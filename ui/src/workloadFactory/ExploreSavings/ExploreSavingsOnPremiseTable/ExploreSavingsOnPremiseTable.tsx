@@ -293,8 +293,8 @@ const ExploreSavingsOnPremiseTable = () => {
                 <div
                     className={
                         selectedRowsForExploreSavingsOnPremBulk.length > 0
-                            ? styles.detectManageDisable
-                            : styles.detectManage
+                            ? CommonStyles.detectManageDisable
+                            : CommonStyles.detectManage
                     }
                     onClick={
                         selectedRowsForExploreSavingsOnPremBulk.length > 0
@@ -305,7 +305,7 @@ const ExploreSavingsOnPremiseTable = () => {
                     }
                     id="wlm-db-onprem-explore-savings-table-button"
                 >
-                    <Typography variant="Regular_14" className={styles.textStyle}>
+                    <Typography variant="Regular_14" className={CommonStyles.textStyle}>
                         {GENERAL.ES_SAVINGS}
                     </Typography>
                 </div>

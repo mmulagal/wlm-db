@@ -13,7 +13,9 @@ vi.mock('react-i18next', () => ({
             const map: Record<string, string> = {
                 'databases.explore-savings.savings-header-ebs': GENERAL.SAVINGS_HEADER,
                 'databases.explore-savings.savings-header-fsx': GENERAL.SAVINGS_HEADER_FSX,
-                'databases.explore-savings.savings-header-onprem': GENERAL.SAVINGS_ONPREM_HEADER
+                'databases.explore-savings.savings-header-onprem': GENERAL.SAVINGS_ONPREM_HEADER,
+                'databases.explore-savings.savings-header-oracle-ebs':
+                    'Oracle on Amazon Elastic Block Store (EBS) configuration'
             };
             return map[key] ?? key;
         }
@@ -27,6 +29,10 @@ vi.mock('@netapp/design-system', () => ({
 
 vi.mock('../../../../assets/MS-sql-icon.svg', () => ({
     ReactComponent: () => <svg data-testid="mssql-icon" />
+}));
+
+vi.mock('../../../../assets/settings.svg', () => ({
+    ReactComponent: () => <svg data-testid="oracle-icon" />
 }));
 
 vi.mock('./SavingsHeader.module.scss', () => ({
@@ -146,5 +152,25 @@ describe('SavingsHeader', () => {
         );
         expect(container.firstChild).toHaveClass('savingsHeader');
         expect(container.firstChild).toHaveClass('savingsHeaderFSX');
+    });
+
+    it('shows Oracle EBS header text for ORACLE_AUTO_EBS', () => {
+        const { container } = render(
+            <Provider store={makeStore({ savingsCalculatorFrom: SAVINGS_CALC_MODE.ORACLE_AUTO_EBS })}>
+                <SavingsHeader />
+            </Provider>
+        );
+        expect(container.textContent).toContain('Oracle on Amazon Elastic Block Store (EBS) configuration');
+    });
+
+    it('applies OnPrem css class for ORACLE_AUTO_EBS', () => {
+        const { container } = render(
+            <Provider store={makeStore({ savingsCalculatorFrom: SAVINGS_CALC_MODE.ORACLE_AUTO_EBS })}>
+                <SavingsHeader />
+            </Provider>
+        );
+        expect(container.firstChild).toHaveClass('savingsHeader');
+        expect(container.firstChild).toHaveClass('savingsHeaderOnPrem');
+        expect(container.firstChild).not.toHaveClass('savingsHeaderFSX');
     });
 });

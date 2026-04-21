@@ -27,6 +27,10 @@ vi.mock('../../../assets/Onprem.svg', () => ({
     ReactComponent: () => <div data-testid="onprem-svg" />
 }));
 
+vi.mock('../../../assets/ES_252.svg', () => ({
+    ReactComponent: () => <div data-testid="explore-saving-svg" />
+}));
+
 vi.mock('../../../assets/Carousel Arrow left.svg', () => ({
     ReactComponent: () => <div data-testid="carousel-left-svg" />
 }));
@@ -36,16 +40,22 @@ vi.mock('../../../assets/Carousel Arrow right.svg', () => ({
 }));
 
 // Helper function to create mock store
-const createMockStore = (selectedTCOHostType: string = DBType.MSSQL) =>
+const createMockStore = (
+    selectedTCOHostType: string = DBType.MSSQL,
+    selectedOracleExploreSavingsTab: string = 'Oracle Server on-premises'
+) =>
     configureStore({
         reducer: {
-            exploreSavings: () => ({ selectedTCOHostType })
+            exploreSavings: () => ({ selectedTCOHostType, selectedOracleExploreSavingsTab })
         }
     });
 
 // Helper function to render component
-const renderComponent = (selectedTCOHostType: string = DBType.MSSQL) => {
-    const store = createMockStore(selectedTCOHostType);
+const renderComponent = (
+    selectedTCOHostType: string = DBType.MSSQL,
+    selectedOracleExploreSavingsTab: string = 'Oracle Server on-premises'
+) => {
+    const store = createMockStore(selectedTCOHostType, selectedOracleExploreSavingsTab);
     return render(
         <Provider store={store}>
             <TCOBanner />
@@ -418,6 +428,51 @@ describe('TCOBanner', () => {
             expect(
                 screen.getByText('databases.explore-savings.tco-mssql-banner-slide-two-content-step-5')
             ).toBeTruthy();
+        });
+    });
+
+    // ---- Oracle EBS Banner ----
+    describe('Oracle EBS Banner', () => {
+        const EBS_TAB = 'Oracle Server on Elastic Block Store (EBS)';
+
+        it('should render the two-section EBS banner (not the carousel) for Oracle EBS', () => {
+            renderComponent(DBType.ORACLE, EBS_TAB);
+            // Should show the EBS static banner, not the carousel
+            expect(screen.getByText('databases.explore-savings.oracle-ebs-heading')).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.oracle-ebs-header')).toBeTruthy();
+        });
+
+        it('should render the manual configuration section for Oracle EBS', () => {
+            renderComponent(DBType.ORACLE, EBS_TAB);
+            expect(screen.getByText('databases.explore-savings.oracle-ebs-manual-heading')).toBeTruthy();
+            expect(screen.getByText('databases.explore-savings.oracle-ebs-manual-content')).toBeTruthy();
+        });
+
+        it('should NOT render carousel arrows for Oracle EBS', () => {
+            renderComponent(DBType.ORACLE, EBS_TAB);
+            expect(screen.queryByTestId('carousel-left-svg')).toBeNull();
+            expect(screen.queryByTestId('carousel-right-svg')).toBeNull();
+        });
+
+        it('should NOT render slide navigation dots for Oracle EBS', () => {
+            renderComponent(DBType.ORACLE, EBS_TAB);
+            const dots = screen.queryAllByRole('button', { name: /Go to slide/i });
+            expect(dots).toHaveLength(0);
+        });
+
+        it('should NOT auto-rotate slides for Oracle EBS', () => {
+            renderComponent(DBType.ORACLE, EBS_TAB);
+            act(() => {
+                vi.advanceTimersByTime(20000);
+            });
+            // Should still show the EBS static banner (no carousel)
+            expect(screen.getByText('databases.explore-savings.oracle-ebs-heading')).toBeTruthy();
+        });
+
+        it('should still render the carousel for Oracle On-Prem', () => {
+            renderComponent(DBType.ORACLE, 'Oracle Server on-premises');
+            expect(screen.getByTestId('oracle-tco-svg')).toBeTruthy();
+            expect(screen.queryByText('databases.explore-savings.oracle-ebs-heading')).toBeNull();
         });
     });
 });

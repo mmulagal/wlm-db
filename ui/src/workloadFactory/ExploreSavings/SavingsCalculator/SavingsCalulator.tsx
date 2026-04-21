@@ -29,7 +29,8 @@ import {
 import {
     setSelectedRowsForExploreSavingsEBSBulk,
     setSelectedRowsForExploreSavingsOnPremBulk,
-    setSelectedRowsForExploreSavingsOracleOnPremBulk
+    setSelectedRowsForExploreSavingsOracleOnPremBulk,
+    setSelectedRowsForExploreSavingsOracleEbsBulk
 } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import { useAppSelector } from '../../../store/storeHooks';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
@@ -54,6 +55,7 @@ import TCOBulkAccordion from './TCOBulkAccordion/TCOBulkAccordion';
 import TCOOnPremBulkAccordion from './TCOOnPremBulkAccordion/TCOOnPremBulkAccordion';
 // Oracle-specific imports (only API remains Oracle-specific)
 import OracleSavingsCalculatorApi from '../OracleTCO/OracleSavingsCalculator/OracleSavingsCalculatorApi';
+import OracleEbsSavingsCalculatorApi from '../OracleTCO/OracleSavingsCalculator/OracleEbsSavingsCalculatorApi';
 
 const SavingsCalculator = ({ statusCheck }: any) => {
     const { t } = useTranslation();
@@ -90,12 +92,14 @@ const SavingsCalculator = ({ statusCheck }: any) => {
 
     // Helper to check if in Oracle on-prem mode
     const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+    const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
     const isOnPremMode = selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem;
 
     const {
         selectedRowsForExploreSavingsEBSBulk,
         selectedRowsForExploreSavingsOnPremBulk,
-        selectedRowsForExploreSavingsOracleOnPremBulk
+        selectedRowsForExploreSavingsOracleOnPremBulk,
+        selectedRowsForExploreSavingsOracleEbsBulk
     } = useAppSelector(state => state.exploreSavingsBulk);
 
     const { isWorkloadFactory, userMetadata } = useAppSelector(state => state.auth);
@@ -145,6 +149,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const setEmailSubject = () => {
         if (
             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
         ) {
             return SAVINGS_CALC_MODE.EBS;
@@ -275,6 +280,16 @@ const SavingsCalculator = ({ statusCheck }: any) => {
             }
         }
 
+        // For Oracle EBS mode (bulk or single)
+        if (isOracleEbs && selectedRowsForExploreSavingsOracleEbsBulk) {
+            if (selectedRowsForExploreSavingsOracleEbsBulk.length > 1) {
+                return `${selectedRowsForExploreSavingsOracleEbsBulk.length} hosts selected`;
+            }
+            if (selectedRowsForExploreSavingsOracleEbsBulk.length === 1) {
+                return selectedRowsForExploreSavingsOracleEbsBulk[0]?.name || selectedServerName;
+            }
+        }
+
         // For Oracle on-prem mode (bulk or single)
         if (isOracleOnPrem) {
             if (selectedRowsForExploreSavingsOracleOnPremBulk?.length > 1) {
@@ -316,8 +331,9 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     };
     return (
         <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
-            {/* Oracle API handler component - conditionally rendered */}
+            {/* Oracle API handler components - conditionally rendered */}
             {isOracleOnPrem && <OracleSavingsCalculatorApi />}
+            {isOracleEbs && <OracleEbsSavingsCalculatorApi />}
             <div className="scrollArea">
                 <div className={styles.savingsCalculator} id="export-pdf">
                     {statusCheck ? (
@@ -332,6 +348,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                             dispatch(setSelectedRowsForExploreSavingsEBSBulk([]));
                                             dispatch(setSelectedRowsForExploreSavingsOnPremBulk([]));
                                             dispatch(setSelectedRowsForExploreSavingsOracleOnPremBulk([]));
+                                            dispatch(setSelectedRowsForExploreSavingsOracleEbsBulk([]));
                                             postBlueXPMessage({
                                                 type: BlueXPListeners.navigate,
                                                 payload: {
@@ -366,14 +383,16 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         <DsTypography variant="Regular_24" style={{ width: '100%' }}>
                             {t('databases.explore-savings.savings-calculator')}
                         </DsTypography>
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && showOptimizeLink && (
-                            <div className={styles.optimizeLinkContainer}>
-                                <LightIcon />
-                                <DsButton type="text" onClick={handleOptimizeLinkButton}>
-                                    {t('databases.explore-savings.optimize-your-calculation')}
-                                </DsButton>
-                            </div>
-                        )}
+                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) &&
+                            showOptimizeLink && (
+                                <div className={styles.optimizeLinkContainer}>
+                                    <LightIcon />
+                                    <DsButton type="text" onClick={handleOptimizeLinkButton}>
+                                        {t('databases.explore-savings.optimize-your-calculation')}
+                                    </DsButton>
+                                </div>
+                            )}
                         {(!statusData || statusData?.isActive === false) &&
                             (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
                                 savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) && (
@@ -398,11 +417,13 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         )}
                     </div>
 
-                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && showOptimizeMode?.showCalcMode && (
-                        <div className={styles.optimizeModeContainer}>
-                            <CalculatorMode />
-                        </div>
-                    )}
+                    {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) &&
+                        showOptimizeMode?.showCalcMode && (
+                            <div className={styles.optimizeModeContainer}>
+                                <CalculatorMode />
+                            </div>
+                        )}
 
                     <div
                         className={
@@ -413,12 +434,16 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && !isOracleOnPrem && (
                             <div className={setFirstContainerClass()}>
                                 {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                                    savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
                                     savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
                                     <>
                                         <SavingsHeader />
                                         <SavingsSelection printState={printState} />
 
-                                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && <TCOBulkAccordion />}
+                                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) && (
+                                            <TCOBulkAccordion />
+                                        )}
 
                                         {/* Condition for EBS TCO Bulk for Auto - accordions to be displayed */}
                                         {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && (
@@ -499,23 +524,25 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         className={setCSSForTextArea()}
                         style={headingWidth !== undefined ? { width: headingWidth } : undefined}
                     >
-                        <div>{isMutliFsx && !isOracleOnPrem ? <SuggestionDisable /> : <Suggestion />}</div>
+                        <div>
+                            {isMutliFsx && !isOracleOnPrem && !isOracleEbs ? <SuggestionDisable /> : <Suggestion />}
+                        </div>
                         <div className={styles.textContent}>
                             <DsTypography
                                 variant="Semibold_16"
-                                className={isMutliFsx && !isOracleOnPrem ? styles.textDisable : ''}
+                                className={isMutliFsx && !isOracleOnPrem && !isOracleEbs ? styles.textDisable : ''}
                             >
                                 {t('databases.explore-savings.mssql-selection-based-text')}
                             </DsTypography>
                             <DsTypography
                                 variant="Regular_14"
                                 className={
-                                    isMutliFsx && !isOracleOnPrem
+                                    isMutliFsx && !isOracleOnPrem && !isOracleEbs
                                         ? `${styles.secondText} ${styles.textDisable}`
                                         : styles.secondText
                                 }
                             >
-                                {isOracleOnPrem
+                                {isOracleOnPrem || isOracleEbs
                                     ? t('databases.explore-savings.oracle-ec2-single-fsx')
                                     : t('databases.explore-savings.mssql-selection-based-second-text')}
                             </DsTypography>
@@ -543,7 +570,9 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                 />
             </div>
 
-            {showOptimizedModal && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && <OptimizedModel />}
+            {showOptimizedModal &&
+                (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                    savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) && <OptimizedModel />}
         </div>
     );
 };

@@ -72,7 +72,8 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
     const {
         selectedRowsForExploreSavingsEBSBulk,
         selectedRowsForExploreSavingsOnPremBulk,
-        selectedRowsForExploreSavingsOracleOnPremBulk
+        selectedRowsForExploreSavingsOracleOnPremBulk,
+        selectedRowsForExploreSavingsOracleEbsBulk
     } = useAppSelector(state => state.exploreSavingsBulk);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
     const { setDialog, closeDialog } = useDialog();
@@ -83,8 +84,9 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
     // Oracle-specific state
     const [oracleInstance, setOracleInstance] = useState<any>({});
 
-    // Helper to check if in Oracle on-prem mode
+    // Helper to check if in Oracle modes
     const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+    const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
 
     const [bulkModeState, setBulkModeState] = useState({ isBulkMode: false, shouldRenderMultipleHosts: false });
 
@@ -107,6 +109,9 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
         }
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
             return selectedRowsForExploreSavingsOracleOnPremBulk || [];
+        }
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) {
+            return selectedRowsForExploreSavingsOracleEbsBulk || [];
         }
         return [];
     };
@@ -131,7 +136,13 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
             selectedRowsForExploreSavingsOracleOnPremBulk &&
             selectedRowsForExploreSavingsOracleOnPremBulk.length > 1;
 
-        const shouldRender = isEBSBulk || isOnPremBulk || isOracleOnPremBulk;
+        // Check for Oracle EBS bulk mode
+        const isOracleEbsBulk =
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS &&
+            selectedRowsForExploreSavingsOracleEbsBulk &&
+            selectedRowsForExploreSavingsOracleEbsBulk.length > 1;
+
+        const shouldRender = isEBSBulk || isOnPremBulk || isOracleOnPremBulk || isOracleEbsBulk;
 
         const isBulk =
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && selectedRowsForExploreSavingsEBSBulk.length > 0) ||
@@ -140,14 +151,18 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
                 selectedRowsForExploreSavingsOnPremBulk.length > 0) ||
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM &&
                 selectedRowsForExploreSavingsOracleOnPremBulk &&
-                selectedRowsForExploreSavingsOracleOnPremBulk.length > 0);
+                selectedRowsForExploreSavingsOracleOnPremBulk.length > 0) ||
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS &&
+                selectedRowsForExploreSavingsOracleEbsBulk &&
+                selectedRowsForExploreSavingsOracleEbsBulk.length > 0);
 
         setBulkModeState({ isBulkMode: isBulk, shouldRenderMultipleHosts: shouldRender });
     }, [
         savingsCalculatorFrom,
         selectedRowsForExploreSavingsEBSBulk,
         selectedRowsForExploreSavingsOnPremBulk,
-        selectedRowsForExploreSavingsOracleOnPremBulk
+        selectedRowsForExploreSavingsOracleOnPremBulk,
+        selectedRowsForExploreSavingsOracleEbsBulk
     ]);
 
     useEffect(() => {
@@ -165,7 +180,8 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
         let selectedRegion = '';
         if (
             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
         ) {
             const matchingRegionEntry =
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === selectedExRegionId);
@@ -193,20 +209,24 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
 
     // Oracle instance data generation
     useEffect(() => {
-        if (isOracleOnPrem && storageSavingsResponse) {
-            const instanceData = generateOracleInstanceData(storageSavingsResponse, selectedOnPremHostDetails);
+        if ((isOracleOnPrem || isOracleEbs) && storageSavingsResponse) {
+            const instanceData = generateOracleInstanceData(
+                storageSavingsResponse,
+                isOracleOnPrem ? selectedOnPremHostDetails : selectedHostDetails
+            );
             setOracleInstance(instanceData);
         }
-    }, [isOracleOnPrem, storageSavingsResponse, selectedOnPremHostDetails]);
+    }, [isOracleOnPrem, isOracleEbs, storageSavingsResponse, selectedOnPremHostDetails, selectedHostDetails]);
 
     useEffect(() => {
         let instanceType = '';
         if (
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
-                savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) &&
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) &&
             storageSavingsResponse
         ) {
-            // Handle AUTO_EBS and ONPREM array format
+            // Handle AUTO_EBS, ONPREM, and ORACLE_AUTO_EBS array format
             const computeArray = Array.isArray(storageSavingsResponse?.compute)
                 ? storageSavingsResponse.compute
                 : [storageSavingsResponse?.compute].filter(Boolean);
@@ -221,10 +241,11 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
         let serverEdition = '';
         if (
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
-                savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) &&
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) &&
             storageSavingsResponse
         ) {
-            // Handle AUTO_EBS and ONPREM array format
+            // Handle AUTO_EBS, ONPREM, and ORACLE_AUTO_EBS array format
             const licenseArray = Array.isArray(storageSavingsResponse?.license)
                 ? storageSavingsResponse.license
                 : [storageSavingsResponse?.license].filter(Boolean);
@@ -318,7 +339,7 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
 
     const handleSaveConfiguration = (dialogFrom: any) => {
         // Use Oracle instance data when in Oracle mode, otherwise MSSQL instance
-        const instanceData = isOracleOnPrem ? oracleInstance : msSqlInstance;
+        const instanceData = isOracleOnPrem || isOracleEbs ? oracleInstance : msSqlInstance;
         setDialog(
             <DialogComponent
                 header={t('databases.explore-savings.save-configuration')}
@@ -357,23 +378,21 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
     };
 
     const setCSS = () => {
-        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem) {
+        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem || isOracleEbs) {
             return `${styles.recommendedAccordion} ${styles.recommendedAccordionOnPremises}`;
         }
         return `${styles.recommendedAccordion}`;
     };
 
-    // Get accordion title based on mode
     const getAccordionTitle = () => {
-        if (isOracleOnPrem) {
+        if (isOracleOnPrem || isOracleEbs) {
             return t('databases.explore-savings.oracle-ec2-single-fsx');
         }
         return t('databases.explore-savings.recommended-es-title');
     };
 
-    // Get instance section title based on mode
     const getInstanceTitle = () => {
-        if (isOracleOnPrem) {
+        if (isOracleOnPrem || isOracleEbs) {
             return t('databases.explore-savings.oracle-server-instance');
         }
         return isMutliFsx
@@ -404,15 +423,17 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
                     selectedHostDetails?.loading ||
                     disableState ||
                     viewCalculationsLoading ||
-                    (isMutliFsx && !isOracleOnPrem) ||
+                    (isMutliFsx && !isOracleOnPrem && !isOracleEbs) ||
                     !storageSavingsResponse
                 }
                 disabledReason={
-                    isMutliFsx && !isOracleOnPrem ? t('databases.explore-savings.multi-fsx-disable-msg') : ''
+                    isMutliFsx && !isOracleOnPrem && !isOracleEbs
+                        ? t('databases.explore-savings.multi-fsx-disable-msg')
+                        : ''
                 }
                 isExpanded={printState}
                 headerActions={[
-                    isMutliFsx && !isOracleOnPrem ? (
+                    isMutliFsx && !isOracleOnPrem && !isOracleEbs ? (
                         <Popover
                             popoverClass={styles.popover}
                             children={t('databases.explore-savings.save-error')}
@@ -428,7 +449,8 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
                     ) : (
                         !printState &&
                         !bulkModeState.shouldRenderMultipleHosts &&
-                        !isOracleOnPrem && (
+                        !isOracleOnPrem &&
+                        !isOracleEbs && (
                             <div id="es-save-config">
                                 {saveIsDisabled() ? (
                                     <Popover
@@ -465,7 +487,7 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
                         )
                     ),
 
-                    !printState && !bulkModeState.shouldRenderMultipleHosts && !isOracleOnPrem && (
+                    !printState && !bulkModeState.shouldRenderMultipleHosts && !isOracleOnPrem && !isOracleEbs && (
                         <div id="es-create" className={`${styles.buttonContainer} ${styles.headerActionsContainer}`}>
                             {savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM && isMutliFsx ? (
                                 <Popover
@@ -501,8 +523,8 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
                     )
                 ]}
                 children={
-                    isOracleOnPrem ? (
-                        // Oracle on-prem content
+                    isOracleOnPrem || isOracleEbs ? (
+                        // Oracle on-prem and EBS content
                         <div className={styles.accordionContentWrapperSingle}>
                             {bulkModeState.isBulkMode ? (
                                 <>
@@ -510,7 +532,7 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
                                         const hostOracleData = generateOracleInstanceData(
                                             storageSavingsResponse,
                                             host,
-                                            host.resourceName
+                                            isOracleOnPrem ? host.resourceName : host.name
                                         );
                                         return (
                                             <div key={host.resourceId || `oracle-host-${hostIndex}`}>
@@ -520,7 +542,8 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
                                                     style={{ marginTop: hostIndex > 0 ? '32px' : '0px' }}
                                                 >
                                                     {`${t('databases.explore-savings.oracle-server-instance')} - ${
-                                                        host.resourceName || `Host ${hostIndex + 1}`
+                                                        (isOracleOnPrem ? host.resourceName : host.name) ||
+                                                        `Host ${hostIndex + 1}`
                                                     }`}
                                                 </DsTypography>
                                                 {OracleServerInstance(hostOracleData, t).map(

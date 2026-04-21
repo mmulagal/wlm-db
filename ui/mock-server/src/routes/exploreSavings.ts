@@ -11,6 +11,8 @@ import ExploreSavingsOnPrem from '../data/exploreSavingsOnPrem.json';
 import ExploreSavingsOnPremOracle from '../data/exploreSavingsOnPremOracle.json';
 import OnPremCalculationsBulk from '../data/onPremCalculationsBulk.json';
 import OnPremCalculationsBulkOracle from '../data/onPremCalculationsBulkOracle.json';
+import OracleStorageSavingsBulk from '../data/oracleStorageSavingsBulk.json';
+import OracleViewCalculationsBulk from '../data/oracleViewCalculationsBulk.json';
 
 const router = require('express').Router();
 
@@ -148,6 +150,26 @@ router.post(
         setTimeout(() => {
             // generateResponse(res, 200, ViewCalculations);
             generateResponse(res, 200, ViewCalculationsFsxw);
+        }, 50);
+    }
+);
+
+// Oracle EBS routes
+
+router.post(
+    `${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/storage-savings/ebs`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, OracleStorageSavingsBulk);
+        }, 100);
+    }
+);
+
+router.post(
+    `${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/storage-savings/ebs/calculations`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, OracleViewCalculationsBulk);
         }, 50);
     }
 );

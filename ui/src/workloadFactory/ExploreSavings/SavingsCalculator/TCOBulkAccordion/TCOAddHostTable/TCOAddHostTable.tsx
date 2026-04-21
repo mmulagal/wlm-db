@@ -7,6 +7,7 @@ import { useTable } from '../../../../../common/Lib/Table/useTable';
 import {
     setRowsRequiringAuthBulk,
     setSelectedRowsForExploreSavingsEBSBulk,
+    setSelectedRowsForExploreSavingsOracleEbsBulk,
     setTriggerBulkDataFetch
 } from '../../../../../store/workloadFactory/exploreSavingsBulkSlice';
 import { getSelectedFromSelectionState } from '../../../../../utils/utilityFunctions';
@@ -16,7 +17,7 @@ import { TableTopBar } from '../../../../../common/Lib/Table/TableTopBar';
 import { renderAllocatedCapacity, renderUnmanagedAZ, uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
 import { GENERAL } from '../../../../../utils/appConstants';
 import { shouldAuthDialogOpenBulk } from '../../../ExploreSavingsUtils';
-import { DBType } from '../../../../../utils/consts';
+import { DBType, SAVINGS_CALC_MODE } from '../../../../../utils/consts';
 
 interface TCOAddHostTableProps {
     onExploreSavings?: () => void;
@@ -29,9 +30,19 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
     const dispatch = useDispatch();
     const [ebsTableData, setEBSTableData] = useState<any>([]);
     const [updatedTableData, setUpdatedTableData] = useState<any>([]);
-    const { selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
+    const { selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOracleEbsBulk } = useAppSelector(
+        state => state.exploreSavingsBulk
+    );
+    const { savingsCalculatorFrom } = useAppSelector(state => state.exploreSavings);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
+
+    const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+    const activeRows = isOracleEbs ? selectedRowsForExploreSavingsOracleEbsBulk : selectedRowsForExploreSavingsEBSBulk;
+    const setActiveRows = isOracleEbs
+        ? setSelectedRowsForExploreSavingsOracleEbsBulk
+        : setSelectedRowsForExploreSavingsEBSBulk;
+    const targetDbType = isOracleEbs ? DBType.ORACLE : DBType.MSSQL;
 
     useEffect(() => {
         if (unManagedHostFormatedList) {
@@ -67,8 +78,7 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
             // Initialize two empty arrays
             const ebsArray: any = [];
             result.forEach((item: any) => {
-                // currently filtering for MSSQL hosts only
-                if (item?.hostType !== DBType.MSSQL) {
+                if (item?.hostType !== targetDbType) {
                     return;
                 }
                 if (item.storageType === 'EBS') {
@@ -79,7 +89,7 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
         } else {
             setEBSTableData([]);
         }
-    }, [unManagedHostFormatedList]);
+    }, [unManagedHostFormatedList, targetDbType]);
 
     const AddHostColDefs: ColumnProps[] = [
         {
@@ -98,7 +108,7 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
             }
         },
         {
-            Header: t('databases.explore-savings.instances'),
+            Header: isOracleEbs ? t('databases.explore-savings.databases') : t('databases.explore-savings.instances'),
             accessor: 'totalInstance',
             isSortable: true,
             id: '2',
@@ -133,7 +143,7 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
         isSorting: false,
         selectionType: 'multiple',
         columns: AddHostColDefs,
-        defaultSelectedRows: selectedRowsForExploreSavingsEBSBulk.map((row: any) => row.id),
+        defaultSelectedRows: activeRows.map((row: any) => row.id),
         rows: updatedTableData,
         pageSize: 10
     });
@@ -196,7 +206,7 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
         });
 
         setUpdatedTableData(updatedData);
-    }, [ebsTableData, selectedRowsForExploreSavingsEBSBulk, tableProps.selectionState]);
+    }, [ebsTableData, activeRows, tableProps.selectionState]);
 
     const handleExploreSavings = () => {
         const selectedRows = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
@@ -211,21 +221,18 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
                 onAuthRequired(selectedRows);
             }
         } else {
-            // Merge with existing hosts to get monthlySqlByolCost values for each hosts
-            const existingHostsMap = new Map(selectedRowsForExploreSavingsEBSBulk.map((host: any) => [host.id, host]));
+            const existingHostsMap = new Map(activeRows.map((host: any) => [host.id, host]));
 
             const rowsWithByolPreserved = selectedRows.map((row: any) => {
                 const existingHost: any = existingHostsMap.get(row.id);
                 return {
                     ...row,
-                    // Preserve existing monthlySqlByolCost if host already exists, otherwise initialize to null
                     monthlySqlByolCost:
                         existingHost?.monthlySqlByolCost !== undefined ? existingHost.monthlySqlByolCost : null
                 };
             });
 
-            // set the selected rows with byol values
-            dispatch(setSelectedRowsForExploreSavingsEBSBulk(rowsWithByolPreserved));
+            dispatch(setActiveRows(rowsWithByolPreserved));
             // Trigger data fetch after adding hosts when authentication is not required
             dispatch(setTriggerBulkDataFetch(true));
             if (onExploreSavings) {
@@ -249,8 +256,12 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
             <TableTopBar
                 // @ts-ignore
                 tableProps={tableProps}
-                pluralTitle={t('databases.explore-savings.mssql-ebs')}
-                singularTitle={t('databases.explore-savings.mssql-ebs')}
+                pluralTitle={
+                    isOracleEbs ? t('databases.explore-savings.oracle-ebs') : t('databases.explore-savings.mssql-ebs')
+                }
+                singularTitle={
+                    isOracleEbs ? t('databases.explore-savings.oracle-ebs') : t('databases.explore-savings.mssql-ebs')
+                }
             />
             <Table
                 // @ts-ignore

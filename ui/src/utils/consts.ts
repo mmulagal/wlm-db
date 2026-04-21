@@ -797,6 +797,11 @@ export const FSX_AZ_TYPE = {
     MULTI: 'multi'
 };
 
+export const AVAILABILITY_ZONE_TYPE = {
+    SINGLE_AZ: 'Single AZ',
+    MULTI_AZ: 'Multi AZ'
+};
+
 export const SAVINGS_CALC_MODE = {
     MANUAL_EBS: 'Manual_EBS',
     AUTO_EBS: 'Auto_EBS',
@@ -804,6 +809,7 @@ export const SAVINGS_CALC_MODE = {
     MANUAL_FSXW: 'Manual_FSXW',
     ONPREM: 'OnPrem',
     ORACLE_ONPREM: 'Oracle_OnPrem',
+    ORACLE_AUTO_EBS: 'Oracle_Auto_EBS',
     EBS: 'ebs',
     FSXW: 'fsxw',
     ONPREM_MODE: 'onprem'

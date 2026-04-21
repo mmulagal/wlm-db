@@ -93,7 +93,8 @@ import {
     getUnmanagedOracleHostInstances,
     uniqueHostRow,
     updateInstancesApiResponse,
-    getExploreSavingsRowsMssql
+    getExploreSavingsRowsMssql,
+    getExploreSavingsRowsOracle
 } from './InventoryUtilsV2';
 import {
     setUnmanagedExploreSavingsHost,
@@ -2550,9 +2551,11 @@ const InventoryApisV3 = () => {
             }
 
             const exploreSavingsRows = getExploreSavingsRowsMssql(inventoryTableDataRef.current);
+            const oracleExploreSavingsRows = getExploreSavingsRowsOracle(inventoryTableDataRef.current);
+            const allExploreSavingsRows = [...exploreSavingsRows, ...oracleExploreSavingsRows];
             const currentExploreSavings = state.exploreSavings.unmanagedExploreSavingsHost;
-            if (!isEqual(exploreSavingsRows, currentExploreSavings)) {
-                dispatch(setUnmanagedExploreSavingsHost(exploreSavingsRows));
+            if (!isEqual(allExploreSavingsRows, currentExploreSavings)) {
+                dispatch(setUnmanagedExploreSavingsHost(allExploreSavingsRows));
 
                 const {
                     selectedInstanceId: esInstanceId,

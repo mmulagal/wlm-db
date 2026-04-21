@@ -1,4 +1,5 @@
 import { Dispatch } from 'redux';
+import i18next from 'i18next';
 import { GENERAL, SELECT_CONFIG } from '../../../utils/appConstants';
 import {
     formatFractionalNumber,
@@ -40,9 +41,11 @@ import { StorageSavingsInterface, ViewCalculationsInterface } from '../../../uti
 export const getOracleLicenseCostValue = () => {
     const state = store.getState();
     const { savingsCalculatorFrom, onPremStorageAndComputeInfo } = state.exploreSavings;
-    const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
-    if (!isOracle || !onPremStorageAndComputeInfo) return 0;
-    // Sum monthlyOracleCost across ALL hosts in onPremStorageAndComputeInfo
+    const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+    const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+
+    if ((!isOracleOnPrem && !isOracleEbs) || !onPremStorageAndComputeInfo) return 0;
+
     return Object.values(onPremStorageAndComputeInfo as Record<string, { monthlyOracleCost?: string | number }>).reduce(
         (total, entry) => {
             const cost = entry?.monthlyOracleCost;
@@ -55,9 +58,12 @@ export const getOracleLicenseCostValue = () => {
 export const comparisonData = (calculatedResponse: any) => {
     const state = store.getState();
     const { recommendedTargetInstance, selectedHostDetails, savingsCalculatorFrom } = state.exploreSavings;
-    const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+    const isOracle =
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
     const isArrayMode =
         (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
             savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
             isOracle) &&
         Array.isArray(calculatedResponse?.compute);
@@ -398,6 +404,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
         storageType = GENERAL.EBS;
     } else if (
         savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
         savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
     ) {
         storageType = GENERAL.EBS;
@@ -405,39 +412,54 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
         storageType = GENERAL.FSX_FOR_WINDOWS;
     }
 
+    // Oracle mode detection for proper labels/fields
+    const isOracleViewCalc =
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+    const editionLabel = isOracleViewCalc
+        ? i18next.t('databases.explore-savings.database-edition-label')
+        : i18next.t('databases.explore-savings.sql-edition-label');
+    const licenseLabel = isOracleViewCalc
+        ? i18next.t('databases.explore-savings.license-included-label')
+        : i18next.t('databases.explore-savings.sql-license-included-label');
+    const getEdition = (calc: any) => (isOracleViewCalc ? calc?.oracleEdition : calc?.sqlEdition);
+    const getLicense = (calc: any) => (isOracleViewCalc ? calc?.oracleLicense : calc?.sqlLicense);
+    const licenseTooltip = isOracleViewCalc
+        ? i18next.t('databases.explore-savings.instance-hourly-price-tooltip')
+        : i18next.t('databases.explore-savings.instance-hourly-price-with-sql-license-tooltip');
+    const instanceTypeTooltip =
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM || savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
+            ? i18next.t('databases.explore-savings.database-instance-type-onprem-tooltip')
+            : '';
+
     // Check if we have bulk calculation data (multiple hosts)
     if (viewCalculation?.isBulkCalculation && viewCalculation?.hostCalculationData?.length > 0) {
-        // For bulk calculations, return host-specific data
         const hostCalculations = viewCalculation.hostCalculationData.map((hostData: any) => {
             const machineDetailsList: any[] = [];
 
-            // Process each machine for this host
             hostData?.fsxInstanceCalculation?.forEach((calculation: any, index: number) => {
                 machineDetailsList.push(
                     { label: `Machine ${index + 1} specification` },
                     {
                         label: 'Instance type',
                         value: `${calculation?.instanceType}`,
-                        text:
-                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-                                ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
-                                : ''
+                        text: instanceTypeTooltip
                     },
                     {
-                        label: 'SQL edition',
-                        value: `${calculation?.sqlEdition}`,
+                        label: editionLabel,
+                        value: `${getEdition(calculation)}`,
                         text: ''
                     },
                     {
-                        label: 'SQL license included',
-                        value: `${calculation?.sqlLicense}`,
+                        label: licenseLabel,
+                        value: `${getLicense(calculation)}`,
                         text: ''
                     },
                     { label: `Machine ${index + 1} pricing calculations` },
                     {
                         label: 'Instance hourly price',
                         value: `${calculation?.computeHourlyPrice}`,
-                        text: 'Instance hourly price with SQL license included'
+                        text: licenseTooltip
                     },
                     {
                         label: `EC2 machine${index + 1} cost`,
@@ -550,26 +572,23 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
             {
                 label: 'Instance type',
                 value: `${calculation?.instanceType}`,
-                text:
-                    savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-                        ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
-                        : ''
+                text: instanceTypeTooltip
             },
             {
-                label: 'SQL edition',
-                value: `${calculation?.sqlEdition}`,
+                label: editionLabel,
+                value: `${getEdition(calculation)}`,
                 text: ''
             },
             {
-                label: 'SQL license included',
-                value: `${calculation?.sqlLicense}`,
+                label: licenseLabel,
+                value: `${getLicense(calculation)}`,
                 text: ''
             },
             { label: `Machine ${index + 1} pricing calculations` },
             {
                 label: 'Instance hourly price',
                 value: `${calculation?.computeHourlyPrice}`,
-                text: 'Instance hourly price with SQL license included'
+                text: licenseTooltip
             },
             {
                 label: `EC2 machine${index + 1} cost`,
@@ -596,19 +615,16 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       {
                           label: 'Instance type',
                           value: `${viewCalculation.fsxInstanceCalculation?.[0]?.instanceType}`,
-                          text:
-                              savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-                                  ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
-                                  : ''
+                          text: instanceTypeTooltip
                       },
                       {
-                          label: 'SQL edition',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.sqlEdition}`,
+                          label: editionLabel,
+                          value: `${getEdition(viewCalculation.fsxInstanceCalculation?.[0])}`,
                           text: ''
                       },
                       {
-                          label: 'SQL license included',
-                          value: `${viewCalculation.fsxInstanceCalculation?.[0]?.sqlLicense}`,
+                          label: licenseLabel,
+                          value: `${getLicense(viewCalculation.fsxInstanceCalculation?.[0])}`,
                           text: ''
                       },
                       {
@@ -617,7 +633,7 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
                       {
                           label: 'Instance hourly price',
                           value: `${viewCalculation.fsxInstanceCalculation?.[0]?.computeHourlyPrice}`,
-                          text: 'Instance hourly price with SQL license included'
+                          text: licenseTooltip
                       },
                       {
                           label: 'EC2 machine1 cost',
@@ -967,39 +983,53 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
         deploymentModelValue = selectedManualDeploymentModel?.value;
     }
 
+    const isOracleEbsCalc =
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+    const ebsEditionLabel = isOracleEbsCalc
+        ? i18next.t('databases.explore-savings.database-edition-label')
+        : i18next.t('databases.explore-savings.sql-edition-label');
+    const ebsLicenseLabel = isOracleEbsCalc
+        ? i18next.t('databases.explore-savings.license-included-label')
+        : i18next.t('databases.explore-savings.sql-license-included-label');
+    const getEbsEdition = (calc: any) => (isOracleEbsCalc ? calc?.oracleEdition : calc?.sqlEdition);
+    const getEbsLicense = (calc: any) => (isOracleEbsCalc ? calc?.oracleLicense : calc?.sqlLicense);
+    const ebsLicenseTooltip = isOracleEbsCalc
+        ? i18next.t('databases.explore-savings.instance-hourly-price-tooltip')
+        : i18next.t('databases.explore-savings.instance-hourly-price-with-sql-license-tooltip');
+    const ebsInstanceTypeTooltip =
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM || savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
+            ? i18next.t('databases.explore-savings.database-instance-type-onprem-tooltip')
+            : '';
+
     // Check if we have bulk calculation data (multiple hosts)
     if (viewCalculation?.isBulkCalculation && viewCalculation?.hostCalculationData?.length > 0) {
-        // For bulk calculations, return host-specific data
         const hostCalculations = viewCalculation.hostCalculationData.map((hostData: any) => {
             const machineDetailsList: any[] = [];
 
-            // Process each machine for this host
             hostData?.ebsInstanceCalculation?.forEach((calculation: any, index: number) => {
                 machineDetailsList.push(
                     { label: `Machine ${index + 1} specification` },
                     {
                         label: 'Instance type',
                         value: `${calculation?.instanceType}`,
-                        text:
-                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-                                ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
-                                : ''
+                        text: ebsInstanceTypeTooltip
                     },
                     {
-                        label: 'SQL edition',
-                        value: `${calculation?.sqlEdition}`,
+                        label: ebsEditionLabel,
+                        value: `${getEbsEdition(calculation)}`,
                         text: ''
                     },
                     {
-                        label: 'SQL license included',
-                        value: `${calculation?.sqlLicense}`,
+                        label: ebsLicenseLabel,
+                        value: `${getEbsLicense(calculation)}`,
                         text: ''
                     },
                     { label: `Machine ${index + 1} pricing calculations` },
                     {
                         label: 'Instance hourly price',
                         value: `${calculation?.computeHourlyPrice}`,
-                        text: 'Instance hourly price with SQL license included'
+                        text: ebsLicenseTooltip
                     },
                     {
                         label: `EC2 machine${index + 1} cost`,
@@ -1009,7 +1039,6 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                 );
             });
 
-            // Calculate total cost for this host
             const hostTotalCost = hostData?.ebsInstanceCalculation?.reduce((total: number, calc: any) => {
                 const price = calc?.instanceMonthlyPrice;
                 const numericPrice =
@@ -1035,7 +1064,6 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
         };
     }
 
-    // Original single host calculation logic
     const machineDetailsList = [];
 
     viewCalculation?.ebsInstanceCalculation?.forEach((calculation: any, index: number) => {
@@ -1044,26 +1072,23 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
             {
                 label: 'Instance type',
                 value: `${calculation?.instanceType}`,
-                text:
-                    savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-                        ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
-                        : ''
+                text: ebsInstanceTypeTooltip
             },
             {
-                label: 'SQL edition',
-                value: `${calculation?.sqlEdition}`,
+                label: ebsEditionLabel,
+                value: `${getEbsEdition(calculation)}`,
                 text: ''
             },
             {
-                label: 'SQL license included',
-                value: `${calculation?.sqlLicense}`,
+                label: ebsLicenseLabel,
+                value: `${getEbsLicense(calculation)}`,
                 text: ''
             },
             { label: `Machine ${index + 1} pricing calculations` },
             {
                 label: 'Instance hourly price',
                 value: `${calculation?.computeHourlyPrice}`,
-                text: 'Instance hourly price with SQL license included'
+                text: ebsLicenseTooltip
             },
             {
                 label: `EC2 machine${index + 1} cost`,
@@ -1090,19 +1115,16 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       {
                           label: 'Instance type',
                           value: `${viewCalculation.ebsInstanceCalculation?.[0]?.instanceType}`,
-                          text:
-                              savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
-                                  ? 'Database instance type selected based on the on-premises number of vCPUS, memory, and network configurations.'
-                                  : ''
+                          text: ebsInstanceTypeTooltip
                       },
                       {
-                          label: 'SQL edition',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.sqlEdition}`,
+                          label: ebsEditionLabel,
+                          value: `${getEbsEdition(viewCalculation.ebsInstanceCalculation?.[0])}`,
                           text: ''
                       },
                       {
-                          label: 'SQL license included',
-                          value: `${viewCalculation.ebsInstanceCalculation?.[0]?.sqlLicense}`,
+                          label: ebsLicenseLabel,
+                          value: `${getEbsLicense(viewCalculation.ebsInstanceCalculation?.[0])}`,
                           text: ''
                       },
                       {

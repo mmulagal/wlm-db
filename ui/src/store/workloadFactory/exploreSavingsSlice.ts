@@ -254,6 +254,9 @@ const exploreSavingsSlice = createSlice({
         setOnPremStorageAndComputeInfoFull(state, action: PayloadAction<any>) {
             state.onPremStorageAndComputeInfo = action.payload;
         },
+        removeOnPremStorageAndComputeInfoKey(state, action: PayloadAction<string>) {
+            delete state.onPremStorageAndComputeInfo[action.payload];
+        },
         setOnPremNetworkPerformance(state, action: PayloadAction<any>) {
             state.onPremNetworkPerformance = action.payload;
         },
@@ -691,6 +694,7 @@ export const {
     setOnPremRegionsLoading,
     setOnPremStorageAndComputeInfo,
     setOnPremStorageAndComputeInfoFull,
+    removeOnPremStorageAndComputeInfoKey,
     setSelectedEsPageInstance,
     resetServerDetailsCredentials,
     setShowFirstTimeOptimize,

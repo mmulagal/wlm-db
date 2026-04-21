@@ -84,6 +84,7 @@ const SavingsSelection = ({ printState }: any) => {
     useEffect(() => {
         if (
             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
             savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM
         ) {
             // Handle AUTO_EBS/ONPREM array format
@@ -149,11 +150,13 @@ const SavingsSelection = ({ printState }: any) => {
 
     useEffect(() => {
         if (
-            (!selectedSnapshotFrequency && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
+            !selectedSnapshotFrequency &&
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM)
         ) {
-            // For FSxW and On-Prem modes, default value is Daily.
             dispatch(setSelectedSnapshotFrequency(generateSnapshotFrequency[2]));
         }
     }, [generateSnapshotFrequency, savingsCalculatorFrom]);
@@ -178,7 +181,11 @@ const SavingsSelection = ({ printState }: any) => {
     }, []);
 
     useEffect(() => {
-        if (!selectedCloneRefresh && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+        if (
+            !selectedCloneRefresh &&
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS)
+        ) {
             dispatch(setSelectedCloneRefresh(generateCloneRefresh[0]));
         }
     }, [generateCloneRefresh]);
@@ -344,7 +351,8 @@ const SavingsSelection = ({ printState }: any) => {
                     </div>
 
                     <div className={styles.secondRow}>
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS &&
+                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) &&
                             (printState ? (
                                 <div className={styles.mockInput}>
                                     <DsTypography variant="Regular_14" className={styles.mockLabel}>
@@ -365,7 +373,8 @@ const SavingsSelection = ({ printState }: any) => {
                                     error={errorForClonedCopiesCount()}
                                 />
                             ))}
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                        {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) && (
                             <SelectField
                                 label={GENERAL.ES_CLONE_REFRESH_FREQUENCY}
                                 isClearable={false}
@@ -413,23 +422,23 @@ const SavingsSelection = ({ printState }: any) => {
                             </DsTypography>
                         </div>
                     </div>
-                    {/* Hide these fields for AUTO_EBS mode since they will be shown per-host in TCOBulkAccordion */}
-                    {savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO_EBS && (
-                        <div className={styles.secondRow}>
-                            {isByolField && (
-                                <TextField
-                                    label={GENERAL.BYOL_TEXT}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                                        setByolValue(numVal);
-                                    }}
-                                    isOptional
-                                    value={byolValue}
-                                    className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
-                                />
-                            )}
-                        </div>
-                    )}
+                    {savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO_EBS &&
+                        savingsCalculatorFrom !== SAVINGS_CALC_MODE.ORACLE_AUTO_EBS && (
+                            <div className={styles.secondRow}>
+                                {isByolField && (
+                                    <TextField
+                                        label={GENERAL.BYOL_TEXT}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                                            setByolValue(numVal);
+                                        }}
+                                        isOptional
+                                        value={byolValue}
+                                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                                    />
+                                )}
+                            </div>
+                        )}
                 </div>
             )}
         </>

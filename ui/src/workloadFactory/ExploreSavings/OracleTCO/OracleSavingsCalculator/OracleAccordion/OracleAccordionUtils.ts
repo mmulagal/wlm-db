@@ -3,12 +3,12 @@ import { DATABASE_DEPLOYMENT_MODE } from '../../../../../utils/consts';
 
 /**
  * Generates Oracle instance data for the accordion display.
- * When hostName is provided, looks up compute/license arrays by resourceName (bulk mode).
- * When hostName is omitted, uses the first compute entry (single mode).
+ * For bulk mode: looks up compute by resourceName.
+ * For single host: uses the first compute entry.
  */
 export const generateOracleInstanceData = (
     storageSavingsResponse: any,
-    selectedOnPremHostDetails: any,
+    selectedHostDetails: any,
     hostName?: string
 ) => {
     if (!storageSavingsResponse) return {};
@@ -17,6 +17,8 @@ export const generateOracleInstanceData = (
         ? storageSavingsResponse.compute
         : [storageSavingsResponse?.compute].filter(Boolean);
 
+    // For bulk mode (when hostName is provided), match by resourceName
+    // For single host mode, use first entry
     const hostCompute = hostName ? computeArray.find((item: any) => item.resourceName === hostName) : computeArray[0];
 
     let instanceType = '';
@@ -25,13 +27,13 @@ export const generateOracleInstanceData = (
     }
 
     let oracleEdition = '';
-    if (selectedOnPremHostDetails?.oracleEdition) {
-        oracleEdition = selectedOnPremHostDetails.oracleEdition;
-    } else if (
-        Array.isArray(selectedOnPremHostDetails?.oracleDatabases) &&
-        selectedOnPremHostDetails.oracleDatabases.length > 0
-    ) {
-        oracleEdition = selectedOnPremHostDetails.oracleDatabases[0].oracleEdition || '';
+    // First check if oracleEdition exists directly on selectedHostDetails (Oracle EBS bulk mode)
+    if (selectedHostDetails?.oracleEdition) {
+        oracleEdition = selectedHostDetails.oracleEdition;
+    }
+    // Check oracleDatabases array (Oracle on-prem mode)
+    else if (Array.isArray(selectedHostDetails?.oracleDatabases) && selectedHostDetails.oracleDatabases.length > 0) {
+        oracleEdition = selectedHostDetails.oracleDatabases[0].oracleEdition || '';
     }
 
     const deploymentModel = DATABASE_DEPLOYMENT_MODE.STANDALONE;

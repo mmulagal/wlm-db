@@ -52,6 +52,7 @@ import {
     setSelectedRowsForExploreSavingsEBSBulk,
     setSelectedRowsForExploreSavingsOnPremBulk,
     setSelectedRowsForExploreSavingsOracleOnPremBulk,
+    setSelectedRowsForExploreSavingsOracleEbsBulk,
     setTriggerBulkDataFetch
 } from '../../store/workloadFactory/exploreSavingsBulkSlice';
 
@@ -230,6 +231,55 @@ export const onClickESHostOracleOnPremBulk = (
             }
         })
     );
+};
+
+export const onClickESHostOracleEbs = (
+    dispatch: any,
+    rowData: any,
+    isWorkloadFactory: boolean,
+    navigate?: NavigateFunction,
+    isBulk?: boolean,
+    bulkServerName?: string
+) => {
+    const deploymentModel = rowData?.oracleServerDeploymentType || 'Standalone';
+
+    if (navigate && isWorkloadFactory) {
+        navigate('../databases/saving-calculator');
+    }
+    postBlueXPMessage({
+        type: BlueXPListeners.navigate,
+        payload: {
+            pathname: `${
+                isWorkloadFactory
+                    ? './storage-saving-calculator?type=oracle-ebs&mode=auto'
+                    : '../fsxdb/storage-saving-calculator?type=oracle-ebs&mode=auto'
+            }`,
+            replace: true
+        }
+    });
+
+    // Only set bulk selection if this is NOT a bulk operation
+    if (!isBulk) {
+        dispatch(setSelectedRowsForExploreSavingsOracleEbsBulk([rowData]));
+    }
+
+    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.ORACLE_AUTO_EBS));
+    dispatch(setDisableState(true));
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+
+    dispatch(
+        setSelectedEsPageInstance({
+            instanceId: rowData?.ec2InstanceId || rowData?.ec2Details?.[0]?.id,
+            credentialId: rowData?.credentialId,
+            regionId: rowData?.regionId,
+            deploymentModel,
+            serverName: bulkServerName || rowData?.name || rowData?.ec2InstanceName
+        })
+    );
+
+    setESInstanceData(rowData, dispatch);
+    dispatch(setTriggerBulkDataFetch(true));
+    dispatch(setSelectedServerName(bulkServerName || rowData?.name || rowData?.ec2InstanceName));
 };
 
 export const onClickESHostOnPrem = (
@@ -551,7 +601,9 @@ export const formatViewCalcInstance = (
     licenseDetails: any
 ) => {
     const { savingsCalculatorFrom, selectedOnPremHostDetails } = store.getState().exploreSavings;
-    const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+    const isOracle =
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
 
     let instanceTypelist: any = [];
     if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
@@ -638,7 +690,8 @@ export const formatViewCalcData = (
     const {
         selectedRowsForExploreSavingsEBSBulk,
         selectedRowsForExploreSavingsOnPremBulk,
-        selectedRowsForExploreSavingsOracleOnPremBulk
+        selectedRowsForExploreSavingsOracleOnPremBulk,
+        selectedRowsForExploreSavingsOracleEbsBulk
     } = state.exploreSavingsBulk;
 
     // Check if we're dealing with bulk calculations (arrays) vs single calculations (objects)
@@ -706,7 +759,9 @@ export const formatViewCalcData = (
         // Create formatted calculation arrays similar to what viewCalculation functions produce
         const createFormattedCalculation = (machineData: any[]) => {
             const machineDetailsList: any[] = [];
-            const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+            const isOracle =
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
             const instanceTypeLabel = isOracle
                 ? i18next.t('databases.explore-savings.oracle-database-type')
                 : i18next.t('databases.explore-savings.sql-instance-type');
@@ -799,6 +854,13 @@ export const formatViewCalcData = (
                 return hostData ? [hostData] : [];
             }
             return [];
+        }
+
+        // For Oracle EBS, use Oracle EBS bulk selection
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) {
+            return selectedRowsForExploreSavingsOracleEbsBulk
+                .map((host: any) => createHostInstanceCalculationData(host.name))
+                .filter(Boolean);
         }
 
         // For MSSQL ONPREM, use selectedRowsForExploreSavingsOnPremBulk
@@ -1533,8 +1595,11 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
                     recommendedTotal: Number(data?.totalSummary?.recommended || 0)
                 }
             };
-        } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
-            // Handle AUTO_EBS mode with array format for compute and license
+        } else if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+        ) {
+            // Handle AUTO_EBS and ORACLE_AUTO_EBS mode with array format for compute and license
             const computeArray = Array.isArray(data?.compute) ? data.compute : [data?.compute].filter(Boolean);
             const licenseArray = Array.isArray(data?.license) ? data.license : [data?.license].filter(Boolean);
 

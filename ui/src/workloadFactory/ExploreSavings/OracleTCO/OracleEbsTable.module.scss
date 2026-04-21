@@ -1,0 +1,16 @@
+.oracleEbsTable {
+    width: 100%;
+    margin-top: 24px;
+
+    [class*='header-name'] {
+        [class*='Checkbox-module'] {
+            display: none !important;
+        }
+    }
+
+    [class*='disabled-row'] {
+        [class*='Typography'] {
+            color: var(--text-disabled) !important;
+        }
+    }
+}

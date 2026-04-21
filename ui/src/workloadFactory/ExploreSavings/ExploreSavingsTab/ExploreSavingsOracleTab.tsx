@@ -6,7 +6,6 @@ import styles from './ExploreSavingsTab.module.scss';
 import { setSelectedOracleExploreSavingsTab } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { WLF_TABS } from '../../../utils/consts';
 import { useAppSelector } from '../../../store/storeHooks';
-import { ReactComponent as ComingSoon } from '../../../assets/comingSoon2.svg';
 import { handleExploreSavingsURL } from '../../../utils/utilityFunctions';
 
 const ExploreSavingsOracleTab = () => {
@@ -51,22 +50,20 @@ const ExploreSavingsOracleTab = () => {
             <div
                 className={
                     selectedTab === WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE
-                        ? `${styles.headers} ${styles.headerOracleTab} ${styles.headerDisabled}`
-                        : `${styles.headers} ${styles.headerOracleTab} ${styles.headerDisabled}`
+                        ? `${styles.headers} ${styles.headerOracleTab} ${styles.active}`
+                        : `${styles.headers} ${styles.headerOracleTab}`
                 }
             >
                 <DsTypography
                     variant="Semibold_14"
                     className={
                         selectedTab === WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE
-                            ? `${styles.headerPart1} ${styles.headerDisabled} ${styles.headerDisabled}`
-                            : `${styles.headerPart1} ${styles.headerDisabled}`
+                            ? `${styles.headerPart1} ${styles.activeText}`
+                            : `${styles.headerPart1}`
                     }
+                    onClick={() => handleClick(WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE)}
                 >
                     <span>{t('databases.explore-savings.oracle-database-ebs')}</span>
-                    <div className={styles.comingSoonStyle}>
-                        <ComingSoon />
-                    </div>
                 </DsTypography>
             </div>
         </div>

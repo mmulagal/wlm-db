@@ -1601,12 +1601,14 @@ export const formatOracleDiscoveredRows = (
     const ec2Details = [
         {
             id: discoveredRow?.ec2InstanceId,
-            name: discoveredRow?.ec2InstanceName
+            name: discoveredRow?.ec2InstanceName,
+            instanceType: discoveredRow?.ec2InstanceType
         }
     ];
     const result = {
         id: discoveredRow?.ec2InstanceId,
         ec2InstanceId: discoveredRow?.ec2InstanceId,
+        ec2InstanceType: discoveredRow?.ec2InstanceType,
         ec2InstanceName: discoveredRow?.ec2InstanceName,
         platform: discoveredRow?.platform,
         name: getDiscoverHostname(discoveredRow, type),
@@ -1631,10 +1633,7 @@ export const formatOracleDiscoveredRows = (
         isDetected: actionObj?.isDetected,
         ec2Details,
         hostType: GENERAL.ORACLE_TYPE,
-        // **** Below values will get from Instances API *****
-        // estimatedUsageCost: {}, // Initially it will be blank
-        // totalCost: '',
-        // allocatedCapacity: '',
+        databaseInstanceDetails: discoveredRow?.databaseInstanceDetails,
         sqlServerInstances: formatOracleDiscoverInstanceData(discoveredRow, perInstanceStatus),
         credentialId: discoveredRow?.credentialId,
         regionId: discoveredRow?.regionId,
@@ -3262,6 +3261,32 @@ export const getExploreSavingsRowsMssql = (inventoryTableData: { [key: string]: 
         }
     });
     return nonFsxnStorageList;
+};
+
+export const getExploreSavingsRowsOracle = (inventoryTableData: { [key: string]: InventoryTableData }) => {
+    const oracleEbsList: Array<InventoryTableData> = [];
+    const state = store.getState();
+    const { removeSecNodeDiscoveredList } = state.inventoryV2;
+
+    const allKeys = Object.keys(inventoryTableData);
+    allKeys.map((key: string) => {
+        const item = inventoryTableData[key];
+        if (removeSecNodeDiscoveredList.includes(key)) {
+            return;
+        }
+
+        if (item?.hostType !== DBType.ORACLE) {
+            return;
+        }
+
+        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
+            const isMixed = checkForMixedStorageType(item);
+            if (!isMixed && item?.storageType === DETECT_HOST_VAR.EBS) {
+                oracleEbsList.push(item);
+            }
+        }
+    });
+    return oracleEbsList;
 };
 
 export const updateInstanceStatus = (

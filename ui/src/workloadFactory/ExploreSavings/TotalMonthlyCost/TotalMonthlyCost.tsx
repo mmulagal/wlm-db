@@ -18,9 +18,11 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
         useAppSelector(state => state.exploreSavings);
 
     const oracleLicenseCost = useMemo(() => {
-        const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
-        if (!isOracle || !onPremStorageAndComputeInfo) return 0;
-        // Sum monthlyOracleCost across ALL hosts in onPremStorageAndComputeInfo
+        const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+        const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+
+        if ((!isOracleOnPrem && !isOracleEbs) || !onPremStorageAndComputeInfo) return 0;
+
         return Object.values(onPremStorageAndComputeInfo).reduce((total: number, entry: any) => {
             const cost = entry?.monthlyOracleCost;
             return total + (cost ? Number(cost) : 0);
@@ -31,7 +33,10 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
 
     // Get category labels based on the savings calculator mode
     const getCategoryLabels = (): [string, string] => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+        ) {
             return [
                 t('databases.explore-savings.oracle-server-on-fsx-ontap'),
                 t('databases.explore-savings.oracle-server-on-ebs')

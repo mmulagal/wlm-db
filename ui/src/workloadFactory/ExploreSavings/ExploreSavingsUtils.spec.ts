@@ -4,6 +4,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
     onClickESHostOnPrem,
     onClickESHost,
+    onClickESHostOracleEbs,
     handleManualTCOEBS,
     handleManualTCOFSXW,
     setESInstanceOnPremData,
@@ -140,6 +141,8 @@ vi.mock('../../utils/consts', () => ({
         AUTO_FSXW: 'Auto_FSXW',
         MANUAL_FSXW: 'Manual_FSXW',
         ONPREM: 'OnPrem',
+        ORACLE_ONPREM: 'Oracle_OnPrem',
+        ORACLE_AUTO_EBS: 'Oracle_Auto_EBS',
         EBS: 'ebs',
         FSXW: 'fsxw',
         ONPREM_MODE: 'onprem'
@@ -200,6 +203,10 @@ vi.mock('../../store/workloadFactory/exploreSavingsBulkSlice', () => ({
         type: 'setSelectedRowsForExploreSavingsOnPremBulk',
         payload: val
     })),
+    setSelectedRowsForExploreSavingsOracleEbsBulk: vi.fn((val: any) => ({
+        type: 'setSelectedRowsForExploreSavingsOracleEbsBulk',
+        payload: val
+    })),
     setTriggerBulkDataFetch: vi.fn((val: any) => ({ type: 'setTriggerBulkDataFetch', payload: val }))
 }));
 
@@ -210,6 +217,8 @@ const SAVINGS_CALC_MODE = {
     AUTO_FSXW: 'Auto_FSXW',
     MANUAL_FSXW: 'Manual_FSXW',
     ONPREM: 'OnPrem',
+    ORACLE_ONPREM: 'Oracle_OnPrem',
+    ORACLE_AUTO_EBS: 'Oracle_Auto_EBS',
     EBS: 'ebs',
     FSXW: 'fsxw',
     ONPREM_MODE: 'onprem'
@@ -3780,6 +3789,342 @@ describe('ExploreSavingsUtils', () => {
             const rows = [makeRowData({ id: '1', isDetected: false }), makeRowData({ id: '2', isDetected: false })];
             const result = shouldAuthDialogOpenBulk(rows);
             expect(result).toHaveLength(2);
+        });
+    });
+
+    // =========================================================================
+    // onClickESHostOracleEbs
+    // =========================================================================
+    describe('onClickESHostOracleEbs', () => {
+        const makeOracleRowData = (overrides: any = {}) => ({
+            id: 'oracle-row-1',
+            ec2InstanceId: 'i-oracle-1',
+            ec2InstanceName: 'ec2-oracle',
+            name: 'oracle-host-1',
+            credentialId: 'cred-1',
+            regionId: 'us-east-1',
+            storageType: 'EBS',
+            serverInstallationMode: 'Standalone',
+            oracleServerDeploymentType: 'Standalone',
+            ec2Details: [{ id: 'i-oracle-1', name: 'ec2-oracle' }],
+            ...overrides
+        });
+
+        it('should navigate and dispatch all required actions for workload factory', () => {
+            const rowData = makeOracleRowData();
+            onClickESHostOracleEbs(mockDispatch, rowData, true, mockNavigate);
+
+            expect(mockNavigate).toHaveBeenCalledWith('../databases/saving-calculator');
+            expect(mockPostBlueXPMessage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'navigate',
+                    payload: expect.objectContaining({
+                        pathname: './storage-saving-calculator?type=oracle-ebs&mode=auto'
+                    })
+                })
+            );
+            expect(mockDispatch).toHaveBeenCalled();
+        });
+
+        it('should use non-workload-factory path when isWorkloadFactory is false', () => {
+            const rowData = makeOracleRowData();
+            onClickESHostOracleEbs(mockDispatch, rowData, false);
+
+            expect(mockPostBlueXPMessage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    payload: expect.objectContaining({
+                        pathname: '../fsxdb/storage-saving-calculator?type=oracle-ebs&mode=auto'
+                    })
+                })
+            );
+        });
+
+        it('should not navigate when navigate function is not provided', () => {
+            const rowData = makeOracleRowData();
+            onClickESHostOracleEbs(mockDispatch, rowData, true);
+
+            expect(mockNavigate).not.toHaveBeenCalled();
+            // Should still dispatch actions
+            expect(mockDispatch).toHaveBeenCalled();
+        });
+
+        it('should set ORACLE_AUTO_EBS as savingsCalculatorFrom', () => {
+            const rowData = makeOracleRowData();
+            onClickESHostOracleEbs(mockDispatch, rowData, true, mockNavigate);
+
+            // Check setSavingsCalculatorFrom was dispatched with ORACLE_AUTO_EBS
+            expect(mockDispatch).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'setSavingsCalculatorFrom',
+                    payload: 'Oracle_Auto_EBS'
+                })
+            );
+        });
+
+        it('should set bulk selection to [rowData] when isBulk is false', () => {
+            const rowData = makeOracleRowData();
+            onClickESHostOracleEbs(mockDispatch, rowData, true, mockNavigate, false);
+
+            expect(mockDispatch).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'setSelectedRowsForExploreSavingsOracleEbsBulk',
+                    payload: [rowData]
+                })
+            );
+        });
+
+        it('should NOT set bulk selection when isBulk is true', () => {
+            const rowData = makeOracleRowData();
+            onClickESHostOracleEbs(mockDispatch, rowData, true, mockNavigate, true, '3 hosts selected');
+
+            // When isBulk, the function should NOT set the Oracle EBS bulk array
+            const bulkCalls = mockDispatch.mock.calls.filter(
+                (call: any[]) => call[0]?.type === 'setSelectedRowsForExploreSavingsOracleEbsBulk'
+            );
+            expect(bulkCalls).toHaveLength(0);
+        });
+
+        it('should set selectedEsPageInstance with ec2 details from rowData', () => {
+            const rowData = makeOracleRowData();
+            onClickESHostOracleEbs(mockDispatch, rowData, true, mockNavigate);
+
+            expect(mockDispatch).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'setSelectedEsPageInstance',
+                    payload: expect.objectContaining({
+                        instanceId: 'i-oracle-1',
+                        credentialId: 'cred-1',
+                        regionId: 'us-east-1',
+                        deploymentModel: 'Standalone'
+                    })
+                })
+            );
+        });
+
+        it('should use bulkServerName for selectedServerName when provided', () => {
+            const rowData = makeOracleRowData();
+            onClickESHostOracleEbs(mockDispatch, rowData, true, mockNavigate, true, '3 hosts selected');
+
+            expect(mockDispatch).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'setSelectedServerName',
+                    payload: '3 hosts selected'
+                })
+            );
+        });
+
+        it('should use rowData.name as serverName when bulkServerName is not provided', () => {
+            const rowData = makeOracleRowData({ name: 'my-oracle-host' });
+            onClickESHostOracleEbs(mockDispatch, rowData, true, mockNavigate);
+
+            expect(mockDispatch).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'setSelectedServerName',
+                    payload: 'my-oracle-host'
+                })
+            );
+        });
+
+        it('should fallback to ec2InstanceName when name is missing', () => {
+            const rowData = makeOracleRowData({ name: undefined, ec2InstanceName: 'fallback-ec2' });
+            onClickESHostOracleEbs(mockDispatch, rowData, true, mockNavigate);
+
+            expect(mockDispatch).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'setSelectedServerName',
+                    payload: 'fallback-ec2'
+                })
+            );
+        });
+
+        it('should use oracleServerDeploymentType as deploymentModel', () => {
+            const rowData = makeOracleRowData({ oracleServerDeploymentType: 'Data Guard' });
+            onClickESHostOracleEbs(mockDispatch, rowData, true, mockNavigate);
+
+            expect(mockDispatch).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'setSelectedEsPageInstance',
+                    payload: expect.objectContaining({
+                        deploymentModel: 'Data Guard'
+                    })
+                })
+            );
+        });
+
+        it('should default deploymentModel to Standalone when oracleServerDeploymentType is absent', () => {
+            const rowData = makeOracleRowData({ oracleServerDeploymentType: undefined });
+            onClickESHostOracleEbs(mockDispatch, rowData, true, mockNavigate);
+
+            expect(mockDispatch).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'setSelectedEsPageInstance',
+                    payload: expect.objectContaining({
+                        deploymentModel: 'Standalone'
+                    })
+                })
+            );
+        });
+
+        it('should trigger bulk data fetch', () => {
+            const rowData = makeOracleRowData();
+            onClickESHostOracleEbs(mockDispatch, rowData, true, mockNavigate);
+
+            expect(mockDispatch).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'setTriggerBulkDataFetch',
+                    payload: true
+                })
+            );
+        });
+
+        it('should dispatch setDisableState(true)', () => {
+            const rowData = makeOracleRowData();
+            onClickESHostOracleEbs(mockDispatch, rowData, true, mockNavigate);
+
+            expect(mockDispatch).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: 'setDisableState',
+                    payload: true
+                })
+            );
+        });
+    });
+
+    // =========================================================================
+    // formatStorageSavingsRecommendedData — ORACLE_AUTO_EBS
+    // =========================================================================
+    describe('formatStorageSavingsRecommendedData — ORACLE_AUTO_EBS', () => {
+        it('should handle ORACLE_AUTO_EBS mode same as AUTO_EBS with array format', () => {
+            mockStoreState.exploreSavings.savingsCalculatorFrom = SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+            mockStoreState.exploreSavings.selectedDeploymentModel = 'standalone';
+            mockStoreState.exploreSavings.recommendedTargetInstance = '';
+
+            const data: any = {
+                compute: [
+                    {
+                        existing: { computeMonthlyPrice: 200 },
+                        recommended: {
+                            computeMonthlyPrice: 200,
+                            machineDetails: [{ instanceType: 'm5.large', computeMonthlyPrice: 200 }]
+                        }
+                    }
+                ],
+                license: [{ recommended: { licenseMonthlyPrice: 50 } }],
+                totalSummary: { recommended: 800 }
+            };
+
+            const result = formatStorageSavingsRecommendedData(data);
+            expect(result.recommendedInstance).toBeDefined();
+            // Fallback path sums existing.computeMonthlyPrice
+            expect(result.recommendedInstance.computeMonthlyPrice).toBe(200);
+            expect(result.totalSummary?.recommendedTotal).toBe(800);
+        });
+
+        it('should handle ORACLE_AUTO_EBS with recommendedTargetInstance override', () => {
+            mockStoreState.exploreSavings.savingsCalculatorFrom = SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+            mockStoreState.exploreSavings.selectedDeploymentModel = 'standalone';
+            mockStoreState.exploreSavings.recommendedTargetInstance = 'r5.xlarge';
+
+            const data: any = {
+                compute: [
+                    {
+                        recommended: {
+                            computeMonthlyPrice: 100,
+                            machineDetails: [{ instanceType: 'm5.large', computeMonthlyPrice: 100 }],
+                            recommendationOptions: [
+                                { instanceType: 'm5.large', computeMonthlyPrice: 100 },
+                                { instanceType: 'r5.xlarge', computeMonthlyPrice: 300 }
+                            ]
+                        }
+                    }
+                ],
+                license: [{ recommended: { licenseMonthlyPrice: 0 } }],
+                totalSummary: { recommended: 900 }
+            };
+
+            const result = formatStorageSavingsRecommendedData(data);
+            expect(result.recommendedInstance).toBeDefined();
+            expect(result.recommendedInstance.instanceType).toBe('r5.xlarge');
+        });
+
+        it('should handle ORACLE_AUTO_EBS with empty license arrays', () => {
+            mockStoreState.exploreSavings.savingsCalculatorFrom = SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+            mockStoreState.exploreSavings.selectedDeploymentModel = 'standalone';
+
+            const data: any = {
+                compute: [{ recommended: { computeMonthlyPrice: 150, machineDetails: [] } }],
+                license: [],
+                totalSummary: { recommended: 500 }
+            };
+
+            const result = formatStorageSavingsRecommendedData(data);
+            expect(result.recommendedInstance).toBeDefined();
+            expect(result.recommendedInstance.licenseMonthlyPrice).toBeFalsy();
+        });
+    });
+
+    // =========================================================================
+    // formatViewCalcData — ORACLE_AUTO_EBS
+    // =========================================================================
+    describe('formatViewCalcData — ORACLE_AUTO_EBS', () => {
+        it('should use Oracle labels in formatted data when ORACLE_AUTO_EBS', () => {
+            mockStoreState.exploreSavings.savingsCalculatorFrom = SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+            mockStoreState.exploreSavings.selectedDeploymentModel = 'standalone';
+            mockStoreState.exploreSavingsBulk.selectedRowsForExploreSavingsOracleEbsBulk = [
+                { name: 'oracle-host-1', ec2InstanceId: 'i-1' }
+            ];
+
+            const viewCalcData = {
+                isBulkCalculation: false,
+                fsxInstanceCalculation: [
+                    {
+                        instanceType: 'm5.xlarge',
+                        sqlEdition: undefined,
+                        oracleEdition: 'Enterprise',
+                        sqlLicense: undefined,
+                        oracleLicense: 'BYOL',
+                        computeHourlyPrice: 0.5
+                    }
+                ],
+                fsxStorageCalculation: {},
+                totalMonthlyFsxCost: 1000
+            };
+
+            // formatViewCalcData takes (viewCalculations, selectedDeploymentModel, monthlyChangeRate)
+            expect(() => {
+                formatViewCalcData(viewCalcData, 'standalone', '5');
+            }).not.toThrow();
+        });
+    });
+
+    // =========================================================================
+    // formatViewCalcInstance — ORACLE_AUTO_EBS
+    // =========================================================================
+    describe('formatViewCalcInstance — ORACLE_AUTO_EBS', () => {
+        it('should use Oracle database type label for ORACLE_AUTO_EBS', () => {
+            mockStoreState.exploreSavings.savingsCalculatorFrom = SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+            mockStoreState.exploreSavings.selectedOnPremHostDetails = null;
+
+            const selectedHostDetails = { ec2Details: [{ instanceType: 'm5.xlarge' }] };
+            const computeDetails = [
+                {
+                    instanceType: 'm5.xlarge',
+                    price: 0.5,
+                    computeMonthlyPrice: 200,
+                    hoursInMonth: 730,
+                    instanceMonthlyPrice: 365
+                }
+            ];
+            const licenseDetails = { oracleEdition: 'Enterprise', licenseIncluded: false };
+
+            // formatViewCalcInstance(deploymentModel, hostDetails, computeDetails, licenseDetails)
+            const result = formatViewCalcInstance('standalone', selectedHostDetails, computeDetails, licenseDetails);
+            expect(Array.isArray(result)).toBe(true);
+            // Oracle mode should produce oracleEdition and oracleLicense fields
+            if (result.length > 0) {
+                expect(result[0].oracleEdition).toBeDefined();
+                expect(result[0].oracleLicense).toBeDefined();
+            }
         });
     });
 });

@@ -1,0 +1,285 @@
+{
+    "ebs": {
+        "capacity": 4096,
+        "iops": 7200,
+        "throughput": 0,
+        "snapshots": 5570.56,
+        "clones": 11916.8,
+        "total": 28783.36
+    },
+    "fsxw": {
+        "capacity": 0,
+        "iops": 0,
+        "throughput": 0,
+        "snapshots": 0,
+        "clones": 0,
+        "total": 0
+    },
+    "fsx": {
+        "capacity": 4096,
+        "iops": 504.83,
+        "throughput": 1966.08,
+        "snapshots": 5066.19,
+        "clones": 327.68,
+        "total": 11960.78
+    },
+    "totalSummary": {
+        "existing": 28783.36,
+        "recommended": 13174.54,
+        "optimized": 11234.54
+    },
+    "single": {
+        "fsxCalculation": {
+            "deploymentType": "Single",
+            "numberOfVolumes": 3,
+            "throughput": 256,
+            "totalStorageCapacity": 17592186044416,
+            "percentageSsd": 100,
+            "savings": 0,
+            "effectiveCapacity": 17592186044416,
+            "ssdTierReqCapacity": 17592186044416,
+            "capacityPoolTier": 0,
+            "ssdIop": 64000,
+            "throughputCapacity": 2048,
+            "useCase": "Low-latency",
+            "regionName": "US West (Oregon)",
+            "monthlySnapshotCapacity": 84442413013196,
+            "desiredStorageCapacity": 0,
+            "ebsCapacity": 0
+        },
+        "fsxBreakdown": {
+            "fsxDataLunSize": 9859228981154,
+            "fsxDataVolumeSize": 10845151879270,
+            "fsxLogVolumeSize": 2711287969818,
+            "fsxTempDbVolumeSize": 1084515187928,
+            "fsxQuorumVolumeSize": 24000000000,
+            "fsxBufferVolumeSize": 2927031007404,
+            "fsxStorageCapacity": 17592186044416
+        }
+    },
+    "multi": {
+        "fsxCalculation": {
+            "deploymentType": "Multi",
+            "numberOfVolumes": 3,
+            "throughput": 256,
+            "totalStorageCapacity": 17592186044416,
+            "percentageSsd": 100,
+            "savings": 0,
+            "effectiveCapacity": 17592186044416,
+            "ssdTierReqCapacity": 17592186044416,
+            "capacityPoolTier": 0,
+            "ssdIop": 64000,
+            "throughputCapacity": 2048,
+            "useCase": "Low-latency",
+            "regionName": "US West (Oregon)",
+            "monthlySnapshotCapacity": 84442413013196,
+            "desiredStorageCapacity": 0,
+            "ebsCapacity": 0
+        },
+        "fsxBreakdown": {
+            "fsxDataLunSize": 9859228981154,
+            "fsxDataVolumeSize": 10845151879270,
+            "fsxLogVolumeSize": 2711287969818,
+            "fsxTempDbVolumeSize": 1084515187928,
+            "fsxQuorumVolumeSize": 24000000000,
+            "fsxBufferVolumeSize": 2927031007404,
+            "fsxStorageCapacity": 17592186044416
+        }
+    },
+    "fsxOptimizedSingle": {
+        "fsxCalculation": {
+            "deploymentType": "Single",
+            "numberOfVolumes": 3,
+            "throughput": 256,
+            "totalStorageCapacity": 17592186044416,
+            "percentageSsd": 100,
+            "savings": 0,
+            "effectiveCapacity": 17592186044416,
+            "ssdTierReqCapacity": 17592186044416,
+            "capacityPoolTier": 0,
+            "ssdIop": 64000,
+            "throughputCapacity": 2048,
+            "useCase": "Low-latency",
+            "regionName": "US West (Oregon)",
+            "monthlySnapshotCapacity": 84442413013196,
+            "desiredStorageCapacity": 0,
+            "ebsCapacity": 0
+        },
+        "fsxBreakdown": {
+            "fsxDataLunSize": 9859228981154,
+            "fsxDataVolumeSize": 10845151879270,
+            "fsxLogVolumeSize": 2711287969818,
+            "fsxTempDbVolumeSize": 1084515187928,
+            "fsxQuorumVolumeSize": 24000000000,
+            "fsxBufferVolumeSize": 2927031007404,
+            "fsxStorageCapacity": 17592186044416
+        }
+    },
+    "fsxOptimized": {
+        "capacity": 4096,
+        "iops": 328.83,
+        "throughput": 334.08,
+        "snapshots": 5066.19,
+        "clones": 327.68,
+        "total": 10152.78
+    },
+    "compute": [
+        {
+            "resourceName": "oracle-ebs-standalone1",
+            "existing": {
+                "instanceType": "m5.xlarge",
+                "computeMonthlyPrice": 140.16,
+                "windowsOsVersion": "Oracle Linux",
+                "finding": "NOT_OPTIMIZED",
+                "machineDetails": [
+                    {
+                        "instanceType": "m5.xlarge",
+                        "price": 0.192,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.192,
+                        "instanceMonthlyPrice": 140.16,
+                        "computeMonthlyPrice": 140.16,
+                        "licenseIncluded": false,
+                        "licenseMonthlyPrice": 0
+                    }
+                ]
+            },
+            "recommended": {
+                "instanceType": "m7i-flex.xlarge",
+                "computeMonthlyPrice": 130.52,
+                "windowsOsVersion": "Oracle Linux",
+                "machineDetails": [
+                    {
+                        "instanceType": "m7i-flex.xlarge",
+                        "price": 0.17879,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.17879,
+                        "instanceMonthlyPrice": 130.52,
+                        "computeMonthlyPrice": 130.52,
+                        "licenseIncluded": false,
+                        "licenseMonthlyPrice": 0
+                    }
+                ],
+                "recommendationOptions": [
+                    {
+                        "instanceType": "m7i-flex.xlarge",
+                        "price": 0.17879,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.17879,
+                        "instanceMonthlyPrice": 130.52,
+                        "computeMonthlyPrice": 130.52,
+                        "licenseMonthlyPrice": 0
+                    },
+                    {
+                        "instanceType": "m6i.xlarge",
+                        "price": 0.192,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.192,
+                        "instanceMonthlyPrice": 140.16,
+                        "computeMonthlyPrice": 140.16,
+                        "licenseMonthlyPrice": 0
+                    }
+                ]
+            }
+        },
+        {
+            "resourceName": "oracle-ebs-standalone2",
+            "existing": {
+                "instanceType": "m5.2xlarge",
+                "computeMonthlyPrice": 280.32,
+                "windowsOsVersion": "Oracle Linux",
+                "finding": "NOT_OPTIMIZED",
+                "machineDetails": [
+                    {
+                        "instanceType": "m5.2xlarge",
+                        "price": 0.384,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.384,
+                        "instanceMonthlyPrice": 280.32,
+                        "computeMonthlyPrice": 280.32,
+                        "licenseIncluded": false,
+                        "licenseMonthlyPrice": 0
+                    }
+                ]
+            },
+            "recommended": {
+                "instanceType": "m7i-flex.2xlarge",
+                "computeMonthlyPrice": 261.04,
+                "windowsOsVersion": "Oracle Linux",
+                "machineDetails": [
+                    {
+                        "instanceType": "m7i-flex.2xlarge",
+                        "price": 0.35758,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.35758,
+                        "instanceMonthlyPrice": 261.04,
+                        "computeMonthlyPrice": 261.04,
+                        "licenseIncluded": false,
+                        "licenseMonthlyPrice": 0
+                    }
+                ],
+                "recommendationOptions": [
+                    {
+                        "instanceType": "m7i-flex.2xlarge",
+                        "price": 0.35758,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.35758,
+                        "instanceMonthlyPrice": 261.04,
+                        "computeMonthlyPrice": 261.04,
+                        "licenseMonthlyPrice": 0
+                    }
+                ]
+            }
+        },
+        {
+            "resourceName": "oracle-ebs-standalone3",
+            "existing": {
+                "instanceType": "r5.xlarge",
+                "computeMonthlyPrice": 182.5,
+                "windowsOsVersion": "Oracle Linux",
+                "finding": "NOT_OPTIMIZED",
+                "machineDetails": [
+                    {
+                        "instanceType": "r5.xlarge",
+                        "price": 0.25,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.25,
+                        "instanceMonthlyPrice": 182.5,
+                        "computeMonthlyPrice": 182.5,
+                        "licenseIncluded": false,
+                        "licenseMonthlyPrice": 0
+                    }
+                ]
+            },
+            "recommended": {
+                "instanceType": "r7i.xlarge",
+                "computeMonthlyPrice": 170.82,
+                "windowsOsVersion": "Oracle Linux",
+                "machineDetails": [
+                    {
+                        "instanceType": "r7i.xlarge",
+                        "price": 0.2341,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.2341,
+                        "instanceMonthlyPrice": 170.82,
+                        "computeMonthlyPrice": 170.82,
+                        "licenseIncluded": false,
+                        "licenseMonthlyPrice": 0
+                    }
+                ],
+                "recommendationOptions": [
+                    {
+                        "instanceType": "r7i.xlarge",
+                        "price": 0.2341,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.2341,
+                        "instanceMonthlyPrice": 170.82,
+                        "computeMonthlyPrice": 170.82,
+                        "licenseMonthlyPrice": 0
+                    }
+                ]
+            }
+        }
+    ],
+    "license": []
+}

@@ -21,7 +21,10 @@ const InstancesEbsCalculation = () => {
 
     // Get the instances label based on calculator mode (Oracle vs MSSQL)
     const getInstancesLabel = () => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+        ) {
             return t('databases.explore-savings.oracle-ec2-instances');
         }
         return t('databases.explore-savings.mssql-ec2-instances');

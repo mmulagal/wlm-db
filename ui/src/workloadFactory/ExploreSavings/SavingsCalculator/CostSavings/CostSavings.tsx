@@ -20,9 +20,11 @@ const CostSavings = ({ disableState }: CS) => {
     const windowSize = useResize();
 
     const oracleLicenseCost = useMemo(() => {
-        const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
-        if (!isOracle || !onPremStorageAndComputeInfo) return 0;
-        // Sum monthlyOracleCost across ALL hosts in onPremStorageAndComputeInfo
+        const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+        const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+
+        if ((!isOracleOnPrem && !isOracleEbs) || !onPremStorageAndComputeInfo) return 0;
+
         return Object.values(onPremStorageAndComputeInfo).reduce((total: number, entry: any) => {
             const cost = entry?.monthlyOracleCost;
             return total + (cost ? Number(cost) : 0);

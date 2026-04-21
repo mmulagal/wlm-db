@@ -64,4 +64,10 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+
+    &.oracleEbsCost {
+        div {
+            margin-bottom: 0;
+        }
+    }
 }

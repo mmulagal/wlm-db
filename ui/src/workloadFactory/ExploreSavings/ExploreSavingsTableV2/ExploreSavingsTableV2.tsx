@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { t } from 'i18next';
 import styles from './ExploreSavingsTableV2.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
@@ -262,7 +263,9 @@ const ExploreSavingsTableV2 = () => {
         renderCell: (cellData: any, rowData: any) => (
             <div
                 className={
-                    selectedRowsForExploreSavingsEBSBulk.length > 0 ? styles.detectManageDisable : styles.detectManage
+                    selectedRowsForExploreSavingsEBSBulk.length > 0
+                        ? CommonStyles.detectManageDisable
+                        : CommonStyles.detectManage
                 }
                 onClick={
                     selectedRowsForExploreSavingsEBSBulk.length > 0
@@ -277,7 +280,7 @@ const ExploreSavingsTableV2 = () => {
                 }
                 id="wlm-db-ebs-explore-savings-table-button"
             >
-                <Typography variant="Regular_14" className={styles.textStyle}>
+                <Typography variant="Regular_14" className={CommonStyles.textStyle}>
                     {GENERAL.ES_SAVINGS}
                 </Typography>
             </div>

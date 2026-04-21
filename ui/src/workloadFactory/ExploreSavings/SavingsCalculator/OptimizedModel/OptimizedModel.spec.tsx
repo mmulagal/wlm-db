@@ -59,6 +59,8 @@ const makeStore = (overrides: any = {}) => {
             showOptimizeMode: { optimizeLoading: false, showCalcMode: false },
             standardStorageSavingsResponse: { std: 'savings' },
             standardViewCalculationsResponse: { std: 'calc' },
+            optimizedStorageSavingsResponse: { opt: 'savings' },
+            optimizedViewCalculationsResponse: { opt: 'calc' },
             ...overrides
         },
         reducers: {}
@@ -124,6 +126,18 @@ describe('OptimizedModel', () => {
         );
         dispatchSpy.mockClear();
         fireEvent.click(screen.getByText('databases.explore-savings.optimize-savings'));
+        expect(dispatchSpy).toHaveBeenCalledWith({
+            type: 'test/setStorageSavingsResponse',
+            payload: { opt: 'savings' }
+        });
+        expect(dispatchSpy).toHaveBeenCalledWith({
+            type: 'test/setViewCalculationsResponse',
+            payload: { opt: 'calc' }
+        });
+        expect(dispatchSpy).toHaveBeenCalledWith({
+            type: 'test/setSelectedCalculatorMode',
+            payload: TCO_CALCULATOR_MODE.OPTIMIZED
+        });
         expect(dispatchSpy).toHaveBeenCalledWith({
             type: 'test/setShowOptimizeMode',
             payload: { optimizeLoading: false, showCalcMode: true }

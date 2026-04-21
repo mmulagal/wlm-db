@@ -17,12 +17,20 @@ import { TCO_CALCULATOR_MODE } from '../../../../utils/consts';
 const OptimizedModel = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const { showOptimizeMode, standardStorageSavingsResponse, standardViewCalculationsResponse } = useAppSelector(
-        state => state.exploreSavings
-    );
+    const {
+        showOptimizeMode,
+        standardStorageSavingsResponse,
+        standardViewCalculationsResponse,
+        optimizedStorageSavingsResponse,
+        optimizedViewCalculationsResponse
+    } = useAppSelector(state => state.exploreSavings);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const handleOptimizeButton = () => {
+        // Set optimized mode data when clicking optimize
+        dispatch(setStorageSavingsResponse(optimizedStorageSavingsResponse));
+        dispatch(setViewCalculationsResponse(optimizedViewCalculationsResponse));
+        dispatch(setSelectedCalculatorMode(TCO_CALCULATOR_MODE.OPTIMIZED));
         // As data is loaded in same api so no need to loading true
         // dispatch(setShowOptimizeMode({ optimizeLoading: true, showCalcMode: false }));
         dispatch(setShowOptimizeMode({ optimizeLoading: false, showCalcMode: true }));

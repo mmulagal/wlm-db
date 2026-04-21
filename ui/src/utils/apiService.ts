@@ -1351,6 +1351,21 @@ export const exploreSavingsApi = createApi({
                 method: 'POST',
                 body: payload
             })
+        }),
+        // Oracle EBS Bulk (also used for single host with 1 element in hosts array)
+        getOracleBulkStorageSavings: builder.mutation({
+            query: ({ credentialId, regionId, payload }) => ({
+                url: `v1/oracle/credentials/${credentialId}/regions/${regionId}/storage-savings/ebs`,
+                method: 'POST',
+                body: payload
+            })
+        }),
+        getOracleBulkViewCalculations: builder.mutation({
+            query: ({ credentialId, regionId, payload }) => ({
+                url: `v1/oracle/credentials/${credentialId}/regions/${regionId}/storage-savings/ebs/calculations`,
+                method: 'POST',
+                body: payload
+            })
         })
     })
 });
@@ -1803,7 +1818,9 @@ export const {
     useGetManualViewCalculationsMutation,
     useGetBulkStorageSavingsMutation,
     useGetBulkViewCalculationsMutation,
-    useGetOracleOnPremCalculationsMutation
+    useGetOracleOnPremCalculationsMutation,
+    useGetOracleBulkStorageSavingsMutation,
+    useGetOracleBulkViewCalculationsMutation
 } = exploreSavingsApi;
 
 export const {

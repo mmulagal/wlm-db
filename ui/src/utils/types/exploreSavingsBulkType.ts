@@ -13,6 +13,7 @@ export interface ExploreSavingsBulkSliceEntities {
     selectedRowsForExploreSavingsEBSBulk: Array<string> | any;
     selectedRowsForExploreSavingsOnPremBulk: Array<string> | any;
     selectedRowsForExploreSavingsOracleOnPremBulk: Array<any>;
+    selectedRowsForExploreSavingsOracleEbsBulk: Array<any>;
     ebsTCOAction: string;
     bulkAuthCredentials: BulkAuthCredentials;
     rowsRequiringAuthBulk?: Array<any> | any;

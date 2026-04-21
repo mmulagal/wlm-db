@@ -31,19 +31,52 @@ const InstanceInformation = ({ host }: { host?: any }) => {
     // Debounced value - dispatches to store after 1s of inactivity
     const [oracleCostDebounced, setOracleCostDebounced] = useSearchDebounce(1000);
 
-    // Check if Oracle on-prem mode
     const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+    const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
 
-    // Derive the store key for the current host's first database entry
+    /**
+     * Derive the store key for Oracle modes to save/retrieve monthly Oracle cost input
+     *
+     * Key format differs based on Oracle mode:
+     *
+     * 1. Oracle On-Prem: One host → Multiple databases → Multiple keys
+     *    - Key format: "resourceId_databaseName" (e.g., "resource123_db1", "resource123_db2")
+     * 2. Oracle EBS: One host → One key
+     *    - Key format: "ec2InstanceId_credentialId_regionId" (e.g., "i-12345_cred-456_us-east-1")
+     */
     const oracleStoreKey = useMemo(() => {
-        if (!isOracleOnPrem || !onPremStorageAndComputeInfo) return null;
-        const currentHost = host || selectedOnPremHostDetails;
-        if (!currentHost?.resourceId) return null;
-        const matchingKey = Object.keys(onPremStorageAndComputeInfo).find(key =>
-            key.startsWith(`${currentHost.resourceId}_`)
-        );
-        return matchingKey || null;
-    }, [isOracleOnPrem, host, selectedOnPremHostDetails, onPremStorageAndComputeInfo]);
+        const currentHost = host || (isOracleOnPrem ? selectedOnPremHostDetails : selectedHostDetails);
+        if (!currentHost) return null;
+
+        if (isOracleOnPrem) {
+            // On-Prem: Search for the first matching database key for this host
+            // Multiple keys exist per host (one per database), so we search for any that start with resourceId
+            if (!currentHost?.resourceId) return null;
+            const matchingKey = Object.keys(onPremStorageAndComputeInfo).find(key =>
+                key.startsWith(`${currentHost.resourceId}_`)
+            );
+            return matchingKey || null;
+        }
+
+        if (isOracleEbs) {
+            // EBS: Generate the single key for this host (deterministic, no search needed)
+            // One key per host, so we construct it directly from host identifiers
+            const ec2Id = currentHost?.ec2InstanceId || currentHost?.ec2Details?.[0]?.id;
+            const credId = currentHost?.credentialId;
+            const regId = currentHost?.regionId;
+            if (!ec2Id || !credId || !regId) return null;
+            return `${ec2Id}_${credId}_${regId}`;
+        }
+
+        return null;
+    }, [
+        isOracleOnPrem,
+        isOracleEbs,
+        host,
+        selectedOnPremHostDetails,
+        selectedHostDetails,
+        onPremStorageAndComputeInfo
+    ]);
 
     // Initialize local state from store data when host changes
     useEffect(() => {
@@ -77,7 +110,6 @@ const InstanceInformation = ({ host }: { host?: any }) => {
         if (selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && !isOracleOnPrem) {
             let currentHost = host || selectedHostDetails;
 
-            // If host prop exists and matches selectedHostDetails, prefer selectedHostDetails for latest data
             if (
                 host &&
                 selectedHostDetails &&
@@ -90,33 +122,28 @@ const InstanceInformation = ({ host }: { host?: any }) => {
 
             setLoading(currentHost?.loading);
             const hostName = currentHost?.name;
+            const isArrayMode =
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
 
             const findingsComputeData = (() => {
-                if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
-                    // Handle AUTO_EBS array format
+                if (isArrayMode && storageSavingsResponse) {
                     const computeArray = Array.isArray(storageSavingsResponse?.compute)
                         ? storageSavingsResponse.compute
                         : [storageSavingsResponse?.compute].filter(Boolean);
-
-                    // Find compute data by matching hostname
                     const hostCompute = computeArray.find((item: any) => item.hostname === hostName);
                     return hostCompute?.existing?.finding || '-';
                 }
-                // Handle single object format for other modes
                 return storageSavingsResponse && (storageSavingsResponse?.compute?.existing?.finding || '-');
             })();
             const findingsLicenseData = (() => {
-                if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && storageSavingsResponse) {
-                    // Handle AUTO_EBS array format
+                if (isArrayMode && storageSavingsResponse) {
                     const licenseArray = Array.isArray(storageSavingsResponse?.license)
                         ? storageSavingsResponse.license
                         : [storageSavingsResponse?.license].filter(Boolean);
-
-                    // Find license data by matching hostname
                     const hostLicense = licenseArray.find((item: any) => item.hostname === hostName);
                     return hostLicense?.existing?.finding || '-';
                 }
-                // Handle single object format for other modes
                 return storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
             })();
             const findingsDbModel =
@@ -125,7 +152,9 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                     ? FINDINGS.NOT_OPTIMIZED
                     : FINDINGS.OPTIMIZED;
 
-            setNoOfInstances(currentHost?.totalInstance || 0);
+            setNoOfInstances(
+                isOracleEbs ? currentHost?.databaseInstanceDetails?.length || 0 : currentHost?.totalInstance || 0
+            );
 
             let instanceTypelist = [];
             if (currentHost?.clusterNodeDetails && currentHost?.clusterNodeDetails?.length === 2) {
@@ -133,44 +162,89 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             } else {
                 instanceTypelist = currentHost?.ec2Details?.map((inst: any) => inst?.instanceType);
             }
-            const serverEdition: any = [];
 
-            currentHost?.sqlServerInstances?.map((perRow: any) => {
-                // Check both nested and direct paths for serverEdition
-                const edition = perRow?.databaseServer?.serverEdition || perRow?.serverEdition;
+            // Build table data for Instance Information section
+            if (isOracleEbs) {
+                // Oracle EBS: Single database edition, single deployment model
+                const oracleEdition =
+                    currentHost?.databaseInstanceDetails?.[0]?.oracleEdition ||
+                    currentHost?.oracleEdition ||
+                    t('databases.general.not-available');
 
-                if (edition && !serverEdition.includes(edition)) {
-                    serverEdition.push(edition);
-                }
-            });
-            const data: any = [
-                {
-                    details: 'Instance type',
-                    value:
-                        instanceTypelist?.length > 0
-                            ? instanceTypelist.join(', ')
-                            : t('databases.general.not-available'),
-                    id: '1',
-                    findings: savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ? findingsComputeData : ''
-                },
-                {
-                    details: 'SQL Edition',
-                    value: serverEdition?.length > 0 ? serverEdition.join(', ') : t('databases.general.not-available'),
-                    id: '2',
-                    findings: findingsLicenseData
-                },
-                {
-                    details: 'Deployment model',
-                    value: currentHost?.serverAllInstallationMode
-                        ? currentHost?.serverAllInstallationMode.join(', ')
-                        : currentHost?.serverInstallationMode || t('databases.general.not-available'),
-                    id: '3',
-                    findings: findingsDbModel
-                }
-            ];
-            setTableData(data);
+                // Oracle ec2Details may not have instanceType; fall back to host-level ec2InstanceType
+                const instanceTypeValue = (() => {
+                    if (instanceTypelist?.length > 0 && instanceTypelist[0]) {
+                        return instanceTypelist.join(', ');
+                    }
+                    if (currentHost?.ec2InstanceType) {
+                        return currentHost.ec2InstanceType;
+                    }
+                    if (storageSavingsResponse?.compute?.existing?.instanceType) {
+                        return storageSavingsResponse.compute.existing.instanceType;
+                    }
+                    return t('databases.general.not-available');
+                })();
+
+                const data: any = [
+                    {
+                        details: t('databases.explore-savings.instance-information-table.details.instance-type'),
+                        value: instanceTypeValue,
+                        id: '1',
+                        findings: findingsComputeData
+                    },
+                    {
+                        details: t('databases.explore-savings.instance-information-table.details.database-edition'),
+                        value: oracleEdition,
+                        id: '2',
+                        findings: findingsLicenseData
+                    },
+                    {
+                        details: t('databases.explore-savings.instance-information-table.details.deployment-model'),
+                        value: currentHost?.serverInstallationMode || t('databases.general.not-available'),
+                        id: '3',
+                        findings: findingsDbModel
+                    }
+                ];
+                setTableData(data);
+            } else {
+                // SQL Server: Multiple instances → aggregate unique editions, multiple deployment models possible
+                const serverEdition: any = [];
+                currentHost?.sqlServerInstances?.map((perRow: any) => {
+                    const edition = perRow?.databaseServer?.serverEdition || perRow?.serverEdition;
+                    if (edition && !serverEdition.includes(edition)) {
+                        serverEdition.push(edition);
+                    }
+                });
+                const data: any = [
+                    {
+                        details: t('databases.explore-savings.instance-information-table.details.instance-type'),
+                        value:
+                            instanceTypelist?.length > 0
+                                ? instanceTypelist.join(', ')
+                                : t('databases.general.not-available'),
+                        id: '1',
+                        findings: isArrayMode ? findingsComputeData : ''
+                    },
+                    {
+                        details: t('databases.explore-savings.instance-information-table.details.sql-edition'),
+                        value:
+                            serverEdition?.length > 0 ? serverEdition.join(', ') : t('databases.general.not-available'),
+                        id: '2',
+                        findings: findingsLicenseData
+                    },
+                    {
+                        details: t('databases.explore-savings.instance-information-table.details.deployment-model'),
+                        value: currentHost?.serverAllInstallationMode
+                            ? currentHost?.serverAllInstallationMode.join(', ')
+                            : currentHost?.serverInstallationMode || t('databases.general.not-available'),
+                        id: '3',
+                        findings: findingsDbModel
+                    }
+                ];
+                setTableData(data);
+            }
         }
-    }, [selectedHostDetails, storageSavingsResponse, host, isOracleOnPrem]);
+    }, [selectedHostDetails, storageSavingsResponse, host, isOracleOnPrem, isOracleEbs]);
 
     useEffect(() => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
@@ -209,13 +283,13 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             });
             const data: any = [
                 {
-                    details: 'SQL Edition',
+                    details: t('databases.explore-savings.instance-information-table.details.sql-edition'),
                     value: serverEdition?.length > 0 ? serverEdition.join(', ') : t('databases.general.not-available'),
                     id: '2',
                     findings: findingsLicenseData
                 },
                 {
-                    details: 'Deployment model',
+                    details: t('databases.explore-savings.instance-information-table.details.deployment-model'),
                     value: currentHost?.deploymentModel || t('databases.general.not-available'),
                     id: '3',
                     findings: findingsDbModel
@@ -250,13 +324,13 @@ const InstanceInformation = ({ host }: { host?: any }) => {
 
             const data: any = [
                 {
-                    details: 'Database edition',
+                    details: t('databases.explore-savings.instance-information-table.details.database-edition'),
                     value: currentHost?.oracleEdition || t('databases.general.not-available'),
                     id: '1',
                     findings: findingsLicenseData
                 },
                 {
-                    details: 'Deployment model',
+                    details: t('databases.explore-savings.instance-information-table.details.deployment-model'),
                     value: currentHost?.deploymentModel || t('databases.general.not-available'),
                     id: '2',
                     findings: findingsDbModel
@@ -266,17 +340,18 @@ const InstanceInformation = ({ host }: { host?: any }) => {
         }
     }, [isOracleOnPrem, selectedOnPremHostDetails, storageSavingsResponse, host]);
 
-    const columns = isOracleOnPrem
-        ? getOracleColDefs({ loading, noOfInstances, styles, t })
-        : getInstanceColDefs({
-              loading,
-              noOfInstances,
-              storageSavingsLoading,
-              snapshotLoading,
-              savingsCalculatorFrom,
-              styles,
-              t
-          });
+    const columns =
+        isOracleOnPrem || isOracleEbs
+            ? getOracleColDefs({ loading, noOfInstances, styles, t })
+            : getInstanceColDefs({
+                  loading,
+                  noOfInstances,
+                  storageSavingsLoading,
+                  snapshotLoading,
+                  savingsCalculatorFrom,
+                  styles,
+                  t
+              });
 
     const tableProps = useTable({
         // @ts-ignore
@@ -290,7 +365,7 @@ const InstanceInformation = ({ host }: { host?: any }) => {
 
     // Get the section title based on mode
     const getSectionTitle = () => {
-        if (isOracleOnPrem) {
+        if (isOracleOnPrem || isOracleEbs) {
             return t('databases.explore-savings.database-information');
         }
         return t('databases.explore-savings.instance-information');
@@ -308,8 +383,8 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             <DsTypography variant="Regular_14">{getSectionTitle()}</DsTypography>
             <div
                 className={classNames(styles.instanceTable, {
-                    [styles.oracleTable]: isOracleOnPrem,
-                    [styles.mssqlTable]: !isOracleOnPrem
+                    [styles.oracleTable]: isOracleOnPrem || isOracleEbs,
+                    [styles.mssqlTable]: !isOracleOnPrem && !isOracleEbs
                 })}
             >
                 <Table
@@ -318,8 +393,12 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                     variant="innerTable"
                 />
             </div>
-            {isOracleOnPrem && (
-                <div className={styles.monthlyOracleCost}>
+            {(isOracleOnPrem || isOracleEbs) && (
+                <div
+                    className={classNames(styles.monthlyOracleCost, {
+                        [styles.oracleEbsCost]: isOracleEbs
+                    })}
+                >
                     <TextField
                         label={t('databases.explore-savings.monthly-oracle-cost')}
                         placeholder=""

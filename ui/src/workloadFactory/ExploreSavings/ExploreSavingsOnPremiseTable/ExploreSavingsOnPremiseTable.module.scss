@@ -108,38 +108,6 @@
         align-items: center;
     }
 
-    .detectManage {
-        width: 134px;
-        height: 32px;
-        border-radius: 32px;
-        border: 1px solid var(--text-button-primary);
-
-        cursor: pointer;
-
-        .textStyle {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 2px;
-            color: var(--text-button-primary);
-        }
-    }
-
-    .detectManageDisable {
-        width: 134px;
-        height: 32px;
-        border-radius: 32px;
-        border: 1px solid var(--text-button-disabled);
-
-        .textStyle {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 2px;
-            color: var(--text-button-disabled);
-        }
-    }
-
     .detectManageDemo {
         width: 134px;
         height: 32px;
@@ -154,14 +122,6 @@
             align-items: center;
             margin-top: 2px;
             color: var(--text-disabled);
-        }
-    }
-
-    .detectManage:hover {
-        border: 1px solid var(--text-button-primary-hover);
-
-        .textStyle {
-            color: var(--text-button-primary-hover);
         }
     }
 

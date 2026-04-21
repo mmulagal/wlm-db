@@ -1,7 +1,6 @@
 import { DsTypography } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as MSSQL } from '../../../../assets/MS-sql-icon.svg';
-import { ReactComponent as OracleIcon } from '../../../../assets/settings.svg';
 
 import styles from './SavingsHeader.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -18,6 +17,10 @@ const SavingsHeader = () => {
         // Oracle on-prem specific text
         if (isOracleOnPrem) {
             return t('databases.explore-savings.oracle-on-premises-configuration');
+        }
+        // Oracle EBS specific text
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) {
+            return t('databases.explore-savings.savings-header-oracle-ebs');
         }
         if (
             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
@@ -38,19 +41,18 @@ const SavingsHeader = () => {
         ) {
             return styles.savingsHeader;
         }
-        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem) {
+        if (
+            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ||
+            isOracleOnPrem ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+        ) {
             return `${styles.savingsHeader} ${styles.savingsHeaderOnPrem}`;
         }
         return `${styles.savingsHeader} ${styles.savingsHeaderFSX}`;
     };
 
     // Render Oracle or MSSQL icon based on mode
-    const renderIcon = () => {
-        if (isOracleOnPrem) {
-            return <OracleIcon />;
-        }
-        return <MSSQL />;
-    };
+    const renderIcon = () => <MSSQL />;
 
     return (
         <div className={setCSS()}>

@@ -20,12 +20,17 @@ import { FROM_DIALOG, SAVINGS_CALC_MODE } from '../../../../utils/consts';
 import SeparatorComponent from '../../../../common/SeparatorComponent/SeparatorComponent';
 import {
     setSelectedRowsForExploreSavingsEBSBulk,
+    setSelectedRowsForExploreSavingsOracleEbsBulk,
     resetBulkAuthCredentialsAndStatus,
     resetRowsRequiringAuthBulk,
     setRowsRequiringAuthBulk,
     setTriggerBulkDataFetch
 } from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
-import { setRecommendedTargetInstance } from '../../../../store/workloadFactory/exploreSavingsSlice';
+import {
+    setRecommendedTargetInstance,
+    setOnPremStorageAndComputeInfo,
+    removeOnPremStorageAndComputeInfoKey
+} from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { generateOptionType, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { generateLabel2ForInstanceType, handleAuthenticate } from '../../ExploreSavingsUtils';
 import { checkIfByolFieldRequired } from '../savingsUtil';
@@ -42,11 +47,19 @@ const TCOBulkAccordion = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { setDialog, closeDialog } = useDialog();
-    const { ebsTCOAction, selectedRowsForExploreSavingsEBSBulk, rowsRequiringAuthBulk } = useAppSelector(
-        state => state.exploreSavingsBulk
+    const { selectedRowsForExploreSavingsEBSBulk, selectedRowsForExploreSavingsOracleEbsBulk, rowsRequiringAuthBulk } =
+        useAppSelector(state => state.exploreSavingsBulk);
+    const { savingsCalculatorFrom, viewCalculationsResponse, onPremStorageAndComputeInfo } = useAppSelector(
+        state => state.exploreSavings
     );
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
+
+    const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+    const activeRows = isOracleEbs ? selectedRowsForExploreSavingsOracleEbsBulk : selectedRowsForExploreSavingsEBSBulk;
+    const setActiveRows = isOracleEbs
+        ? setSelectedRowsForExploreSavingsOracleEbsBulk
+        : setSelectedRowsForExploreSavingsEBSBulk;
 
     // State to track recommendations per host
     const [hostRecommendations, setHostRecommendations] = useState<{ [hostId: string]: string }>({});
@@ -65,14 +78,38 @@ const TCOBulkAccordion = () => {
         if (rowsRequiringAuthBulk && rowsRequiringAuthBulk.length > 0) {
             setTotalHostCount(rowsRequiringAuthBulk.length);
         } else {
-            setTotalHostCount(selectedRowsForExploreSavingsEBSBulk.length);
+            setTotalHostCount(activeRows.length);
         }
-    }, [selectedRowsForExploreSavingsEBSBulk, rowsRequiringAuthBulk]);
+    }, [activeRows, rowsRequiringAuthBulk]);
+
+    // Initialize onPremStorageAndComputeInfo entries for Oracle EBS hosts
+    useEffect(() => {
+        if (isOracleEbs && activeRows.length > 0) {
+            activeRows.forEach((host: any) => {
+                const ec2Id = host?.ec2InstanceId || host?.ec2Details?.[0]?.id;
+                const credId = host?.credentialId;
+                const regId = host?.regionId;
+                if (ec2Id && credId && regId) {
+                    const key = `${ec2Id}_${credId}_${regId}`;
+                    // Only initialize if not already present
+                    if (!onPremStorageAndComputeInfo?.[key]) {
+                        dispatch(
+                            setOnPremStorageAndComputeInfo({
+                                type: key,
+                                mode: 'monthlyOracleCost',
+                                value: ''
+                            })
+                        );
+                    }
+                }
+            });
+        }
+    }, [isOracleEbs, activeRows, onPremStorageAndComputeInfo]);
 
     const handleRemoveHost = (hostToRemove: any, event: React.SyntheticEvent) => {
         event.stopPropagation(); // Prevent accordion from toggling
-        const updatedHosts = selectedRowsForExploreSavingsEBSBulk.filter((host: any) => host.id !== hostToRemove.id);
-        dispatch(setSelectedRowsForExploreSavingsEBSBulk(updatedHosts));
+        const updatedHosts = activeRows.filter((host: any) => host.id !== hostToRemove.id);
+        dispatch(setActiveRows(updatedHosts));
 
         // Also remove from rowsRequiringAuthBulk if it exists there
         if (rowsRequiringAuthBulk && rowsRequiringAuthBulk.length > 0) {
@@ -94,6 +131,17 @@ const TCOBulkAccordion = () => {
         const newPreviousBYOLValues = { ...previousBYOLValues };
         delete newPreviousBYOLValues[hostToRemove.id];
         setPreviousBYOLValues(newPreviousBYOLValues);
+
+        // Clean up onPremStorageAndComputeInfo for Oracle EBS
+        if (isOracleEbs) {
+            const ec2Id = hostToRemove?.ec2InstanceId || hostToRemove?.ec2Details?.[0]?.id;
+            const credId = hostToRemove?.credentialId;
+            const regId = hostToRemove?.regionId;
+            if (ec2Id && credId && regId) {
+                const key = `${ec2Id}_${credId}_${regId}`;
+                dispatch(removeOnPremStorageAndComputeInfoKey(key));
+            }
+        }
 
         // Trigger data fetch after removing hosts when authentication is not required
         dispatch(setTriggerBulkDataFetch(true));
@@ -208,10 +256,10 @@ const TCOBulkAccordion = () => {
 
                 // Update the host object in selectedRowsForExploreSavingsEBSBulk with monthlySqlByolCost
                 // Convert empty string to null for API payload as monthlySqlByolCost is optional argument so where it is not applicable will send null
-                const updatedHosts = selectedRowsForExploreSavingsEBSBulk.map((h: any) =>
+                const updatedHosts = activeRows.map((h: any) =>
                     h.id === hostId ? { ...h, monthlySqlByolCost: textSearch || null } : h
                 );
-                dispatch(setSelectedRowsForExploreSavingsEBSBulk(updatedHosts));
+                dispatch(setActiveRows(updatedHosts));
 
                 // Trigger bulk data fetch - this will call the API with the updated BYOL value
                 dispatch(setTriggerBulkDataFetch(true));
@@ -385,8 +433,6 @@ const TCOBulkAccordion = () => {
         );
     };
 
-    const { savingsCalculatorFrom, viewCalculationsResponse } = useAppSelector(state => state.exploreSavings);
-
     const [showSsdTierCard, setShowSsdTierCard] = useState(false);
 
     // Check if SSD tier card should be shown based on ebsCapacity
@@ -399,12 +445,12 @@ const TCOBulkAccordion = () => {
                 const numericValue = parseFloat(String(totalEbsCapacity).replace(/,/g, '').split(' ')[0]);
 
                 // Show card if less than 800 GiB and if the selcted hosts are less than 5
-                setShowSsdTierCard(numericValue < 800 && selectedRowsForExploreSavingsEBSBulk.length < 5);
+                setShowSsdTierCard(numericValue < 800 && activeRows.length < 5);
             } else {
                 setShowSsdTierCard(false);
             }
         }
-    }, [viewCalculationsResponse, selectedRowsForExploreSavingsEBSBulk]);
+    }, [viewCalculationsResponse, activeRows]);
 
     // Function to calculate total volume count for a specific host
     const getHostVolumeCount = (host: any) => {
@@ -465,20 +511,23 @@ const TCOBulkAccordion = () => {
             <AccordionController isGrouped>
                 <div className={styles.header}>
                     <DsTypography variant="Semibold_16">
-                        {t('databases.explore-savings.selected-hosts')} ({selectedRowsForExploreSavingsEBSBulk.length})
+                        {t('databases.explore-savings.selected-hosts')} ({activeRows.length})
                     </DsTypography>
                     <DsButton type="text" onClick={handleManageHosts}>
                         {t('databases.explore-savings.add-hosts')}
                     </DsButton>
                 </div>
                 <div className={styles.accordionScrollContainer}>
-                    {selectedRowsForExploreSavingsEBSBulk.map((host: any, index: number) => (
+                    {activeRows.map((host: any, index: number) => (
                         <AccordionCard
                             key={host.id || index}
                             ValueContent={() => (
                                 <div className={styles.centerValue}>
                                     <DsTypography variant="Regular_14" className={styles.centerText}>
-                                        {host.totalInstance} {t('databases.explore-savings.instances')}
+                                        {host.totalInstance}{' '}
+                                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+                                            ? t('databases.explore-savings.databases')
+                                            : t('databases.explore-savings.instances')}
                                         <SeparatorComponent variant="vertical" height="16px" />
                                         {getHostVolumeCount(host)} {t('databases.explore-savings.volumes')}
                                     </DsTypography>
@@ -500,7 +549,8 @@ const TCOBulkAccordion = () => {
                         >
                             <AccordionCardContent className={styles.accordionContent}>
                                 <DsTypography>
-                                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                                    {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) && (
                                         <HostInstanceSelection host={host} />
                                     )}
 

@@ -19,13 +19,16 @@ const CostBreakdown = ({ disableState = false }: CB) => {
         state => state.exploreSavings
     );
 
-    const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
+    const isOracle =
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
     const [calculatedResponse, setCalculatedResponse] = useState({});
     const [loading, setLoading] = useState(false);
 
     const checkForTooltip = (() => {
         if (
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
                 savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
                 savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) &&
             storageSavingsResponse
@@ -57,7 +60,10 @@ const CostBreakdown = ({ disableState = false }: CB) => {
 
     // Helper to get the second category label based on mode
     const getSecondCategoryLabel = (): string => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+        ) {
             return t('databases.explore-savings.oracle-server-on-ebs');
         }
         if (
@@ -190,7 +196,8 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                             color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                                         }}
                                     >
-                                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
+                                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
+                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
                                             ? t('databases.explore-savings.oracle-server-on-fsx-ontap')
                                             : t('databases.explore-savings.mssql-server-on-fsx-ontap')}
                                     </Text>
