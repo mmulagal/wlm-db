@@ -86,6 +86,18 @@ const getPayloadType = (type: string) => {
         case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:
             type = 'oracle-security-patch';
             break;
+        case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
+            type = 'transparent-hugepages';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
+            type = 'tcp-advanced-options';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
+            type = 'filesystems-io-options';
+            break;
+        case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
+            type = 'multiblock-readcount';
+            break;
         case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
             type = 'clone-management';
             break;
