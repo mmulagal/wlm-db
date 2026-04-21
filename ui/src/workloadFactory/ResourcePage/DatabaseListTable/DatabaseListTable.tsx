@@ -28,10 +28,11 @@ import { ReactComponent as ArrowIcon } from '../../../assets/row_arrow.svg';
 import ResourcePageReplicaTable from './ResourcePageReplicaTable';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import AssociatedLunsDialogContent from './AssociatedLunsDialogContent';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const DatabaseListTable = () => {
     const { t } = useTranslation();
-    const { selectedHostname, selectedDatabaseInstanceName, selectedDatabaseStorageType } = useAppSelector(
+    const { selectedHostname, selectedDatabaseInstanceName, selectedDatabaseStorageType, isWad } = useAppSelector(
         state => state.getWellOptimize
     );
     const {
@@ -138,9 +139,11 @@ const DatabaseListTable = () => {
                         <DsTypography variant="Semibold_14">
                             {name || t('databases.general.not-available-table-columns')}
                         </DsTypography>
-                        <div className={styles.firstColText}>
-                            <InventoryStatusIndicator status={rowData?.status} loading={rowData?.loading} />
-                        </div>
+                        {!rowData?.isWad && (
+                            <div className={styles.firstColText}>
+                                <InventoryStatusIndicator status={rowData?.status} loading={rowData?.loading} />
+                            </div>
+                        )}
                     </div>
                 );
             }
@@ -347,29 +350,47 @@ const DatabaseListTable = () => {
                 singularTitle="Database"
                 actionsRight={
                     <div className={styles.databaseButton}>
-                        <Button
-                            variant="primary"
-                            className="continue-button"
-                            isThin
-                            data-testid="wlm-db-create-new-database-button"
-                            isDisabled={resourceLoadingState}
-                            onClick={() => {
-                                dispatch(addInitialDBCreateData(initialCreateNewUserState));
-                                dispatch(
-                                    setCdbPageData({
-                                        dbHostName: selectedHostname,
-                                        instanceId: selectedDatabaseInstance,
-                                        instanceName: selectedDatabaseInstanceName,
-                                        cdbCredId: selectedResourceCredId,
-                                        cdbRegionId: selectedResourceRegionId
-                                    })
-                                );
-                                dispatch(updateResourceId(selectedResourceId));
-                                navigate('../create-new-user');
-                            }}
-                        >
-                            {t('databases.general.create-database')}
-                        </Button>
+                        {isWad ? (
+                            <TooltipComponent
+                                placement="bottom"
+                                title={t('databases.wad.tab-disabled-message')}
+                                width={300}
+                            >
+                                <Button
+                                    variant="primary"
+                                    className="continue-button"
+                                    isThin
+                                    data-testid="wlm-db-create-new-database-button"
+                                    isDisabled
+                                >
+                                    {t('databases.general.create-database')}
+                                </Button>
+                            </TooltipComponent>
+                        ) : (
+                            <Button
+                                variant="primary"
+                                className="continue-button"
+                                isThin
+                                data-testid="wlm-db-create-new-database-button"
+                                isDisabled={resourceLoadingState}
+                                onClick={() => {
+                                    dispatch(addInitialDBCreateData(initialCreateNewUserState));
+                                    dispatch(
+                                        setCdbPageData({
+                                            dbHostName: selectedHostname,
+                                            instanceId: selectedDatabaseInstance,
+                                            instanceName: selectedDatabaseInstanceName,
+                                            cdbCredId: selectedResourceCredId,
+                                            cdbRegionId: selectedResourceRegionId
+                                        })
+                                    );
+                                    dispatch(updateResourceId(selectedResourceId));
+                                    navigate('../create-new-user');
+                                }}
+                            >
+                                {t('databases.general.create-database')}
+                            </Button>
+                        )}
                     </div>
                 }
             />

@@ -1,0 +1,463 @@
+{
+    "items": [
+      {
+        "resourceId": "95716d0ca84cd308",
+        "databaseInstanceId": "CB5F9F8D-C315-42E7-8169-A4BC16A0FEA5",
+        "databases": [
+          {
+            "name": "testdb2",
+            "type": "User Database",
+            "size": 16777216,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1776642691032/sqllog",
+                  "driveLetter": "L:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1776642691032/sqldata",
+                  "driveLetter": "S:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "testdb1",
+            "type": "User Database",
+            "size": 16777216,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1776659338/sqldata",
+                  "driveLetter": "D:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1776642691032/sqldata",
+                  "driveLetter": "E:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "optimize_asw64",
+            "type": "User Database",
+            "size": 16777216,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1776661728/sqldata",
+                  "driveLetter": "F:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1776661728/sqllog",
+                  "driveLetter": "G:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "sizeoptimize_jzkc3",
+            "type": "User Database",
+            "size": 16777216,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1776662262/sqldata",
+                  "driveLetter": "H:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1776662262/sqllog",
+                  "driveLetter": "I:"
+                }
+              ]
+            }
+          }
+        ],
+        "count": 4,
+        "databaseInstanceName": "MSSQLSERVER",
+        "fileSystemId": "fs-0f32f6c69fb7e40ac",
+        "hostname": "STVY78E",
+        "deploymentType": "Standalone"
+      },
+      {
+        "resourceId": "4ee1b835f857e787",
+        "databaseInstanceId": "39B6AA45-3425-4E1A-BD67-152EF7DA3FB5",
+        "databases": [
+          {
+            "name": "testdb1",
+            "type": "User Database",
+            "size": 16777216,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1772083011/sqldata",
+                  "driveLetter": "D:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1772083011/sqllog",
+                  "driveLetter": "E:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "testdb2",
+            "type": "User Database",
+            "size": 16777216,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1772067334724/sqllog",
+                  "driveLetter": "L:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1772067334724/sqldata",
+                  "driveLetter": "S:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Rebaseline_27ae1",
+            "type": "User Database",
+            "size": 16777216,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1772067334724/sqldata",
+                  "driveLetter": "S:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1772067334724/sqldata",
+                  "driveLetter": "S:"
+                }
+              ]
+            }
+          }
+        ],
+        "count": 3,
+        "databaseInstanceName": "MSSQLSERVER",
+        "fileSystemId": "fs-08191c6975a71e6f3",
+        "hostname": "SQLNODE1-88334",
+        "deploymentType": "FCI"
+      },
+      {
+        "resourceId": "159671bc9250bd57",
+        "databaseInstanceId": "08CFDEFC-2173-4ACC-999E-797C12865D94",
+        "databases": [
+          {
+            "name": "testdb1",
+            "type": "User Database",
+            "size": 12351176704,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1771305432/sqldata",
+                  "driveLetter": "D:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1771305432/sqllog",
+                  "driveLetter": "E:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "msdb",
+            "type": "System Database",
+            "size": 429458980864,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1771289631228/sqldata",
+                  "driveLetter": "S:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1771289631228/sqldata",
+                  "driveLetter": "S:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "testdb2",
+            "type": "User Database",
+            "size": 236185452544,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqltemp_1771289631228/tempdb",
+                  "driveLetter": "T:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1771289631228/sqldata",
+                  "driveLetter": "S:"
+                }
+              ]
+            }
+          }
+        ],
+        "count": 3,
+        "databaseInstanceName": "MSSQLSERVER",
+        "fileSystemId": "fs-0510a24e02a9a24c2",
+        "hostname": "SQLNODE1-85079",
+        "deploymentType": "FCI"
+      },
+      {
+        "resourceId": "7bc6636d8d41fa2a",
+        "databaseInstanceId": "CB5F9F8D-C315-42E7-8169-A4BC16A0FEA5",
+        "databases": [
+          {
+            "name": "sizeoptimize_gk500",
+            "type": "User Database",
+            "size": 12316573696,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1770703957/sqldata",
+                  "driveLetter": "H:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1770703957/sqllog",
+                  "driveLetter": "I:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "testdb2",
+            "type": "User Database",
+            "size": 268160729088,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1770688985190/sqllog",
+                  "driveLetter": "L:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1770688985190/sqldata",
+                  "driveLetter": "S:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "testdb1",
+            "type": "User Database",
+            "size": 12316573696,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1770697673/sqldata",
+                  "driveLetter": "D:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1770697673/sqllog",
+                  "driveLetter": "E:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "optimize_avd4z",
+            "type": "User Database",
+            "size": 2183135232,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1770703510/sqldata",
+                  "driveLetter": "F:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1770703510/sqllog",
+                  "driveLetter": "G:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "msdb",
+            "type": "System Database",
+            "size": 268160729088,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1770688985190/sqldata",
+                  "driveLetter": "S:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1770688985190/sqllog",
+                  "driveLetter": "L:"
+                }
+              ]
+            }
+          }
+        ],
+        "count": 5,
+        "databaseInstanceName": "MSSQLSERVER",
+        "fileSystemId": "10.0.18.153",
+        "hostname": "STVYYZ1",
+        "deploymentType": "Standalone"
+      },
+      {
+        "resourceId": "b507c700ad088340",
+        "databaseInstanceId": "1ADA3542-80EF-47C1-B263-9045AC170428",
+        "databases": [
+          {
+            "name": "msdb",
+            "type": "System Database",
+            "size": 268397707264,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1771293508107/sqldata",
+                  "driveLetter": "S:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1771293508107/sqllog",
+                  "driveLetter": "L:"
+                }
+              ]
+            }
+          }
+        ],
+        "count": 1,
+        "databaseInstanceName": "MSSQLSERVER",
+        "fileSystemId": "fs-076f556394acf7beb",
+        "hostname": "STVYU4E",
+        "deploymentType": "Standalone"
+      },
+      {
+        "resourceId": "8c01a07de321f565",
+        "databaseInstanceId": "8F8D2F9C-0C1A-48B4-B036-30F3C36E7DEC",
+        "databases": [
+          {
+            "name": "Mansion",
+            "type": "User Database",
+            "size": 16777216,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1764234544/sqldata",
+                  "driveLetter": "F:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1764234544/sqllog",
+                  "driveLetter": "G:"
+                }
+              ]
+            }
+          }
+        ],
+        "count": 1,
+        "databaseInstanceName": "SPECIAL1N$TANCE#",
+        "fileSystemId": "fs-07a22f282fd4f5a20",
+        "hostname": "JELLYBEAN",
+        "deploymentType": "Standalone"
+      },
+      {
+        "resourceId": "dff9493d773d532f",
+        "databaseInstanceId": "EEE505B1-B5DB-49E3-A5F4-CACC0A67DADE",
+        "databases": [
+          {
+            "name": "testdb1",
+            "type": "User Database",
+            "size": 12316573696,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1771823214/sqldata",
+                  "driveLetter": "D:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqllog_1771823214/sqllog",
+                  "driveLetter": "E:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "msdb",
+            "type": "System Database",
+            "size": 429222002688,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1771807991296/sqldata",
+                  "driveLetter": "S:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1771807991296/sqldata",
+                  "driveLetter": "S:"
+                }
+              ]
+            }
+          },
+          {
+            "name": "testdb2",
+            "type": "User Database",
+            "size": 235948474368,
+            "luns": {
+              "dataFiles": [
+                {
+                  "name": "/vol/wlmdb_sqldata_1771807991296/sqldata",
+                  "driveLetter": "S:"
+                }
+              ],
+              "logFiles": [
+                {
+                  "name": "/vol/wlmdb_sqltemp_1771807991296/tempdb",
+                  "driveLetter": "T:"
+                }
+              ]
+            }
+          }
+        ],
+        "count": 3,
+        "databaseInstanceName": "MSSQLSERVER",
+        "fileSystemId": "fs-0f32f6c69fb7e40ac",
+        "hostname": "SQLNODE1-51560",
+        "deploymentType": "FCI"
+      }
+    ],
+    "count": 7,
+    "nextToken": ""
+  }

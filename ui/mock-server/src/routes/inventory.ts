@@ -6,6 +6,8 @@ import MssqlInstancesV2 from '../data/mssqlInstancesV2.json';
 import UploadScript from '../data/uploadScript.json';
 import PgsqlInstancesV2 from '../data/pgsqlInstances.json';
 import OracleInstancesV2 from '../data/oracleInstances.json';
+import MssqlOfflineDatabaseAcc from '../data/mssqlOfflineDatabaseAcc.json';
+import MssqlOfflineDatabase from '../data/mssqlOfflineDatabase.json';
 
 const router = require('express').Router();
 
@@ -31,6 +33,21 @@ router.get(`${BASE_URL}/v1/mssql/offline-assessment/collector`, async (req: {}, 
         });
     }, 50);
 });
+
+router.get(`${BASE_URL}/v1/mssql/offline-assessment/databases`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, MssqlOfflineDatabaseAcc);
+    }, 100);
+});
+
+router.get(
+    `${BASE_URL}/v1/mssql/database-hosts/:id/database-instances/:instanceId/offline-assessment/databases`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, MssqlOfflineDatabase);
+        }, 100);
+    }
+);
 
 router.get(
     `${BASE_URL}/v1/pgsql/credentials/:credentialsId/regions/:region/database-hosts`,

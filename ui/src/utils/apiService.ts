@@ -916,6 +916,21 @@ export const inventoryApiV2 = createApi({
                 return queryString ? `v1/mssql/offline-assessment?${queryString}` : 'v1/mssql/offline-assessment';
             }
         }),
+        getOfflineMssqlAssessmentDatabases: builder.query({
+            query: ({ pageSize = 50, nextToken = null }) => {
+                const params = new URLSearchParams();
+                if (pageSize) params.append('pageSize', String(pageSize));
+                if (nextToken) params.append('nextToken', nextToken);
+                const queryString = params.toString();
+                return queryString
+                    ? `v1/mssql/offline-assessment/databases?${queryString}`
+                    : 'v1/mssql/offline-assessment/databases';
+            }
+        }),
+        getOfflineMssqlAssessmentDatabasesByInstance: builder.query({
+            query: ({ hostId, instanceId }) =>
+                `v1/mssql/database-hosts/${hostId}/database-instances/${instanceId}/offline-assessment/databases`
+        }),
         getAllOfflineOracleHostsAssessmentData: builder.query({
             query: ({ credentialId = null, regionId = null, nextToken = null }) => {
                 const params = new URLSearchParams();
@@ -1784,7 +1799,11 @@ export const {
     useManageBulkV2MssqlInstanceMutation,
     useManageBulkV2OracleInstanceMutation,
     useGetOneTimeWADUploadScriptMutation,
-    useGetOneTimeWADDownloadScriptMutation
+    useGetOneTimeWADDownloadScriptMutation,
+    useGetOfflineMssqlAssessmentDatabasesQuery,
+    useLazyGetOfflineMssqlAssessmentDatabasesQuery,
+    useGetOfflineMssqlAssessmentDatabasesByInstanceQuery,
+    useLazyGetOfflineMssqlAssessmentDatabasesByInstanceQuery
 } = inventoryApiV2;
 
 export const {

@@ -14,7 +14,6 @@ import {
     SQL_DEPLOYMENT_MODE,
     STORAGE_TYPES,
     WELL_ARCHITECTED_TABS,
-    WIZARD_TYPE,
     WLF_TABS
 } from '../../../../utils/consts';
 import {
@@ -31,10 +30,12 @@ import {
 import {
     addAllMssqlHostAssessmentData,
     addAllOracleHostAssessmentData,
+    addOfflineMssqlDatabasesData,
     addOfflineMssqlHostAssessmentData,
     addOfflineOracleHostAssessmentData,
     setBreadCrumbSelectedFrom,
     setInventoryTableData,
+    setOfflineMssqlDatabasesLoading,
     setOfflineMssqlHostAssessmentLoading,
     setOfflineOracleHostAssessmentLoading,
     setRegisterHostType,
@@ -1158,11 +1159,15 @@ export const shouldEnableHeaderCheckbox = (
  * Well-Architected tab's Analyzed Resources table picks it up immediately
  * (mirrors addOfflineDataToAllAssessment in WADApis.tsx).
  */
-const addOfflineDataToAllAssessment = (dispatch: Dispatch, offlineData: any[], dbType: 'mssql' | 'oracle') => {
+const addOfflineDataToAllAssessment = (
+    dispatch: Dispatch,
+    offlineData: any[],
+    dbType: typeof DBType.MSSQL | typeof DBType.ORACLE
+) => {
     const state = store.getState();
     const formattedAssessmentData = formatOfflineDataToAssessmentFormat(offlineData, dbType);
 
-    if (dbType === WIZARD_TYPE.MSSQL) {
+    if (dbType === DBType.MSSQL) {
         const existingAllData = state.inventoryV2.allmssqlHostAssessmentData || [];
         const nonWadData = existingAllData.filter((item: any) => !item?.isWad);
         dispatch(addAllMssqlHostAssessmentData([...nonWadData, ...formattedAssessmentData]));
@@ -1221,7 +1226,7 @@ export const refreshOfflineAssessmentData = async (
                 // All data fetched, update store
                 dispatch(setOfflineMssqlHostAssessmentLoading(false));
                 dispatch(addOfflineMssqlHostAssessmentData(newAssessmentData));
-                addOfflineDataToAllAssessment(dispatch, newAssessmentData, WIZARD_TYPE.MSSQL);
+                addOfflineDataToAllAssessment(dispatch, newAssessmentData, DBType.MSSQL);
 
                 // Format and merge with existing inventory data
                 const currentInventoryTableData = store.getState().inventoryV2.inventoryTableData || {};
@@ -1236,7 +1241,7 @@ export const refreshOfflineAssessmentData = async (
             dispatch(setOfflineMssqlHostAssessmentLoading(false));
             if (assessmentData.length > 0) {
                 dispatch(addOfflineMssqlHostAssessmentData(assessmentData));
-                addOfflineDataToAllAssessment(dispatch, assessmentData, WIZARD_TYPE.MSSQL);
+                addOfflineDataToAllAssessment(dispatch, assessmentData, DBType.MSSQL);
 
                 // Format and merge with existing inventory data
                 const currentInventoryTableData = store.getState().inventoryV2.inventoryTableData || {};
@@ -1252,7 +1257,7 @@ export const refreshOfflineAssessmentData = async (
         dispatch(setOfflineMssqlHostAssessmentLoading(false));
         if (assessmentData.length > 0) {
             dispatch(addOfflineMssqlHostAssessmentData(assessmentData));
-            addOfflineDataToAllAssessment(dispatch, assessmentData, WIZARD_TYPE.MSSQL);
+            addOfflineDataToAllAssessment(dispatch, assessmentData, DBType.MSSQL);
         }
     }
 };
@@ -1305,7 +1310,7 @@ export const refreshOfflineOracleAssessmentData = async (
                 // All data fetched, update store
                 dispatch(setOfflineOracleHostAssessmentLoading(false));
                 dispatch(addOfflineOracleHostAssessmentData(newAssessmentData));
-                addOfflineDataToAllAssessment(dispatch, newAssessmentData, WIZARD_TYPE.ORACLE);
+                addOfflineDataToAllAssessment(dispatch, newAssessmentData, DBType.ORACLE);
 
                 // Format and merge with existing inventory data
                 const currentInventoryTableData = store.getState().inventoryV2.inventoryTableData || {};
@@ -1320,7 +1325,7 @@ export const refreshOfflineOracleAssessmentData = async (
             dispatch(setOfflineOracleHostAssessmentLoading(false));
             if (assessmentData.length > 0) {
                 dispatch(addOfflineOracleHostAssessmentData(assessmentData));
-                addOfflineDataToAllAssessment(dispatch, assessmentData, WIZARD_TYPE.ORACLE);
+                addOfflineDataToAllAssessment(dispatch, assessmentData, DBType.ORACLE);
 
                 // Format and merge with existing inventory data
                 const currentInventoryTableData = store.getState().inventoryV2.inventoryTableData || {};
@@ -1336,7 +1341,63 @@ export const refreshOfflineOracleAssessmentData = async (
         dispatch(setOfflineOracleHostAssessmentLoading(false));
         if (assessmentData.length > 0) {
             dispatch(addOfflineOracleHostAssessmentData(assessmentData));
-            addOfflineDataToAllAssessment(dispatch, assessmentData, WIZARD_TYPE.ORACLE);
+            addOfflineDataToAllAssessment(dispatch, assessmentData, DBType.ORACLE);
+        }
+    }
+};
+
+/**
+ * Refreshes the offline MSSQL databases data (one-time WAD) after an upload completes.
+ * Calls the `v1/mssql/offline-assessment/databases` API with pagination and stores the
+ * aggregated results in Redux so the Databases tab picks up newly uploaded WAD databases
+ * without requiring a full page reload. Mirrors the logic in WADApis.tsx.
+ *
+ * @param getOfflineMssqlDatabasesAPI - The lazy query function from useLazyGetOfflineMssqlAssessmentDatabasesQuery
+ * @param dispatch - Redux dispatch function
+ * @param databasesData - Accumulated databases data from previous calls (for pagination)
+ * @param nextToken - Pagination token for next batch of data
+ */
+export const refreshOfflineMssqlDatabasesData = async (
+    getOfflineMssqlDatabasesAPI: any,
+    dispatch: Dispatch,
+    databasesData: any[],
+    nextToken: string | null
+) => {
+    try {
+        dispatch(setOfflineMssqlDatabasesLoading(true));
+
+        const result: any = await getOfflineMssqlDatabasesAPI({
+            pageSize: 50,
+            nextToken
+        });
+
+        if (result && !result?.error && result?.data) {
+            const newDatabasesData = [
+                ...databasesData,
+                ...(Array.isArray(result?.data?.items) ? result.data.items : [])
+            ];
+
+            if (result?.data?.nextToken) {
+                refreshOfflineMssqlDatabasesData(
+                    getOfflineMssqlDatabasesAPI,
+                    dispatch,
+                    newDatabasesData,
+                    result?.data?.nextToken
+                );
+            } else {
+                dispatch(setOfflineMssqlDatabasesLoading(false));
+                dispatch(addOfflineMssqlDatabasesData(newDatabasesData));
+            }
+        } else {
+            dispatch(setOfflineMssqlDatabasesLoading(false));
+            if (databasesData.length > 0) {
+                dispatch(addOfflineMssqlDatabasesData(databasesData));
+            }
+        }
+    } catch (error) {
+        dispatch(setOfflineMssqlDatabasesLoading(false));
+        if (databasesData.length > 0) {
+            dispatch(addOfflineMssqlDatabasesData(databasesData));
         }
     }
 };

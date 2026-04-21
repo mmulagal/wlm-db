@@ -5604,7 +5604,10 @@ export const mssqlDatabaseMenuOptions = (t: TFunction, isProtected: boolean, row
     let disableOption = false;
     let disableMessage = '';
 
-    if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
+    if (rowData?.isWad) {
+        disableOption = true;
+        disableMessage = t('databases.wad.tab-disabled-message');
+    } else if (rowData?.hostType === GENERAL.POSTGRESQL_TYPE) {
         disableOption = true;
         disableMessage = GENERAL.COMING_SOON;
     } else if (rowData?.type === GENERAL.SYSTEM_DATABASE) {

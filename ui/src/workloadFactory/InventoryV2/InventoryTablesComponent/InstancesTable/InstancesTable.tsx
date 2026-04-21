@@ -27,6 +27,7 @@ import {
     useGetWorkSpaceIDMutation,
     useLazyGetAllOfflineMssqlHostsAssessmentDataQuery,
     useLazyGetAllOfflineOracleHostsAssessmentDataQuery,
+    useLazyGetOfflineMssqlAssessmentDatabasesQuery,
     useLazyGetSubTaskListQuery,
     useListAllDirectoriesMutation,
     useListExistingHostsMutation,
@@ -125,6 +126,7 @@ import {
     MAX_BULK_REGISTER_SELECTION,
     isOracleDataGuard,
     refreshOfflineAssessmentData,
+    refreshOfflineMssqlDatabasesData,
     refreshOfflineOracleAssessmentData,
     handleWadOptimizeAction,
     handleOracleWadOptimizeAction,
@@ -213,6 +215,7 @@ const InstancesTable = () => {
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [getAllOfflineAssessmentAPI] = useLazyGetAllOfflineMssqlHostsAssessmentDataQuery();
     const [getAllOfflineOracleAssessmentAPI] = useLazyGetAllOfflineOracleHostsAssessmentDataQuery();
+    const [getOfflineMssqlDatabasesAPI] = useLazyGetOfflineMssqlAssessmentDatabasesQuery();
 
     const { title, exportToCsvFileName, buttonText } = getInstableTableTopMenuOptions(selectedHostType, t);
 
@@ -1397,6 +1400,14 @@ const InstancesTable = () => {
                                         );
                                     } else {
                                         refreshOfflineAssessmentData(getAllOfflineAssessmentAPI, dispatch, [], null);
+                                        // Also refresh the offline MSSQL databases so the Databases tab
+                                        // picks up the newly uploaded WAD databases without a page reload.
+                                        refreshOfflineMssqlDatabasesData(
+                                            getOfflineMssqlDatabasesAPI,
+                                            dispatch,
+                                            [],
+                                            null
+                                        );
                                     }
                                 } else if (status === JOB_MONITORING_STATUS.FAILED) {
                                     dispatch(

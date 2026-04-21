@@ -1,0 +1,85 @@
+{
+    "databases": [
+      {
+        "name": "testdb2",
+        "type": "User Database",
+        "size": 16777216,
+        "luns": {
+          "dataFiles": [
+            {
+              "name": "/vol/wlmdb_sqllog_1776642691032/sqllog",
+              "driveLetter": "L:"
+            }
+          ],
+          "logFiles": [
+            {
+              "name": "/vol/wlmdb_sqldata_1776642691032/sqldata",
+              "driveLetter": "S:"
+            }
+          ]
+        }
+      },
+      {
+        "name": "testdb1",
+        "type": "User Database",
+        "size": 16777216,
+        "luns": {
+          "dataFiles": [
+            {
+              "name": "/vol/wlmdb_sqldata_1776659338/sqldata",
+              "driveLetter": "D:"
+            }
+          ],
+          "logFiles": [
+            {
+              "name": "/vol/wlmdb_sqldata_1776642691032/sqldata",
+              "driveLetter": "E:"
+            }
+          ]
+        }
+      },
+      {
+        "name": "optimize_asw64",
+        "type": "User Database",
+        "size": 16777216,
+        "luns": {
+          "dataFiles": [
+            {
+              "name": "/vol/wlmdb_sqldata_1776661728/sqldata",
+              "driveLetter": "F:"
+            }
+          ],
+          "logFiles": [
+            {
+              "name": "/vol/wlmdb_sqllog_1776661728/sqllog",
+              "driveLetter": "G:"
+            }
+          ]
+        }
+      },
+      {
+        "name": "sizeoptimize_jzkc3",
+        "type": "User Database",
+        "size": 16777216,
+        "luns": {
+          "dataFiles": [
+            {
+              "name": "/vol/wlmdb_sqldata_1776662262/sqldata",
+              "driveLetter": "H:"
+            }
+          ],
+          "logFiles": [
+            {
+              "name": "/vol/wlmdb_sqllog_1776662262/sqllog",
+              "driveLetter": "I:"
+            }
+          ]
+        }
+      }
+    ],
+    "count": 4,
+    "databaseInstanceName": "MSSQLSERVER",
+    "fileSystemId": "fs-0f32f6c69fb7e40ac",
+    "hostname": "STVY78E",
+    "deploymentType": "Standalone"
+  }

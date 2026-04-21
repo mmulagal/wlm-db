@@ -76,6 +76,13 @@ const HostTable = () => {
     const findDatabaseOption = (rowData: any) => {
         let disableOptionDatabase = false;
         let disableMessageDatabase: any = '';
+        // For WAD (one-time assessment) MSSQL hosts, the managedInstance is always 0 but we still
+        // have database data from the offline-assessment/databases API. Enable "View databases"
+        // whenever at least one instance has WAD databases attached.
+        const hasWadDatabaseData = rowData?.isWad && selectedHostType !== DBType.ORACLE;
+        if (hasWadDatabaseData) {
+            return { disableOptionDatabase: false, disableMessageDatabase: '' };
+        }
         if (
             rowData?.status === INVENTORY_STATUS.STOPPED ||
             rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN ||

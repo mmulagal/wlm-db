@@ -5,6 +5,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import {
     useGenerateDiagramMutation,
     useLazyGetDatabaseListV2Query,
+    useLazyGetOfflineMssqlAssessmentDatabasesByInstanceQuery,
     useLazyGetResourceDetailsV2Query
 } from '../../../utils/apiService';
 import {
@@ -38,11 +39,13 @@ const DatabaseHostOverviewApiV2 = () => {
         credIdFromJM,
         regionFromJM,
         selectedResourceId: getWellResourceId,
-        selectedDatabaseInstance: getWellSelectedDatabaseInstance
+        selectedDatabaseInstance: getWellSelectedDatabaseInstance,
+        isWad
     } = useAppSelector(state => state.getWellOptimize);
 
     const [resourceDetailsApi] = useLazyGetResourceDetailsV2Query();
     const [databaseListApi] = useLazyGetDatabaseListV2Query();
+    const [offlineMssqlDatabasesByInstanceApi] = useLazyGetOfflineMssqlAssessmentDatabasesByInstanceQuery();
     const [generateDiagramAPI] = useGenerateDiagramMutation();
 
     useEffect(() => {
@@ -210,10 +213,38 @@ const DatabaseHostOverviewApiV2 = () => {
         }
     };
 
+    // One-time WAD (MSSQL) flow: hit the offline-assessment databases API scoped by host + instance.
+    // The regular overview / AOAG replica calls don't apply to offline assessments.
+    const runOfflineMssqlDatabasesApi = async () => {
+        try {
+            const hostId = selectedResourceId || getWellResourceId;
+            const instanceId = selectedDatabaseInstance || getWellSelectedDatabaseInstance;
+            if (!hostId || !instanceId) {
+                return;
+            }
+            const result: any = await offlineMssqlDatabasesByInstanceApi({ hostId, instanceId });
+            if (result && !result?.error) {
+                const rawDatabases = result?.data?.databases || result?.data?.items || [];
+                const databases = rawDatabases.map((db: any) => ({ ...db, isWad: true }));
+                dispatch(setDatabaseList(databases));
+            }
+        } catch (error) {
+            dispatch(setDatabaseListLoading(false));
+            dispatch(setResourceLoading(false));
+        } finally {
+            dispatch(setDatabaseListLoading(false));
+            dispatch(setResourceLoading(false));
+        }
+    };
+
     const viewResourceAction = () => {
         dispatch(resetWorkloadFactoryResourceData());
-        dispatch(setResourceLoading(true));
         dispatch(setDatabaseListLoading(true));
+        dispatch(setResourceLoading(true));
+        if (isWad) {
+            runOfflineMssqlDatabasesApi();
+            return;
+        }
         runResourceDetailsApi();
         runDatabaseDetailsApi();
     };

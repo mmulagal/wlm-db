@@ -3469,7 +3469,10 @@ export const createLogAnalyzerActiveInstance = (tableData: any[]) => {
  * @param dbType - The database type ('mssql' or 'oracle')
  * @returns Formatted assessment data array matching the hierarchical structure
  */
-export const formatOfflineDataToAssessmentFormat = (offlineData: any[], dbType: 'mssql' | 'oracle'): any[] => {
+export const formatOfflineDataToAssessmentFormat = (
+    offlineData: any[],
+    dbType: typeof DBType.MSSQL | typeof DBType.ORACLE
+): any[] => {
     if (!offlineData || offlineData.length === 0) {
         return [];
     }
@@ -3481,7 +3484,7 @@ export const formatOfflineDataToAssessmentFormat = (offlineData: any[], dbType: 
         // Use resourceId as host identifier, fallback to vmName
         const hostId =
             instanceData?.resourceId ||
-            (dbType === 'oracle' ? `wad-oracle-${instanceData?.vmName}` : `wad-${instanceData?.vmName}`);
+            (dbType === DBType.ORACLE ? `wad-oracle-${instanceData?.vmName}` : `wad-${instanceData?.vmName}`);
         const credId = instanceData?.credentialId || instanceData?.credentialsId || '';
         const regionId = instanceData?.regionId || instanceData?.region || '';
 
@@ -3503,7 +3506,7 @@ export const formatOfflineDataToAssessmentFormat = (offlineData: any[], dbType: 
 
         const hostId =
             firstInstance?.resourceId ||
-            (dbType === 'oracle' ? `wad-oracle-${firstInstance?.vmName}` : `wad-${firstInstance?.vmName}`);
+            (dbType === DBType.ORACLE ? `wad-oracle-${firstInstance?.vmName}` : `wad-${firstInstance?.vmName}`);
         const credId = firstInstance?.credentialId || firstInstance?.credentialsId || '';
         const regionId = firstInstance?.regionId || firstInstance?.region || '';
 

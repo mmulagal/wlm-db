@@ -47,9 +47,11 @@ export function MssqlPgsqlDatabaseTableColDefs({
                     <DsTypography variant="Semibold_14">
                         {name || t('databases.general.not-available-table-columns')}
                     </DsTypography>
-                    <div className={styles.firstColText}>
-                        <InventoryStatusIndicator status={rowData?.status} loading={rowData?.loading} />
-                    </div>
+                    {!rowData?.isWad && (
+                        <div className={styles.firstColText}>
+                            <InventoryStatusIndicator status={rowData?.status} loading={rowData?.loading} />
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -244,42 +246,46 @@ export function MssqlPgsqlDatabaseTableColDefs({
         isSortable: false,
         filterOptions: getFilterOptions(databaseTableRows, 'instanceRow.fileSystemName'),
         width: '213px',
-        renderCell: (cellData: any, rowData: any) => (
-            <>
-                {cellData && rowData?.instanceRow?.fsxId ? (
-                    <div className={styles.fsxNameContainer}>
-                        <TooltipInfo className={`${styles.fsxName} ${styles['tooltip-icon']}`} trigger="hover">
-                            <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
-                                <DsTypography variant="Regular_13">{rowData?.instanceRow?.fsxId}</DsTypography>
-                                <Popover
-                                    popoverClass={styles['copy-popover']}
-                                    children="Copied"
-                                    container={
-                                        <CopyToClipboardCommon
-                                            value={rowData?.instanceRow?.fsxId}
-                                            iconProvided={<CopyIcon fill="#A7A7A7" />}
-                                        />
-                                    }
-                                />
+        renderCell: (cellData: any, rowData: any) => {
+            // Show the FSx tooltip/copy icon whenever fsxId is present, even when
+            // fileSystemName is missing (mirrors the Instances table behavior).
+            // WAD/one-time-assessment instances carry fsxId but no friendly fileSystemName,
+            // so this makes the same FSx ID surface for their databases too.
+            const fsxId = rowData?.instanceRow?.fsxId;
+            const displayName = cellData || t('databases.general.not-available-table-columns');
+            return (
+                <>
+                    {fsxId ? (
+                        <div className={styles.fsxNameContainer}>
+                            <TooltipInfo className={`${styles.fsxName} ${styles['tooltip-icon']}`} trigger="hover">
+                                <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
+                                    <DsTypography variant="Regular_13">{fsxId}</DsTypography>
+                                    <Popover
+                                        popoverClass={styles['copy-popover']}
+                                        children="Copied"
+                                        container={
+                                            <CopyToClipboardCommon
+                                                value={fsxId}
+                                                iconProvided={<CopyIcon fill="#A7A7A7" />}
+                                            />
+                                        }
+                                    />
+                                </div>
+                            </TooltipInfo>
+                            <div className={styles.fsxName}>
+                                <DsTypography className={styles.fsxNameText} variant="Regular_13" title={displayName}>
+                                    {displayName}
+                                </DsTypography>
                             </div>
-                        </TooltipInfo>
-                        <div className={styles.fsxName}>
-                            <DsTypography
-                                className={styles.fsxNameText}
-                                variant="Regular_13"
-                                title={cellData || t('databases.general.not-available-table-columns')}
-                            >
-                                {cellData || t('databases.general.not-available-table-columns')}
-                            </DsTypography>
                         </div>
-                    </div>
-                ) : (
-                    <DsTypography variant="Regular_13" className={styles.colText}>
-                        {t('databases.general.not-available-table-columns')}
-                    </DsTypography>
-                )}
-            </>
-        )
+                    ) : (
+                        <DsTypography variant="Regular_13" className={styles.colText}>
+                            {t('databases.general.not-available-table-columns')}
+                        </DsTypography>
+                    )}
+                </>
+            );
+        }
     };
 
     const awsCredentialsColumn: ColumnProps = {
