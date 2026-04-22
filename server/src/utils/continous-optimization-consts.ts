@@ -445,6 +445,12 @@ const ORACLE_COMPUTE_HOST_OS_ASSESSMENT_CONFIGS = [
     'multiblock-readcount'
 ];
 
+/** Oracle assessment categories that support on-demand patch scan via the `/assessment/patch-scan` endpoint. */
+const ORACLE_PATCH_SCAN_FIELDS: string[] = [AssessmentCategoriesOracle.HOST_OS_PATCH];
+
+/** MSSQL assessment categories that support on-demand patch scan via the `/assessment/patch-scan` endpoint. */
+const MSSQL_PATCH_SCAN_FIELDS: string[] = [AssessmentCategories.HOST_OS_PATCH];
+
 const ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP = {
     sizing: ['headroom', 'swap-space'],
     layout: [
@@ -713,6 +719,8 @@ export {
     OptimizeHighAvailabilityParams,
     AssessmentCategoriesOracle,
     ORACLE_COMPUTE_HOST_OS_ASSESSMENT_CONFIGS,
+    ORACLE_PATCH_SCAN_FIELDS,
+    MSSQL_PATCH_SCAN_FIELDS,
     DEFAULT_FSX_MTU_VALUE,
     OptimizeStorageApiData,
     ORACLE_STORAGE_LAYOUT_CONFIGS_MAP,

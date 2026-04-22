@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash-es';
+import { isEmpty, omit } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../../utils/logger';
 import { AssessmentCategoriesOracle, AssessmentStatus } from '../../../utils/continous-optimization-consts';
@@ -9,13 +9,35 @@ import { getInstancesPatchStatus, runAwsPatchBaseline } from '../../aws/ospatch-
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
 import { getResourceNameFromTags, sqlResponseParsing } from '../../../utils/utils';
-import { HostOsPatchDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
+import {
+    HostOsPatchDriftResponseType,
+    HostOsPatchScanResponseType
+} from '../../../routes/types/oracle-continuous-optimization.types';
+import { ErrorResponseType } from '../../../routes/types/continuous-optimization.types';
 import { checkLinuxRepoConnectivityScript } from './ssm-scripts/host-assessment-scripts';
 import GOLDEN_CONFIG from './golden-config';
 import { checkIfPatchBaselineInProgress, updatePatchBaselineStatusForHost } from '../assessment-utils';
 
 const logger = getLogger();
 const PATCH_ASSESSMENT_IN_PROGRESS = 'Another patch assessment is already in progress';
+
+async function buildEc2InstanceNameMap(
+    credentialsId: string,
+    region: string,
+    ec2InstanceIds: string[]
+): Promise<Map<string, string>> {
+    const { Reservations = [] } = await describeInstance(credentialsId, region, {
+        InstanceIds: ec2InstanceIds
+    });
+    const describedInstances = Reservations.flatMap(({ Instances = [] }) => Instances);
+
+    return new Map(
+        ec2InstanceIds.map(id => {
+            const tags = describedInstances.find(({ InstanceId }) => InstanceId === id)?.Tags;
+            return [id, getResourceNameFromTags(tags) || 'Unknown'];
+        })
+    );
+}
 
 async function checkIfLinuxRepoReachable(
     accountId: string,
@@ -94,8 +116,7 @@ function calculateHostOsPatchDrift(
                 ec2InstanceName,
                 operationStartTime,
                 operationEndTime,
-                securityNonCompliantCount,
-                missingPatchDetails
+                securityNonCompliantCount
             }) => ({
                 baselineId,
                 criticalNonCompliantCount,
@@ -104,14 +125,7 @@ function calculateHostOsPatchDrift(
                 ec2InstanceName: ec2InstanceName ?? '',
                 operationStartTime,
                 operationEndTime,
-                securityNonCompliantCount,
-                missingPatchDetails: missingPatchDetails?.map(({ classification, cveIds, severity, state, title }) => ({
-                    classification: classification ?? '',
-                    cveIds: cveIds ?? '',
-                    severity: severity ?? '',
-                    state: state ?? '',
-                    title: title ?? ''
-                }))
+                securityNonCompliantCount
             })
         );
 
@@ -145,17 +159,8 @@ async function runLinuxOsPatchAssessment(
     });
 
     try {
-        const { Reservations = [] } = await describeInstance(credentialsId, region, {
-            InstanceIds: [ec2InstanceId]
-        });
-        const ec2Name = getResourceNameFromTags(Reservations?.[0]?.Instances?.[0]?.Tags);
-        const instanceDetails = [{ ec2InstanceId, ec2InstanceName: ec2Name || 'Unknown' }];
-
         const instanceIds = [ec2InstanceId];
-
-        const ec2InstanceNameMap = new Map(
-            instanceDetails.map(({ ec2InstanceId: id, ec2InstanceName }) => [id, ec2InstanceName])
-        );
+        const ec2InstanceNameMap = await buildEc2InstanceNameMap(credentialsId, region, instanceIds);
 
         await checkIfLinuxRepoReachable(accountId, credentialsId, region, databaseHostId, ec2InstanceId);
 
@@ -174,45 +179,22 @@ async function runLinuxOsPatchAssessment(
             return false;
         });
 
-        const response = await getInstancesPatchStatus(credentialsId, region, instanceIds, DatabaseTypes.ORACLE);
+        const assessments = await getInstancesPatchStatus(
+            credentialsId,
+            region,
+            instanceIds,
+            DatabaseTypes.ORACLE,
+            ec2InstanceNameMap
+        );
 
-        if (!response) {
+        if (isEmpty(assessments)) {
             throw new Error(
                 `Host OS patch assessment failed for instance ${ec2InstanceId}: ` +
                     'Unable to retrieve patch status after the baseline scan completed.'
             );
         }
 
-        const hostOsPatchAssessment = response?.map(
-            ({
-                BaselineId: baselineId,
-                CriticalNonCompliantCount: criticalNonCompliantCount,
-                OtherNonCompliantCount: otherNonCompliantCount,
-                InstanceId: instanceId,
-                OperationStartTime: operationStartTime,
-                OperationEndTime: operationEndTime,
-                SecurityNonCompliantCount: securityNonCompliantCount,
-                missingPatchDetails
-            }) => ({
-                baselineId: baselineId ?? '',
-                criticalNonCompliantCount: criticalNonCompliantCount ?? 0,
-                otherNonCompliantCount: otherNonCompliantCount ?? 0,
-                ec2InstanceId: instanceId ?? '',
-                ec2InstanceName: ec2InstanceNameMap.get(instanceId ?? '') || 'Unknown',
-                operationStartTime: operationStartTime ? new Date(operationStartTime).getTime() : 0,
-                operationEndTime: operationEndTime ? new Date(operationEndTime).getTime() : 0,
-                securityNonCompliantCount: securityNonCompliantCount ?? 0,
-                missingPatchDetails: missingPatchDetails?.map(patch => ({
-                    classification: patch.classification,
-                    cveIds: patch.kbId || patch.cveIds || '',
-                    severity: patch.severity,
-                    state: patch.state,
-                    title: patch.title
-                }))
-            })
-        );
-
-        return hostOsPatchAssessment;
+        return assessments.map(assessment => omit(assessment, 'missingPatchDetails'));
     } catch (error) {
         logger.error('Error while running Linux OS patch assessment', { error });
         throw error instanceof Error ? error : new Error(`${error}`);
@@ -282,4 +264,75 @@ async function managedHostOsPatchAssessment(
     return { hostOsPatchAssessment, errorMessage };
 }
 
-export { calculateHostOsPatchDrift, managedHostOsPatchAssessment };
+async function fetchOracleHostOsPatchWithMissingPatches(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    ec2InstanceId: string
+): Promise<HostOsPatchScanResponseType | ErrorResponseType> {
+    logger.info('Getting full host OS patch assessment for Oracle', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        ec2InstanceId
+    });
+
+    try {
+        const ec2InstanceNameMap = await buildEc2InstanceNameMap(credentialsId, region, [ec2InstanceId]);
+
+        const assessments = await getInstancesPatchStatus(
+            credentialsId,
+            region,
+            [ec2InstanceId],
+            DatabaseTypes.ORACLE,
+            ec2InstanceNameMap
+        );
+
+        if (isEmpty(assessments)) {
+            throw new Error('Unable to retrieve patch status for the Oracle database host');
+        }
+
+        updatePatchBaselineStatusForHost(
+            accountId,
+            databaseHostId,
+            assessments.map(assessment => omit(assessment, 'missingPatchDetails'))
+        );
+
+        const isNotOptimized = assessments.some(
+            ({ criticalNonCompliantCount, securityNonCompliantCount }) =>
+                criticalNonCompliantCount > 0 || securityNonCompliantCount > 0
+        );
+
+        return {
+            status: isNotOptimized ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
+            ec2InstancesToPatch: assessments.map(assessment => ({
+                ec2InstanceId: assessment.ec2InstanceId,
+                missingPatchDetails: (assessment.missingPatchDetails ?? []).map(
+                    ({ classification = '', state = '', title = '', kbId = '', cveIds = '', severity = '' }) => ({
+                        classification,
+                        cveIds: kbId || cveIds,
+                        state,
+                        title,
+                        severity
+                    })
+                )
+            }))
+        };
+    } catch (error) {
+        logger.error('Error while running patch scan for Oracle database host', {
+            accountId,
+            databaseHostId,
+            ec2InstanceId,
+            error
+        });
+        return {
+            errorMessage: `Unable to retrieve patch status for the Oracle database host: ${
+                error instanceof Error ? error.message : String(error)
+            }`
+        };
+    }
+}
+
+export { calculateHostOsPatchDrift, fetchOracleHostOsPatchWithMissingPatches, managedHostOsPatchAssessment };

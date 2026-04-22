@@ -87,6 +87,8 @@ const OptimizationResponse = {
     404: { type: 'object', properties: { message: { type: 'string' } } }
 };
 
+const HttpErrorResponse = Type.Object({ message: Type.String() });
+
 export {
     GenericHeaders,
     GenericHeadersType,
@@ -103,5 +105,6 @@ export {
     CredentialsIdParamsType,
     JobIdResponse,
     JobIdResponseType,
-    OptimizationResponse
+    OptimizationResponse,
+    HttpErrorResponse
 };

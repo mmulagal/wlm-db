@@ -1,5 +1,7 @@
+import { Type } from '@fastify/type-provider-typebox';
+
 import { RouteTags } from '../../utils/consts';
-import { AccountIdParams, CredentialsIdParams, JobIdResponse } from '../types/generic.types';
+import { AccountIdParams, CredentialsIdParams, HttpErrorResponse, JobIdResponse } from '../types/generic.types';
 import {
     DatabaseHostInstanceSummaryParams,
     DatabaseHostOptionalInstanceSummaryParams,
@@ -9,7 +11,8 @@ import {
 import {
     ContinuousOptimizationQueryString,
     OracleContinuousOptimizationQueryString,
-    AssessmentQueryStringPerAccount
+    AssessmentQueryStringPerAccount,
+    ErrorResponse
 } from '../types/continuous-optimization.types';
 import {
     OptimizeStorageRequestBody,
@@ -28,7 +31,9 @@ import {
     BulkDismissConfigurationRequestBody,
     BulkDismissConfigurationResponse,
     BulkOptimizeHASharedStorageBody,
-    BulkOptimizeBackupRequestBody
+    BulkOptimizeBackupRequestBody,
+    HostOsPatchScanResponse,
+    MssqlPatchScanField
 } from '../types/mssql-continuous-optimisation.types';
 import { resourceRequest } from './database-hosts-schemas';
 
@@ -311,6 +316,27 @@ const BulkOptimizeMTUAlignmentSchema = {
     body: BulkOptimizeMTURequestBody
 };
 
+const MssqlPatchScanQueryString = Type.Object({
+    field: MssqlPatchScanField
+});
+
+const FetchMssqlPatchScanSchema = {
+    ...resourceRequest,
+    summary: 'Run an on-demand patch scan for an MSSQL database instance',
+    description:
+        'Gather the database instance details and run the patch scan for the requested category. ' +
+        'Currently supports: host-os-patch.',
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    querystring: MssqlPatchScanQueryString,
+    tags: [RouteTags.MSSQL_ASSESSMENT],
+    response: {
+        200: Type.Union([HostOsPatchScanResponse, ErrorResponse]),
+        400: HttpErrorResponse,
+        404: HttpErrorResponse,
+        500: HttpErrorResponse
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
@@ -337,5 +363,6 @@ export {
     BulkOptimizeSQLServerServiceSchema,
     BulkOptimizeMTUAlignmentSchema,
     BulkDismissOracleConfigurationSchema,
-    TriggerOracleDriftAssessmentSchema
+    TriggerOracleDriftAssessmentSchema,
+    FetchMssqlPatchScanSchema
 };

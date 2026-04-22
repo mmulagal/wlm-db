@@ -41,7 +41,11 @@ import {
 } from '../../../utils/continous-optimization-consts';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import { calculateComputeDrift, managedHostsComputeAssessment } from '../compute-assessment-operations';
-import { calculateHostOsPatchDrift, managedHostOsPatchAssessment } from './hostOsPatch-assessment-operations';
+import {
+    calculateHostOsPatchDrift,
+    fetchMssqlHostOsPatchWithMissingPatches,
+    managedHostOsPatchAssessment
+} from './hostOsPatch-assessment-operations';
 import { calculateLicenseDrift, managedHostsLicenseAssessment } from './license-assessment-operations';
 import { calculateMSSQLPatchDrift, managedHostMSSQLPatchAssessment } from './mssqlPatch-assessment-operations';
 import { calculateRssConfigDrift, managedHostsRssConfigAssessment } from './rssConfig-assessment-operations';
@@ -81,7 +85,8 @@ import {
     MSSQLDriftAssessmentResponseType,
     StorageParameterDriftResponseType,
     DriftAssessmentResponsePerHostType,
-    MSSQLDriftAssessmentResponse
+    MSSQLDriftAssessmentResponse,
+    MssqlPatchScanFieldType
 } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { handleGetMssqlAssessmentForDemo } from '../../demo-operations';
@@ -1484,12 +1489,60 @@ async function updateAssessmentResultsInInstanceMetadata(managedInstance: Databa
     }
 }
 
+async function fetchMssqlPatchScan(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    field: MssqlPatchScanFieldType
+) {
+    logger.info('Running MSSQL patch scan', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        field
+    });
+
+    const instanceDetail = (await getInstanceInfo(
+        accountId,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId
+    )) as DatabaseInstance;
+    const {
+        resource: { metadata: resourceMetadata }
+    } = instanceDetail;
+    const { node1InstanceId, node2InstanceId } = resourceMetadata as Metadata;
+    const isPartOfCluster = !!node2InstanceId;
+
+    switch (field) {
+        case AssessmentCategories.HOST_OS_PATCH:
+            return fetchMssqlHostOsPatchWithMissingPatches(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                node1InstanceId,
+                isPartOfCluster
+            );
+        default: {
+            const errorMessage = `Unsupported patch-scan field: ${field as string}`;
+            logger.error(errorMessage, { accountId, databaseHostId, databaseInstanceId, field });
+            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+        }
+    }
+}
+
 export {
     triggerMssqlAssessment,
     onDemandTriggerMssqlDriftAssessment,
     fetchMssqlDriftAssessment,
     fetchMssqlDriftAssessmentPerHost,
     fetchMssqlDriftAssessmentPerAccount,
+    fetchMssqlPatchScan,
     updateAssessmentResultsInInstanceMetadata,
     triggerMssqlAssessmentAfterOptimization
 };

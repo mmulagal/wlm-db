@@ -45,7 +45,11 @@ import {
     initiateComputeHostLevelAssessmentCollection,
     initiateComputeInstanceLevelAssessmentCollection
 } from './compute-assessment-operations';
-import { calculateHostOsPatchDrift, managedHostOsPatchAssessment } from './hostOsPatch-assessment-operations';
+import {
+    calculateHostOsPatchDrift,
+    fetchOracleHostOsPatchWithMissingPatches,
+    managedHostOsPatchAssessment
+} from './hostOsPatch-assessment-operations';
 import {
     initiateOracleAWSBackupAssessment,
     getOracleAwsBackupDriftData
@@ -68,6 +72,7 @@ import {
     HostOsPatchDriftResponseType,
     OracleDriftAssessmentResponse,
     OracleDriftAssessmentResponseType,
+    OraclePatchScanFieldType,
     StorageParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoMockdata';
@@ -1272,12 +1277,58 @@ async function fetchOracleDriftAssessmentPerAccount(
     } as DriftAssessmentResponsePerAccountType;
 }
 
+async function fetchOraclePatchScan(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    field: OraclePatchScanFieldType
+) {
+    logger.info('Running Oracle patch scan', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        field
+    });
+
+    const instanceDetail = (await getInstanceInfo(
+        accountId,
+        credentialsId,
+        databaseHostId,
+        databaseInstanceId
+    )) as DatabaseInstance;
+    const {
+        resource: { metadata: resourceMetadata }
+    } = instanceDetail;
+    const { node1InstanceId: ec2InstanceId } = resourceMetadata as Metadata;
+
+    switch (field) {
+        case AssessmentCategoriesOracle.HOST_OS_PATCH:
+            return fetchOracleHostOsPatchWithMissingPatches(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                ec2InstanceId
+            );
+        default: {
+            const errorMessage = `Unsupported patch-scan field: ${field as string}`;
+            logger.error(errorMessage, { accountId, databaseHostId, databaseInstanceId, field });
+            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+        }
+    }
+}
+
 export {
     triggerOracleAssessment,
     onDemandTriggerOracleDriftAssessment,
     fetchOracleDriftAssessment,
     fetchOracleDriftAssessmentPerHost,
     fetchOracleDriftAssessmentPerAccount,
+    fetchOraclePatchScan,
     initiateInstanceLevelAssessmentDataCollection,
     triggerOracleAssessmentAfterOptimization
 };

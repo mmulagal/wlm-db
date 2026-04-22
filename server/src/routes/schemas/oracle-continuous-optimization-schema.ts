@@ -1,19 +1,24 @@
+import { Type } from '@fastify/type-provider-typebox';
+
 import { RouteTags } from '../../utils/consts';
 import { DatabaseHostOptionalInstanceSummaryParams, DatabaseHostSummaryParams } from '../types/database-hosts.types';
 
 import {
+    ErrorResponse,
     OracleAssessmentQueryStringPerAccount,
     OracleContinuousOptimizationQueryString
 } from '../types/continuous-optimization.types';
 import {
     DriftAssessmentResponsePerAccount,
     DriftAssessmentResponsePerHost,
+    HostOsPatchScanResponse,
     OptimizeRequestBody,
     OptimizeStorageRequestBody,
+    OraclePatchScanField,
     OracleDriftAssessmentResponse
 } from '../types/oracle-continuous-optimization.types';
 import { resourceRequest } from './database-hosts-schemas';
-import { AccountIdParams, CredentialsIdParams, OptimizationResponse } from '../types/generic.types';
+import { AccountIdParams, CredentialsIdParams, HttpErrorResponse, OptimizationResponse } from '../types/generic.types';
 
 const DriftAssessmentDataCollection = {
     ...resourceRequest,
@@ -24,6 +29,27 @@ const DriftAssessmentDataCollection = {
     querystring: OracleContinuousOptimizationQueryString,
     response: {
         200: OracleDriftAssessmentResponse
+    }
+};
+
+const OraclePatchScanQueryString = Type.Object({
+    field: OraclePatchScanField
+});
+
+const FetchOraclePatchScanSchema = {
+    ...resourceRequest,
+    summary: 'Run an on-demand patch scan for an Oracle database instance',
+    description:
+        'Gather the database instance details and run the patch scan for the requested category. ' +
+        'Currently supports: host-os-patch.',
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    querystring: OraclePatchScanQueryString,
+    tags: [RouteTags.ORACLE_ASSESSMENT],
+    response: {
+        200: Type.Union([HostOsPatchScanResponse, ErrorResponse]),
+        400: HttpErrorResponse,
+        404: HttpErrorResponse,
+        500: HttpErrorResponse
     }
 };
 
@@ -90,5 +116,6 @@ export {
     OracleOptimizeStorageSchema,
     OracleOptimizeStorageConfigurationSchema,
     OracleOptimizeStorageLayoutSchema,
-    OracleOptimizeSchema
+    OracleOptimizeSchema,
+    FetchOraclePatchScanSchema
 };

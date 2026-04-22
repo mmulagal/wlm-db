@@ -4,6 +4,7 @@ import { sleep } from '../../utils/utils';
 import { executeSSMDocumentMultipleInstances } from './ssm-operations';
 import { describeInstancePatchStates, describeInstancePatches } from '../../lib/aws/ssm';
 import { DatabaseTypes } from '../../utils/consts';
+import { HostOsPatchAssessmentObject } from '../../utils/common-types';
 
 const logger = getLogger();
 const MAX_PATCH_DETAILS_RETRY_ATTEMPTS = 3;
@@ -131,25 +132,22 @@ async function getInstancesPatchStatus(
     credentialsId: string,
     region: string,
     instanceIds: string[],
-    databaseType: DatabaseTypes
-) {
+    databaseType: DatabaseTypes,
+    ec2InstanceNameMap?: Map<string, string>
+): Promise<HostOsPatchAssessmentObject[]> {
     logger.info('Get Instance Patch Status', { credentialsId, region, instanceIds, databaseType });
 
     try {
-        let response;
-        const params = {
-            InstanceIds: instanceIds
-        };
-        const { InstancePatchStates: instancePatchStates } = await describeInstancePatchStates(
+        const { InstancePatchStates: instancePatchStates = [] } = await describeInstancePatchStates(
             credentialsId,
             region,
-            params
+            { InstanceIds: instanceIds }
         );
 
         let isNotOptimized = false;
         const expectedPatchCountByInstanceId = new Map<string, number>();
 
-        (instancePatchStates || []).forEach(
+        instancePatchStates.forEach(
             ({
                 InstanceId,
                 CriticalNonCompliantCount = 0,
@@ -166,6 +164,11 @@ async function getInstancesPatchStatus(
                 }
             }
         );
+
+        const missingPatchDetailsByInstance = new Map<
+            string,
+            NonNullable<HostOsPatchAssessmentObject['missingPatchDetails']>
+        >();
         if (isNotOptimized) {
             const instanceMissingPatchDetails = await fetchPatchDetailsWithRetry(
                 credentialsId,
@@ -174,36 +177,44 @@ async function getInstancesPatchStatus(
                 databaseType,
                 expectedPatchCountByInstanceId
             );
-            response = instanceMissingPatchDetails?.map(({ instanceId, missingPatches }) => {
-                const instancePatchState = instancePatchStates?.find(({ InstanceId }) => InstanceId === instanceId);
-                return {
-                    ...instancePatchState,
-                    missingPatchDetails: missingPatches?.map(
+            instanceMissingPatchDetails?.forEach(({ instanceId, missingPatches }) => {
+                missingPatchDetailsByInstance.set(
+                    instanceId,
+                    (missingPatches ?? []).map(
                         ({
-                            Classification: classification,
-                            Severity: severity,
-                            State: state,
-                            Title: title,
-                            KBId: kbId,
-                            CVEIds: cveIds
-                        }) => ({
-                            classification,
-                            severity,
-                            state,
-                            title,
-                            kbId,
-                            cveIds
-                        })
+                            Classification: classification = '',
+                            Severity: severity = '',
+                            State: state = '',
+                            Title: title = '',
+                            KBId: kbId = '',
+                            CVEIds: cveIds = ''
+                        }) => ({ classification, kbId, cveIds, severity, state, title })
                     )
-                };
+                );
             });
-        } else {
-            response = instancePatchStates?.map(instancePatchState => ({
-                ...instancePatchState,
-                missingPatchDetails: []
-            }));
         }
-        return response;
+
+        return instancePatchStates.map(
+            ({
+                BaselineId: baselineId,
+                CriticalNonCompliantCount: criticalNonCompliantCount,
+                OtherNonCompliantCount: otherNonCompliantCount,
+                InstanceId: instanceId,
+                OperationStartTime: operationStartTime,
+                OperationEndTime: operationEndTime,
+                SecurityNonCompliantCount: securityNonCompliantCount
+            }) => ({
+                baselineId: baselineId ?? '',
+                criticalNonCompliantCount: criticalNonCompliantCount ?? 0,
+                otherNonCompliantCount: otherNonCompliantCount ?? 0,
+                ec2InstanceId: instanceId ?? '',
+                ec2InstanceName: ec2InstanceNameMap?.get(instanceId ?? '') || 'Unknown',
+                operationStartTime: operationStartTime ? new Date(operationStartTime).getTime() : 0,
+                operationEndTime: operationEndTime ? new Date(operationEndTime).getTime() : 0,
+                securityNonCompliantCount: securityNonCompliantCount ?? 0,
+                missingPatchDetails: missingPatchDetailsByInstance.get(instanceId ?? '') ?? []
+            })
+        );
     } catch (error) {
         const errorMessage = `Failed to run get instance patch status. Reason: ${error}`;
         logger.error(errorMessage);

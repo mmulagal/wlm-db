@@ -10,12 +10,14 @@ import {
     fetchOracleDriftAssessment,
     fetchOracleDriftAssessmentPerAccount,
     fetchOracleDriftAssessmentPerHost,
+    fetchOraclePatchScan,
     onDemandTriggerOracleDriftAssessment
 } from '../operations/continuous-optimization/oracle/assessment-operations';
 import {
     DriftAssessmentDataCollection,
     DriftAssessmentPerAccount,
     DriftAssessmentPerHost,
+    FetchOraclePatchScanSchema,
     OracleOptimizeSchema,
     OracleOptimizeStorageConfigurationSchema,
     OracleOptimizeStorageLayoutSchema
@@ -87,6 +89,25 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
                     databaseHostId,
                     databaseInstanceId,
                     fields
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment/patch-scan`,
+            { schema: FetchOraclePatchScanSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
+                    query: { field }
+                } = castRequest(request);
+                const response = await fetchOraclePatchScan(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    field
                 );
                 return reply.send(response);
             }

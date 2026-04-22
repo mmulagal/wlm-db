@@ -31,7 +31,8 @@ import {
     BulkOptimizeSQLServerServiceSchema,
     BulkOptimizeClusterQuorumSchema,
     BulkOptimizeHeartbeatSchema,
-    BulkOptimizeMTUAlignmentSchema
+    BulkOptimizeMTUAlignmentSchema,
+    FetchMssqlPatchScanSchema
 } from './schemas/mssql-continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -61,6 +62,7 @@ import {
     fetchMssqlDriftAssessment,
     fetchMssqlDriftAssessmentPerAccount,
     fetchMssqlDriftAssessmentPerHost,
+    fetchMssqlPatchScan,
     onDemandTriggerMssqlDriftAssessment
 } from '../operations/continuous-optimization/mssql/assessment-operations';
 import {
@@ -131,6 +133,25 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                     databaseInstanceId,
                     AssessmentTriggeredBy.USER,
                     fields
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment/patch-scan`,
+            { schema: FetchMssqlPatchScanSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
+                    query: { field }
+                } = castRequest(request);
+                const response = await fetchMssqlPatchScan(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    field
                 );
                 return reply.send(response);
             }

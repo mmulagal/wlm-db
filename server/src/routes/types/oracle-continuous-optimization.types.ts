@@ -1,5 +1,6 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import {
+    AssessmentCategoriesOracle,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
     OptimizeOracleiSCSIStorageOperatingSystem,
@@ -65,24 +66,37 @@ const HostOsPatchDriftResponse = Type.Intersect([
                     ec2InstanceName: Type.Optional(Type.String()),
                     operationStartTime: Type.Number(),
                     operationEndTime: Type.Number(),
-                    securityNonCompliantCount: Type.Number(),
-                    missingPatchDetails: Type.Optional(
-                        Type.Array(
-                            Type.Object({
-                                classification: Type.String(),
-                                cveIds: Type.String(),
-                                severity: Type.String(),
-                                state: Type.String(),
-                                title: Type.String()
-                            })
-                        )
-                    )
+                    securityNonCompliantCount: Type.Number()
                 })
             )
         )
     })
 ]);
 type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
+
+const HostOsPatchMissingPatch = Type.Object({
+    classification: Type.String(),
+    cveIds: Type.String(),
+    state: Type.String(),
+    title: Type.String(),
+    severity: Type.String()
+});
+
+const HostOsPatchScanInstance = Type.Object({
+    ec2InstanceId: Type.String(),
+    missingPatchDetails: Type.Array(HostOsPatchMissingPatch)
+});
+
+const HostOsPatchScanResponse = Type.Object({
+    status: Type.Enum(AssessmentStatus),
+    ec2InstancesToPatch: Type.Array(HostOsPatchScanInstance)
+});
+type HostOsPatchScanResponseType = Static<typeof HostOsPatchScanResponse>;
+
+const OraclePatchScanField = Type.Union([Type.Literal(AssessmentCategoriesOracle.HOST_OS_PATCH)], {
+    description: `Assessment category to calculate on demand. Allowed values: ${AssessmentCategoriesOracle.HOST_OS_PATCH}.`
+});
+type OraclePatchScanFieldType = Static<typeof OraclePatchScanField>;
 
 const OracleSecurityPatchDriftResponse = Type.Intersect([
     OracleGenericParameterDriftResponse,
@@ -239,6 +253,10 @@ export {
     StorageParameterDriftResponseType,
     HostOsPatchDriftResponse,
     HostOsPatchDriftResponseType,
+    HostOsPatchScanResponse,
+    HostOsPatchScanResponseType,
+    OraclePatchScanField,
+    OraclePatchScanFieldType,
     OracleSecurityPatchDriftResponse,
     OracleSecurityPatchDriftResponseType,
     OracleCloneDriftResponse,

@@ -1,5 +1,7 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import {
+    AssessmentCategories,
+    AssessmentStatus,
     DISMISS_STATUS_ENUM,
     OPTIMIZE_RESILIENCY_CONFIGS,
     OPTIMIZE_SIZING_CONFIGS,
@@ -177,24 +179,37 @@ const HostOsPatchDriftResponse = Type.Intersect([
                     ec2InstanceName: Type.Optional(Type.String()),
                     operationStartTime: Type.Number(),
                     operationEndTime: Type.Number(),
-                    securityNonCompliantCount: Type.Number(),
-                    missingPatchDetails: Type.Optional(
-                        Type.Array(
-                            Type.Object({
-                                classification: Type.String(),
-                                kbId: Type.String(),
-                                severity: Type.Optional(Type.String()),
-                                state: Type.String(),
-                                title: Type.String()
-                            })
-                        )
-                    )
+                    securityNonCompliantCount: Type.Number()
                 })
             )
         )
     })
 ]);
 type HostOsPatchDriftResponseType = Static<typeof HostOsPatchDriftResponse>;
+
+const HostOsPatchMissingPatch = Type.Object({
+    classification: Type.String(),
+    kbId: Type.String(),
+    severity: Type.String(),
+    state: Type.String(),
+    title: Type.String()
+});
+
+const HostOsPatchScanInstance = Type.Object({
+    ec2InstanceId: Type.String(),
+    missingPatchDetails: Type.Array(HostOsPatchMissingPatch)
+});
+
+const HostOsPatchScanResponse = Type.Object({
+    status: Type.Enum(AssessmentStatus),
+    ec2InstancesToPatch: Type.Array(HostOsPatchScanInstance)
+});
+type HostOsPatchScanResponseType = Static<typeof HostOsPatchScanResponse>;
+
+const MssqlPatchScanField = Type.Union([Type.Literal(AssessmentCategories.HOST_OS_PATCH)], {
+    description: `Assessment category to calculate on demand. Allowed values: ${AssessmentCategories.HOST_OS_PATCH}.`
+});
+type MssqlPatchScanFieldType = Static<typeof MssqlPatchScanField>;
 
 const MSSQLPatchDriftResponse = Type.Intersect([
     GenericParameterDriftResponse,
@@ -605,7 +620,10 @@ export {
     MSSQLDriftAssessmentResponseType,
     ComputeDriftResponseType,
     LicenseDriftResponseType,
+    HostOsPatchDriftResponse,
     HostOsPatchDriftResponseType,
+    HostOsPatchScanResponse,
+    HostOsPatchScanResponseType,
     RssConfigDriftResponseType,
     MtuAlignmentDriftResponseType,
     ParameterDriftResponse,
@@ -673,5 +691,7 @@ export {
     OptimizeHASharedStorageRequestBody,
     BulkOptimizeHASharedStorageRequestBodyType,
     BulkOptimizeMTUPerHostRequestBodyType,
-    BulkOptimizeBackupPerHostRequestBodyType
+    BulkOptimizeBackupPerHostRequestBodyType,
+    MssqlPatchScanField,
+    MssqlPatchScanFieldType
 };
