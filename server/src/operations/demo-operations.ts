@@ -16,7 +16,7 @@ import {
     DEMO_STANDALONE_SQL_SERVER_ID,
     STORAGE_PROTOCOLS
 } from '../utils/consts';
-import { checkAccount, createResource, upsertDatabaseInstance } from '../lib/database/db';
+import { checkAccount, createResource, updateResource, upsertDatabaseInstance } from '../lib/database/db';
 import {
     Metadata,
     Sandbox,
@@ -1118,6 +1118,14 @@ async function createAssessmentDataForOracle(
         },
         DatabaseTypes.ORACLE
     );
+
+    await updateResource({
+        accountId,
+        credentialsId,
+        region,
+        resourceId,
+        updatedAssessmentData: mockOracleHostOsPatchAssessmentData as ResourceAssessmentData
+    });
 }
 
 function prepareDemoSandboxMetadata(

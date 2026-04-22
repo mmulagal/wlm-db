@@ -988,6 +988,10 @@ ssmMock
     .resolves(getSampleCommandResponse('oracleStorageAssessment'))
     .on(SendCommandCommand, params => params.Comment === 'Get OS Configuration Assessment for Oracle instance')
     .resolves(getSampleCommandResponse('oracleStorageAssessment'))
+    .on(SendCommandCommand, params => params.Comment === 'Compute host OS assessment (THP, TCP)')
+    .resolves(getSampleCommandResponse('computeHostOsAssessment'))
+    .on(SendCommandCommand, params => params.Comment === 'Compute Oracle params assessment (filesystemio, multiblock)')
+    .resolves(getSampleCommandResponse('computeOracleParamsAssessment'))
     .on(SendCommandCommand, params => params.Comment?.startsWith('Oracle security patch assessment for'))
     .resolves(getSampleCommandResponse('oracleSecurityPatchAssessment'))
     .on(SendCommandCommand, params => {
@@ -1648,6 +1652,24 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'oracleStorageAssessment',
             JSON.stringify(getCommandInvocationResponse.getOracleStorageAssessmentData)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-computeHostOsAssessment'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'computeHostOsAssessment',
+            JSON.stringify(getCommandInvocationResponse.getComputeHostOsAssessmentData)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-computeOracleParamsAssessment'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'computeOracleParamsAssessment',
+            JSON.stringify(getCommandInvocationResponse.getComputeOracleParamsAssessmentData)
         )
     )
     .on(GetCommandInvocationCommand, {
