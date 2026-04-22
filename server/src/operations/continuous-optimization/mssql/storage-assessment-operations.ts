@@ -818,17 +818,24 @@ async function calculateStorageDrift(
 
         databasesInViolation = [...new Set(databasesInViolation)];
 
-        const dataViolationDetails: GenericViolationResponseType[] = databasesInViolation.map(dbName => {
-            const db = dataLogVolumeDetails.find(d => d.name === dbName);
-            return {
-                objectName: 'placement',
-                value: dbName,
-                objectType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
-                additionalInfo: {
-                    lunPath: db?.lunPath,
-                    driveLetter: db?.driveLetter
-                }
-            };
+        const dataViolationDetails: GenericViolationResponseType[] = databasesInViolation.flatMap(dbName => {
+            const dbs = dataLogVolumeDetails.filter(d => d.name === dbName);
+            const seen = new Set<string>();
+            return dbs
+                .filter(db => {
+                    const key = `${db.lunPath}|${db.driveLetter}`;
+                    if (seen.has(key)) {
+                        return false;
+                    }
+                    seen.add(key);
+                    return true;
+                })
+                .map(db => ({
+                    objectName: 'placement',
+                    value: dbName,
+                    objectType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+                    additionalInfo: { lunPath: db.lunPath, driveLetter: db.driveLetter }
+                }));
         });
 
         const logViolationDetails: GenericViolationResponseType[] = databasesInViolation.map(dbName => {

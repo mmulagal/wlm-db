@@ -379,6 +379,7 @@ export const offlineAssessmentDemoSTD = {
                                 ontapVolumeUuid: 'b8fc4031-06f2-11f1-a170-7143fc0c8c33',
                                 ontapVolumeName: 'wlmdb_sqltemp_1770775096801',
                                 lunUuid: '1071ce88-0a92-42d3-bd95-20bed179e67c',
+                                lunPath: '/vol/wlmdb_sqltemp_1770775096801/tempdb',
                                 diskSerialNumber: 'lWB0t?Ze3zn3',
                                 diskNumber: 3,
                                 svmName: 'wlmdb_sqlsvm_1770775096801'
