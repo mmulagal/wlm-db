@@ -1372,10 +1372,14 @@ const InventoryApisV3 = () => {
         const noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
             instancesList?.forEach((ec2InstanceIdComb: any) => {
-                if (
-                    runningInstanceListRef.current.includes(ec2InstanceIdComb) ||
-                    mssqlInstancesDataRef.current?.[ec2InstanceIdComb]
-                ) {
+                const existingEntry = mssqlInstancesDataRef.current?.[ec2InstanceIdComb];
+                // Skip only if the API is currently in flight, or a completed entry already exists.
+                // If a stale entry is still in loading state (e.g. previous in-flight call was dropped
+                // because of a cred/region switch), we must retry so the flag eventually flips to false.
+                if (runningInstanceListRef.current.includes(ec2InstanceIdComb)) {
+                    return;
+                }
+                if (existingEntry && !existingEntry.loading) {
                     return;
                 }
                 mssqlInstancesDataLoad[ec2InstanceIdComb] = {
@@ -1405,7 +1409,11 @@ const InventoryApisV3 = () => {
         const noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
             instancesList.forEach((ec2InstanceIdComb: any) => {
+                const existingEntry = pgsqlInstancesDataRef.current?.[ec2InstanceIdComb];
                 if (runningPgsqlInstanceListRef.current.includes(ec2InstanceIdComb)) {
+                    return;
+                }
+                if (existingEntry && !existingEntry.loading) {
                     return;
                 }
                 pgsqlInstancesDataLoad[ec2InstanceIdComb] = {
@@ -1434,7 +1442,11 @@ const InventoryApisV3 = () => {
         const noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
             instancesList.forEach((ec2InstanceIdComb: any) => {
+                const existingEntry = oracleInstancesDataRef.current?.[ec2InstanceIdComb];
                 if (runningOracleInstanceListRef.current.includes(ec2InstanceIdComb)) {
+                    return;
+                }
+                if (existingEntry && !existingEntry.loading) {
                     return;
                 }
                 oracleInstancesDataLoad[ec2InstanceIdComb] = {
@@ -1886,10 +1898,14 @@ const InventoryApisV3 = () => {
         const noRunningList: Array<string> = [];
         if (instancesListComb && instancesListComb.length > 0) {
             instancesListComb.forEach((ec2InstanceIdComb: any) => {
-                if (
-                    runningPerfInstanceListRef.current.includes(ec2InstanceIdComb) ||
-                    perfMssqlInstancesDataRef.current?.[ec2InstanceIdComb]
-                ) {
+                const existingEntry = perfMssqlInstancesDataRef.current?.[ec2InstanceIdComb];
+                // Skip only if the API is currently in flight, or a completed entry already exists.
+                // Stale loading entries (left over from a dropped in-flight call) must be retried so
+                // the perf loading flag can eventually flip to false.
+                if (runningPerfInstanceListRef.current.includes(ec2InstanceIdComb)) {
+                    return;
+                }
+                if (existingEntry && !existingEntry.loading) {
                     return;
                 }
                 mssqlInstancesDataLoad[ec2InstanceIdComb] = {
@@ -2058,10 +2074,14 @@ const InventoryApisV3 = () => {
                 !potentialSavingsHostDataRef.current?.[uniqueHostRow(id, credId, rowRegionId)]?.isProtected
             ) {
                 const isEbsProtected = checkIfEbsProtected(row, null);
+                // Only keep the entry in loading state if we can actually classify protection and
+                // schedule the storage savings API; otherwise flip loading to false so the
+                // HeaderComponent's pendingQueries gate doesn't stay stuck forever waiting on an
+                // API that will never be called.
                 instanceData[uniqueHostRow(id, credId, rowRegionId)] = {
                     error: null,
                     data: null,
-                    loading: true,
+                    loading: !!isEbsProtected,
                     storageType,
                     isProtected: isEbsProtected
                 };

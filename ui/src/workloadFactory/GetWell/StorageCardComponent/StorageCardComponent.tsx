@@ -191,7 +191,8 @@ const StorageCardComponent = ({
         if (cardData?.id === 'tempdb-drive-size') {
             return (
                 cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
-                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED
+                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED &&
+                cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
         if (cardData?.id === 'log-drive-size') {
@@ -206,15 +207,7 @@ const StorageCardComponent = ({
 
     const disableOptimizeButtonTooltip = useMemo(() => {
         if (
-            cardData?.id === 'tempdb-drive-size' &&
-            (cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED ||
-                (cardData?.sizingViolations?.overProvisionedDrives?.length &&
-                    !cardData?.sizingViolations?.underProvisionedDrives?.length))
-        ) {
-            return GENERAL.TEMPDB_DRIVE_OVER_PROVISIONED_ERROR;
-        }
-        if (
-            (cardData?.id === 'tempdb-drive-size' || cardData?.id === 'headroom') &&
+            cardData?.id === 'headroom' &&
             cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED &&
             !cardData?.sizingViolations?.underProvisionedDrives?.length &&
             cardData?.sizingViolations?.ignoredDrives?.length

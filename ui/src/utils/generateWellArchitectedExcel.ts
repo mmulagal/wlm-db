@@ -1122,7 +1122,7 @@ const createFileLocationData = (config: AssessmentItem, details: any[]) => {
 
         details.push({
             'Configuration name': 'Database name',
-            Status: 'Drive',
+            Status: 'Drive name',
             Severity: 'LUN path'
         });
 
@@ -1873,7 +1873,8 @@ const applySpecialConfigurationStyling = (
         styleImpactedResourcesHeader(worksheet, impactedResourcesRowIndex, 1);
         styleFilterHeaders(worksheet, filterHeaderRowIndex, 1);
     } else if (FILE_LOCATION_CONFIGS.includes(configName)) {
-        const hasMultipleColumns = configDetails[4] && configDetails[4].Status && configDetails[4].Status === 'Drive';
+        const hasMultipleColumns =
+            configDetails[4] && configDetails[4].Status && configDetails[4].Status === 'Drive name';
         if (hasMultipleColumns) {
             worksheet.mergeCells(`A${impactedResourcesRowIndex}:C${impactedResourcesRowIndex}`);
             styleTableBorders(worksheet, impactedResourcesRowIndex, violationTableEndRow, 1, 3);
@@ -2013,7 +2014,8 @@ const addConfigurationAutoFilter = (
 
     // File location configs (tempdb/data/log files placement)
     if (FILE_LOCATION_CONFIGS.includes(configName)) {
-        const hasMultipleColumns = configDetails[4] && configDetails[4].Status && configDetails[4].Status === 'Drive';
+        const hasMultipleColumns =
+            configDetails[4] && configDetails[4].Status && configDetails[4].Status === 'Drive name';
         if (hasMultipleColumns) {
             worksheet.autoFilter = {
                 from: `A${filterHeaderRowIndex}`,

@@ -195,7 +195,7 @@ const getMssqlImpactedResources = (
             if (details.length > 0 && details.some(d => d.additionalInfo)) {
                 const columns = [
                     t('databases.well-architect.database-name'),
-                    t('databases.well-architect.drive'),
+                    t('databases.well-architect.drive-name'),
                     t('databases.well-architect.lun-path')
                 ];
                 const grouped = new Map<string, { drives: string[]; lunPaths: string[] }>();

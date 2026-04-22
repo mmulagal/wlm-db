@@ -56,7 +56,7 @@ const DataFilesOptimizeTable = ({ type, data, lastColDetails, isWad = false }: a
         ...(hasViolationDetails
             ? [
                   {
-                      Header: t('databases.well-architect.drive'),
+                      Header: t('databases.well-architect.drive-name'),
                       accessor: 'drive',
                       id: '2',
                       isSortable: false,

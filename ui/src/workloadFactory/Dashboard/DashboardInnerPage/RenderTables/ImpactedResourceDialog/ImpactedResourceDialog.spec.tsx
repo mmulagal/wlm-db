@@ -80,7 +80,7 @@ describe('ImpactedResourceDialog', () => {
         };
         render(<ImpactedResourceDialog data={data as any} />);
         expect(screen.getByText('databases.well-architect.database-name')).toBeTruthy();
-        expect(screen.getByText('databases.well-architect.drive')).toBeTruthy();
+        expect(screen.getByText('databases.well-architect.drive-name')).toBeTruthy();
         expect(screen.getByText('databases.well-architect.lun-path')).toBeTruthy();
         expect(screen.getByText('testdb')).toBeTruthy();
     });
@@ -106,7 +106,7 @@ describe('ImpactedResourceDialog', () => {
         };
         render(<ImpactedResourceDialog data={data as any} />);
         expect(screen.getByText('databases.well-architect.database-name')).toBeTruthy();
-        expect(screen.getByText('databases.well-architect.drive')).toBeTruthy();
+        expect(screen.getByText('databases.well-architect.drive-name')).toBeTruthy();
         expect(screen.getByText('databases.well-architect.lun-path')).toBeTruthy();
         expect(screen.getByText('tempdb')).toBeTruthy();
     });

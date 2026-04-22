@@ -56,7 +56,7 @@ const TempDbFilesOptimizeTable = ({ type, data, lastColDetails, isWad = false }:
         ...(hasViolationDetails
             ? [
                   {
-                      Header: t('databases.well-architect.drive'),
+                      Header: t('databases.well-architect.drive-name'),
                       accessor: 'drive',
                       id: '2',
                       isSortable: false,
