@@ -152,6 +152,7 @@ model database_instances {
   @@index([credentials_id], map: "k_wlmdb_database_instances_credentials_id")
   @@index([resource_id], map: "k_wlmdb_database_instances_resource_id")
   @@index([database_instance_name], map: "k_wlmdb_database_instances_database_instance_name")
+  @@index([fsxn_ids], map: "k_wlmdb_database_instances_fsxn_ids")
   logs_analysis_reports logs_analysis_reports[] @relation(map: "k_wlmdb_database_instances_unique_criteria_logs_analysis_reports")
 }
 
@@ -189,6 +190,7 @@ model database_instance_config_data{
   @@index([account_id], name: "k_wlmdb_database_instance_config_data_account_id")
   @@index([credentials_id], map: "k_wlmdb_database_instance_config_data_credentials_id")
   @@index([resource_id], map: "k_wlmdb_database_instance_config_data_resource_id")
+  @@index([account_id, config_data_type], map: "k_wlmdb_db_inst_cfg_acct_id_cfg_type")
 }
 
 model onprem_tco_reports {

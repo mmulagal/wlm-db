@@ -72,7 +72,6 @@ async function getDatabaseVolumes(accountId: string, pageSize = 500, nextToken?:
         ...(nextToken && { nextToken }),
         select: { config_data: true, id: true, database_instances: { select: { fsxn_ids: true } } },
         filters: {
-            config_data: { not: {} },
             ...(!isEmpty(fileSystemIds) && {
                 database_instances: {
                     fsxn_ids: { in: fileSystemIds }
