@@ -15,11 +15,13 @@ vi.mock('react-redux', async () => {
 // Mock API hooks
 const mockResourceDetailsApi = vi.fn();
 const mockDatabaseListApi = vi.fn();
+const mockOfflineMssqlDatabasesByInstanceApi = vi.fn();
 const mockGenerateDiagramAPI = vi.fn();
 
 vi.mock('../../../utils/apiService', () => ({
     useLazyGetResourceDetailsV2Query: () => [mockResourceDetailsApi],
     useLazyGetDatabaseListV2Query: () => [mockDatabaseListApi],
+    useLazyGetOfflineMssqlAssessmentDatabasesByInstanceQuery: () => [mockOfflineMssqlDatabasesByInstanceApi],
     useGenerateDiagramMutation: () => [mockGenerateDiagramAPI]
 }));
 
@@ -79,6 +81,9 @@ describe('DatabaseHostOverviewApiV2', () => {
         });
         mockDatabaseListApi.mockResolvedValue({
             data: { items: [{ name: 'db1' }] }
+        });
+        mockOfflineMssqlDatabasesByInstanceApi.mockResolvedValue({
+            data: { items: [] }
         });
         mockGenerateDiagramAPI.mockResolvedValue(new Blob(['svg'], { type: 'image/svg+xml' }));
     });

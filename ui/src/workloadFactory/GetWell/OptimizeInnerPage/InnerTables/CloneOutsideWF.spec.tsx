@@ -29,7 +29,8 @@ vi.mock('../../../../store/workloadFactory/databaseHomeSlice', () => ({
 
 vi.mock('../../../../utils/consts', () => ({
     ASSESSMENT_CONFIG_NAMES: { CLONE_MANAGEMENT: 'CloneManagement' },
-    WLF_TABS: { DASHBOARD: 'DASHBOARD' }
+    WLF_TABS: { DASHBOARD: 'DASHBOARD' },
+    DBType: { MSSQL: 'MSSQL', ORACLE: 'ORACLE' }
 }));
 
 vi.mock('../../GetWellUtils', () => ({

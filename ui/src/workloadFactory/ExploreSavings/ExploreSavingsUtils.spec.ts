@@ -97,11 +97,13 @@ vi.mock('../../store/workloadFactory/exploreSavingsSlice', () => ({
         payload: val
     })),
     setSavingsCalculatorFrom: vi.fn((val: any) => ({ type: 'setSavingsCalculatorFrom', payload: val })),
+    setSelectedCloneRefresh: vi.fn((val: any) => ({ type: 'setSelectedCloneRefresh', payload: val })),
     setSelectedEsPageInstance: vi.fn((val: any) => ({ type: 'setSelectedEsPageInstance', payload: val })),
     setSelectedHostDetails: vi.fn((val: any) => ({ type: 'setSelectedHostDetails', payload: val })),
     setSelectedOnPremHostDetails: vi.fn((val: any) => ({ type: 'setSelectedOnPremHostDetails', payload: val })),
     setSelectedOnPremHostId: vi.fn((val: any) => ({ type: 'setSelectedOnPremHostId', payload: val })),
-    setSelectedServerName: vi.fn((val: any) => ({ type: 'setSelectedServerName', payload: val }))
+    setSelectedServerName: vi.fn((val: any) => ({ type: 'setSelectedServerName', payload: val })),
+    setSelectedSnapshotFrequency: vi.fn((val: any) => ({ type: 'setSelectedSnapshotFrequency', payload: val }))
 }));
 
 vi.mock('../../store/workloadFactory/inventoryV2Slice', () => ({
@@ -135,6 +137,11 @@ vi.mock('../../utils/consts', () => ({
     GIB_IN_BYTE: 1073741824,
     READINESS_TYPES: ['assessment', 'dbcreation', 'sandbox', 'remediation'],
     REQUIRED_SQL_PERMISSIONS: ['VIEW ANY DEFINITION', 'VIEW SERVER STATE', 'CONNECT SQL'],
+    SNAPSHOT_FREQUENCY: [
+        { value: 'hourly', label: 'Hourly' },
+        { value: 'weekly', label: 'Weekly' },
+        { value: 'daily', label: 'Daily' }
+    ],
     SAVINGS_CALC_MODE: {
         MANUAL_EBS: 'Manual_EBS',
         AUTO_EBS: 'Auto_EBS',

@@ -53,6 +53,9 @@ const OracleEbsSavingsCalculatorApi = () => {
     const [getOracleBulkViewCalculationsApi] = useGetOracleBulkViewCalculationsMutation();
     const [getOracleInstanceDataApi] = useGetOracleInstanceDataMutation();
     const resourceDetailsFetchedRef = useRef<string | null>(null);
+    // Tracks whether this is the initial mount so useEffect #1 (parameter watcher)
+    // skips its first run and does not duplicate the fetch already triggered by useEffect #2.
+    const isMountedRef = useRef(false);
 
     const getCredAndRegionFromBulk = () => {
         const firstHost = selectedRowsForExploreSavingsOracleEbsBulk[0];
@@ -77,6 +80,11 @@ const OracleEbsSavingsCalculatorApi = () => {
 
         const hosts = buildHostsFromBulkSelection();
         if (hosts.length === 0) return;
+
+        // Guard: Don't make API call if required parameters are missing
+        if (!selectedSnapshotFrequency?.value || !selectedCloneRefresh?.value) {
+            return;
+        }
 
         const { credentialId, regionId } = getCredAndRegionFromBulk();
 
@@ -119,6 +127,11 @@ const OracleEbsSavingsCalculatorApi = () => {
 
         const hosts = buildHostsFromBulkSelection();
         if (hosts.length === 0) return;
+
+        // Guard: Don't make API call if required parameters are missing
+        if (!selectedSnapshotFrequency?.value || !selectedCloneRefresh?.value) {
+            return;
+        }
 
         const { credentialId, regionId } = getCredAndRegionFromBulk();
 
@@ -250,23 +263,37 @@ const OracleEbsSavingsCalculatorApi = () => {
     /**
      * useEffect #1: Parameter Changes Watcher
      *
-     * Purpose: Automatically recalculates savings when calculation parameters change
+     * Purpose: Automatically recalculates savings when calculation parameters change.
      *
-     * This effect handles CONTINUOUS RECALCULATION as users adjust parameters.
-     * It only calls triggerRefreshApi() without fetching resource details since
-     * host metadata (Oracle edition, EBS info) doesn't change with parameter adjustments.
+     * Skips the very first run (isMountedRef guard) to avoid duplicating the fetch
+     * that useEffect #2 already performs on initial host selection. This also prevents
+     * spurious calls when returning from the View Calculations page (component remount).
+     *
+     * Uses primitive `.value` dependencies instead of full option objects so that
+     * re-dispatches of the same logical value (different object reference, same string)
+     * from SavingsSelection do not trigger redundant API calls.
      */
     useEffect(() => {
+        if (!isMountedRef.current) {
+            isMountedRef.current = true;
+            return;
+        }
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) {
             triggerRefreshApi();
         }
-    }, [selectedSnapshotFrequency, numberOfClonedCopies, monthlyChangeRate, selectedCloneRefresh, selectedInstanceId]);
+    }, [
+        selectedSnapshotFrequency?.value,
+        numberOfClonedCopies,
+        monthlyChangeRate,
+        selectedCloneRefresh?.value,
+        selectedInstanceId
+    ]);
 
     /**
      * useEffect #2: Host Selection Watcher
      *
-     * Purpose: Handles initial data fetch when host selection changes (single or bulk)
-     * This effect handles INITIAL/SELECTION-BASED CALCULATION when host list changes.
+     * Purpose: Handles initial data fetch when host selection changes (single or bulk).
+     * This is the authoritative trigger for the first API call after a host is selected.
      */
     useEffect(() => {
         if (

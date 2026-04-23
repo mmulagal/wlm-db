@@ -106,22 +106,44 @@ describe('OracleAccordionUtils', () => {
 
         // ---- Bulk mode (hostName provided) ----
 
-        it('should find compute entry matching hostName (bulk mode)', () => {
+        it('should find compute entry matching hostname in bulk mode (Oracle EBS)', () => {
             const response = {
                 compute: [
-                    { resourceName: 'host-1', recommended: { instanceType: 'm5.large' } },
-                    { resourceName: 'host-2', recommended: { instanceType: 'r5.xlarge' } }
+                    {
+                        hostname: 'ip-10-0-141-134.ap-south-1.compute.internal',
+                        recommended: { instanceType: 'm5.large' }
+                    },
+                    {
+                        hostname: 'ip-10-0-141-135.ap-south-1.compute.internal',
+                        recommended: { instanceType: 'r5.xlarge' }
+                    }
                 ]
             };
-            const result = generateOracleInstanceData(response, {}, 'host-2');
+            const result = generateOracleInstanceData(response, {}, 'ip-10-0-141-135.ap-south-1.compute.internal');
+            expect(result.instanceType).toBe('r5.xlarge');
+        });
+
+        it('should find compute entry matching resourceName in bulk mode (Oracle On-Prem)', () => {
+            const response = {
+                compute: [
+                    { resourceName: 'oracle-host-1', recommended: { instanceType: 'm5.large' } },
+                    { resourceName: 'oracle-host-2', recommended: { instanceType: 'r5.xlarge' } }
+                ]
+            };
+            const result = generateOracleInstanceData(response, {}, 'oracle-host-2');
             expect(result.instanceType).toBe('r5.xlarge');
         });
 
         it('should return empty instanceType when hostName does not match any compute entry', () => {
             const response = {
-                compute: [{ resourceName: 'host-1', recommended: { instanceType: 'm5.large' } }]
+                compute: [
+                    {
+                        hostname: 'ip-10-0-141-134.ap-south-1.compute.internal',
+                        recommended: { instanceType: 'm5.large' }
+                    }
+                ]
             };
-            const result = generateOracleInstanceData(response, {}, 'host-999');
+            const result = generateOracleInstanceData(response, {}, 'ip-99-99-99-99.compute.internal');
             expect(result.instanceType).toBe('');
         });
 

@@ -165,13 +165,11 @@ const InstanceInformation = ({ host }: { host?: any }) => {
 
             // Build table data for Instance Information section
             if (isOracleEbs) {
-                // Oracle EBS: Single database edition, single deployment model
-                const oracleEdition =
-                    currentHost?.databaseInstanceDetails?.[0]?.oracleEdition ||
-                    currentHost?.oracleEdition ||
-                    t('databases.general.not-available');
+                // Oracle EBS: oracleEdition is fetched separately via resource-details API
+                // and stored at the host level by OracleEbsSavingsCalculatorApi
+                const oracleEdition = currentHost?.oracleEdition || t('databases.general.not-available');
 
-                // Oracle ec2Details may not have instanceType; fall back to host-level ec2InstanceType
+                // Oracle ec2Details may not have instanceType; fall back to host-level ec2InstanceType or compute data
                 const instanceTypeValue = (() => {
                     if (instanceTypelist?.length > 0 && instanceTypelist[0]) {
                         return instanceTypelist.join(', ');
@@ -179,6 +177,17 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                     if (currentHost?.ec2InstanceType) {
                         return currentHost.ec2InstanceType;
                     }
+                    // For Oracle EBS bulk mode, compute is an array - find matching host by hostname
+                    if (isArrayMode && storageSavingsResponse) {
+                        const computeArray = Array.isArray(storageSavingsResponse?.compute)
+                            ? storageSavingsResponse.compute
+                            : [storageSavingsResponse?.compute].filter(Boolean);
+                        const hostCompute = computeArray.find((item: any) => item.hostname === hostName);
+                        if (hostCompute?.existing?.instanceType) {
+                            return hostCompute.existing.instanceType;
+                        }
+                    }
+                    // Fallback for single object format
                     if (storageSavingsResponse?.compute?.existing?.instanceType) {
                         return storageSavingsResponse.compute.existing.instanceType;
                     }

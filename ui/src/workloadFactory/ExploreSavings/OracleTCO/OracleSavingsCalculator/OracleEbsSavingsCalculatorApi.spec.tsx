@@ -55,7 +55,7 @@ const makeBulkState = (overrides: any = {}) => ({
     bulkAuthCredentials: {},
     rowsRequiringAuthBulk: [],
     bulkAuthStatus: {},
-    triggerBulkDataFetch: false,
+    triggerBulkDataFetch: true,
     ...overrides
 });
 
@@ -338,11 +338,8 @@ describe('OracleEbsSavingsCalculatorApi', () => {
                 }
             );
 
-            // useEffect #1 will fire (parameter changes watcher), but not useEffect #2
-            await waitFor(() => {
-                expect(mockGetOracleBulkStorageSavings).toHaveBeenCalled();
-            });
-            // Resource details should NOT be called from useEffect #2
+            await new Promise(r => setTimeout(r, 50));
+            expect(mockGetOracleBulkStorageSavings).not.toHaveBeenCalled();
             expect(mockGetOracleInstanceData).not.toHaveBeenCalled();
         });
     });

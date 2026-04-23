@@ -125,15 +125,15 @@
     },
     "compute": [
         {
-            "resourceName": "oracle-ebs-standalone1",
+            "hostname": "ip-10-0-141-134.ap-south-1.compute.internal",
             "existing": {
-                "instanceType": "m5.xlarge",
+                "instanceType": "m5.large",
                 "computeMonthlyPrice": 140.16,
                 "windowsOsVersion": "Oracle Linux",
                 "finding": "NOT_OPTIMIZED",
                 "machineDetails": [
                     {
-                        "instanceType": "m5.xlarge",
+                        "instanceType": "m5.large",
                         "price": 0.192,
                         "hoursInMonth": 730,
                         "basePrice": 0.192,
@@ -145,12 +145,12 @@
                 ]
             },
             "recommended": {
-                "instanceType": "m7i-flex.xlarge",
+                "instanceType": "m7i-flex.large",
                 "computeMonthlyPrice": 130.52,
                 "windowsOsVersion": "Oracle Linux",
                 "machineDetails": [
                     {
-                        "instanceType": "m7i-flex.xlarge",
+                        "instanceType": "m7i-flex.large",
                         "price": 0.17879,
                         "hoursInMonth": 730,
                         "basePrice": 0.17879,
@@ -162,7 +162,7 @@
                 ],
                 "recommendationOptions": [
                     {
-                        "instanceType": "m7i-flex.xlarge",
+                        "instanceType": "m7i-flex.large",
                         "price": 0.17879,
                         "hoursInMonth": 730,
                         "basePrice": 0.17879,
@@ -171,7 +171,7 @@
                         "licenseMonthlyPrice": 0
                     },
                     {
-                        "instanceType": "m6i.xlarge",
+                        "instanceType": "m6i.large",
                         "price": 0.192,
                         "hoursInMonth": 730,
                         "basePrice": 0.192,
@@ -183,98 +183,196 @@
             }
         },
         {
-            "resourceName": "oracle-ebs-standalone2",
+            "hostname": "ip-10-0-141-135.ap-south-1.compute.internal",
             "existing": {
-                "instanceType": "m5.2xlarge",
-                "computeMonthlyPrice": 280.32,
+                "instanceType": "m5.large",
+                "computeMonthlyPrice": 140.16,
                 "windowsOsVersion": "Oracle Linux",
                 "finding": "NOT_OPTIMIZED",
                 "machineDetails": [
                     {
-                        "instanceType": "m5.2xlarge",
-                        "price": 0.384,
+                        "instanceType": "m5.large",
+                        "price": 0.192,
                         "hoursInMonth": 730,
-                        "basePrice": 0.384,
-                        "instanceMonthlyPrice": 280.32,
-                        "computeMonthlyPrice": 280.32,
+                        "basePrice": 0.192,
+                        "instanceMonthlyPrice": 140.16,
+                        "computeMonthlyPrice": 140.16,
                         "licenseIncluded": false,
                         "licenseMonthlyPrice": 0
                     }
                 ]
             },
             "recommended": {
-                "instanceType": "m7i-flex.2xlarge",
-                "computeMonthlyPrice": 261.04,
+                "instanceType": "m7i-flex.large",
+                "computeMonthlyPrice": 130.52,
                 "windowsOsVersion": "Oracle Linux",
                 "machineDetails": [
                     {
-                        "instanceType": "m7i-flex.2xlarge",
-                        "price": 0.35758,
+                        "instanceType": "m7i-flex.large",
+                        "price": 0.17879,
                         "hoursInMonth": 730,
-                        "basePrice": 0.35758,
-                        "instanceMonthlyPrice": 261.04,
-                        "computeMonthlyPrice": 261.04,
+                        "basePrice": 0.17879,
+                        "instanceMonthlyPrice": 130.52,
+                        "computeMonthlyPrice": 130.52,
                         "licenseIncluded": false,
                         "licenseMonthlyPrice": 0
                     }
                 ],
                 "recommendationOptions": [
                     {
-                        "instanceType": "m7i-flex.2xlarge",
-                        "price": 0.35758,
+                        "instanceType": "m7i-flex.large",
+                        "price": 0.17879,
                         "hoursInMonth": 730,
-                        "basePrice": 0.35758,
-                        "instanceMonthlyPrice": 261.04,
-                        "computeMonthlyPrice": 261.04,
+                        "basePrice": 0.17879,
+                        "instanceMonthlyPrice": 130.52,
+                        "computeMonthlyPrice": 130.52,
                         "licenseMonthlyPrice": 0
                     }
                 ]
             }
         },
         {
-            "resourceName": "oracle-ebs-standalone3",
+            "hostname": "ip-10-0-142-10.ap-south-1.compute.internal",
             "existing": {
-                "instanceType": "r5.xlarge",
-                "computeMonthlyPrice": 182.5,
+                "instanceType": "m5.large",
+                "computeMonthlyPrice": 140.16,
                 "windowsOsVersion": "Oracle Linux",
                 "finding": "NOT_OPTIMIZED",
                 "machineDetails": [
                     {
-                        "instanceType": "r5.xlarge",
-                        "price": 0.25,
+                        "instanceType": "m5.large",
+                        "price": 0.192,
                         "hoursInMonth": 730,
-                        "basePrice": 0.25,
-                        "instanceMonthlyPrice": 182.5,
-                        "computeMonthlyPrice": 182.5,
+                        "basePrice": 0.192,
+                        "instanceMonthlyPrice": 140.16,
+                        "computeMonthlyPrice": 140.16,
                         "licenseIncluded": false,
                         "licenseMonthlyPrice": 0
                     }
                 ]
             },
             "recommended": {
-                "instanceType": "r7i.xlarge",
-                "computeMonthlyPrice": 170.82,
+                "instanceType": "m7i-flex.large",
+                "computeMonthlyPrice": 130.52,
                 "windowsOsVersion": "Oracle Linux",
                 "machineDetails": [
                     {
-                        "instanceType": "r7i.xlarge",
-                        "price": 0.2341,
+                        "instanceType": "m7i-flex.large",
+                        "price": 0.17879,
                         "hoursInMonth": 730,
-                        "basePrice": 0.2341,
-                        "instanceMonthlyPrice": 170.82,
-                        "computeMonthlyPrice": 170.82,
+                        "basePrice": 0.17879,
+                        "instanceMonthlyPrice": 130.52,
+                        "computeMonthlyPrice": 130.52,
                         "licenseIncluded": false,
                         "licenseMonthlyPrice": 0
                     }
                 ],
                 "recommendationOptions": [
                     {
-                        "instanceType": "r7i.xlarge",
-                        "price": 0.2341,
+                        "instanceType": "m7i-flex.large",
+                        "price": 0.17879,
                         "hoursInMonth": 730,
-                        "basePrice": 0.2341,
-                        "instanceMonthlyPrice": 170.82,
-                        "computeMonthlyPrice": 170.82,
+                        "basePrice": 0.17879,
+                        "instanceMonthlyPrice": 130.52,
+                        "computeMonthlyPrice": 130.52,
+                        "licenseMonthlyPrice": 0
+                    }
+                ]
+            }
+        },
+        {
+            "hostname": "ip-10-0-142-11.ap-south-1.compute.internal",
+            "existing": {
+                "instanceType": "m5.large",
+                "computeMonthlyPrice": 140.16,
+                "windowsOsVersion": "Oracle Linux",
+                "finding": "NOT_OPTIMIZED",
+                "machineDetails": [
+                    {
+                        "instanceType": "m5.large",
+                        "price": 0.192,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.192,
+                        "instanceMonthlyPrice": 140.16,
+                        "computeMonthlyPrice": 140.16,
+                        "licenseIncluded": false,
+                        "licenseMonthlyPrice": 0
+                    }
+                ]
+            },
+            "recommended": {
+                "instanceType": "m7i-flex.large",
+                "computeMonthlyPrice": 130.52,
+                "windowsOsVersion": "Oracle Linux",
+                "machineDetails": [
+                    {
+                        "instanceType": "m7i-flex.large",
+                        "price": 0.17879,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.17879,
+                        "instanceMonthlyPrice": 130.52,
+                        "computeMonthlyPrice": 130.52,
+                        "licenseIncluded": false,
+                        "licenseMonthlyPrice": 0
+                    }
+                ],
+                "recommendationOptions": [
+                    {
+                        "instanceType": "m7i-flex.large",
+                        "price": 0.17879,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.17879,
+                        "instanceMonthlyPrice": 130.52,
+                        "computeMonthlyPrice": 130.52,
+                        "licenseMonthlyPrice": 0
+                    }
+                ]
+            }
+        },
+        {
+            "hostname": "ip-10-0-141-200.ap-south-1.compute.internal",
+            "existing": {
+                "instanceType": "m5.large",
+                "computeMonthlyPrice": 140.16,
+                "windowsOsVersion": "Oracle Linux",
+                "finding": "NOT_OPTIMIZED",
+                "machineDetails": [
+                    {
+                        "instanceType": "m5.large",
+                        "price": 0.192,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.192,
+                        "instanceMonthlyPrice": 140.16,
+                        "computeMonthlyPrice": 140.16,
+                        "licenseIncluded": false,
+                        "licenseMonthlyPrice": 0
+                    }
+                ]
+            },
+            "recommended": {
+                "instanceType": "m7i-flex.large",
+                "computeMonthlyPrice": 130.52,
+                "windowsOsVersion": "Oracle Linux",
+                "machineDetails": [
+                    {
+                        "instanceType": "m7i-flex.large",
+                        "price": 0.17879,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.17879,
+                        "instanceMonthlyPrice": 130.52,
+                        "computeMonthlyPrice": 130.52,
+                        "licenseIncluded": false,
+                        "licenseMonthlyPrice": 0
+                    }
+                ],
+                "recommendationOptions": [
+                    {
+                        "instanceType": "m7i-flex.large",
+                        "price": 0.17879,
+                        "hoursInMonth": 730,
+                        "basePrice": 0.17879,
+                        "instanceMonthlyPrice": 130.52,
+                        "computeMonthlyPrice": 130.52,
                         "licenseMonthlyPrice": 0
                     }
                 ]

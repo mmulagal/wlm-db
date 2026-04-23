@@ -114,6 +114,10 @@ vi.mock('../../../store/workloadFactory/exploreSavingsBulkSlice', () => ({
     setSelectedRowsForExploreSavingsOracleOnPremBulk: (val: any) => ({
         type: 'bulk/setSelectedOracleOnPremRows',
         payload: val
+    }),
+    setSelectedRowsForExploreSavingsOracleEbsBulk: (val: any) => ({
+        type: 'bulk/setSelectedOracleEbsRows',
+        payload: val
     })
 }));
 
@@ -132,6 +136,8 @@ const createMockStore = (overrides: Record<string, any> = {}) => {
         savingsCalculatorFrom: SAVINGS_CALC_MODE.MANUAL_EBS,
         selectedRowsForExploreSavingsEBSBulk: [],
         selectedRowsForExploreSavingsOnPremBulk: [],
+        selectedRowsForExploreSavingsOracleOnPremBulk: [],
+        selectedRowsForExploreSavingsOracleEbsBulk: [],
         ...overrides
     };
     return configureStore({
@@ -143,7 +149,9 @@ const createMockStore = (overrides: Record<string, any> = {}) => {
             }),
             exploreSavingsBulk: () => ({
                 selectedRowsForExploreSavingsEBSBulk: defaults.selectedRowsForExploreSavingsEBSBulk,
-                selectedRowsForExploreSavingsOnPremBulk: defaults.selectedRowsForExploreSavingsOnPremBulk
+                selectedRowsForExploreSavingsOnPremBulk: defaults.selectedRowsForExploreSavingsOnPremBulk,
+                selectedRowsForExploreSavingsOracleOnPremBulk: defaults.selectedRowsForExploreSavingsOracleOnPremBulk,
+                selectedRowsForExploreSavingsOracleEbsBulk: defaults.selectedRowsForExploreSavingsOracleEbsBulk
             })
         }
     });

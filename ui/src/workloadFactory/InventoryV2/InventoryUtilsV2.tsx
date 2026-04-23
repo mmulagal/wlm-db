@@ -2586,6 +2586,7 @@ export const updateInventoryDatawithInstancesRes = (
             estimatedUsageCost: instanceRow?.data?.estimatedUsageCost,
             totalCost: getTotalCost(instanceRow?.data?.estimatedUsageCost || {}),
             sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
+            oracleEdition: instanceRow?.data?.oracleEdition || inventoryRow?.oracleEdition,
             serverInstallationMode: !inventoryRow?.serverInstallationMode
                 ? getInstallationMode(instanceRow?.data)
                 : inventoryRow?.serverInstallationMode,
@@ -2639,6 +2640,7 @@ export const updateInventoryDatawithInstancesRes = (
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                 hasInstanceData: true,
                 sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
+                oracleEdition: instanceRow?.data?.oracleEdition || inventoryRow?.oracleEdition,
                 sqlServerInstances: updateSqlServerInstancesForBothNodes(
                     instanceRow?.data,
                     partnerInstanceData?.data,
@@ -2663,6 +2665,7 @@ export const updateInventoryDatawithInstancesRes = (
                 allocatedCapacityText: allocatedCapacity ? formatSizeTwoPrecision(allocatedCapacity) : '',
                 hasInstanceData: false,
                 sqlLicenseIncluded: instanceRow?.data?.sqlLicenseIncluded,
+                oracleEdition: instanceRow?.data?.oracleEdition || inventoryRow?.oracleEdition,
                 sqlServerInstances: updateSqlServerInstancesForUnmanaged(
                     instanceRow?.data,
                     inventoryRow,
@@ -4079,6 +4082,7 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
     let azList = '';
     let deploymentType = '';
 
+    // Handle MSSQL structure: deploymentTypes is outside storage
     for (const instance of rowData?.sqlServerInstances || []) {
         for (const deployment of instance?.deploymentTypes || []) {
             if (deployment?.zones) {
@@ -4093,6 +4097,26 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
         }
         if (azList || deploymentType) {
             break;
+        }
+    }
+
+    // Handle Oracle structure: deploymentType is inside storage array
+    if (!deploymentType) {
+        for (const instance of rowData?.databaseInstanceDetails || []) {
+            for (const storage of instance?.storage || []) {
+                if (storage?.zones) {
+                    azList = storage.zones.join(',');
+                }
+                if (storage?.deploymentType) {
+                    deploymentType = storage.deploymentType;
+                }
+                if (azList || deploymentType) {
+                    break;
+                }
+            }
+            if (azList || deploymentType) {
+                break;
+            }
         }
     }
 

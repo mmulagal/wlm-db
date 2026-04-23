@@ -534,7 +534,11 @@ const TCOBulkAccordion = () => {
                                 </div>
                             )}
                             id={String(host.id || index + 1)}
-                            title={<div className={CommonStyles.title}>{host.name || `Host ${index + 1}`}</div>}
+                            title={
+                                <div className={isOracleEbs ? styles.hostTitle : CommonStyles.title}>
+                                    {host.name || `Host ${index + 1}`}
+                                </div>
+                            }
                             RightWidget={() => (
                                 <div className={styles.rightWidgetButton}>
                                     <DsButton

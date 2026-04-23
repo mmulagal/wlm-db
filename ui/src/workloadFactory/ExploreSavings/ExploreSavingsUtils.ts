@@ -6,14 +6,15 @@ import store from '../../store/store';
 import {
     resetServerDetailsCredentials,
     setDisableState,
-    setMonthlyChangeRate,
     setOnPremStorageAndComputeInfoFull,
     setSavingsCalculatorFrom,
+    setSelectedCloneRefresh,
     setSelectedEsPageInstance,
     setSelectedHostDetails,
     setSelectedOnPremHostDetails,
     setSelectedOnPremHostId,
-    setSelectedServerName
+    setSelectedServerName,
+    setSelectedSnapshotFrequency
 } from '../../store/workloadFactory/exploreSavingsSlice';
 import { setInventoryTableData, setSelectedHeaderTab } from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
@@ -25,6 +26,7 @@ import {
     READINESS_TYPES,
     REQUIRED_SQL_PERMISSIONS,
     SAVINGS_CALC_MODE,
+    SNAPSHOT_FREQUENCY,
     SQL_DEPLOYMENT_MODE,
     WLF_TABS
 } from '../../utils/consts';
@@ -278,6 +280,12 @@ export const onClickESHostOracleEbs = (
     );
 
     setESInstanceData(rowData, dispatch);
+
+    // Initialize dropdown values BEFORE triggering data fetch
+    // This prevents API calls with null/undefined required parameters
+    dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[2])); // Daily
+    dispatch(setSelectedCloneRefresh({ value: 'Daily', label: 'Daily' })); // Daily
+
     dispatch(setTriggerBulkDataFetch(true));
     dispatch(setSelectedServerName(bulkServerName || rowData?.name || rowData?.ec2InstanceName));
 };

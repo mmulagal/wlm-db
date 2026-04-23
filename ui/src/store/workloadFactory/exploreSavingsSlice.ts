@@ -149,7 +149,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     selectedManualFSXThroughput: 128,
     snapshotLoading: false,
     selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE,
-    selectedOracleExploreSavingsTab: WLF_TABS.ORACLE_SERVER_ON_PREMISES,
+    selectedOracleExploreSavingsTab: WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE,
     onPremStorageAndComputeInfo: {},
     onPremNetworkPerformance: null,
     storageSavingsOnPremResponse: {},

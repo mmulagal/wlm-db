@@ -1,6 +1,543 @@
 {
-    "count": 12,
+    "count": 18,
     "items": [
+        {
+            "ec2InstanceId": "i-12456768",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-node-5717",
+            "ec2HostName": "ip-172-31-48-81.ap-southeast-1.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-0100cefdf732ef9e9",
+                "name": "VPC-5",
+                "cidrBlock": "192.168.16.0/20"
+            },
+            "platform": "Linux/UNIX",
+            "oracleServerDeploymentType": "Standalone",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "pdbebs1",
+                    "instanceId": "pdbebs1",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "3578044225",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-094b644283b4fd16a"
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-02a8c7e5d4b3f12a9",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-node-5718",
+            "ec2HostName": "ip-10-0-141-134.ap-south-1.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-075ecf35aaafc2a4f",
+                "name": "VPC-5",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "platform": "Linux/UNIX",
+            "oracleServerDeploymentType": "Standalone",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "orclstd1",
+                    "instanceId": "orclstd1",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "3578044226",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-0a1b2c3d4e5f00001"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0a1b2c3d4e5f00002"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0a1b2c3d4e5f00003"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0a1b2c3d4e5f00004"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0a1b2c3d4e5f00005"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0a1b2c3d4e5f00006"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0a1b2c3d4e5f00007"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0a1b2c3d4e5f00008"
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-03b9d6f4c5e2a8b71",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-node-5719",
+            "ec2HostName": "ip-10-0-141-135.ap-south-1.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-075ecf35aaafc2a4f",
+                "name": "VPC-5",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "platform": "Linux/UNIX",
+            "oracleServerDeploymentType": "Standalone",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "orclstd2",
+                    "instanceId": "orclstd2",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "3578044227",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-0b2c3d4e5f6a70001"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0b2c3d4e5f6a70002"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0b2c3d4e5f6a70003"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0b2c3d4e5f6a70004"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0b2c3d4e5f6a70005"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0b2c3d4e5f6a70006"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0b2c3d4e5f6a70007"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0b2c3d4e5f6a70008"
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-04c8e5b3d6a9f12c4",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "DATAGUARD-PRIMARY-oracle19c-ebs",
+            "ec2HostName": "ip-10-0-142-10.ap-south-1.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-075ecf35aaafc2a4f",
+                "name": "VPC-5",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "platform": "Linux/UNIX",
+            "oracleServerDeploymentType": "Standalone",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "orclebs_pri",
+                    "instanceId": "orclebs_pri",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "3578044228",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-0c4d5e6f7a8b00001"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0c4d5e6f7a8b00002"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0c4d5e6f7a8b00003"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0c4d5e6f7a8b00004"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0c4d5e6f7a8b00005"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0c4d5e6f7a8b00006"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0c4d5e6f7a8b00007"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0c4d5e6f7a8b00008"
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    },
+                    "isDataGuardDeployed": true,
+                    "dataguardDetails": {
+                        "dbUniqueName": "orclebs_pri",
+                        "dbName": "orclebsdg",
+                        "associatedHosts": [
+                            {
+                                "serviceName": "orclebs_pri",
+                                "hostIp": "10.0.142.10",
+                                "ec2InstanceId": "i-04c8e5b3d6a9f12c4",
+                                "listenerPort": "1521",
+                                "sidName": "orclebs_pri"
+                            },
+                            {
+                                "serviceName": "orclebs_stdby",
+                                "hostIp": "10.0.142.11",
+                                "ec2InstanceId": "i-05d7f6c4e3b8a9d52",
+                                "listenerPort": "1521",
+                                "sidName": "orclebs_stdby"
+                            }
+                        ],
+                        "isPrimaryNode": true
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-05d7f6c4e3b8a9d52",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "DATAGUARD-STANDBY-oracle19c-ebs",
+            "ec2HostName": "ip-10-0-142-11.ap-south-1.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-075ecf35aaafc2a4f",
+                "name": "VPC-5",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "platform": "Linux/UNIX",
+            "oracleServerDeploymentType": "Standalone",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "orclebs_stdby",
+                    "instanceId": "orclebs_stdby",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "3578044228",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-0d5e6f7a8b9c00001"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0d5e6f7a8b9c00002"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0d5e6f7a8b9c00003"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0d5e6f7a8b9c00004"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0d5e6f7a8b9c00005"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0d5e6f7a8b9c00006"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0d5e6f7a8b9c00007"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0d5e6f7a8b9c00008"
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    },
+                    "isDataGuardDeployed": true,
+                    "dataguardDetails": {
+                        "dbUniqueName": "orclebs_stdby",
+                        "dbName": "orclebsdg",
+                        "associatedHosts": [
+                            {
+                                "serviceName": "orclebs_pri",
+                                "hostIp": "10.0.142.10",
+                                "ec2InstanceId": "i-04c8e5b3d6a9f12c4",
+                                "listenerPort": "1521",
+                                "sidName": "orclebs_pri"
+                            },
+                            {
+                                "serviceName": "orclebs_stdby",
+                                "hostIp": "10.0.142.11",
+                                "ec2InstanceId": "i-05d7f6c4e3b8a9d52",
+                                "listenerPort": "1521",
+                                "sidName": "orclebs_stdby"
+                            }
+                        ],
+                        "isPrimaryNode": false
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-06e9a7b5c8d4f3e12",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-node-5720",
+            "ec2HostName": "ip-10-0-141-200.ap-south-1.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-075ecf35aaafc2a4f",
+                "name": "VPC-5",
+                "cidrBlock": "10.0.0.0/16"
+            },
+            "platform": "Linux/UNIX",
+            "oracleServerDeploymentType": "Standalone",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "orclmix_std",
+                    "instanceId": "orclmix_std",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "3578044229",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-0e6f7a8b9c0d00001"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0e6f7a8b9c0d00002"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0e6f7a8b9c0d00003"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0e6f7a8b9c0d00004"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0e6f7a8b9c0d00005"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0e6f7a8b9c0d00006"
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                },
+                {
+                    "instanceName": "orclmix_dg",
+                    "instanceId": "orclmix_dg",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "3578044230",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-0f7a8b9c0d1e00001"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0f7a8b9c0d1e00002"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0f7a8b9c0d1e00003"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0f7a8b9c0d1e00004"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0f7a8b9c0d1e00005"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-0f7a8b9c0d1e00006"
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    },
+                    "isDataGuardDeployed": true,
+                    "dataguardDetails": {
+                        "dbUniqueName": "orclmix_dg",
+                        "dbName": "orclmixdg",
+                        "associatedHosts": [
+                            {
+                                "serviceName": "orclmix_dg",
+                                "hostIp": "10.0.141.200",
+                                "ec2InstanceId": "i-06e9a7b5c8d4f3e12",
+                                "listenerPort": "1521",
+                                "sidName": "orclmix_dg"
+                            }
+                        ],
+                        "isPrimaryNode": true
+                    }
+                }
+            ]
+        },
         {
             "ec2InstanceId": "i-031a1616860f41fe3",
             "ec2InstanceType": "m5.large",

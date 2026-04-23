@@ -130,17 +130,17 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
             selectedRowsForExploreSavingsOnPremBulk &&
             selectedRowsForExploreSavingsOnPremBulk.length > 1;
 
-        // Check for Oracle On-Prem bulk mode
+        // Check for Oracle On-Prem bulk mode (>= 1 to handle single host consistently)
         const isOracleOnPremBulk =
             savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM &&
             selectedRowsForExploreSavingsOracleOnPremBulk &&
-            selectedRowsForExploreSavingsOracleOnPremBulk.length > 1;
+            selectedRowsForExploreSavingsOracleOnPremBulk.length >= 1;
 
-        // Check for Oracle EBS bulk mode
+        // Check for Oracle EBS bulk mode (>= 1 to handle single host consistently)
         const isOracleEbsBulk =
             savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS &&
             selectedRowsForExploreSavingsOracleEbsBulk &&
-            selectedRowsForExploreSavingsOracleEbsBulk.length > 1;
+            selectedRowsForExploreSavingsOracleEbsBulk.length >= 1;
 
         const shouldRender = isEBSBulk || isOnPremBulk || isOracleOnPremBulk || isOracleEbsBulk;
 

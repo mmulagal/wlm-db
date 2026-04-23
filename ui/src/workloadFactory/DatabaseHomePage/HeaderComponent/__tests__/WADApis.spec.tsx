@@ -11,11 +11,14 @@ const {
     mockDispatch,
     mockGetAllOfflineAssessmentAPI,
     mockGetAllOfflineOracleAssessmentAPI,
+    mockGetOfflineMssqlDatabasesAPI,
     mockSetInventoryTableData,
     mockSetOfflineMssqlHostAssessmentLoading,
     mockSetOfflineOracleHostAssessmentLoading,
+    mockSetOfflineMssqlDatabasesLoading,
     mockAddOfflineMssqlHostAssessmentData,
     mockAddOfflineOracleHostAssessmentData,
+    mockAddOfflineMssqlDatabasesData,
     mockAddAllMssqlHostAssessmentData,
     mockAddAllOracleHostAssessmentData,
     mockFormatOfflineAssessmentToInventoryData,
@@ -25,6 +28,7 @@ const {
     mockDispatch: vi.fn(),
     mockGetAllOfflineAssessmentAPI: vi.fn(),
     mockGetAllOfflineOracleAssessmentAPI: vi.fn(),
+    mockGetOfflineMssqlDatabasesAPI: vi.fn(),
     mockSetInventoryTableData: vi.fn((v: any) => ({ type: 'setInventoryTableData', payload: v })),
     mockSetOfflineMssqlHostAssessmentLoading: vi.fn((v: any) => ({
         type: 'setOfflineMssqlHostAssessmentLoading',
@@ -34,12 +38,20 @@ const {
         type: 'setOfflineOracleHostAssessmentLoading',
         payload: v
     })),
+    mockSetOfflineMssqlDatabasesLoading: vi.fn((v: any) => ({
+        type: 'setOfflineMssqlDatabasesLoading',
+        payload: v
+    })),
     mockAddOfflineMssqlHostAssessmentData: vi.fn((v: any) => ({
         type: 'addOfflineMssqlHostAssessmentData',
         payload: v
     })),
     mockAddOfflineOracleHostAssessmentData: vi.fn((v: any) => ({
         type: 'addOfflineOracleHostAssessmentData',
+        payload: v
+    })),
+    mockAddOfflineMssqlDatabasesData: vi.fn((v: any) => ({
+        type: 'addOfflineMssqlDatabasesData',
         payload: v
     })),
     mockAddAllMssqlHostAssessmentData: vi.fn((v: any) => ({
@@ -62,17 +74,20 @@ vi.mock('react-redux', async importOriginal => {
 
 vi.mock('../../../../utils/apiService', () => ({
     useLazyGetAllOfflineMssqlHostsAssessmentDataQuery: vi.fn(() => [mockGetAllOfflineAssessmentAPI]),
-    useLazyGetAllOfflineOracleHostsAssessmentDataQuery: vi.fn(() => [mockGetAllOfflineOracleAssessmentAPI])
+    useLazyGetAllOfflineOracleHostsAssessmentDataQuery: vi.fn(() => [mockGetAllOfflineOracleAssessmentAPI]),
+    useLazyGetOfflineMssqlAssessmentDatabasesQuery: vi.fn(() => [mockGetOfflineMssqlDatabasesAPI])
 }));
 
 vi.mock('../../../../store/workloadFactory/inventoryV2Slice', () => ({
     addOfflineMssqlHostAssessmentData: mockAddOfflineMssqlHostAssessmentData,
     addOfflineOracleHostAssessmentData: mockAddOfflineOracleHostAssessmentData,
+    addOfflineMssqlDatabasesData: mockAddOfflineMssqlDatabasesData,
     addAllMssqlHostAssessmentData: mockAddAllMssqlHostAssessmentData,
     addAllOracleHostAssessmentData: mockAddAllOracleHostAssessmentData,
     setInventoryTableData: mockSetInventoryTableData,
     setOfflineMssqlHostAssessmentLoading: mockSetOfflineMssqlHostAssessmentLoading,
-    setOfflineOracleHostAssessmentLoading: mockSetOfflineOracleHostAssessmentLoading
+    setOfflineOracleHostAssessmentLoading: mockSetOfflineOracleHostAssessmentLoading,
+    setOfflineMssqlDatabasesLoading: mockSetOfflineMssqlDatabasesLoading
 }));
 
 vi.mock('../../../InventoryV2/InventoryUtilsV2', () => ({
@@ -91,7 +106,7 @@ vi.mock('../../../../utils/consts', () => ({
 vi.mock('../../../../store/store', () => ({
     default: {
         getState: vi.fn(() => ({
-            inventoryV2: { inventoryTableData: {} }
+            inventoryV2: { inventoryTableData: {}, offlineMssqlDatabasesData: [] }
         }))
     }
 }));
@@ -110,6 +125,7 @@ const makeStore = (overrides: any = {}) =>
                     inventoryTableData: overrides.inventoryTableData ?? {},
                     offlineMssqlHostAssessmentData: overrides.offlineMssqlHostAssessmentData ?? null,
                     offlineOracleHostAssessmentData: overrides.offlineOracleHostAssessmentData ?? null,
+                    offlineMssqlDatabasesData: overrides.offlineMssqlDatabasesData ?? null,
                     isRefreshed: overrides.isRefreshed ?? false
                 }
             ) => state
@@ -129,6 +145,9 @@ describe('WADApis', () => {
             data: { items: [], nextToken: null }
         });
         mockGetAllOfflineOracleAssessmentAPI.mockResolvedValue({
+            data: { items: [], nextToken: null }
+        });
+        mockGetOfflineMssqlDatabasesAPI.mockResolvedValue({
             data: { items: [], nextToken: null }
         });
     });

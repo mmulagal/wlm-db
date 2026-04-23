@@ -118,8 +118,8 @@ describe('ExploreSavingsOracleTab', () => {
         const { container } = renderComponent({
             selectedOracleExploreSavingsTab: WLF_TABS.ORACLE_SERVER_ON_PREMISES
         });
-        const firstTabDiv = container.firstChild!.childNodes[0] as HTMLElement;
-        expect(firstTabDiv.className).toContain('active');
+        const onPremTabDiv = container.firstChild!.childNodes[1] as HTMLElement;
+        expect(onPremTabDiv.className).toContain('active');
     });
 
     it('should apply activeText class to On-Premises typography when selected', () => {
@@ -127,15 +127,15 @@ describe('ExploreSavingsOracleTab', () => {
             selectedOracleExploreSavingsTab: WLF_TABS.ORACLE_SERVER_ON_PREMISES
         });
         const typographies = container.querySelectorAll('[data-testid="ds-typography"]');
-        expect(typographies[0].className).toContain('activeText');
+        expect(typographies[1].className).toContain('activeText');
     });
 
     it('should not apply active classes to EBS tab div when On-Premises is selected', () => {
         const { container } = renderComponent({
             selectedOracleExploreSavingsTab: WLF_TABS.ORACLE_SERVER_ON_PREMISES
         });
-        const secondTabDiv = container.firstChild!.childNodes[1] as HTMLElement;
-        expect(secondTabDiv.className).not.toContain('active');
+        const ebsTabDiv = container.firstChild!.childNodes[0] as HTMLElement;
+        expect(ebsTabDiv.className).not.toContain('active');
     });
 
     // ---- Active state: EBS selected ----
@@ -144,8 +144,8 @@ describe('ExploreSavingsOracleTab', () => {
         const { container } = renderComponent({
             selectedOracleExploreSavingsTab: WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE
         });
-        const secondTabDiv = container.firstChild!.childNodes[1] as HTMLElement;
-        expect(secondTabDiv.className).toContain('active');
+        const ebsTabDiv = container.firstChild!.childNodes[0] as HTMLElement;
+        expect(ebsTabDiv.className).toContain('active');
     });
 
     it('should apply activeText class to EBS typography when EBS is selected', () => {
@@ -153,15 +153,15 @@ describe('ExploreSavingsOracleTab', () => {
             selectedOracleExploreSavingsTab: WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE
         });
         const typographies = container.querySelectorAll('[data-testid="ds-typography"]');
-        expect(typographies[1].className).toContain('activeText');
+        expect(typographies[0].className).toContain('activeText');
     });
 
     it('should not apply active class to On-Premises tab when EBS is selected', () => {
         const { container } = renderComponent({
             selectedOracleExploreSavingsTab: WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE
         });
-        const firstTabDiv = container.firstChild!.childNodes[0] as HTMLElement;
-        expect(firstTabDiv.className).not.toContain('active');
+        const onPremTabDiv = container.firstChild!.childNodes[1] as HTMLElement;
+        expect(onPremTabDiv.className).not.toContain('active');
     });
 
     it('should not apply activeText to On-Premises typography when EBS selected', () => {
@@ -169,7 +169,7 @@ describe('ExploreSavingsOracleTab', () => {
             selectedOracleExploreSavingsTab: WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE
         });
         const typographies = container.querySelectorAll('[data-testid="ds-typography"]');
-        expect(typographies[0].className).not.toContain('activeText');
+        expect(typographies[1].className).not.toContain('activeText');
     });
 
     it('should dispatch setSelectedOracleExploreSavingsTab when clicking EBS tab', () => {
@@ -198,7 +198,7 @@ describe('ExploreSavingsOracleTab', () => {
         });
         const typographies = container.querySelectorAll('[data-testid="ds-typography"]');
         // When on-prem is selected, EBS tab should NOT have activeText
-        expect(typographies[1].className).not.toContain('activeText');
+        expect(typographies[0].className).not.toContain('activeText');
     });
 
     it('should not apply disabled class to EBS typography when On-Premises is selected', () => {
@@ -207,7 +207,7 @@ describe('ExploreSavingsOracleTab', () => {
         });
         const typographies = container.querySelectorAll('[data-testid="ds-typography"]');
         // EBS tab typography should not have headerDisabled anymore
-        expect(typographies[1].className).not.toContain('headerDisabled');
+        expect(typographies[0].className).not.toContain('headerDisabled');
     });
 
     // ---- useEffect ----

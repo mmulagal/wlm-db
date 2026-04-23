@@ -149,13 +149,14 @@ const SavingsSelection = ({ printState }: any) => {
     }, []);
 
     useEffect(() => {
+        // On-prem modes always force-reset snapshot frequency to Daily on re-entry
+        // ORACLE_AUTO_EBS only sets when not already set to avoid triggering redundant API calls
+
         if (
-            !selectedSnapshotFrequency &&
-            (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ||
-                savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
-                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
-                savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
-                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM)
+            (!selectedSnapshotFrequency && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) ||
+            (!selectedSnapshotFrequency && savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
         ) {
             dispatch(setSelectedSnapshotFrequency(generateSnapshotFrequency[2]));
         }

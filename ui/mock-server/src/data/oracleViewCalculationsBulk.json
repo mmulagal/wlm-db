@@ -360,15 +360,15 @@
     "totalSummary": { "existing": 28783.36, "recommended": 13174.54 },
     "recommendedComputeCalculation": [
         {
-            "hostname": "oracle-ebs-host1",
-            "instanceType": "m7i-flex.xlarge",
+            "hostname": "ip-10-0-141-134.ap-south-1.compute.internal",
+            "instanceType": "m7i-flex.large",
             "hoursInMonth": 730,
             "computeHourlyPrice": 0.17879,
             "instanceMonthlyPrice": 130.52,
             "computeMonthlyPrice": 130.52,
             "machineDetails": [
                 {
-                    "instanceType": "m7i-flex.xlarge",
+                    "instanceType": "m7i-flex.large",
                     "price": 0.17879,
                     "basePrice": 0.17879,
                     "computeMonthlyPrice": 130.52,
@@ -380,7 +380,7 @@
             ],
             "recommendationOptions": [
                 {
-                    "instanceType": "m7i-flex.xlarge",
+                    "instanceType": "m7i-flex.large",
                     "price": 0.17879,
                     "basePrice": 0.17879,
                     "computeMonthlyPrice": 130.52,
@@ -391,19 +391,19 @@
             ]
         },
         {
-            "hostname": "oracle-ebs-host2",
-            "instanceType": "m7i-flex.2xlarge",
+            "hostname": "ip-10-0-141-135.ap-south-1.compute.internal",
+            "instanceType": "m7i-flex.large",
             "hoursInMonth": 730,
-            "computeHourlyPrice": 0.35758,
-            "instanceMonthlyPrice": 261.04,
-            "computeMonthlyPrice": 261.04,
+            "computeHourlyPrice": 0.17879,
+            "instanceMonthlyPrice": 130.52,
+            "computeMonthlyPrice": 130.52,
             "machineDetails": [
                 {
-                    "instanceType": "m7i-flex.2xlarge",
-                    "price": 0.35758,
-                    "basePrice": 0.35758,
-                    "computeMonthlyPrice": 261.04,
-                    "instanceMonthlyPrice": 261.04,
+                    "instanceType": "m7i-flex.large",
+                    "price": 0.17879,
+                    "basePrice": 0.17879,
+                    "computeMonthlyPrice": 130.52,
+                    "instanceMonthlyPrice": 130.52,
                     "licenseMonthlyPrice": 0,
                     "hoursInMonth": 730,
                     "licenseIncluded": false
@@ -411,30 +411,30 @@
             ],
             "recommendationOptions": [
                 {
-                    "instanceType": "m7i-flex.2xlarge",
-                    "price": 0.35758,
-                    "basePrice": 0.35758,
-                    "computeMonthlyPrice": 261.04,
-                    "instanceMonthlyPrice": 261.04,
+                    "instanceType": "m7i-flex.large",
+                    "price": 0.17879,
+                    "basePrice": 0.17879,
+                    "computeMonthlyPrice": 130.52,
+                    "instanceMonthlyPrice": 130.52,
                     "licenseMonthlyPrice": 0,
                     "hoursInMonth": 730
                 }
             ]
         },
         {
-            "hostname": "oracle-ebs-host3",
-            "instanceType": "r7i.xlarge",
+            "hostname": "ip-10-0-142-10.ap-south-1.compute.internal",
+            "instanceType": "m7i-flex.large",
             "hoursInMonth": 730,
-            "computeHourlyPrice": 0.2341,
-            "instanceMonthlyPrice": 170.82,
-            "computeMonthlyPrice": 170.82,
+            "computeHourlyPrice": 0.17879,
+            "instanceMonthlyPrice": 130.52,
+            "computeMonthlyPrice": 130.52,
             "machineDetails": [
                 {
-                    "instanceType": "r7i.xlarge",
-                    "price": 0.2341,
-                    "basePrice": 0.2341,
-                    "computeMonthlyPrice": 170.82,
-                    "instanceMonthlyPrice": 170.82,
+                    "instanceType": "m7i-flex.large",
+                    "price": 0.17879,
+                    "basePrice": 0.17879,
+                    "computeMonthlyPrice": 130.52,
+                    "instanceMonthlyPrice": 130.52,
                     "licenseMonthlyPrice": 0,
                     "hoursInMonth": 730,
                     "licenseIncluded": false
@@ -442,11 +442,73 @@
             ],
             "recommendationOptions": [
                 {
-                    "instanceType": "r7i.xlarge",
-                    "price": 0.2341,
-                    "basePrice": 0.2341,
-                    "computeMonthlyPrice": 170.82,
-                    "instanceMonthlyPrice": 170.82,
+                    "instanceType": "m7i-flex.large",
+                    "price": 0.17879,
+                    "basePrice": 0.17879,
+                    "computeMonthlyPrice": 130.52,
+                    "instanceMonthlyPrice": 130.52,
+                    "licenseMonthlyPrice": 0,
+                    "hoursInMonth": 730
+                }
+            ]
+        },
+        {
+            "hostname": "ip-10-0-142-11.ap-south-1.compute.internal",
+            "instanceType": "m7i-flex.large",
+            "hoursInMonth": 730,
+            "computeHourlyPrice": 0.17879,
+            "instanceMonthlyPrice": 130.52,
+            "computeMonthlyPrice": 130.52,
+            "machineDetails": [
+                {
+                    "instanceType": "m7i-flex.large",
+                    "price": 0.17879,
+                    "basePrice": 0.17879,
+                    "computeMonthlyPrice": 130.52,
+                    "instanceMonthlyPrice": 130.52,
+                    "licenseMonthlyPrice": 0,
+                    "hoursInMonth": 730,
+                    "licenseIncluded": false
+                }
+            ],
+            "recommendationOptions": [
+                {
+                    "instanceType": "m7i-flex.large",
+                    "price": 0.17879,
+                    "basePrice": 0.17879,
+                    "computeMonthlyPrice": 130.52,
+                    "instanceMonthlyPrice": 130.52,
+                    "licenseMonthlyPrice": 0,
+                    "hoursInMonth": 730
+                }
+            ]
+        },
+        {
+            "hostname": "ip-10-0-141-200.ap-south-1.compute.internal",
+            "instanceType": "m7i-flex.large",
+            "hoursInMonth": 730,
+            "computeHourlyPrice": 0.17879,
+            "instanceMonthlyPrice": 130.52,
+            "computeMonthlyPrice": 130.52,
+            "machineDetails": [
+                {
+                    "instanceType": "m7i-flex.large",
+                    "price": 0.17879,
+                    "basePrice": 0.17879,
+                    "computeMonthlyPrice": 130.52,
+                    "instanceMonthlyPrice": 130.52,
+                    "licenseMonthlyPrice": 0,
+                    "hoursInMonth": 730,
+                    "licenseIncluded": false
+                }
+            ],
+            "recommendationOptions": [
+                {
+                    "instanceType": "m7i-flex.large",
+                    "price": 0.17879,
+                    "basePrice": 0.17879,
+                    "computeMonthlyPrice": 130.52,
+                    "instanceMonthlyPrice": 130.52,
                     "licenseMonthlyPrice": 0,
                     "hoursInMonth": 730
                 }
@@ -456,15 +518,15 @@
     "recommendedLicenseCalculation": [],
     "existingComputeCalculation": [
         {
-            "hostname": "oracle-ebs-host1",
-            "instanceType": "m5.xlarge",
+            "hostname": "ip-10-0-141-134.ap-south-1.compute.internal",
+            "instanceType": "m5.large",
             "hoursInMonth": 730,
             "computeHourlyPrice": 0.192,
             "instanceMonthlyPrice": 140.16,
             "computeMonthlyPrice": 140.16,
             "machineDetails": [
                 {
-                    "instanceType": "m5.xlarge",
+                    "instanceType": "m5.large",
                     "price": 0.192,
                     "basePrice": 0.192,
                     "computeMonthlyPrice": 140.16,
@@ -476,19 +538,19 @@
             ]
         },
         {
-            "hostname": "oracle-ebs-host2",
-            "instanceType": "m5.2xlarge",
+            "hostname": "ip-10-0-141-135.ap-south-1.compute.internal",
+            "instanceType": "m5.large",
             "hoursInMonth": 730,
-            "computeHourlyPrice": 0.384,
-            "instanceMonthlyPrice": 280.32,
-            "computeMonthlyPrice": 280.32,
+            "computeHourlyPrice": 0.192,
+            "instanceMonthlyPrice": 140.16,
+            "computeMonthlyPrice": 140.16,
             "machineDetails": [
                 {
-                    "instanceType": "m5.2xlarge",
-                    "price": 0.384,
-                    "basePrice": 0.384,
-                    "computeMonthlyPrice": 280.32,
-                    "instanceMonthlyPrice": 280.32,
+                    "instanceType": "m5.large",
+                    "price": 0.192,
+                    "basePrice": 0.192,
+                    "computeMonthlyPrice": 140.16,
+                    "instanceMonthlyPrice": 140.16,
                     "licenseMonthlyPrice": 0,
                     "hoursInMonth": 730,
                     "licenseIncluded": false
@@ -496,19 +558,59 @@
             ]
         },
         {
-            "hostname": "oracle-ebs-host3",
-            "instanceType": "r5.xlarge",
+            "hostname": "ip-10-0-142-10.ap-south-1.compute.internal",
+            "instanceType": "m5.large",
             "hoursInMonth": 730,
-            "computeHourlyPrice": 0.25,
-            "instanceMonthlyPrice": 182.5,
-            "computeMonthlyPrice": 182.5,
+            "computeHourlyPrice": 0.192,
+            "instanceMonthlyPrice": 140.16,
+            "computeMonthlyPrice": 140.16,
             "machineDetails": [
                 {
-                    "instanceType": "r5.xlarge",
-                    "price": 0.25,
-                    "basePrice": 0.25,
-                    "computeMonthlyPrice": 182.5,
-                    "instanceMonthlyPrice": 182.5,
+                    "instanceType": "m5.large",
+                    "price": 0.192,
+                    "basePrice": 0.192,
+                    "computeMonthlyPrice": 140.16,
+                    "instanceMonthlyPrice": 140.16,
+                    "licenseMonthlyPrice": 0,
+                    "hoursInMonth": 730,
+                    "licenseIncluded": false
+                }
+            ]
+        },
+        {
+            "hostname": "ip-10-0-142-11.ap-south-1.compute.internal",
+            "instanceType": "m5.large",
+            "hoursInMonth": 730,
+            "computeHourlyPrice": 0.192,
+            "instanceMonthlyPrice": 140.16,
+            "computeMonthlyPrice": 140.16,
+            "machineDetails": [
+                {
+                    "instanceType": "m5.large",
+                    "price": 0.192,
+                    "basePrice": 0.192,
+                    "computeMonthlyPrice": 140.16,
+                    "instanceMonthlyPrice": 140.16,
+                    "licenseMonthlyPrice": 0,
+                    "hoursInMonth": 730,
+                    "licenseIncluded": false
+                }
+            ]
+        },
+        {
+            "hostname": "ip-10-0-141-200.ap-south-1.compute.internal",
+            "instanceType": "m5.large",
+            "hoursInMonth": 730,
+            "computeHourlyPrice": 0.192,
+            "instanceMonthlyPrice": 140.16,
+            "computeMonthlyPrice": 140.16,
+            "machineDetails": [
+                {
+                    "instanceType": "m5.large",
+                    "price": 0.192,
+                    "basePrice": 0.192,
+                    "computeMonthlyPrice": 140.16,
+                    "instanceMonthlyPrice": 140.16,
                     "licenseMonthlyPrice": 0,
                     "hoursInMonth": 730,
                     "licenseIncluded": false

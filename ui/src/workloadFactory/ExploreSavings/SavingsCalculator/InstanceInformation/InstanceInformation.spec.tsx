@@ -14,7 +14,11 @@ vi.mock('react-i18next', () => ({
                     'databases.explore-savings.database-information': 'Database information:',
                     'databases.general.not-available': 'n/a',
                     'databases.general.always-on-availability-group': 'Always on availability group',
-                    'databases.explore-savings.monthly-oracle-cost': 'Monthly Oracle cost'
+                    'databases.explore-savings.monthly-oracle-cost': 'Monthly Oracle cost',
+                    'databases.explore-savings.instance-information-table.details.instance-type': 'Instance type',
+                    'databases.explore-savings.instance-information-table.details.sql-edition': 'SQL Edition',
+                    'databases.explore-savings.instance-information-table.details.database-edition': 'Database edition',
+                    'databases.explore-savings.instance-information-table.details.deployment-model': 'Deployment model'
                 } as Record<string, string>
             )[key] ?? key)
     })

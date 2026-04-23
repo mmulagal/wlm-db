@@ -3,7 +3,7 @@ import { DATABASE_DEPLOYMENT_MODE } from '../../../../../utils/consts';
 
 /**
  * Generates Oracle instance data for the accordion display.
- * For bulk mode: looks up compute by resourceName.
+ * For bulk mode: looks up compute by hostname (Oracle EBS uses host.name which equals ec2HostName) or resourceName (Oracle On-Prem).
  * For single host: uses the first compute entry.
  */
 export const generateOracleInstanceData = (
@@ -17,9 +17,11 @@ export const generateOracleInstanceData = (
         ? storageSavingsResponse.compute
         : [storageSavingsResponse?.compute].filter(Boolean);
 
-    // For bulk mode (when hostName is provided), match by resourceName
+    // For bulk mode (when hostName is provided), match by hostname (EBS) or resourceName (On-Prem)
     // For single host mode, use first entry
-    const hostCompute = hostName ? computeArray.find((item: any) => item.resourceName === hostName) : computeArray[0];
+    const hostCompute = hostName
+        ? computeArray.find((item: any) => item.hostname === hostName || item.resourceName === hostName)
+        : computeArray[0];
 
     let instanceType = '';
     if (hostCompute?.recommended?.instanceType) {

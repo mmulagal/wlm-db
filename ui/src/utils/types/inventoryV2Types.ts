@@ -205,6 +205,7 @@ export interface InventoryTableData {
     protocol?: string;
     isWad?: boolean;
     storage?: Array<DiscoveredStorageObj>;
+    oracleEdition?: string;
 }
 
 export interface OraclePluggableDatabase {
@@ -558,6 +559,7 @@ export interface InstancesHostsRowInterface {
     databaseInstancesSummary?: Array<DatabaseInstancesSummaryInterface>;
     nodeInstanceError?: string;
     sqlLicenseIncluded?: boolean;
+    oracleEdition?: string;
 }
 
 export interface DiscoverHostInterface {
