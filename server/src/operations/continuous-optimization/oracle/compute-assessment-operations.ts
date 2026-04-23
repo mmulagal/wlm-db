@@ -282,8 +282,8 @@ async function initiateComputeHostLevelAssessmentCollection(
     });
 
     const { id: computeJobId } = await registerJob(accountId, credentialsId, region, {
-        name: 'Compute host OS assessment',
-        description: 'Compute host OS assessment (THP, TCP)',
+        name: `Compute host OS assessment for ${resourceName}`,
+        description: `Compute host OS assessment (THP, TCP) for Oracle database host ${resourceName}`,
         resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,

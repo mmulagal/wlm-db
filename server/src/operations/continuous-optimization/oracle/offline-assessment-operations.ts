@@ -27,13 +27,14 @@ import {
     validateWithSchema
 } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
-import { AWS_REGIONS, HttpErrorCodes, RESOURCESTYPE } from '../../../utils/consts';
+import { AWS_REGIONS, HttpErrorCodes, RESOURCESTYPE, STORAGE_PROTOCOLS } from '../../../utils/consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
-import { DatabaseInstance } from '../../../utils/common-types';
+import { ComputeHostOsAssessment, DatabaseInstance } from '../../../utils/common-types';
 import { OracleMappedOntapVolumesResponse } from '../../workloads/oracle/common-types';
 import { calculateStorageDrift } from './storage-assessment-operations';
-import { ISCIOSAssessment, NFSOSAssessment, StorageAssessment } from './common-types';
+import { calculateComputeHostOsDrift } from './compute-assessment-operations';
+import { ISCIOSAssessment, NFSOSAssessment, StorageAssessment, StorageIscsiAssessment } from './common-types';
 import { AssessmentStatus, MIN_OPTIMIZED_HEADROOM_PERCENTAGE } from '../../../utils/continous-optimization-consts';
 import GOLDEN_CONFIG from './golden-config';
 import { loadAndModifyDemoOracleISCSIData } from '../../demo-operations';
@@ -509,10 +510,24 @@ async function fetchOracleOfflineAssessment(
         }
     }
 
+    const computeHostOsDriftData =
+        mappedOntapVolumesData.protocol === STORAGE_PROTOCOLS.ISCSI && !isEmpty(os)
+            ? calculateComputeHostOsDrift(
+                  ec2InstanceId || '',
+                  databaseInstanceName || databaseInstanceId,
+                  {
+                      transparentHugepages: (os as ISCIOSAssessment)['transparent-hugepages'],
+                      tcpAdvancedOptions: (os as ISCIOSAssessment)['tcp-advanced-options']
+                  } as ComputeHostOsAssessment,
+                  { os } as StorageIscsiAssessment
+              )
+            : {};
+
     const driftAssessmentData: OracleDriftAssessmentResponseType = {
         storage: !isEmpty(storageAssessmentResponse)
             ? (storageAssessmentResponse as StorageParameterDriftResponseType)
             : undefined,
+        ...computeHostOsDriftData,
         lastAssessmentTimestamp: assessmentTimestamp
             ? new Date(assessmentTimestamp).getTime()
             : record.created_time.getTime(),

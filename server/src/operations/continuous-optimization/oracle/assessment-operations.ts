@@ -579,6 +579,11 @@ async function triggerOracleAssessment(
             );
         }
 
+        const effectiveProtocol = storageProtocol ?? STORAGE_PROTOCOLS.ISCSI;
+        if (effectiveProtocol !== STORAGE_PROTOCOLS.ISCSI) {
+            fields = fields.filter(field => field.toLowerCase() !== AssessmentCategoriesOracle.COMPUTE.toLowerCase());
+        }
+
         const instanceRecord: WorkloadInstance = {
             id: databaseInstanceId,
             name: databaseInstanceName,
@@ -904,6 +909,13 @@ async function fetchOracleDriftAssessment(
             DatabaseTypes.ORACLE,
             storageProtocol ?? STORAGE_PROTOCOLS.ISCSI,
             isASMManaged
+        );
+    }
+
+    const effectiveProtocol = storageProtocol ?? STORAGE_PROTOCOLS.ISCSI;
+    if (effectiveProtocol !== STORAGE_PROTOCOLS.ISCSI) {
+        fieldsValues = fieldsValues.filter(
+            field => field.toLowerCase() !== AssessmentCategoriesOracle.COMPUTE.toLowerCase()
         );
     }
 
