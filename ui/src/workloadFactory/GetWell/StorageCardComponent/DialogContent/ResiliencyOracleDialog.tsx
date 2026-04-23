@@ -49,7 +49,8 @@ const ResiliencyOracleDialog = ({ type }: { type: string }) => {
                             t('databases.well-architect.oracle-crr-what-will-happen-step4'),
                             t('databases.well-architect.oracle-crr-what-will-happen-step5'),
                             t('databases.well-architect.oracle-crr-what-will-happen-step6'),
-                            t('databases.well-architect.oracle-crr-what-will-happen-step7')
+                            t('databases.well-architect.oracle-crr-what-will-happen-step7'),
+                            t('databases.well-architect.oracle-crr-what-will-happen-step8')
                         ])}
                         {createSection(
                             t('databases.well-architect.notes'),
