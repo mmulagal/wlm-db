@@ -53,6 +53,7 @@ fsxMock.on(DescribeFileSystemsCommand).callsFake(input => {
             FileSystemId: id,
             FileSystemType: 'ONTAP',
             Lifecycle: 'AVAILABLE',
+            StorageCapacity: 35840,
             OntapConfiguration: {
                 AutomaticBackupRetentionDays: overrideDays ?? 0,
                 DailyAutomaticBackupStartTime: '03:00',
