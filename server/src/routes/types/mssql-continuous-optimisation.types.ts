@@ -206,8 +206,29 @@ const HostOsPatchScanResponse = Type.Object({
 });
 type HostOsPatchScanResponseType = Static<typeof HostOsPatchScanResponse>;
 
-const MssqlPatchScanField = Type.Union([Type.Literal(AssessmentCategories.HOST_OS_PATCH)], {
-    description: `Assessment category to calculate on demand. Allowed values: ${AssessmentCategories.HOST_OS_PATCH}.`
+const MSSQLPatchMissingPatch = Type.Object({
+    classification: Type.Optional(Type.String()),
+    severity: Type.Optional(Type.String()),
+    releaseDate: Type.Optional(Type.String()),
+    title: Type.Optional(Type.String()),
+    kbId: Type.Optional(Type.String())
+});
+
+const MSSQLPatchScanInstance = Type.Object({
+    ec2InstanceId: Type.String(),
+    missingPatchDetails: Type.Optional(Type.Array(MSSQLPatchMissingPatch))
+});
+
+const MSSQLPatchScanResponse = Type.Object({
+    status: Type.Enum(AssessmentStatus),
+    ec2InstancesToPatch: Type.Array(MSSQLPatchScanInstance)
+});
+type MSSQLPatchScanResponseType = Static<typeof MSSQLPatchScanResponse>;
+
+const MssqlPatchScanFields = [AssessmentCategories.MSSQL_PATCH, AssessmentCategories.HOST_OS_PATCH];
+
+const MssqlPatchScanField = Type.Enum(MssqlPatchScanFields, {
+    description: `Assessment category to calculate on demand. Allowed values: ${MssqlPatchScanFields.join(', ')}.`
 });
 type MssqlPatchScanFieldType = Static<typeof MssqlPatchScanField>;
 
@@ -221,16 +242,7 @@ const MSSQLPatchDriftResponse = Type.Intersect([
                     importantMissingPatchesCount: Type.Number(),
                     ec2InstanceId: Type.String(),
                     ec2InstanceName: Type.String(),
-                    missingPatchesCount: Type.Number(),
-                    missingPatchDetails: Type.Array(
-                        Type.Object({
-                            classification: Type.String(),
-                            kbId: Type.String(),
-                            severity: Type.String(),
-                            releaseDate: Type.String(),
-                            title: Type.String()
-                        })
-                    )
+                    missingPatchesCount: Type.Number()
                 })
             )
         )
@@ -624,6 +636,8 @@ export {
     HostOsPatchDriftResponseType,
     HostOsPatchScanResponse,
     HostOsPatchScanResponseType,
+    MSSQLPatchScanResponse,
+    MSSQLPatchScanResponseType,
     RssConfigDriftResponseType,
     MtuAlignmentDriftResponseType,
     ParameterDriftResponse,

@@ -992,7 +992,7 @@ ssmMock
     .resolves(getSampleCommandResponse('computeHostOsAssessment'))
     .on(SendCommandCommand, params => params.Comment === 'Compute Oracle params assessment (filesystemio, multiblock)')
     .resolves(getSampleCommandResponse('computeOracleParamsAssessment'))
-    .on(SendCommandCommand, params => params.Comment?.startsWith('Oracle security patch assessment for'))
+    .on(SendCommandCommand, params => params.Comment?.startsWith('Oracle Critical Patch Updates assessment for'))
     .resolves(getSampleCommandResponse('oracleSecurityPatchAssessment'))
     .on(SendCommandCommand, params => {
         return /# Get SQL Server services/.test(params.Parameters.commands?.[0]);

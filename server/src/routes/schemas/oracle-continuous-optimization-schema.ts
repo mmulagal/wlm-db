@@ -15,6 +15,7 @@ import {
     OptimizeRequestBody,
     OptimizeStorageRequestBody,
     OraclePatchScanField,
+    OracleSecurityPatchScanResponse,
     OracleDriftAssessmentResponse
 } from '../types/oracle-continuous-optimization.types';
 import { resourceRequest } from './database-hosts-schemas';
@@ -41,12 +42,12 @@ const FetchOraclePatchScanSchema = {
     summary: 'Run an on-demand patch scan for an Oracle database instance',
     description:
         'Gather the database instance details and run the patch scan for the requested category. ' +
-        'Currently supports: host-os-patch.',
+        'Currently supports: host-os-patch, oracle-security-patch.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     querystring: OraclePatchScanQueryString,
     tags: [RouteTags.ORACLE_ASSESSMENT],
     response: {
-        200: Type.Union([HostOsPatchScanResponse, ErrorResponse]),
+        200: Type.Union([HostOsPatchScanResponse, OracleSecurityPatchScanResponse, ErrorResponse]),
         400: HttpErrorResponse,
         404: HttpErrorResponse,
         500: HttpErrorResponse

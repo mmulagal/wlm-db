@@ -93,26 +93,40 @@ const HostOsPatchScanResponse = Type.Object({
 });
 type HostOsPatchScanResponseType = Static<typeof HostOsPatchScanResponse>;
 
-const OraclePatchScanField = Type.Union([Type.Literal(AssessmentCategoriesOracle.HOST_OS_PATCH)], {
-    description: `Assessment category to calculate on demand. Allowed values: ${AssessmentCategoriesOracle.HOST_OS_PATCH}.`
+const OraclePatchScanFields = [
+    AssessmentCategoriesOracle.HOST_OS_PATCH,
+    AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH
+];
+const OraclePatchScanField = Type.Enum(OraclePatchScanFields, {
+    description: `Assessment category to calculate on demand. Allowed values: ${OraclePatchScanFields.join(', ')}.`
 });
 type OraclePatchScanFieldType = Static<typeof OraclePatchScanField>;
+
+const OracleSecurityPatchMissingPatch = Type.Object({
+    cveId: Type.String(),
+    component: Type.String(),
+    description: Type.String(),
+    releaseDate: Type.String(),
+    releaseName: Type.String()
+});
+type OracleSecurityPatchMissingPatchType = Static<typeof OracleSecurityPatchMissingPatch>;
+
+const OracleSecurityPatchScanInstance = Type.Object({
+    ec2InstanceId: Type.String(),
+    database: Type.String(),
+    missingPatchDetails: Type.Optional(Type.Array(OracleSecurityPatchMissingPatch))
+});
+
+const OracleSecurityPatchScanResponse = Type.Object({
+    status: Type.Enum(AssessmentStatus),
+    ec2InstancesToPatch: Type.Array(OracleSecurityPatchScanInstance)
+});
+type OracleSecurityPatchScanResponseType = Static<typeof OracleSecurityPatchScanResponse>;
 
 const OracleSecurityPatchDriftResponse = Type.Intersect([
     OracleGenericParameterDriftResponse,
     Type.Object({
-        missingPatchesCount: Type.Number(),
-        missingPatchDetails: Type.Optional(
-            Type.Array(
-                Type.Object({
-                    cveId: Type.String(),
-                    component: Type.String(),
-                    description: Type.String(),
-                    releaseDate: Type.String(),
-                    releaseName: Type.String()
-                })
-            )
-        )
+        missingPatchesCount: Type.Number()
     })
 ]);
 type OracleSecurityPatchDriftResponseType = Static<typeof OracleSecurityPatchDriftResponse>;
@@ -257,6 +271,9 @@ export {
     HostOsPatchScanResponseType,
     OraclePatchScanField,
     OraclePatchScanFieldType,
+    OracleSecurityPatchScanResponse,
+    OracleSecurityPatchScanResponseType,
+    OracleSecurityPatchMissingPatchType,
     OracleSecurityPatchDriftResponse,
     OracleSecurityPatchDriftResponseType,
     OracleCloneDriftResponse,

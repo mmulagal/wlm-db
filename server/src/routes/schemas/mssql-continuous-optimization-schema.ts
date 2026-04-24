@@ -33,6 +33,7 @@ import {
     BulkOptimizeHASharedStorageBody,
     BulkOptimizeBackupRequestBody,
     HostOsPatchScanResponse,
+    MSSQLPatchScanResponse,
     MssqlPatchScanField
 } from '../types/mssql-continuous-optimisation.types';
 import { resourceRequest } from './database-hosts-schemas';
@@ -325,12 +326,12 @@ const FetchMssqlPatchScanSchema = {
     summary: 'Run an on-demand patch scan for an MSSQL database instance',
     description:
         'Gather the database instance details and run the patch scan for the requested category. ' +
-        'Currently supports: host-os-patch.',
+        'Currently supports: host-os-patch, mssql-patch.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     querystring: MssqlPatchScanQueryString,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
-        200: Type.Union([HostOsPatchScanResponse, ErrorResponse]),
+        200: Type.Union([HostOsPatchScanResponse, MSSQLPatchScanResponse, ErrorResponse]),
         400: HttpErrorResponse,
         404: HttpErrorResponse,
         500: HttpErrorResponse

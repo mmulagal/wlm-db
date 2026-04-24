@@ -1,11 +1,15 @@
+import { vi } from 'vitest';
 import { createResource, listResources, upsertDatabaseInstance } from '../../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
     calculateMSSQLPatchDrift,
+    fetchMssqlPatchWithMissingPatches,
     managedHostMSSQLPatchAssessment,
     runMSSQLPatchAssessment
 } from '../../../../src/operations/continuous-optimization/mssql/mssqlPatch-assessment-operations';
+import * as mssqlOps from '../../../../src/operations/workloads/mssql/mssql-operations';
 import { ResourceAssessmentData } from '../../../../src/utils/common-types';
+import { AssessmentStatus } from '../../../../src/utils/continous-optimization-consts';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 
@@ -326,5 +330,109 @@ describe('MSSql Patch assessment operations', () => {
                 'test-job-id'
             )) || [];
         expect(patchAssessment?.[0]?.ec2InstanceId).toBeDefined();
+    });
+});
+
+describe('fetchMssqlPatchWithMissingPatches', () => {
+    const NODE1_INSTANCE_ID = 'i-07e76a4b916548dc0';
+    const NODE2_INSTANCE_ID = 'i-0880a21327284f67c';
+    const DB_INSTANCE_ID = 'f4b7c5d3-e1f6-4g2a-9b5d';
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('returns ec2InstancesToPatch for a clustered host using the active SQL node', async () => {
+        const response = await fetchMssqlPatchWithMissingPatches(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            DB_INSTANCE_ID,
+            'MSSQLSERVER',
+            false,
+            NODE1_INSTANCE_ID,
+            NODE2_INSTANCE_ID
+        );
+
+        expect('errorMessage' in response).toBe(false);
+        if ('errorMessage' in response) {
+            return;
+        }
+
+        expect([AssessmentStatus.OPTIMIZED, AssessmentStatus.NOT_OPTIMIZED]).toContain(response.status);
+        expect(Array.isArray(response.ec2InstancesToPatch)).toBe(true);
+        expect(response.ec2InstancesToPatch.length).toBeGreaterThan(0);
+        response.ec2InstancesToPatch.forEach(({ ec2InstanceId, missingPatchDetails }) => {
+            expect(typeof ec2InstanceId).toBe('string');
+            expect(Array.isArray(missingPatchDetails)).toBe(true);
+        });
+    });
+
+    it('returns ec2InstancesToPatch for a standalone host when node2 is not provided', async () => {
+        const response = await fetchMssqlPatchWithMissingPatches(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            DB_INSTANCE_ID,
+            'MSSQLSERVER',
+            false,
+            NODE1_INSTANCE_ID,
+            undefined
+        );
+
+        expect('errorMessage' in response).toBe(false);
+        if ('errorMessage' in response) {
+            return;
+        }
+
+        expect(response.ec2InstancesToPatch.length).toBeGreaterThan(0);
+        response.ec2InstancesToPatch.forEach(instance => {
+            expect(typeof instance.ec2InstanceId).toBe('string');
+        });
+    });
+
+    it('returns an errorMessage when getActiveSqlNode cannot resolve an active node', async () => {
+        vi.spyOn(mssqlOps, 'getActiveSqlNode').mockResolvedValueOnce({
+            activeNodeInstanceId: '',
+            instanceName: ''
+        } as unknown as Awaited<ReturnType<typeof mssqlOps.getActiveSqlNode>>);
+
+        const response = await fetchMssqlPatchWithMissingPatches(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            DB_INSTANCE_ID,
+            'MSSQLSERVER',
+            false,
+            NODE1_INSTANCE_ID,
+            NODE2_INSTANCE_ID
+        );
+
+        expect(response).toMatchObject({
+            errorMessage: expect.stringContaining(`Active node instance ID not found for database host ${RESOURCE_ID}`)
+        });
+    });
+
+    it('returns a generic errorMessage when getActiveSqlNode throws', async () => {
+        vi.spyOn(mssqlOps, 'getActiveSqlNode').mockRejectedValueOnce(new Error('unexpected ssm failure'));
+
+        const response = await fetchMssqlPatchWithMissingPatches(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            DB_INSTANCE_ID,
+            'MSSQLSERVER',
+            false,
+            NODE1_INSTANCE_ID,
+            NODE2_INSTANCE_ID
+        );
+
+        expect(response).toMatchObject({
+            errorMessage: 'Failed to run MSSQL patch scan'
+        });
     });
 });

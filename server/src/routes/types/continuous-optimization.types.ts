@@ -20,14 +20,14 @@ const ContinuousOptimizationQueryString = Type.Object({
     nextToken: Type.Optional(Type.String())
 });
 
-const oracleAllowedFields = [...new Set([...allowedFields, ...Object.values(AssessmentCategoriesOracle)])];
+const OracleAllowedFields = [...new Set([...allowedFields, ...Object.values(AssessmentCategoriesOracle)])];
 const OracleContinuousOptimizationQueryString = Type.Object({
     fields: Type.Optional(
         Type.String({
-            description: `Comma separated list of fields to include in the response. Allowed fields: ${oracleAllowedFields.join(
+            description: `Comma separated list of fields to include in the response. Allowed fields: ${OracleAllowedFields.join(
                 ', '
             )}`,
-            pattern: `^(${oracleAllowedFields.join('|')})(,(${oracleAllowedFields.join('|')}))*$`
+            pattern: `^(${OracleAllowedFields.join('|')})(,(${OracleAllowedFields.join('|')}))*$`
         })
     ),
     nextToken: Type.Optional(Type.String())

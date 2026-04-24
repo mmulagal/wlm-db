@@ -56,6 +56,7 @@ import {
 } from './resilience-awsBackup-assessment-operations';
 import {
     calculateOracleSecurityPatchDrift,
+    fetchOracleSecurityPatchWithMissingPatches,
     initiateOracleSecurityPatchAssessmentCollection
 } from './security-patch-assessment-operations';
 import {
@@ -73,6 +74,7 @@ import {
     OracleDriftAssessmentResponse,
     OracleDriftAssessmentResponseType,
     OraclePatchScanFieldType,
+    OracleSecurityPatchDriftResponseType,
     StorageParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoMockdata';
@@ -83,7 +85,7 @@ import {
     mergeDismissConfigurations
 } from '../assessment-dismiss-operations';
 import { handleGetOracleAssessmentForDemo } from '../../demo-operations';
-import { OracleSecurityPatchSsmResponse, StorageAssessment } from './common-types';
+import { StorageAssessment } from './common-types';
 import { listJobs } from '../../../lib/database/job';
 
 const logger = getLogger();
@@ -608,7 +610,6 @@ async function triggerOracleAssessment(
                     AssessmentCategoriesOracle.AWS_BACKUP,
                     AssessmentCategoriesOracle.CRR,
                     AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT,
-                    AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH,
                     AssessmentCategoriesOracle.CLONE
                 ].includes(field.toLowerCase() as AssessmentCategoriesOracle)
             );
@@ -1033,11 +1034,12 @@ async function fetchOracleDriftAssessment(
               )
             : Promise.resolve(undefined),
         assessmentFlags.oracleSecurityPatch
-            ? calculateOracleSecurityPatchDrift(
-                  databaseInstanceName,
-                  assessmentDataMap[AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH] as
-                      | OracleSecurityPatchSsmResponse
-                      | undefined
+            ? Promise.resolve(
+                  calculateOracleSecurityPatchDrift(
+                      assessmentDataMap[
+                          AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH
+                      ] as OracleSecurityPatchDriftResponseType
+                  )
               )
             : Promise.resolve(undefined),
         assessmentFlags.clone
@@ -1313,6 +1315,7 @@ async function fetchOraclePatchScan(
         databaseInstanceId
     )) as DatabaseInstance;
     const {
+        database_instance_name: databaseInstanceName,
         resource: { metadata: resourceMetadata }
     } = instanceDetail;
     const { node1InstanceId: ec2InstanceId } = resourceMetadata as Metadata;
@@ -1324,6 +1327,16 @@ async function fetchOraclePatchScan(
                 credentialsId,
                 region,
                 databaseHostId,
+                ec2InstanceId
+            );
+        case AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH:
+            return fetchOracleSecurityPatchWithMissingPatches(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                databaseInstanceName,
                 ec2InstanceId
             );
         default: {

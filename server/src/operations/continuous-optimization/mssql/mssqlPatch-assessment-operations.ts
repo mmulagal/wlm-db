@@ -1,4 +1,4 @@
-import { compact, isEmpty } from 'lodash-es';
+import { compact, isEmpty, omit } from 'lodash-es';
 import createError from 'http-errors';
 
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
@@ -16,6 +16,7 @@ import { getAvailablePatches, getInstalledSQLPatchDetails } from '../../aws/mssq
 import { MSSQLPatchAssessmentObject, PatchDetail, ResourceAssessmentData } from '../../../utils/common-types';
 import {
     extractKbNumber,
+    extractSqlInstanceName,
     extractVersionDetails,
     getResourceNameFromTags,
     sqlResponseParsing
@@ -24,6 +25,10 @@ import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
 import { GET_INSTALLED_MSSQL_VERSION } from '../../workloads/mssql/assessment-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
+import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
+import { updateDatabaseHostAssessmentData } from '../../database/database-operations';
+import { ErrorResponseType } from '../../../routes/types/continuous-optimization.types';
+import { MSSQLPatchScanResponseType } from '../../../routes/types/mssql-continuous-optimisation.types';
 
 const logger = getLogger();
 
@@ -362,4 +367,90 @@ function getUniqueMissingPatchesAndCountSeverities(patchAssessment: MSSQLPatchAs
     return { uniqueMissingPatches, criticalPatchesCount, importantPatchesCount };
 }
 
-export { managedHostMSSQLPatchAssessment, calculateMSSQLPatchDrift, runMSSQLPatchAssessment, getTheMSSqlversion };
+async function fetchMssqlPatchWithMissingPatches(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    dbInstanceName: string,
+    sqlAuthEnabled: boolean,
+    node1InstanceId: string,
+    node2InstanceId: string | undefined,
+    hostLevelAssessmentData: ResourceAssessmentData | undefined = {}
+): Promise<MSSQLPatchScanResponseType | ErrorResponseType> {
+    logger.info('Running live MSSQL patch scan', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId
+    });
+
+    try {
+        const { activeNodeInstanceId = '', instanceName } = await getActiveSqlNode(credentialsId, region, {
+            node1InstanceId,
+            node2InstanceId,
+            resourceId: databaseHostId,
+            accountId
+        });
+
+        if (!activeNodeInstanceId) {
+            return {
+                errorMessage: `Active node instance ID not found for database host ${databaseHostId}`
+            };
+        }
+
+        const isPartOfCluster = Boolean(node2InstanceId && node2InstanceId.trim() !== '');
+        const sqlInstanceName = extractSqlInstanceName(instanceName || dbInstanceName);
+
+        const assessmentData = await runMSSQLPatchAssessment(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            activeNodeInstanceId,
+            isPartOfCluster,
+            activeNodeInstanceId,
+            sqlAuthEnabled,
+            sqlInstanceName
+        );
+
+        const { uniqueMissingPatches } = getUniqueMissingPatchesAndCountSeverities(assessmentData);
+        const storedAssessment = assessmentData.map(instance => omit(instance, 'missingPatchDetails'));
+
+        updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, {
+            ...hostLevelAssessmentData,
+            mssqlPatch: storedAssessment
+        }).catch(storeError => {
+            logger.error('Failed to persist live MSSQL patch assessment', {
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                error: storeError
+            });
+        });
+
+        return {
+            status: uniqueMissingPatches.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
+            ec2InstancesToPatch: assessmentData.map(instance => ({
+                ec2InstanceId: instance.ec2InstanceId,
+                missingPatchDetails: instance.missingPatchDetails ?? []
+            }))
+        };
+    } catch (error) {
+        const errorMessage = 'Failed to run MSSQL patch scan';
+        logger.error(errorMessage, { accountId, credentialsId, region, databaseHostId, databaseInstanceId, error });
+        return { errorMessage };
+    }
+}
+
+export {
+    managedHostMSSQLPatchAssessment,
+    calculateMSSQLPatchDrift,
+    runMSSQLPatchAssessment,
+    getTheMSSqlversion,
+    fetchMssqlPatchWithMissingPatches
+};

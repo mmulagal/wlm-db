@@ -1,5 +1,5 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { isEmpty } from 'lodash-es';
+import { isEmpty, omit } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { WorkloadInstance } from '../../../utils/common-types';
 import { ASSESSMENT_SSM_EXECUTION_TIMEOUT, GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
@@ -13,7 +13,12 @@ import ORACLE_SECURITY_PATCH_ASSESSMENT from './ssm-scripts/security-patch-asses
 import { loadCpuCatalog, type CPUCatalogEntry } from './oracle-cpu-catalog-operations';
 import GOLDEN_CONFIG from './golden-config';
 import { OracleSecurityPatchSsmResponse } from './common-types';
-import { OracleSecurityPatchDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
+import {
+    OracleSecurityPatchDriftResponseType,
+    OracleSecurityPatchMissingPatchType,
+    OracleSecurityPatchScanResponseType
+} from '../../../routes/types/oracle-continuous-optimization.types';
+import { ErrorResponseType } from '../../../routes/types/continuous-optimization.types';
 
 const logger = getLogger();
 
@@ -110,6 +115,45 @@ function findMissingPatches(
         }));
 }
 
+type OracleSecurityPatchAssessmentResult = OracleSecurityPatchDriftResponseType & {
+    missingPatches: OracleSecurityPatchMissingPatchType[];
+};
+
+async function runOracleSecurityPatchAssessment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    databaseInstanceName: string
+): Promise<OracleSecurityPatchAssessmentResult> {
+    const [instancePatchData, catalog] = await Promise.all([
+        collectSecurityPatchData(credentialsId, region, accountId, ec2InstanceId, databaseInstanceName),
+        loadCpuCatalog()
+    ]);
+
+    if (isEmpty(catalog)) {
+        throw new Error('Oracle Critical Patch Updates catalog is unavailable. Unable to determine missing patches.');
+    }
+
+    const { version, appliedPatches } = instancePatchData;
+    const missingPatches = findMissingPatches(version, appliedPatches, catalog);
+
+    const status = missingPatches.length === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+
+    const objectsInViolation = status === AssessmentStatus.NOT_OPTIMIZED ? [databaseInstanceName] : [];
+
+    return {
+        ...GOLDEN_CONFIG.oracleSecurityPatch,
+        status,
+        recommended: AssessmentStatus.OPTIMIZED,
+        objectsInViolation,
+        totalObjectsAssessed: 1,
+        totalObjectsInViolation: objectsInViolation.length,
+        missingPatchesCount: missingPatches.length,
+        missingPatches
+    };
+}
+
 async function collectSecurityPatchData(
     credentialsId: string,
     region: string,
@@ -143,49 +187,14 @@ async function collectSecurityPatchData(
     return patchInfo;
 }
 
-async function calculateOracleSecurityPatchDrift(
-    databaseInstanceName: string,
-    assessmentData: OracleSecurityPatchSsmResponse | undefined
-): Promise<OracleSecurityPatchDriftResponseType | { errorMessage: string }> {
-    if (isEmpty(assessmentData) || !assessmentData.version || !assessmentData.appliedPatches) {
+function calculateOracleSecurityPatchDrift(
+    assessmentData: OracleSecurityPatchDriftResponseType | undefined
+): OracleSecurityPatchDriftResponseType | { errorMessage: string } {
+    if (!assessmentData || !assessmentData.status || assessmentData.totalObjectsAssessed === 0) {
         return { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH) };
     }
 
-    try {
-        const { version, appliedPatches } = assessmentData;
-
-        const catalog = await loadCpuCatalog();
-        if (isEmpty(catalog)) {
-            return {
-                errorMessage:
-                    'Oracle Critical Patch Updates catalog is unavailable. Unable to determine missing patches.'
-            };
-        }
-
-        const missingPatches = findMissingPatches(version, appliedPatches, catalog);
-
-        const status = !isEmpty(missingPatches) ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
-
-        const objectsInViolation = status === AssessmentStatus.NOT_OPTIMIZED ? [databaseInstanceName] : [];
-
-        return {
-            ...GOLDEN_CONFIG.oracleSecurityPatch,
-            status,
-            recommended: AssessmentStatus.OPTIMIZED,
-            objectsInViolation,
-            totalObjectsAssessed: 1,
-            totalObjectsInViolation: objectsInViolation.length,
-            missingPatchesCount: missingPatches.length,
-            ...(status === AssessmentStatus.NOT_OPTIMIZED &&
-                !isEmpty(missingPatches) && {
-                    missingPatchDetails: missingPatches
-                })
-        };
-    } catch (error) {
-        const errorMessage = `Error calculating Oracle Critical Patch Updates assessment drift: ${error}`;
-        logger.error(errorMessage, { databaseInstanceName });
-        return { errorMessage };
-    }
+    return assessmentData;
 }
 
 async function initiateOracleSecurityPatchAssessmentCollection(
@@ -229,14 +238,15 @@ async function initiateOracleSecurityPatchAssessmentCollection(
     let errorMessage = '';
 
     try {
-        const { version, appliedPatches } = await collectSecurityPatchData(
+        const patchAssessmentData = await runOracleSecurityPatchAssessment(
+            accountId,
             credentialsId,
             region,
-            accountId,
             activeNodeInstanceid,
             databaseInstanceName
         );
 
+        const storedAssessment = omit(patchAssessmentData, 'missingPatches');
         await createDatabaseInstanceConfigData([
             {
                 account_id: accountId,
@@ -246,7 +256,7 @@ async function initiateOracleSecurityPatchAssessmentCollection(
                 database_instance_id: databaseInstanceId,
                 creation_time: new Date(Date.now()),
                 config_data_type: AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH,
-                config_data: { version, appliedPatches }
+                config_data: storedAssessment
             }
         ]);
     } catch (error) {
@@ -269,4 +279,88 @@ async function initiateOracleSecurityPatchAssessmentCollection(
     }
 }
 
-export { calculateOracleSecurityPatchDrift, initiateOracleSecurityPatchAssessmentCollection, findMissingPatches };
+async function fetchOracleSecurityPatchWithMissingPatches(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    databaseInstanceName: string,
+    ec2InstanceId: string
+): Promise<OracleSecurityPatchScanResponseType | ErrorResponseType> {
+    logger.info('Running Oracle Critical Patch Updates scan', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        databaseInstanceName,
+        ec2InstanceId
+    });
+
+    try {
+        const patchAssessmentData = await runOracleSecurityPatchAssessment(
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            databaseInstanceName
+        );
+
+        const storedAssessment = omit(patchAssessmentData, 'missingPatches');
+        createDatabaseInstanceConfigData([
+            {
+                account_id: accountId,
+                credentials_id: credentialsId,
+                region,
+                resource_id: databaseHostId,
+                database_instance_id: databaseInstanceId,
+                creation_time: new Date(Date.now()),
+                config_data_type: AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH,
+                config_data: storedAssessment
+            }
+        ]).catch(error => {
+            logger.error('Failed to persist Oracle Critical Patch Updates assessment data', {
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                error
+            });
+        });
+
+        return {
+            status: patchAssessmentData.status,
+            ec2InstancesToPatch: [
+                {
+                    ec2InstanceId,
+                    database: databaseInstanceName,
+                    missingPatchDetails: patchAssessmentData.missingPatches
+                }
+            ]
+        };
+    } catch (error) {
+        logger.error('Failed to run Oracle Critical Patch Updates scan', {
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            ec2InstanceId,
+            error
+        });
+        return {
+            errorMessage: `Unable to run Oracle Critical Patch Updates scan for database instance ${databaseInstanceName}: ${
+                error instanceof Error ? error.message : String(error)
+            }`
+        };
+    }
+}
+
+export {
+    calculateOracleSecurityPatchDrift,
+    initiateOracleSecurityPatchAssessmentCollection,
+    findMissingPatches,
+    fetchOracleSecurityPatchWithMissingPatches
+};

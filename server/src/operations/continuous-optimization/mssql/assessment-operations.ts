@@ -47,7 +47,11 @@ import {
     managedHostOsPatchAssessment
 } from './hostOsPatch-assessment-operations';
 import { calculateLicenseDrift, managedHostsLicenseAssessment } from './license-assessment-operations';
-import { calculateMSSQLPatchDrift, managedHostMSSQLPatchAssessment } from './mssqlPatch-assessment-operations';
+import {
+    calculateMSSQLPatchDrift,
+    fetchMssqlPatchWithMissingPatches,
+    managedHostMSSQLPatchAssessment
+} from './mssqlPatch-assessment-operations';
 import { calculateRssConfigDrift, managedHostsRssConfigAssessment } from './rssConfig-assessment-operations';
 import { assessMTUAlignment, calculateMTUAlignmentDrift } from './mtu-assessment-operations';
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
@@ -1513,8 +1517,11 @@ async function fetchMssqlPatchScan(
         databaseInstanceId
     )) as DatabaseInstance;
     const {
-        resource: { metadata: resourceMetadata }
+        database_instance_name: dbInstanceName,
+        sqlAuthEnabled = false,
+        resource: { metadata: resourceMetadata, assessment_data: hostLevelAssessmentData }
     } = instanceDetail;
+
     const { node1InstanceId, node2InstanceId } = resourceMetadata as Metadata;
     const isPartOfCluster = !!node2InstanceId;
 
@@ -1527,6 +1534,19 @@ async function fetchMssqlPatchScan(
                 databaseHostId,
                 node1InstanceId,
                 isPartOfCluster
+            );
+        case AssessmentCategories.MSSQL_PATCH:
+            return fetchMssqlPatchWithMissingPatches(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                databaseInstanceId,
+                dbInstanceName,
+                sqlAuthEnabled,
+                node1InstanceId,
+                node2InstanceId,
+                hostLevelAssessmentData as ResourceAssessmentData | undefined
             );
         default: {
             const errorMessage = `Unsupported patch-scan field: ${field as string}`;
