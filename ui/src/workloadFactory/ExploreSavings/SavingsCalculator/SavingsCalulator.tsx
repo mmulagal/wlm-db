@@ -421,7 +421,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) &&
                         showOptimizeMode?.showCalcMode && (
                             <div className={styles.optimizeModeContainer}>
-                                <CalculatorMode />
+                                <CalculatorMode printState={printState} />
                             </div>
                         )}
 

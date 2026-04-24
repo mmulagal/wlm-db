@@ -11,7 +11,11 @@ import {
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { TCO_CALCULATOR_MODE } from '../../../../utils/consts';
 
-const CalculatorMode = () => {
+interface CalculatorModeProps {
+    printState?: boolean;
+}
+
+const CalculatorMode = ({ printState = false }: CalculatorModeProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const {
@@ -46,29 +50,46 @@ const CalculatorMode = () => {
         [dispatch, standardStorageSavingsResponse, standardViewCalculationsResponse]
     );
 
+    const isOptimized = selectedCalculatorMode === TCO_CALCULATOR_MODE.OPTIMIZED;
+
     return (
         <div className={styles.calcMode}>
             <DsTypography variant="Semibold_14">{t('databases.explore-savings.select-calculator-mode')}</DsTypography>
 
-            <div className={styles.radioContainer}>
-                <DsRadioButton
-                    id="select-optimized-type"
-                    data-testid="wlm-db-es-select-optimized-type"
-                    variant="Default"
-                    title={t('databases.explore-savings.optimized-based-on-usage')}
-                    isSelected={selectedCalculatorMode === TCO_CALCULATOR_MODE.OPTIMIZED}
-                    onClick={handleOptimizedClick}
-                />
+            {printState ? (
+                <div className={styles.radioContainer}>
+                    <div className={styles.staticRadio}>
+                        <span className={styles.radioIcon}>{isOptimized ? '\u25C9' : '\u25CB'}</span>
+                        <DsTypography variant="Regular_14">
+                            {t('databases.explore-savings.optimized-based-on-usage')}
+                        </DsTypography>
+                    </div>
+                    <div className={styles.staticRadio}>
+                        <span className={styles.radioIcon}>{!isOptimized ? '\u25C9' : '\u25CB'}</span>
+                        <DsTypography variant="Regular_14">{t('databases.explore-savings.standard')}</DsTypography>
+                    </div>
+                </div>
+            ) : (
+                <div className={styles.radioContainer}>
+                    <DsRadioButton
+                        id="select-optimized-type"
+                        data-testid="wlm-db-es-select-optimized-type"
+                        variant="Default"
+                        title={t('databases.explore-savings.optimized-based-on-usage')}
+                        isSelected={selectedCalculatorMode === TCO_CALCULATOR_MODE.OPTIMIZED}
+                        onClick={handleOptimizedClick}
+                    />
 
-                <DsRadioButton
-                    id="select-standard-type"
-                    data-testid="wlm-db-es-select-standard-type"
-                    variant="Default"
-                    title={t('databases.explore-savings.standard')}
-                    isSelected={selectedCalculatorMode === TCO_CALCULATOR_MODE.STANDARD}
-                    onClick={handleStandardClick}
-                />
-            </div>
+                    <DsRadioButton
+                        id="select-standard-type"
+                        data-testid="wlm-db-es-select-standard-type"
+                        variant="Default"
+                        title={t('databases.explore-savings.standard')}
+                        isSelected={selectedCalculatorMode === TCO_CALCULATOR_MODE.STANDARD}
+                        onClick={handleStandardClick}
+                    />
+                </div>
+            )}
         </div>
     );
 };

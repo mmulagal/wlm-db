@@ -436,4 +436,21 @@ describe('OracleEbsTable', () => {
             expect(mockToggleRowSelection).toHaveBeenCalled();
         });
     });
+
+    describe('Data Guard hosts', () => {
+        it('should render Data Guard hosts with Data Guard deployment model', () => {
+            const dgHost = makeOracleEbsHost(1, { serverInstallationMode: 'Data Guard' });
+            renderComponent({ oracleEbsHosts: [dgHost] });
+            expect(screen.getByTestId('table-row-host-1_cred-1_us-east-1')).toBeTruthy();
+        });
+
+        it('should render mixed standalone and Data Guard rows', () => {
+            const standaloneHost = makeOracleEbsHost(1);
+            const dgHost = makeOracleEbsHost(2, { serverInstallationMode: 'Data Guard' });
+            renderComponent({ oracleEbsHosts: [standaloneHost, dgHost] });
+
+            expect(screen.getByTestId('table-row-host-1_cred-1_us-east-1')).toBeTruthy();
+            expect(screen.getByTestId('table-row-host-2_cred-1_us-east-1')).toBeTruthy();
+        });
+    });
 });

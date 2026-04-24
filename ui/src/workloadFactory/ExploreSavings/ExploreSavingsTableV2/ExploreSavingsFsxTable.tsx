@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { t } from 'i18next';
 import styles from './ExploreSavingsTableV2.module.scss';
+import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
 import { handleAuthenticate, onClickESHost, shouldAuthDialogOpen } from '../ExploreSavingsUtils';
@@ -160,7 +161,7 @@ const ExploreSavingsFsxTable = () => {
         width: windowSize.width >= 1920 ? '15.37%' : '247px',
         renderCell: (cellData: any, rowData: any) => (
             <div
-                className={styles.detectManage}
+                className={CommonStyles.detectManage}
                 onClick={() => {
                     dispatch(resetOptimizedStorage());
                     shouldAuthDialogOpen(rowData)
@@ -169,7 +170,7 @@ const ExploreSavingsFsxTable = () => {
                 }}
                 id="wlm-db-fsxw-explore-savings-table-button"
             >
-                <Typography variant="Regular_14" className={styles.textStyle}>
+                <Typography variant="Regular_14" className={CommonStyles.textStyle}>
                     {GENERAL.ES_SAVINGS}
                 </Typography>
             </div>
@@ -246,7 +247,7 @@ const ExploreSavingsFsxTable = () => {
             width: windowSize.width >= 1920 ? '15.12%' : '243px',
             isSortable: true,
             accessorForTextFilter: 'instanceListText',
-            renderCell: (cellData: any, rowData: any) => renderInstanceListText(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderInstanceListText(cellData, rowData, CommonStyles)
         },
         {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
@@ -266,7 +267,7 @@ const ExploreSavingsFsxTable = () => {
                 { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
             ],
-            renderCell: (cellData: any, rowData: any) => renderUnmanagedAZ(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderUnmanagedAZ(cellData, rowData, CommonStyles)
         },
         {
             id: '8',
@@ -275,7 +276,7 @@ const ExploreSavingsFsxTable = () => {
             isSortable: true,
             filterOptions: 'auto',
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, CommonStyles)
         },
         {
             id: '9',
@@ -284,7 +285,7 @@ const ExploreSavingsFsxTable = () => {
             isSortable: true,
             filterOptions: 'auto',
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, CommonStyles)
         },
         {
             id: '10',
@@ -293,7 +294,7 @@ const ExploreSavingsFsxTable = () => {
             isSortable: true,
             filterOptions: 'auto',
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, CommonStyles)
         },
         lastColDetails()
     ];

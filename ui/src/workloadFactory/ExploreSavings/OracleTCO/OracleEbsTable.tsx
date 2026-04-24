@@ -10,6 +10,7 @@ import { AVAILABILITY_ZONE_TYPE, DATABASE_DEPLOYMENT_MODE, DBType, DETECT_HOST_V
 import {
     renderAllocatedCapacity,
     renderCellData,
+    renderInstanceListText,
     renderUnmanagedAZ,
     uniqueHostRow
 } from '../../InventoryV2/InventoryUtilsV2';
@@ -46,16 +47,30 @@ const OracleEbsTable = () => {
         () =>
             oracleEbsHosts.map((item: any) => {
                 const ec2Details = item?.ec2Details || [];
-                const instanceListText = ec2Details.map((ec2: any) => ec2?.name || ec2?.id).join(', ');
+                const instanceList: string[] = [];
+                const instanceNameList: string[] = [];
+
+                ec2Details.forEach((ec2: any) => {
+                    if (ec2?.name) {
+                        instanceNameList.push(ec2.name);
+                    }
+                    if (ec2?.name && ec2?.id) {
+                        instanceList.push(`${ec2.name} | ID: ${ec2.id}`);
+                    } else if (ec2?.id) {
+                        instanceList.push(`${t('databases.general.not-available')} | ID: ${ec2.id}`);
+                    }
+                });
+
                 const totalInstance = item?.totalInstance || item?.databaseInstanceDetails?.length || 0;
 
                 return {
                     ...item,
                     id: uniqueHostRow(item?.id || item?.resourceId, item?.credentialId, item?.regionId),
                     nameForSorting: (item?.name || '').toLowerCase(),
-                    instanceListText,
+                    instanceListText: instanceList.join(','),
+                    instanceNameListText: instanceNameList.join(', '),
                     totalInstance,
-                    deploymentModel: item?.serverInstallationMode || 'Standalone'
+                    deploymentModel: item?.serverInstallationMode || t('databases.general.standalone')
                 };
             }),
         [oracleEbsHosts]
@@ -197,7 +212,7 @@ const OracleEbsTable = () => {
             Header: t('databases.explore-savings.ec2-instances'),
             accessor: 'instanceListText',
             width: windowSize.width >= 1920 ? '15.12%' : '243px',
-            renderCell: (cellData: string) => cellData || t('databases.general.not-available')
+            renderCell: (cellData: any, rowData: any) => renderInstanceListText(cellData, rowData, CommonStyles)
         },
         {
             id: '5',
@@ -215,7 +230,7 @@ const OracleEbsTable = () => {
                 { label: t('databases.explore-savings.single-az'), value: AVAILABILITY_ZONE_TYPE.SINGLE_AZ },
                 { label: t('databases.explore-savings.multi-az'), value: AVAILABILITY_ZONE_TYPE.MULTI_AZ }
             ],
-            renderCell: (cellData: any, rowData: any) => renderUnmanagedAZ(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderUnmanagedAZ(cellData, rowData, CommonStyles)
         },
         {
             id: '7',
@@ -224,7 +239,7 @@ const OracleEbsTable = () => {
             isSortable: true,
             filterOptions: 'auto',
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, CommonStyles)
         },
         {
             id: '8',
@@ -233,7 +248,7 @@ const OracleEbsTable = () => {
             isSortable: true,
             filterOptions: 'auto',
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, CommonStyles)
         },
         {
             id: '9',
@@ -242,7 +257,7 @@ const OracleEbsTable = () => {
             isSortable: true,
             filterOptions: 'auto',
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, CommonStyles)
         },
         lastColDetails()
     ];

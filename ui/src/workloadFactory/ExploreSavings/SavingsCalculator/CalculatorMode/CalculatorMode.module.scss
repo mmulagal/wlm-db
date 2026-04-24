@@ -3,6 +3,7 @@
     display: flex;
     gap: 48px;
     align-items: center;
+    white-space: nowrap;
 
     background: var(--background-content, #fff);
     /* Light/Drop shadow/level 1 */
@@ -15,6 +16,18 @@
     .radioContainer {
         display: flex;
         gap: 32px;
+    }
+
+    .staticRadio {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .radioIcon {
+        font-size: 18px;
+        line-height: 1;
+        color: #0067c5;
     }
 }
 

@@ -281,11 +281,6 @@ export const onClickESHostOracleEbs = (
 
     setESInstanceData(rowData, dispatch);
 
-    // Initialize dropdown values BEFORE triggering data fetch
-    // This prevents API calls with null/undefined required parameters
-    dispatch(setSelectedSnapshotFrequency(SNAPSHOT_FREQUENCY[2])); // Daily
-    dispatch(setSelectedCloneRefresh({ value: 'Daily', label: 'Daily' })); // Daily
-
     dispatch(setTriggerBulkDataFetch(true));
     dispatch(setSelectedServerName(bulkServerName || rowData?.name || rowData?.ec2InstanceName));
 };

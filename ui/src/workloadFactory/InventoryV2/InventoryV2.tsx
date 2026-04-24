@@ -9,6 +9,7 @@ import InventoryTablesComponent from './InventoryTablesComponent/InventoryTables
 import {
     DATABASE_DEPLOYMENT_MODE,
     DBType,
+    DETECT_HOST_VAR,
     ERROR_ANALYZER_STATUS,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
@@ -167,13 +168,19 @@ const InventoryV2 = () => {
                     t
                 );
 
+                // Filter out EBS and FSx for Windows instances from the displayed count
+                // to stay consistent with the instance table which hides those types
+                const hostEntry = inventoryTableData[key];
+                const fsxnInstances = hostEntry?.sqlServerInstances?.filter(
+                    (inst: any) => inst?.fileSystemType !== DETECT_HOST_VAR.EBS
+                );
+                const filteredTotal = fsxnInstances?.length ?? hostEntry?.totalInstance ?? 0;
+                const filteredManaged = Math.min(hostEntry?.managedInstance ?? 0, filteredTotal);
+
                 const rowData = {
                     ...inventoryTableData[key],
                     id: String(hostUniqueId++),
-                    sqlServerInstancesText:
-                        inventoryTableData[key]?.totalInstance !== 0
-                            ? `${inventoryTableData[key]?.managedInstance} out of ${inventoryTableData[key]?.totalInstance}`
-                            : '',
+                    sqlServerInstancesText: filteredTotal !== 0 ? `${filteredManaged} out of ${filteredTotal}` : '',
                     instanceListText: instanceList.join(','),
                     instanceNameListText: instanceNameList.join(', '),
                     vpcIdAndNameText,

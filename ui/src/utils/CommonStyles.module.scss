@@ -522,3 +522,66 @@
         background: var(--text-secondary, #a1a1a1);
     }
 }
+
+// Shared table cell and tooltip styles
+// Used by OracleEbsTable, ExploreSavingsTableV2, InventoryTable, and other table components
+
+.colText {
+    gap: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 150px;
+}
+
+.azColText {
+    display: flex;
+    gap: 16px;
+}
+
+.tooltipContainer {
+    display: flex;
+    gap: 8px;
+    padding: 12px 0 16px 0;
+
+    span:hover {
+        svg {
+            path {
+                fill: var(--tooltip-icon-hover);
+            }
+        }
+    }
+}
+
+.ec2Separator {
+    border-bottom: 1px solid var(--border);
+}
+
+.ec2Container {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+
+    svg {
+        position: relative;
+        top: 2px;
+    }
+}
+
+.ssmOffline:hover {
+    span:first-child {
+        svg {
+            path {
+                fill: var(--tooltip-icon-hover);
+            }
+        }
+    }
+}
+
+.copy-popover {
+    width: 140px;
+    font-size: 13px;
+    line-height: 20px;
+    text-align: center;
+    padding: 2px 2px;
+}

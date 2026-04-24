@@ -3266,13 +3266,31 @@ export const getExploreSavingsRowsMssql = (inventoryTableData: { [key: string]: 
     return nonFsxnStorageList;
 };
 
+/**
+ * Returns Oracle EBS hosts for Explore Savings table.
+ * For Data Guard configurations, only the primary node is shown (standby nodes are filtered out),
+ * similar to how MSSQL AOAG is handled. The primary row is enriched with all EC2 details
+ * from associatedHosts to show both primary and standby EC2 instances.
+ *
+ * @param inventoryTableData - The inventory table data object
+ * @returns Array of Oracle EBS hosts (with DG standbys filtered out, primary enriched with all EC2s)
+ */
 export const getExploreSavingsRowsOracle = (inventoryTableData: { [key: string]: InventoryTableData }) => {
-    const oracleEbsList: Array<InventoryTableData> = [];
+    const oracleEbsList: Array<any> = [];
     const state = store.getState();
     const { removeSecNodeDiscoveredList } = state.inventoryV2;
 
     const allKeys = Object.keys(inventoryTableData);
-    allKeys.map((key: string) => {
+
+    const ec2NameLookup: Record<string, string> = {};
+    allKeys.forEach((key: string) => {
+        const row = inventoryTableData[key];
+        if (row?.ec2InstanceId && row?.ec2InstanceName) {
+            ec2NameLookup[row.ec2InstanceId] = row.ec2InstanceName;
+        }
+    });
+
+    allKeys.forEach((key: string) => {
         const item = inventoryTableData[key];
         if (removeSecNodeDiscoveredList.includes(key)) {
             return;
@@ -3282,13 +3300,52 @@ export const getExploreSavingsRowsOracle = (inventoryTableData: { [key: string]:
             return;
         }
 
-        if (item?.action === INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
-            const isMixed = checkForMixedStorageType(item);
-            if (!isMixed && item?.storageType === DETECT_HOST_VAR.EBS) {
+        if (item?.action !== INVENTORY_ACTIONS.EXPLORE_SAVINGS) {
+            return;
+        }
+
+        const isMixed = checkForMixedStorageType(item);
+        if (isMixed || item?.storageType !== DETECT_HOST_VAR.EBS) {
+            return;
+        }
+
+        const isDataGuard = item?.serverInstallationMode === DATABASE_DEPLOYMENT_MODE.DATAGUARD;
+
+        if (!isDataGuard) {
+            oracleEbsList.push(item);
+            return;
+        }
+
+        const sqlServerInstances = item?.sqlServerInstances || [];
+        const dgInstance = sqlServerInstances.find((inst: any) => inst?.dataguardDetails?.dbName);
+
+        if (!dgInstance?.dataguardDetails) {
+            oracleEbsList.push(item);
+            return;
+        }
+
+        const { isPrimaryNode, associatedHosts } = dgInstance.dataguardDetails;
+
+        if (isPrimaryNode) {
+            if (associatedHosts && associatedHosts.length > 0) {
+                const allEc2Details = associatedHosts.map((host: any) => {
+                    const ec2Id = host.ec2InstanceId;
+                    const ec2Name = ec2NameLookup[ec2Id] || host.hostName;
+                    return {
+                        id: ec2Id,
+                        name: ec2Name
+                    };
+                });
+                oracleEbsList.push({
+                    ...item,
+                    ec2Details: allEc2Details
+                });
+            } else {
                 oracleEbsList.push(item);
             }
         }
     });
+
     return oracleEbsList;
 };
 

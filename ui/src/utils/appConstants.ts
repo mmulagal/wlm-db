@@ -537,7 +537,7 @@ export const GENERAL = {
     DB_HOST_INSTANCE_ID: 'EC2 instance ID',
     DB_HOST_INSTANCE: 'EC2 instance',
     DB_HOST_VPC: 'VPC',
-    DB_HOST_AVAILABILITY: 'Availability',
+    DB_HOST_AVAILABILITY: 'Availability zone',
     DB_HOST_TYPE: 'Type',
     DB_HOST_COLLATION: 'Collation',
     DB_HOST_DEPLOYMENT_MODEL: 'Deployment model',

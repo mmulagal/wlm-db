@@ -22,7 +22,12 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('./CalculatorMode.module.scss', () => ({
-    default: { calcMode: 'calcMode', radioContainer: 'radioContainer' }
+    default: {
+        calcMode: 'calcMode',
+        radioContainer: 'radioContainer',
+        staticRadio: 'staticRadio',
+        radioIcon: 'radioIcon'
+    }
 }));
 
 vi.mock('../../../../store/workloadFactory/exploreSavingsSlice', () => ({
@@ -143,5 +148,36 @@ describe('CalculatorMode', () => {
             type: 'test/setSelectedCalculatorMode',
             payload: TCO_CALCULATOR_MODE.STANDARD
         });
+    });
+
+    it('renders static radio buttons when printState is true with optimized selected', () => {
+        const { container } = render(
+            <Provider store={makeStore()}>
+                <CalculatorMode printState />
+            </Provider>
+        );
+        expect(screen.queryByTestId('select-optimized-type')).toBeNull();
+        expect(screen.queryByTestId('select-standard-type')).toBeNull();
+        const radios = container.querySelectorAll('.staticRadio');
+        expect(radios).toHaveLength(2);
+        // Selected radio uses ◉ (U+25C9), unselected uses ○ (U+25CB)
+        expect(container.textContent).toContain('\u25C9');
+        expect(container.textContent).toContain('\u25CB');
+        expect(container.textContent).toContain('databases.explore-savings.optimized-based-on-usage');
+        expect(container.textContent).toContain('databases.explore-savings.standard');
+    });
+
+    it('renders static radio buttons when printState is true with standard selected', () => {
+        const { container } = render(
+            <Provider store={makeStore({ selectedCalculatorMode: TCO_CALCULATOR_MODE.STANDARD })}>
+                <CalculatorMode printState />
+            </Provider>
+        );
+        expect(screen.queryByTestId('select-optimized-type')).toBeNull();
+        expect(screen.queryByTestId('select-standard-type')).toBeNull();
+        const radios = container.querySelectorAll('.staticRadio');
+        expect(radios).toHaveLength(2);
+        expect(container.textContent).toContain('databases.explore-savings.optimized-based-on-usage');
+        expect(container.textContent).toContain('databases.explore-savings.standard');
     });
 });

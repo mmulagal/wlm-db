@@ -120,6 +120,7 @@
         .textContent {
             display: flex;
             flex-direction: column;
+            white-space: nowrap;
             .secondText {
                 width: 100%;
             }

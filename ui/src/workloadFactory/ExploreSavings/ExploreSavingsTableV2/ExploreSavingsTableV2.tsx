@@ -357,7 +357,7 @@ const ExploreSavingsTableV2 = () => {
             width: windowSize.width >= 1920 ? '15.12%' : '243px',
             isSortable: true,
             accessorForTextFilter: 'instanceListText',
-            renderCell: (cellData: any, rowData: any) => renderInstanceListText(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderInstanceListText(cellData, rowData, CommonStyles)
         },
         {
             Header: GENERAL.DB_HOST_ALLOCATED_CAPACITY,
@@ -377,7 +377,7 @@ const ExploreSavingsTableV2 = () => {
                 { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
             ],
-            renderCell: (cellData: any, rowData: any) => renderUnmanagedAZ(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderUnmanagedAZ(cellData, rowData, CommonStyles)
         },
         {
             id: '8',
@@ -386,7 +386,7 @@ const ExploreSavingsTableV2 = () => {
             isSortable: true,
             filterOptions: 'auto',
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, CommonStyles)
         },
         {
             id: '9',
@@ -395,7 +395,7 @@ const ExploreSavingsTableV2 = () => {
             isSortable: true,
             filterOptions: 'auto',
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, CommonStyles)
         },
         {
             id: '10',
@@ -404,7 +404,7 @@ const ExploreSavingsTableV2 = () => {
             isSortable: true,
             filterOptions: 'auto',
             width: '254px',
-            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderCellData(cellData, rowData, CommonStyles)
         },
         lastColDetails()
     ];
