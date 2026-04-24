@@ -1151,6 +1151,30 @@ export const ORACLE_IMPACTED_DRIVE_CONFIGS: string[] = [
     ASSESSMENT_CONFIG_NAMES.SPACE_ALLOCATION
 ];
 
+// Oracle iSCSI-only compute card keys (cards that should only render when storage protocol is iSCSI)
+export const ORACLE_ISCSI_ONLY_CARD_KEYS = [
+    'transparent_hugepages',
+    'tcp_advanced_options',
+    'filesystems_io_options',
+    'multiblock_readcount'
+] as const;
+
+// Hyphen-format card IDs for iSCSI-only Oracle compute cards (used when comparing cardItem.id)
+export const ORACLE_ISCSI_ONLY_CARD_IDS = new Set([
+    'transparent-hugepages',
+    'tcp-advanced-options',
+    'filesystems-io-options',
+    'multiblock-readcount'
+]);
+
+// API-level camelCase keys for iSCSI-only Oracle compute configs (used when comparing configKey)
+export const ORACLE_ISCSI_ONLY_API_KEYS = new Set([
+    'oracleTransparentHugepages',
+    'oracleTcpAdvancedOptions',
+    'oracleFilesystemsIoOptions',
+    'oracleMultipathReadcount'
+]);
+
 // Configuration names mapping for unified display names for the export pdf
 export const CONFIG_NAMES = {
     // Oracle Storage sizing configurations
@@ -1337,6 +1361,17 @@ export const ORACLE_UNSUPPORTED_FIX_TYPES = new Set([
 ]);
 
 /**
+ * Oracle compute config types that are only applicable for iSCSI storage protocol instances.
+ * Used to filter out these cards for non-iSCSI instances.
+ */
+export const ORACLE_ISCSI_ONLY_CONFIG_TYPES = new Set([
+    ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES,
+    ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS,
+    ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS,
+    ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT
+]);
+
+/**
  * Config types that always show the unsupported-fix banner when status is OVER_PROVISIONED.
  */
 export const OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES = new Set([ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]);
@@ -1453,10 +1488,6 @@ export type WellArchitectedCategory = 'storage' | 'compute' | 'application' | 'r
 export const MSSQL_API_FIELD_TO_CATEGORY: Record<string, WellArchitectedCategory> = {
     compute: 'compute',
     hostOsPatch: 'compute',
-    transparentHugepages: 'compute',
-    tcpAdvancedOptions: 'compute',
-    filesystemsIoOptions: 'compute',
-    multiblockReadcount: 'compute',
     mtuAlignment: 'compute',
     rssConfig: 'compute',
     license: 'application',
@@ -1471,6 +1502,10 @@ export const MSSQL_API_FIELD_TO_CATEGORY: Record<string, WellArchitectedCategory
 
 export const ORACLE_API_FIELD_TO_CATEGORY: Record<string, WellArchitectedCategory> = {
     hostOsPatch: 'compute',
+    transparentHugepages: 'compute',
+    tcpAdvancedOptions: 'compute',
+    filesystemsIoOptions: 'compute',
+    multiblockReadcount: 'compute',
     oracleSecurityPatch: 'application',
     crr: 'resiliency',
     snapcenterSnapshot: 'resiliency',

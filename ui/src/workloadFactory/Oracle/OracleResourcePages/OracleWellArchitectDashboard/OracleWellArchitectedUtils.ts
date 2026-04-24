@@ -24,6 +24,8 @@ import {
     GETWELL_CONFIG,
     GETWELL_STATUS,
     GETWELL_VALUES,
+    ORACLE_ISCSI_ONLY_CARD_IDS,
+    ORACLE_ISCSI_ONLY_CARD_KEYS,
     WA_FLAG_SKIP,
     oracleCategoryOptions
 } from '../../../../utils/consts';
@@ -1909,6 +1911,13 @@ export const formatOracleOptimizationBreakDown = (
         }
 
         if (cardItem?.category === 'compute') {
+            // Skip the iSCSI-only compute cards when protocol is not iSCSI
+            if (ORACLE_ISCSI_ONLY_CARD_IDS.has(cardItem?.id)) {
+                if (cardsData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI) {
+                    return;
+                }
+            }
+
             // If the card has no assessment data, count it as not optimized
             if (!cardItem?.block_two?.value) {
                 computeCount.notOptimized++;
@@ -2847,6 +2856,10 @@ export const checkAllOracleConfigurationsDismissed = (cardData: any, assessmentD
             if (key === 'fra_dg_lun_layout' && !cardData.isStorageLayoutFra) {
                 return; // Skip FRA if it's not enabled
             }
+        }
+        // Skip the iSCSI-only compute cards when protocol is not iSCSI
+        if ((ORACLE_ISCSI_ONLY_CARD_KEYS as readonly string[]).includes(key)) {
+            if (cardData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI) return;
         }
 
         totalConfigs++;

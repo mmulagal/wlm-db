@@ -26,7 +26,8 @@ import {
     DBType,
     FSXN_STORAGE_PROTOCOLS,
     GETWELL_STATUS,
-    GETWELL_VALUES
+    GETWELL_VALUES,
+    ORACLE_ISCSI_ONLY_CONFIG_TYPES
 } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
@@ -1135,6 +1136,14 @@ const DashboardConfigsTable = ({
 
                     // Skip WAD-excluded configurations for WAD (offline assessment) instances
                     if (isWadExcludedConfig(configType, hostData?.isWad, configEngineType)) {
+                        return;
+                    }
+
+                    // Skip iSCSI-only Oracle compute cards for non-iSCSI instances
+                    if (
+                        ORACLE_ISCSI_ONLY_CONFIG_TYPES.has(configType) &&
+                        instanceData?.assessments?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI
+                    ) {
                         return;
                     }
 

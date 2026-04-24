@@ -8,6 +8,7 @@ import { ReactComponent as Light } from '../../../../../assets/Light.svg';
 import { ReactComponent as LightDisabled } from '../../../../../assets/Light-Disabled.svg';
 import useOraclePostponeInfo from '../OraclePostponeActivatingInfo';
 import { getOracleCardStates, getShouldShowHeader, OracleCategorySectionProps } from '../../../../GetWell/GetWellUtils';
+import { FSXN_STORAGE_PROTOCOLS, ORACLE_ISCSI_ONLY_CARD_KEYS } from '../../../../../utils/consts';
 
 const COMPUTE_CARDS: { cardDataKey: string; accordionId: string }[] = [
     { cardDataKey: 'host_os_patch', accordionId: 'host-os-patch-1' },
@@ -32,7 +33,9 @@ const ComputeSection = ({
 }: OracleCategorySectionProps) => {
     const { t } = useTranslation();
 
-    const { renderPostponeActivatingInfo } = useOraclePostponeInfo();
+    const { cardData, renderPostponeActivatingInfo } = useOraclePostponeInfo();
+
+    const isIscsi = useMemo(() => cardData?.storageProtocol === FSXN_STORAGE_PROTOCOLS.ISCSI, [cardData]);
 
     const computeCardStates = useMemo(
         () =>
@@ -64,57 +67,61 @@ const ComputeSection = ({
             )}
 
             <div className={styles.accordionGroups}>
-                {COMPUTE_CARDS.filter(({ cardDataKey }) => oracleCardData?.[cardDataKey]).map(
-                    ({ cardDataKey, accordionId }) => (
-                        <div key={cardDataKey}>
-                            <OracleCardComponent
-                                cardData={oracleCardData[cardDataKey]}
-                                showDismissedConfigurations={showDismissedConfigurations}
-                                setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                driftAssessmentData={driftAssessmentData}
-                            />
-                            <DsAccordion
-                                id={accordionId}
-                                variant="Default"
-                                isDisabled={loading || showDismissedConfigurations}
-                                isExpanded={isAccordionExpanded(accordionId, optimizePrintState)}
-                                onExpandChange={isExpanded => handleAccordionExpanded(accordionId, isExpanded)}
-                                onClick={() => setClickedAccordionId(accordionId)}
-                                title={
-                                    <div className={styles.tagPlacement}>
-                                        {oracleCardData[cardDataKey]?.tags?.map((perTag: string, index: number) => (
-                                            <div
-                                                key={index}
-                                                className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
-                                            >
-                                                <Tag text={perTag} />
-                                            </div>
-                                        ))}
-                                    </div>
-                                }
-                                headerActions={[
-                                    <div className={styles.headerAction}>
-                                        {renderPostponeActivatingInfo(cardDataKey, showDismissedConfigurations)}
-                                        <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                            {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
-                                        </div>
+                {COMPUTE_CARDS.filter(({ cardDataKey }) => {
+                    if (!oracleCardData?.[cardDataKey]) return false;
+                    if ((ORACLE_ISCSI_ONLY_CARD_KEYS as readonly string[]).includes(cardDataKey)) {
+                        return isIscsi;
+                    }
+                    return true;
+                }).map(({ cardDataKey, accordionId }) => (
+                    <div key={cardDataKey}>
+                        <OracleCardComponent
+                            cardData={oracleCardData[cardDataKey]}
+                            showDismissedConfigurations={showDismissedConfigurations}
+                            setShowDismissedConfigurations={setShowDismissedConfigurations}
+                            driftAssessmentData={driftAssessmentData}
+                        />
+                        <DsAccordion
+                            id={accordionId}
+                            variant="Default"
+                            isDisabled={loading || showDismissedConfigurations}
+                            isExpanded={isAccordionExpanded(accordionId, optimizePrintState)}
+                            onExpandChange={isExpanded => handleAccordionExpanded(accordionId, isExpanded)}
+                            onClick={() => setClickedAccordionId(accordionId)}
+                            title={
+                                <div className={styles.tagPlacement}>
+                                    {oracleCardData[cardDataKey]?.tags?.map((perTag: string, index: number) => (
                                         <div
-                                            style={{
-                                                color:
-                                                    loading || showDismissedConfigurations
-                                                        ? 'var(--text-disabled)'
-                                                        : 'var(--text-button-primary)'
-                                            }}
+                                            key={index}
+                                            className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
                                         >
-                                            {t('databases.oracle-inner-page.view-recommendation')}
+                                            <Tag text={perTag} />
                                         </div>
+                                    ))}
+                                </div>
+                            }
+                            headerActions={[
+                                <div className={styles.headerAction}>
+                                    {renderPostponeActivatingInfo(cardDataKey, showDismissedConfigurations)}
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
                                     </div>
-                                ]}
-                                children={<RecommendationText data={oracleCardData?.[cardDataKey]?.recommendation} />}
-                            />
-                        </div>
-                    )
-                )}
+                                    <div
+                                        style={{
+                                            color:
+                                                loading || showDismissedConfigurations
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
+                                </div>
+                            ]}
+                            children={<RecommendationText data={oracleCardData?.[cardDataKey]?.recommendation} />}
+                        />
+                    </div>
+                ))}
             </div>
         </div>
     );

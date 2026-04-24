@@ -15,6 +15,7 @@ import {
     CONFIG_STATES_UI,
     DBType,
     isConfigKeyWadExcluded,
+    ORACLE_ISCSI_ONLY_CONFIG_TYPES,
     severityOptions,
     oracleSeverityOptions,
     WLF_TABS
@@ -96,6 +97,10 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         }
                     } else if (key === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT) {
                         if (configData?.isAsmEnable && configData?.isArchiveEnable) {
+                            return key;
+                        }
+                    } else if (ORACLE_ISCSI_ONLY_CONFIG_TYPES.has(key)) {
+                        if (configData?.isIscsiEnable) {
                             return key;
                         }
                     } else {
@@ -363,8 +368,12 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT,
                 ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT
             ];
-            // Use config-specific total for ASM configs OR WAD-excluded configs
-            if (oracleAsmConfigs.includes(headingText) || isConfigKeyWadExcluded(key, DBType.ORACLE)) {
+            // Use config-specific total for ASM configs, iSCSI configs, OR WAD-excluded configs
+            if (
+                oracleAsmConfigs.includes(headingText) ||
+                ORACLE_ISCSI_ONLY_CONFIG_TYPES.has(headingText) ||
+                isConfigKeyWadExcluded(key, DBType.ORACLE)
+            ) {
                 total = configData?.[key]?.total || 1;
                 afterOutOfTotal = configData?.[key]?.total;
             } else {
@@ -1394,6 +1403,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         false
                     )}
                 {configEngineType === DBType.ORACLE &&
+                    configData?.isIscsiEnable &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES,
                         'oracleTransparentHugepages',
@@ -1403,6 +1413,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         false
                     )}
                 {configEngineType === DBType.ORACLE &&
+                    configData?.isIscsiEnable &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS,
                         'oracleTcpAdvancedOptions',
@@ -1412,6 +1423,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         false
                     )}
                 {configEngineType === DBType.ORACLE &&
+                    configData?.isIscsiEnable &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS,
                         'oracleFilesystemsIoOptions',
@@ -1421,6 +1433,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                         false
                     )}
                 {configEngineType === DBType.ORACLE &&
+                    configData?.isIscsiEnable &&
                     renderOracleConfigTile(
                         ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT,
                         'oracleMultipathReadcount',

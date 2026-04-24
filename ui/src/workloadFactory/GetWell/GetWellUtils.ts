@@ -51,6 +51,7 @@ import {
     WAD_EXCLUDED_CONFIGS_MSSQL,
     WAD_EXCLUDED_CONFIGS_ORACLE,
     isConfigKeyWadExcluded,
+    ORACLE_ISCSI_ONLY_API_KEYS,
     WA_FLAG_SKIP,
     WLF_TABS
 } from '../../utils/consts';
@@ -5974,9 +5975,11 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
         let totalDb = 0;
         // Configs that have dynamic total (ASM filtering)
         const oracleAsmConfigs = ['dataDgLunLayout', 'logDgLunLayout', 'fraDgLunLayout', 'archiveLogDgLunLayout'];
-        // Check if config should use dynamic total (ASM configs OR WAD-excluded configs)
+        // Check if config should use dynamic total (ASM configs, iSCSI configs OR WAD-excluded configs)
         const usesDynamicTotal =
-            oracleAsmConfigs.includes(configKey) || isConfigKeyWadExcluded(configKey, DBType.ORACLE);
+            oracleAsmConfigs.includes(configKey) ||
+            ORACLE_ISCSI_ONLY_API_KEYS.has(configKey) ||
+            isConfigKeyWadExcluded(configKey, DBType.ORACLE);
         if (usesDynamicTotal) {
             // For above configs we need to calculate dynamic total database (ASM or WAD exclusion).
             totalDb = configData?.[configKey]?.total || 0;

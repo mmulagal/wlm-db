@@ -6,6 +6,7 @@ import {
     ASSESSMENT_CONFIG_NAMES,
     GETWELL_CONFIG,
     FSXN_STORAGE_PROTOCOLS,
+    ORACLE_ISCSI_ONLY_CARD_KEYS,
     WA_FLAG_SKIP
 } from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
@@ -209,6 +210,9 @@ const shouldCountOracleMSSQLConfiguration = (key: string, cardData: any): boolea
             return true;
         }
         return false;
+    }
+    if ((ORACLE_ISCSI_ONLY_CARD_KEYS as readonly string[]).includes(key)) {
+        return cardData?.storageProtocol === FSXN_STORAGE_PROTOCOLS.ISCSI;
     }
     return true;
 };

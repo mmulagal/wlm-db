@@ -1241,5 +1241,7 @@
     "storageEndpoint": "fs-030a8e61dd0631815",
     "databaseInstanceName": "ORACLESEREVR",
     "deploymentType": "Standalone",
+    "storageProtocol": "iSCSI",
+    "isASMManaged": true,
     "databaseHostName": "SQLNODE1-57329"
 }
