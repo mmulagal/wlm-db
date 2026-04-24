@@ -40,6 +40,10 @@ jobs:
         working-directory: ./server
         run: npm run lint
 
+      - name: Check server code formatting
+        working-directory: ./server
+        run: npm run format:check
+
       - name: Test server code
         working-directory: ./server
         env:
