@@ -1131,23 +1131,11 @@ export const formatMicrosoftSqlPatchCardConfig = (
     let totalPatches = 0;
     let criticalPatches = 0;
     let importantPatches = 0;
-    let missingPatchList: any = [];
-    const databaseHostName = data?.databaseHostName;
-    const databaseInstanceName = data?.databaseInstanceName;
     data?.mssqlPatch?.missingPatchesInEc2Instances?.map(perInstance => {
         totalPatches += perInstance?.criticalMissingPatchesCount || 0;
         totalPatches += perInstance?.importantMissingPatchesCount || 0;
         criticalPatches += perInstance?.criticalMissingPatchesCount || 0;
         importantPatches += perInstance?.importantMissingPatchesCount || 0;
-        missingPatchList = [
-            ...missingPatchList,
-            ...(perInstance?.missingPatchDetails || []).map(patch => ({
-                ...patch,
-                instanceName: perInstance.ec2InstanceName,
-                // Format as hostname\instanceName
-                hostInstanceName: `${databaseHostName}\\${databaseInstanceName}`
-            }))
-        ];
     });
 
     cardsData = {
@@ -1183,7 +1171,6 @@ export const formatMicrosoftSqlPatchCardConfig = (
                 important: importantPatches
             },
             recommendationText: item?.recommendation,
-            missingPatchList,
             dismissedObj: data?.dismissedConfigurations?.mssqlPatch
         }
     };
@@ -1482,7 +1469,6 @@ export const formatOsPatchCardConfig = (
     let criticalViolations = 0;
     let securityViolations = 0;
     let otherViolations = 0;
-    let missingPatchList: any = [];
     data?.hostOsPatch?.ec2InstancesToPatch?.map(perInstance => {
         totalViolations += perInstance?.criticalNonCompliantCount || 0;
         totalViolations += perInstance?.securityNonCompliantCount || 0;
@@ -1491,13 +1477,6 @@ export const formatOsPatchCardConfig = (
         criticalViolations += perInstance?.criticalNonCompliantCount || 0;
         securityViolations += perInstance?.securityNonCompliantCount || 0;
         otherViolations += perInstance?.otherNonCompliantCount || 0;
-        missingPatchList = [
-            ...missingPatchList,
-            ...(perInstance?.missingPatchDetails || []).map(patch => ({
-                ...patch,
-                instanceName: perInstance.ec2InstanceName
-            }))
-        ];
     });
 
     cardsData = {
@@ -1534,7 +1513,6 @@ export const formatOsPatchCardConfig = (
                 other: otherViolations
             },
             recommendationText: item?.recommendation,
-            missingPatchList,
             dismissedObj: data?.dismissedConfigurations?.hostOsPatch
         }
     };

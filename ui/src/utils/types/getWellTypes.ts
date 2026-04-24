@@ -60,13 +60,6 @@ export interface PerConfigInterface {
         operationEndTime?: number;
         securityNonCompliantCount?: number;
         otherNonCompliantCount?: number;
-        missingPatchDetails?: Array<{
-            classification?: string;
-            severity?: string;
-            state?: string;
-            title?: string;
-            kbId?: string;
-        }>;
     }>;
     missingPatchesInEc2Instances?: Array<{
         ec2InstanceId?: string;
@@ -74,22 +67,8 @@ export interface PerConfigInterface {
         criticalMissingPatchesCount?: number;
         importantMissingPatchesCount?: number;
         missingPatchesCount?: number;
-        missingPatchDetails?: Array<{
-            classification?: string;
-            severity?: string;
-            state?: string;
-            title?: string;
-            kbId?: string;
-        }>;
     }>;
     missingPatchesCount?: number;
-    missingPatchDetails?: Array<{
-        cveId?: string;
-        component?: string;
-        description?: string;
-        releaseDate?: string;
-        releaseName?: string;
-    }>;
     rssAdapters?: Array<RSSConfigAdapterInterface>;
     tcpOffloadState?: string;
     recommendedAdapterSettings?: {

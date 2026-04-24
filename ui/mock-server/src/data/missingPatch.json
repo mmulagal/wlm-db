@@ -1,0 +1,26 @@
+{
+    "status": "not-optimized",
+    "ec2InstancesToPatch": [
+      {
+        "ec2InstanceId": "i-07a29eb681ba37679",
+        "missingPatchDetails": [
+          {
+            "classification": "SecurityUpdates",
+            "cveIds": "CEV-2024-42474",
+            "kbId": "KB5084071",
+            "state": "AvailableSecurityUpdate",
+            "title": "2026-04 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5084071)",
+            "severity": "Critical"
+          },
+          {
+            "classification": "SecurityUpdates",
+            "cveIds": "CEV-2024-42473",
+            "kbId": "KB5082142",
+            "state": "AvailableSecurityUpdate",
+            "title": "2026-04 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5082142)",
+            "severity": "Important"
+          }
+        ]
+      }
+    ]
+  }

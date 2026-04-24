@@ -1,27 +1,47 @@
-import { Table, useTable } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography, Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { DsButton } from '@tlveng/wlm-ds';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
-import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../utils/consts';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useGetMissingPatchAssessmentDataQuery } from '../../../../utils/apiService';
 import { createActionOptionSection, createContentWithBullets, createSection } from './DialogContentHelper';
 
 type ApplicationOracleDialogProps = {
-    missingPatchList?: Array<any>;
     type: string;
 };
 
-const ApplicationOracleDialog = ({ missingPatchList = [], type }: ApplicationOracleDialogProps) => {
+const ApplicationOracleDialog = ({ type }: ApplicationOracleDialogProps) => {
     const { t } = useTranslation();
-    const tableData = useMemo(
-        () =>
-            missingPatchList?.map((item, index) => ({
-                ...item,
-                id: index
-            })),
-        [missingPatchList]
+    const { selectedResourceId, selectedDatabaseInstance, selectedGwInstanceCredId, selectedGwInstanceRegionId } =
+        useAppSelector(state => state.getWellOptimize);
+
+    const isSecurityPatch = type === ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH;
+    const hasIds = Boolean(
+        selectedGwInstanceCredId && selectedGwInstanceRegionId && selectedResourceId && selectedDatabaseInstance
     );
+
+    const { data: missingPatchResponse, isFetching } = useGetMissingPatchAssessmentDataQuery(
+        {
+            dbType: WIZARD_TYPE.ORACLE,
+            credentialId: selectedGwInstanceCredId,
+            regionId: selectedGwInstanceRegionId,
+            databaseHostId: selectedResourceId,
+            instanceId: selectedDatabaseInstance,
+            field: PATCH_SCAN_FIELD.ORACLE_SECURITY_PATCH
+        },
+        { skip: !hasIds || !isSecurityPatch }
+    );
+
+    const tableData = useMemo(() => {
+        // Backend returns { ec2InstancesToPatch: [{ missingPatchDetails: [...] }, ...] };
+        // flatten across instances into a single list of patches for the table.
+        const instances = (missingPatchResponse as any)?.ec2InstancesToPatch ?? [];
+        const list = instances.flatMap((inst: any) => inst?.missingPatchDetails ?? []);
+        return list.map((item: any, index: number) => ({ ...item, id: index }));
+    }, [missingPatchResponse]);
 
     const patchColDefs: ColumnProps[] = [
         {
@@ -60,7 +80,8 @@ const ApplicationOracleDialog = ({ missingPatchList = [], type }: ApplicationOra
         selectionType: 'none',
         columns: patchColDefs,
         rows: tableData,
-        pageSize: 50
+        pageSize: 50,
+        isLazyLoading: isFetching
     });
 
     const openSecurityAlertsTab = () => {
@@ -78,13 +99,18 @@ const ApplicationOracleDialog = ({ missingPatchList = [], type }: ApplicationOra
                             t('databases.well-architect.oracle-critical-patch-action-summary')
                         )}
 
-                        {createSection(
-                            t('databases.well-architect.oracle-critical-patch-security-patches'),
+                        <div className={styles['first-section']}>
+                            <div className={styles['heading-with-loader']}>
+                                <DsTypography variant="Semibold_14">
+                                    {t('databases.well-architect.oracle-critical-patch-security-patches')}
+                                </DsTypography>
+                                {isFetching && <DsFlashingDotsLoader />}
+                            </div>
                             <div className={styles.table}>
                                 {/* @ts-ignore */}
                                 <Table tableProps={tableProps} variant="innerTable" />
                             </div>
-                        )}
+                        </div>
 
                         {createSection(
                             t('databases.well-architect.oracle-critical-patch-action-required'),

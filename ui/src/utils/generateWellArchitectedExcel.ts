@@ -243,7 +243,6 @@ interface AssessmentItem {
     ec2InterfacesToFix?: any[];
     missingPatchesInEc2Instances?: any[];
     ec2InstancesToPatch?: any[];
-    missingPatchDetails?: any[];
     sqlServerInstances?: any[];
     rssAdapters?: any[];
     recommendedAdapterSettings?: any;
@@ -625,100 +624,6 @@ const createMTUAlignmentData = (config: AssessmentItem, details: any[]) => {
                 currentMTU: interfaceData.currentMTU || '',
                 recommendedMTU: interfaceData.recommendedMTU || ''
             });
-        });
-    }
-};
-
-const createPatchData = (
-    config: AssessmentItem,
-    details: any[],
-    instanceKey: string,
-    headerText: string,
-    databaseType?: string
-) => {
-    const instances = config[instanceKey as keyof AssessmentItem] as any[];
-    if (instances && instances.length > 0) {
-        details.push({}, {});
-
-        const isOracle = databaseType === DBType.ORACLE;
-        const idColumnName = isOracle ? 'CVE ID' : 'KB';
-
-        if (config.name === 'oracle-security-patch') {
-            details.push({
-                [idColumnName]: headerText,
-                Component: '',
-                Description: '',
-                'Published Date': ''
-            });
-
-            details.push({
-                [idColumnName]: idColumnName,
-                Component: 'Component',
-                Description: 'Description',
-                'Published Date': 'Published Date'
-            });
-        } else if (isOracle && config.name === 'host-os-patch') {
-            details.push({
-                Component: headerText,
-                'Package name': '',
-                'Update type': '',
-                Severity: ''
-            });
-
-            details.push({
-                Component: 'Component',
-                'Package name': 'Package name',
-                'Update type': 'Update type',
-                Severity: 'Severity'
-            });
-        } else {
-            details.push({
-                [idColumnName]: headerText,
-                Name: '',
-                Classification: '',
-                Severity: ''
-            });
-
-            details.push({
-                [idColumnName]: idColumnName,
-                Name: 'Name',
-                Classification: 'Classification',
-                Severity: 'Severity'
-            });
-        }
-
-        instances.forEach((instanceData: any) => {
-            if (config.name === 'oracle-security-patch') {
-                details.push({
-                    [idColumnName]: instanceData.cveId || 'N/A',
-                    Component: instanceData.component || 'N/A',
-                    Description: instanceData.description || 'N/A',
-                    'Published Date': instanceData.releaseDate || 'N/A'
-                });
-            } else if (
-                isOracle &&
-                config.name === 'host-os-patch' &&
-                instanceData.missingPatchDetails &&
-                instanceData.missingPatchDetails.length > 0
-            ) {
-                instanceData.missingPatchDetails.forEach((patch: any) => {
-                    details.push({
-                        Component: patch.cveIds || 'N/A',
-                        'Package name': patch.title || 'N/A',
-                        'Update type': patch.classification || 'N/A',
-                        Severity: patch.severity || 'N/A'
-                    });
-                });
-            } else if (instanceData.missingPatchDetails && instanceData.missingPatchDetails.length > 0) {
-                instanceData.missingPatchDetails.forEach((patch: any) => {
-                    details.push({
-                        [idColumnName]: patch.kbId || 'N/A',
-                        Name: patch.title || 'N/A',
-                        Classification: patch.classification || 'N/A',
-                        Severity: patch.severity || 'N/A'
-                    });
-                });
-            }
         });
     }
 };
@@ -1180,14 +1085,11 @@ function generateDetailedConfigurationData(
     }
 
     // Special configuration handlers
+    // Note: patch configs (mssql-patch, host-os-patch, oracle-security-patch) are
+    // intentionally omitted — missing patch details are no longer included in the
+    // main assessment response; the UI fetches them on demand via a separate API.
     const specialHandlers: { [key: string]: () => void } = {
         'mtu-alignment': () => createMTUAlignmentData(config, details),
-        'mssql-patch': () =>
-            createPatchData(config, details, 'missingPatchesInEc2Instances', 'Impacted resources', databaseType),
-        'host-os-patch': () =>
-            createPatchData(config, details, 'ec2InstancesToPatch', 'Impacted resources', databaseType),
-        'oracle-security-patch': () =>
-            createPatchData(config, details, 'missingPatchDetails', 'Impacted resources', databaseType),
         'sql-license': () => createSQLLicenseData(config, details),
         'rss-config': () => createRSSConfigData(config, details),
         'log-drive-size': () =>

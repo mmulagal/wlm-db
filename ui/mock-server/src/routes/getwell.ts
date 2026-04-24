@@ -9,6 +9,7 @@ import GetWellAccOfflineJson from '../data/getWellAccOffline.json';
 import GetWellAccOfflineOracleJson from '../data/offlineOracleAssessmentAcc.json';
 import OracleAssessmentJson from '../data/oracleAssessment.json';
 import OracleAssessmentAccJson from '../data/oracleAssessmentAcc.json';
+import MissingPatchJson from '../data/missingPatch.json';
 
 const router = require('express').Router();
 
@@ -110,6 +111,38 @@ router.post(
         setTimeout(() => {
             generateResponse(res, 200, { jobId: '1234' });
         }, 20);
+    }
+);
+
+router.get(
+    `${BASE_URL}/v1/:dbType(mssql|oracle)/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment/patch-scan`,
+    async (req: any, res: any) => {
+        setTimeout(() => {
+            const { field } = req.query;
+            if (field === 'mssql-patch') {
+                generateResponse(res, 200, {
+                    status: 'not-optimized',
+                    ec2InstancesToPatch: MissingPatchJson.ec2InstancesToPatch
+                });
+            } else if (field === 'oracle-security-patch') {
+                generateResponse(res, 200, {
+                    status: 'not-optimized',
+                    ec2InstancesToPatch: (MissingPatchJson.ec2InstancesToPatch ?? []).map((inst: any) => ({
+                        ec2InstanceId: inst.ec2InstanceId,
+                        database: 'oracle-dev',
+                        missingPatchDetails: (inst.missingPatchDetails ?? []).map((p: any) => ({
+                            cveId: p.cveIds,
+                            component: 'Oracle Database',
+                            description: p.title,
+                            releaseDate: '2025-10-15',
+                            releaseName: 'October 2025'
+                        }))
+                    }))
+                });
+            } else {
+                generateResponse(res, 200, MissingPatchJson);
+            }
+        }, 3000);
     }
 );
 

@@ -1744,6 +1744,19 @@ export const ENGINE_TYPES = {
     POSTGRESQL: 'PostgreSQL'
 };
 
+// Dialog "type" prop values used by the well-architected patch dialogs
+export const PATCH_DIALOG_TYPE = {
+    MSSQL_PATCH: 'mssqlPatch',
+    OS_PATCH: 'osPatch'
+} as const;
+
+// `field` query-string values sent to the /assessment/patch-scan endpoint
+export const PATCH_SCAN_FIELD = {
+    MSSQL_PATCH: 'mssql-patch',
+    HOST_OS_PATCH: 'host-os-patch',
+    ORACLE_SECURITY_PATCH: 'oracle-security-patch'
+} as const;
+
 export const WA_FLAG_SKIP = [
     'isASMManaged',
     'deploymentType',

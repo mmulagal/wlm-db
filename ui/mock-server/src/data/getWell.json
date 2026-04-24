@@ -1133,28 +1133,12 @@
         "ec2InstancesToPatch": [
             {
                 "baselineId": "pb-0da914616003c89f1",
-                "criticalNonCompliantCount": 0,
+                "criticalNonCompliantCount": 1,
                 "ec2InstanceId": "i-07e76a4b916548dc0",
                 "operationStartTime": 551,
                 "operationEndTime": 115,
                 "securityNonCompliantCount": 1,
-                "otherNonCompliantCount": 1,
-                "missingPatchDetails": [
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5051979",
-                        "severity": "Critical",
-                        "state": "Missing",
-                        "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
-                    },
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5050187",
-                        "severity": "Important",
-                        "state": "Missing",
-                        "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
-                    }
-                ]
+                "otherNonCompliantCount": 0
             }
         ],
         "resourceType": "Instance"
@@ -1179,102 +1163,14 @@
                 "ec2InstanceName": "SQLServer-01",
                 "criticalMissingPatchesCount": 0,
                 "importantMissingPatchesCount": 1,
-                "missingPatchesCount": 1,
-                "missingPatchDetails": [
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5021522",
-                        "severity": "Important",
-                        "releaseDate": "2023-03-05T19:18:52.000Z",
-                        "title": "Security Update for SQL Server 2022 RTM GDR (KB5021522)"
-                    },
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5029379",
-                        "severity": "Important",
-                        "releaseDate": "2023-10-10T17:00:00.000Z",
-                        "title": "Security Update for SQL Server 2022 RTM GDR (KB5029379)"
-                    },
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5029503",
-                        "severity": "Important",
-                        "releaseDate": "2023-10-10T17:00:00.000Z",
-                        "title": "Security Update for SQL Server 2022 RTM CU (KB5029503)"
-                    },
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5032968",
-                        "severity": "Important",
-                        "releaseDate": "2024-01-09T18:00:00.000Z",
-                        "title": "Security Update for SQL Server 2022 RTM GDR (KB5032968)"
-                    },
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5033592",
-                        "severity": "Important",
-                        "releaseDate": "2024-01-09T18:00:00.000Z",
-                        "title": "Security Update for SQL Server 2022 RTM CU (KB5033592)"
-                    },
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5035432",
-                        "severity": "Important",
-                        "releaseDate": "2024-04-09T17:00:00.000Z",
-                        "title": "Security Update for SQL Server 2022 RTM GDR (KB5035432)"
-                    },
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5040936",
-                        "severity": "Important",
-                        "releaseDate": "2024-07-09T17:00:00.000Z",
-                        "title": "Security Update for SQL Server 2022 RTM GDR (KB5040936)"
-                    },
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5040939",
-                        "severity": "Important",
-                        "releaseDate": "2024-07-09T17:00:00.000Z",
-                        "title": "Security Update for SQL Server 2022 RTM CU (KB5040939)"
-                    },
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5042211",
-                        "severity": "Important",
-                        "releaseDate": "2024-09-10T17:00:00.000Z",
-                        "title": "Security Update for SQL Server 2022 RTM GDR (KB5042211)"
-                    },
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5046057",
-                        "severity": "Important",
-                        "releaseDate": "2024-10-08T17:00:00.000Z",
-                        "title": "Security Update for SQL Server 2022 RTM GDR (KB5046057)"
-                    },
-                    {
-                        "classification": "SecurityUpdates",
-                        "kbId": "KB5046861",
-                        "severity": "Important",
-                        "releaseDate": "2024-11-12T18:00:00.000Z",
-                        "title": "Security Update for SQL Server 2022 RTM GDR (KB5046861)"
-                    }
-                ]
+                "missingPatchesCount": 1
             },
             {
                 "ec2InstanceId": "i-p9o5n2m4l8k6byol",
                 "ec2InstanceName": "SQLServer-02",
-                "criticalMissingPatchesCount": 0,
-                "importantMissingPatchesCount": 1,
-                "missingPatchesCount": 1,
-                "missingPatchDetails": [
-                    {
-                        "classification": "SecurityUpdates",
-                        "severity": "Important",
-                        "state": "Missing",
-                        "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                        "kbId": "KB5044099"
-                    }
-                ]
+                "criticalMissingPatchesCount": 1,
+                "importantMissingPatchesCount": 0,
+                "missingPatchesCount": 1
             }
         ],
         "severity": "critical",

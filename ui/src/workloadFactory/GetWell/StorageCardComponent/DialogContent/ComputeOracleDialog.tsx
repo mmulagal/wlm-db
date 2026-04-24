@@ -1,9 +1,11 @@
-import { Table, useTable } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography, Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
-import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../utils/consts';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useGetMissingPatchAssessmentDataQuery } from '../../../../utils/apiService';
 import {
     createStandardDialog,
     createStandardNotesSection,
@@ -13,20 +15,63 @@ import {
 
 type ComputeOracleDialogProps = {
     type?: string;
-    missingPatchList?: Array<any>;
     createComputeConfigSection?: () => React.ReactNode;
 };
 
-function ComputeOracleDialog({ type, missingPatchList = [], createComputeConfigSection }: ComputeOracleDialogProps) {
+// Shape of a single host-OS patch row returned by /assessment/patch-scan for
+// Oracle. Fields mirror the column accessors used in the table below.
+interface OracleHostOsPatchDetail {
+    cveIds?: string;
+    title?: string;
+    classification?: string;
+    severity?: string;
+}
+
+interface OracleHostOsPatchInstance {
+    ec2InstanceId?: string;
+    ec2InstanceName?: string;
+    missingPatchDetails?: OracleHostOsPatchDetail[];
+}
+
+interface OracleHostOsPatchResponse {
+    ec2InstancesToPatch?: OracleHostOsPatchInstance[];
+}
+
+type OracleHostOsPatchRow = OracleHostOsPatchDetail & { instanceName?: string };
+
+function ComputeOracleDialog({ type, createComputeConfigSection }: ComputeOracleDialogProps) {
     const { t } = useTranslation();
-    const tableData = useMemo(
-        () =>
-            missingPatchList?.map((item, index) => ({
-                ...item,
-                id: index
-            })),
-        [missingPatchList]
+    const { selectedResourceId, selectedDatabaseInstance, selectedGwInstanceCredId, selectedGwInstanceRegionId } =
+        useAppSelector(state => state.getWellOptimize);
+
+    const isOsPatch = type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH;
+    const hasIds = Boolean(
+        selectedGwInstanceCredId && selectedGwInstanceRegionId && selectedResourceId && selectedDatabaseInstance
     );
+
+    const { data: missingPatchResponse, isFetching } = useGetMissingPatchAssessmentDataQuery(
+        {
+            dbType: WIZARD_TYPE.ORACLE,
+            credentialId: selectedGwInstanceCredId,
+            regionId: selectedGwInstanceRegionId,
+            databaseHostId: selectedResourceId,
+            instanceId: selectedDatabaseInstance,
+            field: PATCH_SCAN_FIELD.HOST_OS_PATCH
+        },
+        { skip: !hasIds || !isOsPatch }
+    );
+
+    const tableData = useMemo(() => {
+        const response = missingPatchResponse as OracleHostOsPatchResponse | undefined;
+        const instances: OracleHostOsPatchInstance[] = response?.ec2InstancesToPatch ?? [];
+        const list = instances.flatMap(instance =>
+            (instance.missingPatchDetails ?? []).map<OracleHostOsPatchRow>(patch => ({
+                ...patch,
+                instanceName: instance.ec2InstanceName
+            }))
+        );
+        return list.map((item, index) => ({ ...item, id: String(index) }));
+    }, [missingPatchResponse]);
 
     const EncryptionColDefs: ColumnProps[] = [
         {
@@ -65,7 +110,8 @@ function ComputeOracleDialog({ type, missingPatchList = [], createComputeConfigS
         selectionType: 'none',
         columns: EncryptionColDefs,
         rows: tableData,
-        pageSize: 50
+        pageSize: 50,
+        isLazyLoading: isFetching
     });
 
     switch (type) {
@@ -120,13 +166,18 @@ function ComputeOracleDialog({ type, missingPatchList = [], createComputeConfigS
                         t('databases.well-architect.oracle-os-patch-action-summary')
                     )}
 
-                    {createSection(
-                        t('databases.well-architect.oracle-os-patch-missing-patches'),
+                    <div className={styles['first-section']}>
+                        <div className={styles['heading-with-loader']}>
+                            <DsTypography variant="Semibold_14">
+                                {t('databases.well-architect.oracle-os-patch-missing-patches')}
+                            </DsTypography>
+                            {isFetching && <DsFlashingDotsLoader />}
+                        </div>
                         <div className={styles.table}>
                             {/* @ts-ignore */}
                             <Table tableProps={tableProps} variant="innerTable" />
                         </div>
-                    )}
+                    </div>
 
                     {createSection(
                         t('databases.well-architect.oracle-os-patch-action-required'),

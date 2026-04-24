@@ -97,7 +97,6 @@ export const handleDialog = (
                         recommendationOptions={cardData?.recommendationOptions}
                         missingPermissions={cardData?.missingPermissions}
                         recommendedSizeInGib={cardData?.recommendedSizeInGib}
-                        missingPatchList={cardData?.missingPatchList}
                         engineType={engineType}
                         status={cardData?.block_two?.value}
                         isWad={isWad}

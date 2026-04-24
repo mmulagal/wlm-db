@@ -929,7 +929,6 @@ export const formatOracleHostOsPatchConfig = (
     let criticalViolations = 0;
     let securityViolations = 0;
     let otherViolations = 0;
-    let missingPatchList: any = [];
 
     hostOsPatchItem?.ec2InstancesToPatch?.forEach((instance: any) => {
         totalViolations += instance?.criticalNonCompliantCount || 0;
@@ -939,14 +938,6 @@ export const formatOracleHostOsPatchConfig = (
         criticalViolations += instance?.criticalNonCompliantCount || 0;
         securityViolations += instance?.securityNonCompliantCount || 0;
         otherViolations += instance?.otherNonCompliantCount || 0;
-
-        missingPatchList = [
-            ...missingPatchList,
-            ...(instance?.missingPatchDetails || []).map((patch: any) => ({
-                ...patch,
-                instanceName: instance.ec2InstanceName
-            }))
-        ];
     });
 
     return {
@@ -981,7 +972,6 @@ export const formatOracleHostOsPatchConfig = (
             other: otherViolations
         },
         recommendationText: hostOsPatchItem?.recommendation,
-        missingPatchList,
         objectsInViolation: hostOsPatchItem?.ec2InstancesToPatch?.map((instance: any) => instance.ec2InstanceId),
         dismissedObj: data?.dismissedConfigurations?.hostOsPatch
     };
@@ -1302,9 +1292,7 @@ export const formatOracleSecurityPatchConfig = (
     const status = optimizingData?.[originalName] || securityPatchItem?.status || '';
     const severity = securityPatchItem?.severity || '';
 
-    const missingPatchDetails = securityPatchItem?.missingPatchDetails || [];
     const totalMissingPatches = securityPatchItem?.missingPatchesCount || 0;
-    const missingPatchList: any[] = missingPatchDetails;
 
     return {
         ...oracleCardData.oracle_security_patch,
@@ -1338,7 +1326,6 @@ export const formatOracleSecurityPatchConfig = (
         recommendationText:
             securityPatchItem?.recommendation || oracleCardData.oracle_security_patch?.recommendation?.description,
         objectsInViolation: securityPatchItem?.objectsInViolation,
-        missingPatchList,
         dismissedObj: data?.dismissedConfigurations?.oracleSecurityPatch
     };
 };

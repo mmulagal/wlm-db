@@ -76,6 +76,12 @@
             gap: 8px;
             max-width: 712px;
 
+            .heading-with-loader {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
             .fixed-width {
                 width: 712px;
             }

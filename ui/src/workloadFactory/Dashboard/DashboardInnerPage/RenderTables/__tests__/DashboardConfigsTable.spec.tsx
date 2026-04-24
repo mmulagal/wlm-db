@@ -820,7 +820,6 @@ describe('DashboardConfigsTable', () => {
                                                     {
                                                         criticalMissingPatchesCount: 2,
                                                         importantMissingPatchesCount: 1,
-                                                        missingPatchDetails: [{ id: 'p1' }],
                                                         ec2InstanceName: 'ec2-1'
                                                     }
                                                 ]

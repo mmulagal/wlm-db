@@ -1084,29 +1084,13 @@
                             "ec2InstancesToPatch": [
                                 {
                                     "baselineId": "pb-05b6196cbb3be9d2c",
-                                    "criticalNonCompliantCount": 0,
+                                    "criticalNonCompliantCount": 1,
                                     "ec2InstanceId": "i-0f73ec408b54d3824",
                                     "ec2InstanceName": "ip-171-30-40-16.ap-southeast-1.compute.internal",
                                     "operationStartTime": 1768928500000,
                                     "operationEndTime": 1768928603000,
-                                    "securityNonCompliantCount": 56,
-                                    "otherNonCompliantCount": 227,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "Security",
-                                            "cveIds": "CEV-2024-42474",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "bind-export-libs.x86_64:32:9.11.36-16.el8_10.6"
-                                        },
-                                        {
-                                            "classification": "Security",
-                                            "cveIds": "CEV-2024-42473",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "bubblewrap.x86_64:0:0.4.0-2.el8_10"
-                                        }
-                                    ]
+                                    "securityNonCompliantCount": 1,
+                                    "otherNonCompliantCount": 0
                                 }
                             ]
                         },
@@ -1298,20 +1282,11 @@
                             "severity": "critical",
                             "recommendation": "Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.",
                             "tags": ["Security", "Reliability"],
-                            "missingPatchesCount": 1,
+                            "missingPatchesCount": 2,
                             "objectsInViolation": ["oracleSid"],
                             "totalObjectsAssessed": 1,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Database",
-                            "missingPatchDetails": [
-                                {
-                                    "cveId": "CVE-2026-21975",
-                                    "component": "Java VM",
-                                    "description": "Vulnerability in the Java VM component of Oracle Database Server. Supported versions that are affected are 19.3-19.29 and 21.3-21.20. Easily exploitable vulnerability allows high privileged attacker having Create Session privilege with network access via Oracle Net to compromise Java VM. Successful attacks require human interaction from a person other than the attacker. Successful attacks of this vulnerability can result in unauthorized ability to cause a hang or frequently repeatable crash (complete DOS) of Java VM. CVSS 3.1 Base Score 4.5 (Availability impacts).",
-                                    "releaseDate": "2026-01-20",
-                                    "releaseName": "January 2026"
-                                }
-                            ]
+                            "resourceType": "Database"
                         },
                         "lastAssessmentTimestamp": 1755629404593,
                         "fileSystemId": "fs-0d5efc3057c4f12cb",
@@ -2406,29 +2381,13 @@
                             "ec2InstancesToPatch": [
                                 {
                                     "baselineId": "pb-05b6196cbb3be9d2c",
-                                    "criticalNonCompliantCount": 0,
+                                    "criticalNonCompliantCount": 1,
                                     "ec2InstanceId": "i-0f73ec408b54d3824",
                                     "ec2InstanceName": "ip-171-30-40-16.ap-southeast-1.compute.internal",
                                     "operationStartTime": 1768928500000,
                                     "operationEndTime": 1768928603000,
-                                    "securityNonCompliantCount": 56,
-                                    "otherNonCompliantCount": 227,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "Security",
-                                            "cveIds": "CEVE-2024-3174",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "bind-export-libs.x86_64:32:9.11.36-16.el8_10.6"
-                                        },
-                                        {
-                                            "classification": "Security",
-                                            "cveIds": "CEVE-2024-3173",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "bubblewrap.x86_64:0:0.4.0-2.el8_10"
-                                        }
-                                    ]
+                                    "securityNonCompliantCount": 1,
+                                    "otherNonCompliantCount": 0
                                 }
                             ]
                         },
@@ -2737,20 +2696,11 @@
                             "severity": "critical",
                             "recommendation": "Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.",
                             "tags": ["Security", "Reliability"],
-                            "missingPatchesCount": 1,
+                            "missingPatchesCount": 2,
                             "objectsInViolation": ["oracleSid"],
                             "totalObjectsAssessed": 1,
                             "totalObjectsInViolation": 1,
-                            "resourceType": "Database",
-                            "missingPatchDetails": [
-                                {
-                                    "cveId": "CVE-2026-21975",
-                                    "component": "Java VM",
-                                    "description": "Vulnerability in the Java VM component of Oracle Database Server. Supported versions that are affected are 19.3-19.29 and 21.3-21.20. Easily exploitable vulnerability allows high privileged attacker having Create Session privilege with network access via Oracle Net to compromise Java VM. Successful attacks require human interaction from a person other than the attacker. Successful attacks of this vulnerability can result in unauthorized ability to cause a hang or frequently repeatable crash (complete DOS) of Java VM. CVSS 3.1 Base Score 4.5 (Availability impacts).",
-                                    "releaseDate": "2026-01-20",
-                                    "releaseName": "January 2026"
-                                }
-                            ]
+                            "resourceType": "Database"  
                         },
                         "lastAssessmentTimestamp": 1755629404593,
                         "fileSystemId": "fs-0d5efc3057c4f12cb",

@@ -1110,28 +1110,12 @@
                             "ec2InstancesToPatch": [
                                 {
                                     "baselineId": "pb-0da914616003c89f1",
-                                    "criticalNonCompliantCount": 0,
+                                    "criticalNonCompliantCount": 1,
                                     "ec2InstanceId": "i-07e76a4b916548dc0",
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5051979",
-                                            "severity": "Critical",
-                                            "state": "Missing",
-                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
-                                        },
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5050187",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
-                                        }
-                                    ]
+                                    "otherNonCompliantCount": 0
                                 }
                             ],
                             "resourceType": "Instance"
@@ -1156,32 +1140,14 @@
                                     "ec2InstanceName": "SQLServer-01",
                                     "criticalMissingPatchesCount": 0,
                                     "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "missingPatchesCount": 1
                                 },
                                 {
                                     "ec2InstanceId": "i-p9o5n2m4l8k6byol",
                                     "ec2InstanceName": "SQLServer-02",
-                                    "criticalMissingPatchesCount": 0,
-                                    "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "criticalMissingPatchesCount": 1,
+                                    "importantMissingPatchesCount": 0,
+                                    "missingPatchesCount": 1
                                 }
                             ],
                             "severity": "critical",
@@ -1733,22 +1699,7 @@
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
                                     "otherNonCompliantCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5051979",
-                                            "severity": "Critical",
-                                            "state": "Missing",
-                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
-                                        },
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5050187",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
-                                        }
-                                    ]
+                                    "missingPatchesCount": 2
                                 }
                             ],
                             "resourceType": "Instance"
@@ -1773,32 +1724,14 @@
                                     "ec2InstanceName": "SQLServer-01",
                                     "criticalMissingPatchesCount": 0,
                                     "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "missingPatchesCount": 1
                                 },
                                 {
                                     "ec2InstanceId": "i-p9o5n2m4l8k6byol",
                                     "ec2InstanceName": "SQLServer-02",
-                                    "criticalMissingPatchesCount": 0,
-                                    "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "criticalMissingPatchesCount": 1,
+                                    "importantMissingPatchesCount": 0,
+                                    "missingPatchesCount": 1
                                 }
                             ],
                             "severity": "critical",
@@ -3299,23 +3232,7 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5051979",
-                                            "severity": "Critical",
-                                            "state": "Missing",
-                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
-                                        },
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5050187",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
-                                        }
-                                    ]
+                                    "otherNonCompliantCount": 1
                                 }
                             ],
                             "resourceType": "Instance"
@@ -3340,32 +3257,14 @@
                                     "ec2InstanceName": "SQLServer-01",
                                     "criticalMissingPatchesCount": 0,
                                     "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "missingPatchesCount": 1
                                 },
                                 {
                                     "ec2InstanceId": "i-p9o5n2m4l8k6byol",
                                     "ec2InstanceName": "SQLServer-02",
-                                    "criticalMissingPatchesCount": 0,
-                                    "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "criticalMissingPatchesCount": 1,
+                                    "importantMissingPatchesCount": 0,
+                                    "missingPatchesCount": 1
                                 }
                             ],
                             "severity": "critical",
@@ -4879,23 +4778,7 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5051979",
-                                            "severity": "Critical",
-                                            "state": "Missing",
-                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
-                                        },
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5050187",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
-                                        }
-                                    ]
+                                    "otherNonCompliantCount": 1
                                 }
                             ],
                             "resourceType": "Instance"
@@ -4920,32 +4803,14 @@
                                     "ec2InstanceName": "SQLServer-01",
                                     "criticalMissingPatchesCount": 0,
                                     "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "missingPatchesCount": 1
                                 },
                                 {
                                     "ec2InstanceId": "i-p9o5n2m4l8k6byol",
                                     "ec2InstanceName": "SQLServer-02",
-                                    "criticalMissingPatchesCount": 0,
-                                    "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "criticalMissingPatchesCount": 1,
+                                    "importantMissingPatchesCount": 0,
+                                    "missingPatchesCount": 1
                                 }
                             ],
                             "severity": "critical",
@@ -6446,23 +6311,7 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5051979",
-                                            "severity": "Critical",
-                                            "state": "Missing",
-                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
-                                        },
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5050187",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
-                                        }
-                                    ]
+                                    "otherNonCompliantCount": 1
                                 }
                             ],
                             "resourceType": "Instance"
@@ -6487,32 +6336,14 @@
                                     "ec2InstanceName": "SQLServer-01",
                                     "criticalMissingPatchesCount": 0,
                                     "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "missingPatchesCount": 1
                                 },
                                 {
                                     "ec2InstanceId": "i-p9o5n2m4l8k6byol",
                                     "ec2InstanceName": "SQLServer-02",
-                                    "criticalMissingPatchesCount": 0,
-                                    "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "criticalMissingPatchesCount": 1,
+                                    "importantMissingPatchesCount": 0,
+                                    "missingPatchesCount": 1
                                 }
                             ],
                             "severity": "critical",
@@ -8013,23 +7844,7 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5051979",
-                                            "severity": "Critical",
-                                            "state": "Missing",
-                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
-                                        },
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5050187",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
-                                        }
-                                    ]
+                                    "otherNonCompliantCount": 1
                                 }
                             ],
                             "resourceType": "Instance"
@@ -8054,32 +7869,14 @@
                                     "ec2InstanceName": "SQLServer-01",
                                     "criticalMissingPatchesCount": 0,
                                     "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "missingPatchesCount": 1
                                 },
                                 {
                                     "ec2InstanceId": "i-p9o5n2m4l8k6byol",
                                     "ec2InstanceName": "SQLServer-02",
-                                    "criticalMissingPatchesCount": 0,
-                                    "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "criticalMissingPatchesCount": 1,
+                                    "importantMissingPatchesCount": 0,
+                                    "missingPatchesCount": 1
                                 }
                             ],
                             "severity": "critical",
@@ -9468,23 +9265,7 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5051979",
-                                            "severity": "Critical",
-                                            "state": "Missing",
-                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
-                                        },
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5050187",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
-                                        }
-                                    ]
+                                    "otherNonCompliantCount": 1
                                 }
                             ],
                             "resourceType": "Instance"
@@ -9509,32 +9290,14 @@
                                     "ec2InstanceName": "SQLServer-01",
                                     "criticalMissingPatchesCount": 0,
                                     "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "missingPatchesCount": 1
                                 },
                                 {
                                     "ec2InstanceId": "i-p9o5n2m4l8k6byol",
                                     "ec2InstanceName": "SQLServer-02",
-                                    "criticalMissingPatchesCount": 0,
-                                    "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "criticalMissingPatchesCount": 1,
+                                    "importantMissingPatchesCount": 0,
+                                    "missingPatchesCount": 1
                                 }
                             ],
                             "severity": "critical",
@@ -10973,23 +10736,7 @@
                                     "operationStartTime": 551,
                                     "operationEndTime": 115,
                                     "securityNonCompliantCount": 1,
-                                    "otherNonCompliantCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5051979",
-                                            "severity": "Critical",
-                                            "state": "Missing",
-                                            "title": "2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)"
-                                        },
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "kbId": "KB5050187",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)"
-                                        }
-                                    ]
+                                    "otherNonCompliantCount": 1
                                 }
                             ],
                             "resourceType": "Instance"
@@ -11014,32 +10761,14 @@
                                     "ec2InstanceName": "SQLServer-01",
                                     "criticalMissingPatchesCount": 0,
                                     "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "missingPatchesCount": 1
                                 },
                                 {
                                     "ec2InstanceId": "i-p9o5n2m4l8k6byol",
                                     "ec2InstanceName": "SQLServer-02",
-                                    "criticalMissingPatchesCount": 0,
-                                    "importantMissingPatchesCount": 1,
-                                    "missingPatchesCount": 1,
-                                    "missingPatchDetails": [
-                                        {
-                                            "classification": "SecurityUpdates",
-                                            "severity": "Important",
-                                            "state": "Missing",
-                                            "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                            "kbId": "KB5044099"
-                                        }
-                                    ]
+                                    "criticalMissingPatchesCount": 1,
+                                    "importantMissingPatchesCount": 0,
+                                    "missingPatchesCount": 1
                                 }
                             ],
                             "severity": "critical",

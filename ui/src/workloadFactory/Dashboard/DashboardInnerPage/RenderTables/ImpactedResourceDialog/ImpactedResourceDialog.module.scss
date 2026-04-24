@@ -41,4 +41,12 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
+    .loaderRow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 120px;
+        padding: 16px 8px;
+    }
 }

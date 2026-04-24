@@ -20,6 +20,7 @@ import {
     DATABASE_DEPLOYMENT_MODE,
     DBType,
     GETWELL_STATUS,
+    PATCH_DIALOG_TYPE,
     SQL_DEPLOYMENT_MODE,
     MSSQL_UNSUPPORTED_FIX_TYPES,
     ORACLE_UNSUPPORTED_FIX_TYPES,
@@ -74,21 +75,12 @@ interface BulkRecommendationOption {
     [key: string]: unknown;
 }
 
-interface MissingPatch {
-    classification?: string;
-    kbId?: string;
-    severity?: string;
-    state?: string;
-    title?: string;
-}
-
 type DialogType = {
     type: string;
     recommendationOptions?: RecommendationOption[];
     missingPermissions?: string[];
     recommendedSizeInGib?: number;
     bulkRecommendationOptions?: BulkRecommendationOption[];
-    missingPatchList?: MissingPatch[];
     operation?: string;
     objectsInViolation?: string[];
     engineType?: string;
@@ -146,7 +138,6 @@ const DialogContent = ({
     missingPermissions,
     recommendedSizeInGib,
     bulkRecommendationOptions = [],
-    missingPatchList = [],
     operation = 'single',
     objectsInViolation = [],
     engineType = DBType.MSSQL,
@@ -283,17 +274,11 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
                 case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
-                    return (
-                        <ComputeOracleDialog
-                            type={type}
-                            missingPatchList={missingPatchList}
-                            createComputeConfigSection={createONTAPConfigSection}
-                        />
-                    );
+                    return <ComputeOracleDialog type={type} createComputeConfigSection={createONTAPConfigSection} />;
 
                 // oracle application cards
                 case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:
-                    return <ApplicationOracleDialog missingPatchList={missingPatchList} type={type} />;
+                    return <ApplicationOracleDialog type={type} />;
 
                 // oracle resiliency cards
                 case ASSESSMENT_CONFIG_NAMES.CRR:
@@ -629,10 +614,10 @@ const DialogContent = ({
                 );
 
             case 'Microsoft SQL Server patch':
-                return <MSSQLPatchDialog type="mssqlPatch" missingPatchList={missingPatchList} />;
+                return <MSSQLPatchDialog type={PATCH_DIALOG_TYPE.MSSQL_PATCH} />;
 
             case 'Operating system patch':
-                return <MSSQLPatchDialog type="osPatch" missingPatchList={missingPatchList} />;
+                return <MSSQLPatchDialog type={PATCH_DIALOG_TYPE.OS_PATCH} />;
             case 'NTFS allocation unit size':
                 return (
                     <div className={styles['storage-tier-block']}>

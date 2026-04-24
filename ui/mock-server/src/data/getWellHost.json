@@ -400,32 +400,14 @@
                             "ec2InstanceName": "SQLServer-01",
                             "criticalMissingPatchesCount": 0,
                             "importantMissingPatchesCount": 1,
-                            "missingPatchesCount": 1,
-                            "missingPatchDetails": [
-                                {
-                                    "classification": "SecurityUpdates",
-                                    "severity": "Important",
-                                    "state": "Missing",
-                                    "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                    "kbId": "KB5044099"
-                                }
-                            ]
+                            "missingPatchesCount": 1
                         },
                         {
                             "ec2InstanceId": "i-p9o5n2m4l8k6byol",
                             "ec2InstanceName": "SQLServer-02",
                             "criticalMissingPatchesCount": 0,
                             "importantMissingPatchesCount": 1,
-                            "missingPatchesCount": 1,
-                            "missingPatchDetails": [
-                                {
-                                    "classification": "SecurityUpdates",
-                                    "severity": "Important",
-                                    "state": "Missing",
-                                    "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                    "kbId": "KB5044099"
-                                }
-                            ]
+                            "missingPatchesCount": 1
                         }
                     ],
                     "severity": "critical",
@@ -833,32 +815,14 @@
                             "ec2InstanceName": "SQLServer-01",
                             "criticalMissingPatchesCount": 0,
                             "importantMissingPatchesCount": 1,
-                            "missingPatchesCount": 1,
-                            "missingPatchDetails": [
-                                {
-                                    "classification": "SecurityUpdates",
-                                    "severity": "Important",
-                                    "state": "Missing",
-                                    "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                    "kbId": "KB5044099"
-                                }
-                            ]
+                            "missingPatchesCount": 1
                         },
                         {
                             "ec2InstanceId": "i-p9o5n2m4l8k6byol",
                             "ec2InstanceName": "SQLServer-02",
                             "criticalMissingPatchesCount": 0,
                             "importantMissingPatchesCount": 1,
-                            "missingPatchesCount": 1,
-                            "missingPatchDetails": [
-                                {
-                                    "classification": "SecurityUpdates",
-                                    "severity": "Important",
-                                    "state": "Missing",
-                                    "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                    "kbId": "KB5044099"
-                                }
-                            ]
+                            "missingPatchesCount": 1
                         }
                     ],
                     "severity": "critical",
@@ -1266,32 +1230,14 @@
                             "ec2InstanceName": "SQLServer-01",
                             "criticalMissingPatchesCount": 0,
                             "importantMissingPatchesCount": 1,
-                            "missingPatchesCount": 1,
-                            "missingPatchDetails": [
-                                {
-                                    "classification": "SecurityUpdates",
-                                    "severity": "Important",
-                                    "state": "Missing",
-                                    "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                    "kbId": "KB5044099"
-                                }
-                            ]
+                            "missingPatchesCount": 1
                         },
                         {
                             "ec2InstanceId": "i-p9o5n2m4l8k6byol",
                             "ec2InstanceName": "SQLServer-02",
                             "criticalMissingPatchesCount": 0,
                             "importantMissingPatchesCount": 1,
-                            "missingPatchesCount": 1,
-                            "missingPatchDetails": [
-                                {
-                                    "classification": "SecurityUpdates",
-                                    "severity": "Important",
-                                    "state": "Missing",
-                                    "title": "2024-10 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5044099)",
-                                    "kbId": "KB5044099"
-                                }
-                            ]
+                            "missingPatchesCount": 1
                         }
                     ],
                     "severity": "critical",

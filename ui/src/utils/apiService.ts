@@ -1428,6 +1428,11 @@ export const getWellApi = createApi({
                 url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
             })
         }),
+        getMissingPatchAssessmentData: builder.query({
+            query: ({ dbType, credentialId, regionId, databaseHostId, instanceId, field }) => ({
+                url: `v1/${dbType}/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment/patch-scan?field=${field}`
+            })
+        }),
         getOfflineMssqlAssessmentData: builder.query({
             query: ({ databaseHostId, instanceId, credentialId = null, regionId = null }) => {
                 const params = new URLSearchParams();
@@ -1844,6 +1849,7 @@ export const {
 
 export const {
     useGetMssqlAssessmentDataMutation,
+    useGetMissingPatchAssessmentDataQuery,
     useGetOracleAssessmentDataMutation,
     useTriggerOracleInstanceAssessmentMutation,
     useGetMssqlAssessmentDataForHostMutation,

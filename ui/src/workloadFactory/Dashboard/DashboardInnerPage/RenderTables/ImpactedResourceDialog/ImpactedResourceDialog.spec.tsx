@@ -23,7 +23,10 @@ vi.mock('../../../../../utils/consts', () => ({
         SPACE_RESERVATION: 'Space reservation',
         SPACE_ALLOCATION: 'Space allocation',
         DRIVE_LETTER: 'Drive letter',
-        SHARED_STORAGE: 'Shared storage'
+        SHARED_STORAGE: 'Shared storage',
+        OPERATING_SYSTEM_PATCH: 'Operating system patch',
+        MICROSOFT_SQL_SERVER_PATCH: 'Microsoft SQL Server patch',
+        ORACLE_SECURITY_PATCH: 'Oracle Critical Patch Updates'
     },
     DBType: { MSSQL: 'MSSQL', ORACLE: 'ORACLE' }
 }));
@@ -44,7 +47,12 @@ vi.mock('./ImpactedResourceDialog.module.scss', () => ({
 }));
 
 vi.mock('@tlveng/wlm-ds', () => ({
-    DsTypography: ({ children }: any) => <span>{children}</span>
+    DsTypography: ({ children }: any) => <span>{children}</span>,
+    DsFlashingDotsLoader: () => <span>loader</span>
+}));
+
+vi.mock('../../../../../utils/apiService', () => ({
+    useGetMissingPatchAssessmentDataQuery: () => ({ data: undefined, isFetching: false })
 }));
 
 describe('ImpactedResourceDialog', () => {

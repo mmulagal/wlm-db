@@ -1,26 +1,95 @@
-import { DsTypography, Table, useTable } from '@netapp/design-system';
+import { DsFlashingDotsLoader, DsTypography, Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
+import { useAppSelector } from '../../../../store/storeHooks';
+import { useGetMissingPatchAssessmentDataQuery } from '../../../../utils/apiService';
+import { PATCH_DIALOG_TYPE, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../utils/consts';
+
+type PatchScanField = (typeof PATCH_SCAN_FIELD)[keyof typeof PATCH_SCAN_FIELD];
 
 type MSSQLPatchDialogProps = {
     type: string;
-    missingPatchList?: Array<any>;
 };
 
-function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps) {
-    const { t } = useTranslation();
-    const tableData = useMemo(
-        () =>
-            missingPatchList?.map((item, index) => ({
-                ...item,
-                id: index
-            })),
-        [missingPatchList]
+// Shape of a single patch row returned by /assessment/patch-scan for MSSQL and
+// host-OS scans. Fields mirror the column accessors used in the table below.
+interface PatchDetail {
+    kbId?: string;
+    title?: string;
+    classification?: string;
+    severity?: string;
+}
+
+interface PatchInstance {
+    ec2InstanceId?: string;
+    ec2InstanceName?: string;
+    missingPatchDetails?: PatchDetail[];
+}
+
+interface MssqlPatchResponse {
+    missingPatchesInEc2Instances?: PatchInstance[];
+    ec2InstancesToPatch?: PatchInstance[];
+}
+
+interface HostOsPatchResponse {
+    ec2InstancesToPatch?: PatchInstance[];
+}
+
+type PatchScanResponse = MssqlPatchResponse | HostOsPatchResponse;
+
+// Row shape consumed by the useTable columns (PatchDetail + per-row instance name + id).
+type PatchRow = PatchDetail & { instanceName?: string };
+
+// Flattens the patch-scan response into a single list of patch rows.
+// Both MSSQL_PATCH and HOST_OS_PATCH backends return `ec2InstancesToPatch`;
+// older MSSQL responses used `missingPatchesInEc2Instances`, so we keep that as a fallback.
+const flattenPatchResponse = (field: PatchScanField, response: PatchScanResponse | undefined): PatchRow[] => {
+    if (!response) return [];
+    const instances: PatchInstance[] =
+        field === PATCH_SCAN_FIELD.MSSQL_PATCH
+            ? (response as MssqlPatchResponse).missingPatchesInEc2Instances ??
+              (response as MssqlPatchResponse).ec2InstancesToPatch ??
+              []
+            : (response as HostOsPatchResponse).ec2InstancesToPatch ?? [];
+    return instances.flatMap(instance =>
+        (instance.missingPatchDetails ?? []).map<PatchRow>(patch => ({
+            ...patch,
+            instanceName: instance.ec2InstanceName
+        }))
     );
+};
+
+function MSSQLPatchDialog({ type }: MSSQLPatchDialogProps) {
+    const { t } = useTranslation();
+    const { selectedResourceId, selectedDatabaseInstance, selectedGwInstanceCredId, selectedGwInstanceRegionId } =
+        useAppSelector(state => state.getWellOptimize);
+
+    const field: PatchScanField =
+        type === PATCH_DIALOG_TYPE.MSSQL_PATCH ? PATCH_SCAN_FIELD.MSSQL_PATCH : PATCH_SCAN_FIELD.HOST_OS_PATCH;
+    const hasIds = Boolean(
+        selectedGwInstanceCredId && selectedGwInstanceRegionId && selectedResourceId && selectedDatabaseInstance
+    );
+
+    const { data: missingPatchResponse, isFetching } = useGetMissingPatchAssessmentDataQuery(
+        {
+            dbType: WIZARD_TYPE.MSSQL,
+            credentialId: selectedGwInstanceCredId,
+            regionId: selectedGwInstanceRegionId,
+            databaseHostId: selectedResourceId,
+            instanceId: selectedDatabaseInstance,
+            field
+        },
+        { skip: !hasIds }
+    );
+
+    const tableData = useMemo(() => {
+        const list = flattenPatchResponse(field, missingPatchResponse as PatchScanResponse | undefined);
+        return list.map((item, index) => ({ ...item, id: String(index) }));
+    }, [field, missingPatchResponse]);
 
     const EncryptionColDefs: ColumnProps[] = [
         {
@@ -59,23 +128,27 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
         selectionType: 'none',
         columns: EncryptionColDefs,
         rows: tableData,
-        pageSize: 50
+        pageSize: 50,
+        isLazyLoading: isFetching
     });
     return (
         <div className={styles['storage-tier-block']}>
             <div className={styles['first-section']}>
                 <DsTypography variant="Semibold_14">{t('databases.well-architect.action-summary')}</DsTypography>
                 <DsTypography variant="Regular_14">
-                    {type === 'mssqlPatch'
+                    {type === PATCH_DIALOG_TYPE.MSSQL_PATCH
                         ? t('databases.well-architect.mssql-os-patch-action-summary')
                         : t('databases.well-architect.mssql-os-patch-action-summary')}
                 </DsTypography>
             </div>
 
             <div className={styles['first-section']}>
-                <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
-                    {t('databases.well-architect.mssql-os-patch-missing-patches')}
-                </DsTypography>
+                <div className={styles['heading-with-loader']}>
+                    <DsTypography variant="Semibold_14">
+                        {t('databases.well-architect.mssql-os-patch-missing-patches')}
+                    </DsTypography>
+                    {isFetching && <DsFlashingDotsLoader />}
+                </div>
                 <div className={styles.table}>
                     <Table
                         // @ts-ignore
@@ -98,7 +171,7 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                 </div>
             </div>
 
-            {type === 'osPatch' && (
+            {type === PATCH_DIALOG_TYPE.OS_PATCH && (
                 <>
                     <div className={styles['first-section']}>
                         <DsTypography variant="Semibold_14" className={styles['fixed-width']}>
@@ -204,7 +277,7 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                 </>
             )}
 
-            {type === 'mssqlPatch' && (
+            {type === PATCH_DIALOG_TYPE.MSSQL_PATCH && (
                 <div className={styles['action-section']}>
                     <div className={styles.row}>
                         <DsTypography variant="Semibold_14">1</DsTypography>
@@ -266,12 +339,12 @@ function MSSQLPatchDialog({ type, missingPatchList = [] }: MSSQLPatchDialogProps
                             <Bullet />
                         </div>
                         <DsTypography variant="Regular_14">
-                            {type === 'mssqlPatch'
+                            {type === PATCH_DIALOG_TYPE.MSSQL_PATCH
                                 ? t('databases.well-architect.mssql-os-patch-note1')
                                 : t('databases.well-architect.mssql-os-patch-note2')}
                         </DsTypography>
                     </div>
-                    {type === 'mssqlPatch' && (
+                    {type === PATCH_DIALOG_TYPE.MSSQL_PATCH && (
                         <div className={styles.row}>
                             <div>
                                 <Bullet />

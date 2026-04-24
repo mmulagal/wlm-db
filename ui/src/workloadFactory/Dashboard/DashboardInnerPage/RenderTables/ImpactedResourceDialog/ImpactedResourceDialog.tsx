@@ -1,8 +1,10 @@
-import { DsTypography } from '@tlveng/wlm-ds';
+import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './ImpactedResourceDialog.module.scss';
-import { ASSESSMENT_CONFIG_NAMES, DBType } from '../../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, DBType, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../../utils/consts';
 import { useAppSelector } from '../../../../../store/storeHooks';
+import { useGetMissingPatchAssessmentDataQuery } from '../../../../../utils/apiService';
 
 interface ViolationDetail {
     objectName?: string;
@@ -73,7 +75,68 @@ interface AssessmentData {
     configObj?: { configurationName?: string };
     name?: string;
     missingPatchList?: (PatchInstance | OracleSecurityPatchDetail)[];
+    credentialId?: string;
+    regionId?: string;
+    databaseHostId?: string;
+    instanceId?: string;
 }
+
+type PatchScanField = (typeof PATCH_SCAN_FIELD)[keyof typeof PATCH_SCAN_FIELD];
+
+// Maps ASSESSMENT_CONFIG_NAMES display names to the `field` query param expected
+// by the patch-scan assessment API for patch-type configurations.
+const PATCH_CONFIG_FIELD_MAP: Record<string, PatchScanField> = {
+    [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: PATCH_SCAN_FIELD.HOST_OS_PATCH,
+    [ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]: PATCH_SCAN_FIELD.MSSQL_PATCH,
+    [ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH]: PATCH_SCAN_FIELD.ORACLE_SECURITY_PATCH
+};
+
+// Response shapes returned by /assessment/patch-scan for each `field` value.
+interface HostOsPatchResponse {
+    ec2InstancesToPatch?: PatchInstance[];
+}
+
+interface MssqlPatchResponse {
+    missingPatchesInEc2Instances?: PatchInstance[];
+    ec2InstancesToPatch?: PatchInstance[];
+}
+
+interface OracleSecurityPatchInstance {
+    ec2InstanceId?: string;
+    database?: string;
+    missingPatchDetails?: OracleSecurityPatchDetail[];
+}
+
+interface OracleSecurityPatchResponse {
+    ec2InstancesToPatch?: OracleSecurityPatchInstance[];
+}
+
+type MissingPatchResponse = HostOsPatchResponse | MssqlPatchResponse | OracleSecurityPatchResponse;
+
+// Normalizes different patch-scan response shapes into the flat list the
+// dialog's row mappers already consume via `data.missingPatchList`.
+const extractMissingPatchList = (
+    field: PatchScanField,
+    response: MissingPatchResponse | undefined
+): (PatchInstance | OracleSecurityPatchDetail)[] => {
+    if (!response) return [];
+    switch (field) {
+        case PATCH_SCAN_FIELD.HOST_OS_PATCH:
+            return (response as HostOsPatchResponse).ec2InstancesToPatch ?? [];
+        case PATCH_SCAN_FIELD.MSSQL_PATCH: {
+            const mssql = response as MssqlPatchResponse;
+            return mssql.missingPatchesInEc2Instances ?? mssql.ec2InstancesToPatch ?? [];
+        }
+        case PATCH_SCAN_FIELD.ORACLE_SECURITY_PATCH: {
+            // Backend returns { ec2InstancesToPatch: [{ missingPatchDetails: [...] }, ...] };
+            // flatten so the Oracle mapper can consume a single list of patches.
+            const oracle = response as OracleSecurityPatchResponse;
+            return (oracle.ec2InstancesToPatch ?? []).flatMap(inst => inst.missingPatchDetails ?? []);
+        }
+        default:
+            return [];
+    }
+};
 
 interface ImpactedResourcesResult {
     columns: string[];
@@ -478,10 +541,48 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
     const na = t('databases.general.not-available');
     const configName = data?.configurationName ?? data?.configObj?.configurationName ?? data?.name;
 
+    const patchField = configName ? PATCH_CONFIG_FIELD_MAP[configName] : undefined;
+    const isPatchConfig = Boolean(patchField);
+
+    const hasPatchIds = Boolean(
+        isPatchConfig && data?.credentialId && data?.regionId && data?.databaseHostId && data?.instanceId
+    );
+    const patchDbType =
+        patchField === PATCH_SCAN_FIELD.MSSQL_PATCH
+            ? WIZARD_TYPE.MSSQL
+            : configEngineType === DBType.ORACLE
+            ? WIZARD_TYPE.ORACLE
+            : WIZARD_TYPE.MSSQL;
+
+    // Patch configs no longer include missingPatchDetails inline; fetch them on demand
+    // when the dialog is opened so the table can render loader → rows.
+    const { data: missingPatchResponse, isFetching: isMissingPatchLoading } = useGetMissingPatchAssessmentDataQuery(
+        {
+            dbType: patchDbType,
+            credentialId: data?.credentialId,
+            regionId: data?.regionId,
+            databaseHostId: data?.databaseHostId,
+            instanceId: data?.instanceId,
+            field: patchField
+        },
+        { skip: !hasPatchIds || !patchField }
+    );
+
+    const dialogData: AssessmentData = useMemo(() => {
+        if (!isPatchConfig || !patchField) return data;
+        return {
+            ...data,
+            missingPatchList: extractMissingPatchList(
+                patchField,
+                missingPatchResponse as MissingPatchResponse | undefined
+            )
+        };
+    }, [isPatchConfig, patchField, data, missingPatchResponse]);
+
     const { columns, rows } =
         configEngineType === DBType.MSSQL
-            ? getMssqlImpactedResources(configName || '', data, na, t)
-            : getOracleImpactedResources(configName || '', data, na);
+            ? getMssqlImpactedResources(configName || '', dialogData, na, t)
+            : getOracleImpactedResources(configName || '', dialogData, na);
 
     if (columns.length === 0) {
         return null;
@@ -517,33 +618,42 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
                 ))}
             </div>
             <div className={styles.tableBody}>
-                {rows.map((row, rowIdx) => {
-                    const isMultiLine = row.some(v => v.includes('\n'));
-                    return (
-                        <div key={rowIdx} className={`${styles.tableRow} ${isMultiLine ? styles.multiLineRow : ''}`}>
-                            {row.map((value, colIdx) => {
-                                const hasNewlines = value.includes('\n');
-                                return (
-                                    <DsTypography
-                                        key={colIdx}
-                                        variant="Regular_14"
-                                        className={`${styles.tableCell} ${hasNewlines ? styles.multiLineCell : ''}`}
-                                        style={getColStyle(columns[colIdx])}
-                                        title={value}
-                                    >
-                                        {hasNewlines
-                                            ? value.split('\n').map((line, i) => (
-                                                  <div key={i} className={styles.multiLineCellItem} title={line}>
-                                                      {line}
-                                                  </div>
-                                              ))
-                                            : value}
-                                    </DsTypography>
-                                );
-                            })}
-                        </div>
-                    );
-                })}
+                {isPatchConfig && isMissingPatchLoading ? (
+                    <div className={styles.loaderRow}>
+                        <DsFlashingDotsLoader />
+                    </div>
+                ) : (
+                    rows.map((row, rowIdx) => {
+                        const isMultiLine = row.some(v => v.includes('\n'));
+                        return (
+                            <div
+                                key={rowIdx}
+                                className={`${styles.tableRow} ${isMultiLine ? styles.multiLineRow : ''}`}
+                            >
+                                {row.map((value, colIdx) => {
+                                    const hasNewlines = value.includes('\n');
+                                    return (
+                                        <DsTypography
+                                            key={colIdx}
+                                            variant="Regular_14"
+                                            className={`${styles.tableCell} ${hasNewlines ? styles.multiLineCell : ''}`}
+                                            style={getColStyle(columns[colIdx])}
+                                            title={value}
+                                        >
+                                            {hasNewlines
+                                                ? value.split('\n').map((line, i) => (
+                                                      <div key={i} className={styles.multiLineCellItem} title={line}>
+                                                          {line}
+                                                      </div>
+                                                  ))
+                                                : value}
+                                        </DsTypography>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })
+                )}
             </div>
         </div>
     );
