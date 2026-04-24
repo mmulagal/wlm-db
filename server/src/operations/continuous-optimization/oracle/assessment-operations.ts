@@ -702,7 +702,7 @@ async function onDemandTriggerOracleDriftAssessment(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    initiatedBy: string,
+    initiatedBy: AssessmentTriggeredBy,
     fields?: string,
     parentJobId?: string
 ) {
@@ -753,8 +753,9 @@ async function onDemandTriggerOracleDriftAssessment(
         const fieldsValues = fields
             ? fields.toLowerCase().replace(/\s+/g, '').split(',')
             : Object.values(AssessmentCategoriesOracle).map(category => category.toLowerCase());
-        // Call the async function without awaiting it
-        triggerOracleAssessment(managedInstance, jobId, fieldsValues, true, AssessmentTriggeredBy.USER);
+        // Fire-and-forget: HTTP on-demand only registers the child job; callers that need completion (e.g.
+        // `triggerOracleAssessmentAfterOptimization`) poll sub-jobs under the parent optimize job.
+        triggerOracleAssessment(managedInstance, jobId, fieldsValues, true, initiatedBy);
 
         return { jobId };
     } catch (error: any) {

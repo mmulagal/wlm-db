@@ -4,9 +4,7 @@ import { DATABASE_TYPE } from '@prisma/client';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
 import { ORACLE_STORAGE_ASSESSMENT_DATA } from '../../../../src/utils/demo-utils/demoMockdata';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
-import {
-    bulkUpsertOfflineAssessments
-} from '../../../../src/lib/database/offline-assessment';
+import { bulkUpsertOfflineAssessments } from '../../../../src/lib/database/offline-assessment';
 import { fetchOracleOfflineAssessment } from '../../../../src/operations/continuous-optimization/oracle/offline-assessment-operations';
 import { OracleGenericParameterDriftResponseType } from '../../../../src/routes/types/oracle-continuous-optimization.types';
 

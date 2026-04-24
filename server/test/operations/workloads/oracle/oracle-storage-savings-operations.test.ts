@@ -39,7 +39,9 @@ function makeStorageSummary(total: number) {
 function makeFsxBlock(): FsxCostCalculations {
     const { single } = ebsStorageSavingsCalculationFixture;
     if (!single) {
-        throw new Error('ebs-storage-savings-calculation.json must include single FSx calculations for Oracle storage savings tests');
+        throw new Error(
+            'ebs-storage-savings-calculation.json must include single FSx calculations for Oracle storage savings tests'
+        );
     }
     return single as FsxCostCalculations;
 }
@@ -94,12 +96,18 @@ describe('isOracleHostIneligibleForAutomaticEbsSavings', () => {
     });
 
     it('should return true when instance storage is ASM-managed', () => {
-        const host = makeHost({ ec2InstanceId: 'i-1', databaseInstanceDetails: [{ isInstanceStorageAsmManaged: true }] });
+        const host = makeHost({
+            ec2InstanceId: 'i-1',
+            databaseInstanceDetails: [{ isInstanceStorageAsmManaged: true }]
+        });
         expect(isOracleHostIneligibleForAutomaticEbsSavings(host)).toBe(true);
     });
 
     it('should return false when neither RAC nor ASM-managed storage applies', () => {
-        const host = makeHost({ ec2InstanceId: 'i-1', databaseInstanceDetails: [{ isRacEnabled: false, isInstanceStorageAsmManaged: false }] });
+        const host = makeHost({
+            ec2InstanceId: 'i-1',
+            databaseInstanceDetails: [{ isRacEnabled: false, isInstanceStorageAsmManaged: false }]
+        });
         expect(isOracleHostIneligibleForAutomaticEbsSavings(host)).toBe(false);
     });
 });
@@ -114,7 +122,9 @@ describe('getOracleAutomaticTcoComputeDeploymentTypeForHost', () => {
 
     it('should return Standalone when Data Guard is not deployed', () => {
         const host = makeHost({ ec2InstanceId: 'i-1', databaseInstanceDetails: [{ isDataGuardDeployed: false }] });
-        expect(getOracleAutomaticTcoComputeDeploymentTypeForHost(host)).toBe(ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE);
+        expect(getOracleAutomaticTcoComputeDeploymentTypeForHost(host)).toBe(
+            ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE
+        );
     });
 });
 
@@ -124,7 +134,14 @@ describe('extractOracleEbsVolumeIdsForHost', () => {
     it('should collect EBS volume ids from database instance storage', () => {
         const host = makeHost({
             ec2InstanceId: 'i-1',
-            databaseInstanceDetails: [{ storage: [{ type: 'EBS', id: 'vol-aaa' }, { type: 'FSX', id: 'fs-1' }] }]
+            databaseInstanceDetails: [
+                {
+                    storage: [
+                        { type: 'EBS', id: 'vol-aaa' },
+                        { type: 'FSX', id: 'fs-1' }
+                    ]
+                }
+            ]
         });
         expect(extractOracleEbsVolumeIdsForHost(host)).toEqual(['vol-aaa']);
     });
@@ -137,7 +154,7 @@ describe('partitionOracleEbsVolumesByDeploymentType', () => {
         const host = makeHost({
             ec2InstanceId: 'i-1',
             databaseInstanceDetails: [
-                { isDataGuardDeployed: true,  storage: [{ type: 'EBS', id: 'vol-dg-1' }] },
+                { isDataGuardDeployed: true, storage: [{ type: 'EBS', id: 'vol-dg-1' }] },
                 { isDataGuardDeployed: false, storage: [{ type: 'EBS', id: 'vol-sa-1' }] }
             ]
         });
@@ -225,7 +242,7 @@ describe('mixed vs homogeneous marketing API call routing', () => {
         const mixedHost = makeHost({
             ec2InstanceId: 'i-mixed',
             databaseInstanceDetails: [
-                { isDataGuardDeployed: true,  storage: [{ type: 'EBS', id: 'vol-dg-1' }] },
+                { isDataGuardDeployed: true, storage: [{ type: 'EBS', id: 'vol-dg-1' }] },
                 { isDataGuardDeployed: false, storage: [{ type: 'EBS', id: 'vol-sa-1' }] }
             ]
         });
@@ -277,7 +294,7 @@ describe('mixed vs homogeneous marketing API call routing', () => {
         const mixedHost = makeHost({
             ec2InstanceId: 'i-mixed',
             databaseInstanceDetails: [
-                { isDataGuardDeployed: true,  storage: [{ type: 'EBS', id: 'vol-dg-1' }] },
+                { isDataGuardDeployed: true, storage: [{ type: 'EBS', id: 'vol-dg-1' }] },
                 { isDataGuardDeployed: false, storage: [{ type: 'EBS', id: 'vol-sa-1' }] }
             ]
         });
@@ -286,7 +303,13 @@ describe('mixed vs homogeneous marketing API call routing', () => {
             items: [mixedHost]
         } as DiscoverOracleResourcesResult);
 
-        const result = await performOracleBulkStorageSavingsCalculations('acct', 'cred', 'us-east-1', ['i-mixed'], sharedParams);
+        const result = await performOracleBulkStorageSavingsCalculations(
+            'acct',
+            'cred',
+            'us-east-1',
+            ['i-mixed'],
+            sharedParams
+        );
 
         expect(result.ebs?.total).toBe(180);
         expect(result.fsx.total).toBe(90);
@@ -295,13 +318,21 @@ describe('mixed vs homogeneous marketing API call routing', () => {
     it('mixed metrics: two formatStorageSavingsCalculationMetrics calls (all-volumes + standalone)', async () => {
         const formatMetricsSpy = vi
             .spyOn(marketingOps, 'formatStorageSavingsCalculationMetrics')
-            .mockResolvedValueOnce(makeMetricsResponse({ ebsTotal: 200, fsxTotal: 100 }) as Awaited<ReturnType<typeof marketingOps.formatStorageSavingsCalculationMetrics>>)
-            .mockResolvedValueOnce(makeMetricsResponse({ ebsTotal: 80, fsxTotal: 40 }) as Awaited<ReturnType<typeof marketingOps.formatStorageSavingsCalculationMetrics>>);
+            .mockResolvedValueOnce(
+                makeMetricsResponse({ ebsTotal: 200, fsxTotal: 100 }) as Awaited<
+                    ReturnType<typeof marketingOps.formatStorageSavingsCalculationMetrics>
+                >
+            )
+            .mockResolvedValueOnce(
+                makeMetricsResponse({ ebsTotal: 80, fsxTotal: 40 }) as Awaited<
+                    ReturnType<typeof marketingOps.formatStorageSavingsCalculationMetrics>
+                >
+            );
 
         const mixedHost = makeHost({
             ec2InstanceId: 'i-mixed',
             databaseInstanceDetails: [
-                { isDataGuardDeployed: true,  storage: [{ type: 'EBS', id: 'vol-dg-1' }] },
+                { isDataGuardDeployed: true, storage: [{ type: 'EBS', id: 'vol-dg-1' }] },
                 { isDataGuardDeployed: false, storage: [{ type: 'EBS', id: 'vol-sa-1' }] }
             ]
         });

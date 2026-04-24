@@ -4,6 +4,8 @@ import { DatabaseInstanceMetadata, WorkloadInstance } from '../../../utils/commo
 import { RESOURCESTYPE, HttpErrorCodes, AuditStatus, LINUX_HOST_UTILITIES_RELATIVE_PATH } from '../../../utils/consts';
 import {
     AssessmentCategories,
+    AssessmentCategoriesOracle,
+    OptimizeOracleComputeHostOs,
     OptimizeOracleiSCSIStorageOperatingSystem,
     OptimizeOracleNFSStorageOperatingSystem
 } from '../../../utils/continous-optimization-consts';
@@ -434,6 +436,12 @@ async function oracleOptimizeStorageOS(
         parentJobStatus === JOBSTATUS.COMPLETED ? '' : parentJobError
     );
 
+    const postOptimizeAssessmentCategory = (Object.values(OptimizeOracleComputeHostOs) as string[]).includes(
+        configurationName
+    )
+        ? AssessmentCategoriesOracle.COMPUTE
+        : AssessmentCategories.STORAGE;
+
     // Common assessment trigger logic for all successful optimizations
     if (parentJobStatus === JOBSTATUS.COMPLETED) {
         try {
@@ -455,7 +463,7 @@ async function oracleOptimizeStorageOS(
                 serverNameWithHostName,
                 parentJobId,
                 instanceToAssess,
-                AssessmentCategories.STORAGE
+                postOptimizeAssessmentCategory
             );
         } catch (error) {
             logger.error(`Error triggering assessment after optimization for databaseHost ${databaseHostId}: ${error}`);

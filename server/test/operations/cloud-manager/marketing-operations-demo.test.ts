@@ -229,13 +229,7 @@ describe('Marketing Operations Demo', () => {
     describe('Oracle deployment types', () => {
         describe('fsxwAutomaticDemoModeCallingManualApi', () => {
             it('should return multi key for Oracle Data Guard deployment', async () => {
-                const result = await fsxwAutomaticDemoModeCallingManualApi(
-                    'us-east-1',
-                    1,
-                    'DG',
-                    30,
-                    ACCOUNT_ID
-                );
+                const result = await fsxwAutomaticDemoModeCallingManualApi('us-east-1', 1, 'DG', 30, ACCOUNT_ID);
 
                 expect(result).toBeDefined();
                 expect(result.fsxw).toBeDefined();
