@@ -27,11 +27,13 @@ import {
     summarizeFirstLevel,
     camelCaseToHyphenated,
     hyphenatedToPascalCaseWithSpace,
-    compressSsmCommand
+    compressSsmCommand,
+    getFsxVolumeArn
 } from '../../src/utils/utils';
 import { ACTIVE_INSTANCE_ID, STANDBY_INSTANCE_ID } from './consts';
 import { SSM_RUN_SHELL_SCRIPT_DOC } from '../../src/operations/workloads/oracle/consts';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC } from '../../src/operations/workloads/mssql/const';
+import { REGION } from '../../src/lib/chatbot/consts';
 
 const CREDENTIALS_ID = `${faker.string.alpha(20)}`;
 const networkConfiguration = {
@@ -52,6 +54,8 @@ vi.mock('../../src/lib/aws/secrets-manager', () => ({
 const awsAccountId = `${faker.number.int({ min: 100000000 })}`;
 const fsxId = `fs-${faker.string.numeric(8)}`;
 const fsxArn = `arn:aws:fsx:${DEFAULT_AWS_REGION}:${awsAccountId}:file-system/${fsxId}`;
+const FSX_VOLUME_ID = 'fsvol-044997d746f7b236b';
+const EXPECTED_VOLUME_ARN = `arn:aws:fsx:${REGION}:${awsAccountId}:volume/${fsxId}/${FSX_VOLUME_ID}`;
 
 describe('Utils test cases', () => {
     it(' Create Secrets Manager String', async () => {
@@ -84,6 +88,11 @@ describe('Utils test cases', () => {
         const response = getFsxArn(awsAccountId, DEFAULT_AWS_REGION, fsxId);
         expect(response).toBe(fsxArn);
     });
+
+    it('should produce the FSxN volume ARN with every ID segment in place', () => {
+        expect(getFsxVolumeArn(REGION, awsAccountId, fsxId, FSX_VOLUME_ID)).toBe(EXPECTED_VOLUME_ARN);
+    });
+
     it('Generate Fsx ARN', async () => {
         const response = await isNetworkConfigurationViolated(networkConfiguration, FCI);
         expect(response.isViolated).toBe(false);

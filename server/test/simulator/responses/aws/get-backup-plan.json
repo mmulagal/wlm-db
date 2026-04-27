@@ -1,0 +1,21 @@
+{
+    "BackupPlanArn": "arn:aws:backup:ap-southeast-1:464262061435:backup-plan:263fc531-ebf1-4d06-91dc-3ede5bd3e62b",
+    "BackupPlanId": "263fc531-ebf1-4d06-91dc-3ede5bd3e62b",
+    "CreationDate": "2025-09-18T10:00:00.000Z",
+    "VersionId": "NmZmMDIzN2YtOTA4Yi00NDMwLTkwMDAtMzY1MmRjMmJiZWY2",
+    "BackupPlan": {
+        "BackupPlanName": "HourlyPlan",
+        "Rules": [
+            {
+                "RuleName": "HourlyRule",
+                "TargetBackupVaultName": "Default",
+                "ScheduleExpression": "cron(0 * ? * * *)",
+                "StartWindowMinutes": 60,
+                "CompletionWindowMinutes": 180,
+                "Lifecycle": {
+                    "DeleteAfterDays": 7
+                }
+            }
+        ]
+    }
+}

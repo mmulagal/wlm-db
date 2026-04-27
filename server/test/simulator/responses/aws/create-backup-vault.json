@@ -1,0 +1,5 @@
+{
+    "BackupVaultName": "wlmdb-poc",
+    "BackupVaultArn": "arn:aws:backup:ap-southeast-1:464262061435:backup-vault:wlmdb-poc",
+    "CreationDate": "2026-04-17T00:00:00.000Z"
+}

@@ -398,6 +398,10 @@ function getFsxArn(awsAccountId: string, region: string, fsxId: string) {
     return `arn:aws:fsx:${region}:${awsAccountId}:file-system/${fsxId}`;
 }
 
+function getFsxVolumeArn(region: string, awsAccountId: string, fsxFileSystemId: string, fsxVolumeId: string) {
+    return `arn:aws:fsx:${region}:${awsAccountId}:volume/${fsxFileSystemId}/${fsxVolumeId}`;
+}
+
 function getEc2Arn(awsAccountId: string, region: string, instanceId: string) {
     return `arn:aws:ec2:${region}:${awsAccountId}:instance/${instanceId}`;
 }
@@ -1649,6 +1653,7 @@ export {
     sleep,
     getSnsArn,
     getFsxArn,
+    getFsxVolumeArn,
     getEc2Arn,
     generateHash,
     fsxStorageCapacityBreakdown,

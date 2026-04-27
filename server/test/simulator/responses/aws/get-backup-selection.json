@@ -1,0 +1,13 @@
+{
+    "BackupPlanId": "263fc531-ebf1-4d06-91dc-3ede5bd3e62b",
+    "BackupSelection": {
+        "SelectionName": "Netapp-WorkloadFactory-1700000000000",
+        "IamRoleArn": "arn:aws:iam::464262061435:role/service-role/AWSBackupDefaultServiceRole",
+        "Resources": [
+            "arn:aws:fsx:ap-southeast-1:464262061435:volume/fs-0d5efc3057c4f12cb/fsvol-044997d746f7b236b"
+        ]
+    },
+    "SelectionId": "sel-0000000000000001",
+    "CreationDate": "2025-09-22T00:00:00.000Z",
+    "CreatorRequestId": "test-creator"
+}

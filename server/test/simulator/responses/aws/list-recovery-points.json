@@ -1,0 +1,13 @@
+{
+    "RecoveryPoints": [
+        {
+            "RecoveryPointArn": "arn:aws:backup:ap-southeast-1:464262061435:recovery-point:00000000-0000-0000-0000-000000000001",
+            "CreationDate": "2026-04-16T10:00:00.000Z",
+            "ResourceArn": "arn:aws:fsx:ap-southeast-1:464262061435:volume/fs-0d5efc3057c4f12cb/fsvol-044997d746f7b236b",
+            "ResourceType": "FSx",
+            "BackupVaultName": "Default",
+            "BackupSizeBytes": 1073741824,
+            "Status": "COMPLETED"
+        }
+    ]
+}

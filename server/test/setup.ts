@@ -4,6 +4,7 @@
 // AWS Scopes
 import './simulator/scopes/aws/ssm-scope';
 import './simulator/scopes/aws/fsx-scope';
+import './simulator/scopes/aws/backup-scope';
 import './simulator/scopes/aws/cloud-watch-logs-scope';
 import './simulator/scopes/aws/cloud-watch-scope';
 import './simulator/scopes/aws/ec2-scope';

@@ -1,0 +1,20 @@
+{
+    "BackupVaultList": [
+        {
+            "BackupVaultName": "Default",
+            "BackupVaultArn": "arn:aws:backup:ap-southeast-1:464262061435:backup-vault:Default",
+            "CreationDate": "2025-09-01T00:00:00.000Z",
+            "EncryptionKeyArn": "arn:aws:kms:ap-southeast-1:464262061435:key/00000000-0000-0000-0000-000000000000",
+            "NumberOfRecoveryPoints": 0,
+            "Locked": false
+        },
+        {
+            "BackupVaultName": "wlmdb-poc",
+            "BackupVaultArn": "arn:aws:backup:ap-southeast-1:464262061435:backup-vault:wlmdb-poc",
+            "CreationDate": "2026-04-17T00:00:00.000Z",
+            "EncryptionKeyArn": "arn:aws:kms:ap-southeast-1:464262061435:key/00000000-0000-0000-0000-000000000000",
+            "NumberOfRecoveryPoints": 0,
+            "Locked": false
+        }
+    ]
+}

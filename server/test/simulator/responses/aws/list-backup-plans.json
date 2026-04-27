@@ -1,0 +1,18 @@
+{
+    "BackupPlansList": [
+        {
+            "BackupPlanArn": "arn:aws:backup:ap-southeast-1:464262061435:backup-plan:263fc531-ebf1-4d06-91dc-3ede5bd3e62b",
+            "BackupPlanId": "263fc531-ebf1-4d06-91dc-3ede5bd3e62b",
+            "BackupPlanName": "HourlyPlan",
+            "CreationDate": "2025-09-18T10:00:00.000Z",
+            "VersionId": "NmZmMDIzN2YtOTA4Yi00NDMwLTkwMDAtMzY1MmRjMmJiZWY2"
+        },
+        {
+            "BackupPlanArn": "arn:aws:backup:ap-southeast-1:464262061435:backup-plan:8459cbc9-b234-4172-9a6c-de1b9f748cc7",
+            "BackupPlanId": "8459cbc9-b234-4172-9a6c-de1b9f748cc7",
+            "BackupPlanName": "DailyPlan",
+            "CreationDate": "2025-09-20T10:00:00.000Z",
+            "VersionId": "NmZmMDIzN2YtOTA4Yi00NDMwLTkwMDAtMzY1MmRjMmJiZWY2"
+        }
+    ]
+}
