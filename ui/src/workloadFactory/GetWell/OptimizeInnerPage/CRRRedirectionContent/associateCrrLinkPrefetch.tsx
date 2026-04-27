@@ -77,7 +77,9 @@ export function useAssociateCrrLinkPrefetch(
                         postBlueXPMessage({
                             type: BlueXPListeners.navigate,
                             payload: {
-                                pathname: `../../administration/links/create?awsAccount=${
+                                pathname: `../../${
+                                    workloadFactory ? 'administration' : 'fsxadministration'
+                                }/links/create?awsAccount=${
                                     fsxDetails?.awsAccountId
                                 }&from=${workloadFactory ? '/databases' : '/fsxdb'}/inventory/${credId}/${
                                     fsxDetails?.region
