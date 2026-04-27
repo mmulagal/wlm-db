@@ -90,7 +90,7 @@ type GenericAssessmentResponseType = Static<typeof GenericAssessmentResponse>;
 
 const FsxBackupOptimizationFields = Type.Object({
     fsxFileSystemId: Type.Optional(Type.String()),
-    backupRetentionDays: Type.Optional(Type.Integer({ minimum: 1, maximum: 90, default: 7 })),
+    backupRetentionDays: Type.Optional(Type.Integer({ minimum: 1, maximum: 90 })),
     backupStartTime: Type.Optional(
         Type.String({
             description: '00:00 to 23:59 padded UTC timestamp',

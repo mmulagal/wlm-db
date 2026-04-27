@@ -1059,6 +1059,11 @@ ssmMock
     .resolves(getSampleCommandResponse('checkOracleDatabaseLogAnalysisPermissions'))
     .on(SendCommandCommand, params => params.Comment === 'Check if Linux package repositories are reachable')
     .resolves(getSampleCommandResponse('checkLinuxRepoConnectivity'))
+    .on(
+        SendCommandCommand,
+        params => typeof params.Comment === 'string' && params.Comment.startsWith('Delete Oracle clone')
+    )
+    .resolves(getSampleCommandResponse('deleteOracleClone'))
     .on(SendCommandCommand, params => params.Comment === 'Get AOAG details for MSSQL instance')
     .callsFake(async (params: any) => {
         const instanceId = params.InstanceIds?.[0];
@@ -1830,6 +1835,15 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkOracleDatabaseLogAnalysisPermissions'
     })
     .resolves(getSampleCommandResponseWithOutput('checkOracleDatabaseLogAnalysisPermissions', JSON.stringify('true\n')))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-deleteOracleClone'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'deleteOracleClone',
+            JSON.stringify({ status: 'success', deletedVolumes: ['test-volume-uuid'] })
+        )
+    )
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getAoagDetails'
     })

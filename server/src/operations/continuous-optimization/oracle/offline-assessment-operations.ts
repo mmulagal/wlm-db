@@ -18,7 +18,8 @@ import {
     OracleDriftAssessmentResponse,
     OracleDriftAssessmentResponseType,
     StorageParameterDriftResponseType,
-    GenericParameterDriftResponseType
+    GenericParameterDriftResponseType,
+    OracleCloneDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import {
     generateSqlResourceId,
@@ -31,9 +32,10 @@ import getLogger from '../../../utils/logger';
 import { AWS_REGIONS, HttpErrorCodes, RESOURCESTYPE, STORAGE_PROTOCOLS } from '../../../utils/consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
-import { ComputeHostOsAssessment, DatabaseInstance } from '../../../utils/common-types';
+import { CloneAssessment, ComputeHostOsAssessment, DatabaseInstance } from '../../../utils/common-types';
 import { OracleMappedOntapVolumesResponse } from '../../workloads/oracle/common-types';
 import { calculateStorageDrift } from './storage-assessment-operations';
+import { calculateOracleCloneDrift } from './clone-assessment-operations';
 import { calculateComputeHostOsDrift } from './compute-assessment-operations';
 import { ISCIOSAssessment, NFSOSAssessment, StorageAssessment, StorageIscsiAssessment } from './common-types';
 import { AssessmentStatus, MIN_OPTIMIZED_HEADROOM_PERCENTAGE } from '../../../utils/continous-optimization-consts';
@@ -83,6 +85,7 @@ interface OracleStoredRawData {
     }>;
     isDataGuardDeployed?: boolean;
     dataguardDetails?: DataGuardDetailsType;
+    clone?: CloneAssessment;
 }
 
 /** Oracle instance-level metadata (version, home, SID, CDB flag) nested inside each entry of `instanceLevelDetails`. */
@@ -114,6 +117,7 @@ interface OracleOfflineAssessmentInstanceData {
     }>;
     isDataGuardDeployed?: boolean;
     dataguardDetails?: DataGuardDetailsType;
+    clone?: CloneAssessment;
 }
 
 /** Top-level `rawdata` block from the uploaded assessment JSON — maps SID keys to per-instance data plus host-level details. */
@@ -224,7 +228,8 @@ async function processOracleOfflineAssessmentUpload(
                     os,
                     pluggableDatabases,
                     isDataGuardDeployed,
-                    dataguardDetails
+                    dataguardDetails,
+                    clone
                 } = instanceData;
 
                 const databaseInstanceId = instanceDetails?.sid || instanceName;
@@ -254,7 +259,8 @@ async function processOracleOfflineAssessmentUpload(
                         errors: rawdata.errors || [],
                         pluggableDatabases: pluggableDatabases || [],
                         isDataGuardDeployed: isDataGuardDeployed || false,
-                        dataguardDetails: dataguardDetails || {}
+                        dataguardDetails: dataguardDetails || {},
+                        ...(clone && { clone })
                     },
                     mappedOntapVolumes: mappedOntapVolumes || {},
                     metadata: {
@@ -490,7 +496,7 @@ async function fetchOracleOfflineAssessment(
     } = metadata;
 
     const skipHeadroom = true;
-    const { instanceLevelAssessment, os } = rawdata;
+    const { instanceLevelAssessment, os, clone: cloneAssessmentData } = rawdata;
     const fileSystemIdentifier = fsxId || storageEndpoint || '';
 
     const instanceAssessment = (instanceLevelAssessment || {}) as Record<string, unknown>;
@@ -546,6 +552,21 @@ async function fetchOracleOfflineAssessment(
         }
     }
 
+    let cloneDriftResponse: OracleCloneDriftResponseType | undefined;
+    if (!isEmpty(cloneAssessmentData)) {
+        const cloneDrift = calculateOracleCloneDrift(
+            accountId,
+            credentialsId || '',
+            region || '',
+            resourceId,
+            databaseInstanceId,
+            cloneAssessmentData as CloneAssessment
+        );
+        if (cloneDrift && !('errorMessage' in cloneDrift)) {
+            cloneDriftResponse = cloneDrift as OracleCloneDriftResponseType;
+        }
+    }
+
     const computeHostOsDriftData =
         mappedOntapVolumesData.protocol === STORAGE_PROTOCOLS.ISCSI && !isEmpty(os)
             ? calculateComputeHostOsDrift(
@@ -563,6 +584,7 @@ async function fetchOracleOfflineAssessment(
         storage: !isEmpty(storageAssessmentResponse)
             ? (storageAssessmentResponse as StorageParameterDriftResponseType)
             : undefined,
+        clone: cloneDriftResponse,
         ...computeHostOsDriftData,
         lastAssessmentTimestamp: assessmentTimestamp
             ? new Date(assessmentTimestamp).getTime()

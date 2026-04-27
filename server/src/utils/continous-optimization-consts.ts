@@ -70,7 +70,8 @@ enum OptimizeOracleTypes {
     STORAGE_OPERATING_SYSTEM = 'storage-operating-system',
     COMPUTE_HOST_OS = 'compute-host-os',
     STORAGE_SIZING = 'storage-sizing',
-    AWS_BACKUP = 'aws-backup'
+    AWS_BACKUP = 'aws-backup',
+    CLONE = 'clone'
 }
 
 const OracleOptimizeJobDescriptions = {
@@ -79,7 +80,8 @@ const OracleOptimizeJobDescriptions = {
     [OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM]: 'Fix Oracle Storage Operating System',
     [OptimizeOracleTypes.COMPUTE_HOST_OS]: 'Fix Oracle compute host OS parameters',
     [OptimizeOracleTypes.STORAGE_SIZING]: 'Fix Oracle Storage Sizing',
-    [OptimizeOracleTypes.AWS_BACKUP]: 'Fix AWS FSx for ONTAP automatic backup configuration for Oracle'
+    [OptimizeOracleTypes.AWS_BACKUP]: 'Fix AWS FSx for ONTAP automatic backup configuration for Oracle',
+    [OptimizeOracleTypes.CLONE]: 'Fix Oracle clones'
 };
 
 enum OptimizeOracleiSCSIStorageOperatingSystem {

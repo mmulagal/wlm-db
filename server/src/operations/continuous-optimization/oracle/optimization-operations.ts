@@ -2,9 +2,12 @@ import { isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import throat from 'throat';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+
 import {
     BackupOptimizePerHostRequestBodyType,
+    CloneOptimizePerHostRequestBodyType,
     HostsToOptimizeType,
+    OracleCloneActionType,
     OptimizeRequestBodyType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import {
@@ -14,27 +17,48 @@ import {
     OracleOptimizeJobDescriptions
 } from '../../../utils/continous-optimization-consts';
 import getLogger from '../../../utils/logger';
-import { oracleOptimizeStorageOS } from './storage-os-optimize-operations';
 import { HttpErrorCodes } from '../../../utils/consts';
 import { handleOptimizeJobCreation } from '../assessment-utils';
 import { updateParentJobStatus } from '../../database/job-operations';
 import { validateAndFilterDatabaseHosts } from '../../bulk-cont-opt-operations';
 import { OracleJobMetadata } from './consts';
+import { oracleOptimizeStorageOS } from './storage-os-optimize-operations';
 import { oracleOptimizeStorageSizing } from './storage-optimize-operations';
 import { triggerOracleAssessmentAfterOptimization } from './assessment-operations';
 import { handleFsxBackupOptimizeJob } from '../resilience-awsBackup-optimize-operations';
+import { handleCloneOptimizationForInstance } from './clone-optimization-operations';
 
 const logger = getLogger();
 
 const ORACLE_COMPUTE_HOST_OS_OPTIMIZE_NAMES = new Set<string>(Object.values(OptimizeOracleComputeHostOs));
 
+interface FlattenedTask {
+    databaseHostId: string;
+    databaseInstanceId: string;
+    credentialsId: string;
+    region: string;
+    optimizationSubcategory: string;
+    clones?: OracleCloneActionType[];
+}
+
 function formatJobMetadata(hostsToOptimize: HostsToOptimizeType) {
     return hostsToOptimize.flatMap(({ configurationName, databaseHosts }) =>
-        databaseHosts.map(({ id, databases }) => ({
-            resourceId: id,
-            databases,
-            optimizationType: configurationName
-        }))
+        databaseHosts.map(host => {
+            if ('oracleInstances' in host) {
+                const cloneHost = host as CloneOptimizePerHostRequestBodyType;
+                return {
+                    resourceId: cloneHost.id,
+                    databases: cloneHost.oracleInstances.map(i => i.instanceId),
+                    optimizationType: configurationName
+                };
+            }
+            const dbHost = host as BackupOptimizePerHostRequestBodyType;
+            return {
+                resourceId: dbHost.id,
+                databases: dbHost.databases,
+                optimizationType: configurationName
+            };
+        })
     );
 }
 
@@ -104,6 +128,32 @@ async function optimizeOracleDatabase(accountId: string, params: OptimizeRequest
     return masterJobId;
 }
 
+function flattenHostsToTasks(hostsToOptimize: HostsToOptimizeType): FlattenedTask[] {
+    return hostsToOptimize.flatMap(({ configurationName: optimizationSubcategory, databaseHosts }) =>
+        databaseHosts.flatMap(host => {
+            if ('oracleInstances' in host) {
+                const cloneHost = host as CloneOptimizePerHostRequestBodyType;
+                return cloneHost.oracleInstances.map(({ instanceId, clones }) => ({
+                    databaseHostId: cloneHost.id,
+                    databaseInstanceId: instanceId,
+                    credentialsId: cloneHost.credentialsId,
+                    region: cloneHost.region,
+                    optimizationSubcategory,
+                    clones
+                }));
+            }
+            const dbHost = host as BackupOptimizePerHostRequestBodyType;
+            return dbHost.databases.map(databaseInstanceId => ({
+                databaseHostId: dbHost.id,
+                databaseInstanceId,
+                credentialsId: dbHost.credentialsId,
+                region: dbHost.region,
+                optimizationSubcategory
+            }));
+        })
+    );
+}
+
 async function handleBulkOptimization(
     accountId: string,
     optimizationCategory: string,
@@ -114,24 +164,22 @@ async function handleBulkOptimization(
         `Handle bulk optimizing : ${accountId}, ${optimizationCategory}, hostsToOptimize: ${hostsToOptimize?.length}, ${masterOptimizeParentId}`
     );
 
-    const flattenedTasks = hostsToOptimize.flatMap(({ configurationName: optimizationSubcategory, databaseHosts }) =>
-        databaseHosts.flatMap(({ id: databaseHostId, databases, credentialsId, region }) =>
-            databases.map(databaseInstanceId => ({
-                databaseHostId,
-                databaseInstanceId,
-                credentialsId,
-                region,
-                optimizationSubcategory
-            }))
-        )
-    );
+    const flattenedTasks = flattenHostsToTasks(hostsToOptimize);
+
     let jobError = '';
     try {
         await Promise.all(
             flattenedTasks.map(
                 throat(
                     3,
-                    async ({ databaseHostId, databaseInstanceId, credentialsId, region, optimizationSubcategory }) => {
+                    async ({
+                        databaseHostId,
+                        databaseInstanceId,
+                        credentialsId,
+                        region,
+                        optimizationSubcategory,
+                        clones
+                    }) => {
                         try {
                             switch (optimizationCategory) {
                                 case OptimizeOracleTypes.STORAGE_OPERATING_SYSTEM: {
@@ -173,6 +221,19 @@ async function handleBulkOptimization(
                                     break;
                                 }
 
+                                case OptimizeOracleTypes.CLONE: {
+                                    await handleCloneOptimizationForInstance(
+                                        accountId,
+                                        credentialsId,
+                                        region,
+                                        databaseHostId,
+                                        databaseInstanceId,
+                                        clones || [],
+                                        masterOptimizeParentId
+                                    );
+                                    break;
+                                }
+
                                 default:
                             }
                         } catch (error: any) {
@@ -204,11 +265,13 @@ async function handleOracleAwsBackupOptimization(
     );
 
     const groupedHosts = hostsToOptimize.reduce((acc, { databaseHosts }) => {
-        databaseHosts.forEach(({ credentialsId, region, ...rest }) => {
-            const key = `${credentialsId}-${region}`;
-            acc[key] ??= { credentialsId, region, databaseHosts: [] };
-            acc[key].databaseHosts.push({ credentialsId, region, ...rest });
-        });
+        databaseHosts
+            .filter((host): host is BackupOptimizePerHostRequestBodyType => 'databases' in host)
+            .forEach(({ credentialsId, region, ...rest }) => {
+                const key = `${credentialsId}-${region}`;
+                acc[key] ??= { credentialsId, region, databaseHosts: [] };
+                acc[key].databaseHosts.push({ credentialsId, region, ...rest });
+            });
         return acc;
     }, {} as Record<string, { credentialsId: string; region: string; databaseHosts: BackupOptimizePerHostRequestBodyType[] }>);
 

@@ -9,6 +9,7 @@ import {
     OptimizeOracleTypes,
     OptimizeStorageRequestParams
 } from '../../utils/continous-optimization-consts';
+import { CLONE_ACTION, OTHER_CLONE } from '../../utils/consts';
 import {
     OntapVolume,
     GenericViolationResponse,
@@ -207,6 +208,26 @@ const BackupOptimizePerHostRequestBody = Type.Intersect([OptimizePerHostRequestB
 
 type BackupOptimizePerHostRequestBodyType = Static<typeof BackupOptimizePerHostRequestBody>;
 
+const OracleCloneAction = Type.Object({
+    cloneDatabaseName: Type.String({ minLength: 1 }),
+    clonedBy: Type.String({ enum: [OTHER_CLONE] }),
+    action: Type.String({ enum: [CLONE_ACTION.DELETE] })
+});
+type OracleCloneActionType = Static<typeof OracleCloneAction>;
+
+const CloneOptimizePerHostRequestBody = Type.Object({
+    id: Type.String({ minLength: 1, description: 'WLMDB registered database host identifier' }),
+    region: Type.String({ minLength: 1, description: 'AWS region of the database host' }),
+    credentialsId: Type.String({ minLength: 1, description: 'WLMDB registered credentials identifier' }),
+    oracleInstances: Type.Array(
+        Type.Object({
+            instanceId: Type.String({ minLength: 1 }),
+            clones: Type.Array(OracleCloneAction)
+        })
+    )
+});
+type CloneOptimizePerHostRequestBodyType = Static<typeof CloneOptimizePerHostRequestBody>;
+
 const HostsToOptimize = Type.Array(
     Type.Object({
         configurationName: Type.String({
@@ -214,7 +235,8 @@ const HostsToOptimize = Type.Array(
                 ...Object.values(OptimizeOracleiSCSIStorageOperatingSystem),
                 ...Object.values(OptimizeOracleNFSStorageOperatingSystem),
                 ...Object.values(OptimizeOracleStorageSizing),
-                'aws-backup'
+                'aws-backup',
+                'clone'
             ],
             description:
                 'Optimization configuration name for the type specified.\n\n' +
@@ -235,9 +257,11 @@ const HostsToOptimize = Type.Array(
                 'For nfs-storage-operating-system type, valid values are:\n' +
                 '- kernel-parameters\n\n' +
                 'For aws-backup type, valid values are:\n' +
-                '- aws-backup\n'
+                '- aws-backup\n\n' +
+                'For clone type, valid values are:\n' +
+                '- clone\n'
         }),
-        databaseHosts: Type.Array(BackupOptimizePerHostRequestBody)
+        databaseHosts: Type.Array(Type.Union([BackupOptimizePerHostRequestBody, CloneOptimizePerHostRequestBody]))
     })
 );
 
@@ -286,5 +310,9 @@ export {
     OptimizeRequestBodyType,
     HostsToOptimizeType,
     OptimizeStorageRequestBody,
-    BackupOptimizePerHostRequestBodyType
+    BackupOptimizePerHostRequestBodyType,
+    OracleCloneAction,
+    OracleCloneActionType,
+    CloneOptimizePerHostRequestBody,
+    CloneOptimizePerHostRequestBodyType
 };
