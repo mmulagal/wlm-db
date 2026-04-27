@@ -317,9 +317,6 @@ function formatEbsCalculationObject(
         monthlyCostPerSnapshot,
         discountForPartialStorageMonth,
         incrementalSnapshotCost,
-        totalSnapshotCost,
-        totalEBSSnapshotCost: totalEbsSnapshotCost,
-        ebsSnapshotCost,
         AWSEBSTotalCostMonthly: ebsTotalCostMonthly,
         ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: ebsSnapshotPriceUnit },
         amountChangedPerSnapshot: { size: amountChangedPerSnapshotSize, unit: amountChangedPerSnapshotUnit }
@@ -362,6 +359,12 @@ function formatEbsCalculationObject(
     // The marketing API sends the initial snapshot cost for a single volume, so calculating to get the total initial snapshot cost for all volumes
     // Although this will not warrant any future changes even after the marketing fix, but it has to be corrected in the marketing API itself in future
     const initialSnapshotCostForAllVolumes = sizeInGigaBytes(ebsStorageAmountSize, 'B') * ebsSnapshotPrice;
+    // GH-9225: Marketing totals (totalSnapshotCost, totalEBSSnapshotCost, ebsSnapshotCost) could disagree with
+    // initialSnapshotCost when multiple volumes of the same type roll up—upstream still mixed per-volume initial into
+    // those fields. Recompute totals from the all-volumes initial we derive above plus incrementalSnapshotCost, then
+    // apply ebsInstanceMonth so every snapshot money field stays internally consistent.
+    const totalSnapshotCostForAllVolumes = initialSnapshotCostForAllVolumes + incrementalSnapshotCost;
+    const totalEbsSnapshotCostForAllVolumes = totalSnapshotCostForAllVolumes * ebsInstanceMonth;
 
     const ebsSnapshotCalculation = {
         storageAmount: ebsStorageAmountSize,
@@ -376,9 +379,9 @@ function formatEbsCalculationObject(
         monthlyCostPerSnapshot,
         discountForPartialStorageMonth,
         incrementalSnapshotCost,
-        totalSnapshotCost,
-        totalEbsSnapshotCost,
-        ebsSnapshotCost
+        totalSnapshotCost: totalSnapshotCostForAllVolumes,
+        totalEbsSnapshotCost: totalEbsSnapshotCostForAllVolumes,
+        ebsSnapshotCost: totalEbsSnapshotCostForAllVolumes
     };
 
     return {
