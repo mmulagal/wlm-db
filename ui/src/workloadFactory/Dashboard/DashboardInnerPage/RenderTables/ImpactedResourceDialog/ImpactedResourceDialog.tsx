@@ -1,10 +1,12 @@
-import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
+import { DsTypography } from '@tlveng/wlm-ds';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ColumnProps, Table } from '@netapp/design-system/dist/components/Table';
 import styles from './ImpactedResourceDialog.module.scss';
 import { ASSESSMENT_CONFIG_NAMES, DBType, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../../utils/consts';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useGetMissingPatchAssessmentDataQuery } from '../../../../../utils/apiService';
+import { useTable, rowDataType } from '../../../../../common/Lib/Table/useTable';
 
 interface ViolationDetail {
     objectName?: string;
@@ -534,6 +536,45 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
     }
 };
 
+const renderTextCell = (cellData: unknown) => {
+    const str = String(cellData ?? '');
+    if (str.includes('\n')) {
+        return (
+            <div>
+                {str.split('\n').map((line, i) => (
+                    <DsTypography key={i} variant="Regular_14" className={styles.multiLineCellItem} title={line}>
+                        {line}
+                    </DsTypography>
+                ))}
+            </div>
+        );
+    }
+    return (
+        <DsTypography variant="Regular_14" className={styles.cellWrapper} title={str}>
+            {str}
+        </DsTypography>
+    );
+};
+
+const buildColumnProps = (columns: string[]): ColumnProps[] =>
+    columns.map((name, idx) => ({
+        Header: name,
+        accessor: name,
+        id: `col-${idx}`,
+        isSortable: true,
+        width: 'auto',
+        renderCell: renderTextCell
+    }));
+
+const buildRowData = (columns: string[], rows: string[][]): rowDataType[] =>
+    rows.map((row, idx) => {
+        const obj: Record<string, unknown> = { id: String(idx) };
+        columns.forEach((name, colIdx) => {
+            obj[name] = row[colIdx] ?? '';
+        });
+        return obj as rowDataType;
+    });
+
 const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
     const { t } = useTranslation();
     const { configEngineType } = useAppSelector(state => state.getWellOptimize);
@@ -584,77 +625,31 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
             ? getMssqlImpactedResources(configName || '', dialogData, na, t)
             : getOracleImpactedResources(configName || '', dialogData, na);
 
+    const isLoading = isPatchConfig && isMissingPatchLoading;
+
+    const columnProps = useMemo(() => buildColumnProps(columns), [columns]);
+
+    const rowData = useMemo(() => (isLoading ? [] : buildRowData(columns, rows)), [isLoading, columns, rows]);
+
+    const tableProps = useTable({
+        selectionType: 'none',
+        isSorting: false,
+        columns: columnProps,
+        rows: rowData,
+        pageSize: 100,
+        isLazyLoading: isLoading
+    });
+
     if (columns.length === 0) {
         return null;
     }
 
-    const colCount = columns.length;
-
-    const COL_WIDTH_MAP: Record<string, React.CSSProperties> = {
-        [t('databases.well-architect.drive')]: { flex: '0 0 80px', maxWidth: '80px' },
-        [t('databases.well-architect.drive-name')]: { flex: '0 0 120px', maxWidth: '120px' },
-        [t('databases.well-architect.lun-path')]: { flex: '2 1 0', maxWidth: 'none' }
-    };
-    const defaultColStyle: React.CSSProperties = {
-        minWidth: colCount === 1 ? '500px' : '140px'
-    };
-    const getColStyle = (colName: string): React.CSSProperties => ({
-        ...defaultColStyle,
-        ...COL_WIDTH_MAP[colName]
-    });
-
     return (
         <div className={styles.tableWrapper}>
-            <div className={styles.tableRow}>
-                {columns.map(name => (
-                    <DsTypography
-                        key={name}
-                        variant="Semibold_14"
-                        className={styles.tableCell}
-                        style={getColStyle(name)}
-                    >
-                        {name}
-                    </DsTypography>
-                ))}
-            </div>
-            <div className={styles.tableBody}>
-                {isPatchConfig && isMissingPatchLoading ? (
-                    <div className={styles.loaderRow}>
-                        <DsFlashingDotsLoader />
-                    </div>
-                ) : (
-                    rows.map((row, rowIdx) => {
-                        const isMultiLine = row.some(v => v.includes('\n'));
-                        return (
-                            <div
-                                key={rowIdx}
-                                className={`${styles.tableRow} ${isMultiLine ? styles.multiLineRow : ''}`}
-                            >
-                                {row.map((value, colIdx) => {
-                                    const hasNewlines = value.includes('\n');
-                                    return (
-                                        <DsTypography
-                                            key={colIdx}
-                                            variant="Regular_14"
-                                            className={`${styles.tableCell} ${hasNewlines ? styles.multiLineCell : ''}`}
-                                            style={getColStyle(columns[colIdx])}
-                                            title={value}
-                                        >
-                                            {hasNewlines
-                                                ? value.split('\n').map((line, i) => (
-                                                      <div key={i} className={styles.multiLineCellItem} title={line}>
-                                                          {line}
-                                                      </div>
-                                                  ))
-                                                : value}
-                                        </DsTypography>
-                                    );
-                                })}
-                            </div>
-                        );
-                    })
-                )}
-            </div>
+            <Table // @ts-ignore
+                tableProps={tableProps}
+                variant="innerTable"
+            />
         </div>
     );
 };

@@ -1,46 +1,6 @@
 .tableWrapper {
-    display: flex;
-    flex-direction: column;
-
-    .tableRow {
-        display: flex;
-        flex-direction: row;
-        gap: 24px;
-        height: 56px;
-    }
-
-    .multiLineRow {
-        height: auto;
-        min-height: 56px;
-    }
-
-    .tableCell {
-        flex: 1;
-        min-width: 0;
-        max-width: 240px;
-        border-bottom: 1px solid var(--border);
-        padding: 0 8px;
-        line-height: 56px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .multiLineCell {
-        white-space: normal;
-        line-height: 24px;
-        padding: 8px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        overflow: hidden;
-    }
-
-    .multiLineCellItem {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+    width: 100%;
+    min-width: 420px;
 
     .loaderRow {
         display: flex;
@@ -48,5 +8,20 @@
         justify-content: center;
         min-height: 120px;
         padding: 16px 8px;
+    }
+
+    .cellWrapper {
+        display: block;
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .multiLineCellItem {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
     }
 }
