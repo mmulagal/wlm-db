@@ -15,7 +15,7 @@ import {
     MIN_OPTIMIZED_HEADROOM_PERCENTAGE
 } from '../../../../src/utils/continous-optimization-consts';
 import { MSSQL_DATABASE_TYPES } from '../../../../src/utils/consts';
-// import { generateSqlResourceId, sleep } from '../../../../src/utils/utils'; // Commented out: only used in commented tests
+import { sleep } from '../../../../src/utils/utils';
 
 // Test constants
 const TEST_RESOURCE_ID = 'i-test-offline-assessment';
@@ -237,6 +237,36 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(result.jobId).toBeDefined();
         });
 
+        it('should populate assessment_results in DB after async upload job completes', async () => {
+            // loadAndModifyDemoFCIData randomises ec2InstanceId/databaseInstanceId on every call,
+            // so we diff before/after to find the new record without hardcoding IDs.
+            const before = await prisma.client.offline_assessment.findMany({
+                where: { account_id: ACCOUNT_ID },
+                select: { resource_id: true, database_instance_id: true }
+            });
+            const beforeKeys = new Set(before.map(r => `${r.resource_id}:${r.database_instance_id}`));
+
+            await uploadMssqlOfflineAssessment(
+                ACCOUNT_ID,
+                JSON.stringify(createValidAssessmentData()),
+                'ar-upload-test.json'
+            );
+
+            // Allow async processOfflineAssessmentUpload (including drift computation) to complete
+            await sleep(3000);
+
+            const after = await prisma.client.offline_assessment.findMany({
+                where: { account_id: ACCOUNT_ID }
+            });
+            const newRecords = after.filter(r => !beforeKeys.has(`${r.resource_id}:${r.database_instance_id}`));
+
+            expect(newRecords.length).toBeGreaterThan(0);
+            for (const record of newRecords) {
+                expect(record.assessment_results).toBeDefined();
+                expect(Object.keys(record.assessment_results as object).length).toBeGreaterThan(0);
+            }
+        }, 10000);
+
         // Commented out: This test fails when IS_DEMO_FLOW is true because demo data structure may differ
         // it('should successfully upload assessment data with headroom information', async () => {
         //     const assessmentData = createValidAssessmentData('i-with-headroom');
@@ -371,6 +401,53 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(result.databaseHostName).toBe('fetch-test-host');
             expect(result.storageEndpoint).toBe('fs-fetch-test');
         });
+
+        it('should persist computed assessment_results to DB when record has empty assessment_results (lazy backfill)', async () => {
+            // Insert a record with no assessment_results (simulates records uploaded before this feature)
+            const resourceId = 'fetch-test-lazy-backfill';
+            const instanceId = 'lazy-backfill-instance';
+            await bulkUpsertOfflineAssessments([
+                {
+                    accountId: ACCOUNT_ID,
+                    resourceId,
+                    databaseInstanceId: instanceId,
+                    databaseType: DATABASE_TYPE.mssql,
+                    rawdata: {
+                        instanceLevelAssessment: {},
+                        rssConfig: {},
+                        headroom: {
+                            ssdStorageCapacityInBytes: 1099511627776,
+                            storageUsedInBytes: 549755813888,
+                            storageAvailableInBytes: 549755813888,
+                            headroomPercent: 40,
+                            aggregateCount: 1
+                        },
+                        hostLevelHighAvailability: {}
+                    },
+                    metadata: {
+                        hostname: 'lazy-backfill-host',
+                        storageEndpoint: 'fs-lazy-backfill',
+                        assessmentTimestamp: new Date().toISOString(),
+                        deploymentType: 'Standalone',
+                        databaseInstanceName: 'MSSQLSERVER'
+                    }
+                    // assessmentResults intentionally omitted → stored as {}
+                }
+            ]);
+
+            // GET computes drift and fire-and-forgets persist
+            const driftResult = await fetchMssqlOfflineAssessment(ACCOUNT_ID, resourceId, instanceId);
+            expect(driftResult).toBeDefined();
+            expect(Object.keys(driftResult).length).toBeGreaterThan(0);
+
+            // Allow the fire-and-forget updateOfflineAssessmentResults to complete
+            await sleep(500);
+
+            const updated = await getOfflineAssessment(ACCOUNT_ID, resourceId, instanceId);
+            expect(updated).toBeDefined();
+            expect(updated?.assessment_results).toBeDefined();
+            expect(Object.keys(updated?.assessment_results as object).length).toBeGreaterThan(0);
+        }, 5000);
 
         it('should throw error for non-existent assessment', async () => {
             await expect(

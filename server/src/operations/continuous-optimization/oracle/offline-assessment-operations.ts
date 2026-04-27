@@ -7,6 +7,7 @@ import {
     getOfflineAssessment,
     listOfflineAssessments as dbListOfflineAssessments,
     removeOfflineAssessmentData,
+    updateOfflineAssessmentResults,
     OfflineAssessmentRecord
 } from '../../../lib/database/offline-assessment';
 import {
@@ -214,69 +215,100 @@ async function processOracleOfflineAssessmentUpload(
             })
         ).items;
 
-        const records = Object.entries(instanceLevelDetails || {}).map(([instanceName, instanceData]) => {
-            const {
-                instanceDetails,
-                mappedOntapVolumes,
-                storage,
-                os,
-                pluggableDatabases,
-                isDataGuardDeployed,
-                dataguardDetails
-            } = instanceData;
+        const records = await Promise.all(
+            Object.entries(instanceLevelDetails || {}).map(async ([instanceName, instanceData]) => {
+                const {
+                    instanceDetails,
+                    mappedOntapVolumes,
+                    storage,
+                    os,
+                    pluggableDatabases,
+                    isDataGuardDeployed,
+                    dataguardDetails
+                } = instanceData;
 
-            const databaseInstanceId = instanceDetails?.sid || instanceName;
-            const resourceId = generateSqlResourceId(ec2InstanceId!);
+                const databaseInstanceId = instanceDetails?.sid || instanceName;
+                const resourceId = generateSqlResourceId(ec2InstanceId!);
 
-            if (
-                managedInstances.some(
-                    instance =>
-                        instance.resource_id === resourceId && instance.database_instance_id === databaseInstanceId
-                )
-            ) {
-                errorMessage = `Offline assessment data upload failed. Database instance ${instanceName} is already managed.`;
-                throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
-            }
-
-            return {
-                accountId,
-                ...(credentialsId && { credentialsId }),
-                ...(region && { region }),
-                resourceId,
-                databaseInstanceId,
-                databaseType: DATABASE_TYPE.oracle,
-                rawdata: {
-                    instanceLevelAssessment: storage || {},
-                    hostLevelDetails: hostLevelDetails || {},
-                    os: os || {},
-                    errors: rawdata.errors || [],
-                    pluggableDatabases: pluggableDatabases || [],
-                    isDataGuardDeployed: isDataGuardDeployed || false,
-                    dataguardDetails: dataguardDetails || {}
-                },
-                mappedOntapVolumes: mappedOntapVolumes || {},
-                metadata: {
-                    databaseInstanceName: instanceName,
-                    hostname,
-                    storageEndpoint,
-                    fsxId,
-                    numberOfDatabaseInstances,
-                    assessmentTimestamp,
-                    osVersion,
-                    vmName,
-                    ec2InstanceId,
-                    region: metadataRegion || region,
-                    virtualNetworkId,
-                    virtualNetworkName,
-                    vmPlatform,
-                    deploymentType: instanceDetails?.deploymentType || deploymentType,
-                    oracleHome: instanceDetails?.oracleHome || oracleHome,
-                    databaseVersion: instanceDetails?.databaseVersion,
-                    isCDB: instanceDetails?.isCDB,
-                    pdbCount: instanceDetails?.pdbCount
+                if (
+                    managedInstances.some(
+                        instance =>
+                            instance.resource_id === resourceId && instance.database_instance_id === databaseInstanceId
+                    )
+                ) {
+                    errorMessage = `Offline assessment data upload failed. Database instance ${instanceName} is already managed.`;
+                    throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
                 }
-            } as OfflineAssessmentRecord;
-        });
+
+                const record: OfflineAssessmentRecord = {
+                    accountId,
+                    ...(credentialsId && { credentialsId }),
+                    ...(region && { region }),
+                    resourceId,
+                    databaseInstanceId,
+                    databaseType: DATABASE_TYPE.oracle,
+                    rawdata: {
+                        instanceLevelAssessment: storage || {},
+                        hostLevelDetails: hostLevelDetails || {},
+                        os: os || {},
+                        errors: rawdata.errors || [],
+                        pluggableDatabases: pluggableDatabases || [],
+                        isDataGuardDeployed: isDataGuardDeployed || false,
+                        dataguardDetails: dataguardDetails || {}
+                    },
+                    mappedOntapVolumes: mappedOntapVolumes || {},
+                    metadata: {
+                        databaseInstanceName: instanceName,
+                        hostname,
+                        storageEndpoint,
+                        fsxId,
+                        numberOfDatabaseInstances,
+                        assessmentTimestamp,
+                        osVersion,
+                        vmName,
+                        ec2InstanceId,
+                        region: metadataRegion || region,
+                        virtualNetworkId,
+                        virtualNetworkName,
+                        vmPlatform,
+                        deploymentType: instanceDetails?.deploymentType || deploymentType,
+                        oracleHome: instanceDetails?.oracleHome || oracleHome,
+                        databaseVersion: instanceDetails?.databaseVersion,
+                        isCDB: instanceDetails?.isCDB,
+                        pdbCount: instanceDetails?.pdbCount
+                    }
+                } as OfflineAssessmentRecord;
+
+                try {
+                    const driftResult = await fetchOracleOfflineAssessment(
+                        accountId,
+                        record.resourceId,
+                        record.databaseInstanceId,
+                        credentialsId,
+                        region,
+                        undefined,
+                        {
+                            rawdata: record.rawdata,
+                            mapped_ontap_volumes: record.mappedOntapVolumes,
+                            metadata: record.metadata,
+                            created_time: new Date()
+                        } as OfflineAssessmentDBSchema
+                    );
+                    if (!isEmpty(driftResult)) {
+                        record.assessmentResults = driftResult;
+                    }
+                } catch (err) {
+                    logger.warn('Failed to compute drift during Oracle offline assessment upload', {
+                        accountId,
+                        resourceId,
+                        databaseInstanceId,
+                        error: err instanceof Error ? err.message : String(err)
+                    });
+                }
+
+                return record;
+            })
+        );
 
         if (records.length === 0) {
             throw createError(HttpErrorCodes.BAD_REQUEST, 'No valid Oracle instances found in assessment data');
@@ -439,6 +471,10 @@ async function fetchOracleOfflineAssessment(
         );
     }
 
+    if (!isEmpty(record.assessment_results)) {
+        return record.assessment_results as OracleDriftAssessmentResponseType;
+    }
+
     const rawdata = (record.rawdata as OracleStoredRawData) || {};
     const metadata = (record.metadata as unknown as OracleOfflineAssessmentMetadataType) || {};
     const mappedOntapVolumesData = (record.mapped_ontap_volumes as OracleMappedOntapVolumesResponse) || {};
@@ -554,6 +590,15 @@ async function fetchOracleOfflineAssessment(
         return {} as OracleDriftAssessmentResponseType;
     }
 
+    updateOfflineAssessmentResults(accountId, resourceId, databaseInstanceId, driftAssessmentData).catch(err =>
+        logger.warn('Failed to persist Oracle offline assessment results', {
+            accountId,
+            resourceId,
+            databaseInstanceId,
+            error: err instanceof Error ? err.message : String(err)
+        })
+    );
+
     return driftAssessmentData;
 }
 
@@ -593,7 +638,8 @@ async function fetchOracleOfflineAssessmentPerAccount(
                     metadata,
                     rawdata: itemRawdata,
                     credentials_id: itemCredentialsId,
-                    region: itemRegion
+                    region: itemRegion,
+                    assessment_results: assessmentResults
                 } = item;
                 const {
                     databaseInstanceName,
@@ -631,15 +677,17 @@ async function fetchOracleOfflineAssessmentPerAccount(
                 };
 
                 try {
-                    const assessments = await fetchOracleOfflineAssessment(
-                        accountId,
-                        resourceId,
-                        databaseInstanceId,
-                        recordCredentialsId ?? undefined,
-                        recordRegion ?? undefined,
-                        undefined,
-                        item
-                    );
+                    const assessments = !isEmpty(item.assessment_results)
+                        ? (assessmentResults as OracleDriftAssessmentResponseType)
+                        : await fetchOracleOfflineAssessment(
+                              accountId,
+                              resourceId,
+                              databaseInstanceId,
+                              recordCredentialsId ?? undefined,
+                              recordRegion ?? undefined,
+                              undefined,
+                              item
+                          );
                     return { ...response, assessments };
                 } catch (error: unknown) {
                     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch assessment';

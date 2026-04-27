@@ -239,11 +239,29 @@ async function removeOfflineAssessmentData(accountId: string, resourceIdList: st
     });
 }
 
+async function updateOfflineAssessmentResults(
+    accountId: string,
+    resourceId: string,
+    databaseInstanceId: string,
+    assessmentResults: object
+) {
+    const checkedAccountId = checkAccount(accountId);
+    return prisma.client.offline_assessment.updateMany({
+        where: {
+            account_id: checkedAccountId,
+            resource_id: resourceId,
+            database_instance_id: databaseInstanceId
+        },
+        data: { assessment_results: assessmentResults }
+    });
+}
+
 export {
     OfflineAssessmentRecord,
     ListOfflineAssessmentParams,
     listOfflineAssessments,
     getOfflineAssessment,
     bulkUpsertOfflineAssessments,
+    updateOfflineAssessmentResults,
     removeOfflineAssessmentData
 };

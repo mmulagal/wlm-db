@@ -7,6 +7,7 @@ import {
     getOfflineAssessment,
     listOfflineAssessments as dbListOfflineAssessments,
     removeOfflineAssessmentData,
+    updateOfflineAssessmentResults,
     OfflineAssessmentRecord
 } from '../../../lib/database/offline-assessment';
 import {
@@ -295,92 +296,124 @@ async function processOfflineAssessmentUpload(
         })
     ).items;
     try {
-        const records = Object.entries(instanceLevelDetails || {})
-            .filter(([, data]) => data.instanceDetails?.databaseInstanceId)
-            .map(([instanceName, instanceData]) => {
-                const { instanceDetails, mappedVolumes, assessment } = instanceData;
-                const {
-                    databaseInstanceId,
-                    windowsClusterNodes,
-                    deploymentType,
-                    baseDeploymentType,
-                    isClustered,
-                    isHadrEnabled,
-                    windowsClusterName,
-                    databaseVersion,
-                    databaseEdition,
-                    availabilityGroups
-                } = instanceDetails;
-
-                const agName = availabilityGroups?.[0]?.agName;
-
-                // Determine if FCI nodes should be used for resource ID
-                // FCI: direct FCI deployment
-                // AOAG+FCI: AOAG deployment with FCI as the base deployment type
-                const isFciOrAoagFci =
-                    deploymentType === 'FCI' || (deploymentType === 'AOAG' && baseDeploymentType === 'FCI');
-
-                let resourceId = generateSqlResourceId(ec2InstanceId!);
-                if (isFciOrAoagFci && windowsClusterNodes?.length === 2) {
-                    const partnerNode = windowsClusterNodes.find(
-                        n => n.ec2InstanceId && n.ec2InstanceId !== ec2InstanceId
-                    );
-                    if (partnerNode?.ec2InstanceId) {
-                        resourceId = generateSqlResourceId(ec2InstanceId!, partnerNode.ec2InstanceId);
-                    }
-                }
-
-                if (
-                    managedInstances.some(
-                        instance =>
-                            instance.resource_id === resourceId && instance.database_instance_id === databaseInstanceId
-                    )
-                ) {
-                    errorMessage = `Offline assessment data upload failed. Database instance ${instanceName} is already managed.`;
-                    throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
-                }
-
-                return {
-                    accountId,
-                    ...(credentialsId && { credentialsId }),
-                    ...(region && { region }),
-                    resourceId,
-                    databaseInstanceId,
-                    databaseType: DATABASE_TYPE.mssql,
-                    rawdata: {
-                        instanceLevelAssessment: assessment || {},
-                        rssConfig: rssConfig || {},
-                        headroom: headroom || {},
-                        hostLevelHighAvailability: hostLevelHighAvailability || {},
-                        errors: errors?.[instanceName] || errors || {}
-                    },
-                    mappedOntapVolumes: mappedVolumes || {},
-                    metadata: {
-                        databaseType,
-                        databaseInstanceName: instanceName,
-                        hostname,
-                        storageEndpoint,
-                        fsxId,
-                        numberOfDatabaseInstances,
-                        assessmentTimestamp,
-                        osVersion,
-                        vmName,
-                        ec2InstanceId,
-                        virtualNetworkId,
-                        virtualNetworkName,
+        const records = await Promise.all(
+            Object.entries(instanceLevelDetails || {})
+                .filter(([, data]) => data.instanceDetails?.databaseInstanceId)
+                .map(async ([instanceName, instanceData]) => {
+                    const { instanceDetails, mappedVolumes, assessment } = instanceData;
+                    const {
+                        databaseInstanceId,
+                        windowsClusterNodes,
                         deploymentType,
                         baseDeploymentType,
                         isClustered,
                         isHadrEnabled,
                         windowsClusterName,
-                        windowsClusterNodes,
                         databaseVersion,
                         databaseEdition,
-                        ...(fciName && { fciName }),
-                        ...(agName && { agName })
+                        availabilityGroups
+                    } = instanceDetails;
+
+                    const agName = availabilityGroups?.[0]?.agName;
+
+                    // Determine if FCI nodes should be used for resource ID
+                    // FCI: direct FCI deployment
+                    // AOAG+FCI: AOAG deployment with FCI as the base deployment type
+                    const isFciOrAoagFci =
+                        deploymentType === 'FCI' || (deploymentType === 'AOAG' && baseDeploymentType === 'FCI');
+
+                    let resourceId = generateSqlResourceId(ec2InstanceId!);
+                    if (isFciOrAoagFci && windowsClusterNodes?.length === 2) {
+                        const partnerNode = windowsClusterNodes.find(
+                            n => n.ec2InstanceId && n.ec2InstanceId !== ec2InstanceId
+                        );
+                        if (partnerNode?.ec2InstanceId) {
+                            resourceId = generateSqlResourceId(ec2InstanceId!, partnerNode.ec2InstanceId);
+                        }
                     }
-                } as OfflineAssessmentRecord;
-            });
+
+                    if (
+                        managedInstances.some(
+                            instance =>
+                                instance.resource_id === resourceId &&
+                                instance.database_instance_id === databaseInstanceId
+                        )
+                    ) {
+                        errorMessage = `Offline assessment data upload failed. Database instance ${instanceName} is already managed.`;
+                        throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+                    }
+
+                    const record: OfflineAssessmentRecord = {
+                        accountId,
+                        ...(credentialsId && { credentialsId }),
+                        ...(region && { region }),
+                        resourceId,
+                        databaseInstanceId,
+                        databaseType: DATABASE_TYPE.mssql,
+                        rawdata: {
+                            instanceLevelAssessment: assessment || {},
+                            rssConfig: rssConfig || {},
+                            headroom: headroom || {},
+                            hostLevelHighAvailability: hostLevelHighAvailability || {},
+                            errors: errors?.[instanceName] || errors || {}
+                        },
+                        mappedOntapVolumes: mappedVolumes || {},
+                        metadata: {
+                            databaseType,
+                            databaseInstanceName: instanceName,
+                            hostname,
+                            storageEndpoint,
+                            fsxId,
+                            numberOfDatabaseInstances,
+                            assessmentTimestamp,
+                            osVersion,
+                            vmName,
+                            ec2InstanceId,
+                            virtualNetworkId,
+                            virtualNetworkName,
+                            deploymentType,
+                            baseDeploymentType,
+                            isClustered,
+                            isHadrEnabled,
+                            windowsClusterName,
+                            windowsClusterNodes,
+                            databaseVersion,
+                            databaseEdition,
+                            ...(fciName && { fciName }),
+                            ...(agName && { agName })
+                        }
+                    } as OfflineAssessmentRecord;
+
+                    try {
+                        const driftResult = await fetchMssqlOfflineAssessment(
+                            accountId,
+                            record.resourceId,
+                            record.databaseInstanceId,
+                            credentialsId,
+                            region,
+                            undefined,
+                            {
+                                rawdata: record.rawdata,
+                                mapped_ontap_volumes: record.mappedOntapVolumes,
+                                metadata: record.metadata,
+                                created_time: new Date()
+                            } as OfflineAssessmentDBSchema
+                        );
+                        if (!isEmpty(driftResult)) {
+                            record.assessmentResults = driftResult;
+                        }
+                    } catch (err) {
+                        logger.warn('Failed to compute drift during mssql offline assessment upload', {
+                            accountId,
+                            resourceId,
+                            databaseInstanceId,
+                            error: err instanceof Error ? err.message : String(err)
+                        });
+                    }
+
+                    return record;
+                })
+        );
 
         await bulkUpsertOfflineAssessments(records);
 
@@ -528,6 +561,10 @@ async function fetchMssqlOfflineAssessment(
         );
     }
 
+    if (!isEmpty(record.assessment_results)) {
+        return record.assessment_results as MSSQLDriftAssessmentResponseType;
+    }
+
     const rawdata = (record.rawdata as MSSQLOfflineAssessmentRawData) || {};
     const metadata = (record.metadata as unknown as MSSQLOfflineAssessmentMetadataType) || {};
     const {
@@ -672,6 +709,16 @@ async function fetchMssqlOfflineAssessment(
         return {} as MSSQLDriftAssessmentResponseType;
     }
 
+    // Persist computed results so future GETs are served from cache
+    updateOfflineAssessmentResults(accountId, resourceId, databaseInstanceId, driftAssessmentData).catch(err =>
+        logger.warn('Failed to persist MSSQL offline assessment results', {
+            accountId,
+            resourceId,
+            databaseInstanceId,
+            error: err instanceof Error ? err.message : String(err)
+        })
+    );
+
     return driftAssessmentData;
 }
 
@@ -710,7 +757,8 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                     database_instance_id: databaseInstanceId,
                     metadata,
                     credentials_id: itemCredentialsId,
-                    region: itemRegion
+                    region: itemRegion,
+                    assessment_results: assessmentResults
                 } = item;
                 const {
                     databaseInstanceName,
@@ -748,15 +796,17 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                 };
 
                 try {
-                    const assessments = await fetchMssqlOfflineAssessment(
-                        accountId,
-                        resourceId,
-                        databaseInstanceId,
-                        recordCredentialsId ?? undefined,
-                        recordRegion ?? undefined,
-                        undefined,
-                        item
-                    );
+                    const assessments = !isEmpty(item.assessment_results)
+                        ? (assessmentResults as MSSQLDriftAssessmentResponseType)
+                        : await fetchMssqlOfflineAssessment(
+                              accountId,
+                              resourceId,
+                              databaseInstanceId,
+                              recordCredentialsId ?? undefined,
+                              recordRegion ?? undefined,
+                              undefined,
+                              item
+                          );
                     return { ...response, assessments };
                 } catch (error: any) {
                     logger.error(`Error fetching MSSQL assessment for ${resourceId}/${databaseInstanceId}:`, error);
