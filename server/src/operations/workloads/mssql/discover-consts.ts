@@ -135,7 +135,6 @@ const HOST_AND_SQL_INFO_PS1 = [
                                    Where-object { $_.Devices -ne {} } |
                                      Sort-Object -Unique -Property TargetName |
                                        Select-Object Devices, TargetName
-                                      
 
     $iScsiSessionList = ForEach ($iScsiInitiator in $iScsiInitiatorSessionList) {
       $interfaceNames = @()
@@ -153,12 +152,13 @@ const HOST_AND_SQL_INFO_PS1 = [
     }
 
     $iScsiInitiatorTargetList = $null
-    If ((Get-WmiObject win32_service | ?{$_.Name -like 'MSiSCSI'}).State -eq 'Running') {
-      
+    $msiScsiServiceState = (Get-WmiObject win32_service | ?{$_.Name -like 'MSiSCSI'}).State
+    If ($msiScsiServiceState -eq 'Running') {
+
       $iScsiInitiatorTargetList = Get-CimInstance -Namespace root\\wmi -ClassName MSIscsiInitiator_TargetClass |
                                     Sort-Object -Unique -Property TargetName |
                                       Select-Object TargetName, DiscoveryMechanism
-                                      
+
     }
 
     $iScsiTargetList = ForEach ($iScsiInitiatorTarget in $iScsiInitiatorTargetList) {
@@ -167,6 +167,50 @@ const HOST_AND_SQL_INFO_PS1 = [
         "DiscoveryMechanism" = $iScsiInitiatorTarget.DiscoveryMechanism
       }
     }
+
+    # Build TargetName (iQN) -> TargetAddress (IP) map by walking each iSCSI session and
+    # querying its connections directly via Get-IscsiConnection -IscsiSession <sess>.
+    # This avoids fragile joins on SessionIdentifier (which can differ in type/format between
+    # the two cmdlets) and works even when MSIscsiInitiator_TargetClass returns 0 entries.
+    $targetNameToAddressMap = @{}
+    try {
+      if (Get-Command Get-IscsiSession -ErrorAction SilentlyContinue) {
+        $allSessions = @(Get-IscsiSession -ErrorAction Stop)
+        foreach ($sess in $allSessions) {
+          $iqn = $sess.TargetNodeAddress
+          if ([string]::IsNullOrEmpty($iqn)) { continue }
+          if ($targetNameToAddressMap.ContainsKey($iqn)) { continue }
+
+          $resolvedIp = $null
+          try {
+            $sessConns = @($sess | Get-IscsiConnection -ErrorAction Stop)
+            foreach ($conn in $sessConns) {
+              if (-not [string]::IsNullOrEmpty($conn.TargetAddress)) {
+                $resolvedIp = ($conn.TargetAddress -split ':')[0]
+                break
+              }
+            }
+          } catch { }
+
+          # Fallback: brute-force scan all connections and pick the first one whose SessionIdentifier matches
+          if ([string]::IsNullOrEmpty($resolvedIp)) {
+            try {
+              $sid = $sess.SessionIdentifier
+              $matchedConn = Get-IscsiConnection -ErrorAction Stop |
+                              Where-Object { "$($_.SessionIdentifier)" -eq "$sid" } |
+                              Select-Object -First 1
+              if ($matchedConn -and -not [string]::IsNullOrEmpty($matchedConn.TargetAddress)) {
+                $resolvedIp = ($matchedConn.TargetAddress -split ':')[0]
+              }
+            } catch { }
+          }
+
+          if (-not [string]::IsNullOrEmpty($resolvedIp)) {
+            $targetNameToAddressMap[$iqn] = $resolvedIp
+          }
+        }
+      }
+    } catch { }
 
     $DriveLetteriScsiTargetAddress = @()
 
@@ -182,7 +226,7 @@ const HOST_AND_SQL_INFO_PS1 = [
         }
       }
       $object | Add-Member -MemberType NoteProperty -Name "DriveLetters" -Value $DriveLetters
-  
+
       $DriveId = $DiskDrive.PNPDeviceID.tolower() -replace '\\\\', '#'
 
       ForEach ($iScsiSession in $iScsiSessionList) {
@@ -198,6 +242,12 @@ const HOST_AND_SQL_INFO_PS1 = [
               }
             }
           }
+          # If DiscoveryMechanism path didn't set TargetAddress, fall back to Get-IscsiConnection map
+          if (-not ($object.PSObject.Properties.Name -contains 'TargetAddress')) {
+            if ($targetNameToAddressMap.ContainsKey($iScsiSessionTarget)) {
+              $object | Add-Member -MemberType NoteProperty -Name "TargetAddress" -Value $targetNameToAddressMap[$iScsiSessionTarget]
+            }
+          }
         }
       }
 
@@ -211,28 +261,28 @@ const HOST_AND_SQL_INFO_PS1 = [
       $DriveLetteriScsiTargetAddress += $object
     }
 
-    $IscsciTargets = $DriveLetteriScsiTargetAddress | Where-Object { (-not([string]::IsNullOrEmpty($_.TargetAddress)))  } 
-   
+    $IscsciTargets = $DriveLetteriScsiTargetAddress | Where-Object { (-not([string]::IsNullOrEmpty($_.TargetAddress)))  }
+
     $DriveTargetMap = @{}
     ForEach ($item in $DriveLetteriScsiTargetAddress) {
       If ($item.DriveLetters -eq $null) {
         Continue
       }
 
-      $Target = $IscsciTargets |  Where-Object {$_.SerialNumber -ceq  $item.SerialNumber } 
+      $Target = $IscsciTargets |  Where-Object {$_.SerialNumber -ceq  $item.SerialNumber }
 
       If ($Target.TargetAddress -ne $null) {
         $item.DriveLetters | ForEach-Object {
           if(-not $DriveTargetMap.ContainsKey($_)) {
             $DriveTargetMap.Add($_, @())
-          } 
+          }
           $DriveTargetMap[$_] += ($Target.TargetAddress)
         }
     } ElseIf ($item.SerialNumber -ne $null) {
       $item.DriveLetters | ForEach-Object {
         if(-not $DriveTargetMap.ContainsKey($_)) {
           $DriveTargetMap.Add($_, @())
-        } 
+        }
         $DriveTargetMap[$_] += ($item.SerialNumber)
         }
       }
