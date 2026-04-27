@@ -3861,7 +3861,7 @@ const updateProgressResourceForBulk = (
         [type]: inProgressResourceOptimizeData?.[type]?.filter((instanceId: any) => {
             const jobInstances =
                 jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) => {
-                    const instances = host?.sqlServerInstances || host?.databases;
+                    const instances = host?.sqlServerInstances || host?.oracleInstances || host?.databases;
                     return instances?.flatMap((instance: any) =>
                         instance?.clones?.map((clone: any) => {
                             uniqueRanList.push(`${host?.id}_${instance?.instanceId}_${clone?.cloneDatabaseName}`);
@@ -3907,7 +3907,7 @@ const updateProgressResourceForBulk = (
         [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
             const jobInstances =
                 jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) => {
-                    const instances = host.sqlServerInstances || host.databases;
+                    const instances = host.sqlServerInstances || host.oracleInstances || host.databases;
                     return instances.map((instance: any) => `${host.id}_${instance?.instanceId}`);
                 }) || [];
             return !jobInstances.includes(instanceId);
@@ -3943,7 +3943,7 @@ const updateProgressForBulk = (
             [type]: inProgressOptimizationData?.[type]?.filter((instanceId: any) => {
                 const jobInstances =
                     jobToInstanceMapForBulk[jobId]?.databaseHosts.flatMap((host: any) => {
-                        const instances = host.sqlServerInstances || host.databases;
+                        const instances = host.sqlServerInstances || host.oracleInstances || host.databases;
                         return instances.map((instance: any) => `${host.id}_${instance}`);
                     }) || [];
                 return !jobInstances.includes(instanceId);
@@ -4278,10 +4278,13 @@ export const handleOptimizeResourceJob = (
                                 if (subjob?.status !== JOB_MONITORING_STATUS.COMPLETED) return false;
                                 if (subjob?.hostsToOptimize?.[0]?.resourceId !== row?.hostId) return false;
                                 const sqlServerInstances = subjob?.hostsToOptimize?.[0]?.sqlServerInstances?.[0];
+                                const oracleInstances = subjob?.hostsToOptimize?.[0]?.oracleInstances?.[0];
                                 const databases = subjob?.hostsToOptimize?.[0]?.databases?.[0];
 
                                 return (
-                                    sqlServerInstances.includes(row?.instanceId) || databases.includes(row?.instanceId)
+                                    sqlServerInstances?.includes(row?.instanceId) ||
+                                    oracleInstances?.includes(row?.instanceId) ||
+                                    databases?.includes(row?.instanceId)
                                 );
                             });
                             if (isSuccess?.length) {

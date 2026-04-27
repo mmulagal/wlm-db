@@ -21,21 +21,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage, engineType =
 
     const isOracle = engineType === DBType.ORACLE;
 
-    // Update tableData when selection changes
     const updatedTableData = useMemo(() => {
-        if (isOracle) {
-            return data?.map((row: any) => ({
-                ...row,
-                cellProps: {
-                    ...row.cellProps,
-                    isDisabled: true,
-                    selectionProps: {
-                        title: t('databases.well-architect.coming-soon'),
-                        titleProps: { placement: 'bottom' }
-                    }
-                }
-            }));
-        }
         if (inProgressResourceOptimizeData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length) {
             return disableOptimizeResourceCheckBoxForOptimizeCase(
                 data,
@@ -44,7 +30,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage, engineType =
             );
         }
         return data;
-    }, [selectedRowsForOptimizeInnerPage, data, inProgressResourceOptimizeData, isOracle, t]);
+    }, [selectedRowsForOptimizeInnerPage, data, inProgressResourceOptimizeData]);
 
     const instanceLabel = isOracle
         ? t('databases.well-architect.dashboard-table-headers.oracle-instance-name')
@@ -126,23 +112,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage, engineType =
                         ) : (
                             <div className={styles.buttonContainer}>
                                 <div />
-                                {isOracle ? (
-                                    // Oracle clone delete API not yet available
-                                    <Popover
-                                        isAppendedToBody
-                                        children={
-                                            <DsTypography variant="Regular_14">
-                                                {t('databases.well-architect.coming-soon')}
-                                            </DsTypography>
-                                        }
-                                        trigger="hover"
-                                        container={
-                                            <DsButton variant="secondary" isDisabled isThin>
-                                                Delete
-                                            </DsButton>
-                                        }
-                                    />
-                                ) : selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0 ? (
+                                {selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0 ? (
                                     <Popover
                                         isAppendedToBody
                                         children={
@@ -187,14 +157,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage, engineType =
         columns: fromPage === WLF_TABS.DASHBOARD ? TableColDefs : colDefsForInstance,
         rows: updatedTableData || [],
         pageSize: 50,
-        selectionType: 'multiple',
-        ...(isOracle && {
-            selectAllProps: {
-                isDisabled: true,
-                isChecked: false,
-                title: t('databases.well-architect.coming-soon')
-            }
-        })
+        selectionType: 'multiple'
     });
 
     useEffect(() => {
@@ -214,7 +177,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage, engineType =
                     isOracle ? undefined : 'Clone refreshing is supported only for clones created in Workload Factory.'
                 }
             />
-            {selectedRowsForOptimizeInnerPage.length > 0 && !isOracle && (
+            {selectedRowsForOptimizeInnerPage.length > 0 && (
                 <BulkCloneContainer
                     action1="Delete"
                     onClick={(val: any) => handleBulkActionForClone(val, 'bulk', selectedRowsForOptimizeInnerPage)}
