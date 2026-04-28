@@ -63,13 +63,11 @@ const ScheduledAWSBackupDialog = ({ type, engineType = DBType.MSSQL }: any) => {
                 </DsTypography>
             </div>
 
-            {isOracle && (
-                <div className={styles['first-section']}>
-                    <DsTypography variant="Semibold_14">
-                        {t('databases.well-architect.oracle-aws-backup-option1-title')}
-                    </DsTypography>
-                </div>
-            )}
+            <div className={styles['first-section']}>
+                <DsTypography variant="Semibold_14">
+                    {t('databases.well-architect.oracle-aws-backup-option1-title')}
+                </DsTypography>
+            </div>
 
             <div className={styles['first-section']}>
                 <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
@@ -226,23 +224,23 @@ const ScheduledAWSBackupDialog = ({ type, engineType = DBType.MSSQL }: any) => {
                     </div>
                 </div>
 
-                {isOracle && (
-                    <div className={styles['first-section']}>
-                        <DsTypography variant="Semibold_14">
-                            {t('databases.well-architect.oracle-aws-backup-option2-title')}
-                        </DsTypography>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.well-architect.oracle-aws-backup-option2-desc')}{' '}
-                            <a
-                                href="https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/using-backups.html#aws-backup-and-fsx"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {t('databases.well-architect.oracle-aws-backup-option2-link')}
-                            </a>
-                        </DsTypography>
-                    </div>
-                )}
+                <div className={styles['first-section']}>
+                    <DsTypography variant="Semibold_14">
+                        {t('databases.well-architect.oracle-aws-backup-option2-title')}
+                    </DsTypography>
+                    <DsTypography variant="Regular_14">
+                        {isOracle
+                            ? t('databases.well-architect.oracle-aws-backup-option2-desc')
+                            : t('databases.well-architect.aws-backup-option2-desc')}{' '}
+                        <a
+                            href="https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/using-backups.html#aws-backup-and-fsx"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {t('databases.well-architect.oracle-aws-backup-option2-link')}
+                        </a>
+                    </DsTypography>
+                </div>
 
                 <div className={styles['first-section']}>
                     <DsTypography variant="Semibold_14" style={{ width: '712px' }}>

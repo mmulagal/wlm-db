@@ -785,6 +785,7 @@
             "oracle-fra-dg-lun-layout-action-summary": "Workload Factory  recommends that the Automatic Storage Management (ASM) Disk Group that contains archive logs should consist of 2-8 LUNs to provide better performance.",
             "oracle-fra-dg-lun-layout-what-will-happen": "Workload Factory will create a new volume with LUNs of the same size as the existing LUNs, adding them until the ASM Disk Group contains two LUNs of similar size.",
             "aws-backup-action-summary-content": "Workload Factory recommends enabling AWS backup on your FSx for ONTAP filesystem to set retention based scheduled backups of your data volumes.",
+            "aws-backup-option2-desc": "Add non-optimized Microsoft SQL Server instance volumes to an existing AWS Backup plan for volume-level protection or create a new AWS Backup plan. For details, refer",
             "aws-backup-user-action-content": "Choose the number of days (between 1 and 90 days) that FSx for ONTAP should retain automatic backups for the serving file system.",
             "aws-backup-number-of-days": "Number of days.",
             "aws-backup-automatic-window": "Select start time for 30-minute daily automatic backup window.",
