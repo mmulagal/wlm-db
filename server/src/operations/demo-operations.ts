@@ -382,6 +382,10 @@ async function updateUserDBIntoResourceData(
                 isCRREnabled: false,
                 isAppConsistentBackupEnabled: false
             },
+            luns: {
+                dataFiles: [{ name: '/vol/wlmdb_sqldata_demo/sqldata', driveLetter: 'E:\\' }],
+                logFiles: [{ name: '/vol/wlmdb_sqllog_demo/sqllog', driveLetter: 'L:\\' }]
+            },
             collation: SQL_DEFAULT_COLLATION
         };
         metaData.userDatabase = [...existingDatabases, databaseDetails];
@@ -417,6 +421,10 @@ async function updateUserDBIntoInstanceTable(
                 isSqlNativeEnabled: false,
                 isCRREnabled: false,
                 isAppConsistentBackupEnabled: false
+            },
+            luns: {
+                dataFiles: [{ name: '/vol/wlmdb_sqldata_demo/sqldata', driveLetter: 'E:\\' }],
+                logFiles: [{ name: '/vol/wlmdb_sqllog_demo/sqllog', driveLetter: 'L:\\' }]
             },
             collation: SQL_DEFAULT_COLLATION
         };
@@ -1157,6 +1165,10 @@ function prepareDemoSandboxMetadata(
             isSqlNativeEnabled: false,
             isCRREnabled: false,
             isAppConsistentBackupEnabled: false
+        },
+        luns: {
+            dataFiles: [{ name: '/vol/wlmdb_sqldata_demo_sandbox/sqldata', driveLetter: 'E:\\' }],
+            logFiles: [{ name: '/vol/wlmdb_sqllog_demo_sandbox/sqllog', driveLetter: 'L:\\' }]
         },
         collation: SQL_DEFAULT_COLLATION
     });

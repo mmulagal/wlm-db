@@ -20,6 +20,7 @@ import {
     deleteResourceById,
     getServerIOLatency,
     getNativeSQLProtection,
+    getNativeSQLBackedupDatabases,
     checkDatabaseExists,
     getAllResourceUtilisation,
     getMssqlInstanceGuid,
@@ -27,6 +28,7 @@ import {
     getActiveSqlNodeAndInstanceDetails,
     getPerformanceMetrics
 } from '../../../src/operations/workloads/mssql/mssql-operations';
+import { MappedOnTapVolumeResponse } from '../../../src/utils/common-types';
 import { createResource, deleteResource, listResources } from '../../../src/lib/database/db';
 import { DATABASE_METRIC_TYPE, DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../src/utils/consts';
 
@@ -83,6 +85,83 @@ describe('MSSQL Resource methods', () => {
             'f6082f35-c1db-4619-bb5c-84bcb5bf3286'
         );
         expect(resp).toEqual(mssqlResponse.databaseSummaryResponse);
+    });
+
+    it('Get databases summary reuses instanceVolumeMapping when provided (skips SSM)', async () => {
+        const databasesSummary = [
+            {
+                databaseName: 'apr1',
+                databaseSize: 1073741824,
+                collationName: 'SQL_Latin1_General_CP1_CI_AS',
+                databaseStatus: 'ONLINE'
+            }
+        ];
+        const instanceVolumeMapping: Record<string, MappedOnTapVolumeResponse> = {
+            [DEFAULT_INSTANCE_NAME]: {
+                volumeRecords: [],
+                volumeDBMap: [],
+                lunRecords: [],
+                databasesSummary,
+                sqlNativeBackupEnabledDatabases: []
+            }
+        };
+
+        const resp = await getDataBasesSummary(
+            'unused-resource-id',
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            false,
+            instanceVolumeMapping
+        );
+        expect(resp).toEqual({ databases: { [DEFAULT_INSTANCE_NAME]: databasesSummary } });
+    });
+
+    it('getNativeSQLBackedupDatabases reuses instanceVolumeMapping when provided (skips SSM)', async () => {
+        const sqlNativeBackupEnabledDatabases = [{ backedupDatabases: 'apr1' }];
+        const instanceVolumeMapping: Record<string, MappedOnTapVolumeResponse> = {
+            [DEFAULT_INSTANCE_NAME]: {
+                volumeRecords: [],
+                volumeDBMap: [],
+                lunRecords: [],
+                databasesSummary: [],
+                sqlNativeBackupEnabledDatabases
+            }
+        };
+
+        const resp = await getNativeSQLBackedupDatabases(
+            'unused-resource-id',
+            undefined,
+            [DEFAULT_INSTANCE_NAME],
+            false,
+            undefined,
+            undefined,
+            instanceVolumeMapping
+        );
+        expect(resp).toEqual({ [DEFAULT_INSTANCE_NAME]: sqlNativeBackupEnabledDatabases });
+    });
+
+    it('getNativeSQLBackedupDatabases returns empty array per instance when databasesSummary/sqlNativeBackupEnabledDatabases missing on mapping', async () => {
+        const instanceVolumeMapping: Record<string, MappedOnTapVolumeResponse> = {
+            [DEFAULT_INSTANCE_NAME]: {
+                volumeRecords: [],
+                volumeDBMap: [],
+                lunRecords: []
+            }
+        };
+
+        const resp = await getNativeSQLBackedupDatabases(
+            'unused-resource-id',
+            undefined,
+            [DEFAULT_INSTANCE_NAME],
+            false,
+            undefined,
+            undefined,
+            instanceVolumeMapping
+        );
+        expect(resp).toEqual({ [DEFAULT_INSTANCE_NAME]: [] });
     });
 
     it('Get databases count', async () => {

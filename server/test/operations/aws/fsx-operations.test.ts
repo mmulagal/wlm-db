@@ -78,6 +78,10 @@ describe('Testcases for Amazon FSx resources operations', () => {
 
         expect(fsxVolumeIds?.length).toBeGreaterThan(0);
         expect(response?.[DEFAULT_INSTANCE_NAME]).toBeDefined();
+        expect(response?.[DEFAULT_INSTANCE_NAME]?.databasesSummary).toBeDefined();
+        expect(Array.isArray(response?.[DEFAULT_INSTANCE_NAME]?.databasesSummary)).toBe(true);
+        expect(response?.[DEFAULT_INSTANCE_NAME]?.sqlNativeBackupEnabledDatabases).toBeDefined();
+        expect(Array.isArray(response?.[DEFAULT_INSTANCE_NAME]?.sqlNativeBackupEnabledDatabases)).toBe(true);
     });
 
     it('Tag Ec2 instance', async () => {

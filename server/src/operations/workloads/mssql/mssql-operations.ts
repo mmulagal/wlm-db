@@ -57,6 +57,7 @@ import { associateResource } from '../../../lib/cloud-manager/credentials';
 import { getPaginatedDatabaseInstances, getResources } from '../../database/database-operations';
 import {
     DatabaseInstance,
+    MappedOnTapVolumeResponse,
     Metadata,
     ResourceDetails,
     InstanceDetails,
@@ -147,6 +148,7 @@ async function getDatabasesCount(
 /**
  * Get databases summary for a resource
  * @param includeAoag - When true, includes AOAG fields (availabilityGroup, replicaRole, synchronizationState, isReadableSecondary) via LEFT JOINs
+ * @param instanceVolumeMapping - When provided, the per-instance `databasesSummary` field is reused instead of issuing the DATABASES SSM call. Lets callers that already executed `getMappedOntapVolumes` (which now embeds the same payload) avoid a second SSM round-trip.
  */
 async function getDataBasesSummary(
     resourceId: string,
@@ -155,7 +157,8 @@ async function getDataBasesSummary(
     accountId?: string,
     credentialsId?: string,
     databaseInstances?: string[],
-    includeAoag = false
+    includeAoag = false,
+    instanceVolumeMapping?: Record<string, MappedOnTapVolumeResponse>
 ) {
     logger.info(
         'Get databases summary for resource:',
@@ -163,8 +166,19 @@ async function getDataBasesSummary(
         sqlAuthEnabled,
         accountId,
         databaseInstances?.length,
-        includeAoag ? 'with AOAG' : ''
+        includeAoag ? 'with AOAG' : '',
+        instanceVolumeMapping ? 'reusing volume mapping' : ''
     );
+
+    if (instanceVolumeMapping && !isEmpty(instanceVolumeMapping)) {
+        const databases = Object.fromEntries(
+            Object.entries(instanceVolumeMapping).map(([instanceName, mapping]) => [
+                instanceName,
+                mapping?.databasesSummary ?? []
+            ])
+        );
+        return { databases };
+    }
 
     const [resourceDetail] = await listResources({
         accountId,
@@ -1024,15 +1038,34 @@ async function getPerformanceMetrics(
     }
 }
 
+/**
+ * @param instanceVolumeMapping - When provided, the per-instance `sqlNativeBackupEnabledDatabases` field is reused instead of issuing the SQL_BACKUPS SSM call. Lets `getDatabaseDetails` skip a redundant SSM round-trip once it has run `getMappedOntapVolumes`.
+ */
 async function getNativeSQLBackedupDatabases(
     resourceId: string,
     activeNodeInstanceId?: string,
     instanceNames: string[] = [],
     isSqlAuthEnabled: boolean = false,
     accountId?: string,
-    credentialsId?: string
+    credentialsId?: string,
+    instanceVolumeMapping?: Record<string, MappedOnTapVolumeResponse>
 ) {
-    logger.info('Fetch SQL native protection status', { resourceId, isSqlAuthEnabled, accountId, credentialsId });
+    logger.info('Fetch SQL native protection status', {
+        resourceId,
+        isSqlAuthEnabled,
+        accountId,
+        credentialsId,
+        reusingVolumeMapping: Boolean(instanceVolumeMapping && !isEmpty(instanceVolumeMapping))
+    });
+
+    if (instanceVolumeMapping && !isEmpty(instanceVolumeMapping)) {
+        return Object.fromEntries(
+            Object.entries(instanceVolumeMapping).map(([instanceName, mapping]) => [
+                instanceName,
+                mapping?.sqlNativeBackupEnabledDatabases ?? []
+            ])
+        );
+    }
 
     try {
         const [resourceDetail] = await listResources({

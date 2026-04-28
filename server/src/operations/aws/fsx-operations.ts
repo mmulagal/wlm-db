@@ -527,7 +527,8 @@ async function getMappedOntapVolumes(
     executionTimeout?: string,
     svmOntapUuid?: string,
     instanceOntapDetails?: Record<string, object>,
-    fields: string = ''
+    fields: string = '',
+    includeAoag = false
 ) {
     const ssmComment = 'Get ontap volumes mapped to data drive of all databases in a server';
     logger.info(ssmComment, {
@@ -541,7 +542,8 @@ async function getMappedOntapVolumes(
         accountId,
         executionTimeout,
         svmOntapUuid,
-        fields
+        fields,
+        includeAoag
     });
 
     try {
@@ -557,7 +559,8 @@ async function getMappedOntapVolumes(
             fields,
             includeLogVolumes,
             svmOntapUuid,
-            instanceOntapDetails
+            instanceOntapDetails,
+            includeAoag
         );
 
         const response = await callSsmExecution({
@@ -586,21 +589,34 @@ async function getMappedOntapVolumes(
                 parsedResponse?.[iName] &&
                 !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
             ) {
-                const { volumeDBMap, volumes, luns } = parsedResponse?.[iName] ?? {};
+                const { volumeDBMap, volumes, luns, databasesSummary, sqlNativeBackupEnabledDatabases } =
+                    parsedResponse?.[iName] ?? {};
                 const normalizedVolumeDBMap = Array.isArray(volumeDBMap)
                     ? volumeDBMap
                     : volumeDBMap
                     ? [volumeDBMap]
+                    : [];
+                const normalizedDatabasesSummary = Array.isArray(databasesSummary) ? databasesSummary : [];
+                const normalizedSqlNativeBackupEnabledDatabases = Array.isArray(sqlNativeBackupEnabledDatabases)
+                    ? sqlNativeBackupEnabledDatabases
                     : [];
                 iName = originalInstanceName;
                 if (volumes && !isEmpty(volumes?.records)) {
                     instancesResponse[iName] = {
                         volumeRecords: volumes.records,
                         volumeDBMap: normalizedVolumeDBMap,
-                        lunRecords: luns
+                        lunRecords: luns,
+                        databasesSummary: normalizedDatabasesSummary,
+                        sqlNativeBackupEnabledDatabases: normalizedSqlNativeBackupEnabledDatabases
                     };
                 } else {
-                    instancesResponse[iName] = { volumeRecords: [], volumeDBMap: [], lunRecords: [] };
+                    instancesResponse[iName] = {
+                        volumeRecords: [],
+                        volumeDBMap: [],
+                        lunRecords: [],
+                        databasesSummary: normalizedDatabasesSummary,
+                        sqlNativeBackupEnabledDatabases: normalizedSqlNativeBackupEnabledDatabases
+                    };
                 }
             } else {
                 logger.error('Failed to get mapped ontap volumes for the instance:', iName, parsedResponse?.[iName]);

@@ -74,10 +74,14 @@ import {
 import {
     DatabaseInstance,
     InstanceDetails,
+    LunRecord,
     MappedOnTapVolumeResponse,
     Metadata,
     ResourceDetails,
     UserDatabase,
+    UserDatabaseLunFile,
+    UserDatabaseLuns,
+    VolumeDBMapEntry,
     VolumeRecord
 } from '../utils/common-types';
 import { getBillByResourceIds, getCostAllocationTags } from './aws/cost-explorer-operations';
@@ -1233,6 +1237,91 @@ function fetchCrrBackupDetails(instanceDetails: DatabaseInstance[], volumeRecord
     return crrMapping;
 }
 
+function buildUserDatabaseLuns(
+    databaseName: string,
+    mapping: MappedOnTapVolumeResponse | undefined
+): UserDatabaseLuns | undefined {
+    // SSM payload can occasionally arrive missing entirely or with these fields non-array (e.g.
+    // when the mapping script's per-instance try/catch surfaces a string error). Coerce
+    // defensively rather than bailing here — downstream logic already handles "no matching DB"
+    // via the !matched guard, which is the only place this helper exits with undefined.
+    const volumeDBMap: VolumeDBMapEntry[] = Array.isArray(mapping?.volumeDBMap) ? mapping.volumeDBMap : [];
+    const lunRecords: LunRecord[] = Array.isArray(mapping?.lunRecords) ? mapping.lunRecords : [];
+
+    const lunByUuid = new Map<string, LunRecord>();
+    for (const lun of lunRecords) {
+        if (lun?.uuid) {
+            lunByUuid.set(lun.uuid, lun);
+        }
+    }
+
+    const dataLunUuids = new Set<string>();
+    const logLunUuids = new Set<string>();
+    let matched = false;
+    for (const entry of volumeDBMap) {
+        if (entry?.databaseName === databaseName) {
+            matched = true;
+            entry.dataLunUuids?.forEach(uuid => dataLunUuids.add(uuid));
+            entry.logLunUuids?.forEach(uuid => logLunUuids.add(uuid));
+        }
+    }
+    if (!matched) {
+        return undefined;
+    }
+
+    const resolveLunFile = (uuid: string): UserDatabaseLunFile | undefined => {
+        const lun = lunByUuid.get(uuid);
+        if (!lun) {
+            return undefined;
+        }
+        return { name: lun.name ?? '', driveLetter: lun.driveLetter ?? '' };
+    };
+
+    return {
+        dataFiles: compact(Array.from(dataLunUuids, resolveLunFile)),
+        logFiles: compact(Array.from(logLunUuids, resolveLunFile))
+    };
+}
+
+async function fetchInstanceVolumeMapping(
+    credentialsId: string,
+    region: string,
+    fileSystemId: string,
+    isSystemDatabase: boolean,
+    activeNodeInstanceId: string | undefined,
+    instanceDetails: DatabaseInstance[] | undefined,
+    isSqlAuthEnabled: boolean,
+    includeAoag = false
+): Promise<Record<string, MappedOnTapVolumeResponse>> {
+    const instanceOntapDetails = (
+        await Promise.all(
+            (instanceDetails || []).map(instance => getInstanceOntapDetails(instance, credentialsId, region))
+        )
+    ).reduce((acc, curr) => ({ ...acc, ...curr }), {});
+
+    logger.debug('instanceOntapDetails', instanceOntapDetails);
+    // Getting the map between database name and associated volume uuid. The mapping script also
+    // returns the per-instance databasesSummary / sqlNativeBackupEnabledDatabases payloads
+    return (
+        ((await getMappedOntapVolumes(
+            credentialsId,
+            region,
+            fileSystemId,
+            isSystemDatabase,
+            activeNodeInstanceId,
+            instanceDetails?.map(instance => instance.database_instance_name),
+            isSqlAuthEnabled,
+            false,
+            undefined,
+            undefined,
+            undefined,
+            instanceOntapDetails,
+            '',
+            includeAoag
+        )) as unknown as Record<string, MappedOnTapVolumeResponse>) ?? ({} as Record<string, MappedOnTapVolumeResponse>)
+    );
+}
+
 async function getProtectionDetails(
     credentialsId: string,
     region: string,
@@ -1240,7 +1329,8 @@ async function getProtectionDetails(
     isSystemDatabase: boolean = false,
     activeNodeInstanceId?: string,
     instanceDetails?: DatabaseInstance[],
-    isSqlAuthEnabled = false
+    isSqlAuthEnabled = false,
+    preFetchedInstanceVolumeMapping?: Record<string, MappedOnTapVolumeResponse>
 ): Promise<{
     awsBackup: Record<string, BackupType>;
     ontapBackup: Record<string, BackupType>;
@@ -1254,35 +1344,25 @@ async function getProtectionDetails(
         activeNodeInstanceId
     });
 
-    const instanceOntapDetails = (
-        await Promise.all(
-            (instanceDetails || []).map(instance => getInstanceOntapDetails(instance, credentialsId, region))
-        )
-    ).reduce((acc, curr) => ({ ...acc, ...curr }), {});
-
-    logger.debug('instanceOntapDetails', instanceOntapDetails);
-    // Getting the map between database name and associated volume uuid
-    const instanceVolumeMapping = ((await getMappedOntapVolumes(
-        credentialsId,
-        region,
-        fileSystemId,
-        isSystemDatabase,
-        activeNodeInstanceId,
-        instanceDetails?.map(instance => instance.database_instance_name),
-        isSqlAuthEnabled,
-        false,
-        undefined,
-        undefined,
-        undefined,
-        instanceOntapDetails
-    )) as MappedOnTapVolumeResponse[]) || [{ volumeRecords: [], volumeDBMap: {} }];
+    // Use pre-fetched mapping when available (avoids re-running the SSM script inside this function).
+    const instanceVolumeMapping =
+        preFetchedInstanceVolumeMapping ??
+        (await fetchInstanceVolumeMapping(
+            credentialsId,
+            region,
+            fileSystemId,
+            isSystemDatabase,
+            activeNodeInstanceId,
+            instanceDetails,
+            isSqlAuthEnabled
+        ));
 
     const volumeRecords = Object.fromEntries(
         Object.entries(instanceVolumeMapping).map(([instanceName, data]) => [instanceName, data?.volumeRecords || []])
     );
 
     const volumeDBMap = Object.fromEntries(
-        Object.entries(instanceVolumeMapping).map(([instanceName, data]) => [instanceName, data?.volumeDBMap || {}])
+        Object.entries(instanceVolumeMapping).map(([instanceName, data]) => [instanceName, data?.volumeDBMap ?? []])
     );
 
     const volumeUuids = Object.fromEntries(
@@ -1476,6 +1556,54 @@ async function getDatabaseDetails(
     });
     try {
         const newinstanceNames = databaseInstances.map(instance => instance.database_instance_name);
+
+        // Fetch the instance -> ONTAP volume mapping once up-front so it can be reused to:
+        //  1. feed getProtectionDetails (previously fetched internally)
+        //  2. build the per-database `luns` field on the response
+        // The fetch is gated on having an active node + an FSxN file system rather than on
+        // `getProtection` so that `luns` is populated for the databases-without-protection flow too.
+        const instanceVolumeMapping: Record<string, MappedOnTapVolumeResponse> =
+            activeNodeInstanceId && fileSystemId
+                ? await fetchInstanceVolumeMapping(
+                      credentialsId,
+                      region,
+                      fileSystemId,
+                      false,
+                      activeNodeInstanceId,
+                      databaseInstances,
+                      sqlAuthEnabled ?? false,
+                      includeAoag
+                  ).catch(error => {
+                      logger.error('Failed to fetch instance volume mapping', {
+                          accountId,
+                          credentialsId,
+                          region,
+                          fileSystemId,
+                          databaseHostId,
+                          activeNodeInstanceId,
+                          error
+                      });
+                      return {};
+                  })
+                : {};
+
+        // Only short-circuit getDataBasesSummary / getNativeSQLBackedupDatabases when the embedded
+        // queries produced rows for EVERY expected instance. The mapping only contains instances
+        // whose volume queries succeeded inside the SSM script (instances on a missing/wrong FSxN
+        // are dropped by getMappedOntapVolumes). Trusting a partial mapping would silently return
+        // databases/protection only for the surviving instances and leave the rest blank — which
+        // is exactly what produced the missing fields for MSSQLSERVER / DOMAINLOGIN1 vs staging.
+        // We also require a non-empty databasesSummary because a working SQL Server always reports
+        // at least the system DBs (master/model/msdb/tempdb), so an empty array signals the
+        // embedded query failed and we should fall back to the original SSM round-trip.
+        const allInstancesHaveEmbeddedData =
+            !isEmpty(instanceVolumeMapping) &&
+            newinstanceNames.every(name => {
+                const mapping = instanceVolumeMapping[name];
+                return Array.isArray(mapping?.databasesSummary) && mapping.databasesSummary.length > 0;
+            });
+        const reusableMapping = allInstancesHaveEmbeddedData ? instanceVolumeMapping : undefined;
+
         const [
             { databases } = { databases: [] },
             backedupDatabases,
@@ -1489,7 +1617,8 @@ async function getDatabaseDetails(
                     accountId,
                     credentialsId,
                     newinstanceNames,
-                    includeAoag
+                    includeAoag,
+                    reusableMapping
                 ),
                 ...(getProtection
                     ? [
@@ -1499,7 +1628,8 @@ async function getDatabaseDetails(
                               newinstanceNames,
                               sqlAuthEnabled,
                               accountId,
-                              credentialsId
+                              credentialsId,
+                              reusableMapping
                           )
                       ]
                     : [Promise.resolve()]), // Fetch native sql protection status
@@ -1512,7 +1642,8 @@ async function getDatabaseDetails(
                               false,
                               activeNodeInstanceId,
                               databaseInstances,
-                              sqlAuthEnabled
+                              sqlAuthEnabled,
+                              instanceVolumeMapping
                           )
                       ]
                     : [Promise.resolve()]) // Fetch protection status
@@ -1536,6 +1667,8 @@ async function getDatabaseDetails(
                         synchronizationState,
                         isReadableSecondary
                     } = database;
+
+                    const luns = buildUserDatabaseLuns(databaseName, instanceVolumeMapping[instName]);
 
                     return {
                         name: databaseName,
@@ -1573,6 +1706,7 @@ async function getDatabaseDetails(
                                     IS_DEMO_FLOW || checkKey(isAppConsistentBackupEnabled[instName], databaseName)
                             }
                         }),
+                        ...(luns && { luns }),
                         // AOAG fields - only included when database is part of an AG (non-null values from LEFT JOIN)
                         ...(includeAoag &&
                             availabilityGroup && {
@@ -2608,5 +2742,6 @@ export {
     getInstanceOntapDetails,
     getEc2ResourceInfo,
     isInstanceAppConsistentBackupEnabled,
-    triggerInstancePerformanceAssessment
+    triggerInstancePerformanceAssessment,
+    buildUserDatabaseLuns
 };

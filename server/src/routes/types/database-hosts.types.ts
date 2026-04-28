@@ -364,6 +364,16 @@ const DatabaseHostSummaryPerStorageTypeListResponse = Type.Object({
 type DatabaseHostSummaryPerStorageTypeResponseType = Static<typeof DatabaseHostSummaryPerStorageTypeResponse>;
 type DatabaseHostSummaryPerStorageTypeListResponseType = Static<typeof DatabaseHostSummaryPerStorageTypeListResponse>;
 
+const DatabaseLunFile = Type.Object({
+    name: Type.String({ description: 'ONTAP LUN path (e.g. /vol/<vol>/<lun>)' }),
+    driveLetter: Type.String({ description: 'Windows volume mount point (e.g. E:\\)' })
+});
+
+const DatabaseLuns = Type.Object({
+    dataFiles: Type.Array(DatabaseLunFile),
+    logFiles: Type.Array(DatabaseLunFile)
+});
+
 const DatabasesResponse = Type.Object({
     name: Type.String({ minLength: 1 }),
     databaseInstanceName: Type.Optional(
@@ -373,6 +383,7 @@ const DatabasesResponse = Type.Object({
     type: Type.String({ minLength: 1 }),
     size: Type.Number(),
     protection: Type.Optional(ProtectionPerStorageTypeResponse),
+    luns: Type.Optional(DatabaseLuns),
     collation: Type.Optional(Type.String({ minLength: 1 })),
     created: Type.Optional(Type.String({ minLength: 1 })), // Optional for Oracle databases
     service: Type.Optional(Type.String({ minLength: 1 })), // Optional for Oracle databases

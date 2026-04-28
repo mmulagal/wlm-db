@@ -360,6 +360,16 @@ interface IsAWSBackup {
     ebs: boolean;
 }
 
+interface UserDatabaseLunFile {
+    name: string;
+    driveLetter: string;
+}
+
+interface UserDatabaseLuns {
+    dataFiles: UserDatabaseLunFile[];
+    logFiles: UserDatabaseLunFile[];
+}
+
 interface UserDatabase {
     name: string;
     databaseInstanceName?: string;
@@ -373,6 +383,7 @@ interface UserDatabase {
         isCRREnabled: boolean;
         isAppConsistentBackupEnabled?: boolean | string;
     };
+    luns?: UserDatabaseLuns;
     collation: string;
 }
 
@@ -809,10 +820,31 @@ interface LunRecord {
     uuid: string;
     name: string;
     serial_number: string;
+    driveLetter?: string;
+    ontapVolumeuuid?: string;
 }
 interface VolumeDBMapEntry {
     ontapVolumeuuid: string;
     databaseName: string;
+    dataLunUuids?: string[];
+    logLunUuids?: string[];
+}
+
+interface MappedDatabaseSummary {
+    databaseId?: number;
+    databaseName: string;
+    creationDate?: string;
+    databaseStatus?: string;
+    databaseSize?: number;
+    collationName?: string;
+    availabilityGroup?: string;
+    replicaRole?: string;
+    synchronizationState?: string;
+    isReadableSecondary?: number;
+}
+
+interface SqlNativeBackupEnabledDatabase {
+    backedupDatabases: string;
 }
 
 interface MappedOnTapVolumeResponse {
@@ -820,6 +852,8 @@ interface MappedOnTapVolumeResponse {
     volumeDBMap: VolumeDBMapEntry[];
     lunRecords: LunRecord[];
     lunNames?: string[]; // Optional, used in some contexts
+    databasesSummary?: MappedDatabaseSummary[];
+    sqlNativeBackupEnabledDatabases?: SqlNativeBackupEnabledDatabase[];
 }
 interface InstancesResponse {
     [key: string]: MappedOnTapVolumeResponse;
@@ -981,6 +1015,8 @@ export {
     NetworkInterface,
     SSMParameterObject,
     UserDatabase,
+    UserDatabaseLunFile,
+    UserDatabaseLuns,
     MissingPermission,
     MissingPermissionInterface,
     DatabaseInstanceMetadata,
@@ -1019,9 +1055,12 @@ export {
     CloneDetail,
     VolumeSpace,
     VolumeRecord,
+    LunRecord,
     MappedOnTapVolumeResponse,
     InstancesResponse,
     VolumeDBMapEntry,
+    MappedDatabaseSummary,
+    SqlNativeBackupEnabledDatabase,
     AWSBackupAssessment,
     ResourceAssessmentData,
     ClonedVolumeDetail,

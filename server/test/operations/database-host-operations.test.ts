@@ -1,10 +1,15 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { STORAGE_TYPE } from '@prisma/client';
 import { faker } from '@faker-js/faker';
-import { getAllClusterNodeDetails, getDatabaseHostSummaryV2 } from '../../src/operations/database-hosts-operations';
+import {
+    getAllClusterNodeDetails,
+    getDatabaseHostSummaryV2,
+    buildUserDatabaseLuns
+} from '../../src/operations/database-hosts-operations';
 import { ACCOUNT_ID, SECRETS } from '../../src/utils/consts';
 import { createResource, deleteResource } from '../../src/lib/database/db';
 import { initializeDatabase } from '../../src/utils/prisma-utils';
+import { MappedOnTapVolumeResponse } from '../../src/utils/common-types';
 
 SECRETS.AUTH_CLIENT_ID = `${faker.string.alphanumeric(20)}`;
 SECRETS.SIGNURL_ACCESS_KEY = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -85,6 +90,171 @@ describe('Database host operations', () => {
         expect(aoagMetadata.sqlDeploymentType).toBe('AOAG');
         expect(aoagMetadata.node1InstanceId).toBeDefined();
         expect(aoagMetadata.node2InstanceId).toBeDefined();
+    });
+
+    describe('buildUserDatabaseLuns', () => {
+        const mappingFixture: MappedOnTapVolumeResponse = {
+            volumeRecords: [],
+            volumeDBMap: [
+                {
+                    databaseName: 'master',
+                    ontapVolumeuuid: 'vol-data-uuid',
+                    dataLunUuids: ['lun-data-uuid'],
+                    logLunUuids: []
+                },
+                {
+                    databaseName: 'master',
+                    ontapVolumeuuid: 'vol-log-uuid',
+                    dataLunUuids: [],
+                    logLunUuids: ['lun-log-uuid']
+                },
+                {
+                    databaseName: 'other',
+                    ontapVolumeuuid: 'vol-other-uuid',
+                    dataLunUuids: ['lun-other-data'],
+                    logLunUuids: ['lun-other-log']
+                }
+            ],
+            databasesSummary: [
+                {
+                    databaseId: 1,
+                    databaseName: 'master',
+                    creationDate: '2003-04-08T09:13:36.390',
+                    databaseStatus: 'ONLINE',
+                    databaseSize: 8388608,
+                    collationName: 'SQL_Latin1_General_CP1_CI_AS'
+                },
+                {
+                    databaseId: 7,
+                    databaseName: 'other',
+                    creationDate: '2024-01-15T10:00:00.000',
+                    databaseStatus: 'ONLINE',
+                    databaseSize: 17179869184,
+                    collationName: 'SQL_Latin1_General_CP1_CI_AS'
+                }
+            ],
+            sqlNativeBackupEnabledDatabases: [{ backedupDatabases: 'other' }],
+            lunRecords: [
+                {
+                    uuid: 'lun-data-uuid',
+                    name: '/vol/wlmdb_sqldata/sqldata',
+                    serial_number: 'sn-data',
+                    driveLetter: 'E:\\',
+                    ontapVolumeuuid: 'vol-data-uuid'
+                },
+                {
+                    uuid: 'lun-log-uuid',
+                    name: '/vol/wlmdb_sqllog/sqllog',
+                    serial_number: 'sn-log',
+                    driveLetter: 'L:\\',
+                    ontapVolumeuuid: 'vol-log-uuid'
+                },
+                {
+                    uuid: 'lun-other-data',
+                    name: '/vol/wlmdb_sqldata_other/sqldata',
+                    serial_number: 'sn-other-d',
+                    driveLetter: 'F:\\',
+                    ontapVolumeuuid: 'vol-other-uuid'
+                },
+                {
+                    uuid: 'lun-other-log',
+                    name: '/vol/wlmdb_sqllog_other/sqllog',
+                    serial_number: 'sn-other-l',
+                    driveLetter: 'M:\\',
+                    ontapVolumeuuid: 'vol-other-uuid'
+                }
+            ]
+        };
+
+        it('returns dataFiles + logFiles aggregated across volumeDBMap entries for the database', () => {
+            const luns = buildUserDatabaseLuns('master', mappingFixture);
+            expect(luns).toEqual({
+                dataFiles: [{ name: '/vol/wlmdb_sqldata/sqldata', driveLetter: 'E:\\' }],
+                logFiles: [{ name: '/vol/wlmdb_sqllog/sqllog', driveLetter: 'L:\\' }]
+            });
+        });
+
+        it('isolates entries by databaseName (does not bleed across DBs)', () => {
+            const luns = buildUserDatabaseLuns('other', mappingFixture);
+            expect(luns).toEqual({
+                dataFiles: [{ name: '/vol/wlmdb_sqldata_other/sqldata', driveLetter: 'F:\\' }],
+                logFiles: [{ name: '/vol/wlmdb_sqllog_other/sqllog', driveLetter: 'M:\\' }]
+            });
+        });
+
+        it('returns undefined when the database is not present in volumeDBMap', () => {
+            expect(buildUserDatabaseLuns('missingdb', mappingFixture)).toBeUndefined();
+        });
+
+        it('returns undefined when the mapping itself is undefined', () => {
+            expect(buildUserDatabaseLuns('master', undefined)).toBeUndefined();
+        });
+
+        it('returns empty arrays when the database has entries but no LUN uuids', () => {
+            const noLunsMapping: MappedOnTapVolumeResponse = {
+                volumeRecords: [],
+                volumeDBMap: [
+                    { databaseName: 'master', ontapVolumeuuid: 'vol-x' } // no dataLunUuids/logLunUuids
+                ],
+                lunRecords: []
+            };
+            expect(buildUserDatabaseLuns('master', noLunsMapping)).toEqual({
+                dataFiles: [],
+                logFiles: []
+            });
+        });
+
+        it('drops dangling LUN uuid references when not found in lunRecords', () => {
+            const danglingMapping: MappedOnTapVolumeResponse = {
+                volumeRecords: [],
+                volumeDBMap: [
+                    {
+                        databaseName: 'master',
+                        ontapVolumeuuid: 'vol-x',
+                        dataLunUuids: ['unknown-uuid'],
+                        logLunUuids: []
+                    }
+                ],
+                lunRecords: []
+            };
+            expect(buildUserDatabaseLuns('master', danglingMapping)).toEqual({
+                dataFiles: [],
+                logFiles: []
+            });
+        });
+
+        it('deduplicates LUN uuids within a database (multiple files on the same LUN appear once)', () => {
+            const duplicatingMapping: MappedOnTapVolumeResponse = {
+                volumeRecords: [],
+                volumeDBMap: [
+                    {
+                        databaseName: 'master',
+                        ontapVolumeuuid: 'vol-data-uuid',
+                        dataLunUuids: ['lun-data-uuid', 'lun-data-uuid'],
+                        logLunUuids: []
+                    },
+                    {
+                        databaseName: 'master',
+                        ontapVolumeuuid: 'vol-data-uuid-2',
+                        dataLunUuids: ['lun-data-uuid'],
+                        logLunUuids: []
+                    }
+                ],
+                lunRecords: [
+                    {
+                        uuid: 'lun-data-uuid',
+                        name: '/vol/wlmdb_sqldata/sqldata',
+                        serial_number: 'sn-data',
+                        driveLetter: 'E:\\',
+                        ontapVolumeuuid: 'vol-data-uuid'
+                    }
+                ]
+            };
+            const luns = buildUserDatabaseLuns('master', duplicatingMapping);
+            expect(luns?.dataFiles).toHaveLength(1);
+            expect(luns?.dataFiles[0]).toEqual({ name: '/vol/wlmdb_sqldata/sqldata', driveLetter: 'E:\\' });
+            expect(luns?.logFiles).toEqual([]);
+        });
     });
 
     it('AOAG: should have correct AOAG metadata structure', async () => {
