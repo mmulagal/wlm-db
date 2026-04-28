@@ -1814,9 +1814,11 @@ function getSwapSpaceDrift(
         recommendedSwapSpace = Math.round(recommendedSwapSpace * 100) / 100;
     }
 
+    const lowerBound = Math.round(recommendedSwapSpace * 0.9 * 100) / 100;
+    const upperBound = Math.round(recommendedSwapSpace * 1.1 * 100) / 100;
     const isViolation = isRangeRecommendation
         ? swapTotal < recommendedSwapSpaceMin || swapTotal > recommendedSwapSpaceMax
-        : swapTotal !== recommendedSwapSpace;
+        : swapTotal < lowerBound || swapTotal > upperBound;
     const status = isViolation ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
 
     return {
