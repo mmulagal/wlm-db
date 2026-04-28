@@ -234,6 +234,7 @@ async function runCloneAssessment(
         ec2InstanceId: activeNodeInstanceId,
         comment: 'Get sandbox Details for clone assessment',
         accountId,
+        executionTimeout: ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
         shouldReadFromCloudWatchLogs: true
     });
 

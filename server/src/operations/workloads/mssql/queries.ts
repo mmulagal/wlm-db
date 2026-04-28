@@ -319,34 +319,48 @@ const DATABASES_COUNT_V2 = `${SET_NOCOUNT} SELECT COUNT(*) AS totalCount FROM sy
 
 const SERVER_VERSION = `${SET_NOCOUNT} SELECT @@VERSION AS version ${FOR_JSON_PATH}`;
 
+// GH-2091: Replaced sp_MSforeachdb with cursor-based iteration.
+// sp_MSforeachdb is undocumented and causes tempdb transaction log overflow
+// on instances with 1000+ databases (Msg 9002: tempdb full due to ACTIVE_TRANSACTION).
+// This cursor only iterates ONLINE user databases and queries sys.extended_properties
+// directly per-database with TRY/CATCH isolation, avoiding tempdb pressure.
 const GET_SANDBOXES = `
     ${SET_NOCOUNT}
     DROP TABLE IF EXISTS #properties;
+    CREATE TABLE #properties (database_name NVARCHAR(255), name NVARCHAR(255), value SQL_VARIANT);
 
-    CREATE TABLE #properties (
-        database_name nvarchar(255),
-        name nvarchar(255),
-        value sql_variant
-    );
+    DECLARE @dbName NVARCHAR(255);
+    DECLARE @sql NVARCHAR(MAX);
 
-    INSERT INTO #properties
-    EXEC sp_MSforeachdb '
-        USE [?];
-        SELECT database_name = DB_NAME(), l.name, l.value
-        FROM sys.databases d
-        OUTER APPLY fn_listextendedproperty(default, default, default, default, default, default, default) l
-        WHERE d.name = DB_NAME()
-        AND database_id > 4
-        AND l.name IS NOT NULL
-        AND l.value IS NOT NULL ';
+    DECLARE db_cursor CURSOR LOCAL FAST_FORWARD FOR
+        SELECT name FROM sys.databases WHERE database_id > 4 AND state_desc = 'ONLINE';
+
+    OPEN db_cursor;
+    FETCH NEXT FROM db_cursor INTO @dbName;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @sql = N'SELECT N''' + REPLACE(@dbName, '''', '''''') + ''' AS database_name, name, value FROM [' + REPLACE(@dbName, ']', ']]') + '].sys.extended_properties WHERE class = 0 AND major_id = 0 AND minor_id = 0 AND name IN (N''source'', N''createdAt'', N''tag'', N''updatedAt'', N''cloned_by'', N''accountId'')';
+        BEGIN TRY
+            INSERT INTO #properties EXEC sp_executesql @sql;
+        END TRY
+        BEGIN CATCH
+        END CATCH
+        FETCH NEXT FROM db_cursor INTO @dbName;
+    END
+
+    CLOSE db_cursor;
+    DEALLOCATE db_cursor;
 
     SELECT (SELECT database_name, JSON_QUERY(properties) AS sandbox_properties
     FROM (
-        SELECT database_name, JSON_QUERY((SELECT name, value FROM #properties AS p2 WHERE p2.database_name = p1.database_name AND p2.name IN ('source', 'createdAt', 'tag', 'updatedAt', 'cloned_by', 'accountId') FOR JSON PATH)) AS properties
+        SELECT database_name, JSON_QUERY((SELECT name, CAST(value AS NVARCHAR(MAX)) AS value FROM #properties AS p2 WHERE p2.database_name = p1.database_name FOR JSON PATH)) AS properties
         FROM #properties AS p1
     ) AS grouped_properties
     GROUP BY database_name, properties
-    ${FOR_JSON_PATH}) as sandboxes
+    ${FOR_JSON_PATH}) as sandboxes;
+
+    DROP TABLE IF EXISTS #properties;
 `;
 
 const INSTANCE_DATA_DRIVES_QUERY = `${SET_NOCOUNT} 
