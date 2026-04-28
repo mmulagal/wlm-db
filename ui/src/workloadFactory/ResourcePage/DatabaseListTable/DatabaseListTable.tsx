@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import classNames from 'classnames';
-import { Button, TooltipInfo, useDialog } from '@netapp/design-system';
+import { Button, Popover, TooltipInfo, useDialog } from '@netapp/design-system';
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
+import CopyToClipboardCommon from '../../../common/CopyToClipboard/copyToClipboard';
+import { ReactComponent as CopyIcon } from '../../../assets/ic_copy.svg';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import styles from './DatabaseListTable.module.scss';
 import { WorkloadFactoryDatabaseItem } from '../../../utils/types/workloadFactoryResourceTypes';
@@ -32,9 +34,8 @@ import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent'
 
 const DatabaseListTable = () => {
     const { t } = useTranslation();
-    const { selectedHostname, selectedDatabaseInstanceName, selectedDatabaseStorageType, isWad } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const { selectedHostname, selectedDatabaseInstanceName, selectedDatabaseStorageType, isWad, innerPageDetails } =
+        useAppSelector(state => state.getWellOptimize);
     const {
         resourceLoading: resourceLoadingState,
         resourceDetails,
@@ -93,8 +94,13 @@ const DatabaseListTable = () => {
         });
     }, [data, replicaDatabasesMap]);
 
-    const formatData = (tableData: WorkloadFactoryDatabaseItem[]) =>
-        tableData?.map(perRow => {
+    const formatData = (tableData: WorkloadFactoryDatabaseItem[]) => {
+        const fsxId = isWad
+            ? innerPageDetails?.fsxId || resourceDetails?.topology?.fileSystemId
+            : resourceDetails?.topology?.fileSystemId;
+        const fsxForOntap = resourceDetails?.topology?.fileSystemName || fsxId || '';
+
+        return tableData?.map(perRow => {
             const protectionText = getProtectionText(perRow);
             let protectionVal = '';
             if (protectionText === PROTECTION_TEXT_STATUS.YES) {
@@ -107,11 +113,17 @@ const DatabaseListTable = () => {
             return {
                 ...perRow,
                 isProtected: protectionVal,
-                lunPaths: getUniqueLunNames(perRow?.luns)
+                lunPaths: getUniqueLunNames(perRow?.luns),
+                fsxId: fsxId || '',
+                fsxForOntap
             };
         });
+    };
 
-    const formattedRows = useMemo(() => formatData(enrichedData) || [], [enrichedData, t]);
+    const formattedRows = useMemo(
+        () => formatData(enrichedData) || [],
+        [enrichedData, t, resourceDetails, isWad, innerPageDetails]
+    );
 
     const lunFilterOptions = useMemo(() => getLunFilterOptions(formattedRows), [formattedRows]);
 
@@ -195,6 +207,44 @@ const DatabaseListTable = () => {
                             </Button>
                         )}
                     </div>
+                );
+            }
+        },
+        {
+            Header: t('databases.databases-table.headers.fsx-for-ontap'),
+            accessor: 'fsxForOntap',
+            id: '9',
+            width: 'auto',
+            renderCell: (cellData: any, rowData: any) => {
+                const fsxId = rowData?.fsxId;
+                const displayName = cellData || t('databases.general.not-available-table-columns');
+                return fsxId ? (
+                    <div className={styles.fsxNameContainer}>
+                        <TooltipInfo className={`${styles.fsxName} ${styles['tooltip-icon']}`} trigger="hover">
+                            <div className={`${styles.tooltipContainer} ${styles.fsxNamePopOver}`}>
+                                <DsTypography variant="Regular_13">{fsxId}</DsTypography>
+                                <Popover
+                                    popoverClass={styles['copy-popover']}
+                                    children={t('databases.general.copied-to-clipboard')}
+                                    container={
+                                        <CopyToClipboardCommon
+                                            value={fsxId}
+                                            iconProvided={<CopyIcon fill="#A7A7A7" />}
+                                        />
+                                    }
+                                />
+                            </div>
+                        </TooltipInfo>
+                        <div className={styles.fsxName}>
+                            <DsTypography className={styles.fsxNameText} variant="Regular_13" title={displayName}>
+                                {displayName}
+                            </DsTypography>
+                        </div>
+                    </div>
+                ) : (
+                    <DsTypography variant="Regular_13" className={styles.colText}>
+                        {t('databases.general.not-available-table-columns')}
+                    </DsTypography>
                 );
             }
         },
@@ -316,7 +366,7 @@ const DatabaseListTable = () => {
         pageSize: 50,
         isLazyLoading: databaseListLoading,
         isHorizontalScroll: true,
-        additionalSearchKeys: ['lunPaths'],
+        additionalSearchKeys: ['lunPaths', 'fsxId'],
         isManagedColumns: isAoag,
         ...(isAoag && {
             manageColumnsProps: {

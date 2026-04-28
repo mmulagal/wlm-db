@@ -20,6 +20,12 @@ vi.mock('@netapp/design-system', () => ({
     ),
     useDialog: () => ({ setDialog: mockSetDialog, closeDialog: vi.fn() }),
     TooltipInfo: ({ children }: any) => <div data-testid="tooltip-info">{children}</div>,
+    Popover: ({ children, container }: any) => (
+        <div data-testid="copy-popover">
+            <span data-testid="popover-text">{children}</span>
+            <div data-testid="popover-container">{container}</div>
+        </div>
+    ),
     SearchInput: (props: any) => <input data-testid="search-input" />,
     DsFlashingDotsLoader: () => <div data-testid="loader" />,
     Typography: ({ children, variant, className }: any) => (
@@ -60,6 +66,24 @@ vi.mock('../../../common/Lib/Table/Table', () => ({
 // --- Mock SVG assets ---
 vi.mock('../../../assets/row_arrow.svg', () => ({
     ReactComponent: () => <span data-testid="arrow-icon" />
+}));
+
+vi.mock('../../../assets/ic_copy.svg', () => ({
+    ReactComponent: () => <span data-testid="copy-icon" />
+}));
+
+// --- Mock CopyToClipboardCommon ---
+vi.mock('../../../common/CopyToClipboard/copyToClipboard', () => ({
+    default: ({ value, iconProvided }: any) => (
+        <button data-testid="copy-to-clipboard" data-value={value}>
+            {iconProvided}
+        </button>
+    )
+}));
+
+// --- Mock TooltipComponent ---
+vi.mock('../../../common/TooltipComponent/TooltipComponent', () => ({
+    default: ({ children }: any) => <div data-testid="tooltip-component">{children}</div>
 }));
 
 // --- Mock ResourcePageReplicaTable ---
@@ -195,6 +219,9 @@ const setupSelectors = (overrides: Record<string, any> = {}) => {
         'state.workloadFactoryResource.databaseListLoading': false,
         'state.getWellOptimize.selectedHostname': 'host1',
         'state.getWellOptimize.selectedDatabaseInstanceName': 'instanceName1',
+        'state.getWellOptimize.selectedDatabaseStorageType': null,
+        'state.getWellOptimize.isWad': false,
+        'state.getWellOptimize.innerPageDetails': null,
         'state.workloadFactoryResource.resourceLoading': false,
         'state.workloadFactoryResource.selectedDatabaseInstance': 'db1',
         'state.workloadFactoryResource.selectedResourceId': 'res1',
@@ -208,7 +235,6 @@ const setupSelectors = (overrides: Record<string, any> = {}) => {
     const merged = { ...defaults, ...overrides };
 
     (useAppSelector as any).mockImplementation((selector: any) => {
-        // Call selector with a proxy to intercept the path
         const state = {
             workloadFactoryResource: {
                 databaseList: merged['state.workloadFactoryResource.databaseList'],
@@ -224,7 +250,10 @@ const setupSelectors = (overrides: Record<string, any> = {}) => {
             },
             getWellOptimize: {
                 selectedHostname: merged['state.getWellOptimize.selectedHostname'],
-                selectedDatabaseInstanceName: merged['state.getWellOptimize.selectedDatabaseInstanceName']
+                selectedDatabaseInstanceName: merged['state.getWellOptimize.selectedDatabaseInstanceName'],
+                selectedDatabaseStorageType: merged['state.getWellOptimize.selectedDatabaseStorageType'],
+                isWad: merged['state.getWellOptimize.isWad'],
+                innerPageDetails: merged['state.getWellOptimize.innerPageDetails']
             }
         };
         return selector(state);
@@ -364,10 +393,10 @@ describe('DatabaseListTable', () => {
         expect(callArgs.rows[0].isProtected).toBe('databases.general.not-available-table-columns');
     });
 
-    it('should have 6 column definitions in useTable call', () => {
+    it('should have 7 column definitions in useTable call', () => {
         render(<DatabaseListTable />);
         const callArgs = mockUseTable.mock.calls[0][0];
-        expect(callArgs.columns.length).toBe(6);
+        expect(callArgs.columns.length).toBe(7);
     });
 
     it('should pass pageSize of 50 to useTable', () => {
@@ -464,7 +493,7 @@ describe('DatabaseListTable', () => {
     it('should pass lunPaths as additional search key to useTable', () => {
         render(<DatabaseListTable />);
         const callArgs = mockUseTable.mock.calls[0][0];
-        expect(callArgs.additionalSearchKeys).toEqual(['lunPaths']);
+        expect(callArgs.additionalSearchKeys).toEqual(['lunPaths', 'fsxId']);
     });
 
     it('should compute lunPaths for each formatted row based on LUN dataFiles and logFiles', () => {
@@ -542,6 +571,58 @@ describe('DatabaseListTable', () => {
         const callArgs = mockUseTable.mock.calls[0][0];
         const collationColDef = callArgs.columns.find((c: any) => c.id === '6');
         expect(collationColDef.renderCell(null)).toBe('databases.general.not-available');
+    });
+
+    it('should stamp fsxId and fsxForOntap on formatted rows when resourceDetails topology is present', () => {
+        const dbList = [{ name: 'DB1', status: 'ONLINE', size: 100, type: 'MSSQL' }];
+        setupSelectors({
+            'state.workloadFactoryResource.databaseList': dbList,
+            'state.workloadFactoryResource.resourceDetails': {
+                topology: { fileSystemId: 'fs-abc123', fileSystemName: 'my-fsx' }
+            }
+        });
+        render(<DatabaseListTable />);
+        const callArgs = mockUseTable.mock.calls[0][0];
+        expect(callArgs.rows[0].fsxId).toBe('fs-abc123');
+        expect(callArgs.rows[0].fsxForOntap).toBe('my-fsx');
+    });
+
+    it('should use innerPageDetails.fsxId for fsxId when isWad is true', () => {
+        const dbList = [{ name: 'DB1', status: 'ONLINE', size: 100, type: 'MSSQL' }];
+        setupSelectors({
+            'state.workloadFactoryResource.databaseList': dbList,
+            'state.getWellOptimize.isWad': true,
+            'state.getWellOptimize.innerPageDetails': { fsxId: 'fs-wad-999' },
+            'state.workloadFactoryResource.resourceDetails': {
+                topology: { fileSystemId: 'fs-fallback', fileSystemName: 'fallback-fsx' }
+            }
+        });
+        render(<DatabaseListTable />);
+        const callArgs = mockUseTable.mock.calls[0][0];
+        expect(callArgs.rows[0].fsxId).toBe('fs-wad-999');
+    });
+
+    it('should render FSx id and file system name when fsxId is present in FSx for ONTAP column', () => {
+        render(<DatabaseListTable />);
+        const callArgs = mockUseTable.mock.calls[0][0];
+        const fsxColDef = callArgs.columns.find((c: any) => c.id === '9');
+        const { render: localRender, screen: localScreen } = require('@testing-library/react');
+        const { unmount } = localRender(<div>{fsxColDef.renderCell('my-fsx', { fsxId: 'fs-abc123' })}</div>);
+        expect(localScreen.getByText('fs-abc123')).toBeTruthy();
+        expect(localScreen.getByText('my-fsx')).toBeTruthy();
+        const copyBtn = localScreen.getByTestId('copy-to-clipboard');
+        expect(copyBtn.getAttribute('data-value')).toBe('fs-abc123');
+        unmount();
+    });
+
+    it('should render N/A when fsxId is absent in FSx for ONTAP column', () => {
+        render(<DatabaseListTable />);
+        const callArgs = mockUseTable.mock.calls[0][0];
+        const fsxColDef = callArgs.columns.find((c: any) => c.id === '9');
+        const { render: localRender, screen: localScreen } = require('@testing-library/react');
+        const { unmount } = localRender(<div>{fsxColDef.renderCell('', { fsxId: '' })}</div>);
+        expect(localScreen.getByText('databases.general.not-available-table-columns')).toBeTruthy();
+        unmount();
     });
 
     it('should call DatabaseHostOverviewApiV2 as a hook on mount', async () => {

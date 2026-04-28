@@ -244,6 +244,8 @@ export interface WorkloadFactoryDatabaseItem {
     isReadableSecondary?: boolean;
     replicaDatabases?: WorkloadFactoryDatabaseItem[];
     replicaHostName?: string;
+    fsxId?: string;
+    fsxForOntap?: string;
 }
 
 export interface AoagClusterNode {

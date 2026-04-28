@@ -961,13 +961,19 @@ const InstancesTable = () => {
                     );
                 }
 
-                // For WAD (offline assessment) MSSQL rows, add Well-Architected option only
+                // For WAD (offline assessment) MSSQL rows, add Well-Architected and View databases options
                 const isWadMssqlRow = rowData?.isWad && selectedHostType === DBType.MSSQL;
                 if (isWadMssqlRow) {
-                    menu.push({
-                        id: 'mssql-optimize-wad',
-                        displayName: t('databases.instance-table.menu-options.well-architected')
-                    });
+                    menu.push(
+                        {
+                            id: 'mssql-optimize-wad',
+                            displayName: t('databases.instance-table.menu-options.well-architected')
+                        },
+                        {
+                            id: 'mssql-viewDatabases',
+                            displayName: t('databases.instance-table.menu-options.view-databases')
+                        }
+                    );
                 }
 
                 // For WAD (offline assessment) Oracle rows, add Well-Architected option only

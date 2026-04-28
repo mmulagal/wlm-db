@@ -17,6 +17,58 @@
         gap: 4px;
     }
 
+    .fsxNameContainer {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 0 16px 0;
+
+        .fsxName {
+            .fsxNamePopOver {
+                justify-content: space-between;
+                padding: 8px 0;
+            }
+
+            .fsxNameText {
+                max-width: 160px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                display: inline-block;
+                vertical-align: bottom;
+            }
+        }
+    }
+
+    .tooltip-icon {
+        span:hover {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+    }
+
+    .tooltipContainer {
+        display: flex;
+        gap: 8px;
+        padding: 12px 0 16px 0;
+
+        span:hover {
+            svg {
+                path {
+                    fill: var(--tooltip-icon-hover);
+                }
+            }
+        }
+    }
+
+    .copy-popover {
+        display: flex;
+        align-items: center;
+    }
+
     .colText {
         display: flex;
         gap: 8px;
