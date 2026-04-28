@@ -141,6 +141,7 @@ const CloneTabs = ({ fromPage = '', engineType = DBType.MSSQL }: any) => {
         }, {});
 
         return {
+            type: 'clone',
             hostsToOptimize: [
                 {
                     configurationName: 'clone',
