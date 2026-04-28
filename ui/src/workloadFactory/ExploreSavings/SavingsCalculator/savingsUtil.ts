@@ -22,6 +22,7 @@ import {
     OS_VERSIONS_LIST,
     SAVINGS_CALC_MODE,
     SQL_DEPLOYMENT_MODE,
+    TCO_CALCULATOR_MODE,
     TCO_MANUAL_DEPLOYMENT_TYPE,
     THROUGHPUT_LIST,
     TIB_IN_BYTE,
@@ -237,11 +238,17 @@ export const calculatedFSXData = (
     {
         storageType = '',
         selectedExploreSavingsTab,
-        isOracleOnPrem
-    }: { storageType?: string; selectedExploreSavingsTab?: string; isOracleOnPrem?: boolean } = {}
+        isOracleOnPrem,
+        isOracleEbs
+    }: {
+        storageType?: string;
+        selectedExploreSavingsTab?: string;
+        isOracleOnPrem?: boolean;
+        isOracleEbs?: boolean;
+    } = {}
 ) => {
     const isOnPrem = selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem;
-    const useCaseLabel = fsxData?.useCase || (isOracleOnPrem ? 'Oracle' : '');
+    const useCaseLabel = fsxData?.useCase || (isOracleOnPrem || isOracleEbs ? 'Oracle' : '');
 
     return [
         {
@@ -259,6 +266,8 @@ export const calculatedFSXData = (
                     : fsxData?.deploymentType || GENERAL.NOT_AVAILABLE,
             text: isOnPrem
                 ? `${fsxData?.deploymentType} Availability Zone is the equivalent deployment type for your on-premises configuration.`
+                : isOracleEbs
+                ? `${fsxData?.deploymentType} Availability Zone is the equivalent deployment type for your source configuration.`
                 : `${fsxData?.deploymentType} Availability Zone are the equivalent availability for Amazon ${storageType}.`
         },
         {
@@ -268,6 +277,8 @@ export const calculatedFSXData = (
                 : GENERAL.NOT_AVAILABLE,
             text: isOnPrem
                 ? 'According to on-premises total capacity of primary database volumes.'
+                : isOracleEbs
+                ? 'According to source total capacity of primary database volumes.'
                 : `According to ${storageType} total capacity of primary database volumes.`
         },
         {
@@ -312,6 +323,8 @@ export const calculatedFSXData = (
             value: fsxData?.ssdIop ? Number(fsxData?.ssdIop).toLocaleString() : GENERAL.NOT_AVAILABLE,
             text: isOnPrem
                 ? 'Based on your on-premises configuration.'
+                : isOracleEbs
+                ? 'Based on your source configuration.'
                 : 'For each GiB of SSD provisioned storage, Amazon FSx automatically provisions 3 SSD IOPS for the file system.'
         },
         {
@@ -319,6 +332,8 @@ export const calculatedFSXData = (
             value: fsxData?.throughputCapacity ? `${fsxData?.throughputCapacity} MBps` : GENERAL.NOT_AVAILABLE,
             text: isOnPrem
                 ? 'Based on your on-premises configuration.'
+                : isOracleEbs
+                ? 'Based on your source configuration.'
                 : `Supported FSx for ONTAP throughput according to the consolidated ${storageType} throughput required (${
                       fsxData?.numberOfVolumes * fsxData?.throughput
                   } Mbps).`
@@ -2556,7 +2571,8 @@ export const prepareViewCalcData = (
     apiResponse: ViewCalculationsInterface,
     dispatch: any,
     selectedDeploymentModel: string,
-    monthlyChangeRate: string
+    monthlyChangeRate: string,
+    selectedCalculatorMode?: string
 ) => {
     const formattedData = formatViewCalcData(apiResponse, selectedDeploymentModel, monthlyChangeRate);
     if (apiResponse?.fsxOptimizedSingle) {
@@ -2585,13 +2601,18 @@ export const prepareViewCalcData = (
                 optimized: optimizedFormattedData
             })
         );
-        dispatch(setViewCalculationsResponse(optimizedFormattedData));
+        const isStandard = selectedCalculatorMode === TCO_CALCULATOR_MODE.STANDARD;
+        dispatch(setViewCalculationsResponse(isStandard ? formattedData : optimizedFormattedData));
     } else {
         dispatch(setViewCalculationsResponse(formattedData));
     }
 };
 
-export const prepareStorageSavingsData = (apiResponse: StorageSavingsInterface, dispatch: any) => {
+export const prepareStorageSavingsData = (
+    apiResponse: StorageSavingsInterface,
+    dispatch: any,
+    selectedCalculatorMode?: string
+) => {
     const formattedData = formatStorageSavingsRecommendedData(apiResponse);
     if (apiResponse?.fsxOptimized) {
         const recommendedDiff = Number(apiResponse?.fsx?.total) - Number(apiResponse?.fsxOptimized?.total);
@@ -2623,7 +2644,8 @@ export const prepareStorageSavingsData = (apiResponse: StorageSavingsInterface, 
                 optimized: optimizedFormattedData
             })
         );
-        dispatch(setStorageSavingsResponse(optimizedFormattedData));
+        const isStandard = selectedCalculatorMode === TCO_CALCULATOR_MODE.STANDARD;
+        dispatch(setStorageSavingsResponse(isStandard ? formattedData : optimizedFormattedData));
     } else {
         dispatch(setStorageSavingsResponse(formattedData));
     }

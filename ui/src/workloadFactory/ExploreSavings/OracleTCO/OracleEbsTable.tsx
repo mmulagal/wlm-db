@@ -1,10 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Typography, TableTopBar } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useTranslation } from 'react-i18next';
-import { Table } from '../../../common/Lib/Table/Table';
-import { useTable } from '../../../common/Lib/Table/useTable';
 import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { AVAILABILITY_ZONE_TYPE, DATABASE_DEPLOYMENT_MODE, DBType, DETECT_HOST_VAR } from '../../../utils/consts';
 import {
@@ -273,10 +271,11 @@ const OracleEbsTable = () => {
         selectionType: 'multiple',
         rows: updatedTableData,
         pageSize: 50,
-        defaultSelectedRows: [],
+        defaultSelectedRows: selectedRowsForExploreSavingsOracleEbsBulk.map((row: any) => row.id),
         isLazyLoading: isDiscoverInProgress || isManagedHostListLoading || multiDataLoading
     });
 
+    // Sync table selection state to Redux
     useEffect(() => {
         if (updatedTableData.length > 0) {
             const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
@@ -284,6 +283,7 @@ const OracleEbsTable = () => {
         }
     }, [tableProps.selectionState]);
 
+    // Sync Redux selection state back to table when rows are removed externally
     useEffect(() => {
         if (updatedTableData.length === 0) return;
 
@@ -291,6 +291,13 @@ const OracleEbsTable = () => {
             Object.keys(tableProps.selectionState?.rows || {}).filter(id => tableProps.selectionState?.rows[id])
         );
         const reduxSelectedIds = new Set(selectedRowsForExploreSavingsOracleEbsBulk.map((row: any) => row.id));
+
+        // Only toggle if there is an actual mismatch to avoid unnecessary re-renders
+        const hasDiff =
+            [...currentTableSelectedIds].some(id => !reduxSelectedIds.has(id)) ||
+            [...reduxSelectedIds].some(id => !currentTableSelectedIds.has(id as string));
+
+        if (!hasDiff) return;
 
         currentTableSelectedIds.forEach(id => {
             if (!reduxSelectedIds.has(id)) {

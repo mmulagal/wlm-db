@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { AccordionCardContent, DsTypography, useDialog, SelectField, TextField, Button } from '@netapp/design-system';
 import { DsButton } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
+import classNames from 'classnames';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
@@ -383,7 +384,12 @@ const TCOBulkAccordion = () => {
                         </div>
                     )}
 
-                    <div className={`${hostInstanceStyles.fieldWrapper} ${hostInstanceStyles.instanceTypeContainer}`}>
+                    <div
+                        className={classNames(
+                            hostInstanceStyles.fieldWrapper,
+                            hostInstanceStyles.instanceTypeContainer
+                        )}
+                    >
                         <SelectField
                             label={GENERAL.RECOMMENDED_INSTANCE_TYPE}
                             info={GENERAL.RECOMMENDED_INSTANCE_TYPE_INFO}
@@ -498,7 +504,7 @@ const TCOBulkAccordion = () => {
     };
 
     return (
-        <div className={styles.tcoBulkAccordion}>
+        <div className={classNames(styles.tcoBulkAccordion, { [styles.tcoBulkAccordionOracleEbs]: isOracleEbs })}>
             {/* SSD tier card - showed based on condition */}
             {showSsdTierCard && (
                 <div className={styles.ssdContainer}>
@@ -523,14 +529,21 @@ const TCOBulkAccordion = () => {
                             key={host.id || index}
                             ValueContent={() => (
                                 <div className={styles.centerValue}>
-                                    <DsTypography variant="Regular_14" className={styles.centerText}>
-                                        {host.totalInstance}{' '}
-                                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
-                                            ? t('databases.explore-savings.databases')
-                                            : t('databases.explore-savings.instances')}
-                                        <SeparatorComponent variant="vertical" height="16px" />
-                                        {getHostVolumeCount(host)} {t('databases.explore-savings.volumes')}
-                                    </DsTypography>
+                                    <div className={styles.centerText}>
+                                        <DsTypography variant="Semibold_16">{host.totalInstance}</DsTypography>
+                                        <DsTypography variant="Regular_12">
+                                            {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+                                                ? t('databases.explore-savings.databases')
+                                                : t('databases.explore-savings.instances')}
+                                        </DsTypography>
+                                    </div>
+                                    <SeparatorComponent variant="vertical" height="28px" />
+                                    <div className={styles.centerText}>
+                                        <DsTypography variant="Semibold_16">{getHostVolumeCount(host)}</DsTypography>
+                                        <DsTypography variant="Regular_12">
+                                            {t('databases.explore-savings.volumes')}
+                                        </DsTypography>
+                                    </div>
                                 </div>
                             )}
                             id={String(host.id || index + 1)}

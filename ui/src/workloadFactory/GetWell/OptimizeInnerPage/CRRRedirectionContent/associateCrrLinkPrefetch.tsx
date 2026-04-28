@@ -79,11 +79,9 @@ export function useAssociateCrrLinkPrefetch(
                             payload: {
                                 pathname: `../../${
                                     workloadFactory ? 'administration' : 'fsxadministration'
-                                }/links/create?awsAccount=${
-                                    fsxDetails?.awsAccountId
-                                }&from=${workloadFactory ? '/databases' : '/fsxdb'}/inventory/${credId}/${
-                                    fsxDetails?.region
-                                }/${
+                                }/links/create?awsAccount=${fsxDetails?.awsAccountId}&from=${
+                                    workloadFactory ? '/databases' : '/fsxdb'
+                                }/inventory/${credId}/${fsxDetails?.region}/${
                                     fsxDetails?.id
                                 }/resource/${selectedResourceId}/instance/${selectedDatabaseInstance}/host/${selectedHostname}/db/${selectedDatabaseInstanceName}/volumeName/${
                                     rowData?.volumeName

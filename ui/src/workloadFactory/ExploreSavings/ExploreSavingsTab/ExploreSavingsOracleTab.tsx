@@ -11,7 +11,7 @@ import { handleExploreSavingsURL } from '../../../utils/utilityFunctions';
 const ExploreSavingsOracleTab = () => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-    const [selectedTab, setSelectedTab] = useState(WLF_TABS.ORACLE_SERVER_ON_PREMISES);
+    const [selectedTab, setSelectedTab] = useState(WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE);
     const selectedOracleExploreSavingsTab = useAppSelector(
         state => state.exploreSavings.selectedOracleExploreSavingsTab
     );

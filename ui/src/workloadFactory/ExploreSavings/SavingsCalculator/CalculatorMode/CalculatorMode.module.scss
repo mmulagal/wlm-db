@@ -4,6 +4,7 @@
     gap: 48px;
     align-items: center;
     white-space: nowrap;
+    box-sizing: border-box;
 
     background: var(--background-content, #fff);
     /* Light/Drop shadow/level 1 */
@@ -45,8 +46,8 @@
 
 @media screen and (min-width: 1920px) {
     .calcMode {
-        width: 86% !important;
-        padding: 16px 120px;
+        width: calc(95% - 240px);
+        padding: 16px 40px;
         margin-bottom: 22px;
         margin-top: 4px;
     }

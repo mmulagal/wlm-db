@@ -93,7 +93,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     // Helper to check if in Oracle on-prem mode
     const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
     const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
-    const isOnPremMode = selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem;
+    const isOnPremMode = (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && !isOracleEbs) || isOracleOnPrem;
 
     const {
         selectedRowsForExploreSavingsEBSBulk,
@@ -119,7 +119,13 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     useEffect(() => {
         dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(storageSavingsResponse)));
         if (viewCalculationsApiResponse) {
-            prepareViewCalcData(viewCalculationsApiResponse, dispatch, selectedDeploymentModel, monthlyChangeRate);
+            prepareViewCalcData(
+                viewCalculationsApiResponse,
+                dispatch,
+                selectedDeploymentModel,
+                monthlyChangeRate,
+                selectedCalculatorMode
+            );
         } else {
             dispatch(setViewCalculationsResponse(null));
         }
@@ -431,7 +437,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         }
                     >
                         {/* Left side code here */}
-                        {selectedExploreSavingsTab !== WLF_TABS.MSSQL_ON_PREMISES && !isOracleOnPrem && (
+                        {!isOnPremMode && (
                             <div className={setFirstContainerClass()}>
                                 {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
                                     savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||

@@ -97,7 +97,9 @@ const SavingsCalculatorApi = () => {
         showOptimizeMode,
         instanceDataUpdatedTrigger,
         requestedPayload,
-        requestedRegion
+        requestedRegion,
+        hasFetched,
+        selectedCalculatorMode
     } = useAppSelector(state => state.exploreSavings);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const {
@@ -305,8 +307,8 @@ const SavingsCalculatorApi = () => {
                         : 'fsxw'
             });
             if (result && !result?.error) {
-                prepareStorageSavingsData(result?.data, dispatch);
-                if (result?.data?.fsxOptimized && !showOptimizeMode?.showCalcMode) {
+                prepareStorageSavingsData(result?.data, dispatch, selectedCalculatorMode);
+                if (result?.data?.fsxOptimized && !showOptimizeMode?.showCalcMode && !hasFetched) {
                     dispatch(setShowFirstTimeOptimize(null));
                 }
                 dispatch(setStorageSavingsLoading(false));
@@ -353,7 +355,13 @@ const SavingsCalculatorApi = () => {
                         : 'fsxw'
             });
             if (result && !result?.error) {
-                prepareViewCalcData(result?.data, dispatch, selectedDeploymentModel, monthlyChangeRate);
+                prepareViewCalcData(
+                    result?.data,
+                    dispatch,
+                    selectedDeploymentModel,
+                    monthlyChangeRate,
+                    selectedCalculatorMode
+                );
                 dispatch(setViewCalculationsApiResponse(result?.data));
                 dispatch(setViewCalculationsLoading(false));
             } else {
@@ -408,8 +416,8 @@ const SavingsCalculatorApi = () => {
                 payload
             });
             if (result && !result?.error) {
-                prepareStorageSavingsData(result?.data, dispatch);
-                if (result?.data?.fsxOptimized && !showOptimizeMode?.showCalcMode) {
+                prepareStorageSavingsData(result?.data, dispatch, selectedCalculatorMode);
+                if (result?.data?.fsxOptimized && !showOptimizeMode?.showCalcMode && !hasFetched) {
                     dispatch(setShowFirstTimeOptimize(null));
                 }
                 dispatch(setStorageSavingsLoading(false));
@@ -467,7 +475,13 @@ const SavingsCalculatorApi = () => {
                 payload
             });
             if (result && !result?.error) {
-                prepareViewCalcData(result?.data, dispatch, selectedDeploymentModel, monthlyChangeRate);
+                prepareViewCalcData(
+                    result?.data,
+                    dispatch,
+                    selectedDeploymentModel,
+                    monthlyChangeRate,
+                    selectedCalculatorMode
+                );
                 dispatch(setViewCalculationsApiResponse(result?.data));
                 dispatch(setViewCalculationsLoading(false));
             } else {
@@ -585,11 +599,11 @@ const SavingsCalculatorApi = () => {
     // This is used in bulk mode to trigger API calls when BYOL values change per host
     useEffect(() => {
         if (triggerBulkDataFetch) {
-            // Reset the flag
-            dispatch(setTriggerBulkDataFetch(false));
-
-            // Then trigger the API calls
+            // Only consume the flag for MSSQL modes handled here.
+            // Oracle modes (ORACLE_AUTO_EBS, ORACLE_ONPREM) are handled by their
+            // own API components and must see triggerBulkDataFetch === true.
             if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+                dispatch(setTriggerBulkDataFetch(false));
                 if (selectedHostDetails && Object.keys(selectedHostDetails).length !== 0) {
                     // Check if instance API has already been called for this host
                     const uniqueHostId = uniqueHostRow(
@@ -616,10 +630,12 @@ const SavingsCalculatorApi = () => {
                     }
                 }
             } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
+                dispatch(setTriggerBulkDataFetch(false));
                 dispatch(setSnapshotLoading(false));
                 dispatch(setDisableState(false));
                 triggerRefreshApi();
             } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM) {
+                dispatch(setTriggerBulkDataFetch(false));
                 // For on-prem bulk mode, trigger API refresh
                 if (
                     selectedRowsForExploreSavingsOnPremBulk &&

@@ -2584,33 +2584,28 @@ const InventoryApisV3 = () => {
                     savingsCalculatorFrom: esCalcFrom
                 } = state.exploreSavings;
                 const isExploreSavingsContext =
-                    esCalcFrom === SAVINGS_CALC_MODE.AUTO_EBS || esCalcFrom === SAVINGS_CALC_MODE.AUTO_FSXW;
+                    esCalcFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+                    esCalcFrom === SAVINGS_CALC_MODE.AUTO_FSXW ||
+                    esCalcFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+                    esCalcFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
 
                 if (isExploreSavingsContext && esInstanceId && esCredId && esRegionId) {
                     const selectedUniqueKey = uniqueHostRow(esInstanceId, esCredId, esRegionId);
-                    // Check if the updated data contains the selected instance
-                    const hasSelectedInstance = exploreSavingsRows.some(
+                    // Check if the updated data contains the selected instance (use merged list to include Oracle rows)
+                    const hasSelectedInstance = allExploreSavingsRows.some(
                         (row: any) => uniqueHostRow(row?.id, row?.credentialId, row?.regionId) === selectedUniqueKey
                     );
 
                     if (hasSelectedInstance) {
-                        const selectedRow = exploreSavingsRows.find(
-                            (row: any) => uniqueHostRow(row?.id, row?.credentialId, row?.regionId) === selectedUniqueKey
-                        );
-
                         // Trigger the update in Explore Savings
                         dispatch(setInstanceDataUpdatedTrigger(selectedUniqueKey));
                     }
                 }
             }
 
-            // Only call if exploreSavingsRows is not empty and has changed
-            if (
-                exploreSavingsRows &&
-                exploreSavingsRows.length > 0 &&
-                !isEqual(exploreSavingsRows, currentExploreSavings)
-            ) {
-                callPotentialSavings(exploreSavingsRows, credId, regionId);
+            // Call potential savings for the merged MSSQL+Oracle list when it has changed
+            if (allExploreSavingsRows.length > 0 && !isEqual(allExploreSavingsRows, currentExploreSavings)) {
+                callPotentialSavings(allExploreSavingsRows, credId, regionId);
             }
         }
     }, [inventoryTableData, removeSecNodeDiscoveredList]);

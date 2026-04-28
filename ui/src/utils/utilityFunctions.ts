@@ -2640,8 +2640,10 @@ interface Dispatch {
 export const setExploreSavingsSubTab = (tabValue: string, dispatch: Dispatch): void => {
     if (tabValue === WLF_TABS.EXPLORE_SAVINGS_EBS) {
         dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE));
+        dispatch(setSelectedTCOHostType(DBType.MSSQL));
     } else if (tabValue === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
         dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_FSX_FOR_WINDOWS));
+        dispatch(setSelectedTCOHostType(DBType.MSSQL));
     } else if (tabValue === WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM) {
         dispatch(setSelectedOracleExploreSavingsTab(WLF_TABS.ORACLE_SERVER_ON_PREMISES));
         dispatch(setSelectedTCOHostType(DBType.ORACLE));
@@ -2650,6 +2652,7 @@ export const setExploreSavingsSubTab = (tabValue: string, dispatch: Dispatch): v
         dispatch(setSelectedTCOHostType(DBType.ORACLE));
     } else {
         dispatch(setSelectedExploreSavingsTab(WLF_TABS.MSSQL_ON_PREMISES));
+        dispatch(setSelectedTCOHostType(DBType.MSSQL));
     }
 };
 

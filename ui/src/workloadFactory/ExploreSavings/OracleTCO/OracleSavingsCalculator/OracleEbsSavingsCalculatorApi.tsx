@@ -42,7 +42,8 @@ const OracleEbsSavingsCalculatorApi = () => {
         showOptimizeMode,
         selectedDeploymentModel,
         selectedHostDetails,
-        hasFetched
+        hasFetched,
+        selectedCalculatorMode
     } = useAppSelector(state => state.exploreSavings);
 
     const { selectedRowsForExploreSavingsOracleEbsBulk, triggerBulkDataFetch } = useAppSelector(
@@ -103,7 +104,7 @@ const OracleEbsSavingsCalculatorApi = () => {
                 payload
             });
             if (result && !result?.error) {
-                prepareStorageSavingsData(result?.data, dispatch);
+                prepareStorageSavingsData(result?.data, dispatch, selectedCalculatorMode);
                 if (result?.data?.fsxOptimized && !showOptimizeMode?.showCalcMode && !hasFetched) {
                     dispatch(setShowFirstTimeOptimize(null));
                 }
@@ -151,7 +152,13 @@ const OracleEbsSavingsCalculatorApi = () => {
             });
             if (result && !result?.error) {
                 dispatch(setViewCalculationsApiResponse(result?.data));
-                prepareViewCalcData(result?.data, dispatch, selectedDeploymentModel, monthlyChangeRate);
+                prepareViewCalcData(
+                    result?.data,
+                    dispatch,
+                    selectedDeploymentModel,
+                    monthlyChangeRate,
+                    selectedCalculatorMode
+                );
                 dispatch(setViewCalculationsLoading(false));
             } else {
                 dispatch(setViewCalculationsApiResponse(null));

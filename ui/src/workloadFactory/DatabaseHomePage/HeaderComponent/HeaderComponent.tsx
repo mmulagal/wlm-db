@@ -285,6 +285,20 @@ const HeaderComponent = ({ tab }: Tab) => {
                     });
                     dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_FSXW));
                     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+                } else if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS) {
+                    postBlueXPMessage({
+                        type: BlueXPListeners.navigate,
+                        payload: {
+                            pathname: `${
+                                isWorkloadFactory
+                                    ? './storage-saving-calculator?type=ebs&mode=manual'
+                                    : '../fsxdb/storage-saving-calculator?type=ebs&mode=manual'
+                            }`,
+                            replace: true
+                        }
+                    });
+                    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
+                    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                 } else {
                     postBlueXPMessage({
                         type: BlueXPListeners.navigate,

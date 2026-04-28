@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { generateOracleInstanceData, OracleServerInstance } from './OracleAccordionUtils';
+import {
+    generateOracleInstanceData,
+    OracleServerInstance,
+    OracleServerInstanceForOnPremise
+} from './OracleAccordionUtils';
 
 // Mock DATABASE_DEPLOYMENT_MODE since it's imported from consts
 vi.mock('../../../../../utils/consts', () => ({
@@ -205,6 +209,61 @@ describe('OracleAccordionUtils', () => {
 
         it('should handle null oracleInstance', () => {
             const result = OracleServerInstance(null, mockT as any);
+            expect(result).toHaveLength(3);
+            expect(result[0].value).toBe('databases.general.not-available');
+        });
+    });
+
+    // =========================================================================
+    // OracleServerInstanceForOnPremise
+    // =========================================================================
+    describe('OracleServerInstanceForOnPremise', () => {
+        const mockT = (key: string) => key;
+
+        it('should return array with 3 items (deployment, edition, instanceType)', () => {
+            const oracleInstance = {
+                deploymentModel: 'Standalone',
+                oracleEdition: 'Enterprise',
+                instanceType: 'r5.xlarge'
+            };
+            const result = OracleServerInstanceForOnPremise(oracleInstance, mockT as any);
+            expect(result).toHaveLength(3);
+        });
+
+        it('should include deployment mode label and value with onprem text key', () => {
+            const oracleInstance = { deploymentModel: 'Standalone', oracleEdition: '', instanceType: '' };
+            const result = OracleServerInstanceForOnPremise(oracleInstance, mockT as any);
+            expect(result[0].label).toBe('databases.explore-savings.oracle-deployment-mode-label');
+            expect(result[0].value).toBe('Standalone');
+            expect(result[0].text).toBe('databases.explore-savings.oracle-deployment-mode-text-onprem');
+        });
+
+        it('should include oracle edition label and value with onprem text key', () => {
+            const oracleInstance = { deploymentModel: '', oracleEdition: 'Enterprise', instanceType: '' };
+            const result = OracleServerInstanceForOnPremise(oracleInstance, mockT as any);
+            expect(result[1].label).toBe('databases.explore-savings.oracle-edition-label');
+            expect(result[1].value).toBe('Enterprise');
+            expect(result[1].text).toBe('databases.explore-savings.oracle-edition-text-onprem');
+        });
+
+        it('should include instance type label and value with onprem text key', () => {
+            const oracleInstance = { deploymentModel: '', oracleEdition: '', instanceType: 'm5.xlarge' };
+            const result = OracleServerInstanceForOnPremise(oracleInstance, mockT as any);
+            expect(result[2].label).toBe('databases.explore-savings.oracle-instance-type-label');
+            expect(result[2].value).toBe('m5.xlarge');
+            expect(result[2].text).toBe('databases.explore-savings.oracle-instance-type-text-onprem');
+        });
+
+        it('should use not-available fallback for missing values', () => {
+            const oracleInstance = {};
+            const result = OracleServerInstanceForOnPremise(oracleInstance, mockT as any);
+            expect(result[0].value).toBe('databases.general.not-available');
+            expect(result[1].value).toBe('databases.general.not-available');
+            expect(result[2].value).toBe('databases.general.not-available');
+        });
+
+        it('should handle null oracleInstance', () => {
+            const result = OracleServerInstanceForOnPremise(null, mockT as any);
             expect(result).toHaveLength(3);
             expect(result[0].value).toBe('databases.general.not-available');
         });

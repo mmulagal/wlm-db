@@ -32,7 +32,8 @@ import { setIsLoadConfig, setIsLoading, setIsRecommendedInstance } from '../../.
 // Oracle-specific utility imports
 import {
     generateOracleInstanceData,
-    OracleServerInstance
+    OracleServerInstance,
+    OracleServerInstanceForOnPremise
 } from '../../OracleTCO/OracleSavingsCalculator/OracleAccordion/OracleAccordionUtils';
 
 const TableLayout = ({ data, type }: any) => (
@@ -546,7 +547,10 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
                                                         `Host ${hostIndex + 1}`
                                                     }`}
                                                 </DsTypography>
-                                                {OracleServerInstance(hostOracleData, t).map(
+                                                {(isOracleOnPrem
+                                                    ? OracleServerInstanceForOnPremise(hostOracleData, t)
+                                                    : OracleServerInstance(hostOracleData, t)
+                                                ).map(
                                                     (
                                                         data: { label: string; text: string; value: string },
                                                         index: number
@@ -563,7 +567,7 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
                                     <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
                                         {t('databases.general.fsx-for-ontap')} 1
                                     </DsTypography>
-                                    {calculatedFSXData(fsxData, { isOracleOnPrem: true }).map(
+                                    {calculatedFSXData(fsxData, { isOracleOnPrem, isOracleEbs }).map(
                                         (data: { label: string; text: string; value: string }, index: number) => (
                                             <TableLayout data={data} key={`oracle-bulk-fsx-${index}`} />
                                         )
@@ -574,16 +578,17 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
                                     <DsTypography variant="Semibold_14" className={styles.instanceTypography}>
                                         {getInstanceTitle()}
                                     </DsTypography>
-                                    {OracleServerInstance(oracleInstance, t).map(
-                                        (data: { label: string; text: string; value: string }, index: number) => (
-                                            <TableLayout data={data} key={`oracle-instance-${index}`} />
-                                        )
-                                    )}
+                                    {(isOracleOnPrem
+                                        ? OracleServerInstanceForOnPremise(oracleInstance, t)
+                                        : OracleServerInstance(oracleInstance, t)
+                                    ).map((data: { label: string; text: string; value: string }, index: number) => (
+                                        <TableLayout data={data} key={`oracle-instance-${index}`} />
+                                    ))}
 
                                     <DsTypography variant="Semibold_14" className={styles.fsxTypography}>
                                         {t('databases.general.fsx-for-ontap')}
                                     </DsTypography>
-                                    {calculatedFSXData(fsxData, { isOracleOnPrem: true }).map(
+                                    {calculatedFSXData(fsxData, { isOracleOnPrem, isOracleEbs }).map(
                                         (data: { label: string; text: string; value: string }, index: number) => (
                                             <TableLayout data={data} key={`oracle-fsx-${index}`} />
                                         )

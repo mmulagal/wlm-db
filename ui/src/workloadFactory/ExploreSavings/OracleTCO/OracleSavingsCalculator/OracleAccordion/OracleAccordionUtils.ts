@@ -44,7 +44,7 @@ export const generateOracleInstanceData = (
 };
 
 /**
- * Generates Oracle server instance configuration display data
+ * Generates Oracle server instance configuration display data for EBS mode
  */
 export const OracleServerInstance = (oracleInstance: any, t: TFunction) => [
     {
@@ -61,5 +61,26 @@ export const OracleServerInstance = (oracleInstance: any, t: TFunction) => [
         label: t('databases.explore-savings.oracle-instance-type-label'),
         value: oracleInstance?.instanceType || t('databases.general.not-available'),
         text: t('databases.explore-savings.oracle-instance-type-text')
+    }
+];
+
+/**
+ * Generates Oracle server instance configuration display data for On-Premise mode
+ */
+export const OracleServerInstanceForOnPremise = (oracleInstance: any, t: TFunction) => [
+    {
+        label: t('databases.explore-savings.oracle-deployment-mode-label'),
+        value: oracleInstance?.deploymentModel || t('databases.general.not-available'),
+        text: t('databases.explore-savings.oracle-deployment-mode-text-onprem')
+    },
+    {
+        label: t('databases.explore-savings.oracle-edition-label'),
+        value: oracleInstance?.oracleEdition || t('databases.general.not-available'),
+        text: t('databases.explore-savings.oracle-edition-text-onprem')
+    },
+    {
+        label: t('databases.explore-savings.oracle-instance-type-label'),
+        value: oracleInstance?.instanceType || t('databases.general.not-available'),
+        text: t('databases.explore-savings.oracle-instance-type-text-onprem')
     }
 ];
