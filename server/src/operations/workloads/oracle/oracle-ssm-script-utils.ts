@@ -309,12 +309,13 @@ ec2InstanceId="${ec2InstanceId}"
 ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
 
 ${resolveOracleHomeInParent('$oracleSid', 'oracle_home_resolved')}
-result=$(sudo -i -u oracle bash <<EOF
+result=$(sudo -i -u oracle bash -s -- "$oracleSid" "$oracle_home_resolved" "$sqlplus_command" <<'EOF'
     set -e
-    export ORACLE_SID="$oracleSid"
-    export ORACLE_HOME="$oracle_home_resolved"
-    export PATH="$oracle_home_resolved/bin:\\$PATH"
-    $sqlplus_command
+    export ORACLE_SID="$1"
+    export ORACLE_HOME="$2"
+    export PATH="$ORACLE_HOME/bin:$PATH"
+    sqlplus_cmd="$3"
+    $sqlplus_cmd <<'EOSQL'
     WHENEVER SQLERROR EXIT SQL.SQLCODE
     SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
     SET LINESIZE 500
@@ -323,15 +324,15 @@ result=$(sudo -i -u oracle bash <<EOF
 
     WITH io_stats AS (
     SELECT
-        (SELECT value FROM v\\$sysstat WHERE name = 'physical reads') AS num_of_reads,
-        (SELECT value FROM v\\$sysstat WHERE name = 'physical writes') AS num_of_writes
+        (SELECT value FROM v$sysstat WHERE name = 'physical reads') AS num_of_reads,
+        (SELECT value FROM v$sysstat WHERE name = 'physical writes') AS num_of_writes
     FROM dual
     ),
     db_block AS (
-        SELECT value AS db_block_size FROM v\\$parameter WHERE name = 'db_block_size'
+        SELECT value AS db_block_size FROM v$parameter WHERE name = 'db_block_size'
     ),
     restart_time AS (
-        SELECT startup_time FROM v\\$instance
+        SELECT startup_time FROM v$instance
     ),
     time_since_restart AS (
         -- SYSDATE - startup_time returns days; multiply by 86400 to obtain seconds.
@@ -341,14 +342,14 @@ result=$(sudo -i -u oracle bash <<EOF
         SELECT
             SUM(time_waited) AS total_read_wait_time,
             SUM(total_waits) AS total_read_waits
-        FROM v\\$system_event
+        FROM v$system_event
         WHERE event IN ('db file sequential read', 'db file scattered read')
     ),
     write_latency AS (
     SELECT
         SUM(time_waited) AS total_write_wait_time,
         SUM(total_waits) AS total_write_waits
-    FROM v\\$system_event
+    FROM v$system_event
     WHERE event = 'db file parallel write'
     ),
     overall_latency AS (
@@ -379,6 +380,7 @@ result=$(sudo -i -u oracle bash <<EOF
     ) AS result
     FROM io_stats, db_block, time_since_restart;
     EXIT;
+EOSQL
 EOF
 )
 
@@ -557,12 +559,14 @@ EOF
             sqlplus_cmd="$4"
             [ "$pdbName" == "__EMPTY__" ] && pdbName=""
             [ "$isCDB" == "YES" ] && alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;" || alter_cmd=""
-            sqlplus_output=$($sqlplus_cmd <<EOSQL
+            # Quoted heredoc so V$ views are not mangled by bash; prepend ALTER SESSION via printf when needed.
+            sqlplus_output=$( {
+                [ -n "$alter_cmd" ] && printf '%s\n' "$alter_cmd"
+                cat <<'EOSQL'
                 ${sqlplusOutputFormatSettings}
-                $alter_cmd
-                select action from V\\$DATAGUARD_PROCESS where regexp_like(name, '^(MRP|PR|TMON|TT)') and action <> 'IDLE';
+                select action from V$DATAGUARD_PROCESS where regexp_like(name, '^(MRP|PR|TMON|TT)') and action <> 'IDLE';
 EOSQL
-)
+            } | $sqlplus_cmd )
         echo "$sqlplus_output"
 EOF
 )
@@ -588,12 +592,13 @@ EOF
             sqlplus_cmd="$4"
             [ "$pdbName" == "__EMPTY__" ] && pdbName=""
             [ "$isCDB" == "YES" ] && alter_cmd="ALTER SESSION SET CONTAINER=$pdbName;" || alter_cmd=""
-            sqlplus_output=$($sqlplus_cmd <<EOSQL
+            sqlplus_output=$( {
+                [ -n "$alter_cmd" ] && printf '%s\n' "$alter_cmd"
+                cat <<'EOSQL'
 ${sqlplusOutputFormatSettings}
-$alter_cmd
-select value from V\\$DATAGUARD_STATS where name in ('apply lag', 'transport lag');
+select value from V$DATAGUARD_STATS where name in ('apply lag', 'transport lag');
 EOSQL
-)
+            } | $sqlplus_cmd )
         echo "$sqlplus_output"
 EOF
 )
@@ -632,12 +637,13 @@ EOF
                 export ORACLE_SID="$1"
                 ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
                 sqlplus_cmd="$2"
-                result=$($sqlplus_cmd <<EOSQL
+                result=$( {
+                    cat <<'EOSQL'
 ${sqlplusOutputFormatSettings}
-SELECT db_unique_name || '|' || dest_role FROM V\\$DATAGUARD_CONFIG;
+SELECT db_unique_name || '|' || dest_role FROM V$DATAGUARD_CONFIG;
 EXIT;
 EOSQL
-)
+                } | $sqlplus_cmd )
                 sqlplus_rc=$?
                 # V$DATAGUARD_CONFIG is only populated when LOG_ARCHIVE_CONFIG is set.
                 # If sqlplus succeeded and returned 2+ members (self + standbys/primary), use it.
@@ -645,12 +651,12 @@ EOSQL
                 if [ $sqlplus_rc -eq 0 ] && [ "$(echo "$result" | grep -cF '|')" -gt 1 ]; then
                     echo "$result"
                 else
-                    $sqlplus_cmd <<EOSQL2
+                    $sqlplus_cmd <<'EOSQL2'
 ${sqlplusOutputFormatSettings}
 SELECT db_unique_name || '|' || dest_role FROM (
     SELECT DB_UNIQUE_NAME,
            CASE DATABASE_ROLE WHEN 'PRIMARY' THEN 'PRIMARY DATABASE' ELSE DATABASE_ROLE END AS dest_role
-    FROM V\\$DATABASE
+    FROM V$DATABASE
     UNION
     SELECT ADS.DB_UNIQUE_NAME,
            CASE ADS.TYPE
@@ -660,18 +666,18 @@ SELECT db_unique_name || '|' || dest_role FROM (
                WHEN 'FAR SYNC' THEN 'FAR SYNC INSTANCE'
                ELSE ADS.TYPE
            END
-    FROM V\\$ARCHIVE_DEST_STATUS ADS
+    FROM V$ARCHIVE_DEST_STATUS ADS
     WHERE ADS.TYPE IN ('PHYSICAL','LOGICAL','SNAPSHOT','FAR SYNC')
       AND ADS.DB_UNIQUE_NAME IS NOT NULL
       AND ADS.DB_UNIQUE_NAME != 'NONE'
-      AND (SELECT DATABASE_ROLE FROM V\\$DATABASE) = 'PRIMARY'
+      AND (SELECT DATABASE_ROLE FROM V$DATABASE) = 'PRIMARY'
     UNION
     SELECT REGEXP_SUBSTR(P.VALUE, '[^,]+', 1, 1),
            'PRIMARY DATABASE'
-    FROM V\\$PARAMETER P
+    FROM V$PARAMETER P
     WHERE P.NAME = 'fal_server'
       AND P.VALUE IS NOT NULL
-      AND (SELECT DATABASE_ROLE FROM V\\$DATABASE) <> 'PRIMARY'
+      AND (SELECT DATABASE_ROLE FROM V$DATABASE) <> 'PRIMARY'
 );
 EXIT;
 EOSQL2
@@ -1092,16 +1098,19 @@ const getOracleInstanceData = (ec2InstanceId: string) => `
     get_instance_details() {
         local ORACLE_SID="$1"
         local isMounted="$2"
+        local oracle_home_inst="$3"
+        local sqlplus_cmd="$4"
         
         # If we have credentials (default auth or user auth), query v$instance
         if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
             # For MOUNTED instances, we can still query v$instance but need to get open_mode from v$database
             if [[ "$isMounted" == "true" ]]; then
-                sudo -i -u oracle bash <<EOF
-                    export ORACLE_SID="$ORACLE_SID"
-                    export ORACLE_HOME="$ORACLE_HOME"
-                    export PATH="$ORACLE_HOME/bin:\\$PATH"
-                    instance_info=$($sqlplus_command <<'EOSQL'
+                sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd" <<'EOF'
+                    export ORACLE_SID="$1"
+                    export ORACLE_HOME="$2"
+                    export PATH="$ORACLE_HOME/bin:$PATH"
+                    sqlplus_cmd="$3"
+                    instance_info=$($sqlplus_cmd <<'EOSQL'
                         SET HEADING OFF
                         SET LINESIZE 500
                         SET FEEDBACK OFF
@@ -1116,7 +1125,7 @@ const getOracleInstanceData = (ec2InstanceId: string) => `
                         FROM v$instance;
 EOSQL
 )
-                    open_mode=$($sqlplus_command <<'EOSQL'
+                    open_mode=$($sqlplus_cmd <<'EOSQL'
                         SET HEADING OFF
                         SET FEEDBACK OFF
                         SET PAGESIZE 0
@@ -1132,11 +1141,12 @@ EOSQL
 EOF
             else
                 # For non-MOUNTED instances, STATUS from v$instance is correct
-                sudo -i -u oracle bash <<EOF
-                    export ORACLE_SID="$ORACLE_SID"
-                    export ORACLE_HOME="$ORACLE_HOME"
-                    export PATH="$ORACLE_HOME/bin:\\$PATH"
-                    $sqlplus_command
+                sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd" <<'EOF'
+                    export ORACLE_SID="$1"
+                    export ORACLE_HOME="$2"
+                    export PATH="$ORACLE_HOME/bin:$PATH"
+                    sqlplus_cmd="$3"
+                    $sqlplus_cmd <<'EOSQL'
                         SET HEADING OFF
                         SET LINESIZE 500
                         SET FEEDBACK OFF
@@ -1148,7 +1158,8 @@ EOF
                                 'version' value VERSION,
                                 'instance_state' value STATUS
                             ) AS instance_info
-                        FROM V\\$INSTANCE;
+                        FROM V$INSTANCE;
+EOSQL
 EOF
             fi
         else
@@ -1198,7 +1209,7 @@ EOF
         isMounted=$(is_mounted_instance "$sid")
         
         if [ "$isDefaultAuth" == "true" ]; then
-            sqlplus_command="sqlplus -S / as sysdba"
+            sqlplus_command="$oracle_home/bin/sqlplus -S / as sysdba"
         elif [ "$isDefaultAuth" == "false" ]; then
             # If default auth is not used, check if user auth credentials are available.
             result=$(get_oracle_user_auth_login_command "$sid" "$ec2InstanceId")
@@ -1209,7 +1220,7 @@ EOF
         fi
 
         { 
-            INSTANCE_DETAILS=$(get_instance_details "$sid" "$isMounted") 
+            INSTANCE_DETAILS=$(get_instance_details "$sid" "$isMounted" "$oracle_home" "$sqlplus_command") 
         } || { 
             echo "Failed to get instance details for $sid"
             continue
@@ -1236,37 +1247,41 @@ const isOracleNativeProtectionEnabled = (ec2InstanceId: string, dbSid: string) =
     ${resolveOracleHomeInParent('$oracleSid', 'oracle_home_resolved')}
 
     areBackupSetsAvailable () {
-        sudo -i -u oracle bash <<EOF
-            export ORACLE_SID="$oracleSid"
-            export ORACLE_HOME="$oracle_home_resolved"
-            export PATH="$oracle_home_resolved/bin:\\$PATH"
-            $sqlplus_command
+        sudo -i -u oracle bash -s -- "$oracleSid" "$oracle_home_resolved" "$sqlplus_command" <<'EOF'
+            export ORACLE_SID="$1"
+            export ORACLE_HOME="$2"
+            export PATH="$ORACLE_HOME/bin:$PATH"
+            sqlplus_cmd="$3"
+            $sqlplus_cmd <<'EOSQL'
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             select case 
-                when exists (select 1 from v\\$backup_set) then 'true' 
+                when exists (select 1 from v$backup_set) then 'true' 
                 else 'false' 
                 end as has_rows
             from dual;
+EOSQL
 EOF
     }
 
     areBackupPiecesAvailable () {
-        sudo -i -u oracle bash <<EOF
-            export ORACLE_SID="$oracleSid"
-            export ORACLE_HOME="$oracle_home_resolved"
-            export PATH="$oracle_home_resolved/bin:\\$PATH"
-            $sqlplus_command
+        sudo -i -u oracle bash -s -- "$oracleSid" "$oracle_home_resolved" "$sqlplus_command" <<'EOF'
+            export ORACLE_SID="$1"
+            export ORACLE_HOME="$2"
+            export PATH="$ORACLE_HOME/bin:$PATH"
+            sqlplus_cmd="$3"
+            $sqlplus_cmd <<'EOSQL'
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             select case 
                     when exists (
                         select 1 
-                        from v\\$backup_piece 
+                        from v$backup_piece 
                         where completion_time > sysdate - 30
                     ) 
                     then 'true' 
                     else 'false'
                 end as has_rows
             from dual;
+EOSQL
 EOF
     }
 
@@ -1317,15 +1332,17 @@ EOF
 
 
         get_instance_db_version() {
-            sudo -i -u oracle bash <<EOF
+            sudo -i -u oracle bash -s -- "$oracleSid" "$oracle_home_resolved" "$sqlplus_command" <<'EOF'
                 set -e
-                export ORACLE_SID="$oracleSid"
-                export ORACLE_HOME="$oracle_home_resolved"
-                export PATH="$oracle_home_resolved/bin:\\$PATH"
-                $sqlplus_command
+                export ORACLE_SID="$1"
+                export ORACLE_HOME="$2"
+                export PATH="$ORACLE_HOME/bin:$PATH"
+                sqlplus_cmd="$3"
+                $sqlplus_cmd <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
-                SELECT version FROM v\\$instance;
+                SELECT version FROM v$instance;
+EOSQL
 EOF
         }
 
@@ -1704,12 +1721,13 @@ const trendGraphCreateScriptForOracle = (dbSid: string, ec2InstanceId: string) =
     ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
     ${resolveOracleHomeInParent('$oracleSid', 'oracle_home_resolved')}
 
-    jsonPayload=$(sudo -i -u oracle bash <<EOF
+    jsonPayload=$(sudo -i -u oracle bash -s -- "$oracleSid" "$oracle_home_resolved" "$sqlplus_command" <<'EOF'
         set -e
-        export ORACLE_SID="$oracleSid"
-        export ORACLE_HOME="$oracle_home_resolved"
-        export PATH="$oracle_home_resolved/bin:\\$PATH"
-        $sqlplus_command
+        export ORACLE_SID="$1"
+        export ORACLE_HOME="$2"
+        export PATH="$ORACLE_HOME/bin:$PATH"
+        sqlplus_cmd="$3"
+        $sqlplus_cmd <<'EOSQL'
         WHENEVER SQLERROR EXIT SQL.SQLCODE
         SET HEADING OFF FEEDBACK OFF PAGESIZE 0 VERIFY OFF ECHO OFF TRIMSPOOL ON
         SET LINESIZE 32767
@@ -1725,7 +1743,7 @@ const trendGraphCreateScriptForOracle = (dbSid: string, ec2InstanceId: string) =
                     MAX(CASE WHEN METRIC_NAME='Physical Write IO Requests Per Sec' THEN VALUE END)  AS writeIops,
                     MAX(CASE WHEN METRIC_NAME='Physical Read Bytes Per Sec'       THEN VALUE END)/1024 AS readKBps,
                     MAX(CASE WHEN METRIC_NAME='Physical Write Bytes Per Sec'      THEN VALUE END)/1024 AS writeKBps
-                FROM V\\$SYSMETRIC_HISTORY
+                FROM V$SYSMETRIC_HISTORY
                 WHERE METRIC_NAME IN (
                 'CPU Usage Per Sec',
                 'Physical Read IO Requests Per Sec',
@@ -1738,13 +1756,13 @@ const trendGraphCreateScriptForOracle = (dbSid: string, ec2InstanceId: string) =
             cpuCores AS (
                 SELECT
                     MAX(CASE WHEN stat_name='NUM_CPU_CORES' THEN VALUE END) AS cores
-                FROM V\\$OSSTAT
+                FROM V$OSSTAT
             ),
             ioStats AS (
                 SELECT
                     NVL(SUM(readtim),0)/DECODE(NVL(SUM(phyrds),0),0,1,SUM(phyrds))   AS avgReadLat,
                     NVL(SUM(writetim),0)/DECODE(NVL(SUM(phywrts),0),0,1,SUM(phywrts)) AS avgWriteLat
-                FROM V\\$FILESTAT
+                FROM V$FILESTAT
             )
             SELECT JSON_OBJECT(
                 'maxCpuSec'    VALUE sysMetric.maxCpu,
@@ -1760,6 +1778,7 @@ const trendGraphCreateScriptForOracle = (dbSid: string, ec2InstanceId: string) =
             CROSS JOIN cpuCores
             CROSS JOIN ioStats;
             EXIT;
+EOSQL
 EOF
 )
 
@@ -1955,18 +1974,20 @@ EOF
 }
 
     is_cdb_instance() {
-        local result=$(sudo -i -u oracle bash <<EOF
+        local result=$(sudo -i -u oracle bash -s -- "$oracleSid" "$permissions_oracle_home" "$sqlplus_command" <<'EOF'
                 set -e
-                export ORACLE_SID="$oracleSid"
-                export ORACLE_HOME="$permissions_oracle_home"
-                export PATH="$permissions_oracle_home/bin:\\$PATH"
-                $sqlplus_command
+                export ORACLE_SID="$1"
+                export ORACLE_HOME="$2"
+                export PATH="$ORACLE_HOME/bin:$PATH"
+                sqlplus_cmd="$3"
+                $sqlplus_cmd <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
                 SELECT CASE WHEN COUNT(*) > 0 THEN 'true' ELSE 'false' END
-                FROM v\\$database
+                FROM v$database
                 WHERE cdb = 'YES';
                 EXIT;
+EOSQL
 EOF
         )
         echo "$result" | grep -q "true" && echo "true" || echo "false"
@@ -1991,18 +2012,20 @@ EOF
 }
 
     check_for_pdb_read_write_state() {
-        local result=$(sudo -i -u oracle bash <<EOF
+        local result=$(sudo -i -u oracle bash -s -- "$oracleSid" "$permissions_oracle_home" "$sqlplus_command" <<'EOF'
             set -e
-            export ORACLE_SID="$oracleSid"
-            export ORACLE_HOME="$permissions_oracle_home"
-            export PATH="$permissions_oracle_home/bin:\\$PATH"
-            $sqlplus_command
+            export ORACLE_SID="$1"
+            export ORACLE_HOME="$2"
+            export PATH="$ORACLE_HOME/bin:$PATH"
+            sqlplus_cmd="$3"
+            $sqlplus_cmd <<'EOSQL'
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             SELECT CASE WHEN COUNT(*) > 1 THEN 'true' ELSE 'false' END
-            FROM v\\$pdbs
+            FROM v$pdbs
             WHERE open_mode = 'READ WRITE' or open_mode = 'READ ONLY';
             EXIT;
+EOSQL
 EOF
         )
         echo "$result" | grep -q "true" && echo "true" || echo "false"
@@ -2149,18 +2172,19 @@ ${isStorageASMmanaged('$oracleSid')}
 
     # Execute all SQL queries in a single connection
     ${resolveOracleHomeInParent('$oracleSid', 'server_details_oracle_home')}
-    sqlResults=$(sudo -i -u oracle bash <<EOF 2>/dev/null
-    export ORACLE_SID="$oracleSid"
-    export ORACLE_HOME="$server_details_oracle_home"
-    export PATH="$server_details_oracle_home/bin:\\$PATH"
-    $sqlplus_command <<'EOSQL'
+    sqlResults=$(sudo -i -u oracle bash -s -- "$oracleSid" "$server_details_oracle_home" "$sqlplus_command" <<'EOF' 2>/dev/null
+    export ORACLE_SID="$1"
+    export ORACLE_HOME="$2"
+    export PATH="$ORACLE_HOME/bin:$PATH"
+    sqlplus_cmd="$3"
+    $sqlplus_cmd <<'EOSQL'
     SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
     SELECT REGEXP_SUBSTR(BANNER, '(Standard|Enterprise) Edition') AS edition, 
         REGEXP_SUBSTR(BANNER, '[0-9]{2}c') AS version 
-    FROM v\\$version 
+    FROM v$version 
     WHERE BANNER LIKE 'Oracle%';
-    SELECT COUNT(*) FROM v\\$session WHERE status = 'ACTIVE';
-    SELECT to_char(created, 'YYYY-MM-DD\\"T\\"HH24:MI:SS\\"Z\\"') FROM v\\$database;
+    SELECT COUNT(*) FROM v$session WHERE status = 'ACTIVE';
+    SELECT to_char(created, 'YYYY-MM-DD\\"T\\"HH24:MI:SS\\"Z\\"') FROM v$database;
     EXIT
 EOSQL
 EOF
