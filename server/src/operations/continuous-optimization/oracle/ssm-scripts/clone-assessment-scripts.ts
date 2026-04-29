@@ -24,29 +24,39 @@ svm_name = '${svmName}'
 log("Starting Oracle clone assessment")
 log(f"FSx ID: {filesystemid}, Region: {region}, SVM: {svm_name}")
 
-try:
-    from urllib.parse import quote
-    encoded_svm = quote(svm_name)
-except ImportError:
-    from urllib import quote
-    encoded_svm = quote(svm_name)
+# Query all FlexClone volumes across the FSx filesystem (not filtered by SVM)
+# This allows detection of cross-SVM clones where parent volume is in one SVM
+# and clone volume is in a different SVM
+all_records = []
+endpoint = f"storage/volumes?clone.is_flexclone=true&fields=${FLEXCLONE_VOLUMES_FIELDS}&max_records=200&return_timeout=60"
+page = 1
 
-endpoint = f"storage/volumes?clone.is_flexclone=true&svm.name={encoded_svm}&fields=${FLEXCLONE_VOLUMES_FIELDS}"
-response, error = ontapRestApiRequest(filesystemid, region, 'GET', endpoint)
+while endpoint:
+    log(f"Fetching FlexClone volumes page {page}: {endpoint}")
+    response, error = ontapRestApiRequest(filesystemid, region, 'GET', endpoint)
 
-if error:
-    log(f"Failed to fetch FlexClone volumes: {error}")
-    print(json.dumps({"error": str(error)}))
-    sys.exit(0)
+    if error:
+        log(f"Failed to fetch FlexClone volumes (page {page}): {error}")
+        print(json.dumps({"error": str(error)}))
+        sys.exit(0)
 
-if not response:
-    log("Empty response from ONTAP API")
-    print(json.dumps({"records": []}))
-    sys.exit(0)
+    if not response:
+        log(f"Empty response from ONTAP API (page {page})")
+        break
 
-records = response.get('records', [])
-log(f"FlexClone volumes retrieved: {len(records)}")
-print(json.dumps({"records": records}))
+    page_records = response.get('records', [])
+    all_records.extend(page_records)
+    log(f"Page {page}: retrieved {len(page_records)} records (total so far: {len(all_records)})")
+
+    next_link = response.get('_links', {}).get('next', {}).get('href', '')
+    if next_link:
+        endpoint = next_link.replace('/api/', '', 1) if next_link.startswith('/api/') else next_link
+        page += 1
+    else:
+        endpoint = None
+
+log(f"FlexClone volumes retrieved (all pages): {len(all_records)}")
+print(json.dumps({"records": all_records}))
 `;
 
 function buildFlexCloneQueryScript(fsxnId: string, region: string, svmName: string) {

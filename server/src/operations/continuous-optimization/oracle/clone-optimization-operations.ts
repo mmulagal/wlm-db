@@ -515,6 +515,8 @@ async function optimizeClone(
     clone: OracleCloneActionType,
     configData: CloneAssessment,
     parentJobId: string,
+    resourceName: string,
+    instanceName: string,
     mappedVolumesConfigData?: Record<string, OracleMappedOntapVolumesResponse>
 ) {
     logger.info('Optimizing Oracle clone', {
@@ -540,7 +542,7 @@ async function optimizeClone(
             resourceName: cloneDatabaseName,
             name: `Delete clone ${cloneDatabaseName}`,
             startTime: Date.now(),
-            description: `Delete clone ${cloneDatabaseName} for instance ${databaseInstanceId}`,
+            description: `Delete clone ${cloneDatabaseName} from ${resourceName}\\${instanceName}`,
             parentJobId
         });
         childCloneJobId = id;
@@ -622,6 +624,8 @@ async function handleCloneOptimizationForInstance(
                         clone,
                         configData,
                         parentJobId,
+                        resourceName,
+                        instanceName,
                         mappedVolumesConfigData
                     );
                     logger.info(
