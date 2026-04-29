@@ -224,6 +224,7 @@ async function initiateHostLevelAssessmentDataCollection(
         const existingAssessmentData = hostLevelAssessmentData as ResourceAssessmentData;
 
         const updatedAssessmentData = {
+            ...existingAssessmentData,
             hostOsPatch:
                 hostOsPatchAssessment || (!hostOsPatchErrorMessage ? existingAssessmentData?.hostOsPatch : undefined),
             errors: {
