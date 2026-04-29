@@ -57,9 +57,13 @@ div.filter-panel-wrapper {
                 }
             }
 
-            span {
+            .filter-option-label {
                 display: inline-block;
                 max-width: 250px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                vertical-align: bottom;
             }
 
             .drop-down-label {

@@ -2,11 +2,11 @@ import React, { useCallback, useState } from 'react';
 import { ReactComponent as FilterIcon } from '@netapp/icons/ic_filter.svg';
 import classNames from 'classnames';
 import { Button, Checkbox, Popover } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import styles from './FilterPanel.module.scss';
 import { ColumnProps } from './Table';
 import { ButtonBase } from '../ButtonBase/ButtonBase';
 import useClickOutside from '../../hooks/useClickOutside';
-import { GENERAL } from '../../../utils/appConstants';
 
 export interface FilterPanelProps {
     column: ColumnProps;
@@ -17,6 +17,7 @@ export const FilterPanel = ({
     column: { filterState, filterOptions, updateColumnFilter },
     setIsOpen
 }: FilterPanelProps) => {
+    const { t } = useTranslation();
     const [internalState, setInternalState] = useState(filterState?.values || {});
 
     const onClickOutside = useCallback(() => {
@@ -30,22 +31,27 @@ export const FilterPanel = ({
                 {filterOptions &&
                     Array.isArray(filterOptions) &&
                     filterOptions.length > 0 &&
-                    filterOptions.map(({ value, label, isDisabled = false, className }) => (
-                        <Checkbox
-                            key={value as string}
-                            isDisabled={isDisabled}
-                            isChecked={internalState[String(value)] || false}
-                            className={classNames(styles['checkbox-container'], className)}
-                            onChange={() =>
-                                setInternalState({
-                                    ...internalState,
-                                    [String(value)]: !internalState[String(value)]
-                                })
-                            }
-                        >
-                            {label === '' ? GENERAL.NOT_AVAILABLE : label}
-                        </Checkbox>
-                    ))}
+                    filterOptions.map(({ value, label, isDisabled = false, className }) => {
+                        const displayText = label === '' ? t('databases.general.not-available') : label;
+                        return (
+                            <Checkbox
+                                key={value as string}
+                                isDisabled={isDisabled}
+                                isChecked={internalState[String(value)] || false}
+                                className={classNames(styles['checkbox-container'], className)}
+                                onChange={() =>
+                                    setInternalState({
+                                        ...internalState,
+                                        [String(value)]: !internalState[String(value)]
+                                    })
+                                }
+                            >
+                                <span className={styles['filter-option-label']} title={displayText}>
+                                    {displayText}
+                                </span>
+                            </Checkbox>
+                        );
+                    })}
             </div>
             <div className={styles['buttons-row']}>
                 <ButtonBase
