@@ -1592,6 +1592,7 @@ async function registerOracleInstance(
             }
         }
 
+        await installJqAndAwsCli(accountId, region, credentialsId, ec2InstanceId, hostJobId);
         await installPythonModules(accountId, region, credentialsId, ec2InstanceId, hostJobId);
 
         if (isResourceToBeCreated) {
@@ -1764,6 +1765,92 @@ async function installPythonModules(
         });
         errorMessage = error.message;
         status = JOBSTATUS.FAILED;
+        throw error;
+    } finally {
+        await updateJobDetails(accountId, childJobId, {
+            status,
+            endTime: Date.now(),
+            ...(errorMessage && { error: errorMessage })
+        });
+    }
+}
+
+async function installJqAndAwsCli(
+    accountId: string,
+    region: string,
+    credentialsId: string,
+    instanceId: string,
+    parentJobId: string
+) {
+    logger.info('Check and install jq/AWS CLI', { accountId, region, credentialsId, instanceId });
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.REGISTER_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: accountId,
+        parentJobId,
+        name: `Check and install jq/AWS CLI on instance ${instanceId}`,
+        startTime: Date.now(),
+        description: `Check and install jq/AWS CLI on instance ${instanceId}`
+    });
+
+    let errorMessage = '';
+    let status = '';
+
+    const bucketname = getArtifactsRegionBucketName(region);
+    const [awsCliSignedUrl, jqSignedUrl, makeSignedUrl] = await Promise.all([
+        getPreSignedUrl(region, bucketname, AWS_CLI_LINUX_RELATIVE_PATH),
+        getPreSignedUrl(region, bucketname, JQ_LINUX_RELATIVE_PATH),
+        getPreSignedUrl(region, bucketname, MAKE_LINUX_RELATIVE_PATH)
+    ]);
+    const signedUrls = [awsCliSignedUrl, jqSignedUrl, makeSignedUrl];
+
+    try {
+        const command = `${initializeResultObject}\n${checkAndInstallRequiredOracleDependentModules(
+            signedUrls
+        )}\necho $resultObject`;
+        const ssmresponse = await callSsmExecution({
+            credentialsId,
+            region,
+            commands: [command],
+            ec2InstanceId: instanceId,
+            comment: 'Check and install jq/AWS CLI on linux host',
+            accountId,
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
+        });
+
+        const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
+        let parsedResponse = attempt(JSON.parse, cleanResponse);
+        parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
+
+        if (!parsedResponse) {
+            throw new Error(`Failed to check/install jq and AWS CLI. Reason: ${cleanResponse}`);
+        }
+
+        const { modulesInstallationResults } = parsedResponse;
+        if (modulesInstallationResults && modulesInstallationResults.length) {
+            const errString = modulesInstallationResults
+                .filter((r: Record<string, string>) => r?.error)
+                .map((r: Record<string, string>) => r.error)
+                .join(', ');
+            if (errString) {
+                throw new Error(`Failed to install required modules: ${errString}`);
+            }
+        }
+
+        status = JOBSTATUS.COMPLETED;
+    } catch (error: any) {
+        logger.error('Error while installing jq/AWS CLI', {
+            accountId,
+            region,
+            credentialsId,
+            instanceId,
+            error: error.message
+        });
+        errorMessage = error.message;
+        status = JOBSTATUS.FAILED;
+        throw error;
     } finally {
         await updateJobDetails(accountId, childJobId, {
             status,
