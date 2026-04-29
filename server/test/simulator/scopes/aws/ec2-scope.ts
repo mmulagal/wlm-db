@@ -50,6 +50,7 @@ import modifyVpcAttributesResponse from '../../responses/aws/modify-vpc-attribut
 import describeSnapshotsResponse from '../../responses/aws/describe-snapshots.json';
 import instanceTypesFromRequirements from '../../responses/aws/ec2-instance-types-from-requirements.json';
 import { inventoryDemoData } from '../../../../src/utils/demo-utils/demoInventoryData';
+import { getOracleTcoEbsDescribeVolumesForSimulator } from '../../../../src/operations/demo-operations';
 import { waitForInstanceOkWrapper } from '../../../../src/lib/aws/ec2';
 import { TEST_STOPPED_EC2_INSTANCE_ID } from '../../../utils/consts';
 
@@ -331,6 +332,11 @@ ec2Mock.on(ModifyVpcAttributeCommand).resolves(modifyVpcAttributesResponse);
 ec2Mock.on(DescribeVolumesCommand).callsFake(async (command: DescribeVolumesCommand) => {
     // Get the VolumeIds from the command parameters if not passed assign a random volumeId
     const volumeIds = command.VolumeIds ? command.VolumeIds : [`vol-${faker.string.alphanumeric(8)}`];
+
+    const oracleTcoVols = getOracleTcoEbsDescribeVolumesForSimulator(volumeIds);
+    if (oracleTcoVols) {
+        return oracleTcoVols;
+    }
 
     const volumes: Volume[] = volumeIds?.map(volumeId => ({
         VolumeId: volumeId,

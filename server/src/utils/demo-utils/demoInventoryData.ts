@@ -5,7 +5,7 @@ import {
     DiscoverOracleResponseBodyType,
     DiscoverOracleResponseType
 } from '../../routes/types/discover.types';
-import { DatabaseTypes } from '../consts';
+import { DatabaseTypes, SINGLE_AZ } from '../consts';
 import { getDatabaseHostsSummaryV2 } from '../../operations/database-hosts-operations';
 import { EC2InstanceDetailsResponseType } from '../../routes/types/database-hosts.types';
 
@@ -34,6 +34,16 @@ const MANAGE_READINESS = {
 };
 
 const ORACLE_DISCOVERY_RES: DiscoverOracleResponseBodyType = { count: 0, items: [] };
+
+/** Matches EBS items from `getDiscoveredOracleInstancesStorageDetails` in discover-operations. */
+const mkOracleDemoEbsStorageEntries = (volumeIds: string[], zone: string = 'ap-south-1a') =>
+    volumeIds.map(id => ({
+        type: 'EBS',
+        id,
+        deploymentType: SINGLE_AZ,
+        isAsmManaged: false,
+        zones: [zone]
+    }));
 
 function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlResponseBodyType {
     return {
@@ -1532,11 +1542,6 @@ async function discoverDemoDataOracle(
                     VolumeId
                 }
             }));
-        const mkOracleDemoEbsStorageEntries = (volumeIds: string[]) =>
-            volumeIds.map(id => ({
-                type: 'EBS',
-                id
-            }));
 
         const mkOracleDemoDeploymentTypes = (zones: string[]) => [
             {
@@ -1545,6 +1550,7 @@ async function discoverDemoDataOracle(
             }
         ];
 
+        // Order for multi-type EBS: 00001–00004 = gp3, 00005–00008 = io2 (aligns with Oracle TCO marketing demo in demo-operations).
         const oracleEbsTcoDemoSa1Vols = [
             'vol-0a1b2c3d4e5f00001',
             'vol-0a1b2c3d4e5f00002',
@@ -1861,7 +1867,7 @@ async function discoverDemoDataOracle(
                 ec2InstanceId: 'i-12456768',
                 ec2InstanceType: 'm5.large',
                 ec2InstanceName: 'oracle-node-5717',
-                ec2HostName: 'ip-172-31-48-81.ap-southeast-1.compute.internal',
+                ec2HostName: 'ORACLE-EBS-PRD-STG-ORCLSTD6',
                 ec2UsageOperation: 'RunInstances',
                 ssmState: 'connected',
                 ebsVolumeIDs: ['vol-094b644283b4fd16a'],
@@ -1897,18 +1903,8 @@ async function discoverDemoDataOracle(
                             openMode: 'READ WRITE'
                         },
 
-                        storage: [
-                            {
-                                type: 'EBS',
-                                id: 'vol-094b644283b4fd16a'
-                            }
-                        ],
-                        deploymentTypes: [
-                            {
-                                type: 'SINGLE_AZ_1',
-                                zones: ['ap-south-1c']
-                            }
-                        ],
+                        storage: mkOracleDemoEbsStorageEntries(['vol-094b644283b4fd16a'], 'ap-south-1c'),
+                        deploymentTypes: mkOracleDemoDeploymentTypes(['ap-south-1c']),
                         isInstanceStorageAsmManaged: false,
                         isDefaultAuthentication: true,
                         oracleServerAuthentication: false,
@@ -2122,9 +2118,9 @@ async function discoverDemoDataOracle(
             },
             {
                 ec2InstanceId: 'i-02a8c7e5d4b3f12a9',
-                ec2InstanceType: 'm5.large',
-                ec2InstanceName: 'oracle-node-5718',
-                ec2HostName: 'ip-10-0-141-134.ap-south-1.compute.internal',
+                ec2InstanceType: 'm5.4xlarge',
+                ec2InstanceName: 'ORACLE-EBS-PRD-ORCLSTD1',
+                ec2HostName: 'ORACLE-EBS-PRD-ORCLSTD1',
                 ec2UsageOperation: 'RunInstances',
                 ssmState: 'connected',
                 ebsVolumeIDs: oracleEbsTcoDemoSa1Vols,
@@ -2170,9 +2166,9 @@ async function discoverDemoDataOracle(
             },
             {
                 ec2InstanceId: 'i-03b9d6f4c5e2a8b71',
-                ec2InstanceType: 'm5.large',
-                ec2InstanceName: 'oracle-node-5719',
-                ec2HostName: 'ip-10-0-141-135.ap-south-1.compute.internal',
+                ec2InstanceType: 'm5.4xlarge',
+                ec2InstanceName: 'ORACLE-EBS-PRD-ORCLSTD2',
+                ec2HostName: 'ORACLE-EBS-PRD-ORCLSTD2',
                 ec2UsageOperation: 'RunInstances',
                 ssmState: 'connected',
                 ebsVolumeIDs: oracleEbsTcoDemoSa2Vols,
@@ -2218,9 +2214,9 @@ async function discoverDemoDataOracle(
             },
             {
                 ec2InstanceId: 'i-04c8e5b3d6a9f12c4',
-                ec2InstanceType: 'm5.large',
-                ec2InstanceName: 'DATAGUARD-PRIMARY-oracle19c-ebs',
-                ec2HostName: 'ip-10-0-142-10.ap-south-1.compute.internal',
+                ec2InstanceType: 'm5.4xlarge',
+                ec2InstanceName: 'ORACLE-EBS-DG-PRIMARY-ORC19C',
+                ec2HostName: 'ORACLE-EBS-DG-PRIMARY-ORC19C',
                 ec2UsageOperation: 'RunInstances',
                 ssmState: 'connected',
                 ebsVolumeIDs: oracleEbsTcoDemoDgPrimaryVols,
@@ -2288,9 +2284,9 @@ async function discoverDemoDataOracle(
             },
             {
                 ec2InstanceId: 'i-05d7f6c4e3b8a9d52',
-                ec2InstanceType: 'm5.large',
-                ec2InstanceName: 'DATAGUARD-STANDBY-oracle19c-ebs',
-                ec2HostName: 'ip-10-0-142-11.ap-south-1.compute.internal',
+                ec2InstanceType: 'm5.4xlarge',
+                ec2InstanceName: 'ORACLE-EBS-DG-STANDBY-ORC19C',
+                ec2HostName: 'ORACLE-EBS-DG-STANDBY-ORC19C',
                 ec2UsageOperation: 'RunInstances',
                 ssmState: 'connected',
                 ebsVolumeIDs: oracleEbsTcoDemoDgStandbyVols,
@@ -2358,9 +2354,9 @@ async function discoverDemoDataOracle(
             },
             {
                 ec2InstanceId: 'i-06e9a7b5c8d4f3e12',
-                ec2InstanceType: 'm5.large',
-                ec2InstanceName: 'oracle-node-5720',
-                ec2HostName: 'ip-10-0-141-200.ap-south-1.compute.internal',
+                ec2InstanceType: 'm5.4xlarge',
+                ec2InstanceName: 'ORACLE-EBS-PRD-MIXED-01',
+                ec2HostName: 'ORACLE-EBS-PRD-MIXED-01',
                 ec2UsageOperation: 'RunInstances',
                 ssmState: 'connected',
                 ebsVolumeIDs: oracleEbsTcoDemoMixedHostAllVols,

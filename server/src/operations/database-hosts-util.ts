@@ -11,7 +11,11 @@ import {
 } from './aws/cloud-watch-operations';
 import { getEc2Hostname, IS_DEMO_FLOW } from '../utils/utils';
 import { AWS_ERROR_CODES, AWS_REGIONS, DatabaseTypes, HttpErrorCodes, SqlServerDeploymentModel } from '../utils/consts';
-import { getEBSVolumesForDemo, getMssqlStorageDataForDemo } from './demo-operations';
+import {
+    getEBSVolumesForDemo,
+    getMssqlStorageDataForDemo,
+    getOracleTcoEbsDescribeVolumesForSimulator
+} from './demo-operations';
 import { describeInstance, describeVolumes, describeVpc } from '../lib/aws/ec2';
 
 const logger = getLogger();
@@ -92,7 +96,10 @@ async function getEbsResourceInfo(
                 databaseInstanceDetails
             )) as DescribeVolumesResult;
         } else {
-            volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds });
+            // Oracle TCO EBS demo: same idea as getEBSVolumesForDemo for MSSQL — return fixed multi-type
+            // volumes from demo-operations instead of the generic EC2 DescribeVolumes mock.
+            const oracleTcoVols = getOracleTcoEbsDescribeVolumesForSimulator(ebsVolumeIds);
+            volumes = oracleTcoVols ?? (await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds }));
         }
     } else {
         volumes = await describeVolumes(credentialsId, region, { VolumeIds: ebsVolumeIds }, { useCache: true });

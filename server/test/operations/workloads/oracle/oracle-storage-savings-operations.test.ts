@@ -23,7 +23,10 @@ import {
     partitionOracleEbsVolumesByDeploymentType,
     performOracleBulkStorageSavingsCalculations
 } from '../../../../src/operations/workloads/oracle/oracle-storage-savings-operations';
+import { getOracleTcoEbsDescribeVolumesForSimulator } from '../../../../src/operations/demo-operations';
+import { discoverDemoDataOracle } from '../../../../src/utils/demo-utils/demoInventoryData';
 
+type OracleTcoInventoryHost = DiscoverOracleResponseType & { ebsVolumeIDs: string[] };
 type DiscoverOracleResourcesResult = Awaited<ReturnType<typeof discoverOperations.discoverOracleResources>>;
 
 afterEach(() => {
@@ -73,6 +76,7 @@ function makeMetricsResponse(opts: { ebsTotal: number; fsxTotal: number }) {
 
 function makeHost(opts: {
     ec2InstanceId: string;
+    ec2InstanceType?: string;
     databaseInstanceDetails: Array<{
         isDataGuardDeployed?: boolean;
         isRacEnabled?: boolean;
@@ -82,7 +86,7 @@ function makeHost(opts: {
 }): DiscoverOracleResponseType {
     return {
         ec2InstanceId: opts.ec2InstanceId,
-        ec2InstanceType: 'm5.large',
+        ec2InstanceType: opts.ec2InstanceType ?? 'm5.large',
         databaseInstanceDetails: opts.databaseInstanceDetails
     } as DiscoverOracleResponseType;
 }
@@ -350,5 +354,51 @@ describe('mixed vs homogeneous marketing API call routing', () => {
         // Call 2: standalone volumes only
         expect(formatMetricsSpy.mock.calls[1][3]).toEqual(['vol-sa-1']);
         expect(formatMetricsSpy.mock.calls[1][5]).toBe(ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE);
+    });
+});
+
+describe('Oracle EBS TCO inventory ↔ demo-operations contract', () => {
+    it('8-vol Standalone orclstd1: describe volumes match inventory and TCO spec', async () => {
+        const { items } = await discoverDemoDataOracle('acct', 'us-east-1', 'cred', 'fs-1', 'vol-dummy');
+        const host = items.find(h => h.ec2InstanceId === 'i-02a8c7e5d4b3f12a9') as OracleTcoInventoryHost | undefined;
+        expect(host).toBeDefined();
+        const { ebsVolumeIDs } = host!;
+        const result = getOracleTcoEbsDescribeVolumesForSimulator(ebsVolumeIDs);
+        expect(result).not.toBeNull();
+        expect(result!.Volumes).toHaveLength(8);
+        const typeSet = new Set(result!.Volumes!.map(v => v.VolumeType));
+        expect(typeSet.has('gp3')).toBe(true);
+        expect(typeSet.has('io2')).toBe(true);
+        const gp3Vols = result!.Volumes!.filter(v => v.VolumeType === 'gp3');
+        expect(gp3Vols[0]!.Size).toBe(200);
+        expect(gp3Vols[0]!.Iops).toBe(3000);
+        const io2Vols = result!.Volumes!.filter(v => v.VolumeType === 'io2');
+        expect(io2Vols[0]!.Iops).toBe(10000);
+    });
+
+    it('8-vol DG primary: describe volumes match inventory (gp3 + io2)', async () => {
+        const { items } = await discoverDemoDataOracle('acct', 'us-east-1', 'cred', 'fs-1', 'vol-dummy');
+        const host = items.find(h => h.ec2InstanceId === 'i-04c8e5b3d6a9f12c4') as OracleTcoInventoryHost | undefined;
+        expect(host).toBeDefined();
+        const { ebsVolumeIDs } = host!;
+        const result = getOracleTcoEbsDescribeVolumesForSimulator(ebsVolumeIDs);
+        expect(result).not.toBeNull();
+        expect(result!.Volumes).toHaveLength(8);
+        const types = new Set(result!.Volumes!.map(v => v.VolumeType));
+        expect(types.has('gp3')).toBe(true);
+        expect(types.has('io2')).toBe(true);
+    });
+
+    it('6+6 mixed host: describe volumes match 12 vol ids (two TCO groups)', async () => {
+        const { items } = await discoverDemoDataOracle('acct', 'us-east-1', 'cred', 'fs-1', 'vol-dummy');
+        const host = items.find(h => h.ec2InstanceId === 'i-06e9a7b5c8d4f3e12') as OracleTcoInventoryHost | undefined;
+        expect(host).toBeDefined();
+        const { ebsVolumeIDs } = host!;
+        const result = getOracleTcoEbsDescribeVolumesForSimulator(ebsVolumeIDs);
+        expect(result).not.toBeNull();
+        expect(result!.Volumes).toHaveLength(12);
+        const types = new Set(result!.Volumes!.map(v => v.VolumeType));
+        expect(types.has('gp3')).toBe(true);
+        expect(types.has('io2')).toBe(true);
     });
 });

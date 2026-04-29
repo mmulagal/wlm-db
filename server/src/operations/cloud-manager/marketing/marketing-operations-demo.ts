@@ -2,6 +2,7 @@ import { isEmpty } from 'lodash-es';
 import {
     DEMO_STANDALONE_INSTANCE_ID,
     ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
     SqlServerDeploymentModel
 } from '../../../utils/consts';
 import { getEbsManualModeStorageSavings, getFsxwManualModeStorageSavings } from '../../../lib/cloud-manager/marketing';
@@ -16,6 +17,10 @@ import {
     getEbsMarketingApiManualModeRequestBody,
     getFsxwMarketingApiManualModeRequestBody
 } from './marketing-request-utils';
+import {
+    getOracleTcoEbsDemoMarketingVolsAndInstanceType,
+    ORACLE_TCO_DEMO_EBS_HOST_TCO_SIZE
+} from '../../demo-operations';
 
 /* eslint-disable camelcase */
 async function fsxwAutomaticDemoModeCallingManualApi(
@@ -89,6 +94,7 @@ async function ebsAutomaticDemoModeCallingManualApi(
             throughput: 128
         }
     ];
+    let primaryEc2InstanceType = 'm5.4xlarge';
     if (
         sqlServerDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&
         instanceIds?.includes(DEMO_STANDALONE_INSTANCE_ID)
@@ -109,9 +115,7 @@ async function ebsAutomaticDemoModeCallingManualApi(
                 throughput: 128
             }
         ];
-    }
-
-    if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+    } else if (sqlServerDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
         volumes = [
             {
                 volumeType: 'io2',
@@ -121,6 +125,15 @@ async function ebsAutomaticDemoModeCallingManualApi(
                 throughput: 128
             }
         ];
+    } else if (
+        (sqlServerDeploymentType === ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE ||
+            sqlServerDeploymentType === ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG) &&
+        (instanceIds ?? []).some(id => ORACLE_TCO_DEMO_EBS_HOST_TCO_SIZE[id] != null)
+    ) {
+        const tco = getOracleTcoEbsDemoMarketingVolsAndInstanceType(instanceIds);
+        if (tco) {
+            ({ volumes, ec2InstanceType: primaryEc2InstanceType } = tco);
+        }
     }
 
     const marketingRequestBody = getEbsMarketingApiManualModeRequestBody(region, {
@@ -132,7 +145,7 @@ async function ebsAutomaticDemoModeCallingManualApi(
         ec2Instances: [
             {
                 ec2InstanceDescription: 'Primary',
-                ec2InstanceType: 'm5.4xlarge',
+                ec2InstanceType: primaryEc2InstanceType,
                 isPrimary: true,
                 volumes
             }

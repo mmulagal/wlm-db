@@ -1,9 +1,15 @@
+import { vi } from 'vitest';
+import * as marketingRequestUtils from '../../../src/operations/cloud-manager/marketing/marketing-request-utils';
 import {
     fsxwAutomaticDemoModeCallingManualApi,
     ebsAutomaticDemoModeCallingManualApi
 } from '../../../src/operations/cloud-manager/marketing/marketing-operations-demo';
 import { ACCOUNT_ID } from '../../utils/consts';
-import { SqlServerDeploymentModel } from '../../../src/utils/consts';
+import {
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
+    SqlServerDeploymentModel
+} from '../../../src/utils/consts';
 
 describe('Marketing Operations Demo', () => {
     describe('fsxwAutomaticDemoModeCallingManualApi', () => {
@@ -224,6 +230,70 @@ describe('Marketing Operations Demo', () => {
                 expect(result.multi).toBeDefined();
             }
         });
+
+        it('uses Oracle TCO demo primary instance type and gp3+io2 volumes for TCO host instance id', async () => {
+            const spy = vi.spyOn(marketingRequestUtils, 'getEbsMarketingApiManualModeRequestBody');
+            const instanceIds = ['i-02a8c7e5d4b3f12a9'];
+            const region = 'us-east-1';
+            const clonedCopiesCount = 1;
+            const monthlyChangeRatePercentage = 30;
+
+            try {
+                const result = await ebsAutomaticDemoModeCallingManualApi(
+                    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
+                    instanceIds,
+                    region,
+                    clonedCopiesCount,
+                    monthlyChangeRatePercentage,
+                    ACCOUNT_ID
+                );
+
+                expect(result).toBeDefined();
+                expect(result.ebs).toBeDefined();
+                expect(spy).toHaveBeenCalled();
+                const body = spy.mock.calls[0]![1] as {
+                    ec2Instances: Array<{ ec2InstanceType: string; volumes: Array<{ volumeType: string }> }>;
+                };
+                expect(body.ec2Instances[0].ec2InstanceType).toBe('m5.4xlarge');
+                const volTypes = body.ec2Instances[0].volumes.map(v => v.volumeType);
+                expect(volTypes).toContain('gp3');
+                expect(volTypes).toContain('io2');
+            } finally {
+                spy.mockRestore();
+            }
+        });
+
+        it('uses Oracle TCO demo DG primary instance type and gp3+io2 volumes for TCO host instance id', async () => {
+            const spy = vi.spyOn(marketingRequestUtils, 'getEbsMarketingApiManualModeRequestBody');
+            const instanceIds = ['i-04c8e5b3d6a9f12c4'];
+            const region = 'us-east-1';
+            const clonedCopiesCount = 1;
+            const monthlyChangeRatePercentage = 30;
+
+            try {
+                const result = await ebsAutomaticDemoModeCallingManualApi(
+                    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
+                    instanceIds,
+                    region,
+                    clonedCopiesCount,
+                    monthlyChangeRatePercentage,
+                    ACCOUNT_ID
+                );
+
+                expect(result).toBeDefined();
+                expect(result.ebs).toBeDefined();
+                expect(spy).toHaveBeenCalled();
+                const body = spy.mock.calls[0]![1] as {
+                    ec2Instances: Array<{ ec2InstanceType: string; volumes: Array<{ volumeType: string }> }>;
+                };
+                expect(body.ec2Instances[0].ec2InstanceType).toBe('m5.4xlarge');
+                const volTypes = body.ec2Instances[0].volumes.map(v => v.volumeType);
+                expect(volTypes).toContain('gp3');
+                expect(volTypes).toContain('io2');
+            } finally {
+                spy.mockRestore();
+            }
+        });
     });
 
     describe('Oracle deployment types', () => {
@@ -258,17 +328,28 @@ describe('Marketing Operations Demo', () => {
         describe('ebsAutomaticDemoModeCallingManualApi', () => {
             it('should return multi key for Oracle Data Guard deployment', async () => {
                 const result = await ebsAutomaticDemoModeCallingManualApi(
-                    'DG',
-                    ['i-1234567890abcdef0', 'i-0987654321fedcba0'],
+                    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
+                    // TCO demo instance ids (demo-operations) so manual marketing + nock use the same fixture
+                    ['i-04c8e5b3d6a9f12c4', 'i-05d7f6c4e3b8a9d52'],
                     'us-east-1',
                     1,
                     30,
                     ACCOUNT_ID
                 );
 
+                // getEbsManualModeStorageSavings → POST .../ebs/calculate; nock returns ebs-storage-manual-calculation-v2.json
                 expect(result).toBeDefined();
-                expect(result.ebs).toBeDefined();
-                expect(result.fsx).toBeDefined();
+                expect(result.ebs.capacity).toBe(5120);
+                expect(result.ebs.iops).toBe(9776);
+                expect(result.ebs.throughput).toBe(0);
+                expect(result.ebs.total).toBe(23408.96);
+                expect(result.fsx.total).toBe(4361.89);
+                expect(result.ebsClassification.io2).toBeDefined();
+                expect(result.ebsClassification.io2!.ebs.capacity).toBe(2560);
+                expect(result.fsxOptimized!.throughput).toBe(1228.8 * 0.25);
+                expect(result.fsxOptimized!.total).toBeCloseTo(3203.65, 5);
+                expect(result.fsxOptimized!.total).toBeLessThan(result.fsx.total);
+                expect(result.fsxOptimizedSingle).toBeDefined();
                 if ('multi' in result) {
                     expect(result.multi).toBeDefined();
                 }
@@ -277,8 +358,8 @@ describe('Marketing Operations Demo', () => {
 
             it('should return single key for Oracle Standalone deployment', async () => {
                 const result = await ebsAutomaticDemoModeCallingManualApi(
-                    'Standalone',
-                    ['i-1234567890abcdef0'],
+                    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
+                    ['i-02a8c7e5d4b3f12a9'],
                     'us-east-1',
                     1,
                     30,
@@ -286,8 +367,17 @@ describe('Marketing Operations Demo', () => {
                 );
 
                 expect(result).toBeDefined();
-                expect(result.ebs).toBeDefined();
-                expect(result.fsx).toBeDefined();
+                expect(result.ebs.capacity).toBe(5120);
+                expect(result.ebs.iops).toBe(9776);
+                expect(result.ebs.throughput).toBe(0);
+                expect(result.ebs.total).toBe(23408.96);
+                expect(result.fsx.total).toBe(4361.89);
+                expect(result.ebsClassification.io2).toBeDefined();
+                expect(result.ebsClassification.io2!.ebs.capacity).toBe(2560);
+                expect(result.fsxOptimized!.throughput).toBe(1228.8 * 0.25);
+                expect(result.fsxOptimized!.total).toBeCloseTo(3203.65, 5);
+                expect(result.fsxOptimized!.total).toBeLessThan(result.fsx.total);
+                expect(result.fsxOptimizedSingle).toBeDefined();
                 if ('single' in result) {
                     expect(result.single).toBeDefined();
                 }

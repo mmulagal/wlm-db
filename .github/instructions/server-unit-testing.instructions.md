@@ -205,11 +205,18 @@ import { myOperation } from '../../../../src/operations/my-module';
 | --------------------------------- | --------------------------------------------------- |
 | Full object match against fixture | `expect(result).toEqual(fixture)`                   |
 | Property exists                   | `expect(result.field).toBeDefined()`                |
+| Numeric / string field from known fixture | `expect(result.field).toBe(fixtureValue)`   |
+| Derived numeric (computed from known inputs) | `expect(result.optimized).toBe(raw * 0.25)` |
 | Resolved promise value            | `await expect(fn()).resolves.toBe(x)`               |
 | Rejected promise                  | `await expect(fn()).rejects.toThrow('msg')`         |
 | Numeric bound                     | `expect(a).toBeLessThanOrEqual(b)`                  |
 | UUID shape                        | `expect(result.id).toMatch(/^[0-9a-f-]{36}$/)`      |
 | Type-guarded field                | Use `if ('field' in result)` before asserting on it |
+
+**Avoid bare `toBeDefined()` for fields with predictable values.** When the value comes from a
+fixture (`test/simulator/responses/`) or is computed deterministically from known inputs, assert
+the actual value. Reserve `toBeDefined()` for UUID/timestamp fields or data that is intentionally
+opaque to the test.
 
 ## Checklist for New Functionality
 

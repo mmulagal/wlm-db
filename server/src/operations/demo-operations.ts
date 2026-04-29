@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import randomize from 'randomatic';
-import { Volume } from '@aws-sdk/client-ec2';
+import { Volume, type DescribeVolumesResult } from '@aws-sdk/client-ec2';
 import { DEPLOYMENT_MODEL, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { compact, isEmpty, sample } from 'lodash-es';
@@ -56,7 +56,7 @@ import {
     createAssessmentDataWithRetry,
     ORACLE_DATAGUARD_INSTANCES
 } from '../utils/demo-utils/demoMockdata';
-import { generateRandomIP, summarizeFirstLevel, parseAssessmentFileContent } from '../utils/utils';
+import { convertToBytes, generateRandomIP, summarizeFirstLevel, parseAssessmentFileContent } from '../utils/utils';
 import { FSXConfigurationType } from '../routes/types/deployment.types';
 import { SQL_DEFAULT_COLLATION } from '../lib/chatbot/consts';
 import { getInstanceListFromStorage, getVolumesListFromStorage } from '../lib/cloud-manager/marketing';
@@ -622,6 +622,299 @@ async function getEBSVolumesForDemo(sqlDeploymentType: string, volumeIds: string
     return {
         Volumes: volumes
     };
+}
+
+/** volumeId prefixes for discoverDemoDataOracle EBS TCO rows — first half gp3, second half io2 (8-vol) or 3+3 (6-vol) */
+const ORACLE_TCO_DEMO_EBS_8_PREFIXES = [
+    'vol-0a1b2c3d4e5f',
+    'vol-0b2c3d4e5f6a7',
+    'vol-0c4d5e6f7a8b0',
+    'vol-0d5e6f7a8b9c0'
+] as const;
+const ORACLE_TCO_DEMO_EBS_6_PREFIXES = ['vol-0e6f7a8b9c0d0', 'vol-0f7a8b9c0d1e0'] as const;
+
+type OracleTcoEbsVolSpec = {
+    sizeGiB: number;
+    gp3: { Iops: number; Throughput: number };
+    io2: { Iops: number; Throughput: number };
+};
+
+/** Default for unknown prefix; per-host TCO uses `ORACLE_TCO_DEMO_EBS_SPECS`. */
+const ORACLE_TCO_DEMO_EBS_GIB = 256;
+const ORACLE_TCO_GP3 = { Iops: 3000, Throughput: 125 } as const;
+const ORACLE_TCO_IO2 = { Iops: 12000, Throughput: 1000 } as const;
+
+const ORACLE_TCO_DEMO_EBS_DEFAULT_SPEC: OracleTcoEbsVolSpec = {
+    sizeGiB: ORACLE_TCO_DEMO_EBS_GIB,
+    gp3: { Iops: ORACLE_TCO_GP3.Iops, Throughput: ORACLE_TCO_GP3.Throughput },
+    io2: { Iops: ORACLE_TCO_IO2.Iops, Throughput: ORACLE_TCO_IO2.Throughput }
+};
+
+/** Each TCO demo host / spec-prefix group has distinct capacity and IOPS (still gp3 + io2 mix). */
+const ORACLE_TCO_DEMO_EBS_SPECS: Readonly<Record<string, OracleTcoEbsVolSpec>> = {
+    [ORACLE_TCO_DEMO_EBS_8_PREFIXES[0]]: {
+        sizeGiB: 200,
+        gp3: { Iops: 3000, Throughput: 125 },
+        io2: { Iops: 10000, Throughput: 1000 }
+    },
+    [ORACLE_TCO_DEMO_EBS_8_PREFIXES[1]]: {
+        sizeGiB: 256,
+        gp3: { Iops: 3000, Throughput: 125 },
+        io2: { Iops: 12000, Throughput: 1000 }
+    },
+    [ORACLE_TCO_DEMO_EBS_8_PREFIXES[2]]: {
+        sizeGiB: 400,
+        gp3: { Iops: 4000, Throughput: 125 },
+        io2: { Iops: 12000, Throughput: 1000 }
+    },
+    [ORACLE_TCO_DEMO_EBS_8_PREFIXES[3]]: {
+        sizeGiB: 256,
+        gp3: { Iops: 3000, Throughput: 125 },
+        io2: { Iops: 8000, Throughput: 1000 }
+    },
+    [ORACLE_TCO_DEMO_EBS_6_PREFIXES[0]]: {
+        sizeGiB: 128,
+        gp3: { Iops: 3000, Throughput: 125 },
+        io2: { Iops: 10000, Throughput: 1000 }
+    },
+    [ORACLE_TCO_DEMO_EBS_6_PREFIXES[1]]: {
+        sizeGiB: 512,
+        gp3: { Iops: 3000, Throughput: 250 },
+        io2: { Iops: 16000, Throughput: 1000 }
+    }
+};
+
+/** EBS TCO host EC2 id → first volume id prefix (marketing + spec lookup for that host). */
+const ORACLE_TCO_DEMO_EBS_HOST_PREFIX: Readonly<Record<string, string>> = {
+    'i-02a8c7e5d4b3f12a9': ORACLE_TCO_DEMO_EBS_8_PREFIXES[0], // orclstd1
+    'i-03b9d6f4c5e2a8b71': ORACLE_TCO_DEMO_EBS_8_PREFIXES[1], // orclstd2
+    'i-04c8e5b3d6a9f12c4': ORACLE_TCO_DEMO_EBS_8_PREFIXES[2], // DG primary
+    'i-05d7f6c4e3b8a9d52': ORACLE_TCO_DEMO_EBS_8_PREFIXES[3], // DG standby
+    // Mixed 12-vol host: use std (smaller) group for the automatic marketing line item
+    'i-06e9a7b5c8d4f3e12': ORACLE_TCO_DEMO_EBS_6_PREFIXES[0]
+};
+
+function getOracleTco8Or6Prefix(
+    volumeId: string
+): (typeof ORACLE_TCO_DEMO_EBS_8_PREFIXES)[number] | (typeof ORACLE_TCO_DEMO_EBS_6_PREFIXES)[number] | undefined {
+    const p8 = ORACLE_TCO_DEMO_EBS_8_PREFIXES.find(p => volumeId.startsWith(p));
+    if (p8) {
+        return p8;
+    }
+    return ORACLE_TCO_DEMO_EBS_6_PREFIXES.find(p => volumeId.startsWith(p));
+}
+
+/**
+ * Oracle TCO EBS demo in `discoverDemoDataOracle` (same ids as `demoInventoryData` EBS TCO block).
+ * 8-vol: 4×gp3 + 4×io2; 6-vol (mixed host): 3+3. Marketing demo keys off `instanceIds` (no ebs in util).
+ */
+const ORACLE_TCO_DEMO_EBS_HOST_TCO_SIZE: Readonly<Record<string, 'eight' | 'six'>> = {
+    'i-02a8c7e5d4b3f12a9': 'eight', // orclstd1
+    'i-03b9d6f4c5e2a8b71': 'eight', // orclstd2
+    'i-04c8e5b3d6a9f12c4': 'eight', // DG primary
+    'i-05d7f6c4e3b8a9d52': 'eight', // DG standby
+    'i-06e9a7b5c8d4f3e12': 'six' // mixed: two 6-vol groups
+};
+
+function getOracleTcoSpecForPrefix(prefix: string): OracleTcoEbsVolSpec {
+    return ORACLE_TCO_DEMO_EBS_SPECS[prefix] ?? ORACLE_TCO_DEMO_EBS_DEFAULT_SPEC;
+}
+
+/**
+ * Groups volumeIds into consecutive runs that share the same TCO demo EBS spec prefix
+ * (volume id `startsWith` that string → same `getOracleTcoSpecForPrefix` row and same 8- vs 6-vol layout).
+ * Returns null if any id has no known TCO prefix or the input is empty.
+ *
+ * Example — mixed host with two 6-vol groups (two different spec prefixes):
+ *   input:  ['vol-0e6f...01', 'vol-0e6f...02', ...(6 total), 'vol-0f7a...01', ...(6 total)]
+ *   output: [['vol-0e6f...01', ...(6)], ['vol-0f7a...01', ...(6)]]
+ */
+function segmentOracleTcoVolumeIdsByConsecutivePrefix(volumeIds: string[]): string[][] | null {
+    if (volumeIds.length === 0) {
+        return null;
+    }
+    const segments: string[][] = [];
+    let current: string[] = [];
+    let lastPrefix: string | undefined;
+    for (const id of volumeIds) {
+        const matchedDemoTcoPrefix = getOracleTco8Or6Prefix(id);
+        if (!matchedDemoTcoPrefix) {
+            return null;
+        }
+        if (lastPrefix !== undefined && matchedDemoTcoPrefix !== lastPrefix) {
+            segments.push(current);
+            current = [];
+        }
+        lastPrefix = matchedDemoTcoPrefix;
+        current.push(id);
+    }
+    if (current.length) {
+        segments.push(current);
+    }
+    return segments;
+}
+
+/**
+ * Returns true only when all volumeIds share one TCO demo EBS spec prefix AND the count
+ * matches that prefix’s layout: 8 volumes for an 8-prefix spec (4×gp3 + 4×io2),
+ * or 6 for a 6-prefix spec (3×gp3 + 3×io2).
+ */
+function isOracleTcoEbsMultiTypeVolumeIdsForDemo(volumeIds: string[]): boolean {
+    if (volumeIds.length === 0) {
+        return false;
+    }
+    const sharedDemoTcoPrefix = getOracleTco8Or6Prefix(volumeIds[0]!); // every volume id in this group must start with this spec prefix
+    if (!sharedDemoTcoPrefix) {
+        return false;
+    }
+    const is8 = ORACLE_TCO_DEMO_EBS_8_PREFIXES.includes(
+        sharedDemoTcoPrefix as (typeof ORACLE_TCO_DEMO_EBS_8_PREFIXES)[number]
+    );
+    if (is8 && volumeIds.length !== 8) {
+        return false;
+    }
+    if (!is8 && volumeIds.length !== 6) {
+        return false;
+    }
+    return volumeIds.every(volumeId => getOracleTco8Or6Prefix(volumeId) === sharedDemoTcoPrefix);
+}
+
+/**
+ * Maps volumeIds to AWS DescribeVolumes-shaped rows using a mixed gp3/io2 layout.
+ * The first gp3VolumeCount entries become gp3 volumes; the remainder become io2.
+ * For an 8-vol host: gp3VolumeCount=4 (4×gp3 + 4×io2).
+ * For a 6-vol host:  gp3VolumeCount=3 (3×gp3 + 3×io2).
+ */
+function buildOracleTcoEbsVolumeRowsForSimulator(
+    volumeIds: string[],
+    gp3VolumeCount: 4 | 3,
+    spec: OracleTcoEbsVolSpec
+): Volume[] {
+    return volumeIds.map((VolumeId, index) => {
+        const isGp3 = index < gp3VolumeCount;
+        if (isGp3) {
+            return {
+                VolumeId,
+                AvailabilityZone: 'ap-south-1a',
+                State: 'in-use',
+                VolumeType: 'gp3',
+                Size: spec.sizeGiB,
+                Iops: spec.gp3.Iops,
+                Throughput: spec.gp3.Throughput
+            } as Volume;
+        }
+        return {
+            VolumeId,
+            AvailabilityZone: 'ap-south-1a',
+            State: 'in-use',
+            VolumeType: 'io2',
+            Size: spec.sizeGiB,
+            Iops: spec.io2.Iops,
+            Throughput: spec.io2.Throughput
+        } as Volume;
+    });
+}
+
+/**
+ * Oracle TCO EBS demo: `DescribeVolumes`-shaped rows (gp3 + io2) for inventory volume ids in `discoverDemoDataOracle`.
+ * Used in `IS_DEMO_FLOW` by `getEbsResourceInfo` (same pattern as `getEBSVolumesForDemo` for MSSQL) and by the test
+ * EC2 `DescribeVolumes` mock. Returns `null` when `volumeIds` are not the TCO multi-type set.
+ */
+function getOracleTcoEbsDescribeVolumesForSimulator(volumeIds: string[] | undefined): DescribeVolumesResult | null {
+    if (!volumeIds?.length) {
+        return null;
+    }
+    if (isOracleTcoEbsMultiTypeVolumeIdsForDemo(volumeIds)) {
+        const sharedDemoTcoPrefix = getOracleTco8Or6Prefix(volumeIds[0]!)!; // shared spec prefix for this group → 8 vs 6 layout + `getOracleTcoSpecForPrefix`
+        const is8 = ORACLE_TCO_DEMO_EBS_8_PREFIXES.includes(
+            sharedDemoTcoPrefix as (typeof ORACLE_TCO_DEMO_EBS_8_PREFIXES)[number]
+        );
+        const spec = getOracleTcoSpecForPrefix(sharedDemoTcoPrefix);
+        const volumes = buildOracleTcoEbsVolumeRowsForSimulator(volumeIds, is8 ? 4 : 3, spec);
+        return { Volumes: volumes } as DescribeVolumesResult;
+    }
+    // Second path: mixed host — one instance, two consecutive 6-vol groups with different TCO demo spec prefixes (12 volumes total).
+    const segments = segmentOracleTcoVolumeIdsByConsecutivePrefix(volumeIds);
+    if (!segments || segments.length < 2) {
+        return null;
+    }
+    if (!segments.every(segment => isOracleTcoEbsMultiTypeVolumeIdsForDemo(segment))) {
+        return null;
+    }
+    const allVolumes: Volume[] = [];
+    for (const segment of segments) {
+        const sharedDemoTcoPrefix = getOracleTco8Or6Prefix(segment[0]!)!; // shared spec prefix for this segment → 8 vs 6 layout + `getOracleTcoSpecForPrefix`
+        const is8 = ORACLE_TCO_DEMO_EBS_8_PREFIXES.includes(
+            sharedDemoTcoPrefix as (typeof ORACLE_TCO_DEMO_EBS_8_PREFIXES)[number]
+        );
+        const spec = getOracleTcoSpecForPrefix(sharedDemoTcoPrefix);
+        allVolumes.push(...buildOracleTcoEbsVolumeRowsForSimulator(segment, is8 ? 4 : 3, spec));
+    }
+    return { Volumes: allVolumes } as DescribeVolumesResult;
+}
+
+type OracleTcoMarketingVol = {
+    volumeType: string;
+    volumeNumber: number;
+    storageAmount: number;
+    volumeIops: number;
+    throughput: number;
+};
+
+/**
+ * @returns `null` when the request is not the Oracle TCO EBS multi-type demo (manual marketing path uses defaults).
+ * Prefers `instanceIds` (discover EBS TCO hosts); optional ebs-id fallback for tests that call the demo API without instance ids.
+ */
+function getOracleTcoEbsDemoMarketingVolsAndInstanceType(
+    instanceIds: string[] | undefined,
+    ebsVolumeIdsForTestFallback?: string[] | undefined
+): { volumes: OracleTcoMarketingVol[]; ec2InstanceType: string } | null {
+    const fromSizeAndSpec = (volumeCountPerType: 4 | 3, spec: OracleTcoEbsVolSpec) => {
+        const storageSizeBytes = convertToBytes(spec.sizeGiB, 'GiB') || 0;
+        return {
+            ec2InstanceType: 'm5.4xlarge' as const,
+            volumes: [
+                {
+                    volumeType: 'gp3',
+                    volumeNumber: volumeCountPerType,
+                    storageAmount: storageSizeBytes,
+                    volumeIops: spec.gp3.Iops,
+                    throughput: spec.gp3.Throughput
+                },
+                {
+                    volumeType: 'io2',
+                    volumeNumber: volumeCountPerType,
+                    storageAmount: storageSizeBytes,
+                    volumeIops: spec.io2.Iops,
+                    throughput: spec.io2.Throughput
+                }
+            ]
+        };
+    };
+
+    for (const id of instanceIds ?? []) {
+        const tco = ORACLE_TCO_DEMO_EBS_HOST_TCO_SIZE[id];
+        if (tco) {
+            const hostVolumePrefix = ORACLE_TCO_DEMO_EBS_HOST_PREFIX[id];
+            if (!hostVolumePrefix) {
+                return null;
+            }
+            const spec = getOracleTcoSpecForPrefix(hostVolumePrefix);
+            return fromSizeAndSpec(tco === 'eight' ? 4 : 3, spec);
+        }
+    }
+    if (ebsVolumeIdsForTestFallback?.length) {
+        if (!isOracleTcoEbsMultiTypeVolumeIdsForDemo(ebsVolumeIdsForTestFallback)) {
+            return null;
+        }
+        const sharedDemoTcoPrefix = getOracleTco8Or6Prefix(ebsVolumeIdsForTestFallback[0]!)!; // shared spec prefix for fallback ids → 8 vs 6 layout + `getOracleTcoSpecForPrefix`
+        const is8 = ORACLE_TCO_DEMO_EBS_8_PREFIXES.includes(
+            sharedDemoTcoPrefix as (typeof ORACLE_TCO_DEMO_EBS_8_PREFIXES)[number]
+        );
+        const spec = getOracleTcoSpecForPrefix(sharedDemoTcoPrefix);
+        return fromSizeAndSpec(is8 ? 4 : 3, spec);
+    }
+    return null;
 }
 
 function createAssessmentJobMockData(accountId: string, instanceDetails: any, credentialsId: string, region: string) {
@@ -1623,5 +1916,8 @@ export {
     updateAllOptimizedClonesDemoFlow,
     getMssqlStorageDataForDemo,
     loadAndModifyDemoFCIData,
-    loadAndModifyDemoOracleISCSIData
+    loadAndModifyDemoOracleISCSIData,
+    getOracleTcoEbsDemoMarketingVolsAndInstanceType,
+    ORACLE_TCO_DEMO_EBS_HOST_TCO_SIZE,
+    getOracleTcoEbsDescribeVolumesForSimulator
 };
