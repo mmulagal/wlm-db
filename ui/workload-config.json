@@ -35,8 +35,8 @@
             "primaryCtaBluexpTo": "/fsxdb/well-architected",
             "primaryCtaLabel": "Go to Well-architected",
             "label": "Databases",
-            "resourcesLabelSingular": "database",
-            "resourcesLabelPlural": "databases"
+            "resourcesLabelPlural": "Impacted resources",
+            "resourcesLabelSingular": "Impacted resource"
         }
     ],
     "widget": {
