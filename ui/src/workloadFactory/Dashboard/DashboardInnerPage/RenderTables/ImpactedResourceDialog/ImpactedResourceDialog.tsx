@@ -6,6 +6,7 @@ import styles from './ImpactedResourceDialog.module.scss';
 import { ASSESSMENT_CONFIG_NAMES, DBType, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../../utils/consts';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useGetMissingPatchAssessmentDataQuery } from '../../../../../utils/apiService';
+import { getTableLazyLoadingComponentProps } from '../../../../../common/Lib/Table/tableLazyLoadingProps';
 import { useTable, rowDataType } from '../../../../../common/Lib/Table/useTable';
 
 interface ViolationDetail {
@@ -635,6 +636,8 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
 
     const rowData = useMemo(() => (isLoading ? [] : buildRowData(columns, rows)), [isLoading, columns, rows]);
 
+    const tableComponentProps = getTableLazyLoadingComponentProps(t('databases.general.loading'));
+
     const tableProps = useTable({
         selectionType: 'none',
         isSorting: false,
@@ -652,6 +655,7 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
         <div className={styles.tableWrapper}>
             <Table // @ts-ignore
                 tableProps={tableProps}
+                {...tableComponentProps}
                 variant="innerTable"
             />
         </div>

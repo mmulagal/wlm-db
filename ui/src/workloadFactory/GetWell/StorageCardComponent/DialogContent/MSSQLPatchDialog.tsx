@@ -1,4 +1,4 @@
-import { DsFlashingDotsLoader, DsTypography, Table, useTable } from '@netapp/design-system';
+import { DsTypography, Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useGetMissingPatchAssessmentDataQuery } from '../../../../utils/apiService';
+import { getTableLazyLoadingComponentProps } from '../../../../common/Lib/Table/tableLazyLoadingProps';
 import { PATCH_DIALOG_TYPE, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../utils/consts';
 
 type PatchScanField = (typeof PATCH_SCAN_FIELD)[keyof typeof PATCH_SCAN_FIELD];
@@ -131,6 +132,9 @@ function MSSQLPatchDialog({ type }: MSSQLPatchDialogProps) {
         pageSize: 50,
         isLazyLoading: isFetching
     });
+
+    const tableComponentProps = getTableLazyLoadingComponentProps(t('databases.general.loading'));
+
     return (
         <div className={styles['storage-tier-block']}>
             <div className={styles['first-section']}>
@@ -147,12 +151,12 @@ function MSSQLPatchDialog({ type }: MSSQLPatchDialogProps) {
                     <DsTypography variant="Semibold_14">
                         {t('databases.well-architect.mssql-os-patch-missing-patches')}
                     </DsTypography>
-                    {isFetching && <DsFlashingDotsLoader />}
                 </div>
                 <div className={styles.table}>
                     <Table
                         // @ts-ignore
                         tableProps={tableProps}
+                        {...tableComponentProps}
                         variant="innerTable"
                     />
                 </div>

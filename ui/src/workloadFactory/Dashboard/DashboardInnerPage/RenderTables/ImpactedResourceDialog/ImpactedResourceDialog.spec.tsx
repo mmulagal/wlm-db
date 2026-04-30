@@ -73,6 +73,12 @@ vi.mock('../../../../../store/storeHooks', () => ({
         selector({ getWellOptimize: { configEngineType: 'MSSQL' } })
 }));
 
+vi.mock('../../../../../common/Lib/Table/TableLazyLoading.module.scss', () => ({
+    default: {
+        lazyLoadingInline: 'lazyLoadingInline'
+    }
+}));
+
 vi.mock('./ImpactedResourceDialog.module.scss', () => ({
     default: {
         tableWrapper: 'tableWrapper',

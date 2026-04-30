@@ -497,8 +497,8 @@ export interface TableComponentProps {
     ExpandedRow?: typeof Component;
     /** Should row ne higher? (72px) */
     isDoubleRow?: boolean;
-    /** In case useTable have isLazyLoading:true, and there are no rows, show the following text */
-    lazyLoadingText?: string;
+    /** In case useTable have isLazyLoading:true, and there are no rows, show the following text or node */
+    lazyLoadingText?: ReactNode;
     /** In case expanded row needs to be open in same level of outer row */
     isRowExpandedInSameLevel?: boolean;
 }

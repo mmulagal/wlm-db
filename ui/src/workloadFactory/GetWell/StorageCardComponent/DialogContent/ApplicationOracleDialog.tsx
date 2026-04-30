@@ -1,4 +1,4 @@
-import { DsFlashingDotsLoader, DsTypography, Table, useTable } from '@netapp/design-system';
+import { DsTypography, Table, useTable } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { DsButton } from '@tlveng/wlm-ds';
 import { useMemo } from 'react';
@@ -7,6 +7,7 @@ import styles from './DialogContent.module.scss';
 import { ASSESSMENT_CONFIG_NAMES, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useGetMissingPatchAssessmentDataQuery } from '../../../../utils/apiService';
+import { getTableLazyLoadingComponentProps } from '../../../../common/Lib/Table/tableLazyLoadingProps';
 import { createActionOptionSection, createContentWithBullets, createSection } from './DialogContentHelper';
 
 type ApplicationOracleDialogProps = {
@@ -84,6 +85,7 @@ const ApplicationOracleDialog = ({ type }: ApplicationOracleDialogProps) => {
         isLazyLoading: isFetching
     });
 
+    const tableComponentProps = getTableLazyLoadingComponentProps(t('databases.general.loading'));
     const openSecurityAlertsTab = () => {
         const url = 'https://www.oracle.com/security-alerts/';
         window.open(url, '_blank', 'noopener');
@@ -104,11 +106,10 @@ const ApplicationOracleDialog = ({ type }: ApplicationOracleDialogProps) => {
                                 <DsTypography variant="Semibold_14">
                                     {t('databases.well-architect.oracle-critical-patch-security-patches')}
                                 </DsTypography>
-                                {isFetching && <DsFlashingDotsLoader />}
                             </div>
                             <div className={styles.table}>
                                 {/* @ts-ignore */}
-                                <Table tableProps={tableProps} variant="innerTable" />
+                                <Table tableProps={tableProps} {...tableComponentProps} variant="innerTable" />
                             </div>
                         </div>
 

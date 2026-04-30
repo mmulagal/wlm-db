@@ -20,6 +20,7 @@
             "fix-after-operation-ends": "You will be able to fix after the current well-architected operation ends."
         },
         "general": {
+            "loading": "Loading",
             "out-of": "out of",
             "assessment-unavailable-with-tooltip": "Configuration data is not available.",
             "save": "Save",
