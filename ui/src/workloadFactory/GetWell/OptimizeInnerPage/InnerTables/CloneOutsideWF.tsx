@@ -3,7 +3,6 @@ import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
 import styles from './InnerTable.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
@@ -102,46 +101,64 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage, engineType =
                 const isInProgress = inProgressResourceOptimizeData?.[
                     ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
                 ]?.includes(rowData?.id);
-                return (
-                    <>
-                        {isInProgress ? (
-                            <div className={styles['optimize-in-progress']}>
-                                <DsFlashingDotsLoader />
-                                <DsTypography variant="Regular_14">{t('databases.well-architect.fixing')}</DsTypography>
-                            </div>
-                        ) : (
-                            <div className={styles.buttonContainer}>
-                                <div />
-                                {selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0 ? (
-                                    <Popover
-                                        isAppendedToBody
-                                        children={
-                                            <DsTypography variant="Regular_14">
-                                                Bulk action is enabled on selected rows
-                                            </DsTypography>
-                                        }
-                                        trigger="hover"
-                                        container={
-                                            <DsButton variant="secondary" isDisabled isThin>
-                                                Delete
-                                            </DsButton>
-                                        }
-                                    />
-                                ) : (
-                                    <DsButton
-                                        isThin
-                                        variant="secondary"
-                                        isDisabled={selectedRowsForOptimizeInnerPage.length > 0}
-                                        onClick={() => {
-                                            handleBulkActionForClone('Delete', 'single', [rowData]);
-                                        }}
-                                    >
-                                        Delete
+
+                const isBulkModeActive =
+                    selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0;
+
+                if (isBulkModeActive) {
+                    return (
+                        <div className={styles.buttonContainer}>
+                            <div />
+                            <Popover
+                                isAppendedToBody
+                                trigger="hover"
+                                container={
+                                    <DsButton variant="secondary" isDisabled isThin>
+                                        {t('databases.well-architect.delete')}
                                     </DsButton>
-                                )}
-                            </div>
-                        )}
-                    </>
+                                }
+                            >
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.well-architect.bulk-action-enabled-on-selected')}
+                                </DsTypography>
+                            </Popover>
+                        </div>
+                    );
+                }
+
+                if (isInProgress) {
+                    return (
+                        <div className={styles.buttonContainer}>
+                            <div />
+                            <Popover
+                                isAppendedToBody
+                                trigger="hover"
+                                container={
+                                    <DsButton variant="secondary" isDisabled isThin>
+                                        {t('databases.well-architect.delete')}
+                                    </DsButton>
+                                }
+                            >
+                                <DsTypography variant="Regular_14">{t('databases.well-architect.fixing')}</DsTypography>
+                            </Popover>
+                        </div>
+                    );
+                }
+
+                return (
+                    <div className={styles.buttonContainer}>
+                        <div />
+                        <DsButton
+                            isThin
+                            variant="secondary"
+                            isDisabled={false}
+                            onClick={() => {
+                                handleBulkActionForClone('Delete', 'single', [rowData]);
+                            }}
+                        >
+                            {t('databases.well-architect.delete')}
+                        </DsButton>
+                    </div>
                 );
             }
         }

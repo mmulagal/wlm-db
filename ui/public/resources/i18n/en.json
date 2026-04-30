@@ -543,6 +543,8 @@
                 "mix-active-status": "{{successCount}} {{resourceType}}s reactivated, but failed to reactivate {{failedCount}}. Successful {{resourceType}}s will be analyzed in the next analysis."
             },
             "fixing": "Fixing",
+            "refresh": "Refresh",
+            "delete": "Delete",
             "view": "View",
             "bulk-fix-disable-for-fsx-for-ontap-backup": "Bulk fix is not supported for Scheduled FSx for ONTAP Backups.",
             "bulk-fix-disable-for-transparent-hugepages": "Bulk fix is not supported for Transparent hugepages.",

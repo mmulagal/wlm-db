@@ -1,9 +1,8 @@
-import { Table, useTable, TableTopBar, DsTypography, ButtonWithDropdown } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, DsTypography, ButtonWithDropdown, Popover } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
 import styles from './InnerTable.module.scss';
 
 import { GENERAL } from '../../../../utils/appConstants';
@@ -105,51 +104,79 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
                 const isInProgress = inProgressResourceOptimizeData?.[
                     ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
                 ]?.includes(rowData?.id);
-                return (
-                    <>
-                        {isInProgress ? (
-                            <div className={styles['optimize-in-progress']}>
-                                <DsFlashingDotsLoader />
-                                <DsTypography variant="Regular_14">{t('databases.well-architect.fixing')}</DsTypography>
-                            </div>
-                        ) : (
-                            <div
-                                className={
-                                    selectedRowsForOptimizeInnerPage.length > 0
-                                        ? `${styles.actionContainer} ${styles.actionDisabled}`
-                                        : styles.actionContainer
+
+                const isBulkModeActive = selectedRowsForOptimizeInnerPage.length > 0;
+
+                if (isBulkModeActive || isInProgress) {
+                    const tooltipMessage = isBulkModeActive
+                        ? t('databases.well-architect.bulk-action-enabled-on-selected')
+                        : t('databases.well-architect.fixing');
+
+                    return (
+                        <div className={`${styles.actionContainer} ${styles.actionDisabled}`}>
+                            <DsTypography variant="Regular_14" className={styles.actionText}>
+                                {t('databases.well-architect.fix')}
+                            </DsTypography>
+                            <Popover
+                                isAppendedToBody
+                                trigger="hover"
+                                container={
+                                    <ButtonWithDropdown
+                                        variant="icon"
+                                        isDisabled
+                                        items={[
+                                            {
+                                                id: 'refresh',
+                                                children: t('databases.well-architect.refresh'),
+                                                isDisabled: true
+                                            },
+                                            {
+                                                id: 'delete',
+                                                children: t('databases.well-architect.delete'),
+                                                isDisabled: true
+                                            }
+                                        ]}
+                                    >
+                                        <MenuIcon />
+                                    </ButtonWithDropdown>
                                 }
                             >
-                                <DsTypography variant="Regular_14" className={styles.actionText}>
-                                    Fix
-                                </DsTypography>
-                                <ButtonWithDropdown
-                                    variant="icon"
-                                    isDisabled={selectedRowsForOptimizeInnerPage.length > 0}
-                                    items={[
-                                        {
-                                            id: 'refresh',
-                                            children: 'Refresh',
-                                            isDisabled: false,
-                                            onClick: () => {
-                                                handleBulkActionForClone('Refresh', 'single', [rowData]);
-                                            }
-                                        },
-                                        {
-                                            id: 'delete',
-                                            children: 'Delete',
-                                            isDisabled: false,
-                                            onClick: () => {
-                                                handleBulkActionForClone('Delete', 'single', [rowData]);
-                                            }
-                                        }
-                                    ]}
-                                >
-                                    <MenuIcon />
-                                </ButtonWithDropdown>
-                            </div>
-                        )}
-                    </>
+                                <DsTypography variant="Regular_14">{tooltipMessage}</DsTypography>
+                            </Popover>
+                        </div>
+                    );
+                }
+
+                return (
+                    <div className={styles.actionContainer}>
+                        <DsTypography variant="Regular_14" className={styles.actionText}>
+                            {t('databases.well-architect.fix')}
+                        </DsTypography>
+                        <ButtonWithDropdown
+                            variant="icon"
+                            isDisabled={false}
+                            items={[
+                                {
+                                    id: 'refresh',
+                                    children: t('databases.well-architect.refresh'),
+                                    isDisabled: false,
+                                    onClick: () => {
+                                        handleBulkActionForClone('Refresh', 'single', [rowData]);
+                                    }
+                                },
+                                {
+                                    id: 'delete',
+                                    children: t('databases.well-architect.delete'),
+                                    isDisabled: false,
+                                    onClick: () => {
+                                        handleBulkActionForClone('Delete', 'single', [rowData]);
+                                    }
+                                }
+                            ]}
+                        >
+                            <MenuIcon />
+                        </ButtonWithDropdown>
+                    </div>
                 );
             }
         }
