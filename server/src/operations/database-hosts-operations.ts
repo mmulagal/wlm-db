@@ -1733,7 +1733,13 @@ async function getDatabaseDetails(
 
                 const { userDatabase = [] } = metadata as unknown as Metadata;
 
-                response[instanceName] = [...defaultResponse, ...userDatabase];
+                const baseDatabases = Array.isArray(defaultResponse)
+                    ? defaultResponse
+                    : Array.isArray(response[instanceName])
+                    ? response[instanceName]
+                    : [];
+
+                response[instanceName] = [...baseDatabases, ...userDatabase];
             });
         }
         return response;
