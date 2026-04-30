@@ -29,9 +29,13 @@ export const generateOracleInstanceData = (
     }
 
     let oracleEdition = '';
-    // First check if oracleEdition exists directly on selectedHostDetails (Oracle EBS bulk mode)
+    // First check if oracleEdition exists directly on selectedHostDetails (Oracle EBS bulk mode — enriched by OracleEbsSavingsCalculatorApi)
     if (selectedHostDetails?.oracleEdition) {
         oracleEdition = selectedHostDetails.oracleEdition;
+    }
+    // Fallback: pick from databaseInstancesSummary (resource-details API response)
+    else if (Array.isArray(selectedHostDetails?.databaseInstancesSummary)) {
+        oracleEdition = selectedHostDetails.databaseInstancesSummary[0]?.databaseServer?.serverEdition || '';
     }
     // Check oracleDatabases array (Oracle on-prem mode)
     else if (Array.isArray(selectedHostDetails?.oracleDatabases) && selectedHostDetails.oracleDatabases.length > 0) {

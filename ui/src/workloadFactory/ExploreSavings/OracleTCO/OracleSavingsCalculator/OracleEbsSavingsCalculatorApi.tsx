@@ -28,6 +28,12 @@ import {
 } from '../../../../utils/consts';
 import { prepareStorageSavingsData, prepareViewCalcData } from '../../SavingsCalculator/savingsUtil';
 
+/** Extracts Oracle edition from databaseInstancesSummary */
+const getOracleEditionFromSummary = (databaseInstancesSummary: any[] | undefined): string => {
+    if (!Array.isArray(databaseInstancesSummary) || databaseInstancesSummary.length === 0) return '';
+    return databaseInstancesSummary[0]?.databaseServer?.serverEdition || '';
+};
+
 const OracleEbsSavingsCalculatorApi = () => {
     const dispatch = useAppDispatch();
     const {
@@ -212,7 +218,10 @@ const OracleEbsSavingsCalculatorApi = () => {
                     return {
                         ...host,
                         ebsResourceInfo: apiData.ebsResourceInfo || host.ebsResourceInfo,
-                        oracleEdition: apiData.oracleEdition || host.oracleEdition,
+                        oracleEdition:
+                            apiData.oracleEdition ||
+                            getOracleEditionFromSummary(apiData.databaseInstancesSummary) ||
+                            host.oracleEdition,
                         estimatedUsageCost: apiData.estimatedUsageCost || host.estimatedUsageCost,
                         loading: false
                     };
@@ -227,7 +236,10 @@ const OracleEbsSavingsCalculatorApi = () => {
                             setSelectedHostDetails({
                                 ...selectedHostDetails,
                                 ebsResourceInfo: currentApiData.ebsResourceInfo || selectedHostDetails.ebsResourceInfo,
-                                oracleEdition: currentApiData.oracleEdition || selectedHostDetails.oracleEdition,
+                                oracleEdition:
+                                    currentApiData.oracleEdition ||
+                                    getOracleEditionFromSummary(currentApiData.databaseInstancesSummary) ||
+                                    selectedHostDetails.oracleEdition,
                                 estimatedUsageCost:
                                     currentApiData.estimatedUsageCost || selectedHostDetails.estimatedUsageCost,
                                 loading: false

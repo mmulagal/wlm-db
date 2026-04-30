@@ -165,9 +165,11 @@ const InstanceInformation = ({ host }: { host?: any }) => {
 
             // Build table data for Instance Information section
             if (isOracleEbs) {
-                // Oracle EBS: oracleEdition is fetched separately via resource-details API
-                // and stored at the host level by OracleEbsSavingsCalculatorApi
-                const oracleEdition = currentHost?.oracleEdition || t('databases.general.not-available');
+                // Oracle EBS: oracleEdition is enriched by OracleEbsSavingsCalculatorApi,
+                // fallback to databaseInstancesSummary from resource-details API response
+                const oracleEdition = currentHost?.oracleEdition ||
+                    currentHost?.databaseInstancesSummary?.[0]?.databaseServer?.serverEdition ||
+                    t('databases.general.not-available');
 
                 // Oracle ec2Details may not have instanceType; fall back to host-level ec2InstanceType or compute data
                 const instanceTypeValue = (() => {
