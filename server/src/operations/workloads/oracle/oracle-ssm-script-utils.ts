@@ -1667,6 +1667,51 @@ const checkAndInstallRequiredOracleDependentModules = (signedUrls: string[]) => 
         resultObject=$(echo "$resultObject" | jq --argjson res "$(echo "$missingModules" | jq '.')" '.missingModules = $res')
 `;
 
+const installJqOnLinuxHost = (signedUrls: string[]) => `
+    ${checkOracleModuleAvailability}
+    modulesAvailability=$(check_oracle_module_availability)
+    isJqInstalled=$(echo "$modulesAvailability" | grep -o '"isJqInstalled": *"[^"]*"' | sed 's/.*: *"\\([^"]*\\)"/\\1/')
+
+    if [ "$isJqInstalled" == "true" ]; then
+        installationSuccessful=true
+    else
+        jqSignedUrl="${signedUrls[0]}"
+        makeSignedUrl="${signedUrls[1]}"
+        installationSuccessful=true
+        errorMsg=""
+
+        download_dir=$(pwd)
+        curl -sS -fSL "$jqSignedUrl" -o jq-1.8.0.tar.gz
+        if [ $? -ne 0 ]; then
+            errorMsg="Failed to download JQ."
+            installationSuccessful=false
+        else
+            tar -xzf jq-1.8.0.tar.gz > /dev/null 2>&1
+            isMakeInstalled=$(is_module_installed make)
+            if [ ! "$isMakeInstalled" ]; then
+                curl -sS -fSL "$makeSignedUrl" -o make-4.4.1.tar.gz
+                tar -xzf make-4.4.1.tar.gz > /dev/null 2>&1
+                cd make-4.4.1/
+                sudo ./configure --disable-dependency-tracking > /dev/null 2>&1
+                sudo sh build.sh > /dev/null 2>&1
+                sudo mv make /usr/bin/ > /dev/null 2>&1
+                cd $download_dir
+            fi
+            cd jq-1.8.0/
+            sudo ./configure --disable-dependency-tracking > /dev/null 2>&1
+            (sudo make > /dev/null 2>&1) && (sudo make install > /dev/null 2>&1)
+            if [ $? -ne 0 ]; then
+                errorMsg="Failed to install JQ."
+                installationSuccessful=false
+                cd $download_dir
+                rm -rf jq-1.8.0.tar.gz jq-1.8.0
+            fi
+        fi
+    fi
+    results="{\\"installationSuccessful\\": \\"$installationSuccessful\\", \\"error\\": \\"$errorMsg\\"}"
+    echo $results
+`;
+
 const installPythonOnLinuxHost = (pythonSignedUrls?: string[]) => `
     ${checkOracleModuleAvailability}    
     modulesAvailability=$(check_oracle_module_availability)
@@ -2457,6 +2502,7 @@ export {
     oracleUserAuthLoginCommand,
     loadOracleUserPermissionsDetectionModule,
     installPythonOnLinuxHost,
+    installJqOnLinuxHost,
     initializeResultObject,
     pythonScriptInit,
     pythonImports,
