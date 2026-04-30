@@ -7,6 +7,8 @@ import { ReactComponent as Play } from '../../../assets/Play.svg';
 import { ReactComponent as Upload } from '../../../assets/Upload.svg';
 import { ReactComponent as Onprem } from '../../../assets/Onprem.svg';
 import { ReactComponent as ExploreSaving } from '../../../assets/ES_252.svg';
+import { ReactComponent as ExploreSaving1600 } from '../../../assets/exploreSaving1600.svg';
+import { ReactComponent as ExploreSavingCommon } from '../../../assets/exploreSavingsCommon.svg';
 
 import { ReactComponent as CarousalLeft } from '../../../assets/Carousel Arrow left.svg';
 import { ReactComponent as CarousalRight } from '../../../assets/Carousel Arrow right.svg';
@@ -15,9 +17,11 @@ import styles from './TCOBanner.module.scss';
 import headerStyles from '../ExploreSavingHeader/ExploreSavingHeader.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { DBType, WLF_TABS } from '../../../utils/consts';
+import useResize from '../../../common/hooks/useResize';
 
 const TCOBanner = () => {
     const { t } = useTranslation();
+    const windowSize = useResize();
     const { selectedTCOHostType, selectedOracleExploreSavingsTab } = useAppSelector(state => state.exploreSavings);
     const [activeSlide, setActiveSlide] = useState(0); // 0 for first, 1 for second
 
@@ -40,9 +44,15 @@ const TCOBanner = () => {
         return (
             <div className={headerStyles.exploreSavingsHeader}>
                 <div className={headerStyles.topPart}>
-                    <div className={headerStyles.svgContainer}>
-                        <ExploreSaving />
-                    </div>
+                    {windowSize.width > 1621 && windowSize.width <= 1822 ? (
+                        <div className={headerStyles.svgContainer1600}>
+                            <ExploreSavingCommon />
+                        </div>
+                    ) : (
+                        <div className={headerStyles.svgContainer}>
+                            {windowSize.width > 1823 ? <ExploreSaving /> : <ExploreSaving1600 />}
+                        </div>
+                    )}
                     <div className={headerStyles.contentSection}>
                         <div className={headerStyles.leftSide}>
                             <div className={headerStyles.headingPart}>
