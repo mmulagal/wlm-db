@@ -21,9 +21,6 @@ log() {
 }
 `;
 
-/** Bash `log` for scripts that embed `loadStorageDetectionModules` (e.g. ASM diskgroup diagnostics). */
-const oracleDiscoveryHostLog = debugLog(`${LINUX_LOG_DIRECTORY}/wlmdb-oracle-discovery.log`);
-
 const getDataguardDeploymentDetails = `
     ${parseSqlplusOutput}
     ${dataguardDeploymentUtilities}
@@ -270,8 +267,6 @@ const loadStorageDetectionModules = `
         local isCDB="$2"
         local pdbName="$3"
         local isASMManaged="$4"
-        local oracle_home_inst="$5"
-        local sqlplus_cmd_inst="$6"
         local matching="NOT LIKE"
         local alter_cmd=""
         local sqlplus_output=""
@@ -284,35 +279,29 @@ const loadStorageDetectionModules = `
             matching="LIKE"
         fi
 
-        sqlplus_output=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd_inst" "$alter_cmd" "$matching" <<'EOF'
-            export ORACLE_SID="$1"
-            export ORACLE_HOME="$2"
-            export PATH="$ORACLE_HOME/bin:$PATH"
-            sqlplus_cmd="$3"
-            alter_cmd="$4"
-            matching="$5"
-            # Quoted heredocs so V$ views are literal; inject ALTER SESSION and LIKE/NOT LIKE via printf (unquoted <<EOSQL would mangle V$...).
-            sqlplus_output=$(
-            {
-            [ -n "$alter_cmd" ] && printf '%s\\n' "$alter_cmd"
-            cat <<'EOSQL'
+        sqlplus_output=$(sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
+            sqlplus_output=\\$($sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SET FEEDBACK OFF
             SET TERMOUT OFF
             SET PAGESIZE 0
             SET TRIMSPOOL ON
+            $alter_cmd
             SELECT 
                 '{' || CHR(10) ||
                 '    "REDO_LOGS": {' || CHR(10) ||
                 '        "directories": [' || 
                     NVL((SELECT LISTAGG('"' || redo_dir || '"', ', ') WITHIN GROUP (ORDER BY redo_dir)
-                        FROM (SELECT DISTINCT substr(member,1,instr(member,'/',-1)-1) as redo_dir FROM v$logfile)), '') || 
+                        FROM (SELECT DISTINCT substr(member,1,instr(member,'/',-1)-1) as redo_dir FROM v\\$logfile)), '') || 
                 '],' || CHR(10) ||
                 '        "copies_per_directory": {' ||
                     NVL((SELECT LISTAGG('"' || redo_dir || '": ' || copy_count, ', ') WITHIN GROUP (ORDER BY redo_dir)
                         FROM (SELECT substr(member,1,instr(member,'/',-1)-1) as redo_dir, COUNT(*) as copy_count 
-                              FROM v$logfile GROUP BY substr(member,1,instr(member,'/',-1)-1))), '') ||
+                              FROM v\\$logfile GROUP BY substr(member,1,instr(member,'/',-1)-1))), '') ||
                 '}' || CHR(10) ||
                 '    },' || CHR(10) ||
                 '    "ARCHIVE_LOGS": {' || CHR(10) ||
@@ -323,11 +312,11 @@ const loadStorageDetectionModules = `
                                 CASE d.destination
                                         WHEN 'USE_DB_RECOVERY_FILE_DEST'
                                             THEN (SELECT value
-                                                    FROM v$parameter
+                                                    FROM v\\$parameter
                                                     WHERE name = 'db_recovery_file_dest')
                                         ELSE d.destination
                                 END AS archive_dir
-                            FROM   v$archive_dest_status d
+                            FROM   v\\$archive_dest_status d
                             WHERE  d.destination IS NOT NULL
                             AND  LENGTH(TRIM(d.destination)) > 0
                             AND  d.type = 'LOCAL'
@@ -342,11 +331,11 @@ const loadStorageDetectionModules = `
                                 CASE d.destination
                                         WHEN 'USE_DB_RECOVERY_FILE_DEST'
                                             THEN (SELECT value
-                                                    FROM v$parameter
+                                                    FROM v\\$parameter
                                                     WHERE name = 'db_recovery_file_dest')
                                         ELSE d.destination
                                 END AS archive_dir
-                            FROM   v$archive_dest_status d
+                            FROM   v\\$archive_dest_status d
                             WHERE  d.destination IS NOT NULL
                             AND  LENGTH(TRIM(d.destination)) > 0
                             AND  d.type = 'LOCAL'
@@ -358,12 +347,12 @@ const loadStorageDetectionModules = `
                 '    "CONTROL_FILES": {' || CHR(10) ||
                 '        "directories": [' || 
                     NVL((SELECT LISTAGG('"' || ctrlfile_dir || '"', ', ') WITHIN GROUP (ORDER BY ctrlfile_dir)
-                        FROM (SELECT DISTINCT substr(name,1,instr(name,'/',-1)-1) as ctrlfile_dir FROM v$controlfile)), '') || 
+                        FROM (SELECT DISTINCT substr(name,1,instr(name,'/',-1)-1) as ctrlfile_dir FROM v\\$controlfile)), '') || 
                 '],' || CHR(10) ||
                 '        "copies_per_directory": {' ||
                     NVL((SELECT LISTAGG('"' || ctrlfile_dir || '": ' || copy_count, ', ') WITHIN GROUP (ORDER BY ctrlfile_dir)
                         FROM (SELECT substr(name,1,instr(name,'/',-1)-1) as ctrlfile_dir, COUNT(*) as copy_count 
-                              FROM v$controlfile GROUP BY substr(name,1,instr(name,'/',-1)-1))), '') ||
+                              FROM v\\$controlfile GROUP BY substr(name,1,instr(name,'/',-1)-1))), '') ||
                 '}' || CHR(10) ||
                 '    },' || CHR(10) ||
                 '    "TEMP_FILES": {' || CHR(10) ||
@@ -381,40 +370,31 @@ const loadStorageDetectionModules = `
                 '        "directories": [' || 
                     NVL((SELECT LISTAGG('"' || data_dir || '"', ', ') WITHIN GROUP (ORDER BY data_dir)
                         FROM (SELECT DISTINCT SUBSTR(file_name, 1, INSTR(file_name, '/', -1) - 1) AS data_dir 
-                            FROM dba_data_files WHERE file_name 
-EOSQL
-            printf '%s ' "$matching"
-            cat <<'EOSQLM1'
-'+%')), '') || 
+                            FROM dba_data_files WHERE file_name $matching '+%')), '') || 
                 '],' || CHR(10) ||
                 '        "copies_per_directory": {' ||
                     NVL((SELECT LISTAGG('"' || data_dir || '": ' || copy_count, ', ') WITHIN GROUP (ORDER BY data_dir)
                         FROM (SELECT SUBSTR(file_name, 1, INSTR(file_name, '/', -1) - 1) AS data_dir, COUNT(*) as copy_count 
-                              FROM dba_data_files WHERE file_name 
-EOSQLM1
-            printf '%s ' "$matching"
-            cat <<'EOSQLM2'
-'+%' 
+                              FROM dba_data_files WHERE file_name $matching '+%' 
                               GROUP BY SUBSTR(file_name, 1, INSTR(file_name, '/', -1) - 1))), '') ||
                 '}' || CHR(10) ||
                 '    },' || CHR(10) ||
                 '   "FRA": {' || CHR(10) ||
                 '        "directories": [' || 
                         NVL((SELECT LISTAGG('"' || fra_dir || '"', ', ') WITHIN GROUP (ORDER BY fra_dir)
-                            FROM (SELECT DISTINCT name as fra_dir FROM v$RECOVERY_FILE_DEST)), '') || 
+                            FROM (SELECT DISTINCT name as fra_dir FROM v\\$RECOVERY_FILE_DEST)), '') || 
                 '],' || CHR(10) ||
                 '        "copies_per_directory": {' ||
                     NVL((SELECT LISTAGG('"' || fra_dir || '": 1', ', ') WITHIN GROUP (ORDER BY fra_dir)
-                        FROM (SELECT DISTINCT name as fra_dir FROM v$RECOVERY_FILE_DEST)), '') ||
+                        FROM (SELECT DISTINCT name as fra_dir FROM v\\$RECOVERY_FILE_DEST)), '') ||
                 '}' || CHR(10) ||
                 '    }' || CHR(10) ||
                 '}'
             AS json_output
             FROM dual;
-EOSQLM2
-            } | $sqlplus_cmd
-            )
-            echo "$sqlplus_output"
+EOSQL
+)
+            echo "\\$sqlplus_output"
 EOF
 )
         parsed_output=$(parse_sqlplus_output "$sqlplus_output")
@@ -458,12 +438,10 @@ EOF
     get_disk_details() {
         local ORACLE_SID="$1"
         local diskgroupName="$2"
-        sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" "$diskgroupName" <<'EOF'
-            export ORACLE_SID="$1"
-            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
-            sqlplus_cmd="$2"
-            diskgroupName="$3"
-            $sqlplus_cmd <<EOSQL
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID', true)}
+            $sqlplus_command << 'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT d.name
@@ -477,16 +455,14 @@ EOF
     get_disk_device_path() {
         local ORACLE_SID="$1"
         local diskName="$2"
-        sudo -i -u oracle bash -s -- "$ORACLE_SID" "$sqlplus_command" "$diskName" <<'EOF'
-            export ORACLE_SID="$1"
-            ${bashExportOracleHomeFromOratab('$ORACLE_SID')}
-            sqlplus_cmd="$2"
-            diskName="$3"
-            $sqlplus_cmd <<EOSQL
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            ${bashExportOracleHomeFromOratab('$ORACLE_SID', true)}
+            $sqlplus_command << 'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT path 
-                FROM v\\$asm_disk 
+                FROM v$asm_disk 
                 WHERE name = '$diskName'
                 AND header_status = 'MEMBER';
             EXIT;
@@ -655,13 +631,13 @@ EOF
                     fi
 
                     if [[ "$isAsmLibSetup" == "false" && "$isAfdSetup" == "false" ]]; then
-                        log "Neither ASMLIB nor AFD is set up on the system."
+                        echo "Neither ASMLIB nor AFD is set up on the system."
                         continue
                     fi
 
                     result=$(get_asm_nfs_details "$diskName" "$toolInUse") || result=$(get_asm_iscsi_details "$diskName" "$toolInUse")
                     if [ $? -ne 0 ]; then
-                        log "Failed to get NFS or iSCSI details for disk $diskName"
+                        echo "Failed to get NFS or iSCSI details for disk $diskName"
                         continue
                     fi
                     mountIP=$(echo "$result" | cut -d',' -f1)
@@ -1010,11 +986,9 @@ get_multipath_mount_details() {
         local ORACLE_SID="$1"
         local isCDB="$2"
         local pdbName="$3"
-        local oracle_home_inst="$4"
-        local sqlplus_cmd_inst="$5"
         
         # Get Oracle DB file paths
-        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "NO" "$oracle_home_inst" "$sqlplus_cmd_inst" | tr -d '\n')
+        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "NO" | tr -d '\n')
         # Validate JSON (e.g., ORA- error messages from ALTER SESSION failures in Data Guard can produce malformed output)
         if ! echo "$db_paths_json" | jq empty 2>/dev/null; then
             jq -nc --arg error "Failed to parse Oracle file paths for SID $ORACLE_SID." '{"error": $error}'
@@ -1065,11 +1039,9 @@ get_multipath_mount_details() {
         local ORACLE_SID="$1"
         local isCDB="$2"
         local pdbName="$3"
-        local oracle_home_inst="$4"
-        local sqlplus_cmd_inst="$5"
 
         # Get Oracle DB file paths
-        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "YES" "$oracle_home_inst" "$sqlplus_cmd_inst" | tr -d '\n')
+        db_paths_json=$(get_oracle_db_file_paths "$ORACLE_SID" "$isCDB" "$pdbName" "YES" | tr -d '\n')
         # Validate JSON (e.g., ORA- error messages from ALTER SESSION failures in Data Guard can produce malformed output)
         if ! echo "$db_paths_json" | jq empty 2>/dev/null; then
             jq -nc --arg error "Failed to parse Oracle file paths for SID $ORACLE_SID." '{"error": $error}'
@@ -1249,21 +1221,17 @@ const loadDatabaseDetectionModules = `
     get_instance_details() {
         local ORACLE_SID="$1"
         local isMounted="\${2:-false}"
-        local oracle_home_inst="$3"
-        local sqlplus_cmd="$4"
         
         if [ "$isDefaultAuth" == "true" ]; then
             if [[ "$isMounted" == "true" ]]; then
                 # For MOUNTED instances, use v$database.OPEN_MODE instead of v$instance.STATUS
                 # v$instance.STATUS shows "STARTED" but we need the actual open mode ("MOUNTED")
                 # Cross-join works because both v$instance and v$database are single-row views
-                # Quoted heredoc + positional args: ORACLE_HOME must not rely on parent expansion (see server-patterns).
-                sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd" <<'EOF'
-                    export ORACLE_SID="$1"
-                    export ORACLE_HOME="$2"
-                    export PATH="$ORACLE_HOME/bin:$PATH"
-                    sqlplus_cmd="$3"
-                    $sqlplus_cmd <<'EOSQL'
+                sudo -i -u oracle bash <<EOF
+                    export ORACLE_SID="$ORACLE_SID"
+                    export ORACLE_HOME="$ORACLE_HOME"
+                    export PATH="$ORACLE_HOME/bin:\\$PATH"
+                    $sqlplus_command <<'EOSQL'
                         SET HEADING OFF
                         SET LINESIZE 500
                         SET FEEDBACK OFF
@@ -1276,21 +1244,20 @@ const loadDatabaseDetectionModules = `
                                 'instance_state' value d.OPEN_MODE,
                                 'is_rac_enabled' value (
                                     SELECT CASE WHEN UPPER(p.VALUE) = 'TRUE' THEN 'true' ELSE 'false' END
-                                    FROM v$parameter p
+                                    FROM v\\$parameter p
                                     WHERE p.NAME = 'cluster_database' AND ROWNUM = 1
                                 )
                             ) AS instance_info
-                        FROM v$instance i, v$database d;
+                        FROM v\\$instance i, v\\$database d;
 EOSQL
 EOF
             else
                 # For non-MOUNTED (OPEN) instances, STATUS from v$instance is correct
-                sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd" <<'EOF'
-                    export ORACLE_SID="$1"
-                    export ORACLE_HOME="$2"
-                    export PATH="$ORACLE_HOME/bin:$PATH"
-                    sqlplus_cmd="$3"
-                    $sqlplus_cmd <<'EOSQL'
+                sudo -i -u oracle bash <<EOF
+                    export ORACLE_SID="$ORACLE_SID"
+                    export ORACLE_HOME="$ORACLE_HOME"
+                    export PATH="$ORACLE_HOME/bin:\\$PATH"
+                    $sqlplus_command <<'EOSQL'
                         SET HEADING OFF
                         SET LINESIZE 500
                         SELECT JSON_OBJECT(
@@ -1301,11 +1268,11 @@ EOF
                                 'instance_state' value STATUS,
                                 'is_rac_enabled' value (
                                     SELECT CASE WHEN UPPER(p.VALUE) = 'TRUE' THEN 'true' ELSE 'false' END
-                                    FROM v$parameter p
+                                    FROM v\\$parameter p
                                     WHERE p.NAME = 'cluster_database' AND ROWNUM = 1
                                 )
                             ) AS instance_info
-                        FROM V$INSTANCE;
+                        FROM V\\$INSTANCE;
 EOSQL
 EOF
             fi
@@ -1338,16 +1305,13 @@ EOF
 
     get_database_details() {
         local ORACLE_SID="$1"
-        local oracle_home_inst="$2"
-        local sqlplus_cmd="$3"
         local jsonRes
-        jsonRes=$(sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd" <<'EOF'
+        jsonRes=$(sudo -i -u oracle bash <<EOF
             set -e
-            export ORACLE_SID="$1"
-            export ORACLE_HOME="$2"
-            export PATH="$ORACLE_HOME/bin:$PATH"
-            sqlplus_cmd="$3"
-            $sqlplus_cmd <<'EOSQL'
+            export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
+            $sqlplus_command <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET HEADING OFF
                 SET LINESIZE 500
@@ -1362,7 +1326,7 @@ EOF
                             ELSE 'OFFLINE'
                         END
                 )
-                FROM V$DATABASE;
+                FROM V\\$DATABASE;
 EOSQL
 EOF
 ) || return 1
@@ -1372,14 +1336,11 @@ EOF
 
     get_pdb_databases_details() {
         local ORACLE_SID="$1"
-        local oracle_home_inst="$2"
-        local sqlplus_cmd="$3"
-        sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd" <<'EOF'
-            export ORACLE_SID="$1"
-            export ORACLE_HOME="$2"
-            export PATH="$ORACLE_HOME/bin:$PATH"
-            sqlplus_cmd="$3"
-            $sqlplus_cmd <<'EOSQL'
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT JSON_ARRAYAGG(
@@ -1396,20 +1357,17 @@ EOF
 
     get_pdbs_sizes() {
         local ORACLE_SID="$1"
-        local oracle_home_inst="$2"
-        local sqlplus_cmd="$3"
-        sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd" <<'EOF'
-            export ORACLE_SID="$1"
-            export ORACLE_HOME="$2"
-            export PATH="$ORACLE_HOME/bin:$PATH"
-            sqlplus_cmd="$3"
-            $sqlplus_cmd <<'EOSQL'
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT JSON_OBJECTAGG(
                     p.PDB_NAME VALUE ROUND(SUM(df.BYTES), 2)
                 ) AS pdb_sizes_json
-            FROM V$DATAFILE df
+            FROM V\\$DATAFILE df
             JOIN DBA_PDBS p ON df.CON_ID = p.CON_ID
             GROUP BY p.PDB_NAME;
 EOSQL
@@ -1418,14 +1376,11 @@ EOF
 
     get_cdb_or_single_instance_db_size() {
         local ORACLE_SID="$1"
-        local oracle_home_inst="$2"
-        local sqlplus_cmd="$3"
-        sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd" <<'EOF'
-            export ORACLE_SID="$1"
-            export ORACLE_HOME="$2"
-            export PATH="$ORACLE_HOME/bin:$PATH"
-            sqlplus_cmd="$3"
-            $sqlplus_cmd <<'EOSQL'
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT ROUND(SUM(BYTES), 2) AS db_size_gb
@@ -1436,14 +1391,11 @@ EOF
 
     get_pdbs_active_status() {
         local ORACLE_SID="$1"
-        local oracle_home_inst="$2"
-        local sqlplus_cmd="$3"
-        sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd" <<'EOF'
-            export ORACLE_SID="$1"
-            export ORACLE_HOME="$2"
-            export PATH="$ORACLE_HOME/bin:$PATH"
-            sqlplus_cmd="$3"
-            $sqlplus_cmd <<'EOSQL'
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT JSON_ARRAYAGG(
@@ -1457,21 +1409,18 @@ EOF
                         END
                     )
                 ) AS pdb_status_json
-            FROM V$PDBS;
+            FROM V\\$PDBS;
 EOSQL
 EOF
     }
 
     get_pdbs_count() {
         local ORACLE_SID="$1"
-        local oracle_home_inst="$2"
-        local sqlplus_cmd="$3"
-        sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd" <<'EOF'
-            export ORACLE_SID="$1"
-            export ORACLE_HOME="$2"
-            export PATH="$ORACLE_HOME/bin:$PATH"
-            sqlplus_cmd="$3"
-            $sqlplus_cmd <<'EOSQL'
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF
             SET LINESIZE 500
             SELECT COUNT(*) AS pdb_count FROM DBA_PDBS;
@@ -1481,17 +1430,14 @@ EOF
 
     get_open_pdb_names() {
         local ORACLE_SID="$1"
-        local oracle_home_inst="$2"
-        local sqlplus_cmd="$3"
-        sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd" <<'EOF'
-            export ORACLE_SID="$1"
-            export ORACLE_HOME="$2"
-            export PATH="$ORACLE_HOME/bin:$PATH"
-            sqlplus_cmd="$3"
-            $sqlplus_cmd <<'EOSQL'
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 500
-            SELECT NAME FROM V$PDBS
-            WHERE NAME != 'PDB$SEED'
+            SELECT NAME FROM V\\$PDBS
+            WHERE NAME != 'PDB\\$SEED'
             AND OPEN_MODE IN ('READ WRITE', 'READ ONLY');
 EOSQL
 EOF
@@ -1499,17 +1445,14 @@ EOF
 
     get_mounted_pdb_names() {
         local ORACLE_SID="$1"
-        local oracle_home_inst="$2"
-        local sqlplus_cmd="$3"
-        sudo -i -u oracle bash -s -- "$ORACLE_SID" "$oracle_home_inst" "$sqlplus_cmd" <<'EOF'
-            export ORACLE_SID="$1"
-            export ORACLE_HOME="$2"
-            export PATH="$ORACLE_HOME/bin:$PATH"
-            sqlplus_cmd="$3"
-            $sqlplus_cmd <<'EOSQL'
+        sudo -i -u oracle bash <<EOF
+            export ORACLE_SID="$ORACLE_SID"
+            export ORACLE_HOME="$ORACLE_HOME"
+            export PATH="$ORACLE_HOME/bin:\\$PATH"
+            $sqlplus_command <<'EOSQL'
             SET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 500
-            SELECT NAME FROM V$PDBS
-            WHERE NAME != 'PDB$SEED'
+            SELECT NAME FROM V\\$PDBS
+            WHERE NAME != 'PDB\\$SEED'
             AND OPEN_MODE NOT IN ('READ WRITE', 'READ ONLY');
 EOSQL
 EOF
@@ -1606,11 +1549,8 @@ const discoverOracleHosts = `
         exit 0
     fi
 
-    mkdir -p ${LINUX_LOG_DIRECTORY}
-    # SSM treats any StandardErrorContent as failure. Route stderr to log so sqlplus/oracle
-    # diagnostics do not mask successful JSON on stdout (see extractSsmResponse).
-    exec 2>>${LINUX_LOG_DIRECTORY}/wlmdb-oracle-discovery.log
-    ${oracleDiscoveryHostLog}
+    # Use default auth command for SQLPlus in discovery scripts
+    sqlplus_command="sqlplus -S / as sysdba"
 
     RESULTS="["  # start of the JSON array
     FIRST=1      # flag to determine the first object
@@ -1646,7 +1586,6 @@ const discoverOracleHosts = `
 
         export ORACLE_HOME="$oracle_home"
         export PATH="$oracle_home/bin:$PATH"
-        sqlplus_command="$oracle_home/bin/sqlplus -S / as sysdba"
 
         isDefaultAuth=$(is_default_auth "$sid")
         if [ $? -ne 0 ]; then
@@ -1656,8 +1595,8 @@ const discoverOracleHosts = `
         modulesAvailability=$(check_oracle_module_availability)
 
         {
-            INSTANCE_DETAILS=$(get_instance_details "$sid" "$isMounted" "$oracle_home" "$sqlplus_command")
-            DATABASE_DETAILS=$(get_database_details "$sid" "$oracle_home" "$sqlplus_command")
+            INSTANCE_DETAILS=$(get_instance_details "$sid" "$isMounted")
+            DATABASE_DETAILS=$(get_database_details "$sid")
             if [ $? -ne 0 ]; then
                 DATABASE_DETAILS='{"error": "failed to retrieve database details for instance '$sid'"}'
             fi
@@ -1671,8 +1610,8 @@ const discoverOracleHosts = `
                 else
                     is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
                     if [[ "$is_cdb" == "YES" ]]; then
-                        PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid" "$oracle_home" "$sqlplus_command")
-                        pdb_names=$(get_open_pdb_names "$sid" "$oracle_home" "$sqlplus_command" | tr -d ' ' | tr '\\n' ' ')
+                        PDB_DATABASE_DETAILS=$(get_pdb_databases_details "$sid")
+                        pdb_names=$(get_open_pdb_names "$sid" | tr -d ' ' | tr '\\n' ' ')
                     else
                         PDB_DATABASE_DETAILS="[]"
                     fi
@@ -1761,7 +1700,6 @@ const getStorageDetailsForRegisteredInstances = (ec2InstanceId: string, dbSid: s
     ${getOracleDefaultOrUserAuthCommand(ec2InstanceId, dbSid)}
     ${loadOracleUserPermissionsDetectionModule}
     ${loadDatabaseDetectionModules}
-    ${oracleDiscoveryHostLog}
 
     while IFS=: read -r sid oracle_home; do
         # Check if the instance is running by checking for its PMON process.
@@ -1784,8 +1722,8 @@ const getStorageDetailsForRegisteredInstances = (ec2InstanceId: string, dbSid: s
         if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
             if [ "$(is_cdb_instance)" == "true" ]; then
                 is_cdb="YES"
-                pdb_names=$(get_open_pdb_names "$dbSid" "$oracle_home" "$sqlplus_command" | tr -d ' ' | tr '\\n' ' ')
-                mounted_pdb_names=$(get_mounted_pdb_names "$dbSid" "$oracle_home" "$sqlplus_command" | tr -d ' ' | tr '\\n' ' ')
+                pdb_names=$(get_open_pdb_names "$dbSid" | tr -d ' ' | tr '\\n' ' ')
+                mounted_pdb_names=$(get_mounted_pdb_names "$dbSid" | tr -d ' ' | tr '\\n' ' ')
             else
                 is_cdb="NO"
                 pdb_names=""
@@ -1867,7 +1805,7 @@ const fetchOracleDatabasesCount = (ec2InstanceId: string, dbSid: string) => `
 
         isDefaultAuth=$(is_default_auth "$sid")
 
-        DATABASE_DETAILS=$(get_database_details "$sid" "$oracle_home" "$sqlplus_command")
+        DATABASE_DETAILS=$(get_database_details "$sid")
         
         
         is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
@@ -1875,7 +1813,7 @@ const fetchOracleDatabasesCount = (ec2InstanceId: string, dbSid: string) => `
 
         if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
             if [ "$is_cdb" == "YES" ]; then
-                databasesCount=$(get_pdbs_count "$sid" "$oracle_home" "$sqlplus_command")
+                databasesCount=$(get_pdbs_count "$sid")
             else
                 databasesCount=1
             fi
@@ -1937,8 +1875,8 @@ const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
         isDefaultAuth=$(is_default_auth "$sid")
         
         if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
-            DATABASE_DETAILS=$(get_database_details "$sid" "$oracle_home" "$sqlplus_command")
-            root_db_size=$(parse_sqlplus_output "$(get_cdb_or_single_instance_db_size "$sid" "$oracle_home" "$sqlplus_command")")
+            DATABASE_DETAILS=$(get_database_details "$sid")
+            root_db_size=$(parse_sqlplus_output "$(get_cdb_or_single_instance_db_size "$sid")")
             sqlplus_exit_code=$?
             if [ $sqlplus_exit_code -ne 0 ]; then
                 errorMessage=$root_db_size
@@ -1946,8 +1884,8 @@ const fetchOracleDatabasesDetails = (ec2InstanceId: string, dbSid: string) => `
             is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
 
             if [ "$is_cdb" == "YES" ]; then
-                pdbs_size=$(get_pdbs_sizes "$sid" "$oracle_home" "$sqlplus_command")
-                pdbs_status=$(get_pdbs_active_status "$sid" "$oracle_home" "$sqlplus_command")
+                pdbs_size=$(get_pdbs_sizes "$sid")
+                pdbs_status=$(get_pdbs_active_status "$sid")
             else
                 pdbs_size="null"
                 pdbs_status="null"
@@ -1998,7 +1936,6 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
 
     # Use filtered entries instead of all oratab_entries
     oratab_entries="$filtered_oratab_entries"
-    ${oracleDiscoveryHostLog}
     # Initialize final result JSON
     finalResult="{"
     firstSid=true
@@ -2026,8 +1963,8 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
         fi
 
         {
-            INSTANCE_DETAILS=$(get_instance_details "$sid" "false" "$oracle_home" "$sqlplus_command")
-            DATABASE_DETAILS=$(get_database_details "$sid" "$oracle_home" "$sqlplus_command")
+            INSTANCE_DETAILS=$(get_instance_details "$sid")
+            DATABASE_DETAILS=$(get_database_details "$sid")
             if [ $? -ne 0 ]; then
                 DATABASE_DETAILS='{"error": "failed to retrieve database details for instance '$sid'"}'
             fi
@@ -2035,8 +1972,8 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
             is_cdb=$(echo "$DATABASE_DETAILS" | grep -o '"is_cdb":"[^"]*"' | cut -d':' -f2 | tr -d '"')
 
             if [ "$is_cdb" == "YES" ]; then
-                pdb_names=$(get_open_pdb_names "$sid" "$oracle_home" "$sqlplus_command" | tr -d ' ' | tr '\\n' ' ')
-                mounted_pdb_names=$(get_mounted_pdb_names "$sid" "$oracle_home" "$sqlplus_command" | tr -d ' ' | tr '\\n' ' ')
+                pdb_names=$(get_open_pdb_names "$sid" | tr -d ' ' | tr '\\n' ' ')
+                mounted_pdb_names=$(get_mounted_pdb_names "$sid" | tr -d ' ' | tr '\\n' ' ')
             else
                 mounted_pdb_names=""
             fi
@@ -2080,7 +2017,7 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                                 finalResult+=","
                             fi
                             
-                            pdbMountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "$pdb_name" "$oracle_home" "$sqlplus_command")
+                            pdbMountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "$pdb_name")
                             if [ $? -ne 0 ]; then
                                 mountDetailsFailed=true
                                 if [ -z "$mountDetailsError" ]; then
@@ -2100,7 +2037,7 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                             finalResult+="}}"
                         fi
                     else
-                        mountDetails=$(get_oracle_db_asm_mount_details "$sid" "NO" "" "$oracle_home" "$sqlplus_command")
+                        mountDetails=$(get_oracle_db_asm_mount_details "$sid" "NO" "")
                         if [ $? -ne 0 ]; then
                             mountDetailsError=$(echo "$mountDetails" | jq -r '.error // empty' 2>/dev/null)
                             if [ -z "$mountDetailsError" ]; then
@@ -2113,7 +2050,7 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                         fi
                     fi
                 else
-                    mountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "" "$oracle_home" "$sqlplus_command")
+                    mountDetails=$(get_oracle_db_asm_mount_details "$sid" "$is_cdb" "")
                     if [ $? -ne 0 ]; then
                         mountDetailsError=$(echo "$mountDetails" | jq -r '.error // empty' 2>/dev/null)
                         if [ -z "$mountDetailsError" ]; then
@@ -2140,7 +2077,7 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                                 finalResult+=","
                             fi
                             
-                            pdbMountDetails=$(get_oracle_db_mount_details "$sid" "$is_cdb" "$pdb_name" "$oracle_home" "$sqlplus_command")
+                            pdbMountDetails=$(get_oracle_db_mount_details "$sid" "$is_cdb" "$pdb_name")
                             if [ $? -ne 0 ]; then
                                 mountDetailsFailed=true
                                 if [ -z "$mountDetailsError" ]; then
@@ -2160,7 +2097,7 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                             finalResult+="}}"
                         fi
                     else
-                        mountDetails=$(get_oracle_db_mount_details "$sid" "NO" "" "$oracle_home" "$sqlplus_command")
+                        mountDetails=$(get_oracle_db_mount_details "$sid" "NO" "")
                         if [ $? -ne 0 ]; then
                             mountDetailsError=$(echo "$mountDetails" | jq -r '.error // empty' 2>/dev/null)
                             if [ -z "$mountDetailsError" ]; then
@@ -2174,7 +2111,7 @@ const getOracleDbMountDetails = (ec2InstanceId: string, oracleSids: string[]) =>
                     fi
                 else
                     # Handle single instance DB
-                    mountDetails=$(get_oracle_db_mount_details "$sid" "$is_cdb" "" "$oracle_home" "$sqlplus_command")
+                    mountDetails=$(get_oracle_db_mount_details "$sid" "$is_cdb" "")
                     if [ $? -ne 0 ]; then
                         mountDetailsError=$(echo "$mountDetails" | jq -r '.error // empty' 2>/dev/null)
                         if [ -z "$mountDetailsError" ]; then
