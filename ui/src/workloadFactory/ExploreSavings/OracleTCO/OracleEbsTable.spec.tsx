@@ -45,10 +45,14 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@netapp/design-system', () => ({
     Typography: ({ children, ...props }: any) => <span {...props}>{children}</span>,
-    TableTopBar: ({ children }: any) => <div data-testid="table-topbar">{children}</div>
-}));
-
-vi.mock('../../../common/Lib/Table/Table', () => ({
+    TableTopBar: ({ children }: any) => <div data-testid="table-topbar">{children}</div>,
+    useTable: (config: any) => ({
+        rows: config.rows,
+        columns: config.columns,
+        selectionState: mockSelectionState,
+        toggleRowSelection: mockToggleRowSelection,
+        isLoading: config.isLazyLoading
+    }),
     Table: ({ tableProps }: any) => (
         <div data-testid="oracle-ebs-table">
             {tableProps?.rows?.map((row: any, idx: number) => (
@@ -61,16 +65,6 @@ vi.mock('../../../common/Lib/Table/Table', () => ({
             ))}
         </div>
     )
-}));
-
-vi.mock('../../../common/Lib/Table/useTable', () => ({
-    useTable: (config: any) => ({
-        rows: config.rows,
-        columns: config.columns,
-        selectionState: mockSelectionState,
-        toggleRowSelection: mockToggleRowSelection,
-        isLoading: config.isLazyLoading
-    })
 }));
 
 vi.mock('../../../common/BulkAction/BulkActionContainer', () => ({

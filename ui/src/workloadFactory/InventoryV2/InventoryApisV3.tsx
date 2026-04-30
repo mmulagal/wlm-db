@@ -2088,7 +2088,7 @@ const InventoryApisV3 = () => {
                 instanceData[uniqueHostRow(id, credId, rowRegionId)] = {
                     error: null,
                     data: null,
-                    loading: !!isEbsProtected,
+                    loading: true,
                     storageType,
                     isProtected: isEbsProtected
                 };

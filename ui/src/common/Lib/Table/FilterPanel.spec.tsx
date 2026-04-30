@@ -13,6 +13,16 @@ vi.mock('@netapp/design-system', () => ({
             {children}
         </button>
     ),
+    SearchInput: ({ value, onChange, isDisabled, placeholder }: any) => (
+        <input
+            type="search"
+            data-testid="filter-option-search"
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            disabled={isDisabled}
+            placeholder={placeholder}
+        />
+    ),
     Checkbox: ({ children, isChecked, onChange, isDisabled, className }: any) => (
         <label className={className}>
             <input type="checkbox" checked={isChecked} onChange={onChange} disabled={isDisabled} />
@@ -77,7 +87,7 @@ describe('FilterPanel', () => {
         const column = makeColumn();
         const setIsOpen = vi.fn();
         const { getByText } = render(<FilterPanel column={column} setIsOpen={setIsOpen} />);
-        expect(getByText('N/A')).toBeTruthy();
+        expect(getByText('databases.general.not-available')).toBeTruthy();
     });
 
     it('should toggle checkbox state', () => {
@@ -107,6 +117,49 @@ describe('FilterPanel', () => {
         fireEvent.click(getByText('Clear'));
         expect(updateColumnFilter).toHaveBeenCalledWith({});
         expect(setIsOpen).toHaveBeenCalledWith(false);
+    });
+
+    it('should not show option search when filter option count is at most 5', () => {
+        const filterOptions = Array.from({ length: 5 }, (_, i) => ({
+            value: `v${i}`,
+            label: `Label ${i}`
+        }));
+        const column = makeColumn({ filterOptions });
+        const { queryByTestId } = render(<FilterPanel column={column} setIsOpen={vi.fn()} />);
+        expect(queryByTestId('filter-option-search')).toBeNull();
+    });
+
+    it('should show option search when filter option count is greater than 5', () => {
+        const filterOptions = Array.from({ length: 6 }, (_, i) => ({
+            value: `v${i}`,
+            label: `Label ${i}`
+        }));
+        const column = makeColumn({ filterOptions });
+        const { getByTestId } = render(<FilterPanel column={column} setIsOpen={vi.fn()} />);
+        expect(getByTestId('filter-option-search')).toBeTruthy();
+    });
+
+    it('should narrow visible options when search text is entered', () => {
+        const filterOptions = Array.from({ length: 6 }, (_, i) => ({
+            value: `v${i}`,
+            label: `Option ${i}`
+        }));
+        const column = makeColumn({ filterOptions });
+        const { getByTestId, getAllByRole } = render(<FilterPanel column={column} setIsOpen={vi.fn()} />);
+        expect(getAllByRole('checkbox')).toHaveLength(6);
+        fireEvent.change(getByTestId('filter-option-search'), { target: { value: 'Option 5' } });
+        expect(getAllByRole('checkbox')).toHaveLength(1);
+    });
+
+    it('should show no-matches message when search has no results', () => {
+        const filterOptions = Array.from({ length: 6 }, (_, i) => ({
+            value: `v${i}`,
+            label: `Option ${i}`
+        }));
+        const column = makeColumn({ filterOptions });
+        const { getByTestId, getByText } = render(<FilterPanel column={column} setIsOpen={vi.fn()} />);
+        fireEvent.change(getByTestId('filter-option-search'), { target: { value: 'nomatch' } });
+        expect(getByText('databases.general.filter-options-no-matches')).toBeTruthy();
     });
 });
 

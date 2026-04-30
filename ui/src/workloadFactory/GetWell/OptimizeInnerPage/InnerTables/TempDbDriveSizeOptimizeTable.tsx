@@ -1,4 +1,4 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
+import { Table, useTable, TableTopBar, Typography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -75,7 +75,7 @@ const TempDbDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkAc
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '224px',
+            width: 'auto',
             renderCell: (cellData: any) => cellData || na
         },
         {
@@ -85,7 +85,14 @@ const TempDbDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkAc
             isSortable: false,
             filterOptions: 'auto',
             width: 'auto',
-            renderCell: (cellData: any) => cellData || na
+            renderCell: (cellData: any) =>
+                cellData ? (
+                    <Typography title={String(cellData)} variant="Regular_14" className={styles.lunPathCell}>
+                        {cellData}
+                    </Typography>
+                ) : (
+                    na
+                )
         },
         {
             Header: t('databases.well-architect.databases'),
@@ -93,14 +100,14 @@ const TempDbDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkAc
             id: '7',
             isSortable: false,
             filterOptions: 'auto',
-            width: '284px',
+            width: 'auto',
             renderCell: (cellData: any) => (Array.isArray(cellData) && cellData.length > 0 ? cellData.join(', ') : na)
         },
         {
             Header: t('databases.well-architect.status'),
             accessor: 'status',
             id: '3',
-            width: '224px',
+            width: 'auto',
             filterOptions: 'auto',
             renderCell: (cellData: string) => cellData || na
         },

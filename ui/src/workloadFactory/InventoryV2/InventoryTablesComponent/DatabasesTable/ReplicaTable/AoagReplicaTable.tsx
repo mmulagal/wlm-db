@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Table, TableTopBar, useTable } from '@netapp/design-system';
+import { Table, TableTopBar, useDialog, useTable } from '@netapp/design-system';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { DsTypography } from '@tlveng/wlm-ds';
@@ -17,6 +17,7 @@ import {
     setSelectedSandboxHeaderValue
 } from '../../../../../store/workloadFactory/createSandboxSlice';
 import { determineProtectionStatusMssql, mssqlDatabaseMenuOptions } from '../../../InventoryUtilsV2';
+import { getUniqueLunNames } from '../../../../WellArchitectedTab/WellArchitectedTabUtils';
 
 type AoagReplicaTableProps = {
     width?: number;
@@ -34,6 +35,7 @@ const AoagReplicaTable = ({
     handleViewProtectionDetailsDb
 }: AoagReplicaTableProps) => {
     const { t } = useTranslation();
+    const { setDialog } = useDialog();
     const [data, setData] = useState<any[]>([]);
     const [menuOpenedRow, setOpenedRow] = useState<any>(null);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
@@ -42,9 +44,14 @@ const AoagReplicaTable = ({
     const dispatch = useDispatch();
 
     // Get all Oracle columns at component level (hooks must be called here, not in useEffect)
-    const allDatabaseCol = MssqlPgsqlDatabaseTableColDefs({ t, databaseTableRows: data, databaseType: DBType.MSSQL });
+    const allDatabaseCol = MssqlPgsqlDatabaseTableColDefs({
+        t,
+        databaseTableRows: data,
+        databaseType: DBType.MSSQL,
+        setDialog
+    });
     // Extract columns
-    const baseColumns = [...allDatabaseCol.slice(0, 3), ...allDatabaseCol.slice(4, 9)];
+    const baseColumns = [...allDatabaseCol.slice(0, 10)];
 
     // Create manage column
     const manageColumn = {
@@ -127,8 +134,13 @@ const AoagReplicaTable = ({
     });
 
     useEffect(() => {
-        // Set data from replicasList (standby databases)
-        const replicasList = rowData?.replicasList || [];
+        // Set data from replicasList (standby databases). Add lunPaths like ResourcePageReplicaTable so
+        // Associated LUNs uses the same count as the parent table (DatabasesTable only maps lunPaths onto
+        // non-replica rows, so replica objects never received it).
+        const replicasList = (rowData?.replicasList || []).map((r: any) => ({
+            ...r,
+            lunPaths: getUniqueLunNames(r?.luns)
+        }));
         setData(replicasList);
     }, [rowData]);
 

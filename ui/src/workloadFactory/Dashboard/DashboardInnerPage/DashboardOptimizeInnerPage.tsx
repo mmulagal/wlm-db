@@ -52,19 +52,6 @@ const DashboardOptimizeInnerPage = () => {
                     >
                         {selectedConfig}
                     </DsTypography>
-                    <SeparatorComponent variant="vertical" height="24px" />
-                    <DsTypography
-                        data-testid={`wlm-db-manage-instance-optimization-heading-for-${selectedConfig
-                            .toLowerCase()
-                            .replace(/ /g, '-')}`}
-                        variant="Regular_16"
-                    >
-                        {engineTypeBasedResourceStr(
-                            configEngineType,
-                            t('databases.well-architect.register-instance-fixing'),
-                            t('databases.well-architect.register-database-fixing')
-                        )}
-                    </DsTypography>
                 </div>
 
                 <div className={styles.mainSection}>

@@ -2254,19 +2254,27 @@ describe('HeaderComponent', () => {
 
     // ── isRefreshed useEffect ──────────────────────────────────────────────────
     describe('isRefreshed useEffect', () => {
-        it('resets state when isRefreshed becomes true', () => {
+        it('resets state when isRefreshed becomes true', async () => {
+            vi.useFakeTimers();
             const headerSelectedMultiCred = [
                 { value: 'Cred1', data: { credentialsId: 'c1', name: 'Cred1', providerAccountId: '111' }, length: 1 }
             ];
             const headerSelectedMultiRegion = [
                 { value: 'US East', data: { regionCode: 'us-east-1', regionName: 'US East' }, length: 1 }
             ];
-            renderComponent('dashboard', {
-                isRefreshed: true,
-                headerSelectedMultiCred,
-                headerSelectedMultiRegion
-            });
-            expect(mockDispatch).toHaveBeenCalled();
+            try {
+                renderComponent('dashboard', {
+                    isRefreshed: true,
+                    headerSelectedMultiCred,
+                    headerSelectedMultiRegion
+                });
+                expect(mockDispatch).toHaveBeenCalled();
+                await act(async () => {
+                    await vi.advanceTimersByTimeAsync(20);
+                });
+            } finally {
+                vi.useRealTimers();
+            }
         });
     });
 });

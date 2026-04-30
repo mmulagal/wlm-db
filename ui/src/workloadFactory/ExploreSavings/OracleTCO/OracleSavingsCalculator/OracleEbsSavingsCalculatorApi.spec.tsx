@@ -262,7 +262,7 @@ describe('OracleEbsSavingsCalculatorApi', () => {
             renderComponent({}, { selectedRowsForExploreSavingsOracleEbsBulk: hosts });
 
             await waitFor(() => {
-                expect(mockPrepareStorageSavingsData).toHaveBeenCalledWith(apiData, expect.any(Function));
+                expect(mockPrepareStorageSavingsData).toHaveBeenCalledWith(apiData, expect.any(Function), undefined);
             });
         });
 
@@ -274,7 +274,13 @@ describe('OracleEbsSavingsCalculatorApi', () => {
             renderComponent({}, { selectedRowsForExploreSavingsOracleEbsBulk: hosts });
 
             await waitFor(() => {
-                expect(mockPrepareViewCalcData).toHaveBeenCalledWith(apiData, expect.any(Function), 'Standalone', 5);
+                expect(mockPrepareViewCalcData).toHaveBeenCalledWith(
+                    apiData,
+                    expect.any(Function),
+                    'Standalone',
+                    5,
+                    undefined
+                );
             });
         });
 

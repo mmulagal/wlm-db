@@ -75,7 +75,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '224px',
+            width: 'auto',
             renderCell: (cellData: any, rowData: any) => cellData || na
         },
         {
@@ -85,7 +85,14 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             isSortable: false,
             filterOptions: 'auto',
             width: 'auto',
-            renderCell: (cellData: any) => cellData || na
+            renderCell: (cellData: any) =>
+                cellData ? (
+                    <Typography title={String(cellData)} variant="Regular_14" className={styles.lunPathCell}>
+                        {cellData}
+                    </Typography>
+                ) : (
+                    na
+                )
         },
 
         {
@@ -95,7 +102,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             isSortable: false,
             filterOptions: 'auto',
             isSticky: true,
-            width: '284px',
+            width: 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 const truncatedItems = getTruncatedItems(cellData);
 
@@ -141,7 +148,7 @@ const LogDriveSizeOptimizeTable = ({ type, data, lastColDetails, handleBulkActio
             Header: t('databases.well-architect.status'),
             accessor: 'status',
             id: '3',
-            width: '224px',
+            width: 'auto',
             filterOptions: 'auto',
             renderCell: (cellData: string) => cellData || na
         },

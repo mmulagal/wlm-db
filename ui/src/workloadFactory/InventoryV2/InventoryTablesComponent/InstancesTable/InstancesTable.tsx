@@ -129,6 +129,7 @@ import {
     refreshOfflineMssqlDatabasesData,
     refreshOfflineOracleAssessmentData,
     handleWadOptimizeAction,
+    handleWadViewDatabasesAction,
     handleOracleWadOptimizeAction,
     autoSelectRegionInHeaderFilter
 } from './InstanceTableHelper';
@@ -1034,6 +1035,12 @@ const InstancesTable = () => {
                                             // Handle WAD optimize action separately
                                             if (menuId === 'mssql-optimize-wad') {
                                                 handleWadOptimizeAction(rowData, dispatch);
+                                            } else if (
+                                                menuId === 'mssql-viewDatabases' &&
+                                                rowData?.isWad &&
+                                                selectedHostType === DBType.MSSQL
+                                            ) {
+                                                handleWadViewDatabasesAction(rowData, dispatch);
                                             } else if (menuId === 'oracle-optimize-wad') {
                                                 handleOracleWadOptimizeAction(rowData, dispatch);
                                             } else {

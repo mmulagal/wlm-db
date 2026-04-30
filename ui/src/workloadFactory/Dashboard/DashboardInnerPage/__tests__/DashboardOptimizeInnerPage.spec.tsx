@@ -38,10 +38,6 @@ vi.mock('../../../../common/BreadCrumbs/BreadCrumbs', () => ({
     )
 }));
 
-vi.mock('../../../../common/SeparatorComponent/SeparatorComponent', () => ({
-    default: () => <hr data-testid="separator" />
-}));
-
 vi.mock('../TagComponent/TagComponent', () => ({
     default: (props: any) => <div data-testid="tag-component">{props.type}</div>
 }));
@@ -162,15 +158,5 @@ describe('DashboardOptimizeInnerPage', () => {
             </Provider>
         );
         expect(screen.getAllByText('Cross-Region Replication (CRR)').length).toBeGreaterThan(0);
-    });
-
-    it('renders separator component', () => {
-        const store = createMockStore();
-        render(
-            <Provider store={store}>
-                <DashboardOptimizeInnerPage />
-            </Provider>
-        );
-        expect(screen.getByTestId('separator')).toBeTruthy();
     });
 });

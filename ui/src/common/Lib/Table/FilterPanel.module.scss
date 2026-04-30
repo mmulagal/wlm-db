@@ -35,6 +35,35 @@ div.filter-panel-wrapper {
         min-width: 176px;
         max-width: 500px;
 
+        .filter-search {
+            padding: 8px 16px 6px;
+
+            .filter-search-input {
+                width: 100%;
+                max-width: 100%;
+                min-width: 0;
+                svg {
+                    width: 16px;
+                    height: 16px;
+                    --icon-primary-color: var(--field-icon);
+                }
+
+                input {
+                    padding: 0;
+
+                    &::placeholder {
+                        color: var(--text-disabled);
+                    }
+                }
+            }
+        }
+
+        .filter-no-matches {
+            padding: 12px 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
         .filter-content {
             max-height: 310px;
             padding: 4px 0;

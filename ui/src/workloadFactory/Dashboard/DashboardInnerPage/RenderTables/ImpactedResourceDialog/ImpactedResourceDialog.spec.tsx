@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import ImpactedResourceDialog from './ImpactedResourceDialog';
@@ -7,6 +8,31 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('../../../../../utils/consts', () => ({
+    SQL_DEPLOYMENT_MODE: {
+        FAILOVER_CLUSTER_VALUE: 'fci',
+        SINGLE_INSTANCE_VALUE: 'standalone',
+        AOAG: 'aoag',
+        HA: 'ha',
+        FAILOVER_CLUSTER_VALUE_CAPS: 'FCI'
+    },
+    FORM_OPTIONS: {
+        FSXN_NEW: 'fsxn_new',
+        FSXN_EXISTING: 'fsxn_existing',
+        LICENSE_AMI: 'License included AMI',
+        CUSTOM_AMI: 'Use custom AMI'
+    },
+    FSXADMIN: 'fsxadmin',
+    SQL_USERNAME: 'sqlsa',
+    PATCH_SCAN_FIELD: {
+        MSSQL_PATCH: 'mssql-patch',
+        HOST_OS_PATCH: 'host-os-patch',
+        ORACLE_SECURITY_PATCH: 'oracle-security-patch'
+    },
+    WIZARD_TYPE: {
+        PGSQL: 'pgsql',
+        MSSQL: 'mssql',
+        ORACLE: 'oracle'
+    },
     ASSESSMENT_CONFIG_NAMES: {
         NTFS_ALLOCATION_UNIT_SIZE: 'NTFS allocation unit size',
         MULTIPATH_IO_POLICY: 'Multipath I/O Policy',
@@ -31,8 +57,20 @@ vi.mock('../../../../../utils/consts', () => ({
     DBType: { MSSQL: 'MSSQL', ORACLE: 'ORACLE' }
 }));
 
+vi.mock('../../../../../common/Lib/Table/useTable', () => ({
+    useTable: (config: { rows?: unknown[]; columns?: unknown[]; isLazyLoading?: boolean }) => ({
+        rows: config.rows ?? [],
+        columns: config.columns ?? [],
+        selectionState: { rows: {} },
+        toggleRowSelection: () => () => {},
+        sortState: {},
+        isLoading: config.isLazyLoading
+    })
+}));
+
 vi.mock('../../../../../store/storeHooks', () => ({
-    useAppSelector: () => ({ configEngineType: 'MSSQL' })
+    useAppSelector: (selector: (state: { getWellOptimize: { configEngineType: string } }) => unknown) =>
+        selector({ getWellOptimize: { configEngineType: 'MSSQL' } })
 }));
 
 vi.mock('./ImpactedResourceDialog.module.scss', () => ({
@@ -49,6 +87,35 @@ vi.mock('./ImpactedResourceDialog.module.scss', () => ({
 vi.mock('@tlveng/wlm-ds', () => ({
     DsTypography: ({ children }: any) => <span>{children}</span>,
     DsFlashingDotsLoader: () => <span>loader</span>
+}));
+
+vi.mock('@netapp/design-system/dist/components/Table', () => ({
+    Table: ({
+        tableProps
+    }: {
+        tableProps: { rows?: Record<string, unknown>[]; columns?: { Header?: React.ReactNode; id?: string }[] };
+    }) => {
+        const rows = tableProps?.rows ?? [];
+        const columns = tableProps?.columns ?? [];
+        return (
+            <div data-testid="impacted-dialog-table">
+                <div data-testid="impacted-dialog-table-headers">
+                    {columns.map((col, i: number) => (
+                        <span key={col.id ?? i}>{col.Header}</span>
+                    ))}
+                </div>
+                {rows.map((row: Record<string, unknown>, idx: number) => (
+                    <div key={(row.id as string) ?? String(idx)}>
+                        {Object.entries(row)
+                            .filter(([key]) => key !== 'id' && key !== 'cellProps')
+                            .map(([key, val]) => (
+                                <span key={key}>{val as React.ReactNode}</span>
+                            ))}
+                    </div>
+                ))}
+            </div>
+        );
+    }
 }));
 
 vi.mock('../../../../../utils/apiService', () => ({

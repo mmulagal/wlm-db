@@ -17,6 +17,7 @@ import {
     WLF_TABS
 } from '../../../../utils/consts';
 import {
+    resetVisitedTabs,
     setFSXId,
     setGwPageLoadInstanceData,
     setLandingFrom,
@@ -274,6 +275,14 @@ export const handleInstanceMenuSelection = ({
                 case 'mssql-optimize':
                 case 'mssql-investigateErrors':
                 case 'mssql-viewInstance':
+                case 'mssql-viewDatabases':
+                    // Same dispatch sequence as "Instance dashboard" (mssql-viewInstance); only the sub-tab differs.
+                    if (menuId === 'mssql-viewDatabases') {
+                        // Clear MSSQL dashboard visit flags so DatabaseHostOverviewApiV2 runs viewResourceAction (same
+                        // as opening Instance dashboard first). Otherwise visitedTabs.Overview can already be true and
+                        // the DB list request is skipped, leaving undefined credential/region/instance in API calls.
+                        dispatch(resetVisitedTabs());
+                    }
                     dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                     dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
                     dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
@@ -284,23 +293,10 @@ export const handleInstanceMenuSelection = ({
                         dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION));
                     } else if (menuId === 'mssql-viewInstance') {
                         dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.OVERVIEW));
+                    } else if (menuId === 'mssql-viewDatabases') {
+                        dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.DATABASES));
                     }
                     optimizeAction(rowData);
-                    break;
-                case 'mssql-viewDatabases':
-                    dispatch(setSelectedInventoryTab('Databases'));
-                    dispatch(
-                        setSelectedFilterValue({
-                            flag: true,
-                            value: {
-                                hostName: rowData?.name,
-                                instanceName: rowData?.databaseInstanceName,
-                                credentialName: rowData?.credentialName,
-                                regionName: rowData?.regionName
-                            },
-                            filterType: 'multi'
-                        })
-                    );
                     break;
                 case 'mssql-createUserDb':
                     dispatch(addInitialDBCreateData(initialCreateNewUserState));
@@ -1402,31 +1398,34 @@ export const refreshOfflineMssqlDatabasesData = async (
     }
 };
 
+type WellArchitectedTabValue = (typeof WELL_ARCHITECTED_TABS)[keyof typeof WELL_ARCHITECTED_TABS];
+
 /**
- * Handler for WAD (offline assessment) optimize action.
- * Sets isWad flag and navigates to the Well-Architected page.
- * The offline assessment API is called in GetWellApi.tsx based on isWad flag.
- *
- * @param rowData - The instance row data
- * @param dispatch - Redux dispatch function
+ * Shared WAD navigation from inventory to Optimize → Well-Architected (MSSQL offline assessment).
+ * Keeps host/instance dispatch sequence aligned between optimize and "view databases" entry points.
  */
-export const handleWadOptimizeAction = (rowData: any, dispatch: Dispatch) => {
-    // Get databaseHostId and instanceId from rowData
+const dispatchWadWellArchitectedFromInventoryRow = (
+    rowData: any,
+    dispatch: Dispatch,
+    wellArchitectedTab: WellArchitectedTabValue,
+    options?: { resetVisitedTabs?: boolean }
+) => {
+    if (options?.resetVisitedTabs) {
+        dispatch(resetVisitedTabs());
+    }
+
     const databaseHostId = rowData?.databaseHostId || rowData?.hostRow?.id || rowData?.hostRow?.resourceId;
     const instanceId = rowData?.databaseInstanceId;
     const credentialId = rowData?.credentialId || rowData?.hostRow?.credentialId;
     const regionId = rowData?.regionId || rowData?.hostRow?.regionId;
 
-    // Navigate to Well-Architected page (same as mssql-optimize)
     dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
     dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
     dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
     dispatch(setFSXId({ fsxId: rowData?.fsxId, ec2InstanceId: rowData?.ec2InstanceId }));
-    dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+    dispatch(setSelectedWellArchitectTab(wellArchitectedTab));
     dispatch(setLandingFrom(WLF_TABS.INVENTORY));
 
-    // Set page load instance data with isWad: true
-    // GetWellApi.tsx will call the offline assessment API based on this flag
     dispatch(
         setGwPageLoadInstanceData({
             hostname: rowData?.name || rowData?.hostRow?.name,
@@ -1440,7 +1439,6 @@ export const handleWadOptimizeAction = (rowData: any, dispatch: Dispatch) => {
         })
     );
 
-    // For overview and database
     dispatch(resetWorkloadFactoryResourceData());
     dispatch(setSelectedHostname(rowData?.name || rowData?.hostRow?.name));
     dispatch(
@@ -1453,6 +1451,28 @@ export const handleWadOptimizeAction = (rowData: any, dispatch: Dispatch) => {
         })
     );
     dispatch(resetEiData({}));
+};
+
+/**
+ * Handler for WAD (offline assessment) optimize action.
+ * Sets isWad flag and navigates to the Well-Architected page.
+ * The offline assessment API is called in GetWellApi.tsx based on isWad flag.
+ *
+ * @param rowData - The instance row data
+ * @param dispatch - Redux dispatch function
+ */
+export const handleWadOptimizeAction = (rowData: any, dispatch: Dispatch) => {
+    dispatchWadWellArchitectedFromInventoryRow(rowData, dispatch, WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS);
+};
+
+/**
+ * One-time WAD: open resource screen Databases tab (offline assessment DB list API).
+ * Does not use inventory credential/region lookup — same host/instance wiring as {@link handleWadOptimizeAction}.
+ */
+export const handleWadViewDatabasesAction = (rowData: any, dispatch: Dispatch) => {
+    dispatchWadWellArchitectedFromInventoryRow(rowData, dispatch, WELL_ARCHITECTED_TABS.DATABASES, {
+        resetVisitedTabs: true
+    });
 };
 
 /**

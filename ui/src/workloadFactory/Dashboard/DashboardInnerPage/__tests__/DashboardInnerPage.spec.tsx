@@ -88,10 +88,6 @@ vi.mock('../RenderTables/DashboardConfigsMultiTable', () => ({
     default: ({ configType }: any) => <div data-testid="dashboard-multi-table">{configType}</div>
 }));
 
-vi.mock('../../../../common/SeparatorComponent/SeparatorComponent', () => ({
-    default: () => <div data-testid="separator" />
-}));
-
 vi.mock('../../../../common/Dialog/DialogComponent', () => ({
     default: (props: any) => <div data-testid="dialog-component">{props.header}</div>
 }));
@@ -365,15 +361,6 @@ describe('DashboardInnerPage', () => {
         expect(screen.getAllByText('Cross-Region Replication (CRR)').length).toBeGreaterThan(0);
     });
 
-    it('renders separator', () => {
-        render(
-            <Provider store={makeStore()}>
-                <DashboardInnerPage />
-            </Provider>
-        );
-        expect(screen.getByTestId('separator')).toBeTruthy();
-    });
-
     // ── renderTable switch cases for DashboardConfigsTable ──
     const singleTableConfigs = [
         'File system headroom',
@@ -557,16 +544,6 @@ describe('DashboardInnerPage', () => {
             </Provider>
         );
         expect(screen.getByText('databases.general.well-architected')).toBeTruthy();
-    });
-
-    // ── engine type based heading ──
-    it('renders engine type based heading text', () => {
-        render(
-            <Provider store={makeStore()}>
-                <DashboardInnerPage />
-            </Provider>
-        );
-        expect(screen.getByText('databases.well-architect.register-instance-fixing')).toBeTruthy();
     });
 
     // ── Test with isWorkloadFactory = true ──
