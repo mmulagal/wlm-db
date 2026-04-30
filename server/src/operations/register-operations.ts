@@ -1453,7 +1453,8 @@ async function registerOracleInstancesData(
                 databaseType: DatabaseTypes.ORACLE,
                 metaData: {
                     oracleDeploymentType: oracleDeploymentType as OracleDeploymentTenacy
-                }
+                },
+                checkOfflineAssessment: true
             });
 
             instanceManagementStatus = {

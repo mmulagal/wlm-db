@@ -26,14 +26,7 @@ import {
 } from '../../routes/types/form-config.types';
 import { DeploymentStatusListResponseType, DeploymentStatusResponseType } from '../../routes/types/deployment.types';
 import getLogger from '../../utils/logger';
-import {
-    CONFIG_NOT_FOUND,
-    HttpErrorCodes,
-    RESOURCESTYPE,
-    STACK_NOT_FOUND,
-    TCO_FEATURE,
-    DatabaseTypes
-} from '../../utils/consts';
+import { CONFIG_NOT_FOUND, HttpErrorCodes, RESOURCESTYPE, STACK_NOT_FOUND, TCO_FEATURE } from '../../utils/consts';
 import {
     ResourceDetails,
     DeploymentDetails,
@@ -542,24 +535,20 @@ async function populateDbInstances(resourceDetails: ResourceDetails) {
     }
 }
 
-async function upsertDatabaseInstance(
-    accountId: string,
-    record: DatabaseInstanceRecord,
-    checkOfflineAssessment: boolean = false
-) {
-    const { metaData, databaseType, resourceId, databaseInstanceId } = record;
+async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanceRecord) {
+    const { metaData, resourceId, databaseInstanceId } = record;
     logger.info('Upsert database instance', {
         accountId,
         resourceId,
-        databaseInstanceId,
-        checkOfflineAssessment
+        databaseInstanceId
     });
 
     try {
         // Check if instance was assessed using onetimewad and get updateCount
         // Only check when explicitly requested (e.g., from register-operations.ts)
         let numberOfTimesAssessedOffline: number | undefined;
-        if (metaData && checkOfflineAssessment && databaseType === DatabaseTypes.MS_SQL_SERVER) {
+        const checkOfflineAssessment = record.checkOfflineAssessment || false;
+        if (checkOfflineAssessment) {
             try {
                 // Get offline assessment, selecting only metadata column
                 const offlineAssessment = await getOfflineAssessment(accountId, resourceId, databaseInstanceId, [
@@ -581,11 +570,9 @@ async function upsertDatabaseInstance(
         }
 
         const finalMetaData: DatabaseInstanceMetadata | undefined =
-            metaData !== undefined && numberOfTimesAssessedOffline !== undefined
-                ? { ...metaData, numberOfTimesAssessedOffline }
-                : metaData !== undefined
-                ? metaData
-                : undefined;
+            numberOfTimesAssessedOffline !== undefined
+                ? { ...(metaData ?? {}), numberOfTimesAssessedOffline }
+                : metaData;
 
         // Create updated record with final metadata
         const updatedRecord: DatabaseInstanceRecord = {
