@@ -51,6 +51,7 @@ import {
     OptimizeStorageApiData,
     AssessmentCategories,
     AssessmentStatus,
+    AssessmentTriggeredBy,
     OPTIMIZE_SIZING_CONFIGS,
     OptimizeOperatingSystemParams,
     OptimizeStorageConfigsJobNames,
@@ -89,7 +90,10 @@ import {
     JobMetadata
 } from './continuous-optimization/assessment-utils';
 import { resetCache } from '../utils/cache';
-import { triggerMssqlAssessmentAfterOptimization } from './continuous-optimization/mssql/assessment-operations';
+import {
+    onDemandTriggerMssqlDriftAssessment,
+    triggerMssqlAssessmentAfterOptimization
+} from './continuous-optimization/mssql/assessment-operations';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from './workloads/mssql/const';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
 import { triggerOracleAssessmentAfterOptimization } from './continuous-optimization/oracle/assessment-operations';
@@ -3181,22 +3185,19 @@ async function handleUpdateAwsBackup(
     databaseHosts: OptimizePerHostRequestBodyType[],
     masterOptimizeParentId: string
 ) {
-    const { jobStatus, errors: errMsg } = await handleFsxBackupOptimizeJob(
-        accountId,
-        credentialsId,
-        region,
-        databaseHosts,
-        masterOptimizeParentId,
-        {
-            hostsToOptimize: [
-                {
-                    optimizationType: 'aws-backup',
-                    resourceId: databaseHosts[0].id,
-                    sqlServerInstances: [databaseHosts[0].sqlServerInstances[0]]
-                }
-            ]
-        }
-    );
+    const {
+        jobId: awsBackupFixJobId,
+        jobStatus,
+        errors: errMsg
+    } = await handleFsxBackupOptimizeJob(accountId, credentialsId, region, databaseHosts, masterOptimizeParentId, {
+        hostsToOptimize: [
+            {
+                optimizationType: 'aws-backup',
+                resourceId: databaseHosts[0].id,
+                sqlServerInstances: [databaseHosts[0].sqlServerInstances[0]]
+            }
+        ]
+    });
 
     await updateLongRunningAuditGroup(
         jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED,
@@ -3211,17 +3212,45 @@ async function handleUpdateAwsBackup(
             }
         ] = databaseHosts;
 
-        await triggerMssqlAssessmentAfterOptimization(
+        // Schedule the post-remediation assessment as a sibling of awsBackupFixJobId under the
+        // master bulk parent. We deliberately avoid triggerMssqlAssessmentAfterOptimization here:
+        // that helper polls and updates whichever job id it is given, which would race with
+        // updateParentJobStatus(masterOptimizeParentId) in the bulk flow and could wait on
+        // unrelated sibling jobs under the master parent.
+        await onDemandTriggerMssqlDriftAssessment(
+            accountId,
             credentialsId,
             region,
-            accountId,
             databaseHostId,
-            accountId,
-            masterOptimizeParentId,
-            { id: databaseInstanceId },
-            AssessmentCategories.AWS_BACKUP
+            databaseInstanceId,
+            AssessmentTriggeredBy.SYSTEM,
+            AssessmentCategories.AWS_BACKUP,
+            masterOptimizeParentId
         );
+
+        logger.info('Completing AWS backup remediation and scheduling assessment', {
+            accountId,
+            credentialsId,
+            region,
+            awsBackupFixJobId,
+            masterOptimizeParentId,
+            jobStatus,
+            assessmentTriggered: true
+        });
+
+        return;
     }
+
+    logger.info('Skipping AWS backup post-remediation assessment', {
+        accountId,
+        credentialsId,
+        region,
+        awsBackupFixJobId,
+        masterOptimizeParentId,
+        jobStatus,
+        errMsg,
+        assessmentTriggered: false
+    });
 }
 
 function isDatabaseInstanceMetadata(value: any): value is DatabaseInstanceMetadata {
