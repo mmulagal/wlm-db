@@ -196,4 +196,28 @@ describe('ImpactedResourceDialog', () => {
         expect(screen.getByText('databases.well-architect.database-name')).toBeTruthy();
         expect(screen.getByText('logdb1')).toBeTruthy();
     });
+
+    it('renders log-drive-size rows for ignoredDrives (shared drive) without n/a placeholder row', () => {
+        const data = {
+            configurationName: 'log-drive-size',
+            sizingViolations: {
+                overProvisionedDrives: [],
+                underProvisionedDrives: [],
+                ignoredDrives: [
+                    {
+                        logAccessPath: 'D:\\',
+                        lunPath: '/vol/vol1/lun0',
+                        databases: ['A3228DB1', 'msdb'],
+                        sizePercentToDataDrive: 100
+                    }
+                ]
+            }
+        };
+        render(<ImpactedResourceDialog data={data as any} />);
+        expect(screen.getByText('D:\\')).toBeTruthy();
+        expect(screen.getByText('/vol/vol1/lun0')).toBeTruthy();
+        expect(screen.getByText('A3228DB1, msdb')).toBeTruthy();
+        expect(screen.getByText('databases.well-architect.shared-drive')).toBeTruthy();
+        expect(screen.getByText('100%')).toBeTruthy();
+    });
 });

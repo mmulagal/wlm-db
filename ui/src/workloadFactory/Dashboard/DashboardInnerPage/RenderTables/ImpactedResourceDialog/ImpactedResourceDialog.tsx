@@ -44,6 +44,8 @@ interface SizingDrive {
 interface SizingViolations {
     overProvisionedDrives?: SizingDrive[];
     underProvisionedDrives?: SizingDrive[];
+    /** Shared-drive / not optimizable per backend; same shape as other sizing drives */
+    ignoredDrives?: SizingDrive[];
 }
 
 interface PatchDetail {
@@ -178,6 +180,40 @@ const mapObjectsToVolumeName = (objects: ObjectInViolation[], na: string): Impac
     return ensureRows(columns, rows, na);
 };
 
+type SizingDrivePathKey = keyof Pick<SizingDrive, 'logAccessPath' | 'tempdbAccessPath'>;
+
+/** Log drive size and TempDB drive size share the same table shape; only the drive path field and % column label differ. */
+const mssqlSizingViolationsToDriveTable = (
+    sizing: SizingViolations,
+    drivePathKey: SizingDrivePathKey,
+    percentColumnI18nKey: string,
+    na: string,
+    t: (key: string) => string
+): ImpactedResourcesResult => {
+    const drivePath = (drive: SizingDrive) => drive[drivePathKey] || na;
+    const columns = [
+        t('databases.well-architect.drive-name'),
+        t('databases.well-architect.lun-path'),
+        t('databases.well-architect.databases'),
+        t('databases.well-architect.status'),
+        t(percentColumnI18nKey)
+    ];
+    const mapDrives = (drives: SizingDrive[] | undefined, statusI18nKey: string) =>
+        (drives || []).map((drive: SizingDrive) => [
+            drivePath(drive),
+            drive?.lunPath || na,
+            (drive?.databases || []).join(', ') || na,
+            t(statusI18nKey),
+            drive?.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : na
+        ]);
+    const rows = [
+        ...mapDrives(sizing?.overProvisionedDrives, 'databases.well-architect.over-provisioned'),
+        ...mapDrives(sizing?.underProvisionedDrives, 'databases.well-architect.under-provisioned'),
+        ...mapDrives(sizing?.ignoredDrives, 'databases.well-architect.shared-drive')
+    ];
+    return ensureRows(columns, rows, na);
+};
+
 /**
  * MSSQL config names arrive from two sources:
  * - DashboardConfigsTable sets internal names: 'performance-tier', 'log-drive-size', etc.
@@ -204,55 +240,23 @@ const getMssqlImpactedResources = (
             return ensureRows(columns, rows, na);
         }
 
-        case 'log-drive-size': {
-            const columns = [
-                t('databases.well-architect.drive-name'),
-                t('databases.well-architect.lun-path'),
-                t('databases.well-architect.databases'),
-                t('databases.well-architect.status'),
-                t('databases.well-architect.log-drive-size-percentage')
-            ];
-            const overDrives = (sizing?.overProvisionedDrives || []).map((drive: SizingDrive) => [
-                drive?.logAccessPath || na,
-                drive?.lunPath || na,
-                (drive?.databases || []).join(', ') || na,
-                t('databases.well-architect.over-provisioned'),
-                drive?.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : na
-            ]);
-            const underDrives = (sizing?.underProvisionedDrives || []).map((drive: SizingDrive) => [
-                drive?.logAccessPath || na,
-                drive?.lunPath || na,
-                (drive?.databases || []).join(', ') || na,
-                t('databases.well-architect.under-provisioned'),
-                drive?.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : na
-            ]);
-            return ensureRows(columns, [...overDrives, ...underDrives], na);
-        }
+        case 'log-drive-size':
+            return mssqlSizingViolationsToDriveTable(
+                sizing,
+                'logAccessPath',
+                'databases.well-architect.log-drive-size-percentage',
+                na,
+                t
+            );
 
-        case 'tempdb-drive-size': {
-            const columns = [
-                t('databases.well-architect.drive-name'),
-                t('databases.well-architect.lun-path'),
-                t('databases.well-architect.databases'),
-                t('databases.well-architect.status'),
-                t('databases.well-architect.tempdb-drive-size-percentage')
-            ];
-            const overDrives = (sizing?.overProvisionedDrives || []).map((drive: SizingDrive) => [
-                drive?.tempdbAccessPath || na,
-                drive?.lunPath || na,
-                (drive?.databases || []).join(', ') || na,
-                t('databases.well-architect.over-provisioned'),
-                drive?.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : na
-            ]);
-            const underDrives = (sizing?.underProvisionedDrives || []).map((drive: SizingDrive) => [
-                drive?.tempdbAccessPath || na,
-                drive?.lunPath || na,
-                (drive?.databases || []).join(', ') || na,
-                t('databases.well-architect.under-provisioned'),
-                drive?.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : na
-            ]);
-            return ensureRows(columns, [...overDrives, ...underDrives], na);
-        }
+        case 'tempdb-drive-size':
+            return mssqlSizingViolationsToDriveTable(
+                sizing,
+                'tempdbAccessPath',
+                'databases.well-architect.tempdb-drive-size-percentage',
+                na,
+                t
+            );
 
         case 'data-files-location':
         case 'log-files-location':

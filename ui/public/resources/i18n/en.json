@@ -981,6 +981,7 @@
             "tempdb-drive-size-percentage": "TempDB drive size percentage",
             "over-provisioned": "Over provisioned",
             "under-provisioned": "Under provisioned",
+            "shared-drive": "Shared drive",
             "pdbs": "PDBs",
             "pdb": "PDB",
             "dashboard-table-headers": {
