@@ -68,11 +68,18 @@ function calculateMSSQLPatchDrift(
 
         patchAssessment = mssqlPatch as MSSQLPatchAssessmentObject[];
 
-        // Find unique missing patches by KbNumber with Critical and Important patch counts
-        const { uniqueMissingPatches, criticalPatchesCount, importantPatchesCount } =
-            getUniqueMissingPatchesAndCountSeverities(patchAssessment);
+        const criticalPatchesCount = patchAssessment.reduce(
+            (sum, { criticalMissingPatchesCount = 0 }) => sum + criticalMissingPatchesCount,
+            0
+        );
+        const importantPatchesCount = patchAssessment.reduce(
+            (sum, { importantMissingPatchesCount = 0 }) => sum + importantMissingPatchesCount,
+            0
+        );
         const status: AssessmentStatus =
-            uniqueMissingPatches.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+            criticalPatchesCount > 0 || importantPatchesCount > 0
+                ? AssessmentStatus.NOT_OPTIMIZED
+                : AssessmentStatus.OPTIMIZED;
 
         const recommendationMessage: string =
             status === AssessmentStatus.NOT_OPTIMIZED

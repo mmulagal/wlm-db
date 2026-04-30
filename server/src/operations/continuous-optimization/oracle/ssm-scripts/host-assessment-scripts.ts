@@ -20,7 +20,7 @@ def check_linux_repo_connectivity():
             repolist_cmd = ['dnf', 'repolist', '--quiet']
         elif os_name == 'sles':
             pkg_mgr = 'zypper'
-            repolist_cmd = ['zypper', 'repos', '--no-refresh']
+            repolist_cmd = ['zypper', '--no-refresh', 'repos']
         else:
             error_msg = 'Unsupported OS: {}. Only rhel and sles are supported'.format(os_name or 'unknown')
             log(error_msg)
