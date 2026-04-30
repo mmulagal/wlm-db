@@ -3228,7 +3228,7 @@ async function handleUpdateAwsBackup(
             masterOptimizeParentId
         );
 
-        logger.info('Completing AWS backup remediation and scheduling assessment', {
+        logger.info('Completed AWS backup remediation and scheduled assessment', {
             accountId,
             credentialsId,
             region,

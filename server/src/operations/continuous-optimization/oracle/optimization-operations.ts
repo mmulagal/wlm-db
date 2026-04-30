@@ -12,6 +12,7 @@ import {
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import {
     AssessmentCategoriesOracle,
+    AssessmentTriggeredBy,
     OptimizeOracleComputeHostOs,
     OptimizeOracleTypes,
     OracleOptimizeJobDescriptions
@@ -24,7 +25,7 @@ import { validateAndFilterDatabaseHosts } from '../../bulk-cont-opt-operations';
 import { OracleJobMetadata } from './consts';
 import { oracleOptimizeStorageOS } from './storage-os-optimize-operations';
 import { oracleOptimizeStorageSizing } from './storage-optimize-operations';
-import { triggerOracleAssessmentAfterOptimization } from './assessment-operations';
+import { onDemandTriggerOracleDriftAssessment } from './assessment-operations';
 import { handleFsxBackupOptimizeJob } from '../resilience-awsBackup-optimize-operations';
 import { handleCloneOptimizationForInstance } from './clone-optimization-operations';
 
@@ -297,39 +298,64 @@ async function handleOracleUpdateAwsBackup(
     databaseHosts: BackupOptimizePerHostRequestBodyType[],
     masterOptimizeParentId: string
 ) {
-    const { jobId, jobStatus } = await handleFsxBackupOptimizeJob(
-        accountId,
-        credentialsId,
-        region,
-        databaseHosts,
-        masterOptimizeParentId,
-        {
-            hostsToOptimize: databaseHosts.map(({ id, databases }) => ({
-                optimizationType: 'aws-backup',
-                resourceId: id,
-                databases
-            }))
-        }
-    );
+    const {
+        jobId: awsBackupFixJobId,
+        jobStatus,
+        errors: errMsg
+    } = await handleFsxBackupOptimizeJob(accountId, credentialsId, region, databaseHosts, masterOptimizeParentId, {
+        hostsToOptimize: databaseHosts.map(({ id, databases }) => ({
+            optimizationType: 'aws-backup',
+            resourceId: id,
+            databases
+        }))
+    });
 
     if (jobStatus === JOBSTATUS.COMPLETED) {
+        // Schedule the post-remediation assessment as a sibling of awsBackupFixJobId under the
+        // master bulk parent. We deliberately avoid triggerOracleAssessmentAfterOptimization here:
+        // that helper polls and updates whichever job id it is given, which would (a) nest the
+        // assessment under the fix job in the job tree, and (b) race with handleFsxBackupOptimizeJob's
+        // own updateJobDetails call on the same fix job.
         await Promise.all(
             databaseHosts.flatMap(({ id: databaseHostId, databases }) =>
                 databases.map(databaseInstanceId =>
-                    triggerOracleAssessmentAfterOptimization(
+                    onDemandTriggerOracleDriftAssessment(
+                        accountId,
                         credentialsId,
                         region,
-                        accountId,
                         databaseHostId,
-                        databaseHostId,
-                        jobId,
-                        { id: databaseInstanceId },
-                        AssessmentCategoriesOracle.AWS_BACKUP
+                        databaseInstanceId,
+                        AssessmentTriggeredBy.SYSTEM,
+                        AssessmentCategoriesOracle.AWS_BACKUP,
+                        masterOptimizeParentId
                     )
                 )
             )
         );
+
+        logger.info('Completed Oracle AWS backup remediation and scheduled assessment', {
+            accountId,
+            credentialsId,
+            region,
+            awsBackupFixJobId,
+            masterOptimizeParentId,
+            jobStatus,
+            assessmentTriggered: true
+        });
+
+        return;
     }
+
+    logger.info('Skipping Oracle AWS backup post-remediation assessment', {
+        accountId,
+        credentialsId,
+        region,
+        awsBackupFixJobId,
+        masterOptimizeParentId,
+        jobStatus,
+        errMsg,
+        assessmentTriggered: false
+    });
 }
 
 export { optimizeOracleDatabase };
