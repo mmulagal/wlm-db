@@ -2017,6 +2017,13 @@ const InventoryApisV3 = () => {
         exploreSavingsRows?.forEach((row: any) => {
             const { credentialId, regionId: rowRegionId, storageType, id, isDetected } = row;
 
+            // Oracle rows have their own savings flow (getOracleBulkStorageSavings / OracleEbsSavingsCalculatorApi).
+            // checkIfEbsProtected and getStorageSavingsData are both MSSQL-specific, so skip oracle rows here.
+            // In next sprint we will handle oracle calls also
+            if (row?.hostType === GENERAL.ORACLE_TYPE) {
+                return;
+            }
+
             if (credentialId !== runningCredId || rowRegionId !== runningRegionId) {
                 return;
             }
