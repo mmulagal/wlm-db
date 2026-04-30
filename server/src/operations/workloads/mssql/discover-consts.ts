@@ -1024,7 +1024,7 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
           $sqlCred = $null
           $hasSqlCred = $False
           if ($credsFromParameterStore) {
-            $domainCred = $credsFromParameterStore.domain.Where({$_.sqlInstanceName -eq $instanceName -or $_.sqlInstanceName -eq 'MSSQLSERVER'})[0]
+            $domainCred = $credsFromParameterStore.domain.Where({$_.sqlInstanceName -eq $instanceName})[0]
             $hasDomainCred = (-Not [string]::IsNullOrEmpty($domainCred)) -And (-Not [string]::IsNullOrEmpty($domainCred.username)) -And (-Not [string]::IsNullOrEmpty($domainCred.password))
             $sqlCred = $credsFromParameterStore.sql.Where({$_.sqlInstanceName -eq $instanceName})[0]
             $hasSqlCred = (-Not [string]::IsNullOrEmpty($sqlCred)) -And (-Not [string]::IsNullOrEmpty($sqlCred.username)) -And (-Not [string]::IsNullOrEmpty($sqlCred.password))

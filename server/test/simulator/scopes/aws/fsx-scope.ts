@@ -59,7 +59,13 @@ fsxMock.on(DescribeFileSystemsCommand).callsFake(input => {
                 DailyAutomaticBackupStartTime: '03:00',
                 DeploymentType: 'SINGLE_AZ_1',
                 ThroughputCapacity: 128
-            }
+            },
+            Tags: [
+                {
+                    Key: 'Name',
+                    Value: 'DBSFSX'
+                }
+            ]
         };
     });
     return { FileSystems: fileSystems };
