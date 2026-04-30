@@ -4143,7 +4143,7 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
     for (const instance of rowData?.sqlServerInstances || []) {
         for (const deployment of instance?.deploymentTypes || []) {
             if (deployment?.zones) {
-                azList = deployment.zones.join(',');
+                azList = deployment.zones.join(', ');
             }
             if (deployment?.type) {
                 deploymentType = deployment.type;
@@ -4162,7 +4162,7 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
         for (const instance of rowData?.databaseInstanceDetails || []) {
             for (const storage of instance?.storage || []) {
                 if (storage?.zones) {
-                    azList = storage.zones.join(',');
+                    azList = storage.zones.join(', ');
                 }
                 if (storage?.deploymentType) {
                     deploymentType = storage.deploymentType;
@@ -4181,7 +4181,18 @@ export const renderUnmanagedAZ = (cellData: string, rowData: any, styles: any) =
         <>
             {deploymentType && (
                 <div className={styles.azColText}>
-                    <TooltipInfo onVisibleChange={function noRefCheck() {}}>{azList}</TooltipInfo>
+                    {azList && (
+                        <TooltipInfo
+                            className={styles.tooltipIconWrapper}
+                            trigger="hover"
+                            isAppendedToBody
+                            placement="bottom"
+                        >
+                            <div>
+                                <DsTypography variant="Regular_13">{azList}</DsTypography>
+                            </div>
+                        </TooltipInfo>
+                    )}
                     <DsTypography variant="Regular_14">{getAzType(deploymentType)}</DsTypography>
                 </div>
             )}

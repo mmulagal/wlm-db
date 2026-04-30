@@ -536,7 +536,21 @@
 
 .azColText {
     display: flex;
-    gap: 16px;
+    gap: 8px;
+    align-items: center;
+}
+
+.tooltipIconWrapper {
+    display: inline-flex;
+    align-items: center;
+
+    span:hover {
+        svg {
+            path {
+                fill: var(--tooltip-icon-hover);
+            }
+        }
+    }
 }
 
 .tooltipContainer {

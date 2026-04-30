@@ -12,6 +12,7 @@ import {
 } from '../../../../../store/workloadFactory/exploreSavingsBulkSlice';
 import { getSelectedFromSelectionState } from '../../../../../utils/utilityFunctions';
 import styles from './TCOAddHostTable.module.scss';
+import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { TableTopBar } from '../../../../../common/Lib/Table/TableTopBar';
 import { renderAllocatedCapacity, renderUnmanagedAZ, uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
@@ -131,7 +132,7 @@ const TCOAddHostTable = ({ onExploreSavings, onHandlerReady, onAuthRequired }: T
                 { label: GENERAL.SINGLE_AZ, value: GENERAL.SINGLE_AZ },
                 { label: GENERAL.MULTI_AZ, value: GENERAL.MULTI_AZ }
             ],
-            renderCell: (cellData: any, rowData: any) => renderUnmanagedAZ(cellData, rowData, styles)
+            renderCell: (cellData: any, rowData: any) => renderUnmanagedAZ(cellData, rowData, CommonStyles)
         }
     ];
 

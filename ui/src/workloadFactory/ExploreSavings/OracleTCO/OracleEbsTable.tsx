@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table, useTable, Typography, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
@@ -32,6 +32,8 @@ const OracleEbsTable = () => {
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const { multiDataLoading } = useAppSelector(state => state.headers);
+
+    const isInitialMountRef = useRef(true);
 
     const oracleEbsHosts = useMemo(
         () =>
@@ -271,20 +273,24 @@ const OracleEbsTable = () => {
         selectionType: 'multiple',
         rows: updatedTableData,
         pageSize: 50,
-        defaultSelectedRows: selectedRowsForExploreSavingsOracleEbsBulk.map((row: any) => row.id),
+        defaultSelectedRows: [],
         isLazyLoading: isDiscoverInProgress || isManagedHostListLoading || multiDataLoading
     });
 
     // Sync table selection state to Redux
     useEffect(() => {
-        if (updatedTableData.length > 0) {
-            const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
-            dispatch(setSelectedRowsForExploreSavingsOracleEbsBulk(rowsData));
-        }
+        if (updatedTableData.length === 0) return;
+
+        const rowsData = getSelectedFromSelectionState(tableProps.selectionState, updatedTableData);
+        dispatch(setSelectedRowsForExploreSavingsOracleEbsBulk(rowsData));
     }, [tableProps.selectionState]);
 
     // Sync Redux selection state back to table when rows are removed externally
     useEffect(() => {
+        if (isInitialMountRef.current) {
+            isInitialMountRef.current = false;
+            return;
+        }
         if (updatedTableData.length === 0) return;
 
         const currentTableSelectedIds = new Set(
