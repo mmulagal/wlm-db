@@ -7,18 +7,15 @@ import {
     ORACLE_COMPUTE_HOST_OS_ASSESSMENT_CONFIGS
 } from '../../../utils/continous-optimization-consts';
 import { parseMultipleCommandResponse } from '../../../utils/utils';
-import { ComputeHostOsAssessment, ResourceAssessmentData, WorkloadInstance } from '../../../utils/common-types';
-import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../../utils/database-consts';
+import { ComputeHostOsAssessment, WorkloadInstance } from '../../../utils/common-types';
 import getLogger from '../../../utils/logger';
 
 import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
 
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
-import { listResources } from '../../../lib/database/db';
 
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
-import { updateDatabaseHostAssessmentData } from '../../database/database-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 
 import { ComputeDriftEntry, ComputeHostOsDriftTopLevel, StorageIscsiAssessment } from './common-types';
@@ -216,52 +213,11 @@ function calculateComputeHostOsDrift(
     return { ...hostDrift, ...oracleDrift };
 }
 
-async function persistComputeHostOsToResource(
-    accountId: string,
-    databaseHostId: string,
-    hostOsData: Record<string, unknown> | undefined
-) {
-    if (!hostOsData || isEmpty(hostOsData)) {
-        return;
-    }
-    const thpData = hostOsData['transparent-hugepages'] as Record<string, unknown> | undefined;
-    const tcpData = hostOsData['tcp-advanced-options'] as Record<string, unknown> | undefined;
-    if (!thpData && !tcpData) {
-        return;
-    }
-
-    const resources =
-        (await listResources({
-            accountId,
-            resourceId: databaseHostId,
-            selectKeys: [...new Set([...RESOURCE_DEFAULT_SELECT_FIELDS, 'assessment_data'])]
-        })) || [];
-
-    if (isEmpty(resources)) {
-        return;
-    }
-
-    await Promise.all(
-        resources.map(async ({ credentials_id: resCreds, assessment_data: assessmentData }) => {
-            const existing = (assessmentData ?? {}) as ResourceAssessmentData;
-            const existingComputeHostOs = existing.computeHostOs ?? {};
-            const updated: ResourceAssessmentData = {
-                ...existing,
-                computeHostOs: {
-                    ...existingComputeHostOs,
-                    ...(thpData && { transparentHugepages: thpData }),
-                    ...(tcpData && { tcpAdvancedOptions: tcpData })
-                },
-                lastAssessedDate: new Date().getTime().toString()
-            };
-            await updateDatabaseHostAssessmentData(accountId, resCreds, databaseHostId, updated);
-        })
-    );
-}
-
 /**
  * Host-level compute assessment: THP + TCP advanced options. Runs once per host.
- * Persists to `resource.assessment_data.computeHostOs`.
+ * Returns the raw host OS data; persistence onto resource.assessment_data.computeHostOs
+ * is handled by the caller so it can be merged with other host-level updates in a
+ * single write.
  */
 async function initiateComputeHostLevelAssessmentCollection(
     accountId: string,
@@ -294,6 +250,8 @@ async function initiateComputeHostLevelAssessmentCollection(
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
 
+    let hostOsData;
+
     try {
         const hostOsResponse = await callSsmExecution({
             credentialsId,
@@ -310,9 +268,10 @@ async function initiateComputeHostLevelAssessmentCollection(
 
         const [hostOsResult] = parseMultipleCommandResponse(hostOsResponse);
         const hostOs = hostOsResult as Record<string, unknown> | undefined;
-        const hostOsData = (hostOs?.os ?? hostOs) as Record<string, unknown> | undefined;
-
-        await persistComputeHostOsToResource(accountId, databaseHostId, hostOsData);
+        hostOsData = (hostOs?.os ?? hostOs) as Record<string, unknown> | undefined;
+        // Note: persistence of hostOsData onto resource.assessment_data.computeHostOs
+        // is handled by the caller (initiateHostLevelAssessmentDataCollection) so
+        // it can be merged into the same update as hostOsPatch and avoid races.
     } catch (error) {
         logger.error('Error during compute host-level assessment collection', {
             accountId,
@@ -330,6 +289,7 @@ async function initiateComputeHostLevelAssessmentCollection(
             ...(errorMessage && { error: errorMessage })
         });
     }
+    return { hostOsData };
 }
 
 /**

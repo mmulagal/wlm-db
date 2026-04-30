@@ -182,6 +182,7 @@ async function initiateHostLevelAssessmentDataCollection(
 
     let hostOsPatchAssessment;
     let hostOsPatchErrorMessage;
+    let hostComputeData;
 
     const hostLevelTasks: Promise<void>[] = [];
 
@@ -204,39 +205,50 @@ async function initiateHostLevelAssessmentDataCollection(
 
     if (fields?.includes(AssessmentCategoriesOracle.COMPUTE)) {
         hostLevelTasks.push(
-            initiateComputeHostLevelAssessmentCollection(
-                accountId,
-                credentialsId,
-                region,
-                databaseHostId,
-                jobId,
-                activeNodeInstanceId,
-                resourceName
-            )
+            (async () => {
+                ({ hostOsData: hostComputeData } = await initiateComputeHostLevelAssessmentCollection(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    jobId,
+                    activeNodeInstanceId,
+                    resourceName
+                ));
+            })()
         );
     }
 
     await Promise.all(hostLevelTasks);
 
-    const hasAssessmentOrError = [hostOsPatchAssessment, hostOsPatchErrorMessage].some(item => !isEmpty(item));
+    const existingAssessmentData = hostLevelAssessmentData as ResourceAssessmentData;
 
-    if (hasAssessmentOrError) {
-        const existingAssessmentData = hostLevelAssessmentData as ResourceAssessmentData;
+    const thpData = hostComputeData?.['transparent-hugepages'] as Record<string, unknown> | undefined;
+    const tcpData = hostComputeData?.['tcp-advanced-options'] as Record<string, unknown> | undefined;
+    const hasComputeHostOsUpdate = Boolean(thpData || tcpData);
+    const mergedComputeHostOs = hasComputeHostOsUpdate
+        ? {
+              ...(existingAssessmentData?.computeHostOs ?? {}),
+              ...(thpData && { transparentHugepages: thpData }),
+              ...(tcpData && { tcpAdvancedOptions: tcpData })
+          }
+        : existingAssessmentData?.computeHostOs;
 
-        const updatedAssessmentData = {
-            ...existingAssessmentData,
+    const updatedAssessmentData = {
+        ...existingAssessmentData,
+        hostOsPatch:
+            hostOsPatchAssessment || (!hostOsPatchErrorMessage ? existingAssessmentData?.hostOsPatch : undefined),
+        computeHostOs: mergedComputeHostOs,
+        errors: {
+            ...existingAssessmentData?.errors,
             hostOsPatch:
-                hostOsPatchAssessment || (!hostOsPatchErrorMessage ? existingAssessmentData?.hostOsPatch : undefined),
-            errors: {
-                hostOsPatch:
-                    hostOsPatchErrorMessage ||
-                    (!hostOsPatchAssessment ? existingAssessmentData?.errors?.hostOsPatch : undefined)
-            },
-            lastAssessedDate: new Date().getTime().toString()
-        };
+                hostOsPatchErrorMessage ||
+                (!hostOsPatchAssessment ? existingAssessmentData?.errors?.hostOsPatch : undefined)
+        },
+        lastAssessedDate: new Date().getTime().toString()
+    };
 
-        await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, updatedAssessmentData);
-    }
+    await updateDatabaseHostAssessmentData(accountId, credentialsId, databaseHostId, updatedAssessmentData);
 }
 
 async function initiateInstanceLevelAssessmentDataCollection(
