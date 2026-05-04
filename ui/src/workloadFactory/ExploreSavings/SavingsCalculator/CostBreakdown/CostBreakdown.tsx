@@ -15,9 +15,8 @@ type CB = {
 
 const CostBreakdown = ({ disableState = false }: CB) => {
     const { t } = useTranslation();
-    const { storageSavingsResponse, storageSavingsLoading, savingsCalculatorFrom } = useAppSelector(
-        state => state.exploreSavings
-    );
+    const { storageSavingsResponse, storageSavingsLoading, savingsCalculatorFrom, oracleLicenseCostUpdating } =
+        useAppSelector(state => state.exploreSavings);
 
     const isOracle =
         savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
@@ -55,8 +54,8 @@ const CostBreakdown = ({ disableState = false }: CB) => {
 
     useEffect(() => {
         setCalculatedResponse(storageSavingsResponse);
-        setLoading(storageSavingsLoading);
-    }, [storageSavingsResponse, storageSavingsLoading]);
+        setLoading(storageSavingsLoading || oracleLicenseCostUpdating);
+    }, [storageSavingsResponse, storageSavingsLoading, oracleLicenseCostUpdating]);
 
     // Helper to get the second category label based on mode
     const getSecondCategoryLabel = (): string => {

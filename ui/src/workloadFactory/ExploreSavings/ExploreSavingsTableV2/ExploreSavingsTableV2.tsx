@@ -41,6 +41,7 @@ import {
 } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import BulkActionContainer from '../../../common/BulkAction/BulkActionContainer';
 import AuthBulkDialog from './AuthDialog/AuthBulkDialog';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
@@ -260,31 +261,42 @@ const ExploreSavingsTableV2 = () => {
         accessor: '',
         isSticky: true,
         width: windowSize.width >= 1920 ? '15.37%' : '247px',
-        renderCell: (cellData: any, rowData: any) => (
-            <div
-                className={
-                    selectedRowsForExploreSavingsEBSBulk.length > 0
-                        ? CommonStyles.detectManageDisable
-                        : CommonStyles.detectManage
-                }
-                onClick={
-                    selectedRowsForExploreSavingsEBSBulk.length > 0
-                        ? undefined
-                        : () => {
-                              dispatch(setEbsTCOAction('bulk'));
-                              dispatch(resetOptimizedStorage());
-                              shouldAuthDialogOpen(rowData)
-                                  ? handleDialog(rowData)
-                                  : onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
-                          }
-                }
-                id="wlm-db-ebs-explore-savings-table-button"
-            >
-                <Typography variant="Regular_14" className={CommonStyles.textStyle}>
-                    {GENERAL.ES_SAVINGS}
-                </Typography>
-            </div>
-        )
+        renderCell: (cellData: any, rowData: any) => {
+            const isBulkSelectionActive = selectedRowsForExploreSavingsEBSBulk.length > 0;
+            const tooltipMessage = isBulkSelectionActive
+                ? t('databases.explore-savings.disabled-tooltip-bulk-selection')
+                : '';
+
+            const exploreSavingsButton = (
+                <div
+                    className={isBulkSelectionActive ? CommonStyles.detectManageDisable : CommonStyles.detectManage}
+                    onClick={
+                        isBulkSelectionActive
+                            ? undefined
+                            : () => {
+                                  dispatch(setEbsTCOAction('bulk'));
+                                  dispatch(resetOptimizedStorage());
+                                  shouldAuthDialogOpen(rowData)
+                                      ? handleDialog(rowData)
+                                      : onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
+                              }
+                    }
+                    id="wlm-db-ebs-explore-savings-table-button"
+                >
+                    <Typography variant="Regular_14" className={CommonStyles.textStyle}>
+                        {GENERAL.ES_SAVINGS}
+                    </Typography>
+                </div>
+            );
+
+            return isBulkSelectionActive ? (
+                <TooltipComponent title={tooltipMessage} placement="bottom" width="240px" height="50px">
+                    {exploreSavingsButton}
+                </TooltipComponent>
+            ) : (
+                exploreSavingsButton
+            );
+        }
     });
 
     const ExploreSavingsColDefs: ColumnProps[] = [

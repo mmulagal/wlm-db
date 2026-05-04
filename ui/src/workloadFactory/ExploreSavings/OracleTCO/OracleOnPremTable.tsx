@@ -33,6 +33,7 @@ import {
 } from '../../../utils/apiService';
 import { JOB_MONITORING_STATUS } from '../../../utils/consts';
 import TableTooltip from './TableTooltip/TableTooltip';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { useOnPremData } from '../ExploreSavingsOnPremiseTable/useOnPremData';
 import { formatDateWithTime, getTruncatedItems } from '../../../utils/utilityFunctions';
 import {
@@ -320,16 +321,17 @@ const OracleOnPremTable = () => {
             id: '6',
             width: '16.66%',
             isSticky: true,
-            renderCell: (cellData: any, rowData: any) => (
-                <div className={styles.lasColContainer}>
+            renderCell: (cellData: any, rowData: any) => {
+                const isBulkSelectionActive = selectedRowsForExploreSavingsOracleOnPremBulk.length > 0;
+                const tooltipMessage = isBulkSelectionActive
+                    ? t('databases.explore-savings.disabled-tooltip-bulk-selection')
+                    : '';
+
+                const exploreSavingsButton = (
                     <div
-                        className={
-                            selectedRowsForExploreSavingsOracleOnPremBulk.length > 0
-                                ? CommonStyles.detectManageDisable
-                                : CommonStyles.detectManage
-                        }
+                        className={isBulkSelectionActive ? CommonStyles.detectManageDisable : CommonStyles.detectManage}
                         onClick={
-                            selectedRowsForExploreSavingsOracleOnPremBulk.length > 0
+                            isBulkSelectionActive
                                 ? undefined
                                 : () => onClickESHostOracleOnPrem(dispatch, rowData, isWorkloadFactory, navigate)
                         }
@@ -339,18 +341,30 @@ const OracleOnPremTable = () => {
                             {t('databases.explore-savings.table-tooltip-content-three')}
                         </DsTypography>
                     </div>
+                );
 
-                    <DeleteMenuCell
-                        isDemoMode={isDemoMode}
-                        isBulkSelected={selectedRowsForExploreSavingsOracleOnPremBulk.length > 0}
-                        rowData={rowData}
-                        menuOpenedRow={menuOpenedRow}
-                        menuOpenedRowDetail={menuOpenedRowDetail}
-                        setOpenedRow={setOpenedRow}
-                        onDelete={handleDelete}
-                    />
-                </div>
-            )
+                return (
+                    <div className={styles.lasColContainer}>
+                        {isBulkSelectionActive ? (
+                            <TooltipComponent title={tooltipMessage} placement="bottom" width="240px" height="50px">
+                                {exploreSavingsButton}
+                            </TooltipComponent>
+                        ) : (
+                            exploreSavingsButton
+                        )}
+
+                        <DeleteMenuCell
+                            isDemoMode={isDemoMode}
+                            isBulkSelected={selectedRowsForExploreSavingsOracleOnPremBulk.length > 0}
+                            rowData={rowData}
+                            menuOpenedRow={menuOpenedRow}
+                            menuOpenedRowDetail={menuOpenedRowDetail}
+                            setOpenedRow={setOpenedRow}
+                            onDelete={handleDelete}
+                        />
+                    </div>
+                );
+            }
         }
     ];
 

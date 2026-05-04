@@ -14,8 +14,13 @@ type TMC = {
 };
 const TotalMonthlyCost = ({ disableState = false }: TMC) => {
     const { t } = useTranslation();
-    const { storageSavingsResponse, storageSavingsLoading, savingsCalculatorFrom, onPremStorageAndComputeInfo } =
-        useAppSelector(state => state.exploreSavings);
+    const {
+        storageSavingsResponse,
+        storageSavingsLoading,
+        savingsCalculatorFrom,
+        onPremStorageAndComputeInfo,
+        oracleLicenseCostUpdating
+    } = useAppSelector(state => state.exploreSavings);
 
     const oracleLicenseCost = useMemo(() => {
         const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
@@ -63,7 +68,7 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
                 >
                     {GENERAL.TOTAL_MONTHLY_COST}
                 </DsTypography>
-                {storageSavingsLoading && <DsFlashingDotsLoader />}
+                {(storageSavingsLoading || oracleLicenseCostUpdating) && <DsFlashingDotsLoader />}
             </div>
 
             <div className={styles.mainSection}>

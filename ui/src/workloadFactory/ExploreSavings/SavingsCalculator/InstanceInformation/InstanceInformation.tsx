@@ -5,7 +5,10 @@ import { useTranslation } from 'react-i18next';
 import styles from './InstanceInformation.module.scss';
 import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
 import { FINDINGS, SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
-import { setOnPremStorageAndComputeInfo } from '../../../../store/workloadFactory/exploreSavingsSlice';
+import {
+    setOnPremStorageAndComputeInfo,
+    setOracleLicenseCostUpdating
+} from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 import { getOracleColDefs, getInstanceColDefs, getInstanceClassName } from './InstanceInformationUtils';
 
@@ -95,6 +98,8 @@ const InstanceInformation = ({ host }: { host?: any }) => {
         if (oracleCostDebounced !== null && oracleCostDebounced !== undefined && oracleStoreKey) {
             const currentStoreValue = onPremStorageAndComputeInfo?.[oracleStoreKey]?.monthlyOracleCost ?? '';
             if (oracleCostDebounced !== currentStoreValue) {
+                // Set updating flag when actually dispatching a change
+                dispatch(setOracleLicenseCostUpdating(true));
                 dispatch(
                     setOnPremStorageAndComputeInfo({
                         type: oracleStoreKey,
@@ -102,6 +107,15 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                         value: oracleCostDebounced
                     })
                 );
+                // Clear the updating flag after dispatch (simulating completion of "calculation")
+                const timeoutId = setTimeout(() => {
+                    dispatch(setOracleLicenseCostUpdating(false));
+                }, 500);
+
+                return () => {
+                    clearTimeout(timeoutId);
+                    dispatch(setOracleLicenseCostUpdating(false));
+                };
             }
         }
     }, [oracleCostDebounced, oracleStoreKey]);

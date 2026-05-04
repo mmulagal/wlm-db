@@ -32,6 +32,7 @@ import { setOnPremiseData } from '../../../store/workloadFactory/exploreSavingsS
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import AssessmentDialog from '../OracleTCO/AssessmentDialog/AssessmentDialog';
 import TableTooltip from '../OracleTCO/TableTooltip/TableTooltip';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { Table } from '../../../common/Lib/Table/Table';
 import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
 import { useTable } from '../../../common/Lib/Table/useTable';
@@ -288,16 +289,17 @@ const ExploreSavingsOnPremiseTable = () => {
         accessor: '',
         isSticky: true,
         width: windowSize.width >= 1920 ? '14.001%' : '225px',
-        renderCell: (cellData: any, rowData: any) => (
-            <div className={styles.lasColContainer}>
+        renderCell: (cellData: any, rowData: any) => {
+            const isBulkSelectionActive = selectedRowsForExploreSavingsOnPremBulk.length > 0;
+            const tooltipMessage = isBulkSelectionActive
+                ? t('databases.explore-savings.disabled-tooltip-bulk-selection')
+                : '';
+
+            const exploreSavingsButton = (
                 <div
-                    className={
-                        selectedRowsForExploreSavingsOnPremBulk.length > 0
-                            ? CommonStyles.detectManageDisable
-                            : CommonStyles.detectManage
-                    }
+                    className={isBulkSelectionActive ? CommonStyles.detectManageDisable : CommonStyles.detectManage}
                     onClick={
-                        selectedRowsForExploreSavingsOnPremBulk.length > 0
+                        isBulkSelectionActive
                             ? undefined
                             : () => {
                                   onClickESHostOnPrem(dispatch, rowData, isWorkloadFactory, navigate);
@@ -309,18 +311,30 @@ const ExploreSavingsOnPremiseTable = () => {
                         {GENERAL.ES_SAVINGS}
                     </Typography>
                 </div>
+            );
 
-                <DeleteMenuCell
-                    isDemoMode={isDemoMode}
-                    isBulkSelected={selectedRowsForExploreSavingsOnPremBulk.length > 0}
-                    rowData={rowData}
-                    menuOpenedRow={menuOpenedRow}
-                    menuOpenedRowDetail={menuOpenedRowDetail}
-                    setOpenedRow={setOpenedRow}
-                    onDelete={handleDelete}
-                />
-            </div>
-        )
+            return (
+                <div className={styles.lasColContainer}>
+                    {isBulkSelectionActive ? (
+                        <TooltipComponent title={tooltipMessage} placement="bottom" width="240px" height="50px">
+                            {exploreSavingsButton}
+                        </TooltipComponent>
+                    ) : (
+                        exploreSavingsButton
+                    )}
+
+                    <DeleteMenuCell
+                        isDemoMode={isDemoMode}
+                        isBulkSelected={isBulkSelectionActive}
+                        rowData={rowData}
+                        menuOpenedRow={menuOpenedRow}
+                        menuOpenedRowDetail={menuOpenedRowDetail}
+                        setOpenedRow={setOpenedRow}
+                        onDelete={handleDelete}
+                    />
+                </div>
+            );
+        }
     });
 
     const ExploreSavingsColDefs: ColumnProps[] = [

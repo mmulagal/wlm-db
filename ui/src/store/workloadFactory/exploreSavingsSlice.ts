@@ -32,6 +32,7 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     hasFetched: false,
     showOptimizedModal: false,
     storageSavingsLoading: false,
+    oracleLicenseCostUpdating: false,
     savingsCalculatorRefresh: false,
     selectedDeploymentModel: '',
     viewCalculationsResponse: null,
@@ -414,6 +415,9 @@ const exploreSavingsSlice = createSlice({
         setStorageSavingsLoading(state, action: PayloadAction<any>) {
             state.storageSavingsLoading = action.payload;
         },
+        setOracleLicenseCostUpdating(state, action: PayloadAction<boolean>) {
+            state.oracleLicenseCostUpdating = action.payload;
+        },
         setSavingsCalculatorRefresh(state, action: PayloadAction<any>) {
             state.savingsCalculatorRefresh = action.payload;
         },
@@ -459,6 +463,7 @@ const exploreSavingsSlice = createSlice({
             state.getPartnerHostDetailsLoading = false;
             state.storageSavingsResponse = {};
             state.storageSavingsLoading = false;
+            state.oracleLicenseCostUpdating = false;
             state.savingsCalculatorRefresh = false;
             state.selectedDeploymentModel = '';
             state.viewCalculationsResponse = null;
@@ -607,6 +612,7 @@ const exploreSavingsSlice = createSlice({
             state.viewCalculationsResponse = null;
             state.viewCalculationsApiResponse = null;
             state.storageSavingsLoading = false;
+            state.oracleLicenseCostUpdating = false;
             state.viewCalculationsLoading = false;
         }
     }
@@ -679,6 +685,7 @@ export const {
     setGetPartnerHostDetailsLoading,
     setStorageSavingsResponse,
     setStorageSavingsLoading,
+    setOracleLicenseCostUpdating,
     setSavingsCalculatorRefresh,
     addExploreSavingsInitialData,
     setSelectedDeploymentModel,

@@ -18,6 +18,7 @@ import { resetOptimizedStorage } from '../../../store/workloadFactory/exploreSav
 import { setSelectedRowsForExploreSavingsOracleEbsBulk } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import BulkActionContainer from '../../../common/BulkAction/BulkActionContainer';
 import useResize from '../../../common/hooks/useResize';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import styles from './OracleEbsTable.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 
@@ -155,24 +156,31 @@ const OracleEbsTable = () => {
         accessor: '',
         isSticky: true,
         width: windowSize.width >= 1920 ? '15.37%' : '247px',
-        renderCell: (_cellData: any, rowData: any) => (
-            <div
-                className={
-                    selectedRowsForExploreSavingsOracleEbsBulk.length > 0
-                        ? CommonStyles.detectManageDisable
-                        : CommonStyles.detectManage
-                }
-                onClick={
-                    selectedRowsForExploreSavingsOracleEbsBulk.length > 0
-                        ? undefined
-                        : () => handleSingleAction(rowData)
-                }
-            >
-                <Typography variant="Regular_14" className={CommonStyles.textStyle}>
-                    {t('databases.explore-savings.explore-savings-title')}
-                </Typography>
-            </div>
-        )
+        renderCell: (_cellData: any, rowData: any) => {
+            const isBulkSelectionActive = selectedRowsForExploreSavingsOracleEbsBulk.length > 0;
+            const tooltipMessage = isBulkSelectionActive
+                ? t('databases.explore-savings.disabled-tooltip-bulk-selection')
+                : '';
+
+            const exploreSavingsButton = (
+                <div
+                    className={isBulkSelectionActive ? CommonStyles.detectManageDisable : CommonStyles.detectManage}
+                    onClick={isBulkSelectionActive ? undefined : () => handleSingleAction(rowData)}
+                >
+                    <Typography variant="Regular_14" className={CommonStyles.textStyle}>
+                        {t('databases.explore-savings.explore-savings-title')}
+                    </Typography>
+                </div>
+            );
+
+            return isBulkSelectionActive ? (
+                <TooltipComponent title={tooltipMessage} placement="bottom" width="240px" height="50px">
+                    {exploreSavingsButton}
+                </TooltipComponent>
+            ) : (
+                exploreSavingsButton
+            );
+        }
     });
 
     const columns: ColumnProps[] = [

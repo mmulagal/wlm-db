@@ -1794,6 +1794,7 @@
             "disabled-tooltip": "Running a DB on an FSxN in a different region may affect performance.",
             "disabled-tooltip-limit-exceed": "Upto 5 hosts can be selected",
             "disabled-tooltip-limit-reached": "Atleast 1 of the host should be selected",
+            "disabled-tooltip-bulk-selection": "Since bulk selection is enabled, the single action is disabled",
             "mssql-ebs": "Microsoft SQL Server hosts on Elastic Block Store",
             "oracle-ebs": "Oracle database hosts on Elastic Block Store",
             "mssql-on-prem": "Microsoft SQL Server hosts on-premises",

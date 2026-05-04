@@ -62,6 +62,7 @@ export interface ExploreSavingsSliceEntities {
     optimizedStorageSavingsResponse: StorageSavingsInterface;
     standardStorageSavingsResponse: StorageSavingsInterface;
     storageSavingsLoading: boolean;
+    oracleLicenseCostUpdating: boolean;
     savingsCalculatorRefresh: boolean;
     selectedDeploymentModel: string;
     viewCalculationsResponse: ViewCalculationsInterface | null;
