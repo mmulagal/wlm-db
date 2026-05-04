@@ -181,7 +181,8 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             if (isOracleEbs) {
                 // Oracle EBS: oracleEdition is enriched by OracleEbsSavingsCalculatorApi,
                 // fallback to databaseInstancesSummary from resource-details API response
-                const oracleEdition = currentHost?.oracleEdition ||
+                const oracleEdition =
+                    currentHost?.oracleEdition ||
                     currentHost?.databaseInstancesSummary?.[0]?.databaseServer?.serverEdition ||
                     t('databases.general.not-available');
 

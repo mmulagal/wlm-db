@@ -1,4 +1,5 @@
 import { DsTypography } from '@tlveng/wlm-ds';
+import { Popover } from '@netapp/design-system';
 import { TFunction } from 'i18next';
 import React from 'react';
 import styles from './DialogContent.module.scss';
@@ -65,6 +66,23 @@ export const createCodeBox = (content: string | string[]) => (
                 ) : (
                     <DsTypography variant="Regular_14">{content}</DsTypography>
                 )}
+            </div>
+        </div>
+    </div>
+);
+
+// Helper function to create a command code box with an inline copy button
+export const createCodeBoxWithCopy = (command: string, copiedMessage: string) => (
+    <div className={styles['command-list-code']}>
+        <div className={styles['command-code-box']}>
+            <span className={styles['command-text']}>{command}</span>
+            <div className={styles['command-copy']}>
+                <Popover
+                    popoverClass={styles['copy-popover']}
+                    container={<CopyToClipboardCommon value={command} iconProvided={<CopyIcon />} />}
+                >
+                    {copiedMessage}
+                </Popover>
             </div>
         </div>
     </div>
@@ -216,10 +234,16 @@ export const createDriveSizeMissingPermissionsDialog = (t: any, missingPermissio
 export const createNumberedActionSteps = (steps: React.ReactNode[]) => (
     <div className={styles['action-section']}>
         {steps.map((step, index) => (
-            <div key={`step-${index}`} className={styles.row}>
+            <div key={`step-${index}`} className={`${styles.row} ${typeof step !== 'string' ? styles['row-top'] : ''}`}>
                 <DsTypography variant="Semibold_14">{index + 1}</DsTypography>
                 <DsTypography variant="Regular_14">|</DsTypography>
-                <DsTypography variant="Regular_14">{step}</DsTypography>
+                {typeof step === 'string' ? (
+                    <DsTypography variant="Regular_14">{step}</DsTypography>
+                ) : (
+                    <DsTypography variant="Regular_14" className={styles['step-content']}>
+                        {step}
+                    </DsTypography>
+                )}
             </div>
         ))}
     </div>

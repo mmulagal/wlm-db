@@ -8,7 +8,12 @@ import { ASSESSMENT_CONFIG_NAMES, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../..
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useGetMissingPatchAssessmentDataQuery } from '../../../../utils/apiService';
 import { getTableLazyLoadingComponentProps } from '../../../../common/Lib/Table/tableLazyLoadingProps';
-import { createActionOptionSection, createContentWithBullets, createSection } from './DialogContentHelper';
+import {
+    createActionOptionSection,
+    createCodeBoxWithCopy,
+    createContentWithBullets,
+    createSection
+} from './DialogContentHelper';
 
 type ApplicationOracleDialogProps = {
     type: string;
@@ -129,24 +134,35 @@ const ApplicationOracleDialog = ({ type }: ApplicationOracleDialogProps) => {
                             t('databases.well-architect.oracle-critical-patch-step3'),
                             t('databases.well-architect.oracle-critical-patch-step4'),
                             <>
-                                {t('databases.well-architect.oracle-critical-patch-step5-before')}
-                                <span className={styles['medium-weight']}>
-                                    {t('databases.well-architect.oracle-critical-patch-step5-command')}
-                                </span>
-                                {t('databases.well-architect.oracle-critical-patch-step5-after')}
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.well-architect.oracle-critical-patch-step5-before')}
+                                </DsTypography>
+                                {createCodeBoxWithCopy(
+                                    t('databases.well-architect.oracle-critical-patch-step5-command'),
+                                    t('databases.general.copied-to-clipboard')
+                                )}
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.well-architect.oracle-critical-patch-step5-after')}
+                                </DsTypography>
                             </>,
                             t('databases.well-architect.oracle-critical-patch-step6'),
                             <>
-                                {t('databases.well-architect.oracle-critical-patch-step7-before')}
-                                <span className={styles['medium-weight']}>
-                                    {t('databases.well-architect.oracle-critical-patch-step7-command')}
-                                </span>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.well-architect.oracle-critical-patch-step7-before')}
+                                </DsTypography>
+                                {createCodeBoxWithCopy(
+                                    t('databases.well-architect.oracle-critical-patch-step7-command'),
+                                    t('databases.general.copied-to-clipboard')
+                                )}
                             </>,
                             <>
-                                {t('databases.well-architect.oracle-critical-patch-step8-before')}
-                                <span className={styles['medium-weight']}>
-                                    {t('databases.well-architect.oracle-critical-patch-step8-command')}
-                                </span>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.well-architect.oracle-critical-patch-step8-before')}
+                                </DsTypography>
+                                {createCodeBoxWithCopy(
+                                    t('databases.well-architect.oracle-critical-patch-step8-command'),
+                                    t('databases.general.copied-to-clipboard')
+                                )}
                             </>,
                             t('databases.well-architect.oracle-critical-patch-step9')
                         ])}
