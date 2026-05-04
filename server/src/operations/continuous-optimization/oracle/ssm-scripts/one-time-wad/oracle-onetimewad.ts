@@ -711,6 +711,115 @@ def main():
             log_warning("Failed to get headroom data: {}".format(headroom_err))
             result["rawdata"]["hostLevelDetails"]["headroom"] = {}
 
+        # Collect FlexClone assessment data
+        # Queries all FlexClone volumes across the FSx filesystem (not filtered by SVM)
+        # to detect cross-SVM clones where parent volume is in one SVM and clone is in another
+        clone_assessment = {}
+        CLONE_AGE_THRESHOLD = 60
+        FLEXCLONE_FIELDS = "clone.parent_volume.name,clone.is_flexclone,create_time,name,uuid,svm.name,svm.uuid,space.size,space.used,space.physical_used"
+
+        if volume_names:
+            log_info("Collecting FlexClone assessment data...")
+            try:
+                all_clone_records = []
+                clone_endpoint = "storage/volumes?clone.is_flexclone=true&fields={}&max_records=200&return_timeout=60".format(FLEXCLONE_FIELDS)
+                clone_page = 1
+
+                while clone_endpoint:
+                    log_info("Fetching FlexClone volumes page {}: {}".format(clone_page, clone_endpoint))
+                    clone_response = ontap_request(ontap_config, "GET", clone_endpoint)
+
+                    if not clone_response:
+                        log_info("Empty response from ONTAP API (page {})".format(clone_page))
+                        break
+
+                    page_records = clone_response.get("records", [])
+                    all_clone_records.extend(page_records)
+                    log_info("Page {}: retrieved {} records (total so far: {})".format(clone_page, len(page_records), len(all_clone_records)))
+
+                    next_link = clone_response.get("_links", {}).get("next", {}).get("href", "")
+                    if next_link:
+                        clone_endpoint = next_link.replace("/api/", "", 1) if next_link.startswith("/api/") else next_link
+                        clone_page += 1
+                    else:
+                        clone_endpoint = None
+
+                log_info("FlexClone volumes retrieved (all pages): {}".format(len(all_clone_records)))
+
+                mapped_volume_set = set(volume_names)
+                relevant_clone_records = [
+                    record for record in all_clone_records
+                    if record.get("clone", {}).get("is_flexclone")
+                    and record.get("clone", {}).get("parent_volume", {}).get("name", "") in mapped_volume_set
+                ]
+
+                clone_details = []
+                old_clone_details = []
+                old_clone_database_names = []
+                old_clones = 0
+
+                for record in relevant_clone_records:
+                    clone_info = record.get("clone", {})
+                    parent_vol_name = clone_info.get("parent_volume", {}).get("name", "")
+                    clone_volume_name = record.get("name", "")
+                    clone_volume_uuid = record.get("uuid", "")
+                    clone_volume_create_time = record.get("create_time", "")
+                    space = record.get("space", {})
+                    clone_size = space.get("physical_used", space.get("used", 0)) or 0
+
+                    clone_age = 0
+                    if clone_volume_create_time:
+                        try:
+                            create_dt = datetime.datetime.strptime(clone_volume_create_time[:19], "%Y-%m-%dT%H:%M:%S")
+                            now_dt = datetime.datetime.utcnow()
+                            clone_age = (now_dt - create_dt).days
+                        except Exception:
+                            clone_age = 0
+
+                    cloned_volume_detail = {
+                        "sourceVolumeName": parent_vol_name,
+                        "cloneVolumeName": clone_volume_name,
+                        "cloneVolumeUuid": clone_volume_uuid,
+                        "cloneVolumeCreateTime": clone_volume_create_time,
+                        "cloneDatabaseName": clone_volume_name
+                    }
+
+                    clone_detail = {
+                        "cloneDatabaseName": clone_volume_name,
+                        "databaseHostName": socket.gethostname(),
+                        "databaseHostId": ec2_instance_id,
+                        "databaseInstanceName": ORACLE_SID,
+                        "clonedBy": "other",
+                        "cloneAge": clone_age,
+                        "cloneSize": clone_size,
+                        "clonedVolumeDetails": [cloned_volume_detail]
+                    }
+
+                    clone_details.append(clone_detail)
+
+                    if clone_age >= CLONE_AGE_THRESHOLD:
+                        old_clones += 1
+                        old_clone_details.append(clone_detail)
+                        old_clone_database_names.append(clone_volume_name)
+
+                is_optimized = old_clones == 0
+                clone_assessment = {
+                    "cloneDetails": clone_details,
+                    "status": "optimized" if is_optimized else "not-optimized",
+                    "oldClones": old_clones,
+                    "oldCloneDetails": old_clone_details,
+                    "oldCloneDatabaseNames": old_clone_database_names
+                }
+
+                log_info("Clone assessment: {} total clones, {} old clones, status={}".format(
+                    len(clone_details), old_clones, clone_assessment["status"]))
+
+            except Exception as clone_err:
+                log_warning("Failed to collect FlexClone assessment data: {}".format(clone_err))
+                clone_assessment = {}
+        else:
+            log_info("Skipping clone assessment - no mapped volume names available")
+
         # Build instance level details
         instance_level = {
             "instanceDetails": instance_details,
@@ -723,6 +832,8 @@ def main():
         }
         if storage_protocol == "NFS":
             instance_level["adrInfo"] = adr_info
+        if clone_assessment:
+            instance_level["clone"] = clone_assessment
         result["rawdata"]["instanceLevelDetails"][ORACLE_SID] = instance_level
 
         if errors:
