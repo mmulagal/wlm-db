@@ -626,7 +626,11 @@ export const formatViewCalcInstance = (
 
         if (isOracle) {
             base.oracleEdition =
-                licenseDetails?.oracleEdition || selectedOnPremHostDetails?.oracleEdition || GENERAL.NOT_AVAILABLE;
+                licenseDetails?.oracleEdition ||
+                selectedHostDetails?.oracleEdition ||
+                selectedHostDetails?.databaseInstancesSummary?.[0]?.databaseServer?.serverEdition ||
+                selectedOnPremHostDetails?.oracleEdition ||
+                GENERAL.NOT_AVAILABLE;
             base.oracleLicense = licenseDetails?.licenseIncluded ? 'Yes' : 'No';
         } else {
             base.sqlEdition =
@@ -745,16 +749,24 @@ export const formatViewCalcData = (
 
         const hostDeploymentType = recommendedCompute?.deploymentType || existingCompute?.deploymentType;
 
+        // Find the matching bulk host to pass oracleEdition for View Calculations
+        const bulkHost =
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+                ? selectedRowsForExploreSavingsOracleEbsBulk?.find((h: any) => h.name === hostName)
+                : savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
+                ? selectedRowsForExploreSavingsOracleOnPremBulk?.find((h: any) => h.resourceName === hostName)
+                : {};
+
         const fsxMachineData = formatViewCalcInstance(
             hostDeploymentType,
-            {},
+            bulkHost || {},
             recommendedCompute?.machineDetails,
             recommendedLicense
         );
 
         const ebsMachineData = formatViewCalcInstance(
             hostDeploymentType,
-            {},
+            bulkHost || {},
             existingCompute?.machineDetails,
             existingLicense
         );
