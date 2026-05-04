@@ -50,7 +50,7 @@ import {
     ORACLE_ASSESSMENT_CRR_CONFIG_DATA,
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     buildOracleDemoAwsBackupAssessmentSeed,
-    ORACLE_SECURITY_PATCH_ASSESSMENT_DATA,
+    buildOracleSecurityPatchAssessmentData,
     ORACLE_SNAPCENTER_ASSESSMENT_DATA,
     ORACLE_ASSESSMENT_CLONE_CONFIG_DATA,
     createAssessmentDataWithRetry,
@@ -1376,7 +1376,7 @@ async function createAssessmentDataForOracle(
     const instanceSecurityPatchConfigDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH,
-        config_data: ORACLE_SECURITY_PATCH_ASSESSMENT_DATA
+        config_data: buildOracleSecurityPatchAssessmentData(databaseInstanceId)
     };
 
     const instanceSnapcenterConfigDataRecord = {

@@ -20,7 +20,13 @@ import {
     STORAGE_PROTOCOLS
 } from '../consts';
 import { checkAccount, getSubJobDescriptions } from '../utils';
-import { AssessmentCategories } from '../continous-optimization-consts';
+import {
+    AssessmentCategories,
+    ASSESSMENT_RESOURCE_TYPE,
+    AssessmentStatus,
+    AwsWellArchitecturedPillars,
+    SEVERITY
+} from '../continous-optimization-consts';
 import {
     createDatabaseInstanceConfigData,
     listDatabaseInstanceConfigData
@@ -6747,17 +6753,33 @@ async function createAssessmentDataWithRetry(
     }
 }
 
-// Oracle 21c with RU 17 (Oct 2024). VERSION_FULL reports 21.17.
-// Against DEMO_ORACLE_CPU_CATALOG this produces exactly one missing patch: CVE-2026-21975
-// (affects 21.3-21.20, released 2026-01-20, which is after the database RU date of 2024-10-15).
-const ORACLE_SECURITY_PATCH_ASSESSMENT_DATA = {
-    version: '21.17.0.0.0',
-    appliedPatches: {
-        'java vm': '2024-10-15',
-        database: '2024-10-15',
-        clusterware: '2021-03-01'
-    }
-};
+// Oracle 19.22 with database RU dated 2024-01-16 — matches the SSM mock
+// `oracleSecurityPatchAssessmentData` payload. Against DEMO_ORACLE_CPU_CATALOG
+// this version + appliedPatches set produces exactly four missing CPUs
+// (CVE-2026-21975, CVE-2025-67735, CVE-2022-26345, CVE-2024-21247) so the
+// first-load drift count matches what running the assessment / patch-scan
+// would surface.
+const ORACLE_SECURITY_PATCH_MISSING_COUNT = 4;
+
+function buildOracleSecurityPatchAssessmentData(databaseInstanceName: string) {
+    return {
+        name: 'oracle-security-patch',
+        tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
+        category: 'compute',
+        subCategory: 'compute',
+        focusWidgetName: 'Oracle security patch',
+        severity: SEVERITY.CRITICAL,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+        recommendation:
+            'Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.',
+        status: AssessmentStatus.NOT_OPTIMIZED,
+        recommended: AssessmentStatus.OPTIMIZED,
+        objectsInViolation: [databaseInstanceName],
+        totalObjectsAssessed: 1,
+        totalObjectsInViolation: 1,
+        missingPatchesCount: ORACLE_SECURITY_PATCH_MISSING_COUNT
+    };
+}
 
 const ORACLE_SNAPCENTER_ASSESSMENT_DATA = {
     isDataguardPrimary: false,
@@ -7039,7 +7061,7 @@ export {
     ORACLE_ASSESSMENT_CRR_CONFIG_DATA,
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     buildOracleDemoAwsBackupAssessmentSeed,
-    ORACLE_SECURITY_PATCH_ASSESSMENT_DATA,
+    buildOracleSecurityPatchAssessmentData,
     ORACLE_SNAPCENTER_ASSESSMENT_DATA,
     ORACLE_ASSESSMENT_CLONE_CONFIG_DATA,
     PDB_DETAILS,

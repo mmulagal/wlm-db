@@ -1,3 +1,177 @@
+const MSSQL_HOST_OS_MISSING_PATCHES = [
+    {
+        kbId: 'KB5051979',
+        state: 'Missing',
+        title: '2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)',
+        severity: 'Critical',
+        classification: 'SecurityUpdates'
+    },
+    {
+        kbId: 'KB5050187',
+        state: 'Missing',
+        title: '2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)',
+        severity: 'Important',
+        classification: 'SecurityUpdates'
+    }
+];
+
+const MSSQL_HOST_OS_NON_COMPLIANT_COUNTS = {
+    otherNonCompliantCount: 0,
+    criticalNonCompliantCount: 1,
+    securityNonCompliantCount: 1
+};
+
+// Shared MSSQL database-level missing patch list for every demo MSSQL instance.
+// Mirrors what the simulator's SSM mock produces for SQL Server 2019 RTM-CU19
+// (15.0.4298, release date Jan 27 2023): the 11 SQL Server 2019 KB updates
+// from `ssm-describe-available-patches.json` that aren't already present in
+// `getInstalledSQLPatchesCommandResponse` and were released after that date.
+// Keeping the seed and the post-scan output in sync ensures the patch count
+// on first load matches what running the assessment / patch-scan returns.
+const MSSQL_DATABASE_MISSING_PATCHES = [
+    {
+        kbId: 'KB5021124',
+        title: 'Security Update for SQL Server 2019 RTM CU (KB5021124)',
+        severity: 'Important',
+        releaseDate: '2023-02-14T18:00:00.000Z',
+        classification: 'SecurityUpdates'
+    },
+    {
+        kbId: 'KB5021125',
+        title: 'Security Update for SQL Server 2019 RTM GDR (KB5021125)',
+        severity: 'Important',
+        releaseDate: '2023-03-05T19:18:30.000Z',
+        classification: 'SecurityUpdates'
+    },
+    {
+        kbId: 'KB5029377',
+        title: 'Security Update for SQL Server 2019 RTM GDR (KB5029377)',
+        severity: 'Important',
+        releaseDate: '2023-10-10T17:00:00.000Z',
+        classification: 'SecurityUpdates'
+    },
+    {
+        kbId: 'KB5029378',
+        title: 'Security Update for SQL Server 2019 RTM CU (KB5029378)',
+        severity: 'Important',
+        releaseDate: '2023-10-10T17:00:00.000Z',
+        classification: 'SecurityUpdates'
+    },
+    {
+        kbId: 'KB5035434',
+        title: 'Security Update for SQL Server 2019 RTM GDR (KB5035434)',
+        severity: 'Important',
+        releaseDate: '2024-04-09T17:00:00.000Z',
+        classification: 'SecurityUpdates'
+    },
+    {
+        kbId: 'KB5036335',
+        title: 'Security Update for SQL Server 2019 RTM CU (KB5036335)',
+        severity: 'Important',
+        releaseDate: '2024-04-09T17:00:00.000Z',
+        classification: 'SecurityUpdates'
+    },
+    {
+        kbId: 'KB5040948',
+        title: 'Security Update for SQL Server 2019 RTM CU (KB5040948)',
+        severity: 'Important',
+        releaseDate: '2024-07-09T17:00:00.000Z',
+        classification: 'SecurityUpdates'
+    },
+    {
+        kbId: 'KB5040986',
+        title: 'Security Update for SQL Server 2019 RTM GDR (KB5040986)',
+        severity: 'Important',
+        releaseDate: '2024-07-09T17:00:00.000Z',
+        classification: 'SecurityUpdates'
+    },
+    {
+        kbId: 'KB5042214',
+        title: 'Security Update for SQL Server 2019 RTM GDR (KB5042214)',
+        severity: 'Important',
+        releaseDate: '2024-09-10T17:00:00.000Z',
+        classification: 'SecurityUpdates'
+    },
+    {
+        kbId: 'KB5046056',
+        title: 'Security Update for SQL Server 2019 RTM GDR (KB5046056)',
+        severity: 'Important',
+        releaseDate: '2024-10-08T17:00:00.000Z',
+        classification: 'SecurityUpdates'
+    },
+    {
+        kbId: 'KB5046859',
+        title: 'Security Update for SQL Server 2019 RTM GDR (KB5046859)',
+        severity: 'Important',
+        releaseDate: '2024-11-12T18:00:00.000Z',
+        classification: 'SecurityUpdates'
+    }
+];
+
+const MSSQL_DATABASE_MISSING_PATCH_COUNTS = {
+    missingPatchesCount: MSSQL_DATABASE_MISSING_PATCHES.length,
+    criticalMissingPatchesCount: MSSQL_DATABASE_MISSING_PATCHES.filter(({ severity }) => severity === 'Critical')
+        .length,
+    importantMissingPatchesCount: MSSQL_DATABASE_MISSING_PATCHES.filter(({ severity }) => severity === 'Important')
+        .length
+};
+
+// Shared Oracle Linux host OS missing patch list. The seeded `assessment_data`
+// no longer carries `missingPatchDetails` (production persists the host OS
+// patch assessment without details — see `omit(..., 'missingPatchDetails')` in
+// `runLinuxOsPatchAssessment`). The list still lives here so the simulator
+// SSM mock can replay the same set of CVEs that patch-scan would surface.
+const ORACLE_HOST_OS_MISSING_PATCHES = [
+    {
+        classification: 'Security',
+        cveIds: 'CVE-2025-21785,CVE-2025-21760',
+        severity: 'Critical',
+        state: 'Missing',
+        title: 'kernel-5.14.0-503.40.1.el9_5.x86_64 - Security update for Linux kernel'
+    },
+    {
+        classification: 'Security',
+        cveIds: 'CVE-2024-50302,CVE-2024-53197',
+        severity: 'Critical',
+        state: 'Missing',
+        title: 'kernel-headers-5.14.0-503.40.1.el9_5.x86_64 - Security update for kernel headers'
+    },
+    {
+        classification: 'Security',
+        cveIds: 'CVE-2025-0624',
+        severity: 'Important',
+        state: 'Missing',
+        title: 'grub2-common-2.06-94.el9_5.3.noarch - Security update for GRUB2 bootloader'
+    },
+    {
+        classification: 'Security',
+        cveIds: 'CVE-2024-12243',
+        severity: 'Important',
+        state: 'Missing',
+        title: 'gnutls-3.8.3-4.el9_5.5.x86_64 - Security update for GnuTLS'
+    },
+    {
+        classification: 'Security',
+        cveIds: 'CVE-2024-11187,CVE-2024-12705',
+        severity: 'Important',
+        state: 'Missing',
+        title: 'bind-utils-9.16.23-24.el9_5.3.x86_64 - Security update for BIND DNS utilities'
+    },
+    {
+        classification: 'Security',
+        cveIds: 'CVE-2024-11168',
+        severity: 'Important',
+        state: 'Missing',
+        title: 'python3-urllib3-1.26.5-5.el9_5.1.noarch - Security update for Python urllib3'
+    }
+];
+
+const ORACLE_HOST_OS_NON_COMPLIANT_COUNTS = {
+    otherNonCompliantCount: 0,
+    criticalNonCompliantCount: ORACLE_HOST_OS_MISSING_PATCHES.filter(({ severity }) => severity === 'Critical').length,
+    securityNonCompliantCount: ORACLE_HOST_OS_MISSING_PATCHES.filter(({ severity }) => severity === 'Important').length
+};
+
 const mockResourceAssessmentData = {
     assessment: {
         compute: {
@@ -165,216 +339,12 @@ const mockResourceAssessmentData = {
             {
                 ec2InstanceId: 'i-0a1f31a39bd2d9362',
                 ec2InstanceName: 'SQLServer-Dev-02',
-                missingPatchDetails: [
-                    {
-                        kbId: 'KB4583458',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB4583458)',
-                        severity: 'Important',
-                        releaseDate: '2021-01-12T18:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB4583459',
-                        title: 'Security Update for SQL Server 2019 RTM CU (KB4583459)',
-                        severity: 'Important',
-                        releaseDate: '2021-01-12T18:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5014356',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5014356)',
-                        severity: 'Important',
-                        releaseDate: '2022-06-14T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5021124',
-                        title: 'Security Update for SQL Server 2019 RTM CU (KB5021124)',
-                        severity: 'Important',
-                        releaseDate: '2023-02-14T18:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5021125',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5021125)',
-                        severity: 'Important',
-                        releaseDate: '2023-03-05T19:18:30.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5029377',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5029377)',
-                        severity: 'Important',
-                        releaseDate: '2023-10-10T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5029378',
-                        title: 'Security Update for SQL Server 2019 RTM CU (KB5029378)',
-                        severity: 'Important',
-                        releaseDate: '2023-10-10T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5035434',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5035434)',
-                        severity: 'Important',
-                        releaseDate: '2024-04-09T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5036335',
-                        title: 'Security Update for SQL Server 2019 RTM CU (KB5036335)',
-                        severity: 'Important',
-                        releaseDate: '2024-04-09T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5040948',
-                        title: 'Security Update for SQL Server 2019 RTM CU (KB5040948)',
-                        severity: 'Important',
-                        releaseDate: '2024-07-09T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5040986',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5040986)',
-                        severity: 'Important',
-                        releaseDate: '2024-07-09T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5042214',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5042214)',
-                        severity: 'Important',
-                        releaseDate: '2024-09-10T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5046056',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5046056)',
-                        severity: 'Important',
-                        releaseDate: '2024-10-08T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5046859',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5046859)',
-                        severity: 'Important',
-                        releaseDate: '2024-11-12T18:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    }
-                ],
-                missingPatchesCount: 14,
-                criticalMissingPatchesCount: 0,
-                importantMissingPatchesCount: 14
+                ...MSSQL_DATABASE_MISSING_PATCH_COUNTS
             },
             {
                 ec2InstanceId: 'i-0253886610c274a28',
                 ec2InstanceName: 'SQLServer-QA-02',
-                missingPatchDetails: [
-                    {
-                        kbId: 'KB4583458',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB4583458)',
-                        severity: 'Important',
-                        releaseDate: '2021-01-12T18:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB4583459',
-                        title: 'Security Update for SQL Server 2019 RTM CU (KB4583459)',
-                        severity: 'Important',
-                        releaseDate: '2021-01-12T18:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5014356',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5014356)',
-                        severity: 'Important',
-                        releaseDate: '2022-06-14T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5021124',
-                        title: 'Security Update for SQL Server 2019 RTM CU (KB5021124)',
-                        severity: 'Important',
-                        releaseDate: '2023-02-14T18:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5021125',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5021125)',
-                        severity: 'Important',
-                        releaseDate: '2023-03-05T19:18:30.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5029377',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5029377)',
-                        severity: 'Important',
-                        releaseDate: '2023-10-10T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5029378',
-                        title: 'Security Update for SQL Server 2019 RTM CU (KB5029378)',
-                        severity: 'Important',
-                        releaseDate: '2023-10-10T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5035434',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5035434)',
-                        severity: 'Important',
-                        releaseDate: '2024-04-09T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5036335',
-                        title: 'Security Update for SQL Server 2019 RTM CU (KB5036335)',
-                        severity: 'Important',
-                        releaseDate: '2024-04-09T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5040948',
-                        title: 'Security Update for SQL Server 2019 RTM CU (KB5040948)',
-                        severity: 'Important',
-                        releaseDate: '2024-07-09T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5040986',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5040986)',
-                        severity: 'Important',
-                        releaseDate: '2024-07-09T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5042214',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5042214)',
-                        severity: 'Important',
-                        releaseDate: '2024-09-10T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5046056',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5046056)',
-                        severity: 'Important',
-                        releaseDate: '2024-10-08T17:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5046859',
-                        title: 'Security Update for SQL Server 2019 RTM GDR (KB5046859)',
-                        severity: 'Important',
-                        releaseDate: '2024-11-12T18:00:00.000Z',
-                        classification: 'SecurityUpdates'
-                    }
-                ],
-                missingPatchesCount: 14,
-                criticalMissingPatchesCount: 0,
-                importantMissingPatchesCount: 14
+                ...MSSQL_DATABASE_MISSING_PATCH_COUNTS
             }
         ],
         hostOsPatch: [
@@ -384,51 +354,15 @@ const mockResourceAssessmentData = {
                 ec2InstanceName: 'SQLServer-Dev-02',
                 operationEndTime: 999,
                 operationStartTime: 1,
-                missingPatchDetails: [
-                    {
-                        kbId: 'KB5051979',
-                        state: 'Missing',
-                        title: '2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)',
-                        severity: 'Critical',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5050187',
-                        state: 'Missing',
-                        title: '2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)',
-                        severity: 'Important',
-                        classification: 'SecurityUpdates'
-                    }
-                ],
-                otherNonCompliantCount: 0,
-                criticalNonCompliantCount: 0,
-                securityNonCompliantCount: 2
+                ...MSSQL_HOST_OS_NON_COMPLIANT_COUNTS
             },
             {
                 baselineId: 'pb-03e4a480964bbb87f',
                 ec2InstanceId: 'i-0253886610c274a28',
-                ec2InstanceName: 'SQLServer-Dev-02',
+                ec2InstanceName: 'SQLServer-QA-02',
                 operationEndTime: 819,
                 operationStartTime: 244,
-                missingPatchDetails: [
-                    {
-                        kbId: 'KB5051979',
-                        state: 'Missing',
-                        title: '2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)',
-                        severity: 'Critical',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5050187',
-                        state: 'Missing',
-                        title: '2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)',
-                        severity: 'Important',
-                        classification: 'SecurityUpdates'
-                    }
-                ],
-                otherNonCompliantCount: 0,
-                criticalNonCompliantCount: 0,
-                securityNonCompliantCount: 2
+                ...MSSQL_HOST_OS_NON_COMPLIANT_COUNTS
             }
         ],
         highAvailability: {
@@ -637,18 +571,12 @@ const mockResourceAssessmentDataAllOptimized = {
             {
                 ec2InstanceId: 'i-0a1f31a39bd2d9362',
                 ec2InstanceName: 'SQLServer-Dev-02',
-                missingPatchDetails: [],
-                missingPatchesCount: 0,
-                criticalMissingPatchesCount: 0,
-                importantMissingPatchesCount: 0
+                ...MSSQL_DATABASE_MISSING_PATCH_COUNTS
             },
             {
                 ec2InstanceId: 'i-0253886610c274a28',
                 ec2InstanceName: 'SQLServer-QA-02',
-                missingPatchDetails: [],
-                missingPatchesCount: 0,
-                criticalMissingPatchesCount: 0,
-                importantMissingPatchesCount: 0
+                ...MSSQL_DATABASE_MISSING_PATCH_COUNTS
             }
         ],
         hostOsPatch: [
@@ -658,21 +586,15 @@ const mockResourceAssessmentDataAllOptimized = {
                 ec2InstanceName: 'SQLServer-Dev-02',
                 operationEndTime: 999,
                 operationStartTime: 1,
-                missingPatchDetails: [],
-                otherNonCompliantCount: 0,
-                criticalNonCompliantCount: 0,
-                securityNonCompliantCount: 0
+                ...MSSQL_HOST_OS_NON_COMPLIANT_COUNTS
             },
             {
                 baselineId: 'pb-03e4a480964bbb87f',
                 ec2InstanceId: 'i-0253886610c274a28',
-                ec2InstanceName: 'SQLServer-Dev-02',
+                ec2InstanceName: 'SQLServer-QA-02',
                 operationEndTime: 819,
                 operationStartTime: 244,
-                missingPatchDetails: [],
-                otherNonCompliantCount: 0,
-                criticalNonCompliantCount: 0,
-                securityNonCompliantCount: 0
+                ...MSSQL_HOST_OS_NON_COMPLIANT_COUNTS
             }
         ],
         mtuAlignment: {
@@ -726,53 +648,7 @@ const mockOracleHostOsPatchAssessmentData = {
             ec2InstanceName: 'OracleDB-Prod-01',
             operationEndTime: new Date('2025-06-15T10:45:00Z').getTime(),
             operationStartTime: new Date('2025-06-15T10:30:00Z').getTime(),
-            missingPatchDetails: [
-                {
-                    classification: 'Security',
-                    cveIds: 'CVE-2025-21785,CVE-2025-21760',
-                    severity: 'Critical',
-                    state: 'Missing',
-                    title: 'kernel-5.14.0-503.40.1.el9_5.x86_64 - Security update for Linux kernel'
-                },
-                {
-                    classification: 'Security',
-                    cveIds: 'CVE-2024-50302,CVE-2024-53197',
-                    severity: 'Critical',
-                    state: 'Missing',
-                    title: 'kernel-headers-5.14.0-503.40.1.el9_5.x86_64 - Security update for kernel headers'
-                },
-                {
-                    classification: 'Security',
-                    cveIds: 'CVE-2025-0624',
-                    severity: 'Important',
-                    state: 'Missing',
-                    title: 'grub2-common-2.06-94.el9_5.3.noarch - Security update for GRUB2 bootloader'
-                },
-                {
-                    classification: 'Security',
-                    cveIds: 'CVE-2024-12243',
-                    severity: 'Important',
-                    state: 'Missing',
-                    title: 'gnutls-3.8.3-4.el9_5.5.x86_64 - Security update for GnuTLS'
-                },
-                {
-                    classification: 'Security',
-                    cveIds: 'CVE-2024-11187,CVE-2024-12705',
-                    severity: 'Important',
-                    state: 'Missing',
-                    title: 'bind-utils-9.16.23-24.el9_5.3.x86_64 - Security update for BIND DNS utilities'
-                },
-                {
-                    classification: 'Security',
-                    cveIds: 'CVE-2024-11168',
-                    severity: 'Important',
-                    state: 'Missing',
-                    title: 'python3-urllib3-1.26.5-5.el9_5.1.noarch - Security update for Python urllib3'
-                }
-            ],
-            otherNonCompliantCount: 0,
-            criticalNonCompliantCount: 2,
-            securityNonCompliantCount: 4
+            ...ORACLE_HOST_OS_NON_COMPLIANT_COUNTS
         }
     ],
     computeHostOs: {
@@ -804,7 +680,6 @@ const mockOracleHostOsPatchAssessmentDataAllOptimized = {
             ec2InstanceName: 'OracleDB-Prod-01',
             operationEndTime: new Date('2025-06-15T10:45:00Z').getTime(),
             operationStartTime: new Date('2025-06-15T10:30:00Z').getTime(),
-            missingPatchDetails: [],
             otherNonCompliantCount: 0,
             criticalNonCompliantCount: 0,
             securityNonCompliantCount: 0
@@ -841,34 +716,12 @@ const mockAoagResourceAssessmentData = {
             {
                 ec2InstanceId: 'i-0b2c3d4e5f6a7b8c1',
                 ec2InstanceName: 'PRD-SQL-CRM-AG3',
-                missingPatchDetails: [
-                    {
-                        kbId: 'KB5046861',
-                        title: 'Security Update for SQL Server 2022 CU16 (KB5046861)',
-                        severity: 'Important',
-                        classification: 'SecurityUpdates',
-                        releaseDate: '2025-11-12'
-                    }
-                ],
-                missingPatchesCount: 1,
-                criticalMissingPatchesCount: 0,
-                importantMissingPatchesCount: 1
+                ...MSSQL_DATABASE_MISSING_PATCH_COUNTS
             },
             {
                 ec2InstanceId: 'i-0b2c3d4e5f6a7b8c2',
                 ec2InstanceName: 'PRD-SQL-CRM-AG4',
-                missingPatchDetails: [
-                    {
-                        kbId: 'KB5046861',
-                        title: 'Security Update for SQL Server 2022 CU16 (KB5046861)',
-                        severity: 'Important',
-                        classification: 'SecurityUpdates',
-                        releaseDate: '2025-11-12'
-                    }
-                ],
-                missingPatchesCount: 1,
-                criticalMissingPatchesCount: 0,
-                importantMissingPatchesCount: 1
+                ...MSSQL_DATABASE_MISSING_PATCH_COUNTS
             }
         ],
         rssConfig: {
@@ -897,25 +750,7 @@ const mockAoagResourceAssessmentData = {
                 ec2InstanceName: 'PRD-SQL-CRM-AG3',
                 operationEndTime: 999,
                 operationStartTime: 1,
-                missingPatchDetails: [
-                    {
-                        kbId: 'KB5051979',
-                        state: 'Missing',
-                        title: '2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)',
-                        severity: 'Critical',
-                        classification: 'SecurityUpdates'
-                    },
-                    {
-                        kbId: 'KB5050187',
-                        state: 'Missing',
-                        title: '2025-01 Cumulative Update for .NET Framework 3.5, 4.8 and 4.8.1 for Microsoft server operating system version 21H2 for x64 (KB5050187)',
-                        severity: 'Important',
-                        classification: 'SecurityUpdates'
-                    }
-                ],
-                otherNonCompliantCount: 0,
-                criticalNonCompliantCount: 0,
-                securityNonCompliantCount: 2
+                ...MSSQL_HOST_OS_NON_COMPLIANT_COUNTS
             },
             {
                 baselineId: 'pb-03e4a480964bbb87f',
@@ -923,18 +758,7 @@ const mockAoagResourceAssessmentData = {
                 ec2InstanceName: 'PRD-SQL-CRM-AG4',
                 operationEndTime: 819,
                 operationStartTime: 244,
-                missingPatchDetails: [
-                    {
-                        kbId: 'KB5051979',
-                        state: 'Missing',
-                        title: '2025-02 Cumulative Update for Microsoft server operating system version 21H2 for x64-based Systems (KB5051979)',
-                        severity: 'Critical',
-                        classification: 'SecurityUpdates'
-                    }
-                ],
-                otherNonCompliantCount: 0,
-                criticalNonCompliantCount: 0,
-                securityNonCompliantCount: 1
+                ...MSSQL_HOST_OS_NON_COMPLIANT_COUNTS
             }
         ],
         highAvailability: {
@@ -1041,12 +865,14 @@ const mockAoagResourceAssessmentDataAllOptimized = {
         },
         mssqlPatch: [
             {
+                ec2InstanceId: 'i-0b2c3d4e5f6a7b8c1',
+                ec2InstanceName: 'PRD-SQL-CRM-AG3',
+                ...MSSQL_DATABASE_MISSING_PATCH_COUNTS
+            },
+            {
                 ec2InstanceId: 'i-0b2c3d4e5f6a7b8c2',
                 ec2InstanceName: 'PRD-SQL-CRM-AG4',
-                missingPatchDetails: [],
-                missingPatchesCount: 0,
-                criticalMissingPatchesCount: 0,
-                importantMissingPatchesCount: 0
+                ...MSSQL_DATABASE_MISSING_PATCH_COUNTS
             }
         ],
         rssConfig: {
@@ -1075,10 +901,7 @@ const mockAoagResourceAssessmentDataAllOptimized = {
                 ec2InstanceName: 'PRD-SQL-CRM-AG3',
                 operationEndTime: 999,
                 operationStartTime: 1,
-                missingPatchDetails: [],
-                otherNonCompliantCount: 0,
-                criticalNonCompliantCount: 0,
-                securityNonCompliantCount: 0
+                ...MSSQL_HOST_OS_NON_COMPLIANT_COUNTS
             },
             {
                 baselineId: 'pb-03e4a480964bbb87f',
@@ -1086,10 +909,7 @@ const mockAoagResourceAssessmentDataAllOptimized = {
                 ec2InstanceName: 'PRD-SQL-CRM-AG4',
                 operationEndTime: 819,
                 operationStartTime: 244,
-                missingPatchDetails: [],
-                otherNonCompliantCount: 0,
-                criticalNonCompliantCount: 0,
-                securityNonCompliantCount: 0
+                ...MSSQL_HOST_OS_NON_COMPLIANT_COUNTS
             }
         ],
         highAvailability: {
@@ -1169,5 +989,15 @@ export {
     mockOracleHostOsPatchAssessmentData,
     mockOracleHostOsPatchAssessmentDataAllOptimized,
     optimizedResourceName,
-    aoagPrimaryHostName
+    aoagPrimaryHostName,
+    // Shared patch-detail lists. The seeded `assessment_data` no longer carries
+    // missingPatchDetails (production persists the assessment without details
+    // via `omit(..., 'missingPatchDetails')`), so the SSM mock reads these
+    // exports directly when replaying patch-scan responses.
+    MSSQL_HOST_OS_MISSING_PATCHES,
+    MSSQL_HOST_OS_NON_COMPLIANT_COUNTS,
+    MSSQL_DATABASE_MISSING_PATCHES,
+    MSSQL_DATABASE_MISSING_PATCH_COUNTS,
+    ORACLE_HOST_OS_MISSING_PATCHES,
+    ORACLE_HOST_OS_NON_COMPLIANT_COUNTS
 };

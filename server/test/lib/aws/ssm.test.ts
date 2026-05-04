@@ -82,7 +82,8 @@ describe('sendSSMCommand', () => {
             InstanceIds: ['i-0e5af83448e1b83ef']
         };
         const response = await describeInstancePatchStates(credentialsId, 'us-east-1', params);
-        expect(response.InstancePatchStates).toEqual(describePatchStatesResponse.InstancePatchStates);
+        const [expected] = describePatchStatesResponse.InstancePatchStates;
+        expect(response.InstancePatchStates).toEqual([{ ...expected, InstanceId: 'i-0e5af83448e1b83ef' }]);
     });
 
     it('Describe instance patches', async () => {

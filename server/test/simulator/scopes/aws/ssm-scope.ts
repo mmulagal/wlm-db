@@ -37,6 +37,13 @@ import deleteParametersResponse from '../../responses/aws/ssm-delete-parameters.
 import describePatchStatesResponse from '../../responses/aws/ssm-describe-patch-states.json';
 import describeInstancePatchesResponse from '../../responses/aws/ssm-describe-patches.json';
 import describeAvailablePatchesResponse from '../../responses/aws/ssm-describe-available-patches.json';
+import {
+    buildDemoInstancePatchState,
+    buildDemoMissingPatches,
+    resolveResourceTypeForInstanceId,
+    MSSQL_DATABASE_AVAILABLE_PATCHES,
+    MSSQL_DATABASE_INSTALLED_PATCHES_OUTPUT
+} from '../../../../src/utils/demo-utils/hostOsPatchSsmFixtures';
 import listCommandsCommandResponse from '../../responses/aws/list-commands-command.json';
 import getSsmInstanceInformationResponse from '../../responses/aws/ssm-instance-information.json';
 import listAmazonLinuxAmiResponse from '../../responses/aws/list-amazon-linux-amis.json';
@@ -1353,7 +1360,14 @@ ssmMock
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-installedSQLPatchesCommand'
     })
-    .resolves(getCommandInvocationResponse.getInstalledSQLPatchesCommandResponse)
+    // Empty installed-patches list so every entry from
+    // `DescribeAvailablePatchesCommand` (built from MSSQL_DATABASE_MISSING_PATCHES)
+    // is reported as missing by `runMSSQLPatchAssessment`, keeping the
+    // post-assessment count identical to the seeded `mssqlPatch` count.
+    .resolves({
+        ...getCommandInvocationResponse.getInstalledSQLPatchesCommandResponse,
+        StandardOutputContent: MSSQL_DATABASE_INSTALLED_PATCHES_OUTPUT
+    })
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-crrAssessmentCommand'
     })
@@ -1886,20 +1900,33 @@ ssmMock.on(PutParameterCommand).resolves(putParameterResponse);
 ssmMock.on(GetParameterCommand).resolves(getParameerResponse);
 ssmMock.on(DeleteParametersCommand).resolves(deleteParametersResponse);
 ssmMock.on(DescribeInstancePatchStatesCommand).callsFake(async (command: DescribeInstancePatchStatesCommand) => {
-    const instanceIds = command.InstanceIds;
+    const instanceIds = command.InstanceIds || [];
     const response = cloneDeep(describePatchStatesResponse);
-    const instancePatchStates = [];
-    instanceIds.forEach(instanceId => {
-        const sampleinstancePatchState = describePatchStatesResponse.InstancePatchStates[0];
-        sampleinstancePatchState.InstanceId = instanceId;
-        instancePatchStates.push(sampleinstancePatchState);
-    });
+    const [fallbackPatchState] = describePatchStatesResponse.InstancePatchStates;
 
-    response.InstancePatchStates = instancePatchStates;
+    const resourceTypes = await Promise.all(instanceIds.map(id => resolveResourceTypeForInstanceId(id)));
+    response.InstancePatchStates = instanceIds.map((instanceId, index) =>
+        buildDemoInstancePatchState(instanceId, resourceTypes[index], fallbackPatchState)
+    );
+
     return response;
 });
-ssmMock.on(DescribeInstancePatchesCommand).resolves(describeInstancePatchesResponse);
-ssmMock.on(DescribeAvailablePatchesCommand).resolves(describeAvailablePatchesResponse);
+
+ssmMock.on(DescribeInstancePatchesCommand).callsFake(async (command: DescribeInstancePatchesCommand) => {
+    const resourceType = await resolveResourceTypeForInstanceId(command.InstanceId);
+    const response = cloneDeep(describeInstancePatchesResponse);
+    response.Patches = buildDemoMissingPatches(resourceType, describeInstancePatchesResponse.Patches);
+    return response;
+});
+// `DescribeAvailablePatchesCommand` feeds `runMSSQLPatchAssessment`. Returning
+// the SSM-shape projection of `MSSQL_DATABASE_MISSING_PATCHES` here keeps the
+// post-assessment computation aligned with the seeded `mssqlPatch` shape so
+// first load, get-assessment, and re-run-assessment all surface the same set.
+ssmMock.on(DescribeAvailablePatchesCommand).callsFake(async () => {
+    const response = cloneDeep(describeAvailablePatchesResponse);
+    response.Patches = MSSQL_DATABASE_AVAILABLE_PATCHES;
+    return response;
+});
 ssmMock.on(ListCommandsCommand).callsFake(async (command: ListCommandsCommand) => {
     const instanceId = command.InstanceId;
     if (instanceId?.includes('inProgress')) {
