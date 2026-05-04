@@ -144,8 +144,16 @@ function calculateComputeOsDrift(
             }
 
             case 'multiblock-readcount': {
-                const oracleParamsData =
-                    os?.['oracle-parameters-from-init']?.['db-file-multiblock-read-count-in-init'] || [];
+                const initOracleParams = os?.['oracle-parameters-from-init'];
+                const assessmentError = initOracleParams?.error;
+                if (assessmentError) {
+                    drift.multiblockReadcount = {
+                        name: config.name,
+                        errorMessage: assessmentError
+                    };
+                    break;
+                }
+                const oracleParamsData = initOracleParams?.['db-file-multiblock-read-count-in-init'] || [];
                 violationDetails = oracleParamsData
                     .filter(paramRecord => paramRecord['parameter-found'])
                     .map(paramRecord =>
