@@ -923,6 +923,31 @@ describe('Oracle Assessment Dismiss Operations', () => {
         expect(result.dismissedConfigurations[0].databaseHosts[0].status).toBe('SUCCESS');
     });
 
+    it('Should surface resolver errors when Oracle compute dismiss cannot load instance', async () => {
+        const mockConfigurations = [
+            {
+                configurationName: 'transparent-hugepages',
+                configState: 'DISMISSED',
+                databaseHosts: [
+                    {
+                        id: testResourceId,
+                        sqlServerInstances: ['nonexistent-oracle-instance'],
+                        credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                        region: DEFAULT_AWS_REGION
+                    }
+                ]
+            }
+        ];
+
+        const result = await updateDismissConfigurations(ACCOUNT_ID, mockConfigurations, DatabaseTypes.ORACLE);
+
+        expect(result.dismissedConfigurations).toHaveLength(1);
+        const host = result.dismissedConfigurations[0].databaseHosts[0];
+        expect(host.status).toBe('FAILED');
+        expect(host.failedInstances?.[0]?.instanceId).toBe('nonexistent-oracle-instance');
+        expect(host.failedInstances?.[0]?.errorMessage).toMatch(/No database instance/i);
+    });
+
     it('Should format Oracle storage configuration assessment', async () => {
         const mockCurrentConfigs = {};
         const currentTime = Date.now();

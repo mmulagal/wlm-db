@@ -966,6 +966,8 @@ ssmMock
     .resolves(getSampleCommandResponse('validateOracleCredentials'))
     .on(SendCommandCommand, params => params.Comment === 'Install python on linux host')
     .resolves(getSampleCommandResponse('installPythonOnLinuxHost'))
+    .on(SendCommandCommand, params => params.Comment === 'Check and install jq on linux host')
+    .resolves(getSampleCommandResponse('installJqOnLinuxHost'))
     .on(SendCommandCommand, params => params.Comment === 'Get mapped volume details for Oracle db')
     .resolves(getSampleCommandResponse('oracleMappedVolumeDetails'))
     .on(SendCommandCommand, params => {
@@ -1731,6 +1733,12 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-installPythonOnLinuxHost'
     })
     .resolves(getSampleCommandResponseWithOutput('installPythonOnLinuxHost', '{ "installationSuccessful": "true" }'))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-installJqOnLinuxHost'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput('installJqOnLinuxHost', '{"installationSuccessful":"true","error":""}')
+    )
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getOracleStorageDataFromOntap'
     })

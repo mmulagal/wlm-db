@@ -4138,18 +4138,18 @@
         "os": {
             "transparent-hugepages": {
                 "error": null,
-                "thp-status": "enabled",
-                "thp-disabled": false
+                "thp-status": "never",
+                "thp-disabled": true
             },
             "tcp-advanced-options": {
                 "error": null,
                 "tcp-features": {
-                    "tcp-sack-value": "0",
-                    "tcp-sack-enabled": false,
-                    "tcp-timestamps-value": "0",
-                    "tcp-timestamps-enabled": false,
-                    "tcp-window-scaling-value": "0",
-                    "tcp-window-scaling-enabled": false
+                    "tcp-sack-value": "1",
+                    "tcp-sack-enabled": true,
+                    "tcp-timestamps-value": "1",
+                    "tcp-timestamps-enabled": true,
+                    "tcp-window-scaling-value": "1",
+                    "tcp-window-scaling-enabled": true
                 }
             }
         }
@@ -4160,23 +4160,16 @@
                 "error": null,
                 "filesystemio-options": {
                     "found": true,
-                    "value": "none"
+                    "value": "setall"
                 },
                 "db-file-multiblock-read-count": {
-                    "found": true,
-                    "value": "128"
+                    "found": false,
+                    "value": null
                 }
             },
             "oracle-parameters-from-init": {
                 "error": null,
-                "db-file-multiblock-read-count-in-init": [
-                    {
-                        "path": "/u01/app/oracle/product/19c/db_1/dbs/spfilepdbnas1.ora",
-                        "error": null,
-                        "parameter-found": true,
-                        "parameter-value": "128"
-                    }
-                ]
+                "db-file-multiblock-read-count-in-init": []
             }
         }
     },

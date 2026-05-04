@@ -404,7 +404,20 @@ async function updateDatabaseInstanceConfigurations(
     updatedConfigs: any
 ) {
     logger.info('Update instance configurations', { accountId, instanceId });
-    return updateDatabaseInstance({ accountId, credentialsId, region, databaseHostId, instanceId, updatedConfigs });
+    const result = await updateDatabaseInstance({
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        instanceId,
+        updatedConfigs
+    });
+    if (!isEmpty(updatedConfigs) && result.count === 0) {
+        const msg = `No database instance matched update for instance "${instanceId}" on host "${databaseHostId}"`;
+        logger.warn(msg, { accountId, credentialsId, region, databaseHostId, instanceId });
+        throw createError(HttpErrorCodes.NOT_FOUND, msg);
+    }
+    return result;
 }
 
 async function updateResourceMetaData(accountId: string, credentialsId: string, resourceId: string, metaData?: any) {

@@ -299,35 +299,53 @@ function getOrCreateDismissGroup(
     throw new Error('Invalid group type');
 }
 
+function formatDismissGroupErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+        return error.message;
+    }
+    if (typeof error === 'string' && error.length > 0) {
+        return error;
+    }
+    return 'Database update failed';
+}
+
 function markGroupAsFailed(
     group: DismissHostGroup | DismissInstanceGroup,
     finalResponse: BulkDismissConfigurationResponseItem[],
-    isInstanceGroup = false
+    isInstanceGroup = false,
+    error?: unknown
 ): void {
+    const resolvedMessage = formatDismissGroupErrorMessage(error);
     group.configs.forEach(({ originalConfigIndex }) => {
         const hostIndex = finalResponse[originalConfigIndex].databaseHosts.findIndex(h => h.id === group.hostId);
         if (hostIndex !== -1) {
             if (isInstanceGroup && 'instanceId' in group) {
                 const response = finalResponse[originalConfigIndex];
-                const errorMessage = 'Database update failed';
                 if (!response.databaseHosts[hostIndex]?.failedInstances) {
                     response.databaseHosts[hostIndex].failedInstances = [
                         {
                             databaseHostId: response.databaseHosts[hostIndex].id,
                             instanceId: group.instanceId,
-                            errorMessage
+                            errorMessage: resolvedMessage
                         }
                     ];
                 } else {
                     response.databaseHosts[hostIndex].failedInstances.push({
                         databaseHostId: response.databaseHosts[hostIndex].id,
                         instanceId: group.instanceId,
-                        errorMessage
+                        errorMessage: resolvedMessage
                     });
                 }
                 updateHostStatus(finalResponse[originalConfigIndex], hostIndex, [group.instanceId]);
             } else {
                 finalResponse[originalConfigIndex].databaseHosts[hostIndex].status = DISMISS_UPDATE_STATUS.FAILED;
+                if (!finalResponse[originalConfigIndex].databaseHosts[hostIndex].failedInstances) {
+                    finalResponse[originalConfigIndex].databaseHosts[hostIndex].failedInstances = [];
+                }
+                finalResponse[originalConfigIndex].databaseHosts[hostIndex].failedInstances!.push({
+                    databaseHostId: finalResponse[originalConfigIndex].databaseHosts[hostIndex].id,
+                    errorMessage: resolvedMessage
+                });
             }
         }
     });
@@ -444,7 +462,7 @@ async function updateDismissConfigurations(
                     await processHostGroup(accountId, group, finalResponse, databaseType);
                 } catch (error) {
                     logger.error('Error processing host group:', error);
-                    markGroupAsFailed(group, finalResponse, false);
+                    markGroupAsFailed(group, finalResponse, false, error);
                 }
             })
         )
@@ -457,7 +475,7 @@ async function updateDismissConfigurations(
                     await processInstanceGroup(accountId, group, finalResponse, databaseType);
                 } catch (error) {
                     logger.error('Error processing instance group:', error);
-                    markGroupAsFailed(group, finalResponse, true);
+                    markGroupAsFailed(group, finalResponse, true, error);
                 }
             })
         )

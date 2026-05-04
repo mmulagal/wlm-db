@@ -1543,6 +1543,7 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
                     else
                         successMsg="JQ installed."
                         isJqInstalled=true
+                        export PATH="/usr/local/bin:$PATH"
                     fi
                 fi
             fi
@@ -1705,6 +1706,8 @@ const installJqOnLinuxHost = (signedUrls: string[]) => `
                 installationSuccessful=false
                 cd $download_dir
                 rm -rf jq-1.8.0.tar.gz jq-1.8.0
+            else
+                export PATH="/usr/local/bin:$PATH"
             fi
         fi
     fi

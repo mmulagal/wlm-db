@@ -125,17 +125,6 @@ afterAll(async () => {
     await deleteResource(ACCOUNT_ID, resourceId);
 });
 describe('Oracle assessment operations', () => {
-    it('should return job id', async () => {
-        const jobId = await onDemandTriggerOracleDriftAssessment(
-            accountId,
-            credentialsId,
-            region,
-            resourceId,
-            dbInstanceSid,
-            AssessmentTriggeredBy.SYSTEM
-        );
-        expect(jobId).toBeDefined();
-    });
     it('should return drift assessment data', async () => {
         const assessmentData = await fetchOracleDriftAssessment(
             accountId,
@@ -384,5 +373,16 @@ describe('Oracle assessment operations', () => {
         expect(headroomAssessment.totalObjectsAssessed).toBe(1);
         expect(headroomAssessment.totalObjectsInViolation).toBe(0);
         expect(headroomAssessment.resourceType).toBe('File system (FSx for ONTAP)');
+    });
+    it('should return job id from on-demand assessment trigger', async () => {
+        const { jobId } = await onDemandTriggerOracleDriftAssessment(
+            accountId,
+            credentialsId,
+            region,
+            resourceId,
+            dbInstanceSid,
+            AssessmentTriggeredBy.SYSTEM
+        );
+        expect(jobId).toBeDefined();
     });
 });
