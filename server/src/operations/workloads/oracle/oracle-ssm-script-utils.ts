@@ -1544,6 +1544,9 @@ const installOracleDependentModules = (signedUrls: string[], modulesToInstall: s
                         successMsg="JQ installed."
                         isJqInstalled=true
                         export PATH="/usr/local/bin:$PATH"
+                        echo 'export PATH="/usr/local/bin:$PATH"' | sudo tee /etc/profile.d/jq.sh > /dev/null
+                        sudo chmod 644 /etc/profile.d/jq.sh
+                        grep -qxF 'export PATH="/usr/local/bin:$PATH"' ~/.bashrc || echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc
                     fi
                 fi
             fi
@@ -1708,6 +1711,9 @@ const installJqOnLinuxHost = (signedUrls: string[]) => `
                 rm -rf jq-1.8.0.tar.gz jq-1.8.0
             else
                 export PATH="/usr/local/bin:$PATH"
+                echo 'export PATH="/usr/local/bin:$PATH"' | sudo tee /etc/profile.d/jq.sh > /dev/null
+                sudo chmod 644 /etc/profile.d/jq.sh
+                grep -qxF 'export PATH="/usr/local/bin:$PATH"' ~/.bashrc || echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc
             fi
         fi
     fi
