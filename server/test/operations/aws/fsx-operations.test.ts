@@ -15,7 +15,7 @@ import {
     updateFsxBackup,
     isInstanceAppConsistentBackupEnabled
 } from '../../../src/operations/aws/fsx-operations';
-import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_VPC_ID, ACCOUNT_ID, CREDENTIALS_ID } from '../../utils/consts';
+import { DEFAULT_AWS_CREDENTIALS_ID, INVENTORY_AWS_VPC_ID, ACCOUNT_ID, CREDENTIALS_ID } from '../../utils/consts';
 import fsxResponse from '../../simulator/responses/aws/fsx-operations-response.json';
 
 const FSX_FILESYSTEM_ID = 'fs-03773e21b2f0e39b4';
@@ -33,7 +33,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
         const response = await getFSxFileSystemsList(
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
-            DEFAULT_AWS_VPC_ID
+            INVENTORY_AWS_VPC_ID
         );
 
         expect(response).toBeDefined();

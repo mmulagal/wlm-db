@@ -1,21 +1,29 @@
 /* eslint-disable quotes */
 import { faker } from '@faker-js/faker';
 
-const DEFAULT_AWS_VPC_ID = 'vpc-84b3afe6';
+// Two VPCs are intentionally distinct (not interchangeable):
+// - INVENTORY_AWS_VPC_ID: hardcoded in inventory-side simulator fixtures (describe-instance,
+//   list-network-interfaces, demoInventoryData, etc.). Use for discovery/listing tests.
+// - DEPLOYMENT_AWS_VPC_ID: the only VPC in list-vpcs.json backed by valid subnets, route
+//   tables, and ADs. Use for deployment-wizard tests (powers NETWORKING_CONFIGURATION).
+const INVENTORY_AWS_VPC_ID = 'vpc-84b3afe6';
+const DEPLOYMENT_AWS_VPC_ID = 'vpc-ba1ed1de';
+/** @deprecated Use INVENTORY_AWS_VPC_ID or DEPLOYMENT_AWS_VPC_ID to make the intent explicit. Retained as an alias for backwards compatibility. */
+const DEFAULT_AWS_VPC_ID = INVENTORY_AWS_VPC_ID;
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
 const DEFAULT_AWS_CREDENTIALS_ID = '3ad8702a-a2fd-48c2-b150-1ba6ce83aca5';
 const DEFAULT_AWS_REGION = 'us-east-1';
 
 const TEST_STOPPED_EC2_INSTANCE_ID = 'i-07e76a4b916548dc0';
 const NETWORKING_CONFIGURATION = {
-    vpcId: 'vpc-84b3afe6',
-    vpcCidr: '172.31.0.0/16',
-    privateSubnet1Id: 'subnet-f4484e80',
-    routeTable1Id: 'rtb-65aeb107',
-    availabilityZone1: 'string',
-    privateSubnet2Id: 'subnet-4cdd3b29',
-    routeTable2Id: 'rtb-65aeb108',
-    availabilityZone2: 'string'
+    vpcId: DEPLOYMENT_AWS_VPC_ID,
+    vpcCidr: '192.168.16.0/20',
+    privateSubnet1Id: 'subnet-5a37222d',
+    routeTable1Id: 'rtb-0dde1132a1c54f5e6',
+    availabilityZone1: 'availability-zone-1',
+    privateSubnet2Id: 'subnet-74a1b303',
+    routeTable2Id: 'rtb-00d7acd615fac5414',
+    availabilityZone2: 'availability-zone-2'
 };
 const EC2_CONFIGURATION = {
     workloadInstanceType: 'm4.xlarge',
@@ -172,6 +180,8 @@ export {
     AD_CONFIGURATION,
     EC2_CONFIGURATION,
     NETWORKING_CONFIGURATION,
+    INVENTORY_AWS_VPC_ID,
+    DEPLOYMENT_AWS_VPC_ID,
     DEFAULT_AWS_VPC_ID,
     DEFAULT_AWS_CREDENTIALS_TYPE,
     DEFAULT_AWS_CREDENTIALS_ID,
