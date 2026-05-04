@@ -83,6 +83,106 @@ type ontapStorageSummary = {
     snapshotUsed: number;
 };
 
+type OracleNodeDetails = {
+    prettyName: string;
+    name: string;
+    version: string;
+    serverEdition: string;
+    serverVersion: string;
+    activeNode: string;
+    nodeNames: string;
+    activeConnections: number;
+    creationDate: string;
+    isASMManaged: 'true' | 'false';
+};
+
+// Parse the three /etc/os-release fields emitted by GET_ORACLE_SERVER_DETAILS.
+// Inter-row newlines are <<NL>>-encoded by the host so they survive
+// parseMultipleCommandResponse's newline stripping; the trailing field may
+// also carry a real LF before the next sentinel which .trim() handles. Each
+// value's surrounding double or single quotes are stripped (the os-release
+// format permits both). Missing fields default to ''.
+function parseOsRelease(text: string): { prettyName: string; name: string; version: string } {
+    const readField = (key: string): string => {
+        const re = new RegExp(`(?:^|<<NL>>)${key}=([^]*?)(?:<<NL>>|$)`);
+        const raw = (text.match(re)?.[1] ?? '').trim();
+        return raw.replace(/^(['"])(.*)\1$/, '$2');
+    };
+    return {
+        prettyName: readField('PRETTY_NAME'),
+        name: readField('NAME'),
+        version: readField('VERSION')
+    };
+}
+
+// Parse the three sqlplus rows emitted by GET_ORACLE_SERVER_DETAILS. Rows are
+// separated by the literal token <<NL>> (host-encoded so they survive
+// parseMultipleCommandResponse's newline stripping). Each row is identified
+// by *shape* rather than position so that any incidental sqlplus chatter
+// (ORA-/SP2- messages, connect banners, blank lines) does not shift the
+// indices and silently corrupt the parse:
+//   - edition/version row: contains '|' (joined server-side via REGEXP_SUBSTR
+//                          over v$version.BANNER, e.g. "Enterprise Edition|19c")
+//   - active connection count row: pure integer
+//   - creation date row: ISO 8601 Z timestamp
+// Empty-string / zero defaults are returned when a row is missing.
+function parseSqlRows(text: string): {
+    serverEdition: string;
+    serverVersion: string;
+    activeConnections: number;
+    creationDate: string;
+} {
+    const rows = text
+        .split('<<NL>>')
+        .map(row => row.trim())
+        .filter(row => row.length > 0 && !row.startsWith('ORA-') && !row.startsWith('SP2-'));
+
+    const editionVersionRow = rows.find(row => row.includes('|')) ?? '';
+    const countRow = rows.find(row => /^\d+$/.test(row)) ?? '';
+    const dateRow = rows.find(row => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(row)) ?? '';
+
+    const [serverEdition = '', serverVersion = ''] = editionVersionRow.split('|').map(field => field.trim());
+    const activeConnections = parseInt(countRow, 10);
+    return {
+        serverEdition,
+        serverVersion,
+        creationDate: dateRow,
+        activeConnections: Number.isFinite(activeConnections) ? activeConnections : 0
+    };
+}
+
+// Parse per-SID sentinel records emitted by GET_ORACLE_SERVER_DETAILS. Each
+// record is fully self-delimiting (<<SID:...>> ... <<ASM:true|false>>), so we
+// just matchAll over the raw response. Returns undefined if no record is
+// present (e.g. fetchServerDetails was false or the on-host script failed
+// early). Newlines in captured fields are encoded by the host as the literal
+// token <<NL>> so they survive parseMultipleCommandResponse's newline stripping.
+function extractOracleServerDetailsBlock(
+    rawSsmResponse: string,
+    activeNodeInstanceId: string
+): Record<string, OracleNodeDetails> | undefined {
+    const sidSegmentRe = /<<SID:([^>]+?)>>\s*<<OS>>([\s\S]*?)<<SQL>>([\s\S]*?)<<ASM:(true|false)>>/g;
+    const result: Record<string, OracleNodeDetails> = {};
+    for (const m of rawSsmResponse.matchAll(sidSegmentRe)) {
+        const [, sid, osText, sqlText, asm] = m;
+        const os = parseOsRelease(osText);
+        const sql = parseSqlRows(sqlText);
+        result[sid] = {
+            prettyName: os.prettyName,
+            name: os.name,
+            version: os.version,
+            serverEdition: sql.serverEdition,
+            serverVersion: sql.serverVersion,
+            activeNode: activeNodeInstanceId,
+            nodeNames: activeNodeInstanceId,
+            activeConnections: sql.activeConnections,
+            creationDate: sql.creationDate,
+            isASMManaged: asm === 'true' ? 'true' : 'false'
+        };
+    }
+    return Object.keys(result).length > 0 ? result : undefined;
+}
+
 async function getOracleInstanceDetails(
     accountId: string,
     credentialId: string,
@@ -96,10 +196,17 @@ async function getOracleInstanceDetails(
         fetchServerDetails,
         oracleSids
     });
-    let [parsedResponse, activeNodeDetails] = parseMultipleCommandResponse(ssmResponse || '[]');
+    const rawResponse = ssmResponse || '[]';
+    const [parsedResponse] = parseMultipleCommandResponse(rawResponse);
+    let activeNodeDetails: Record<string, OracleNodeDetails> | undefined = fetchServerDetails
+        ? extractOracleServerDetailsBlock(rawResponse, node1InstanceId)
+        : undefined;
 
-    if (IS_DEMO_FLOW && fetchServerDetails) {
-        activeNodeDetails = Object.fromEntries(oracleSids.map(sid => [sid, activeNodeDetails]));
+    if (IS_DEMO_FLOW && fetchServerDetails && activeNodeDetails && oracleSids.length > 0) {
+        const [firstSidDetails] = Object.values(activeNodeDetails);
+        if (firstSidDetails) {
+            activeNodeDetails = Object.fromEntries(oracleSids.map(sid => [sid, firstSidDetails]));
+        }
     }
 
     const instanceDetails = [];
@@ -579,7 +686,6 @@ async function getOracleDatabaseInstancesSummary(
     fields?: string,
     resourceDetails?: ResourceDetails,
     standbyNodeInstanceId?: string,
-    getOracleHostSummary?: boolean,
     getRegisteredDataguardInstances?: boolean
 ) {
     logger.info('Fetching summary of Oracle database instances', {
@@ -591,7 +697,6 @@ async function getOracleDatabaseInstancesSummary(
         fields,
         resourceDetails,
         standbyNodeInstanceId,
-        getOracleHostSummary,
         getRegisteredDataguardInstances
     });
 
@@ -613,6 +718,7 @@ async function getOracleDatabaseInstancesSummary(
     const getDbCount = fieldsValues?.includes(DatabaseHostsQueryFields.DB_COUNT.toLowerCase());
     const getStorage = fieldsValues?.includes(DatabaseHostsQueryFields.STORAGE.toLowerCase());
     const getDbNodeTopology = fieldsValues?.includes(DatabaseHostsQueryFields.NODE_TOPOLOGY.toLowerCase());
+    const getOracleHostSummary = fieldsValues?.includes(DatabaseHostsQueryFields.SERVER_DETAILS.toLowerCase());
 
     // Run getOracleStorageInfoFromOntap concurrently with databaseInstances.map
     const [storageInfoFromOntap, hostInfo, dataguardInfo, results] = await Promise.all([
@@ -918,7 +1024,11 @@ async function getOracleDatabaseInstancesSummary(
     if (hostInfo && !isEmpty(hostInfo)) {
         const { activeNodeDetails } = hostInfo;
         results?.forEach(result => {
-            if (result.databaseInstanceId && Object.keys(activeNodeDetails).includes(result.databaseInstanceId)) {
+            if (
+                activeNodeDetails &&
+                result.databaseInstanceId &&
+                Object.keys(activeNodeDetails).includes(result.databaseInstanceId)
+            ) {
                 const nodeDetails = activeNodeDetails[result.databaseInstanceId];
                 if (nodeDetails) {
                     if (getOracleHostSummary) {
@@ -988,16 +1098,20 @@ async function getOracleDatabaseHostInstanceSummary(
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
+
+        // Previously getOracleDatabaseInstancesSummary was called with getOracleHostSummary=true
+        // unconditionally; that boolean has been removed in favor of the SERVER_DETAILS field.
+        // Append it here so this endpoint keeps returning serverEdition / serverVersion regardless of caller input.
+        const fieldsWithServerDetails = [fields, DatabaseHostsQueryFields.SERVER_DETAILS].filter(Boolean).join(',');
         [databaseInstanceSummary] = await getOracleDatabaseInstancesSummary(
             accountId,
             credentialsId,
             activeNodeInstanceId,
             region,
             [databaseInstance],
-            fields,
+            fieldsWithServerDetails,
             resourceDetails,
             undefined,
-            true,
             true
         );
         let tenancy = (databaseInstance?.metadata as DatabaseInstanceMetadata)?.oracleDeploymentType;

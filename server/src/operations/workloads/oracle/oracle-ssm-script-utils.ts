@@ -2180,70 +2180,63 @@ const isStorageASMmanaged = (dbSid: string) => `
     fi
 `;
 
+// Emits one self-delimiting sentinel record per SID (no JSON, no escaping),
+// consumed by extractOracleServerDetailsBlock in oracle-operations.ts. Each
+// record is bounded by <<SID:...>> ... <<ASM:true|false>>, and embedded
+// newlines are encoded as the literal token <<NL>> so they survive
+// parseMultipleCommandResponse's newline stripping.
+//
+// Edition/version come from v$version.BANNER (e.g. "Oracle Database 19c
+// Enterprise Edition Release 19.0.0.0.0 - Production"). The regex enumerates
+// every shipped Oracle edition. The literal " Edition" suffix lives *inside*
+// the alternation rather than after it, because the multi-word variants
+// ("Standard Edition 2", "Standard Edition One") already contain "Edition";
+// appending another " Edition" would make them unmatchable and silently
+// downgrade SE2/SEOne banners to plain "Standard Edition". Branches are
+// ordered longest-first so "Standard Edition 2" wins over plain "Standard
+// Edition".
 const GET_ORACLE_SERVER_DETAILS = (oracleSids: string[], ec2InstanceId: string) => `
 # Get oracle server details script
 oracleSids=(${oracleSids.map(sid => `"${sid}"`).join(' ')})
 ec2InstanceId="${ec2InstanceId}"
-resultObject="{}"
+
 for oracleSid in "\${oracleSids[@]}"; do
     # Get Oracle server details
 ${getOracleDefaultOrUserAuthCommand('$ec2InstanceId', '$oracleSid')}
 ${isStorageASMmanaged('$oracleSid')}
     isDefaultAuth=$(is_default_auth "$oracleSid")
 
-    prettyName=$(grep PRETTY_NAME /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
-    osName=$(grep ^NAME= /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
-    osVersion=$(grep ^VERSION= /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"' || echo "")
+    osRelease=$(grep -E '^(PRETTY_NAME|NAME|VERSION)=' /etc/os-release 2>/dev/null || echo "")
 
-    # Execute all SQL queries in a single connection
+    # Execute all SQL queries in a single connection.
     ${resolveOracleHomeInParent('$oracleSid', 'server_details_oracle_home')}
-    sqlResults=$(sudo -i -u oracle bash <<EOF 2>/dev/null
-    export ORACLE_SID="$oracleSid"
-    export ORACLE_HOME="$server_details_oracle_home"
-    export PATH="$server_details_oracle_home/bin:\\$PATH"
-    $sqlplus_command <<'EOSQL'
+    sqlOutput=$(sudo -i -u oracle bash -s -- "$oracleSid" "$server_details_oracle_home" "$sqlplus_command" <<'EOF' 2>/dev/null
+    export ORACLE_SID="$1"
+    export ORACLE_HOME="$2"
+    export PATH="$ORACLE_HOME/bin:$PATH"
+    sqlplus_cmd="$3"
+    $sqlplus_cmd <<'EOSQL'
     SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
-    SELECT REGEXP_SUBSTR(BANNER, '(Standard|Enterprise) Edition') AS edition, 
-        REGEXP_SUBSTR(BANNER, '[0-9]{2}c') AS version 
-    FROM v\\$version 
-    WHERE BANNER LIKE 'Oracle%';
-    SELECT COUNT(*) FROM v\\$session WHERE status = 'ACTIVE';
-    SELECT to_char(created, 'YYYY-MM-DD\\"T\\"HH24:MI:SS\\"Z\\"') FROM v\\$database;
+    SELECT
+        NVL(REGEXP_SUBSTR(BANNER, '(Standard Edition 2|Standard Edition One|Standard Edition|Enterprise Edition|Express Edition|Personal Edition)'), '')
+        || '|' ||
+        NVL(REGEXP_SUBSTR(BANNER, '[0-9]+(c|g|i|ai)?'), '')
+    FROM v$version
+    WHERE BANNER LIKE 'Oracle%' AND ROWNUM = 1;
+    SELECT COUNT(*) FROM v$session WHERE status = 'ACTIVE';
+    SELECT to_char(created, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') FROM v$database;
     EXIT
 EOSQL
 EOF
     )
 
-    serverEdition=$(echo "$sqlResults" | sed -n '1p' | xargs 2>/dev/null || echo "")
-    serverVersion=$(echo "$sqlResults" | sed -n '2p' | xargs 2>/dev/null || echo "")
-    activeConnections=$(echo "$sqlResults" | sed -n '4p' | xargs 2>/dev/null || echo "0")
-    creationDate=$(echo "$sqlResults" | sed -n '5p' | xargs 2>/dev/null || echo "")
-    activeNode=$ec2InstanceId
-
-    if ! [[ "$activeConnections" =~ ^[0-9]+$ ]]; then
-        activeConnections="0"
-    fi
-    sidResponse=$(jq -n     --arg prettyName "$prettyName"     --arg name "$osName"     --arg version "$osVersion"     --arg serverEdition "$serverEdition"     --arg serverVersion "$serverVersion"     --arg activeNode "$activeNode"     --arg activeConnections "$activeConnections"     --arg creationDate "$creationDate"    --arg isASMManaged "$isASMManaged" '{
-        prettyName: $prettyName,
-        name: $name,
-        version: $version,
-        serverEdition: $serverEdition,
-        serverVersion: $serverVersion,
-        activeNode: $activeNode,
-        nodeNames: $activeNode,
-        activeConnections: ($activeConnections | tonumber),
-        creationDate: $creationDate,
-        isASMManaged: $isASMManaged
-    }')
-
-    if [ $? -eq 0 ]; then
-        resultObject=$(echo "$resultObject" | jq --arg key "$oracleSid" --argjson val "$sidResponse" '. + {($key): $val}')
-    else
-        echo "Error processing SID $oracleSid"
-    fi
-
+    osReleaseEnc=\${osRelease//$'\\n'/<<NL>>}
+    sqlOutputEnc=\${sqlOutput//$'\\n'/<<NL>>}
+    printf '<<SID:%s>>\\n' "$oracleSid"
+    printf '<<OS>>%s\\n' "$osReleaseEnc"
+    printf '<<SQL>>%s\\n' "$sqlOutputEnc"
+    printf '<<ASM:%s>>\\n' "$isASMManaged"
 done
-echo "$resultObject"
 `;
 
 const getFsxCredentials = `

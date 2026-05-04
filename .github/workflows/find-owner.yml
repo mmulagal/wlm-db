@@ -34,6 +34,7 @@ jobs:
                   # true when FIND_OWNER_ORG_PROJECT_TOKEN is set (for diagnostics only; never the secret value).
                   FIND_OWNER_ORG_PROJECT_SECRET_SET: ${{ secrets.FIND_OWNER_ORG_PROJECT_TOKEN != '' }}
                   ISSUE_NUMBER: ${{ github.event.issue.number }}
+                  ISSUE_TITLE: ${{ github.event.issue.title }}
                   ISSUE_BODY: ${{ github.event.issue.body }}
                   REPO: ${{ github.repository }}
                   RUNTIME_PREFIX: '/opt/netapp/wlmdb/'
@@ -46,6 +47,17 @@ jobs:
                   # Org-level projects still need secret FIND_OWNER_ORG_PROJECT_TOKEN — GITHUB_TOKEN cannot see them (GitHub limitation).
                   PROJECT_V2_NUMBER: ${{ vars.FIND_OWNER_PROJECT_V2_NUMBER }}
                   SPRINT_FIELD_NAME: 'Sprint'
+                  # Default iteration title for non-priority issues (matched case-insensitively).
+                  # Skipped when the issue title starts with one of HIGH_PRIORITY_TITLE_PREFIXES;
+                  # in that case the legacy calendar-active iteration is used instead.
+                  SPRINT_ITERATION_TITLE: 'DBS Sprint Backlogs'
+                  # Default milestone title for non-priority issues (matched case-insensitively).
+                  # Skipped when the issue title starts with one of HIGH_PRIORITY_TITLE_PREFIXES;
+                  # in that case the legacy due-date heuristic is used instead.
+                  MILESTONE_TITLE: 'Future'
+                  # Comma-separated case-insensitive title prefixes that opt back into the legacy
+                  # "currently active" sprint + milestone behavior (so they get worked on now).
+                  HIGH_PRIORITY_TITLE_PREFIXES: '[HIGH]'
               run: |
                   python3 - <<'PY'
                   import datetime as dt, json, os, re, subprocess, sys
@@ -597,6 +609,21 @@ jobs:
                       return payload.get("data")
 
 
+                  def _is_high_priority_issue() -> bool:
+                      """True when the issue title starts with one of HIGH_PRIORITY_TITLE_PREFIXES.
+
+                      Match is case-insensitive and ignores leading whitespace. Used to opt the issue
+                      back into the legacy calendar-active sprint + due-date milestone behavior so it
+                      gets worked on now (instead of being parked in the configured backlog/Future).
+                      """
+                      title = (os.environ.get("ISSUE_TITLE") or "").lstrip().lower()
+                      if not title:
+                          return False
+                      raw = os.environ.get("HIGH_PRIORITY_TITLE_PREFIXES") or ""
+                      prefixes = [p.strip().lower() for p in raw.split(",") if p.strip()]
+                      return any(title.startswith(p) for p in prefixes)
+
+
                   def _iteration_is_current(it: dict) -> bool:
                       sd, dur = it.get("startDate"), it.get("duration")
                       if not sd or dur is None:
@@ -613,9 +640,36 @@ jobs:
 
 
                   def _pick_current_iteration(iterations: list, completed: list) -> Optional[dict]:
-                      """Prefer calendar-active iteration (same as test-item-defaults.js), then title match."""
-                      sub = (os.environ.get("CURRENT_SPRINT_TITLE_SUBSTRING") or "current").strip().lower()
+                      """Pick iteration by configured `SPRINT_ITERATION_TITLE`; otherwise fall back to calendar-active.
+
+                      Title match is case-insensitive and exact (after strip), then substring as a softer fallback.
+                      If no configured title is provided — or the issue is high-priority (per
+                      `HIGH_PRIORITY_TITLE_PREFIXES`) — we keep the legacy behavior: calendar-active
+                      iteration (same as test-item-defaults.js), then `CURRENT_SPRINT_TITLE_SUBSTRING`
+                      match, then the next future iteration.
+                      """
                       all_it = list(iterations or []) + list(completed or [])
+                      high = _is_high_priority_issue()
+                      target = (os.environ.get("SPRINT_ITERATION_TITLE") or "").strip().lower()
+                      if high and target:
+                          print(
+                              f"find-owner: high-priority issue title; ignoring SPRINT_ITERATION_TITLE={target!r} "
+                              "and using calendar-active iteration",
+                              file=sys.stderr,
+                          )
+                      if target and not high:
+                          for it in all_it:
+                              if (it.get("title") or "").strip().lower() == target:
+                                  return it
+                          for it in all_it:
+                              if target in (it.get("title") or "").lower():
+                                  return it
+                          print(
+                              f"find-owner: SPRINT_ITERATION_TITLE={target!r} not found among "
+                              f"{len(all_it)} iterations; falling back to calendar-active",
+                              file=sys.stderr,
+                          )
+                      sub = (os.environ.get("CURRENT_SPRINT_TITLE_SUBSTRING") or "current").strip().lower()
                       for it in all_it:
                           if _iteration_is_current(it):
                               return it
@@ -907,13 +961,17 @@ jobs:
 
 
                   def apply_current_milestone(repo_full: str, issue_number: str) -> None:
-                      """Set the issue's milestone to the currently active open milestone, if unset.
+                      """Set the issue's milestone, if unset.
 
-                      Mirrors `setMilestone` in `.github/scripts/test-item-defaults.js`:
+                      Behavior:
                       - If the issue already has a milestone, leave it alone.
-                      - Otherwise list open milestones (sorted by due_on asc) and pick the first
-                        milestone whose `due_on` is today-or-later. If none qualify, fall back to
-                        the last open milestone returned by the API in that ordering.
+                      - If `MILESTONE_TITLE` is configured, find an open milestone with that exact title
+                        (case-insensitive); if found, apply it. Useful for milestones like "Future" that
+                        have no due date.
+                      - Otherwise (or if the configured title isn't found), mirror `setMilestone` in
+                        `.github/scripts/test-item-defaults.js`: list open milestones (sorted by due_on
+                        asc) and pick the first whose `due_on` is today-or-later, falling back to the
+                        last open milestone returned by the API.
                       - Apply via REST `PATCH /repos/{owner}/{repo}/issues/{n}`.
 
                       Uses the repo-scoped `GITHUB_TOKEN` (no org project token required): milestones
@@ -972,21 +1030,41 @@ jobs:
                               file=sys.stderr,
                           )
                           return
-                      today = dt.datetime.now(dt.timezone.utc).date()
                       chosen: Optional[dict] = None
-                      for m in milestones:
-                          due = m.get("due_on")
-                          if not due:
-                              continue
-                          try:
-                              d = dt.datetime.fromisoformat(str(due).replace("Z", "+00:00"))
-                              if d.tzinfo is None:
-                                  d = d.replace(tzinfo=dt.timezone.utc)
-                          except ValueError:
-                              continue
-                          if d.date() >= today:
-                              chosen = m
-                              break
+                      target_ms = (os.environ.get("MILESTONE_TITLE") or "").strip().lower()
+                      high = _is_high_priority_issue()
+                      if high and target_ms:
+                          print(
+                              f"find-owner: high-priority issue title; ignoring MILESTONE_TITLE={target_ms!r} "
+                              "and using due-date heuristic",
+                              file=sys.stderr,
+                          )
+                      if target_ms and not high:
+                          for m in milestones:
+                              if (m.get("title") or "").strip().lower() == target_ms:
+                                  chosen = m
+                                  break
+                          if chosen is None:
+                              print(
+                                  f"find-owner: MILESTONE_TITLE={target_ms!r} not found among open milestones; "
+                                  "falling back to due-date heuristic",
+                                  file=sys.stderr,
+                              )
+                      if chosen is None:
+                          today = dt.datetime.now(dt.timezone.utc).date()
+                          for m in milestones:
+                              due = m.get("due_on")
+                              if not due:
+                                  continue
+                              try:
+                                  d = dt.datetime.fromisoformat(str(due).replace("Z", "+00:00"))
+                                  if d.tzinfo is None:
+                                      d = d.replace(tzinfo=dt.timezone.utc)
+                              except ValueError:
+                                  continue
+                              if d.date() >= today:
+                                  chosen = m
+                                  break
                       if chosen is None:
                           chosen = milestones[-1]
                       num = chosen.get("number")
