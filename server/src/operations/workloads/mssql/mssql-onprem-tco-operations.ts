@@ -54,6 +54,7 @@ import {
     PricingDetails,
     getPricePerUnit,
     validateOrThrow,
+    rethrowIfClientError,
     resolveSnapshotDefaults,
     EBSClassification,
     EbsVolumeType,
@@ -94,7 +95,16 @@ const logger = getLogger();
 
 const ENTERPRISE_EDITION = 'Enterprise Edition';
 const STANDARD_EDITION = 'Standard Edition';
-const MSSQL_ALLOWED_INSTANCE_TYPES = ['m*', 'c*', 'r*'];
+// Existing-footprint sizing matches the on-prem host as closely as possible.
+// Include x* (memory-optimized) so genuinely large hosts (e.g. 4 TiB clusters) can
+// match x2iedn / x2iezn SKUs which are the only current-gen 128-vCPU/≥2-TiB options.
+const MSSQL_EXISTING_ALLOWED_INSTANCE_TYPES = ['m*', 'c*', 'r*', 'x*'];
+// Recommended sizing is right-sized to actual SQL usage; keep general-purpose
+// families only to avoid over-provisioning to memory-optimized hardware.
+const MSSQL_RECOMMENDED_ALLOWED_INSTANCE_TYPES = ['m*', 'c*', 'r*'];
+// Maximum plausible on-prem NIC speed (400 Gbps in Mbps). Values above this threshold
+// indicate driver overflow/corruption (e.g. Broadcom reporting 8 PBps) and must be discarded.
+const MAX_NIC_SPEED_MBPS = 400_000;
 
 interface MssqlComputeSavingsEntry {
     resourceName: string;
@@ -459,10 +469,13 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
         }
         const networkConfig = Array.isArray(networkConfiguration) ? networkConfiguration : [networkConfiguration];
 
-        // Loop through the network configurations to find the maximum speed
+        // Loop through the network configurations to find the maximum speed.
+        // Discard values exceeding MAX_NIC_SPEED_MBPS — they indicate driver overflow/corruption.
         networkConfig.forEach(({ speedMbps }) => {
-            if (speedMbps > 0) {
+            if (speedMbps > 0 && speedMbps <= MAX_NIC_SPEED_MBPS) {
                 networkBandwidthGbps = Math.max(networkBandwidthGbps, speedMbps / 1000); // Convert to Gbps
+            } else if (speedMbps > 0) {
+                logger.warn('Discarding implausible NIC speedMbps value (driver overflow?)', { speedMbps });
             }
         });
     });
@@ -473,7 +486,7 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
     const instanceRequirements = buildInstanceRequirements({
         vCpuCount: { Min: vCpuCeil, Max: vCpuCeil }, // both min and max are same to ensure we get the same instance type matching the vcpu count of the on-prem server
         memoryMiB: { Min: Math.ceil(minMemoryMiB) },
-        allowedInstanceTypes: MSSQL_ALLOWED_INSTANCE_TYPES,
+        allowedInstanceTypes: MSSQL_EXISTING_ALLOWED_INSTANCE_TYPES,
         networkBandwidthGbps: networkBandwidthGbps
             ? {
                   Min: Math.ceil(networkBandwidthGbps),
@@ -887,7 +900,7 @@ function deriveInstanceRequirements(
     return buildInstanceRequirements({
         vCpuCount: { Min: Math.ceil(minVcpuCount), Max: Math.ceil(maxVcpuCount) },
         memoryMiB: { Min: Math.ceil(requiredMemory) },
-        allowedInstanceTypes: MSSQL_ALLOWED_INSTANCE_TYPES,
+        allowedInstanceTypes: MSSQL_RECOMMENDED_ALLOWED_INSTANCE_TYPES,
         networkBandwidthGbps: networkPerformance === NETWORK_PERF.UP_TO_10 ? { Max: 10 } : { Min: 10 }
     });
 }
@@ -1801,7 +1814,7 @@ async function getOnPremBulkResourceExploreSavings(
 
         if (isEmpty(validResourceDataList)) {
             const errorMessage = 'No valid resources with instance types found for bulk analysis.';
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
         }
 
         // Step 3: Collect and aggregate EBS volumes
@@ -2061,6 +2074,7 @@ async function getOnPremBulkResourceExploreSavings(
         };
     } catch (error) {
         logger.error('Failed to fetch bulk assessment data', { accountId, error });
+        rethrowIfClientError(error);
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `Failed to fetch bulk assessment data: ${(error as Error).message}`

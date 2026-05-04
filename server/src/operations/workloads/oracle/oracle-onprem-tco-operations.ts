@@ -59,6 +59,7 @@ import {
     PricingDetails,
     getPricePerUnit,
     validateOrThrow,
+    rethrowIfClientError,
     resolveSnapshotDefaults,
     EBSClassification,
     EbsVolumeType,
@@ -1065,7 +1066,7 @@ async function getOracleBulkResourceExploreSavings(
 
         if (isEmpty(validResourceDataList)) {
             const errorMessage = 'No valid Oracle resources with instance types found for bulk analysis.';
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+            throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
         }
 
         // Step 3: Collect and aggregate EBS volumes across all resources
@@ -1232,6 +1233,7 @@ async function getOracleBulkResourceExploreSavings(
         };
     } catch (error) {
         logger.error('Failed to fetch Oracle bulk assessment data', { accountId, error });
+        rethrowIfClientError(error);
         throw createError(
             HttpErrorCodes.INTERNAL_SERVER_ERROR,
             `Failed to fetch Oracle bulk assessment data: ${(error as Error).message}`

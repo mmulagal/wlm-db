@@ -141,6 +141,12 @@ interface SavedAssessmentData {
     licenseFinding?: string;
 }
 
+type RelaxationStep = {
+    name: string;
+    // Returns false if the step is a no-op for the current request, so we can skip the AWS round-trip.
+    apply: (req: GetInstanceTypesFromInstanceRequirementsCommandInput) => boolean;
+};
+
 function uint8ArrayToBase64(uint8Array: Uint8Array): string {
     let binary = '';
     const len = uint8Array.byteLength;
@@ -197,70 +203,127 @@ async function deleteOnPremTcoReportResourceRecord(
     }
 }
 
+// Each step is a strict relaxation of the previous request — once a constraint is dropped/widened
+// it stays that way for all subsequent attempts. This guarantees the search monotonically casts a
+// wider net and never re-tightens after a miss.
+const RELAXATION_STEPS: RelaxationStep[] = [
+    {
+        name: 'drop NetworkBandwidthGbps',
+        apply: req => {
+            if (!req.InstanceRequirements || isEmpty(req.InstanceRequirements.NetworkBandwidthGbps)) {
+                return false;
+            }
+            delete req.InstanceRequirements.NetworkBandwidthGbps;
+            return true;
+        }
+    },
+    {
+        name: 'widen VCpuCount.Max x2',
+        apply: req => {
+            const v = req.InstanceRequirements?.VCpuCount;
+            if (!v || typeof v !== 'object' || !Number.isInteger(v.Max)) {
+                return false;
+            }
+            v.Max = (v.Max as number) * 2;
+            return true;
+        }
+    },
+    {
+        name: 'halve MemoryMiB.Min',
+        apply: req => {
+            const m = req.InstanceRequirements?.MemoryMiB;
+            if (!m || typeof m !== 'object' || !Number.isInteger(m.Min) || (m.Min as number) <= 1024) {
+                return false;
+            }
+            m.Min = Math.max(1024, Math.floor((m.Min as number) / 2));
+            return true;
+        }
+    },
+    {
+        name: 'drop VCpuCount.Max',
+        apply: req => {
+            const v = req.InstanceRequirements?.VCpuCount;
+            if (!v || typeof v !== 'object' || v.Max == null) {
+                return false;
+            }
+            delete v.Max;
+            return true;
+        }
+    },
+    {
+        name: 'halve VCpuCount.Min',
+        apply: req => {
+            const v = req.InstanceRequirements?.VCpuCount;
+            if (!v || typeof v !== 'object' || !Number.isInteger(v.Min) || (v.Min as number) <= 2) {
+                return false;
+            }
+            v.Min = Math.max(2, Math.floor((v.Min as number) / 2));
+            return true;
+        }
+    },
+    {
+        name: 'reset MemoryMiB.Min=1024',
+        apply: req => {
+            const m = req.InstanceRequirements?.MemoryMiB;
+            if (!m || typeof m !== 'object' || m.Min === 1024) {
+                return false;
+            }
+            m.Min = 1024;
+            return true;
+        }
+    }
+];
+
+async function tryRelaxationsSequentially(
+    region: string,
+    req: GetInstanceTypesFromInstanceRequirementsCommandInput,
+    steps: RelaxationStep[],
+    stepIndex: number,
+    attempt: number
+): Promise<{ InstanceType?: string }[]> {
+    if (stepIndex >= steps.length) {
+        return [];
+    }
+    const step = steps[stepIndex];
+    if (!step.apply(req)) {
+        return tryRelaxationsSequentially(region, req, steps, stepIndex + 1, attempt);
+    }
+    const nextAttempt = attempt + 1;
+    logger.info('Retrying instance-type lookup with relaxed constraints', {
+        attempt: nextAttempt,
+        relaxation: step.name,
+        req
+    });
+    const { InstanceTypes = [] } = (await getInstanceTypesFromInstanceRequirementsCommand(region, req)) || {};
+    if (!isEmpty(InstanceTypes)) {
+        return InstanceTypes;
+    }
+    return tryRelaxationsSequentially(region, req, steps, stepIndex + 1, nextAttempt);
+}
+
 async function fetchInstanceTypesByRetry(
     region: string,
     instanceRequirements: GetInstanceTypesFromInstanceRequirementsCommandInput
 ): Promise<{ InstanceType: string }[] | undefined> {
     logger.info('Fetching Instance Types by Retry', { region, instanceRequirements });
 
-    let req = cloneDeep(instanceRequirements);
-    let { InstanceTypes: instanceTypes } = (await getInstanceTypesFromInstanceRequirementsCommand(region, req)) || {};
+    const req = cloneDeep(instanceRequirements);
+    const { InstanceTypes: initialInstanceTypes = [] } =
+        (await getInstanceTypesFromInstanceRequirementsCommand(region, req)) || {};
 
-    if (
-        isEmpty(instanceTypes) &&
-        req.InstanceRequirements &&
-        !isEmpty(req.InstanceRequirements?.NetworkBandwidthGbps)
-    ) {
-        logger.info(
-            'No instance types matching initial requirements. Removing network bandwidth requirement and trying again.'
-        );
-        req = cloneDeep(instanceRequirements);
-        if (req.InstanceRequirements) {
-            delete req.InstanceRequirements.NetworkBandwidthGbps;
-        }
-        ({ InstanceTypes: instanceTypes = [] } =
-            (await getInstanceTypesFromInstanceRequirementsCommand(region, req)) || {});
+    const instanceTypes = isEmpty(initialInstanceTypes)
+        ? await tryRelaxationsSequentially(region, req, RELAXATION_STEPS, 0, 0)
+        : initialInstanceTypes;
+
+    if (isEmpty(instanceTypes)) {
+        logger.warn('Exhausted all instance-type relaxations with no match', {
+            region,
+            initialRequirements: instanceRequirements,
+            finalRequirements: req
+        });
     }
 
-    if (
-        isEmpty(instanceTypes) &&
-        req.InstanceRequirements?.MemoryMiB &&
-        typeof req.InstanceRequirements.MemoryMiB === 'object' &&
-        Number.isInteger(req.InstanceRequirements.MemoryMiB.Min)
-    ) {
-        logger.info(
-            'No instance types matching requirements after removing network bandwidth. Resetting minimum memory to minimum possible and trying again.'
-        );
-        req = cloneDeep(instanceRequirements);
-        if (req.InstanceRequirements?.MemoryMiB && typeof req.InstanceRequirements.MemoryMiB === 'object') {
-            req.InstanceRequirements = {
-                ...req.InstanceRequirements,
-                MemoryMiB: { ...req.InstanceRequirements.MemoryMiB, Min: 1024 }
-            };
-        }
-        ({ InstanceTypes: instanceTypes = [] } =
-            (await getInstanceTypesFromInstanceRequirementsCommand(region, req)) || {});
-    }
-
-    if (
-        isEmpty(instanceTypes) &&
-        req.InstanceRequirements?.VCpuCount &&
-        typeof req.InstanceRequirements.VCpuCount === 'object' &&
-        Number.isInteger(req.InstanceRequirements.VCpuCount.Max)
-    ) {
-        logger.info(
-            'No instance types matching requirements after resetting minimum memory. Removing maximum CPU criteria and trying again.'
-        );
-        req = cloneDeep(instanceRequirements);
-        if (req.InstanceRequirements?.VCpuCount && typeof req.InstanceRequirements.VCpuCount === 'object') {
-            delete req.InstanceRequirements.VCpuCount.Max;
-        }
-        ({ InstanceTypes: instanceTypes = [] } =
-            (await getInstanceTypesFromInstanceRequirementsCommand(region, req)) || {});
-    }
-
-    const filtered = instanceTypes?.filter((t): t is { InstanceType: string } => typeof t?.InstanceType === 'string');
-    return filtered;
+    return instanceTypes?.filter((t): t is { InstanceType: string } => typeof t?.InstanceType === 'string');
 }
 
 function validateEbsLimits(volumeSizeGiB: number, iops: number, throughputMBps: number): void {
@@ -611,6 +674,17 @@ function validateOrThrow(schema: object, data: unknown, label: string): void {
     }
 }
 
+/**
+ * Re-throws the error if it already carries a 4xx HTTP status code, preventing
+ * outer catch blocks from accidentally wrapping user-actionable errors as HTTP 500.
+ */
+function rethrowIfClientError(error: unknown): void {
+    const statusCode = (error as { status?: number }).status;
+    if (statusCode && statusCode >= 400 && statusCode < 500) {
+        throw error;
+    }
+}
+
 function resolveSnapshotDefaults(snapshotInfo?: StorageSavingsRequestBodyType) {
     return {
         clonedCopiesCount: snapshotInfo?.clonedCopiesCount ?? 1,
@@ -947,6 +1021,7 @@ export {
     PricingDetails,
     getPricePerUnit,
     validateOrThrow,
+    rethrowIfClientError,
     resolveSnapshotDefaults,
     EBSClassification,
     EbsVolumeType,

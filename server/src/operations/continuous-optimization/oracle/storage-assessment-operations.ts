@@ -1,5 +1,5 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { compact, isEmpty, uniqBy } from 'lodash-es';
+import { compact, groupBy, isEmpty, uniqBy } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { WorkloadInstance } from '../../../utils/common-types';
@@ -1082,7 +1082,7 @@ function prepareASMLunLayoutAssessment(
         return acc;
     }, [] as OracleVolumeRecord[]);
 
-    const lunsGroupedByDiskGroup = Object.groupBy(luns, lun => lun.diskGroup!);
+    const lunsGroupedByDiskGroup = groupBy(luns, lun => lun.diskGroup!);
     if (isEmpty(luns)) {
         goldenConfig = createEmptyVolumeAssessment(goldenConfig, diskGroupLabel);
     } else {

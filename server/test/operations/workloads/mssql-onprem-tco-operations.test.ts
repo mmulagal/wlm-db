@@ -1,6 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { DATABASE_DEPLOYMENT_TYPE, DATABASE_TYPE } from '@prisma/client';
+import { GetInstanceTypesFromInstanceRequirementsCommandInput } from '@aws-sdk/client-ec2';
+import { cloneDeep } from 'lodash-es';
+import { vi } from 'vitest';
 
 import { removeOnPremTcoReportData } from '../../../src/lib/database/onprem-tco';
 import {
@@ -19,6 +22,7 @@ import {
     calculateTotalAllocatedCapacity
 } from '../../../src/operations/workloads/mssql/mssql-onprem-tco-operations';
 import { processEbsDisks, EbsVolumeType } from '../../../src/operations/onprem-tco-operations';
+import * as ec2Lib from '../../../src/lib/aws/ec2';
 import { ACCOUNT_ID, DEFAULT_AWS_REGION, MSSQL } from '../../../src/utils/consts';
 import { convertGiBToBytes } from '../../../src/utils/utils';
 import { hasComputeOverrides } from '../../../src/utils/onprem-tco/onprem-tco-utils';
@@ -125,6 +129,8 @@ describe('MSSQL Deployment Type Grouping', () => {
             expect(requirements.InstanceRequirements?.VCpuCount?.Min).toBeGreaterThanOrEqual(4);
             expect(requirements.InstanceRequirements?.MemoryMiB?.Min).toBeGreaterThanOrEqual(8192);
             expect(requirements.InstanceRequirements?.CpuManufacturers).toContain('intel');
+            // Pins MSSQL_RECOMMENDED_ALLOWED_INSTANCE_TYPES — recommended sizing intentionally
+            // omits x* (memory-optimized) families to avoid over-provisioning.
             expect(requirements.InstanceRequirements?.AllowedInstanceTypes).toEqual(['m*', 'c*', 'r*']);
             expect(requirements.InstanceRequirements?.InstanceGenerations).toEqual(['current']);
         });
@@ -684,5 +690,198 @@ describe('MSSQL bulk compute override cache-bypass', () => {
 
         expect(result).toBeDefined();
         expect(result.calculations).toBeDefined();
+    });
+});
+
+// ============================================================================
+// Suite 8: speedMbps overflow / corrupt NIC data (GH-issue fix)
+// ============================================================================
+
+describe('deriveHostConfigBasedInstanceType – corrupt speedMbps', () => {
+    const stdData = loadJson('SQLServerDataResponse-DemoSTD.json');
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should discard overflow speedMbps and omit NetworkBandwidthGbps filter', async () => {
+        // Build a windowsConfig whose sole node has a corrupt Broadcom NIC overflow value
+        // (8,796,093,022,208 Mbps ≈ 8.2 Pbps), which is beyond MAX_NIC_SPEED_MBPS (400 Gbps).
+        const overflowWindowsConfig = {
+            ...stdData.windowsConfig,
+            nodeDetails: stdData.windowsConfig.nodeDetails.map(node => ({
+                ...node,
+                networkConfiguration: [
+                    {
+                        name: 'Broadcom NetXtreme-E 10Gb/25Gb RDMA Ethernet Adapter',
+                        speedMbps: 8_796_093_022_208,
+                        adapterType: 'Ethernet 802.3'
+                    }
+                ]
+            }))
+        };
+
+        const captured: GetInstanceTypesFromInstanceRequirementsCommandInput[] = [];
+        vi.spyOn(ec2Lib, 'getInstanceTypesFromInstanceRequirementsCommand').mockImplementation(async (_region, req) => {
+            // Deep-clone so subsequent in-place relaxation mutations of `req` cannot
+            // retroactively alter what we captured for the first AWS call.
+            captured.push(cloneDeep(req));
+            return { InstanceTypes: [{ InstanceType: 'm7i-flex.large' }], $metadata: {} };
+        });
+
+        await deriveHostConfigBasedInstanceType(DEFAULT_AWS_REGION, overflowWindowsConfig, 'Enterprise Edition');
+
+        // The overflow speedMbps must have been discarded, so the first AWS call should
+        // NOT carry a NetworkBandwidthGbps filter (it would be astronomically large otherwise).
+        expect(captured[0]?.InstanceRequirements?.NetworkBandwidthGbps).toBeUndefined();
+    });
+});
+
+// ============================================================================
+// Suite 8b: Allowed-instance-type families per derivation path
+// ============================================================================
+
+describe('AllowedInstanceTypes per derivation path', () => {
+    const stdData = loadJson('SQLServerDataResponse-DemoSTD.json');
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('uses x* family for existing-host derivation (host-config path)', async () => {
+        const captured: GetInstanceTypesFromInstanceRequirementsCommandInput[] = [];
+        vi.spyOn(ec2Lib, 'getInstanceTypesFromInstanceRequirementsCommand').mockImplementation(async (_region, req) => {
+            captured.push(cloneDeep(req));
+            return { InstanceTypes: [{ InstanceType: 'x2iedn.32xlarge' }], $metadata: {} };
+        });
+
+        await deriveHostConfigBasedInstanceType(DEFAULT_AWS_REGION, stdData.windowsConfig, 'Enterprise Edition');
+
+        expect(captured[0].InstanceRequirements?.AllowedInstanceTypes).toEqual(
+            expect.arrayContaining(['m*', 'c*', 'r*', 'x*'])
+        );
+    });
+
+    it('does NOT use x* family for recommended (sql-usage) derivation', async () => {
+        const captured: GetInstanceTypesFromInstanceRequirementsCommandInput[] = [];
+        vi.spyOn(ec2Lib, 'getInstanceTypesFromInstanceRequirementsCommand').mockImplementation(async (_region, req) => {
+            captured.push(cloneDeep(req));
+            return { InstanceTypes: [{ InstanceType: 'r7i.48xlarge' }], $metadata: {} };
+        });
+
+        await deriveSqlUsageBasedInstanceType(DEFAULT_AWS_REGION, stdData.sqlServerInfo, 'Enterprise Edition');
+
+        expect(captured[0].InstanceRequirements?.AllowedInstanceTypes).not.toContain('x*');
+    });
+});
+
+// ============================================================================
+// Suite 8c: Monotonic relaxation across retries
+// ============================================================================
+
+describe('fetchInstanceTypesByRetry – monotonic relaxation', () => {
+    const stdData = loadJson('SQLServerDataResponse-DemoSTD.json');
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('relaxes constraints monotonically across retries', async () => {
+        // Build a host config that will force the retry chain to fire several times:
+        // a high vCPU/RAM/Network footprint that no AWS SKU will satisfy as-is.
+        const largeHostConfig = {
+            ...stdData.windowsConfig,
+            nodeDetails: stdData.windowsConfig.nodeDetails.map(node => ({
+                ...node,
+                ramSize: 4096, // 4 TiB → MemoryMiB.Min ≈ 4 TiB
+                numberOfVcpus: 128,
+                networkConfiguration: [
+                    {
+                        name: 'Mellanox ConnectX-6',
+                        speedMbps: 48_000, // ~48 Gbps
+                        adapterType: 'Ethernet 802.3'
+                    }
+                ]
+            }))
+        };
+
+        const captured: GetInstanceTypesFromInstanceRequirementsCommandInput[] = [];
+        let callCount = 0;
+        vi.spyOn(ec2Lib, 'getInstanceTypesFromInstanceRequirementsCommand').mockImplementation(async (_region, req) => {
+            captured.push(cloneDeep(req));
+            callCount += 1;
+            // First 3 attempts return empty; 4th returns a hit so the chain terminates.
+            return callCount <= 3
+                ? { InstanceTypes: [], $metadata: {} }
+                : { InstanceTypes: [{ InstanceType: 'r7i.48xlarge' }], $metadata: {} };
+        });
+
+        await deriveHostConfigBasedInstanceType(DEFAULT_AWS_REGION, largeHostConfig, 'Enterprise Edition');
+
+        expect(captured.length).toBeGreaterThanOrEqual(2);
+
+        // Each subsequent request must be a strict relaxation of its predecessor:
+        for (let i = 1; i < captured.length; i++) {
+            const prev = captured[i - 1].InstanceRequirements!;
+            const curr = captured[i].InstanceRequirements!;
+
+            // NetworkBandwidthGbps: once removed, never re-added.
+            if (prev.NetworkBandwidthGbps === undefined) {
+                expect(curr.NetworkBandwidthGbps).toBeUndefined();
+            }
+
+            const prevVCpu = prev.VCpuCount as { Min?: number; Max?: number } | undefined;
+            const currVCpu = curr.VCpuCount as { Min?: number; Max?: number } | undefined;
+
+            // VCpuCount.Min monotonically non-increasing.
+            const prevVMin = prevVCpu?.Min ?? 0;
+            const currVMin = currVCpu?.Min ?? 0;
+            expect(currVMin).toBeLessThanOrEqual(prevVMin);
+
+            // VCpuCount.Max monotonically non-decreasing (or removed).
+            const prevVMax = prevVCpu?.Max;
+            const currVMax = currVCpu?.Max;
+            if (prevVMax !== undefined && currVMax !== undefined) {
+                expect(currVMax).toBeGreaterThanOrEqual(prevVMax);
+            }
+
+            const prevMem = prev.MemoryMiB as { Min?: number } | undefined;
+            const currMem = curr.MemoryMiB as { Min?: number } | undefined;
+
+            // MemoryMiB.Min monotonically non-increasing.
+            const prevMMin = prevMem?.Min ?? 0;
+            const currMMin = currMem?.Min ?? 0;
+            expect(currMMin).toBeLessThanOrEqual(prevMMin);
+        }
+    });
+});
+
+// ============================================================================
+// Suite 9: Bulk assessment 422 when all instance-type retries exhausted
+// ============================================================================
+
+describe('getOnPremBulkResourceExploreSavings – no valid instance types', () => {
+    const stdData = loadJson('SQLServerDataResponse-DemoSTD.json');
+
+    afterEach(async () => {
+        await removeOnPremTcoReportData(undefined, ACCOUNT_ID, undefined, DATABASE_TYPE.mssql);
+        vi.restoreAllMocks();
+    });
+
+    it('should throw HTTP 422 when all resources fail instance-type derivation', async () => {
+        await saveReportInWlmdbDatabase(ACCOUNT_ID, DATABASE_TYPE.mssql, stdData);
+        const resources = await getOnPremDatabaseResources(ACCOUNT_ID);
+        const { resourceId } = resources.items[0];
+
+        // Force all EC2 instance-requirements queries to return empty results so that
+        // every retry attempt finds no matching instance type.
+        vi.spyOn(ec2Lib, 'getInstanceTypesFromInstanceRequirementsCommand').mockResolvedValue({
+            InstanceTypes: [],
+            $metadata: {}
+        });
+
+        await expect(
+            getOnPremBulkResourceExploreSavings(ACCOUNT_ID, DEFAULT_AWS_REGION, [{ resourceId }])
+        ).rejects.toMatchObject({ status: 422 });
     });
 });
