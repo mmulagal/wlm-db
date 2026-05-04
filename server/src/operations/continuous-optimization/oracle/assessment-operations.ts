@@ -744,14 +744,7 @@ async function onDemandTriggerOracleDriftAssessment(
         } = managedInstance;
         const savedInstanceName = `${resourceName}\\${instanceName}`;
         const jobName = `Oracle assessment for database ${savedInstanceName}`;
-        const instanceDetailsForJob = JSON.stringify({
-            hostName: resourceName,
-            resourceId: databaseHostId,
-            databaseInstanceId,
-            databaseInstanceName: instanceName,
-            sqlServerDeploymentType: RESOURCESTYPE.ORACLE
-        });
-        const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+        const jobDescription = `${jobName}`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: jobName,
             description: jobDescription,
