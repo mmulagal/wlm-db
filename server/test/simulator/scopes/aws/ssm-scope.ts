@@ -1068,6 +1068,8 @@ ssmMock
     .resolves(getSampleCommandResponse('checkOracleDatabaseLogAnalysisPermissions'))
     .on(SendCommandCommand, params => params.Comment === 'Check if Linux package repositories are reachable')
     .resolves(getSampleCommandResponse('checkLinuxRepoConnectivity'))
+    .on(SendCommandCommand, params => params.Comment === 'Get FlexClone volumes for Oracle clone assessment')
+    .resolves(getSampleCommandResponse('getOracleFlexCloneVolumes'))
     .on(
         SendCommandCommand,
         params => typeof params.Comment === 'string' && params.Comment.startsWith('Delete Oracle clone')
@@ -1857,6 +1859,32 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkOracleDatabaseLogAnalysisPermissions'
     })
     .resolves(getSampleCommandResponseWithOutput('checkOracleDatabaseLogAnalysisPermissions', JSON.stringify('true\n')))
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getOracleFlexCloneVolumes'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'getOracleFlexCloneVolumes',
+            JSON.stringify({
+                records: [
+                    {
+                        uuid: 'a1b2c3d4-1111-2222-3333-444455556666',
+                        name: 'oracledata2_clone',
+                        create_time: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+                        clone: { is_flexclone: true, parent_volume: { name: 'oracledata2' } },
+                        space: { physical_used: 5368709120, used: 5368709120 }
+                    },
+                    {
+                        uuid: 'e5f6a7b8-5555-6666-7777-888899990000',
+                        name: 'oraclearch2_clone',
+                        create_time: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+                        clone: { is_flexclone: true, parent_volume: { name: 'oraclearch2' } },
+                        space: { physical_used: 21474836480, used: 21474836480 }
+                    }
+                ]
+            })
+        )
+    )
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-deleteOracleClone'
     })

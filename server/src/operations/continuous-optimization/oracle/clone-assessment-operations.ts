@@ -159,7 +159,7 @@ async function runOracleCloneAssessment(
 
         cloneDetails.push(cloneDetail);
 
-        if (cloneAge >= CLONE_AGE) {
+        if (cloneAge > CLONE_AGE) {
             oldClones += 1;
             oldCloneDetails.push(cloneDetail);
             oldCloneDatabaseNames.push(cloneVolumeName);

@@ -1766,6 +1766,11 @@ function handleGetOracleAssessmentForDemo(
                     .filter((name): name is string => typeof name === 'string' && name.trim() !== '')
             );
 
+            const filteredCloneDetails = cloneDetails.filter(
+                ({ cloneDatabaseName }) =>
+                    typeof cloneDatabaseName === 'string' && !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
+            );
+
             const filteredOldCloneDetails = oldCloneDetails.filter(
                 ({ cloneDatabaseName }) =>
                     typeof cloneDatabaseName === 'string' && !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
@@ -1776,8 +1781,10 @@ function handleGetOracleAssessmentForDemo(
                 .map(({ cloneDatabaseName }) => cloneDatabaseName)
                 .filter((name): name is string => typeof name === 'string');
             const status = totalObjectsInViolation === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            const cloneDriftMessage = `${filteredOldCloneDetails.length} out of ${cloneDetails.length} clones are old and divergent`;
+            const cloneDriftMessage = `${filteredOldCloneDetails.length} out of ${filteredCloneDetails.length} clones are old and divergent`;
 
+            cloneResponse.cloneDetails = filteredCloneDetails;
+            cloneResponse.totalObjectsAssessed = filteredCloneDetails.length;
             cloneResponse.oldCloneDetails = filteredOldCloneDetails;
             cloneResponse.totalObjectsInViolation = totalObjectsInViolation;
             cloneResponse.status = status;

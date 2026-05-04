@@ -6869,7 +6869,7 @@ const ORACLE_DATAGUARD_INSTANCES = {
 const ORACLE_ASSESSMENT_CLONE_CONFIG_DATA = {
     cloneDetails: [
         {
-            cloneDatabaseName: 'oracle_data_vol_001_clone',
+            cloneDatabaseName: 'oracledata2_clone',
             databaseHostName: 'demo-oracle-host',
             databaseHostId: 'demo-oracle-host-id',
             databaseInstanceName: 'demo-oracle-instance',
@@ -6878,16 +6878,16 @@ const ORACLE_ASSESSMENT_CLONE_CONFIG_DATA = {
             cloneSize: 5368709120,
             clonedVolumeDetails: [
                 {
-                    sourceVolumeName: 'oracle_data_vol_001',
-                    cloneVolumeName: 'oracle_data_vol_001_clone',
+                    sourceVolumeName: 'oracledata2',
+                    cloneVolumeName: 'oracledata2_clone',
                     cloneVolumeUuid: 'a1b2c3d4-1111-2222-3333-444455556666',
-                    cloneVolumeCreateTime: '2026-03-01T10:00:00+00:00',
-                    cloneDatabaseName: 'oracle_data_vol_001_clone'
+                    cloneVolumeCreateTime: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+                    cloneDatabaseName: 'oracledata2_clone'
                 }
             ]
         },
         {
-            cloneDatabaseName: 'oracle_data_vol_002_clone',
+            cloneDatabaseName: 'oraclearch2_clone',
             databaseHostName: 'demo-oracle-host',
             databaseHostId: 'demo-oracle-host-id',
             databaseInstanceName: 'demo-oracle-instance',
@@ -6896,11 +6896,11 @@ const ORACLE_ASSESSMENT_CLONE_CONFIG_DATA = {
             cloneSize: 21474836480,
             clonedVolumeDetails: [
                 {
-                    sourceVolumeName: 'oracle_data_vol_002',
-                    cloneVolumeName: 'oracle_data_vol_002_clone',
+                    sourceVolumeName: 'oraclearch2',
+                    cloneVolumeName: 'oraclearch2_clone',
                     cloneVolumeUuid: 'e5f6a7b8-5555-6666-7777-888899990000',
-                    cloneVolumeCreateTime: '2025-12-15T08:30:00+00:00',
-                    cloneDatabaseName: 'oracle_data_vol_002_clone'
+                    cloneVolumeCreateTime: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+                    cloneDatabaseName: 'oraclearch2_clone'
                 }
             ]
         }
@@ -6909,7 +6909,7 @@ const ORACLE_ASSESSMENT_CLONE_CONFIG_DATA = {
     oldClones: 1,
     oldCloneDetails: [
         {
-            cloneDatabaseName: 'oracle_data_vol_002_clone',
+            cloneDatabaseName: 'oraclearch2_clone',
             databaseHostName: 'demo-oracle-host',
             databaseHostId: 'demo-oracle-host-id',
             databaseInstanceName: 'demo-oracle-instance',
@@ -6918,16 +6918,16 @@ const ORACLE_ASSESSMENT_CLONE_CONFIG_DATA = {
             cloneSize: 21474836480,
             clonedVolumeDetails: [
                 {
-                    sourceVolumeName: 'oracle_data_vol_002',
-                    cloneVolumeName: 'oracle_data_vol_002_clone',
+                    sourceVolumeName: 'oraclearch2',
+                    cloneVolumeName: 'oraclearch2_clone',
                     cloneVolumeUuid: 'e5f6a7b8-5555-6666-7777-888899990000',
-                    cloneVolumeCreateTime: '2025-12-15T08:30:00+00:00',
-                    cloneDatabaseName: 'oracle_data_vol_002_clone'
+                    cloneVolumeCreateTime: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+                    cloneDatabaseName: 'oraclearch2_clone'
                 }
             ]
         }
     ],
-    oldCloneDatabaseNames: ['oracle_data_vol_002_clone']
+    oldCloneDatabaseNames: ['oraclearch2_clone']
 };
 
 const DEMO_FOCUS_EVENT_ITEMS = [
