@@ -4318,7 +4318,8 @@ export const manageActionCol = (translation: TFunction, engineType: string, rowD
     } else if (rowData?.detectOption === DETECT_HOST_VAR.DISABLE || rowData?.detectOption === DETECT_HOST_VAR.HIDE) {
         disableMsg = rowData?.detectOptionDisableMsg;
     } else if (
-        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
         rowData.fileSystemType !== GENERAL.FSX_FOR_ONTAP &&
         !rowData?.fsxId
     ) {

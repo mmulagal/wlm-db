@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { DBType, DETECT_HOST_VAR, ACTION_TYPE } from '../../../../../utils/consts';
+import { DBType, DETECT_HOST_VAR, ACTION_TYPE, INVENTORY_STATUS } from '../../../../../utils/consts';
 import {
     DiscoverHostInterface,
     DiscoverOracleHostInterface,
@@ -17,7 +17,8 @@ export interface StorageItem {
     id: string;
     svmId?: string;
     protocol?: string;
-    name?: string; // FSx name if available
+    name?: string; // FSx name if available (MSSQL / pgsql discover)
+    fileSystemName?: string; // FSx name as returned by Oracle discover
 }
 
 // FSx item interface with formatted fields
@@ -101,17 +102,29 @@ export const useFsxDiscoverContext = (): FsxDiscoverContextResult => {
         [discoveredHostData, discoveredOracleHostData]
     );
 
-    // Build instance identifiers for single mode discover data lookup (including fsxId fallback)
+    // Build instance identifiers for single mode discover data lookup
     const instanceIdentifiers: InstanceIdentifiers | undefined = useMemo(() => {
         if (isBulkMode || !manageSingleInstanceData) return undefined;
+
+        // Normalise: INVENTORY_STATUS.NOT_AVAILABLE ('n/a') is a display-only placeholder set by
+        // formatInstanceData when no real FSx name is known. Passing it into instanceIdentifiers
+        // would cause getAllFsxFromStorage to use 'n/a' as the FSx card title in the wizard.
+        // Coercing it to undefined lets the name fallback chain use either the storage item's
+        // own fileSystemName/name field, or the fsxId as a last resort.
+        const fileSystemName: string | undefined =
+            manageSingleInstanceData.fileSystemName &&
+            manageSingleInstanceData.fileSystemName !== INVENTORY_STATUS.NOT_AVAILABLE
+                ? manageSingleInstanceData.fileSystemName
+                : undefined;
+
         return {
             ec2InstanceId: manageSingleInstanceData.ec2InstanceId,
             databaseInstanceName: manageSingleInstanceData.databaseInstanceName,
             credentialId: manageSingleInstanceData.credentialId,
             regionId: manageSingleInstanceData.regionId,
             hostType: manageSingleInstanceData.hostType,
-            fsxId: manageSingleInstanceData.fsxId, // Direct fsxId fallback
-            fileSystemName: manageSingleInstanceData.fileSystemName // FSx name for display
+            fsxId: manageSingleInstanceData.fsxId,
+            fileSystemName
         };
     }, [isBulkMode, manageSingleInstanceData]);
 
@@ -178,8 +191,13 @@ export const getAllFsxFromStorage = (
 ): FsxItem[] => {
     let effectiveStorage = storage;
 
-    // If storage is missing or empty, try to get it from discover data
-    if ((!effectiveStorage || effectiveStorage.length === 0) && instanceIdentifiers && discoverContext) {
+    // If storage is missing, empty, or not in StorageItem[] array format (e.g. {fsxn:{...}} summary format
+    // from databaseInstancesSummary), try to get it from discover data
+    if (
+        (!effectiveStorage || !Array.isArray(effectiveStorage) || effectiveStorage.length === 0) &&
+        instanceIdentifiers &&
+        discoverContext
+    ) {
         effectiveStorage = getStorageFromDiscoverData(instanceIdentifiers, discoverContext);
     }
 
@@ -193,8 +211,9 @@ export const getAllFsxFromStorage = (
         fsxnItems.forEach(item => {
             if (!seenFsxIds.has(item.id)) {
                 seenFsxIds.add(item.id);
-                // Try to get name from storage item first, then from instanceIdentifiers if single FSx
-                let fsxName = item.name;
+                // Try to get name from storage item first (both 'name' and Oracle's 'fileSystemName'),
+                // then fall back to instanceIdentifiers when there is only one FSx.
+                let fsxName = item.fileSystemName || item.name;
                 if (!fsxName && fsxnItems.length === 1 && instanceIdentifiers?.fileSystemName) {
                     fsxName = instanceIdentifiers.fileSystemName;
                 }
@@ -238,14 +257,20 @@ export const getAllFsxFromBulkStorage = (
         const storage = instance.data?.storage || instance.storage;
 
         // Build instance identifiers for discover data lookup (including fsxId and fileSystemName fallback)
+        const rawFileSystemName = instance.data?.fileSystemName || instance.fileSystemName;
         const instanceIdentifiers: InstanceIdentifiers = {
             ec2InstanceId: instance.data?.ec2InstanceId || instance.ec2InstanceId,
             databaseInstanceName: instance.data?.databaseInstanceName || instance.databaseInstanceName,
             credentialId: instance.data?.credentialId || instance.credentialsId,
             regionId: instance.data?.regionId || instance.region,
             hostType: instance.data?.hostType,
-            fsxId: instance.data?.fsxId || instance.fsxId, // Direct fsxId fallback
-            fileSystemName: instance.data?.fileSystemName || instance.fileSystemName // FSx name for display
+            fsxId: instance.data?.fsxId || instance.fsxId,
+            // Same normalisation as in useFsxDiscoverContext: strip the 'n/a' placeholder
+            // so the wizard FSx card falls back to the storage item's name or the fsxId
+            fileSystemName:
+                rawFileSystemName && rawFileSystemName !== INVENTORY_STATUS.NOT_AVAILABLE
+                    ? rawFileSystemName
+                    : undefined
         };
 
         const instanceFsx = getAllFsxFromStorage(storage, instanceIdentifiers, discoverContext);

@@ -712,9 +712,13 @@ export const isInstanceActionDisabled = (
         };
     }
 
-    // Check FSx/ONTAP storage requirement for unmanaged instances
+    // Check FSx/ONTAP storage requirement for unmanaged/undetected instances.
+    // An UNDETECTED instance may have no discover data at all (e.g. SQL*Plus init error on
+    // the host) and therefore no fileSystemType, no storage array, and no fsxId — it must
+    // also be disabled so the user cannot enter the FSx auth wizard with nothing to auth.
     if (
-        rowData?.statusColText === INVENTORY_STATUS.UNMANAGED &&
+        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
+            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
         rowData?.fileSystemType !== STORAGE_TYPES.FSX_FOR_ONTAP &&
         !rowData?.fsxId
     ) {
