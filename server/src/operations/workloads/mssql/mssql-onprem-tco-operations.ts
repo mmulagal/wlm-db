@@ -74,6 +74,7 @@ import {
     generateUniqueId,
     parseStorageDetailsByDb,
     parseAoagReadReplica,
+    parseOwnerNodes,
     parseSqlVersion,
     getPowerOfTwoVcpuCount,
     hasComputeOverrides
@@ -95,13 +96,10 @@ const logger = getLogger();
 
 const ENTERPRISE_EDITION = 'Enterprise Edition';
 const STANDARD_EDITION = 'Standard Edition';
-// Existing-footprint sizing matches the on-prem host as closely as possible.
-// Include x* (memory-optimized) so genuinely large hosts (e.g. 4 TiB clusters) can
-// match x2iedn / x2iezn SKUs which are the only current-gen 128-vCPU/≥2-TiB options.
-const MSSQL_EXISTING_ALLOWED_INSTANCE_TYPES = ['m*', 'c*', 'r*', 'x*'];
-// Recommended sizing is right-sized to actual SQL usage; keep general-purpose
-// families only to avoid over-provisioning to memory-optimized hardware.
-const MSSQL_RECOMMENDED_ALLOWED_INSTANCE_TYPES = ['m*', 'c*', 'r*'];
+// General-purpose + compute + memory-optimized families for MSSQL on-prem TCO.
+// Used for both existing-host (host-config) and recommended (sql-usage) instance derivation.
+// x* covers large footprint SKUs (e.g. x2iedn / x2iezn for high vCPU / high memory).
+const MSSQL_ALLOWED_INSTANCE_TYPES = ['m*', 'c*', 'r*', 'x*'];
 // Maximum plausible on-prem NIC speed (400 Gbps in Mbps). Values above this threshold
 // indicate driver overflow/corruption (e.g. Broadcom reporting 8 PBps) and must be discarded.
 const MAX_NIC_SPEED_MBPS = 400_000;
@@ -330,7 +328,7 @@ async function getStorageSavingsResponse(
         sqlServerDeploymentType
     };
 
-    const nodeCount = windowsConfig.nodeDetails.length;
+    const nodeCount = deriveExistingNodeCount(instances, windowsConfig);
 
     const { existingConfigData, existingConfigCalculations, recommendedConfigData, recommendedConfigCalculations } =
         await fetchStorageSavingsFromMarketingApi({
@@ -419,6 +417,23 @@ function deriveEbsVolumesListForMarketing(region: string, sqlInstancesDetails: S
     }
 }
 
+function deriveExistingNodeCount(sqlInstanceDetails: SqlInstanceDetails[], windowsConfig: WindowsConfig): number {
+    const ownerSummaries = sqlInstanceDetails.map(({ ownerNodes }) => parseOwnerNodes(ownerNodes ?? ''));
+
+    const distinctOwners = new Set(
+        ownerSummaries.flatMap(owners => owners.map(({ nodeName }) => nodeName).filter(Boolean))
+    );
+
+    // ownerNodes only ever reference hosts within the discovered windows cluster,
+    // so any instance that produced no usable entries can only undercount. When
+    // that happens, prefer the discovered host count to avoid skewing
+    // license/storage sizing for clustered resources.
+    const hasMissingOwnerData = ownerSummaries.some(owners => owners.length === 0);
+    const discoveredHostCount = windowsConfig.nodeDetails?.length;
+
+    return hasMissingOwnerData && discoveredHostCount ? discoveredHostCount : distinctOwners.size;
+}
+
 function deriveEc2InstanceListForMarketing(
     region: string,
     sqlInstancesDetails: SqlInstanceDetails[],
@@ -486,7 +501,7 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
     const instanceRequirements = buildInstanceRequirements({
         vCpuCount: { Min: vCpuCeil, Max: vCpuCeil }, // both min and max are same to ensure we get the same instance type matching the vcpu count of the on-prem server
         memoryMiB: { Min: Math.ceil(minMemoryMiB) },
-        allowedInstanceTypes: MSSQL_EXISTING_ALLOWED_INSTANCE_TYPES,
+        allowedInstanceTypes: MSSQL_ALLOWED_INSTANCE_TYPES,
         networkBandwidthGbps: networkBandwidthGbps
             ? {
                   Min: Math.ceil(networkBandwidthGbps),
@@ -598,7 +613,7 @@ async function computeAndSaveComputeLicenseData(
                         return;
                     }
 
-                    const existingNodeCount = windowsConfig.nodeDetails.length;
+                    const existingNodeCount = deriveExistingNodeCount(instances, windowsConfig);
                     const recommendedNodeCount = deploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ? 1 : 2;
                     const resourceName = windowsConfig.windowsSystemName;
 
@@ -900,7 +915,7 @@ function deriveInstanceRequirements(
     return buildInstanceRequirements({
         vCpuCount: { Min: Math.ceil(minVcpuCount), Max: Math.ceil(maxVcpuCount) },
         memoryMiB: { Min: Math.ceil(requiredMemory) },
-        allowedInstanceTypes: MSSQL_RECOMMENDED_ALLOWED_INSTANCE_TYPES,
+        allowedInstanceTypes: MSSQL_ALLOWED_INSTANCE_TYPES,
         networkBandwidthGbps: networkPerformance === NETWORK_PERF.UP_TO_10 ? { Max: 10 } : { Min: 10 }
     });
 }
@@ -1075,7 +1090,7 @@ async function buildHybridExploreSavingsResponse(params: HybridExploreSavingsPar
 
         const { clonedCopiesCount, monthlyChangeRatePercentage, snapshotFrequency } =
             resolveSnapshotDefaults(snapshotInfo);
-        const existingNodeCount = windowsConfig.nodeDetails.length;
+        const existingNodeCount = deriveExistingNodeCount(rawSqlInstanceDetails, windowsConfig);
         const recommendedNodeCount = deploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ? 1 : 2;
 
         const existingLicenseEdition = existingLicenseCalculation?.sqlServerEdition || STANDARD_EDITION;
@@ -1511,7 +1526,7 @@ function collectAndAggregateEbsVolumes(
                 combinedSecondaryEbsVolumes = [...combinedSecondaryEbsVolumes, ...secondaryEbsVolumes];
             }
         }
-        totalNodeCount += windowsConfig.nodeDetails.length;
+        totalNodeCount += deriveExistingNodeCount(sqlInstanceDetails, windowsConfig);
     }
 
     return {
@@ -1828,6 +1843,7 @@ async function getOnPremBulkResourceExploreSavings(
                 resourceName,
                 deploymentType,
                 windowsConfig,
+                sqlInstanceDetails,
                 currentLicenseEdition,
                 recommendedLicenseEdition,
                 finding,
@@ -1838,7 +1854,7 @@ async function getOnPremBulkResourceExploreSavings(
                 resourceId,
                 resourceName,
                 deploymentType,
-                existingNodeCount: windowsConfig.nodeDetails.length,
+                existingNodeCount: deriveExistingNodeCount(sqlInstanceDetails, windowsConfig),
                 // For recommended, use 2 nodes for FCI/AOAG (same logic as single-resource flow)
                 recommendedNodeCount: deploymentType === DATABASE_DEPLOYMENT_TYPE.Standalone ? 1 : 2,
                 currentLicenseEdition,
@@ -2090,6 +2106,7 @@ export {
     deriveHostConfigBasedInstanceType,
     groupSqlServerInstancesByDeploymentType,
     deriveEbsVolumesListForMarketing,
+    deriveExistingNodeCount,
     deriveSqlUsageBasedInstanceType,
     getOnpremLicenseRecommendations,
     deriveInstanceRequirements,

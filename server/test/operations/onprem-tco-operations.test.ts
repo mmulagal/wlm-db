@@ -306,7 +306,7 @@ describe('onPrem TCO operations', () => {
                 },
                 CpuManufacturers: ['intel', 'amazon-web-services'],
                 InstanceGenerations: ['current'],
-                AllowedInstanceTypes: ['m*', 'c*', 'r*'],
+                AllowedInstanceTypes: ['m*', 'c*', 'r*', 'x*'],
                 NetworkBandwidthGbps: {
                     Max: 10
                 }

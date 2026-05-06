@@ -5,6 +5,8 @@ import { sizeInGigaBytes, generateHash } from '../utils';
 
 const logger = getLogger();
 
+type ParsedOwnerNode = { nodeName: string };
+
 function parseCpuUtilization(value: string) {
     try {
         const parsedValue = JSON.parse(value);
@@ -158,6 +160,49 @@ function parseAoagReadReplica(value: string) {
     }
 }
 
+// `ownerNodes` is persisted as a JSON-encoded string. We accept both observed shapes:
+// - FCI: [{ nodeName: "HOST", nodeRole: "Primary" | "Standby" }, ...]
+// - AOAG/Standalone: [{ primary: "HOST" }, ...]
+// Parsing is intentionally tolerant: return [] on errors so callers can fall back to other sources (e.g. nodeDetails).
+function parseOwnerNodes(value: string): ParsedOwnerNode[] {
+    if (!value) {
+        return [];
+    }
+
+    try {
+        const parsedValue = JSON.parse(value) as unknown;
+
+        if (!Array.isArray(parsedValue)) {
+            return [];
+        }
+
+        const distinct = new Set<string>();
+        for (const item of parsedValue) {
+            if (item && typeof item === 'object') {
+                const maybeNodeName = (item as Record<string, unknown>).nodeName;
+                const maybePrimary = (item as Record<string, unknown>).primary;
+
+                const nodeName =
+                    typeof maybeNodeName === 'string'
+                        ? maybeNodeName
+                        : typeof maybePrimary === 'string'
+                        ? maybePrimary
+                        : '';
+
+                const normalized = nodeName.trim().toLowerCase();
+                if (normalized) {
+                    distinct.add(normalized);
+                }
+            }
+        }
+
+        return [...distinct].map(nodeName => ({ nodeName }));
+    } catch (error) {
+        logger.warn('Failed to parse ownerNodes', { error });
+        return [];
+    }
+}
+
 function convertToDate(dateString: string): Date {
     return moment(dateString, 'YYYYMMDDHHmmss').toDate();
 }
@@ -232,6 +277,7 @@ export {
     parseIops,
     parseStorageDetailsByDb,
     parseAoagReadReplica,
+    parseOwnerNodes,
     convertToDate,
     generateUniqueId,
     getPowerOfTwoVcpuCount,

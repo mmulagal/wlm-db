@@ -31,7 +31,8 @@ function mapVolumeToMarketingFormat(
     }
 
     let snapshots;
-    const totalStorageAmount = sizeInGigaBytes(storageAmount, 'B') * volumeNumber;
+    // We are sending the average storage per volume instead of the total, as per the changes in bug https://github.com/TLVeng/gg-skywalker/issues/13109
+    const totalStorageAmount = sizeInGigaBytes(storageAmount, 'B');
     if (isPrimary && snapshotFrequency && snapshotFrequency !== NO_SNAPSHOT_STORAGE) {
         const snapshotPercentageChange = monthlyChangeRatePercentage || 0;
         const snapshotCapacityGib = (snapshotPercentageChange / 100) * totalStorageAmount;

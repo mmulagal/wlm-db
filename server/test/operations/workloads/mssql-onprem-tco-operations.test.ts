@@ -14,6 +14,7 @@ import {
     deriveHostConfigBasedInstanceType,
     groupSqlServerInstancesByDeploymentType,
     deriveEbsVolumesListForMarketing,
+    deriveExistingNodeCount,
     deriveSqlUsageBasedInstanceType,
     getOnpremLicenseRecommendations,
     deriveInstanceRequirements,
@@ -26,7 +27,11 @@ import * as ec2Lib from '../../../src/lib/aws/ec2';
 import { ACCOUNT_ID, DEFAULT_AWS_REGION, MSSQL } from '../../../src/utils/consts';
 import { convertGiBToBytes } from '../../../src/utils/utils';
 import { hasComputeOverrides } from '../../../src/utils/onprem-tco/onprem-tco-utils';
-import { OnPremCollectionObject, SqlInstanceDetails } from '../../../src/utils/onprem-tco/onprem-tco-generic.types';
+import {
+    OnPremCollectionObject,
+    SqlInstanceDetails,
+    WindowsConfig
+} from '../../../src/utils/onprem-tco/onprem-tco-generic.types';
 
 const loadJson = (filename: string): OnPremCollectionObject => {
     const filePath = path.join(__dirname, '../../../src/utils/demo-utils/onPremRecords', filename);
@@ -129,9 +134,8 @@ describe('MSSQL Deployment Type Grouping', () => {
             expect(requirements.InstanceRequirements?.VCpuCount?.Min).toBeGreaterThanOrEqual(4);
             expect(requirements.InstanceRequirements?.MemoryMiB?.Min).toBeGreaterThanOrEqual(8192);
             expect(requirements.InstanceRequirements?.CpuManufacturers).toContain('intel');
-            // Pins MSSQL_RECOMMENDED_ALLOWED_INSTANCE_TYPES — recommended sizing intentionally
-            // omits x* (memory-optimized) families to avoid over-provisioning.
-            expect(requirements.InstanceRequirements?.AllowedInstanceTypes).toEqual(['m*', 'c*', 'r*']);
+            // Pins MSSQL_ALLOWED_INSTANCE_TYPES for sql-usage-based recommendations.
+            expect(requirements.InstanceRequirements?.AllowedInstanceTypes).toEqual(['m*', 'c*', 'r*', 'x*']);
             expect(requirements.InstanceRequirements?.InstanceGenerations).toEqual(['current']);
         });
 
@@ -738,7 +742,7 @@ describe('deriveHostConfigBasedInstanceType – corrupt speedMbps', () => {
 });
 
 // ============================================================================
-// Suite 8b: Allowed-instance-type families per derivation path
+// Suite 8b: Allowed instance types (shared list for host-config and sql-usage paths)
 // ============================================================================
 
 describe('AllowedInstanceTypes per derivation path', () => {
@@ -748,7 +752,7 @@ describe('AllowedInstanceTypes per derivation path', () => {
         vi.restoreAllMocks();
     });
 
-    it('uses x* family for existing-host derivation (host-config path)', async () => {
+    it('uses MSSQL_ALLOWED_INSTANCE_TYPES for existing-host derivation (host-config path)', async () => {
         const captured: GetInstanceTypesFromInstanceRequirementsCommandInput[] = [];
         vi.spyOn(ec2Lib, 'getInstanceTypesFromInstanceRequirementsCommand').mockImplementation(async (_region, req) => {
             captured.push(cloneDeep(req));
@@ -757,12 +761,10 @@ describe('AllowedInstanceTypes per derivation path', () => {
 
         await deriveHostConfigBasedInstanceType(DEFAULT_AWS_REGION, stdData.windowsConfig, 'Enterprise Edition');
 
-        expect(captured[0].InstanceRequirements?.AllowedInstanceTypes).toEqual(
-            expect.arrayContaining(['m*', 'c*', 'r*', 'x*'])
-        );
+        expect(captured[0].InstanceRequirements?.AllowedInstanceTypes).toEqual(['m*', 'c*', 'r*', 'x*']);
     });
 
-    it('does NOT use x* family for recommended (sql-usage) derivation', async () => {
+    it('uses the same MSSQL_ALLOWED_INSTANCE_TYPES for recommended (sql-usage) derivation', async () => {
         const captured: GetInstanceTypesFromInstanceRequirementsCommandInput[] = [];
         vi.spyOn(ec2Lib, 'getInstanceTypesFromInstanceRequirementsCommand').mockImplementation(async (_region, req) => {
             captured.push(cloneDeep(req));
@@ -771,7 +773,117 @@ describe('AllowedInstanceTypes per derivation path', () => {
 
         await deriveSqlUsageBasedInstanceType(DEFAULT_AWS_REGION, stdData.sqlServerInfo, 'Enterprise Edition');
 
-        expect(captured[0].InstanceRequirements?.AllowedInstanceTypes).not.toContain('x*');
+        expect(captured[0].InstanceRequirements?.AllowedInstanceTypes).toEqual(['m*', 'c*', 'r*', 'x*']);
+    });
+});
+
+// ============================================================================
+// Suite 10: Existing node count derivation (ownerNodes parsing + fallback)
+// ============================================================================
+
+describe('deriveExistingNodeCount', () => {
+    const stubWindowsConfig = (nodeCount: number): WindowsConfig => {
+        const nodeDetails = Array.from({ length: nodeCount }, (_v, i) => ({
+            ramSize: 1,
+            hostId: `host-${i}`,
+            networkConfiguration: { name: 'eth0', speedMbps: 1000, adapterType: 'Ethernet 802.3' },
+            driveDetails: { value: '', PSComputerName: '', RunspaceId: '', PSShowComputerName: false },
+            numberOfVcpus: 1
+        }));
+
+        return {
+            clusterNodeNames: [],
+            nodeDetails,
+            windowsSystemName: 'TEST-WINDOWS',
+            belongsToCluster: false
+        } as WindowsConfig;
+    };
+
+    it('counts distinct nodeName values from FCI-style ownerNodes', () => {
+        const sqlServerInfo = [
+            {
+                ownerNodes: JSON.stringify([
+                    { nodeName: 'HOST-A', nodeRole: 'Primary' },
+                    { nodeName: 'Host-A', nodeRole: 'Standby' }, // duplicate (case-insensitive)
+                    { nodeName: ' HOST-B ', nodeRole: 'Standby' }
+                ])
+            },
+            {
+                ownerNodes: JSON.stringify([{ nodeName: 'host-b', nodeRole: 'Primary' }]) // duplicate
+            }
+        ] as unknown as SqlInstanceDetails[];
+
+        expect(deriveExistingNodeCount(sqlServerInfo, stubWindowsConfig(2))).toBe(2);
+    });
+
+    it('counts distinct primary values from AOAG/Standalone-style ownerNodes', () => {
+        const sqlServerInfo = [
+            {
+                ownerNodes: JSON.stringify([{ primary: 'AOAG-NODE-1' }, { primary: 'aoag-node-2' }])
+            },
+            {
+                ownerNodes: JSON.stringify([{ primary: ' aoag-node-2 ' }]) // duplicate
+            }
+        ] as unknown as SqlInstanceDetails[];
+
+        expect(deriveExistingNodeCount(sqlServerInfo, stubWindowsConfig(2))).toBe(2);
+    });
+
+    it('falls back to windowsConfig.nodeDetails.length when ownerNodes are missing/malformed', () => {
+        const sqlServerInfo = [
+            { ownerNodes: '' },
+            { ownerNodes: 'not-json' },
+            { ownerNodes: JSON.stringify({ nodeName: 'host-a' }) } // not an array → ignored
+        ] as unknown as SqlInstanceDetails[];
+
+        expect(deriveExistingNodeCount(sqlServerInfo, stubWindowsConfig(3))).toBe(3);
+    });
+
+    it('prefers discovered host count over partial ownerNodes data to avoid undercounting', () => {
+        // Real-world skew: one instance reports only its primary node (e.g. truncated/partial ownerNodes),
+        // while discovery sees the full 4-node windows cluster. We must size for the cluster, not the
+        // partial owner list, so license/storage calculations do not undercount.
+        const sqlServerInfo = [
+            {
+                ownerNodes: JSON.stringify([{ nodeName: 'HOST-A', nodeRole: 'Primary' }])
+            },
+            { ownerNodes: '' }
+        ] as unknown as SqlInstanceDetails[];
+
+        expect(deriveExistingNodeCount(sqlServerInfo, stubWindowsConfig(4))).toBe(4);
+    });
+
+    it('handles a missing nodeDetails array safely', () => {
+        const sqlServerInfo = [
+            { ownerNodes: JSON.stringify([{ nodeName: 'HOST-A' }, { nodeName: 'HOST-B' }]) }
+        ] as unknown as SqlInstanceDetails[];
+
+        const windowsConfig = {
+            windowsSystemName: 'TEST',
+            clusterNodeNames: [],
+            belongsToCluster: false
+        } as unknown as WindowsConfig;
+
+        expect(deriveExistingNodeCount(sqlServerInfo, windowsConfig)).toBe(2);
+    });
+
+    it('trusts ownerNodes when every instance has well-formed data, even if smaller than nodeDetails', () => {
+        // All instances report well-formed ownerNodes — the discovered host count may include
+        // hosts that are no longer running SQL (e.g. evicted from the cluster). We should not
+        // inflate to nodeDetails.length in that case.
+        const sqlServerInfo = [
+            {
+                ownerNodes: JSON.stringify([
+                    { nodeName: 'HOST-A', nodeRole: 'Primary' },
+                    { nodeName: 'HOST-B', nodeRole: 'Standby' }
+                ])
+            },
+            {
+                ownerNodes: JSON.stringify([{ nodeName: 'HOST-A', nodeRole: 'Primary' }])
+            }
+        ] as unknown as SqlInstanceDetails[];
+
+        expect(deriveExistingNodeCount(sqlServerInfo, stubWindowsConfig(5))).toBe(2);
     });
 });
 
