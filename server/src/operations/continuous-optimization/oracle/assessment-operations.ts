@@ -2,6 +2,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
 import throat from 'throat';
 import { isEmpty } from 'lodash-es';
+import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import getLogger from '../../../utils/logger';
 import {
     getInstanceInfo,
@@ -31,6 +32,7 @@ import {
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getOracleDatabaseMappedVolumes } from '../../workloads/oracle/oracle-operations';
+import { getSSMConnectionStatus } from '../../aws/ssm-operations';
 import { initiateCrossRegionResiliencyAssessment, getCrrDriftData } from './resilience-assessment-operation';
 import {
     OracleMappedOntapVolumeRecord,
@@ -556,6 +558,7 @@ async function triggerOracleAssessment(
 
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
+    let shouldUpdateAssessmentResults = true;
 
     try {
         const {
@@ -566,6 +569,27 @@ async function triggerOracleAssessment(
         } = resource as ResourceDetails;
 
         const { node1InstanceId: activeNodeInstanceId } = metadata as Metadata;
+        if (activeNodeInstanceId) {
+            const connectionStatus = await getSSMConnectionStatus(
+                credentialsId,
+                region,
+                activeNodeInstanceId,
+                accountId
+            );
+            if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
+                shouldUpdateAssessmentResults = false;
+                logger.info('Skipping Oracle scheduled assessment because host is offline', {
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    activeNodeInstanceId,
+                    ssmStatus: connectionStatus.Status
+                });
+                throw createError(HttpErrorCodes.VALIDATION_ERROR, 'Oracle host is offline');
+            }
+        }
 
         const { configurations: instanceConfigurations } = managedInstance;
 
@@ -698,14 +722,16 @@ async function triggerOracleAssessment(
         }
     } finally {
         if (isOnDemandAssessment) {
-            await updateParentJobStatus(accountId, parentJobId);
+            await updateParentJobStatus(accountId, parentJobId, false, errorMessage);
             if (initiatedBy === AssessmentTriggeredBy.USER) {
                 updateLongRunningAuditGroup(
                     jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED
                 );
             }
         }
-        await updateAssessmentResultsInInstanceMetadata(managedInstance);
+        if (shouldUpdateAssessmentResults) {
+            await updateAssessmentResultsInInstanceMetadata(managedInstance);
+        }
     }
 }
 
