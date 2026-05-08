@@ -389,10 +389,10 @@ WHERE database_id = 2;
 SET @TimeInSeconds = Datediff(s, @SQLRestartDateTime, GetDate());
 
 SELECT 
-    STR(CAST(SUM(num_of_writes) AS FLOAT) / @TimeInSeconds, 10, 2) AS writeIops,
-    STR(CAST(SUM(num_of_reads) AS FLOAT) / @TimeInSeconds, 10, 2) AS readIops,
-    STR(CAST(SUM(num_of_bytes_written) AS FLOAT) / @TimeInSeconds, 20, 2) AS writeBytesPerSec,
-    STR(CAST(SUM(num_of_bytes_read) AS FLOAT) / @TimeInSeconds, 20, 2) AS readBytesPerSec
+    STR(CAST(SUM(num_of_writes) AS FLOAT) / NULLIF(@TimeInSeconds, 0), 10, 2) AS writeIops,
+    STR(CAST(SUM(num_of_reads) AS FLOAT) / NULLIF(@TimeInSeconds, 0), 10, 2) AS readIops,
+    STR(CAST(SUM(num_of_bytes_written) AS FLOAT) / NULLIF(@TimeInSeconds, 0), 20, 2) AS writeBytesPerSec,
+    STR(CAST(SUM(num_of_bytes_read) AS FLOAT) / NULLIF(@TimeInSeconds, 0), 20, 2) AS readBytesPerSec
 FROM 
     sys.dm_io_virtual_file_stats(null, null) FOR JSON PATH;
 "@
@@ -490,7 +490,7 @@ WITH db_size_cte AS (
     SELECT 
         database_id,
         type,
-        size * 8 / 1024 AS size_mb, 
+        CAST(size AS BIGINT) * 8 / 1024 AS size_mb, 
         physical_name,
         file_id
     FROM 

@@ -128,6 +128,10 @@ function parseStorageDetailsByDb(value: string) {
             throw parsedValue?.error;
         }
     } catch (error) {
+        if (error instanceof SyntaxError) {
+            logger.error('Failed to parse storageDetailsByDb: non-JSON value received', { rawValue: value, error });
+            return undefined;
+        }
         const errorMessage = `Error parsing storageDetailsByDb: ${error}`;
         throw createError(500, errorMessage);
     }
