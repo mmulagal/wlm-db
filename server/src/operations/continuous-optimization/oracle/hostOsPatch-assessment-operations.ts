@@ -256,11 +256,6 @@ async function managedHostOsPatchAssessment(
             error: errorMessage
         });
     }
-
-    if (!isEmpty(hostOsPatchAssessment)) {
-        updatePatchBaselineStatusForHost(accountId, databaseHostId, hostOsPatchAssessment);
-    }
-
     return { hostOsPatchAssessment, errorMessage };
 }
 
@@ -294,11 +289,19 @@ async function fetchOracleHostOsPatchWithMissingPatches(
             throw new Error('Unable to retrieve patch status for the Oracle database host');
         }
 
-        updatePatchBaselineStatusForHost(
-            accountId,
-            databaseHostId,
-            assessments.map(assessment => omit(assessment, 'missingPatchDetails'))
-        );
+        try {
+            await updatePatchBaselineStatusForHost(
+                accountId,
+                databaseHostId,
+                assessments.map(assessment => omit(assessment, 'missingPatchDetails'))
+            );
+        } catch (error) {
+            logger.error('Failed to persist host OS patch baseline status after Oracle patch scan', {
+                accountId,
+                databaseHostId,
+                error
+            });
+        }
 
         const isNotOptimized = assessments.some(
             ({ criticalNonCompliantCount, securityNonCompliantCount }) =>

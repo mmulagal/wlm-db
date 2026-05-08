@@ -275,6 +275,10 @@ async function updatePatchBaselineStatusForHost(
     databaseHostId: string,
     hostOsPatchAssessment?: HostOsPatchAssessmentObject[]
 ): Promise<void> {
+    if (isEmpty(hostOsPatchAssessment)) {
+        return;
+    }
+
     const resources =
         (await listResources({
             accountId,
@@ -282,7 +286,7 @@ async function updatePatchBaselineStatusForHost(
             selectKeys: [...new Set([...RESOURCE_DEFAULT_SELECT_FIELDS, 'assessment_data'])]
         })) || [];
 
-    if (!isEmpty(resources) && !isEmpty(hostOsPatchAssessment)) {
+    if (!isEmpty(resources)) {
         await Promise.all(
             resources.map(async ({ credentials_id: credentialsId, assessment_data: assessmentData }) => {
                 const existingAssessmentData = assessmentData as ResourceAssessmentData;
