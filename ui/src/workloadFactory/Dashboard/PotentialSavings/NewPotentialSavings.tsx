@@ -8,7 +8,7 @@ import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { dashboardRedirection, formatNumberWithCustomComma } from '../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../store/storeHooks';
-import { WLF_TABS } from '../../../utils/consts';
+import { DBType, WLF_TABS } from '../../../utils/consts';
 import ComparisonChartStack from '../../../ui-components/Charts/ComparionChartStack';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import { ReactComponent as PotentialSavingsImage } from '../../../assets/potential_savings.svg';
@@ -52,6 +52,7 @@ const NewPotentialSavings = () => {
             const uniqueResourceList: Array<string> = [];
             unManagedHostFormatedList?.map((perRow: any) => {
                 if (
+                    perRow?.hostType !== DBType.MSSQL ||
                     !headerSelectedMultiCredIdsList?.includes(perRow?.credentialId) ||
                     !headerSelectedMultiRegionIdsList?.includes(perRow?.regionId) ||
                     uniqueResourceList?.includes(perRow?.ec2InstanceId)

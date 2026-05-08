@@ -265,4 +265,146 @@ describe('NewPotentialSavings', () => {
         );
         expect(screen.getAllByTestId('separator').length).toBeGreaterThan(0);
     });
+
+    describe('MSSQL-only host filtering for esCount', () => {
+        const CRED_ID = 'cred-1';
+        const REGION_ID = 'us-east-1';
+
+        const baseHeaders = {
+            showNA: false,
+            multiDataLoading: false,
+            headerSelectedMultiCredIdsList: [CRED_ID],
+            headerSelectedMultiRegionIdsList: [REGION_ID]
+        };
+
+        const makeMssqlHost = (ec2InstanceId: string, storageType: string) => ({
+            hostType: 'Microsoft SQL Server',
+            credentialId: CRED_ID,
+            regionId: REGION_ID,
+            ec2InstanceId,
+            storageType
+        });
+
+        const makeNonMssqlHost = (ec2InstanceId: string, storageType: string) => ({
+            hostType: 'Oracle',
+            credentialId: CRED_ID,
+            regionId: REGION_ID,
+            ec2InstanceId,
+            storageType
+        });
+
+        it('counts only MSSQL hosts with EBS storage', () => {
+            render(
+                <Provider
+                    store={makeStore({
+                        exploreSavings: {
+                            unmanagedExploreSavingsHost: [makeMssqlHost('i-001', 'EBS'), makeMssqlHost('i-002', 'EBS')]
+                        },
+                        headers: baseHeaders
+                    })}
+                >
+                    <NewPotentialSavings />
+                </Provider>
+            );
+            // esCount.ebs = 2, esCount.fsxw = 0 → total shown = 2
+            const semiboldTypography = screen.getAllByTestId('typography-Semibold_20');
+            const values = semiboldTypography.map(el => el.textContent);
+            expect(values).toContain('2'); // ebs count
+            expect(values).toContain('0'); // fsxw count
+        });
+
+        it('counts only MSSQL hosts with FSx for Windows storage', () => {
+            render(
+                <Provider
+                    store={makeStore({
+                        exploreSavings: {
+                            unmanagedExploreSavingsHost: [
+                                makeMssqlHost('i-003', 'FSx for Windows'),
+                                makeMssqlHost('i-004', 'FSx for Windows')
+                            ]
+                        },
+                        headers: baseHeaders
+                    })}
+                >
+                    <NewPotentialSavings />
+                </Provider>
+            );
+            // esCount.ebs = 0, esCount.fsxw = 2
+            const semiboldTypography = screen.getAllByTestId('typography-Semibold_20');
+            const values = semiboldTypography.map(el => el.textContent);
+            expect(values).toContain('0'); // ebs count
+            expect(values).toContain('2'); // fsxw count
+        });
+
+        it('excludes non-MSSQL hosts from esCount totals', () => {
+            render(
+                <Provider
+                    store={makeStore({
+                        exploreSavings: {
+                            unmanagedExploreSavingsHost: [
+                                makeNonMssqlHost('i-005', 'EBS'),
+                                makeNonMssqlHost('i-006', 'FSx for Windows')
+                            ]
+                        },
+                        headers: baseHeaders
+                    })}
+                >
+                    <NewPotentialSavings />
+                </Provider>
+            );
+            // Non-MSSQL hosts must not be counted → ebs = 0, fsxw = 0
+            const semiboldTypography = screen.getAllByTestId('typography-Semibold_20');
+            const values = semiboldTypography.map(el => el.textContent);
+            expect(values).not.toContain('1');
+            expect(values).not.toContain('2');
+            expect(values.every(v => v === '0')).toBe(true);
+        });
+
+        it('counts only MSSQL hosts when mixed with non-MSSQL hosts', () => {
+            render(
+                <Provider
+                    store={makeStore({
+                        exploreSavings: {
+                            unmanagedExploreSavingsHost: [
+                                makeMssqlHost('i-010', 'EBS'),
+                                makeNonMssqlHost('i-011', 'EBS'),
+                                makeMssqlHost('i-012', 'FSx for Windows'),
+                                makeNonMssqlHost('i-013', 'FSx for Windows')
+                            ]
+                        },
+                        headers: baseHeaders
+                    })}
+                >
+                    <NewPotentialSavings />
+                </Provider>
+            );
+            // Only MSSQL rows count: ebs = 1 (i-010), fsxw = 1 (i-012)
+            const semiboldTypography = screen.getAllByTestId('typography-Semibold_20');
+            const values = semiboldTypography.map(el => el.textContent);
+            expect(values).toContain('1'); // both ebs and fsxw are 1
+            expect(values).not.toContain('2');
+        });
+
+        it('deduplicates MSSQL hosts by ec2InstanceId', () => {
+            render(
+                <Provider
+                    store={makeStore({
+                        exploreSavings: {
+                            unmanagedExploreSavingsHost: [
+                                makeMssqlHost('i-020', 'EBS'),
+                                makeMssqlHost('i-020', 'EBS') // duplicate ec2InstanceId
+                            ]
+                        },
+                        headers: baseHeaders
+                    })}
+                >
+                    <NewPotentialSavings />
+                </Provider>
+            );
+            // Duplicate ec2InstanceId → only counted once → ebs = 1
+            const semiboldTypography = screen.getAllByTestId('typography-Semibold_20');
+            const values = semiboldTypography.map(el => el.textContent);
+            expect(values).toContain('1');
+        });
+    });
 });
