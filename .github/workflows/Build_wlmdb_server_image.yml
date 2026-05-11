@@ -1,4 +1,4 @@
-name: BE Build & Deploy Staging
+name: WLMDB BE Build & Deploy Staging
 
 on:
   push:
