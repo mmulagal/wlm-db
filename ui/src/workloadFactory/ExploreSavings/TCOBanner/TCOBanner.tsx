@@ -15,14 +15,17 @@ import { ReactComponent as CarousalRight } from '../../../assets/Carousel Arrow 
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import styles from './TCOBanner.module.scss';
 import headerStyles from '../ExploreSavingHeader/ExploreSavingHeader.module.scss';
-import { useAppSelector } from '../../../store/storeHooks';
+import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import { DBType, WLF_TABS } from '../../../utils/consts';
 import useResize from '../../../common/hooks/useResize';
+import { handleManualTCOOracleEBS } from '../ExploreSavingsUtils';
 
 const TCOBanner = () => {
     const { t } = useTranslation();
+    const dispatch = useAppDispatch();
     const windowSize = useResize();
     const { selectedTCOHostType, selectedOracleExploreSavingsTab } = useAppSelector(state => state.exploreSavings);
+    const { isWorkloadFactory } = useAppSelector(state => state.auth);
     const [activeSlide, setActiveSlide] = useState(0); // 0 for first, 1 for second
 
     const isOracleOnPrem = selectedOracleExploreSavingsTab === WLF_TABS.ORACLE_SERVER_ON_PREMISES;
@@ -75,6 +78,14 @@ const TCOBanner = () => {
 
                             <span className={headerStyles.subText}>
                                 <span>{t('databases.explore-savings.oracle-ebs-manual-content')}</span>
+                                <span
+                                    className={headerStyles.link}
+                                    id="explore-savings-manually-oracle-ebs"
+                                    onClick={() => handleManualTCOOracleEBS(dispatch, isWorkloadFactory)}
+                                    style={{ marginTop: '12px' }}
+                                >
+                                    {t('databases.explore-savings.oracle-ebs-manual-link')}
+                                </span>
                             </span>
                         </div>
                     </div>

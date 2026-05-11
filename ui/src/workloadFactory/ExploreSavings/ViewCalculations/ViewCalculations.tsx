@@ -46,13 +46,15 @@ const ViewCalculations = ({ statusCheck }: any) => {
 
     const isOracleMode =
         savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
-        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS;
 
     const getDynamicBreadcrumbTitle = () => {
         // For manual modes, use the manual breadcrumb title
         if (
             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
         ) {
             return t('databases.explore-savings.view-calculation-breadcrumb-title-manual');
         }
@@ -200,7 +202,8 @@ const ViewCalculations = ({ statusCheck }: any) => {
                             savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
                             savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
                             savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
-                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) && (
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+                            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) && (
                             <div>
                                 <DsTypography variant="Regular_14" style={{ marginBottom: '14px', fontWeight: '500' }}>
                                     {getEbsCalculationLabel()}

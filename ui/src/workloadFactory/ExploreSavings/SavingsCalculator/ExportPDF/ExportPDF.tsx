@@ -44,7 +44,9 @@ const ExportPDF = ({ printDocument, disableState, sendEmail, emailStatus, width 
     };
 
     const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
-    const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+    const isOracleEbs =
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS;
 
     const setCSSForExportPDF = () => {
         if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES || isOracleOnPrem || isOracleEbs) {

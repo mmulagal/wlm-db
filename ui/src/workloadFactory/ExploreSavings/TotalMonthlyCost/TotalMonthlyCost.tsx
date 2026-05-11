@@ -8,6 +8,7 @@ import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
 import { SAVINGS_CALC_MODE } from '../../../utils/consts';
 import { formatNumberWithCustomComma } from '../../../utils/utilityFunctions';
+import { getOracleLicenseCostValue } from '../SavingsCalculator/savingsUtil';
 
 type TMC = {
     disableState?: boolean;
@@ -19,20 +20,13 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
         storageSavingsLoading,
         savingsCalculatorFrom,
         onPremStorageAndComputeInfo,
-        oracleLicenseCostUpdating
+        oracleLicenseCostUpdating,
+        monthlyBYOLCost
     } = useAppSelector(state => state.exploreSavings);
 
     const oracleLicenseCost = useMemo(() => {
-        const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
-        const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
-
-        if ((!isOracleOnPrem && !isOracleEbs) || !onPremStorageAndComputeInfo) return 0;
-
-        return Object.values(onPremStorageAndComputeInfo).reduce((total: number, entry: any) => {
-            const cost = entry?.monthlyOracleCost;
-            return total + (cost ? Number(cost) : 0);
-        }, 0);
-    }, [savingsCalculatorFrom, onPremStorageAndComputeInfo]);
+        return getOracleLicenseCostValue();
+    }, [savingsCalculatorFrom, onPremStorageAndComputeInfo, monthlyBYOLCost]);
     const noData = disableState;
     const costZeroCase = false;
 
@@ -40,7 +34,8 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
     const getCategoryLabels = (): [string, string] => {
         if (
             savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
         ) {
             return [
                 t('databases.explore-savings.oracle-server-on-fsx-ontap'),

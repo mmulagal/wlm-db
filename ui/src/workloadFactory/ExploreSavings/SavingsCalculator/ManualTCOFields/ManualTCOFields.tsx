@@ -1,13 +1,14 @@
 import { DsTypography, TextField } from '@netapp/design-system';
 import { useEffect, useMemo, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
-import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import styles from './ManualTCOFields.module.scss';
 import { generateOptionType, regionsSort } from '../../../../utils/utilityFunctions';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
     setMonthlyChangeRate,
     setNumberOfClonedCopies,
+    setOracleLicenseCostUpdating,
     setRegionChangeInstanceLoading,
     setSelectedDeploymentModelForManualTCO,
     setSelectedManualServerEdition,
@@ -15,8 +16,13 @@ import {
     setSelectedRegionFromManualTCO,
     setSelectedSnapshotFrequency
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
-import { useAppSelector } from '../../../../store/storeHooks';
-import { SAVINGS_CALC_MODE, SNAPSHOT_FREQUENCY } from '../../../../utils/consts';
+import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
+import {
+    DATABASE_DEPLOYMENT_MODE,
+    SAVINGS_CALC_MODE,
+    SNAPSHOT_FREQUENCY,
+    SQL_DEPLOYMENT_MODE
+} from '../../../../utils/consts';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 
@@ -25,7 +31,8 @@ interface ManualTCOFieldsProps {
 }
 
 const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
-    const dispatch = useDispatch();
+    const dispatch = useAppDispatch();
+    const { t } = useTranslation();
     const {
         selectedManualRegion,
         selectedManualDeploymentModel,
@@ -50,7 +57,17 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
 
     useEffect(() => {
         dispatch(setSelectedMonthlyBYOLCost(textSearch));
-    }, [textSearch]);
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) {
+            dispatch(setOracleLicenseCostUpdating(true));
+            const timeoutId = setTimeout(() => {
+                dispatch(setOracleLicenseCostUpdating(false));
+            }, 500);
+            return () => {
+                clearTimeout(timeoutId);
+                dispatch(setOracleLicenseCostUpdating(false));
+            };
+        }
+    }, [textSearch, savingsCalculatorFrom]);
 
     // Function to generate the options for Select Field
     const generateRegionList = useMemo<optionType[]>((): optionType[] => {
@@ -103,10 +120,14 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
 
     // Function to generate the options for Select Field
     const generateDeploymentModelList = useMemo<optionType[]>((): optionType[] => {
-        const deploymentModel =
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
-                ? [GENERAL.STANDALONE, GENERAL.AOAG]
-                : [GENERAL.STANDALONE, GENERAL.FCI];
+        let deploymentModel;
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+            deploymentModel = [DATABASE_DEPLOYMENT_MODE.STANDALONE, DATABASE_DEPLOYMENT_MODE.AOAG];
+        } else if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) {
+            deploymentModel = [DATABASE_DEPLOYMENT_MODE.STANDALONE, DATABASE_DEPLOYMENT_MODE.DATAGUARD];
+        } else {
+            deploymentModel = [DATABASE_DEPLOYMENT_MODE.STANDALONE, SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE_CAPS];
+        }
         const options: optionType[] = [];
         deploymentModel?.map((val, idx: number) => {
             const option = generateOptionType(val, val, '', false, '', val);
@@ -114,7 +135,7 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
         });
 
         return options;
-    }, []);
+    }, [savingsCalculatorFrom]);
 
     useEffect(() => {
         if (!selectedManualDeploymentModel)
@@ -155,6 +176,8 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
             <DsTypography variant="Regular_14">
                 {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
                     ? GENERAL.SAVINGS_MANUAL_TEXT
+                    : savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
+                    ? t('databases.explore-savings.oracle-manual-ebs-description')
                     : GENERAL.SAVINGS_MANUAL_FSXW_TEXT}
             </DsTypography>
 
@@ -187,17 +210,19 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
                         className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
 
-                    <SelectField
-                        label="SQL server edition"
-                        isClearable={false}
-                        defaultValue={selectedManualServerEdition || [generateSQLEditionList[0]]}
-                        onChange={(selectedOptions: any): void => {
-                            dispatch(setSelectedManualServerEdition(selectedOptions));
-                        }}
-                        isSearchable={generateSQLEditionList.length > 5}
-                        options={generateSQLEditionList}
-                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
-                    />
+                    {savingsCalculatorFrom !== SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS && (
+                        <SelectField
+                            label={t('databases.explore-savings.sql-server-edition')}
+                            isClearable={false}
+                            defaultValue={selectedManualServerEdition || [generateSQLEditionList[0]]}
+                            onChange={(selectedOptions: any): void => {
+                                dispatch(setSelectedManualServerEdition(selectedOptions));
+                            }}
+                            isSearchable={generateSQLEditionList.length > 5}
+                            options={generateSQLEditionList}
+                            className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                        />
+                    )}
                 </div>
 
                 <div className={styles.secondRow}>
@@ -259,7 +284,11 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
 
                     {!printState && (
                         <TextField
-                            label={GENERAL.BYOL_TEXT}
+                            label={
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
+                                    ? t('databases.explore-savings.monthly-oracle-cost')
+                                    : GENERAL.BYOL_TEXT
+                            }
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                 const numVal = e.target.value.replace(/[^0-9.]/g, '');
                                 setMachineDesc(numVal);
@@ -267,12 +296,19 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
                             isOptional
                             value={machineDesc}
                             className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                            info={
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
+                                    ? t('databases.explore-savings.monthly-oracle-cost-tooltip')
+                                    : undefined
+                            }
                         />
                     )}
                     {printState && (
                         <div className={CommonStyles.mockInputClone}>
                             <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
-                                {GENERAL.BYOL_TEXT}
+                                {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
+                                    ? t('databases.explore-savings.monthly-oracle-cost')
+                                    : GENERAL.BYOL_TEXT}
                             </DsTypography>
                             <div className={CommonStyles.inputField}>{machineDesc}</div>
                         </div>

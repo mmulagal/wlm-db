@@ -23,7 +23,8 @@ const InstancesEbsCalculation = () => {
     const getInstancesLabel = () => {
         if (
             savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
         ) {
             return t('databases.explore-savings.oracle-ec2-instances');
         }

@@ -6,6 +6,7 @@ import {
     onClickESHost,
     onClickESHostOracleEbs,
     handleManualTCOEBS,
+    handleManualTCOOracleEBS,
     handleManualTCOFSXW,
     setESInstanceOnPremData,
     onClickESHostOnPremBulk,
@@ -505,6 +506,57 @@ describe('ExploreSavingsUtils', () => {
 
             expect(mockPostBlueXPMessage).not.toHaveBeenCalled();
             expect(mockDispatch).toHaveBeenCalled();
+        });
+    });
+
+    // =========================================================================
+    // handleManualTCOOracleEBS
+    // =========================================================================
+    describe('handleManualTCOOracleEBS', () => {
+        it('should post BlueXP message with oracle-manual mode and dispatch actions when isWorkloadFactory is true', () => {
+            handleManualTCOOracleEBS(mockDispatch, true);
+
+            expect(mockPostBlueXPMessage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    payload: expect.objectContaining({
+                        pathname: './storage-saving-calculator?type=ebs&mode=oracle-manual',
+                        replace: true
+                    })
+                })
+            );
+            expect(mockDispatch).toHaveBeenCalledTimes(3);
+        });
+
+        it('should not post BlueXP message when isWorkloadFactory is false but still dispatch actions', () => {
+            handleManualTCOOracleEBS(mockDispatch, false);
+
+            expect(mockPostBlueXPMessage).not.toHaveBeenCalled();
+            expect(mockDispatch).toHaveBeenCalledTimes(3);
+        });
+
+        it('should dispatch correct actions in correct order', () => {
+            const dispatchCalls: any[] = [];
+            const trackingDispatch = vi.fn((action) => {
+                dispatchCalls.push(action);
+                return action; // AppDispatch returns the action
+            }) as any; // Type assertion to match AppDispatch
+
+            handleManualTCOOracleEBS(trackingDispatch, true);
+
+            // Verify the actions are dispatched
+            expect(trackingDispatch).toHaveBeenCalledTimes(3);
+            // First call should be setSavingsCalculatorFrom with ORACLE_MANUAL_EBS
+            expect(dispatchCalls[0]).toEqual(expect.objectContaining({
+                type: expect.stringContaining('setSavingsCalculatorFrom')
+            }));
+            // Second call should be setDisableState
+            expect(dispatchCalls[1]).toEqual(expect.objectContaining({
+                type: expect.stringContaining('setDisableState')
+            }));
+            // Third call should be setSelectedHeaderTab
+            expect(dispatchCalls[2]).toEqual(expect.objectContaining({
+                type: expect.stringContaining('setSelectedHeaderTab')
+            }));
         });
     });
 

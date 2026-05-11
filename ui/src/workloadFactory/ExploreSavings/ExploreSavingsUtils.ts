@@ -2,7 +2,7 @@ import { BlueXPListeners, postBlueXPMessage } from '@netapp/design-system';
 import { NavigateFunction } from 'react-router-dom';
 import { Dispatch } from '@reduxjs/toolkit';
 import i18next, { TFunction } from 'i18next';
-import store from '../../store/store';
+import store, { AppDispatch } from '../../store/store';
 import {
     resetServerDetailsCredentials,
     setDisableState,
@@ -406,6 +406,22 @@ export const handleManualTCOEBS = (dispatch: any, navigate: any, isWorkloadFacto
     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
 };
 
+export const handleManualTCOOracleEBS = (dispatch: AppDispatch, isWorkloadFactory: boolean) => {
+    if (isWorkloadFactory) {
+        postBlueXPMessage({
+            type: BlueXPListeners.navigate,
+            payload: {
+                pathname: './storage-saving-calculator?type=ebs&mode=oracle-manual',
+                replace: true
+            }
+        });
+    }
+
+    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS));
+    dispatch(setDisableState(true));
+    dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
+};
+
 export const handleManualTCOFSXW = (dispatch: any, navigate: any, isWorkloadFactory: boolean) => {
     postBlueXPMessage({
         type: BlueXPListeners.navigate,
@@ -606,7 +622,8 @@ export const formatViewCalcInstance = (
     const { savingsCalculatorFrom, selectedOnPremHostDetails } = store.getState().exploreSavings;
     const isOracle =
         savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
-        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS;
 
     let instanceTypelist: any = [];
     if (selectedHostDetails?.clusterNodeDetails && selectedHostDetails?.clusterNodeDetails?.length === 2) {
@@ -630,6 +647,7 @@ export const formatViewCalcInstance = (
                 selectedHostDetails?.oracleEdition ||
                 selectedHostDetails?.databaseInstancesSummary?.[0]?.databaseServer?.serverEdition ||
                 selectedOnPremHostDetails?.oracleEdition ||
+                licenseDetails?.sqlServerEdition ||
                 GENERAL.NOT_AVAILABLE;
             base.oracleLicense = licenseDetails?.licenseIncluded ? 'Yes' : 'No';
         } else {
@@ -776,7 +794,8 @@ export const formatViewCalcData = (
             const machineDetailsList: any[] = [];
             const isOracle =
                 savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
-                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS;
             const instanceTypeLabel = isOracle
                 ? i18next.t('databases.explore-savings.oracle-database-type')
                 : i18next.t('databases.explore-savings.sql-instance-type');

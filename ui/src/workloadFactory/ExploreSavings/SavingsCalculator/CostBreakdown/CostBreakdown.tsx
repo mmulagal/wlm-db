@@ -61,7 +61,8 @@ const CostBreakdown = ({ disableState = false }: CB) => {
     const getSecondCategoryLabel = (): string => {
         if (
             savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
         ) {
             return t('databases.explore-savings.oracle-server-on-ebs');
         }
@@ -196,7 +197,8 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                                         }}
                                     >
                                         {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
-                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+                                        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
                                             ? t('databases.explore-savings.oracle-server-on-fsx-ontap')
                                             : t('databases.explore-savings.mssql-server-on-fsx-ontap')}
                                     </Text>

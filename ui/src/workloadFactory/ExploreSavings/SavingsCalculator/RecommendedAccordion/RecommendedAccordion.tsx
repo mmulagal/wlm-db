@@ -87,7 +87,9 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
 
     // Helper to check if in Oracle modes
     const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
-    const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+    const isOracleEbs =
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS;
 
     const [bulkModeState, setBulkModeState] = useState({ isBulkMode: false, shouldRenderMultipleHosts: false });
 
@@ -111,7 +113,10 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM) {
             return selectedRowsForExploreSavingsOracleOnPremBulk || [];
         }
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
+        ) {
             return selectedRowsForExploreSavingsOracleEbsBulk || [];
         }
         return [];
@@ -139,7 +144,8 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
 
         // Check for Oracle EBS bulk mode (>= 1 to handle single host consistently)
         const isOracleEbsBulk =
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS &&
+            (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) &&
             selectedRowsForExploreSavingsOracleEbsBulk &&
             selectedRowsForExploreSavingsOracleEbsBulk.length >= 1;
 
@@ -153,7 +159,8 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM &&
                 selectedRowsForExploreSavingsOracleOnPremBulk &&
                 selectedRowsForExploreSavingsOracleOnPremBulk.length > 0) ||
-            (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS &&
+            ((savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) &&
                 selectedRowsForExploreSavingsOracleEbsBulk &&
                 selectedRowsForExploreSavingsOracleEbsBulk.length > 0);
 
@@ -243,10 +250,11 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
         if (
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
                 savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
-                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) &&
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) &&
             storageSavingsResponse
         ) {
-            // Handle AUTO_EBS, ONPREM, and ORACLE_AUTO_EBS array format
+            // Handle AUTO_EBS, ONPREM, ORACLE_AUTO_EBS, and ORACLE_MANUAL_EBS array format
             const licenseArray = Array.isArray(storageSavingsResponse?.license)
                 ? storageSavingsResponse.license
                 : [storageSavingsResponse?.license].filter(Boolean);

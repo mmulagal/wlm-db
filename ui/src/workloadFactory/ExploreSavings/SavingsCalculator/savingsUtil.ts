@@ -14,9 +14,11 @@ import { NOTIFICATION_TYPES, addNotification } from '../../../store/notification
 import { duplicateSaveCheck } from '../../../components/CreateMsSql/Configuration/LoadConfiguration';
 import { setIsSaveConfigLoading, setSavedConfig } from '../../../store/mssql/msSqlActionSlice';
 import {
+    DATABASE_DEPLOYMENT_MODE,
     DB_DEPLOYMENT_MODEL,
     DB_EDITIONS,
     DB_VERSIONS,
+    DBType,
     EBS_PROTECTED_OPTIONS,
     GIB_IN_BYTE,
     OS_VERSIONS_LIST,
@@ -41,9 +43,12 @@ import { StorageSavingsInterface, ViewCalculationsInterface } from '../../../uti
 
 export const getOracleLicenseCostValue = () => {
     const state = store.getState();
-    const { savingsCalculatorFrom, onPremStorageAndComputeInfo } = state.exploreSavings;
+    const { savingsCalculatorFrom, onPremStorageAndComputeInfo, monthlyBYOLCost } = state.exploreSavings;
     const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
     const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+    const isOracleManualEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS;
+
+    if (isOracleManualEbs) return monthlyBYOLCost ? Number(monthlyBYOLCost) : 0;
 
     if ((!isOracleOnPrem && !isOracleEbs) || !onPremStorageAndComputeInfo) return 0;
 
@@ -61,7 +66,8 @@ export const comparisonData = (calculatedResponse: any) => {
     const { recommendedTargetInstance, selectedHostDetails, savingsCalculatorFrom } = state.exploreSavings;
     const isOracle =
         savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
-        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS;
     const isArrayMode =
         (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
             savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
@@ -430,7 +436,8 @@ export const viewCalculation = (viewCalculation: any, selectedDeploymentModel: s
     // Oracle mode detection for proper labels/fields
     const isOracleViewCalc =
         savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
-        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS;
     const editionLabel = isOracleViewCalc
         ? i18next.t('databases.explore-savings.database-edition-label')
         : i18next.t('databases.explore-savings.sql-edition-label');
@@ -1000,7 +1007,8 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
 
     const isOracleEbsCalc =
         savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM ||
-        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS;
     const ebsEditionLabel = isOracleEbsCalc
         ? i18next.t('databases.explore-savings.database-edition-label')
         : i18next.t('databases.explore-savings.sql-edition-label');
@@ -2402,12 +2410,15 @@ const createInstances = (state: any) => {
     } = state.exploreSavings;
 
     let firstInstance: any = {
-        ec2InstanceDescription: manualMonthlyDescription,
+        ec2InstanceDescription: manualMonthlyDescription || null,
         ec2InstanceType: selectedManualInstanceType?.value,
         isPrimary: true
     };
 
-    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+    if (
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
+    ) {
         firstInstance = {
             ...firstInstance,
             volumes: generateVolumesData(manualTCOVolumeTypes)
@@ -2421,12 +2432,13 @@ const createInstances = (state: any) => {
     instanceArr.push(firstInstance);
 
     if (
-        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS &&
-        selectedManualDeploymentModel?.label !== 'Standalone' &&
+        (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) &&
+        selectedManualDeploymentModel?.label !== DATABASE_DEPLOYMENT_MODE.STANDALONE &&
         secondaryVolumeFilledStatus
     ) {
         instanceArr.push({
-            ec2InstanceDescription: manualSecondaryMachineDescription,
+            ec2InstanceDescription: manualSecondaryMachineDescription || null,
             ec2InstanceType: selectedSecondaryManualInstanceType?.value,
             isPrimary: false,
             volumes: generateVolumesData(manualTCOVolumeTypes2)
@@ -2449,12 +2461,15 @@ const setSQLServerEdition = (value: string) => {
     }
 };
 
-const deploymentTypeSelection = (value: string, savingsCalculatorFrom: string | null) => {
-    if (value !== 'Standalone') {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
-            return 'FCI';
+const deploymentTypeSelection = (value: string, savingsCalculatorFrom: string | null, engineType: string) => {
+    if (value !== DATABASE_DEPLOYMENT_MODE.STANDALONE) {
+        if (engineType === DBType.ORACLE) {
+            return DATABASE_DEPLOYMENT_MODE.DATAGUARD;
         }
-        return 'AOAG';
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
+            return SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE_CAPS;
+        }
+        return DATABASE_DEPLOYMENT_MODE.AOAG_CAPS;
     }
     return value;
 };
@@ -2471,19 +2486,34 @@ export const generateManualStorageSavingsPayload = () => {
         savingsCalculatorFrom
     } = state.exploreSavings;
     const payloadObj: any = {};
-    payloadObj.sqlServerDeploymentType = deploymentTypeSelection(
-        selectedManualDeploymentModel?.value,
-        savingsCalculatorFrom
-    );
 
-    payloadObj.clonedCopiesCount = Number(numberOfClonedCopies);
-    payloadObj.snapshotFrequency = selectedSnapshotFrequency?.value;
-    payloadObj.monthlyChangeRatePercentage = Number(monthlyChangeRate);
-    if (monthlyBYOLCost) {
-        payloadObj.monthlySqlByolCost = Number(monthlyBYOLCost);
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) {
+        // Oracle manual EBS payload
+        payloadObj.oracleDeploymentType = deploymentTypeSelection(
+            selectedManualDeploymentModel?.value,
+            savingsCalculatorFrom,
+            DBType.ORACLE
+        );
+        payloadObj.clonedCopiesCount = Number(numberOfClonedCopies);
+        payloadObj.snapshotFrequency = selectedSnapshotFrequency?.value;
+        payloadObj.monthlyChangeRatePercentage = Number(monthlyChangeRate);
+        payloadObj.ec2Instances = createInstances(state);
+    } else {
+        // MSSQL manual EBS/FSXW payload
+        payloadObj.sqlServerDeploymentType = deploymentTypeSelection(
+            selectedManualDeploymentModel?.value,
+            savingsCalculatorFrom,
+            DBType.MSSQL
+        );
+        payloadObj.clonedCopiesCount = Number(numberOfClonedCopies);
+        payloadObj.snapshotFrequency = selectedSnapshotFrequency?.value;
+        payloadObj.monthlyChangeRatePercentage = Number(monthlyChangeRate);
+        if (monthlyBYOLCost) {
+            payloadObj.monthlySqlByolCost = Number(monthlyBYOLCost);
+        }
+        payloadObj.sqlServerEdition = setSQLServerEdition(selectedManualServerEdition?.value);
+        payloadObj.ec2Instances = createInstances(state);
     }
-    payloadObj.sqlServerEdition = setSQLServerEdition(selectedManualServerEdition?.value);
-    payloadObj.ec2Instances = createInstances(state);
     return payloadObj;
 };
 

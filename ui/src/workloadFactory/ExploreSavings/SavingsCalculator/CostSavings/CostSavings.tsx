@@ -9,27 +9,20 @@ import { GENERAL } from '../../../../utils/appConstants';
 import { formatFractionalNumberForCost, formatNumberWithCustomComma } from '../../../../utils/utilityFunctions';
 import useResize from '../../../../common/hooks/useResize';
 import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
+import { getOracleLicenseCostValue } from '../savingsUtil';
 
 type CS = {
     disableState?: boolean;
 };
 
 const CostSavings = ({ disableState }: CS) => {
-    const { storageSavingsResponse, storageSavingsLoading, savingsCalculatorFrom, onPremStorageAndComputeInfo } =
+    const { storageSavingsResponse, storageSavingsLoading, savingsCalculatorFrom, onPremStorageAndComputeInfo, monthlyBYOLCost } =
         useAppSelector(state => state.exploreSavings);
     const windowSize = useResize();
 
     const oracleLicenseCost = useMemo(() => {
-        const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
-        const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
-
-        if ((!isOracleOnPrem && !isOracleEbs) || !onPremStorageAndComputeInfo) return 0;
-
-        return Object.values(onPremStorageAndComputeInfo).reduce((total: number, entry: any) => {
-            const cost = entry?.monthlyOracleCost;
-            return total + (cost ? Number(cost) : 0);
-        }, 0);
-    }, [savingsCalculatorFrom, onPremStorageAndComputeInfo]);
+        return getOracleLicenseCostValue();
+    }, [savingsCalculatorFrom, onPremStorageAndComputeInfo, monthlyBYOLCost]);
 
     const [savings, setSavings] = useState<any>(0);
     const [savingsPer, setSavingsPer] = useState<any>(0);

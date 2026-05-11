@@ -4,6 +4,8 @@ import { useAppDispatch, useAppSelector } from '../../../store/storeHooks';
 import {
     useGetManualStorageSavingsMutation,
     useGetManualViewCalculationsMutation,
+    useGetOracleManualStorageSavingsMutation,
+    useGetOracleManualViewCalculationsMutation,
     useLazyGetInstanceTypesWithoutCredQuery,
     useLazyGetRegionsWithoutCredQuery
 } from '../../../utils/apiService';
@@ -62,11 +64,14 @@ const SavingsCalculatorManualApi = () => {
 
     const [getManualStorageSavingsApi] = useGetManualStorageSavingsMutation();
     const [getManualViewCalculationsApi] = useGetManualViewCalculationsMutation();
+    const [getOracleManualStorageSavingsApi] = useGetOracleManualStorageSavingsMutation();
+    const [getOracleManualViewCalculationsApi] = useGetOracleManualViewCalculationsMutation();
 
     useEffect(() => {
         if (
             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
         ) {
             dispatch(setManualRegionsLoading(true));
             getRegionsWithoutCred({})
@@ -83,7 +88,8 @@ const SavingsCalculatorManualApi = () => {
     useEffect(() => {
         if (
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) &&
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) &&
             selectedManualRegion
         ) {
             dispatch(setInstanceLoading(true));
@@ -106,15 +112,23 @@ const SavingsCalculatorManualApi = () => {
         const payload = generateManualStorageSavingsPayload();
 
         try {
-            const result = await getManualStorageSavingsApi({
-                regionId: selectedManualRegion?.data?.regionCode,
-                payload,
-                type:
-                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
-                        ? 'ebs'
-                        : 'fsxw'
-            });
+            let result;
+            if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) {
+                result = await getOracleManualStorageSavingsApi({
+                    regionId: selectedManualRegion?.data?.regionCode,
+                    payload
+                });
+            } else {
+                result = await getManualStorageSavingsApi({
+                    regionId: selectedManualRegion?.data?.regionCode,
+                    payload,
+                    type:
+                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                        savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
+                            ? 'ebs'
+                            : 'fsxw'
+                });
+            }
             dispatch(setStorageSavingsLoading(false));
             dispatch(setStorageSavingsResponse(formatStorageSavingsRecommendedData(result?.data)));
         } catch (error) {
@@ -125,15 +139,23 @@ const SavingsCalculatorManualApi = () => {
     const getManualViewCalculationsData = async () => {
         const payload = generateManualStorageSavingsPayload();
         try {
-            const result = await getManualViewCalculationsApi({
-                regionId: selectedManualRegion?.data?.regionCode,
-                payload,
-                type:
-                    savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
-                        ? 'ebs'
-                        : 'fsxw'
-            });
+            let result;
+            if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) {
+                result = await getOracleManualViewCalculationsApi({
+                    regionId: selectedManualRegion?.data?.regionCode,
+                    payload
+                });
+            } else {
+                result = await getManualViewCalculationsApi({
+                    regionId: selectedManualRegion?.data?.regionCode,
+                    payload,
+                    type:
+                        savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                        savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
+                            ? 'ebs'
+                            : 'fsxw'
+                });
+            }
             dispatch(setViewCalculationsApiResponse(result?.data));
             dispatch(
                 setViewCalculationsResponse(
@@ -254,6 +276,52 @@ const SavingsCalculatorManualApi = () => {
         selectedManualFSXIOPS,
         selectedManualFSXThroughput,
         selectedManualStorageCapacityUnit
+    ]);
+
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) {
+            const payload = generateManualStorageSavingsPayload();
+            const comparedPayloadValues =
+                isEqual(payload, requestedPayload) &&
+                selectedManualRegion?.data?.regionCode === requestedRegion?.data?.regionCode;
+
+            if (
+                !comparedPayloadValues &&
+                !instanceTypeLoading &&
+                selectedManualRegion &&
+                numberOfClonedCopies &&
+                numberOfClonedCopies <= MAX_CLONED_COPIES &&
+                monthlyChangeRate &&
+                Number(monthlyChangeRate) <= MAX_MONTHLY_CHANGE_RATE &&
+                volumeFilledStatus &&
+                selectedManualInstanceType &&
+                payload?.ec2Instances &&
+                payload?.ec2Instances[0] &&
+                payload?.ec2Instances[0]?.volumes &&
+                payload?.ec2Instances[0]?.volumes.length
+            ) {
+                dispatch(setDisableState(false));
+                dispatch(setRequestedPayload(payload));
+                dispatch(setRequestedRegion(selectedManualRegion));
+                triggerManualStorageAPI();
+            }
+        }
+    }, [
+        savingsCalculatorFrom,
+        numberOfClonedCopies,
+        monthlyChangeRate,
+        selectedManualDeploymentModel,
+        selectedManualRegion,
+        selectedManualServerEdition,
+        selectedManualInstanceType,
+        manualMonthlyDescription,
+        manualSecondaryMachineDescription,
+        selectedSecondaryManualInstanceType,
+        manualTCOVolumeTypes,
+        volumeFilledStatus,
+        manualTCOVolumeTypes2,
+        instanceTypeLoading,
+        selectedSnapshotFrequency
     ]);
 
     return <></>;

@@ -4,7 +4,7 @@ import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@net
 import { useEffect, useRef, useState } from 'react';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './SavingsCalculator.module.scss';
-import { DBType, DETECT_HOST_VAR, SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
+import { DATABASE_DEPLOYMENT_MODE, DBType, DETECT_HOST_VAR, SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
 import CostSavings from './CostSavings/CostSavings';
 import TotalMonthlyCost from '../TotalMonthlyCost/TotalMonthlyCost';
 import SavingsHeader from './SavingsHeader/SavingsHeader';
@@ -93,6 +93,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     // Helper to check if in Oracle on-prem mode
     const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
     const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+    const isOracleManualEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS;
     const isOnPremMode = (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && !isOracleEbs) || isOracleOnPrem;
 
     const {
@@ -108,7 +109,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         if (
             (!statusData || statusData?.isActive === false) &&
             (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW)
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS)
         ) {
             setIsCardOpen(true);
         } else {
@@ -261,7 +263,10 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     };
 
     const setManualBreadcrumbTitle = () => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
+        ) {
             return 'Custom configuration for EBS';
         }
         return 'Custom configuration for FSx for Windows';
@@ -271,7 +276,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         // For manual modes, use the manual breadcrumb title
         if (
             savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
         ) {
             return setManualBreadcrumbTitle();
         }
@@ -401,7 +407,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                             )}
                         {(!statusData || statusData?.isActive === false) &&
                             (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
-                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) && (
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW ||
+                                savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS) && (
                                 <DsButton
                                     ref={buttonRef}
                                     onClick={() => {
@@ -464,7 +471,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                 {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS && (
                                     <>
                                         <SavingsHeader />
-                                        <div style={{ padding: '40px' }}>
+                                        <div className={styles.manualContentWrapper}>
                                             <ManualTCOFields printState={printState} />
                                             <ManualEC2 />
                                             <ManualVolumeTypes />
@@ -477,10 +484,23 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                 {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW && (
                                     <>
                                         <SavingsHeader />
-                                        <div style={{ padding: '40px' }}>
+                                        <div className={styles.manualContentWrapper}>
                                             <ManualTCOFields printState={printState} />
                                             <ManualTCOFSXFields printState={printState} />
                                             <ManualFSXEC2 />
+                                        </div>
+                                    </>
+                                )}
+
+                                {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS && (
+                                    <>
+                                        <SavingsHeader />
+                                        <div className={styles.manualContentWrapper}>
+                                            <ManualTCOFields printState={printState} />
+                                            <ManualEC2 />
+                                            <ManualVolumeTypes />
+                                            {selectedManualDeploymentModel?.label ===
+                                                DATABASE_DEPLOYMENT_MODE.DATAGUARD && <ManualTCOAccordion />}
                                         </div>
                                     </>
                                 )}
@@ -531,24 +551,32 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         style={headingWidth !== undefined ? { width: headingWidth } : undefined}
                     >
                         <div>
-                            {isMutliFsx && !isOracleOnPrem && !isOracleEbs ? <SuggestionDisable /> : <Suggestion />}
+                            {isMutliFsx && !isOracleOnPrem && !isOracleEbs && !isOracleManualEbs ? (
+                                <SuggestionDisable />
+                            ) : (
+                                <Suggestion />
+                            )}
                         </div>
                         <div className={styles.textContent}>
                             <DsTypography
                                 variant="Semibold_16"
-                                className={isMutliFsx && !isOracleOnPrem && !isOracleEbs ? styles.textDisable : ''}
+                                className={
+                                    isMutliFsx && !isOracleOnPrem && !isOracleEbs && !isOracleManualEbs
+                                        ? styles.textDisable
+                                        : ''
+                                }
                             >
                                 {t('databases.explore-savings.mssql-selection-based-text')}
                             </DsTypography>
                             <DsTypography
                                 variant="Regular_14"
                                 className={
-                                    isMutliFsx && !isOracleOnPrem && !isOracleEbs
+                                    isMutliFsx && !isOracleOnPrem && !isOracleEbs && !isOracleManualEbs
                                         ? `${styles.secondText} ${styles.textDisable}`
                                         : styles.secondText
                                 }
                             >
-                                {isOracleOnPrem || isOracleEbs
+                                {isOracleOnPrem || isOracleEbs || isOracleManualEbs
                                     ? t('databases.explore-savings.oracle-ec2-single-fsx')
                                     : t('databases.explore-savings.mssql-selection-based-second-text')}
                             </DsTypography>

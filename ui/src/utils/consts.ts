@@ -810,6 +810,7 @@ export const SAVINGS_CALC_MODE = {
     ONPREM: 'OnPrem',
     ORACLE_ONPREM: 'Oracle_OnPrem',
     ORACLE_AUTO_EBS: 'Oracle_Auto_EBS',
+    ORACLE_MANUAL_EBS: 'Oracle_Manual_EBS',
     EBS: 'ebs',
     FSXW: 'fsxw',
     ONPREM_MODE: 'onprem'

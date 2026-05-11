@@ -1381,6 +1381,21 @@ export const exploreSavingsApi = createApi({
                 method: 'POST',
                 body: payload
             })
+        }),
+        // Oracle Manual EBS
+        getOracleManualStorageSavings: builder.mutation({
+            query: ({ regionId, payload }) => ({
+                url: `v1/oracle/regions/${regionId}/manual-storage-savings/ebs`,
+                method: 'POST',
+                body: payload
+            })
+        }),
+        getOracleManualViewCalculations: builder.mutation({
+            query: ({ regionId, payload }) => ({
+                url: `v1/oracle/regions/${regionId}/manual-storage-savings/ebs/calculations`,
+                method: 'POST',
+                body: payload
+            })
         })
     })
 });
@@ -1844,7 +1859,9 @@ export const {
     useGetBulkViewCalculationsMutation,
     useGetOracleOnPremCalculationsMutation,
     useGetOracleBulkStorageSavingsMutation,
-    useGetOracleBulkViewCalculationsMutation
+    useGetOracleBulkViewCalculationsMutation,
+    useGetOracleManualStorageSavingsMutation,
+    useGetOracleManualViewCalculationsMutation
 } = exploreSavingsApi;
 
 export const {

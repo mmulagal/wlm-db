@@ -174,4 +174,20 @@ router.post(
     }
 );
 
+// Oracle Manual EBS routes
+router.post(`${BASE_URL}/v1/oracle/regions/:region/manual-storage-savings/ebs`, async (req: {}, res: any) => {
+    setTimeout(() => {
+        generateResponse(res, 200, StorageSavings);
+    }, 50);
+});
+
+router.post(
+    `${BASE_URL}/v1/oracle/regions/:region/manual-storage-savings/ebs/calculations`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, ViewCalculations);
+        }, 50);
+    }
+);
+
 export default router;

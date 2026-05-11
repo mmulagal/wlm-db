@@ -1,6 +1,7 @@
 import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as StorageCredentials } from '../../../../assets/storage-credentials.svg';
 
 import styles from './CalculateSavingCard.module.scss';
@@ -12,6 +13,7 @@ import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 import { handleExploreSavingsURL } from '../../../../utils/utilityFunctions';
 
 const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }: any) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedExploreSavingsTab } = useAppSelector(state => state?.exploreSavings);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -35,7 +37,10 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
     };
 
     const navigateAddCredentials = () => {
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
+        ) {
             postBlueXPMessage({
                 type: BlueXPListeners.navigate,
                 payload: {
@@ -69,35 +74,41 @@ const CalculateSavingCard = ({ buttonRef, setIsCardOpen, savingsCalculatorFrom }
             <StorageCredentials />
             <div className={styles.content}>
                 <DsTypography className={styles.heading} variant="Semibold_14">
-                    Calculate savings on your existing SQL Servers
+                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
+                        ? t('databases.explore-savings.calculate-savings-card-oracle-heading')
+                        : t('databases.explore-savings.calculate-savings-card-heading')}
                 </DsTypography>
                 {!noAccount && (
                     <DsTypography variant="Regular_14" className={styles.text}>
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
-                            ? 'We can calculate how much you\'ll save by comparing the cost of your existing SQL Servers using EBS resources with FSx for ONTAP. Click "Try it" to select specific EBS database hosts to compare with FSx for ONTAP in the calculator.'
-                            : 'We can calculate how much you\'ll save by comparing the cost of your existing SQL Servers using FSx for Windows File Server resources with FSx for ONTAP. Click "Try it" to select specific FSx for Windows database hosts to compare with FSx for ONTAP in the calculator.'}
+                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
+                            ? t('databases.explore-savings.calculate-savings-card-oracle-ebs-description')
+                            : savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
+                            ? t('databases.explore-savings.calculate-savings-card-ebs-description')
+                            : t('databases.explore-savings.calculate-savings-card-fsxw-description')}
                     </DsTypography>
                 )}
                 {noAccount && (
                     <DsTypography variant="Regular_14" className={styles.text}>
-                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
-                            ? "We can calculate how much you'll save by comparing the cost of your existing SQL Servers using EBS resources with FSx for ONTAP. Add your credentials, go back to Explore savings, and select the Microsoft SQL Server host you'd like to compare."
-                            : "We can calculate how much you'll save by comparing the cost of your existing SQL Servers using FSx for Windows resources with FSx for ONTAP. Add your credentials, go back to Explore savings, and select the Microsoft SQL Server host you'd like to compare."}
+                        {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
+                            ? t('databases.explore-savings.calculate-savings-card-oracle-ebs-no-account-description')
+                            : savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS
+                            ? t('databases.explore-savings.calculate-savings-card-ebs-no-account-description')
+                            : t('databases.explore-savings.calculate-savings-card-fsxw-no-account-description')}
                     </DsTypography>
                 )}
             </div>
             <div className={styles.buttonContainer}>
                 <DsButton type="text" className={styles.button} onClick={() => setIsCardOpen(false)}>
-                    Maybe later
+                    {t('databases.explore-savings.calculate-savings-card-maybe-later')}
                 </DsButton>
                 {!noAccount && (
                     <DsButton type="button" onClick={handleTryIt} isThin className={styles.button}>
-                        Try it
+                        {t('databases.explore-savings.calculate-savings-card-try-it')}
                     </DsButton>
                 )}
                 {noAccount && (
                     <DsButton type="button" onClick={navigateAddCredentials} isThin className={styles.button}>
-                        Add credentials
+                        {t('databases.explore-savings.calculate-savings-card-add-credentials')}
                     </DsButton>
                 )}
             </div>

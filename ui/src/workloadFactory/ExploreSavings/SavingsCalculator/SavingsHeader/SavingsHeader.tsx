@@ -18,8 +18,11 @@ const SavingsHeader = () => {
         if (isOracleOnPrem) {
             return t('databases.explore-savings.oracle-on-premises-configuration');
         }
-        // Oracle EBS specific text
-        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) {
+        // Oracle EBS specific text (automated and manual)
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
+        ) {
             return t('databases.explore-savings.savings-header-oracle-ebs');
         }
         if (
@@ -44,7 +47,8 @@ const SavingsHeader = () => {
         if (
             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ||
             isOracleOnPrem ||
-            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
         ) {
             return `${styles.savingsHeader} ${styles.savingsHeaderOnPrem}`;
         }

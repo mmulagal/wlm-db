@@ -291,13 +291,13 @@ const HeaderComponent = ({ tab }: Tab) => {
                         payload: {
                             pathname: `${
                                 isWorkloadFactory
-                                    ? './storage-saving-calculator?type=ebs&mode=manual'
-                                    : '../fsxdb/storage-saving-calculator?type=ebs&mode=manual'
+                                    ? './storage-saving-calculator?type=ebs&mode=oracle-manual'
+                                    : '../fsxdb/storage-saving-calculator?type=ebs&mode=oracle-manual'
                             }`,
                             replace: true
                         }
                     });
-                    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.MANUAL_EBS));
+                    dispatch(setSavingsCalculatorFrom(SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS));
                     dispatch(setSelectedHeaderTab(WLF_TABS.SAVINGS_CALCULATOR));
                 } else {
                     postBlueXPMessage({
