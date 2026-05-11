@@ -1936,9 +1936,20 @@ EOF
 // • SET CONTAINER_DATA = ALL CONTAINER = CURRENT — required to get storage details & protection details for PDBs
 
 const loadOracleUserPermissionsDetectionModule = `
-    ${resolveOracleHomeInParent('$oracleSid', 'permissions_oracle_home')}
+    permissions_oracle_home=""
+    permissions_oracle_home_sid=""
+
+    resolve_oracle_home_for_permission_probe() {
+        if [ "$permissions_oracle_home_sid" == "$oracleSid" ] && [ -n "$permissions_oracle_home" ]; then
+            return 0
+        fi
+
+        ${resolveOracleHomeInParent('$oracleSid', 'permissions_oracle_home')}
+        permissions_oracle_home_sid="$oracleSid"
+    }
 
     is_create_session_granted() {
+        resolve_oracle_home_for_permission_probe
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
@@ -1956,6 +1967,7 @@ EOF
 }
 
     check_for_select_catalog_permission() {
+        resolve_oracle_home_for_permission_probe
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
@@ -1974,6 +1986,7 @@ EOF
     }
 
     check_for_set_container_permission() {
+        resolve_oracle_home_for_permission_probe
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
@@ -1992,6 +2005,7 @@ EOF
 }
 
     check_for_container_data_permission() {
+        resolve_oracle_home_for_permission_probe
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
@@ -2009,6 +2023,7 @@ EOF
 }
 
     is_cdb_instance() {
+        resolve_oracle_home_for_permission_probe
         local result=$(sudo -i -u oracle bash <<EOF
                 set -e
                 export ORACLE_SID="$oracleSid"
@@ -2027,6 +2042,7 @@ EOF
     }
 
     check_for_alter_system_permission() {
+        resolve_oracle_home_for_permission_probe
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
@@ -2045,6 +2061,7 @@ EOF
 }
 
     check_for_pdb_read_write_state() {
+        resolve_oracle_home_for_permission_probe
         local result=$(sudo -i -u oracle bash <<EOF
             set -e
             export ORACLE_SID="$oracleSid"
