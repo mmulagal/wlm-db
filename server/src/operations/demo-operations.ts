@@ -64,7 +64,8 @@ import { describeFSxVolumes } from '../lib/aws/fsx';
 import {
     AssessmentCategories,
     AssessmentCategoriesOracle,
-    AssessmentStatus
+    AssessmentStatus,
+    OptimizeOracleComputeHostOs
 } from '../utils/continous-optimization-consts';
 import { ORACLE_COMPUTE_DRIFT_RESPONSE_KEYS } from './continuous-optimization/oracle/consts';
 import { offlineAssessmentDemoFCI } from '../utils/demo-utils/offlineAssessmentRecords/offlineAssessmentDemoFCI';
@@ -96,9 +97,12 @@ import {
     OracleCloneDriftResponseType,
     HostOsPatchDriftResponseType as OracleHostOsPatchDriftResponseType
 } from '../routes/types/oracle-continuous-optimization.types';
+import { StorageIscsiAssessment } from './continuous-optimization/oracle/common-types';
 
 const logger = getLogger();
 const DemoDefaultDatabaseNames = ['RetailBanking', 'MFGSales'];
+const ORACLE_COMPUTE_HOST_OS_DEMO_CONFIG_NAMES = new Set<string>(Object.values(OptimizeOracleComputeHostOs));
+const oracleComputeHostOsDemoMetadataUpdates = new Map<string, Promise<void>>();
 const generateRandomEc2InstanceId = () => `i-${randomize('?0', 17, { chars: 'abcdef' })}`;
 
 function createJobMockData(
@@ -483,6 +487,65 @@ async function updateOptimizedConfigMetaData(
 
     metaData.configsOptimized = existingConfigs;
     await updateInstanceMetadata(accountId, instanceId, metaData);
+}
+
+async function updateOracleComputeHostOsOptimizedConfigInResourceMetadata(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    configName: string
+) {
+    logger.info('updating Oracle compute host OS optimized config into resource metadata', {
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        configName
+    });
+
+    const updateKey = `${accountId}:${credentialsId}:${region}:${databaseHostId}`;
+    const previousUpdate = oracleComputeHostOsDemoMetadataUpdates.get(updateKey);
+    const currentUpdate = (async () => {
+        if (previousUpdate) {
+            await previousUpdate;
+        }
+
+        const { resource: { metadata = {} } = {} } = (await getInstanceInfo(
+            accountId,
+            credentialsId,
+            databaseHostId,
+            databaseInstanceId,
+            region
+        )) as DatabaseInstance;
+        const currentMetadata = metadata as unknown as Metadata;
+        const oracleComputeHostOsDemoOptimized = [
+            ...new Set([...(currentMetadata.oracleComputeHostOsDemoOptimized || []), configName])
+        ];
+
+        await updateResource({
+            accountId,
+            credentialsId,
+            region,
+            resourceId: databaseHostId,
+            metaData: {
+                ...currentMetadata,
+                oracleComputeHostOsDemoOptimized
+            }
+        });
+    })();
+
+    oracleComputeHostOsDemoMetadataUpdates.set(updateKey, currentUpdate);
+
+    try {
+        await currentUpdate;
+    } finally {
+        if (oracleComputeHostOsDemoMetadataUpdates.get(updateKey) === currentUpdate) {
+            oracleComputeHostOsDemoMetadataUpdates.delete(updateKey);
+        }
+    }
 }
 
 async function updateSandboxDBIntoResourceData(
@@ -1794,6 +1857,23 @@ function handleGetOracleAssessmentForDemo(
         assessmentData.clone = cloneResponse;
     }
 
+    const oracleComputeHostOsDemoOptimized = (metadata as unknown as Metadata).oracleComputeHostOsDemoOptimized || [];
+    const oracleComputeHostOsDemoOptimizedConfigs = new Set<string>(oracleComputeHostOsDemoOptimized);
+
+    if (oracleComputeHostOsDemoOptimizedConfigs.size > 0) {
+        ORACLE_COMPUTE_DRIFT_RESPONSE_KEYS.forEach(topKey => {
+            const drift = assessmentData[topKey] as ParameterDriftResponseType | undefined;
+            if (
+                drift &&
+                typeof drift === 'object' &&
+                'name' in drift &&
+                oracleComputeHostOsDemoOptimizedConfigs.has(drift.name)
+            ) {
+                optimizeDriftConfig(drift);
+            }
+        });
+    }
+
     // Handle Oracle storage assessment
     const storageAssessmentResponse = assessmentData.storage as StorageParameterDriftResponseType;
 
@@ -1831,20 +1911,18 @@ function handleGetOracleAssessmentForDemo(
         }
     }
 
-    if (osConfigsOptimized.length > 0) {
+    if (osConfigsOptimized.length > 0 || oracleComputeHostOsDemoOptimizedConfigs.size > 0) {
         storageAssessmentResponse.configuration.os = storageAssessmentResponse.configuration.os.map(osConfig => {
             const os = osConfig as ParameterDriftResponseType;
-            if (osConfigsOptimized.includes(os.name)) {
-                os.status = AssessmentStatus.OPTIMIZED;
+            const isOracleComputeHostOsConfig = ORACLE_COMPUTE_HOST_OS_DEMO_CONFIG_NAMES.has(os.name);
+            const isOptimized = isOracleComputeHostOsConfig
+                ? oracleComputeHostOsDemoOptimizedConfigs.has(os.name)
+                : osConfigsOptimized.includes(os.name);
+
+            if (isOptimized) {
+                optimizeDriftConfig(os);
             }
             return os;
-        });
-
-        ORACLE_COMPUTE_DRIFT_RESPONSE_KEYS.forEach(topKey => {
-            const drift = assessmentData[topKey] as ParameterDriftResponseType | undefined;
-            if (drift && typeof drift === 'object' && 'name' in drift && osConfigsOptimized.includes(drift.name)) {
-                drift.status = AssessmentStatus.OPTIMIZED;
-            }
         });
     }
 
@@ -1883,16 +1961,75 @@ function handleGetOracleAssessmentForDemo(
     return assessmentData;
 }
 
+function optimizeDriftConfig(config: ParameterDriftResponseType) {
+    config.status = AssessmentStatus.OPTIMIZED;
+    config.objectsInViolation = [];
+    config.violationDetails = [];
+    config.totalObjectsInViolation = 0;
+    return config;
+}
+
 function optimizeConfig(configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) {
     return configArray.map(config => {
         if (optimizedConfigs.includes(config.name)) {
-            config.status = AssessmentStatus.OPTIMIZED;
-            config.objectsInViolation = [];
-            config.violationDetails = [];
-            config.totalObjectsInViolation = 0;
+            optimizeDriftConfig(config);
         }
         return config;
     });
+}
+
+function buildDemoComputeHostOsAssessmentInputs(metadata: Metadata): {
+    computeHostOs: ResourceAssessmentData['computeHostOs'];
+    oracleParamsConfigData: StorageIscsiAssessment;
+} {
+    const optimizedConfigs = new Set(metadata.oracleComputeHostOsDemoOptimized || []);
+    const isTransparentHugepagesOptimized = optimizedConfigs.has(OptimizeOracleComputeHostOs.THP_DISABLE);
+    const isTcpOptimized = optimizedConfigs.has(OptimizeOracleComputeHostOs.TCP_OPTIONS);
+    const isFilesystemIoOptimized = optimizedConfigs.has(OptimizeOracleComputeHostOs.FILESYSTEM_IO_OPTIONS);
+    const isMultiblockOptimized = optimizedConfigs.has(OptimizeOracleComputeHostOs.MULTIBLOCK_READCOUNT);
+
+    return {
+        computeHostOs: {
+            transparentHugepages: {
+                error: null,
+                'thp-status': isTransparentHugepagesOptimized ? 'never' : 'always',
+                'thp-disabled': isTransparentHugepagesOptimized
+            },
+            tcpAdvancedOptions: {
+                error: null,
+                'tcp-features': {
+                    'tcp-sack-value': isTcpOptimized ? '1' : '0',
+                    'tcp-sack-enabled': isTcpOptimized,
+                    'tcp-timestamps-value': isTcpOptimized ? '1' : '0',
+                    'tcp-timestamps-enabled': isTcpOptimized,
+                    'tcp-window-scaling-value': isTcpOptimized ? '1' : '0',
+                    'tcp-window-scaling-enabled': isTcpOptimized
+                }
+            }
+        },
+        oracleParamsConfigData: {
+            os: {
+                'oracle-parameters': {
+                    error: null,
+                    'filesystemio-options': {
+                        found: true,
+                        value: isFilesystemIoOptimized ? 'setall' : 'none'
+                    }
+                },
+                'oracle-parameters-from-init': {
+                    error: null,
+                    'db-file-multiblock-read-count-in-init': isMultiblockOptimized
+                        ? []
+                        : [
+                              {
+                                  'parameter-found': true,
+                                  'parameter-value': '128'
+                              }
+                          ]
+                }
+            }
+        } as StorageIscsiAssessment
+    };
 }
 
 export {
@@ -1908,6 +2045,7 @@ export {
     createAssessmentJobMockData,
     createOptimizeJobMockData,
     updateOptimizedConfigNameInInstanceTable,
+    updateOracleComputeHostOsOptimizedConfigInResourceMetadata,
     createDeploymentMockDataInDBForPgSql,
     createOperatingSystemOptimizeJobMockData,
     demoGetFsxnVolIdsFromOntapVolIds,
@@ -1926,5 +2064,6 @@ export {
     loadAndModifyDemoOracleISCSIData,
     getOracleTcoEbsDemoMarketingVolsAndInstanceType,
     ORACLE_TCO_DEMO_EBS_HOST_TCO_SIZE,
-    getOracleTcoEbsDescribeVolumesForSimulator
+    getOracleTcoEbsDescribeVolumesForSimulator,
+    buildDemoComputeHostOsAssessmentInputs
 };

@@ -12,6 +12,7 @@ import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/d
 import { StorageParameterDriftResponseType } from '../../../../src/routes/types/mssql-continuous-optimisation.types';
 import { OracleGenericParameterDriftResponseType } from '../../../../src/routes/types/oracle-continuous-optimization.types';
 import { ORACLE_STORAGE_ASSESSMENT_DATA } from '../../../../src/utils/demo-utils/demoMockdata';
+import { STORAGE_PROTOCOLS } from '../../../../src/utils/consts';
 
 const credentialsId = DEFAULT_AWS_CREDENTIALS_ID;
 const region = DEFAULT_AWS_REGION;
@@ -22,10 +23,14 @@ const node1InstanceId = 'i-03ed3dc17db570670';
 const fsxNId = 'fs-0f53fbecdd3d85fb2';
 const resourceId = '6cbdabbfe3fb147e';
 
-const createDatabaseInstanceRecord = (instanceId: string, storageProtocol?: string) => ({
+const createDatabaseInstanceRecord = (
+    instanceId: string,
+    storageProtocol?: string,
+    resourceIdOverride: string = resourceId
+) => ({
     credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
     region: DEFAULT_AWS_REGION,
-    resourceId,
+    resourceId: resourceIdOverride,
     databaseInstanceId: instanceId,
     databaseInstanceName: instanceId,
     isDefault: true,
@@ -38,11 +43,17 @@ const createDatabaseInstanceRecord = (instanceId: string, storageProtocol?: stri
     ...(storageProtocol && { storageProtocol })
 });
 
-const createConfigDataRecord = (instanceId: string, configData: unknown, configType: string, creationTime?: Date) => ({
+const createConfigDataRecord = (
+    instanceId: string,
+    configData: unknown,
+    configType: string,
+    creationTime?: Date,
+    resourceIdOverride: string = resourceId
+) => ({
     account_id: ACCOUNT_ID,
     credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
     region: DEFAULT_AWS_REGION,
-    resource_id: resourceId,
+    resource_id: resourceIdOverride,
     database_instance_id: instanceId,
     creation_time: creationTime ?? new Date(),
     last_updated: new Date(),
@@ -66,6 +77,44 @@ const computeHostOsAssessmentData = {
         tcpAdvancedOptions: oracleParamsOs['tcp-advanced-options']
     },
     lastAssessedDate: new Date().getTime().toString()
+};
+
+const allOptimizedComputeHostOsAssessmentData = {
+    computeHostOs: {
+        transparentHugepages: {
+            error: null,
+            'thp-status': 'never',
+            'thp-disabled': true
+        },
+        tcpAdvancedOptions: {
+            error: null,
+            'tcp-features': {
+                'tcp-sack-value': '1',
+                'tcp-sack-enabled': true,
+                'tcp-timestamps-value': '1',
+                'tcp-timestamps-enabled': true,
+                'tcp-window-scaling-value': '1',
+                'tcp-window-scaling-enabled': true
+            }
+        }
+    },
+    lastAssessedDate: new Date().getTime().toString()
+};
+
+const allOptimizedComputeOracleParamsPayload = {
+    os: {
+        'oracle-parameters': {
+            error: null,
+            'filesystemio-options': {
+                found: true,
+                value: 'setall'
+            }
+        },
+        'oracle-parameters-from-init': {
+            error: null,
+            'db-file-multiblock-read-count-in-init': []
+        }
+    }
 };
 
 beforeAll(async () => {
@@ -244,6 +293,83 @@ describe('Oracle assessment operations', () => {
         const pathSelectorViolation = multipathConfig.violationDetails?.find(v => v.objectName === 'path_selector');
         expect(pathSelectorViolation?.value).toBe('not found');
     });
+
+    it('should calculate demo compute drift from resource metadata before reading optimized mock assessment data', async () => {
+        const demoMetadataResourceId = 'oracle-demo-metadata-resource';
+        const demoMetadataInstanceId = 'oracle-demo-metadata-instance';
+        await createResource(ACCOUNT_ID, {
+            resourceId: demoMetadataResourceId,
+            resourceName: dbInstanceSid,
+            resourceType: 'ORACLE',
+            coRelationId: fsxNId,
+            cloudProviderAccountId: 'test-aws-account',
+            cloudProviderName: 'AWS',
+            region: DEFAULT_AWS_REGION,
+            credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+            storageType: 'FSXN',
+            metadata: {
+                node1InstanceId,
+                oracleComputeHostOsDemoOptimized: ['tcp-advanced-options']
+            },
+            assessmentData: allOptimizedComputeHostOsAssessmentData
+        });
+
+        try {
+            await upsertDatabaseInstance(
+                ACCOUNT_ID,
+                createDatabaseInstanceRecord(demoMetadataInstanceId, STORAGE_PROTOCOLS.ISCSI, demoMetadataResourceId)
+            );
+            const creationTime = new Date();
+            await createDatabaseInstanceConfigData([
+                createConfigDataRecord(
+                    demoMetadataInstanceId,
+                    storageAssessmentData,
+                    AssessmentCategoriesOracle.STORAGE,
+                    creationTime,
+                    demoMetadataResourceId
+                ),
+                createConfigDataRecord(
+                    demoMetadataInstanceId,
+                    allOptimizedComputeOracleParamsPayload,
+                    AssessmentCategoriesOracle.COMPUTE,
+                    creationTime,
+                    demoMetadataResourceId
+                ),
+                createConfigDataRecord(
+                    demoMetadataInstanceId,
+                    oracleInstanceMappedVolMetadata('iSCSI'),
+                    AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES,
+                    creationTime,
+                    demoMetadataResourceId
+                )
+            ]);
+
+            const assessmentData = await fetchOracleDriftAssessment(
+                accountId,
+                credentialsId,
+                region,
+                demoMetadataResourceId,
+                demoMetadataInstanceId,
+                'compute'
+            );
+
+            expect((assessmentData.tcpAdvancedOptions as OracleGenericParameterDriftResponseType).status).toBe(
+                'optimized'
+            );
+            expect((assessmentData.transparentHugepages as OracleGenericParameterDriftResponseType).status).toBe(
+                'not-optimized'
+            );
+            expect((assessmentData.filesystemsIoOptions as OracleGenericParameterDriftResponseType).status).toBe(
+                'not-optimized'
+            );
+            expect((assessmentData.multiblockReadcount as OracleGenericParameterDriftResponseType).status).toBe(
+                'not-optimized'
+            );
+        } finally {
+            await deleteResource(ACCOUNT_ID, demoMetadataResourceId);
+        }
+    });
+
     it('should return drift assessment data at host level', async () => {
         const assessmentData = await fetchOracleDriftAssessmentPerHost(accountId, credentialsId, region, resourceId);
         expect(assessmentData).toBeDefined();

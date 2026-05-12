@@ -325,6 +325,7 @@ interface Metadata {
     isLicenseOptimized?: boolean;
     isHostOsPatchOptimized?: boolean;
     isRssConfigOptimized?: string[];
+    oracleComputeHostOsDemoOptimized?: string[];
     isHeartBeatOptimized?: boolean;
     isClusterQuorumOptimized?: boolean;
     optimizedMtus?: string[];

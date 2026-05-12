@@ -19,7 +19,10 @@ import {
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { updateJobDetails, registerJob, updateParentJobStatus } from '../../database/job-operations';
-import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
+import {
+    updateOptimizedConfigNameInInstanceTable,
+    updateOracleComputeHostOsOptimizedConfigInResourceMetadata
+} from '../../demo-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import {
     optimizeTcpOptionsCommand,
@@ -50,6 +53,10 @@ import { triggerOracleAssessmentAfterOptimization } from './assessment-operation
 
 const logger = getLogger();
 const { getPreSignedUrl } = preSignedUrl;
+
+function shouldPersistOracleComputeHostOsDemoOptimizedConfig(status?: string) {
+    return status === 'success' || status === 'already-optimized';
+}
 
 async function oracleOptimizeStorageOS(
     accountId: string,
@@ -486,8 +493,7 @@ async function optimizeTcpOptions(params: OptimizeOSParams) {
         serverNameWithHostName,
         parentJobId,
         databaseInstanceId,
-        activeNodeInstanceId,
-        instanceMetadata
+        activeNodeInstanceId
     } = params;
 
     logger.info('Optimizing TCP Options', { accountId, databaseHostId, serverNameWithHostName, databaseInstanceId });
@@ -503,6 +509,7 @@ async function optimizeTcpOptions(params: OptimizeOSParams) {
     });
     let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let jobError;
+    let shouldPersistDemoOptimizedConfig = false;
 
     try {
         const ssmCommand = optimizeTcpOptionsCommand;
@@ -534,35 +541,45 @@ async function optimizeTcpOptions(params: OptimizeOSParams) {
             const errMsg = 'All TCP options are already optimized, no further action done.';
             jobError = errMsg;
             jobStatus = JOBSTATUS.WARNING;
-            throw new Error(errMsg);
-        }
+            shouldPersistDemoOptimizedConfig = true;
+        } else {
+            tcpParams.forEach(param => {
+                const paramData = parsedResponse['tcp-features'][param];
+                if (paramData?.error) {
+                    errors.push(`${param}: ${paramData.error}`);
+                }
+            });
 
-        tcpParams.forEach(param => {
-            const paramData = parsedResponse['tcp-features'][param];
-            if (paramData?.error) {
-                errors.push(`${param}: ${paramData.error}`);
+            const status =
+                errors.length === 0 &&
+                tcpParams.every(param => parsedResponse['tcp-features'][param]?.enabled === true);
+
+            if (errors.length > 0) {
+                jobError = `TCP optimization failed: ${errors.join(', ')}`;
+                jobStatus = JOBSTATUS.FAILED;
+                logger.error(jobError);
+                throw new Error(jobError);
             }
-        });
 
-        const status =
-            errors.length === 0 && tcpParams.every(param => parsedResponse['tcp-features'][param]?.enabled === true);
+            if (!status) {
+                jobError = 'TCP optimization failed: not all TCP advanced options are enabled';
+                jobStatus = JOBSTATUS.FAILED;
+                logger.error(jobError);
+                throw new Error(jobError);
+            }
 
-        if (errors.length > 0) {
-            jobError = `TCP optimization failed: ${errors.join(', ')}`;
-            jobStatus = JOBSTATUS.FAILED;
-            logger.error(jobError);
-            throw new Error(jobError);
+            shouldPersistDemoOptimizedConfig = true;
+            logger.info('TCP optimization status: SUCCESS', { status, errors });
         }
 
-        logger.info(`TCP optimization status: ${status ? 'SUCCESS' : 'FAILED'}`, { status, errors });
-
-        if (IS_DEMO_FLOW) {
-            await updateOptimizedConfigNameInInstanceTable(
+        if (IS_DEMO_FLOW && shouldPersistDemoOptimizedConfig) {
+            await updateOracleComputeHostOsOptimizedConfigInResourceMetadata(
                 accountId,
+                credentialsId,
+                region,
+                databaseHostId,
                 databaseInstanceId,
-                ['tcp-advanced-options'],
-                'OS',
-                instanceMetadata || {}
+                OptimizeOracleComputeHostOs.TCP_OPTIONS
             );
         }
     } catch (error) {
@@ -814,8 +831,7 @@ async function optimizeTransparentHugePages(params: OptimizeOSParams) {
         serverNameWithHostName,
         parentJobId,
         databaseInstanceId,
-        activeNodeInstanceId,
-        instanceMetadata
+        activeNodeInstanceId
     } = params;
 
     logger.info('Optimizing Transparent Huge Pages', {
@@ -875,13 +891,14 @@ async function optimizeTransparentHugePages(params: OptimizeOSParams) {
             jobStatus = JOBSTATUS.FAILED;
         }
 
-        if (IS_DEMO_FLOW) {
-            await updateOptimizedConfigNameInInstanceTable(
+        if (IS_DEMO_FLOW && shouldPersistOracleComputeHostOsDemoOptimizedConfig(status)) {
+            await updateOracleComputeHostOsOptimizedConfigInResourceMetadata(
                 accountId,
+                credentialsId,
+                region,
+                databaseHostId,
                 databaseInstanceId,
-                ['transparent-hugepages'],
-                'OS',
-                instanceMetadata || {}
+                OptimizeOracleComputeHostOs.THP_DISABLE
             );
         }
     } catch (error) {
@@ -1296,8 +1313,7 @@ async function optimizeMultiblockReadcount(params: OptimizeOSParams) {
         serverNameWithHostName,
         parentJobId,
         databaseInstanceId,
-        activeNodeInstanceId,
-        instanceMetadata
+        activeNodeInstanceId
     } = params;
 
     logger.info('Optimizing Oracle multiblock read count', {
@@ -1359,13 +1375,14 @@ async function optimizeMultiblockReadcount(params: OptimizeOSParams) {
             jobStatus = JOBSTATUS.FAILED;
         }
 
-        if (IS_DEMO_FLOW) {
-            await updateOptimizedConfigNameInInstanceTable(
+        if (IS_DEMO_FLOW && shouldPersistOracleComputeHostOsDemoOptimizedConfig(status)) {
+            await updateOracleComputeHostOsOptimizedConfigInResourceMetadata(
                 accountId,
+                credentialsId,
+                region,
+                databaseHostId,
                 databaseInstanceId,
-                ['multiblock-readcount'],
-                'OS',
-                instanceMetadata || {}
+                OptimizeOracleComputeHostOs.MULTIBLOCK_READCOUNT
             );
         }
     } catch (error) {
@@ -1402,8 +1419,7 @@ async function optimizeFilesystemioOptions(params: OptimizeOSParams) {
         serverNameWithHostName,
         parentJobId,
         databaseInstanceId,
-        activeNodeInstanceId,
-        instanceMetadata
+        activeNodeInstanceId
     } = params;
 
     logger.info('Optimizing Oracle filesystem I/O options', {
@@ -1465,13 +1481,14 @@ async function optimizeFilesystemioOptions(params: OptimizeOSParams) {
             jobStatus = JOBSTATUS.FAILED;
         }
 
-        if (IS_DEMO_FLOW) {
-            await updateOptimizedConfigNameInInstanceTable(
+        if (IS_DEMO_FLOW && shouldPersistOracleComputeHostOsDemoOptimizedConfig(status)) {
+            await updateOracleComputeHostOsOptimizedConfigInResourceMetadata(
                 accountId,
+                credentialsId,
+                region,
+                databaseHostId,
                 databaseInstanceId,
-                ['filesystem-io-options'],
-                'OS',
-                instanceMetadata || {}
+                OptimizeOracleComputeHostOs.FILESYSTEM_IO_OPTIONS
             );
         }
     } catch (error) {

@@ -4138,18 +4138,18 @@
         "os": {
             "transparent-hugepages": {
                 "error": null,
-                "thp-status": "never",
-                "thp-disabled": true
+                "thp-status": "always",
+                "thp-disabled": false
             },
             "tcp-advanced-options": {
                 "error": null,
                 "tcp-features": {
-                    "tcp-sack-value": "1",
-                    "tcp-sack-enabled": true,
-                    "tcp-timestamps-value": "1",
-                    "tcp-timestamps-enabled": true,
-                    "tcp-window-scaling-value": "1",
-                    "tcp-window-scaling-enabled": true
+                    "tcp-sack-value": "0",
+                    "tcp-sack-enabled": false,
+                    "tcp-timestamps-value": "0",
+                    "tcp-timestamps-enabled": false,
+                    "tcp-window-scaling-value": "0",
+                    "tcp-window-scaling-enabled": false
                 }
             }
         }
@@ -4160,16 +4160,21 @@
                 "error": null,
                 "filesystemio-options": {
                     "found": true,
-                    "value": "setall"
+                    "value": "none"
                 },
                 "db-file-multiblock-read-count": {
-                    "found": false,
-                    "value": null
+                    "found": true,
+                    "value": "128"
                 }
             },
             "oracle-parameters-from-init": {
                 "error": null,
-                "db-file-multiblock-read-count-in-init": []
+                "db-file-multiblock-read-count-in-init": [
+                    {
+                        "parameter-found": true,
+                        "parameter-value": "128"
+                    }
+                ]
             }
         }
     },

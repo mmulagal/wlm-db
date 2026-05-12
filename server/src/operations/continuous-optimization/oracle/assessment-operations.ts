@@ -86,7 +86,7 @@ import {
     processDismissedConfigurations,
     mergeDismissConfigurations
 } from '../assessment-dismiss-operations';
-import { handleGetOracleAssessmentForDemo } from '../../demo-operations';
+import { buildDemoComputeHostOsAssessmentInputs, handleGetOracleAssessmentForDemo } from '../../demo-operations';
 import { StorageAssessment } from './common-types';
 import { listJobs } from '../../../lib/database/job';
 
@@ -769,8 +769,15 @@ async function onDemandTriggerOracleDriftAssessment(
             database_instance_name: instanceName
         } = managedInstance;
         const savedInstanceName = `${resourceName}\\${instanceName}`;
+        const instanceDetailsForJob = JSON.stringify({
+            hostName: resourceName,
+            resourceId: databaseHostId,
+            databaseInstanceId,
+            databaseInstanceName: instanceName,
+            sqlServerDeploymentType: RESOURCESTYPE.ORACLE
+        });
         const jobName = `Oracle assessment for database ${savedInstanceName}`;
-        const jobDescription = `${jobName}`;
+        const jobDescription = `${jobName}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
         const { id: jobId } = await registerJob(accountId, credentialsId, region, {
             name: jobName,
             description: jobDescription,
@@ -963,6 +970,10 @@ async function fetchOracleDriftAssessment(
         oracleSecurityPatch: fieldsValues.includes(AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH.toLowerCase()),
         clone: fieldsValues.includes(AssessmentCategoriesOracle.CLONE.toLowerCase())
     };
+    const demoComputeInputs =
+        IS_DEMO_FLOW && assessmentFlags.compute && storageProtocol === STORAGE_PROTOCOLS.ISCSI
+            ? buildDemoComputeHostOsAssessmentInputs(resourceMetadata as Metadata)
+            : undefined;
 
     const awsBackupAssessmentData = assessmentDataMap[AssessmentCategories.AWS_BACKUP] as
         | AWSBackupAssessment
@@ -1092,8 +1103,9 @@ async function fetchOracleDriftAssessment(
                   calculateComputeHostOsDrift(
                       node1InstanceId,
                       databaseInstanceName,
-                      (hostLevelAssessmentData as ResourceAssessmentData)?.computeHostOs,
-                      assessmentDataMap[AssessmentCategoriesOracle.COMPUTE]
+                      demoComputeInputs?.computeHostOs ??
+                          (hostLevelAssessmentData as ResourceAssessmentData)?.computeHostOs,
+                      demoComputeInputs?.oracleParamsConfigData ?? assessmentDataMap[AssessmentCategoriesOracle.COMPUTE]
                   )
               )
             : Promise.resolve({})
