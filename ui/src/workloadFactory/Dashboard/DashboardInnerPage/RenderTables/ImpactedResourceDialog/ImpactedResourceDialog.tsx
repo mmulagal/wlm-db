@@ -1,13 +1,21 @@
 import { DsTypography } from '@tlveng/wlm-ds';
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ColumnProps, Table } from '@netapp/design-system/dist/components/Table';
 import styles from './ImpactedResourceDialog.module.scss';
+import commonStyles from '../../../../../utils/CommonStyles.module.scss';
 import { ASSESSMENT_CONFIG_NAMES, DBType, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../../utils/consts';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useGetMissingPatchAssessmentDataQuery } from '../../../../../utils/apiService';
 import { getTableLazyLoadingComponentProps } from '../../../../../common/Lib/Table/tableLazyLoadingProps';
 import { useTable, rowDataType } from '../../../../../common/Lib/Table/useTable';
+import { ReactComponent as ArrowIcon } from '../../../../../assets/row_arrow.svg';
+import {
+    toggleExpandedRow,
+    useInitialExpandedRowByIndex,
+    buildColumnProps,
+    renderExpandableChevron
+} from '../../../../GetWell/OptimizeInnerPage/InnerTables/ExpandableTableHelper';
 
 interface ViolationDetail {
     objectName?: string;
@@ -146,6 +154,7 @@ const extractMissingPatchList = (
 interface ImpactedResourcesResult {
     columns: string[];
     rows: string[][];
+    isExpandable?: boolean;
 }
 
 /**
@@ -262,12 +271,12 @@ const getMssqlImpactedResources = (
         case 'data-files-location':
         case 'log-files-location':
         case 'tempdb-files-location': {
+            const columns = [
+                t('databases.well-architect.database-name'),
+                t('databases.well-architect.drive-name'),
+                t('databases.well-architect.lun-path')
+            ];
             if (details.length > 0 && details.some(d => d.additionalInfo)) {
-                const columns = [
-                    t('databases.well-architect.database-name'),
-                    t('databases.well-architect.drive-name'),
-                    t('databases.well-architect.lun-path')
-                ];
                 const grouped = new Map<string, { drives: string[]; lunPaths: string[] }>();
                 for (const detail of details) {
                     const dbName = String(detail?.value ?? na);
@@ -280,14 +289,15 @@ const getMssqlImpactedResources = (
                 }
                 const rows = Array.from(grouped.entries()).map(([dbName, { drives, lunPaths }]) => [
                     dbName,
-                    drives.length > 0 ? drives.join('\n') : na,
-                    lunPaths.length > 0 ? lunPaths.join('\n') : na
+                    drives.join('|'),
+                    lunPaths.join('|')
                 ]);
-                return ensureRows(columns, rows, na);
+                return { columns, rows, isExpandable: true };
             }
-            const columns = [t('databases.well-architect.database-name')];
             const rows = objects.map((item: ObjectInViolation) => [
-                typeof item === 'string' ? item : item?.databaseName || na
+                typeof item === 'string' ? item : item?.databaseName || na,
+                na,
+                na
             ]);
             return ensureRows(columns, rows, na);
         }
@@ -561,16 +571,6 @@ const renderTextCell = (cellData: unknown) => {
     );
 };
 
-const buildColumnProps = (columns: string[]): ColumnProps[] =>
-    columns.map((name, idx) => ({
-        Header: name,
-        accessor: name,
-        id: `col-${idx}`,
-        isSortable: true,
-        width: 'auto',
-        renderCell: renderTextCell
-    }));
-
 const buildRowData = (columns: string[], rows: string[][]): rowDataType[] =>
     rows.map((row, idx) => {
         const obj: Record<string, unknown> = { id: String(idx) };
@@ -583,6 +583,7 @@ const buildRowData = (columns: string[], rows: string[][]): rowDataType[] =>
 const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
     const { t } = useTranslation();
     const { configEngineType } = useAppSelector(state => state.getWellOptimize);
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
     const na = t('databases.general.not-available');
     const configName = data?.configurationName ?? data?.configObj?.configurationName ?? data?.name;
@@ -600,8 +601,6 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
             ? WIZARD_TYPE.ORACLE
             : WIZARD_TYPE.MSSQL;
 
-    // Patch configs no longer include missingPatchDetails inline; fetch them on demand
-    // when the dialog is opened so the table can render loader → rows.
     const { data: missingPatchResponse, isFetching: isMissingPatchLoading } = useGetMissingPatchAssessmentDataQuery(
         {
             dbType: patchDbType,
@@ -625,16 +624,128 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
         };
     }, [isPatchConfig, patchField, data, missingPatchResponse]);
 
-    const { columns, rows } =
+    const { columns, rows, isExpandable } =
         configEngineType === DBType.MSSQL
             ? getMssqlImpactedResources(configName || '', dialogData, na, t)
             : getOracleImpactedResources(configName || '', dialogData, na);
 
     const isLoading = isPatchConfig && isMissingPatchLoading;
 
-    const columnProps = useMemo(() => buildColumnProps(columns), [columns]);
+    useInitialExpandedRowByIndex(rows, !!isExpandable, setExpandedRows);
 
-    const rowData = useMemo(() => (isLoading ? [] : buildRowData(columns, rows)), [isLoading, columns, rows]);
+    const toggleRow = useCallback(
+        (idx: string | number) => toggleExpandedRow(idx as number, setExpandedRows, false),
+        []
+    );
+
+    const expandableRowData = useMemo(() => {
+        if (!isExpandable || isLoading) return [];
+        const result: rowDataType[] = [];
+        rows.forEach((row: string[], idx: number) => {
+            const dbName = row[0];
+            const drives = row[1]?.split('|') || [];
+            const lunPaths = row[2]?.split('|') || [];
+            const isMulti = drives.length > 1;
+            const isExpanded = expandedRows.has(idx);
+
+            result.push({
+                id: String(idx),
+                databaseName: dbName,
+                drives: isMulti ? `${drives.length} ${t('databases.well-architect.drives')}` : drives[0] || na,
+                luns: isMulti ? `${lunPaths.length} ${t('databases.well-architect.lun-paths')}` : lunPaths[0] || na,
+                isMulti,
+                isExpanded,
+                isSubRow: false,
+                parentIdx: idx
+            } as rowDataType);
+
+            if (isMulti && isExpanded) {
+                drives.forEach((drive, subIdx) => {
+                    result.push({
+                        id: `${idx}-sub-${subIdx}`,
+                        databaseName: '',
+                        drives: drive,
+                        luns: lunPaths[subIdx] || na,
+                        isMulti: false,
+                        isExpanded: false,
+                        isSubRow: true,
+                        parentIdx: idx
+                    } as rowDataType);
+                });
+            }
+        });
+        return result;
+    }, [isExpandable, isLoading, rows, expandedRows, t, na]);
+
+    const expandableColumnProps = useMemo((): ColumnProps[] => {
+        if (!isExpandable) return [];
+        return [
+            {
+                Header: t('databases.well-architect.database-name'),
+                accessor: 'databaseName',
+                id: 'database',
+                isSortable: true,
+                width: 'auto',
+                renderCell: (cellData: string, rowData: any) => {
+                    if (rowData.isSubRow) return null;
+                    return (
+                        <DsTypography variant="Regular_14" className={styles.cellWrapper} title={cellData}>
+                            {cellData}
+                        </DsTypography>
+                    );
+                }
+            },
+            {
+                Header: t('databases.well-architect.drive-name'),
+                accessor: 'drives',
+                id: 'drive',
+                isSortable: true,
+                width: 'auto',
+                renderCell: (cellData: string) => (
+                    <DsTypography variant="Regular_14" className={styles.cellWrapper} title={cellData}>
+                        {cellData}
+                    </DsTypography>
+                )
+            },
+            {
+                Header: t('databases.well-architect.lun-path'),
+                accessor: 'luns',
+                id: 'lun',
+                isSortable: true,
+                width: 'auto',
+                renderCell: (cellData: string) => (
+                    <DsTypography variant="Regular_14" className={commonStyles.lunPathCell} title={cellData}>
+                        {cellData}
+                    </DsTypography>
+                )
+            },
+            {
+                Header: '',
+                accessor: 'isMulti',
+                id: 'chevron',
+                isSortable: false,
+                width: '48px',
+                renderCell: (_cellData: unknown, rowData: any) =>
+                    renderExpandableChevron({
+                        rowData,
+                        toggleRow,
+                        commonStyles,
+                        ArrowIcon,
+                        useParentIdx: true
+                    })
+            }
+        ];
+    }, [isExpandable, toggleRow, t]);
+
+    const columnProps = useMemo(
+        () => (isExpandable ? expandableColumnProps : buildColumnProps(columns, renderTextCell)),
+        [isExpandable, expandableColumnProps, columns]
+    );
+
+    const rowData = useMemo(() => {
+        if (isLoading) return [];
+        return isExpandable ? expandableRowData : buildRowData(columns, rows);
+    }, [isLoading, isExpandable, expandableRowData, columns, rows]);
 
     const tableComponentProps = getTableLazyLoadingComponentProps(t('databases.general.loading'));
 

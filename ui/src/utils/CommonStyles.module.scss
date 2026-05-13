@@ -599,3 +599,45 @@
     text-align: center;
     padding: 2px 2px;
 }
+
+.expandableArrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    svg {
+        transform: rotate(90deg);
+        transition: transform 0.2s;
+    }
+
+    &.expanded {
+        svg {
+            transform: rotate(270deg);
+        }
+    }
+
+    &.disabled {
+        cursor: default;
+        pointer-events: none;
+
+        svg path {
+            fill: var(--text-disabled);
+        }
+    }
+}
+
+.expandableSubRowCell {
+    padding-left: 16px;
+    color: var(--text-primary);
+}
+
+.lunPathCell {
+    display: block;
+    width: 100%;
+    max-width: 150px;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

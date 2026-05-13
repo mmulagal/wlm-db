@@ -817,32 +817,30 @@
                                     "recommended": "10%",
                                     "severity": "warning",
                                     "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
-                                    "tags": [
-                                      "Operational excellence"
-                                    ],
+                                    "tags": ["Operational excellence"],
                                     "missingPermissions": [],
                                     "current": "1%",
                                     "totalObjectsAssessed": 1,
                                     "totalObjectsInViolation": 1,
                                     "resourceType": "Drive",
                                     "sizingViolations": {
-                                      "overProvisionedDrives": [],
-                                      "underProvisionedDrives": [
-                                        {
-                                          "databases": ["tempDB"],
-                                          "dataDriveTotalSizeMB": 9731000,
-                                          "svmName": "wlmdb_sqlsvm_1731915150431",
-                                          "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
-                                          "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
-                                          "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
-                                          "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
-                                          "tempdbAccessPath": "T:",
-                                          "tempdbDriveTotalSizeMB": 42,
-                                          "diskSerialNumber": "lWB4c$XRevT9",
-                                          "sizePercentToDataDrive": 1
-                                        }
-                                      ],
-                                      "ignoredDrives": []
+                                        "overProvisionedDrives": [],
+                                        "underProvisionedDrives": [
+                                            {
+                                                "databases": ["tempDB"],
+                                                "dataDriveTotalSizeMB": 9731000,
+                                                "svmName": "wlmdb_sqlsvm_1731915150431",
+                                                "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
+                                                "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
+                                                "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
+                                                "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
+                                                "tempdbAccessPath": "T:",
+                                                "tempdbDriveTotalSizeMB": 42,
+                                                "diskSerialNumber": "lWB4c$XRevT9",
+                                                "sizePercentToDataDrive": 1
+                                            }
+                                        ],
+                                        "ignoredDrives": []
                                     }
                                 },
                                 {
@@ -862,14 +860,14 @@
                                     "name": "tempdb-files-location",
                                     "current": "separate drive",
                                     "recommended": "separate-drive",
-                                    "status": "optimized",
+                                    "status": "not-optimized",
                                     "severity": "critical",
                                     "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
                                     "tags": ["Performance efficiency", "Operational excellence"],
                                     "resourceType": "Database",
-                                    "totalObjectsAssessed": 2,
-                                    "totalObjectsInViolation": 1,
-                                    "objectsInViolation": ["tempdb"],
+                                    "totalObjectsAssessed": 4,
+                                    "totalObjectsInViolation": 3,
+                                    "objectsInViolation": ["tempdb", "tempdb_analytics", "tempdb_cache"],
                                     "violationDetails": [
                                         {
                                             "objectName": "placement",
@@ -888,6 +886,42 @@
                                                 "lunPath": "/vol/wlmdb_sqltempdb_1750140716368/sqltempdb1",
                                                 "driveLetter": "U:"
                                             }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "tempdb_analytics",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqltempdb_analytics_1750140716400/tempanalytics1",
+                                                "driveLetter": "V:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "tempdb_analytics",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqltempdb_analytics_1750140716400/tempanalytics2",
+                                                "driveLetter": "W:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "tempdb_analytics",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqltempdb_analytics_1750140716400/tempanalytics3",
+                                                "driveLetter": "X:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "tempdb_cache",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqltempdb_cache_1750140716500/tempcache",
+                                                "driveLetter": "Y:"
+                                            }
                                         }
                                     ]
                                 },
@@ -895,14 +929,14 @@
                                     "name": "log-files-location",
                                     "current": "shared drive",
                                     "recommended": "separate-drive",
-                                    "status": "optimized",
+                                    "status": "not-optimized",
                                     "severity": "critical",
                                     "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                                     "tags": ["Performance efficiency", "Operational excellence"],
                                     "resourceType": "Database",
-                                    "totalObjectsAssessed": 2,
-                                    "totalObjectsInViolation": 1,
-                                    "objectsInViolation": ["msdb"],
+                                    "totalObjectsAssessed": 5,
+                                    "totalObjectsInViolation": 4,
+                                    "objectsInViolation": ["msdb", "ReportServer", "AuditDB", "BackupDB"],
                                     "violationDetails": [
                                         {
                                             "objectName": "placement",
@@ -921,6 +955,51 @@
                                                 "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog1",
                                                 "driveLetter": "E:"
                                             }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "ReportServer",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqllog_reports_1750140716400/reportlog1",
+                                                "driveLetter": "M:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "ReportServer",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqllog_reports_1750140716400/reportlog2",
+                                                "driveLetter": "N:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "AuditDB",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqllog_audit_1750140716500/auditlog",
+                                                "driveLetter": "O:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "BackupDB",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqllog_backup_1750140716600/backuplog1",
+                                                "driveLetter": "P:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "BackupDB",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqllog_backup_1750140716600/backuplog2",
+                                                "driveLetter": "Q:"
+                                            }
                                         }
                                     ]
                                 },
@@ -928,31 +1007,67 @@
                                     "name": "data-files-location",
                                     "recommended": "separate-drive",
                                     "current": "shared drive",
-                                    "status": "optimized",
+                                    "status": "not-optimized",
                                     "severity": "critical",
                                     "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                                     "tags": ["Performance efficiency", "Operational excellence"],
                                     "resourceType": "Database",
-                                    "totalObjectsAssessed": 2,
-                                    "totalObjectsInViolation": 1,
-                                    "objectsInViolation": ["RetailBanking"],
+                                    "totalObjectsAssessed": 5,
+                                    "totalObjectsInViolation": 4,
+                                    "objectsInViolation": ["RetailBanking", "test01", "test02"],
                                     "violationDetails": [
                                         {
-                                        "objectName": "placement",
-                                        "value": "RetailBanking",
-                                        "objectType": "Database",
-                                        "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
-                                            "driveLetter": "S:"
-                                        }
+                                            "objectName": "placement",
+                                            "value": "RetailBanking",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
+                                                "driveLetter": "S:"
+                                            }
                                         },
                                         {
                                             "objectName": "placement",
                                             "value": "RetailBanking",
                                             "objectType": "Database",
                                             "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
-                                            "driveLetter": "D:"
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
+                                                "driveLetter": "D:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "test01",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_blahh_1750140716400/blahdata1",
+                                                "driveLetter": "E:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "test01",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_blahh_1750140716400/blahdata2",
+                                                "driveLetter": "F:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "test01",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_blahh_1750140716400/blahdata3",
+                                                "driveLetter": "G:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "test02",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_shh_1750140716500/shhdata",
+                                                "driveLetter": "H:"
                                             }
                                         }
                                     ]
@@ -2934,32 +3049,30 @@
                                     "recommended": "10%",
                                     "severity": "warning",
                                     "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
-                                    "tags": [
-                                      "Operational excellence"
-                                    ],
+                                    "tags": ["Operational excellence"],
                                     "missingPermissions": [],
                                     "current": "1%",
                                     "totalObjectsAssessed": 1,
                                     "totalObjectsInViolation": 1,
                                     "resourceType": "Drive",
                                     "sizingViolations": {
-                                      "overProvisionedDrives": [],
-                                      "underProvisionedDrives": [
-                                        {
-                                          "databases": ["tempDB"],
-                                          "dataDriveTotalSizeMB": 9731000,
-                                          "svmName": "wlmdb_sqlsvm_1731915150431",
-                                          "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
-                                          "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
-                                          "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
-                                          "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
-                                          "tempdbAccessPath": "T:",
-                                          "tempdbDriveTotalSizeMB": 42,
-                                          "diskSerialNumber": "lWB4c$XRevT9",
-                                          "sizePercentToDataDrive": 1
-                                        }
-                                      ],
-                                      "ignoredDrives": []
+                                        "overProvisionedDrives": [],
+                                        "underProvisionedDrives": [
+                                            {
+                                                "databases": ["tempDB"],
+                                                "dataDriveTotalSizeMB": 9731000,
+                                                "svmName": "wlmdb_sqlsvm_1731915150431",
+                                                "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
+                                                "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
+                                                "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
+                                                "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
+                                                "tempdbAccessPath": "T:",
+                                                "tempdbDriveTotalSizeMB": 42,
+                                                "diskSerialNumber": "lWB4c$XRevT9",
+                                                "sizePercentToDataDrive": 1
+                                            }
+                                        ],
+                                        "ignoredDrives": []
                                     }
                                 },
                                 {
@@ -3055,21 +3168,21 @@
                                     "objectsInViolation": ["RetailBanking"],
                                     "violationDetails": [
                                         {
-                                        "objectName": "placement",
-                                        "value": "RetailBanking",
-                                        "objectType": "Database",
-                                        "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
-                                            "driveLetter": "S:"
-                                        }
+                                            "objectName": "placement",
+                                            "value": "RetailBanking",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
+                                                "driveLetter": "S:"
+                                            }
                                         },
                                         {
                                             "objectName": "placement",
                                             "value": "RetailBanking",
                                             "objectType": "Database",
                                             "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
-                                            "driveLetter": "D:"
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
+                                                "driveLetter": "D:"
                                             }
                                         }
                                     ]
@@ -4480,32 +4593,30 @@
                                     "recommended": "10%",
                                     "severity": "warning",
                                     "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
-                                    "tags": [
-                                      "Operational excellence"
-                                    ],
+                                    "tags": ["Operational excellence"],
                                     "missingPermissions": [],
                                     "current": "1%",
                                     "totalObjectsAssessed": 1,
                                     "totalObjectsInViolation": 1,
                                     "resourceType": "Drive",
                                     "sizingViolations": {
-                                      "underProvisionedDrives": [],
-                                      "overProvisionedDrives": [
-                                        {
-                                          "databases": ["tempDB"],
-                                          "dataDriveTotalSizeMB": 9731000,
-                                          "svmName": "wlmdb_sqlsvm_1731915150431",
-                                          "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
-                                          "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
-                                          "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
-                                          "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
-                                          "tempdbAccessPath": "T:",
-                                          "tempdbDriveTotalSizeMB": 42,
-                                          "diskSerialNumber": "lWB4c$XRevT9",
-                                          "sizePercentToDataDrive": 1
-                                        }
-                                      ],
-                                      "ignoredDrives": []
+                                        "underProvisionedDrives": [],
+                                        "overProvisionedDrives": [
+                                            {
+                                                "databases": ["tempDB"],
+                                                "dataDriveTotalSizeMB": 9731000,
+                                                "svmName": "wlmdb_sqlsvm_1731915150431",
+                                                "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
+                                                "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
+                                                "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
+                                                "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
+                                                "tempdbAccessPath": "T:",
+                                                "tempdbDriveTotalSizeMB": 42,
+                                                "diskSerialNumber": "lWB4c$XRevT9",
+                                                "sizePercentToDataDrive": 1
+                                            }
+                                        ],
+                                        "ignoredDrives": []
                                     }
                                 },
                                 {
@@ -4601,21 +4712,21 @@
                                     "objectsInViolation": ["RetailBanking"],
                                     "violationDetails": [
                                         {
-                                        "objectName": "placement",
-                                        "value": "RetailBanking",
-                                        "objectType": "Database",
-                                        "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
-                                            "driveLetter": "S:"
-                                        }
+                                            "objectName": "placement",
+                                            "value": "RetailBanking",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
+                                                "driveLetter": "S:"
+                                            }
                                         },
                                         {
                                             "objectName": "placement",
                                             "value": "RetailBanking",
                                             "objectType": "Database",
                                             "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
-                                            "driveLetter": "D:"
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
+                                                "driveLetter": "D:"
                                             }
                                         }
                                     ]
@@ -6013,32 +6124,30 @@
                                     "recommended": "10%",
                                     "severity": "warning",
                                     "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
-                                    "tags": [
-                                      "Operational excellence"
-                                    ],
+                                    "tags": ["Operational excellence"],
                                     "missingPermissions": [],
                                     "current": "1%",
                                     "totalObjectsAssessed": 1,
                                     "totalObjectsInViolation": 1,
                                     "resourceType": "Drive",
                                     "sizingViolations": {
-                                      "underProvisionedDrives": [],
-                                      "overProvisionedDrives": [
-                                        {
-                                          "databases": ["tempDB"],
-                                          "dataDriveTotalSizeMB": 9731000,
-                                          "svmName": "wlmdb_sqlsvm_1731915150431",
-                                          "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
-                                          "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
-                                          "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
-                                          "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
-                                          "tempdbAccessPath": "T:",
-                                          "tempdbDriveTotalSizeMB": 42,
-                                          "diskSerialNumber": "lWB4c$XRevT9",
-                                          "sizePercentToDataDrive": 1
-                                        }
-                                      ],
-                                      "ignoredDrives": []
+                                        "underProvisionedDrives": [],
+                                        "overProvisionedDrives": [
+                                            {
+                                                "databases": ["tempDB"],
+                                                "dataDriveTotalSizeMB": 9731000,
+                                                "svmName": "wlmdb_sqlsvm_1731915150431",
+                                                "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
+                                                "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
+                                                "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
+                                                "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
+                                                "tempdbAccessPath": "T:",
+                                                "tempdbDriveTotalSizeMB": 42,
+                                                "diskSerialNumber": "lWB4c$XRevT9",
+                                                "sizePercentToDataDrive": 1
+                                            }
+                                        ],
+                                        "ignoredDrives": []
                                     }
                                 },
                                 {
@@ -6134,21 +6243,21 @@
                                     "objectsInViolation": ["RetailBanking"],
                                     "violationDetails": [
                                         {
-                                        "objectName": "placement",
-                                        "value": "RetailBanking",
-                                        "objectType": "Database",
-                                        "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
-                                            "driveLetter": "S:"
-                                        }
+                                            "objectName": "placement",
+                                            "value": "RetailBanking",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
+                                                "driveLetter": "S:"
+                                            }
                                         },
                                         {
                                             "objectName": "placement",
                                             "value": "RetailBanking",
                                             "objectType": "Database",
                                             "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
-                                            "driveLetter": "D:"
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
+                                                "driveLetter": "D:"
                                             }
                                         }
                                     ]
@@ -7546,32 +7655,30 @@
                                     "recommended": "10%",
                                     "severity": "warning",
                                     "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
-                                    "tags": [
-                                      "Operational excellence"
-                                    ],
+                                    "tags": ["Operational excellence"],
                                     "missingPermissions": [],
                                     "current": "1%",
                                     "totalObjectsAssessed": 1,
                                     "totalObjectsInViolation": 1,
                                     "resourceType": "Drive",
                                     "sizingViolations": {
-                                      "underProvisionedDrives": [],
-                                      "overProvisionedDrives": [
-                                        {
-                                          "databases": ["tempDB"],
-                                          "dataDriveTotalSizeMB": 9731000,
-                                          "svmName": "wlmdb_sqlsvm_1731915150431",
-                                          "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
-                                          "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
-                                          "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
-                                          "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
-                                          "tempdbAccessPath": "T:",
-                                          "tempdbDriveTotalSizeMB": 42,
-                                          "diskSerialNumber": "lWB4c$XRevT9",
-                                          "sizePercentToDataDrive": 1
-                                        }
-                                      ],
-                                      "ignoredDrives": []
+                                        "underProvisionedDrives": [],
+                                        "overProvisionedDrives": [
+                                            {
+                                                "databases": ["tempDB"],
+                                                "dataDriveTotalSizeMB": 9731000,
+                                                "svmName": "wlmdb_sqlsvm_1731915150431",
+                                                "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
+                                                "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
+                                                "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
+                                                "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
+                                                "tempdbAccessPath": "T:",
+                                                "tempdbDriveTotalSizeMB": 42,
+                                                "diskSerialNumber": "lWB4c$XRevT9",
+                                                "sizePercentToDataDrive": 1
+                                            }
+                                        ],
+                                        "ignoredDrives": []
                                     }
                                 },
                                 {
@@ -7667,21 +7774,21 @@
                                     "objectsInViolation": ["RetailBanking"],
                                     "violationDetails": [
                                         {
-                                        "objectName": "placement",
-                                        "value": "RetailBanking",
-                                        "objectType": "Database",
-                                        "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
-                                            "driveLetter": "S:"
-                                        }
+                                            "objectName": "placement",
+                                            "value": "RetailBanking",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
+                                                "driveLetter": "S:"
+                                            }
                                         },
                                         {
                                             "objectName": "placement",
                                             "value": "RetailBanking",
                                             "objectType": "Database",
                                             "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
-                                            "driveLetter": "D:"
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
+                                                "driveLetter": "D:"
                                             }
                                         }
                                     ]
@@ -8967,32 +9074,30 @@
                                     "recommended": "10%",
                                     "severity": "warning",
                                     "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
-                                    "tags": [
-                                      "Operational excellence"
-                                    ],
+                                    "tags": ["Operational excellence"],
                                     "missingPermissions": [],
                                     "current": "1%",
                                     "totalObjectsAssessed": 1,
                                     "totalObjectsInViolation": 1,
                                     "resourceType": "Drive",
                                     "sizingViolations": {
-                                      "overProvisionedDrives": [],
-                                      "underProvisionedDrives": [
-                                        {
-                                          "databases": ["tempDB"],
-                                          "dataDriveTotalSizeMB": 9731000,
-                                          "svmName": "wlmdb_sqlsvm_1731915150431",
-                                          "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
-                                          "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
-                                          "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
-                                          "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
-                                          "tempdbAccessPath": "T:",
-                                          "tempdbDriveTotalSizeMB": 42,
-                                          "diskSerialNumber": "lWB4c$XRevT9",
-                                          "sizePercentToDataDrive": 1
-                                        }
-                                      ],
-                                      "ignoredDrives": []
+                                        "overProvisionedDrives": [],
+                                        "underProvisionedDrives": [
+                                            {
+                                                "databases": ["tempDB"],
+                                                "dataDriveTotalSizeMB": 9731000,
+                                                "svmName": "wlmdb_sqlsvm_1731915150431",
+                                                "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
+                                                "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
+                                                "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
+                                                "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
+                                                "tempdbAccessPath": "T:",
+                                                "tempdbDriveTotalSizeMB": 42,
+                                                "diskSerialNumber": "lWB4c$XRevT9",
+                                                "sizePercentToDataDrive": 1
+                                            }
+                                        ],
+                                        "ignoredDrives": []
                                     }
                                 },
                                 {
@@ -9088,21 +9193,21 @@
                                     "objectsInViolation": ["RetailBanking"],
                                     "violationDetails": [
                                         {
-                                        "objectName": "placement",
-                                        "value": "RetailBanking",
-                                        "objectType": "Database",
-                                        "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
-                                            "driveLetter": "S:"
-                                        }
+                                            "objectName": "placement",
+                                            "value": "RetailBanking",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
+                                                "driveLetter": "S:"
+                                            }
                                         },
                                         {
                                             "objectName": "placement",
                                             "value": "RetailBanking",
                                             "objectType": "Database",
                                             "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
-                                            "driveLetter": "D:"
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
+                                                "driveLetter": "D:"
                                             }
                                         }
                                     ]
@@ -10438,32 +10543,30 @@
                                     "recommended": "10%",
                                     "severity": "warning",
                                     "recommendation": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.",
-                                    "tags": [
-                                      "Operational excellence"
-                                    ],
+                                    "tags": ["Operational excellence"],
                                     "missingPermissions": [],
                                     "current": "1%",
                                     "totalObjectsAssessed": 1,
                                     "totalObjectsInViolation": 1,
                                     "resourceType": "Drive",
                                     "sizingViolations": {
-                                      "overProvisionedDrives": [],
-                                      "underProvisionedDrives": [
-                                        {
-                                          "databases": ["tempDB"],
-                                          "dataDriveTotalSizeMB": 9731000,
-                                          "svmName": "wlmdb_sqlsvm_1731915150431",
-                                          "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
-                                          "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
-                                          "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
-                                          "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
-                                          "tempdbAccessPath": "T:",
-                                          "tempdbDriveTotalSizeMB": 42,
-                                          "diskSerialNumber": "lWB4c$XRevT9",
-                                          "sizePercentToDataDrive": 1
-                                        }
-                                      ],
-                                      "ignoredDrives": []
+                                        "overProvisionedDrives": [],
+                                        "underProvisionedDrives": [
+                                            {
+                                                "databases": ["tempDB"],
+                                                "dataDriveTotalSizeMB": 9731000,
+                                                "svmName": "wlmdb_sqlsvm_1731915150431",
+                                                "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
+                                                "ontapVolumeUuid": "c4585626-a581-11ef-8dba-75539f3dc73f",
+                                                "lunUuid": "c8bcdf6e-060c-4cb9-b07e-d8036108379f",
+                                                "lunPath": "/vol/wlmdb_sqltemp_1750140716368/tempdb",
+                                                "tempdbAccessPath": "T:",
+                                                "tempdbDriveTotalSizeMB": 42,
+                                                "diskSerialNumber": "lWB4c$XRevT9",
+                                                "sizePercentToDataDrive": 1
+                                            }
+                                        ],
+                                        "ignoredDrives": []
                                     }
                                 },
                                 {
@@ -10488,9 +10591,9 @@
                                     "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
                                     "tags": ["Performance efficiency", "Operational excellence"],
                                     "resourceType": "Database",
-                                    "totalObjectsAssessed": 2,
-                                    "totalObjectsInViolation": 1,
-                                    "objectsInViolation": ["tempdb"],
+                                    "totalObjectsAssessed": 4,
+                                    "totalObjectsInViolation": 3,
+                                    "objectsInViolation": ["tempdb", "tempdb_analytics", "tempdb_cache"],
                                     "violationDetails": [
                                         {
                                             "objectName": "placement",
@@ -10509,6 +10612,42 @@
                                                 "lunPath": "/vol/wlmdb_sqltempdb_1750140716368/sqltempdb1",
                                                 "driveLetter": "U:"
                                             }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "tempdb_analytics",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqltempdb_analytics_1750140716400/tempanalytics1",
+                                                "driveLetter": "V:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "tempdb_analytics",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqltempdb_analytics_1750140716400/tempanalytics2",
+                                                "driveLetter": "W:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "tempdb_analytics",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqltempdb_analytics_1750140716400/tempanalytics3",
+                                                "driveLetter": "X:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "tempdb_cache",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqltempdb_cache_1750140716500/tempcache",
+                                                "driveLetter": "Y:"
+                                            }
                                         }
                                     ]
                                 },
@@ -10521,9 +10660,9 @@
                                     "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                                     "tags": ["Performance efficiency", "Operational excellence"],
                                     "resourceType": "Database",
-                                    "totalObjectsAssessed": 2,
-                                    "totalObjectsInViolation": 1,
-                                    "objectsInViolation": ["msdb"],
+                                    "totalObjectsAssessed": 5,
+                                    "totalObjectsInViolation": 4,
+                                    "objectsInViolation": ["msdb", "ReportServer", "AuditDB", "BackupDB"],
                                     "violationDetails": [
                                         {
                                             "objectName": "placement",
@@ -10542,6 +10681,51 @@
                                                 "lunPath": "/vol/wlmdb_sqllog_1750140716368/sqllog1",
                                                 "driveLetter": "E:"
                                             }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "ReportServer",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqllog_reports_1750140716400/reportlog1",
+                                                "driveLetter": "M:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "ReportServer",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqllog_reports_1750140716400/reportlog2",
+                                                "driveLetter": "N:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "AuditDB",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqllog_audit_1750140716500/auditlog",
+                                                "driveLetter": "O:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "BackupDB",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqllog_backup_1750140716600/backuplog1",
+                                                "driveLetter": "P:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "BackupDB",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqllog_backup_1750140716600/backuplog2",
+                                                "driveLetter": "Q:"
+                                            }
                                         }
                                     ]
                                 },
@@ -10554,26 +10738,62 @@
                                     "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                                     "tags": ["Performance efficiency", "Operational excellence"],
                                     "resourceType": "Database",
-                                    "totalObjectsAssessed": 2,
-                                    "totalObjectsInViolation": 1,
-                                    "objectsInViolation": ["RetailBanking"],
+                                    "totalObjectsAssessed": 5,
+                                    "totalObjectsInViolation": 4,
+                                    "objectsInViolation": ["RetailBanking", "test01", "test02"],
                                     "violationDetails": [
                                         {
-                                        "objectName": "placement",
-                                        "value": "RetailBanking",
-                                        "objectType": "Database",
-                                        "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
-                                            "driveLetter": "S:"
-                                        }
+                                            "objectName": "placement",
+                                            "value": "RetailBanking",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata",
+                                                "driveLetter": "S:"
+                                            }
                                         },
                                         {
                                             "objectName": "placement",
                                             "value": "RetailBanking",
                                             "objectType": "Database",
                                             "additionalInfo": {
-                                            "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
-                                            "driveLetter": "D:"
+                                                "lunPath": "/vol/wlmdb_sqldata_1750140716368/sqldata1",
+                                                "driveLetter": "D:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "test01",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_blahh_1750140716400/blahdata1",
+                                                "driveLetter": "E:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "test01",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_blahh_1750140716400/blahdata2",
+                                                "driveLetter": "F:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "test01",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_blahh_1750140716400/blahdata3",
+                                                "driveLetter": "G:"
+                                            }
+                                        },
+                                        {
+                                            "objectName": "placement",
+                                            "value": "test02",
+                                            "objectType": "Database",
+                                            "additionalInfo": {
+                                                "lunPath": "/vol/wlmdb_shh_1750140716500/shhdata",
+                                                "driveLetter": "H:"
                                             }
                                         }
                                     ]
