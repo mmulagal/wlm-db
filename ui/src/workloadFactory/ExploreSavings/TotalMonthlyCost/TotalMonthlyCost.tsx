@@ -24,9 +24,10 @@ const TotalMonthlyCost = ({ disableState = false }: TMC) => {
         monthlyBYOLCost
     } = useAppSelector(state => state.exploreSavings);
 
-    const oracleLicenseCost = useMemo(() => {
-        return getOracleLicenseCostValue();
-    }, [savingsCalculatorFrom, onPremStorageAndComputeInfo, monthlyBYOLCost]);
+    const oracleLicenseCost = useMemo(
+        () => getOracleLicenseCostValue(),
+        [savingsCalculatorFrom, onPremStorageAndComputeInfo, monthlyBYOLCost]
+    );
     const noData = disableState;
     const costZeroCase = false;
 

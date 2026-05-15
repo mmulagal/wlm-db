@@ -536,7 +536,7 @@ describe('ExploreSavingsUtils', () => {
 
         it('should dispatch correct actions in correct order', () => {
             const dispatchCalls: any[] = [];
-            const trackingDispatch = vi.fn((action) => {
+            const trackingDispatch = vi.fn(action => {
                 dispatchCalls.push(action);
                 return action; // AppDispatch returns the action
             }) as any; // Type assertion to match AppDispatch
@@ -546,17 +546,23 @@ describe('ExploreSavingsUtils', () => {
             // Verify the actions are dispatched
             expect(trackingDispatch).toHaveBeenCalledTimes(3);
             // First call should be setSavingsCalculatorFrom with ORACLE_MANUAL_EBS
-            expect(dispatchCalls[0]).toEqual(expect.objectContaining({
-                type: expect.stringContaining('setSavingsCalculatorFrom')
-            }));
+            expect(dispatchCalls[0]).toEqual(
+                expect.objectContaining({
+                    type: expect.stringContaining('setSavingsCalculatorFrom')
+                })
+            );
             // Second call should be setDisableState
-            expect(dispatchCalls[1]).toEqual(expect.objectContaining({
-                type: expect.stringContaining('setDisableState')
-            }));
+            expect(dispatchCalls[1]).toEqual(
+                expect.objectContaining({
+                    type: expect.stringContaining('setDisableState')
+                })
+            );
             // Third call should be setSelectedHeaderTab
-            expect(dispatchCalls[2]).toEqual(expect.objectContaining({
-                type: expect.stringContaining('setSelectedHeaderTab')
-            }));
+            expect(dispatchCalls[2]).toEqual(
+                expect.objectContaining({
+                    type: expect.stringContaining('setSelectedHeaderTab')
+                })
+            );
         });
     });
 

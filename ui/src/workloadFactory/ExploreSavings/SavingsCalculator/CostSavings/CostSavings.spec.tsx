@@ -4,7 +4,6 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { Provider } from 'react-redux';
 import { configureStore, createSlice } from '@reduxjs/toolkit';
 import CostSavings from './CostSavings';
-import { GENERAL } from '../../../../utils/appConstants';
 
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, variant, className, style, id }: any) => (
@@ -65,6 +64,20 @@ vi.mock('../../../../common/hooks/useResize', () => ({
     default: () => ({ width: 1600 })
 }));
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => {
+            const translations: Record<string, string> = {
+                'databases.explore-savings.cost-savings': 'Cost savings',
+                'databases.explore-savings.savings-percentage': 'Savings percentage',
+                'databases.explore-savings.notice-message-cost-savings':
+                    'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.'
+            };
+            return translations[key] || key;
+        }
+    })
+}));
+
 const makeStore = (overrides: any = {}) => {
     const slice = createSlice({
         name: 'exploreSavings',
@@ -101,7 +114,7 @@ describe('CostSavings', () => {
                 <CostSavings />
             </Provider>
         );
-        expect(container.textContent).toContain(GENERAL.ES_COST_SAVINGS);
+        expect(container.textContent).toContain('Cost savings');
     });
 
     it('renders percentage savings label when savings exist', () => {
@@ -110,7 +123,7 @@ describe('CostSavings', () => {
                 <CostSavings />
             </Provider>
         );
-        expect(container.textContent).toContain(GENERAL.ES_SAVINGS_PERCENTAGE);
+        expect(container.textContent).toContain('Savings percentage');
     });
 
     it('renders percentage symbol when savings exist', () => {
@@ -160,7 +173,9 @@ describe('CostSavings', () => {
                 <CostSavings />
             </Provider>
         );
-        expect(container.textContent).toContain(GENERAL.NOTICE_MESSAGE_COST_SAVINGS);
+        expect(container.textContent).toContain(
+            'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.'
+        );
     });
 
     it('shows 0 cost when no savings', () => {

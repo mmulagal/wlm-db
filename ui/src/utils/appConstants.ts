@@ -1089,8 +1089,6 @@ export const GENERAL = {
     REFER_SNAPSHOTS: 'This field refer to clones and snapshots',
     VIEW_THE_CALCULATIONS: 'View the calculations',
     EXPORT_PDF: 'Export PDF',
-    ES_COST_SAVINGS: 'Cost savings',
-    ES_SAVINGS_PERCENTAGE: 'Percentage savings',
     ES_HEADING: 'Authenticated host cost analysis',
     ES_HEADING_ONPREM_LEFT_SIDE: 'Migrate your on-premises SQL Server environment',
     ES_HEADING_ONPREM_RIGHT_SIDE: 'Assessment steps',
@@ -1139,8 +1137,6 @@ export const GENERAL = {
     DEPLOY_RATE_EXCEEDED: 'An internal error occurred when attempting to deploy the database server, please try again.',
     TOOLTIP_MESSAGE_SNAPSHOT_FREQ:
         'No EBS snapshots authenticated. If you would like to compare the cost of EBS snapshots to FSx for ONTAP snapshots, update the snapshot frequency.',
-    NOTICE_MESSAGE_COST_SAVINGS:
-        'This configuration cannot benefit from savings. Please check the cost breakdown below for further analysis.',
     REPORT_DOWNLOAD_SUCCESS: 'Report downloaded successfully',
     REPORT_DOWNLOAD_FAIL: 'Failed to download the report. Please try again.',
     MANAGE_HOST_DISABLED: 'Supported only for the FSx for ONTAP storage type',

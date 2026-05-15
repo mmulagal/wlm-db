@@ -1546,6 +1546,16 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       label: 'Incremental snapshot cost',
                       value: `$${viewCalculation.ebsSnapshotCalculation.gp3.incrementalSnapshotCost}`,
                       text: `Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.gp3.discountForPartialStorageMonth}) x Total snapshots (${viewCalculation.ebsSnapshotCalculation.gp3.totalSnapshots})`
+                  },
+                  {
+                      label: 'Total snapshot cost',
+                      value: `$${viewCalculation.ebsSnapshotCalculation.gp3.totalSnapshotCost}`,
+                      text: `Initial snapshot cost ($${viewCalculation.ebsSnapshotCalculation.gp3.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsSnapshotCalculation.gp3.incrementalSnapshotCost})`
+                  },
+                  {
+                      label: 'Total EBS snapshot cost',
+                      value: `$${viewCalculation.ebsSnapshotCalculation.gp3.totalEbsSnapshotCost}`,
+                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.gp3.totalSnapshotCost}) × Number of volumes (${viewCalculation.ebsSnapshotCalculation.gp3.numberOfVolumes})`
                   }
               ]
             : [],
@@ -1586,6 +1596,16 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       label: 'Incremental snapshot cost',
                       value: `$${viewCalculation.ebsSnapshotCalculation.io2.incrementalSnapshotCost}`,
                       text: `Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.io2.discountForPartialStorageMonth}) x Total snapshots (${viewCalculation.ebsSnapshotCalculation.io2.totalSnapshots})`
+                  },
+                  {
+                      label: 'Total snapshot cost',
+                      value: `$${viewCalculation.ebsSnapshotCalculation.io2.totalSnapshotCost}`,
+                      text: `Initial snapshot cost ($${viewCalculation.ebsSnapshotCalculation.io2.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsSnapshotCalculation.io2.incrementalSnapshotCost})`
+                  },
+                  {
+                      label: 'Total EBS snapshot cost',
+                      value: `$${viewCalculation.ebsSnapshotCalculation.io2.totalEbsSnapshotCost}`,
+                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.io2.totalSnapshotCost}) × Number of volumes (${viewCalculation.ebsSnapshotCalculation.io2.numberOfVolumes})`
                   }
               ]
             : [],
@@ -1626,6 +1646,16 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       label: 'Incremental snapshot cost',
                       value: `$${viewCalculation.ebsSnapshotCalculation.io1.incrementalSnapshotCost}`,
                       text: `Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.io1.discountForPartialStorageMonth}) x Total snapshots (${viewCalculation.ebsSnapshotCalculation.io1.totalSnapshots})`
+                  },
+                  {
+                      label: 'Total snapshot cost',
+                      value: `$${viewCalculation.ebsSnapshotCalculation.io1.totalSnapshotCost}`,
+                      text: `Initial snapshot cost ($${viewCalculation.ebsSnapshotCalculation.io1.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsSnapshotCalculation.io1.incrementalSnapshotCost})`
+                  },
+                  {
+                      label: 'Total EBS snapshot cost',
+                      value: `$${viewCalculation.ebsSnapshotCalculation.io1.totalEbsSnapshotCost}`,
+                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.io1.totalSnapshotCost}) × Number of volumes (${viewCalculation.ebsSnapshotCalculation.io1.numberOfVolumes})`
                   }
               ]
             : [],
@@ -1666,6 +1696,16 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       label: 'Incremental snapshot cost',
                       value: `$${viewCalculation.ebsSnapshotCalculation.gp2.incrementalSnapshotCost}`,
                       text: `Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.gp2.discountForPartialStorageMonth}) x Total snapshots (${viewCalculation.ebsSnapshotCalculation.gp2.totalSnapshots})`
+                  },
+                  {
+                      label: 'Total snapshot cost',
+                      value: `$${viewCalculation.ebsSnapshotCalculation.gp2.totalSnapshotCost}`,
+                      text: `Initial snapshot cost ($${viewCalculation.ebsSnapshotCalculation.gp2.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsSnapshotCalculation.gp2.incrementalSnapshotCost})`
+                  },
+                  {
+                      label: 'Total EBS snapshot cost',
+                      value: `$${viewCalculation.ebsSnapshotCalculation.gp2.totalEbsSnapshotCost}`,
+                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.gp2.totalSnapshotCost}) × Number of volumes (${viewCalculation.ebsSnapshotCalculation.gp2.numberOfVolumes})`
                   }
               ]
             : [],
@@ -1706,16 +1746,38 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                       label: 'Incremental snapshot cost',
                       value: `$${viewCalculation.ebsSnapshotCalculation.st1.incrementalSnapshotCost}`,
                       text: `Discount for partial storage month ($${viewCalculation.ebsSnapshotCalculation.st1.discountForPartialStorageMonth}) x Total snapshots (${viewCalculation.ebsSnapshotCalculation.st1.totalSnapshots})`
+                  },
+                  {
+                      label: 'Total snapshot cost',
+                      value: `$${viewCalculation.ebsSnapshotCalculation.st1.totalSnapshotCost}`,
+                      text: `Initial snapshot cost ($${viewCalculation.ebsSnapshotCalculation.st1.initialSnapshotCost}) + Incremental snapshot cost ($${viewCalculation.ebsSnapshotCalculation.st1.incrementalSnapshotCost})`
+                  },
+                  {
+                      label: 'Total EBS snapshot cost',
+                      value: `$${viewCalculation.ebsSnapshotCalculation.st1.totalEbsSnapshotCost}`,
+                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.st1.totalSnapshotCost}) × Number of volumes (${viewCalculation.ebsSnapshotCalculation.st1.numberOfVolumes})`
                   }
               ]
             : [],
-        snapshotsTotalCost: [
-            {
-                label: 'Total snapshots cost',
-                value: `$${viewCalculation.ebsSnapshotCalculation?.totalEbsSnapshotCost}`,
-                text: ''
-            }
-        ]
+        snapshotsTotalCost: (() => {
+            const volumeTypes = ['gp3', 'io2', 'io1', 'gp2', 'st1'] as const;
+            const breakdownParts = volumeTypes
+                .filter(vt => viewCalculation.ebsSnapshotCalculation?.[vt]?.totalEbsSnapshotCost)
+                .map(vt => `$${viewCalculation.ebsSnapshotCalculation[vt].totalEbsSnapshotCost} (${vt})`);
+            const breakdownText =
+                breakdownParts.length > 1
+                    ? i18next.t('databases.explore-savings.sum-of-total-ebs-snapshot-cost-with-breakdown', {
+                          breakdown: breakdownParts.join(' + ')
+                      })
+                    : i18next.t('databases.explore-savings.sum-of-total-ebs-snapshot-cost');
+            return [
+                {
+                    label: 'Total snapshots cost',
+                    value: `$${viewCalculation.ebsSnapshotCalculation?.totalEbsSnapshotCost}`,
+                    text: breakdownText
+                }
+            ];
+        })()
     };
 };
 

@@ -1,11 +1,11 @@
 import { DsTypography, FlashingDotsLoader, Popover } from '@netapp/design-system';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info.svg';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as CostSavingsImage } from '../../../../assets/cost-savings.svg';
 import { ReactComponent as CostSavingsDisabledImage } from '../../../../assets/Cost-Disabled.svg';
 import styles from './CostSavings.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { GENERAL } from '../../../../utils/appConstants';
 import { formatFractionalNumberForCost, formatNumberWithCustomComma } from '../../../../utils/utilityFunctions';
 import useResize from '../../../../common/hooks/useResize';
 import { SAVINGS_CALC_MODE } from '../../../../utils/consts';
@@ -16,13 +16,20 @@ type CS = {
 };
 
 const CostSavings = ({ disableState }: CS) => {
-    const { storageSavingsResponse, storageSavingsLoading, savingsCalculatorFrom, onPremStorageAndComputeInfo, monthlyBYOLCost } =
-        useAppSelector(state => state.exploreSavings);
+    const { t } = useTranslation();
+    const {
+        storageSavingsResponse,
+        storageSavingsLoading,
+        savingsCalculatorFrom,
+        onPremStorageAndComputeInfo,
+        monthlyBYOLCost
+    } = useAppSelector(state => state.exploreSavings);
     const windowSize = useResize();
 
-    const oracleLicenseCost = useMemo(() => {
-        return getOracleLicenseCostValue();
-    }, [savingsCalculatorFrom, onPremStorageAndComputeInfo, monthlyBYOLCost]);
+    const oracleLicenseCost = useMemo(
+        () => getOracleLicenseCostValue(),
+        [savingsCalculatorFrom, onPremStorageAndComputeInfo, monthlyBYOLCost]
+    );
 
     const [savings, setSavings] = useState<any>(0);
     const [savingsPer, setSavingsPer] = useState<any>(0);
@@ -96,7 +103,7 @@ const CostSavings = ({ disableState }: CS) => {
                                 color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                             }}
                         >
-                            {GENERAL.ES_COST_SAVINGS}
+                            {t('databases.explore-savings.cost-savings')}
                         </DsTypography>
                         {storageSavingsLoading && <FlashingDotsLoader />}
                     </div>
@@ -117,7 +124,7 @@ const CostSavings = ({ disableState }: CS) => {
                         variant="Regular_14"
                         style={{ color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)' }}
                     >
-                        {GENERAL.NOTICE_MESSAGE_COST_SAVINGS}
+                        {t('databases.explore-savings.notice-message-cost-savings')}
                     </DsTypography>
                 </div>
             )}
@@ -129,11 +136,11 @@ const CostSavings = ({ disableState }: CS) => {
 
                     <Popover
                         popoverClass={styles.popover}
-                        children={GENERAL.NOTICE_MESSAGE_COST_SAVINGS}
+                        children={t('databases.explore-savings.notice-message-cost-savings')}
                         trigger="hover"
                         container={
                             <DsTypography variant="Regular_14" className={styles.smallResolutionMessage}>
-                                {GENERAL.NOTICE_MESSAGE_COST_SAVINGS}
+                                {t('databases.explore-savings.notice-message-cost-savings')}
                             </DsTypography>
                         }
                     />
@@ -171,7 +178,7 @@ const CostSavings = ({ disableState }: CS) => {
                                 color: disableState ? 'var(--text-disabled)' : 'var(--text-primary)'
                             }}
                         >
-                            {GENERAL.ES_SAVINGS_PERCENTAGE}
+                            {t('databases.explore-savings.savings-percentage')}
                         </DsTypography>
                         {storageSavingsLoading && <FlashingDotsLoader />}
                     </div>
