@@ -364,65 +364,48 @@ function processEbsDisks(disks: EBSClassification[]): EbsVolumeType[] {
     disks
         .filter(disk => disk.numDatabases > 0)
         .forEach((disk: EBSClassification) => {
-            if (ebsTypeCountMap.has(disk.ebsType)) {
-                const existing = ebsTypeCountMap.get(disk.ebsType)!;
-
-                const { ebsType, numDatabases, requiredVolumeSize, requiredIops, requiredThroughput } = disk;
+            const { ebsType, numDatabases, requiredVolumeSize, requiredIops, requiredThroughput } = disk;
+            const existing = ebsTypeCountMap.get(ebsType);
+            if (existing) {
                 const { volumeNumber, storageAmount, volumeIops, throughput } = existing;
                 ebsTypeCountMap.set(ebsType, {
                     volumeType: ebsType,
                     volumeNumber: volumeNumber + numDatabases,
                     storageAmount: storageAmount + requiredVolumeSize * numDatabases,
-                    // IOPS and throughput would be in a similar range for the same EBS disk type,
-                    // considering the max value among all primary or secondary instances which use the same EBS disk type
-                    volumeIops: Math.max(volumeIops, requiredIops),
-                    throughput: Math.max(throughput, requiredThroughput)
+                    // Per GROGU-5182: marketing expects per-volume iops/throughput. Like storageAmount, we
+                    // accumulate workload-weighted totals (× numDatabases); the map below divides by
+                    // volumeNumber so each EbsVolumeType row is per-volume for mapVolumeToMarketingFormat.
+                    volumeIops: volumeIops + requiredIops * numDatabases,
+                    throughput: throughput + requiredThroughput * numDatabases
                 });
             } else {
-                const { ebsType, numDatabases, requiredVolumeSize, requiredIops, requiredThroughput } = disk;
                 ebsTypeCountMap.set(ebsType, {
                     volumeType: ebsType,
                     volumeNumber: numDatabases,
                     storageAmount: requiredVolumeSize * numDatabases,
-                    volumeIops: requiredIops,
-                    throughput: requiredThroughput
+                    volumeIops: requiredIops * numDatabases,
+                    throughput: requiredThroughput * numDatabases
                 });
             }
         });
 
     return Array.from(ebsTypeCountMap.values()).map(
         ({ volumeType, volumeNumber, storageAmount: totalStorageAmountPerDiskType, volumeIops, throughput }) => {
+            // Convert bucket totals to per-volume values for the EbsVolumeType output. Storage is
+            // clamped to per-volume EBS min/max. Iops/throughput are totals / volumeNumber with no
+            // EBS ceiling clamp here. Unsupported configurations may still throw from validateEbsLimits
+            // in MSSQL/Oracle on-prem TCO paths before marketing. All fields are per-volume from here on.
             const storageAmountPerDiskType = totalStorageAmountPerDiskType / volumeNumber;
-            let adjustedStorage: number;
-            let adjustedIops: number;
-            let adjustedThroughput: number;
-
-            // https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html#vol-type-ssd
-            switch (volumeType) {
-                case 'io2':
-                    adjustedStorage = Math.min(Math.max(storageAmountPerDiskType, 4), sizeInGigaBytes(64, 'TiB')); // Min 4 GiB, max 64 TiB
-                    adjustedIops = Math.min(Math.max(volumeIops, 100), 256000); // Min 100, max 256,000
-                    adjustedThroughput = 0; // Throughput is not applicable for io2
-                    break;
-                case 'io1':
-                    adjustedStorage = Math.min(Math.max(storageAmountPerDiskType, 4), sizeInGigaBytes(16, 'TiB')); // Min 4 GiB, max 16 TiB
-                    adjustedIops = Math.min(Math.max(volumeIops, 100), 64000); // Min 100, max 64,000
-                    adjustedThroughput = 0; // Throughput is not applicable for io1
-                    break;
-                case 'gp3':
-                default:
-                    adjustedStorage = Math.min(Math.max(storageAmountPerDiskType, 1), sizeInGigaBytes(16, 'TiB')); // Min 1 GiB, max 16 TiB
-                    adjustedIops = Math.min(Math.max(volumeIops, 3000), 16000); // Min 3,000, max 16,000
-                    adjustedThroughput = Math.min(Math.max(throughput, 125), 1000); // Min 125 MiB/s, max 1,000 MiB/s
-                    break;
-            }
+            const maxStorageGiB = volumeType === 'io2' ? sizeInGigaBytes(64, 'TiB') : sizeInGigaBytes(16, 'TiB');
+            const minStorageGiB = volumeType === 'gp3' ? 1 : 4;
+            const adjustedStoragePerVolume = Math.min(Math.max(storageAmountPerDiskType, minStorageGiB), maxStorageGiB);
 
             return {
                 volumeType,
                 volumeNumber,
-                storageAmount: convertGiBToBytes(adjustedStorage),
-                volumeIops: adjustedIops,
-                throughput: adjustedThroughput
+                storageAmount: convertGiBToBytes(adjustedStoragePerVolume),
+                volumeIops: volumeIops / volumeNumber,
+                throughput: throughput / volumeNumber
             };
         }
     );
@@ -435,15 +418,22 @@ function aggregateVolumesByType(volumes: EbsVolumeType[]): EbsVolumeType[] {
         if (existing) {
             const hasIops = existing.volumeIops !== undefined || volume.volumeIops !== undefined;
             const hasThroughput = existing.throughput !== undefined || volume.throughput !== undefined;
+            // Inputs are per-volume values (see processEbsDisks). Combining `n1` volumes at value
+            // `a` per volume with `n2` volumes at value `b` per volume into a bucket of `n1 + n2`
+            // volumes yields the weighted-average per-volume value `(a*n1 + b*n2) / (n1 + n2)`.
+            // Apply the same formula to storageAmount, volumeIops, and throughput so the output
+            // stays per-volume across hosts/resources.
             const newVolumeNumber = existing.volumeNumber + volume.volumeNumber;
+            const weightedAverage = (existingVal: number, newVal: number) =>
+                (existingVal * existing.volumeNumber + newVal * volume.volumeNumber) / newVolumeNumber;
             volumeMap.set(volume.volumeType, {
                 volumeType: volume.volumeType,
                 volumeNumber: newVolumeNumber,
-                storageAmount:
-                    (existing.storageAmount * existing.volumeNumber + volume.storageAmount * volume.volumeNumber) /
-                    newVolumeNumber,
-                volumeIops: hasIops ? Math.max(existing.volumeIops || 0, volume.volumeIops || 0) : undefined,
-                throughput: hasThroughput ? Math.max(existing.throughput || 0, volume.throughput || 0) : undefined
+                storageAmount: weightedAverage(existing.storageAmount, volume.storageAmount),
+                volumeIops: hasIops ? weightedAverage(existing.volumeIops || 0, volume.volumeIops || 0) : undefined,
+                throughput: hasThroughput
+                    ? weightedAverage(existing.throughput || 0, volume.throughput || 0)
+                    : undefined
             });
         } else {
             volumeMap.set(volume.volumeType, { ...volume });

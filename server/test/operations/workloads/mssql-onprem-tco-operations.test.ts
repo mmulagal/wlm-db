@@ -252,7 +252,7 @@ describe('License Recommendations and EBS Volumes', () => {
             expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(5));
         });
 
-        it('should clamp gp3 IOPS to max 16000', () => {
+        it('should pass through raw iops/throughput for gp3 without clamping', () => {
             const gp3List = [
                 {
                     instanceName: 'TEST',
@@ -265,11 +265,12 @@ describe('License Recommendations and EBS Volumes', () => {
                 }
             ];
             const ebsDisks = processEbsDisks(gp3List);
-            expect(ebsDisks[0].volumeIops).toEqual(16000);
-            expect(ebsDisks[0].throughput).toEqual(1000);
+            expect(ebsDisks[0].volumeIops).toEqual(259000);
+            expect(ebsDisks[0].throughput).toEqual(3000);
+            expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(16 * 1024)); // gp3 storage max 16 TiB
         });
 
-        it('should process io2 EBS disks with max limits', () => {
+        it('should pass through raw iops/throughput for io2 (no clamp, throughput preserved)', () => {
             const io2List = [
                 {
                     instanceName: 'TEST',
@@ -282,12 +283,12 @@ describe('License Recommendations and EBS Volumes', () => {
                 }
             ];
             const ebsDisks = processEbsDisks(io2List);
-            expect(ebsDisks[0].throughput).toEqual(0);
-            expect(ebsDisks[0].volumeIops).toEqual(256000);
+            expect(ebsDisks[0].throughput).toEqual(3000);
+            expect(ebsDisks[0].volumeIops).toEqual(259000);
             expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(64 * 1024));
         });
 
-        it('should process io1 EBS disks with max limits', () => {
+        it('should pass through raw iops/throughput for io1 (no clamp, throughput preserved)', () => {
             const io1List = [
                 {
                     instanceName: 'TEST',
@@ -300,8 +301,8 @@ describe('License Recommendations and EBS Volumes', () => {
                 }
             ];
             const ebsDisks = processEbsDisks(io1List);
-            expect(ebsDisks[0].throughput).toEqual(0);
-            expect(ebsDisks[0].volumeIops).toEqual(64000);
+            expect(ebsDisks[0].throughput).toEqual(3000);
+            expect(ebsDisks[0].volumeIops).toEqual(259000);
             expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(16 * 1024));
         });
 

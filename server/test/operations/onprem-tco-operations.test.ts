@@ -1,6 +1,7 @@
 import { listOnPremDatabaseResources, removeOnPremTcoReportData } from '../../src/lib/database/onprem-tco';
 import {
     processEbsDisks,
+    aggregateVolumesByType,
     EbsVolumeType,
     buildCombinedEc2Instances,
     buildComputeCalculation,
@@ -317,7 +318,10 @@ describe('onPrem TCO operations', () => {
         expect(instanceRequirements).toEqual(expectedRequirements);
     });
 
-    it('should process IO2 EBS disks Max limits', () => {
+    // iops/throughput EBS max clamps were removed in processEbsDisks so raw collector values can
+    // reach the marketing API; only storage retains per-volume min/max bounds. Bucket totals are
+    // accumulated internally; processEbsDisks divides by volumeNumber when emitting each volume row.
+    it('should pass through raw iops/throughput for io2 and clamp storage to max', () => {
         const io2List = [
             {
                 instanceName: 'FCI23NEW',
@@ -330,12 +334,12 @@ describe('onPrem TCO operations', () => {
             }
         ];
         const ebsDisks = processEbsDisks(io2List);
-        expect(ebsDisks[0].throughput).toEqual(0); // no throughput for io2
-        expect(ebsDisks[0].volumeIops).toEqual(256000); // max iops for io2 is 256000
-        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(64 * 1024)); // max storage for io2 is 64TiB
+        expect(ebsDisks[0].throughput).toEqual(3000);
+        expect(ebsDisks[0].volumeIops).toEqual(259000);
+        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(64 * 1024)); // io2 max 64 TiB
     });
 
-    it('should process IO2 EBS disks min limits', () => {
+    it('should pass through raw iops/throughput for io2 and clamp storage to min', () => {
         const io2List = [
             {
                 instanceName: 'FCI23NEW',
@@ -348,12 +352,12 @@ describe('onPrem TCO operations', () => {
             }
         ];
         const ebsDisks = processEbsDisks(io2List);
-        expect(ebsDisks[0].throughput).toEqual(0); // no throughput for io2
-        expect(ebsDisks[0].volumeIops).toEqual(100); // min iops for io2 is 100
-        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(4)); // min storage for io2 is 4 GiB
+        expect(ebsDisks[0].throughput).toEqual(3000);
+        expect(ebsDisks[0].volumeIops).toEqual(50);
+        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(4)); // io2 min 4 GiB
     });
 
-    it('should process IO2 EBS disks within limits', () => {
+    it('should pass through raw iops/throughput for io2 within storage limits', () => {
         const io2List = [
             {
                 instanceName: 'FCI23NEW',
@@ -366,12 +370,12 @@ describe('onPrem TCO operations', () => {
             }
         ];
         const ebsDisks = processEbsDisks(io2List);
-        expect(ebsDisks[0].throughput).toEqual(0); // no throughput for io2
+        expect(ebsDisks[0].throughput).toEqual(3000);
         expect(ebsDisks[0].volumeIops).toEqual(150);
         expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(5));
     });
 
-    it('should process IO1 EBS disks Max limits', () => {
+    it('should pass through raw iops/throughput for io1 and clamp storage to max', () => {
         const io1List = [
             {
                 instanceName: 'FCI23NEW',
@@ -384,30 +388,30 @@ describe('onPrem TCO operations', () => {
             }
         ];
         const ebsDisks = processEbsDisks(io1List);
-        expect(ebsDisks[0].throughput).toEqual(0); // no throughput for io1
-        expect(ebsDisks[0].volumeIops).toEqual(64000); // max iops for io1 is 64000
-        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(16 * 1024)); // max storage for io1 is 16TiB
+        expect(ebsDisks[0].throughput).toEqual(3000);
+        expect(ebsDisks[0].volumeIops).toEqual(259000);
+        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(16 * 1024)); // io1 max 16 TiB
     });
 
-    it('should process IO2 EBS disks min limits', () => {
+    it('should pass through raw iops/throughput for io1 and clamp storage to min', () => {
         const io1List = [
             {
                 instanceName: 'FCI23NEW',
                 numDatabases: 1,
                 requiredIops: 50,
                 requiredThroughput: 3000,
-                ebsType: 'io2',
+                ebsType: 'io1',
                 requiredVolumeSize: 2,
                 isPrimary: true
             }
         ];
         const ebsDisks = processEbsDisks(io1List);
-        expect(ebsDisks[0].throughput).toEqual(0); // no throughput for io1
-        expect(ebsDisks[0].volumeIops).toEqual(100); // min iops for io1 is 100
-        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(4)); // min storage for io1 is 4 GiB
+        expect(ebsDisks[0].throughput).toEqual(3000);
+        expect(ebsDisks[0].volumeIops).toEqual(50);
+        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(4)); // io1 min 4 GiB
     });
 
-    it('should process IO1 EBS disks within limits', () => {
+    it('should pass through raw iops/throughput for io1 within storage limits', () => {
         const io1List = [
             {
                 instanceName: 'FCI23NEW',
@@ -420,12 +424,12 @@ describe('onPrem TCO operations', () => {
             }
         ];
         const ebsDisks = processEbsDisks(io1List);
-        expect(ebsDisks[0].throughput).toEqual(0); // no throughput for io1
+        expect(ebsDisks[0].throughput).toEqual(3000);
         expect(ebsDisks[0].volumeIops).toEqual(150);
         expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(5));
     });
 
-    it('should process gp3 EBS disks Max limits', () => {
+    it('should pass through raw iops/throughput for gp3 and clamp storage to max', () => {
         const gp3List = [
             {
                 instanceName: 'FCI23NEW',
@@ -438,12 +442,12 @@ describe('onPrem TCO operations', () => {
             }
         ];
         const ebsDisks = processEbsDisks(gp3List);
-        expect(ebsDisks[0].throughput).toEqual(1000); // no throughput for gp3
-        expect(ebsDisks[0].volumeIops).toEqual(16000); // max iops for gp3 is 16000
-        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(16 * 1024)); // max storage for gp3 is 16TiB
+        expect(ebsDisks[0].throughput).toEqual(3000);
+        expect(ebsDisks[0].volumeIops).toEqual(259000);
+        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(16 * 1024)); // gp3 max 16 TiB
     });
 
-    it('should process gp3 EBS disks min limits', () => {
+    it('should pass through raw iops/throughput for gp3 and clamp storage to min', () => {
         const gp3List = [
             {
                 instanceName: 'FCI23NEW',
@@ -456,12 +460,12 @@ describe('onPrem TCO operations', () => {
             }
         ];
         const ebsDisks = processEbsDisks(gp3List);
-        expect(ebsDisks[0].throughput).toEqual(1000); // max throughput for gp3 1000
-        expect(ebsDisks[0].volumeIops).toEqual(3000); // min iops for gp3 is 3000
-        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(1)); // min storage for gp3 is 4 GiB
+        expect(ebsDisks[0].throughput).toEqual(3000);
+        expect(ebsDisks[0].volumeIops).toEqual(50);
+        expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(1)); // gp3 min 1 GiB
     });
 
-    it('should process gp3 EBS disks within limits', () => {
+    it('should pass through raw iops/throughput for gp3 within limits', () => {
         const gp3List = [
             {
                 instanceName: 'FCI23NEW',
@@ -477,6 +481,86 @@ describe('onPrem TCO operations', () => {
         expect(ebsDisks[0].throughput).toEqual(150);
         expect(ebsDisks[0].volumeIops).toEqual(3000);
         expect(ebsDisks[0].storageAmount).toEqual(convertGiBToBytes(5));
+    });
+
+    it('should emit per-volume iops/throughput/storage across same-type disks (weighted by numDatabases)', () => {
+        const disks = [
+            {
+                instanceName: 'A',
+                numDatabases: 2,
+                requiredIops: 1000,
+                requiredThroughput: 100,
+                ebsType: 'gp3',
+                requiredVolumeSize: 50,
+                isPrimary: true
+            },
+            {
+                instanceName: 'B',
+                numDatabases: 3,
+                requiredIops: 500,
+                requiredThroughput: 50,
+                ebsType: 'gp3',
+                requiredVolumeSize: 20,
+                isPrimary: true
+            }
+        ];
+        const [result] = processEbsDisks(disks);
+        expect(result.volumeNumber).toEqual(5);
+        // Internal totals: iops = 1000*2 + 500*3 = 3500 across 5 volumes -> per-volume = 700
+        expect(result.volumeIops).toEqual(700);
+        // Internal totals: throughput = 100*2 + 50*3 = 350 across 5 volumes -> per-volume = 70
+        expect(result.throughput).toEqual(70);
+        // Storage total = (50 GiB * 2 + 20 GiB * 3) = 160 GiB across 5 volumes -> per-volume = 32 GiB
+        // (within gp3 clamps), reported in bytes.
+        expect(result.storageAmount).toEqual(convertGiBToBytes(32));
+    });
+});
+
+describe('aggregateVolumesByType', () => {
+    // Inputs to aggregateVolumesByType are per-volume values from processEbsDisks. Combining
+    // `n1` volumes at value `a` per volume with `n2` volumes at value `b` per volume into a
+    // bucket of `n1 + n2` volumes yields the weighted-average per-volume value
+    // `(a*n1 + b*n2) / (n1 + n2)` for storage, iops, and throughput.
+    it('should weighted-average per-volume values across same-type volumes from different resources', () => {
+        const volumes: EbsVolumeType[] = [
+            { volumeType: 'gp3', volumeNumber: 2, storageAmount: 1000, volumeIops: 6000, throughput: 250 },
+            { volumeType: 'gp3', volumeNumber: 3, storageAmount: 1500, volumeIops: 9000, throughput: 450 }
+        ];
+        const [result] = aggregateVolumesByType(volumes);
+        expect(result.volumeType).toEqual('gp3');
+        expect(result.volumeNumber).toEqual(5);
+        // (1000*2 + 1500*3) / 5 = 1300
+        expect(result.storageAmount).toEqual(1300);
+        // (6000*2 + 9000*3) / 5 = 7800
+        expect(result.volumeIops).toEqual(7800);
+        // (250*2 + 450*3) / 5 = 370
+        expect(result.throughput).toEqual(370);
+    });
+
+    it('should keep different volume types separate', () => {
+        const volumes: EbsVolumeType[] = [
+            { volumeType: 'gp3', volumeNumber: 1, storageAmount: 100, volumeIops: 3000, throughput: 125 },
+            { volumeType: 'io2', volumeNumber: 1, storageAmount: 200, volumeIops: 5000, throughput: 0 }
+        ];
+        const result = aggregateVolumesByType(volumes);
+        expect(result).toHaveLength(2);
+        expect(result.find(v => v.volumeType === 'gp3')?.storageAmount).toEqual(100);
+        expect(result.find(v => v.volumeType === 'io2')?.storageAmount).toEqual(200);
+    });
+
+    it('should treat undefined iops/throughput as zero when weighted-averaging', () => {
+        const volumes: EbsVolumeType[] = [
+            { volumeType: 'gp3', volumeNumber: 1, storageAmount: 100 },
+            { volumeType: 'gp3', volumeNumber: 2, storageAmount: 200, volumeIops: 4000, throughput: 250 }
+        ];
+        const [result] = aggregateVolumesByType(volumes);
+        expect(result.volumeNumber).toEqual(3);
+        // (100*1 + 200*2) / 3 = 500/3
+        expect(result.storageAmount).toBeCloseTo(500 / 3, 6);
+        // (0*1 + 4000*2) / 3 = 8000/3
+        expect(result.volumeIops).toBeCloseTo(8000 / 3, 6);
+        // (0*1 + 250*2) / 3 = 500/3
+        expect(result.throughput).toBeCloseTo(500 / 3, 6);
     });
 });
 

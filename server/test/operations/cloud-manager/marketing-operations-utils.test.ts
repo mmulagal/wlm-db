@@ -11,7 +11,10 @@ import {
 
 describe('Marketing Operations Utils', () => {
     describe('getEbsMarketingApiManualModeRequestBody', () => {
-        it('should generate correct request body for single AZ deployment', () => {
+        it('should pass through per-volume values for single AZ deployment', () => {
+            // Callers (UI manual mode, on-prem TCO helpers, demo flow) all supply storageAmount,
+            // volumeIops, and throughput as per-single-volume values; the mapper passes them
+            // through to the marketing API unchanged, with `volumeNumber` carrying the count.
             const region = 'us-east-1';
             const params = {
                 snapshotFrequency: 'Daily' as const,
@@ -28,7 +31,7 @@ describe('Marketing Operations Utils', () => {
                             {
                                 volumeType: 'gp3' as const,
                                 volumeNumber: 2,
-                                storageAmount: 1073741824000, // 1 TiB in bytes
+                                storageAmount: 1073741824000, // ~1000 GiB per volume
                                 volumeIops: 3000,
                                 throughput: 125
                             }
@@ -46,11 +49,20 @@ describe('Marketing Operations Utils', () => {
             expect(result.clones.changeRate).toBe(25);
             expect(result.clones.cloneEnvs).toBe(2);
             expect(result.volumes).toHaveLength(1);
-            expect(result.volumes[0].volumeType).toBe('gp3');
-            expect(result.volumes[0].volumeNumber).toBe(2);
+
+            const [primaryVolume] = result.volumes;
+            expect(primaryVolume.volumeType).toBe('gp3');
+            expect(primaryVolume.volumeNumber).toBe(2);
+            const expectedGib = 1073741824000 / 1024 / 1024 / 1024;
+            expect(primaryVolume.storageAmount.size).toBeCloseTo(expectedGib, 6);
+            expect(primaryVolume.storageAmount.unit).toBe('GiB');
+            expect(primaryVolume.volumeIops).toBe(3000);
+            expect(primaryVolume.throughput).toBe(125);
+            expect(primaryVolume.snapshotAmountChange.size).toBeCloseTo((25 / 100) * expectedGib, 6);
+            expect(primaryVolume.snapshotFreq).toBe('Daily');
         });
 
-        it('should generate correct request body for multi AZ deployment', () => {
+        it('should pass through per-volume values for multi AZ deployment', () => {
             const region = 'us-west-2';
             const params = {
                 snapshotFrequency: 'Weekly' as const,
@@ -67,7 +79,7 @@ describe('Marketing Operations Utils', () => {
                             {
                                 volumeType: 'io2' as const,
                                 volumeNumber: 1,
-                                storageAmount: 536870912000, // 500 GiB in bytes
+                                storageAmount: 536870912000, // 500 GiB per volume
                                 volumeIops: 4000,
                                 throughput: 250
                             }
@@ -80,6 +92,12 @@ describe('Marketing Operations Utils', () => {
 
             expect(result.deploymentType).toBe('Multi');
             expect(result.fsxSnapshotFreq).toBe('Weekly');
+            const [primaryVolume] = result.volumes;
+            expect(primaryVolume.volumeIops).toBe(4000);
+            expect(primaryVolume.throughput).toBe(250);
+            const expectedGib = 536870912000 / 1024 / 1024 / 1024;
+            expect(primaryVolume.storageAmount.size).toBeCloseTo(expectedGib, 6);
+            expect(primaryVolume.snapshotAmountChange.size).toBeCloseTo((20 / 100) * expectedGib, 6);
         });
 
         it('should throw error for duplicate volume types', () => {

@@ -31,11 +31,15 @@ function mapVolumeToMarketingFormat(
     }
 
     let snapshots;
-    // We are sending the average storage per volume instead of the total, as per the changes in bug https://github.com/TLVeng/gg-skywalker/issues/13109
-    const totalStorageAmount = sizeInGigaBytes(storageAmount, 'B');
+    // Per-volume contract: callers (UI manual mode, on-prem TCO helpers, demo) all supply
+    // storageAmount/volumeIops/throughput as values for a SINGLE volume; `volumeNumber` is the
+    // count of identical volumes in this bucket. The marketing API expects the same per-volume
+    // shape, so we pass these fields through and compute the per-volume snapshot capacity from
+    // the per-volume storage size (GROGU-5182).
+    const perVolumeStorageGib = sizeInGigaBytes(storageAmount, 'B');
     if (isPrimary && snapshotFrequency && snapshotFrequency !== NO_SNAPSHOT_STORAGE) {
         const snapshotPercentageChange = monthlyChangeRatePercentage || 0;
-        const snapshotCapacityGib = (snapshotPercentageChange / 100) * totalStorageAmount;
+        const snapshotCapacityGib = (snapshotPercentageChange / 100) * perVolumeStorageGib;
         snapshots = {
             snapshotFreq: snapshotFrequency,
             snapshotAmountChange: {
@@ -56,7 +60,7 @@ function mapVolumeToMarketingFormat(
         volumeType,
         volumeNumber,
         storageAmount: {
-            size: totalStorageAmount, // The marketing API expects the total storage amount across all volumes, not per-volume amounts, to simplify reporting and align with internal data aggregation requirements (see GROGU-5182).
+            size: perVolumeStorageGib,
             unit: 'GiB'
         },
         volumeIops: volumeIops && volumeIops > 0 ? volumeIops : 0,
