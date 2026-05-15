@@ -21,6 +21,7 @@ import {
     supportedOracleOsVersions
 } from '../../workloads/oracle/consts';
 import storageGoldenConfigData from './golden-config';
+import { ORACLE_FILE_TYPE_LABEL_ORDER, ORACLE_FILE_TYPE_LABELS } from './consts';
 import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
 import {
     GenericParameterDriftResponseType,
@@ -1486,6 +1487,47 @@ function getLunConfigDrift(storageAssessmentData: StorageAssessment) {
     });
 }
 
+function getSharedFileTypeLabels(
+    conflictVolumeIds: string[],
+    volumeTypeMap: Record<OracleSysFileTypes, OracleVolumeRecord[]>,
+    excludeTypes: OracleSysFileTypes[]
+): string[] {
+    if (conflictVolumeIds.length === 0) {
+        return [];
+    }
+    const excluded = new Set(excludeTypes);
+    const conflictIdSet = new Set(conflictVolumeIds);
+    const { labels } = ORACLE_FILE_TYPE_LABEL_ORDER.reduce(
+        (acc, type) => {
+            if (excluded.has(type)) {
+                return acc;
+            }
+            const volumes = volumeTypeMap[type];
+            if (!(volumes ?? []).some(v => conflictIdSet.has(v.volumeId))) {
+                return acc;
+            }
+            const label = ORACLE_FILE_TYPE_LABELS[type];
+            if (!acc.seen.has(label)) {
+                acc.seen.add(label);
+                acc.labels.push(label);
+            }
+            return acc;
+        },
+        { labels: [] as string[], seen: new Set<string>() }
+    );
+    return labels;
+}
+
+/** One Intl.ListFormat for the lifetime of this module — avoids reallocating native formatter objects per message. */
+const formatTypeList = (() => {
+    const formatter = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
+    return (labels: string[]): string => formatter.format(labels);
+})();
+
+function volumeIdsSet(...groups: readonly OracleVolumeRecord[][]): Set<string> {
+    return new Set(groups.flat().map(({ volumeId }) => volumeId));
+}
+
 function getVolumeLayoutDrift(
     volumeTypeMap: Record<OracleSysFileTypes, OracleVolumeRecord[]>,
     storageAssessmentData: StorageAssessment
@@ -1510,20 +1552,29 @@ function getVolumeLayoutDrift(
     if (isEmpty(archiveFraLogVolumes)) {
         volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.archivePlacement, 'archive log'));
     } else {
+        const archiveSharesWithVolumeIds = volumeIdsSet(
+            controlFileVolumes,
+            dataFileVolumes,
+            redoLogVolumes,
+            tempFileVolumes
+        );
         const archiveLogConflicts = [
-            ...new Set(
-                archiveFraLogVolumes.filter(archiveVolume =>
-                    [controlFileVolumes, dataFileVolumes, redoLogVolumes, tempFileVolumes]
-                        .flat()
-                        .map(volume => volume.volumeId)
-                        .includes(archiveVolume.volumeId)
-                )
-            )
+            ...new Set(archiveFraLogVolumes.filter(v => archiveSharesWithVolumeIds.has(v.volumeId)))
         ];
         status = archiveLogConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        const archiveSharedLabels = getSharedFileTypeLabels(
+            archiveLogConflicts.map(c => c.volumeId),
+            volumeTypeMap,
+            [OracleSysFileTypes.ARCHIVE_LOGS, OracleSysFileTypes.FRA]
+        );
+        const archiveCurrent =
+            status === AssessmentStatus.NOT_OPTIMIZED && archiveSharedLabels.length > 0
+                ? `Archive logs currently shared with ${formatTypeList(archiveSharedLabels)}`
+                : undefined;
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.archivePlacement,
             status,
+            ...(archiveCurrent && { current: archiveCurrent }),
             objectsInViolation:
                 status === AssessmentStatus.NOT_OPTIMIZED
                     ? archiveLogConflicts.map(conflict => conflict.volumeName)
@@ -1536,21 +1587,22 @@ function getVolumeLayoutDrift(
     if (isEmpty(dataFileVolumes)) {
         volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.datafilesPlacement, 'data file'));
     } else {
-        // Data files can be on separate volume or shared with control files
-        const dataFileConflicts = [
-            ...new Set(
-                dataFileVolumes.filter(dataVolume =>
-                    [...redoLogVolumes, ...archiveLogVolumes, ...tempFileVolumes]
-                        .flat()
-                        .map(volume => volume.volumeId)
-                        .includes(dataVolume.volumeId)
-                )
-            )
-        ];
+        const dataSharesWithVolumeIds = volumeIdsSet(redoLogVolumes, archiveLogVolumes, tempFileVolumes);
+        const dataFileConflicts = [...new Set(dataFileVolumes.filter(v => dataSharesWithVolumeIds.has(v.volumeId)))];
         status = dataFileConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        const dataSharedLabels = getSharedFileTypeLabels(
+            dataFileConflicts.map(c => c.volumeId),
+            volumeTypeMap,
+            [OracleSysFileTypes.DATA_FILES, OracleSysFileTypes.CONTROL_FILES]
+        );
+        const dataCurrent =
+            status === AssessmentStatus.NOT_OPTIMIZED && dataSharedLabels.length > 0
+                ? `Data files currently shared with ${formatTypeList(dataSharedLabels)}`
+                : undefined;
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.datafilesPlacement,
             status,
+            ...(dataCurrent && { current: dataCurrent }),
             objectsInViolation:
                 status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.map(conflict => conflict.volumeName) : [],
             totalObjectsAssessed: dataFileVolumes.length,
@@ -1566,9 +1618,9 @@ function getVolumeLayoutDrift(
         );
     } else {
         // Control files can be on separate volume or shared with data/redo/temp and maintain at least two, preferably three, control file copies across separate volumes
-        const conflictVolumeIds = [...archiveLogVolumes].map(volume => volume.volumeId);
+        const archiveVolumeIdSet = volumeIdsSet(archiveLogVolumes);
         const controlFileConflicts = [
-            ...new Set(controlFileVolumes.filter(controlVolume => conflictVolumeIds.includes(controlVolume.volumeId)))
+            ...new Set(controlFileVolumes.filter(controlVolume => archiveVolumeIdSet.has(controlVolume.volumeId)))
         ];
 
         hasConflicts = controlFileConflicts.length > 0;
@@ -1576,7 +1628,7 @@ function getVolumeLayoutDrift(
         const uniqueControlFileVolumesWithoutSharingViolation = [
             ...new Set(
                 controlFileVolumes
-                    .filter(controlVolume => !conflictVolumeIds.includes(controlVolume.volumeId))
+                    .filter(controlVolume => !archiveVolumeIdSet.has(controlVolume.volumeId))
                     .map(volume => volume.volumeId)
             )
         ];
@@ -1590,10 +1642,41 @@ function getVolumeLayoutDrift(
                 : hasConflicts
                 ? 'separate-volume-or-shared-with-data-redo-temp'
                 : 'two-multiplexed-volumes';
+        const controlSharedLabels = hasConflicts
+            ? getSharedFileTypeLabels(
+                  controlFileConflicts.map(c => c.volumeId),
+                  volumeTypeMap,
+                  [
+                      OracleSysFileTypes.CONTROL_FILES,
+                      OracleSysFileTypes.DATA_FILES,
+                      OracleSysFileTypes.REDO_LOGS,
+                      OracleSysFileTypes.TEMP_FILES
+                  ]
+              )
+            : [];
+        const controlMultiplexCount = uniqueControlFileVolumesWithoutSharingViolation.length;
+        const controlSharingMessage =
+            hasConflicts && controlSharedLabels.length > 0
+                ? `Control files currently shared with ${formatTypeList(controlSharedLabels)}`
+                : '';
+        const controlMultiplexingFragment = insufficientMultiplexing
+            ? controlMultiplexCount === 0
+                ? 'no separate volumes available for multiplexed copies'
+                : `only ${controlMultiplexCount} separate volume available for multiplexed copies`
+            : '';
+        let controlCurrent: string | undefined;
+        if (controlSharingMessage && controlMultiplexingFragment) {
+            controlCurrent = `${controlSharingMessage}; ${controlMultiplexingFragment}`;
+        } else if (controlSharingMessage) {
+            controlCurrent = controlSharingMessage;
+        } else if (controlMultiplexingFragment) {
+            controlCurrent = `Control files have ${controlMultiplexingFragment}`;
+        }
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.controlfilesPlacement,
             recommended,
             status,
+            ...(controlCurrent && { current: controlCurrent }),
             objectsInViolation: hasConflicts ? controlFileConflicts.map(conflict => conflict.volumeName) : [],
             totalObjectsAssessed: controlFileVolumes.length,
             totalObjectsInViolation: hasConflicts ? controlFileConflicts.length : 0
@@ -1604,9 +1687,9 @@ function getVolumeLayoutDrift(
         volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.redologsPlacement, 'redo log'));
     } else {
         // Redo logs can be on separate or shared with temp/control
-        const conflictVolumeIds = [...dataFileVolumes, ...archiveLogVolumes].map(volume => volume.volumeId);
+        const redoSharesWithVolumeIds = volumeIdsSet(dataFileVolumes, archiveLogVolumes);
         const redoFileConflicts = [
-            ...new Set(redoLogVolumes.filter(redoVolume => conflictVolumeIds.includes(redoVolume.volumeId)))
+            ...new Set(redoLogVolumes.filter(redoVolume => redoSharesWithVolumeIds.has(redoVolume.volumeId)))
         ];
 
         hasConflicts = redoFileConflicts.length > 0;
@@ -1614,7 +1697,7 @@ function getVolumeLayoutDrift(
         const uniqueRedoLogVolumesWithoutSharingViolation = [
             ...new Set(
                 redoLogVolumes
-                    .filter(redoVolume => !conflictVolumeIds.includes(redoVolume.volumeId))
+                    .filter(redoVolume => !redoSharesWithVolumeIds.has(redoVolume.volumeId))
                     .map(volume => volume.volumeId)
             )
         ];
@@ -1628,9 +1711,10 @@ function getVolumeLayoutDrift(
                 1;
         insufficientMultiplexing = !hasMultipleVolumes && !hasSingleVolumeWithSingleCopy;
 
+        const uniqueRedoVolumesNoShareViolationSet = new Set(uniqueRedoLogVolumesWithoutSharingViolation);
         // Find volumes with multiple copies when there's insufficient multiplexing
         const volumesWithMultipleCopies = insufficientMultiplexing
-            ? redoLogVolumes.filter(vol => uniqueRedoLogVolumesWithoutSharingViolation.includes(vol.volumeId))
+            ? redoLogVolumes.filter(vol => uniqueRedoVolumesNoShareViolationSet.has(vol.volumeId))
             : [];
 
         status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
@@ -1641,10 +1725,37 @@ function getVolumeLayoutDrift(
                 ? 'separate-volume-or-shared-with-control-temp'
                 : 'multiplexed-copies-on-two-or-more-volumes';
 
+        const redoSharedLabels = hasConflicts
+            ? getSharedFileTypeLabels(
+                  redoFileConflicts.map(c => c.volumeId),
+                  volumeTypeMap,
+                  [OracleSysFileTypes.REDO_LOGS, OracleSysFileTypes.CONTROL_FILES, OracleSysFileTypes.TEMP_FILES]
+              )
+            : [];
+        const redoMultiplexCount = uniqueRedoLogVolumesWithoutSharingViolation.length;
+        const redoSharingMessage =
+            hasConflicts && redoSharedLabels.length > 0
+                ? `Redo logs currently shared with ${formatTypeList(redoSharedLabels)}`
+                : '';
+        const redoMultiplexingFragment = insufficientMultiplexing
+            ? redoMultiplexCount === 0
+                ? 'no separate volumes available for multiplexed copies'
+                : `only ${redoMultiplexCount} separate volume available for multiplexed copies`
+            : '';
+        let redoCurrent: string | undefined;
+        if (redoSharingMessage && redoMultiplexingFragment) {
+            redoCurrent = `${redoSharingMessage}; ${redoMultiplexingFragment}`;
+        } else if (redoSharingMessage) {
+            redoCurrent = redoSharingMessage;
+        } else if (redoMultiplexingFragment) {
+            redoCurrent = `Redo logs have ${redoMultiplexingFragment}`;
+        }
+
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.redologsPlacement,
             recommended,
             status,
+            ...(redoCurrent && { current: redoCurrent }),
             objectsInViolation: hasConflicts
                 ? redoFileConflicts.map(conflict => conflict.volumeName)
                 : insufficientMultiplexing
@@ -1663,19 +1774,22 @@ function getVolumeLayoutDrift(
         volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.templogsPlacement, 'temp log'));
     } else {
         // Temp logs can be on separate or shared with redo/control
-        const tempFileConflicts = [
-            ...new Set(
-                tempFileVolumes.filter(tempVolume =>
-                    [...dataFileVolumes, ...archiveLogVolumes]
-                        .map(volume => volume.volumeId)
-                        .includes(tempVolume.volumeId)
-                )
-            )
-        ];
+        const tempSharesWithVolumeIds = volumeIdsSet(dataFileVolumes, archiveLogVolumes);
+        const tempFileConflicts = [...new Set(tempFileVolumes.filter(v => tempSharesWithVolumeIds.has(v.volumeId)))];
         status = tempFileConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        const tempSharedLabels = getSharedFileTypeLabels(
+            tempFileConflicts.map(c => c.volumeId),
+            volumeTypeMap,
+            [OracleSysFileTypes.TEMP_FILES, OracleSysFileTypes.REDO_LOGS, OracleSysFileTypes.CONTROL_FILES]
+        );
+        const tempCurrent =
+            status === AssessmentStatus.NOT_OPTIMIZED && tempSharedLabels.length > 0
+                ? `Temp files currently shared with ${formatTypeList(tempSharedLabels)}`
+                : undefined;
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.templogsPlacement,
             status,
+            ...(tempCurrent && { current: tempCurrent }),
             objectsInViolation:
                 tempFileConflicts.length > 0 ? tempFileConflicts.map(conflict => conflict.volumeName) : [],
             totalObjectsAssessed: tempFileVolumes.length,
@@ -1688,16 +1802,24 @@ function getVolumeLayoutDrift(
             createEmptyVolumeAssessment(storageGoldenConfigData.oracleBinaryPlacement, 'binary log')
         );
     } else {
-        const binaryVolumeConflicts = binaryVolumeIds.filter(binaryVolumeId =>
-            [controlFileVolumes, dataFileVolumes, redoLogVolumes, archiveLogVolumes, tempFileVolumes]
-                .flat()
-                .map(volume => volume.volumeId)
-                .includes(binaryVolumeId)
+        const oracleDataVolumeIds = volumeIdsSet(
+            controlFileVolumes,
+            dataFileVolumes,
+            redoLogVolumes,
+            archiveLogVolumes,
+            tempFileVolumes
         );
+        const binaryVolumeConflicts = binaryVolumeIds.filter(id => oracleDataVolumeIds.has(id));
         status = binaryVolumeConflicts.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+        const binarySharedLabels = getSharedFileTypeLabels(binaryVolumeConflicts, volumeTypeMap, []);
+        const binaryCurrent =
+            status === AssessmentStatus.NOT_OPTIMIZED && binarySharedLabels.length > 0
+                ? `Oracle binaries currently shared with ${formatTypeList(binarySharedLabels)}`
+                : undefined;
         volumeLayoutDrift.push({
             ...storageGoldenConfigData.oracleBinaryPlacement,
             status,
+            ...(binaryCurrent && { current: binaryCurrent }),
             objectsInViolation: binaryVolumeConflicts.length > 0 ? binaryVolumeConflicts : [],
             totalObjectsAssessed: binaryVolumeIds.length,
             totalObjectsInViolation: binaryVolumeConflicts.length > 0 ? binaryVolumeConflicts.length : 0
@@ -2214,6 +2336,9 @@ export {
     initiateStorageAssessmentCollection,
     calculateStorageDrift,
     getVolumeConfigDrift,
+    getVolumeLayoutDrift,
+    getSharedFileTypeLabels,
+    formatTypeList,
     getNfsOSConfigDrift,
     mapVolumeTypesToIdName,
     getBaseVolume,

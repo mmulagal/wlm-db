@@ -1,10 +1,52 @@
 import { describe, it, expect } from 'vitest';
 import {
+    formatTypeList,
     getBaseVolume,
+    getSharedFileTypeLabels,
+    getVolumeLayoutDrift,
     getNfsOSConfigDrift
 } from '../../../../src/operations/continuous-optimization/oracle/storage-assessment-operations';
 import { StorageNfsAssessment } from '../../../../src/operations/continuous-optimization/oracle/common-types';
+import { OracleSysFileTypes, OracleVolumeRecord } from '../../../../src/operations/workloads/oracle/common-types';
 import { AssessmentStatus } from '../../../../src/utils/continous-optimization-consts';
+
+type LayoutAssessment = {
+    name: string;
+    status?: AssessmentStatus;
+    current?: string;
+    errorMessage?: string;
+    objectsInViolation?: string[];
+    totalObjectsAssessed?: number;
+    totalObjectsInViolation?: number;
+};
+
+const vol = (volumeId: string, volumeName?: string, copiesCount?: number): OracleVolumeRecord => ({
+    volumeId,
+    volumeName: volumeName ?? volumeId,
+    ...(copiesCount !== undefined && { copiesCount })
+});
+
+const buildVolumeTypeMap = (
+    overrides: Partial<Record<OracleSysFileTypes, OracleVolumeRecord[]>> = {}
+): Record<OracleSysFileTypes, OracleVolumeRecord[]> => ({
+    [OracleSysFileTypes.CONTROL_FILES]: [],
+    [OracleSysFileTypes.DATA_FILES]: [],
+    [OracleSysFileTypes.REDO_LOGS]: [],
+    [OracleSysFileTypes.ARCHIVE_LOGS]: [],
+    [OracleSysFileTypes.TEMP_FILES]: [],
+    [OracleSysFileTypes.FRA]: [],
+    ...overrides
+});
+
+const buildStorageAssessment = (binaryVolumes: { volumeId: string; volumeName: string }[] = []) =>
+    ({
+        volumes: { error: '', data: [], filesystemId: 'fs-test' },
+        binaryVolumes: { error: '', data: binaryVolumes }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+
+const findAssessment = (drift: ReturnType<typeof getVolumeLayoutDrift>, name: string): LayoutAssessment =>
+    drift.find(d => d.name === name) as LayoutAssessment;
 
 describe('getBaseVolume', () => {
     const exportsByServer: Record<string, string[]> = {
@@ -49,6 +91,317 @@ describe('getBaseVolume', () => {
         it('should not match partial segment names', () => {
             const result = getBaseVolume('/log_280126120450/as/subdir', '10.0.49.228', exportsByServer);
             expect(result).toBe('/log_280126120450');
+        });
+    });
+});
+
+describe('formatTypeList', () => {
+    it('returns an empty string for an empty list', () => {
+        expect(formatTypeList([])).toBe('');
+    });
+
+    it('returns the single label as-is', () => {
+        expect(formatTypeList(['data files'])).toBe('data files');
+    });
+
+    it('joins two labels with " and "', () => {
+        expect(formatTypeList(['data files', 'redo logs'])).toBe('data files and redo logs');
+    });
+
+    it('joins three or more labels with comma separators and an Oxford comma', () => {
+        expect(formatTypeList(['control files', 'data files', 'redo logs'])).toBe(
+            'control files, data files, and redo logs'
+        );
+        expect(formatTypeList(['control files', 'data files', 'redo logs', 'temp files'])).toBe(
+            'control files, data files, redo logs, and temp files'
+        );
+    });
+});
+
+describe('getSharedFileTypeLabels', () => {
+    it('returns an empty array when there are no conflict volume ids', () => {
+        const map = buildVolumeTypeMap({
+            [OracleSysFileTypes.DATA_FILES]: [vol('v1')]
+        });
+        expect(getSharedFileTypeLabels([], map, [])).toEqual([]);
+    });
+
+    it('returns labels for file types that occupy any of the conflict volumes', () => {
+        const map = buildVolumeTypeMap({
+            [OracleSysFileTypes.DATA_FILES]: [vol('v1')],
+            [OracleSysFileTypes.REDO_LOGS]: [vol('v1')],
+            [OracleSysFileTypes.TEMP_FILES]: [vol('v2')]
+        });
+        expect(getSharedFileTypeLabels(['v1'], map, [])).toEqual(['data files', 'redo logs']);
+    });
+
+    it('skips file types listed in excludeTypes', () => {
+        const map = buildVolumeTypeMap({
+            [OracleSysFileTypes.DATA_FILES]: [vol('v1')],
+            [OracleSysFileTypes.CONTROL_FILES]: [vol('v1')]
+        });
+        expect(getSharedFileTypeLabels(['v1'], map, [OracleSysFileTypes.CONTROL_FILES])).toEqual(['data files']);
+    });
+
+    it('dedupes archive logs when both ARCHIVE_LOGS and FRA contain the conflict volume', () => {
+        const map = buildVolumeTypeMap({
+            [OracleSysFileTypes.ARCHIVE_LOGS]: [vol('v1')],
+            [OracleSysFileTypes.FRA]: [vol('v1')]
+        });
+        expect(getSharedFileTypeLabels(['v1'], map, [])).toEqual(['archive logs']);
+    });
+
+    it('returns labels in deterministic enum-defined order (control, data, redo, archive, temp)', () => {
+        const map = buildVolumeTypeMap({
+            [OracleSysFileTypes.TEMP_FILES]: [vol('v1')],
+            [OracleSysFileTypes.CONTROL_FILES]: [vol('v1')],
+            [OracleSysFileTypes.ARCHIVE_LOGS]: [vol('v1')],
+            [OracleSysFileTypes.DATA_FILES]: [vol('v1')],
+            [OracleSysFileTypes.REDO_LOGS]: [vol('v1')]
+        });
+        expect(getSharedFileTypeLabels(['v1'], map, [])).toEqual([
+            'control files',
+            'data files',
+            'redo logs',
+            'archive logs',
+            'temp files'
+        ]);
+    });
+});
+
+describe('getVolumeLayoutDrift - current message', () => {
+    describe('archive-placement', () => {
+        it('returns errorMessage with no current when no archive volumes are present', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.DATA_FILES]: [vol('v1')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const archive = findAssessment(drift, 'archive-placement');
+            expect(archive.errorMessage).toBe('No archive log volumes found.');
+            expect(archive.current).toBeUndefined();
+        });
+
+        it('omits current when archive logs are on a dedicated volume', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.ARCHIVE_LOGS]: [vol('v-arch')],
+                [OracleSysFileTypes.DATA_FILES]: [vol('v-data')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const archive = findAssessment(drift, 'archive-placement');
+            expect(archive.status).toBe(AssessmentStatus.OPTIMIZED);
+            expect(archive.current).toBeUndefined();
+        });
+
+        it('sets current describing every file type the archive volume is shared with', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.ARCHIVE_LOGS]: [vol('v-shared')],
+                [OracleSysFileTypes.DATA_FILES]: [vol('v-shared')],
+                [OracleSysFileTypes.REDO_LOGS]: [vol('v-shared')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const archive = findAssessment(drift, 'archive-placement');
+            expect(archive.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(archive.current).toBe('Archive logs currently shared with data files and redo logs');
+        });
+
+        it('treats FRA volumes as archive logs when checking for placement violations', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.FRA]: [vol('v-fra')],
+                [OracleSysFileTypes.TEMP_FILES]: [vol('v-fra')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const archive = findAssessment(drift, 'archive-placement');
+            expect(archive.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(archive.current).toBe('Archive logs currently shared with temp files');
+        });
+    });
+
+    describe('datafiles-placement', () => {
+        it('omits current when data files are shared only with control files (allowed)', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.DATA_FILES]: [vol('v-data')],
+                [OracleSysFileTypes.CONTROL_FILES]: [vol('v-data')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const data = findAssessment(drift, 'datafiles-placement');
+            expect(data.status).toBe(AssessmentStatus.OPTIMIZED);
+            expect(data.current).toBeUndefined();
+        });
+
+        it('sets current listing temp files and archive logs when data files share with both', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.DATA_FILES]: [vol('v-data')],
+                [OracleSysFileTypes.TEMP_FILES]: [vol('v-data')],
+                [OracleSysFileTypes.ARCHIVE_LOGS]: [vol('v-data')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const data = findAssessment(drift, 'datafiles-placement');
+            expect(data.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(data.current).toBe('Data files currently shared with archive logs and temp files');
+        });
+    });
+
+    describe('controlfiles-placement', () => {
+        it('omits current when 2+ control file volumes exist with no sharing violation', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.CONTROL_FILES]: [vol('v-c1'), vol('v-c2')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const control = findAssessment(drift, 'controlfiles-placement');
+            expect(control.status).toBe(AssessmentStatus.OPTIMIZED);
+            expect(control.current).toBeUndefined();
+        });
+
+        it('sets sharing-only current when control shares with archive but multiplexing is sufficient', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.CONTROL_FILES]: [vol('v-c1'), vol('v-c2'), vol('v-shared')],
+                [OracleSysFileTypes.ARCHIVE_LOGS]: [vol('v-shared')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const control = findAssessment(drift, 'controlfiles-placement');
+            expect(control.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(control.current).toBe('Control files currently shared with archive logs');
+        });
+
+        it('sets multiplexing-only current when there is a single dedicated control volume', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.CONTROL_FILES]: [vol('v-c1')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const control = findAssessment(drift, 'controlfiles-placement');
+            expect(control.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(control.current).toBe('Control files have only 1 separate volume available for multiplexed copies');
+        });
+
+        it('combines sharing and multiplexing fragments when both violations occur (count=0)', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.CONTROL_FILES]: [vol('v-shared')],
+                [OracleSysFileTypes.ARCHIVE_LOGS]: [vol('v-shared')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const control = findAssessment(drift, 'controlfiles-placement');
+            expect(control.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(control.current).toBe(
+                'Control files currently shared with archive logs; no separate volumes available for multiplexed copies'
+            );
+        });
+    });
+
+    describe('redologs-placement', () => {
+        it('omits current when there is a single redo volume with copiesCount=1', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.REDO_LOGS]: [vol('v-redo', 'v-redo', 1)]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const redo = findAssessment(drift, 'redologs-placement');
+            expect(redo.status).toBe(AssessmentStatus.OPTIMIZED);
+            expect(redo.current).toBeUndefined();
+        });
+
+        it('omits current when redo logs are on 2+ dedicated volumes', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.REDO_LOGS]: [vol('v-r1'), vol('v-r2')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const redo = findAssessment(drift, 'redologs-placement');
+            expect(redo.status).toBe(AssessmentStatus.OPTIMIZED);
+            expect(redo.current).toBeUndefined();
+        });
+
+        it('sets sharing-only current when redo shares with data files but multiplexing is fine', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.REDO_LOGS]: [vol('v-r1'), vol('v-r2'), vol('v-shared')],
+                [OracleSysFileTypes.DATA_FILES]: [vol('v-shared')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const redo = findAssessment(drift, 'redologs-placement');
+            expect(redo.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(redo.current).toBe('Redo logs currently shared with data files');
+        });
+
+        it('sets multiplexing-only current when one redo volume hosts multiple copies', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.REDO_LOGS]: [vol('v-r1', 'v-r1', 2)]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const redo = findAssessment(drift, 'redologs-placement');
+            expect(redo.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(redo.current).toBe('Redo logs have only 1 separate volume available for multiplexed copies');
+        });
+
+        it('combines sharing and multiplexing fragments when the only redo volume is shared (count=0)', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.REDO_LOGS]: [vol('v-shared')],
+                [OracleSysFileTypes.DATA_FILES]: [vol('v-shared')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const redo = findAssessment(drift, 'redologs-placement');
+            expect(redo.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(redo.current).toBe(
+                'Redo logs currently shared with data files; no separate volumes available for multiplexed copies'
+            );
+        });
+    });
+
+    describe('templogs-placement', () => {
+        it('omits current when temp files share only with redo logs (allowed)', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.TEMP_FILES]: [vol('v-temp')],
+                [OracleSysFileTypes.REDO_LOGS]: [vol('v-temp')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const temp = findAssessment(drift, 'templogs-placement');
+            expect(temp.status).toBe(AssessmentStatus.OPTIMIZED);
+            expect(temp.current).toBeUndefined();
+        });
+
+        it('sets current when temp files share with data files and archive logs', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.TEMP_FILES]: [vol('v-temp')],
+                [OracleSysFileTypes.DATA_FILES]: [vol('v-temp')],
+                [OracleSysFileTypes.ARCHIVE_LOGS]: [vol('v-temp')]
+            });
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const temp = findAssessment(drift, 'templogs-placement');
+            expect(temp.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(temp.current).toBe('Temp files currently shared with data files and archive logs');
+        });
+    });
+
+    describe('oracle-binary-placement', () => {
+        it('returns errorMessage with no current when no binary volumes are present', () => {
+            const map = buildVolumeTypeMap();
+            const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+            const binary = findAssessment(drift, 'oracle-binary-placement');
+            expect(binary.errorMessage).toBe('No binary log volumes found.');
+            expect(binary.current).toBeUndefined();
+        });
+
+        it('omits current when the binary volume is dedicated', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.DATA_FILES]: [vol('v-data')]
+            });
+            const drift = getVolumeLayoutDrift(
+                map,
+                buildStorageAssessment([{ volumeId: 'v-bin', volumeName: 'v-bin' }])
+            );
+            const binary = findAssessment(drift, 'oracle-binary-placement');
+            expect(binary.status).toBe(AssessmentStatus.OPTIMIZED);
+            expect(binary.current).toBeUndefined();
+        });
+
+        it('sets current listing every file type the binary volume is shared with', () => {
+            const map = buildVolumeTypeMap({
+                [OracleSysFileTypes.CONTROL_FILES]: [vol('v-bin')],
+                [OracleSysFileTypes.DATA_FILES]: [vol('v-bin')]
+            });
+            const drift = getVolumeLayoutDrift(
+                map,
+                buildStorageAssessment([{ volumeId: 'v-bin', volumeName: 'v-bin' }])
+            );
+            const binary = findAssessment(drift, 'oracle-binary-placement');
+            expect(binary.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(binary.current).toBe('Oracle binaries currently shared with control files and data files');
         });
     });
 });
