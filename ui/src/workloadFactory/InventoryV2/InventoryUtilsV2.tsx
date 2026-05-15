@@ -2338,13 +2338,16 @@ export const sortDatabaseTableData = (data: Array<InventoryTableData>) => {
     const statusWeights: any = {
         ONLINE: 3000,
         OFFLINE: 2000,
+        WAD: 1500,
         UNKNOWN: 1000
     };
 
     const result = data.slice().sort((a, b) => {
-        const weightA = databasesWeights[a?.hostType || ''] + statusWeights[a.status || ''];
+        const statusKeyA = a?.isWad ? 'WAD' : a.status || '';
+        const statusKeyB = b?.isWad ? 'WAD' : b.status || '';
 
-        const weightB = databasesWeights[b?.hostType || ''] + statusWeights[b.status || ''];
+        const weightA = (databasesWeights[a?.hostType || ''] || 0) + (statusWeights[statusKeyA] || 0);
+        const weightB = (databasesWeights[b?.hostType || ''] || 0) + (statusWeights[statusKeyB] || 0);
 
         return weightB - weightA;
     });
