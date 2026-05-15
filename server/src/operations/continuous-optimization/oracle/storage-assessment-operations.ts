@@ -535,7 +535,27 @@ function getNfsOSConfigDrift(
         return osDrift;
     }
 
-    const oracleJunctionPaths = new Set(volumes?.data?.map(vol => vol.junctionPath) || []);
+    const oracleJunctionPaths = new Set(
+        compact(volumes?.data?.map(vol => vol.junctionPath)).filter(path => path.trim().length > 0)
+    );
+
+    // Filter the host-wide NFS mounts down to just the ones serving this oracleSid once
+    // and share the result across SID-scoped consumers (databasefiles/caching/nfsv4-domain-name).
+    // Surfaces a single error so consumers can emit one error entry instead of a misleading OPTIMIZED.
+    type DbNfsMountsResult =
+        | { error: string }
+        | { mounts: NonNullable<NonNullable<(typeof os)['nfs-mount-options']>['nfs-mount-options']> };
+    const dbMountsResult: DbNfsMountsResult = (() => {
+        if (oracleJunctionPaths.size === 0) {
+            return { error: 'No mapped DB-instance volumes provided; cannot identify DB mounts for this oracleSid.' };
+        }
+        const mountData = os?.['nfs-mount-options'];
+        if (mountData?.error) {
+            return { error: mountData.error };
+        }
+        const allMounts = mountData?.['nfs-mount-options'] ?? [];
+        return { mounts: allMounts.filter(mount => oracleJunctionPaths.has(mount?.['remote-path'] ?? '')) };
+    })();
 
     const recommendedNFSMountOptions = Object.entries(nfsMountOptionExpected)
         .map(([key, expectedValue]) => {
@@ -572,46 +592,44 @@ function getNfsOSConfigDrift(
                 break;
             }
             case 'nfs-mount-options-databasefiles': {
-                const nfsMountData = os?.['nfs-mount-options'];
-                if (nfsMountData?.error) {
-                    osDrift.push({ name: config.name, errorMessage: nfsMountData.error });
-                } else {
-                    const mountOptions = nfsMountData?.['nfs-mount-options'] || [];
-                    mountOptions.forEach(mount => {
-                        const mountPoint = mount?.['mount-point'] || '';
-                        const remotePath = mount?.['remote-path'] || '';
-                        const options = mount?.options || {};
-                        const mountVersion = options.vers;
-                        const currentMountOptions = Object.entries(nfsMountOptionExpected)
-                            .map(([key]) => {
-                                const actualValue = options[key]?.toString() || 'not found';
-                                return `${key}=${actualValue}`;
-                            })
-                            .join(', ');
-                        const violations = Object.entries(nfsMountOptionExpected)
-                            .filter(([key, expectedValue]) => {
-                                const actualValue = options[key];
-                                return Array.isArray(expectedValue)
-                                    ? !expectedValue.includes(actualValue as string)
-                                    : actualValue !== expectedValue;
-                            })
-                            .map(([key]) => {
-                                const actualValue = options[key]?.toString() || 'not found';
-                                return `${key}=${actualValue}`;
-                            });
-
-                        if (violations.length > 0) {
-                            violationDetails.push(
-                                createViolationDetail(
-                                    `${remotePath}:${mountPoint}`,
-                                    'nfs mount mapping',
-                                    `${currentMountOptions}, vers=${mountVersion}`,
-                                    `${recommendedNFSMountOptions}, vers=${mountVersion}`
-                                )
-                            );
-                        }
-                    });
+                if ('error' in dbMountsResult) {
+                    osDrift.push({ name: config.name, errorMessage: dbMountsResult.error });
+                    break;
                 }
+                dbMountsResult.mounts.forEach(mount => {
+                    const mountPoint = mount?.['mount-point'] || '';
+                    const remotePath = mount?.['remote-path'] || '';
+                    const options = mount?.options || {};
+                    const mountVersion = options.vers;
+                    const currentMountOptions = Object.entries(nfsMountOptionExpected)
+                        .map(([key]) => {
+                            const actualValue = options[key]?.toString() || 'not found';
+                            return `${key}=${actualValue}`;
+                        })
+                        .join(', ');
+                    const violations = Object.entries(nfsMountOptionExpected)
+                        .filter(([key, expectedValue]) => {
+                            const actualValue = options[key];
+                            return Array.isArray(expectedValue)
+                                ? !expectedValue.includes(actualValue as string)
+                                : actualValue !== expectedValue;
+                        })
+                        .map(([key]) => {
+                            const actualValue = options[key]?.toString() || 'not found';
+                            return `${key}=${actualValue}`;
+                        });
+
+                    if (violations.length > 0) {
+                        violationDetails.push(
+                            createViolationDetail(
+                                `${remotePath}:${mountPoint}`,
+                                'nfs mount mapping',
+                                `${currentMountOptions}, vers=${mountVersion}`,
+                                `${recommendedNFSMountOptions}, vers=${mountVersion}`
+                            )
+                        );
+                    }
+                });
                 osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
@@ -619,39 +637,36 @@ function getNfsOSConfigDrift(
                 if (deploymentType !== 'Standalone') {
                     return;
                 }
-                const nfsMountData = os?.['nfs-mount-options'];
-                if (nfsMountData?.error) {
-                    osDrift.push({ name: config.name, errorMessage: nfsMountData.error });
-                } else {
-                    const mountOptions = nfsMountData?.['nfs-mount-options'] || [];
-                    mountOptions.forEach(mount => {
-                        const mountPoint = mount?.['mount-point'] || '';
-                        const remotePath = mount?.['remote-path'] || '';
-                        const options = mount?.options || {};
-                        const violations: string[] = [];
-                        if (options.noac !== undefined) {
-                            violations.push('noac');
-                        }
+                if ('error' in dbMountsResult) {
+                    osDrift.push({ name: config.name, errorMessage: dbMountsResult.error });
+                    break;
+                }
+                dbMountsResult.mounts.forEach(mount => {
+                    const mountPoint = mount?.['mount-point'] || '';
+                    const remotePath = mount?.['remote-path'] || '';
+                    const options = mount?.options || {};
+                    const violations: string[] = [];
+                    if (options.noac !== undefined) {
+                        violations.push('noac');
+                    }
 
-                        // Check for caching options set to 0
-                        ['acregmin', 'acregmax', 'acdirmin', 'acdirmax'].forEach(option => {
-                            if (options[option] === '0') {
-                                violations.push(`${option}=${options[option]}`);
-                            }
-                        });
-
-                        if (violations.length > 0) {
-                            violationDetails.push(
-                                createViolationDetail(
-                                    `${remotePath}:${mountPoint}`,
-                                    'nfs mount mapping',
-                                    violations.join(', '),
-                                    'Remove noac option and ensure caching options are not set to 0'
-                                )
-                            );
+                    ['acregmin', 'acregmax', 'acdirmin', 'acdirmax'].forEach(option => {
+                        if (options[option] === '0') {
+                            violations.push(`${option}=${options[option]}`);
                         }
                     });
-                }
+
+                    if (violations.length > 0) {
+                        violationDetails.push(
+                            createViolationDetail(
+                                `${remotePath}:${mountPoint}`,
+                                'nfs mount mapping',
+                                violations.join(', '),
+                                'Remove noac option and ensure caching options are not set to 0'
+                            )
+                        );
+                    }
+                });
                 osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
                 break;
             }
@@ -716,20 +731,13 @@ function getNfsOSConfigDrift(
             }
             case 'nfsv4-domain-name': {
                 const idmapdDomainConfig = os?.['idmapd-domain-config'];
-                const mountOptions = os?.['nfs-mount-options']?.['nfs-mount-options'] || [];
+                const dbMountOptions = 'error' in dbMountsResult ? [] : dbMountsResult.mounts;
                 const domain = os?.['hostname-domain']?.domain || '';
 
-                // Check if NFSv4 mounts exist
-                const hasOntapNfsv4Mount = mountOptions.some(mount => {
-                    const options = mount?.options || {};
-                    const remotePath = mount?.['remote-path'] || '';
-                    const versValue = typeof options.vers === 'string' ? options.vers : '';
-                    return (
-                        versValue.startsWith('4') &&
-                        volumes?.data?.some(
-                            volume => volume.junctionPath && remotePath && remotePath.startsWith(volume.junctionPath)
-                        )
-                    );
+                // Check if any NFSv4 mount belongs to this oracleSid (host list filtered by junction paths)
+                const hasOntapNfsv4Mount = dbMountOptions.some(mount => {
+                    const versValue = typeof mount?.options?.vers === 'string' ? (mount.options.vers as string) : '';
+                    return versValue.startsWith('4');
                 });
 
                 if (
@@ -2206,6 +2214,7 @@ export {
     initiateStorageAssessmentCollection,
     calculateStorageDrift,
     getVolumeConfigDrift,
+    getNfsOSConfigDrift,
     mapVolumeTypesToIdName,
     getBaseVolume,
     createAssessment,
