@@ -14,7 +14,9 @@ import {
     getEbsBulkStorageSavingsSchema,
     getEbsBulkStorageSavingsCalculationMetricsSchema,
     getOracleEbsBulkStorageSavingsSchema,
-    getOracleEbsBulkStorageSavingsCalculationMetricsSchema
+    getOracleEbsBulkStorageSavingsCalculationMetricsSchema,
+    getOracleEbsManualStorageSavingsSchema,
+    getOracleEbsManualStorageSavingsCalculationMetricsSchema
 } from './schemas/storage-savings-schema';
 import {
     getManualModeStorageSavingsCalculationMetrics,
@@ -28,11 +30,14 @@ import {
     BulkStorageSavingsRequestBodyType,
     ManualStorageSavingsRequestBodyType,
     OracleBulkStorageSavingsRequestBodyType,
+    OracleManualStorageSavingsRequestBodyType,
     StorageSavingsRequestBodyType
 } from './types/storage-savings.types';
 import {
     getOracleBulkStorageSavingsCalculationMetrics,
-    performOracleBulkStorageSavingsCalculations
+    getOracleManualEbsStorageSavingsCalculationMetrics,
+    performOracleBulkStorageSavingsCalculations,
+    performOracleManualEbsStorageSavingsCalculations
 } from '../operations/workloads/oracle/oracle-storage-savings-operations';
 
 export default function storageSavingsRoutes(fastify: FastifyInstance) {
@@ -44,6 +49,7 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
         '/v1/oracle/credentials/:credentialsId/regions/:region/storage-savings';
 
     const API_PATH_MANUAL_STORAGE_SAVINGS = '/v1/mssql/regions/:region/manual-storage-savings';
+    const API_PATH_ORACLE_MANUAL_STORAGE_SAVINGS = '/v1/oracle/regions/:region/manual-storage-savings';
 
     server.put(
         '/v1/internal/recommendation-preferences',
@@ -207,6 +213,42 @@ export default function storageSavingsRoutes(fastify: FastifyInstance) {
                 accountId,
                 region,
                 body as ManualStorageSavingsRequestBodyType
+            );
+            return reply.send(response);
+        }
+    );
+
+    server.post(
+        `${API_PATH_ORACLE_MANUAL_STORAGE_SAVINGS}/ebs`,
+        { schema: getOracleEbsManualStorageSavingsSchema },
+        async (request: FastifyRequest, reply) => {
+            const {
+                params: { accountId, region },
+                body
+            } = castRequest(request);
+
+            const response = await performOracleManualEbsStorageSavingsCalculations(
+                accountId,
+                region,
+                body as OracleManualStorageSavingsRequestBodyType
+            );
+            return reply.send(response);
+        }
+    );
+
+    server.post(
+        `${API_PATH_ORACLE_MANUAL_STORAGE_SAVINGS}/ebs/calculations`,
+        { schema: getOracleEbsManualStorageSavingsCalculationMetricsSchema },
+        async (request: FastifyRequest, reply) => {
+            const {
+                params: { accountId, region },
+                body
+            } = castRequest(request);
+
+            const response = await getOracleManualEbsStorageSavingsCalculationMetrics(
+                accountId,
+                region,
+                body as OracleManualStorageSavingsRequestBodyType
             );
             return reply.send(response);
         }

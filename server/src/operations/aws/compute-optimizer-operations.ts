@@ -250,6 +250,15 @@ async function manageInstanceRecommendationPreReqsForProfile(
     );
 
     if (isEmpty(instanceTypes)) {
+        await addEc2InstancesToTrackedList(
+            accountId,
+            region,
+            credentialsId,
+            awsAccountId,
+            instanceIds,
+            TCO_FEATURE,
+            profile.databaseType
+        );
         throw new Error(
             'Instance types not found for the instance requirements, unable to create recommendation preference'
         );
@@ -267,7 +276,24 @@ async function manageInstanceRecommendationPreReqsForProfile(
     const isRecommendationPreferenceExists = includeList && includeList?.length > 1 && includeList?.[0] !== '*'; // includeList includes a list of ec2 instance types ; by default it is * so the length is 1; if its more than 1, that means we have added recommendation preferences
     await createRecommendationForResource(region, credentialsId, accountId, instanceIds, instanceTypes, awsAccountId);
     if (isRecommendationPreferenceExists) {
-        logger.info('Recommendation preference already exists for the instance, updating the last updated time');
+        logger.info('Recommendation preference already exists for the instance', {
+            accountId,
+            instanceIds
+        });
+        await addEc2InstancesToTrackedList(
+            accountId,
+            region,
+            credentialsId,
+            awsAccountId,
+            instanceIds,
+            TCO_FEATURE,
+            profile.databaseType
+        );
+        logger.info('Refreshing last_updated on tracked EC2 records', {
+            accountId,
+            instanceIds,
+            feature: TCO_FEATURE
+        });
         await Promise.all(
             instanceIds.map(async instanceId => {
                 await updateTrackedEc2Record(accountId, region, credentialsId, instanceId, TCO_FEATURE, {
@@ -349,15 +375,6 @@ async function addEc2InstancesToTrackedList(
     feature: string,
     databaseType: DATABASE_TYPE = DATABASE_TYPE.mssql
 ) {
-    logger.info('Adding instance to tracked list', {
-        accountId,
-        region,
-        credentialsId,
-        awsAccountId,
-        instanceIds,
-        feature,
-        databaseType
-    });
     const { items: trackedEc2Instances } = await listTrackedEc2Operation({ feature, accountId, region, credentialsId });
     const records = instanceIds
         .map(instanceId => ({
@@ -371,10 +388,29 @@ async function addEc2InstancesToTrackedList(
         }))
         .filter(
             record => !trackedEc2Instances?.some(trackedInstance => trackedInstance.instance_id === record.instance_id)
-        ); // filter out instances that are already tracked
+        );
 
-    if (records && records.length > 0) {
+    if (records.length > 0) {
+        logger.info('Inserting tracked EC2 records for instances not yet tracked', {
+            accountId,
+            region,
+            credentialsId,
+            awsAccountId,
+            instanceIds: records.map(r => r.instance_id),
+            feature,
+            databaseType
+        });
         await createTrackedEc2Records(records);
+    } else {
+        logger.info('All requested instances are already in the tracked list; skipping insert', {
+            accountId,
+            region,
+            credentialsId,
+            awsAccountId,
+            instanceIds,
+            feature,
+            databaseType
+        });
     }
 }
 

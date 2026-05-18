@@ -385,8 +385,20 @@ async function handleInstanceRecommendation(
                     hoursInMonth: HOURS_IN_MONTH,
                     licenseIncluded: isAwsLicenseIncluded
                 })),
+                // Filter purpose is two-fold:
+                //   1. Exclude the existing instance type (not a useful alternate recommendation).
+                //   2. Narrow `instanceType` from optional → required. Items reaching here are
+                //      already cross-checked against an allowlist upstream in
+                //      `getInstanceRecommendationsForProfile` (see filter on `instanceTypes.includes`),
+                //      so a missing `instanceType` here would be an upstream bug rather than a
+                //      legitimate API state. We still drop such items defensively because the AWS
+                //      Compute Optimizer SDK types `InstanceRecommendationOption.instanceType` as
+                //      optional and we cannot tighten that at the source.
                 recommendationOptions: instanceRecommendations
-                    ?.filter(({ instanceType }) => instanceType !== existingInstanceType)
+                    ?.filter(
+                        (rec): rec is typeof rec & { instanceType: string } =>
+                            !!rec.instanceType && rec.instanceType !== existingInstanceType
+                    )
                     ?.map(({ instanceType, pricingDetails }) => {
                         const basePrice = pricingDetails?.NA?.pricePerUnit;
                         const price =

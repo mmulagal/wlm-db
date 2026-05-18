@@ -72,37 +72,35 @@ const ManualStorageSavingsRequestParams = Type.Object({
     region: Type.String({ minLength: 1 })
 });
 
+const ManualModeVolume = Type.Object({
+    volumeType: Type.String({ enum: ['gp2', 'gp3', 'io1', 'io2', 'st1'] }),
+    volumeNumber: Type.Number({
+        minimum: 1
+    }),
+    storageAmount: Type.Number({
+        minimum: 1024 * 1024 * 1024, // 1 GB
+        maximum: 16 * 1024 * 1024 * 1024 * 1024 // 16 TB
+    }),
+    volumeIops: Type.Optional(
+        Type.Number({
+            minimum: 100,
+            maximum: 256000 // io2 supports upto 256000 IOPS
+        })
+    ),
+    throughput: Type.Optional(
+        Type.Number({
+            minimum: 125,
+            maximum: 1000
+        })
+    )
+});
+
 const ManualModeInstances = Type.Array(
     Type.Object({
         ec2InstanceDescription: Type.String(),
         ec2InstanceType: Type.String(),
         isPrimary: Type.Boolean(),
-        volumes: Type.Optional(
-            Type.Array(
-                Type.Object({
-                    volumeType: Type.String({ enum: ['gp2', 'gp3', 'io1', 'io2', 'st1'] }),
-                    volumeNumber: Type.Number({
-                        minimum: 1
-                    }),
-                    storageAmount: Type.Number({
-                        minimum: 1024 * 1024 * 1024, // 1 GB
-                        maximum: 16 * 1024 * 1024 * 1024 * 1024 // 16 TB
-                    }),
-                    volumeIops: Type.Optional(
-                        Type.Number({
-                            minimum: 100,
-                            maximum: 256000 // io2 supportes upto 256000 IOPS
-                        })
-                    ),
-                    throughput: Type.Optional(
-                        Type.Number({
-                            minimum: 125,
-                            maximum: 1000
-                        })
-                    )
-                })
-            )
-        ),
+        volumes: Type.Optional(Type.Array(ManualModeVolume)),
         fsxw: Type.Optional(
             Type.Object({
                 deploymentType: Type.String({ enum: ['Single', 'Multi'] }),
@@ -143,6 +141,47 @@ const ManualStorageSavingsRequestBody = Type.Object({
     ec2Instances: ManualModeInstances
 });
 
+const OracleManualModeInstanceItem = Type.Object({
+    ec2InstanceType: Type.String({ minLength: 1 }),
+    isPrimary: Type.Boolean(),
+    volumes: Type.Array(ManualModeVolume, { minItems: 1 })
+});
+
+// Kept as an unconstrained array of the item shape for external consumers / typing helpers.
+// Per-deployment-type cardinality (Standalone = 1, Data Guard = 2) is enforced by the
+// discriminated union in `OracleManualStorageSavingsRequestBody` below.
+const OracleManualModeInstances = Type.Array(OracleManualModeInstanceItem);
+
+const OracleManualStorageSavingsRequestBodyBase = {
+    oracleEdition: Type.Optional(Type.String({ enum: ['Enterprise Edition', 'Standard Edition 2'] })),
+    monthlyChangeRatePercentage: Type.Number({
+        minimum: 0,
+        maximum: 100
+    }),
+    snapshotFrequency: StorageSavingsRequestBody.properties.snapshotFrequency,
+    clonedCopiesCount: Type.Number({
+        minimum: 0
+    })
+};
+
+// Discriminated on `oracleDeploymentType` so the request shape matches what downstream
+// pricing/storage calculations assume: Standalone → exactly 1 instance (single node),
+// Data Guard → exactly 2 instances (primary + standby). Without this, Standalone could
+// pass with 2 instances (double-counted storage) or Data Guard with 1 instance (compute
+// fabricated by padding with the primary's instance type in `resolveOracleManualInstancePricing`).
+const OracleManualStorageSavingsRequestBody = Type.Union([
+    Type.Object({
+        ...OracleManualStorageSavingsRequestBodyBase,
+        oracleDeploymentType: Type.Literal('Standalone'),
+        ec2Instances: Type.Array(OracleManualModeInstanceItem, { minItems: 1, maxItems: 1 })
+    }),
+    Type.Object({
+        ...OracleManualStorageSavingsRequestBodyBase,
+        oracleDeploymentType: Type.Literal('Data Guard'),
+        ec2Instances: Type.Array(OracleManualModeInstanceItem, { minItems: 2, maxItems: 2 })
+    })
+]);
+
 const StorageMetrics = Type.Object({
     capacity: Type.Number(),
     iops: Type.Number(),
@@ -152,23 +191,36 @@ const StorageMetrics = Type.Object({
     total: Type.Number()
 });
 
-const MachinePriceDetails = Type.Array(
-    Type.Object({
-        instanceType: Type.String(),
-        price: Type.Optional(Type.Number()),
-        basePrice: Type.Optional(Type.Number()),
-        computeMonthlyPrice: Type.Optional(Type.Number()),
-        instanceMonthlyPrice: Type.Optional(Type.Number()),
-        hoursInMonth: Type.Number(),
-        licenseIncluded: Type.Optional(Type.Boolean()),
-        licenseMonthlyPrice: Type.Optional(Type.Number())
-    })
-);
+// Shared price-breakdown fields used by both the *chosen* recommended instance(s)
+// (`MachinePriceEntry` / `machineDetails`) and *alternative* Compute Optimizer candidates
+// (`RecommendationOption` / `recommendationOptions`). Defined as a plain object spread (rather
+// than via `Type.Pick`/`Type.Omit` from a wrapper schema) so each consumer remains a top-level
+// `Type.Object` — keeping `Static<>` inference, JSON-schema output, and Fastify validation
+// identical to the previous duplicated definitions.
+const BaseInstancePriceFields = {
+    instanceType: Type.String(),
+    price: Type.Optional(Type.Number()),
+    basePrice: Type.Optional(Type.Number()),
+    computeMonthlyPrice: Type.Optional(Type.Number()),
+    instanceMonthlyPrice: Type.Optional(Type.Number()),
+    hoursInMonth: Type.Number(),
+    licenseIncluded: Type.Optional(Type.Boolean()),
+    licenseMonthlyPrice: Type.Optional(Type.Number())
+};
 
-const RecommendationOption = Type.Object({
-    instanceType: Type.Optional(Type.String()),
-    pricingDetails: Type.Optional(Type.Unknown())
-});
+const MachinePriceEntry = Type.Object({ ...BaseInstancePriceFields });
+
+const MachinePriceDetails = Type.Array(MachinePriceEntry);
+
+// Conceptually distinct from `MachinePriceEntry` even though the field set is identical today:
+// `machineDetails` describes the *chosen* recommended instance(s) the savings calculation is
+// based on, while `recommendationOptions` describes *alternative* candidates surfaced by AWS
+// Compute Optimizer for the same host. Kept as its own schema (rather than aliased to
+// `MachinePriceEntry`) so it can evolve independently — e.g. recommendation options may later
+// carry Compute Optimizer-specific fields like `rank`, `savingsOpportunity`, or
+// `platformDifferences` that don't apply to the chosen instance breakdown. When that happens,
+// extend this object with the additional fields alongside `...BaseInstancePriceFields`.
+const RecommendationOption = Type.Object({ ...BaseInstancePriceFields });
 
 const StorageSavingsCompute = Type.Object({
     instanceType: Type.String(),
@@ -179,7 +231,7 @@ const StorageSavingsCompute = Type.Object({
     ),
     message: Type.Optional(Type.String()),
     machineDetails: Type.Optional(MachinePriceDetails),
-    recommendationOptions: Type.Optional(MachinePriceDetails)
+    recommendationOptions: Type.Optional(Type.Array(RecommendationOption))
 });
 
 const StorageSavingsLicense = Type.Object({
@@ -574,6 +626,8 @@ type AutomaticModeStorageSavingsMarketingParams = Pick<
 };
 
 type ManualStorageSavingsRequestBodyType = Static<typeof ManualStorageSavingsRequestBody>;
+type OracleManualStorageSavingsRequestBodyType = Static<typeof OracleManualStorageSavingsRequestBody>;
+type RecommendationOptionType = Static<typeof RecommendationOption>;
 
 const ComputeDetails = Type.Object({
     instanceType: Type.String(),
@@ -636,6 +690,7 @@ type EBSCloneCostCalculationRespType = Static<typeof EBSCloneCostCalculationResp
 type EBSSnapshotCalculationRespType = Static<typeof EBSSnapshotCalculationResp>;
 
 type ManualModeInstancesType = Static<typeof ManualModeInstances>;
+type OracleManualModeInstancesType = Static<typeof OracleManualModeInstances>;
 
 type BulkStorageSavingsRequestBodyType = Static<typeof BulkStorageSavingsRequestBody> & { bulk?: boolean };
 type OracleBulkStorageSavingsRequestBodyType = Static<typeof OracleBulkStorageSavingsRequestBody> & {
@@ -659,9 +714,13 @@ export {
     ManualStorageSavingsRequestParams,
     ManualStorageSavingsRequestBody,
     ManualModeInstances,
+    OracleManualStorageSavingsRequestBody,
+    OracleManualModeInstances,
     StorageSavingsRequestBodyType,
     AutomaticModeStorageSavingsMarketingParams,
     ManualStorageSavingsRequestBodyType,
+    OracleManualStorageSavingsRequestBodyType,
+    RecommendationOptionType,
     StorageSavingsResponse,
     StorageSavingsResponseType,
     StorageSavingsCalculationsMetricsResponse,
@@ -678,6 +737,7 @@ export {
     EBSSnapshotCalculationRespType,
     StorageSavingsCalculationsMetricsType,
     ManualModeInstancesType,
+    OracleManualModeInstancesType,
     BulkStorageSavingsRequestBody,
     BulkStorageSavingsRequestBodyType,
     OracleBulkStorageSavingsRequestBody,

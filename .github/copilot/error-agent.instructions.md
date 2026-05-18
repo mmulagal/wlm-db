@@ -54,7 +54,7 @@ Condensed requirements:
 3. Fix at the producer first (normalize type/shape so callers always get the expected form).
 4. Add a minimal guard at the crash site as belt-and-suspenders.
 5. Do not implement **competing** alternative fixes (e.g., several different producer-side changes or unrelated strategies in one PR). Pick **one** coherent fix strategy; steps 3-4 are still one strategy (producer correction plus the minimal guard from step 4).
-6. Add or update a unit test that covers the failure case (wrong type, shape, or missing data) to prevent regression.
+6. Add **at most one** unit test targeting the exact failure case (wrong type, shape, or missing data) to prevent regression. Do not add tests for happy paths, related scenarios, or adjacent code. If a test covering the same input already exists, update it instead of creating a new one. Do not create a new test file — only add to an existing one.
 7. Run pre-push validation per `git-conventions.instructions.md` before opening the PR.
 8. When you open the PR, follow **`git-conventions.instructions.md`** → **Pull Requests** (title, branch, **Linking the PR to the issue**, and **Error-agent PR description**). Do that when the PR is first opened, not only in follow-up edits.
 
@@ -98,6 +98,7 @@ You must complete all checks below before opening/updating a PR:
 -   If the issue has no stack trace, search for the exact error message text (or the variable name in it) first; do not try to match every context log line to code — that leads to scope creep and wrong paths.
 -   Do not change logging or error messages unless the issue body specifically asks for it — minimal diff only.
 -   Do not add tests that rely on external connectivity, environment-specific credentials, or live external service data.
+-   Do not create new test files. Do not add more than one new test case per PR. The only permitted test work is a single regression test for the exact failure scenario added to an existing test file, or an edit to an existing test case. Any additional test cases are out of scope.
 
 ## Using Code Location Hints
 

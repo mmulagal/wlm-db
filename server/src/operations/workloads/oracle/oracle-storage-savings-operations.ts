@@ -6,7 +6,11 @@ import {
     BulkStorageSavingsCalculationsMetricsResponseType,
     BulkStorageSavingsResponseType,
     ComputeLicenseCostType,
-    OracleBulkStorageSavingsRequestBodyType
+    OracleBulkStorageSavingsRequestBodyType,
+    OracleManualStorageSavingsRequestBodyType,
+    RecommendationOptionType,
+    StorageSavingsMetricsCalculationsResponseType,
+    StorageSavingsResponseType
 } from '../../../routes/types/storage-savings.types';
 import { DiscoverOracleResponseType } from '../../../routes/types/discover.types';
 import { NodeDetails } from '../../../utils/common-types';
@@ -29,15 +33,24 @@ import {
 import { getOracleInstanceRecommendations } from '../../aws/compute-optimizer-operations';
 import { getSqlInstancePricingDetails } from '../../aws/pricing-operations';
 import {
-    formatStorageSavingsCalculationMetrics,
-    handleMarketingApiFsxCalculationObject
+    formatManualStorageSavingsCalculationMetrics,
+    formatStorageSavingsCalculationMetrics
 } from '../../cloud-manager/marketing/marketing-operations';
 import { invokeMarketingApi } from '../../cloud-manager/marketing/marketing-operations-utils';
 import { discoverOracleResources } from '../../discover-operations';
 import { checkComputeOptimizerEnrollmentStatus } from '../../recommendation-operations';
-import { getExistingAndRecommendedComputeAndLicense, settledFulfilledValues } from '../../storage-savings-operations';
+import {
+    extractFsxSlotCalculation,
+    getExistingAndRecommendedComputeAndLicense,
+    normalizeInstancesForMarketing,
+    performManualEbsFsxnStorageCalculations,
+    settledFulfilledValues
+} from '../../storage-savings-operations';
 
 const logger = getLogger();
+
+const isOracleManualDataGuard = (params: OracleManualStorageSavingsRequestBodyType): boolean =>
+    params.oracleDeploymentType === 'Data Guard';
 
 type OracleEbsVolumePartition = {
     dgEbsVolumeIds: string[];
@@ -216,7 +229,7 @@ async function retrieveOracleComputeCost(
 
     let recommendedInstanceType = ec2InstanceType;
     let computeFinding: string = FINDING.OPTIMIZED;
-    let recommendationOptions: Array<{ instanceType?: string; pricingDetails?: unknown }> = [];
+    let recommendationOptions: RecommendationOptionType[] = [];
     let computeMessage: string | undefined;
 
     // Happy path: CO (+ CW-backed allowlist in ec2-operations). Catch below mirrors MSSQL EBS behavior on errors.
@@ -430,24 +443,9 @@ async function mixOfDgAndStandaloneOracleBulkStorageSavingsCalculations(
             ? sumStorageSummaries(dgFsx, saFsx)
             : dgFsx ?? saFsx ?? { capacity: 0, iops: 0, throughput: 0, snapshots: 0, clones: 0, total: 0 };
 
-    const multiFsxData = dgMarketing.multi?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(
-              dgMarketing.multi.fsx_calculation,
-              dgMarketing.multi.fsx_cost_calculation_no_snapshot
-          )
-        : undefined;
-    const singleFsxData = saMarketing.single?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(
-              saMarketing.single.fsx_calculation,
-              saMarketing.single.fsx_cost_calculation_no_snapshot
-          )
-        : undefined;
-    const fsxOptimizedSingleData = saMarketing.fsxOptimizedSingle?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(
-              saMarketing.fsxOptimizedSingle.fsx_calculation,
-              saMarketing.fsxOptimizedSingle.fsx_cost_calculation_no_snapshot
-          )
-        : undefined;
+    const multiFsxData = extractFsxSlotCalculation(dgMarketing.multi);
+    const singleFsxData = extractFsxSlotCalculation(saMarketing.single);
+    const fsxOptimizedSingleData = extractFsxSlotCalculation(saMarketing.fsxOptimizedSingle);
 
     return {
         compute: computeAndLicenseCostList.map(item => ({
@@ -545,18 +543,9 @@ async function performOracleBulkStorageSavingsCalculations(
     const { existingComputeLicensePrice, recommendedComputeLicensePrice } =
         getExistingAndRecommendedComputeAndLicense(computeAndLicenseCostList);
 
-    const singleFsxCalculationData = single?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(single.fsx_calculation, single.fsx_cost_calculation_no_snapshot)
-        : undefined;
-    const multiFsxCalculationData = multi?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
-        : undefined;
-    const fsxOptimizedSingleFsxCalculationData = fsxOptimizedSingle?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(
-              fsxOptimizedSingle.fsx_calculation,
-              fsxOptimizedSingle.fsx_cost_calculation_no_snapshot
-          )
-        : undefined;
+    const singleFsxCalculationData = extractFsxSlotCalculation(single);
+    const multiFsxCalculationData = extractFsxSlotCalculation(multi);
+    const fsxOptimizedSingleFsxCalculationData = extractFsxSlotCalculation(fsxOptimizedSingle);
 
     return {
         compute: computeAndLicenseCostList.map(item => ({
@@ -747,11 +736,190 @@ async function getOracleBulkStorageSavingsCalculationMetrics(
     };
 }
 
+async function resolveOracleManualInstancePricing(region: string, params: OracleManualStorageSavingsRequestBodyType) {
+    const nodeCount = isOracleManualDataGuard(params) ? 2 : 1;
+
+    const primaryNodes = params.ec2Instances.filter(n => n.isPrimary);
+    const primaryInstanceType = primaryNodes[0]?.ec2InstanceType || params.ec2Instances[0]?.ec2InstanceType || '';
+
+    const requestedTypes = params.ec2Instances.map(n => n.ec2InstanceType).filter(Boolean);
+    const paddedTypes =
+        nodeCount === 1
+            ? [primaryInstanceType]
+            : [requestedTypes[0] || primaryInstanceType, requestedTypes[1] || primaryInstanceType];
+
+    const hourlyPrices = await Promise.all(paddedTypes.map(t => getLinuxInstanceHourlyPrice(region, t)));
+    const computeHourlyPrice = hourlyPrices.reduce((sum, price) => sum + price, 0);
+    const computeMonthlyPrice = getMonthlyPriceFromHourlyPrice(computeHourlyPrice);
+    const machineDetails = paddedTypes.flatMap((t, idx) => buildOracleLinuxMachineDetails(t, hourlyPrices[idx] || 0));
+
+    return { primaryInstanceType, computeHourlyPrice, computeMonthlyPrice, machineDetails };
+}
+
+async function buildOracleManualComputeLicense(
+    region: string,
+    params: OracleManualStorageSavingsRequestBodyType
+): Promise<{
+    compute: StorageSavingsResponseType['compute'];
+    license: StorageSavingsResponseType['license'];
+}> {
+    const { primaryInstanceType, computeHourlyPrice, computeMonthlyPrice, machineDetails } =
+        await resolveOracleManualInstancePricing(region, params);
+
+    const existingCompute = {
+        instanceType: primaryInstanceType,
+        computeHourlyPrice,
+        instanceHourlyPrice: computeHourlyPrice,
+        computeMonthlyPrice,
+        instanceMonthlyPrice: computeMonthlyPrice,
+        hoursInMonth: HOURS_IN_MONTH,
+        finding: FINDING.OPTIMIZED,
+        machineDetails
+    };
+
+    const existingLicense = { finding: FINDING.OPTIMIZED };
+
+    return {
+        compute: { existing: existingCompute, recommended: existingCompute },
+        license: { existing: existingLicense, recommended: existingLicense }
+    };
+}
+
+async function buildOracleManualCalculationComputeLicense(
+    region: string,
+    params: OracleManualStorageSavingsRequestBodyType
+) {
+    const { primaryInstanceType, computeHourlyPrice, computeMonthlyPrice, machineDetails } =
+        await resolveOracleManualInstancePricing(region, params);
+
+    const computeCalculation = {
+        instanceType: primaryInstanceType,
+        computeHourlyPrice,
+        instanceHourlyPrice: computeHourlyPrice,
+        computeMonthlyPrice,
+        instanceMonthlyPrice: computeMonthlyPrice,
+        hoursInMonth: HOURS_IN_MONTH,
+        finding: FINDING.OPTIMIZED,
+        machineDetails,
+        recommendationOptions: []
+    };
+
+    const licenseCalculation = {
+        sqlServerEdition: undefined,
+        licenseHourlyPrice: 0,
+        licenseIncluded: false,
+        licenseMonthlyPrice: 0,
+        hoursInMonth: HOURS_IN_MONTH,
+        finding: FINDING.OPTIMIZED
+    };
+
+    return {
+        existingComputeCalculation: computeCalculation,
+        recommendedComputeCalculation: computeCalculation,
+        existingLicenseCalculation: licenseCalculation,
+        recommendedLicenseCalculation: licenseCalculation
+    };
+}
+
+async function performOracleManualEbsStorageSavingsCalculations(
+    accountId: string,
+    region: string,
+    params: OracleManualStorageSavingsRequestBodyType
+): Promise<StorageSavingsResponseType> {
+    logger.info('Performing Oracle manual EBS storage savings calculations', { accountId, region, params });
+
+    const deploymentType = isOracleManualDataGuard(params)
+        ? ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG
+        : ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE;
+
+    const storageParams = {
+        deploymentType,
+        snapshotFrequency: params.snapshotFrequency,
+        clonedCopiesCount: params.clonedCopiesCount,
+        monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
+        ec2Instances: params.ec2Instances
+    };
+
+    const [storageOnly, { compute, license }] = await Promise.all([
+        performManualEbsFsxnStorageCalculations(accountId, region, storageParams),
+        buildOracleManualComputeLicense(region, params)
+    ]);
+
+    return {
+        ...storageOnly,
+        compute,
+        license,
+        totalSummary: {
+            existing:
+                Number(storageOnly.totalSummary.existing || 0) + Number(compute.existing.computeMonthlyPrice || 0),
+            recommended:
+                Number(storageOnly.totalSummary.recommended || 0) + Number(compute.recommended.computeMonthlyPrice || 0)
+        }
+    } as unknown as StorageSavingsResponseType;
+}
+
+async function getOracleManualEbsStorageSavingsCalculationMetrics(
+    accountId: string,
+    region: string,
+    params: OracleManualStorageSavingsRequestBodyType
+): Promise<StorageSavingsMetricsCalculationsResponseType> {
+    logger.info('Getting Oracle manual EBS storage savings calculation metrics', { accountId, region, params });
+
+    const deploymentType = isOracleManualDataGuard(params)
+        ? ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG
+        : ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE;
+
+    // `formatManualStorageSavingsCalculationMetrics` does not return a top-level `fsx` total on its EBS path,
+    // so derive existing/recommended storage totals from `performManualEbsFsxnStorageCalculations` (same source
+    // used by `performOracleManualEbsStorageSavingsCalculations`) to keep the two endpoints consistent.
+    const [storageMetrics, storageTotals] = await Promise.all([
+        formatManualStorageSavingsCalculationMetrics(accountId, region, {
+            sqlServerDeploymentType: deploymentType,
+            sqlServerEdition: 'NA',
+            monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
+            snapshotFrequency: params.snapshotFrequency,
+            clonedCopiesCount: params.clonedCopiesCount,
+            ec2Instances: normalizeInstancesForMarketing(params.ec2Instances)
+        }),
+        performManualEbsFsxnStorageCalculations(accountId, region, {
+            deploymentType,
+            snapshotFrequency: params.snapshotFrequency,
+            clonedCopiesCount: params.clonedCopiesCount,
+            monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
+            ec2Instances: params.ec2Instances
+        })
+    ]);
+
+    const storageExistingTotal = Number(storageTotals.totalSummary.existing || 0);
+    const storageRecommendedTotal = Number(storageTotals.totalSummary.recommended || 0);
+
+    const {
+        existingComputeCalculation,
+        recommendedComputeCalculation,
+        existingLicenseCalculation,
+        recommendedLicenseCalculation
+    } = await buildOracleManualCalculationComputeLicense(region, params);
+
+    return {
+        existingComputeCalculation,
+        recommendedComputeCalculation,
+        existingLicenseCalculation,
+        recommendedLicenseCalculation,
+        ...storageMetrics,
+        totalSummary: {
+            existing: storageExistingTotal + Number(existingComputeCalculation.computeMonthlyPrice || 0),
+            recommended: storageRecommendedTotal + Number(recommendedComputeCalculation.computeMonthlyPrice || 0)
+        }
+    } as unknown as StorageSavingsMetricsCalculationsResponseType;
+}
+
 export {
     extractOracleEbsVolumeIdsForHost,
     getOracleAutomaticTcoComputeDeploymentTypeForHost,
     getOracleBulkStorageSavingsCalculationMetrics,
+    getOracleManualEbsStorageSavingsCalculationMetrics,
     isOracleHostIneligibleForAutomaticEbsSavings,
     partitionOracleEbsVolumesByDeploymentType,
-    performOracleBulkStorageSavingsCalculations
+    performOracleBulkStorageSavingsCalculations,
+    performOracleManualEbsStorageSavingsCalculations
 };

@@ -2,8 +2,9 @@
 # implementation, demo support, testcase design, functional testing, automation. Child titles use the epic title
 # with a leading `[EPIC]:` prefix stripped from the epic title for readability.
 #
-# Shape is encoded in STANDARD_STORY_DEFINITIONS and USER_STORY_SUB_DEFINITIONS below. Labels: Epic, Story, Task,
-# Test Plan. Native GitHub issue types when enabled: Epic, User Story, Task, Test Plan.
+# Shape is encoded in STANDARD_STORY_DEFINITIONS and USER_STORY_SUB_DEFINITIONS below. Labels: applied on create only
+# (epic non-type labels, testcase-design `progression`, nested `Task` where used); PATCH re-sync omits labels. User stories rely
+# on issue type User Story — no redundant `Story` text label. Native types: Epic, User Story, Task, Test Plan.
 #
 # Auto: issue opened as Epic with a milestone, OR existing Epic milestoned. Manual: workflow_dispatch for sprint-only
 # assignments or re-syncs. Re-runs (e.g. after a milestone change) resync milestone and project/sprint fields onto
@@ -13,10 +14,11 @@
 #
 # Milestone: copied from the epic to every created/updated child (REST). Omitted (not sent) when the epic has no
 # milestone so the REST API does not receive milestone: null on create.
-# Labels: the canonical Story/Task/Test Plan labels plus the epic's non-type labels are propagated to every child.
+# Labels: set only when an issue is first created (from the epic + testcase-design `progression` / `Task` as today).
+# Re-sync PATCH does not send `labels`, so existing user stories and tasks keep whatever labels they already have.
 # GitHub Project + Sprint (Iteration): copied from the epic's Project fields via GraphQL. The default GITHUB_TOKEN
 # cannot access organization/user Projects — set secret PROJECTS_SYNC_PAT (PAT with `project` + `repo`, or fine-grained
-# equivalent with Projects read/write). If unset, milestone + labels still apply; Project/Sprint propagation is
+# equivalent with Projects read/write). If unset, milestone and create-time labels still apply; Project/Sprint propagation is
 # skipped. Status is intentionally overridden to the project's "Todo" option on children rather than mirroring the
 # epic's status (avoids resetting in-progress children on re-runs); other single-select fields copy as-is.
 # GraphQL calls retry on 5xx / secondary rate limit / network errors with exponential backoff.
@@ -160,7 +162,12 @@ jobs:
                   }
 
                   function nestedIssueLabels(nestedSlug) {
-                      return nestedSlug === "testcase-design" ? ["Test Plan"] : ["Task"];
+                      return nestedSlug === "testcase-design" ? ["progression"] : ["Task"];
+                  }
+
+                  /** Merge canonical nested labels + epic-derived labels without duplicates. */
+                  function nestedIssuesLabelsMerged(nestedSlug, epic) {
+                      return [...new Set([...nestedIssueLabels(nestedSlug), ...extraLabelsFromEpic(epic)])];
                   }
 
                   const TYPE_LABEL_NAMES = new Set([
@@ -364,6 +371,7 @@ jobs:
                   }
 
                   function buildFieldUpdate(fv) {
+                      if (!fv) return null;
                       const field = fv.field;
                       const fname = field && field.name;
                       if (!field || !fname || SKIP_PROJECT_FIELD_NAMES.has(fname)) {
@@ -604,7 +612,7 @@ jobs:
                                           slug: def.slug,
                                           title: def.title,
                                       }),
-                                      labels: ["Story", ...extraLabelsFromEpic(epic)],
+                                      labels: [...extraLabelsFromEpic(epic)],
                                       type: GITHUB_ISSUE_TYPE.USER_STORY,
                                       ...milestoneFromEpic(epic),
                                       ...assigneesPayload(),
@@ -638,7 +646,6 @@ jobs:
                                           slug: def.slug,
                                           title: def.title,
                                       }),
-                                      labels: ["Story", ...extraLabelsFromEpic(epic)],
                                       type: GITHUB_ISSUE_TYPE.USER_STORY,
                                       ...milestoneFromEpic(epic),
                                       ...assigneesPayload(),
@@ -671,7 +678,6 @@ jobs:
                                       `/repos/${owner}/${repo}/issues/${existingNested.number}`,
                                       {
                                           title: nestedTitle,
-                                          labels: [...nestedIssueLabels(nest.slug), ...extraLabelsFromEpic(epic)],
                                           type: nestedIssueType(nest.slug),
                                           ...milestoneFromEpic(epic),
                                           ...assigneesPayload(),
@@ -679,7 +685,7 @@ jobs:
                                       "updateIssue"
                                   );
                                   console.log(
-                                      `Child issue #${existingNested.number} already present under user story #${storyIssue.number}; title, labels, type, and assignee updated.`
+                                      `Child issue #${existingNested.number} already present under user story #${storyIssue.number}; title, type, assignee, and milestone updated (labels unchanged).`
                                   );
                                   await propagateProjectsToIssue(
                                       projectToken,
@@ -700,7 +706,7 @@ jobs:
                                           storyTitle: def.title,
                                           userStoryNumber: storyIssue.number,
                                       }),
-                                      labels: [...nestedIssueLabels(nest.slug), ...extraLabelsFromEpic(epic)],
+                                      labels: nestedIssuesLabelsMerged(nest.slug, epic),
                                       type: nestedIssueType(nest.slug),
                                       ...milestoneFromEpic(epic),
                                       ...assigneesPayload(),

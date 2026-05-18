@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 
 import '../../../simulator/scopes/aws/ec2-scope';
 
 import { DiscoverOracleResponseType } from '../../../../src/routes/types/discover.types';
 import {
+    HOURS_IN_MONTH,
     ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
     ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE
 } from '../../../../src/utils/consts';
@@ -13,15 +14,20 @@ import * as marketingOps from '../../../../src/operations/cloud-manager/marketin
 import * as marketingOpsUtils from '../../../../src/operations/cloud-manager/marketing/marketing-operations-utils';
 import type { MarketingApiResponse } from '../../../../src/operations/cloud-manager/marketing/marketing-operations-utils';
 import type { FsxCostCalculations } from '../../../../src/utils/marketing-types';
+import type { OracleManualStorageSavingsRequestBodyType } from '../../../../src/routes/types/storage-savings.types';
 import ebsStorageSavingsCalculationFixture from '../../../simulator/responses/cloud-manager/ebs-storage-savings-calculation.json';
 import * as oracleStorageSavingsModule from '../../../../src/operations/workloads/oracle/oracle-storage-savings-operations';
+import * as pricingOperations from '../../../../src/operations/aws/pricing-operations';
+import * as storageSavingsOperations from '../../../../src/operations/storage-savings-operations';
 import {
     extractOracleEbsVolumeIdsForHost,
     getOracleAutomaticTcoComputeDeploymentTypeForHost,
     getOracleBulkStorageSavingsCalculationMetrics,
+    getOracleManualEbsStorageSavingsCalculationMetrics,
     isOracleHostIneligibleForAutomaticEbsSavings,
     partitionOracleEbsVolumesByDeploymentType,
-    performOracleBulkStorageSavingsCalculations
+    performOracleBulkStorageSavingsCalculations,
+    performOracleManualEbsStorageSavingsCalculations
 } from '../../../../src/operations/workloads/oracle/oracle-storage-savings-operations';
 import { getOracleTcoEbsDescribeVolumesForSimulator } from '../../../../src/operations/demo-operations';
 import { discoverDemoDataOracle } from '../../../../src/utils/demo-utils/demoInventoryData';
@@ -354,6 +360,141 @@ describe('mixed vs homogeneous marketing API call routing', () => {
         // Call 2: standalone volumes only
         expect(formatMetricsSpy.mock.calls[1][3]).toEqual(['vol-sa-1']);
         expect(formatMetricsSpy.mock.calls[1][5]).toBe(ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE);
+    });
+});
+
+// ─── Oracle manual EBS (performOracleManualEbsStorageSavingsCalculations /   ───
+//     getOracleManualEbsStorageSavingsCalculationMetrics) — totalSummary merge ───
+
+function makeOracleManualStandaloneParams(): OracleManualStorageSavingsRequestBodyType {
+    return {
+        oracleDeploymentType: 'Standalone',
+        monthlyChangeRatePercentage: 10,
+        snapshotFrequency: 'Daily',
+        clonedCopiesCount: 1,
+        ec2Instances: [
+            {
+                ec2InstanceType: 'm5.large',
+                isPrimary: true,
+                volumes: [
+                    {
+                        volumeType: 'gp3',
+                        volumeNumber: 1,
+                        storageAmount: 1073741824,
+                        volumeIops: 3000,
+                        throughput: 125
+                    }
+                ]
+            }
+        ]
+    };
+}
+
+describe('Oracle manual EBS storage savings', () => {
+    const stubHourlyPrice = 1;
+
+    beforeEach(() => {
+        vi.spyOn(pricingOperations, 'getSqlInstancePricingDetails').mockResolvedValue({
+            'm5.large': { NA: { pricePerUnit: stubHourlyPrice, unit: 'Hrs' } }
+        } as Awaited<ReturnType<typeof pricingOperations.getSqlInstancePricingDetails>>);
+    });
+
+    it('should merge manual storage-only totals with compute into totalSummary', async () => {
+        const storageExisting = 100;
+        const storageRecommended = 60;
+        const manualStorageSpy = vi
+            .spyOn(storageSavingsOperations, 'performManualEbsFsxnStorageCalculations')
+            .mockResolvedValue({
+                ebs: makeStorageSummary(storageExisting),
+                fsx: makeStorageSummary(storageRecommended),
+                totalSummary: {
+                    existing: storageExisting,
+                    recommended: storageRecommended
+                }
+            } as Awaited<ReturnType<typeof storageSavingsOperations.performManualEbsFsxnStorageCalculations>>);
+
+        const params = makeOracleManualStandaloneParams();
+        const result = await performOracleManualEbsStorageSavingsCalculations('acct', 'us-east-1', params);
+
+        expect(manualStorageSpy).toHaveBeenCalledWith(
+            'acct',
+            'us-east-1',
+            expect.objectContaining({
+                deploymentType: ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
+                snapshotFrequency: params.snapshotFrequency,
+                clonedCopiesCount: params.clonedCopiesCount,
+                monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
+                ec2Instances: params.ec2Instances
+            })
+        );
+
+        const expectedComputeMonthly = stubHourlyPrice * HOURS_IN_MONTH;
+        expect(result.compute.existing.computeMonthlyPrice).toBe(expectedComputeMonthly);
+        expect(result.totalSummary.existing).toBe(storageExisting + expectedComputeMonthly);
+        expect(result.totalSummary.recommended).toBe(storageRecommended + expectedComputeMonthly);
+    });
+
+    it('should merge manual storage metrics with compute into totalSummary using authoritative storage totals', async () => {
+        // `formatManualStorageSavingsCalculationMetrics` does NOT return a top-level `fsx` total
+        // on its EBS path (only `ebs`, `ebsCalculation`, `ebsCloneCalculation`, `ebsSnapshotCalculation`,
+        // `single`/`multi`). Storage totals must therefore come from `performManualEbsFsxnStorageCalculations`,
+        // not from the metrics response. Mock the metrics response to omit `fsx`/`ebs` to lock that in.
+        const formatManualSpy = vi
+            .spyOn(marketingOps, 'formatManualStorageSavingsCalculationMetrics')
+            .mockResolvedValue({
+                ebsCalculation: { gp3: {} },
+                ebsCloneCalculation: { gp3: {} },
+                ebsSnapshotCalculation: { gp3: {} },
+                single: {}
+            } as unknown as Awaited<ReturnType<typeof marketingOps.formatManualStorageSavingsCalculationMetrics>>);
+
+        const storageExisting = 50;
+        const storageRecommended = 30;
+        const manualStorageSpy = vi
+            .spyOn(storageSavingsOperations, 'performManualEbsFsxnStorageCalculations')
+            .mockResolvedValue({
+                ebs: makeStorageSummary(storageExisting),
+                fsx: makeStorageSummary(storageRecommended),
+                totalSummary: {
+                    existing: storageExisting,
+                    recommended: storageRecommended
+                }
+            } as Awaited<ReturnType<typeof storageSavingsOperations.performManualEbsFsxnStorageCalculations>>);
+
+        const params = makeOracleManualStandaloneParams();
+        const result = await getOracleManualEbsStorageSavingsCalculationMetrics('acct', 'us-east-1', params);
+
+        expect(formatManualSpy).toHaveBeenCalledWith(
+            'acct',
+            'us-east-1',
+            expect.objectContaining({
+                sqlServerDeploymentType: ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
+                sqlServerEdition: 'NA',
+                monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
+                snapshotFrequency: params.snapshotFrequency,
+                clonedCopiesCount: params.clonedCopiesCount
+            })
+        );
+
+        expect(manualStorageSpy).toHaveBeenCalledWith(
+            'acct',
+            'us-east-1',
+            expect.objectContaining({
+                deploymentType: ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
+                snapshotFrequency: params.snapshotFrequency,
+                clonedCopiesCount: params.clonedCopiesCount,
+                monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
+                ec2Instances: params.ec2Instances
+            })
+        );
+
+        const expectedComputeMonthly = stubHourlyPrice * HOURS_IN_MONTH;
+        expect(result.existingComputeCalculation.computeMonthlyPrice).toBe(expectedComputeMonthly);
+        // Recommended must include FSx storage (storageRecommended), not just compute — regression guard
+        // for the bug where `storageMetrics.fsx?.total` was always undefined.
+        expect(result.totalSummary.existing).toBe(storageExisting + expectedComputeMonthly);
+        expect(result.totalSummary.recommended).toBe(storageRecommended + expectedComputeMonthly);
+        expect(result.totalSummary.recommended).toBeGreaterThan(expectedComputeMonthly);
     });
 });
 

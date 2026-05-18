@@ -15,35 +15,29 @@ import {
     FsxwSnapshotCalculationRespType,
     ManualStorageSavingsRequestBodyType,
     StorageSavingsMetricsCalculationsResponseType,
-    StorageSavingsRequestBodyType
+    StorageSavingsRequestBodyType,
+    StorageSavingsResponseType
 } from '../../../routes/types/storage-savings.types';
 import { DiscoverResponseInfoType, SqlServerInstanceInfoType } from '../../../routes/types/discover.types';
 import { FileSystemTypes, HOURS_IN_MONTH, HttpErrorCodes, SqlServerDeploymentModel } from '../../../utils/consts';
 import getLogger from '../../../utils/logger';
-import {
-    ManualModeEbsComparisonV2Response,
-    ManualModeFsxwComparisonResponse,
-    StorageSummary
-} from '../../../utils/marketing-types';
-import { fsxStorageCapacityBreakdown, getMonthlyPriceFromHourlyPrice, isMultiAzDeployment } from '../../../utils/utils';
-import { getEbsManualModeStorageSavings, getFsxwManualModeStorageSavings } from '../../../lib/cloud-manager/marketing';
+import { StorageSummary } from '../../../utils/marketing-types';
+import { fsxStorageCapacityBreakdown, getMonthlyPriceFromHourlyPrice } from '../../../utils/utils';
 import { getInstanceDetailsByPrivateIp } from '../../aws/ec2-operations';
-import {
-    formatManualStorageSavingsCalculationMetrics,
-    formatStorageSavingsCalculationMetrics,
-    handleMarketingApiFsxCalculationObject
-} from '../../cloud-manager/marketing/marketing-operations';
+import { formatStorageSavingsCalculationMetrics } from '../../cloud-manager/marketing/marketing-operations';
 import {
     invokeMarketingApi,
     type MarketingApiResponse
 } from '../../cloud-manager/marketing/marketing-operations-utils';
-import {
-    getEbsMarketingApiManualModeRequestBody,
-    getFsxwMarketingApiManualModeRequestBody
-} from '../../cloud-manager/marketing/marketing-request-utils';
 import { getHostAndSqlServerInfo } from '../../discover-operations';
 import { getSqlInstanceLicenseRecommendations, manualModeComputeLicenseDetails } from '../../recommendation-operations';
-import { getExistingAndRecommendedComputeAndLicense, settledFulfilledValues } from '../../storage-savings-operations';
+import {
+    extractFsxSlotCalculation,
+    getExistingAndRecommendedComputeAndLicense,
+    getManualEbsFsxnStorageCalculationMetrics,
+    performManualEbsFsxnStorageCalculations,
+    settledFulfilledValues
+} from '../../storage-savings-operations';
 
 const logger = getLogger();
 
@@ -223,18 +217,9 @@ async function aoagStorageSavingsCalculations(
         const allNodesRecommendedLicensePrice = allNodesComputeLicenseDetails.license.recommended.licenseHourlyPrice;
         const recommendedLicenseMonthlyPrice = getMonthlyPriceFromHourlyPrice(allNodesRecommendedLicensePrice || 0);
 
-        const singleFsxCalculationData = single?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation, single.fsx_cost_calculation_no_snapshot)
-            : undefined;
-        const multiFsxCalculationData = multi?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
-            : undefined;
-        const fsxOptimizedSingleFsxCalculationData = fsxOptimizedSingle?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(
-                  fsxOptimizedSingle.fsx_calculation,
-                  fsxOptimizedSingle.fsx_cost_calculation_no_snapshot
-              )
-            : undefined;
+        const singleFsxCalculationData = extractFsxSlotCalculation(single);
+        const multiFsxCalculationData = extractFsxSlotCalculation(multi);
+        const fsxOptimizedSingleFsxCalculationData = extractFsxSlotCalculation(fsxOptimizedSingle);
         return {
             compute: { ...compute, deploymentType, hostname },
             license: { ...license, deploymentType, hostname },
@@ -579,13 +564,8 @@ async function performStorageSavingsCalculations(
         const { existingComputeLicensePrice, recommendedComputeLicensePrice } =
             getExistingAndRecommendedComputeAndLicense(computeAndLicenseCostList);
 
-        const singleFsxCalculationData = single?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(single.fsx_calculation, single.fsx_cost_calculation_no_snapshot)
-            : undefined;
-
-        const multiFsxCalculationData = multi?.fsx_calculation
-            ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
-            : undefined;
+        const singleFsxCalculationData = extractFsxSlotCalculation(single);
+        const multiFsxCalculationData = extractFsxSlotCalculation(multi);
 
         if (!computeAndLicenseCostList.length) {
             logger.warn('computeAndLicenseCostList is empty; primaryHostComputeLicense will be undefined', {
@@ -701,18 +681,9 @@ async function performStorageSavingsCalculations(
     const { existingComputeLicensePrice, recommendedComputeLicensePrice } =
         getExistingAndRecommendedComputeAndLicense(computeAndLicenseCostList);
 
-    const singleFsxCalculationData = single?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(single.fsx_calculation, single.fsx_cost_calculation_no_snapshot)
-        : undefined;
-    const multiFsxCalculationData = multi?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
-        : undefined;
-    const fsxOptimizedSingleFsxCalculationData = fsxOptimizedSingle?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(
-              fsxOptimizedSingle.fsx_calculation,
-              fsxOptimizedSingle.fsx_cost_calculation_no_snapshot
-          )
-        : undefined;
+    const singleFsxCalculationData = extractFsxSlotCalculation(single);
+    const multiFsxCalculationData = extractFsxSlotCalculation(multi);
+    const fsxOptimizedSingleFsxCalculationData = extractFsxSlotCalculation(fsxOptimizedSingle);
     if (!computeAndLicenseCostList.length) {
         logger.warn('computeAndLicenseCostList is empty; primaryHostComputeLicense will be undefined', {
             accountId
@@ -1133,6 +1104,15 @@ async function getStorageSavingsCalculationMetrics(
     };
 }
 
+/**
+ * MSSQL manual-mode storage savings (storage + compute/license).
+ *
+ * Set `skipComputeLicense=true` for callers that derive compute/license totals themselves and
+ * only need the EBS/FSx storage payload (e.g. the MSSQL bulk on-prem TCO flow, which
+ * destructures only `ebs`, `fsx`, `single`, `multi`). Skipping avoids two extra pricing
+ * round-trips per request. Oracle does not call this wrapper — it uses
+ * `performManualEbsFsxnStorageCalculations` directly, which is storage-only by construction.
+ */
 async function performManualModeStorageSavingsCalculations(
     accountId: string,
     region: string,
@@ -1140,7 +1120,7 @@ async function performManualModeStorageSavingsCalculations(
     nodeCount: number = 2,
     isOnpremTcoFlow: boolean = false,
     skipComputeLicense: boolean = false
-) {
+): Promise<StorageSavingsResponseType> {
     logger.info('Getting manual mode storage savings calculations ', {
         accountId,
         region,
@@ -1149,143 +1129,52 @@ async function performManualModeStorageSavingsCalculations(
         isOnpremTcoFlow,
         skipComputeLicense
     });
-    if (!isEmpty(params?.ec2Instances[0]?.volumes)) {
-        // EBS flow
-        return handleEbsWorkflow(accountId, region, params, nodeCount, isOnpremTcoFlow, skipComputeLicense);
+    const storageParams = {
+        deploymentType: params.sqlServerDeploymentType,
+        snapshotFrequency: params.snapshotFrequency,
+        clonedCopiesCount: params.clonedCopiesCount,
+        monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
+        ec2Instances: params.ec2Instances
+    };
+
+    if (skipComputeLicense) {
+        const storageOnly = await performManualEbsFsxnStorageCalculations(accountId, region, storageParams);
+        // Callers that skip compute/license derive those totals themselves and only read
+        // storage fields from this response (`ebs`, `fsx`, `single`, `multi`). The route-level
+        // response type still requires `compute`/`license`; surface them as `undefined` so the
+        // shape is consistent with the prior (pre-refactor) skip behavior.
+        return { ...storageOnly, compute: undefined, license: undefined } as unknown as StorageSavingsResponseType;
     }
-    return handleFsxwWorkflow(region, params, accountId, nodeCount, skipComputeLicense);
-}
 
-async function handleEbsWorkflow(
-    accountId: string,
-    region: string,
-    params: ManualStorageSavingsRequestBodyType,
-    nodeCount: number,
-    isOnpremTcoFlow: boolean,
-    skipComputeLicense: boolean = false
-) {
-    logger.info('Handling EBS workflow for manual mode storage savings calculation', {
-        accountId,
-        region,
-        params,
-        nodeCount,
-        isOnpremTcoFlow,
-        skipComputeLicense
-    });
-
-    const { sqlServerDeploymentType } = params;
-    const ebsMarketingRequestBody = getEbsMarketingApiManualModeRequestBody(region, params);
-
-    const {
-        ebsTotal,
-        fsx,
-        fsx_calculation: fsxCalculation,
-        fsx_cost_calculation_no_snapshot: fsxCostCalculationNoSnapshot
-    } = await getEbsManualModeStorageSavings<ManualModeEbsComparisonV2Response>(accountId, ebsMarketingRequestBody);
-    const { compute, license } = skipComputeLicense
-        ? { compute: undefined, license: undefined }
-        : await manualModeComputeLicenseDetails(region, params, nodeCount, isOnpremTcoFlow);
-
-    const isMultiAz = isMultiAzDeployment(sqlServerDeploymentType);
-
-    const fsxCalculationData = handleMarketingApiFsxCalculationObject(fsxCalculation, fsxCostCalculationNoSnapshot);
-
+    const [storageOnly, { compute, license }] = await Promise.all([
+        performManualEbsFsxnStorageCalculations(accountId, region, storageParams),
+        manualModeComputeLicenseDetails(region, params, nodeCount, isOnpremTcoFlow)
+    ]);
     return {
+        ...storageOnly,
         compute,
         license,
-        ebs: ebsTotal,
-        fsx,
-        ...(!isMultiAz && {
-            single: {
-                fsxCalculation: fsxCalculationData,
-                fsxBreakdown: fsxStorageCapacityBreakdown(
-                    fsxCalculationData.totalStorageCapacity,
-                    sqlServerDeploymentType!
-                )
-            }
-        }),
-        ...(isMultiAz && {
-            multi: {
-                fsxCalculation: fsxCalculationData,
-                fsxBreakdown: fsxStorageCapacityBreakdown(
-                    fsxCalculationData.totalStorageCapacity,
-                    sqlServerDeploymentType!
-                )
-            }
-        }),
         totalSummary: {
             existing:
-                Number(ebsTotal.total || 0) +
+                Number(storageOnly.totalSummary.existing || 0) +
                 Number(compute?.existing?.computeMonthlyPrice || 0) +
                 Number(license?.existing?.licenseMonthlyPrice || 0),
             recommended:
-                fsx.total +
+                Number(storageOnly.totalSummary.recommended || 0) +
                 Number(compute?.recommended?.computeMonthlyPrice || 0) +
                 Number(license?.recommended?.licenseMonthlyPrice || 0)
         }
     };
 }
 
-async function handleFsxwWorkflow(
-    region: string,
-    params: ManualStorageSavingsRequestBodyType,
-    accountId: string,
-    nodeCount: number,
-    skipComputeLicense: boolean = false
-) {
-    const fsxwMarketingRequestBody = getFsxwMarketingApiManualModeRequestBody(region, params);
-    if (!fsxwMarketingRequestBody) {
-        throw createError(
-            HttpErrorCodes.NOT_FOUND,
-            'No FSxW configuration found for the provided manual mode parameters. Please ensure that the request includes valid FSxW configuration details such as file system type, storage capacity, and deployment type.'
-        );
-    }
-    const resp = await getFsxwManualModeStorageSavings<ManualModeFsxwComparisonResponse>(
-        accountId,
-        fsxwMarketingRequestBody
-    );
-
-    const {
-        fsx_calculation: fsxCalculation,
-        fsx_cost_calculation_no_snapshot: fsxCalculationDataNoSnapshot,
-        fsx,
-        fsxw
-    } = resp;
-    const fsxCalculationData = fsxCalculation
-        ? handleMarketingApiFsxCalculationObject(fsxCalculation, fsxCalculationDataNoSnapshot)
-        : undefined;
-
-    const { compute, license } = skipComputeLicense
-        ? { compute: undefined, license: undefined }
-        : await manualModeComputeLicenseDetails(region, params, nodeCount);
-
-    return {
-        compute,
-        license,
-        fsx,
-        fsxw,
-        ...(fsxCalculationData && {
-            [isMultiAzDeployment(params.sqlServerDeploymentType) ? 'multi' : 'single']: {
-                fsxCalculation: fsxCalculationData,
-                fsxBreakdown: fsxStorageCapacityBreakdown(
-                    fsxCalculationData.totalStorageCapacity,
-                    params.sqlServerDeploymentType!
-                )
-            }
-        }),
-        totalSummary: {
-            existing:
-                Number(fsxw.total || 0) +
-                Number(compute?.existing?.computeMonthlyPrice || 0) +
-                Number(license?.existing?.licenseMonthlyPrice || 0),
-            recommended:
-                fsx.total +
-                Number(compute?.recommended?.computeMonthlyPrice || 0) +
-                Number(license?.recommended?.licenseMonthlyPrice || 0)
-        }
-    };
-}
-
+/**
+ * MSSQL manual-mode storage savings metrics (storage + compute/license calculations).
+ *
+ * Set `skipComputeLicense=true` for callers that derive compute/license calculations themselves
+ * and only need the storage-side metrics (e.g. the MSSQL bulk on-prem TCO flow, which only
+ * reads `ebsCalculation` / fsx-side fields from the response and supplies per-resource
+ * compute/license calculations separately). Skipping avoids two extra pricing round-trips.
+ */
 async function getManualModeStorageSavingsCalculationMetrics(
     accountId: string,
     region: string,
@@ -1307,7 +1196,18 @@ async function getManualModeStorageSavingsCalculationMetrics(
         ? undefined
         : await manualModeComputeLicenseDetails(region, params, nodeCount, isOnpremTcoFlow);
 
-    const resp = await formatManualStorageSavingsCalculationMetrics(accountId, region, params);
+    const resp = await getManualEbsFsxnStorageCalculationMetrics(accountId, region, {
+        deploymentType: params.sqlServerDeploymentType,
+        snapshotFrequency: params.snapshotFrequency,
+        clonedCopiesCount: params.clonedCopiesCount,
+        monthlyChangeRatePercentage: params.monthlyChangeRatePercentage,
+        ec2Instances: params.ec2Instances
+    });
+
+    const existingComputeMonthlyPrice = Number(computeLicense?.compute?.existing?.computeMonthlyPrice || 0);
+    const existingLicenseMonthlyPrice = Number(computeLicense?.license?.existing?.licenseMonthlyPrice || 0);
+    const recommendedComputeMonthlyPrice = Number(computeLicense?.compute?.recommended?.computeMonthlyPrice || 0);
+    const recommendedLicenseMonthlyPrice = Number(computeLicense?.license?.recommended?.licenseMonthlyPrice || 0);
 
     if (params.ec2Instances[0].fsxw) {
         const { single, multi, fsxwCalculation, fsxwCloneCalculation, fsxwSnapshotCalculation, fsx, fsxw } =
@@ -1325,14 +1225,8 @@ async function getManualModeStorageSavingsCalculationMetrics(
             fsxwCloneCalculation,
             fsxwSnapshotCalculation,
             totalSummary: {
-                existing:
-                    Number(fsxw?.total || 0) +
-                    Number(computeLicense?.compute?.existing?.computeMonthlyPrice || 0) +
-                    Number(computeLicense?.license?.existing?.licenseMonthlyPrice || 0),
-                recommended:
-                    Number(fsx?.total || 0) +
-                    Number(computeLicense?.compute?.recommended?.computeMonthlyPrice || 0) +
-                    Number(computeLicense?.license?.recommended?.licenseMonthlyPrice || 0)
+                existing: Number(fsxw?.total || 0) + existingComputeMonthlyPrice + existingLicenseMonthlyPrice,
+                recommended: Number(fsx?.total || 0) + recommendedComputeMonthlyPrice + recommendedLicenseMonthlyPrice
             }
         } as unknown as StorageSavingsMetricsCalculationsResponseType;
     }
@@ -1352,14 +1246,8 @@ async function getManualModeStorageSavingsCalculationMetrics(
         ...(single && { single }),
         ...(multi && { multi }),
         totalSummary: {
-            existing:
-                Number(ebs?.total || 0) +
-                Number(computeLicense?.compute?.existing?.computeMonthlyPrice || 0) +
-                Number(computeLicense?.license?.existing?.licenseMonthlyPrice || 0),
-            recommended:
-                Number(fsx?.total || 0) +
-                Number(computeLicense?.compute?.recommended?.computeMonthlyPrice || 0) +
-                Number(computeLicense?.license?.recommended?.licenseMonthlyPrice || 0)
+            existing: Number(ebs?.total || 0) + existingComputeMonthlyPrice + existingLicenseMonthlyPrice,
+            recommended: Number(fsx?.total || 0) + recommendedComputeMonthlyPrice + recommendedLicenseMonthlyPrice
         }
     } as unknown as StorageSavingsMetricsCalculationsResponseType;
 }
@@ -1402,18 +1290,9 @@ function returnAoagStorageSavingsResponse({
     const { ebs: allEbsDetails } = allEbsCapacityDetails;
     const { ebs, fsx, single, multi, fsxOptimized, fsxOptimizedSingle } = uniqueEbsCapacityDetails;
 
-    const singleFsxCalculationData = single?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(single.fsx_calculation, single.fsx_cost_calculation_no_snapshot)
-        : undefined;
-    const multiFsxCalculationData = multi?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(multi.fsx_calculation, multi.fsx_cost_calculation_no_snapshot)
-        : undefined;
-    const fsxOptimizedSingleFsxCalculationData = fsxOptimizedSingle?.fsx_calculation
-        ? handleMarketingApiFsxCalculationObject(
-              fsxOptimizedSingle.fsx_calculation,
-              fsxOptimizedSingle.fsx_cost_calculation_no_snapshot
-          )
-        : undefined;
+    const singleFsxCalculationData = extractFsxSlotCalculation(single);
+    const multiFsxCalculationData = extractFsxSlotCalculation(multi);
+    const fsxOptimizedSingleFsxCalculationData = extractFsxSlotCalculation(fsxOptimizedSingle);
 
     return {
         compute,
