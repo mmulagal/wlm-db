@@ -20,7 +20,7 @@ locals {
   operating_system               = local.is_windows ? "Windows" : "Linux"
   sql_fsx_server_net_bios_name   = element(split(",", var.node_net_bios_names), 0)
   sql_fsx_server_net_bios_name_2 = element(split(",", var.node_net_bios_names), 1)
-  ontap_security_groups          = split(",", var.ontap_security_group_id)
+  ontap_security_groups          = var.ontap_security_group_id == "" ? [] : split(",", var.ontap_security_group_id)
   group_set                      = concat([aws_security_group.workload_security_group.id], local.ontap_security_groups)
 }
 
@@ -199,7 +199,7 @@ module "standalone_sql_node" {
   sql_node_aws_location            = var.aws_location
   route_table_id                   = var.route_table1_id
   ebs_volume_size                  = var.ebs_volume_size
-  ontap_security_group_id          = local.new_ontap_fsx ? module.fsxn_standalone[0].fsxn_security_group_id : var.ontap_security_group_id
+  ontap_security_group_id          = var.ontap_security_group_id
   sql_fsx_server_net_bios_name     = local.sql_fsx_server_net_bios_name
   workload_instance_type           = var.workload_instance_type
   sql_node_name                    = "PGSQL-Node"
@@ -236,7 +236,7 @@ module "ha_pgsql_node1" {
   sql_node_aws_location            = var.aws_location
   route_table_id                   = var.route_table1_id
   ebs_volume_size                  = var.ebs_volume_size
-  ontap_security_group_id          = local.new_ontap_fsx ? module.fsxn_ha[0].fsxn_security_group_id : var.ontap_security_group_id
+  ontap_security_group_id          = var.ontap_security_group_id
   sql_fsx_server_net_bios_name     = local.sql_fsx_server_net_bios_name
   workload_instance_type           = var.workload_instance_type
   sql_node_name                    = "PGSQL-Node-1"
@@ -280,7 +280,7 @@ module "ha_pgsql_node2" {
   sql_node_aws_location            = var.aws_location
   route_table_id                   = var.route_table1_id
   ebs_volume_size                  = var.ebs_volume_size
-  ontap_security_group_id          = local.new_ontap_fsx ? module.fsxn_ha[0].fsxn_security_group_id : var.ontap_security_group_id
+  ontap_security_group_id          = var.ontap_security_group_id
   sql_fsx_server_net_bios_name     = local.sql_fsx_server_net_bios_name_2
   workload_instance_type           = var.workload_instance_type
   sql_node_name                    = "PGSQL-Node-2"
@@ -324,7 +324,7 @@ module "ha_pgpool_node" {
   sql_node_aws_location            = var.aws_location
   route_table_id                   = var.route_table1_id
   ebs_volume_size                  = var.ebs_volume_size
-  ontap_security_group_id          = local.new_ontap_fsx ? module.fsxn_ha[0].fsxn_security_group_id : var.ontap_security_group_id
+  ontap_security_group_id          = var.ontap_security_group_id
   sql_fsx_server_net_bios_name     = "PgpoolNode"
   workload_instance_type           = "t3.medium"
   sql_node_name                    = "PgPoolNode"

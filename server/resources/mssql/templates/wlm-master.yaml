@@ -968,10 +968,7 @@ Resources:
         SQLigroupname:
           Ref: SQLigroupname
         ONTAPSecurityGroupID:
-          !If
-            - NewOntapFsx
-            - !GetAtt "NewFSxStack.Outputs.FsxSecurityGroupID"
-            - !Ref "ONTAPSecurityGroupID"
+          Ref: ONTAPSecurityGroupID
         EnableCloudWatchLogFeature:
           Ref: EnableCloudWatchLogFeature
         ParentStackName:
@@ -1073,10 +1070,7 @@ Resources:
         SQLigroupname:
           Ref: SQLigroupname
         ONTAPSecurityGroupID:
-          !If
-            - NewOntapFsx
-            - !GetAtt "NewFSxStack.Outputs.FsxSecurityGroupID"
-            - !Ref "ONTAPSecurityGroupID"
+          Ref: ONTAPSecurityGroupID
         EnableCloudWatchLogFeature:
           Ref: EnableCloudWatchLogFeature
         NumberOfNodes: "1"

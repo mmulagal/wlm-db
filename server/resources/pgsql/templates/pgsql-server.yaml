@@ -140,6 +140,9 @@ Conditions:
     IsHACluster: !Equals
         - !Ref 'SQLDeploymentMode'
         - 'ha'
+    ONTAPSGNotSelected: !Equals
+        - !Ref 'ONTAPSecurityGroupID'
+        - ''
 Resources:
     LaunchWizardSqlFSxProfile:
         Type: AWS::IAM::InstanceProfile
@@ -152,12 +155,12 @@ Resources:
         Properties:
             SecondaryPrivateIpAddressCount: 2
             SubnetId: !Ref 'PrivateSubnet1ID'
-            GroupSet: !Split
-                - ','
-                - !Join
-                    - ','
-                    -   - !Ref 'WorkloadSecurityGroup'
-                        - !Ref 'ONTAPSecurityGroupID'
+            GroupSet:
+                - !Ref 'WorkloadSecurityGroup'
+                - !If
+                  - ONTAPSGNotSelected
+                  - !Ref 'AWS::NoValue'
+                  - !Ref 'ONTAPSecurityGroupID'
             Tags:
                 -   Key: Name
                     Value: !Ref 'SqlFSxServerNetBIOSName1'
@@ -378,12 +381,12 @@ Resources:
         Properties:
             SecondaryPrivateIpAddressCount: 2
             SubnetId: !Ref 'PrivateSubnet2ID'
-            GroupSet: !Split
-                - ','
-                - !Join
-                    - ','
-                    -   - !Ref 'WorkloadSecurityGroup'
-                        - !Ref 'ONTAPSecurityGroupID'
+            GroupSet:
+                - !Ref 'WorkloadSecurityGroup'
+                - !If
+                  - ONTAPSGNotSelected
+                  - !Ref 'AWS::NoValue'
+                  - !Ref 'ONTAPSecurityGroupID'
             Tags:
                 -   Key: Name
                     Value: !Ref 'SqlFSxServerNetBIOSName2'
@@ -607,12 +610,12 @@ Resources:
         Properties:
             SecondaryPrivateIpAddressCount: 2
             SubnetId: !Ref 'PrivateSubnet1ID'
-            GroupSet: !Split
-                - ','
-                - !Join
-                    - ','
-                    -   - !Ref 'WorkloadSecurityGroup'
-                        - !Ref 'ONTAPSecurityGroupID'
+            GroupSet:
+                - !Ref 'WorkloadSecurityGroup'
+                - !If
+                  - ONTAPSGNotSelected
+                  - !Ref 'AWS::NoValue'
+                  - !Ref 'ONTAPSecurityGroupID'
             Tags:
                 -   Key: Name
                     Value: 'PgPoolServerNode'

@@ -1,7 +1,7 @@
 locals {
   log_feature_enabled   = var.enable_cloudwatch_log_feature == true ? "true" : "false"
   is_ha                 = var.is_standalone == false ? "true" : "false"
-  ontap_security_groups = split(",", var.ontap_security_group_id)
+  ontap_security_groups = var.ontap_security_group_id == "" ? [] : split(",", var.ontap_security_group_id)
   group_set             = concat([var.workload_security_group_id], local.ontap_security_groups)
   node_type             = var.sql_node_name == "PGSQL-Node-1" ? "Primary" : "Secondary"
   # tagName             = (var.sql_node_name == "PGSQL-Node" || var.sql_node_name == "PGSQL-Node-1") ? var.sql_fsx_server_net_bios_name : var.sql_fsx_server_net_bios_name_2

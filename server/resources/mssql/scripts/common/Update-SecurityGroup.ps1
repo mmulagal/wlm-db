@@ -16,11 +16,22 @@ try {
   Foreach ($address in $local_addresses) {
     $cidrBlocks = New-Object 'collections.generic.list[string]'
     $cidrBlocks.add("$address/32")
+    
+    $ipRange = New-Object Amazon.EC2.Model.IpRange
+    $ipRange.CidrIp = "$address/32"
+    $ipv4Ranges = New-Object 'System.Collections.Generic.List[Amazon.EC2.Model.IpRange]'
+    $ipv4Ranges.Add($ipRange) 
+
     $ipPermissions = New-Object Amazon.EC2.Model.IpPermission
     $ipPermissions.IpProtocol = "All"
     $ipPermissions.FromPort = -1
     $ipPermissions.ToPort = -1
-    $ipPermissions.IpRanges = $cidrBlocks
+    try {
+      $ipPermissions.IpRanges = $cidrBlocks
+    } catch {
+      $ipPermissions.Ipv4Ranges = $ipv4Ranges
+    } 
+
     Invoke-WithRetry -Command {
       Grant-EC2SecurityGroupIngress -GroupID $SGID -IpPermissions $ipPermissions
     }
