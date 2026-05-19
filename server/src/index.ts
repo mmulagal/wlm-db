@@ -25,7 +25,8 @@ import {
     JWKS_FULL_NAME,
     WLMDB,
     SSM_COMMAND_CACHE_TYPE,
-    BXP
+    BXP,
+    GOV_ACCOUNT
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
 import {
@@ -217,9 +218,17 @@ const app = fastify({
                     if (authorization) {
                         try {
                             const payload = (await verifyToken(authorization.replace('Bearer ', ''))) as JwtPayload;
-                            await authorizeJwt(authorization, payload, accountId);
+                            const { isGovAccount: isGovFromTenancy } = await authorizeJwt(
+                                authorization,
+                                payload,
+                                accountId
+                            );
                             request.headers.user = payload[JWKS_FULL_NAME] ? payload[JWKS_FULL_NAME] : 'SYSTEM';
                             request.headers.principal = payload.sub;
+
+                            const isGovAccount = isGovFromTenancy ?? request.headers[HEADERS.IS_GOV_ACCOUNT] === 'true';
+                            logger.debug('GovCloud account resolved', { accountId, isGovFromTenancy, isGovAccount });
+                            request.headers[HEADERS.IS_GOV_ACCOUNT] = String(isGovAccount);
                         } catch (err) {
                             logger.error('Token verification error', err);
                             reply.unauthorized();
@@ -274,7 +283,8 @@ const app = fastify({
                             authorization,
                             [HEADERS.WORKSPACE_ID_HEADER]: workspaceId,
                             [HEADERS.X_NETAPP_REFERER]: xNetappReferer,
-                            [HEADERS.X_NETAPP_CACHE_CONTROL]: xNetappCacheControl
+                            [HEADERS.X_NETAPP_CACHE_CONTROL]: xNetappCacheControl,
+                            [HEADERS.IS_GOV_ACCOUNT]: isGovAccountHeader
                         },
                         params: { accountId },
                         id: requestId
@@ -285,6 +295,7 @@ const app = fastify({
                     setAsyncLocalStorageResource(WORKSPACE_ID, workspaceId);
                     setAsyncLocalStorageResource(HEADERS.X_NETAPP_REFERER, xNetappReferer);
                     setAsyncLocalStorageResource(HEADERS.X_NETAPP_CACHE_CONTROL, xNetappCacheControl);
+                    setAsyncLocalStorageResource(GOV_ACCOUNT, isGovAccountHeader === 'true');
 
                     if (!url.includes(API_PATH_HEALTH) && !url.includes('/wlmdb/documentation')) {
                         const traceData = getTraceData();

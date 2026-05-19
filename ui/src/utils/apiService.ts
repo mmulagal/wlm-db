@@ -28,7 +28,7 @@ const prepareHeaders = (
     api: Pick<BaseQueryApi, 'type' | 'getState' | 'extra' | 'endpoint' | 'forced'>
 ): Headers => {
     const { getState, endpoint } = api;
-    const { accessToken, workspaceId, isDemoMode, isWorkloadFactory } = (getState() as RootState).auth;
+    const { accessToken, workspaceId, isDemoMode, isWorkloadFactory, isGovAccount } = (getState() as RootState).auth;
     const { selectConfig } = (getState() as RootState).mssqlForm;
     const isChatbot = (getState() as RootState).chatbot.isShow;
     if (accessToken) {
@@ -39,6 +39,9 @@ const prepareHeaders = (
     }
     if (isDemoMode) {
         headers.set('x-simulator', 'true');
+    }
+    if (isGovAccount) {
+        headers.set('x-is-gov-account', 'true');
     }
     if (
         !isWorkloadFactory &&
@@ -539,6 +542,9 @@ export const headersApi = createApi({
         }),
         getStatus: builder.query({
             query: () => 'v1/status'
+        }),
+        getAccountInfo: builder.query({
+            query: () => 'v1/account-info'
         })
     })
 });
@@ -1757,7 +1763,8 @@ export const {
     useGetHeadersCredentialsQuery,
     useGetHeadersRegionsQuery,
     useGetHeadersRegionsWithoutCredQuery,
-    useGetStatusQuery
+    useGetStatusQuery,
+    useGetAccountInfoQuery
 } = headersApi;
 
 export const { useGetWlmdbPoliciesQuery } = policiesApi;

@@ -11,6 +11,8 @@ terraform {
   }
 }
 
+data "aws_partition" "current" {}
+
 locals {
   new_ontap_fsx                  = var.fsx_file_system_id == "" ? true : false
   existing_ontap_fsx             = local.new_ontap_fsx ? false : true

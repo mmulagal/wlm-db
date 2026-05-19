@@ -20,6 +20,7 @@ import {
     manageSqlServerV2,
     registerResourceCredentials,
     validateAndStoreDiscoveredParameters,
+    validateCredentialsByAccountType,
     registerDatabaseServerInstances,
     unmanageDatabaseInstance,
     checkCredentialsExistence
@@ -53,6 +54,8 @@ export default function registerRoutes(fastify: FastifyInstance) {
                 params: { accountId, credentialsId, region, instanceId },
                 body: { credentials, clusterNodesIpAddress, checkManageReadiness }
             } = castRequest(request);
+
+            validateCredentialsByAccountType(credentials);
 
             const { response } = await validateAndStoreDiscoveredParameters(
                 accountId,
@@ -131,6 +134,10 @@ export default function registerRoutes(fastify: FastifyInstance) {
             params: { accountId },
             body: { items }
         } = castRequest(request);
+
+        for (const item of items) {
+            validateCredentialsByAccountType(item.credentials);
+        }
 
         const response = await registerResourceCredentials(accountId, items);
         return response;

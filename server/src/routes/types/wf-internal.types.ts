@@ -72,9 +72,14 @@ const HomepageWidgetStatusResponse = Type.Object({
     )
 });
 
+const AccountInfoResponse = Type.Object({
+    isGovAccount: Type.Boolean()
+});
+
 export {
     StatusParams,
     StatusResponse,
+    AccountInfoResponse,
     VolumeObject,
     ListVolumesResponse,
     ListVolumesQueryParams,

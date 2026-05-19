@@ -55,7 +55,10 @@ import {
     CLOUD_WATCH_METRICS_PERFORMANCE_METRIC_NAMES,
     CLOUD_WATCH_METRICS_PERFORMANCE_NAMESPACE,
     NOT_AVAILABLE,
-    SSM_COMMAND_COMPRESSION_THRESHOLD
+    SSM_COMMAND_COMPRESSION_THRESHOLD,
+    DEFAULT_GOV_REGION,
+    GOV_ACCOUNT,
+    getArnPartition
 } from './consts';
 
 import getLogger, { hideSecretsValues } from './logger';
@@ -386,33 +389,45 @@ function checkAndRetrieveJsonObject(str: string | undefined) {
     }
 }
 
+function getDefaultRegion(): string {
+    const isGov = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
+    return isGov ? DEFAULT_GOV_REGION : DEFAULT_AWS_REGION;
+}
+
+function getCloudFormationStackUrl(): string {
+    const isGov = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
+    const region = isGov ? DEFAULT_GOV_REGION : DEFAULT_AWS_REGION;
+    const domain = isGov ? 'console.amazonaws-us-gov.com' : 'console.aws.amazon.com';
+    return `https://${region}.${domain}/cloudformation/home`;
+}
+
 function getQueueArn(accountId: string, queueName: string) {
-    return `arn:aws:sqs:${DEFAULT_AWS_REGION}:${accountId}:${queueName}`;
+    return `arn:${getArnPartition()}:sqs:${getDefaultRegion()}:${accountId}:${queueName}`;
 }
 
 function getSnsArn(accountId: string, region: string, snsName: string) {
-    return `arn:aws:sns:${region}:${accountId}:${snsName}`;
+    return `arn:${getArnPartition()}:sns:${region}:${accountId}:${snsName}`;
 }
 
 function getFsxArn(awsAccountId: string, region: string, fsxId: string) {
-    return `arn:aws:fsx:${region}:${awsAccountId}:file-system/${fsxId}`;
+    return `arn:${getArnPartition()}:fsx:${region}:${awsAccountId}:file-system/${fsxId}`;
 }
 
 function getFsxVolumeArn(region: string, awsAccountId: string, fsxFileSystemId: string, fsxVolumeId: string) {
-    return `arn:aws:fsx:${region}:${awsAccountId}:volume/${fsxFileSystemId}/${fsxVolumeId}`;
+    return `arn:${getArnPartition()}:fsx:${region}:${awsAccountId}:volume/${fsxFileSystemId}/${fsxVolumeId}`;
 }
 
 function getEc2Arn(awsAccountId: string, region: string, instanceId: string) {
-    return `arn:aws:ec2:${region}:${awsAccountId}:instance/${instanceId}`;
+    return `arn:${getArnPartition()}:ec2:${region}:${awsAccountId}:instance/${instanceId}`;
 }
 
 function getQueueUrl(accountId: string, queueName: string) {
     logger.debug({ accountId, queueName });
-    return `https://sqs.${DEFAULT_AWS_REGION}.amazonaws.com/${accountId}/${queueName}`;
+    return `https://sqs.${getDefaultRegion()}.amazonaws.com/${accountId}/${queueName}`;
 }
 
 function derivePropertiesFromARN(awsResourceArn: string) {
-    const ARN_FORMAT = /arn:aws:(?<awsServiceName>.+):(?<region>.*):(?<awsAccountId>.+):(?<resourceName>.+)/;
+    const ARN_FORMAT = /arn:aws(-us-gov)?:(?<awsServiceName>.+):(?<region>.*):(?<awsAccountId>.+):(?<resourceName>.+)/;
     if (ARN_FORMAT.test(awsResourceArn)) {
         const matchResult = awsResourceArn.match(ARN_FORMAT);
         if (matchResult && matchResult.groups) {
@@ -606,8 +621,12 @@ function getResourceNameFromTags(tags?: Tag[]) {
     return name;
 }
 
+function getArtifactsBucketRegion(region: string): string {
+    return region.startsWith('us-gov-') ? DEFAULT_AWS_REGION : region;
+}
+
 function getArtifactsRegionBucketName(region: string) {
-    return `${ARTIFACT_BUCKET_NAME.replace('REGION', region)}`;
+    return `${ARTIFACT_BUCKET_NAME.replace('REGION', getArtifactsBucketRegion(region))}`;
 }
 
 function sqlResponseParsing(response: string) {
@@ -1719,6 +1738,10 @@ export {
     buildSelectFields,
     determineStorageType,
     getFsxNameFromTags,
+    getArnPartition,
+    getDefaultRegion,
+    getCloudFormationStackUrl,
+    getArtifactsBucketRegion,
     IS_DEMO_FLOW,
     IS_PROD,
     isMultiAzDeployment,

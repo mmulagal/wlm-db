@@ -9,6 +9,7 @@ import {
     escapeBackslash,
     generateSqlResourceId,
     getArtifactsRegionBucketName,
+    getArtifactsBucketRegion,
     getServerNameWithHostname,
     retryWithDelay,
     IS_DEMO_FLOW,
@@ -34,6 +35,7 @@ import {
     RESOURCE_SOURCE,
     RESOURCESTYPE,
     SqlServerDeploymentModel,
+    GOV_ACCOUNT,
     SSM_PARAM_PREFIX,
     SSM_PARAMETERS_BASE_PATH
 } from '../utils/consts';
@@ -150,8 +152,9 @@ async function installPowershell7(
     let errorMessage = '';
     try {
         // Get signed url for dependent-packages.zip to install the ps modules
+        const artifactsRegion = getArtifactsBucketRegion(region);
         const bucketname = getArtifactsRegionBucketName(region);
-        const copyPowershell7SignedUrl = await getPreSignedUrl(region, bucketname, POWERSHELL_7_RELATIVE_PATH);
+        const copyPowershell7SignedUrl = await getPreSignedUrl(artifactsRegion, bucketname, POWERSHELL_7_RELATIVE_PATH);
 
         const installResponse = await retryWithDelay(
             callSsmExecution.bind(null, {
@@ -226,8 +229,13 @@ async function installPowerShellModules(
     let parsedResponse;
     try {
         // Get signed url for dependent-packages.zip to install the ps modules
+        const artifactsRegion = getArtifactsBucketRegion(region);
         const bucketname = getArtifactsRegionBucketName(region);
-        const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PREPARE_PSMODULES_RELATIVE_PATH);
+        const copyPSModuleS3SignedUrl = await getPreSignedUrl(
+            artifactsRegion,
+            bucketname,
+            PREPARE_PSMODULES_RELATIVE_PATH
+        );
 
         ssmPsModuleInstallResponse = await retryWithDelay(
             callSsmExecution.bind(null, {
@@ -1724,9 +1732,10 @@ async function installPythonModules(
     let errorMessage = '';
     let status = '';
 
+    const artifactsRegion = getArtifactsBucketRegion(region);
     const bucketname = getArtifactsRegionBucketName(region);
     const pythonSignedUrls = await Promise.all(
-        pythonRelativePaths.map(relativePath => getPreSignedUrl(region, bucketname, relativePath))
+        pythonRelativePaths.map(relativePath => getPreSignedUrl(artifactsRegion, bucketname, relativePath))
     );
 
     try {
@@ -1799,10 +1808,11 @@ async function installJq(
     let errorMessage = '';
     let status = '';
 
+    const artifactsRegion = getArtifactsBucketRegion(region);
     const bucketname = getArtifactsRegionBucketName(region);
     const [jqSignedUrl, makeSignedUrl] = await Promise.all([
-        getPreSignedUrl(region, bucketname, JQ_LINUX_RELATIVE_PATH),
-        getPreSignedUrl(region, bucketname, MAKE_LINUX_RELATIVE_PATH)
+        getPreSignedUrl(artifactsRegion, bucketname, JQ_LINUX_RELATIVE_PATH),
+        getPreSignedUrl(artifactsRegion, bucketname, MAKE_LINUX_RELATIVE_PATH)
     ]);
     const signedUrls = [jqSignedUrl, makeSignedUrl];
 
@@ -1873,164 +1883,169 @@ function getErrorMessage(detectResponse: Record<string, string[]>[]) {
 function prepareParametersToStore(instanceIds: string[], credentials: RegisterCredentialsType[]) {
     logger.debug('prepare parameters to store', { instanceIds });
 
-    return credentials.reduce((acc: SSMParameterObject[], { resourceId, resourceType, username, password }) => {
-        if (resourceType === RESOURCESTYPE.MSSQL) {
-            const sqlItem = acc.find(el => el.value.sql);
+    return credentials.reduce(
+        (acc: SSMParameterObject[], { resourceId, resourceType, username: _username, password: _password }) => {
+            const username = _username!;
+            const password = _password!;
+            if (resourceType === RESOURCESTYPE.MSSQL) {
+                const sqlItem = acc.find(el => el.value.sql);
 
-            if (sqlItem && Array.isArray(sqlItem.value.sql)) {
-                sqlItem.value.sql.push({
-                    sqlinstancename: resourceId,
-                    username,
-                    password
-                });
-            } else {
-                instanceIds.forEach(instanceId => {
-                    const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
-                    if (instanceObject) {
-                        instanceObject.value.sql = [
-                            {
-                                sqlinstancename: resourceId,
-                                username,
-                                password
-                            }
-                        ];
-                    } else {
-                        acc.push({
-                            path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
-                            value: {
-                                sql: [
-                                    {
-                                        sqlinstancename: resourceId,
-                                        username,
-                                        password
-                                    }
-                                ]
-                            }
-                        });
-                    }
-                });
-            }
-        } else if (resourceType === RESOURCESTYPE.FSX) {
-            acc.push({
-                path: `${SSM_PARAMETERS_BASE_PATH}/${resourceId}`,
-                value: {
-                    fsx: {
+                if (sqlItem && Array.isArray(sqlItem.value.sql)) {
+                    sqlItem.value.sql.push({
+                        sqlinstancename: resourceId,
                         username,
                         password
-                    }
+                    });
+                } else {
+                    instanceIds.forEach(instanceId => {
+                        const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
+                        if (instanceObject) {
+                            instanceObject.value.sql = [
+                                {
+                                    sqlinstancename: resourceId,
+                                    username,
+                                    password
+                                }
+                            ];
+                        } else {
+                            acc.push({
+                                path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                                value: {
+                                    sql: [
+                                        {
+                                            sqlinstancename: resourceId,
+                                            username,
+                                            password
+                                        }
+                                    ]
+                                }
+                            });
+                        }
+                    });
                 }
-            });
-        } else if (resourceType === RESOURCESTYPE.WINDOWS_USER) {
-            const windowsUserItem = acc.find(el => el.value.domain);
-
-            if (windowsUserItem && Array.isArray(windowsUserItem.value.domain)) {
-                windowsUserItem.value.domain.push({
-                    sqlinstancename: resourceId,
-                    username: escapeBackslash(username),
-                    password
-                });
-            } else {
-                instanceIds.forEach(instanceId => {
-                    const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
-                    if (instanceObject) {
-                        instanceObject.value.domain = [
-                            {
-                                sqlinstancename: resourceId,
-                                username: escapeBackslash(username),
-                                password
-                            }
-                        ];
-                    } else {
-                        acc.push({
-                            path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
-                            value: {
-                                domain: [
-                                    {
-                                        sqlinstancename: resourceId,
-                                        username: escapeBackslash(username),
-                                        password
-                                    }
-                                ]
-                            }
-                        });
+            } else if (resourceType === RESOURCESTYPE.FSX) {
+                acc.push({
+                    path: `${SSM_PARAMETERS_BASE_PATH}/${resourceId}`,
+                    value: {
+                        fsx: {
+                            username,
+                            password
+                        }
                     }
                 });
-            }
-        } else if (resourceType === RESOURCESTYPE.ORACLE) {
-            const oracleItem = acc.find(el => el.value.oracle);
+            } else if (resourceType === RESOURCESTYPE.WINDOWS_USER) {
+                const windowsUserItem = acc.find(el => el.value.domain);
 
-            if (oracleItem && Array.isArray(oracleItem.value.oracle)) {
-                oracleItem.value.oracle.push({
-                    oracleinstancename: resourceId,
-                    username,
-                    password
-                });
-            } else {
-                instanceIds.forEach(instanceId => {
-                    const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
-                    if (instanceObject) {
-                        instanceObject.value.oracle = [
-                            {
-                                oracleinstancename: resourceId,
-                                username,
-                                password
-                            }
-                        ];
-                    } else {
-                        acc.push({
-                            path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
-                            value: {
-                                oracle: [
-                                    {
-                                        oracleinstancename: resourceId,
-                                        username,
-                                        password
-                                    }
-                                ]
-                            }
-                        });
-                    }
-                });
-            }
-        } else if (resourceType === RESOURCESTYPE.ORACLE_ASM) {
-            const oracleAsmItem = acc.find(el => el.value.asm);
+                if (windowsUserItem && Array.isArray(windowsUserItem.value.domain)) {
+                    windowsUserItem.value.domain.push({
+                        sqlinstancename: resourceId,
+                        username: escapeBackslash(username),
+                        password
+                    });
+                } else {
+                    instanceIds.forEach(instanceId => {
+                        const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
+                        if (instanceObject) {
+                            instanceObject.value.domain = [
+                                {
+                                    sqlinstancename: resourceId,
+                                    username: escapeBackslash(username),
+                                    password
+                                }
+                            ];
+                        } else {
+                            acc.push({
+                                path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                                value: {
+                                    domain: [
+                                        {
+                                            sqlinstancename: resourceId,
+                                            username: escapeBackslash(username),
+                                            password
+                                        }
+                                    ]
+                                }
+                            });
+                        }
+                    });
+                }
+            } else if (resourceType === RESOURCESTYPE.ORACLE) {
+                const oracleItem = acc.find(el => el.value.oracle);
 
-            if (oracleAsmItem && Array.isArray(oracleAsmItem.value.asm)) {
-                oracleAsmItem.value.asm.push({
-                    oracleinstancename: resourceId,
-                    username,
-                    password
-                });
-            } else {
-                instanceIds.forEach(instanceId => {
-                    const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
-                    if (instanceObject) {
-                        instanceObject.value.asm = [
-                            {
-                                oracleinstancename: resourceId,
-                                username,
-                                password
-                            }
-                        ];
-                    } else {
-                        acc.push({
-                            path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
-                            value: {
-                                asm: [
-                                    {
-                                        oracleinstancename: resourceId,
-                                        username,
-                                        password
-                                    }
-                                ]
-                            }
-                        });
-                    }
-                });
+                if (oracleItem && Array.isArray(oracleItem.value.oracle)) {
+                    oracleItem.value.oracle.push({
+                        oracleinstancename: resourceId,
+                        username,
+                        password
+                    });
+                } else {
+                    instanceIds.forEach(instanceId => {
+                        const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
+                        if (instanceObject) {
+                            instanceObject.value.oracle = [
+                                {
+                                    oracleinstancename: resourceId,
+                                    username,
+                                    password
+                                }
+                            ];
+                        } else {
+                            acc.push({
+                                path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                                value: {
+                                    oracle: [
+                                        {
+                                            oracleinstancename: resourceId,
+                                            username,
+                                            password
+                                        }
+                                    ]
+                                }
+                            });
+                        }
+                    });
+                }
+            } else if (resourceType === RESOURCESTYPE.ORACLE_ASM) {
+                const oracleAsmItem = acc.find(el => el.value.asm);
+
+                if (oracleAsmItem && Array.isArray(oracleAsmItem.value.asm)) {
+                    oracleAsmItem.value.asm.push({
+                        oracleinstancename: resourceId,
+                        username,
+                        password
+                    });
+                } else {
+                    instanceIds.forEach(instanceId => {
+                        const instanceObject = acc.find(el => el.path === `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`);
+                        if (instanceObject) {
+                            instanceObject.value.asm = [
+                                {
+                                    oracleinstancename: resourceId,
+                                    username,
+                                    password
+                                }
+                            ];
+                        } else {
+                            acc.push({
+                                path: `${SSM_PARAMETERS_BASE_PATH}/${instanceId}`,
+                                value: {
+                                    asm: [
+                                        {
+                                            oracleinstancename: resourceId,
+                                            username,
+                                            password
+                                        }
+                                    ]
+                                }
+                            });
+                        }
+                    });
+                }
             }
-        }
-        return acc;
-    }, []);
+            return acc;
+        },
+        []
+    );
 }
 
 async function registerResourceCredentials(
@@ -2229,6 +2244,17 @@ async function validateAndStoreDiscoveredParameters(
             }
         }
 
+        const isGovAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
+        if (isGovAccount) {
+            return validateGovCloudCredentials(
+                credentialsId,
+                region,
+                instanceId,
+                credentials,
+                singleInstanceRegistration
+            );
+        }
+
         const { response: detectResponse, replicaInfoObject } = await validateCredentials(
             accountId,
             credentialsId,
@@ -2274,6 +2300,74 @@ async function validateAndStoreDiscoveredParameters(
         logger.error('Failed to validate credentials', error);
         throw createError(error?.statusCode || HttpErrorCodes.BAD_REQUEST, error.message);
     }
+}
+
+async function validateGovCloudCredentials(
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    credentials: RegisterCredentialsType[],
+    singleInstanceRegistration: boolean
+): Promise<{
+    response: SingleRegisterCredentialsResponseType[] | SingleRegisterCredentialsResponseType;
+    replicaInfoObject: ReplicaInfoType[];
+}> {
+    logger.info('Validating GovCloud credentials via SSM parameter ARNs', {
+        credentialsId,
+        region,
+        instanceId,
+        credentialCount: credentials.length
+    });
+
+    const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
+    if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `Unable to validate the credentials through SSM, for host ${instanceId}`
+        );
+    }
+
+    const validatedCreds = credentials.map(cred => {
+        if (!cred.ssmParameterArn) {
+            throw createError(
+                HttpErrorCodes.BAD_REQUEST,
+                `GovCloud credential for ${cred.resourceId} is missing ssmParameterArn.`
+            );
+        }
+
+        const arnParts = cred.ssmParameterArn.match(/^arn:aws(-us-gov)?:ssm:([^:]+):([^:]+):parameter\/(.+)$/);
+        if (!arnParts) {
+            throw createError(HttpErrorCodes.BAD_REQUEST, `Invalid SSM parameter ARN format: ${cred.ssmParameterArn}`);
+        }
+        return { cred, parameterName: `/${arnParts[4]}` };
+    });
+
+    const results = await Promise.all(
+        validatedCreds.map(async ({ cred, parameterName }) => {
+            try {
+                const paramValue = await getParameter(credentialsId, region, parameterName);
+                if (!paramValue) {
+                    throw new Error(`SSM parameter not found at path ${parameterName}`);
+                }
+            } catch (error: any) {
+                throw createError(
+                    HttpErrorCodes.BAD_REQUEST,
+                    `Unable to read SSM parameter for ${cred.resourceId}: ${error.message}`
+                );
+            }
+            return {
+                resourceId: cred.resourceId,
+                resourceType: cred.resourceType,
+                ...(cred.resourceType === RESOURCESTYPE.FSX ? { fsxnError: '' } : { databaseServerError: '' })
+            } as SingleRegisterCredentialsResponseType;
+        })
+    );
+
+    if (singleInstanceRegistration && results.length === 1) {
+        return { response: results[0], replicaInfoObject: [] };
+    }
+
+    return { response: results, replicaInfoObject: [] };
 }
 
 async function rewriteOrDeleteSSMParameter(
@@ -2639,8 +2733,9 @@ async function validateWindowsCredentials(
 
     if (fsxCredentials || sqlCredentials.length || windowsUserCredentials) {
         // Get signed url for aws_ssm.zip to install the ps modules
+        const artifactsRegion = getArtifactsBucketRegion(region);
         const bucketname = getArtifactsRegionBucketName(region);
-        const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PSMODULES_RELATIVE_PATH);
+        const copyPSModuleS3SignedUrl = await getPreSignedUrl(artifactsRegion, bucketname, PSMODULES_RELATIVE_PATH);
         const moduleNames = `
   'AWS.Tools.SimpleSystemsManagement'
 `;
@@ -2716,7 +2811,7 @@ async function validateWindowsCredentials(
                     credentialsId,
                     region,
                     fsxCredentials.resourceId,
-                    fsxCredentials.password
+                    fsxCredentials.password!
                 );
             }
         });
@@ -3015,10 +3110,11 @@ async function validateOracleCredentials(
     let command = '';
     let parsedResponse;
 
+    const artifactsRegion = getArtifactsBucketRegion(region);
     const bucketname = getArtifactsRegionBucketName(region);
-    const awsCliSignedUrl = await getPreSignedUrl(region, bucketname, AWS_CLI_LINUX_RELATIVE_PATH);
-    const jqSignedUrl = await getPreSignedUrl(region, bucketname, JQ_LINUX_RELATIVE_PATH);
-    const makeSignedUrl = await getPreSignedUrl(region, bucketname, MAKE_LINUX_RELATIVE_PATH);
+    const awsCliSignedUrl = await getPreSignedUrl(artifactsRegion, bucketname, AWS_CLI_LINUX_RELATIVE_PATH);
+    const jqSignedUrl = await getPreSignedUrl(artifactsRegion, bucketname, JQ_LINUX_RELATIVE_PATH);
+    const makeSignedUrl = await getPreSignedUrl(artifactsRegion, bucketname, MAKE_LINUX_RELATIVE_PATH);
     const signedUrls = [awsCliSignedUrl, jqSignedUrl, makeSignedUrl];
 
     command += `${initializeResultObject}\n`;
@@ -3140,7 +3236,7 @@ async function validateOracleCredentials(
                     credentialsId,
                     region,
                     fsxCredentials.resourceId,
-                    fsxCredentials.password
+                    fsxCredentials.password!
                 );
             }
         });
@@ -3405,6 +3501,14 @@ async function verifyAndAddFSxOntapCredentials(
 ) {
     logger.info('Verify and add FSx ONTAP credentials', { accountId, credentialsId, region, fsxStorageId: fsxNId });
 
+    const isGovAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
+    if (isGovAccount) {
+        logger.info('GovCloud account: skipping FSx credential storage — credentials referenced via SSM ARN', {
+            fsxStorageId: fsxNId
+        });
+        return;
+    }
+
     if (!isEmpty(fsxNId)) {
         // Check if the FSx credentials are already present in SSM parameter store
         const fsxCredentials = await getParameter(credentialsId, region, `${SSM_PARAM_PREFIX}${fsxNId}`);
@@ -3556,12 +3660,36 @@ async function checkCredentialsExistence(
     };
 }
 
+function validateCredentialsByAccountType(
+    credentials: { ssmParameterArn?: string; password?: string; username?: string }[]
+) {
+    const isGov = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
+    for (const cred of credentials) {
+        if (isGov) {
+            if (!cred.ssmParameterArn) {
+                throw createError(400, 'GovCloud accounts must provide ssmParameterArn instead of username/password.');
+            }
+            if (cred.password) {
+                throw createError(400, 'GovCloud accounts must not send plaintext password. Use ssmParameterArn.');
+            }
+        } else {
+            if (cred.ssmParameterArn) {
+                throw createError(400, 'ssmParameterArn is only allowed for GovCloud accounts.');
+            }
+            if (!cred.username || !cred.password) {
+                throw createError(400, 'Commercial accounts must provide username and password.');
+            }
+        }
+    }
+}
+
 export {
     registerDatabaseServerInstances,
     registerResourceCredentials,
     manageSqlServerV2,
     validateAndStoreDiscoveredParameters,
     validateOracleCredentials,
+    validateCredentialsByAccountType,
     unmanageDatabaseInstance,
     checkCredentialsExistence
 };

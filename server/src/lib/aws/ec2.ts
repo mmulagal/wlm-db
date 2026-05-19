@@ -61,7 +61,8 @@ import {
 import { PaginationConfiguration } from '@aws-sdk/types';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
-import { DEFAULT_AWS_REGION } from '../../utils/consts';
+import { DEFAULT_AWS_REGION, DEFAULT_GOV_REGION, GOV_ACCOUNT } from '../../utils/consts';
+import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import addCacheMiddleware from '../../utils/aws-sdk-middlewares';
 import { AWSSDKCacheParams } from '../../utils/common-types';
 
@@ -198,9 +199,11 @@ async function describeRegions(
     credentialsId?: string,
     cacheParams?: AWSSDKCacheParams
 ): Promise<DescribeRegionsCommandOutput> {
-    logger.info('Describe AWS regions:', { credentialsId, input });
+    const isGovAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
+    const region = isGovAccount ? DEFAULT_GOV_REGION : DEFAULT_AWS_REGION;
+    logger.info('Describe AWS regions:', { credentialsId, input, isGovAccount, region });
 
-    const client = await getEC2Client(DEFAULT_AWS_REGION, credentialsId, undefined, cacheParams);
+    const client = await getEC2Client(region, credentialsId, undefined, cacheParams);
     const response = await client.send(new DescribeRegionsCommand(input));
     logger.debug('Describe AWS regions response:', response);
 

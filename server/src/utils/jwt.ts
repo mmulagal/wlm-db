@@ -78,10 +78,19 @@ async function getTenancyUserPermissions(
     return userPermissionsResponse ? (userPermissionsResponse as TenancyUserPermissions) : undefined;
 }
 
-async function authorizeJwt(authToken: string, decodedToken: JwtPayload | string, accountId: string) {
+interface AuthorizeJwtResult {
+    isGovAccount: boolean | undefined;
+}
+
+async function authorizeJwt(
+    authToken: string,
+    decodedToken: JwtPayload | string,
+    accountId: string
+): Promise<AuthorizeJwtResult> {
     logger.debug('Authorize JWT:', { authToken, decodedToken, accountId });
     const tokenSub = decodedToken?.sub as string;
     const isUserAuth = tokenSub?.includes('auth0');
+    let isGovAccount: boolean | undefined;
 
     if (isUserAuth && tokenSub && !isEmpty(tokenSub) && !tokenSub?.endsWith('@clients')) {
         // service token ends with @clients, we cant get user permissions using service token so skipping auth for service token requests
@@ -107,7 +116,13 @@ async function authorizeJwt(authToken: string, decodedToken: JwtPayload | string
         ) {
             throw createError(403, unauthorizedErrorMessage);
         }
+
+        const matchedAccount = userTenancyAccounts?.find(account => account.accountPublicId === accountId);
+        isGovAccount = matchedAccount?.isGov ?? false;
+        logger.debug('Tenancy account Gov status', { accountId, isGovAccount });
     }
+
+    return { isGovAccount };
 }
 
 const jwtOperation = { verifyToken, authorizeJwt };

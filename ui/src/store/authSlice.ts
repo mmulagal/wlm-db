@@ -18,6 +18,7 @@ interface AuthState {
     refreshBlocked: boolean;
     orgId: string;
     initialPathName?: string;
+    isGovAccount: boolean;
 }
 
 interface PayloadAuthSuccess {
@@ -45,7 +46,8 @@ const initialState: AuthState = {
         sub: ''
     },
     orgId: '',
-    initialPathName: ''
+    initialPathName: '',
+    isGovAccount: false
 };
 
 const authSlice = createSlice({
@@ -95,6 +97,9 @@ const authSlice = createSlice({
         },
         updateRefreshBlocked: (state, action: PayloadAction<boolean>) => {
             state.refreshBlocked = action.payload;
+        },
+        updateIsGovAccount: (state, action: PayloadAction<boolean>) => {
+            state.isGovAccount = action.payload;
         }
     }
 });
@@ -113,7 +118,8 @@ export const {
     updateIsDemoMode,
     updateIsWorkloadfactory,
     updateFeatures,
-    updateRefreshBlocked
+    updateRefreshBlocked,
+    updateIsGovAccount
 } = authSlice.actions;
 
 export default authSlice;

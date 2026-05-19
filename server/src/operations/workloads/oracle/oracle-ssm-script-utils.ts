@@ -236,7 +236,11 @@ const ontapRestApi = `
     fsxpassword=$(echo "$creds" | sed -n 's/.*"fsx"[[:space:]]*:[[:space:]]*{[^}]*"password"[[:space:]]*:[[:space:]]*"\\([^"]*\\)".*/\\1/p')
 
     
-    certsUrl="https://fsx-aws-Certificates.s3.amazonaws.com/bundle-$region.pem"
+    if [[ "$region" == us-gov-* ]]; then
+        certsUrl="https://fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com/bundle-$region.pem"
+    else
+        certsUrl="https://fsx-aws-Certificates.s3.amazonaws.com/bundle-$region.pem"
+    fi
 
     # Check for public network
     if ping -c 1 -W 1 ${CLOUDFLARE_DNS_IP} > /dev/null 2>&1; then
@@ -2327,7 +2331,10 @@ def ontapRestApiRequest(fileSystemId, region, method, url, body=None):
     }
 
     cert_option = ""
-    cert_url = f"https://fsx-aws-Certificates.s3.amazonaws.com/bundle-{region}.pem"
+    if region.startswith("us-gov-"):
+        cert_url = f"https://fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com/bundle-{region}.pem"
+    else:
+        cert_url = f"https://fsx-aws-Certificates.s3.amazonaws.com/bundle-{region}.pem"
     cert_path = "/tmp/fsx_bundle.pem"
     try:
         result = subprocess.run(

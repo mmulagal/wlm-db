@@ -28,8 +28,10 @@ import {
     ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
     ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
     SqlServerDeploymentModel,
-    WLMDB_COST_ALLOCATION_TAG
+    WLMDB_COST_ALLOCATION_TAG,
+    GOV_ACCOUNT
 } from '../../utils/consts';
+import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import {
     describeVpc,
     describeSecurityGroups,
@@ -327,28 +329,31 @@ async function getAmiList(
                 ? { Name: 'name', Values: filterSqlAmis(osVersion, databaseVersion, databaseEdition) }
                 : { Name: 'description', Values: ['Amazon Linux 2023*'] };
 
+        const isGovAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
         logger.info('AMI filter:', amiFilter);
         amis = await getAmis(credentialsId, region, {
             Filters: [amiFilter, { Name: 'owner-alias', Values: [AMI_OWNERS.AMAZON] }],
             ...(osType === 'windows' && {
-                Owners: [
-                    '801119661308', // for regular regions
-                    '185158320714', // for il-central-1
-                    '536790793924', // for eu-central-2
-                    '688423173695', // for eu-south-2
-                    '878052572473', // for me-central-1
-                    '159365745649', // for ap-south-2
-                    '903064639964', // ap-southeast-3
-                    '311529897437', //  ap-southeast-4
-                    '442396546477', // af-south-1
-                    '777534740333', // ap-east-1
-                    '460214486919', // eu-south-1
-                    '162367869970', // me-south-1
-                    '194652444849', // ca-west-1,
-                    '002667544638', // ap-southeast-5
-                    '767398017123', // ap-southeast-7
-                    '574179025982' // mx-central-1
-                ]
+                Owners: isGovAccount
+                    ? ['077303321853'] // for us-gov-west-1 and us-gov-east-1
+                    : [
+                          '801119661308', // for regular regions
+                          '185158320714', // for il-central-1
+                          '536790793924', // for eu-central-2
+                          '688423173695', // for eu-south-2
+                          '878052572473', // for me-central-1
+                          '159365745649', // for ap-south-2
+                          '903064639964', // ap-southeast-3
+                          '311529897437', //  ap-southeast-4
+                          '442396546477', // af-south-1
+                          '777534740333', // ap-east-1
+                          '460214486919', // eu-south-1
+                          '162367869970', // me-south-1
+                          '194652444849', // ca-west-1,
+                          '002667544638', // ap-southeast-5
+                          '767398017123', // ap-southeast-7
+                          '574179025982' // mx-central-1
+                      ]
             })
         });
 

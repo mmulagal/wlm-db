@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+    useGetAccountInfoQuery,
     useGetHeadersCredentialsQuery,
     useGetHeadersRegionsQuery,
     useGetHeadersRegionsWithoutCredQuery,
@@ -15,6 +16,7 @@ import {
     setRegionMapping,
     setShowNA
 } from '../../../store/workloadFactory/headersSlice';
+import { updateIsGovAccount } from '../../../store/authSlice';
 import { makeCredMapping, makeRegionMapping } from '../../../utils/utilityFunctions';
 
 const HeaderComponentApi = () => {
@@ -32,6 +34,7 @@ const HeaderComponentApi = () => {
     const [skipApiCall, setSkipApiCall] = useState(true);
 
     const { data: statusData, isFetching: statusLoading, isError: statusError } = useGetStatusQuery('');
+    const { data: accountInfoData } = useGetAccountInfoQuery('');
 
     // API call to get credentials list for user account
     const {
@@ -51,6 +54,12 @@ const HeaderComponentApi = () => {
             skip: credSkip
         }
     );
+
+    useEffect(() => {
+        if (accountInfoData) {
+            dispatch(updateIsGovAccount(accountInfoData.isGovAccount));
+        }
+    }, [accountInfoData, dispatch]);
 
     useEffect(() => {
         if (statusError) {

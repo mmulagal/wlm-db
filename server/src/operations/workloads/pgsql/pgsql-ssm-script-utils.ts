@@ -95,7 +95,11 @@ const ontapRestApi = `
         # Check for public network to determine if we are in a public or private network
         if ping -c 1 -W 1 ${CLOUDFLARE_DNS_IP} > /dev/null 2>&1; then
             # Public network: download the certificate
-            certsUrl="https://fsx-aws-Certificates.s3.amazonaws.com/bundle-$region.pem"
+            if [[ "$region" == us-gov-* ]]; then
+                certsUrl="https://fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com/bundle-$region.pem"
+            else
+                certsUrl="https://fsx-aws-Certificates.s3.amazonaws.com/bundle-$region.pem"
+            fi
             if [ ! -f /tmp/fsx_bundle.pem ]; then
                 curl -sS -o /tmp/fsx_bundle.pem "$certsUrl"
             fi

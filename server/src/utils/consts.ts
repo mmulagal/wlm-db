@@ -5,6 +5,7 @@ import { join } from 'path';
 import moment from 'moment';
 import { DATABASE_DEPLOYMENT_TYPE, DEPLOYMENT_STATUS } from '@prisma/client';
 import { MissingPermission } from './common-types';
+import { getAsyncLocalStorageResource } from './async-local-storage';
 
 // General
 const APP_NAME = 'Workload Manager for DB';
@@ -19,6 +20,7 @@ const AUDIT_GROUP = 'AUDIT_GROUP';
 const WORKSPACE_ID = 'WORKSPACE_ID';
 const SERVICE_TOKEN = 'SERVICE_TOKEN';
 const TOKEN_EXPIRATION_TIME = 'TOKEN_EXPIRATION_TIME';
+const GOV_ACCOUNT = 'GOV_ACCOUNT';
 
 // Attributes used to determine Amazon FSx for NetApp ONTAP.
 const FSX_FILESYSTEM_TYPE = 'ONTAP';
@@ -71,7 +73,8 @@ enum HEADERS {
     X_NETAPP_CACHE_CONTROL = 'x-netapp-cache-control',
     X_AGENT_ID = 'x-agent-id',
     X_ACCOUNT_ID = 'x-account-id',
-    NETAPP_WORKSPACE_ID = 'x-netapp-workspace-id'
+    NETAPP_WORKSPACE_ID = 'x-netapp-workspace-id',
+    IS_GOV_ACCOUNT = 'x-is-gov-account'
 }
 
 const API_PATH_HEALTH: string = '/health';
@@ -92,6 +95,8 @@ const AUDIT_EXCLUDE_LIST = [
     '/onprem-tco'
 ];
 const DEFAULT_AWS_REGION = process.env.REGION || 'us-east-1';
+// us-gov-west-1 chosen as primary GovCloud region where most AWS services launched first; confirm with PM if needed
+const DEFAULT_GOV_REGION = 'us-gov-west-1';
 
 const DEFAULT_AWS_CREDENTIALS_TYPE = 'aws_assume_role';
 
@@ -522,9 +527,22 @@ const AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP = {
     [IAM]: IAM_STRICT_CONDITION_ACTION_NAMES
 };
 
-const SECRET_MANAGER_ARN = 'arn:aws:secretsmanager:*:*:secret:wlmdb*';
-const CLOUD_FORMATION_ARN = 'arn:aws:cloudformation:*:*:stack/WLMDB*';
-const LOG_GROUP_ARN = 'arn:aws:logs:*:*:log-group:WLMDB*';
+function getArnPartition(): string {
+    const isGov = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
+    return isGov ? 'aws-us-gov' : 'aws';
+}
+
+function getSecretManagerArn() {
+    return `arn:${getArnPartition()}:secretsmanager:*:*:secret:wlmdb*`;
+}
+
+function getCloudFormationArn() {
+    return `arn:${getArnPartition()}:cloudformation:*:*:stack/WLMDB*`;
+}
+
+function getLogGroupArn() {
+    return `arn:${getArnPartition()}:logs:*:*:log-group:WLMDB*`;
+}
 const EC2_TAG_CONDITION = 'ec2:ResourceTag/aws:cloudformation:stack-name';
 const FSX_TAG_CONDITION = 'aws:ResourceTag/aws:cloudformation:stack-name';
 const WLMDB_RESOURCE_TAG_VALUE = 'WLMDB*';
@@ -613,7 +631,6 @@ const MSSQL_MEDIA_BUCKET_NAME = 'LaunchWizard-sqlha';
 const MSSQL_MEDIA_PATH_KEY = 'launchwizardscripts/sqlmedia/sqlserver.iso';
 const MASTER_TEMPLATE_PATH = 'templates/wlm-master.yaml';
 const PGSQL_MASTER_TEMPLATE_PATH = 'pgsql/templates/wlm-master.yaml';
-const CLOUD_FORMATION_STACK_URL = `https://${DEFAULT_AWS_REGION}.console.aws.amazon.com/cloudformation/home`;
 const CLOUD_FORMATION_CLI_COMMAND = 'aws cloudformation create-stack';
 const DISABLE_ROLLBACK = true;
 // In private network, time taken is longer
@@ -1810,6 +1827,11 @@ const RESTRICTED_FSX_REGIONS: Array<string> = [
     'us-isob-east-1'
 ];
 
+// All AWS GovCloud regions where FSx ONTAP is available.
+// If Gen2 (SINGLE_AZ_2) region filtering is needed later, split into GOV_REGIONS and GEN2_GOV_REGIONS
+// (as of now only us-gov-west-1 supports Gen2 in gg-skywalker).
+const GOV_REGIONS = ['us-gov-east-1', 'us-gov-west-1'] as const;
+
 const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'netapp/wlmdb/ssm-response';
 const CLONE_AGE: number = config.has('clone-age-in-days') ? config.get('clone-age-in-days') : 60; // Fall Back to 60 days as default if not set in config
 const OTHER_CLONE = 'other';
@@ -1960,7 +1982,7 @@ export {
     API_TITLE,
     APP_NAME,
     MASTER_TEMPLATE_PATH,
-    CLOUD_FORMATION_STACK_URL,
+    getArnPartition,
     TEMPLATE_CONFIGURATION_MAPPING,
     WLM_ASSETS,
     CF_DEPLOY_ROLE_NAME,
@@ -2071,8 +2093,8 @@ export {
     SECRECTS_MANAGER_STRICT_ACTION_NAMES,
     AWS_RESOURCES_STRICT_ACTION_MAP,
     AWS_RESOURCES_STRICT_CONDITION_ACTION_MAP,
-    SECRET_MANAGER_ARN,
-    CLOUD_FORMATION_ARN,
+    getSecretManagerArn,
+    getCloudFormationArn,
     EC2_TAG_CONDITION,
     FSX_TAG_CONDITION,
     CLOUD_FORMATION_CLI_COMMAND,
@@ -2095,7 +2117,7 @@ export {
     SQL_ENT,
     SQL_WEB,
     INVALID_PARAMETER_VALUE,
-    LOG_GROUP_ARN,
+    getLogGroupArn,
     WLMDB_RESOURCE_TAG_VALUE,
     MSSQL_SYSTEM_DATABASES,
     MSSQL_DATABASE_TYPES,
@@ -2249,6 +2271,9 @@ export {
     CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
     GENERIC_ASSESSMENT_ERROR_MESSAGE,
     RESTRICTED_FSX_REGIONS,
+    GOV_REGIONS,
+    DEFAULT_GOV_REGION,
+    GOV_ACCOUNT,
     CLONE_AGE,
     PGSQL_DEFAULT_INSTANCE_NAME,
     ORACLE_INSTANCE_NAME,

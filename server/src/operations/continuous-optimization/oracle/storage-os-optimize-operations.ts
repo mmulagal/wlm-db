@@ -14,6 +14,7 @@ import {
     retryWithDelay,
     sqlResponseParsing,
     getArtifactsRegionBucketName,
+    getArtifactsBucketRegion,
     IS_PROD
 } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
@@ -1145,9 +1146,10 @@ async function installHostUtilities(params: OptimizeOSParams) {
 
     try {
         // Generate presigned URL based on OS
+        const artifactsRegion = getArtifactsBucketRegion(region);
         const artifactsBucketName = getArtifactsRegionBucketName(region);
         const linuxHostUtilitiesSignedUrl = await getPreSignedUrl(
-            region,
+            artifactsRegion,
             artifactsBucketName,
             LINUX_HOST_UTILITIES_RELATIVE_PATH
         );

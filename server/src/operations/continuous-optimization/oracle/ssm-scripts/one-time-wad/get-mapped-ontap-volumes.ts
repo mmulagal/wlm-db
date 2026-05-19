@@ -171,8 +171,12 @@ def make_ontap_config(filesystem_id, region, username, password):
 
     # Setup certificate for public networks (only when using FQDN, not IP)
     if not config["use_insecure"] and can_ping("1.1.1.1"):
-        cert_url = ("https://fsx-aws-certificates.s3.amazonaws.com/"
-                   "bundle-{}.pem").format(region)
+        if region.startswith("us-gov-"):
+            cert_url = ("https://fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com/"
+                           "bundle-{}.pem").format(region)
+        else:
+            cert_url = ("https://fsx-aws-certificates.s3.amazonaws.com/"
+                           "bundle-{}.pem").format(region)
         config["cert_path"] = "/tmp/fsx_bundle.pem"
         if not os.path.exists(config["cert_path"]):
             if not download_certificate(cert_url, config["cert_path"]):

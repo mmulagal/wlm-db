@@ -30,8 +30,11 @@ import {
     RESTRICTED_FSX_REGIONS,
     SSM_COMMAND_CACHE_TYPE,
     CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
-    SSM_COMMAND_RUNTIMES
+    SSM_COMMAND_RUNTIMES,
+    GOV_REGIONS,
+    GOV_ACCOUNT
 } from '../../utils/consts';
+import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
 import { FSxAvailableRegionType } from '../../routes/types/aws.types';
 import { SSMParameterObject, MultipleCommandSsmResponse, AWSSDKCacheParams } from '../../utils/common-types';
@@ -362,10 +365,27 @@ async function getSsmResponseFromCloudWatch(
     }
 }
 
+async function getGovFSxOntapRegions(includeBedrockStatus?: boolean): Promise<{ regions: FSxAvailableRegionType[] }> {
+    logger.info('List Gov regions supporting Amazon FSx for NetApp ONTAP', { includeBedrockStatus });
+
+    return {
+        regions: GOV_REGIONS.map(regionCode => ({
+            regionCode,
+            regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : '',
+            bedrockAvailable: includeBedrockStatus ? true : undefined
+        }))
+    };
+}
+
 async function getGenericFSxOntapRegionsList(
     includeBedrockStatus?: boolean
 ): Promise<{ regions: FSxAvailableRegionType[] }> {
-    logger.info('List generic regions supporting Amazon FSx for NetApp ONTAP', { includeBedrockStatus });
+    const isGovAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
+    logger.info('List generic regions supporting Amazon FSx for NetApp ONTAP', { includeBedrockStatus, isGovAccount });
+
+    if (isGovAccount) {
+        return getGovFSxOntapRegions(includeBedrockStatus);
+    }
 
     const fsxRegionsList: Array<FSxAvailableRegionType> = [];
 
@@ -409,11 +429,17 @@ async function getFSxOntapRegionsList(
     includeBedrockStatus?: boolean,
     cacheParams?: AWSSDKCacheParams
 ): Promise<{ regions: FSxAvailableRegionType[] }> {
+    const isGovAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
     logger.info('List regions supporting Amazon FSx for NetApp ONTAP', {
         credentialsId,
         includeBedrockStatus,
-        cacheParams
+        cacheParams,
+        isGovAccount
     });
+
+    if (isGovAccount) {
+        return getGovFSxOntapRegions(includeBedrockStatus);
+    }
 
     const fsxRegionsList: Array<FSxAvailableRegionType> = [];
 

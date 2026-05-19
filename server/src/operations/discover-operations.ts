@@ -27,6 +27,7 @@ import {
     decompressSSMResponse,
     generateHash,
     getArtifactsRegionBucketName,
+    getArtifactsBucketRegion,
     getEc2Hostname,
     getFsxNameFromTags,
     getRedisConnection,
@@ -1323,8 +1324,13 @@ async function preparePsModulesForManage(
 
     try {
         // Get signed url for dependent-packages.zip to install the ps modules
+        const artifactsRegion = getArtifactsBucketRegion(region);
         const bucketname = getArtifactsRegionBucketName(region);
-        const copyPSModuleS3SignedUrl = await getPreSignedUrl(region, bucketname, PREPARE_PSMODULES_RELATIVE_PATH);
+        const copyPSModuleS3SignedUrl = await getPreSignedUrl(
+            artifactsRegion,
+            bucketname,
+            PREPARE_PSMODULES_RELATIVE_PATH
+        );
 
         const ssmPsModuleInstallResponse = await retryWithDelay(
             callSsmExecution.bind(null, {

@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify/types/instance';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyRequest } from 'fastify';
 import {
+    GetAccountInfoSchema,
     GetDatabaseVolumesSchema,
     GetFocusEventStatusSchema,
     GetFocusWadStatusSchema,
@@ -9,6 +10,7 @@ import {
     GetWidgetStatusSchema
 } from './schemas/wf-internal-schema';
 import {
+    getAccountInfo,
     getDatabaseVolumes,
     getFocusWadStatus,
     getLogsAnalysisStatus,
@@ -53,5 +55,11 @@ export default function systemRoutes(fastify: FastifyInstance) {
                 query: { credentialsIds, regions }
             } = castRequest(request);
             return getWidgetStatus(accountId, credentialsIds, regions);
+        })
+        .get('/v1/account-info', { schema: GetAccountInfoSchema }, async (request: FastifyRequest) => {
+            const {
+                params: { accountId }
+            } = castRequest(request);
+            return getAccountInfo(accountId);
         });
 }

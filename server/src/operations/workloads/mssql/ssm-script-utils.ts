@@ -955,7 +955,8 @@ const validateOntapConnectivity = (fsxids: string[], fsxregion: string) => `
         $responseObject = @{}
     }
 
-    $connection = Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet -Count 1
+    $certHost = $(if ('${fsxregion}' -like 'us-gov-*') { 'fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com' } else { 'fsx-aws-certificates.s3.amazonaws.com' })
+    $connection = Test-Connection -ComputerName $certHost -Quiet -Count 1
     if ($connection -ne $True) {
         # Set the registry key to disable certificate revocation check in case of private subnet
         Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
@@ -1184,7 +1185,8 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
         if ($null -eq $connection) {
             $tcp = New-Object System.Net.Sockets.TcpClient
             try {
-                $iar = $tcp.BeginConnect('fsx-aws-certificates.s3.amazonaws.com', 443, $null, $null)
+                $certHost = $(if ($FSxRegion -like 'us-gov-*') { 'fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com' } else { 'fsx-aws-certificates.s3.amazonaws.com' })
+                $iar = $tcp.BeginConnect($certHost, 443, $null, $null)
                 $connection = $iar.AsyncWaitHandle.WaitOne(1500) -and $tcp.Connected
                 if ($connection) { $tcp.EndConnect($iar) | Out-Null }
             } catch {
@@ -1202,7 +1204,8 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
         $regionCertificate = $null
         if (-not $isprivatesubnet) {
             try {
-                $FSxCertificateUri = "https://fsx-aws-Certificates.s3.amazonaws.com/bundle-$FSxRegion.pem"
+                $certHost = $(if ($FSxRegion -like 'us-gov-*') { 'fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com' } else { 'fsx-aws-Certificates.s3.amazonaws.com' })
+                $FSxCertificateUri = "https://$certHost/bundle-$FSxRegion.pem"
                 # Stream cert into memory then write a temp file for Import-Certificate (avoids Invoke-WebRequest progress overhead)
                 $tempCertFile = [System.IO.Path]::GetTempFileName()
                 Invoke-WebRequest -Uri $FSxCertificateUri -OutFile $tempCertFile -UseBasicParsing

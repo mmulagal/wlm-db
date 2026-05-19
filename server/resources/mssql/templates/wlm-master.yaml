@@ -462,7 +462,7 @@ Resources:
                   - cloudformation:ListStacks
                   - cloudformation:SignalResource
                 Resource: 
-                  - arn:aws:cloudformation:*:*:stack/WLMDB*
+                  - !Sub 'arn:${AWS::Partition}:cloudformation:*:*:stack/WLMDB*'
               - Sid: STSStatement
                 Effect: Allow
                 Action:
@@ -546,7 +546,7 @@ Resources:
                   - ssm:GetParameters
                   - ssm:PutParameter
                   - ssm:GetParametersByPath
-                Resource: 'arn:aws:ssm:*:*:parameter/netapp/wlmdb/*'
+                Resource: !Sub 'arn:${AWS::Partition}:ssm:*:*:parameter/netapp/wlmdb/*'
           PolicyName: !Join
             - ''
             - - !Ref 'AWS::StackName'
@@ -555,7 +555,7 @@ Resources:
     Type: Custom::MyCustomResource
     Condition: ShouldSendSaasNotification
     Properties:
-      ServiceToken: !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb'
+      ServiceToken: !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb'
       AccountId: !Ref AccountId
       CloudProviderAccountId: !Ref CloudProviderAccountId
       CredentialsId: !Ref RoleCredentialsId
@@ -628,11 +628,11 @@ Resources:
         - IncludeNotification
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN, !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - [Ref: NotificationARN]
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [!Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
       {{{Tags}}}
   ValidationStack1:
@@ -690,11 +690,11 @@ Resources:
         - IncludeNotification
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN, !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - [Ref: NotificationARN]
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [!Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
       {{{Tags}}}
   ValidationStack2:
@@ -744,11 +744,11 @@ Resources:
         - IncludeNotification
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN, !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - [Ref: NotificationARN]
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [!Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
       {{{Tags}}}
   FCIWaitHandler: 
@@ -831,11 +831,11 @@ Resources:
         - IncludeNotification
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN, !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - [Ref: NotificationARN]
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [!Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
       {{{Tags}}}
   ExistingFSxStack:
@@ -874,11 +874,11 @@ Resources:
         - IncludeNotification
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN, !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - [Ref: NotificationARN]
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [!Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
       {{{Tags}}}
   SQLServerStack:
@@ -998,11 +998,11 @@ Resources:
         - IncludeNotification
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN, !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - [Ref: NotificationARN]
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [!Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
       {{{Tags}}}
   SQLStandaloneStack:
@@ -1106,18 +1106,18 @@ Resources:
         - IncludeNotification
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [Ref: NotificationARN, !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [Ref: NotificationARN, !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - [Ref: NotificationARN]
         - Fn::If: 
           - ShouldSendSaasNotification
-          - [!Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
+          - [!Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb']
           - []
       {{{Tags}}}
   PostStackDeployment:
     Type: Custom::MyCustomResource
     Condition: ShouldSendSaasNotification
     Properties:
-      ServiceToken: !Sub 'arn:aws:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb'
+      ServiceToken: !Sub 'arn:${AWS::Partition}:sns:${AWS::Region}:${WlmdbAwsAccountId}:wlmdb'
       AccountId: !Ref AccountId
       CloudProviderAccountId: !Ref CloudProviderAccountId
       CredentialsId: !Ref RoleCredentialsId

@@ -23,7 +23,6 @@ import {
     TerraformSetupResponseType
 } from '../routes/types/deployment.types';
 import {
-    CLOUD_FORMATION_STACK_URL,
     MISSING_PERMISSIONS,
     TEMPLATE_CONFIGURATION_MAPPING,
     DISABLE_ROLLBACK,
@@ -101,7 +100,8 @@ import {
     splitDomainUsername,
     getCollationForMSSQLVersion,
     filterActions,
-    IS_DEMO_FLOW
+    IS_DEMO_FLOW,
+    getCloudFormationStackUrl
 } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { getRoleDetails } from './cloud-manager/credentials-operations';
@@ -587,7 +587,7 @@ async function getCloudformationTemplate(
         }`;
     });
 
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
+    const signedTemplateURL = `${getCloudFormationStackUrl()}?region=${
         region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
     }#/stacks/create/review?templateURL=${encodeURIComponent(signedMasterTemplateUrl)}&${urlParams}`;
 
@@ -743,7 +743,7 @@ async function getPgSqlCfTemplate(
         }`;
     });
 
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${
+    const signedTemplateURL = `${getCloudFormationStackUrl()}?region=${
         region || undefined // explicitly needs to be send if the region is empty string -- cloudformation would not take an empty string
     }#/stacks/create/review?templateURL=${encodeURIComponent(signedMasterTemplateUrl)}&${urlParams}`;
 
@@ -1356,7 +1356,7 @@ async function createCloudFormationTemplateForUserDeployment(
         templateParamsInCfFormat
     );
 
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${encodedSignedMasterTemplateURL}&${templateParams}`;
+    const signedTemplateURL = `${getCloudFormationStackUrl()}?region=${region}#/stacks/create/review?templateURL=${encodedSignedMasterTemplateURL}&${templateParams}`;
 
     logger.info('Cloud Formation template URL ', signedTemplateURL);
 
@@ -2256,7 +2256,7 @@ async function createCfTemplateForPgsqlDeployment(
         templateParamsInCfFormat
     );
 
-    const signedTemplateURL = `${CLOUD_FORMATION_STACK_URL}?region=${region}#/stacks/create/review?templateURL=${encodedSignedMasterTemplateURL}&${templateParams}`;
+    const signedTemplateURL = `${getCloudFormationStackUrl()}?region=${region}#/stacks/create/review?templateURL=${encodedSignedMasterTemplateURL}&${templateParams}`;
 
     logger.info('Cloud Formation template URL ', signedTemplateURL);
 

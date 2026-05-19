@@ -50,7 +50,8 @@ $ErrorActionPreference = "Stop"
 
 $FilePaths = $FilePathString.Split(',')
 $FSxCredStore = "/netapp/wlmdb/$FileSystemId"
-$connection = Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet -Count 1
+$certHost = $(if ($region -like 'us-gov-*') { 'fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com' } else { 'fsx-aws-certificates.s3.amazonaws.com' })
+$connection = Test-Connection -ComputerName $certHost -Quiet -Count 1
 if ($connection -eq $False) {
     # Set the registry key to disable certificate revocation check in case of private subnet
     Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
@@ -160,7 +161,8 @@ if ($connection -eq $False) {
     $restcert = ''
 }
 else {
-    $certuri = "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+    $certHost = $(if ($region -like 'us-gov-*') { 'fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com' } else { 'fsx-aws-certificates.s3.amazonaws.com' })
+    $certuri = "https://$certHost/bundle-$region.pem"
     Invoke-WebRequest -Uri $certuri -OutFile C:\\cfn\\cert.pem
     $cert = Import-Certificate -FilePath C:\\cfn\\cert.pem -CertStoreLocation Cert:\\LocalMachine\\Root
     $restcert = Get-ChildItem -Path Cert:\\LocalMachine\\Root | ? { $_.Subject -like $cert.Subject }

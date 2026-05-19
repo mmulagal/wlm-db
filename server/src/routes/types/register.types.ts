@@ -136,12 +136,21 @@ const RegisterCredentials = Type.Object({
             RESOURCESTYPE.ORACLE_ASM
         ]
     }),
-    username: Type.String({
-        minLength: 1,
-        description: 'Username for the resource. For windows domain user, use DOMAIN\\username format.',
-        examples: ['WLM\\wfuser', 'sqluser', 'fsxadmin']
-    }),
-    password: Type.String({ minLength: 1 })
+    username: Type.Optional(
+        Type.String({
+            minLength: 1,
+            description: 'Username for the resource. For windows domain user, use DOMAIN\\username format.',
+            examples: ['WLM\\wfuser', 'sqluser', 'fsxadmin']
+        })
+    ),
+    password: Type.Optional(Type.String({ minLength: 1 })),
+    ssmParameterArn: Type.Optional(
+        Type.String({
+            description:
+                'ARN of a pre-created SSM SecureString parameter containing credentials. Required for GovCloud accounts; not allowed for commercial accounts.',
+            pattern: '^arn:aws(-us-gov)?:ssm:[a-z0-9-]+:[0-9]{12}:parameter\\/.+'
+        })
+    )
 });
 
 const RegisterCredentialsRequestBody = Type.Object({

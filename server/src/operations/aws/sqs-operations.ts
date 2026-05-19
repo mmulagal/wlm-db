@@ -15,6 +15,7 @@ import {
     DEFAULT_AWS_REGION,
     ERROR_CODE_SQS_INVALID_TOKEN,
     ERROR_CODE_SQS_NON_EXISTENT_QUEUE,
+    GOV_ACCOUNT,
     RESOURCESTYPE,
     TRACK_STATUS_CUSTOM_RESOURCE,
     WLMDB,
@@ -69,6 +70,7 @@ import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import { DeploymentDetails } from '../../utils/common-types';
 import { paginateDescribeEbsVolumes } from '../../lib/aws/ec2';
 import prepareWFNotificationRequest from '../wf-notification-operations';
+import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 
 const logger = getLogger();
 
@@ -1281,7 +1283,13 @@ async function registerWithWFServices(
     // region: string,
     // nodeIds: string[]
 ) {
-    if (encryptedFsxPassword) {
+    const isGovAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
+    if (isGovAccount) {
+        logger.info(
+            'GovCloud account: skipping FSx credential registration with FSx core — credentials managed via SSM parameter ARN',
+            { accountId, fsxId }
+        );
+    } else if (encryptedFsxPassword) {
         const { credentials_id: deploymentCredentialId, region: deploymentRegion } = masterStackDeployment;
         try {
             const decryptedPassword = await decryptString(encryptedFsxPassword);

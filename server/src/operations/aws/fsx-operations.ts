@@ -41,6 +41,7 @@ import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import {
     convertToBytes,
     divideArrayIntoChunks,
+    getArnPartition,
     getFsxArn,
     sleep,
     sqlResponseParsing,
@@ -253,7 +254,7 @@ async function getFSXFileSystemListForDemo(credentialsId: string, region: string
             ...(deploymentType === 'SINGLE_AZ'
                 ? { subnetIds: [subnetIds?.primary] }
                 : { subnetIds: [subnetIds?.primary, subnetIds?.secondary] }),
-            kmsKeyId: `arn:aws:kms:${fsxRegion}:${awsAccountId}:key/${randomize('A0', 17)}`
+            kmsKeyId: `arn:${getArnPartition()}:kms:${fsxRegion}:${awsAccountId}:key/${randomize('A0', 17)}`
         })
     );
     return filteredResponse;

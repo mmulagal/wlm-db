@@ -139,7 +139,7 @@ resource "aws_iam_role_policy" "ec2_iam_role_policy" {
           "ssm:GetParametersByPath",
           "ssm:DeleteParameter"
         ]
-        Resource = "arn:aws:ssm:*:*:parameter/netapp/wlmdb/*"
+        Resource = "arn:${data.aws_partition.current.partition}:ssm:*:*:parameter/netapp/wlmdb/*"
       }
     ]
   })

@@ -2,9 +2,9 @@ import throat from 'throat';
 import { describeRegions } from '../../lib/aws/ec2';
 import { createTopic, listTopics, subscribeTopic } from '../../lib/aws/sns';
 import { createQueue } from '../../lib/aws/sqs';
-import { AWS_RESOURCE_NAME_TAG, DEFAULT_AWS_REGION, SQS_MSG_RETENTION, WLMDB } from '../../utils/consts';
+import { AWS_RESOURCE_NAME_TAG, SQS_MSG_RETENTION, WLMDB } from '../../utils/consts';
 import getLogger from '../../utils/logger';
-import { derivePropertiesFromARN, getQueueArn } from '../../utils/utils';
+import { derivePropertiesFromARN, getArnPartition, getDefaultRegion, getQueueArn } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -48,7 +48,9 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
         if (process.env.AWS_ROLE_ARN) {
             const { awsAccountId } = derivePropertiesFromARN(process.env.AWS_ROLE_ARN) || {};
             const queueName = WLMDB;
-            const { QueueUrl } = await createQueue(DEFAULT_AWS_REGION, {
+            const region = getDefaultRegion();
+            const partition = getArnPartition();
+            const { QueueUrl } = await createQueue(region, {
                 QueueName: queueName,
                 Attributes: {
                     MessageRetentionPeriod: SQS_MSG_RETENTION,
@@ -59,10 +61,10 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                                 Sid: '__owner_statement',
                                 Effect: 'Allow',
                                 Principal: {
-                                    AWS: `arn:aws:iam::${awsAccountId}:root`
+                                    AWS: `arn:${partition}:iam::${awsAccountId}:root`
                                 },
                                 Action: 'SQS:*',
-                                Resource: `arn:aws:sqs:${DEFAULT_AWS_REGION}:${awsAccountId}:${queueName}`
+                                Resource: `arn:${partition}:sqs:${region}:${awsAccountId}:${queueName}`
                             },
                             {
                                 Sid: 'sns-topic-subscription',
@@ -71,10 +73,10 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                                     AWS: '*'
                                 },
                                 Action: 'SQS:SendMessage',
-                                Resource: `arn:aws:sqs:${DEFAULT_AWS_REGION}:${awsAccountId}:${queueName}`,
+                                Resource: `arn:${partition}:sqs:${region}:${awsAccountId}:${queueName}`,
                                 Condition: {
                                     ArnLike: {
-                                        'aws:SourceArn': `arn:aws:sns:*:${awsAccountId}:${queueName}`
+                                        'aws:SourceArn': `arn:${partition}:sns:*:${awsAccountId}:${queueName}`
                                     }
                                 }
                             }
@@ -100,7 +102,7 @@ async function createAndSubscribeToSnsTopicInAllRegions() {
                                                 AWS: '*'
                                             },
                                             Action: ['SNS:Publish', 'SNS:Subscribe'],
-                                            Resource: `arn:aws:sns:${code}:${awsAccountId}:${queueName}`
+                                            Resource: `arn:${partition}:sns:${code}:${awsAccountId}:${queueName}`
                                         }
                                     ]
                                 };

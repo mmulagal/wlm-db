@@ -3,7 +3,8 @@ import { DATABASE_TYPE } from '@prisma/client';
 import getLogger from '../utils/logger';
 import { getCredentials } from './cloud-manager/credentials-operations';
 import { creadteDemoDBData, prepopulateOfflineAssessmentData } from '../utils/demo-utils/demoDefaultUtils';
-import { DatabaseTypes, MSSQL } from '../utils/consts';
+import { DatabaseTypes, MSSQL, GOV_ACCOUNT } from '../utils/consts';
+import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import {
     onPremAOAGAUploadObject,
     onPremFCIUploadObject,
@@ -523,11 +524,18 @@ async function getLogsAnalysisStatus(
     return { severity: focusSeverity as FocusStatusResponse['severity'], totalItems, items };
 }
 
+function getAccountInfo(accountId: string) {
+    const isGovAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
+    logger.info('Get account info', { accountId, isGovAccount });
+    return { isGovAccount };
+}
+
 export {
     getSystemStatus,
     getDatabaseVolumes,
     getFocusWadStatus,
     getLogsAnalysisStatus,
     getWidgetStatus,
+    getAccountInfo,
     DEFAULT_WIDGET_LIMIT
 };

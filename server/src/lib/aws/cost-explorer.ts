@@ -12,7 +12,8 @@ import { getCredentialsDetails } from '../../operations/cloud-manager/credential
 import getLogger from '../../utils/logger';
 import { generateHash } from '../../utils/utils';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { AWS_CE_TYPE } from '../../utils/consts';
+import { AWS_CE_TYPE, GOV_ACCOUNT } from '../../utils/consts';
+import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 
 const logger = getLogger();
 
@@ -36,6 +37,12 @@ async function getCostAndUsage(
     credentialsId?: string,
     readFromCache = true
 ) {
+    const isGov = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
+    if (isGov) {
+        logger.info('Cost Explorer API is not available for GovCloud accounts, returning empty results');
+        return { ResultsByTime: [], $metadata: { httpStatusCode: 200 } } as GetCostAndUsageCommandOutput;
+    }
+
     logger.info('Get cost and usage :', region, credentialsId, input);
     try {
         const costAndUsageHash = generateHash(JSON.stringify(input));
@@ -65,6 +72,12 @@ async function getTagsfromCostExplorer(
     credentialsId?: string,
     readFromCache = true
 ) {
+    const isGov = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
+    if (isGov) {
+        logger.info('Cost Explorer API is not available for GovCloud accounts, returning empty results');
+        return { Tags: [], ReturnSize: 0, TotalSize: 0, $metadata: { httpStatusCode: 200 } } as GetTagsCommandOutput;
+    }
+
     logger.info('Get cost allocation tag at account level :', region, credentialsId, input);
     try {
         const ceTagsHash = generateHash(JSON.stringify(input));

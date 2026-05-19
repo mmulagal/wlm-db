@@ -1,5 +1,6 @@
 import { AccountIdParams } from '../types/generic.types';
 import {
+    AccountInfoResponse,
     HomepageFocusStatusResponse,
     HomepageStatusQueryParams,
     HomepageWidgetStatusResponse,
@@ -63,8 +64,19 @@ const GetWidgetStatusSchema = {
     }
 };
 
+const GetAccountInfoSchema = {
+    tags: ['WF-Internal'],
+    params: AccountIdParams,
+    summary: 'Get account info',
+    description: 'Returns account metadata including GovCloud status',
+    response: {
+        200: AccountInfoResponse
+    }
+};
+
 export {
     GetSystemStatusSchema,
+    GetAccountInfoSchema,
     GetDatabaseVolumesSchema,
     GetFocusWadStatusSchema,
     GetFocusEventStatusSchema,

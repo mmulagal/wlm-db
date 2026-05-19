@@ -19,7 +19,8 @@ const invokeOntapRequestTemplate = `
 
         # If network type is determined in the upstream script, then it is not necessary to check the connection again
         if ($connection -eq $null) {
-            $connection = Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet -Count 1
+            $certHost = $(if ($FSxRegion -like 'us-gov-*') { 'fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com' } else { 'fsx-aws-certificates.s3.amazonaws.com' })
+            $connection = Test-Connection -ComputerName $certHost -Quiet -Count 1
         }
         if ($connection -eq $False) {
             # Set the registry key to disable certificate revocation check in case of private subnet
@@ -32,9 +33,10 @@ const invokeOntapRequestTemplate = `
             $isprivatesubnet = $True
             $regionCertificate = ''
         } else {
-            $FSxCertificateificateUri = 'https://fsx-aws-Certificates.s3.amazonaws.com/bundle-' + $FSxRegion + '.pem'
+            $certHost = $(if ($FSxRegion -like 'us-gov-*') { 'fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com' } else { 'fsx-aws-Certificates.s3.amazonaws.com' })
+            $FSxCertificateUri = 'https://' + $certHost + '/bundle-' + $FSxRegion + '.pem'
             $tempCertFile = (New-TemporaryFile).FullName
-            Invoke-WebRequest -Uri $FSxCertificateificateUri -OutFile $tempCertFile
+            Invoke-WebRequest -Uri $FSxCertificateUri -OutFile $tempCertFile
             $Certificate = Import-Certificate -FilePath $tempCertFile -CertStoreLocation Cert:\\LocalMachine\\Root
             $regionCertificate = Get-ChildItem -Path Cert:\\LocalMachine\\Root | Where-Object { $_.Subject -like $Certificate.Subject }
             Remove-Item -Path $tempCertFile -Force -ErrorAction SilentlyContinue

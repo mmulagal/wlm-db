@@ -23,6 +23,7 @@ import {
 import {
     generateHash,
     getArtifactsRegionBucketName,
+    getArtifactsBucketRegion,
     getNextToken,
     sqlResponseParsing,
     IS_DEMO_FLOW
@@ -111,9 +112,7 @@ async function findFirstAvailableModel(accountId: string, credentialsId: string,
                 return { modelId, response };
             }
         } catch (error) {
-            const errorMessage = `Failed to retrieve AWS Bedrock model ${modelId} may not be not available. Error: ${error}`;
-            logger.error(errorMessage);
-            throw error;
+            logger.warn(`Bedrock model ${modelId} is not available in region, trying next model`, { error });
         }
     }
 }
@@ -375,7 +374,11 @@ async function handleLogsAnalysis(
                 : `${LOGS_ANALYZER_BUNDLE_PATH}${ORACLE_PATH}`;
         const s3SignedUrl =
             logsAnalyzerS3SignedUrl ||
-            (await getPreSignedUrl(region, getArtifactsRegionBucketName(region), logsAnalyzerPath));
+            (await getPreSignedUrl(
+                getArtifactsBucketRegion(region),
+                getArtifactsRegionBucketName(region),
+                logsAnalyzerPath
+            ));
 
         let logsPath = '';
         let databaseInstanceName = '';
