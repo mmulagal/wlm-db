@@ -18,6 +18,13 @@ vi.mock('@netapp/design-system', () => ({
             {tableProps?.rows?.map((row: any, i: number) => (
                 <div key={i} data-testid={`row-${i}`}>
                     {row.details}
+                    {Object.keys(row)
+                        .filter(k => k !== 'details' && k !== 'id')
+                        .map(k => (
+                            <span key={k} data-testid={`cell-${row.id}-${k}`}>
+                                {row[k]}
+                            </span>
+                        ))}
                 </div>
             ))}
         </div>
@@ -297,5 +304,33 @@ describe('SelectedVolumeSummary', () => {
             </Provider>
         );
         expect(screen.getByTestId('table')).toHaveAttribute('data-variant', 'innerTable');
+    });
+
+    it('sums throughput for multiple volumes of the same type instead of using max', async () => {
+        const host = {
+            ec2InstanceId: 'i-tp',
+            credentialId: 'cred-tp',
+            regionId: 'us-east-1',
+            loading: false,
+            ebsResourceInfo: [
+                { id: 1, volumeType: 'gp3', size: 100, iops: 3000, throughput: 125 },
+                { id: 2, volumeType: 'gp3', size: 200, iops: 6000, throughput: 1000 },
+                { id: 3, volumeType: 'gp3', size: 300, iops: 9000, throughput: 750 }
+            ]
+        };
+        const store = makeStore({ selectedHostDetails: {} });
+        render(
+            <Provider store={store}>
+                <SelectedVolumeSummary host={host} />
+            </Provider>
+        );
+
+        await act(() => {
+            vi.advanceTimersByTime(10);
+        });
+
+        // Row id '4' is the throughput row; cell-4-gp3 should be 1875 (125+1000+750), not 1000 (max) or 125 (first)
+        const throughputCell = screen.getByTestId('cell-4-gp3');
+        expect(throughputCell.textContent).toBe('1875');
     });
 });

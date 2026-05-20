@@ -1388,6 +1388,13 @@ export const UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES = new Set([
 ]);
 
 /**
+ * Sort-weight discriminator key for WAD (offline assessment) rows.
+ * Used in sortDatabaseTableData to give WAD rows a stable weight between OFFLINE and UNKNOWN,
+ * without relying on the absence of a status field.
+ */
+export const WAD_SORT_STATUS = 'WAD';
+
+/**
  * List of MSSQL configuration names that are excluded for WAD (offline assessment) instances.
  * These configurations require online connectivity and are not available for WAD instances.
  * If a config is removed from this list, it will be shown normally for isWad=true cases.

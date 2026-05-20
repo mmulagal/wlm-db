@@ -31,6 +31,7 @@ import {
     SQL_DEPLOYMENT_MODE,
     STATUS_CONST,
     STORAGE_TYPES,
+    WAD_SORT_STATUS,
     WLF_TABS
 } from '../../utils/consts';
 import {
@@ -2329,22 +2330,22 @@ export const sortDatabaseTableData = (data: Array<InventoryTableData>) => {
         return data;
     }
     // Sorting based on database type and status
-    const databasesWeights: any = {
+    const databasesWeights: Record<string, number> = {
         [DBType.MSSQL]: 30000,
         [DBType.ORACLE]: 20000,
         [DBType.POSTGRESQL]: 10000
     };
 
-    const statusWeights: any = {
+    const statusWeights: Record<string, number> = {
         ONLINE: 3000,
         OFFLINE: 2000,
-        WAD: 1500,
+        [WAD_SORT_STATUS]: 1500,
         UNKNOWN: 1000
     };
 
     const result = data.slice().sort((a, b) => {
-        const statusKeyA = a?.isWad ? 'WAD' : a.status || '';
-        const statusKeyB = b?.isWad ? 'WAD' : b.status || '';
+        const statusKeyA = a?.isWad ? WAD_SORT_STATUS : a.status || '';
+        const statusKeyB = b?.isWad ? WAD_SORT_STATUS : b.status || '';
 
         const weightA = (databasesWeights[a?.hostType || ''] || 0) + (statusWeights[statusKeyA] || 0);
         const weightB = (databasesWeights[b?.hostType || ''] || 0) + (statusWeights[statusKeyB] || 0);
