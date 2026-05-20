@@ -8,8 +8,19 @@
         gap: 24px;
 
         .deploymentModelWidth {
-            width: 276px;
+            flex: 1;
+            min-width: 0;
             height: 70px;
         }
+    }
+}
+
+.mockDisabled {
+    pointer-events: none;
+
+    [class*='inputField'] {
+        background-color: var(--field-background-disabled);
+        color: var(--text-disabled);
+        border-color: var(--field-border-disabled);
     }
 }

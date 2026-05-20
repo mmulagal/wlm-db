@@ -94,7 +94,10 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const isOracleOnPrem = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM;
     const isOracleEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
     const isOracleManualEbs = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS;
-    const isOnPremMode = (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && !isOracleEbs) || isOracleOnPrem;
+    const isOnPremMode =
+        (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES && !isOracleEbs && !isOracleManualEbs) ||
+        isOracleOnPrem ||
+        savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM;
 
     const {
         selectedRowsForExploreSavingsEBSBulk,
@@ -473,8 +476,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                         <SavingsHeader />
                                         <div className={styles.manualContentWrapper}>
                                             <ManualTCOFields printState={printState} />
-                                            <ManualEC2 />
-                                            <ManualVolumeTypes />
+                                            <ManualEC2 printState={printState} />
+                                            <ManualVolumeTypes printState={printState} />
                                             {selectedManualDeploymentModel?.label ===
                                                 'Always on availability group' && <ManualTCOAccordion />}
                                         </div>
@@ -497,8 +500,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                         <SavingsHeader />
                                         <div className={styles.manualContentWrapper}>
                                             <ManualTCOFields printState={printState} />
-                                            <ManualEC2 />
-                                            <ManualVolumeTypes />
+                                            <ManualEC2 printState={printState} />
+                                            <ManualVolumeTypes printState={printState} />
                                             {selectedManualDeploymentModel?.label ===
                                                 DATABASE_DEPLOYMENT_MODE.DATAGUARD && <ManualTCOAccordion />}
                                         </div>

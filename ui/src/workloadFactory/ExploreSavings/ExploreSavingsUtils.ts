@@ -648,6 +648,7 @@ export const formatViewCalcInstance = (
                 selectedHostDetails?.databaseInstancesSummary?.[0]?.databaseServer?.serverEdition ||
                 selectedOnPremHostDetails?.oracleEdition ||
                 licenseDetails?.sqlServerEdition ||
+                store.getState().exploreSavings.selectedManualServerEdition?.value ||
                 GENERAL.NOT_AVAILABLE;
             base.oracleLicense = licenseDetails?.licenseIncluded ? 'Yes' : 'No';
         } else {

@@ -154,6 +154,35 @@ describe('SavingsHeader', () => {
         expect(container.firstChild).toHaveClass('savingsHeaderFSX');
     });
 
+    it('shows OnPrem header text when savingsCalculatorFrom is ONPREM even without MSSQL_ON_PREMISES tab', () => {
+        const { container } = render(
+            <Provider
+                store={makeStore({
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.ONPREM,
+                    selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE
+                })}
+            >
+                <SavingsHeader />
+            </Provider>
+        );
+        expect(container.textContent).toContain(GENERAL.SAVINGS_ONPREM_HEADER);
+    });
+
+    it('applies OnPrem css class when savingsCalculatorFrom is ONPREM even without MSSQL_ON_PREMISES tab', () => {
+        const { container } = render(
+            <Provider
+                store={makeStore({
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.ONPREM,
+                    selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE
+                })}
+            >
+                <SavingsHeader />
+            </Provider>
+        );
+        expect(container.firstChild).toHaveClass('savingsHeader');
+        expect(container.firstChild).toHaveClass('savingsHeaderOnPrem');
+    });
+
     it('shows Oracle EBS header text for ORACLE_AUTO_EBS', () => {
         const { container } = render(
             <Provider store={makeStore({ savingsCalculatorFrom: SAVINGS_CALC_MODE.ORACLE_AUTO_EBS })}>

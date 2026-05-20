@@ -19,9 +19,11 @@ import {
 import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
 import {
     DATABASE_DEPLOYMENT_MODE,
+    ORACLE_EDITIONS,
     SAVINGS_CALC_MODE,
     SNAPSHOT_FREQUENCY,
-    SQL_DEPLOYMENT_MODE
+    SQL_DEPLOYMENT_MODE,
+    SQL_SERVER_EDITIONS
 } from '../../../../utils/consts';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -98,25 +100,27 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
     }, [generateRegionList]);
 
     // Function to generate the options for Select Field
-    const generateSQLEditionList = useMemo<optionType[]>((): optionType[] => {
-        const deploymentModel = [
-            'SQL server Standard',
-            'SQL server Enterprise',
-            'SQL server Web',
-            'SQL server Developer'
-        ];
-        const options: optionType[] = [];
-        deploymentModel?.map((val, idx: number) => {
-            const option = generateOptionType(val, val, '', false, '', val);
-            options.push(option);
-        });
-
-        return options;
-    }, []);
+    const generateSQLEditionList = useMemo<optionType[]>(
+        (): optionType[] => SQL_SERVER_EDITIONS.map(val => generateOptionType(val, val, '', false, '', val)),
+        []
+    );
 
     useEffect(() => {
-        if (!selectedManualServerEdition) dispatch(setSelectedManualServerEdition(generateSQLEditionList[0]));
-    }, [generateSQLEditionList]);
+        if (!selectedManualServerEdition && savingsCalculatorFrom !== SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS)
+            dispatch(setSelectedManualServerEdition(generateSQLEditionList[0]));
+    }, [generateSQLEditionList, savingsCalculatorFrom]);
+
+    // Function to generate the options for Oracle edition Select Field
+    const generateOracleEditionList = useMemo<optionType[]>(
+        (): optionType[] => ORACLE_EDITIONS.map(val => generateOptionType(val, val, '', false, '', val)),
+        []
+    );
+
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS && !selectedManualServerEdition) {
+            dispatch(setSelectedManualServerEdition(generateOracleEditionList[0]));
+        }
+    }, [generateOracleEditionList, savingsCalculatorFrom]);
 
     // Function to generate the options for Select Field
     const generateDeploymentModelList = useMemo<optionType[]>((): optionType[] => {
@@ -223,6 +227,19 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
                             className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                         />
                     )}
+                    {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS && (
+                        <SelectField
+                            label={t('databases.explore-savings.oracle-edition-label')}
+                            isClearable={false}
+                            defaultValue={selectedManualServerEdition || [generateOracleEditionList[0]]}
+                            onChange={(selectedOptions: any): void => {
+                                dispatch(setSelectedManualServerEdition(selectedOptions));
+                            }}
+                            isSearchable={false}
+                            options={generateOracleEditionList}
+                            className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                        />
+                    )}
                 </div>
 
                 <div className={styles.secondRow}>
@@ -240,7 +257,7 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
                         />
                     )}
                     {printState && (
-                        <div className={CommonStyles.mockInputClone}>
+                        <div className={`${CommonStyles.mockInputClone} ${styles.deploymentModelWidth}`}>
                             <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
                                 {GENERAL.MONTHLY_DATA_CHANGE_RATE}
                             </DsTypography>
@@ -274,7 +291,7 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
                         />
                     )}
                     {printState && (
-                        <div className={CommonStyles.mockInputClone}>
+                        <div className={`${CommonStyles.mockInputClone} ${styles.deploymentModelWidth}`}>
                             <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
                                 {GENERAL.NUMBER_OF_CLONED_COPIES}
                             </DsTypography>
@@ -304,7 +321,7 @@ const ManualTCOFields = ({ printState }: ManualTCOFieldsProps) => {
                         />
                     )}
                     {printState && (
-                        <div className={CommonStyles.mockInputClone}>
+                        <div className={`${CommonStyles.mockInputClone} ${styles.deploymentModelWidth}`}>
                             <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
                                 {savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS
                                     ? t('databases.explore-savings.monthly-oracle-cost')

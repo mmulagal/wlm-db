@@ -54,7 +54,8 @@ const SavingsCalculatorManualApi = () => {
         selectedManualFSXIOPS,
         selectedManualFSXThroughput,
         selectedManualStorageCapacityUnit,
-        requestedRegion
+        requestedRegion,
+        viewCalculationsApiResponse
     } = useAppSelector(state => state.exploreSavings);
 
     const instanceTypeLoading = useAppSelector(state => state.exploreSavings.regionChangeInstanceLoading);
@@ -174,6 +175,22 @@ const SavingsCalculatorManualApi = () => {
         getManualStorageSavingsData();
         getManualViewCalculationsData();
     };
+
+    // Re-format the cached view-calc API response whenever the Oracle edition changes
+    // so the View Calculation modal reflects the new selection immediately (no extra API call needed)
+    useEffect(() => {
+        if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS && viewCalculationsApiResponse) {
+            dispatch(
+                setViewCalculationsResponse(
+                    formatViewCalcData(
+                        viewCalculationsApiResponse,
+                        selectedManualDeploymentModel?.label,
+                        monthlyChangeRate
+                    )
+                )
+            );
+        }
+    }, [selectedManualServerEdition, savingsCalculatorFrom, viewCalculationsApiResponse]);
 
     useEffect(() => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS) {

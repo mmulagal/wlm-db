@@ -206,7 +206,7 @@ const ManualTCOFSXFields = ({ printState }: ManualTCOFSXFieldsProps) => {
                             />
                         )}
                         {printState && (
-                            <div className={CommonStyles.mockInputClone}>
+                            <div className={`${CommonStyles.mockInputClone} ${styles.SCWidth}`}>
                                 <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
                                     Total storage capacity
                                 </DsTypography>
@@ -239,7 +239,7 @@ const ManualTCOFSXFields = ({ printState }: ManualTCOFSXFieldsProps) => {
                         />
                     )}
                     {printState && (
-                        <div className={CommonStyles.mockInputClone}>
+                        <div className={`${CommonStyles.mockInputClone} ${styles.deploymentModelWidth}`}>
                             <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
                                 Provisioned SSD IOPS
                             </DsTypography>
@@ -262,7 +262,7 @@ const ManualTCOFSXFields = ({ printState }: ManualTCOFSXFieldsProps) => {
                         />
                     )}
                     {printState && (
-                        <div className={CommonStyles.mockInputClone}>
+                        <div className={`${CommonStyles.mockInputClone} ${styles.deploymentModelWidth}`}>
                             <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
                                 Throughput (MB/s)
                             </DsTypography>

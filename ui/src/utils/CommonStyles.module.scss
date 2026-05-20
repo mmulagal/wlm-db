@@ -357,7 +357,8 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    width: 191px;
+    flex: 1;
+    min-width: 0;
     position: relative;
 
     .inputField {

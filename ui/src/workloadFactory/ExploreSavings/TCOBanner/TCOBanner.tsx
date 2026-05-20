@@ -28,8 +28,9 @@ const TCOBanner = () => {
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
     const [activeSlide, setActiveSlide] = useState(0); // 0 for first, 1 for second
 
-    const isOracleOnPrem = selectedOracleExploreSavingsTab === WLF_TABS.ORACLE_SERVER_ON_PREMISES;
-    const isOracleEbs = selectedOracleExploreSavingsTab === WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE;
+    const isOracle = selectedTCOHostType === DBType.ORACLE;
+    const isOracleOnPrem = isOracle && selectedOracleExploreSavingsTab === WLF_TABS.ORACLE_SERVER_ON_PREMISES;
+    const isOracleEbs = isOracle && selectedOracleExploreSavingsTab === WLF_TABS.ORACLE_SERVER_ON_ELASTIC_BLOCK_STORE;
 
     // Auto-rotate slides every 8 seconds (only for on-prem)
     useEffect(() => {

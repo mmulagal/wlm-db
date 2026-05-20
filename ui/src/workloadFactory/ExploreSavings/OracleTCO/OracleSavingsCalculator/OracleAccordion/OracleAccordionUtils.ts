@@ -9,7 +9,8 @@ import { DATABASE_DEPLOYMENT_MODE } from '../../../../../utils/consts';
 export const generateOracleInstanceData = (
     storageSavingsResponse: any,
     selectedHostDetails: any,
-    hostName?: string
+    hostName?: string,
+    manualEditionValue?: string
 ) => {
     if (!storageSavingsResponse) return {};
 
@@ -40,6 +41,10 @@ export const generateOracleInstanceData = (
     // Check oracleDatabases array (Oracle on-prem mode)
     else if (Array.isArray(selectedHostDetails?.oracleDatabases) && selectedHostDetails.oracleDatabases.length > 0) {
         oracleEdition = selectedHostDetails.oracleDatabases[0].oracleEdition || '';
+    }
+    // Fallback: use the edition value passed in from the caller (Oracle manual EBS form selection)
+    else if (manualEditionValue) {
+        oracleEdition = manualEditionValue;
     }
 
     const deploymentModel = DATABASE_DEPLOYMENT_MODE.STANDALONE;

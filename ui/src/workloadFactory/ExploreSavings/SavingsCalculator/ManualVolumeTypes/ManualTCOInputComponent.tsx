@@ -1,4 +1,4 @@
-import { DsTextField, Popover, TextField } from '@netapp/design-system';
+import { DsTextField, DsTypography, Popover, TextField } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,15 +9,23 @@ import {
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 
 type ManualInputs = {
     type: string;
     throughPutDisable?: boolean;
     IOPSDisable?: boolean;
     from?: string;
+    printState?: boolean;
 };
 
-const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable = false, from }: ManualInputs) => {
+const ManualTCOInputComponent = ({
+    type,
+    throughPutDisable = false,
+    IOPSDisable = false,
+    from,
+    printState = false
+}: ManualInputs) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { manualTCOVolumeTypes, manualTCOVolumeTypes2 } = useAppSelector(state => state.exploreSavings);
@@ -302,75 +310,129 @@ const ManualTCOInputComponent = ({ type, throughPutDisable = false, IOPSDisable 
         return '';
     };
 
+    const displayVolumeValue = volumeValue === null ? defaultVolumeVal : volumeValue;
+    const displayStorageValue = storageAmountValue === null ? defaultStorageAmountValue : storageAmountValue;
+    const displayIopsValue = iopsValue === null ? defaultIOPSValue : iopsValue;
+    const displayThroughputValue = throughputValue === null ? defaultThroughputValue : throughputValue;
+
     return (
         <div className={styles.mainSection}>
             <div className={styles.row}>
-                <TextField
-                    label="Number of volumes"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setVolumeValue(numVal);
-                    }}
-                    value={volumeValue === null ? defaultVolumeVal : volumeValue}
-                    className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
-                    error={handleVolumeError()}
-                />
+                {!printState && (
+                    <TextField
+                        label={t('databases.explore-savings.number-of-volumes')}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setVolumeValue(numVal);
+                        }}
+                        value={displayVolumeValue}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                        error={handleVolumeError()}
+                    />
+                )}
+                {printState && (
+                    <div className={`${CommonStyles.mockInputClone} ${styles.deploymentModelWidth}`}>
+                        <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
+                            {t('databases.explore-savings.number-of-volumes')}
+                        </DsTypography>
+                        <div className={CommonStyles.inputField}>{displayVolumeValue}</div>
+                    </div>
+                )}
 
-                <TextField
-                    label="Storage amount per volume (GiB)"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const numVal = e.target.value.replace(/[^0-9.]/g, '');
-                        setStorageAmountValue(numVal);
-                    }}
-                    value={storageAmountValue === null ? defaultStorageAmountValue : storageAmountValue}
-                    className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
-                    info={type === 'io2' ? 'Maximum capacity allowed: 64 TiB.' : 'Maximum capacity allowed: 16 TiB.'}
-                    error={handleStorageCapacityLimit()}
-                />
+                {!printState && (
+                    <TextField
+                        label={t('databases.explore-savings.storage-amount-per-volume')}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const numVal = e.target.value.replace(/[^0-9.]/g, '');
+                            setStorageAmountValue(numVal);
+                        }}
+                        value={displayStorageValue}
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                        info={
+                            type === 'io2'
+                                ? t('databases.explore-savings.storage-max-capacity-io2')
+                                : t('databases.explore-savings.storage-max-capacity-default')
+                        }
+                        error={handleStorageCapacityLimit()}
+                    />
+                )}
+                {printState && (
+                    <div className={`${CommonStyles.mockInputClone} ${styles.deploymentModelWidth}`}>
+                        <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
+                            {t('databases.explore-savings.storage-amount-per-volume')}
+                        </DsTypography>
+                        <div className={CommonStyles.inputField}>{displayStorageValue}</div>
+                    </div>
+                )}
             </div>
 
-            {/* Second Row */}
-            {/* removing tooltip to test */}
             <div className={styles.row}>
-                {IOPSDisable ? (
-                    <DsTextField
-                        title="Provisioned IOPS per volume"
-                        disabledReason={t('databases.explore-savings.iops-disabled-tooltip')}
-                        isDisabled
-                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
-                    />
-                ) : (
+                {!printState && !IOPSDisable && (
                     <TextField
-                        label="Provisioned IOPS per volume"
+                        label={t('databases.explore-savings.provisioned-iops-per-volume')}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setIOPSValue(numVal);
                         }}
                         isDisabled={IOPSDisable}
-                        value={iopsValue === null ? defaultIOPSValue : iopsValue}
+                        value={displayIopsValue}
                         className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                         error={handleIOPSError()}
                     />
                 )}
-                {throughPutDisable ? (
+                {!printState && IOPSDisable && (
                     <DsTextField
-                        title="Throughput (MB/s)"
-                        disabledReason={t('databases.explore-savings.throughput-disabled-tooltip')}
+                        title={t('databases.explore-savings.provisioned-iops-per-volume')}
+                        disabledReason={t('databases.explore-savings.iops-disabled-tooltip')}
                         isDisabled
                         className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                     />
-                ) : (
+                )}
+                {printState && (
+                    <div
+                        className={`${CommonStyles.mockInputClone} ${styles.deploymentModelWidth} ${
+                            IOPSDisable ? styles.mockDisabled : ''
+                        }`}
+                    >
+                        <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
+                            {t('databases.explore-savings.provisioned-iops-per-volume')}
+                        </DsTypography>
+                        <div className={CommonStyles.inputField}>{IOPSDisable ? '' : displayIopsValue}</div>
+                    </div>
+                )}
+
+                {!printState && !throughPutDisable && (
                     <TextField
-                        label="Throughput (MB/s)"
+                        label={t('databases.explore-savings.throughput-mbs-label')}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             const numVal = e.target.value.replace(/[^0-9.]/g, '');
                             setThroughputValue(numVal);
                         }}
                         isDisabled={throughPutDisable}
-                        value={throughputValue === null ? defaultThroughputValue : throughputValue}
+                        value={displayThroughputValue}
                         className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
                         error={handleThroughputError()}
                     />
+                )}
+                {!printState && throughPutDisable && (
+                    <DsTextField
+                        title={t('databases.explore-savings.throughput-mbs-label')}
+                        disabledReason={t('databases.explore-savings.throughput-disabled-tooltip')}
+                        isDisabled
+                        className={`${styles.deploymentModelWidth} savings-calculator-input-fields`}
+                    />
+                )}
+                {printState && (
+                    <div
+                        className={`${CommonStyles.mockInputClone} ${styles.deploymentModelWidth} ${
+                            throughPutDisable ? styles.mockDisabled : ''
+                        }`}
+                    >
+                        <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
+                            {t('databases.explore-savings.throughput-mbs-label')}
+                        </DsTypography>
+                        <div className={CommonStyles.inputField}>{throughPutDisable ? '' : displayThroughputValue}</div>
+                    </div>
                 )}
             </div>
         </div>

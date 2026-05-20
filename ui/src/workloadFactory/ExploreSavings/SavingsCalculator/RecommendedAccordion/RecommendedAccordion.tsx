@@ -68,7 +68,8 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
         selectedManualRegion,
         selectedExploreSavingsTab,
         selectedOnPremRegion,
-        selectedExRegionId
+        selectedExRegionId,
+        selectedManualServerEdition
     } = useAppSelector(state => state.exploreSavings);
     const {
         selectedRowsForExploreSavingsEBSBulk,
@@ -220,11 +221,20 @@ const RecommendedAccordion = ({ printState, disableState, isMutliFsx, width }: a
         if ((isOracleOnPrem || isOracleEbs) && storageSavingsResponse) {
             const instanceData = generateOracleInstanceData(
                 storageSavingsResponse,
-                isOracleOnPrem ? selectedOnPremHostDetails : selectedHostDetails
+                isOracleOnPrem ? selectedOnPremHostDetails : selectedHostDetails,
+                undefined,
+                selectedManualServerEdition?.value
             );
             setOracleInstance(instanceData);
         }
-    }, [isOracleOnPrem, isOracleEbs, storageSavingsResponse, selectedOnPremHostDetails, selectedHostDetails]);
+    }, [
+        isOracleOnPrem,
+        isOracleEbs,
+        storageSavingsResponse,
+        selectedOnPremHostDetails,
+        selectedHostDetails,
+        selectedManualServerEdition
+    ]);
 
     useEffect(() => {
         let instanceType = '';

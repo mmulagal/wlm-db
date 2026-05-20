@@ -7,7 +7,11 @@ import { setSelectedVolumeType, setVolumeFilledStatus } from '../../../../store/
 import ManualTCOInputComponent from './ManualTCOInputComponent';
 import { allPropertiesHaveValues, calculateTotalVolumes } from '../savingsUtil';
 
-const ManualVolumeTypes = () => {
+interface ManualVolumeTypesProps {
+    printState?: boolean;
+}
+
+const ManualVolumeTypes = ({ printState = false }: ManualVolumeTypesProps) => {
     const dispatch = useDispatch();
     const { selectedVolumeTab, manualTCOVolumeTypes } = useAppSelector(state => state.exploreSavings);
 
@@ -120,14 +124,32 @@ const ManualVolumeTypes = () => {
             </div>
 
             <div className={styles.contentContainer}>
-                {selectedVolumeTab === 'io2' && <ManualTCOInputComponent type="io2" throughPutDisable from="primary" />}
-                {selectedVolumeTab === 'io1' && <ManualTCOInputComponent type="io1" throughPutDisable from="primary" />}
-                {selectedVolumeTab === 'gp2' && (
-                    <ManualTCOInputComponent type="gp2" throughPutDisable IOPSDisable from="primary" />
+                {selectedVolumeTab === 'io2' && (
+                    <ManualTCOInputComponent type="io2" throughPutDisable from="primary" printState={printState} />
                 )}
-                {selectedVolumeTab === 'gp3' && <ManualTCOInputComponent type="gp3" from="primary" />}
+                {selectedVolumeTab === 'io1' && (
+                    <ManualTCOInputComponent type="io1" throughPutDisable from="primary" printState={printState} />
+                )}
+                {selectedVolumeTab === 'gp2' && (
+                    <ManualTCOInputComponent
+                        type="gp2"
+                        throughPutDisable
+                        IOPSDisable
+                        from="primary"
+                        printState={printState}
+                    />
+                )}
+                {selectedVolumeTab === 'gp3' && (
+                    <ManualTCOInputComponent type="gp3" from="primary" printState={printState} />
+                )}
                 {selectedVolumeTab === 'st1' && (
-                    <ManualTCOInputComponent type="st1" throughPutDisable IOPSDisable from="primary" />
+                    <ManualTCOInputComponent
+                        type="st1"
+                        throughPutDisable
+                        IOPSDisable
+                        from="primary"
+                        printState={printState}
+                    />
                 )}
             </div>
         </div>

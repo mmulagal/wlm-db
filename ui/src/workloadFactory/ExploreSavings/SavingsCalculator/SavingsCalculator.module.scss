@@ -49,6 +49,7 @@
 
         .firstContainer {
             width: 656px;
+            min-width: 656px;
             height: 1315px;
             max-height: 1315px;
             overflow-y: auto;
@@ -154,6 +155,7 @@
             max-width: 1128px !important;
             .firstContainer {
                 width: 648px !important;
+                min-width: 648px !important;
                 height: 1356px;
                 max-height: 1356px;
 

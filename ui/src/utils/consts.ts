@@ -188,6 +188,15 @@ export const DATABASE_DEPLOYMENT_MODE = {
     AOAG_FULL: 'ALWAYS ON AVAILABILITY GROUP'
 };
 
+export const SQL_SERVER_EDITIONS = [
+    'SQL server Standard',
+    'SQL server Enterprise',
+    'SQL server Web',
+    'SQL server Developer'
+] as const;
+
+export const ORACLE_EDITIONS = ['Enterprise Edition', 'Standard Edition 2'] as const;
+
 export const DATABASE_STATUS = {
     ONLINE: 'ONLINE',
     OFFLINE: 'OFFLINE'

@@ -16,7 +16,7 @@
         border-bottom: 1px solid var(--text-disabled);
 
         .headerPart1 {
-            width: 115.2px;
+            flex: 1;
             display: flex;
             justify-content: center;
             height: 34px;
@@ -42,7 +42,8 @@
                 gap: 24px;
 
                 .deploymentModelWidth {
-                    width: 276px;
+                    flex: 1;
+                    min-width: 0;
                 }
             }
         }

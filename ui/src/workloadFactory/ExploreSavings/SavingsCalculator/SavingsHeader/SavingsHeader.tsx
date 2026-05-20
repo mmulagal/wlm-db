@@ -31,7 +31,10 @@ const SavingsHeader = () => {
         ) {
             return t('databases.explore-savings.savings-header-ebs');
         }
-        if (selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES) {
+        if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
+            selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES
+        ) {
             return t('databases.explore-savings.savings-header-onprem');
         }
         return t('databases.explore-savings.savings-header-fsx');
@@ -45,6 +48,7 @@ const SavingsHeader = () => {
             return styles.savingsHeader;
         }
         if (
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM ||
             selectedExploreSavingsTab === WLF_TABS.MSSQL_ON_PREMISES ||
             isOracleOnPrem ||
             savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS ||

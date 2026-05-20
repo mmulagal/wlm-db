@@ -1,4 +1,5 @@
 import { DsTypography, TextField } from '@netapp/design-system';
+import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useEffect, useMemo, useState } from 'react';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
@@ -12,9 +13,15 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { formatSize, generateOptionType, sortListOfDict } from '../../../../utils/utilityFunctions';
 import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
+import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 
-const ManualEC2 = () => {
+interface ManualEC2Props {
+    printState?: boolean;
+}
+
+const ManualEC2 = ({ printState = false }: ManualEC2Props) => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const { manualMonthlyDescription, selectedManualInstanceType } = useAppSelector(state => state.exploreSavings);
     // Getting the Data from state
     const { instanceTypeData, instanceTypeLoading } = useAppSelector(
@@ -81,29 +88,49 @@ const ManualEC2 = () => {
             <DsTypography variant="Semibold_14">{GENERAL.EC2_SPECIFICATIONS}</DsTypography>
 
             <div className={styles.firstRow}>
-                <TextField
-                    label="Machine description"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        setMachineDesc(e.target.value);
-                    }}
-                    value={machineDesc}
-                    className={`${styles.setWidth} savings-calculator-input-fields`}
-                    isOptional
-                />
+                {!printState && (
+                    <TextField
+                        label={t('databases.explore-savings.manual-machine-description')}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            setMachineDesc(e.target.value);
+                        }}
+                        value={machineDesc}
+                        className={`${styles.setWidth} savings-calculator-input-fields`}
+                        isOptional
+                    />
+                )}
+                {printState && (
+                    <div className={`${CommonStyles.mockInputClone} ${styles.setWidth}`}>
+                        <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
+                            {t('databases.explore-savings.manual-machine-description')}
+                        </DsTypography>
+                        <div className={CommonStyles.inputField}>{machineDesc}</div>
+                    </div>
+                )}
 
-                <SelectField
-                    label="Instance type"
-                    isClearable={false}
-                    variant="two-lines"
-                    value={selectedManualInstanceType}
-                    onChange={(selectedOptions: any): void => {
-                        dispatch(setSelectedManualInstanceType(selectedOptions));
-                    }}
-                    isLoading={instanceTypeLoading}
-                    isSearchable
-                    options={generateInstances}
-                    className={`${styles.setWidth} savings-calculator-input-fields`}
-                />
+                {!printState && (
+                    <SelectField
+                        label={t('databases.explore-savings.manual-instance-type')}
+                        isClearable={false}
+                        variant="two-lines"
+                        value={selectedManualInstanceType}
+                        onChange={(selectedOptions: any): void => {
+                            dispatch(setSelectedManualInstanceType(selectedOptions));
+                        }}
+                        isLoading={instanceTypeLoading}
+                        isSearchable
+                        options={generateInstances}
+                        className={`${styles.setWidth} savings-calculator-input-fields`}
+                    />
+                )}
+                {printState && (
+                    <div className={`${CommonStyles.mockInputClone} ${styles.setWidth}`}>
+                        <DsTypography variant="Regular_14" className={CommonStyles.mockLabel}>
+                            {t('databases.explore-savings.manual-instance-type')}
+                        </DsTypography>
+                        <div className={CommonStyles.inputField}>{selectedManualInstanceType?.value || ''}</div>
+                    </div>
+                )}
             </div>
         </div>
     );
