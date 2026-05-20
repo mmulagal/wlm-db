@@ -55,9 +55,10 @@ router.get(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:id/database-instances/:instanceId`,
     async (req: any, res: any) => {
         const hostId = req.params.id;
-        const data = (hostId === 'resource-id-aoag1' || hostId === 'resource-id-aoag2')
-            ? MssqlInstanceAoagData
-            : MssqlInstanceData;
+        const data =
+            hostId === 'resource-id-aoag1' || hostId === 'resource-id-aoag2'
+                ? MssqlInstanceAoagData
+                : MssqlInstanceData;
         await delay(3000);
         generateResponse(res, 200, data);
     }
@@ -103,6 +104,11 @@ router.post(`${BASE_URL}/v1/pgsql/terraform/setup`, async (req: {}, res: any) =>
 
 router.get(`${BASE_URL}/v1/status`, async (req: {}, res: any) => {
     generateResponse(res, 200, { isActive: true });
+});
+
+// Toggle isGovAccount to true to test GovCloud SSM ARN flows
+router.get(`${BASE_URL}/v1/account-info`, async (req: {}, res: any) => {
+    generateResponse(res, 200, { isGovAccount: false });
 });
 
 router.get(`${BASE_URL}/v1/jobs`, async (req: {}, res: any) => {
@@ -157,8 +163,8 @@ router.post(`${BASE_URL}/v1/register-credentials`, async (req: {}, res: any) => 
                     errorMessage: '',
                     registerDetails: [
                         {
-                            resourceId: "MSSQLSERVER",
-                            resourceType: "MSSQL",
+                            resourceId: 'MSSQLSERVER',
+                            resourceType: 'MSSQL',
                             manageReadiness: {
                                 assessment: {
                                     missingSqlPermissions: [],
@@ -179,8 +185,8 @@ router.post(`${BASE_URL}/v1/register-credentials`, async (req: {}, res: any) => 
                             }
                         },
                         {
-                            resourceId: "MSSQLSERVER2",
-                            resourceType: "MSSQL",
+                            resourceId: 'MSSQLSERVER2',
+                            resourceType: 'MSSQL',
                             manageReadiness: {
                                 assessment: {
                                     missingSqlPermissions: [],

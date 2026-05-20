@@ -14,7 +14,6 @@
     }
 
     .card1 {
-        height: 280px;
         display: flex;
         flex-direction: column;
         gap: 40px;
@@ -63,6 +62,13 @@
             flex-shrink: 0;
             padding-top: 24px; // Offset to align with input fields
             font-weight: 500;
+            overflow: hidden;
+
+            [class*='Typography'] {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
         }
     }
 
@@ -86,6 +92,7 @@
         .textFieldStyle {
             flex: 1 1 28.7%;
             min-width: 384px;
+            max-width: 480px;
             margin-bottom: 0 !important;
         }
     }
@@ -93,6 +100,57 @@
     .card1 .textFieldContainer .textFieldStyle {
         flex: 1 1 59.3%;
         min-width: 300px;
+        max-width: 480px;
+    }
+
+    .govCloudSection {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .govCloudDescription {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .govCloudFieldRow {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        flex: 1;
+
+        .govCloudTextField {
+            flex: 1;
+            max-width: 560px;
+            min-width: 384px;
+            margin-bottom: 0 !important;
+        }
+
+        svg {
+            margin-top: 32px;
+        }
+    }
+
+    .learnMoreLink {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--color-link, #0067c5);
+        text-decoration: none;
+        font-size: 14px;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .externalLinkIcon {
+        width: 14px;
+        height: 14px;
+        fill: var(--color-link, #0067c5);
     }
 
     .authStatus {

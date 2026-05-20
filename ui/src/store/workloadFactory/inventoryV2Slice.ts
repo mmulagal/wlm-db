@@ -69,9 +69,11 @@ const initialInventoryV2State: InventorySliceData = {
     inProgressInstances: new Set(),
     detectManageUserName: '',
     detectManagePassword: '',
+    detectSsmParameterArn: '',
     detectOntapUsername: '',
     detectOntapPassword: '',
-    detectOntapCredentialsByFsx: {} as Record<string, { username: string; password: string }>,
+    detectOntapSsmParameterArn: '',
+    detectOntapCredentialsByFsx: {} as Record<string, { username: string; password: string; ssmParameterArn?: string }>,
     fsxAuthStatus: {} as FsxAuthStatusMap,
     instanceAuthStatus: {} as InstanceAuthStatusMap,
     instanceAuthErrors: {} as Record<string, string>,
@@ -393,17 +395,23 @@ const inventoryV2Slice = createSlice({
         setDetectManagePassword: (state, action: PayloadAction<any>) => {
             state.detectManagePassword = action.payload;
         },
+        setDetectSsmParameterArn: (state, action: PayloadAction<string>) => {
+            state.detectSsmParameterArn = action.payload;
+        },
         setDetectONTAPUserName: (state, action: PayloadAction<any>) => {
             state.detectOntapUsername = action.payload;
         },
         setDetectONTAPPassword: (state, action: PayloadAction<any>) => {
             state.detectOntapPassword = action.payload;
         },
+        setDetectONTAPSsmParameterArn: (state, action: PayloadAction<string>) => {
+            state.detectOntapSsmParameterArn = action.payload;
+        },
         setDetectONTAPCredentialsByFsx: (
             state,
-            action: PayloadAction<{ fsxId: string; username?: string; password?: string }>
+            action: PayloadAction<{ fsxId: string; username?: string; password?: string; ssmParameterArn?: string }>
         ) => {
-            const { fsxId, username, password } = action.payload;
+            const { fsxId, username, password, ssmParameterArn } = action.payload;
             if (!state.detectOntapCredentialsByFsx[fsxId]) {
                 state.detectOntapCredentialsByFsx[fsxId] = { username: '', password: '' };
             }
@@ -412,6 +420,9 @@ const inventoryV2Slice = createSlice({
             }
             if (password !== undefined) {
                 state.detectOntapCredentialsByFsx[fsxId].password = password;
+            }
+            if (ssmParameterArn !== undefined) {
+                state.detectOntapCredentialsByFsx[fsxId].ssmParameterArn = ssmParameterArn;
             }
         },
         setFsxAuthStatus: (
@@ -426,9 +437,9 @@ const inventoryV2Slice = createSlice({
         },
         resetFsxAuthStatus: state => {
             state.fsxAuthStatus = {};
-            // Also reset FSx credentials for fresh state on next wizard
             state.detectOntapUsername = '';
             state.detectOntapPassword = '';
+            state.detectOntapSsmParameterArn = '';
             state.detectOntapCredentialsByFsx = {};
             state.selectedFSxForOntapCredentials = FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED;
         },
@@ -445,9 +456,9 @@ const inventoryV2Slice = createSlice({
         resetInstanceAuthStatus: state => {
             state.instanceAuthStatus = {};
             state.instanceAuthErrors = {};
-            // Also reset instance authentication credentials for fresh state on next wizard
             state.detectManageUserName = '';
             state.detectManagePassword = '';
+            state.detectSsmParameterArn = '';
             state.detectWindowsAuthentication = { username: '', password: '' };
             state.authenticationType = AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION;
             state.credentialOption = CREDENTIAL_OPTIONS.SAME_FOR_ALL;
@@ -778,8 +789,10 @@ export const {
     setInProgressInstances,
     setDetectManageUserName,
     setDetectManagePassword,
+    setDetectSsmParameterArn,
     setDetectONTAPUserName,
     setDetectONTAPPassword,
+    setDetectONTAPSsmParameterArn,
     setDetectONTAPCredentialsByFsx,
     setFsxAuthStatus,
     resetFsxAuthStatus,

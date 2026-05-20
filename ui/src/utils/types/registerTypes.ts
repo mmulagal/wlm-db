@@ -93,6 +93,8 @@ export interface WizardState {
     mssqlPasswordFromWizard?: string;
     windowsAuthenticationUsernameFromWizard?: string;
     windowsAuthenticationPasswordFromWizard?: string;
+    ssmArnFromWizard?: string;
+    ontapSsmArnFromWizard?: string;
     authenticationTypeSelected?: string;
     hitNext?: boolean;
     hitNextForStep2?: boolean;

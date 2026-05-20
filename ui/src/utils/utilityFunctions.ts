@@ -1914,15 +1914,26 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
     const {
         detectManageUserName,
         detectManagePassword,
+        detectSsmParameterArn,
         detectWindowsAuthentication,
         detectOntapUsername,
         detectOntapPassword,
+        detectOntapSsmParameterArn,
         authenticationType
     } = state?.inventoryV2;
-    const credList = [];
+    const { isGovAccount } = state?.auth;
+    const credList: any[] = [];
     let checkManageReadiness = false;
-    // Add SQL Server credentials when SQL Server Authentication is selected as authentication type
-    if (
+
+    if (isGovAccount && detectSsmParameterArn) {
+        credList.push({
+            resourceId: sqlServerInstance,
+            resourceType: rowData?.hostType === DBType.MSSQL ? DETECT_HOST_VAR.MSSQL : rowData?.hostType?.toUpperCase(),
+            ssmParameterArn: detectSsmParameterArn
+        });
+        checkManageReadiness = true;
+    } else if (
+        !isGovAccount &&
         detectManageUserName &&
         detectManagePassword &&
         authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
@@ -1934,9 +1945,8 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
             password: detectManagePassword
         });
         checkManageReadiness = true;
-    }
-    // Add Windows credentials when Windows Authentication is selected as authentication type
-    else if (
+    } else if (
+        !isGovAccount &&
         detectWindowsAuthentication.username &&
         detectWindowsAuthentication.password &&
         authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
@@ -1949,8 +1959,14 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
         });
         checkManageReadiness = true;
     }
-    // Add FSx ONTAP credentials to the credential list
-    if (detectOntapUsername && detectOntapPassword) {
+
+    if (isGovAccount && detectOntapSsmParameterArn) {
+        credList.push({
+            resourceId: fsxId,
+            resourceType: DETECT_HOST_VAR.FSX,
+            ssmParameterArn: detectOntapSsmParameterArn
+        });
+    } else if (!isGovAccount && detectOntapUsername && detectOntapPassword) {
         credList.push({
             resourceId: fsxId,
             resourceType: DETECT_HOST_VAR.FSX,
@@ -1976,14 +1992,27 @@ export const createDetectHostPayload = (sqlServerInstance: string, fsxId: string
  */
 export const createAuthOnlyPayload = (sqlServerInstance: string, rowData: any) => {
     const state = store.getState();
-    const { detectManageUserName, detectManagePassword, detectWindowsAuthentication, authenticationType } =
-        state?.inventoryV2;
+    const {
+        detectManageUserName,
+        detectManagePassword,
+        detectSsmParameterArn,
+        detectWindowsAuthentication,
+        authenticationType
+    } = state?.inventoryV2;
+    const { isGovAccount } = state?.auth;
 
-    const credList = [];
+    const credList: any[] = [];
     let checkManageReadiness = false;
 
-    // SQL Server Auth
-    if (
+    if (isGovAccount && detectSsmParameterArn) {
+        credList.push({
+            resourceId: sqlServerInstance,
+            resourceType: rowData?.hostType === DBType.MSSQL ? DETECT_HOST_VAR.MSSQL : rowData?.hostType?.toUpperCase(),
+            ssmParameterArn: detectSsmParameterArn
+        });
+        checkManageReadiness = true;
+    } else if (
+        !isGovAccount &&
         detectManageUserName &&
         detectManagePassword &&
         authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
@@ -1995,9 +2024,8 @@ export const createAuthOnlyPayload = (sqlServerInstance: string, rowData: any) =
             password: detectManagePassword
         });
         checkManageReadiness = true;
-    }
-    // Windows Auth
-    else if (
+    } else if (
+        !isGovAccount &&
         detectWindowsAuthentication.username &&
         detectWindowsAuthentication.password &&
         authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
@@ -2011,7 +2039,6 @@ export const createAuthOnlyPayload = (sqlServerInstance: string, rowData: any) =
         checkManageReadiness = true;
     }
 
-    // Cluster node addresses for FCI
     if (rowData?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
         const addresses = rowData?.windowsClusterNodes?.map((obj: { Address: string; Node: string }) => obj?.Address);
         return { credentials: credList, clusterNodesIpAddress: addresses, checkManageReadiness };
@@ -2028,35 +2055,65 @@ export const createAuthOnlyPayload = (sqlServerInstance: string, rowData: any) =
  */
 export const createFsxOnlyPayload = (fsxIds: string[], rowData: any) => {
     const state = store.getState();
-    const { detectOntapUsername, detectOntapPassword, detectOntapCredentialsByFsx, selectedFSxForOntapCredentials } =
-        state?.inventoryV2;
+    const {
+        detectOntapUsername,
+        detectOntapPassword,
+        detectOntapSsmParameterArn,
+        detectOntapCredentialsByFsx,
+        selectedFSxForOntapCredentials
+    } = state?.inventoryV2;
+    const { isGovAccount } = state?.auth;
 
-    const credList: { resourceId: string; resourceType: string; username: string; password: string }[] = [];
+    const credList: any[] = [];
 
-    if (selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED) {
-        // Same credentials for all FSx
-        fsxIds.forEach(fsxId => {
-            if (detectOntapUsername && detectOntapPassword) {
-                credList.push({
-                    resourceId: fsxId,
-                    resourceType: DETECT_HOST_VAR.FSX,
-                    username: detectOntapUsername,
-                    password: detectOntapPassword
-                });
-            }
-        });
+    if (isGovAccount) {
+        if (selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED) {
+            fsxIds.forEach(fsxId => {
+                if (detectOntapSsmParameterArn) {
+                    credList.push({
+                        resourceId: fsxId,
+                        resourceType: DETECT_HOST_VAR.FSX,
+                        ssmParameterArn: detectOntapSsmParameterArn
+                    });
+                }
+            });
+        } else {
+            fsxIds.forEach(fsxId => {
+                const cred = detectOntapCredentialsByFsx[fsxId];
+                if (cred?.ssmParameterArn) {
+                    credList.push({
+                        resourceId: fsxId,
+                        resourceType: DETECT_HOST_VAR.FSX,
+                        ssmParameterArn: cred.ssmParameterArn
+                    });
+                }
+            });
+        }
     } else {
-        fsxIds.forEach(fsxId => {
-            const cred = detectOntapCredentialsByFsx[fsxId];
-            if (cred?.username && cred?.password) {
-                credList.push({
-                    resourceId: fsxId,
-                    resourceType: DETECT_HOST_VAR.FSX,
-                    username: cred.username,
-                    password: cred.password
-                });
-            }
-        });
+        if (selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED) {
+            fsxIds.forEach(fsxId => {
+                if (detectOntapUsername && detectOntapPassword) {
+                    credList.push({
+                        resourceId: fsxId,
+                        resourceType: DETECT_HOST_VAR.FSX,
+                        username: detectOntapUsername,
+                        password: detectOntapPassword
+                    });
+                }
+            });
+        } else {
+            fsxIds.forEach(fsxId => {
+                const cred = detectOntapCredentialsByFsx[fsxId];
+                if (cred?.username && cred?.password) {
+                    credList.push({
+                        resourceId: fsxId,
+                        resourceType: DETECT_HOST_VAR.FSX,
+                        username: cred.username,
+                        password: cred.password
+                    });
+                }
+            });
+        }
     }
 
     return { credentials: credList, checkManageReadiness: false };

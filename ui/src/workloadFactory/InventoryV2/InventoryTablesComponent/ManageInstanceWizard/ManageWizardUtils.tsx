@@ -87,6 +87,7 @@ export const detectAuthFieldsValidation = (
     const {
         detectManageUserName,
         detectManagePassword,
+        detectSsmParameterArn,
         detectWindowsAuthentication,
         authenticationType,
         oracleBulkDatabaseCredentials,
@@ -94,6 +95,9 @@ export const detectAuthFieldsValidation = (
         credentialOption,
         instanceCredentials
     } = state.inventoryV2;
+    const { isGovAccount } = state.auth;
+
+    const isDbArnValid = () => !!detectSsmParameterArn;
 
     /**
      * Checks if shared credentials are valid (SAME_FOR_ALL mode)
@@ -102,7 +106,6 @@ export const detectAuthFieldsValidation = (
         if (engineType === DBType.ORACLE) {
             return !!(oracleBulkDatabaseCredentials?.oracleUsername && oracleBulkDatabaseCredentials?.oraclePassword);
         }
-        // For MSSQL bulk mode
         return !!(bulkInstanceCredentials?.username && bulkInstanceCredentials?.password);
     };
 
@@ -126,10 +129,8 @@ export const detectAuthFieldsValidation = (
 
     const isWindowsAuthValid = () => {
         if (isBulkMode) {
-            // For MSSQL bulk mode with Windows auth (SAME_FOR_ALL mode)
             return !!(bulkInstanceCredentials?.username && bulkInstanceCredentials?.password);
         }
-        // For single mode
         return !!(detectWindowsAuthentication?.username && detectWindowsAuthentication?.password);
     };
 
@@ -139,17 +140,29 @@ export const detectAuthFieldsValidation = (
      * @returns True if instance is already authenticated or credentials are valid
      */
     const validateSingleInstance = (instanceData: any): boolean => {
+        if (isGovAccount) {
+            const needsAuth = (() => {
+                if (engineType === DBType.ORACLE) {
+                    return instanceData?.isDefaultAuthentication === false && !instanceData?.oracleServerAuthentication;
+                }
+                return (
+                    !instanceData?.sqlServerAuthentication &&
+                    !instanceData?.windowsAuthentication &&
+                    !instanceData?.windowsDomainUserAuthentication
+                );
+            })();
+            return needsAuth ? isDbArnValid() : true;
+        }
+
         switch (engineType) {
             case DBType.ORACLE: {
                 const isDefault = instanceData?.isDefaultAuthentication;
                 const isOracleAuth = instanceData?.oracleServerAuthentication;
 
-                // In Oracle if isDefaultAuthentication is true then no need to check for Oracle auth
                 if (isDefault === true) {
                     return true;
                 }
                 if (isDefault === false) {
-                    // Need Oracle Auth - check based on credential mode
                     if (!isOracleAuth) {
                         if (isBulkMode) {
                             if (credentialOption === CREDENTIAL_OPTIONS.MANUAL) {
@@ -161,17 +174,15 @@ export const detectAuthFieldsValidation = (
                     }
                     return true;
                 }
-                return false; // If isDefault is undefined or null, return false
+                return false;
             }
             case DBType.MSSQL:
             default: {
-                // Check when neither SQL Server nor Windows Domain User is authenticated
                 if (
                     !instanceData?.sqlServerAuthentication &&
                     !instanceData?.windowsAuthentication &&
                     !instanceData?.windowsDomainUserAuthentication
                 ) {
-                    // Based on authentication type is SQL Server or Windows, check if the respective fields are valid
                     if (authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION) {
                         if (isBulkMode) {
                             if (credentialOption === CREDENTIAL_OPTIONS.MANUAL) {
@@ -196,12 +207,9 @@ export const detectAuthFieldsValidation = (
 
     // Bulk mode: validate all selected instances
     if (isBulkMode && selectedInstances && Array.isArray(selectedInstances)) {
-        // If no instances selected, return false
         if (selectedInstances.length === 0) {
             return false;
         }
-
-        // Validate each instance - all must pass
         return selectedInstances.every(instance => {
             const instanceData = instance.data || instance;
             return validateSingleInstance(instanceData);
@@ -223,16 +231,41 @@ export const detectFieldsValidation = (entryData: any, engineType: string) => {
     const {
         detectManageUserName,
         detectManagePassword,
+        detectSsmParameterArn,
         detectWindowsAuthentication,
         detectOntapUsername,
         detectOntapPassword,
+        detectOntapSsmParameterArn,
         authenticationType
     } = state.inventoryV2;
+    const { isGovAccount } = state.auth;
 
-    // Checks if the respective authentication fields are present
     const isAuthValid = () => !!(detectManageUserName && detectManagePassword);
     const isWindowsAuthValid = () => !!(detectWindowsAuthentication?.username && detectWindowsAuthentication?.password);
-    const isFsxAuthValid = () => !!(detectOntapUsername && detectOntapPassword);
+    const isFsxAuthValid = () => {
+        if (isGovAccount) return !!detectOntapSsmParameterArn;
+        return !!(detectOntapUsername && detectOntapPassword);
+    };
+    const isDbArnValid = () => !!detectSsmParameterArn;
+
+    if (isGovAccount) {
+        const needsDbAuth = (() => {
+            if (engineType === DBType.ORACLE) {
+                return entryData?.isDefaultAuthentication === false && !entryData?.oracleServerAuthentication;
+            }
+            return (
+                !entryData?.sqlServerAuthentication &&
+                !entryData?.windowsAuthentication &&
+                !entryData?.windowsDomainUserAuthentication
+            );
+        })();
+        const needsFsx = entryData?.fsxId && !entryData?.isFsxRegistered;
+
+        if (needsDbAuth && needsFsx) return isDbArnValid() && isFsxAuthValid();
+        if (needsDbAuth) return isDbArnValid();
+        if (needsFsx) return isFsxAuthValid();
+        return true;
+    }
 
     switch (engineType) {
         case DBType.ORACLE: {
@@ -240,35 +273,20 @@ export const detectFieldsValidation = (entryData: any, engineType: string) => {
             const isOracleAuth = entryData?.oracleServerAuthentication;
             const needsFsx = entryData?.fsxId && !entryData?.isFsxRegistered;
 
-            // In Oracle if isDefaultAuthentication is true then no need to check for Oracle auth
             if (isDefault === true) {
-                // Only FSx registration matters
-                if (needsFsx) {
-                    return isFsxAuthValid();
-                }
+                if (needsFsx) return isFsxAuthValid();
                 return true;
             }
             if (isDefault === false) {
-                // 1. Need both Oracle Auth and FSx
-                if (!isOracleAuth && needsFsx) {
-                    return isAuthValid() && isFsxAuthValid();
-                }
-                // 2. Need Oracle Auth
-                if (!isOracleAuth) {
-                    return isAuthValid();
-                }
-                // 3. Need FSx
-                if (needsFsx) {
-                    return isFsxAuthValid();
-                }
-                // 4. Oracle Auth is present and no FSx needed
+                if (!isOracleAuth && needsFsx) return isAuthValid() && isFsxAuthValid();
+                if (!isOracleAuth) return isAuthValid();
+                if (needsFsx) return isFsxAuthValid();
                 return true;
             }
-            return false; // If isDefault is undefined or null, return false
+            return false;
         }
         case DBType.MSSQL:
         default: {
-            // Check when neither SQL Server nor Windows Domain User is authenticated and FsxId is not registered
             if (
                 !entryData?.sqlServerAuthentication &&
                 !entryData?.windowsAuthentication &&
@@ -276,7 +294,6 @@ export const detectFieldsValidation = (entryData: any, engineType: string) => {
                 entryData?.fsxId &&
                 !entryData?.isFsxRegistered
             ) {
-                // Based on authentication type is SQL Server or Windows, check if the respective fields are valid
                 if (authenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION) {
                     return isAuthValid() && isFsxAuthValid();
                 }
@@ -285,7 +302,6 @@ export const detectFieldsValidation = (entryData: any, engineType: string) => {
                 }
                 return false;
             }
-            // Check if SQL Server fields are valid when SQL Server Authentication is selected
             if (
                 !entryData?.sqlServerAuthentication &&
                 !entryData?.windowsAuthentication &&
@@ -294,7 +310,6 @@ export const detectFieldsValidation = (entryData: any, engineType: string) => {
             ) {
                 return isAuthValid();
             }
-            // Check if Windows fields are valid when Windows Authentication is selected
             if (
                 !entryData?.windowsAuthentication &&
                 !entryData?.sqlServerAuthentication &&
@@ -327,28 +342,30 @@ export const detectFsxFieldsValidation = (
     selectedInstances?: any[]
 ) => {
     const state = store.getState();
-    const { detectOntapUsername, detectOntapPassword, detectOntapCredentialsByFsx, selectedFSxForOntapCredentials } =
-        state.inventoryV2;
+    const {
+        detectOntapUsername,
+        detectOntapPassword,
+        detectOntapSsmParameterArn,
+        detectOntapCredentialsByFsx,
+        selectedFSxForOntapCredentials
+    } = state.inventoryV2;
+    const { isGovAccount } = state.auth;
     const fsxCredentialStatusObj = getFsxCredStatusByEngine(state.inventoryV2, engineType);
 
-    // Get list of unregistered FSx IDs that need credentials
     const getUnregisteredFsxIds = (): string[] => {
         if (isBulkMode && selectedInstances && Array.isArray(selectedInstances)) {
-            // Bulk mode: aggregate FSx from all selected instances
             const allFsxIds = new Set<string>();
             selectedInstances.forEach(instance => {
                 const storage = instance.data?.storage || instance.storage;
                 if (storage && Array.isArray(storage)) {
                     storage.forEach(item => {
                         if (item.type === 'FSXN' && item.id) {
-                            // Only include if not already registered
                             if (fsxCredentialStatusObj?.[item.id] !== true) {
                                 allFsxIds.add(item.id);
                             }
                         }
                     });
                 }
-                // Also add direct fsxId from instance (may be different from storage)
                 const directFsxId = instance.data?.fsxId || instance.fsxId;
                 if (directFsxId && fsxCredentialStatusObj?.[directFsxId] !== true) {
                     allFsxIds.add(directFsxId);
@@ -357,15 +374,12 @@ export const detectFsxFieldsValidation = (
             return Array.from(allFsxIds);
         }
 
-        // Single mode: get FSx from entryData
         const storage = entryData?.storage;
         if (!storage || !Array.isArray(storage)) return [];
 
         return storage
             .filter(item => {
-                // Only include FSXN type items with valid IDs
                 if (item.type !== 'FSXN' || !item.id) return false;
-                // Exclude already registered FSx
                 const statusObj = fsxCredentialStatusObj?.[item.id];
                 return statusObj !== true;
             })
@@ -374,21 +388,23 @@ export const detectFsxFieldsValidation = (
 
     const unregisteredFsxIds = getUnregisteredFsxIds();
 
-    // If no FSx needs authentication, return true
     if (unregisteredFsxIds.length === 0) {
         return true;
     }
 
-    // Validate based on radio selection mode
     if (selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED) {
-        // Use single credentials for all FSx
+        if (isGovAccount) {
+            return !!detectOntapSsmParameterArn;
+        }
         return !!(detectOntapUsername && detectOntapPassword);
     }
 
     if (selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.MANAGE_CRED_MANUALLY) {
-        // Each FSx must have its own credentials
         return unregisteredFsxIds.every(fsxId => {
             const cred = detectOntapCredentialsByFsx[fsxId];
+            if (isGovAccount) {
+                return !!cred?.ssmParameterArn;
+            }
             return !!(cred?.username && cred?.password);
         });
     }

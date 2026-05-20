@@ -4,12 +4,14 @@ import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useMemo, useCallback } from 'react';
 import classNames from 'classnames';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info_tooltip.svg';
+import { ReactComponent as ExternalLinkIcon } from '@netapp/icons/ic_external_link.svg';
 import styles from './InputCard.module.scss';
 import CommonStyles from '../../../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import {
     setDetectONTAPPassword,
     setDetectONTAPUserName,
+    setDetectONTAPSsmParameterArn,
     setDetectONTAPCredentialsByFsx
 } from '../../../../../../store/workloadFactory/inventoryV2Slice';
 import { UseWizardReturn } from '../../../../../../utils/types/registerTypes';
@@ -52,6 +54,7 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
             registerHostType
         ]
     );
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { state, setState }: UseWizardReturn = useWizard();
@@ -194,45 +197,112 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                         </DsTypography>
                     </div>
 
-                    <div className={styles.textFieldContainer}>
-                        <TextField
-                            label={t('databases.register-flow.fsx-for-ontap-username')}
-                            value={detectOntapUsername}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                dispatch(setDetectONTAPUserName(e.target.value));
-                            }}
-                            className={`${styles.textFieldStyle} ${fsxAllAuthFailed ? styles.errorBorder : ''}`}
-                            error={
-                                !detectOntapUsername && hitNextForStep2
-                                    ? t('databases.general.action-required')
-                                    : fsxAllAuthFailed
-                                    ? t('databases.register-flow.fsx-authentication-failed')
-                                    : ''
-                            }
-                            placeholder={`${t('databases.general.enter')} ${t(
-                                'databases.register-flow.fsx-for-ontap-username'
-                            )}`}
-                            isDisabled={isLoading}
-                        />
+                    {isGovAccount ? (
+                        <div className={styles.govCloudSection}>
+                            <div className={styles.govCloudDescription}>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.register-flow.govcloud-ssm-description-line1', {
+                                        count: fsxList.length
+                                    })}
+                                </DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.register-flow.govcloud-ssm-description-line2')}
+                                </DsTypography>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.register-flow.govcloud-ssm-description-line3')}
+                                </DsTypography>
+                            </div>
 
-                        <PasswordField
-                            label={t('databases.register-flow.fsx-for-ontap-password')}
-                            value={detectOntapPassword}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                dispatch(setDetectONTAPPassword(e.target.value));
-                            }}
-                            className={`${styles.textFieldStyle} ${fsxAllAuthFailed ? styles.errorBorder : ''}`}
-                            error={
-                                !detectOntapPassword && hitNextForStep2
-                                    ? t('databases.general.action-required')
-                                    : fsxAllAuthFailed
-                                    ? t('databases.register-flow.fsx-authentication-failed')
-                                    : ''
-                            }
-                            placeholder={t('databases.general.enter-password')}
-                            isDisabled={isLoading}
-                        />
-                    </div>
+                            <div className={styles.govCloudFieldRow}>
+                                <TextField
+                                    label={t('databases.register-flow.govcloud-ssm-endpoint-label')}
+                                    value={inventoryV2State.detectOntapSsmParameterArn}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        dispatch(setDetectONTAPSsmParameterArn(e.target.value));
+                                    }}
+                                    className={`${styles.govCloudTextField} ${
+                                        fsxAllAuthFailed ? styles.errorBorder : ''
+                                    }`}
+                                    error={
+                                        !inventoryV2State.detectOntapSsmParameterArn && hitNextForStep2
+                                            ? t('databases.general.action-required')
+                                            : fsxAllAuthFailed
+                                            ? t('databases.register-flow.fsx-authentication-failed')
+                                            : ''
+                                    }
+                                    placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
+                                    isDisabled={isLoading}
+                                />
+                                <Popover
+                                    popoverClass={CommonStyles.scrollablePopover}
+                                    trigger="hover"
+                                    placement="bottom"
+                                    delayHide={200}
+                                    interactive
+                                    isAppendedToBody
+                                    container={<InfoIcon className={CommonStyles.infoIcon} />}
+                                >
+                                    <div className={CommonStyles.popoverTooltipContent}>
+                                        <div className={CommonStyles.popoverTooltipTitle}>
+                                            <DsTypography variant="Regular_13">
+                                                {t('databases.register-flow.govcloud-ssm-endpoint-tooltip')}
+                                            </DsTypography>
+                                        </div>
+                                    </div>
+                                </Popover>
+                            </div>
+
+                            <a
+                                href={t('databases.register-flow.govcloud-ssm-docs-url')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.learnMoreLink}
+                            >
+                                {t('databases.register-flow.govcloud-ssm-learn-more')}
+                                <ExternalLinkIcon className={styles.externalLinkIcon} />
+                            </a>
+                        </div>
+                    ) : (
+                        <div className={styles.textFieldContainer}>
+                            <TextField
+                                label={t('databases.register-flow.fsx-for-ontap-username')}
+                                value={detectOntapUsername}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    dispatch(setDetectONTAPUserName(e.target.value));
+                                }}
+                                className={`${styles.textFieldStyle} ${fsxAllAuthFailed ? styles.errorBorder : ''}`}
+                                error={
+                                    !detectOntapUsername && hitNextForStep2
+                                        ? t('databases.general.action-required')
+                                        : fsxAllAuthFailed
+                                        ? t('databases.register-flow.fsx-authentication-failed')
+                                        : ''
+                                }
+                                placeholder={`${t('databases.general.enter')} ${t(
+                                    'databases.register-flow.fsx-for-ontap-username'
+                                )}`}
+                                isDisabled={isLoading}
+                            />
+
+                            <PasswordField
+                                label={t('databases.register-flow.fsx-for-ontap-password')}
+                                value={detectOntapPassword}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    dispatch(setDetectONTAPPassword(e.target.value));
+                                }}
+                                className={`${styles.textFieldStyle} ${fsxAllAuthFailed ? styles.errorBorder : ''}`}
+                                error={
+                                    !detectOntapPassword && hitNextForStep2
+                                        ? t('databases.general.action-required')
+                                        : fsxAllAuthFailed
+                                        ? t('databases.register-flow.fsx-authentication-failed')
+                                        : ''
+                                }
+                                placeholder={t('databases.general.enter-password')}
+                                isDisabled={isLoading}
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -253,58 +323,117 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                                 }`}
                             >
                                 <div className={styles.firstCol}>
-                                    <DsTypography variant="Semibold_14">{fsx.fsxName}</DsTypography>
-                                    <DsTypography variant="Regular_14">
+                                    <DsTypography variant="Semibold_14" title={fsx.fsxName}>
+                                        {fsx.fsxName}
+                                    </DsTypography>
+                                    <DsTypography
+                                        variant="Regular_14"
+                                        title={`${t('databases.register-flow.id')}: ${fsx.fsxId}`}
+                                    >
                                         {t('databases.register-flow.id')}: {fsx.fsxId}
                                     </DsTypography>
                                 </div>
 
                                 <div className={styles.textFieldContainer}>
-                                    <TextField
-                                        label={t('databases.register-flow.fsx-for-ontap-username')}
-                                        value={detectOntapCredentialsByFsx[fsx.fsxId]?.username || ''}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                            dispatch(
-                                                setDetectONTAPCredentialsByFsx({
-                                                    fsxId: fsx.fsxId,
-                                                    username: e.target.value
-                                                })
-                                            );
-                                        }}
-                                        className={`${styles.textFieldStyle} ${isFailed ? styles.errorBorder : ''}`}
-                                        error={
-                                            (!detectOntapCredentialsByFsx[fsx.fsxId]?.username && hitNextForStep2) ||
-                                            isFailed
-                                                ? t('databases.general.action-required')
-                                                : ''
-                                        }
-                                        placeholder={`${t('databases.general.enter')} ${t(
-                                            'databases.register-flow.fsx-for-ontap-username'
-                                        )}`}
-                                        isDisabled={isAuthenticated || isLoading}
-                                    />
+                                    {isGovAccount ? (
+                                        <div className={styles.govCloudFieldRow}>
+                                            <TextField
+                                                label={t('databases.register-flow.govcloud-ssm-endpoint-label')}
+                                                value={detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn || ''}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                    dispatch(
+                                                        setDetectONTAPCredentialsByFsx({
+                                                            fsxId: fsx.fsxId,
+                                                            ssmParameterArn: e.target.value
+                                                        })
+                                                    );
+                                                }}
+                                                className={`${styles.govCloudTextField} ${
+                                                    isFailed ? styles.errorBorder : ''
+                                                }`}
+                                                error={
+                                                    (!detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn &&
+                                                        hitNextForStep2) ||
+                                                    isFailed
+                                                        ? t('databases.general.action-required')
+                                                        : ''
+                                                }
+                                                placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
+                                                isDisabled={isAuthenticated || isLoading}
+                                            />
+                                            <Popover
+                                                popoverClass={CommonStyles.scrollablePopover}
+                                                trigger="hover"
+                                                placement="bottom"
+                                                delayHide={200}
+                                                interactive
+                                                isAppendedToBody
+                                                container={<InfoIcon className={CommonStyles.infoIcon} />}
+                                            >
+                                                <div className={CommonStyles.popoverTooltipContent}>
+                                                    <div className={CommonStyles.popoverTooltipTitle}>
+                                                        <DsTypography variant="Regular_13">
+                                                            {t('databases.register-flow.govcloud-ssm-endpoint-tooltip')}
+                                                        </DsTypography>
+                                                    </div>
+                                                </div>
+                                            </Popover>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <TextField
+                                                label={t('databases.register-flow.fsx-for-ontap-username')}
+                                                value={detectOntapCredentialsByFsx[fsx.fsxId]?.username || ''}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                    dispatch(
+                                                        setDetectONTAPCredentialsByFsx({
+                                                            fsxId: fsx.fsxId,
+                                                            username: e.target.value
+                                                        })
+                                                    );
+                                                }}
+                                                className={`${styles.textFieldStyle} ${
+                                                    isFailed ? styles.errorBorder : ''
+                                                }`}
+                                                error={
+                                                    (!detectOntapCredentialsByFsx[fsx.fsxId]?.username &&
+                                                        hitNextForStep2) ||
+                                                    isFailed
+                                                        ? t('databases.general.action-required')
+                                                        : ''
+                                                }
+                                                placeholder={`${t('databases.general.enter')} ${t(
+                                                    'databases.register-flow.fsx-for-ontap-username'
+                                                )}`}
+                                                isDisabled={isAuthenticated || isLoading}
+                                            />
 
-                                    <PasswordField
-                                        label={t('databases.register-flow.fsx-for-ontap-password')}
-                                        value={detectOntapCredentialsByFsx[fsx.fsxId]?.password || ''}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                            dispatch(
-                                                setDetectONTAPCredentialsByFsx({
-                                                    fsxId: fsx.fsxId,
-                                                    password: e.target.value
-                                                })
-                                            );
-                                        }}
-                                        className={`${styles.textFieldStyle} ${isFailed ? styles.errorBorder : ''}`}
-                                        error={
-                                            (!detectOntapCredentialsByFsx[fsx.fsxId]?.password && hitNextForStep2) ||
-                                            isFailed
-                                                ? t('databases.general.action-required')
-                                                : ''
-                                        }
-                                        placeholder={t('databases.general.enter-password')}
-                                        isDisabled={isAuthenticated || isLoading}
-                                    />
+                                            <PasswordField
+                                                label={t('databases.register-flow.fsx-for-ontap-password')}
+                                                value={detectOntapCredentialsByFsx[fsx.fsxId]?.password || ''}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                    dispatch(
+                                                        setDetectONTAPCredentialsByFsx({
+                                                            fsxId: fsx.fsxId,
+                                                            password: e.target.value
+                                                        })
+                                                    );
+                                                }}
+                                                className={`${styles.textFieldStyle} ${
+                                                    isFailed ? styles.errorBorder : ''
+                                                }`}
+                                                error={
+                                                    (!detectOntapCredentialsByFsx[fsx.fsxId]?.password &&
+                                                        hitNextForStep2) ||
+                                                    isFailed
+                                                        ? t('databases.general.action-required')
+                                                        : ''
+                                                }
+                                                placeholder={t('databases.general.enter-password')}
+                                                isDisabled={isAuthenticated || isLoading}
+                                            />
+                                        </>
+                                    )}
                                 </div>
 
                                 {/* Always reserve space for auth status */}
@@ -329,6 +458,18 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                             </div>
                         );
                     })}
+
+                    {isGovAccount && (
+                        <a
+                            href={t('databases.register-flow.govcloud-ssm-docs-url')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.learnMoreLink}
+                        >
+                            {t('databases.register-flow.govcloud-ssm-learn-more')}
+                            <ExternalLinkIcon className={styles.externalLinkIcon} />
+                        </a>
+                    )}
                 </div>
             )}
         </div>

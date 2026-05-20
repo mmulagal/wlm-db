@@ -99,9 +99,11 @@ export interface InventorySliceData {
     inProgressInstances: any;
     detectManageUserName: string;
     detectManagePassword: string;
+    detectSsmParameterArn: string;
     detectOntapUsername: string;
     detectOntapPassword: string;
-    detectOntapCredentialsByFsx: Record<string, { username: string; password: string }>;
+    detectOntapSsmParameterArn: string;
+    detectOntapCredentialsByFsx: Record<string, { username: string; password: string; ssmParameterArn?: string }>;
     detectWindowsAuthentication: {
         username: string;
         password: string;

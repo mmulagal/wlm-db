@@ -827,14 +827,47 @@ const addCredentialsBasedOnEngineType = (
     detectOntapPassword: string,
     authenticationType: string,
     engineType: string,
-    checkManageReadiness: boolean
+    checkManageReadiness: boolean,
+    isGovAccount: boolean = false,
+    detectSsmParameterArn: string = '',
+    detectOntapSsmParameterArn: string = ''
 ): boolean => {
     const sqlServerInstance = instance?.data?.sqlServerInstance || instance?.data?.databaseInstanceName || '';
+
+    if (isGovAccount) {
+        const needsDbAuth = (() => {
+            if (engineType === DBType.ORACLE) {
+                return instance?.data?.isDefaultAuthentication === false && !instance?.data?.oracleServerAuthentication;
+            }
+            return (
+                !instance?.data?.sqlServerAuthentication &&
+                !instance?.data?.windowsAuthentication &&
+                !instance?.data?.windowsDomainUserAuthentication
+            );
+        })();
+
+        if (needsDbAuth && detectSsmParameterArn) {
+            const resourceType = engineType === DBType.ORACLE ? DETECT_HOST_VAR.ORACLE : DETECT_HOST_VAR.MSSQL;
+            credentials.push({
+                resourceId: sqlServerInstance,
+                resourceType,
+                ssmParameterArn: detectSsmParameterArn
+            });
+            checkManageReadiness = true;
+        }
+        if (instance?.data?.fsxId && !instance?.data?.isFsxRegistered && detectOntapSsmParameterArn) {
+            credentials.push({
+                resourceId: instance?.data?.fsxId,
+                resourceType: DETECT_HOST_VAR.FSX,
+                ssmParameterArn: detectOntapSsmParameterArn
+            });
+        }
+        return checkManageReadiness;
+    }
 
     switch (engineType) {
         case DBType.ORACLE: {
             const { isDefaultAuthentication, oracleServerAuthentication } = instance?.data || {};
-            // For Oracle: Only push if isDefaultAuthentication === false && oracleServerAuthentication === false/undefined
             if (
                 isDefaultAuthentication === false &&
                 !oracleServerAuthentication &&
@@ -853,7 +886,6 @@ const addCredentialsBasedOnEngineType = (
         }
         case DBType.MSSQL:
         default: {
-            // Add SQL credential if not already registered
             if (
                 !instance?.data?.sqlServerAuthentication &&
                 !instance?.data?.windowsAuthentication &&
@@ -869,10 +901,7 @@ const addCredentialsBasedOnEngineType = (
                     password: detectManagePassword
                 });
                 checkManageReadiness = true;
-            }
-
-            // Add Windows credential if not already registered
-            else if (
+            } else if (
                 !instance?.data?.sqlServerAuthentication &&
                 !instance?.data?.windowsAuthentication &&
                 !instance?.data?.windowsDomainUserAuthentication &&
@@ -892,7 +921,6 @@ const addCredentialsBasedOnEngineType = (
         }
     }
 
-    // Add FSX credential if not already registered
     if (instance?.data?.fsxId && !instance?.data?.isFsxRegistered && detectOntapUsername && detectOntapPassword) {
         credentials.push({
             resourceId: instance?.data?.fsxId,
@@ -906,28 +934,28 @@ const addCredentialsBasedOnEngineType = (
 };
 
 export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDetectedInstance[]) => {
-    // New logic to combine credentials by ec2InstanceId and skip already registered resources
     const instanceMap: { [key: string]: any } = {};
 
     const state = store.getState();
     const {
         detectManageUserName,
         detectManagePassword,
+        detectSsmParameterArn,
         detectWindowsAuthentication,
         detectOntapUsername,
         detectOntapPassword,
+        detectOntapSsmParameterArn,
         authenticationType
     } = state?.inventoryV2 || {};
+    const { isGovAccount } = state?.auth || {};
 
     selectedMultiDetectInstances?.forEach((instance: BulkDetectedInstance) => {
         const ec2InstanceId = instance?.data?.ec2InstanceId;
         if (!ec2InstanceId) return;
 
-        // Build credentials array for this instance
         const credentials: any[] = [];
         let checkManageReadiness = false;
 
-        // Add credentials if not already registered
         checkManageReadiness = addCredentialsBasedOnEngineType(
             instance,
             credentials,
@@ -938,7 +966,10 @@ export const createDetectHostPayloadBulk = (selectedMultiDetectInstances: BulkDe
             detectOntapPassword,
             authenticationType,
             instance?.data?.hostType,
-            checkManageReadiness
+            checkManageReadiness,
+            isGovAccount,
+            detectSsmParameterArn,
+            detectOntapSsmParameterArn
         );
 
         // If already present, merge credentials arrays
