@@ -146,6 +146,37 @@
     [class*='Table-module_high-row'] {
         background-color: var(--content-background) !important;
     }
+
+    .sub-row-cell {
+        background-color: var(--grey-15) !important;
+    }
+
+    // Expanded row section styling
+    [class*='expanded-row-section'] {
+        background-color: var(--grey-10);
+        padding: 16px;
+        margin: 16px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+    }
+
+    // Expanded row inner table - hide header and match background
+    .expanded-row-inner-table {
+        margin-left: calc(18% + 8px);
+
+        [class*='header-row'] {
+            display: none !important;
+        }
+
+        [class*='table-wrapper'] {
+            box-shadow: none !important;
+            background-color: var(--grey-10) !important;
+        }
+
+        [class*='cell'] {
+            background-color: var(--grey-10) !important;
+        }
+    }
 }
 
 .colorSet {

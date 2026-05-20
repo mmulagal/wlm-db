@@ -16,6 +16,8 @@ import {
     buildColumnProps,
     renderExpandableChevron
 } from '../../../../GetWell/OptimizeInnerPage/InnerTables/ExpandableTableHelper';
+import CopyToClipboardCommon from '../../../../../common/CopyToClipboard/copyToClipboard';
+import { ReactComponent as CopyIcon } from '../../../../../assets/ic_copy.svg';
 
 interface ViolationDetail {
     objectName?: string;
@@ -713,11 +715,22 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
                 id: 'lun',
                 isSortable: true,
                 width: 'auto',
-                renderCell: (cellData: string) => (
-                    <DsTypography variant="Regular_14" className={commonStyles.lunPathCell} title={cellData}>
-                        {cellData}
-                    </DsTypography>
-                )
+                renderCell: (cellData: string, rowData: any) => {
+                    const showCopyIcon = rowData.isSubRow || !rowData.isMulti;
+                    return (
+                        <div className={styles.lunPathCellContainer}>
+                            <DsTypography variant="Regular_14" className={commonStyles.lunPathCell} title={cellData}>
+                                {cellData}
+                            </DsTypography>
+                            {showCopyIcon && (
+                                <CopyToClipboardCommon
+                                    value={cellData}
+                                    iconProvided={<CopyIcon className={styles.copyIcon} />}
+                                />
+                            )}
+                        </div>
+                    );
+                }
             },
             {
                 Header: '',

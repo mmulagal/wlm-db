@@ -1,6 +1,8 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { TFunction } from 'i18next';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
+import { Table, useTable } from '@netapp/design-system';
+import styles from './InnerTable.module.scss';
 
 export const toggleExpandedRow = <T extends string | number>(
     id: T,
@@ -145,7 +147,8 @@ export const buildExpandableTableData = (
     groupedData: GroupedViolationData[],
     expandedRows: Set<string>,
     t: TFunction,
-    na: string
+    na: string,
+    subRowClassName?: string
 ): ExpandableTableRow[] => {
     const rows: ExpandableTableRow[] = [];
     groupedData.forEach(item => {
@@ -173,7 +176,10 @@ export const buildExpandableTableData = (
                     isMulti: false,
                     isExpanded: false,
                     isSubRow: true,
-                    cellProps: item.cellProps
+                    cellProps: {
+                        ...item.cellProps,
+                        className: subRowClassName || ''
+                    }
                 });
             });
         }
@@ -239,6 +245,193 @@ export const buildColumnProps = (
         ...(renderCell && { renderCell })
     }));
 
+// Nested table component for expanded rows using Design System Table
+export const ExpandedRowTable = ({ rowData }: { rowData: any }): React.ReactElement | null => {
+    const hasMultipleDrives = rowData.drive && rowData.drive.length > 1;
+
+    const nestedRows = useMemo(
+        () =>
+            hasMultipleDrives
+                ? rowData.drive.map((drive: string, idx: number) => ({
+                      id: `${rowData.id}-nested-${idx}`,
+                      drive,
+                      lunPath: rowData.lunPath[idx] || '-'
+                  }))
+                : [],
+        [hasMultipleDrives, rowData.drive, rowData.lunPath, rowData.id]
+    );
+
+    const nestedColumns: ColumnProps[] = useMemo(
+        () => [
+            {
+                Header: '',
+                accessor: 'drive',
+                id: 'drive',
+                isSortable: false,
+                width: '220px',
+                renderCell: (cellData: string) => cellData
+            },
+            {
+                Header: '',
+                accessor: 'lunPath',
+                id: 'lunPath',
+                isSortable: false,
+                width: 'auto',
+                renderCell: (cellData: string) => (
+                    <span className={styles.lunPathCell} title={cellData}>
+                        {cellData}
+                    </span>
+                )
+            }
+        ],
+        []
+    );
+
+    const tableProps = useTable({
+        columns: nestedColumns,
+        rows: nestedRows,
+        pageSize: 100,
+        selectionType: 'none',
+        isSorting: false,
+        isHorizontalScroll: false
+    });
+
+    if (!hasMultipleDrives) return null;
+
+    return (
+        <div className={styles['expanded-row-inner-table']}>
+            <Table
+                // @ts-expect-error - tableProps type
+                tableProps={tableProps}
+                variant="innerTable"
+            />
+        </div>
+    );
+};
+
+// Build parent-only table data for nested expandable tables
+export const buildParentTableData = (
+    groupedData: GroupedViolationData[],
+    t: TFunction,
+    na: string
+): Array<GroupedViolationData & { driveDisplay: string; lunPathDisplay: string; isMulti: boolean }> =>
+    groupedData.map((item: GroupedViolationData) => ({
+        ...item,
+        driveDisplay:
+            item.drive.length > 1
+                ? `${item.drive.length} ${t('databases.well-architect.drives')}`
+                : item.drive[0] || na,
+        lunPathDisplay:
+            item.lunPath.length > 1
+                ? `${item.lunPath.length} ${t('databases.well-architect.lun-paths')}`
+                : item.lunPath[0] || na,
+        isMulti: item.drive.length > 1
+    }));
+
+// Get column definitions for nested expandable table
+export interface GetNestedTableColumnsParams {
+    t: TFunction;
+    na: string;
+    hasViolationDetails: boolean;
+    lastColDetails: (type: string, props: Record<string, unknown>, width: string) => ColumnProps;
+    type: string;
+    lunPathCellClassName: string;
+    commonStyles: Record<string, string>;
+    ArrowIcon: React.ComponentType;
+}
+
+export const getNestedTableColumns = ({
+    t,
+    na,
+    hasViolationDetails,
+    lastColDetails,
+    type,
+    lunPathCellClassName,
+    commonStyles,
+    ArrowIcon
+}: GetNestedTableColumnsParams): ColumnProps[] => [
+    {
+        Header: t('databases.well-architect.database-name'),
+        accessor: 'databaseName',
+        id: '1',
+        isSortable: false,
+        filterOptions: 'auto',
+        isSticky: true,
+        width: '18%',
+        renderCell: (cellData: any) => cellData || na
+    },
+    ...(hasViolationDetails
+        ? [
+              {
+                  Header: t('databases.well-architect.drive-name'),
+                  accessor: 'driveDisplay',
+                  id: '2',
+                  isSortable: false,
+                  width: '12%',
+                  renderCell: (cellData: any) => cellData
+              } as ColumnProps,
+              {
+                  Header: t('databases.well-architect.lun-path'),
+                  accessor: 'lunPathDisplay',
+                  id: '3',
+                  isSortable: false,
+                  width: '45%',
+                  renderCell: (cellData: any, rowData: any) => (
+                      <span className={lunPathCellClassName} title={rowData.lunPathDisplay}>
+                          {cellData}
+                      </span>
+                  )
+              } as ColumnProps
+          ]
+        : []),
+    {
+        ...lastColDetails(type, {}, '20%')
+    },
+    ...(hasViolationDetails
+        ? [
+              {
+                  Header: '',
+                  accessor: 'isMulti',
+                  id: 'chevron',
+                  isSortable: false,
+                  width: '5%',
+                  renderCell: (_cellData: any, rowData: any, rowMetaData: any) =>
+                      renderExpandableChevron({
+                          rowData: {
+                              ...rowData,
+                              isExpanded: rowMetaData?.rowsState?.[rowData.id]?.isExpanded
+                          },
+                          toggleRow: (id: string | number) => {
+                              rowMetaData?.updateRowState(id)({
+                                  isExpanded: !rowMetaData?.rowsState?.[id]?.isExpanded
+                              });
+                          },
+                          commonStyles,
+                          ArrowIcon
+                      })
+              } as ColumnProps
+          ]
+        : [])
+];
+
+// Hook to auto-expand first expandable row
+export const useAutoExpandFirstRow = (
+    hasViolationDetails: boolean,
+    tableData: Array<{ id: string; isMulti: boolean }>,
+    updateRowState: ((id: string) => (state: any) => void) | undefined
+): void => {
+    const hasInitialExpanded = useRef(false);
+    useEffect(() => {
+        if (!hasInitialExpanded.current && hasViolationDetails && tableData.length > 0) {
+            const firstExpandable = tableData.find((item) => item.isMulti);
+            if (firstExpandable && updateRowState) {
+                updateRowState(firstExpandable.id)({ isExpanded: true });
+                hasInitialExpanded.current = true;
+            }
+        }
+    }, [hasViolationDetails, tableData, updateRowState]);
+};
+
 export interface GetExpandableColumnsParams {
     t: TFunction;
     na: string;
@@ -269,7 +462,7 @@ export const getExpandableTableColumns = ({
         isSortable: false,
         filterOptions: 'auto',
         isSticky: true,
-        width: '20%',
+        width: '18%',
         renderCell: (_cellData: any, rowData: any) => (rowData.isSubRow ? '' : rowData.databaseName || na)
     },
     ...(hasViolationDetails
@@ -279,7 +472,7 @@ export const getExpandableTableColumns = ({
                   accessor: 'driveDisplay',
                   id: '2',
                   isSortable: false,
-                  width: '15%',
+                  width: '12%',
                   renderCell: (_cellData: any, rowData: any) => (
                       <span className={rowData.isSubRow ? commonStyles.expandableSubRowCell : ''}>
                           {rowData.driveDisplay}
@@ -291,7 +484,7 @@ export const getExpandableTableColumns = ({
                   accessor: 'lunPathDisplay',
                   id: '3',
                   isSortable: false,
-                  width: '50%',
+                  width: '45%',
                   renderCell: (_cellData: any, rowData: any) => (
                       <span
                           className={`${innerStyles?.lunPathCell || commonStyles.lunPathCell} ${
@@ -302,7 +495,19 @@ export const getExpandableTableColumns = ({
                           {rowData.lunPathDisplay}
                       </span>
                   )
-              } as ColumnProps,
+              } as ColumnProps
+          ]
+        : []),
+    {
+        ...lastColDetails(type, {}, '20%'),
+        renderCell: (_cellData: any, rowData: any) => {
+            if (rowData.isSubRow) return null;
+            const originalCol = lastColDetails(type, {}, '20%');
+            return originalCol.renderCell ? originalCol.renderCell(_cellData, rowData) : null;
+        }
+    },
+    ...(hasViolationDetails
+        ? [
               {
                   Header: '',
                   accessor: 'isMulti',
@@ -318,13 +523,5 @@ export const getExpandableTableColumns = ({
                       })
               } as ColumnProps
           ]
-        : []),
-    {
-        ...lastColDetails(type, {}, '10%'),
-        renderCell: (_cellData: any, rowData: any) => {
-            if (rowData.isSubRow) return null;
-            const originalCol = lastColDetails(type, {}, '10%');
-            return originalCol.renderCell ? originalCol.renderCell(_cellData, rowData) : null;
-        }
-    }
+        : [])
 ];

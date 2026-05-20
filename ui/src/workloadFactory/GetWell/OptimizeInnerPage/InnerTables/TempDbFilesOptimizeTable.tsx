@@ -1,50 +1,45 @@
-import { Table, useTable, TableTopBar } from '@netapp/design-system';
-import { useMemo, useState } from 'react';
+import { Table, useTable } from '@netapp/design-system';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import styles from './InnerTable.module.scss';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import { ReactComponent as ArrowIcon } from '../../../../assets/row_arrow.svg';
 
 import { getWadCellProps } from '../../GetWellUtils';
 import {
-    getExpandableTableColumns,
     groupViolationDetails,
-    buildExpandableTableData,
-    toggleExpandedRow,
-    useInitialExpandedRow
+    ExpandedRowTable,
+    buildParentTableData,
+    getNestedTableColumns,
+    useAutoExpandFirstRow
 } from './ExpandableTableHelper';
 
 const TempDbFilesOptimizeTable = ({ type, data, lastColDetails, isWad = false }: any) => {
     const { t } = useTranslation();
     const na = t('databases.general.not-available-table-columns');
     const hasViolationDetails = data?.violationDetails?.some((d: any) => d.additionalInfo);
-    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-
-    const toggleRow = (id: string) => toggleExpandedRow(id, setExpandedRows, false);
 
     const groupedData = useMemo(() => groupViolationDetails(data, isWad, t, getWadCellProps), [data, isWad, t]);
+    const tableData = useMemo(() => buildParentTableData(groupedData, t, na), [groupedData, t, na]);
 
-    useInitialExpandedRow(groupedData, hasViolationDetails, setExpandedRows);
-
-    const tableData = useMemo(
-        () => buildExpandableTableData(groupedData, expandedRows, t, na),
-        [groupedData, expandedRows, t, na]
+    const TableColDefs = useMemo(
+        () =>
+            getNestedTableColumns({
+                t,
+                na,
+                hasViolationDetails,
+                lastColDetails,
+                type,
+                lunPathCellClassName: styles.lunPathCell,
+                commonStyles,
+                ArrowIcon
+            }),
+        [t, na, hasViolationDetails, lastColDetails, type]
     );
 
-    const TableColDefs = getExpandableTableColumns({
-        t,
-        na,
-        toggleRow,
-        hasViolationDetails,
-        commonStyles,
-        ArrowIcon,
-        lastColDetails,
-        type,
-        innerStyles: styles
-    });
-
     const tableProps = useTable({
-        // @ts-ignore
+        // @ts-expect-error - manageColumnsProps type
         manageColumnsProps: false,
         isHorizontalScroll: false,
         isSorting: false,
@@ -55,18 +50,25 @@ const TempDbFilesOptimizeTable = ({ type, data, lastColDetails, isWad = false }:
         defaultSelectedRows: tableData.map((item: any) => item.id)
     });
 
+    useAutoExpandFirstRow(hasViolationDetails, tableData, tableProps.updateRowState);
+
+    const databaseCount = groupedData.length;
+
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
-                // @ts-ignore
+                // @ts-expect-error - tableProps type
                 tableProps={tableProps}
-                pluralTitle={t('databases.well-architect.impacted-databases')}
-                singularTitle={t('databases.well-architect.impacted-database')}
+                pluralTitle={`${t('databases.well-architect.impacted-databases')} (${databaseCount})`}
+                singularTitle={`${t('databases.well-architect.impacted-database')} (${databaseCount})`}
+                hideCount
             />
 
             <Table
-                // @ts-ignore
+                // @ts-expect-error - tableProps type
                 tableProps={tableProps}
+                // @ts-expect-error - ExpandedRow accepts functional component
+                ExpandedRow={ExpandedRowTable}
             />
         </div>
     );

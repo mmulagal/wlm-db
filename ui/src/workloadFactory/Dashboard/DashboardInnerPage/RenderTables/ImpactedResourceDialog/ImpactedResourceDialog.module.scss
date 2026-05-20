@@ -24,4 +24,18 @@
         text-overflow: ellipsis;
         display: block;
     }
+
+    .lunPathCellContainer {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+
+        .copyIcon {
+            cursor: pointer;
+            flex-shrink: 0;
+            width: 16px;
+            height: 16px;
+            fill: var(--text-secondary);
+        }
+    }
 }
