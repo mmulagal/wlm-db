@@ -41,6 +41,7 @@ import { discoverOracleResources } from '../../discover-operations';
 import { checkComputeOptimizerEnrollmentStatus } from '../../recommendation-operations';
 import {
     extractFsxSlotCalculation,
+    filterSupportedEbsVolumeIds,
     getExistingAndRecommendedComputeAndLicense,
     normalizeInstancesForMarketing,
     performManualEbsFsxnStorageCalculations,
@@ -358,7 +359,19 @@ async function resolveOracleBulkStorageSavingsContext(
 
     assertOracleHostsEligibleForEbsSavings(accountId, oracleHosts, instanceIds);
 
-    const { dgEbsVolumeIds, standaloneEbsVolumeIds, isMixed } = partitionOracleEbsVolumesByDeploymentType(oracleHosts);
+    const { dgEbsVolumeIds: rawDgEbsVolumeIds, standaloneEbsVolumeIds: rawStandaloneEbsVolumeIds } =
+        partitionOracleEbsVolumesByDeploymentType(oracleHosts);
+    const rawEbsVolumeIds = uniq([...rawDgEbsVolumeIds, ...rawStandaloneEbsVolumeIds]);
+    if (!rawEbsVolumeIds.length) {
+        const errorMessage = `No EBS volumes found for the provided instance: ${instanceIds.join(', ')}`;
+        logger.error(errorMessage, { accountId, credentialsId, region, instanceIds });
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+
+    const [dgEbsVolumeIds, standaloneEbsVolumeIds] = await Promise.all([
+        filterSupportedEbsVolumeIds(credentialsId, region, rawDgEbsVolumeIds),
+        filterSupportedEbsVolumeIds(credentialsId, region, rawStandaloneEbsVolumeIds)
+    ]);
     const ebsVolumeIds = uniq([...dgEbsVolumeIds, ...standaloneEbsVolumeIds]);
     if (!ebsVolumeIds.length) {
         const errorMessage = `No EBS volumes found for the provided instance: ${instanceIds.join(', ')}`;
@@ -366,6 +379,7 @@ async function resolveOracleBulkStorageSavingsContext(
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
     }
 
+    const isMixed = dgEbsVolumeIds.length > 0 && standaloneEbsVolumeIds.length > 0;
     const deploymentType =
         dgEbsVolumeIds.length > 0 ? ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG : ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE;
 

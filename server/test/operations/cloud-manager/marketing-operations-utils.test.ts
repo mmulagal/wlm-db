@@ -1,8 +1,14 @@
 import {
     formatEbsCalculationObject,
-    formatFsxwCalculationObject
+    formatFsxwCalculationObject,
+    getMarketingApiRequestBody
 } from '../../../src/operations/cloud-manager/marketing/marketing-operations-utils';
-import { SqlServerDeploymentModel } from '../../../src/utils/consts';
+import type { AutomaticModeStorageSavingsMarketingParams } from '../../../src/routes/types/storage-savings.types';
+import {
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
+    ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
+    SqlServerDeploymentModel
+} from '../../../src/utils/consts';
 import { StorageSummary, EbsCostCalculation, FsxwCostCalculation } from '../../../src/utils/marketing-types';
 import {
     getEbsMarketingApiManualModeRequestBody,
@@ -10,6 +16,39 @@ import {
 } from '../../../src/operations/cloud-manager/marketing/marketing-request-utils';
 
 describe('Marketing Operations Utils', () => {
+    describe('getMarketingApiRequestBody', () => {
+        const automaticParams: AutomaticModeStorageSavingsMarketingParams = {
+            snapshotFrequency: 'Daily',
+            cloneRefreshFrequency: 'daily',
+            clonedCopiesCount: 1,
+            monthlyChangeRatePercentage: 30
+        };
+
+        it('should use Multi deployment for SQL AOAG and Oracle DG automatic TCO, Single for Oracle Standalone', () => {
+            const volumeIds = ['vol-11111111111111111'];
+            const multiBody = getMarketingApiRequestBody(
+                volumeIds,
+                automaticParams,
+                SqlServerDeploymentModel.SQL_AOAG_SHORT
+            ) as { deploymentType: string };
+            expect(multiBody.deploymentType).toBe('Multi');
+
+            const oracleDgBody = getMarketingApiRequestBody(
+                volumeIds,
+                automaticParams,
+                ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG
+            ) as { deploymentType: string };
+            expect(oracleDgBody.deploymentType).toBe('Multi');
+
+            const oracleSaBody = getMarketingApiRequestBody(
+                volumeIds,
+                automaticParams,
+                ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE
+            ) as { deploymentType: string };
+            expect(oracleSaBody.deploymentType).toBe('Single');
+        });
+    });
+
     describe('getEbsMarketingApiManualModeRequestBody', () => {
         it('should pass through per-volume values for single AZ deployment', () => {
             // Callers (UI manual mode, on-prem TCO helpers, demo flow) all supply storageAmount,
@@ -291,7 +330,7 @@ describe('Marketing Operations Utils', () => {
             expect(result.ebsSnapshotCalculation.monthlyChangeRatePercentage).toBe(30);
         });
 
-        it('should recompute snapshot totals from all-volumes initial cost and incremental cost (multi-volume)', () => {
+        it('should recompute snapshot totals from all-volumes initial cost and per-volume incremental cost scaled by ebsInstanceMonth (multi-volume)', () => {
             const ebsSummary: StorageSummary = {
                 capacity: 10,
                 iops: 0,
@@ -336,14 +375,17 @@ describe('Marketing Operations Utils', () => {
 
             const result = formatEbsCalculationObject(ebsSummary, ebsCostCalculation as EbsCostCalculation, 0, 10);
 
-            const initialSnapshotCostForAllVolumes = storageGiBTotal * ebsSnapshotPrice;
-            const totalSnapshotCostForAllVolumes = initialSnapshotCostForAllVolumes + incrementalSnapshotCost;
-            const totalEbsSnapshotCostForAllVolumes = totalSnapshotCostForAllVolumes * ebsInstanceMonth;
+            const initialSnapshotCostForAllVolumes = storageGiBTotal * ebsSnapshotPrice; // 2048 × 0.05 = 102.4
+            const incrementalSnapshotCostForAllVolumes = incrementalSnapshotCost * ebsInstanceMonth; // 10.24 × 2 = 20.48
+            const totalSnapshotCostForAllVolumes =
+                initialSnapshotCostForAllVolumes + incrementalSnapshotCostForAllVolumes; // 122.88
 
             expect(result.ebsSnapshotCalculation.initialSnapshotCost).toBe(initialSnapshotCostForAllVolumes);
             expect(result.ebsSnapshotCalculation.totalSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
-            expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBe(totalEbsSnapshotCostForAllVolumes);
-            expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBe(totalEbsSnapshotCostForAllVolumes);
+            // GH-9225 follow-up: totalEbsSnapshotCost and ebsSnapshotCost must NOT be re-multiplied by
+            // ebsInstanceMonth (the previous fix did, double-counting the initial cost).
+            expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
+            expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
         });
 
         it.each([
@@ -406,16 +448,131 @@ describe('Marketing Operations Utils', () => {
                 const result = formatEbsCalculationObject(ebsSummary, ebsCostCalculation as EbsCostCalculation, 0, 10);
 
                 const initialSnapshotCostForAllVolumes = totalStorageGiB * ebsSnapshotPrice;
-                const totalSnapshotCostForAllVolumes = initialSnapshotCostForAllVolumes + incrementalSnapshotCost;
-                const totalEbsSnapshotCostForAllVolumes = totalSnapshotCostForAllVolumes * ebsInstanceMonth;
+                const totalSnapshotCostForAllVolumes =
+                    initialSnapshotCostForAllVolumes + incrementalSnapshotCost * ebsInstanceMonth;
 
                 expect(result.ebsSnapshotCalculation.numberOfVolumes).toBe(numberOfVolumes);
                 expect(result.ebsSnapshotCalculation.initialSnapshotCost).toBe(initialSnapshotCostForAllVolumes);
                 expect(result.ebsSnapshotCalculation.totalSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
-                expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBe(totalEbsSnapshotCostForAllVolumes);
-                expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBe(totalEbsSnapshotCostForAllVolumes);
+                expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
+                expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
             }
         );
+
+        it('should scale per-volume initial by ebsInstanceMonth when storage comes from storageAmountPerVol (auto mode)', () => {
+            // Simulator auto response: 4 × gp2 @ 1600 GiB/vol, ebsInstanceMonth = 4.
+            // storageAmountPerVol is per-volume; initial must be 1600 × 0.05 × 4 = 320, not 80.
+            const ebsSummary: StorageSummary = {
+                capacity: 182.4,
+                iops: 0,
+                throughput: 0,
+                total: 448,
+                snapshots: 83.2,
+                clones: 182.4
+            };
+
+            const ebsSnapshotPrice = 0.05;
+            const storageGiBPerVol = 1600;
+            const incrementalSnapshotCost = 3.2;
+            const ebsInstanceMonth = 4;
+
+            const ebsCostCalculation: Partial<EbsCostCalculation> = {
+                instanceAvgDuration: 2920,
+                EBSCapacityPrice: { price: 0.114, unit: 'UsdPerGiB' },
+                numberOfVolumes: 4,
+                storageAmountPerVol: { size: storageGiBPerVol, unit: 'GiB' },
+                totalInstanceHours: 2920,
+                EBSInstanceMonth: ebsInstanceMonth,
+                EBSStorageCost: 182.4,
+                billableIops: 0,
+                totalBillableIops: 0,
+                EBSIopsCost: 0,
+                billableMBps: 0,
+                billableThroughputMBps: 0,
+                billableThroughputGBps: 0,
+                EBSThroughputCost: 0,
+                totalSnapshot: 120,
+                initialSnapshotCost: 80,
+                monthlyCostPerSnapshot: 0.21333333333333337,
+                discountForPartialStorageMonth: 0.10666666666666669,
+                incrementalSnapshotCost,
+                totalSnapshotCost: 83.2,
+                totalEBSSnapshotCost: 83.2,
+                ebsSnapshotCost: 83.2,
+                AWSEBSTotalCostMonthly: 265.6,
+                ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: 'UsdPerGiB' },
+                amountChangedPerSnapshot: { size: 4.2666666666666675, unit: 'GiB' }
+            };
+
+            const result = formatEbsCalculationObject(ebsSummary, ebsCostCalculation as EbsCostCalculation, 0, 10);
+
+            const initialSnapshotCostForAllVolumes = storageGiBPerVol * ebsSnapshotPrice * ebsInstanceMonth; // 320
+            const incrementalSnapshotCostForAllVolumes = incrementalSnapshotCost * ebsInstanceMonth; // 12.8
+            const totalSnapshotCostForAllVolumes =
+                initialSnapshotCostForAllVolumes + incrementalSnapshotCostForAllVolumes; // 332.8
+
+            expect(result.ebsSnapshotCalculation.initialSnapshotCost).toBe(initialSnapshotCostForAllVolumes);
+            expect(result.ebsSnapshotCalculation.totalSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
+            expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
+            expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
+        });
+
+        it('should match AWS Pricing Calculator for the GH-9225 follow-up rollup (3 gp3 volumes summing to 1250 GiB)', () => {
+            // Real-world regression case reported on GH-9225 (after PR #9332):
+            // 3 gp3 volumes (700 + 200 + 350 GiB), Daily snapshots, 10% monthly change rate.
+            // AWS Pricing Calculator (sum of per-volume entries): 38.13 + 13.13 + 20.63 = $71.88.
+            // Pre-fix API was returning $196.875 because (initial + incremental) was multiplied by
+            // ebsInstanceMonth = 3, double-counting the initial snapshot cost.
+            const ebsSummary: StorageSummary = {
+                capacity: 1,
+                iops: 0,
+                throughput: 0,
+                total: 1,
+                snapshots: 1,
+                clones: 0
+            };
+
+            const ebsSnapshotPrice = 0.05;
+            const totalStorageGiB = 1250; // 700 + 200 + 350
+            const incrementalSnapshotCost = 3.12525; // per-volume monthly incremental from marketing API
+            const ebsInstanceMonth = 3; // 3 volumes × 1 instance month each
+
+            const ebsCostCalculation: Partial<EbsCostCalculation> = {
+                instanceAvgDuration: 730,
+                EBSCapacityPrice: { price: 0.0912, unit: 'GB-Mo' },
+                numberOfVolumes: 3,
+                storageAmount: { size: totalStorageGiB, unit: 'GiB' },
+                totalInstanceHours: 2190,
+                EBSInstanceMonth: ebsInstanceMonth,
+                EBSStorageCost: 114,
+                billableIops: 0,
+                totalBillableIops: 0,
+                EBSIopsCost: 0,
+                billableMBps: 0,
+                billableThroughputMBps: 0,
+                billableThroughputGBps: 0,
+                EBSThroughputCost: 0,
+                totalSnapshot: 30,
+                initialSnapshotCost: 17.5,
+                monthlyCostPerSnapshot: 0.20835,
+                discountForPartialStorageMonth: 0.104175,
+                incrementalSnapshotCost,
+                totalSnapshotCost: 65.625,
+                totalEBSSnapshotCost: 196.875,
+                ebsSnapshotCost: 196.875,
+                AWSEBSTotalCostMonthly: 0,
+                ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: 'GB-Mo' },
+                amountChangedPerSnapshot: { size: 4.167, unit: 'GiB' }
+            };
+
+            const result = formatEbsCalculationObject(ebsSummary, ebsCostCalculation as EbsCostCalculation, 0, 10);
+
+            // initial = 1250 × 0.05 = 62.5 ; incremental rolled up = 3.12525 × 3 = 9.37575 ; total = 71.87575
+            expect(result.ebsSnapshotCalculation.initialSnapshotCost).toBeCloseTo(62.5, 5);
+            expect(result.ebsSnapshotCalculation.totalSnapshotCost).toBeCloseTo(71.87575, 5);
+            expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBeCloseTo(71.87575, 5);
+            expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBeCloseTo(71.87575, 5);
+        });
     });
 
     describe('formatFsxwCalculationObject', () => {

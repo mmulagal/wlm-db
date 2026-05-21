@@ -28,13 +28,14 @@ async function fsxwAutomaticDemoModeCallingManualApi(
     clonedCopiesCount: number,
     sqlServerDeploymentType: string,
     monthlyChangeRatePercentage: number,
-    accountId: string
+    accountId: string,
+    snapshotFrequency?: string
 ) {
     const marketingRequestBody = getFsxwMarketingApiManualModeRequestBody(region, {
         clonedCopiesCount,
         sqlServerDeploymentType,
         monthlyChangeRatePercentage,
-        snapshotFrequency: 'Daily',
+        snapshotFrequency: snapshotFrequency ?? 'Daily',
         sqlServerEdition: 'Enterprise',
         ec2Instances: [
             {
@@ -83,7 +84,8 @@ async function ebsAutomaticDemoModeCallingManualApi(
     region: string,
     clonedCopiesCount: number,
     monthlyChangeRatePercentage: number,
-    accountId: string
+    accountId: string,
+    snapshotFrequency?: string
 ) {
     let volumes = [
         {
@@ -140,7 +142,7 @@ async function ebsAutomaticDemoModeCallingManualApi(
         clonedCopiesCount,
         sqlServerDeploymentType,
         monthlyChangeRatePercentage,
-        snapshotFrequency: 'Daily',
+        snapshotFrequency: snapshotFrequency ?? 'Daily',
         sqlServerEdition: 'Enterprise',
         ec2Instances: [
             {

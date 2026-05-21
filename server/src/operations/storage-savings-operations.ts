@@ -7,7 +7,8 @@ import type {
     StorageSavingsCalculationsMetricsType,
     StorageSavingsResponseType
 } from '../routes/types/storage-savings.types';
-import { HttpErrorCodes } from '../utils/consts';
+import { describeVolumes } from '../lib/aws/ec2';
+import { HttpErrorCodes, SUPPORTED_EBS_VOLUME_TYPES } from '../utils/consts';
 import getLogger from '../utils/logger';
 import type {
     FsxCalculation,
@@ -215,11 +216,64 @@ async function getManualEbsFsxnStorageCalculationMetrics(
     );
 }
 
+// The storage marketing API (/marketing/v2/.../ebs/auto/calculate) rejects the entire request with
+// `invalidVolumeTypeError` when any input volume is an unsupported sub-type (st1, sc1, standard).
+// Discovery only stores the high-level filesystem type (EBS/FSXW), not the EBS sub-type, so we
+// consult AWS DescribeVolumes here to drop unsupported ids before calling marketing.
+async function filterSupportedEbsVolumeIds(
+    credentialsId: string,
+    region: string,
+    ebsVolumeIds: string[]
+): Promise<string[]> {
+    if (isEmpty(ebsVolumeIds)) {
+        return [];
+    }
+
+    try {
+        const { Volumes: volumes = [] } = await describeVolumes(
+            credentialsId,
+            region,
+            { VolumeIds: ebsVolumeIds },
+            { useCache: true }
+        );
+
+        const identifiedVolumes = volumes
+            .filter((volume): volume is typeof volume & { VolumeId: string } => Boolean(volume.VolumeId))
+            .map(({ VolumeId, VolumeType }) => ({ id: VolumeId, volumeType: VolumeType }));
+
+        const supportedVolumeIds = identifiedVolumes
+            .filter(({ volumeType }) => Boolean(volumeType) && SUPPORTED_EBS_VOLUME_TYPES.includes(volumeType!))
+            .map(({ id }) => id);
+
+        const droppedVolumes = identifiedVolumes.filter(
+            ({ volumeType }) => !volumeType || !SUPPORTED_EBS_VOLUME_TYPES.includes(volumeType)
+        );
+
+        if (!isEmpty(droppedVolumes)) {
+            logger.warn('Dropping EBS volumes with unsupported volume types from marketing API request', {
+                region,
+                droppedVolumes,
+                supportedVolumeTypes: SUPPORTED_EBS_VOLUME_TYPES
+            });
+        }
+
+        return supportedVolumeIds;
+    } catch (error) {
+        logger.warn('Failed to describe EBS volumes for unsupported-type filtering, falling back to input', {
+            region,
+            ebsVolumeIds,
+            error
+        });
+        return ebsVolumeIds;
+    }
+}
+
 export {
     settledFulfilledValues,
     getExistingAndRecommendedComputeAndLicense,
     extractFsxSlotCalculation,
     normalizeInstancesForMarketing,
+    filterSupportedEbsVolumeIds,
     type ManualEbsFsxnCoreParams,
     type ManualStorageCoreResult,
     performManualEbsFsxnStorageCalculations,

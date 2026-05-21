@@ -1,6 +1,6 @@
 # Reads a GitHub epic issue and creates/updates two user stories (API, UI), each with five children:
 # implementation, demo support, testcase design, functional testing, automation. Child titles use the epic title
-# with a leading `[EPIC]:` prefix stripped from the epic title for readability.
+# with a case-insensitive `[epic]` tag stripped from the epic title for readability (e.g. [EPIC], [Epic], [epic]).
 #
 # Shape is encoded in STANDARD_STORY_DEFINITIONS and USER_STORY_SUB_DEFINITIONS below. Labels: applied on create only
 # (epic non-type labels, testcase-design `progression`, nested `Task` where used); PATCH re-sync omits labels. User stories rely
@@ -94,9 +94,17 @@ jobs:
                       TEST_PLAN: "Test Plan",
                   };
 
+                  /** Matches [epic] in any letter casing, optional trailing colon (e.g. [EPIC], [Epic], [epic]:). */
+                  const EPIC_BRACKET_TAG = /\[(?:epic)\]/i;
+
                   function stripEpicPrefix(title) {
                       const t = (title || "").trim();
-                      const stripped = t.replace(/^\[EPIC\]:\s*/i, "").trim();
+                      if (!t) return t;
+                      let stripped = t.replace(new RegExp(`^${EPIC_BRACKET_TAG.source}:?\\s*`, "i"), "").trim();
+                      stripped = stripped
+                          .replace(new RegExp(`\\s*${EPIC_BRACKET_TAG.source}\\s*`, "gi"), " ")
+                          .replace(/\s+/g, " ")
+                          .trim();
                       return stripped || t;
                   }
 

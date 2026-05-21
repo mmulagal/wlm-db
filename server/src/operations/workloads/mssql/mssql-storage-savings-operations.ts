@@ -33,6 +33,7 @@ import { getHostAndSqlServerInfo } from '../../discover-operations';
 import { getSqlInstanceLicenseRecommendations, manualModeComputeLicenseDetails } from '../../recommendation-operations';
 import {
     extractFsxSlotCalculation,
+    filterSupportedEbsVolumeIds,
     getExistingAndRecommendedComputeAndLicense,
     getManualEbsFsxnStorageCalculationMetrics,
     performManualEbsFsxnStorageCalculations,
@@ -53,6 +54,13 @@ interface CalculationResponse {
     ebs?: StorageSummary;
     fsx?: StorageSummary;
     fsxw?: StorageSummary;
+}
+
+function formatNoEbsVolumesForInstances(...instanceIdSources: (string | undefined)[]): string {
+    const instanceIds = compact(uniq(instanceIdSources.filter((id): id is string => Boolean(id))));
+    return isEmpty(instanceIds)
+        ? 'No EBS volumes found for the provided instance.'
+        : `No EBS volumes found for the provided instance: ${instanceIds.join(', ')}`;
 }
 
 function fetchSqlVolumeIdsByType(type: string, sqlServerInstances: SqlServerInstanceInfoType[]) {
@@ -167,11 +175,17 @@ async function aoagStorageSavingsCalculations(
             params.monthlySqlByolCost
         ); // retrieves compute and license cost for all nodes in the AOAG cluster
 
-        const { allEbsVolumeIds, uniqueHostVolumeIds } = identifyAoagVolumes(
-            sqlServerInstances,
-            nodeEbsVolumeIds,
-            partnerNodeDetails
-        );
+        const { allEbsVolumeIds: rawAllEbsVolumeIds, uniqueHostVolumeIds: rawUniqueHostVolumeIds } =
+            identifyAoagVolumes(sqlServerInstances, nodeEbsVolumeIds, partnerNodeDetails);
+
+        const [allEbsVolumeIds, uniqueHostVolumeIds] = await Promise.all([
+            filterSupportedEbsVolumeIds(credentialsId, region, rawAllEbsVolumeIds),
+            filterSupportedEbsVolumeIds(credentialsId, region, rawUniqueHostVolumeIds)
+        ]);
+
+        if (isEmpty(allEbsVolumeIds)) {
+            throw createError(HttpErrorCodes.NOT_FOUND, formatNoEbsVolumesForInstances(instanceId, nodeInstanceId));
+        }
 
         if (isBulk) {
             return {
@@ -324,11 +338,20 @@ async function aoagStorageSavingsMetrics(
             deploymentType
         } = currentNodeComputeLicenseDetails;
 
-        const { allEbsVolumeIds, uniqueHostVolumeIds } = identifyAoagVolumes(
-            sqlServerInstances,
-            nodeEbsVolumeIds,
-            partnerNodeDetails
-        );
+        const { allEbsVolumeIds: rawAllEbsVolumeIds, uniqueHostVolumeIds: rawUniqueHostVolumeIds } =
+            identifyAoagVolumes(sqlServerInstances, nodeEbsVolumeIds, partnerNodeDetails);
+
+        const [allEbsVolumeIds, uniqueHostVolumeIds] = await Promise.all([
+            filterSupportedEbsVolumeIds(credentialsId, region, rawAllEbsVolumeIds),
+            filterSupportedEbsVolumeIds(credentialsId, region, rawUniqueHostVolumeIds)
+        ]);
+
+        if (isEmpty(allEbsVolumeIds)) {
+            throw createError(
+                HttpErrorCodes.NOT_FOUND,
+                formatNoEbsVolumesForInstances(instanceId, nodeDetails.ec2InstanceId)
+            );
+        }
 
         // Consider all EBS volumes for storage, iops and throughput calculation
         const {
@@ -625,7 +648,16 @@ async function performStorageSavingsCalculations(
         };
     }
 
-    const ebsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
+    const rawEbsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
+
+    if (!rawEbsVolumeIds.length) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `No EBS volumes found for the provided instance: ${instanceIds.join(', ')}`
+        );
+    }
+
+    const ebsVolumeIds = await filterSupportedEbsVolumeIds(credentialsId, region, rawEbsVolumeIds);
 
     if (!ebsVolumeIds.length) {
         throw createError(
@@ -922,7 +954,16 @@ async function getStorageSavingsCalculationMetrics(
         };
     }
 
-    const ebsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
+    const rawEbsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, sqlServerInstances);
+    if (!rawEbsVolumeIds.length) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `No EBS volumes found for the provided instance: ${instanceIds.join(', ')}`
+        );
+    }
+
+    const ebsVolumeIds = await filterSupportedEbsVolumeIds(credentialsId, region, rawEbsVolumeIds);
+
     if (!ebsVolumeIds.length) {
         throw createError(
             HttpErrorCodes.NOT_FOUND,
@@ -1399,8 +1440,21 @@ async function mixOfAoagAndNonAoagStorageSavingsCalculations(
     const [aoagServerInstances, nonAoagServerInstances] = partition(sqlServerInstances, {
         sqlServerDeploymentType: SqlServerDeploymentModel.SQL_AOAG_SHORT
     });
-    const aoagNodeEbsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, aoagServerInstances);
-    const nonAoagNodeEbsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, nonAoagServerInstances);
+    const rawAoagNodeEbsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, aoagServerInstances);
+    const rawNonAoagNodeEbsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, nonAoagServerInstances);
+
+    const [aoagNodeEbsVolumeIds, nonAoagNodeEbsVolumeIds] = await Promise.all([
+        filterSupportedEbsVolumeIds(credentialsId, region, rawAoagNodeEbsVolumeIds),
+        filterSupportedEbsVolumeIds(credentialsId, region, rawNonAoagNodeEbsVolumeIds)
+    ]);
+
+    if (isEmpty(aoagNodeEbsVolumeIds) && isEmpty(nonAoagNodeEbsVolumeIds)) {
+        const discoveredInstanceIds = compact(nodeDetailsList.map(node => node.ec2InstanceId));
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            formatNoEbsVolumesForInstances(...(instanceIds ?? []), ...discoveredInstanceIds)
+        );
+    }
 
     let aoagNodesComputeAndLicenseDetailsPromise: Promise<
         {
@@ -1571,14 +1625,32 @@ async function mixOfAoagAndNonAoagStorageSavingsMetrics(
     const [aoagServerInstances, nonAoagServerInstances] = partition(sqlServerInstances, {
         sqlServerDeploymentType: SqlServerDeploymentModel.SQL_AOAG_SHORT
     });
-    const aoagNodeEbsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, aoagServerInstances);
-    const nonAoagNodeEbsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, nonAoagServerInstances);
+    const rawAoagNodeEbsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, aoagServerInstances);
+    const rawNonAoagNodeEbsVolumeIds = fetchSqlVolumeIdsByType(FileSystemTypes.EBS, nonAoagServerInstances);
 
-    const { allEbsVolumeIds, uniqueHostVolumeIds } = identifyAoagVolumes(
+    const [aoagNodeEbsVolumeIds, nonAoagNodeEbsVolumeIds] = await Promise.all([
+        filterSupportedEbsVolumeIds(credentialsId, region, rawAoagNodeEbsVolumeIds),
+        filterSupportedEbsVolumeIds(credentialsId, region, rawNonAoagNodeEbsVolumeIds)
+    ]);
+
+    const { allEbsVolumeIds: rawAllEbsVolumeIds, uniqueHostVolumeIds: rawUniqueHostVolumeIds } = identifyAoagVolumes(
         aoagServerInstances,
         aoagNodeEbsVolumeIds,
         partnerNodeDetails
     );
+
+    const [allEbsVolumeIds, uniqueHostVolumeIds] = await Promise.all([
+        filterSupportedEbsVolumeIds(credentialsId, region, rawAllEbsVolumeIds),
+        filterSupportedEbsVolumeIds(credentialsId, region, rawUniqueHostVolumeIds)
+    ]);
+
+    if (isEmpty(allEbsVolumeIds) && isEmpty(nonAoagNodeEbsVolumeIds)) {
+        const discoveredInstanceIds = compact(nodeDetailsList.map(node => node.ec2InstanceId));
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            formatNoEbsVolumesForInstances(...(instanceIds ?? []), ...discoveredInstanceIds)
+        );
+    }
 
     const {
         ebs,

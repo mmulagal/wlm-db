@@ -17,6 +17,7 @@ import {
 import {
     HOURS_IN_MONTH,
     ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG,
+    SqlServerDeploymentModel,
     STORAGE_SERVICE_DEFAULT_REGION
 } from '../../../utils/consts';
 
@@ -322,6 +323,7 @@ function formatEbsCalculationObject(
         amountChangedPerSnapshot: { size: amountChangedPerSnapshotSize, unit: amountChangedPerSnapshotUnit }
     } = ebsCostCalculationObject;
 
+    const usesTotalStorageAmount = Boolean(storageAmountSize && storageAmountUnit);
     const ebsStorageAmountSize =
         storageAmountSize && storageAmountUnit
             ? convertToBytes(storageAmountSize, storageAmountUnit) || 0
@@ -356,15 +358,22 @@ function formatEbsCalculationObject(
     };
 
     const amountChangedPerSnapshot = convertToBytes(amountChangedPerSnapshotSize, amountChangedPerSnapshotUnit) || 0;
-    // The marketing API sends the initial snapshot cost for a single volume, so calculating to get the total initial snapshot cost for all volumes
-    // Although this will not warrant any future changes even after the marketing fix, but it has to be corrected in the marketing API itself in future
-    const initialSnapshotCostForAllVolumes = sizeInGigaBytes(ebsStorageAmountSize, 'B') * ebsSnapshotPrice;
-    // GH-9225: Marketing totals (totalSnapshotCost, totalEBSSnapshotCost, ebsSnapshotCost) could disagree with
-    // initialSnapshotCost when multiple volumes of the same type roll up—upstream still mixed per-volume initial into
-    // those fields. Recompute totals from the all-volumes initial we derive above plus incrementalSnapshotCost, then
-    // apply ebsInstanceMonth so every snapshot money field stays internally consistent.
-    const totalSnapshotCostForAllVolumes = initialSnapshotCostForAllVolumes + incrementalSnapshotCost;
-    const totalEbsSnapshotCostForAllVolumes = totalSnapshotCostForAllVolumes * ebsInstanceMonth;
+    // GH-9225 (fix): Marketing returns per-volume snapshot numbers — `initialSnapshotCost` and
+    // `incrementalSnapshotCost` are both for a single volume of the class, while `EBSInstanceMonth`
+    // already aggregates across volumes (totalInstanceHours / hoursInMonth = numberOfVolumes ×
+    // instance-months-per-volume). Roll up per volume class as follows:
+    //   • Manual mode (`storageAmount` = total GiB across the class): initial = total × price; scale
+    //     only incremental by `ebsInstanceMonth`. Do not multiply initial again — that was the PR #9332
+    //     regression for heterogeneous gp3 rollups (see GH-9225 follow-up).
+    //   • Automatic mode (`storageAmountPerVol` = per-volume GiB): initial and incremental are both
+    //     per-volume; scale each by `ebsInstanceMonth` (equivalent to (initial + incremental) × N when
+    //     volumes are homogeneous, without double-counting initial after manual-mode total storage).
+    const initialSnapshotCostPerVolumeOrTotal = sizeInGigaBytes(ebsStorageAmountSize, 'B') * ebsSnapshotPrice;
+    const initialSnapshotCostForAllVolumes = usesTotalStorageAmount
+        ? initialSnapshotCostPerVolumeOrTotal
+        : initialSnapshotCostPerVolumeOrTotal * ebsInstanceMonth;
+    const incrementalSnapshotCostForAllVolumes = incrementalSnapshotCost * ebsInstanceMonth;
+    const totalSnapshotCostForAllVolumes = initialSnapshotCostForAllVolumes + incrementalSnapshotCostForAllVolumes;
 
     const ebsSnapshotCalculation = {
         storageAmount: ebsStorageAmountSize,
@@ -380,8 +389,11 @@ function formatEbsCalculationObject(
         discountForPartialStorageMonth,
         incrementalSnapshotCost,
         totalSnapshotCost: totalSnapshotCostForAllVolumes,
-        totalEbsSnapshotCost: totalEbsSnapshotCostForAllVolumes,
-        ebsSnapshotCost: totalEbsSnapshotCostForAllVolumes
+        // totalEbsSnapshotCost and ebsSnapshotCost are the same money number from this point onwards;
+        // ebsInstanceMonth has already been rolled into incrementalSnapshotCostForAllVolumes above,
+        // so do NOT multiply again — that was the source of the original double-count regression.
+        totalEbsSnapshotCost: totalSnapshotCostForAllVolumes,
+        ebsSnapshotCost: totalSnapshotCostForAllVolumes
     };
 
     return {
@@ -513,7 +525,7 @@ function getMarketingApiRequestBody(
         volumeIds: ebsVolumeIds,
         includeSnapshots: false,
         deploymentType:
-            marketingApiDeploymentType === 'SQL_AOAG_SHORT' ||
+            marketingApiDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT ||
             marketingApiDeploymentType === ORACLE_AUTOMATIC_TCO_DEPLOYMENT_DG
                 ? 'Multi'
                 : 'Single',
@@ -552,7 +564,7 @@ async function invokeMarketingApi(
         // The SQL server instances list in our  application and the instances list in storage service application are different.
         // We are using manual API in demo for automatic mode as well as it gives us more room to play around with volume sizes to suit our demo workflows, this gives us flexibility by not mandating us to retrieve the same volumes IDs as associated with instances in storage application; that way storage service also wouldnt have to maintain a list specific to our requirements
 
-        const { clonedCopiesCount, monthlyChangeRatePercentage } = params;
+        const { clonedCopiesCount, monthlyChangeRatePercentage, snapshotFrequency } = params;
         region = STORAGE_SERVICE_DEFAULT_REGION;
 
         if (fileSystemsIds && fileSystemsIds.length > 0) {
@@ -561,7 +573,8 @@ async function invokeMarketingApi(
                 clonedCopiesCount,
                 marketingApiDeploymentType,
                 monthlyChangeRatePercentage,
-                accountId
+                accountId,
+                snapshotFrequency
             );
         }
         return ebsAutomaticDemoModeCallingManualApi(
@@ -570,7 +583,8 @@ async function invokeMarketingApi(
             region,
             clonedCopiesCount,
             monthlyChangeRatePercentage,
-            accountId
+            accountId,
+            snapshotFrequency
         );
     }
 

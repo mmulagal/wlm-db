@@ -343,6 +343,18 @@ enum FileSystemTypes {
     FSXW = 'FSXW'
 }
 
+// EBS volume types accepted by the storage marketing API (/marketing/v2/.../ebs/auto/calculate).
+// Unsupported sub-types (st1, sc1, standard) cause the API to reject the whole request with
+// `invalidVolumeTypeError`, so we filter discovery results before forwarding.
+enum MarketingSupportedEbsVolumeType {
+    GP2 = 'gp2',
+    GP3 = 'gp3',
+    IO1 = 'io1',
+    IO2 = 'io2'
+}
+
+const SUPPORTED_EBS_VOLUME_TYPES: readonly string[] = Object.freeze(Object.values(MarketingSupportedEbsVolumeType));
+
 enum STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES {
     RESILIENCY = 'resiliency',
     STORAGE = 'storage',
@@ -2309,5 +2321,6 @@ export {
     NOTIFICATION_SERVICE_NAME,
     SSM_COMMAND_COMPRESSION_THRESHOLD,
     STORAGE_LABEL,
-    DATABASE_LABEL
+    DATABASE_LABEL,
+    SUPPORTED_EBS_VOLUME_TYPES
 };
