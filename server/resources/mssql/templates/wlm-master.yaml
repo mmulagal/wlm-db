@@ -768,7 +768,7 @@ Resources:
     Type: AWS::CloudFormation::WaitCondition
     Properties: 
       Handle: !If [IsFailoverCluster, !Ref FCIWaitHandler, !Ref SIWaitHandler]
-      Timeout: '7200'
+      Timeout: '10800'
       Count: 0
   NewFSxStack:
     Type: AWS::CloudFormation::Stack

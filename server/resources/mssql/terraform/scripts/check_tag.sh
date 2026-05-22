@@ -7,9 +7,9 @@ AwsProfile=$4
 
 counter=0
 if [ "$NodeName" = "Validation-Node-1" ] || [ "$NodeName" = "Validation-Node-2" ]; then
-    timeout=150 # 150 * 10 seconds = 25 minutes
+    timeout=180 # 80 10-second intervals = 30 minutes
 else
-    timeout=720 # 720 * 10 seconds = 2 hours
+    timeout=1080 # 1080 10-second intervals = 3 hours
 fi
 
 echo "Checking tag for InstanceId: $InstanceId in Region: $Region with timeout: $timeout (10-second intervals)"

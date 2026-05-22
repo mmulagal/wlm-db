@@ -6,7 +6,7 @@ param(
 )
 
 $counter = 0
-$timeout = if ($NodeName -in @('Validation-Node-1', 'Validation-Node-2')) { 150 } else { 720 } # 150 * 10 seconds = 25 minutes, 720 * 10 seconds = 2 hours
+$timeout = if ($NodeName -in @('Validation-Node-1', 'Validation-Node-2')) { 180 } else { 1080 } # 180 / 60 seconds = 30 minutes, 1080 / 60 seconds = 3 hours
 
 Write-Output "Checking tag for InstanceId: $InstanceId in Region: $Region with timeout: $timeout (10-second intervals)"
 
