@@ -1719,6 +1719,7 @@ const getStorageDetailsForRegisteredInstances = (ec2InstanceId: string, dbSid: s
         export ORACLE_HOME="$oracle_home"
         export PATH="$oracle_home/bin:$PATH"
 
+        ${loadStorageDetectionModules}
         if [[ "$isDefaultAuth" == "true" || "$oracleCredsAvailable" == "true" ]]; then
             if [ "$(is_cdb_instance)" == "true" ]; then
                 is_cdb="YES"
@@ -1729,7 +1730,6 @@ const getStorageDetailsForRegisteredInstances = (ec2InstanceId: string, dbSid: s
                 pdb_names=""
                 mounted_pdb_names=""
             fi
-            ${loadStorageDetectionModules}
             ${getInstanceStorageDetails}
         else
             ${getStorageWithoutCreds}
