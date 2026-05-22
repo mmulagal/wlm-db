@@ -1,5 +1,5 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import createError from 'http-errors';
+import createError, { isHttpError } from 'http-errors';
 import { isEmpty } from 'lodash-es';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import getLogger from '../utils/logger';
@@ -1809,6 +1809,9 @@ async function getCollationDetails(
             sqlAuthEnabled
         });
     } catch (error: any) {
+        if (isHttpError(error)) {
+            throw error;
+        }
         const errorMessage = `Unable to get collation information. ${error?.message}.`;
         logger.error(errorMessage);
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
