@@ -343,7 +343,7 @@ async function createFileSystemForDemo(
         securityGroupIds: [],
         tags: [],
         svmAdminPassword: `Svm${randomize('Aa', 4)}${randomize('0', 2)}`,
-        generateSecurityGroup: true,
+        generateSecurityGroup: false,
         haPairs: 1,
         automaticBackupRetentionDays: 30,
         routeTableIds: ['rtb-11111111']
