@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import isEqual from 'lodash/isEqual';
 import { useAppDispatch, useAppSelector } from '../../store/storeHooks';
 import {
     addAggregatedCosts,
@@ -30,6 +31,7 @@ const DatabaseHomeApis = () => {
     const refreshBlocked = useAppSelector(state => state.auth?.refreshBlocked);
     const dashSandboxSavingsData = useAppSelector(state => state.inventoryV2.dashSandboxSavings.data);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
+    const prevPotentialSavingsRef = useRef<any>(null);
 
     // To have database hosts data in dashboard - V2
     useEffect(() => {
@@ -134,7 +136,12 @@ const DatabaseHomeApis = () => {
         // Here we are getting the values from it and storing it in databaseHome slice.
         // This is to show data on dashboard potential card UI.
         const potentialSavingsValues = getPotentialSavingsValues(potentialSavingsHostData);
-        dispatch(setPotentialSavingsValues(potentialSavingsValues));
+
+        // Only dispatch if values have actually changed to prevent flickering
+        if (!isEqual(prevPotentialSavingsRef.current, potentialSavingsValues)) {
+            prevPotentialSavingsRef.current = potentialSavingsValues;
+            dispatch(setPotentialSavingsValues(potentialSavingsValues));
+        }
     }, [potentialSavingsHostData, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
     return <></>;

@@ -266,7 +266,8 @@ export const FSXN_STORAGE_PROTOCOLS = {
 
 export const STORAGE_TYPES = {
     FSX_FOR_ONTAP: 'FSx for ONTAP',
-    FSXN: 'FSXN'
+    FSXN: 'FSXN',
+    FSX_FOR_WINDOWS: 'FSx for Windows'
 };
 
 export const MAX_SAVED_CONFIG = 100;

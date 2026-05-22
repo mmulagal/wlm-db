@@ -17,24 +17,30 @@ const ComparisonChartStack = React.memo(
         yTickFormatter,
         tooltipHeading,
         tooltipText,
+        tooltipHeadingFirst,
+        tooltipTextFirst,
         loading = false,
         loadingWithNoData = false,
         marginTop = '150px',
         labelChange = false,
-        labelChangeText = ''
+        labelChangeText = '',
+        stackedBarColors
     }: {
         colors?: ChartColor[];
         data: number[][];
         categories: XCategories;
         height?: number;
         yTickFormatter?: YTickFormatter;
-        tooltipHeading?: any;
-        tooltipText?: any;
+        tooltipHeading?: string[];
+        tooltipText?: string[];
+        tooltipHeadingFirst?: string[];
+        tooltipTextFirst?: string[];
         loading?: boolean;
         loadingWithNoData?: boolean;
         marginTop?: string;
         labelChange?: boolean;
         labelChangeText?: string;
+        stackedBarColors?: ChartColor[];
     }) => {
         let max = 0;
         for (const stack of data) {
@@ -98,65 +104,75 @@ const ComparisonChartStack = React.memo(
                                     <div
                                         className={styles.datum}
                                         style={{
-                                            height: `${100}%`,
-                                            position: 'relative',
-                                            top: compareArrayValues?.result ? compareArrayValues?.percentage : '0%'
+                                            height: `${(total / max) * 100}%`,
+                                            display: 'flex',
+                                            flexDirection: 'column'
                                         }}
                                     >
-                                        {stack.map((value, stackIndex) => {
-                                            const percentage = (value / max) * 100;
-                                            const backgroundColor = colors
-                                                ? `var(--${colors[stackIndex]})`
+                                        {[...stack].reverse().map((value, revIndex) => {
+                                            const stackIndex = stack.length - 1 - revIndex;
+                                            const percentage = total > 0 ? (value / total) * 100 : 0;
+                                            const colorSet = index === 0 ? colors : (stackedBarColors || colors);
+                                            const backgroundColor = colorSet
+                                                ? `var(--${colorSet[stackIndex]})`
                                                 : fullColors[stackIndex];
 
                                             return (
-                                                <Popover
-                                                    popoverClass={styles.popover}
-                                                    isAppendedToBody
-                                                    placement="auto"
+                                                <div
                                                     key={stackIndex}
-                                                    children={
+                                                    style={{
+                                                        height: `${percentage}%`,
+                                                        width: '100%'
+                                                    }}
+                                                >
+                                                    <Popover
+                                                        popoverClass={styles.popover}
+                                                        isAppendedToBody
+                                                        placement="auto"
+                                                        trigger="hover"
+                                                        container={
+                                                            <div
+                                                                className={styles.stackSegment}
+                                                                style={{
+                                                                    height: '100%',
+                                                                    backgroundColor
+                                                                }}
+                                                            />
+                                                        }
+                                                    >
                                                         <div className={styles.tooltipContainer}>
-                                                            <div className={styles.tooltipContentRowFirst}>
-                                                                {stackIndex === 0 && (
-                                                                    <div className={styles.squareChart2} />
-                                                                )}
-                                                                {stackIndex === 1 && (
-                                                                    <div className={styles.squareChart3} />
-                                                                )}
-                                                                <DsTypography variant="Semibold_14">
-                                                                    {stackIndex === 1
-                                                                        ? tooltipHeading[0]
-                                                                        : tooltipHeading[1]}
-                                                                </DsTypography>
-                                                                <SeparatorComponent variant="vertical" height="20px" />
-                                                                <DsTypography variant="Semibold_14">
-                                                                    {stackIndex === 1 ? tooltipText[0] : tooltipText[1]}
-                                                                </DsTypography>
-                                                            </div>
+                                                        <div className={styles.tooltipContentRowFirst}>
+                                                            <div
+                                                                className={styles.squareChart2}
+                                                                style={{ backgroundColor }}
+                                                            />
+                                                            {(index === 0
+                                                                ? (tooltipHeadingFirst?.[stackIndex] || tooltipHeading?.[stackIndex])
+                                                                : tooltipHeading?.[stackIndex]) && (
+                                                                <>
+                                                                    <DsTypography variant="Semibold_14">
+                                                                        {index === 0
+                                                                            ? (tooltipHeadingFirst?.[stackIndex] || tooltipHeading?.[stackIndex])
+                                                                            : tooltipHeading?.[stackIndex]}
+                                                                    </DsTypography>
+                                                                    <SeparatorComponent variant="vertical" height="20px" />
+                                                                </>
+                                                            )}
+                                                            <DsTypography variant="Semibold_14">
+                                                                {index === 0
+                                                                    ? (tooltipTextFirst?.[stackIndex] || tooltipText?.[stackIndex])
+                                                                    : tooltipText?.[stackIndex]}
+                                                            </DsTypography>
+                                                        </div>
                                                             <DsTypography
                                                                 variant="Semibold_14"
                                                                 style={{ marginBottom: '8px' }}
                                                             >
-                                                                $
-                                                                {stackIndex === 0
-                                                                    ? formatNumberWithCustomComma(data[1][0])
-                                                                    : formatNumberWithCustomComma(data[1][1])}
+                                                                ${formatNumberWithCustomComma(data[index]?.[stackIndex])}
                                                             </DsTypography>
                                                         </div>
-                                                    }
-                                                    trigger="hover"
-                                                    container={
-                                                        <div
-                                                            key={stackIndex}
-                                                            className={styles.stackSegment}
-                                                            style={{
-                                                                height: `${percentage}%`,
-                                                                backgroundColor
-                                                            }}
-                                                        />
-                                                    }
-                                                />
+                                                    </Popover>
+                                                </div>
                                             );
                                         })}
                                     </div>
@@ -213,16 +229,14 @@ const ComparisonChartStack = React.memo(
                             )}
                             {stack.length === 2 && (
                                 <div className={styles.xLabel}>
-                                    <div className={styles.xContainer}>
-                                        <div className={styles.xContainerInner}>
-                                            <div className={styles.squareChart3} />
-                                            <DsTypography variant="Semibold_14">EBS</DsTypography>
-                                        </div>
-                                        <div className={styles.xContainerInner}>
-                                            <div className={styles.squareChart2} />
-                                            <DsTypography variant="Semibold_14">FSxW</DsTypography>
-                                        </div>
-                                    </div>
+                                    <Span
+                                        bold
+                                        className={styles.spanStyle}
+                                        title={categories[index]}
+                                        color={hasData ? undefined : 'text-disabled'}
+                                    >
+                                        {categories[index]}
+                                    </Span>
                                 </div>
                             )}
                         </div>

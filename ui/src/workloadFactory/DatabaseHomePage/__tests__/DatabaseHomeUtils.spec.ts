@@ -524,8 +524,8 @@ describe('getPotentialSavingsValues', () => {
         };
         const result = getPotentialSavingsValues(data);
         expect(result.savings).toBeGreaterThan(0);
-        expect(result.ebsCost).toBe(1000);
-        expect(result.fsxnCostForEbsHost).toBe(600);
+        expect(result.totalEbsCost).toBe(1000);
+        expect(result.totalFsxnCostForEbsHost).toBe(600);
     });
 
     it('sets noSavings true when fsxnCost >= total cost', () => {

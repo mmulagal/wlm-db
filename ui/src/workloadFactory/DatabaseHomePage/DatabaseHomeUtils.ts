@@ -214,14 +214,18 @@ export const getManagedHostCountFromInventory = (
 export const getPotentialSavingsValues = (data: any) => {
     const result = {
         loading: false,
-        ebsCost: 0,
+        totalEbsCost: 0,
         fsxwCost: 0,
         fsxnCost: 0,
-        fsxnCostForEbsHost: 0,
+        totalFsxnCostForEbsHost: 0,
         fsxnCostForFsxwHost: 0,
         savings: 0,
         savingsPercent: 0,
-        noSavings: false
+        noSavings: false,
+        oracleEbsCost: 0,
+        oracleFsxnCostForEbsHost: 0,
+        mssqlEbsCost: 0,
+        mssqlFsxnCostForEbsHost: 0
     };
 
     const state = store.getState();
@@ -229,6 +233,47 @@ export const getPotentialSavingsValues = (data: any) => {
     const uniqueResourceList: Array<string> = [];
 
     Object.keys(data).map((key: string) => {
+        const val = data[key];
+
+        // Handle bulk entries (format: bulk_oracle_ebs_credId_regionId_batch_batchIndex)
+        if (val?.isBulk) {
+            const keyList = key.split('_');
+            // For bulk keys: bulk_oracle_ebs_credId_regionId_batch_batchIndex -> credId is at index 3, regionId at index 4
+            const bulkCredId = keyList?.[3];
+            const bulkRegionId = keyList?.[4];
+            const isOracle = keyList?.[1] === WIZARD_TYPE.ORACLE;
+
+            if (
+                !headerSelectedMultiCredIdsList.includes(bulkCredId) ||
+                !headerSelectedMultiRegionIdsList.includes(bulkRegionId) ||
+                uniqueResourceList.includes(key)
+            ) {
+                return;
+            }
+            uniqueResourceList.push(key);
+
+            if (val?.loading) {
+                result.loading = true;
+            }
+            if (val?.data) {
+                // Bulk entries are only for EBS (Oracle bulk API)
+                result.fsxnCost += val?.data?.totalSummary?.recommended || 0;
+                result.totalFsxnCostForEbsHost += val?.data?.totalSummary?.recommended || 0;
+                result.totalEbsCost += val?.data?.totalSummary?.existing || 0;
+
+                // Track Oracle and MSSQL EBS separately for chart colors
+                if (isOracle) {
+                    result.oracleFsxnCostForEbsHost += val?.data?.totalSummary?.recommended || 0;
+                    result.oracleEbsCost += val?.data?.totalSummary?.existing || 0;
+                } else {
+                    result.mssqlFsxnCostForEbsHost += val?.data?.totalSummary?.recommended || 0;
+                    result.mssqlEbsCost += val?.data?.totalSummary?.existing || 0;
+                }
+            }
+            return;
+        }
+
+        // Handle per-instance entries (format: instanceId_credId_regionId)
         const keyList = key.split('_');
         if (
             !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
@@ -239,15 +284,17 @@ export const getPotentialSavingsValues = (data: any) => {
         }
         uniqueResourceList.push(keyList?.[0]);
 
-        const val = data[key];
         if (val?.loading) {
             result.loading = true;
         }
         if (val?.data) {
             result.fsxnCost += val?.data?.totalSummary?.recommended || 0;
             if (val?.storageType === GENERAL.EBS) {
-                result.fsxnCostForEbsHost += val?.data?.totalSummary?.recommended || 0;
-                result.ebsCost += val?.data?.totalSummary?.existing || 0;
+                result.totalFsxnCostForEbsHost += val?.data?.totalSummary?.recommended || 0;
+                result.totalEbsCost += val?.data?.totalSummary?.existing || 0;
+                // Per-instance entries are MSSQL (FSxW)
+                result.mssqlFsxnCostForEbsHost += val?.data?.totalSummary?.recommended || 0;
+                result.mssqlEbsCost += val?.data?.totalSummary?.existing || 0;
             } else if (val?.storageType === GENERAL.FSX_FOR_WINDOWS) {
                 result.fsxnCostForFsxwHost += val?.data?.totalSummary?.recommended || 0;
                 result.fsxwCost += val?.data?.totalSummary?.existing || 0;
@@ -255,12 +302,13 @@ export const getPotentialSavingsValues = (data: any) => {
         }
     });
 
-    result.savings = (result?.ebsCost || 0) + (result?.fsxwCost || 0) - (result?.fsxnCost || 0);
+    result.savings = (result?.totalEbsCost || 0) + (result?.fsxwCost || 0) - (result?.fsxnCost || 0);
 
     result.savingsPercent =
-        100 * ((result.ebsCost + result.fsxwCost - result.fsxnCost) / (result.ebsCost + result.fsxwCost || 1));
+        100 *
+        ((result.totalEbsCost + result.fsxwCost - result.fsxnCost) / (result.totalEbsCost + result.fsxwCost || 1));
 
-    if (result.fsxnCost !== 0 && result.fsxnCost >= result.ebsCost + result.fsxwCost) {
+    if (result.fsxnCost !== 0 && result.fsxnCost >= result.totalEbsCost + result.fsxwCost) {
         result.noSavings = true;
         result.savingsPercent = 0;
         result.savings = 0;

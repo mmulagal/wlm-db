@@ -58,6 +58,7 @@ import {
     useGetPgsqlInstanceDataMutation,
     useGetOracleInstanceDataMutation,
     useGetStorageSavingsMutation,
+    useGetOracleBulkStorageSavingsMutation,
     useLazyDiscoverHostsQuery,
     useLazyDiscoverOracleHostsQuery,
     useLazyDiscoverPgsqlHostsQuery,
@@ -103,13 +104,15 @@ import {
 import store from '../../store/store';
 import {
     DBType,
+    DETECT_HOST_VAR,
     EBS_PROTECTED_OPTIONS,
     ERROR_ANALYZER_STATUS,
     INSTANCE_API_FIELDS,
     SNAPSHOT_FREQUENCY,
-    SAVINGS_CALC_MODE
+    SAVINGS_CALC_MODE,
+    STORAGE_TYPES,
+    WIZARD_TYPE
 } from '../../utils/consts';
-import { GENERAL } from '../../utils/appConstants';
 import {
     addInitialData,
     initialDBHomepageState,
@@ -119,10 +122,11 @@ import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savings
 import { OracleInstanceData, DiscoverOracleHostInterface } from '../../utils/types/inventoryV2Types';
 
 // Limit the number of concurrent API calls to avoid overloading the backend or hitting rate limits.
-// storageSavingsApiLimit: Used specifically for storage savings API calls, allowing up to 10 concurrent requests.
 // generalApiLimit: Used for general API calls (e.g., instance/resource data), allowing up to 5 concurrent requests.
-const storageSavingsApiLimit = pLimit(10);
+// storageSavingsApiLimit: Used specifically for storage savings API calls, allowing up to 10 concurrent requests.
 const generalApiLimit = pLimit(5);
+const storageSavingsApiLimit = pLimit(10);
+const ORACLE_BULK_API_HOST_LIMIT = 5;
 
 const InventoryApisV3 = () => {
     const dispatch = useAppDispatch();
@@ -208,8 +212,9 @@ const InventoryApisV3 = () => {
     const [getOracleDatabaseHostsFullDataApi] = useLazyGetOracleDatabaseHostsFullDataV2Query();
     const [fullOracleHostData, setFullOracleHostData] = useState<any>({});
 
-    // Potential savings API for EBS and FSxW
+    // Potential savings API for EBS and FSxW (single instance for MSSQL, bulk for Oracle)
     const [getStorageSavingsApi] = useGetStorageSavingsMutation();
+    const [getOracleBulkStorageSavingsApi] = useGetOracleBulkStorageSavingsMutation();
 
     // Discover MSSQL API
     const [getDiscoveryHostsListApi] = useLazyDiscoverHostsQuery();
@@ -852,7 +857,7 @@ const InventoryApisV3 = () => {
                                     ...discoveredList,
                                     {
                                         ...perRow,
-                                        hostType: GENERAL.MICROSOFT_SQL_SERVER_TYPE,
+                                        hostType: DBType.MSSQL,
                                         credentialId: credId,
                                         regionId
                                     }
@@ -919,7 +924,7 @@ const InventoryApisV3 = () => {
                                     ...discoveredOracleList,
                                     {
                                         ...perRow,
-                                        hostType: GENERAL.ORACLE_TYPE,
+                                        hostType: DBType.ORACLE,
                                         credentialId: credId,
                                         regionId
                                     }
@@ -985,7 +990,7 @@ const InventoryApisV3 = () => {
                                     ...discoveredPgsqlList,
                                     {
                                         ...perRow,
-                                        hostType: GENERAL.POSTGRESQL_TYPE,
+                                        hostType: DBType.POSTGRESQL,
                                         credentialId: credId,
                                         regionId
                                     }
@@ -1929,6 +1934,8 @@ const InventoryApisV3 = () => {
         }
     };
 
+    // Individual storage savings API call for MSSQL EBS and FSxW
+    // For EBS, snapshotFrequency is determined based on protection status
     const getStorageSavingsData = async (
         savingsCalculatorType: string,
         selectedInstanceId: string,
@@ -1940,10 +1947,10 @@ const InventoryApisV3 = () => {
             return;
         }
         let snapshotFrequency = '';
-        if (savingsCalculatorType === GENERAL.FSX_FOR_WINDOWS) {
+        if (savingsCalculatorType === STORAGE_TYPES.FSX_FOR_WINDOWS) {
             // For FSXW it is default set to Daily
             snapshotFrequency = SNAPSHOT_FREQUENCY[2]?.value;
-        } else if (savingsCalculatorType === GENERAL.EBS) {
+        } else if (savingsCalculatorType === DETECT_HOST_VAR.EBS) {
             // For EBS snapshotfrequency set is based on whether EBS is protected or not
             if (isEbsProtected === EBS_PROTECTED_OPTIONS.PROTECTED) {
                 snapshotFrequency = SNAPSHOT_FREQUENCY[2]?.value;
@@ -1960,7 +1967,7 @@ const InventoryApisV3 = () => {
             clonedCopiesCount: 3,
             monthlyChangeRatePercentage: 10
         };
-        if (savingsCalculatorType === GENERAL.EBS) {
+        if (savingsCalculatorType === DETECT_HOST_VAR.EBS) {
             payload = {
                 ...payload,
                 cloneRefreshFrequency: 'Daily' // cloneRefreshFrequency default to Daily for dashboard potential EBS
@@ -1973,7 +1980,7 @@ const InventoryApisV3 = () => {
                 regionId: headerSelectedRegion?.data?.regionCode,
                 instanceId: selectedInstanceId,
                 payload,
-                type: savingsCalculatorType === GENERAL.EBS ? 'ebs' : 'fsxw'
+                type: savingsCalculatorType === DETECT_HOST_VAR.EBS ? 'ebs' : 'fsxw'
             });
             if (
                 headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
@@ -1986,8 +1993,6 @@ const InventoryApisV3 = () => {
                         loading: false,
                         storageType: savingsCalculatorType
                     };
-                    // Potential savings data is stored in inventoryV2 slice and
-                    // it will be used in DatabaseHomeApis to format data for dashboard potential card UI.
                     dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
                 } else {
                     instanceData[uniqueHostRow(selectedInstanceId, credId, regionId)] = {
@@ -2010,23 +2015,109 @@ const InventoryApisV3 = () => {
         }
     };
 
+    // Bulk EBS storage savings for Oracle only (Oracle doesn't have EBS protection logic)
+    const getOracleBulkEbsStorageSavings = async (
+        ebsHosts: Array<{ id: string; row: any }>,
+        runningCredId: string,
+        runningRegionId: string,
+        batchIndex: number = 0
+    ) => {
+        if (!headerSelectedCred || !headerSelectedRegion || ebsHosts.length === 0) {
+            return;
+        }
+
+        const bulkKey = `bulk_oracle_ebs_${credId}_${regionId}_batch_${batchIndex}`;
+
+        const hosts = ebsHosts.map(({ id, row }) => ({
+            ec2InstanceId: id,
+            monthlySqlByolCost: null,
+            oracleEdition: row?.databaseInstancesSummary?.[0]?.databaseServer?.serverEdition || ''
+        }));
+
+        const payload = {
+            snapshotFrequency: SNAPSHOT_FREQUENCY[2]?.value,
+            clonedCopiesCount: 3,
+            monthlyChangeRatePercentage: 10,
+            cloneRefreshFrequency: 'Daily',
+            hosts
+        };
+
+        try {
+            const result: any = await getOracleBulkStorageSavingsApi({
+                credentialId: headerSelectedCred?.data?.credentialsId,
+                regionId: headerSelectedRegion?.data?.regionCode,
+                payload
+            });
+
+            if (
+                headerSelectedMultiCredIdsListRef.current.includes(runningCredId) &&
+                headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
+            ) {
+                const instanceData: any = {};
+                if (result && !result?.error && result?.data) {
+                    instanceData[bulkKey] = {
+                        error: null,
+                        data: result?.data,
+                        loading: false,
+                        storageType: DETECT_HOST_VAR.EBS,
+                        isBulk: true,
+                        hostType: WIZARD_TYPE.ORACLE
+                    };
+                } else {
+                    instanceData[bulkKey] = {
+                        error: result?.error?.data?.message || 'Bulk API error',
+                        data: null,
+                        loading: false,
+                        storageType: DETECT_HOST_VAR.EBS,
+                        isBulk: true,
+                        hostType: WIZARD_TYPE.ORACLE
+                    };
+                }
+                dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+            }
+        } catch (error) {
+            const instanceData: any = {};
+            instanceData[bulkKey] = {
+                error,
+                data: null,
+                loading: false,
+                storageType: DETECT_HOST_VAR.EBS,
+                isBulk: true,
+                hostType: WIZARD_TYPE.ORACLE
+            };
+            dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+        }
+    };
+
     const callPotentialSavings = async (exploreSavingsRows: any, runningCredId: string, runningRegionId: string) => {
         const instanceData: any = {};
         const promises: Promise<void>[] = [];
 
-        exploreSavingsRows?.forEach((row: any) => {
-            const { credentialId, regionId: rowRegionId, storageType, id, isDetected } = row;
+        // Collect Oracle EBS hosts for bulk API
+        const oracleEbsHosts: Array<{ id: string; row: any }> = [];
 
-            // Oracle rows have their own savings flow (getOracleBulkStorageSavings / OracleEbsSavingsCalculatorApi).
-            // checkIfEbsProtected and getStorageSavingsData are both MSSQL-specific, so skip oracle rows here.
-            // In next sprint we will handle oracle calls also
-            if (row?.hostType === GENERAL.ORACLE_TYPE) {
-                return;
-            }
+        // Check if Oracle bulk data already exists for this cred/region to prevent duplicate API calls
+        const oracleBulkKeyPrefix = `bulk_oracle_ebs_${credId}_${regionId}`;
+        const hasExistingOracleBulk = Object.keys(potentialSavingsHostDataRef.current || {}).some(key =>
+            key.startsWith(oracleBulkKeyPrefix)
+        );
+
+        exploreSavingsRows?.forEach((row: any) => {
+            const { credentialId, regionId: rowRegionId, storageType, id, isDetected, hostType } = row;
 
             if (credentialId !== runningCredId || rowRegionId !== runningRegionId) {
                 return;
             }
+
+            // Handle Oracle EBS hosts - collect for bulk API
+            if (hostType === DBType.ORACLE && storageType === DETECT_HOST_VAR.EBS && isDetected) {
+                if (!hasExistingOracleBulk) {
+                    oracleEbsHosts.push({ id, row });
+                }
+                return;
+            }
+
+            // Handle MSSQL hosts (EBS and FSxW) - individual API with protection logic
             if (
                 storageType &&
                 !potentialSavingsHostDataRef.current?.[uniqueHostRow(id, credId, rowRegionId)] &&
@@ -2037,7 +2128,7 @@ const InventoryApisV3 = () => {
                     headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
                 ) {
                     let isEbsProtected = null;
-                    if (storageType === GENERAL.EBS) {
+                    if (storageType === DETECT_HOST_VAR.EBS) {
                         isEbsProtected = checkIfEbsProtected(row, null);
                     }
                     instanceData[uniqueHostRow(id, credId, rowRegionId)] = {
@@ -2047,11 +2138,10 @@ const InventoryApisV3 = () => {
                         storageType,
                         isProtected: isEbsProtected
                     };
-                    dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
 
-                    // storageSavingsApiLimit is used to limit the number of API calls to storage savings API. Limited to 10 For now.
+                    // storageSavingsApiLimit is used to limit the number of API calls to storage savings API. Limited to 10.
                     // This is to avoid hitting the API limit for storage savings API.
-                    if (storageType === GENERAL.EBS) {
+                    if (storageType === DETECT_HOST_VAR.EBS) {
                         if (isEbsProtected) {
                             promises.push(
                                 storageSavingsApiLimit(() =>
@@ -2067,16 +2157,17 @@ const InventoryApisV3 = () => {
                         } else {
                             addInstanceIdToGetPerf(row, dispatch);
                         }
-                    } else if (storageType === GENERAL.FSX_FOR_WINDOWS) {
+                    } else if (storageType === STORAGE_TYPES.FSX_FOR_WINDOWS) {
+                        // Use generalApiLimit for FSxW to avoid overloading backend
                         promises.push(
-                            storageSavingsApiLimit(() =>
+                            generalApiLimit(() =>
                                 getStorageSavingsData(storageType, id, runningCredId, runningRegionId, '')
                             )
                         );
                     }
                 }
             } else if (
-                storageType === GENERAL.EBS &&
+                storageType === DETECT_HOST_VAR.EBS &&
                 potentialSavingsHostDataRef.current?.[uniqueHostRow(id, credId, rowRegionId)]?.loading &&
                 !potentialSavingsHostDataRef.current?.[uniqueHostRow(id, credId, rowRegionId)]?.isProtected
             ) {
@@ -2092,7 +2183,6 @@ const InventoryApisV3 = () => {
                     storageType,
                     isProtected: isEbsProtected
                 };
-                dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
                 if (isEbsProtected) {
                     promises.push(
                         storageSavingsApiLimit(() =>
@@ -2102,6 +2192,39 @@ const InventoryApisV3 = () => {
                 }
             }
         });
+
+        if (oracleEbsHosts.length > 0) {
+            const batches: Array<Array<{ id: string; row: any }>> = [];
+            for (let i = 0; i < oracleEbsHosts.length; i += ORACLE_BULK_API_HOST_LIMIT) {
+                batches.push(oracleEbsHosts.slice(i, i + ORACLE_BULK_API_HOST_LIMIT));
+            }
+
+            // Set loading state for each batch
+            batches.forEach((_, batchIndex) => {
+                instanceData[`bulk_oracle_ebs_${credId}_${regionId}_batch_${batchIndex}`] = {
+                    error: null,
+                    data: null,
+                    loading: true,
+                    storageType: DETECT_HOST_VAR.EBS,
+                    isBulk: true,
+                    hostType: WIZARD_TYPE.ORACLE
+                };
+            });
+
+            // Call Oracle bulk API with rate limiting - max 5 concurrent API calls, each with max 5 hosts
+            batches.forEach((batch, batchIndex) => {
+                promises.push(
+                    generalApiLimit(() =>
+                        getOracleBulkEbsStorageSavings(batch, runningCredId, runningRegionId, batchIndex)
+                    )
+                );
+            });
+        }
+
+        // Dispatch all loading states at once to avoid multiple re-renders
+        if (Object.keys(instanceData).length > 0) {
+            dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
+        }
 
         await Promise.all(promises);
     };
@@ -2215,13 +2338,13 @@ const InventoryApisV3 = () => {
                     };
                     databaseHostDataObj = {
                         ...databaseHostDataObj,
-                        ...{ [key]: { ...perObj, hostType: GENERAL.MICROSOFT_SQL_SERVER_TYPE } }
+                        ...{ [key]: { ...perObj, hostType: DBType.MSSQL } }
                     };
                 } else {
                     const perObj = { ...topologyHostData[key], loading: !!fullHostDataLoading };
                     databaseHostDataObj = {
                         ...databaseHostDataObj,
-                        ...{ [key]: { ...perObj, hostType: GENERAL.MICROSOFT_SQL_SERVER_TYPE } }
+                        ...{ [key]: { ...perObj, hostType: DBType.MSSQL } }
                     };
                 }
             });
@@ -2248,13 +2371,13 @@ const InventoryApisV3 = () => {
                     };
                     databaseHostDataObj = {
                         ...databaseHostDataObj,
-                        ...{ [key]: { ...perObj, hostType: GENERAL.POSTGRESQL_TYPE } }
+                        ...{ [key]: { ...perObj, hostType: DBType.POSTGRESQL } }
                     };
                 } else {
                     const perObj = { ...pgsqlTopologyHostData[key], loading: !!pgsqlFullHostDataLoading };
                     databaseHostDataObj = {
                         ...databaseHostDataObj,
-                        ...{ [key]: { ...perObj, hostType: GENERAL.POSTGRESQL_TYPE } }
+                        ...{ [key]: { ...perObj, hostType: DBType.POSTGRESQL } }
                     };
                 }
             });
@@ -2280,13 +2403,13 @@ const InventoryApisV3 = () => {
                     };
                     databaseHostDataObj = {
                         ...databaseHostDataObj,
-                        ...{ [key]: { ...perObj, hostType: GENERAL.ORACLE_TYPE } }
+                        ...{ [key]: { ...perObj, hostType: DBType.ORACLE } }
                     };
                 } else {
                     const perObj = { ...oracleTopologyHostData[key], loading: !!oracleFullHostDataLoading };
                     databaseHostDataObj = {
                         ...databaseHostDataObj,
-                        ...{ [key]: { ...perObj, hostType: GENERAL.ORACLE_TYPE } }
+                        ...{ [key]: { ...perObj, hostType: DBType.ORACLE } }
                     };
                 }
             });

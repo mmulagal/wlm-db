@@ -1,9 +1,11 @@
 import React from 'react';
 import classNames from 'classnames';
-import { DsFlashingDotsLoader } from '@netapp/design-system';
+import { Popover } from '@netapp/design-system/dist/components/Popover';
+import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
 import { ChartColor, XCategories, fullColors, emptyColors, YTickFormatter } from './chartCommon';
 import styles from './ComparisonChart.module.scss';
 import { Span } from '../Typography';
+import { formatNumberWithCustomComma } from '../../utils/utilityFunctions';
 
 const ComparisonChart = React.memo(
     ({
@@ -12,7 +14,8 @@ const ComparisonChart = React.memo(
         categories,
         height = 200,
         loading = false,
-        yTickFormatter
+        yTickFormatter,
+        tooltipText
     }: {
         colors?: ChartColor[];
         data: number[];
@@ -20,6 +23,7 @@ const ComparisonChart = React.memo(
         height?: number;
         loading?: boolean;
         yTickFormatter?: YTickFormatter;
+        tooltipText?: string[];
     }) => {
         let max = 0;
         for (const datum of data) {
@@ -41,6 +45,10 @@ const ComparisonChart = React.memo(
                         backgroundColor = emptyColors[0];
                     }
 
+                    const barElement = (
+                        <div className={styles.datum} style={{ height: `${percentage}%`, backgroundColor }} />
+                    );
+
                     return (
                         <div
                             key={index}
@@ -54,7 +62,39 @@ const ComparisonChart = React.memo(
                                         {loading && <DsFlashingDotsLoader />}
                                     </div>
                                 )}
-                                <div className={styles.datum} style={{ height: `${percentage}%`, backgroundColor }} />
+                                {tooltipText?.[index] ? (
+                                    <div style={{ height: `${percentage}%`, width: '100%', alignSelf: 'flex-end' }}>
+                                        <Popover
+                                            popoverClass={styles.popover}
+                                            isAppendedToBody
+                                            placement="auto"
+                                            trigger="hover"
+                                            container={
+                                                <div
+                                                    className={styles.datum}
+                                                    style={{
+                                                        height: '100%',
+                                                        backgroundColor
+                                                    }}
+                                                />
+                                            }
+                                        >
+                                            <div className={styles.tooltipContainer}>
+                                                <div className={styles.tooltipContentRowFirst}>
+                                                    <div className={styles.squareChart2} style={{ backgroundColor }} />
+                                                    <DsTypography variant="Semibold_14">
+                                                        {tooltipText[index]}
+                                                    </DsTypography>
+                                                </div>
+                                                <DsTypography variant="Semibold_14" style={{ marginBottom: '8px' }}>
+                                                    ${formatNumberWithCustomComma(datum)}
+                                                </DsTypography>
+                                            </div>
+                                        </Popover>
+                                    </div>
+                                ) : (
+                                    barElement
+                                )}
                             </div>
                             <div className={styles.xLabel}>
                                 <Span

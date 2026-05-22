@@ -131,8 +131,8 @@ const makeStore = (overrides: any = {}) =>
                         savings: 1000,
                         fsxnCost: 500,
                         fsxwCost: 300,
-                        ebsCost: 800,
-                        fsxnCostForEbsHost: 400,
+                        totalEbsCost: 800,
+                        totalFsxnCostForEbsHost: 400,
                         fsxnCostForFsxwHost: 200,
                         ...overrides.potentialSavings
                     },

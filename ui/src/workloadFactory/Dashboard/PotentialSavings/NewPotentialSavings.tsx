@@ -26,7 +26,11 @@ const NewPotentialSavings = () => {
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const potentialSavingsValues = useAppSelector(state => state.databaseHome.potentialSavingsValues);
-    const [esCount, setEsCount] = useState<{ ebs: number; fsxw: number }>({ ebs: 0, fsxw: 0 });
+    const [esCount, setEsCount] = useState<{ fsxw: number; mssqlEbs: number; oracleEbs: number }>({
+        fsxw: 0,
+        mssqlEbs: 0,
+        oracleEbs: 0
+    });
     const [loading, setLoading] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading, showNA } =
@@ -47,12 +51,14 @@ const NewPotentialSavings = () => {
 
     useEffect(() => {
         if (unManagedHostFormatedList) {
-            let ebsCount = 0;
             let fsxwCount = 0;
+            let mssqlEbsCount = 0;
+            let oracleEbsCount = 0;
             const uniqueResourceList: Array<string> = [];
-            unManagedHostFormatedList?.map((perRow: any) => {
+            unManagedHostFormatedList?.forEach((perRow: any) => {
+                // Include both MSSQL and Oracle hosts for EBS count
                 if (
-                    perRow?.hostType !== DBType.MSSQL ||
+                    (perRow?.hostType !== DBType.MSSQL && perRow?.hostType !== DBType.ORACLE) ||
                     !headerSelectedMultiCredIdsList?.includes(perRow?.credentialId) ||
                     !headerSelectedMultiRegionIdsList?.includes(perRow?.regionId) ||
                     uniqueResourceList?.includes(perRow?.ec2InstanceId)
@@ -61,12 +67,16 @@ const NewPotentialSavings = () => {
                 }
                 uniqueResourceList.push(perRow?.ec2InstanceId);
                 if (perRow?.storageType === GENERAL.EBS) {
-                    ebsCount += 1;
+                    if (perRow?.hostType === DBType.ORACLE) {
+                        oracleEbsCount += 1;
+                    } else {
+                        mssqlEbsCount += 1;
+                    }
                 } else if (perRow?.storageType === GENERAL.FSX_FOR_WINDOWS) {
                     fsxwCount += 1;
                 }
             });
-            setEsCount({ ebs: ebsCount, fsxw: fsxwCount });
+            setEsCount({ fsxw: fsxwCount, mssqlEbs: mssqlEbsCount, oracleEbs: oracleEbsCount });
         }
     }, [unManagedHostFormatedList, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
@@ -78,7 +88,7 @@ const NewPotentialSavings = () => {
     }, [isDiscoverInProgress, isManagedHostListLoading, potentialSavingsValues, multiDataLoading]);
 
     const hasPotentialValues = () =>
-        potentialSavingsValues?.fsxnCost || potentialSavingsValues?.fsxwCost || potentialSavingsValues?.ebsCost;
+        potentialSavingsValues?.fsxnCost || potentialSavingsValues?.fsxwCost || potentialSavingsValues?.totalEbsCost;
 
     const checkForPotentialSavings = (val1: number | any, val2: number | any) => {
         if (val1 !== 0 && val2 !== 0) {
@@ -90,21 +100,30 @@ const NewPotentialSavings = () => {
     const setMarginTop = () => {
         if (
             !hasPotentialValues() &&
-            !checkForPotentialSavings(potentialSavingsValues?.fsxnCostForEbsHost, potentialSavingsValues?.ebsCost) &&
+            !checkForPotentialSavings(
+                potentialSavingsValues?.totalFsxnCostForEbsHost,
+                potentialSavingsValues?.totalEbsCost
+            ) &&
             !checkForPotentialSavings(potentialSavingsValues?.fsxnCostForFsxwHost, potentialSavingsValues?.fsxwCost)
         ) {
             return '155px';
         }
         if (
             hasPotentialValues() &&
-            checkForPotentialSavings(potentialSavingsValues?.fsxnCostForEbsHost, potentialSavingsValues?.ebsCost) &&
+            checkForPotentialSavings(
+                potentialSavingsValues?.totalFsxnCostForEbsHost,
+                potentialSavingsValues?.totalEbsCost
+            ) &&
             !checkForPotentialSavings(potentialSavingsValues?.fsxnCostForFsxwHost, potentialSavingsValues?.fsxwCost)
         ) {
             return '137px';
         }
         if (
             hasPotentialValues() &&
-            !checkForPotentialSavings(potentialSavingsValues?.fsxnCostForEbsHost, potentialSavingsValues?.ebsCost) &&
+            !checkForPotentialSavings(
+                potentialSavingsValues?.totalFsxnCostForEbsHost,
+                potentialSavingsValues?.totalEbsCost
+            ) &&
             checkForPotentialSavings(potentialSavingsValues?.fsxnCostForFsxwHost, potentialSavingsValues?.fsxwCost)
         ) {
             return '137px';
@@ -115,7 +134,7 @@ const NewPotentialSavings = () => {
         <div className={styles.potentialSavings}>
             <div className={styles.headSection}>
                 <DsTypography variant="Regular_16" className={styles.title}>
-                    {GENERAL.POTENTIAL_SAVINGS}
+                    {t('databases.dashboard.potential-savings')}
                 </DsTypography>
 
                 {/* {loading && <FlashingDotsLoader />} */}
@@ -129,7 +148,7 @@ const NewPotentialSavings = () => {
                         onClick={() => handleClick(WLF_TABS.EXPLORE_SAVINGS)}
                         isDisabled={loading || showNA}
                     >
-                        {GENERAL.ES_SAVINGS}
+                        {t('databases.dashboard.explore-savings')}
                     </DsButton>
                 </div>
             </div>
@@ -188,7 +207,7 @@ const NewPotentialSavings = () => {
                                             variant="Regular_14"
                                             className={showNA ? CommonStyles.notAvailable : ''}
                                         >
-                                            {GENERAL.POTENTIAL_SAVINGS}
+                                            {t('databases.dashboard.potential-savings')}
                                         </DsTypography>
                                     </div>
                                 </div>
@@ -207,7 +226,7 @@ const NewPotentialSavings = () => {
                                             variant="Regular_14"
                                             className={showNA ? CommonStyles.notAvailable : ''}
                                         >
-                                            {GENERAL.SQL_SERVER_HOSTS_EBS}
+                                            {t('databases.dashboard.sql-server-hosts-ebs')}
                                         </DsTypography>
                                     </div>
 
@@ -225,7 +244,7 @@ const NewPotentialSavings = () => {
                                             variant="Regular_14"
                                             className={showNA ? CommonStyles.notAvailable : ''}
                                         >
-                                            {GENERAL.SQL_SERVER_HOSTS_FSXW}
+                                            {t('databases.dashboard.sql-server-hosts-fsxw')}
                                         </DsTypography>
                                     </div>
                                 </div>
@@ -279,7 +298,7 @@ const NewPotentialSavings = () => {
                                         >
                                             {showNA
                                                 ? t('databases.general.not-available')
-                                                : esCount?.ebs + esCount?.fsxw}
+                                                : esCount?.mssqlEbs + esCount?.oracleEbs + esCount?.fsxw}
                                         </DsTypography>
                                         {loading && <DsFlashingDotsLoader />}
                                     </div>
@@ -339,7 +358,7 @@ const NewPotentialSavings = () => {
                                         variant="Regular_14"
                                         className={showNA ? CommonStyles.notAvailable : ''}
                                     >
-                                        {GENERAL.POTENTIAL_SAVINGS}
+                                        {t('databases.dashboard.potential-savings')}
                                     </DsTypography>
                                 </div>
                             </div>
@@ -353,20 +372,32 @@ const NewPotentialSavings = () => {
                                 <div className={styles.newChartSection}>
                                     {hasPotentialValues() &&
                                     checkForPotentialSavings(
-                                        potentialSavingsValues?.fsxnCostForEbsHost,
-                                        potentialSavingsValues?.ebsCost
+                                        potentialSavingsValues?.totalFsxnCostForEbsHost,
+                                        potentialSavingsValues?.totalEbsCost
                                     ) ? (
-                                        <ComparisonChart
+                                        <ComparisonChartStack
                                             data={[
-                                                potentialSavingsValues?.fsxnCostForEbsHost || 0,
-                                                potentialSavingsValues?.ebsCost || 0
+                                                [
+                                                    potentialSavingsValues?.mssqlFsxnCostForEbsHost || 0,
+                                                    potentialSavingsValues?.oracleFsxnCostForEbsHost || 0
+                                                ],
+                                                [
+                                                    potentialSavingsValues?.mssqlEbsCost || 0,
+                                                    potentialSavingsValues?.oracleEbsCost || 0
+                                                ]
                                             ]}
                                             yTickFormatter={yValue =>
                                                 `$${formatNumberWithCustomComma(Number(yValue), true)}`
                                             }
                                             height={259}
-                                            colors={['chart-9', 'chart-3']}
+                                            colors={['chart-2', 'chart-9']}
+                                            stackedBarColors={['chart-2', 'chart-9']}
                                             categories={['FSx for ONTAP', 'EBS']}
+                                            tooltipTextFirst={[
+                                                `${esCount?.mssqlEbs} MSSQL`,
+                                                `${esCount?.oracleEbs} Oracle`
+                                            ]}
+                                            tooltipText={[`${esCount?.mssqlEbs} MSSQL`, `${esCount?.oracleEbs} Oracle`]}
                                             loading={loading}
                                         />
                                     ) : (
@@ -390,19 +421,20 @@ const NewPotentialSavings = () => {
 
                                 <SeparatorComponent variant="horizontal" />
 
-                                {/* Text section */}
+                                {/* Text section - Oracle hosts */}
                                 <div className={styles.textSection}>
                                     {!showNA && (
                                         <>
                                             <div
                                                 className={styles.square}
-                                                style={{ backgroundColor: 'var(--chart-3)' }}
+                                                style={{ backgroundColor: 'var(--chart-9)' }}
                                             />
-                                            <DsTypography variant="Semibold_20">{esCount?.ebs}</DsTypography>
+                                            <DsTypography variant="Semibold_20">{esCount?.oracleEbs}</DsTypography>
                                         </>
                                     )}
-
-                                    <DsTypography variant="Regular_14">{GENERAL.SQL_SERVER_HOSTS_EBS}</DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.dashboard.oracle-hosts')}
+                                    </DsTypography>
                                 </div>
                             </div>
                             <div className={styles.rightSide}>
@@ -421,9 +453,10 @@ const NewPotentialSavings = () => {
                                                 `$${formatNumberWithCustomComma(Number(yValue), true)}`
                                             }
                                             height={259}
-                                            colors={['chart-9', 'chart-2']}
+                                            colors={['chart-2', 'chart-2']}
                                             categories={['FSx for ONTAP', 'FSx for Windows']}
                                             loading={loading}
+                                            tooltipText={[`${esCount?.fsxw} MSSQL`, `${esCount?.fsxw} MSSQL`]}
                                         />
                                     ) : (
                                         <ComparisonChartStack
@@ -446,7 +479,7 @@ const NewPotentialSavings = () => {
 
                                 <SeparatorComponent variant="horizontal" />
 
-                                {/* Text section */}
+                                {/* Text section - SQL Server hosts (EBS + FSxW) */}
                                 <div className={styles.textSection}>
                                     {!showNA && (
                                         <>
@@ -454,11 +487,14 @@ const NewPotentialSavings = () => {
                                                 className={styles.square}
                                                 style={{ backgroundColor: 'var(--chart-2)' }}
                                             />
-                                            <DsTypography variant="Semibold_20">{esCount?.fsxw}</DsTypography>
+                                            <DsTypography variant="Semibold_20">
+                                                {esCount?.mssqlEbs + esCount?.fsxw}
+                                            </DsTypography>
                                         </>
                                     )}
-
-                                    <DsTypography variant="Regular_14">{GENERAL.SQL_SERVER_HOSTS_FSXW}</DsTypography>
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.dashboard.sql-server-hosts')}
+                                    </DsTypography>
                                 </div>
                             </div>
                         </div>

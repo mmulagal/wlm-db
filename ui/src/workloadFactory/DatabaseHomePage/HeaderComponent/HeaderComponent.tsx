@@ -649,10 +649,28 @@ const HeaderComponent = ({ tab }: Tab) => {
                 });
             }
 
+            let oraclePotentialSavingsHostDataLoading = false;
+            if (potentialSavingsHostDataLatest) {
+                Object.keys(potentialSavingsHostDataLatest)?.map((key: any) => {
+                    const keyList = key.split('_');
+                    if (
+                        keyList?.length === 3 &&
+                        keyList[0] === 'bulk' &&
+                        keyList[1] === 'oracle' &&
+                        keyList[3] === currentCredId &&
+                        keyList[4] === currentRegionId &&
+                        potentialSavingsHostDataLatest?.[key]?.loading
+                    ) {
+                        oraclePotentialSavingsHostDataLoading = true;
+                    }
+                });
+            }
+
             if (
                 !isMssqlInstanceDataLoading &&
                 !perfMssqlInstancesDataLoading &&
                 !potentialSavingsHostDataLoading &&
+                !oraclePotentialSavingsHostDataLoading &&
                 !isPgsqlInstanceDataLoading &&
                 !isOracleInstanceDataLoading
             ) {

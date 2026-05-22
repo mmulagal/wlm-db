@@ -90,14 +90,18 @@ export const initialDBHomepageState: DatabaseHostsEntities = {
     enableFilter: true,
     potentialSavingsValues: {
         loading: false,
-        ebsCost: 0,
+        totalEbsCost: 0,
         fsxwCost: 0,
         fsxnCost: 0,
-        fsxnCostForEbsHost: 0,
+        totalFsxnCostForEbsHost: 0,
         fsxnCostForFsxwHost: 0,
         savings: 0,
         savingsPercent: 0,
-        noSavings: false
+        noSavings: false,
+        oracleEbsCost: 0,
+        oracleFsxnCostForEbsHost: 0,
+        mssqlEbsCost: 0,
+        mssqlFsxnCostForEbsHost: 0
     },
     dismissPageLanding: ''
 };

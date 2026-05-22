@@ -184,14 +184,18 @@ export interface DatabaseHostsEntities {
     };
     potentialSavingsValues: {
         loading: boolean;
-        ebsCost: number;
+        totalEbsCost: number;
         fsxwCost: number;
         fsxnCost: number;
-        fsxnCostForEbsHost: number;
+        totalFsxnCostForEbsHost: number;
         fsxnCostForFsxwHost: number;
         savings: number;
-        savingsPercent: any;
+        savingsPercent: number;
         noSavings: boolean;
+        oracleEbsCost: number;
+        oracleFsxnCostForEbsHost: number;
+        mssqlEbsCost: number;
+        mssqlFsxnCostForEbsHost: number;
     };
 }
 
