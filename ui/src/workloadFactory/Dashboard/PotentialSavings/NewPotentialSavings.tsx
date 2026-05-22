@@ -423,16 +423,17 @@ const NewPotentialSavings = () => {
 
                                 {/* Text section - Oracle hosts */}
                                 <div className={styles.textSection}>
-                                    {!showNA && (
-                                        <>
-                                            <div
-                                                className={styles.square}
-                                                style={{ backgroundColor: 'var(--chart-9)' }}
-                                            />
-                                            <DsTypography variant="Semibold_20">{esCount?.oracleEbs}</DsTypography>
-                                        </>
+                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-9)' }} />
+                                    {!showNA && <DsTypography variant="Semibold_20">{esCount?.oracleEbs}</DsTypography>}
+                                    {showNA && (
+                                        <DsTypography variant="Regular_14" className={CommonStyles.notAvailable}>
+                                            {t('databases.general.not-available-table-columns')}
+                                        </DsTypography>
                                     )}
-                                    <DsTypography variant="Regular_14">
+                                    <DsTypography
+                                        variant="Regular_14"
+                                        className={showNA ? CommonStyles.notAvailable : ''}
+                                    >
                                         {t('databases.dashboard.oracle-hosts')}
                                     </DsTypography>
                                 </div>
@@ -481,18 +482,21 @@ const NewPotentialSavings = () => {
 
                                 {/* Text section - SQL Server hosts (EBS + FSxW) */}
                                 <div className={styles.textSection}>
+                                    <div className={styles.square} style={{ backgroundColor: 'var(--chart-2)' }} />
                                     {!showNA && (
-                                        <>
-                                            <div
-                                                className={styles.square}
-                                                style={{ backgroundColor: 'var(--chart-2)' }}
-                                            />
-                                            <DsTypography variant="Semibold_20">
-                                                {esCount?.mssqlEbs + esCount?.fsxw}
-                                            </DsTypography>
-                                        </>
+                                        <DsTypography variant="Semibold_20">
+                                            {esCount?.mssqlEbs + esCount?.fsxw}
+                                        </DsTypography>
                                     )}
-                                    <DsTypography variant="Regular_14">
+                                    {showNA && (
+                                        <DsTypography variant="Regular_14" className={CommonStyles.notAvailable}>
+                                            {t('databases.general.not-available-table-columns')}
+                                        </DsTypography>
+                                    )}
+                                    <DsTypography
+                                        variant="Regular_14"
+                                        className={showNA ? CommonStyles.notAvailable : ''}
+                                    >
                                         {t('databases.dashboard.sql-server-hosts')}
                                     </DsTypography>
                                 </div>
