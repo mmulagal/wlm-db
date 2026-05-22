@@ -6,6 +6,9 @@
       "totalRetryDelay": 0
     },
     "InstanceTypes": [
+      { "InstanceType": "m5.2xlarge" },
+      { "InstanceType": "m6i.2xlarge" },
+      { "InstanceType": "r5.2xlarge" },
       { "InstanceType": "m2.xlarge" },
       { "InstanceType": "m4.large" },
       { "InstanceType": "m5.large" },

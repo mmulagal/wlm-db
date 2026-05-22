@@ -10,8 +10,8 @@
         "collectionTimestamp": "2025-12-01T06:00:00Z",
         "hostname": "ora-prod-standalone-01",
         "operatingSystem": "Red Hat Enterprise Linux release 8.9 (Ootpa)",
-        "cpuCount": 48,
-        "totalRamBytes": 549755813888,
+        "cpuCount": 8,
+        "totalRamBytes": 34359738368,
         "uniqueHostId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
         "ipAddresses": "192.168.10.50",
         "storageProtocol": "NFS",
@@ -33,9 +33,9 @@
                 "isCDB": false,
                 "containerName": "FINDB",
                 "containerId": 0,
-                "vCPUs": 48,
-                "sgaTargetGB": 192,
-                "pgaTargetGB": 64,
+                "vCPUs": 8,
+                "sgaTargetGB": 24,
+                "pgaTargetGB": 8,
                 "oracleEdition": "Enterprise Edition",
                 "oracleEditionFull": "Oracle Database 19c Enterprise Edition Release 19.0.0.0.0",
                 "pdbCount": 0,
@@ -50,11 +50,11 @@
                     "p95": 68.5
                 },
                 "memoryUtilization": {
-                    "sgaAllocatedGB": 192,
-                    "pgaAllocatedGB": 64,
-                    "totalOracleMemoryGB": 256,
-                    "memoryTargetGB": 256,
-                    "hostPhysicalMemoryGB": 512
+                    "sgaAllocatedGB": 24,
+                    "pgaAllocatedGB": 8,
+                    "totalOracleMemoryGB": 32,
+                    "memoryTargetGB": 32,
+                    "hostPhysicalMemoryGB": 32
                 },
                 "dbTimePerSec": {
                     "min": 0.3,
@@ -124,7 +124,7 @@
                         "avgOfPeaks": 30640.4,
                         "p50OfPeaks": 27395,
                         "maxOfPeaks": 67780,
-                        "recommendedValue": 29420
+                        "recommendedValue": 12000
                     },
                     "readThroughputMBps": {
                         "avgOfAverages": 8.79,
@@ -148,12 +148,12 @@
                         "avgOfPeaks": 24.56,
                         "p50OfPeaks": 22.92,
                         "maxOfPeaks": 52.85,
-                        "recommendedValue": 23.58
+                        "recommendedValue": 500
                     }
                 }
             },
             "storageInfo": {
-                "totalDatabaseSizeGB": 5536.3,
+                "totalDatabaseSizeGB": 4096,
                 "tempTablespaceSizeGB": 32,
                 "redoLogCount": 6,
                 "totalRedoSizeMB": 12288,
