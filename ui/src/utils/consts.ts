@@ -61,6 +61,48 @@ export const DEAFULT_INSTANCE_VALUE = 'm5.xlarge';
 export const CREDENTIAL_STAGE_LINK = 'https://staging.console.netapp.com/fsxadministration/credentials';
 export const CREDENTIAL_PROD_LINK = 'https://console.netapp.com/fsxadministration/credentials';
 
+// Required security group rules for PgSQL Standalone
+export const PGSQL_STANDALONE_SECURITY_GROUP_RULES: { type: string; protocol: string; portRange: string }[] = [
+    { type: 'PostgreSQL', protocol: 'TCP', portRange: '5432' },
+    { type: 'NFS', protocol: 'TCP', portRange: '2049' },
+    { type: 'Custom TCP', protocol: 'TCP', portRange: '9999' },
+    { type: 'SSH', protocol: 'TCP', portRange: '22' }
+];
+
+// Maximum number of security groups that can be selected
+export const MAX_SG_SELECTION = 4;
+
+// Required security group rules for PgSQL HA
+export const PGSQL_HA_SECURITY_GROUP_RULES: { type: string; protocol: string; portRange: string }[] = [
+    { type: 'NFS', protocol: 'TCP', portRange: '2049' },
+    { type: 'PostgreSQL', protocol: 'TCP', portRange: '5432' },
+    { type: 'SSH', protocol: 'TCP', portRange: '22' }
+];
+
+// Required security group for MSSQL rules
+export const MSSQL_SECURITY_GROUP_RULES: { type: string; protocol: string; portRange: string }[] = [
+    { type: 'SMB', protocol: 'TCP', portRange: '445' },
+    { type: 'Custom TCP', protocol: 'TCP', portRange: '3343' },
+    { type: 'Custom TCP', protocol: 'TCP', portRange: '135' },
+    { type: 'DNS (TCP)', protocol: 'TCP', portRange: '53' },
+    { type: 'Custom TCP', protocol: 'TCP', portRange: '88' },
+    { type: 'Custom UDP', protocol: 'UDP', portRange: '389' },
+    { type: 'Custom UDP', protocol: 'UDP', portRange: '137' },
+    { type: 'Custom UDP', protocol: 'UDP', portRange: '3343' },
+    { type: 'Custom TCP', protocol: 'TCP', portRange: '636' },
+    { type: 'DNS (UDP)', protocol: 'UDP', portRange: '53' },
+    { type: 'Custom UDP', protocol: 'UDP', portRange: '88' },
+    { type: 'WinRM-HTTP', protocol: 'TCP', portRange: '5985' },
+    { type: 'Custom TCP', protocol: 'TCP', portRange: '49152 - 65535' },
+    { type: 'LDAP', protocol: 'TCP', portRange: '389' },
+    { type: 'Custom UDP', protocol: 'UDP', portRange: '1024 - 65534' },
+    { type: 'Custom TCP', protocol: 'TCP', portRange: '3268 - 3269' },
+    { type: 'Custom TCP', protocol: 'TCP', portRange: '464' },
+    { type: 'Custom UDP', protocol: 'UDP', portRange: '123' },
+    { type: 'Custom UDP', protocol: 'UDP', portRange: '464' },
+    { type: 'Custom TCP', protocol: 'TCP', portRange: '9389' }
+];
+
 // Add WF credentials link
 // export const CREDENTIAL_WF_STAGE_LINK = 'https://staging.console.workloads.netapp.com/credentials';
 // export const CREDENTIAL_WF_PROD_LINK = 'https://console.workloads.netapp.com/credentials';

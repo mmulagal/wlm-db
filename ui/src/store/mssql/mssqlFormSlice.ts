@@ -18,7 +18,7 @@ export const initialMssqlState: any = {
     },
     securityGroup: {
         selectedSecurityType: '',
-        selectedExistingSecurityGroup: ''
+        selectedExistingSecurityGroup: []
     },
     operatingSystem: {
         label: GENERAL.WIN_SERVER_2016,
@@ -283,7 +283,17 @@ const mssqlFormSlice = createSlice({
         },
         // Update full form
         setMssqlForm(state, action: PayloadAction<any>) {
-            return { ...state, ...action.payload };
+            const payload = { ...action.payload };
+            // Normalize selectedExistingSecurityGroup to always be an array.
+            // Old saved configs stored a single object; new configs store an array.
+            const sg = payload.securityGroup?.selectedExistingSecurityGroup;
+            if (sg && !Array.isArray(sg)) {
+                payload.securityGroup = {
+                    ...payload.securityGroup,
+                    selectedExistingSecurityGroup: [sg]
+                };
+            }
+            return { ...state, ...payload };
         }
     }
 });

@@ -179,9 +179,7 @@
                 "disabledTitle": "",
                 "data": {
                     "availabilityZone": "ap-southeast-1c",
-                    "subnets": [
-                        "subnet-0fcd4374d52d4faf0"
-                    ]
+                    "subnets": ["subnet-0fcd4374d52d4faf0"]
                 }
             },
             "selectedSubnetNode1": {
@@ -239,10 +237,7 @@
                 "disabledTitle": "",
                 "data": {
                     "availabilityZone": "ap-southeast-1a",
-                    "subnets": [
-                        "subnet-03302cffd47acd237",
-                        "subnet-03dc0032136f7e0f5"
-                    ]
+                    "subnets": ["subnet-03302cffd47acd237", "subnet-03dc0032136f7e0f5"]
                 }
             },
             "selectedSubnetNode2": {
@@ -334,11 +329,11 @@
             "selectedCustomAMI": null
         },
         "sqlServerCollation": {
-            "value":"Albanian_BIN",
-            "label":"Albanian_BIN",
-            "label2":"Albanian, binary sort",
-            "isDisabled":false,
-            "disabledTitle":""
+            "value": "Albanian_BIN",
+            "label": "Albanian_BIN",
+            "label2": "Albanian, binary sort",
+            "isDisabled": false,
+            "disabledTitle": ""
         },
         "dbName": "sqldatabase1",
         "dbCredentials": {
@@ -369,7 +364,7 @@
                 "data": {
                     "domainName": "kanika.netapp.com",
                     "dnsIpAddress": "10.0.1.229,10.0.24.217",
-                    "securityGroupId": "sg-04d6d745ca2efa385",
+                    "securityGroupId": "",
                     "adScenarioType": "AWS_MANAGED_AD"
                 }
             },
@@ -403,9 +398,7 @@
                 "data": {
                     "fileSystemId": "fs-0f32f6c69fb7e40ac",
                     "fileSystemName": "wlmdb-fsx-2",
-                    "securityGroups": [
-                        "sg-05f4939d6670b405f"
-                    ]
+                    "securityGroups": ["sg-05f4939d6670b405f"]
                 }
             },
             "fsxNExistingUserName": "fsxadmin",

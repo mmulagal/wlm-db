@@ -228,7 +228,7 @@ describe('createPgsqlPayload', () => {
                 mssqlForm: {
                     securityGroup: {
                         selectedSecurityType: 'Use an existing security group',
-                        selectedExistingSecurityGroup: { value: 'sg-existing' }
+                        selectedExistingSecurityGroup: [{ data: { id: 'sg-existing' } }]
                     }
                 }
             });
@@ -236,7 +236,24 @@ describe('createPgsqlPayload', () => {
             expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-existing');
         });
 
-        it('includes FSxN security groups when using existing FSxN', () => {
+        it('includes multiple existing security group ids', () => {
+            const state = buildState({
+                mssqlForm: {
+                    securityGroup: {
+                        selectedSecurityType: 'Use an existing security group',
+                        selectedExistingSecurityGroup: [
+                            { data: { id: 'sg-existing-1' } },
+                            { data: { id: 'sg-existing-2' } }
+                        ]
+                    }
+                }
+            });
+            const payload = createPgsqlPayload(state);
+            expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-existing-1');
+            expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-existing-2');
+        });
+
+        it('does not auto-include FSxN security groups when using existing FSxN', () => {
             const state = buildState({
                 mssqlForm: {
                     securityGroup: { selectedSecurityType: '', selectedExistingSecurityGroup: { value: '' } },
@@ -256,8 +273,7 @@ describe('createPgsqlPayload', () => {
                 }
             });
             const payload = createPgsqlPayload(state);
-            expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-fsxn-1');
-            expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-fsxn-2');
+            expect(payload.fsxConfiguration.ontapSgGroupId).toEqual([]);
         });
 
         it('returns empty array when no security group selected', () => {
@@ -268,6 +284,52 @@ describe('createPgsqlPayload', () => {
             });
             const payload = createPgsqlPayload(state);
             expect(payload.fsxConfiguration.ontapSgGroupId).toEqual([]);
+        });
+
+        it('adds up to 4 SGs (max selection) to ontapSgGroupIdsList', () => {
+            const state = buildState({
+                mssqlForm: {
+                    securityGroup: {
+                        selectedSecurityType: 'Use an existing security group',
+                        selectedExistingSecurityGroup: [
+                            { data: { id: 'sg-1' } },
+                            { data: { id: 'sg-2' } },
+                            { data: { id: 'sg-3' } },
+                            { data: { id: 'sg-4' } }
+                        ]
+                    }
+                }
+            });
+            const payload = createPgsqlPayload(state);
+            expect(payload.fsxConfiguration.ontapSgGroupId).toHaveLength(4);
+            expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-1');
+            expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-4');
+        });
+
+        it('extracts SG id from sg.id fallback when data.id is absent', () => {
+            const state = buildState({
+                mssqlForm: {
+                    securityGroup: {
+                        selectedSecurityType: 'Use an existing security group',
+                        selectedExistingSecurityGroup: [{ id: 'sg-from-id' }]
+                    }
+                }
+            });
+            const payload = createPgsqlPayload(state);
+            expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-from-id');
+        });
+
+        it('extracts SG id from sg.value fallback when data.id and id are absent', () => {
+            const state = buildState({
+                mssqlForm: {
+                    securityGroup: {
+                        selectedSecurityType: 'Use an existing security group',
+                        selectedExistingSecurityGroup: [{ value: 'sg-from-value' }]
+                    }
+                }
+            });
+            const payload = createPgsqlPayload(state);
+            expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-from-value');
         });
     });
 

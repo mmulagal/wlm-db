@@ -19,7 +19,7 @@ import { formatSize, generateOptionType, isFsxnExisting } from '../../../utils/u
 
 export const selectDefaultSecurityGroup = (dispatch: any) => {
     dispatch(setSelectedSecurityGroup(GENERAL.GENERATED_SECURITY_GROUP));
-    dispatch(setSelectedExistingSecurityGroup(''));
+    dispatch(setSelectedExistingSecurityGroup([]));
 };
 
 export const selectDefaultInstanceType = (instanceTypeData: any, dispatch: any) => {

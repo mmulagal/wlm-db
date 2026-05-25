@@ -76,19 +76,13 @@ const createPgsqlPayload = (state: any) => {
     })();
 
     const ontapSgGroupIdsList = (() => {
-        const ontapSgGroupList = [];
-        const sgType = state.mssqlForm.securityGroup?.selectedSecurityType;
-        const vpcsg = state.mssqlForm.securityGroup?.selectedExistingSecurityGroup?.value;
-        if (sgType === GENERAL.USE_AN_EXISTING_SECURITY && vpcsg) {
-            ontapSgGroupList.push(vpcsg);
-        }
-        const fsxnType = state.mssqlForm.fsxN?.fsxNType;
-        if (isFsxnExisting(fsxnType)) {
-            const fsxsg = state.mssqlForm.fsxN?.fsxNExistingName?.data?.securityGroups || [];
-            fsxsg.map((val: string) => {
-                ontapSgGroupList.push(val);
-            });
-        }
+        const ontapSgGroupList: string[] = [];
+        const selectedSGs = state.mssqlForm.securityGroup?.selectedExistingSecurityGroup;
+        const sgsArray = Array.isArray(selectedSGs) ? selectedSGs : [];
+        sgsArray.forEach((sg: any) => {
+            const sgId = sg?.data?.id || sg?.id || sg?.value;
+            if (sgId) ontapSgGroupList.push(sgId);
+        });
         return ontapSgGroupList;
     })();
 

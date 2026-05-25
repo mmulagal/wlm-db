@@ -3,6 +3,7 @@ import {
     LoadConfiguration,
     LoadRecommendedConfig,
     SaveConfiguration,
+    duplicateSaveCheck,
     resetChecksAfterLoad,
     resetRefetchApiCheck
 } from './LoadConfiguration';
@@ -107,5 +108,50 @@ describe('Utility functions', () => {
     it('resetRefetchApiCheck dispatches actions', () => {
         resetRefetchApiCheck(mockDispatch);
         expect(mockDispatch).toHaveBeenCalled();
+    });
+});
+
+describe('duplicateSaveCheck - securityGroup comparison', () => {
+    const baseConfig = (sgOverride: any) => ({
+        securityGroup: { selectedExistingSecurityGroup: sgOverride }
+    });
+
+    it('returns true when both have same single SG (array format)', () => {
+        const config = baseConfig([{ data: { id: 'sg-123' } }]);
+        expect(duplicateSaveCheck(config, config)).toBe(true);
+    });
+
+    it('returns false when SGs differ', () => {
+        const newConfig = baseConfig([{ data: { id: 'sg-123' } }]);
+        const oldConfig = baseConfig([{ data: { id: 'sg-456' } }]);
+        expect(duplicateSaveCheck(newConfig, oldConfig)).toBe(false);
+    });
+
+    it('returns true when both have same multiple SGs regardless of order', () => {
+        const newConfig = baseConfig([{ data: { id: 'sg-1' } }, { data: { id: 'sg-2' } }]);
+        const oldConfig = baseConfig([{ data: { id: 'sg-2' } }, { data: { id: 'sg-1' } }]);
+        expect(duplicateSaveCheck(newConfig, oldConfig)).toBe(true);
+    });
+
+    it('returns false when SG count differs', () => {
+        const newConfig = baseConfig([{ data: { id: 'sg-1' } }, { data: { id: 'sg-2' } }]);
+        const oldConfig = baseConfig([{ data: { id: 'sg-1' } }]);
+        expect(duplicateSaveCheck(newConfig, oldConfig)).toBe(false);
+    });
+
+    it('returns true when both have no SG selected', () => {
+        const config = baseConfig(null);
+        expect(duplicateSaveCheck(config, config)).toBe(true);
+    });
+
+    it('handles legacy single-object format without crashing', () => {
+        const newConfig = baseConfig({ value: 'sg-123' });
+        const oldConfig = baseConfig({ value: 'sg-123' });
+        expect(duplicateSaveCheck(newConfig, oldConfig)).toBe(true);
+    });
+
+    it('returns false when oldConfig is null', () => {
+        const newConfig = baseConfig([{ data: { id: 'sg-123' } }]);
+        expect(duplicateSaveCheck(newConfig, null)).toBe(false);
     });
 });

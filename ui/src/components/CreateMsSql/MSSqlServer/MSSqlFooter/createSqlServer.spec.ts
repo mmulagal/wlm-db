@@ -219,11 +219,74 @@ describe('createMssqlPayload', () => {
         const state = buildBaseState({
             securityGroup: {
                 selectedSecurityType: GENERAL.USE_AN_EXISTING_SECURITY,
-                selectedExistingSecurityGroup: { value: 'sg-existing-1' }
+                selectedExistingSecurityGroup: [{ data: { id: 'sg-existing-1' } }]
             }
         });
         const payload = createMssqlPayload(state);
         expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-existing-1');
+    });
+
+    it('adds multiple existing SGs to ontapSgGroupIdsList', () => {
+        const state = buildBaseState({
+            securityGroup: {
+                selectedSecurityType: GENERAL.USE_AN_EXISTING_SECURITY,
+                selectedExistingSecurityGroup: [{ data: { id: 'sg-existing-1' } }, { data: { id: 'sg-existing-2' } }]
+            }
+        });
+        const payload = createMssqlPayload(state);
+        expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-existing-1');
+        expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-existing-2');
+    });
+
+    it('adds up to 4 SGs (max selection) to ontapSgGroupIdsList', () => {
+        const state = buildBaseState({
+            securityGroup: {
+                selectedSecurityType: GENERAL.USE_AN_EXISTING_SECURITY,
+                selectedExistingSecurityGroup: [
+                    { data: { id: 'sg-1' } },
+                    { data: { id: 'sg-2' } },
+                    { data: { id: 'sg-3' } },
+                    { data: { id: 'sg-4' } }
+                ]
+            }
+        });
+        const payload = createMssqlPayload(state);
+        expect(payload.fsxConfiguration.ontapSgGroupId).toHaveLength(4);
+        expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-1');
+        expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-4');
+    });
+
+    it('returns empty ontapSgGroupIdsList when no SG selected', () => {
+        const state = buildBaseState({
+            securityGroup: {
+                selectedSecurityType: GENERAL.GENERATED_SECURITY_GROUP,
+                selectedExistingSecurityGroup: []
+            }
+        });
+        const payload = createMssqlPayload(state);
+        expect(payload.fsxConfiguration.ontapSgGroupId).toEqual([]);
+    });
+
+    it('extracts SG id from sg.id fallback when data.id is absent', () => {
+        const state = buildBaseState({
+            securityGroup: {
+                selectedSecurityType: GENERAL.USE_AN_EXISTING_SECURITY,
+                selectedExistingSecurityGroup: [{ id: 'sg-from-id' }]
+            }
+        });
+        const payload = createMssqlPayload(state);
+        expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-from-id');
+    });
+
+    it('extracts SG id from sg.value fallback when data.id and id are absent', () => {
+        const state = buildBaseState({
+            securityGroup: {
+                selectedSecurityType: GENERAL.USE_AN_EXISTING_SECURITY,
+                selectedExistingSecurityGroup: [{ value: 'sg-from-value' }]
+            }
+        });
+        const payload = createMssqlPayload(state);
+        expect(payload.fsxConfiguration.ontapSgGroupId).toContain('sg-from-value');
     });
 
     it('filters tags to only include ones with key', () => {

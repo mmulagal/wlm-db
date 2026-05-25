@@ -1,13 +1,72 @@
-.security-group {
-    .handleRadio {
+.rulesDialogContent {
+    display: flex;
+    flex-direction: column;
+    min-height: 100px;
+    max-height: 380px;
+    --table-top-fixed: 0px;
+
+    [class*='Table-module_innerTable'] {
         display: flex;
-        gap: 32px;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    [class*='Table-module_table'] {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    [class*='Table-module_header-row'] {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    ::-webkit-scrollbar {
+        width: 4px;
+    }
+}
+
+.security-group {
+    .descriptionBlock {
+        margin-bottom: 8px;
+    }
+
+    .descriptionTextRow {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .descriptionText {
+        display: block;
+        color: var(--text-primary);
+        line-height: 24px;
     }
 
     .handleSelect {
         margin-top: 24px;
         width: 477px;
         --menu-max-height: 250px;
+    }
+
+    .selectLabelWrapper {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 2px;
+        margin-bottom: 4px;
+    }
+
+    .selectLabel {
+        color: var(--text-primary);
+        line-height: 24px;
     }
 
     .setHeaderStyle {
@@ -20,9 +79,5 @@
     .separator {
         border-right: 1px solid var(--grey-15);
         height: 16px;
-    }
-
-    .createNew {
-        margin-bottom: 32px;
     }
 }

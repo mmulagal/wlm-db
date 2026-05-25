@@ -274,9 +274,18 @@ export const duplicateSaveCheck = (newConfig: any, oldConfig: any) => {
         oldConfig?.availabilityZones?.selectedSubnetNode2?.label2;
     const securityGroupType =
         newConfig?.securityGroup?.selectedSecurityType === oldConfig?.securityGroup?.selectedSecurityType;
+    const getSgIds = (val: any): string[] => {
+        let arr: any[] = [];
+        if (Array.isArray(val)) {
+            arr = val;
+        } else if (val) {
+            arr = [val];
+        }
+        return arr.map((sg: any) => sg?.data?.id || sg?.id || sg?.value || '').sort();
+    };
     const securityGroup =
-        newConfig?.securityGroup?.selectedExistingSecurityGroup?.value ===
-        oldConfig?.securityGroup?.selectedExistingSecurityGroup?.value;
+        getSgIds(newConfig?.securityGroup?.selectedExistingSecurityGroup).join(',') ===
+        getSgIds(oldConfig?.securityGroup?.selectedExistingSecurityGroup).join(',');
     const operatingSystem = newConfig?.operatingSystem?.label === oldConfig?.operatingSystem?.label;
     const deploymentModel = newConfig?.dbDeploymentModel?.value === oldConfig?.dbDeploymentModel?.value;
     const edition = newConfig?.dbEdition?.value === oldConfig?.dbEdition?.value;
