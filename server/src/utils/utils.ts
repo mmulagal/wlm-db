@@ -514,8 +514,11 @@ function waitForResolution(fn: () => boolean, delay: number, maxDelay: number) {
     ]);
 }
 
-const deployedStackUrl = (region: string, stackId: string) =>
-    `https://console.aws.amazon.com/cloudformation/home?region=${region}#/stacks/stackinfo?stackId=${stackId}`;
+const deployedStackUrl = (region: string, stackId: string) => {
+    const isGov = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
+    const domain = isGov ? 'console.amazonaws-us-gov.com' : 'console.aws.amazon.com';
+    return `https://${domain}/cloudformation/home?region=${region}#/stacks/stackinfo?stackId=${stackId}`;
+};
 
 function generateRandomIP(): string {
     const randomOctet = () => Math.floor(Math.random() * 256);

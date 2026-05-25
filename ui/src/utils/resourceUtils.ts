@@ -209,32 +209,46 @@ export const mapDismissedValues = (data: any, itemName: string | any) => {
 
 export const createOraclePayLoad = (value: string, selectedDatabaseInstanceName: string) => {
     const state = store.getState();
-    const { sqlServerPasswords, sqlServerUserName } = state.workloadFactoryResource;
+    const { isGovAccount } = state.auth;
+    const { sqlServerPasswords, sqlServerUserName, credentialUpdateSsmArn } = state.workloadFactoryResource;
     const { password } = sqlServerPasswords;
-    const credList = [];
-    credList.push({
-        resourceId: selectedDatabaseInstanceName,
-        resourceType: DETECT_HOST_VAR.ORACLE,
-        username: sqlServerUserName,
-        password
-    });
 
-    return { credentials: credList };
+    const credential = isGovAccount
+        ? {
+              resourceId: selectedDatabaseInstanceName,
+              resourceType: DETECT_HOST_VAR.ORACLE,
+              ssmParameterArn: credentialUpdateSsmArn
+          }
+        : {
+              resourceId: selectedDatabaseInstanceName,
+              resourceType: DETECT_HOST_VAR.ORACLE,
+              username: sqlServerUserName,
+              password
+          };
+
+    return { credentials: [credential] };
 };
 
 export const createPayload = (resourceDetails: any, innerPageDetails: any) => {
     const state = store.getState();
-    const { fsxAdminPasswords } = state.workloadFactoryResource;
+    const { isGovAccount } = state.auth;
+    const { fsxAdminPasswords, credentialUpdateSsmArn } = state.workloadFactoryResource;
     const { password } = fsxAdminPasswords;
-    const credList = [];
-    credList.push({
-        resourceId: resourceDetails?.topology?.fileSystemId || innerPageDetails?.fsxId,
-        resourceType: DETECT_HOST_VAR.FSX,
-        username: 'fsxadmin',
-        password
-    });
 
-    return { credentials: credList };
+    const credential = isGovAccount
+        ? {
+              resourceId: resourceDetails?.topology?.fileSystemId || innerPageDetails?.fsxId,
+              resourceType: DETECT_HOST_VAR.FSX,
+              ssmParameterArn: credentialUpdateSsmArn
+          }
+        : {
+              resourceId: resourceDetails?.topology?.fileSystemId || innerPageDetails?.fsxId,
+              resourceType: DETECT_HOST_VAR.FSX,
+              username: 'fsxadmin',
+              password
+          };
+
+    return { credentials: [credential] };
 };
 
 export const handleFSXAdminApply = async (

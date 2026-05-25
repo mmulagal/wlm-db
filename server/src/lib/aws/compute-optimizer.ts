@@ -13,7 +13,7 @@ import { isEmpty } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
-import { AWS_CO_TYPE } from '../../utils/consts';
+import { AWS_CO_TYPE, GOV_REGIONS } from '../../utils/consts';
 
 const logger = getLogger();
 
@@ -24,7 +24,8 @@ async function getComputeOptimizerClient(region: string, credentialsId: string, 
         credentials: { accessKey: accessKeyId, secretKey: secretAccessKey, sessionId: sessionToken }
     } = await getCredentialsDetails(credentialsId, accountId);
     const credentials = { accessKeyId, secretAccessKey, sessionToken };
-    return new ComputeOptimizerClient({ credentials, region });
+    const isGovCloud = GOV_REGIONS.includes(region as (typeof GOV_REGIONS)[number]);
+    return new ComputeOptimizerClient({ credentials, region, ...(isGovCloud && { useFipsEndpoint: true }) });
 }
 
 async function getEnrollmentStatus(

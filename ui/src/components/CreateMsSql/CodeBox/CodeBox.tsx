@@ -74,7 +74,7 @@ const CodeBox = () => {
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
     const isDemoMode = useAppSelector(state => state.auth.isDemoMode);
     const selectedDBName = useAppSelector(state => state.mssqlForm.dbName);
-    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const { isWorkloadFactory, isGovAccount } = useAppSelector(state => state?.auth);
 
     useEffect(() => {
         if (isLoadConfig) {
@@ -221,7 +221,8 @@ const CodeBox = () => {
         // To get accountid, credid and region from provided data
         const credDetails = getCredDetails(actualData);
         const changeObjectForm = {
-            mssqlForm: actualData
+            mssqlForm: actualData,
+            auth: { isGovAccount }
         };
         const resBody = createMssqlPayload(changeObjectForm);
         if (credDetails?.credId) {
@@ -255,7 +256,8 @@ const CodeBox = () => {
         const actualData = mssqlFormData;
         const credDetails = getCredDetails(actualData);
         const changeObjectForm = {
-            mssqlForm: actualData
+            mssqlForm: actualData,
+            auth: { isGovAccount }
         };
         const resBody = createMssqlPayload(changeObjectForm);
         if (credDetails?.credId) {
@@ -323,7 +325,8 @@ const CodeBox = () => {
         // To get accountid, credid and region from saved config
         const credDetails = getCredDetails(actualData);
         const changeObjectForm = {
-            mssqlForm: actualData
+            mssqlForm: actualData,
+            auth: { isGovAccount }
         };
         const resBody = createMssqlPayload(changeObjectForm);
         const res = JSON.stringify(resBody, null, 2);
@@ -346,7 +349,8 @@ const CodeBox = () => {
     // This will set masked data
     const getMaskedRestResponse = (actualData: any, credDetails: any, baseUrl: string) => {
         const changeObjectForm = {
-            mssqlForm: setMaskedPassword(actualData)
+            mssqlForm: setMaskedPassword(actualData),
+            auth: { isGovAccount }
         };
         const resBody = createMssqlPayload(changeObjectForm);
 
@@ -547,8 +551,9 @@ const CodeBox = () => {
                     </div>
                 </div>
 
-                {/* Cloud formation button */}
-                {dropDownValue === CODE_VIEWER.CLOUDFORMATION &&
+                {/* Cloud formation button — hidden for GovCloud (Quick Create URL uses commercial console) */}
+                {!isGovAccount &&
+                    dropDownValue === CODE_VIEWER.CLOUDFORMATION &&
                     !isRightPanelTemplateLoading &&
                     rightPanelTemplateResponse?.template && (
                         <div className={styles.cloudFormationButtonContainer}>

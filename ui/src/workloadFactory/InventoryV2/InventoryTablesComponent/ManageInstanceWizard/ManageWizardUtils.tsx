@@ -22,7 +22,8 @@ import {
     CREDENTIAL_OPTIONS,
     DETECT_PAYLOAD_SIZE,
     RESPONSE_STATUS,
-    DATABASE_DEPLOYMENT_MODE
+    DATABASE_DEPLOYMENT_MODE,
+    isValidSsmArn
 } from '../../../../utils/consts';
 import { isAuthRequiredForInstance } from './DetectInstanceStep/DetectContent/DetectContentHelper';
 import ReplicaInfoDialog from './ReplicaInfoDialog/ReplicaInfoDialog';
@@ -97,12 +98,18 @@ export const detectAuthFieldsValidation = (
     } = state.inventoryV2;
     const { isGovAccount } = state.auth;
 
-    const isDbArnValid = () => !!detectSsmParameterArn;
+    const isDbArnValid = () => isValidSsmArn(detectSsmParameterArn || '');
 
     /**
      * Checks if shared credentials are valid (SAME_FOR_ALL mode)
      */
     const isSharedAuthValid = () => {
+        if (isGovAccount) {
+            if (engineType === DBType.ORACLE) {
+                return isValidSsmArn(oracleBulkDatabaseCredentials?.ssmParameterArn || '');
+            }
+            return isValidSsmArn(bulkInstanceCredentials?.ssmParameterArn || '');
+        }
         if (engineType === DBType.ORACLE) {
             return !!(oracleBulkDatabaseCredentials?.oracleUsername && oracleBulkDatabaseCredentials?.oraclePassword);
         }
@@ -119,6 +126,9 @@ export const detectAuthFieldsValidation = (
         const instanceId = instanceData?.databaseInstanceName || '';
         const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
         const creds = instanceCredentials?.[uniqueKey];
+        if (isGovAccount) {
+            return isValidSsmArn(creds?.ssmParameterArn || '');
+        }
         return !!(creds?.username && creds?.password);
     };
 
@@ -128,6 +138,12 @@ export const detectAuthFieldsValidation = (
     const isSingleModeAuthValid = () => !!(detectManageUserName && detectManagePassword);
 
     const isWindowsAuthValid = () => {
+        if (isGovAccount) {
+            if (isBulkMode) {
+                return isValidSsmArn(bulkInstanceCredentials?.ssmParameterArn || '');
+            }
+            return isValidSsmArn(detectSsmParameterArn || '');
+        }
         if (isBulkMode) {
             return !!(bulkInstanceCredentials?.username && bulkInstanceCredentials?.password);
         }
@@ -243,10 +259,10 @@ export const detectFieldsValidation = (entryData: any, engineType: string) => {
     const isAuthValid = () => !!(detectManageUserName && detectManagePassword);
     const isWindowsAuthValid = () => !!(detectWindowsAuthentication?.username && detectWindowsAuthentication?.password);
     const isFsxAuthValid = () => {
-        if (isGovAccount) return !!detectOntapSsmParameterArn;
+        if (isGovAccount) return isValidSsmArn(detectOntapSsmParameterArn || '');
         return !!(detectOntapUsername && detectOntapPassword);
     };
-    const isDbArnValid = () => !!detectSsmParameterArn;
+    const isDbArnValid = () => isValidSsmArn(detectSsmParameterArn || '');
 
     if (isGovAccount) {
         const needsDbAuth = (() => {
@@ -394,7 +410,7 @@ export const detectFsxFieldsValidation = (
 
     if (selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED) {
         if (isGovAccount) {
-            return !!detectOntapSsmParameterArn;
+            return isValidSsmArn(detectOntapSsmParameterArn || '');
         }
         return !!(detectOntapUsername && detectOntapPassword);
     }
@@ -403,7 +419,7 @@ export const detectFsxFieldsValidation = (
         return unregisteredFsxIds.every(fsxId => {
             const cred = detectOntapCredentialsByFsx[fsxId];
             if (isGovAccount) {
-                return !!cred?.ssmParameterArn;
+                return isValidSsmArn(cred?.ssmParameterArn || '');
             }
             return !!(cred?.username && cred?.password);
         });
@@ -892,6 +908,7 @@ export const handleReplicaAuthenticationAndDialog = async (
     const handleReplicaAuthCredentials = async (credList: any) => {
         const updatedState = store.getState();
         const { replicaSelectedRowsForManage, instanceCredentials }: any = updatedState?.inventoryV2;
+        const { isGovAccount } = updatedState.auth;
         if (replicaSelectedRowsForManage && replicaSelectedRowsForManage.length > 0) {
             const hostType = registerHostType || DBType.MSSQL;
 
@@ -939,7 +956,8 @@ export const handleReplicaAuthenticationAndDialog = async (
                             : AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
                 },
                 username: credList?.credentials?.[0]?.username,
-                password: credList?.credentials?.[0]?.password
+                password: credList?.credentials?.[0]?.password,
+                ssmParameterArn: credList?.credentials?.[0]?.ssmParameterArn || ''
             };
             // Create payload using bulk auth utility
             const payloadItems = createBulkAuthPayload(
@@ -948,7 +966,8 @@ export const handleReplicaAuthenticationAndDialog = async (
                 bulkInstanceCredentials,
                 instanceCredentials,
                 instanceAuthStatus,
-                hostType
+                hostType,
+                isGovAccount
             );
 
             // If no credentials to send (all already authenticated), proceed to next step

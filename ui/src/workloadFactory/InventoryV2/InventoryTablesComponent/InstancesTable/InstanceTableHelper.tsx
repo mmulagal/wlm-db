@@ -138,7 +138,8 @@ export const getInstanceTableMenuOptions = (
     disableMessage: string,
     disableCreateDb: boolean,
     disableCreateDbMsg: string,
-    isBedRockAvailable: boolean
+    isBedRockAvailable: boolean,
+    isGovAccount: boolean = false
 ) => {
     switch (rowData.hostType) {
         case DBType.POSTGRESQL:
@@ -236,8 +237,10 @@ export const getInstanceTableMenuOptions = (
                     displayName: rowData?.isProtected
                         ? t('databases.instance-table.menu-options.edit-protection')
                         : t('databases.instance-table.menu-options.protect'),
-                    disabled: disableOption || !rowData?.fsxId || !rowData?.hostRow?.nodeIpAddress,
-                    infoText: disableMessage
+                    disabled: isGovAccount || disableOption || !rowData?.fsxId || !rowData?.hostRow?.nodeIpAddress,
+                    infoText: isGovAccount
+                        ? t('databases.register-flow.govcloud-protection-not-supported')
+                        : disableMessage
                 },
                 {
                     id: 'mssql-unManage',

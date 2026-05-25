@@ -163,13 +163,6 @@ Parameters:
         Type: String
         Default: default
 Conditions:
-    isGovRegion: !Or
-        - !Equals
-          - us-gov-west-1
-          - !Ref 'AWS::Region'
-        - !Equals
-          - us-gov-east-1
-          - !Ref 'AWS::Region'
     ADCheckEnabled: !Equals
         - !Ref 'PerformADCheck'
         - 'true'

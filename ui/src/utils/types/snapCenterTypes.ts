@@ -3,6 +3,7 @@ import { ProtectionProcessState } from '../../store/workloadFactory/snapcenterSl
 export interface UserCredentials {
     username: string;
     password: string;
+    ssmParameterArn?: string;
 }
 
 export interface SnapCenterEntities {

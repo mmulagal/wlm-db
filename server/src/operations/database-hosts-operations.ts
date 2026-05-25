@@ -46,8 +46,10 @@ import {
     MSSQL_SYSTEM_DATABASES,
     PGSQL_DEFAULT_INSTANCE_NAME,
     ACCOUNT_ID,
+    GOV_ACCOUNT,
     CUSTOM_SSM_EXECUTION_TIMEOUT,
-    RESOURCESTYPE
+    RESOURCESTYPE,
+    isGovCloudRegion
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import {
@@ -2593,6 +2595,7 @@ async function processResourcesBatch(
                 try {
                     await getLocalStorage().run(new Map(), async () => {
                         setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                        setAsyncLocalStorageResource(GOV_ACCOUNT, isGovCloudRegion(region!));
                         await processResourceNodes(
                             accountId,
                             credentialsId,

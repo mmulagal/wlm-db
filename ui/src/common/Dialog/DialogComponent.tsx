@@ -11,7 +11,7 @@ import { ReactNode, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { useAppSelector } from '../../store/storeHooks';
-import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG } from '../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG, isValidSsmArn } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
 // eslint-disable-next-line import/no-cycle
 import { isValidSqlUsername, checkCustomTimeframeExceedsCurrentTime } from '../../utils/utilityFunctions';
@@ -91,11 +91,14 @@ const DialogComponent = ({
         return { password: '', confirmPassword: '' };
     }, [dialogFrom, fsxAdminPasswords, sqlServerPasswords]);
 
-    const { sqlServerUserName } = useAppSelector(state => state.workloadFactoryResource);
+    const { sqlServerUserName, credentialUpdateSsmArn } = useAppSelector(state => state.workloadFactoryResource);
     const { passwordResetLoading } = useAppSelector(state => state.workloadFactoryResource);
-    const { userName: exploreSavingsUserName, password: exploreSavingsPassword } = useAppSelector(
-        state => state.exploreSavings.serverDetails
-    );
+    const {
+        userName: exploreSavingsUserName,
+        password: exploreSavingsPassword,
+        ssmParameterArn: exploreSavingsSsmArn
+    } = useAppSelector(state => state.exploreSavings.serverDetails);
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const { username: scUsername, password: scPassword } = useAppSelector(state => state.snapCenter.credentials);
     const { authVerification } = useAppSelector(state => state.snapCenter);
     const { bulkAuthCredentials, rowsRequiringAuthBulk, selectedRowsForExploreSavingsEBSBulk } = useAppSelector(
@@ -105,12 +108,14 @@ const DialogComponent = ({
     // Track if this is a bulk explore savings case
     const isBulkExploreSavings = useRef(false);
 
-    // Check if all bulk credentials are filled for explore savings
     const checkBulkCredentialsFilled = (rowsToCheck: any[]) =>
         rowsToCheck.every((row: any) => {
             const credentials = bulkAuthCredentials[row.name];
+            if (!credentials) return false;
+            if (isGovAccount) {
+                return isValidSsmArn(credentials.ssmParameterArn || '');
+            }
             return (
-                credentials &&
                 credentials.userName &&
                 credentials.userName.length > 0 &&
                 credentials.password &&
@@ -118,28 +123,21 @@ const DialogComponent = ({
             );
         });
 
-    // Check if explore savings credentials are disabled
     const checkExploreSavingsDisabled = () => {
-        // Check if it's a bulk operation (multiple hosts requiring auth)
         const rowsToCheck =
             rowsRequiringAuthBulk && rowsRequiringAuthBulk.length > 0
                 ? rowsRequiringAuthBulk
                 : selectedRowsForExploreSavingsEBSBulk;
 
-        // If we have bulk credentials to check (bulk case)
         if (rowsToCheck && rowsToCheck.length > 0) {
-            // Set flag for bulk explore savings case
             isBulkExploreSavings.current = true;
-
-            // Check if all hosts have both username and password filled
-            const allCredentialsFilled = checkBulkCredentialsFilled(rowsToCheck);
-
-            // Disable if not all credentials are filled
-            return !allCredentialsFilled;
+            return !checkBulkCredentialsFilled(rowsToCheck);
         }
 
-        // Otherwise, it's a single auth case - check single credentials
         isBulkExploreSavings.current = false;
+        if (isGovAccount) {
+            return !isValidSsmArn(exploreSavingsSsmArn);
+        }
         return exploreSavingsUserName.length === 0 || exploreSavingsPassword.length === 0;
     };
 
@@ -224,21 +222,26 @@ const DialogComponent = ({
         ) {
             return true;
         }
-        // Condition to disable Apply in FSX Admin and SQL Server password dialogs
-        if (
-            (dialogFrom === FROM_DIALOG.SQLSERVER &&
-                ((password.length === 0 && confirmPassword.length === 0) ||
-                    sqlServerUserName.length === 0 ||
-                    password !== confirmPassword)) ||
-            isValidSqlUsername(sqlServerUserName, t)
-        ) {
-            return true;
+        if (dialogFrom === FROM_DIALOG.SQLSERVER) {
+            if (isGovAccount) {
+                return !isValidSsmArn(credentialUpdateSsmArn);
+            }
+            if (
+                (password.length === 0 && confirmPassword.length === 0) ||
+                sqlServerUserName.length === 0 ||
+                password !== confirmPassword ||
+                isValidSqlUsername(sqlServerUserName, t)
+            ) {
+                return true;
+            }
         }
-        if (
-            dialogFrom === FROM_DIALOG.FSXADMIN &&
-            ((password.length === 0 && confirmPassword.length === 0) || password !== confirmPassword)
-        ) {
-            return true;
+        if (dialogFrom === FROM_DIALOG.FSXADMIN) {
+            if (isGovAccount) {
+                return !isValidSsmArn(credentialUpdateSsmArn);
+            }
+            if ((password.length === 0 && confirmPassword.length === 0) || password !== confirmPassword) {
+                return true;
+            }
         }
         if (dialogFrom === FROM_DIALOG.EXPLORE_SAVINGS) {
             return checkExploreSavingsDisabled();

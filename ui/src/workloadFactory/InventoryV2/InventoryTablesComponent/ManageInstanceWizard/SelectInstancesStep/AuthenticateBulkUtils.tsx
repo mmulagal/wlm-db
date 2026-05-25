@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import { BulkDetectedInstance } from '../../../../../utils/types/registerTypes';
 import { InstanceAuthStatus, InstanceAuthStatusMap } from '../../../../../utils/types/inventoryV2Types';
 import {
@@ -5,7 +6,8 @@ import {
     RESPONSE_STATUS,
     DETECT_HOST_VAR,
     CREDENTIAL_OPTIONS,
-    AUTHENTICATION_TYPE
+    AUTHENTICATION_TYPE,
+    isValidSsmArn
 } from '../../../../../utils/consts';
 import { isAuthRequiredForInstance } from '../DetectInstanceStep/DetectContent/DetectContentHelper';
 
@@ -15,8 +17,9 @@ import { isAuthRequiredForInstance } from '../DetectInstanceStep/DetectContent/D
 export interface BulkCredentialItem {
     resourceId: string;
     resourceType: string;
-    username: string;
-    password: string;
+    username?: string;
+    password?: string;
+    ssmParameterArn?: string;
 }
 
 /**
@@ -326,10 +329,19 @@ export const hasInstanceFailed = (
 export const createBulkAuthPayload = (
     selectedInstances: BulkDetectedInstance[] | undefined,
     credentialOption: string,
-    bulkInstanceCredentials: { authMode: { value: string }; username: string; password: string },
-    instanceCredentials: Record<string, { authMode: { value: string }; username: string; password: string }>,
+    bulkInstanceCredentials: {
+        authMode: { value: string };
+        username: string;
+        password: string;
+        ssmParameterArn?: string;
+    },
+    instanceCredentials: Record<
+        string,
+        { authMode: { value: string }; username: string; password: string; ssmParameterArn?: string }
+    >,
     instanceAuthStatus: InstanceAuthStatusMap | undefined,
-    hostType: string = DBType.MSSQL
+    hostType: string = DBType.MSSQL,
+    isGovAccount: boolean = false
 ): BulkAuthPayloadItem[] => {
     if (!selectedInstances || !Array.isArray(selectedInstances)) return [];
 
@@ -355,32 +367,44 @@ export const createBulkAuthPayload = (
         let authMode: string;
         let username: string;
         let password: string;
+        let ssmParameterArn: string;
 
         if (credentialOption === CREDENTIAL_OPTIONS.SAME_FOR_ALL) {
             authMode = bulkInstanceCredentials.authMode?.value || '';
             username = bulkInstanceCredentials.username || '';
             password = bulkInstanceCredentials.password || '';
+            ssmParameterArn = bulkInstanceCredentials.ssmParameterArn || '';
         } else {
             // MANUAL mode - get per-instance credentials using uniqueKey
             const creds = instanceCredentials[uniqueKey];
             authMode = creds?.authMode?.value || '';
             username = creds?.username || '';
             password = creds?.password || '';
+            ssmParameterArn = creds?.ssmParameterArn || '';
         }
-
-        // Skip if credentials are empty
-        if (!username || !password) return;
 
         // Determine resource type based on auth mode
         const isSqlAuth = authMode === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION;
         const resourceType = isSqlAuth ? DETECT_HOST_VAR.MSSQL : DETECT_HOST_VAR.WINDOWS;
 
-        const credential: BulkCredentialItem = {
-            resourceId: instanceId,
-            resourceType,
-            username,
-            password
-        };
+        let credential: BulkCredentialItem;
+
+        if (isGovAccount) {
+            if (!ssmParameterArn) return;
+            credential = {
+                resourceId: instanceId,
+                resourceType,
+                ssmParameterArn
+            };
+        } else {
+            if (!username || !password) return;
+            credential = {
+                resourceId: instanceId,
+                resourceType,
+                username,
+                password
+            };
+        }
 
         // If already present, merge credentials arrays
         if (instanceMap[ec2InstanceId]) {
@@ -420,50 +444,69 @@ export const createBulkAuthPayload = (
 export const validateBulkInstanceCredentials = (
     selectedInstances: BulkDetectedInstance[] | undefined,
     credentialOption: string,
-    bulkInstanceCredentials: { authMode: { value: string }; username: string; password: string },
-    instanceCredentials: Record<string, { authMode: { value: string }; username: string; password: string }>,
+    bulkInstanceCredentials: {
+        authMode: { value: string };
+        username: string;
+        password: string;
+        ssmParameterArn?: string;
+    },
+    instanceCredentials: Record<
+        string,
+        { authMode: { value: string }; username: string; password: string; ssmParameterArn?: string }
+    >,
     instanceAuthStatus: InstanceAuthStatusMap | undefined,
-    hostType: string = DBType.MSSQL
+    hostType: string = DBType.MSSQL,
+    isGovAccount: boolean = false
 ): { isValid: boolean; errorMessage: string } => {
     if (!selectedInstances || selectedInstances.length === 0) {
         return { isValid: false, errorMessage: 'No instances selected' };
     }
 
-    // Get instances that need authentication
     const instancesNeedingAuth = selectedInstances.filter(instance => {
         const instanceData = instance.data || instance;
         const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
         const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
         const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
-        // Skip already authenticated instances
         if (!isAuthRequiredForInstance(instanceData, hostType)) return false;
         if (instanceAuthStatus?.[uniqueKey]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) return false;
 
         return true;
     });
 
-    // If no instances need auth, validation passes
     if (instancesNeedingAuth.length === 0) {
         return { isValid: true, errorMessage: '' };
     }
 
     if (credentialOption === CREDENTIAL_OPTIONS.SAME_FOR_ALL) {
-        // Validate bulk credentials
-        if (!bulkInstanceCredentials.username || !bulkInstanceCredentials.password) {
+        if (isGovAccount) {
+            if (!isValidSsmArn(bulkInstanceCredentials.ssmParameterArn || '')) {
+                return {
+                    isValid: false,
+                    errorMessage: i18next.t('databases.register-flow.ssm-parameter-arn-required')
+                };
+            }
+        } else if (!bulkInstanceCredentials.username || !bulkInstanceCredentials.password) {
             return { isValid: false, errorMessage: 'Please enter username and password' };
         }
     } else {
-        // Validate per-instance credentials
         for (const instance of instancesNeedingAuth) {
             const instanceData = instance.data || instance;
             const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
             const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
-            // Use uniqueKey for credential lookup to handle duplicate instance names
             const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
             const creds = instanceCredentials[uniqueKey];
 
-            if (!creds?.username || !creds?.password) {
+            if (isGovAccount) {
+                if (!isValidSsmArn(creds?.ssmParameterArn || '')) {
+                    return {
+                        isValid: false,
+                        errorMessage: i18next.t('databases.register-flow.ssm-parameter-arn-required-for', {
+                            instanceId
+                        })
+                    };
+                }
+            } else if (!creds?.username || !creds?.password) {
                 return { isValid: false, errorMessage: `Please enter credentials for ${instanceId}` };
             }
         }
@@ -478,6 +521,7 @@ export const validateBulkInstanceCredentials = (
 export interface OracleBulkCredentials {
     oracleUsername: string;
     oraclePassword: string;
+    ssmParameterArn?: string;
 }
 
 /**
@@ -486,6 +530,7 @@ export interface OracleBulkCredentials {
 export interface OracleInstanceCredentials {
     username: string;
     password: string;
+    ssmParameterArn?: string;
 }
 
 /**
@@ -503,7 +548,8 @@ export const createOracleBulkAuthPayload = (
     credentialOption: string,
     oracleBulkDatabaseCredentials: OracleBulkCredentials,
     instanceCredentials: Record<string, OracleInstanceCredentials>,
-    instanceAuthStatus: InstanceAuthStatusMap | undefined
+    instanceAuthStatus: InstanceAuthStatusMap | undefined,
+    isGovAccount: boolean = false
 ): BulkAuthPayloadItem[] => {
     if (!selectedInstances || !Array.isArray(selectedInstances)) return [];
 
@@ -529,27 +575,38 @@ export const createOracleBulkAuthPayload = (
         // Get credentials based on credential option
         let username: string;
         let password: string;
+        let ssmParameterArn: string;
 
         if (credentialOption === CREDENTIAL_OPTIONS.SAME_FOR_ALL) {
             username = oracleBulkDatabaseCredentials.oracleUsername || '';
             password = oracleBulkDatabaseCredentials.oraclePassword || '';
+            ssmParameterArn = oracleBulkDatabaseCredentials.ssmParameterArn || '';
         } else {
             // MANUAL mode - get per-instance credentials using uniqueKey
             const creds = instanceCredentials[uniqueKey];
             username = creds?.username || '';
             password = creds?.password || '';
+            ssmParameterArn = creds?.ssmParameterArn || '';
         }
 
-        // Skip if required credentials are empty
-        if (!username || !password) return;
+        let oracleCredential: BulkCredentialItem;
 
-        // Create Oracle DB credential
-        const oracleCredential: BulkCredentialItem = {
-            resourceId: instanceId,
-            resourceType: DETECT_HOST_VAR.ORACLE,
-            username,
-            password
-        };
+        if (isGovAccount) {
+            if (!ssmParameterArn) return;
+            oracleCredential = {
+                resourceId: instanceId,
+                resourceType: DETECT_HOST_VAR.ORACLE,
+                ssmParameterArn
+            };
+        } else {
+            if (!username || !password) return;
+            oracleCredential = {
+                resourceId: instanceId,
+                resourceType: DETECT_HOST_VAR.ORACLE,
+                username,
+                password
+            };
+        }
 
         const credentials: BulkCredentialItem[] = [oracleCredential];
 
@@ -590,38 +647,41 @@ export const validateOracleBulkInstanceCredentials = (
     credentialOption: string,
     oracleBulkDatabaseCredentials: OracleBulkCredentials,
     instanceCredentials: Record<string, OracleInstanceCredentials>,
-    instanceAuthStatus: InstanceAuthStatusMap | undefined
+    instanceAuthStatus: InstanceAuthStatusMap | undefined,
+    isGovAccount: boolean = false
 ): { isValid: boolean; errorMessage: string } => {
     if (!selectedInstances || selectedInstances.length === 0) {
         return { isValid: false, errorMessage: 'No databases selected' };
     }
 
-    // Get instances that need authentication
     const instancesNeedingAuth = selectedInstances.filter(instance => {
         const instanceData = instance.data || instance;
         const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
         const ec2InstanceId = instanceData?.ec2InstanceId || instance.ec2InstanceId || '';
         const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
 
-        // Skip already authenticated instances
         if (!isAuthRequiredForInstance(instanceData, DBType.ORACLE)) return false;
         if (instanceAuthStatus?.[uniqueKey]?.toLowerCase() === RESPONSE_STATUS.SUCCESS.toLowerCase()) return false;
 
         return true;
     });
 
-    // If no instances need auth, validation passes
     if (instancesNeedingAuth.length === 0) {
         return { isValid: true, errorMessage: '' };
     }
 
     if (credentialOption === CREDENTIAL_OPTIONS.SAME_FOR_ALL) {
-        // Validate Oracle bulk credentials
-        if (!oracleBulkDatabaseCredentials.oracleUsername || !oracleBulkDatabaseCredentials.oraclePassword) {
+        if (isGovAccount) {
+            if (!isValidSsmArn(oracleBulkDatabaseCredentials.ssmParameterArn || '')) {
+                return {
+                    isValid: false,
+                    errorMessage: i18next.t('databases.register-flow.ssm-parameter-arn-required')
+                };
+            }
+        } else if (!oracleBulkDatabaseCredentials.oracleUsername || !oracleBulkDatabaseCredentials.oraclePassword) {
             return { isValid: false, errorMessage: 'Please enter Oracle username and password' };
         }
     } else {
-        // Validate per-instance credentials
         for (const instance of instancesNeedingAuth) {
             const instanceData = instance.data || instance;
             const instanceId = instanceData?.databaseInstanceName || instance.databaseInstanceName || '';
@@ -629,7 +689,16 @@ export const validateOracleBulkInstanceCredentials = (
             const uniqueKey = generateInstanceUniqueKey(ec2InstanceId, instanceId);
             const creds = instanceCredentials[uniqueKey];
 
-            if (!creds?.username || !creds?.password) {
+            if (isGovAccount) {
+                if (!isValidSsmArn(creds?.ssmParameterArn || '')) {
+                    return {
+                        isValid: false,
+                        errorMessage: i18next.t('databases.register-flow.ssm-parameter-arn-required-for', {
+                            instanceId
+                        })
+                    };
+                }
+            } else if (!creds?.username || !creds?.password) {
                 return { isValid: false, errorMessage: `Please enter Oracle credentials for ${instanceId}` };
             }
         }

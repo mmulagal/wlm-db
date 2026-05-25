@@ -86,7 +86,7 @@ module "validation_node1" {
   key_pair_name                         = var.key_pair_name
   perform_ad_check                      = "true"
   domain_dns_name                       = var.domain_dns_name
-  domain_admin_user                     = var.domain_admin_user
+  domain_admin_user                     = local.resolved_ad_username
   perform_fsx_check                     = local.existing_ontap_fsx ? "true" : "false"
   fsx_file_system_id                    = local.existing_ontap_fsx ? var.fsx_file_system_id : ""
   enable_cloudwatch_log_feature         = var.enable_cloud_watch_log_feature
@@ -117,7 +117,7 @@ module "validation_node2" {
   key_pair_name                         = var.key_pair_name
   perform_ad_check                      = "false"
   domain_dns_name                       = var.domain_dns_name
-  domain_admin_user                     = var.domain_admin_user
+  domain_admin_user                     = local.resolved_ad_username
   perform_fsx_check                     = local.existing_ontap_fsx ? "true" : "false"
   fsx_file_system_id                    = local.existing_ontap_fsx ? var.fsx_file_system_id : ""
   enable_cloudwatch_log_feature         = var.enable_cloud_watch_log_feature
@@ -163,7 +163,7 @@ module "fsxn_standalone" {
   fsx_temp_db_volume_size           = var.fsx_temp_db_volume_size
   fsx_cluster_quorum_volume_name    = var.fsx_quorum_volume_name
   fsx_cluster_quorum_volume_size    = var.fsx_quorum_volume_size
-  fsx_administrator_password        = var.fsx_admin_password
+  fsx_administrator_password        = local.resolved_fsx_password
   fsx_svm_name                      = var.sql_svm_name
   fsx_weekly_maintenance_start_time = "1:05:00"
   sql_deployment_mode               = var.sql_deployment_mode
@@ -199,7 +199,7 @@ module "fsxn_fci" {
   fsx_temp_db_volume_size           = var.fsx_temp_db_volume_size
   fsx_cluster_quorum_volume_name    = var.fsx_quorum_volume_name
   fsx_cluster_quorum_volume_size    = var.fsx_quorum_volume_size
-  fsx_administrator_password        = var.fsx_admin_password
+  fsx_administrator_password        = local.resolved_fsx_password
   fsx_svm_name                      = var.sql_svm_name
   fsx_weekly_maintenance_start_time = "1:05:00"
   sql_deployment_mode               = var.sql_deployment_mode
@@ -232,8 +232,8 @@ module "standalone_sql_node" {
   fsx_volume_snapshot_policy = var.fsx_volume_snapshot_policy
   ad_dns_ip_addresses        = element(split(",", var.dns_ip_addresses), 0)
   domain_dns_name            = var.domain_dns_name
-  domain_admin_user          = var.domain_admin_user
-  sql_admin_accounts         = var.sql_service_account_name
+  domain_admin_user          = local.resolved_ad_username
+  sql_admin_accounts         = local.resolved_sql_username
   sql_collation              = var.sql_collation
 
   sql_node_initialization_s3_url = var.sql_node_initialization_s3_url
@@ -280,8 +280,8 @@ module "fci_sql_node1" {
   fsx_volume_snapshot_policy = var.fsx_volume_snapshot_policy
   ad_dns_ip_addresses        = element(split(",", var.dns_ip_addresses), 0)
   domain_dns_name            = var.domain_dns_name
-  domain_admin_user          = var.domain_admin_user
-  sql_admin_accounts         = var.sql_service_account_name
+  domain_admin_user          = local.resolved_ad_username
+  sql_admin_accounts         = local.resolved_sql_username
   sql_collation              = var.sql_collation
 
   sql_node_initialization_s3_url = var.sql_node_initialization_s3_url
@@ -338,8 +338,8 @@ module "fci_sql_node2" {
   fsx_volume_snapshot_policy = var.fsx_volume_snapshot_policy
   ad_dns_ip_addresses        = element(split(",", var.dns_ip_addresses), 0)
   domain_dns_name            = var.domain_dns_name
-  domain_admin_user          = var.domain_admin_user
-  sql_admin_accounts         = var.sql_service_account_name
+  domain_admin_user          = local.resolved_ad_username
+  sql_admin_accounts         = local.resolved_sql_username
   sql_collation              = var.sql_collation
 
   sql_node_initialization_s3_url = var.sql_node_initialization_s3_url

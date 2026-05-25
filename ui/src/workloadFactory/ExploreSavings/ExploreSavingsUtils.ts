@@ -1876,8 +1876,9 @@ export const handleAuthenticate = async (
         const state = store.getState();
         const {
             selectedAuthenticationType,
-            serverDetails: { userName, password }
+            serverDetails: { userName, password, ssmParameterArn }
         } = state.exploreSavings;
+        const { isGovAccount } = state.auth;
         const { selectedRowsForExploreSavingsEBSBulk, bulkAuthCredentials, rowsRequiringAuthBulk } =
             state.exploreSavingsBulk;
 
@@ -1900,29 +1901,31 @@ export const handleAuthenticate = async (
             const payloadItems: any[] = [];
 
             rowsToAuthenticate.forEach((row: any) => {
-                const credentialList: {
-                    resourceId: string;
-                    resourceType: string;
-                    username: string;
-                    password: string;
-                }[] = [];
+                const credentialList: any[] = [];
 
                 const hostCredentials = bulkAuthCredentials[row.name];
-                const credUserName = hostCredentials?.userName || '';
-                const credPassword = hostCredentials?.password || '';
 
-                // Only create credentials for instances in this specific host that match the fileSystemType
                 row?.sqlServerInstances?.forEach((instance: any) => {
                     if (instance?.fileSystemType === selectedExploreSavingsTabFileSystemType) {
-                        credentialList.push({
-                            resourceId: instance?.databaseInstanceName,
-                            resourceType:
-                                selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
-                                    ? DETECT_HOST_VAR.MSSQL
-                                    : DETECT_HOST_VAR.WINDOWS,
-                            username: credUserName,
-                            password: credPassword
-                        });
+                        const resourceType =
+                            selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                                ? DETECT_HOST_VAR.MSSQL
+                                : DETECT_HOST_VAR.WINDOWS;
+
+                        if (isGovAccount) {
+                            credentialList.push({
+                                resourceId: instance?.databaseInstanceName,
+                                resourceType,
+                                ssmParameterArn: hostCredentials?.ssmParameterArn || ''
+                            });
+                        } else {
+                            credentialList.push({
+                                resourceId: instance?.databaseInstanceName,
+                                resourceType,
+                                username: hostCredentials?.userName || '',
+                                password: hostCredentials?.password || ''
+                            });
+                        }
                     }
                 });
 
@@ -2090,23 +2093,28 @@ export const handleAuthenticate = async (
                 (instance: any) => instance?.fileSystemType === selectedExploreSavingsTabFileSystemType
             );
 
-            const credentialList: {
-                resourceId: string;
-                resourceType: string;
-                username: string;
-                password: string;
-            }[] = [];
+            const credentialList: any[] = [];
 
             matchedInstances?.forEach((instance: any) => {
-                credentialList.push({
-                    resourceId: instance?.databaseInstanceName,
-                    resourceType:
-                        selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
-                            ? DETECT_HOST_VAR.MSSQL
-                            : DETECT_HOST_VAR.WINDOWS,
-                    username: userName,
-                    password
-                });
+                const resourceType =
+                    selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                        ? DETECT_HOST_VAR.MSSQL
+                        : DETECT_HOST_VAR.WINDOWS;
+
+                if (isGovAccount) {
+                    credentialList.push({
+                        resourceId: instance?.databaseInstanceName,
+                        resourceType,
+                        ssmParameterArn
+                    });
+                } else {
+                    credentialList.push({
+                        resourceId: instance?.databaseInstanceName,
+                        resourceType,
+                        username: userName,
+                        password
+                    });
+                }
             });
             const credList = {
                 credentials: credentialList,

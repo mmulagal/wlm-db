@@ -3,7 +3,7 @@ import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import throat from 'throat';
 import getLogger from '../utils/logger';
 import { DatabaseInstancesIncludingResource } from '../utils/common-types';
-import { ACCOUNT_ID, DatabaseTypes } from '../utils/consts';
+import { ACCOUNT_ID, GOV_ACCOUNT, DatabaseTypes, isGovCloudRegion } from '../utils/consts';
 import { setAsyncLocalStorageResource, getLocalStorage } from '../utils/async-local-storage';
 import { IS_DEMO_FLOW, formatDuration, sleep } from '../utils/utils';
 import { registerJob, updateParentJobStatus } from './database/job-operations';
@@ -275,6 +275,11 @@ async function processCurrentBatch(
                 try {
                     await getLocalStorage().run(new Map(), async () => {
                         setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                        const accountRegion = accountInstances[0]?.region;
+                        setAsyncLocalStorageResource(
+                            GOV_ACCOUNT,
+                            accountRegion ? isGovCloudRegion(accountRegion) : false
+                        );
                         await processAccountInstancesBatch(
                             accountId,
                             accountInstances,

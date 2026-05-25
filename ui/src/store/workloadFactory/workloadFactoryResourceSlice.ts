@@ -159,6 +159,7 @@ const initialState: WorkloadFactoryResourceEntities = {
     },
     passwordResetLoading: false,
     sqlServerUserName: '',
+    credentialUpdateSsmArn: '',
     instanceDetailsData: {
         fsxId: '',
         ec2InstanceId: '',
@@ -180,6 +181,9 @@ const workloadFactoryResourceSlice = createSlice({
         },
         setSqlServerUserName: (state, action: PayloadAction<any>) => {
             state.sqlServerUserName = action.payload;
+        },
+        setCredentialUpdateSsmArn: (state, action: PayloadAction<string>) => {
+            state.credentialUpdateSsmArn = action.payload;
         },
         setPasswordResetLoading: (state, action: PayloadAction<any>) => {
             state.passwordResetLoading = action.payload;
@@ -257,6 +261,7 @@ const workloadFactoryResourceSlice = createSlice({
             state.sqlServerPasswords.password = '';
             state.sqlServerPasswords.confirmPassword = '';
             state.sqlServerUserName = '';
+            state.credentialUpdateSsmArn = '';
         }
     }
 });
@@ -286,6 +291,7 @@ export const {
     setIsResourceRefresh,
     setSelectedResourcePageHostData,
     setSelectedAuthenticationType,
+    setCredentialUpdateSsmArn,
     resetAllPasswords
 } = workloadFactoryResourceSlice.actions;
 export default workloadFactoryResourceSlice;

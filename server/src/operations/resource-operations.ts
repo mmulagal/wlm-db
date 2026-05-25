@@ -8,7 +8,13 @@ import {
     HttpErrorCodes,
     RESOURCE_PREPARE_JOB_TIMEOUT_MINUTES
 } from '../utils/consts';
-import { IS_DEMO_FLOW, getArtifactsRegionBucketName, retryWithDelay, sqlResponseParsing } from '../utils/utils';
+import {
+    IS_DEMO_FLOW,
+    getArtifactsBucketRegion,
+    getArtifactsRegionBucketName,
+    retryWithDelay,
+    sqlResponseParsing
+} from '../utils/utils';
 import { listFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import getLogger from '../utils/logger';
 import { ManageResourcesResponseType } from '../routes/types/resource.types';
@@ -152,8 +158,9 @@ async function checkScriptNeedsUpdate(accountId: string, credentialsId: string, 
 
 async function copyScriptsToHost(accountId: string, credentialsId: string, region: string, ec2InstanceId: string) {
     logger.info('Copy scripts to host', { accountId, credentialsId, region, ec2InstanceId });
+    const artifactsRegion = getArtifactsBucketRegion(region);
     const bucketname = getArtifactsRegionBucketName(region);
-    const dbcreateS3SignedUrl = await getPreSignedUrl(region, bucketname, DBCREATE_RELATIVE_PATH);
+    const dbcreateS3SignedUrl = await getPreSignedUrl(artifactsRegion, bucketname, DBCREATE_RELATIVE_PATH);
 
     try {
         // Copy scripts to the EC2 instance

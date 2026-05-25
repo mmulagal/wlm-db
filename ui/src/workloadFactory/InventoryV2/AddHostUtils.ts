@@ -78,6 +78,9 @@ export const handleProtectionUtil = async (
         getOrganizationIds
     }: any
 ) => {
+    const { isGovAccount } = store.getState().auth;
+    if (isGovAccount) return;
+
     dispatch(
         setDialogErrorWithTooltip({
             showDialogError: false,

@@ -12,12 +12,13 @@ import {
     setSqlServerPassword,
     setSqlServerUserName,
     setSelectedAuthenticationType,
+    setCredentialUpdateSsmArn,
     resetAllPasswords
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { useDelayedError } from '../../../../common/hooks/useDelayedError';
 import { isValidSqlUsername } from '../../../../utils/utilityFunctions';
-import { AUTHENTICATION_TYPE, RESET_PASSWORD_TYPE } from '../../../../utils/consts';
+import { AUTHENTICATION_TYPE, RESET_PASSWORD_TYPE, isValidSsmArn } from '../../../../utils/consts';
 import { AppDispatch } from '../../../../store/store';
 
 interface PasswordContentProps {
@@ -110,9 +111,44 @@ const PasswordContent = ({
     );
 };
 
+const GovCloudArnContent = () => {
+    const { t } = useTranslation();
+    const dispatch = useDispatch();
+    const credentialUpdateSsmArn = useAppSelector(state => state.workloadFactoryResource.credentialUpdateSsmArn);
+    const [arnTouched, setArnTouched] = useState(false);
+
+    const arnError = (() => {
+        if (!arnTouched) return '';
+        if (!credentialUpdateSsmArn) return t('databases.general.action-required');
+        if (!isValidSsmArn(credentialUpdateSsmArn)) return t('databases.register-flow.ssm-parameter-arn-invalid');
+        return '';
+    })();
+
+    return (
+        <div className={styles['fsxadmin-password']}>
+            <div className={styles.textArea}>
+                <TextField
+                    label={t('databases.register-flow.ssm-parameter-arn-label')}
+                    value={credentialUpdateSsmArn}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        dispatch(setCredentialUpdateSsmArn(e.target.value))
+                    }
+                    onBlur={() => setArnTouched(true)}
+                    error={arnError}
+                    placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
+                    className={styles.textField}
+                />
+            </div>
+        </div>
+    );
+};
+
 const FSXPasswordContent = ({ type, engine }: FSXPasswordContentProps) => {
     const dispatch = useDispatch();
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const { password, confirmPassword } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
+
+    if (isGovAccount) return <GovCloudArnContent />;
 
     return (
         <PasswordContent
@@ -133,10 +169,13 @@ const FSXPasswordContent = ({ type, engine }: FSXPasswordContentProps) => {
 
 const OracleServerPasswordContent = ({ type }: ORACLEPasswordContentProps) => {
     const dispatch = useDispatch();
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const { password: sqlPassword, confirmPassword: sqlConfirmPassword } = useAppSelector(
         state => state.workloadFactoryResource.sqlServerPasswords
     );
     const { sqlServerUserName } = useAppSelector(state => state.workloadFactoryResource);
+
+    if (isGovAccount) return <GovCloudArnContent />;
 
     return (
         <PasswordContent
@@ -153,10 +192,13 @@ const OracleServerPasswordContent = ({ type }: ORACLEPasswordContentProps) => {
 
 const SQLServerPasswordContent = () => {
     const dispatch = useDispatch();
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const { password: sqlPassword, confirmPassword: sqlConfirmPassword } = useAppSelector(
         state => state.workloadFactoryResource.sqlServerPasswords
     );
     const { sqlServerUserName } = useAppSelector(state => state.workloadFactoryResource);
+
+    if (isGovAccount) return <GovCloudArnContent />;
 
     return (
         <PasswordContent

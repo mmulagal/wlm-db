@@ -60,12 +60,9 @@ variable "sql_fsx_server_net_bios_name" {
   }
 }
 variable "domain_admin_user" {
-  description = "User name for the account that will be used as Domain Administrator. This is separate from the default 'Administrator' account."
+  description = "User name for the account that will be used as Domain Administrator. Can be empty when credentials are resolved from SSM."
   type        = string
-  validation {
-    condition     = can(regex("([a-zA-Z0-9]+(\\.|_|-|@)*)+", var.domain_admin_user))
-    error_message = "The user name must contain only alphanumeric characters, periods, underscores, hyphens, or at signs."
-  }
+  default     = ""
 }
 
 variable "domain_dns_name" {

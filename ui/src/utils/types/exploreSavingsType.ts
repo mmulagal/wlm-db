@@ -18,6 +18,7 @@ export interface ExploreSavingsSliceEntities {
     serverDetails: {
         password: string;
         userName: string;
+        ssmParameterArn: string;
     };
     selectedAuthenticationType: string;
     selectedCalculatorMode: string;

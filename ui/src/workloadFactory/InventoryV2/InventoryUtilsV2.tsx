@@ -5697,7 +5697,12 @@ export const isProtectDisabled = (rowData: any): boolean =>
     !rowData?.hostRow?.nodeIpAddress ||
     rowData?.status !== 'ONLINE';
 
-export const mssqlDatabaseMenuOptions = (t: TFunction, isProtected: boolean, rowData: any) => {
+export const mssqlDatabaseMenuOptions = (
+    t: TFunction,
+    isProtected: boolean,
+    rowData: any,
+    isGovAccount: boolean = false
+) => {
     let disableOption = false;
     let disableMessage = '';
 
@@ -5723,14 +5728,16 @@ export const mssqlDatabaseMenuOptions = (t: TFunction, isProtected: boolean, row
             displayName: isProtected
                 ? t('databases.instance-table.menu-options.edit-protection')
                 : t('databases.instance-table.menu-options.protect'),
-            disabled: isProtectDisabled(rowData)
+            disabled: isGovAccount || isProtectDisabled(rowData),
+            infoText: isGovAccount ? t('databases.register-flow.govcloud-protection-not-supported') : ''
         },
         ...(isProtected
             ? [
                   {
                       id: 'viewProtectionDetails',
                       displayName: t('databases.instance-table.menu-options.view-protection-details'),
-                      disabled: false
+                      disabled: isGovAccount,
+                      infoText: isGovAccount ? t('databases.register-flow.govcloud-protection-not-supported') : ''
                   }
               ]
             : [])

@@ -162,13 +162,14 @@ if ($IsClustered -ne "false") {
 
 # Get FSx certificate
 $isprivatesubnet = $False
-$connection = Test-Connection -ComputerName fsx-aws-certificates.s3.amazonaws.com -Quiet
+$certHost = $(if ($region -like 'us-gov-*') { 'fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com' } else { 'fsx-aws-certificates.s3.amazonaws.com' })
+$connection = Test-Connection -ComputerName $certHost -Quiet
 if ($connection -eq $False) {
     $isprivatesubnet = $True
     $restcert = ''
 }
 else {
-    $certuri = "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+    $certuri = "https://$certHost/bundle-$region.pem"
     Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
     $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root
     $restcert = Get-ChildItem -Path Cert:\LocalMachine\Root | ? { $_.Subject -like $cert.Subject }

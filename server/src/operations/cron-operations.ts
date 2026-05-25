@@ -27,12 +27,14 @@ import {
     DAILY_DRIFT_ASSESSMENT_TRIGGER_CRON_PATTERN,
     FAIL_LONGRUNNING_DEPLOYMENT_JOB_INTERVAL,
     FAIL_LONGRUNNING_RESOURCE_PREPARE_JOB_INTERVAL,
+    GOV_ACCOUNT,
     INSTANCE_PERFORMANCE_ASSESSMENT_QUEUE,
     ORACLE_CPU_CATALOG_CRON_PATTERN,
     ORACLE_CPU_CATALOG_QUEUE,
     TCO_FEATURE,
     WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_CRON_PATTERN,
-    WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_QUEUE
+    WELL_ARCHITECTED_ASSESSMENT_NOTIFICATION_QUEUE,
+    isGovCloudRegion
 } from '../utils/consts';
 import getLogger from '../utils/logger';
 import { getLocalStorage, setAsyncLocalStorageResource } from '../utils/async-local-storage';
@@ -207,6 +209,7 @@ async function updateTcoInstRecPrefs() {
                             region
                         } = instance;
                         setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                        setAsyncLocalStorageResource(GOV_ACCOUNT, isGovCloudRegion(region));
                         try {
                             const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
                             if (instance.database_type === DATABASE_TYPE.oracle) {
@@ -369,6 +372,7 @@ async function updateManagedInstRecPrefs() {
                 Object.entries(grouped).map(async ([key, instances]) => {
                     const [accountId, region, credentialsId, awsAccountId, deploymentType] = key.split('||');
                     setAsyncLocalStorageResource(ACCOUNT_ID, accountId);
+                    setAsyncLocalStorageResource(GOV_ACCOUNT, isGovCloudRegion(region));
                     const managedInstanceToBeUpdated = instances.filter((instance: { resource: Resource }) => {
                         const resourceInfo = instance?.resource;
                         const { node1InstanceId, node2InstanceId } = resourceInfo?.metadata as unknown as Metadata;

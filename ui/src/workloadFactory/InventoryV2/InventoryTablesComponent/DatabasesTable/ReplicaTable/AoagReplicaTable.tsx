@@ -39,6 +39,7 @@ const AoagReplicaTable = ({
     const [data, setData] = useState<any[]>([]);
     const [menuOpenedRow, setOpenedRow] = useState<any>(null);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const { databaseProtection } = useAppSelector(state => state.snapCenter);
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -63,7 +64,7 @@ const AoagReplicaTable = ({
         isSticky: true,
         renderCell: (cellData: any, replicaRowData: any) => {
             const isProtected = determineProtectionStatusMssql(isDemoMode, rowData, databaseProtection);
-            const menu = mssqlDatabaseMenuOptions(t, isProtected, rowData);
+            const menu = mssqlDatabaseMenuOptions(t, isProtected, rowData, isGovAccount);
 
             return (
                 <div className={mssqlStyles.lastContainer}>

@@ -27,6 +27,7 @@ import {
     PgSqlTerraformSetupSchema
 } from './schemas/deployment-schemas';
 import castRequest from './utils';
+import { validateDeploymentConfigSsmArn } from '../utils/ssm-arn-validator';
 
 const API_PREFIX_PATH = '/v1/credentials/:credentialsId/regions/:region';
 const API_MSSQL_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
@@ -101,6 +102,7 @@ const deploymentValidationHook = async (request: FastifyRequest, reply: FastifyR
     }
     if (sqlConfig) {
         if (
+            !sqlConfig.ssmParameterArn &&
             !sqlConfig.isManagedServiceAccount &&
             (!sqlConfig.serviceAccountPassword || sqlConfig.serviceAccountPassword.length < 8)
         ) {
@@ -113,13 +115,24 @@ const deploymentValidationHook = async (request: FastifyRequest, reply: FastifyR
     }
 };
 
+async function govCloudDeploymentValidationHook(request: FastifyRequest) {
+    const body = request.body as any;
+    const region = (request.params as any)?.region || body?.region;
+    validateDeploymentConfigSsmArn('fsxConfiguration', body?.fsxConfiguration, region);
+    validateDeploymentConfigSsmArn('adConfiguration', body?.adConfiguration, region);
+    validateDeploymentConfigSsmArn('sqlConfiguration', body?.sqlConfiguration, region);
+}
+
 export default function deploymentRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
 
     server
         .post(
             `${API_MSSQL_STATIC_TEMPLATE_PREFIX_PATH}`,
-            { schema: CloudFormationTemplateSchema, preHandler: deploymentValidationHook },
+            {
+                schema: CloudFormationTemplateSchema,
+                preHandler: [govCloudDeploymentValidationHook, deploymentValidationHook]
+            },
             async (request, reply) => {
                 const {
                     headers: { 'triggered-from': triggeredFrom },
@@ -154,7 +167,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
         )
         .post(
             `${API_MSSQL_PREFIX_PATH}/cloudformation/deploy`,
-            { schema: DeployTemplateSchema, preHandler: deploymentValidationHook },
+            { schema: DeployTemplateSchema, preHandler: [govCloudDeploymentValidationHook, deploymentValidationHook] },
             async (request, reply) => {
                 const {
                     params: { credentialsId, region },
@@ -229,7 +242,10 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
         })
         .post(
             `${API_PGSQL_PREFIX_PATH}/cloudformation/deploy`,
-            { schema: PgSqlDeployTemplateSchema },
+            {
+                schema: PgSqlDeployTemplateSchema,
+                preHandler: [govCloudDeploymentValidationHook, deploymentValidationHook]
+            },
             async (request, reply) => {
                 const {
                     params: { credentialsId, region },
@@ -261,7 +277,7 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
         )
         .post(
             `${'/v1/pgsql/cloudformation/template'}`,
-            { schema: PgSqlCloudFormationTemplateSchema },
+            { schema: PgSqlCloudFormationTemplateSchema, preHandler: govCloudDeploymentValidationHook },
             async (request, reply) => {
                 const {
                     headers: { 'triggered-from': triggeredFrom },
@@ -292,10 +308,26 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                 return reply.send(response);
             }
         )
-        .post(`${API_MSSQL_TERRAFORM_PREFIX_PATH}`, { schema: TerraformSetupSchema }, async (request, reply) => {
-            const {
-                headers: { 'triggered-from': triggeredFrom },
-                body: {
+        .post(
+            `${API_MSSQL_TERRAFORM_PREFIX_PATH}`,
+            { schema: TerraformSetupSchema, preHandler: govCloudDeploymentValidationHook },
+            async (request, reply) => {
+                const {
+                    headers: { 'triggered-from': triggeredFrom },
+                    body: {
+                        networkConfiguration,
+                        ec2Configuration,
+                        adConfiguration,
+                        fsxConfiguration,
+                        sqlConfiguration,
+                        topicArn,
+                        enableCloudWatch,
+                        tags,
+                        credentialsId,
+                        region
+                    }
+                } = castRequest(request);
+                const response = await getTerraformSetup(
                     networkConfiguration,
                     ec2Configuration,
                     adConfiguration,
@@ -303,53 +335,45 @@ export default function deploymentRoutes(fastify: FastifyInstance) {
                     sqlConfiguration,
                     topicArn,
                     enableCloudWatch,
+                    triggeredFrom as string,
                     tags,
                     credentialsId,
                     region
-                }
-            } = castRequest(request);
-            const response = await getTerraformSetup(
-                networkConfiguration,
-                ec2Configuration,
-                adConfiguration,
-                fsxConfiguration,
-                sqlConfiguration,
-                topicArn,
-                enableCloudWatch,
-                triggeredFrom as string,
-                tags,
-                credentialsId,
-                region
-            );
-            return reply.send(response);
-        })
-        .post(`${API_PGSQL_TERRAFORM_PREFIX_PATH}`, { schema: PgSqlTerraformSetupSchema }, async (request, reply) => {
-            const {
-                headers: { 'triggered-from': triggeredFrom },
-                body: {
+                );
+                return reply.send(response);
+            }
+        )
+        .post(
+            `${API_PGSQL_TERRAFORM_PREFIX_PATH}`,
+            { schema: PgSqlTerraformSetupSchema, preHandler: govCloudDeploymentValidationHook },
+            async (request, reply) => {
+                const {
+                    headers: { 'triggered-from': triggeredFrom },
+                    body: {
+                        networkConfiguration,
+                        ec2Configuration,
+                        fsxConfiguration,
+                        sqlConfiguration,
+                        topicArn,
+                        enableCloudWatch,
+                        tags,
+                        credentialsId,
+                        region
+                    }
+                } = castRequest(request);
+                const response = await getPGSQLTerraformSetup(
                     networkConfiguration,
                     ec2Configuration,
                     fsxConfiguration,
                     sqlConfiguration,
                     topicArn,
                     enableCloudWatch,
+                    triggeredFrom as string,
                     tags,
                     credentialsId,
                     region
-                }
-            } = castRequest(request);
-            const response = await getPGSQLTerraformSetup(
-                networkConfiguration,
-                ec2Configuration,
-                fsxConfiguration,
-                sqlConfiguration,
-                topicArn,
-                enableCloudWatch,
-                triggeredFrom as string,
-                tags,
-                credentialsId,
-                region
-            );
-            return reply.code(202).send(response);
-        });
+                );
+                return reply.code(202).send(response);
+            }
+        );
 }

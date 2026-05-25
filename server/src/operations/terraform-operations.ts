@@ -30,7 +30,7 @@ import {
     PGSQL_TERRAFORM_ROOT_MODULE_DISTRIBUTION,
     TEMP_DIRECTORY
 } from '../utils/consts';
-import { getArtifactsRegionBucketName, isMssql, isPgsql } from '../utils/utils';
+import { getArtifactsBucketRegion, getArtifactsRegionBucketName, isMssql, isPgsql } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { generateSignedUrls } from './template-operations';
 
@@ -265,10 +265,11 @@ async function processTemplate(
     const customInitializerTemplatePath: string = `${WLMDB}/${resourcePath}/${INITIALIZER}/${deploymentName}/${
         initializerTemplate!.url
     }`;
+    const artifactsRegion = getArtifactsBucketRegion(region);
     const bucketName = getArtifactsRegionBucketName(region);
 
-    await putObjectBucket(region, bucketName, customInitializerTemplatePath, contents);
-    const initializerS3ignedURL = await getPreSignedUrl(region, bucketName, customInitializerTemplatePath);
+    await putObjectBucket(artifactsRegion, bucketName, customInitializerTemplatePath, contents);
+    const initializerS3ignedURL = await getPreSignedUrl(artifactsRegion, bucketName, customInitializerTemplatePath);
     return {
         name: urlName,
         url: initializerS3ignedURL,

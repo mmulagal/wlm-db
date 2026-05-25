@@ -7,7 +7,7 @@ variable "aws_location" {
     error_message = "The aws_location value must not be empty."
   }
   validation {
-    condition     = can(regex("[a-z][a-z]-[a-z]+-[1-9]", var.aws_location))
+    condition     = can(regex("^[a-z]{2}(-gov)?-[a-z]+-[1-9]$", var.aws_location))
     error_message = "Must be valid AWS Region names."
   }
 }
@@ -301,13 +301,9 @@ variable "fsx_storage_capacity" {
 
 
 variable "fsx_admin_username" {
-  description = "The username of the FSx admin"
+  description = "The username of the FSx admin. Can be empty when fsx_ssm_parameter_arn is provided."
   type        = string
-
-  validation {
-    condition     = length(var.fsx_admin_username) > 0
-    error_message = "The fsx_admin_username value must not be empty."
-  }
+  default     = ""
 }
 
 variable "sql_version" {
@@ -337,13 +333,9 @@ variable "fsx_file_system_id" {
 }
 
 variable "fsx_admin_password" {
-  description = "The password of the FSx admin"
+  description = "The password of the FSx admin. Can be empty when fsx_ssm_parameter_arn is provided."
   type        = string
-
-  validation {
-    condition     = length(var.fsx_admin_password) > 0
-    error_message = "The fsx_admin_password value must not be empty."
-  }
+  default     = ""
 }
 
 variable "fsx_volume_throughput_capacity" {
@@ -393,13 +385,9 @@ variable "sql_deployment_mode" {
 }
 
 variable "sql_service_account_password" {
-  description = "The password of the SQL service account"
+  description = "The password of the SQL service account. Can be empty when sql_ssm_parameter_arn is provided."
   type        = string
-
-  validation {
-    condition     = length(var.sql_service_account_password) > 0
-    error_message = "The sql_service_account_password value must not be empty."
-  }
+  default     = ""
 }
 
 variable "enable_cloud_watch_log_feature" {
@@ -494,4 +482,27 @@ variable "fsx_aggr_name" {
   type        = string
 }
 
+# GovCloud SSM Parameter ARN variables
+# When provided, credentials are read from the SSM parameter instead of direct password/username variables.
 
+variable "fsx_ssm_parameter_arn" {
+  description = "ARN of a pre-created SSM parameter containing FSx credentials JSON ({username, password}). For GovCloud deployments."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.fsx_ssm_parameter_arn == "" || can(regex("^arn:aws-us-gov:ssm:us-gov-(east|west)-[1-9]:[0-9]{12}:parameter/netapp/wlmdb/.+$", var.fsx_ssm_parameter_arn))
+    error_message = "fsx_ssm_parameter_arn must be a valid GovCloud SSM ARN (arn:aws-us-gov:ssm:REGION:ACCOUNT:parameter/netapp/wlmdb/...) or empty."
+  }
+}
+
+variable "sql_ssm_parameter_arn" {
+  description = "ARN of a pre-created SSM parameter containing PGSQL credentials JSON ({username, password}). For GovCloud deployments."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.sql_ssm_parameter_arn == "" || can(regex("^arn:aws-us-gov:ssm:us-gov-(east|west)-[1-9]:[0-9]{12}:parameter/netapp/wlmdb/.+$", var.sql_ssm_parameter_arn))
+    error_message = "sql_ssm_parameter_arn must be a valid GovCloud SSM ARN (arn:aws-us-gov:ssm:REGION:ACCOUNT:parameter/netapp/wlmdb/...) or empty."
+  }
+}

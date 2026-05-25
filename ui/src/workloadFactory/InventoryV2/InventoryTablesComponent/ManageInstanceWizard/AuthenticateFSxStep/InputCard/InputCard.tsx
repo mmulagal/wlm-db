@@ -17,7 +17,7 @@ import {
 import { UseWizardReturn } from '../../../../../../utils/types/registerTypes';
 import { ReactComponent as Success } from '../../../../../../assets/success.svg';
 import { ReactComponent as Failure } from '../../../../../../assets/error-icon.svg';
-import { FSX_FOR_ONTAP_CRED_OPTION, RESPONSE_STATUS } from '../../../../../../utils/consts';
+import { FSX_FOR_ONTAP_CRED_OPTION, RESPONSE_STATUS, isValidSsmArn } from '../../../../../../utils/consts';
 import { FsxAuthStatus } from '../../../../../../utils/types/inventoryV2Types';
 import {
     FsxItem,
@@ -226,6 +226,9 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                                     error={
                                         !inventoryV2State.detectOntapSsmParameterArn && hitNextForStep2
                                             ? t('databases.general.action-required')
+                                            : inventoryV2State.detectOntapSsmParameterArn &&
+                                              !isValidSsmArn(inventoryV2State.detectOntapSsmParameterArn)
+                                            ? t('databases.register-flow.ssm-parameter-arn-invalid')
                                             : fsxAllAuthFailed
                                             ? t('databases.register-flow.fsx-authentication-failed')
                                             : ''
@@ -352,9 +355,16 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                                                     isFailed ? styles.errorBorder : ''
                                                 }`}
                                                 error={
-                                                    (!detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn &&
-                                                        hitNextForStep2) ||
-                                                    isFailed
+                                                    !detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn &&
+                                                    hitNextForStep2
+                                                        ? t('databases.general.action-required')
+                                                        : detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn &&
+                                                          !isValidSsmArn(
+                                                              detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn ||
+                                                                  ''
+                                                          )
+                                                        ? t('databases.register-flow.ssm-parameter-arn-invalid')
+                                                        : isFailed
                                                         ? t('databases.general.action-required')
                                                         : ''
                                                 }

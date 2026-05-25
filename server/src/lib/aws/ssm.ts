@@ -27,7 +27,11 @@ import {
     DescribeInstanceInformationCommandInput,
     paginateDescribeInstanceInformation,
     paginateDescribeAvailablePatches,
-    paginateDescribeInstancePatches
+    paginateDescribeInstancePatches,
+    DescribeParametersCommandInput,
+    ParameterMetadata,
+    ParameterType,
+    paginateDescribeParameters
 } from '@aws-sdk/client-ssm';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
@@ -202,12 +206,13 @@ async function describeInstancePatches(
 }
 
 async function describeAvailablePatches(
+    credentialsId: string,
     region: string,
     params: DescribeAvailablePatchesCommandInput
 ): Promise<Patch[]> {
-    logger.info('Describe Available Patches', { region, params });
+    logger.info('Describe Available Patches', { credentialsId, region, params });
 
-    const ssmClient = await getSSMClient(region);
+    const ssmClient = await getSSMClient(region, credentialsId);
     let allPatches: Patch[] = [];
 
     for await (const page of paginateDescribeAvailablePatches({ client: ssmClient }, params)) {
@@ -240,6 +245,34 @@ async function describeInstanceInformation(
     return instanceInformation;
 }
 
+async function describeParameters(
+    credentialsId: string,
+    region: string,
+    parameterType?: ParameterType
+): Promise<ParameterMetadata[]> {
+    logger.info('Describe SSM parameters', { credentialsId, region, parameterType });
+
+    const ssmClient = await getSSMClient(region, credentialsId);
+
+    const input: DescribeParametersCommandInput = {
+        ParameterFilters: [
+            ...(parameterType
+                ? [{ Key: 'Type', Values: [parameterType] }]
+                : [{ Key: 'Type', Values: [ParameterType.SECURE_STRING] }])
+        ]
+    };
+
+    const allParameters: ParameterMetadata[] = [];
+    for await (const page of paginateDescribeParameters({ client: ssmClient }, input)) {
+        if (page.Parameters?.length) {
+            allParameters.push(...page.Parameters);
+        }
+    }
+
+    logger.debug('describeParameters response', { count: allParameters.length });
+    return allParameters;
+}
+
 export {
     getSSMClient,
     sendSSMCommand,
@@ -253,5 +286,6 @@ export {
     describeInstancePatchStates,
     describeInstancePatches,
     describeAvailablePatches,
-    describeInstanceInformation
+    describeInstanceInformation,
+    describeParameters
 };

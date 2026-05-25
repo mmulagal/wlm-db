@@ -145,6 +145,8 @@ Allows the script to automatically retrieve SQL Server and ONTAP credentials fro
 }
 \`\`\`
 
+> **Note for GovCloud:** Use \`arn:aws-us-gov:secretsmanager:*:*:secret:*\` for GovCloud accounts.
+
 **Secret Naming Convention:**
 - SQL Server credentials: \`<Hostname>/<InstanceName>\`
 - ONTAP credentials: Use the StorageManagementAddress (FQDN, Management IP, or FSx ID) as the secret name
@@ -374,6 +376,8 @@ Allows the script to automatically retrieve Oracle and ONTAP credentials from AW
     ]
 }
 \`\`\`
+
+> **Note for GovCloud:** Use \`arn:aws-us-gov:secretsmanager:*:*:secret:*\` for GovCloud accounts.
 
 **Secret Naming Convention:**
 - Oracle credentials: \`oracle/<EC2InstanceId>/<OracleSid>\`

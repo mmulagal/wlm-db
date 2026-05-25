@@ -34,7 +34,7 @@ async function getAvailablePatches(credentialsId: string, region: string, instan
         ]
     };
 
-    const availablePatches = (await describeAvailablePatches(region, params)) || {};
+    const availablePatches = (await describeAvailablePatches(credentialsId, region, params)) || {};
     return availablePatches;
 }
 

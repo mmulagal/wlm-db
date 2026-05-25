@@ -5,7 +5,13 @@ import { useDispatch } from 'react-redux';
 import classNames from 'classnames';
 import styles from './DetectContent.module.scss';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { ACTION_TYPE, AUTHENTICATION_TYPE, DBType, DETECT_HOST_VAR } from '../../../../../../utils/consts';
+import {
+    ACTION_TYPE,
+    AUTHENTICATION_TYPE,
+    DBType,
+    DETECT_HOST_VAR,
+    isValidSsmArn
+} from '../../../../../../utils/consts';
 import {
     setAuthenticationType,
     setDetectManagePassword,
@@ -167,7 +173,13 @@ const DetectContent = () => {
                             setState({ [wizardKey]: e.target.value });
                         }}
                         className={styles.textFieldStyle}
-                        error={errorField || (!storeValue && hitNext ? t('databases.general.action-required') : '')}
+                        error={
+                            errorField ||
+                            (!storeValue && hitNext ? t('databases.general.action-required') : '') ||
+                            (storeValue && !isValidSsmArn(storeValue)
+                                ? t('databases.register-flow.ssm-parameter-arn-invalid')
+                                : '')
+                        }
                         isDisabled={isDetectHostLoading}
                         placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
                     />

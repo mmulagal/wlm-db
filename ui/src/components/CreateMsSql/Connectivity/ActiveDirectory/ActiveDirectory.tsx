@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
-import { AccordionCard, AccordionCardContent, PasswordField, TextField, Typography } from '@netapp/design-system';
+import { AccordionCard, AccordionCardContent, PasswordField, TextField, DsTypography } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
 import { useDispatch } from 'react-redux';
@@ -17,10 +17,11 @@ import {
     setSelectedADPassword,
     setSelectedADScenarioType,
     setSelectedADUserName,
+    setSelectedADSsmArn,
     setActiveDirectoryFields,
     resetADAdvancedFields
 } from '../../../../store/mssql/mssqlFormSlice';
-import { AWS_MANAGED_AD, USER_MANAGED_AD } from '../../../../utils/consts';
+import { AWS_MANAGED_AD, isValidSsmArn, USER_MANAGED_AD } from '../../../../utils/consts';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 import { setOUPathValue } from '../../../../store/mssql/msSqlActionSlice';
 
@@ -51,6 +52,8 @@ const ActiveDirectory = () => {
 
     const userName = useAppSelector(state => state.mssqlForm.activeDirectory.userName);
     const password = useAppSelector(state => state.mssqlForm.activeDirectory.password);
+    const ssmParameterArn = useAppSelector(state => state.mssqlForm.activeDirectory.ssmParameterArn);
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const preferredDC = useAppSelector(state => state.mssqlForm.activeDirectory.preferredDomainController);
     const preferredOUPath = useAppSelector(state => state.mssqlForm.activeDirectory.preferredOUPath);
     const targetADGroup = useAppSelector(state => state.mssqlForm.activeDirectory.targetADGroup);
@@ -189,13 +192,29 @@ const ActiveDirectory = () => {
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
             return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                <DsTypography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.SELECT_ANY_ACCOUNT}
-                </Typography>
+                </DsTypography>
             );
         }
         if (!selectedVPCData) {
             return <ActionRequired disabled />;
+        }
+
+        if (isGovAccount) {
+            if (!selectedADDomainName?.label || !selectedADDomainAddress || !ssmParameterArn) {
+                return <ActionRequired error={!isADNotFilled} />;
+            }
+            if (!isValidSsmArn(ssmParameterArn)) {
+                return <AccordionError />;
+            }
+            return (
+                <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
+                    <div>{selectedADDomainName?.label}</div>
+                    <div className={CommonStyles.separator} />
+                    <div>{selectedADDomainAddress}</div>
+                </DsTypography>
+            );
         }
 
         // Check for validation errors first (even if fields are filled)
@@ -211,13 +230,13 @@ const ActiveDirectory = () => {
             return <ActionRequired error={!isADNotFilled} />;
         }
         return (
-            <Typography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
+            <DsTypography variant="Regular_14" className={CommonStyles.setHeaderStyle}>
                 <div>{selectedADDomainName?.label}</div>
                 <div className={CommonStyles.separator} />
                 <div>{selectedADDomainAddress}</div>
                 <div className={CommonStyles.separator} />
                 <div>{userName}</div>
-            </Typography>
+            </DsTypography>
         );
     };
     return (
@@ -231,10 +250,10 @@ const ActiveDirectory = () => {
                 title={<div className={CommonStyles.title}>{GENERAL.ACTIVE_DIRECTORY}</div>}
             >
                 <AccordionCardContent>
-                    <Typography>
-                        <Typography variant="Regular_14" className={styles.adText}>
+                    <DsTypography>
+                        <DsTypography variant="Regular_14" className={styles.adText}>
                             {GENERAL.AD_TEXT}
-                        </Typography>
+                        </DsTypography>
                         <div className={styles.firstContainer}>
                             <SelectField
                                 label={GENERAL.DOMAIN_NAME}
@@ -268,7 +287,7 @@ const ActiveDirectory = () => {
                                             width: '16px',
                                             height: '16px',
                                             // @ts-ignore
-                                            '--icon-primary-color': 'var(--error'
+                                            '--icon-primary-color': 'var(--error)'
                                         }}
                                     />
                                 }
@@ -287,7 +306,7 @@ const ActiveDirectory = () => {
                                             width: '16px',
                                             height: '16px',
                                             // @ts-ignore
-                                            '--icon-primary-color': 'var(--error'
+                                            '--icon-primary-color': 'var(--error)'
                                         }}
                                     />
                                 }
@@ -301,53 +320,89 @@ const ActiveDirectory = () => {
                             />
                         </div>
                         <div className={styles.secondContainer}>
-                            <TextField
-                                label={GENERAL.USER_NAME}
-                                placeholder="Username"
-                                error={!isADNotFilled && !userName ? GENERAL.ACTION_REQUIRED : ''}
-                                ref={userNameRef}
-                                // @ts-ignore
-                                isErrorPrefixHidden
-                                customErrorWarningIcon={
-                                    <WarningIcon
-                                        style={{
-                                            width: '16px',
-                                            height: '16px',
-                                            // @ts-ignore
-                                            '--icon-primary-color': 'var(--error'
+                            {isGovAccount ? (
+                                <TextField
+                                    label={t('databases.register-flow.ssm-parameter-arn-label')}
+                                    placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
+                                    error={
+                                        !isADNotFilled && !ssmParameterArn
+                                            ? GENERAL.ACTION_REQUIRED
+                                            : ssmParameterArn && !isValidSsmArn(ssmParameterArn)
+                                            ? t('databases.register-flow.ssm-parameter-arn-invalid')
+                                            : ''
+                                    }
+                                    // @ts-ignore
+                                    isErrorPrefixHidden
+                                    customErrorWarningIcon={
+                                        <WarningIcon
+                                            style={{
+                                                width: '16px',
+                                                height: '16px',
+                                                // @ts-ignore
+                                                '--icon-primary-color': 'var(--error)'
+                                            }}
+                                        />
+                                    }
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        dispatch(setSelectedADSsmArn(e.target.value));
+                                        dispatch(setIsWizardTouched(true));
+                                    }}
+                                    value={ssmParameterArn}
+                                    className={styles.textField}
+                                />
+                            ) : (
+                                <>
+                                    <TextField
+                                        label={GENERAL.USER_NAME}
+                                        placeholder="Username"
+                                        error={!isADNotFilled && !userName ? GENERAL.ACTION_REQUIRED : ''}
+                                        ref={userNameRef}
+                                        // @ts-ignore
+                                        isErrorPrefixHidden
+                                        customErrorWarningIcon={
+                                            <WarningIcon
+                                                style={{
+                                                    width: '16px',
+                                                    height: '16px',
+                                                    // @ts-ignore
+                                                    '--icon-primary-color': 'var(--error)'
+                                                }}
+                                            />
+                                        }
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            dispatch(setSelectedADUserName(e.target.value));
+                                            dispatch(setIsWizardTouched(true));
                                         }}
+                                        value={userName}
+                                        className={styles.textField}
                                     />
-                                }
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    dispatch(setSelectedADUserName(e.target.value));
-                                    dispatch(setIsWizardTouched(true));
-                                }}
-                                value={userName}
-                                className={styles.textField}
-                            />
-                            <PasswordField
-                                label={GENERAL.PASSWORD}
-                                ref={passwordRefAD}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    dispatch(setSelectedADPassword(e.target.value));
-                                    dispatch(setIsWizardTouched(true));
-                                }}
-                                error={!isADNotFilled && !password ? GENERAL.ACTION_REQUIRED : adPassVal(password)}
-                                // @ts-ignore
-                                isErrorPrefixHidden
-                                customErrorWarningIcon={
-                                    <WarningIcon
-                                        style={{
-                                            width: '16px',
-                                            height: '16px',
-                                            // @ts-ignore
-                                            '--icon-primary-color': 'var(--error'
+                                    <PasswordField
+                                        label={GENERAL.PASSWORD}
+                                        ref={passwordRefAD}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            dispatch(setSelectedADPassword(e.target.value));
+                                            dispatch(setIsWizardTouched(true));
                                         }}
+                                        error={
+                                            !isADNotFilled && !password ? GENERAL.ACTION_REQUIRED : adPassVal(password)
+                                        }
+                                        // @ts-ignore
+                                        isErrorPrefixHidden
+                                        customErrorWarningIcon={
+                                            <WarningIcon
+                                                style={{
+                                                    width: '16px',
+                                                    height: '16px',
+                                                    // @ts-ignore
+                                                    '--icon-primary-color': 'var(--error)'
+                                                }}
+                                            />
+                                        }
+                                        value={password}
+                                        className={styles.textFieldPassword}
                                     />
-                                }
-                                value={password}
-                                className={styles.textFieldPassword}
-                            />
+                                </>
+                            )}
                         </div>
 
                         {selectConfig === SELECT_CONFIG.STANDARD_CREATE && (
@@ -401,7 +456,7 @@ const ActiveDirectory = () => {
                                 </div>
                             </>
                         )}
-                    </Typography>
+                    </DsTypography>
                 </AccordionCardContent>
             </AccordionCard>
         </div>

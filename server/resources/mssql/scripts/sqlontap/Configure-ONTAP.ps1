@@ -60,7 +60,8 @@ $base64 = [System.Convert]::ToBase64String($bytes)
 
 # Get FSx certificate
 $isprivatesubnet = $False
-$certuri = "https://fsx-aws-certificates.s3.amazonaws.com/bundle-$region.pem"
+$certHost = $(if ($region -like 'us-gov-*') { 'fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com' } else { 'fsx-aws-certificates.s3.amazonaws.com' })
+$certuri = "https://$certHost/bundle-$region.pem"
 try {
     Invoke-WebRequest -Uri $certuri -OutFile C:\cfn\cert.pem
     $cert = Import-Certificate -FilePath C:\cfn\cert.pem -CertStoreLocation Cert:\LocalMachine\Root

@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { DBType, FROM_DIALOG } from '../../../../utils/consts';
+import { DBType, DETECT_HOST_VAR, FROM_DIALOG } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedFilterValue, setTableManageColumnState } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -279,20 +279,25 @@ const DatabasesTable = () => {
                 callback={async () => {
                     try {
                         dispatch(setAuthVerification(true));
-                        const state = store.getState(); // For live state
+                        const state = store.getState();
                         const credDetails = state.snapCenter.credentials;
+                        const { isGovAccount } = state.auth;
+                        const credential = isGovAccount
+                            ? {
+                                  resourceId: rowData?.databaseInstanceName,
+                                  resourceType: DETECT_HOST_VAR.WINDOWS,
+                                  ssmParameterArn: credDetails.ssmParameterArn || ''
+                              }
+                            : {
+                                  resourceId: rowData?.databaseInstanceName,
+                                  resourceType: DETECT_HOST_VAR.WINDOWS,
+                                  username: credDetails.username,
+                                  password: credDetails.password
+                              };
                         const payload = {
                             items: [
                                 {
-                                    credentials: [
-                                        {
-                                            resourceId: rowData?.databaseInstanceName,
-                                            resourceType: 'WINDOWS_USER',
-                                            username: credDetails.username,
-                                            password: credDetails.password
-                                        }
-                                    ],
-
+                                    credentials: [credential],
                                     ec2InstanceId: rowData?.ec2InstanceId,
                                     region: rowData.regionId,
                                     credentialsId: rowData.credentialId
@@ -371,6 +376,7 @@ const DatabasesTable = () => {
 
     // Direct redirect handlers for cleaner usage in menu selection
     const handleEditProtectionDb = (rowData: any) => {
+        if (isGovAccount) return;
         bxpRedirect(
             isWorkloadFactory,
             { ...rowData, editProtection: true },
@@ -381,6 +387,7 @@ const DatabasesTable = () => {
     };
 
     const handleViewProtectionDetailsDb = (rowData: any) => {
+        if (isGovAccount) return;
         bxpRedirect(
             isWorkloadFactory,
             { ...rowData, viewProtectionDetails: true },
@@ -494,9 +501,10 @@ const DatabasesTable = () => {
     // Prefetch SnapCenter databases per host
     const prefetchRun = useRef(false);
     const orgId = useAppSelector(state => state.auth?.orgId);
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const { databaseProtection } = useAppSelector(state => state.snapCenter);
     useEffect(() => {
-        if (prefetchRun.current || isDemoMode) return;
+        if (prefetchRun.current || isDemoMode || isGovAccount) return;
         prefetchRun.current = true;
         (async () => {
             try {
@@ -575,7 +583,8 @@ const DatabasesTable = () => {
         dispatch,
         isWorkloadFactory,
         getOrganizationIds,
-        isDemoMode
+        isDemoMode,
+        isGovAccount
     ]);
 
     /**
@@ -648,7 +657,7 @@ const DatabasesTable = () => {
                 }
 
                 const isProtected = determineProtectionStatusMssql(isDemoMode, rowData, databaseProtection);
-                const menu = mssqlDatabaseMenuOptions(t, isProtected, rowData);
+                const menu = mssqlDatabaseMenuOptions(t, isProtected, rowData, isGovAccount);
                 return (
                     <div className={styles.lastContainer}>
                         <div

@@ -140,35 +140,53 @@ const WellArchitectDashboard = () => {
 
     const createPayload = () => {
         const state = store.getState();
-        const { fsxAdminPasswords } = state.workloadFactoryResource;
+        const { isGovAccount } = state.auth;
+        const { fsxAdminPasswords, credentialUpdateSsmArn } = state.workloadFactoryResource;
         const { password } = fsxAdminPasswords;
-        const credList = [];
-        credList.push({
-            resourceId: fsxId || resourceDetails?.topology?.fileSystemId || innerPageDetails?.fsxId,
-            resourceType: DETECT_HOST_VAR.FSX,
-            username: 'fsxadmin',
-            password
-        });
 
-        return { credentials: credList };
+        const credential = isGovAccount
+            ? {
+                  resourceId: fsxId || resourceDetails?.topology?.fileSystemId || innerPageDetails?.fsxId,
+                  resourceType: DETECT_HOST_VAR.FSX,
+                  ssmParameterArn: credentialUpdateSsmArn
+              }
+            : {
+                  resourceId: fsxId || resourceDetails?.topology?.fileSystemId || innerPageDetails?.fsxId,
+                  resourceType: DETECT_HOST_VAR.FSX,
+                  username: 'fsxadmin',
+                  password
+              };
+
+        return { credentials: [credential] };
     };
 
     const createSqlPayload = () => {
         const state = store.getState();
-        const { selectedAuthenticationType } = state.workloadFactoryResource;
-        const credList = [];
-        const { sqlServerPasswords, sqlServerUserName } = state.workloadFactoryResource;
+        const { isGovAccount } = state.auth;
+        const { selectedAuthenticationType, sqlServerPasswords, sqlServerUserName, credentialUpdateSsmArn } =
+            state.workloadFactoryResource;
         const { password } = sqlServerPasswords;
-        credList.push({
-            resourceId: selectedDatabaseInstanceName,
-            resourceType:
-                selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
-                    ? DETECT_HOST_VAR.MSSQL
-                    : DETECT_HOST_VAR.WINDOWS,
-            username: sqlServerUserName,
-            password
-        });
-        return { credentials: credList };
+
+        const credential = isGovAccount
+            ? {
+                  resourceId: selectedDatabaseInstanceName,
+                  resourceType:
+                      selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                          ? DETECT_HOST_VAR.MSSQL
+                          : DETECT_HOST_VAR.WINDOWS,
+                  ssmParameterArn: credentialUpdateSsmArn
+              }
+            : {
+                  resourceId: selectedDatabaseInstanceName,
+                  resourceType:
+                      selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                          ? DETECT_HOST_VAR.MSSQL
+                          : DETECT_HOST_VAR.WINDOWS,
+                  username: sqlServerUserName,
+                  password
+              };
+
+        return { credentials: [credential] };
     };
 
     const resetPasswords = () => {

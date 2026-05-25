@@ -90,6 +90,7 @@ import {
 } from '../routes/types/register.types';
 import { getAsyncLocalStorageResource, setAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { createAssessmentData, DEMO_REGISTER_RESPONSE } from '../utils/demo-utils/demoMockdata';
+import { validateRegisterSsmArn } from '../utils/ssm-arn-validator';
 import {
     mockAoagResourceAssessmentData,
     mockAoagResourceAssessmentDataAllOptimized,
@@ -2246,13 +2247,7 @@ async function validateAndStoreDiscoveredParameters(
 
         const isGovAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
         if (isGovAccount) {
-            return validateGovCloudCredentials(
-                credentialsId,
-                region,
-                instanceId,
-                credentials,
-                singleInstanceRegistration
-            );
+            await validateGovCloudSsmParameters(credentialsId, region, credentials);
         }
 
         const { response: detectResponse, replicaInfoObject } = await validateCredentials(
@@ -2302,72 +2297,43 @@ async function validateAndStoreDiscoveredParameters(
     }
 }
 
-async function validateGovCloudCredentials(
+/**
+ * Pre-validates GovCloud SSM parameter ARNs before credential authentication.
+ * Checks format, partition, region match, path, existence, and JSON structure.
+ * Called before validateCredentials so that auth scripts find valid parameters.
+ */
+async function validateGovCloudSsmParameters(
     credentialsId: string,
     region: string,
-    instanceId: string,
-    credentials: RegisterCredentialsType[],
-    singleInstanceRegistration: boolean
-): Promise<{
-    response: SingleRegisterCredentialsResponseType[] | SingleRegisterCredentialsResponseType;
-    replicaInfoObject: ReplicaInfoType[];
-}> {
-    logger.info('Validating GovCloud credentials via SSM parameter ARNs', {
+    credentials: RegisterCredentialsType[]
+): Promise<void> {
+    logger.info('Validating GovCloud SSM parameter ARNs before credential authentication', {
         credentialsId,
         region,
-        instanceId,
         credentialCount: credentials.length
     });
 
-    const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
-    if (connectionStatus.Status !== ConnectionStatus.CONNECTED) {
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Unable to validate the credentials through SSM, for host ${instanceId}`
-        );
-    }
-
-    const validatedCreds = credentials.map(cred => {
-        if (!cred.ssmParameterArn) {
-            throw createError(
-                HttpErrorCodes.BAD_REQUEST,
-                `GovCloud credential for ${cred.resourceId} is missing ssmParameterArn.`
-            );
-        }
-
-        const arnParts = cred.ssmParameterArn.match(/^arn:aws(-us-gov)?:ssm:([^:]+):([^:]+):parameter\/(.+)$/);
-        if (!arnParts) {
-            throw createError(HttpErrorCodes.BAD_REQUEST, `Invalid SSM parameter ARN format: ${cred.ssmParameterArn}`);
-        }
-        return { cred, parameterName: `/${arnParts[4]}` };
-    });
-
-    const results = await Promise.all(
-        validatedCreds.map(async ({ cred, parameterName }) => {
-            try {
-                const paramValue = await getParameter(credentialsId, region, parameterName);
-                if (!paramValue) {
-                    throw new Error(`SSM parameter not found at path ${parameterName}`);
-                }
-            } catch (error: any) {
+    await Promise.all(
+        credentials.map(async cred => {
+            if (!cred.ssmParameterArn) {
                 throw createError(
                     HttpErrorCodes.BAD_REQUEST,
-                    `Unable to read SSM parameter for ${cred.resourceId}: ${error.message}`
+                    `GovCloud credential for ${cred.resourceId} is missing ssmParameterArn.`
                 );
             }
-            return {
-                resourceId: cred.resourceId,
-                resourceType: cred.resourceType,
-                ...(cred.resourceType === RESOURCESTYPE.FSX ? { fsxnError: '' } : { databaseServerError: '' })
-            } as SingleRegisterCredentialsResponseType;
+
+            const credentialType =
+                cred.resourceType === RESOURCESTYPE.FSX
+                    ? 'fsx'
+                    : cred.resourceType === RESOURCESTYPE.WINDOWS_USER
+                    ? 'domain'
+                    : cred.resourceType === RESOURCESTYPE.ORACLE
+                    ? 'oracle'
+                    : 'sql-mssql';
+
+            await validateRegisterSsmArn(credentialsId, region, cred.ssmParameterArn, cred.resourceId, credentialType);
         })
     );
-
-    if (singleInstanceRegistration && results.length === 1) {
-        return { response: results[0], replicaInfoObject: [] };
-    }
-
-    return { response: results, replicaInfoObject: [] };
 }
 
 async function rewriteOrDeleteSSMParameter(
@@ -2572,7 +2538,6 @@ async function validateCredentials(
 
     const connectionStatus = await getSSMConnectionStatus(credentialsId, region, instanceId);
 
-    // TODO: Revisit this logic, as it is not clear why we are trying to delete SSM parameters when we haven't set any.
     const ssmParameters = [`${SSM_PARAM_PREFIX}${fsxCredentials?.resourceId}`];
     instanceIds.forEach(instance => ssmParameters.push(`${SSM_PARAM_PREFIX}${instance}`));
 
@@ -2580,9 +2545,14 @@ async function validateCredentials(
         const errorMessage = `Unable to validate the credentials through SSM, for host ${instanceId}`;
         logger.error(errorMessage);
 
-        await deleteSSMParameter(credentialsId, region, ssmParameters);
+        const isGovCloudPreCheck = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
+        if (!isGovCloudPreCheck) {
+            await deleteSSMParameter(credentialsId, region, ssmParameters);
+        }
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
+
+    const isGovCloud = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
 
     const newSqlCredentials = cloneDeep(sqlCredentials);
     const newWindowsUserCredentials = cloneDeep(windowsUserCredentials);
@@ -2590,8 +2560,13 @@ async function validateCredentials(
     const newOracleAsmCredentials = cloneDeep(oracleAsmCredentials || []);
     const credentialsForValidation =
         (newSqlCredentials && newSqlCredentials.length) > 0 ? newSqlCredentials : newOracleCredentials;
-    const { allDatabaseCredentials, allWindowsUserCredentials, allOracleAsmCredentials } =
-        await verifyAndCreateCredentials(
+
+    let allDatabaseCredentials: RegisterCredentialsType[] = [];
+    let allWindowsUserCredentials: RegisterCredentialsType[] = [];
+    let allOracleAsmCredentials: RegisterCredentialsType[] = [];
+
+    if (!isGovCloud) {
+        const verifiedCreds = await verifyAndCreateCredentials(
             credentialsId,
             region,
             instanceId,
@@ -2601,6 +2576,10 @@ async function validateCredentials(
             oracleAsmCredentials,
             instanceIds
         );
+        allDatabaseCredentials = verifiedCreds.allDatabaseCredentials;
+        allWindowsUserCredentials = verifiedCreds.allWindowsUserCredentials;
+        allOracleAsmCredentials = verifiedCreds.allOracleAsmCredentials;
+    }
 
     try {
         let isLinuxHost = false;
@@ -2654,40 +2633,41 @@ async function validateCredentials(
 
         return response;
     } catch (error: any) {
-        // delete the ssm parameters if its already created
-        const paramsToDelete: string[] = [];
-        const instancesToBeDeleted: string[] = [];
+        if (!isGovCloud) {
+            const paramsToDelete: string[] = [];
+            const instancesToBeDeleted: string[] = [];
 
-        if (fsxCredentials) {
-            paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
-        }
+            if (fsxCredentials) {
+                paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+            }
 
-        if (
-            sqlCredentials.length ||
-            windowsUserCredentials.length ||
-            oracleCredentials.length ||
-            oracleAsmCredentials.length
-        ) {
-            instancesToBeDeleted.push(
-                ...(sqlCredentials ?? []).map(e => e.resourceId),
-                ...(windowsUserCredentials ?? []).map(e => e.resourceId),
-                ...(oracleCredentials ?? []).map(e => `${e.resourceId}${TEMP}`),
-                ...(oracleAsmCredentials ?? []).map(e => `${e.resourceId}${TEMP}`)
+            if (
+                sqlCredentials.length ||
+                windowsUserCredentials.length ||
+                oracleCredentials.length ||
+                oracleAsmCredentials.length
+            ) {
+                instancesToBeDeleted.push(
+                    ...(sqlCredentials ?? []).map(e => e.resourceId),
+                    ...(windowsUserCredentials ?? []).map(e => e.resourceId),
+                    ...(oracleCredentials ?? []).map(e => `${e.resourceId}${TEMP}`),
+                    ...(oracleAsmCredentials ?? []).map(e => `${e.resourceId}${TEMP}`)
+                );
+            }
+
+            await rewriteOrDeleteSSMParameter(
+                credentialsId,
+                region,
+                instanceIds,
+                paramsToDelete,
+                instancesToBeDeleted,
+                fsxCredentials!,
+                newSqlCredentials,
+                windowsUserCredentials,
+                allDatabaseCredentials,
+                allWindowsUserCredentials
             );
         }
-
-        await rewriteOrDeleteSSMParameter(
-            credentialsId,
-            region,
-            instanceIds,
-            paramsToDelete,
-            instancesToBeDeleted,
-            fsxCredentials!,
-            newSqlCredentials,
-            windowsUserCredentials,
-            allDatabaseCredentials,
-            allWindowsUserCredentials
-        );
 
         throw createError(
             HttpErrorCodes.VALIDATION_ERROR,

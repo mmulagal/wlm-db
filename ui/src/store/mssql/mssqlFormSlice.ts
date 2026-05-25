@@ -45,7 +45,8 @@ export const initialMssqlState: any = {
     dbName: '',
     dbCredentials: {
         name: '',
-        password: ''
+        password: '',
+        ssmParameterArn: ''
     },
     keyPair: {
         selectedKeyPair: null
@@ -56,6 +57,7 @@ export const initialMssqlState: any = {
         domainAddress: '',
         userName: '',
         password: '',
+        ssmParameterArn: '',
         preferredDomainController: '',
         preferredOUPath: '',
         targetADGroup: '',
@@ -70,7 +72,8 @@ export const initialMssqlState: any = {
         fsxNNewUserName: FSXADMIN,
         fsxNExistingName: null,
         fsxNExistingUserName: '',
-        fsxNPassword: ''
+        fsxNPassword: '',
+        ssmParameterArn: ''
     },
     storageCapacity: {
         capacity: '',
@@ -174,6 +177,9 @@ const mssqlFormSlice = createSlice({
         setDBCredentialsPassword(state, action: PayloadAction<any>) {
             state.dbCredentials.password = action.payload;
         },
+        setDBCredentialsSsmArn(state, action: PayloadAction<string>) {
+            state.dbCredentials.ssmParameterArn = action.payload;
+        },
         // keyPair
         setSelectedKeyPair(state, action: PayloadAction<any>) {
             state.keyPair.selectedKeyPair = action.payload;
@@ -193,6 +199,9 @@ const mssqlFormSlice = createSlice({
         },
         setSelectedADPassword(state, action: PayloadAction<any>) {
             state.activeDirectory.password = action.payload;
+        },
+        setSelectedADSsmArn(state, action: PayloadAction<string>) {
+            state.activeDirectory.ssmParameterArn = action.payload;
         },
         setActiveDirectoryFields(state, action: PayloadAction<Partial<typeof state.activeDirectory>>) {
             state.activeDirectory = { ...state.activeDirectory, ...action.payload };
@@ -223,6 +232,9 @@ const mssqlFormSlice = createSlice({
         },
         setFsxNPassword(state, action: PayloadAction<any>) {
             state.fsxN.fsxNPassword = action.payload;
+        },
+        setFsxNSsmArn(state, action: PayloadAction<string>) {
+            state.fsxN.ssmParameterArn = action.payload;
         },
         setExistingFsxnName(state, action: PayloadAction<any>) {
             state.fsxN.fsxNExistingName = action.payload;
@@ -306,6 +318,7 @@ export const {
     setSelectedADDomainAddress,
     setSelectedADUserName,
     setSelectedADPassword,
+    setSelectedADSsmArn,
     setActiveDirectoryFields,
     resetADAdvancedFields,
     setEncryptionType,
@@ -324,6 +337,7 @@ export const {
     setFsxNName,
     setFsxNExistingUserName,
     setFsxNPassword,
+    setFsxNSsmArn,
     setSelectedCredentials,
     setSelectedOperatingSystem,
     setSelectedSecurityGroup,
@@ -340,6 +354,7 @@ export const {
     setDBName,
     setDBCredentialsName,
     setDBCredentialsPassword,
+    setDBCredentialsSsmArn,
     setSelectedAzNode1,
     setSelectedSubnetNode1,
     setSelectedAzNode2,

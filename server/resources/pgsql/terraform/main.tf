@@ -88,7 +88,7 @@ module "fsxn_standalone" {
   fsx_data_volume_size              = var.fsx_data_volume_size
   fsx_log_volume_name               = var.fsx_log_volume_name
   fsx_log_volume_size               = var.fsx_log_volume_size
-  fsx_administrator_password        = var.fsx_admin_password
+  fsx_administrator_password        = local.resolved_fsx_password
   fsx_svm_name                      = var.sql_svm_name
   fsx_weekly_maintenance_start_time = "1:05:00"
   sql_deployment_mode               = var.sql_deployment_mode
@@ -121,7 +121,7 @@ module "fsxn_ha" {
   fsx_data_volume_size              = var.fsx_data_volume_size
   fsx_log_volume_name               = var.fsx_log_volume_name
   fsx_log_volume_size               = var.fsx_log_volume_size
-  fsx_administrator_password        = var.fsx_admin_password
+  fsx_administrator_password        = local.resolved_fsx_password
   fsx_svm_name                      = var.sql_svm_name
   fsx_weekly_maintenance_start_time = "1:05:00"
   sql_deployment_mode               = var.sql_deployment_mode
@@ -209,7 +209,7 @@ module "standalone_sql_node" {
   is_standalone                    = local.is_standalone
   aws_profile                      = var.aws_profile
   sql_version                      = var.sql_version
-  sql_service_account_password     = var.sql_service_account_password
+  sql_service_account_password     = local.resolved_sql_password
   fsx_svm_id                       = module.fsxn_standalone[0].fsx_svm_id
   fsx_aggr_name                    = var.fsx_aggr_name
   fsx_svm_uuid                     = module.fsxn_standalone[0].fsx_svm_uuid
@@ -246,7 +246,7 @@ module "ha_pgsql_node1" {
   is_standalone                    = local.is_standalone
   aws_profile                      = var.aws_profile
   sql_version                      = var.sql_version
-  sql_service_account_password     = var.sql_service_account_password
+  sql_service_account_password     = local.resolved_sql_password
   fsx_svm_id                       = module.fsxn_ha[0].fsx_svm_id
   fsx_aggr_name                    = var.fsx_aggr_name
   fsx_svm_uuid                     = module.fsxn_ha[0].fsx_svm_uuid
@@ -290,7 +290,7 @@ module "ha_pgsql_node2" {
   is_standalone                    = local.is_standalone
   aws_profile                      = var.aws_profile
   sql_version                      = var.sql_version
-  sql_service_account_password     = var.sql_service_account_password
+  sql_service_account_password     = local.resolved_sql_password
   fsx_svm_id                       = module.fsxn_ha[0].fsx_replica_svm_id
   fsx_aggr_name                    = var.fsx_aggr_name
   fsx_svm_uuid                     = module.fsxn_ha[0].fsx_replica_svm_uuid
@@ -334,7 +334,7 @@ module "ha_pgpool_node" {
   is_standalone                    = local.is_standalone
   aws_profile                      = var.aws_profile
   sql_version                      = var.sql_version
-  sql_service_account_password     = var.sql_service_account_password
+  sql_service_account_password     = local.resolved_sql_password
   fsx_svm_id                       = module.fsxn_ha[0].fsx_replica_svm_id
   fsx_aggr_name                    = var.fsx_aggr_name
   fsx_svm_uuid                     = module.fsxn_ha[0].fsx_replica_svm_uuid

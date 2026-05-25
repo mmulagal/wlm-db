@@ -6,10 +6,11 @@ import {
     PasswordField,
     RadioButton,
     TextField,
-    Typography
+    DsTypography
 } from '@netapp/design-system';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as WarningIcon } from '@netapp/icons/ic_notice_triangle.svg';
+import { useTranslation } from 'react-i18next';
 import ActionRequired from '../../../../common/ActionRequired/ActionRequired';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
@@ -24,10 +25,11 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setExistingFsxnName,
     setFsxNPassword,
+    setFsxNSsmArn,
     setFsxNType,
     setFsxNExistingUserName
 } from '../../../../store/mssql/mssqlFormSlice';
-import { FORM_OPTIONS, FSXADMIN, FSX_DEPLOYMENT_MODE, WIZARD_TYPE } from '../../../../utils/consts';
+import { FORM_OPTIONS, FSXADMIN, FSX_DEPLOYMENT_MODE, isValidSsmArn, WIZARD_TYPE } from '../../../../utils/consts';
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 
 import styles from './FSxNSystem.module.scss';
@@ -36,7 +38,10 @@ import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const FSxNSystem = ({ wizardType }: any) => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
 
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
+    const fsxSsmParameterArn = useAppSelector(state => state.mssqlForm.fsxN.ssmParameterArn);
     const { fsxnData, fsxnLoading } = useAppSelector(state => state.mssql.getFsxnList);
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const selectedFsxnType = useAppSelector(state => state.mssqlForm.fsxN.fsxNType);
@@ -202,9 +207,9 @@ const FSxNSystem = ({ wizardType }: any) => {
     const setHeader = () => {
         if (!credentialData || (credentialData && !credentialData.length)) {
             return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                <DsTypography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.SELECT_ANY_ACCOUNT}
-                </Typography>
+                </DsTypography>
             );
         }
         if (!selectedVPCData) {
@@ -215,10 +220,29 @@ const FSxNSystem = ({ wizardType }: any) => {
             (deploymentMode?.label === GENERAL.SINGLE_INSTANCE && !selectedZone1)
         ) {
             return (
-                <Typography variant="Regular_14" className={CommonStyles['text-disabled']}>
+                <DsTypography variant="Regular_14" className={CommonStyles['text-disabled']}>
                     {GENERAL.SELECT_AZ}
-                </Typography>
+                </DsTypography>
             );
+        }
+
+        if (isGovAccount) {
+            if (isFsxnNew(selectedFsxnType)) {
+                if (!fsxSsmParameterArn) {
+                    return <ActionRequired error={!isFsxNotFilled} />;
+                }
+                if (!isValidSsmArn(fsxSsmParameterArn)) {
+                    return <AccordionError />;
+                }
+                return <DsTypography variant="Regular_14">{GENERAL.CREATE_NEW_FSXN_SYSTEM}</DsTypography>;
+            }
+            if (!selectedExistingFsxnName?.label || !fsxSsmParameterArn) {
+                return <ActionRequired />;
+            }
+            if (!isValidSsmArn(fsxSsmParameterArn)) {
+                return <AccordionError />;
+            }
+            return <DsTypography variant="Regular_14">{selectedExistingFsxnName.label}</DsTypography>;
         }
 
         // Checking for the create new option
@@ -229,7 +253,7 @@ const FSxNSystem = ({ wizardType }: any) => {
             if (fsxPassVal(password)) {
                 return <AccordionError />;
             }
-            return <Typography variant="Regular_14">{GENERAL.CREATE_NEW_FSXN_SYSTEM}</Typography>;
+            return <DsTypography variant="Regular_14">{GENERAL.CREATE_NEW_FSXN_SYSTEM}</DsTypography>;
         }
         // Checking for the existing option
         if (!selectedExistingFsxnName?.label || !selectedFsxnExistingUserName || !selectedFsxnPassword) {
@@ -238,7 +262,7 @@ const FSxNSystem = ({ wizardType }: any) => {
         if (fsxPassVal(password)) {
             return <AccordionError />;
         }
-        return <Typography variant="Regular_14">{selectedExistingFsxnName.label}</Typography>;
+        return <DsTypography variant="Regular_14">{selectedExistingFsxnName.label}</DsTypography>;
     };
 
     const disableCheck = (() => {
@@ -265,7 +289,7 @@ const FSxNSystem = ({ wizardType }: any) => {
                 title={<div className={CommonStyles.title}>{GENERAL.FSXN_SYSTEM}</div>}
             >
                 <AccordionCardContent>
-                    <Typography>
+                    <DsTypography>
                         <div className={styles.handleRadio}>
                             <RadioButton
                                 isChecked={isFsxnNew(selectedFsxnType)}
@@ -314,73 +338,115 @@ const FSxNSystem = ({ wizardType }: any) => {
                                     : `${styles.createNewContainer}`
                             }
                         >
-                            <TextField
-                                label={GENERAL.USER_NAME}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    dispatch(setFsxNExistingUserName(e.target.value));
-                                    dispatch(setIsWizardTouched(true));
-                                }}
-                                value={
-                                    isFsxnExisting(selectedFsxnType) && selectedFsxnExistingUserName
-                                        ? selectedFsxnExistingUserName
-                                        : FSXADMIN
-                                }
-                                className={styles.textField}
-                                isDisabled={isFsxnNew(selectedFsxnType)}
-                            />
-                            <PasswordField
-                                label={GENERAL.FSX_PASSWORD}
-                                info={
-                                    <Typography variant="Regular_13" className={styles.infoMsg}>
-                                        <div className={styles.bulletContainer}>
-                                            <Bullet />
-                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_1}</Typography>
-                                        </div>
-                                        <div className={styles.bulletContainer}>
-                                            <Bullet />
-                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_2}</Typography>
-                                        </div>
-                                        <div className={styles.bulletContainer}>
-                                            <Bullet />
-                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_3}</Typography>
-                                        </div>
-                                        <div className={styles.bulletContainer}>
-                                            <Bullet />
-                                            <Typography variant="Regular_13">{GENERAL.PASSWORD_FSX_4}</Typography>
-                                        </div>
-                                    </Typography>
-                                }
-                                error={
-                                    !isFsxNotFilled && !selectedFsxnPassword
-                                        ? GENERAL.ACTION_REQUIRED
-                                        : fsxPassVal(password)
-                                }
-                                isErrorPrefixHidden
-                                customErrorWarningIcon={
-                                    <WarningIcon
-                                        style={{
-                                            width: '16px',
-                                            height: '16px',
-                                            // @ts-ignore
-                                            '--icon-primary-color': 'var(--error'
+                            {isGovAccount ? (
+                                <TextField
+                                    label={t('databases.register-flow.ssm-parameter-arn-label')}
+                                    placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
+                                    error={
+                                        !isFsxNotFilled && !fsxSsmParameterArn
+                                            ? GENERAL.ACTION_REQUIRED
+                                            : fsxSsmParameterArn && !isValidSsmArn(fsxSsmParameterArn)
+                                            ? t('databases.register-flow.ssm-parameter-arn-invalid')
+                                            : ''
+                                    }
+                                    // @ts-ignore
+                                    isErrorPrefixHidden
+                                    customErrorWarningIcon={
+                                        <WarningIcon
+                                            style={{
+                                                width: '16px',
+                                                height: '16px',
+                                                // @ts-ignore
+                                                '--icon-primary-color': 'var(--error)'
+                                            }}
+                                        />
+                                    }
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        dispatch(setFsxNSsmArn(e.target.value));
+                                        dispatch(setIsWizardTouched(true));
+                                    }}
+                                    value={fsxSsmParameterArn}
+                                    className={styles.textField}
+                                />
+                            ) : (
+                                <>
+                                    <TextField
+                                        label={GENERAL.USER_NAME}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            dispatch(setFsxNExistingUserName(e.target.value));
+                                            dispatch(setIsWizardTouched(true));
                                         }}
+                                        value={
+                                            isFsxnExisting(selectedFsxnType) && selectedFsxnExistingUserName
+                                                ? selectedFsxnExistingUserName
+                                                : FSXADMIN
+                                        }
+                                        className={styles.textField}
+                                        isDisabled={isFsxnNew(selectedFsxnType)}
                                     />
-                                }
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    setPassword(e.target.value);
-                                    dispatch(setFsxNPassword(e.target.value));
-                                    dispatch(setIsWizardTouched(true));
-                                }}
-                                value={selectedFsxnPassword}
-                                className={styles.textFieldPassword}
-                            />
+                                    <PasswordField
+                                        label={GENERAL.FSX_PASSWORD}
+                                        info={
+                                            <DsTypography variant="Regular_13" className={styles.infoMsg}>
+                                                <div className={styles.bulletContainer}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13">
+                                                        {GENERAL.PASSWORD_FSX_1}
+                                                    </DsTypography>
+                                                </div>
+                                                <div className={styles.bulletContainer}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13">
+                                                        {GENERAL.PASSWORD_FSX_2}
+                                                    </DsTypography>
+                                                </div>
+                                                <div className={styles.bulletContainer}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13">
+                                                        {GENERAL.PASSWORD_FSX_3}
+                                                    </DsTypography>
+                                                </div>
+                                                <div className={styles.bulletContainer}>
+                                                    <Bullet />
+                                                    <DsTypography variant="Regular_13">
+                                                        {GENERAL.PASSWORD_FSX_4}
+                                                    </DsTypography>
+                                                </div>
+                                            </DsTypography>
+                                        }
+                                        error={
+                                            !isFsxNotFilled && !selectedFsxnPassword
+                                                ? GENERAL.ACTION_REQUIRED
+                                                : fsxPassVal(password)
+                                        }
+                                        isErrorPrefixHidden
+                                        customErrorWarningIcon={
+                                            <WarningIcon
+                                                style={{
+                                                    width: '16px',
+                                                    height: '16px',
+                                                    // @ts-ignore
+                                                    '--icon-primary-color': 'var(--error)'
+                                                }}
+                                            />
+                                        }
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                            setPassword(e.target.value);
+                                            dispatch(setFsxNPassword(e.target.value));
+                                            dispatch(setIsWizardTouched(true));
+                                        }}
+                                        value={selectedFsxnPassword}
+                                        className={styles.textFieldPassword}
+                                    />
+                                </>
+                            )}
                         </div>
 
-                        <Typography variant="Regular_14" className={styles.bottomText}>
+                        <DsTypography variant="Regular_14" className={styles.bottomText}>
                             <span style={{ fontWeight: '590' }}>{GENERAL.NOTICE}</span>&nbsp;
                             {GENERAL.NOTICE_FSX_TEXT}
-                        </Typography>
-                    </Typography>
+                        </DsTypography>
+                    </DsTypography>
                 </AccordionCardContent>
             </AccordionCard>
         </div>

@@ -1852,6 +1852,9 @@ export const PATCH_SCAN_FIELD = {
     ORACLE_SECURITY_PATCH: 'oracle-security-patch'
 } as const;
 
+export const SSM_ARN_REGEX = /^arn:aws(-us-gov)?:ssm:[^:]+:\d{12}:parameter\/netapp\/wlmdb\/.+$/;
+export const isValidSsmArn = (arn: string) => SSM_ARN_REGEX.test(arn);
+
 export const WA_FLAG_SKIP = [
     'isASMManaged',
     'deploymentType',

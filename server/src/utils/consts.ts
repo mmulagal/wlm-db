@@ -1172,7 +1172,10 @@ const CLOUDFORMATION_TO_TERRAFORM_VARIABLE_MAPPING: {
     WlmdbAwsAccountId: { name: 'wlmdb_aws_account_id', type: 'string', configType: TF_VARS_CONFIG.General },
     WorkloadInstanceType: { name: 'workload_instance_type', type: 'string', configType: TF_VARS_CONFIG.EC2 },
     EBSVolumeSize: { name: 'ebs_volume_size', type: 'number', configType: TF_VARS_CONFIG.EC2 },
-    SqlFSxWSFCName: { name: 'sql_fsx_ws_fc_name', type: 'string', configType: TF_VARS_CONFIG.General }
+    SqlFSxWSFCName: { name: 'sql_fsx_ws_fc_name', type: 'string', configType: TF_VARS_CONFIG.General },
+    FSxSsmParameterArn: { name: 'fsx_ssm_parameter_arn', type: 'string', configType: TF_VARS_CONFIG.FSX },
+    ADSsmParameterArn: { name: 'ad_ssm_parameter_arn', type: 'string', configType: TF_VARS_CONFIG.AD },
+    SQLSsmParameterArn: { name: 'sql_ssm_parameter_arn', type: 'string', configType: TF_VARS_CONFIG.SQLServer }
 };
 
 const CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING: {
@@ -1269,7 +1272,9 @@ const CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING: {
         configType: PGSQL_TF_VARS_CONFIG.PGSQLServer
     },
     SqlServerName: { name: 'sql_server_name', type: 'string', configType: PGSQL_TF_VARS_CONFIG.PGSQLServer },
-    SQLDeploymentMode: { name: 'sql_deployment_mode', type: 'string', configType: PGSQL_TF_VARS_CONFIG.PGSQLServer }
+    SQLDeploymentMode: { name: 'sql_deployment_mode', type: 'string', configType: PGSQL_TF_VARS_CONFIG.PGSQLServer },
+    FSxSsmParameterArn: { name: 'fsx_ssm_parameter_arn', type: 'string', configType: PGSQL_TF_VARS_CONFIG.FSX },
+    SQLSsmParameterArn: { name: 'sql_ssm_parameter_arn', type: 'string', configType: PGSQL_TF_VARS_CONFIG.PGSQLServer }
 };
 
 const MSSQL_DATABASE_INSTANCE_INDEX_MAPPING: { [index: number]: string } = {
@@ -1844,6 +1849,10 @@ const RESTRICTED_FSX_REGIONS: Array<string> = [
 // (as of now only us-gov-west-1 supports Gen2 in gg-skywalker).
 const GOV_REGIONS = ['us-gov-east-1', 'us-gov-west-1'] as const;
 
+function isGovCloudRegion(region: string): boolean {
+    return GOV_REGIONS.includes(region as (typeof GOV_REGIONS)[number]);
+}
+
 const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'netapp/wlmdb/ssm-response';
 const CLONE_AGE: number = config.has('clone-age-in-days') ? config.get('clone-age-in-days') : 60; // Fall Back to 60 days as default if not set in config
 const OTHER_CLONE = 'other';
@@ -2284,6 +2293,7 @@ export {
     GENERIC_ASSESSMENT_ERROR_MESSAGE,
     RESTRICTED_FSX_REGIONS,
     GOV_REGIONS,
+    isGovCloudRegion,
     DEFAULT_GOV_REGION,
     GOV_ACCOUNT,
     CLONE_AGE,

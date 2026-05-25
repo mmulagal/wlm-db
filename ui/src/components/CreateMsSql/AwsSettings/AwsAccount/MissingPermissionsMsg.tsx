@@ -16,6 +16,7 @@ type permissionProp = {
 const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
     const { setDialog } = useDialog();
     const { policiesList } = useAppSelector(state => state.mssql.getPolicies);
+    const { isGovAccount } = useAppSelector(state => state.auth);
     const blockedPermissions = permissionData?.explicitlyDenied && permissionData?.explicitlyDenied.length;
 
     const [dataToDisplay, setDataToDisplay] = useState([]);
@@ -95,13 +96,17 @@ const MissingPermissionsMsg = ({ permissionData }: permissionProp) => {
                 '2012-10-17',
             Statement: mergedStatements
         };
-        const data = JSON.stringify(
+        let data = JSON.stringify(
             type === 'view'
                 ? policiesList?.packages?.find?.(pkg => pkg?.name === POLICIES_PERMISSIONS.VIEW_POLICY)?.permissions
                 : permissionsData,
             null,
             2
         );
+        // TODO: Remove this workaround once WF Console team hosts a GovCloud-specific workload-policies.json
+        if (isGovAccount) {
+            data = data?.replaceAll('arn:aws:', 'arn:aws-us-gov:');
+        }
         setDialog(
             <DialogComponent
                 header={setHeading(type)}

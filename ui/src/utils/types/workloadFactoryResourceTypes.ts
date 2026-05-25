@@ -34,6 +34,7 @@ export interface WorkloadFactoryResourceEntities {
     imageDataUrl: string;
     instanceDetailsData: InstanceDetailsData;
     sqlServerUserName: string;
+    credentialUpdateSsmArn: string;
     passwordResetLoading: boolean;
     resourceLoading: boolean;
     // eslint-disable-next-line no-use-before-define

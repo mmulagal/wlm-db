@@ -60,7 +60,7 @@ const PostgreCodebox = () => {
     const pgsqlFormData = useAppSelector(state => state.postgreForm);
     const selectedDBName = useAppSelector(state => state.postgreForm.postgreServerName);
     const { postgreServerName, postGreVersion } = useAppSelector(state => state.postgreForm);
-    const { isWorkloadFactory, isDemoMode } = useAppSelector(state => state?.auth);
+    const { isWorkloadFactory, isDemoMode, isGovAccount } = useAppSelector(state => state?.auth);
 
     const [loadTemplateData] = useGetPgsqlTemplatesMutation();
     const [loadTerraformData] = useGetPGSQLTerraformSetupMutation();
@@ -153,7 +153,8 @@ const PostgreCodebox = () => {
     const getMaskedRestResponse = (actualData: any, pgsqlFormData: any) => {
         const changeObjectForm = {
             mssqlForm: setMaskedPassword(actualData),
-            postgreForm: setMaskedPassword(pgsqlFormData)
+            postgreForm: setMaskedPassword(pgsqlFormData),
+            auth: { isGovAccount }
         };
         const resBody = createPgsqlPayload(changeObjectForm);
         // @ts-ignore
@@ -166,7 +167,8 @@ const PostgreCodebox = () => {
         const credDetails = getCredDetails(mssqlFormData);
         const changeObjectForm = {
             mssqlForm: mssqlFormData,
-            postgreForm: pgsqlFormData
+            postgreForm: pgsqlFormData,
+            auth: { isGovAccount }
         };
         const resBody: any = createPgsqlPayload(changeObjectForm);
         if (credDetails?.credId) {
@@ -201,7 +203,8 @@ const PostgreCodebox = () => {
         const credDetails = getCredDetails(actualData);
         const changeObjectForm = {
             mssqlForm: actualData,
-            postgreForm: pgsqlFormData
+            postgreForm: pgsqlFormData,
+            auth: { isGovAccount }
         };
         const resBody: any = createPgsqlPayload(changeObjectForm);
         if (credDetails?.credId) {
@@ -235,7 +238,11 @@ const PostgreCodebox = () => {
         if (dropDownValue === CODE_VIEWER.REST_API) {
             const baseUrl = getBaseUrl();
             const credDetails = getCredDetails(mssqlFormData);
-            const rightPanelResponse = createPgsqlPayload({ mssqlForm: mssqlFormData, postgreForm: pgsqlFormData });
+            const rightPanelResponse = createPgsqlPayload({
+                mssqlForm: mssqlFormData,
+                postgreForm: pgsqlFormData,
+                auth: { isGovAccount }
+            });
             const restApiPayload = PGSQL_CURL_REQ_TEMPLATE(
                 baseUrl,
                 credDetails.credId || CRED_PLACEHOLDERS.CRED_ID,
@@ -466,7 +473,8 @@ const PostgreCodebox = () => {
                         </div>
                     </div>
 
-                    {dropDownValue === CODE_VIEWER.CLOUDFORMATION &&
+                    {!isGovAccount &&
+                        dropDownValue === CODE_VIEWER.CLOUDFORMATION &&
                         !isRightPanelTemplateLoading &&
                         rightPanelTemplateResponse?.template && (
                             <div className={styles.cloudFormationButtonContainer}>

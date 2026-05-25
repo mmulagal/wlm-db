@@ -48,6 +48,7 @@ import { bxpRedirect, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
     ACTION_CTA,
     DBType,
+    DETECT_HOST_VAR,
     FROM_DIALOG,
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
@@ -239,9 +240,10 @@ const InstancesTable = () => {
     }, [selectedHostType]);
 
     // Prefetch SnapCenter hosts and instances to decide Protect/Edit Protection
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const protectionPrefetchRun = useRef(false);
     useEffect(() => {
-        if (protectionPrefetchRun.current || isDemoMode) return;
+        if (protectionPrefetchRun.current || isDemoMode || isGovAccount) return;
         protectionPrefetchRun.current = true;
 
         (async () => {
@@ -324,11 +326,13 @@ const InstancesTable = () => {
         isWorkloadFactory,
         getOrganizationIds,
         dispatch,
-        isDemoMode
+        isDemoMode,
+        isGovAccount
     ]);
 
     // Direct Edit Protection handler - no prereqs, redirect only
     const handleEditProtection = (rowData: any) => {
+        if (isGovAccount) return;
         bxpRedirect(isWorkloadFactory, { ...rowData, editProtection: true }, 'instance', getDiscoverInstanceResult);
     };
 
@@ -607,20 +611,25 @@ const InstancesTable = () => {
                 callback={async () => {
                     try {
                         dispatch(setAuthVerification(true));
-                        const state = store.getState(); // For live state
+                        const state = store.getState();
                         const credDetails = state.snapCenter.credentials;
+                        const { isGovAccount } = state.auth;
+                        const credential = isGovAccount
+                            ? {
+                                  resourceId: rowData?.databaseInstanceName,
+                                  resourceType: DETECT_HOST_VAR.WINDOWS,
+                                  ssmParameterArn: credDetails.ssmParameterArn || ''
+                              }
+                            : {
+                                  resourceId: rowData?.databaseInstanceName,
+                                  resourceType: DETECT_HOST_VAR.WINDOWS,
+                                  username: credDetails.username,
+                                  password: credDetails.password
+                              };
                         const payload = {
                             items: [
                                 {
-                                    credentials: [
-                                        {
-                                            resourceId: rowData?.databaseInstanceName,
-                                            resourceType: 'WINDOWS_USER',
-                                            username: credDetails.username,
-                                            password: credDetails.password
-                                        }
-                                    ],
-
+                                    credentials: [credential],
                                     ec2InstanceId: rowData?.ec2InstanceId,
                                     region: rowData.regionId,
                                     credentialsId: rowData.credentialId
@@ -957,7 +966,8 @@ const InstancesTable = () => {
                             disableMessage,
                             disableCreateDb,
                             disableCreateDbMsg,
-                            isBedRockAvailable
+                            isBedRockAvailable,
+                            isGovAccount
                         )
                     );
                 }

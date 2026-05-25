@@ -8,7 +8,7 @@ import {
     setPgDBNameValue,
     setVPCSelectedValue
 } from '../../store/mssql/msSqlActionSlice';
-import { FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../utils/consts';
+import { FSX_DEPLOYMENT_MODE, isValidSsmArn, SQL_DEPLOYMENT_MODE } from '../../utils/consts';
 import { TagObj } from '../../utils/types/mssqlTypes';
 import { fsxPassVal, isFsxnExisting, isFsxnNew, isValidUserName } from '../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSlice';
@@ -28,20 +28,30 @@ const createPgsqlPayload = (state: any) => {
         return state.mssqlForm.encryption?.encryptionArn;
     })();
 
+    const isGovAccount = state.auth?.isGovAccount;
+
     const fileSystem = (() => {
-        const fsObj = {
-            fsxFileSystemId: '',
-            fsxUsername: '',
-            fsxPassword: ''
+        const fsObj: any = {
+            fsxFileSystemId: ''
         };
+        if (isGovAccount) {
+            fsObj.ssmParameterArn = state.mssqlForm.fsxN?.ssmParameterArn || '';
+        } else {
+            fsObj.fsxUsername = '';
+            fsObj.fsxPassword = '';
+        }
         const fsxnType = state.mssqlForm.fsxN?.fsxNType;
         if (isFsxnNew(fsxnType)) {
-            fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNNewUserName;
-            fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
+            if (!isGovAccount) {
+                fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNNewUserName;
+                fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
+            }
         } else {
             fsObj.fsxFileSystemId = state.mssqlForm.fsxN?.fsxNExistingName?.data?.fileSystemId;
-            fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNExistingUserName;
-            fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
+            if (!isGovAccount) {
+                fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNExistingUserName;
+                fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
+            }
         }
         return fsObj;
     })();
@@ -126,8 +136,9 @@ const createPgsqlPayload = (state: any) => {
         fsxConfiguration: {
             fsxDeploymentMode,
             fsxFileSystemId: fileSystem?.fsxFileSystemId,
-            fsxUsername: fileSystem?.fsxUsername,
-            fsxPassword: fileSystem?.fsxPassword,
+            ...(isGovAccount
+                ? { ssmParameterArn: fileSystem?.ssmParameterArn || '' }
+                : { fsxUsername: fileSystem?.fsxUsername, fsxPassword: fileSystem?.fsxPassword }),
             databaseSize,
             ontapSgGroupId: ontapSgGroupIdsList,
             fsxVolThroughput,
@@ -144,7 +155,9 @@ const createPgsqlPayload = (state: any) => {
                     : 'standalone',
             sqlServerName: state?.postgreForm?.postgreServerName || '',
             serviceAccountName: state.mssqlForm?.dbCredentials?.name || '',
-            serviceAccountPassword: state.mssqlForm?.dbCredentials?.password || '',
+            ...(isGovAccount
+                ? { ssmParameterArn: state.mssqlForm?.dbCredentials?.ssmParameterArn || '' }
+                : { serviceAccountPassword: state.mssqlForm?.dbCredentials?.password || '' }),
             sqlVersion: state.postgreForm?.postgreVersion?.value || ''
         },
         topicArn: state.mssqlForm?.simpleNotification?.snsState
@@ -164,6 +177,7 @@ const handleCreatePgsql = (state: any, dispatch: Dispatch) => {
         payload = createPgsqlPayload(state);
     } else {
         const vpcStateValue = !state.mssqlForm.regionAndVpc.selectedVPC;
+        const govCloud = state.auth?.isGovAccount;
 
         const azStateValue =
             (state.mssqlForm.dbDeploymentModel?.label === GENERAL.FAILOVER_CLUSTER &&
@@ -175,11 +189,14 @@ const handleCreatePgsql = (state: any, dispatch: Dispatch) => {
                 (!state.mssqlForm.availabilityZones.selectedAzNode1 ||
                     !state.mssqlForm.availabilityZones.selectedSubnetNode1));
 
-        const dbCredStateValue = !state.mssqlForm.dbCredentials.password;
+        const dbCredStateValue = govCloud
+            ? !isValidSsmArn(state.mssqlForm.dbCredentials.ssmParameterArn || '')
+            : !state.mssqlForm.dbCredentials.password;
 
-        const fsxStateValue =
-            (isFsxnNew(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNPassword) ||
-            (isFsxnExisting(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNExistingName);
+        const fsxStateValue = govCloud
+            ? !isValidSsmArn(state.mssqlForm.fsxN.ssmParameterArn || '')
+            : (isFsxnNew(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNPassword) ||
+              (isFsxnExisting(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNExistingName);
 
         // Check for VPC values
         if (vpcStateValue) {
@@ -213,14 +230,14 @@ const handleCreatePgsql = (state: any, dispatch: Dispatch) => {
         const checkForUserName = isValidUserName(state.mssqlForm.dbCredentials.name);
 
         // Proceed for post call
+        const passwordChecks = govCloud ? true : !checkForUserName && !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword);
         if (
             !vpcStateValue &&
             !azStateValue &&
             !dbCredStateValue &&
             !fsxStateValue &&
             !isDBValueValid &&
-            !checkForUserName &&
-            !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)
+            passwordChecks
         ) {
             payload = createPgsqlPayload(state);
             console.log('Deploy Payload', payload);

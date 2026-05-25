@@ -2,6 +2,7 @@ export interface BulkAuthCredentials {
     [hostName: string]: {
         userName: string;
         password: string;
+        ssmParameterArn?: string;
     };
 }
 

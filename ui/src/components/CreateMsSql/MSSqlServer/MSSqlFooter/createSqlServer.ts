@@ -16,6 +16,7 @@ import { AWS_MANAGED_AD, FORM_OPTIONS, FSX_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE 
 import { MssqlRequestBody, TagObj } from '../../../../utils/types/mssqlTypes';
 import { dbPassVal, fsxPassVal, isFsxnExisting, isFsxnNew, isValidUserName } from '../../../../utils/utilityFunctions';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
+import { isValidSsmArn } from '../../../../utils/consts';
 
 const createMssqlPayload = (state: any) => {
     let payload: MssqlRequestBody;
@@ -44,20 +45,30 @@ const createMssqlPayload = (state: any) => {
         return state.mssqlForm.encryption?.encryptionArn;
     })();
 
+    const isGovAccount = state.auth?.isGovAccount;
+
     const fileSystem = (() => {
-        const fsObj = {
-            fsxFileSystemId: '',
-            fsxUsername: '',
-            fsxPassword: ''
+        const fsObj: any = {
+            fsxFileSystemId: ''
         };
+        if (isGovAccount) {
+            fsObj.ssmParameterArn = state.mssqlForm.fsxN?.ssmParameterArn || '';
+        } else {
+            fsObj.fsxUsername = '';
+            fsObj.fsxPassword = '';
+        }
         const fsxnType = state.mssqlForm.fsxN?.fsxNType;
         if (isFsxnNew(fsxnType)) {
-            fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNNewUserName;
-            fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
+            if (!isGovAccount) {
+                fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNNewUserName;
+                fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
+            }
         } else {
             fsObj.fsxFileSystemId = state.mssqlForm.fsxN?.fsxNExistingName?.data?.fileSystemId;
-            fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNExistingUserName;
-            fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
+            if (!isGovAccount) {
+                fsObj.fsxUsername = state.mssqlForm.fsxN?.fsxNExistingUserName;
+                fsObj.fsxPassword = state.mssqlForm.fsxN?.fsxNPassword;
+            }
         }
         return fsObj;
     })();
@@ -130,8 +141,12 @@ const createMssqlPayload = (state: any) => {
     // Build adConfiguration with conditional fields
     const adConfiguration: any = {
         adScenarioType: state.mssqlForm.activeDirectory?.scenarioType || AWS_MANAGED_AD,
-        domainUsername: state.mssqlForm.activeDirectory?.userName || '',
-        domainPassword: state.mssqlForm.activeDirectory?.password || '',
+        ...(isGovAccount
+            ? { ssmParameterArn: state.mssqlForm.activeDirectory?.ssmParameterArn || '' }
+            : {
+                  domainUsername: state.mssqlForm.activeDirectory?.userName || '',
+                  domainPassword: state.mssqlForm.activeDirectory?.password || ''
+              }),
         domainDnsname: state.mssqlForm.activeDirectory?.domainName?.value || '',
         dnsIpaddress: state.mssqlForm.activeDirectory?.domainAddress || '',
         securityGroupId: ''
@@ -156,7 +171,9 @@ const createMssqlPayload = (state: any) => {
         sqlAmiId: licenseId || '',
         sqlAmiName: licenceName || '',
         serviceAccountName: state.mssqlForm.dbCredentials?.name || '',
-        serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '',
+        ...(isGovAccount
+            ? { ssmParameterArn: state.mssqlForm.dbCredentials?.ssmParameterArn || '' }
+            : { serviceAccountPassword: state.mssqlForm.dbCredentials?.password || '' }),
         sqlCollation: state.mssqlForm.sqlServerCollation?.label || '',
         sqlServerName: state.mssqlForm.dbName || ''
     };
@@ -185,8 +202,9 @@ const createMssqlPayload = (state: any) => {
         fsxConfiguration: {
             fsxDeploymentMode,
             fsxFileSystemId: fileSystem?.fsxFileSystemId,
-            fsxUsername: fileSystem?.fsxUsername,
-            fsxPassword: fileSystem?.fsxPassword,
+            ...(isGovAccount
+                ? { ssmParameterArn: fileSystem?.ssmParameterArn || '' }
+                : { fsxUsername: fileSystem?.fsxUsername, fsxPassword: fileSystem?.fsxPassword }),
             databaseSize,
             ontapSgGroupId: ontapSgGroupIdsList,
             fsxVolThroughput,
@@ -226,6 +244,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         console.log('Deploy Payload', payload);
     } else {
         const vpcStateValue = !state.mssqlForm.regionAndVpc.selectedVPC;
+        const govCloud = state.auth?.isGovAccount;
 
         const azStateValue =
             (state.mssqlForm.dbDeploymentModel?.label === GENERAL.FAILOVER_CLUSTER &&
@@ -240,17 +259,23 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         // Password is only NOT required in Advanced Create mode when managed service account is checked
         const isAdvancedCreate = state.mssqlForm.selectConfig === SELECT_CONFIG.STANDARD_CREATE;
         const isPasswordRequired = !(isAdvancedCreate && state.mssqlForm.activeDirectory.useManagedServiceAccount);
-        const dbCredStateValue = isPasswordRequired && !state.mssqlForm.dbCredentials.password;
+        const dbCredStateValue = govCloud
+            ? !isValidSsmArn(state.mssqlForm.dbCredentials.ssmParameterArn || '')
+            : isPasswordRequired && !state.mssqlForm.dbCredentials.password;
 
-        const adStateValue =
-            !state.mssqlForm.activeDirectory.domainAddress ||
-            !state.mssqlForm.activeDirectory.domainName ||
-            !state.mssqlForm.activeDirectory.userName ||
-            !state.mssqlForm.activeDirectory.password;
+        const adStateValue = govCloud
+            ? !state.mssqlForm.activeDirectory.domainAddress ||
+              !state.mssqlForm.activeDirectory.domainName ||
+              !isValidSsmArn(state.mssqlForm.activeDirectory.ssmParameterArn || '')
+            : !state.mssqlForm.activeDirectory.domainAddress ||
+              !state.mssqlForm.activeDirectory.domainName ||
+              !state.mssqlForm.activeDirectory.userName ||
+              !state.mssqlForm.activeDirectory.password;
 
-        const fsxStateValue =
-            (isFsxnNew(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNPassword) ||
-            (isFsxnExisting(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNExistingName);
+        const fsxStateValue = govCloud
+            ? !isValidSsmArn(state.mssqlForm.fsxN.ssmParameterArn || '')
+            : (isFsxnNew(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNPassword) ||
+              (isFsxnExisting(state.mssqlForm.fsxN.fsxNType) && !state.mssqlForm.fsxN.fsxNExistingName);
 
         const licenseIdCheck = !state.mssqlForm.license.selectedLicenseId;
         // Check for VPC values
@@ -299,6 +324,11 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
         }
 
         // Proceed for post call
+        const passwordChecks = govCloud
+            ? true
+            : !checkForUserName &&
+              !dbPassVal(state.mssqlForm.dbCredentials?.password) &&
+              !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword);
         if (
             !vpcStateValue &&
             !azStateValue &&
@@ -307,9 +337,7 @@ const handleCreateSQLServer = (state: any, dispatch: Dispatch) => {
             !fsxStateValue &&
             !isDBValueValid &&
             !licenseIdCheck &&
-            !checkForUserName &&
-            !dbPassVal(state.mssqlForm.dbCredentials?.password) &&
-            !fsxPassVal(state.mssqlForm.fsxN?.fsxNPassword)
+            passwordChecks
         ) {
             payload = createMssqlPayload(state);
             console.log('Deploy Payload', payload);

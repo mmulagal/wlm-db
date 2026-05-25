@@ -22,6 +22,7 @@ import {
     setSelectedMultiDetectInstances
 } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { AUTHENTICATION_TYPE, CREDENTIAL_OPTIONS, DBType } from '../../../../../utils/consts';
+import SsmParameterArnField from '../../../../../common/SsmParameterArnField/SsmParameterArnField';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../../store/notificationSlice';
 import styles from './AuthenticateBulkInstance.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
@@ -113,8 +114,11 @@ export const Content = () => {
     const applyToAllInstancesRef = useRef(false);
 
     // Redux state
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const credentialOption = useAppSelector(state => state.inventoryV2.credentialOption);
-    const { authMode, username, password } = useAppSelector(state => state.inventoryV2.bulkInstanceCredentials);
+    const { authMode, username, password, ssmParameterArn } = useAppSelector(
+        state => state.inventoryV2.bulkInstanceCredentials
+    );
     const instanceCredentials = useAppSelector(state => state.inventoryV2.instanceCredentials);
     const selectedMultiDetectInstances = useAppSelector(state => state.inventoryV2.selectedMultiDetectInstances);
     const instanceAuthStatus = useAppSelector(state => state.inventoryV2.instanceAuthStatus);
@@ -322,7 +326,11 @@ export const Content = () => {
     };
 
     // Handle updating individual instance credentials using uniqueKey to handle duplicate names
-    const handleInstanceUpdate = (uniqueKey: string, field: 'authMode' | 'username' | 'password', value: any) => {
+    const handleInstanceUpdate = (
+        uniqueKey: string,
+        field: 'authMode' | 'username' | 'password' | 'ssmParameterArn',
+        value: any
+    ) => {
         // For auth mode changes on the first time, show confirmation dialog
         if (field === 'authMode' && !hasShownAuthModeChangeDialog && instances.length > 1) {
             showAuthModeChangeDialog(uniqueKey, value);
@@ -509,59 +517,70 @@ export const Content = () => {
                     </div>
 
                     <div className={styles.formFields}>
-                        <SelectField
-                            label={t('databases.register-flow.select-authentication-mode')}
-                            value={authMode}
-                            onChange={(selectedOption: any) =>
-                                dispatch(setBulkInstanceCredentials({ authMode: selectedOption }))
-                            }
-                            options={authModeOptions}
-                            isClearable={false}
-                            isSearchable={false}
-                            className={`${styles.selectField} ${allFailed ? styles.errorBorder : ''}`}
-                            isDisabled={isDetectHostLoading}
-                        />
+                        {isGovAccount ? (
+                            <SsmParameterArnField
+                                value={ssmParameterArn}
+                                onChange={value => dispatch(setBulkInstanceCredentials({ ssmParameterArn: value }))}
+                                className={styles.textField}
+                                isDisabled={isDetectHostLoading}
+                            />
+                        ) : (
+                            <>
+                                <SelectField
+                                    label={t('databases.register-flow.select-authentication-mode')}
+                                    value={authMode}
+                                    onChange={(selectedOption: any) =>
+                                        dispatch(setBulkInstanceCredentials({ authMode: selectedOption }))
+                                    }
+                                    options={authModeOptions}
+                                    isClearable={false}
+                                    isSearchable={false}
+                                    className={`${styles.selectField} ${allFailed ? styles.errorBorder : ''}`}
+                                    isDisabled={isDetectHostLoading}
+                                />
 
-                        <DsTextField
-                            title={getAuthFieldLabels(authMode?.value, t).usernameLabel}
-                            value={username}
-                            onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
-                                dispatch(setBulkInstanceCredentials({ username: event?.target?.value || '' }))
-                            }
-                            placeholder={`${t('databases.general.enter')} ${
-                                getAuthFieldLabels(authMode?.value, t).usernameLabel
-                            }`}
-                            className={styles.textField}
-                            isDisabled={isDetectHostLoading}
-                            {...(allFailed && allErrorsSame
-                                ? {
-                                      message: {
-                                          type: 'error',
-                                          value:
-                                              (Object.values(instanceAuthErrors || {})[0] as string) ||
-                                              t('databases.register-flow.authentication-failed') ||
-                                              ''
-                                      }
-                                  }
-                                : {})}
-                        />
+                                <DsTextField
+                                    title={getAuthFieldLabels(authMode?.value, t).usernameLabel}
+                                    value={username}
+                                    onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
+                                        dispatch(setBulkInstanceCredentials({ username: event?.target?.value || '' }))
+                                    }
+                                    placeholder={`${t('databases.general.enter')} ${
+                                        getAuthFieldLabels(authMode?.value, t).usernameLabel
+                                    }`}
+                                    className={styles.textField}
+                                    isDisabled={isDetectHostLoading}
+                                    {...(allFailed && allErrorsSame
+                                        ? {
+                                              message: {
+                                                  type: 'error',
+                                                  value:
+                                                      (Object.values(instanceAuthErrors || {})[0] as string) ||
+                                                      t('databases.register-flow.authentication-failed') ||
+                                                      ''
+                                              }
+                                          }
+                                        : {})}
+                                />
 
-                        <PasswordField
-                            label={getAuthFieldLabels(authMode?.value, t).passwordLabel}
-                            value={password}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                dispatch(setBulkInstanceCredentials({ password: e.target.value }))
-                            }
-                            placeholder={t('databases.general.enter-password')}
-                            className={styles.passwordField}
-                            error={
-                                allFailed && allErrorsSame
-                                    ? (Object.values(instanceAuthErrors || {})[0] as string) ||
-                                      t('databases.register-flow.authentication-failed')
-                                    : ''
-                            }
-                            isDisabled={isDetectHostLoading}
-                        />
+                                <PasswordField
+                                    label={getAuthFieldLabels(authMode?.value, t).passwordLabel}
+                                    value={password}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                        dispatch(setBulkInstanceCredentials({ password: e.target.value }))
+                                    }
+                                    placeholder={t('databases.general.enter-password')}
+                                    className={styles.passwordField}
+                                    error={
+                                        allFailed && allErrorsSame
+                                            ? (Object.values(instanceAuthErrors || {})[0] as string) ||
+                                              t('databases.register-flow.authentication-failed')
+                                            : ''
+                                    }
+                                    isDisabled={isDetectHostLoading}
+                                />
+                            </>
+                        )}
                     </div>
                 </div>
             )}
@@ -607,62 +626,78 @@ export const Content = () => {
                                 </div>
 
                                 <div className={styles.instanceFields}>
-                                    <SelectField
-                                        label={t('databases.register-flow.select-authentication-mode')}
-                                        value={creds.authMode}
-                                        onChange={(selectedOption: any) =>
-                                            handleInstanceUpdate(instance.uniqueKey, 'authMode', selectedOption)
-                                        }
-                                        options={authModeOptions}
-                                        isClearable={false}
-                                        isSearchable={false}
-                                        isDisabled={authenticated || isDetectHostLoading}
-                                        className={`${styles.instanceSelectField} ${failed ? styles.errorBorder : ''}`}
-                                    />
+                                    {isGovAccount ? (
+                                        <SsmParameterArnField
+                                            value={instanceCredentials[instance.uniqueKey]?.ssmParameterArn || ''}
+                                            onChange={value =>
+                                                handleInstanceUpdate(instance.uniqueKey, 'ssmParameterArn', value)
+                                            }
+                                            className={styles.instanceTextField}
+                                            isDisabled={authenticated || isDetectHostLoading}
+                                        />
+                                    ) : (
+                                        <>
+                                            <SelectField
+                                                label={t('databases.register-flow.select-authentication-mode')}
+                                                value={creds.authMode}
+                                                onChange={(selectedOption: any) =>
+                                                    handleInstanceUpdate(instance.uniqueKey, 'authMode', selectedOption)
+                                                }
+                                                options={authModeOptions}
+                                                isClearable={false}
+                                                isSearchable={false}
+                                                isDisabled={authenticated || isDetectHostLoading}
+                                                className={`${styles.instanceSelectField} ${
+                                                    failed ? styles.errorBorder : ''
+                                                }`}
+                                            />
 
-                                    <DsTextField
-                                        title={getAuthFieldLabels(creds.authMode?.value, t).usernameLabel}
-                                        value={creds.username}
-                                        onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
-                                            handleInstanceUpdate(
-                                                instance.uniqueKey,
-                                                'username',
-                                                event?.target?.value || ''
-                                            )
-                                        }
-                                        placeholder={`${t('databases.general.enter')} ${
-                                            getAuthFieldLabels(creds.authMode?.value, t).usernameLabel
-                                        }`}
-                                        className={styles.instanceTextField}
-                                        isDisabled={authenticated || isDetectHostLoading}
-                                        {...(failed
-                                            ? {
-                                                  message: {
-                                                      type: 'error',
-                                                      value:
-                                                          instanceError ||
-                                                          t('databases.register-flow.authentication-failed') ||
-                                                          ''
-                                                  }
-                                              }
-                                            : {})}
-                                    />
+                                            <DsTextField
+                                                title={getAuthFieldLabels(creds.authMode?.value, t).usernameLabel}
+                                                value={creds.username}
+                                                onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
+                                                    handleInstanceUpdate(
+                                                        instance.uniqueKey,
+                                                        'username',
+                                                        event?.target?.value || ''
+                                                    )
+                                                }
+                                                placeholder={`${t('databases.general.enter')} ${
+                                                    getAuthFieldLabels(creds.authMode?.value, t).usernameLabel
+                                                }`}
+                                                className={styles.instanceTextField}
+                                                isDisabled={authenticated || isDetectHostLoading}
+                                                {...(failed
+                                                    ? {
+                                                          message: {
+                                                              type: 'error',
+                                                              value:
+                                                                  instanceError ||
+                                                                  t('databases.register-flow.authentication-failed') ||
+                                                                  ''
+                                                          }
+                                                      }
+                                                    : {})}
+                                            />
 
-                                    <PasswordField
-                                        label={getAuthFieldLabels(creds.authMode?.value, t).passwordLabel}
-                                        value={creds.password}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                            handleInstanceUpdate(instance.uniqueKey, 'password', e.target.value)
-                                        }
-                                        placeholder={t('databases.general.enter-password')}
-                                        className={styles.instancePasswordField}
-                                        isDisabled={authenticated || isDetectHostLoading}
-                                        error={
-                                            failed
-                                                ? instanceError || t('databases.register-flow.authentication-failed')
-                                                : ''
-                                        }
-                                    />
+                                            <PasswordField
+                                                label={getAuthFieldLabels(creds.authMode?.value, t).passwordLabel}
+                                                value={creds.password}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                    handleInstanceUpdate(instance.uniqueKey, 'password', e.target.value)
+                                                }
+                                                placeholder={t('databases.general.enter-password')}
+                                                className={styles.instancePasswordField}
+                                                isDisabled={authenticated || isDetectHostLoading}
+                                                error={
+                                                    failed
+                                                        ? instanceError ||
+                                                          t('databases.register-flow.authentication-failed')
+                                                        : ''
+                                                }
+                                            />
+                                        </>
+                                    )}
 
                                     {/* Reserve space for close button to prevent layout shift */}
                                     <div className={styles.closeButtonContainer}>

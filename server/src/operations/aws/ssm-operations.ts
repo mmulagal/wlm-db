@@ -21,7 +21,8 @@ import {
     getConnectionStatus,
     putParameter,
     getParameter,
-    describeInstanceInformation
+    describeInstanceInformation,
+    describeParameters
 } from '../../lib/aws/ssm';
 import { compressSsmCommand, decompressSSMResponse, generateHash, IS_DEMO_FLOW, sleep } from '../../utils/utils';
 import {
@@ -669,6 +670,41 @@ async function extractSsmResponse(
     return { output };
 }
 
+interface SSMParameterListItem {
+    name: string;
+    arn: string;
+    type: string;
+    lastModifiedDate?: string;
+}
+
+async function getSSMParametersList(
+    credentialsId: string,
+    region: string
+): Promise<{ parameters: SSMParameterListItem[] }> {
+    logger.info('List SSM parameters for customer', { credentialsId, region });
+
+    try {
+        const parameters = await describeParameters(credentialsId, region);
+
+        const parameterList: SSMParameterListItem[] = parameters
+            .filter(param => param.Name && param.ARN)
+            .map(param => ({
+                name: param.Name!,
+                arn: param.ARN!,
+                type: param.Type || 'String',
+                lastModifiedDate: param.LastModifiedDate?.toISOString()
+            }));
+
+        return { parameters: parameterList };
+    } catch (error: any) {
+        logger.error('Failed to list SSM parameters', { credentialsId, region, error });
+        if (error?.$metadata?.httpStatusCode && error.message) {
+            throw createError(error.$metadata.httpStatusCode, `Error listing SSM parameters: ${error.message}`);
+        }
+        throw createError(500, `Error listing SSM parameters: ${error?.message || error}`);
+    }
+}
+
 export {
     executeSSMDocument,
     getGenericFSxOntapRegionsList,
@@ -682,5 +718,6 @@ export {
     executeSSMDocumentMultipleInstances,
     getSSMConnectionStatusByInstanceIds,
     extractSsmResponse,
-    pollSSMConnectionStatus
+    pollSSMConnectionStatus,
+    getSSMParametersList
 };

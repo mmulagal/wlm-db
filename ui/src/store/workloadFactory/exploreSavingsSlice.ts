@@ -158,7 +158,8 @@ export const initialExploreSavingsState: ExploreSavingsSliceEntities = {
     regionChangeInstanceLoading: false,
     serverDetails: {
         password: '',
-        userName: ''
+        userName: '',
+        ssmParameterArn: ''
     },
     selectedAuthenticationType: '',
     showOptimizeLink: false,
@@ -590,7 +591,8 @@ const exploreSavingsSlice = createSlice({
         resetServerDetailsCredentials(state) {
             state.serverDetails = {
                 password: '',
-                userName: ''
+                userName: '',
+                ssmParameterArn: ''
             };
         },
         setInstanceDataUpdatedTrigger(state, action: PayloadAction<string | null>) {

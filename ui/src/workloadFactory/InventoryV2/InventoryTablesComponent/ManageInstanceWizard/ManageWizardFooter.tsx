@@ -98,6 +98,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     const fsxCredentialStatusObj = getFsxCredStatusByEngine(inventoryV2State, registerHostType);
     const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
     const { discoveredOracleHostData } = useAppSelector(state => state.inventoryV2.discoveredOracleHosts);
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
 
     // Build discover data context for fallback lookup when storage is missing
     const discoverContext: DiscoverDataContext = {
@@ -635,7 +636,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             bulkInstanceCredentials,
             instanceCredentials,
             instanceAuthStatus,
-            hostType
+            hostType,
+            isGovAccount
         );
 
         if (!validationResult.isValid) {
@@ -666,7 +668,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             bulkInstanceCredentials,
             instanceCredentials,
             instanceAuthStatus,
-            hostType
+            hostType,
+            isGovAccount
         );
 
         // If no credentials to send (all already authenticated), proceed to next step
@@ -876,7 +879,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             credentialOption,
             oracleBulkDatabaseCredentials,
             instanceCredentials,
-            instanceAuthStatus
+            instanceAuthStatus,
+            isGovAccount
         );
 
         if (!validationResult.isValid) {
@@ -906,7 +910,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             credentialOption,
             oracleBulkDatabaseCredentials,
             instanceCredentials,
-            instanceAuthStatus
+            instanceAuthStatus,
+            isGovAccount
         );
 
         // If no credentials to send (all already authenticated), proceed to next step

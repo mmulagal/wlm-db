@@ -17,23 +17,32 @@ const EC2Configuration = Type.Object({
     keyPairName: Type.String()
 });
 
+const SsmParameterArnField = Type.Optional(
+    Type.String({
+        description:
+            'ARN of a pre-created SSM SecureString parameter containing credentials JSON ({username, password}). Required for GovCloud accounts; not allowed for commercial accounts.',
+        pattern: '^arn:aws(-us-gov)?:ssm:[a-z0-9-]+:[0-9]{12}:parameter\\/.+'
+    })
+);
+
 const ADConfiguration = Type.Object({
     adScenarioType: Type.String({ enum: ['AWS_MANAGED_AD', 'USER_MANAGED_AD'] }),
-    domainUsername: Type.String(),
-    domainPassword: Type.String(),
+    domainUsername: Type.Optional(Type.String()),
+    domainPassword: Type.Optional(Type.String()),
     domainDnsname: Type.String(),
     dnsIpaddress: Type.String(),
     securityGroupId: Type.Optional(Type.String()),
     preferredDomainController: Type.Optional(Type.String()),
     ouPath: Type.Optional(Type.String()),
-    adGroup: Type.Optional(Type.String())
+    adGroup: Type.Optional(Type.String()),
+    ssmParameterArn: SsmParameterArnField
 });
 
 const FSXConfiguration = Type.Object({
     fsxFileSystemId: Type.Optional(Type.String()),
     fsxDeploymentMode: Type.String({ enum: ['SINGLE_AZ_1', 'MULTI_AZ_1', 'SINGLE_AZ_2', 'MULTI_AZ_2'] }),
-    fsxUsername: Type.String(),
-    fsxPassword: Type.String(),
+    fsxUsername: Type.Optional(Type.String()),
+    fsxPassword: Type.Optional(Type.String()),
     databaseSize: Type.Number(),
     fsxVolThroughput: Type.Number({
         enum: [
@@ -44,7 +53,8 @@ const FSXConfiguration = Type.Object({
     fsxIOPS: Type.Number(),
     ontapSgGroupId: Type.Array(Type.String()),
     encryptionKey: Type.Optional(Type.String()),
-    snapshotPolicy: Type.String({ enum: ['none', 'daily_weekretention'], default: 'daily_weekretention' })
+    snapshotPolicy: Type.String({ enum: ['none', 'daily_weekretention'], default: 'daily_weekretention' }),
+    ssmParameterArn: SsmParameterArnField
 });
 
 const SQLConfiguration = Type.Object({
@@ -57,14 +67,16 @@ const SQLConfiguration = Type.Object({
     sqlCollation: Type.String(),
     isCustomAmi: Type.Optional(Type.Boolean({ default: false })),
     sqlVersion: Type.Optional(Type.String({ enum: ['postgresql15', 'postgresql16'] })),
-    isManagedServiceAccount: Type.Optional(Type.Boolean({ default: false }))
+    isManagedServiceAccount: Type.Optional(Type.Boolean({ default: false })),
+    ssmParameterArn: SsmParameterArnField
 });
 
 const PgSqlConfiguration = Type.Pick(SQLConfiguration, [
     'sqlDeploymentMode',
     'sqlServerName',
     'sqlVersion',
-    'serviceAccountPassword'
+    'serviceAccountPassword',
+    'ssmParameterArn'
 ]);
 
 const PgSqlCloudFormationTemplateRequestBody = Type.Object({

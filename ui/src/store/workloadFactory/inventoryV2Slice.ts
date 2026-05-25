@@ -153,11 +153,13 @@ const initialInventoryV2State: InventorySliceData = {
             value: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
         },
         username: '',
-        password: ''
+        password: '',
+        ssmParameterArn: ''
     },
     oracleBulkDatabaseCredentials: {
         oracleUsername: '',
-        oraclePassword: ''
+        oraclePassword: '',
+        ssmParameterArn: ''
     },
     instanceCredentials: {},
     manageInstanceInstallAction: {
@@ -263,6 +265,7 @@ const inventoryV2Slice = createSlice({
                     authMode: any;
                     username: string;
                     password: string;
+                    ssmParameterArn: string;
                 }>;
             }>
         ) => {
@@ -468,12 +471,14 @@ const inventoryV2Slice = createSlice({
                     value: AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
                 },
                 username: '',
-                password: ''
+                password: '',
+                ssmParameterArn: ''
             };
             state.instanceCredentials = {};
             state.oracleBulkDatabaseCredentials = {
                 oracleUsername: '',
-                oraclePassword: ''
+                oraclePassword: '',
+                ssmParameterArn: ''
             };
             state.detectCredentialErrors = {
                 databaseServerError: '',

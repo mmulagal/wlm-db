@@ -13,6 +13,7 @@ import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClip
 import styles from './AuthDialog.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { AUTHENTICATION_TYPE } from '../../../../utils/consts';
+import SsmParameterArnField from '../../../../common/SsmParameterArnField/SsmParameterArnField';
 import { ReactComponent as Cross } from '../../../../assets/Cancel.svg';
 import {
     resetServerDetailsCredentials,
@@ -34,6 +35,7 @@ const AuthBulkDialog = () => {
     const [touchedFields, setTouchedFields] = useState<Record<string, { user: boolean; pass: boolean }>>({});
 
     const { selectedAuthenticationType } = useAppSelector(state => state.exploreSavings);
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
 
     const { actionsDisabled } = useAppSelector(state => state.dialogComponent);
 
@@ -46,7 +48,9 @@ const AuthBulkDialog = () => {
             ? rowsRequiringAuthBulk
             : selectedRowsForExploreSavingsEBSBulk;
 
-    const [inputValues, setInputValues] = useState<Record<string, { userName: string; password: string }>>({});
+    const [inputValues, setInputValues] = useState<
+        Record<string, { userName: string; password: string; ssmParameterArn?: string }>
+    >({});
 
     useEffect(() => {
         if (!selectedAuthenticationType) {
@@ -62,9 +66,9 @@ const AuthBulkDialog = () => {
 
     // Initialize local input state based on rows we'll render
     useEffect(() => {
-        const newValues: Record<string, { userName: string; password: string }> = {};
+        const newValues: Record<string, { userName: string; password: string; ssmParameterArn?: string }> = {};
         rowsToRender.forEach((row: any) => {
-            newValues[row.name] = inputValues[row.name] || { userName: '', password: '' };
+            newValues[row.name] = inputValues[row.name] || { userName: '', password: '', ssmParameterArn: '' };
         });
         setInputValues(newValues);
     }, [rowsToRender]);
@@ -77,7 +81,7 @@ const AuthBulkDialog = () => {
         setInputValues({});
     };
 
-    const handleInputChange = (hostName: string, field: 'userName' | 'password', value: string) => {
+    const handleInputChange = (hostName: string, field: 'userName' | 'password' | 'ssmParameterArn', value: string) => {
         const updated = {
             ...inputValues,
             [hostName]: {
@@ -151,20 +155,27 @@ const AuthBulkDialog = () => {
         <div className={styles.firstBulkSection}>
             <div className={styles.rowContainer} style={{ marginBottom: '-16px' }}>
                 <div className={styles.hostNameContainer}>
-                    {/* Reserve same space as icon container for alignment */}
                     <div className={styles.svgContainer} />
                     <DsTypography className={styles.hostName} variant="Semibold_14">
                         {t('databases.explore-savings.database-name')}
                     </DsTypography>
                 </div>
 
-                <DsTypography className={styles.fieldLabel} variant="Semibold_14">
-                    {getUsernameLabel()}
-                </DsTypography>
+                {isGovAccount ? (
+                    <DsTypography className={styles.fieldLabel} variant="Semibold_14">
+                        {t('databases.register-flow.ssm-parameter-arn-label')}
+                    </DsTypography>
+                ) : (
+                    <>
+                        <DsTypography className={styles.fieldLabel} variant="Semibold_14">
+                            {getUsernameLabel()}
+                        </DsTypography>
 
-                <DsTypography className={styles.fieldLabel} variant="Semibold_14">
-                    {getPasswordLabel()}
-                </DsTypography>
+                        <DsTypography className={styles.fieldLabel} variant="Semibold_14">
+                            {getPasswordLabel()}
+                        </DsTypography>
+                    </>
+                )}
             </div>
             {rowsToRender.map((row: any) => {
                 const hostName = row.name;
@@ -172,58 +183,71 @@ const AuthBulkDialog = () => {
                 const passTouched = touchedFields[hostName]?.pass;
                 const userValue = inputValues[hostName]?.userName || '';
                 const passValue = inputValues[hostName]?.password || '';
+                const arnValue = inputValues[hostName]?.ssmParameterArn || '';
                 const authStatus = bulkAuthStatus?.[hostName];
-
                 return (
                     <div key={row.id} className={styles.rowContainer}>
                         <div className={styles.hostNameContainer}>
-                            {/* Reserve space for status icon to maintain alignment */}
                             <div className={styles.svgContainer}>{authStatus && getImageForStatus(authStatus)}</div>
                             <DsTypography className={styles.hostName} variant="Regular_14">
                                 {hostName}
                             </DsTypography>
                         </div>
 
-                        <DsTextField
-                            title=""
-                            value={userValue}
-                            onChange={(event?: ChangeEvent<HTMLInputElement>) =>
-                                handleInputChange(hostName, 'userName', event?.target?.value || '')
-                            }
-                            isDisabled={actionsDisabled}
-                            onBlur={() => handleBlur(hostName, 'user')}
-                            className={styles.textFieldStyleBulk}
-                            {...(userTouched && userValue.length === 0
-                                ? {
-                                      message: {
-                                          type: 'error',
-                                          value: t('databases.general.action-required') || ''
-                                      }
-                                  }
-                                : {})}
-                            placeholder={getUsernamePlaceholder()}
-                        />
+                        {isGovAccount ? (
+                            <SsmParameterArnField
+                                label=""
+                                value={arnValue}
+                                onChange={value => handleInputChange(hostName, 'ssmParameterArn', value)}
+                                onBlur={() => handleBlur(hostName, 'user')}
+                                isDisabled={actionsDisabled}
+                                className={styles.textFieldStyleBulk}
+                                showRequiredError={!!touchedFields[hostName]?.user && !arnValue}
+                            />
+                        ) : (
+                            <>
+                                <DsTextField
+                                    title=""
+                                    value={userValue}
+                                    onChange={(event?: ChangeEvent<HTMLInputElement>) =>
+                                        handleInputChange(hostName, 'userName', event?.target?.value || '')
+                                    }
+                                    isDisabled={actionsDisabled}
+                                    onBlur={() => handleBlur(hostName, 'user')}
+                                    className={styles.textFieldStyleBulk}
+                                    {...(userTouched && userValue.length === 0
+                                        ? {
+                                              message: {
+                                                  type: 'error',
+                                                  value: t('databases.general.action-required') || ''
+                                              }
+                                          }
+                                        : {})}
+                                    placeholder={getUsernamePlaceholder()}
+                                />
 
-                        <DsTextField
-                            title=""
-                            value={passValue}
-                            isPassword
-                            onChange={(event?: ChangeEvent<HTMLInputElement>) =>
-                                handleInputChange(hostName, 'password', event?.target?.value || '')
-                            }
-                            isDisabled={actionsDisabled}
-                            onBlur={() => handleBlur(hostName, 'pass')}
-                            className={styles.textFieldStyleBulk}
-                            {...(passTouched && passValue.length === 0
-                                ? {
-                                      message: {
-                                          type: 'error',
-                                          value: t('databases.general.action-required') || ''
-                                      }
-                                  }
-                                : {})}
-                            placeholder={t('databases.general.enter-password')}
-                        />
+                                <DsTextField
+                                    title=""
+                                    value={passValue}
+                                    isPassword
+                                    onChange={(event?: ChangeEvent<HTMLInputElement>) =>
+                                        handleInputChange(hostName, 'password', event?.target?.value || '')
+                                    }
+                                    isDisabled={actionsDisabled}
+                                    onBlur={() => handleBlur(hostName, 'pass')}
+                                    className={styles.textFieldStyleBulk}
+                                    {...(passTouched && passValue.length === 0
+                                        ? {
+                                              message: {
+                                                  type: 'error',
+                                                  value: t('databases.general.action-required') || ''
+                                              }
+                                          }
+                                        : {})}
+                                    placeholder={t('databases.general.enter-password')}
+                                />
+                            </>
+                        )}
 
                         <Cross
                             className={`${styles.crossIcon} ${

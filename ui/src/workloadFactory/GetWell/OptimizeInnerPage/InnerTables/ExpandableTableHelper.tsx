@@ -423,7 +423,7 @@ export const useAutoExpandFirstRow = (
     const hasInitialExpanded = useRef(false);
     useEffect(() => {
         if (!hasInitialExpanded.current && hasViolationDetails && tableData.length > 0) {
-            const firstExpandable = tableData.find((item) => item.isMulti);
+            const firstExpandable = tableData.find(item => item.isMulti);
             if (firstExpandable && updateRowState) {
                 updateRowState(firstExpandable.id)({ isExpanded: true });
                 hasInitialExpanded.current = true;

@@ -111,13 +111,9 @@ variable "sql_server_name" {
 }
 
 variable "sql_service_account_password" {
-  description = "The password of the SQL service account"
+  description = "The password of the SQL service account. Can be empty when credentials are resolved from SSM."
   type        = string
-
-  validation {
-    condition     = length(var.sql_service_account_password) > 0
-    error_message = "The sql_service_account_password value must not be empty."
-  }
+  default     = ""
 }
 
 variable "ontap_security_group_id" {

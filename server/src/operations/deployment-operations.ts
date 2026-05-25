@@ -88,7 +88,8 @@ import {
     AL2023_AMI_NAME,
     CF_QUOTA_REACHED,
     HA,
-    AMAZON_LINUX_AMI_PATH
+    AMAZON_LINUX_AMI_PATH,
+    GOV_ACCOUNT
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -114,6 +115,7 @@ import { MissingPermissionInterface, NetworkViolation } from '../utils/common-ty
 import { encryptString } from './aws/kms-operations';
 import getConfigParameters from '../utils/template-parameters';
 import { getWlmdbPolicy, PolicyStatement } from '../lib/cloud-manager/wlmdb';
+import { validateSsmArnFormat, SSM_ARN_PATTERN } from '../utils/ssm-arn-validator';
 import {
     createDeploymentMockDataInDB,
     createFileSystemForDemo,
@@ -127,7 +129,7 @@ import {
     createTFVarsFile,
     createRootModuleFile
 } from './terraform-operations';
-import { getParametersByPath } from '../lib/aws/ssm';
+import { getParameter, getParametersByPath } from '../lib/aws/ssm';
 import { isCfStackQuotaReached } from './aws/service-quotas-operations';
 import { validateSvmCountCapacity } from './aws/fsx-operations';
 import { createDemoResourcesPerRegion } from '../utils/demo-utils/demoDefaultUtils';
@@ -232,6 +234,93 @@ async function getSubnetsCidr(
         throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
     }
     return { privateSubnet1Cidr, privateSubnet2Cidr };
+}
+
+async function readSsmCredential(credentialsId: string, region: string, ssmParameterArn: string, configName: string) {
+    validateSsmArnFormat(ssmParameterArn, configName, region);
+
+    const arnParts = ssmParameterArn.match(SSM_ARN_PATTERN);
+    if (!arnParts) {
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            `Invalid SSM parameter ARN format for ${configName}: ${ssmParameterArn}`
+        );
+    }
+    const parameterName = `/${arnParts[4]}`;
+    const paramValue = await getParameter(credentialsId, region, parameterName);
+    if (!paramValue) {
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            `SSM parameter not found or not readable for ${configName}: ${parameterName}. Ensure the parameter exists and the credentials have access.`
+        );
+    }
+
+    try {
+        const parsed = JSON.parse(paramValue);
+        if (!parsed.username || !parsed.password) {
+            throw createError(
+                HttpErrorCodes.BAD_REQUEST,
+                `SSM parameter for ${configName} must contain JSON with "username" and "password" fields.`
+            );
+        }
+        return parsed;
+    } catch (err: any) {
+        if (err.statusCode) {
+            throw err;
+        }
+        throw createError(
+            HttpErrorCodes.BAD_REQUEST,
+            `SSM parameter value is not valid JSON for ${configName}: ${parameterName}`
+        );
+    }
+}
+
+async function resolveGovCloudDeploymentCredentials(
+    credentialsId: string,
+    region: string,
+    adConfiguration?: ADConfigurationType,
+    fsxConfiguration?: FSXConfigurationType,
+    sqlConfiguration?: SQLConfigurationType | PgSqlConfigurationType
+) {
+    logger.info('Resolving GovCloud deployment credentials from per-config SSM parameters', { credentialsId, region });
+
+    if (fsxConfiguration?.ssmParameterArn) {
+        const creds = await readSsmCredential(
+            credentialsId,
+            region,
+            fsxConfiguration.ssmParameterArn,
+            'fsxConfiguration'
+        );
+        fsxConfiguration.fsxUsername = creds.username || fsxConfiguration.fsxUsername;
+        fsxConfiguration.fsxPassword = creds.password;
+    }
+
+    if (adConfiguration?.ssmParameterArn) {
+        const creds = await readSsmCredential(
+            credentialsId,
+            region,
+            adConfiguration.ssmParameterArn,
+            'adConfiguration'
+        );
+        adConfiguration.domainUsername = creds.username || adConfiguration.domainUsername;
+        adConfiguration.domainPassword = creds.password;
+    }
+
+    if (sqlConfiguration?.ssmParameterArn) {
+        const creds = await readSsmCredential(
+            credentialsId,
+            region,
+            sqlConfiguration.ssmParameterArn,
+            'sqlConfiguration'
+        );
+        sqlConfiguration.serviceAccountPassword = creds.password;
+        if ('serviceAccountName' in sqlConfiguration) {
+            (sqlConfiguration as SQLConfigurationType).serviceAccountName =
+                creds.username || (sqlConfiguration as SQLConfigurationType).serviceAccountName;
+        }
+    }
+
+    logger.info('GovCloud deployment credentials resolved successfully');
 }
 
 async function formatTemplateParameters(
@@ -347,17 +436,17 @@ async function formatTemplateParameters(
         }
     });
 
-    const adUsernameDetails = splitDomainUsername(adConfiguration.domainUsername);
-    const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername);
-    const sqlUsernameDetails = splitDomainUsername(sqlConfiguration.serviceAccountName);
+    const adUsernameDetails = splitDomainUsername(adConfiguration.domainUsername || '');
+    const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername || '');
+    const sqlUsernameDetails = splitDomainUsername(sqlConfiguration.serviceAccountName || '');
     templateParams.push(
         {
             ParameterKey: TEMPLATE_USERNAME_MAPPING.DomainAdminUser,
-            ParameterValue: adUsernameDetails?.username || adConfiguration.domainUsername
+            ParameterValue: adUsernameDetails?.username || adConfiguration.domainUsername || ''
         },
         {
             ParameterKey: TEMPLATE_USERNAME_MAPPING.FSxAdminUsername,
-            ParameterValue: fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
+            ParameterValue: fsxUsernameDetails?.username || fsxConfiguration.fsxUsername || ''
         },
         {
             ParameterKey: TEMPLATE_USERNAME_MAPPING.SQLServiceAccountName,
@@ -465,6 +554,20 @@ async function getCloudformationTemplate(
         triggeredFrom,
         tags
     });
+
+    if (
+        credentialsId &&
+        region &&
+        (fsxConfiguration.ssmParameterArn || adConfiguration.ssmParameterArn || sqlConfiguration.ssmParameterArn)
+    ) {
+        await resolveGovCloudDeploymentCredentials(
+            credentialsId,
+            region,
+            adConfiguration,
+            fsxConfiguration,
+            sqlConfiguration
+        );
+    }
 
     const { workloadInstanceType } = ec2Configuration;
     const { sqlServerName, sqlAmiName } = sqlConfiguration;
@@ -620,6 +723,16 @@ async function getPgSqlCfTemplate(
         triggeredFrom,
         tags
     });
+
+    if (credentialsId && region && (fsxConfiguration.ssmParameterArn || sqlConfiguration.ssmParameterArn)) {
+        await resolveGovCloudDeploymentCredentials(
+            credentialsId,
+            region,
+            undefined,
+            fsxConfiguration,
+            sqlConfiguration
+        );
+    }
 
     const { workloadInstanceType } = ec2Configuration;
     const { sqlServerName, sqlVersion } = sqlConfiguration;
@@ -802,6 +915,20 @@ async function getTerraformSetup(
         topicArn
     });
 
+    if (
+        credentialsId &&
+        region &&
+        (fsxConfiguration.ssmParameterArn || adConfiguration.ssmParameterArn || sqlConfiguration.ssmParameterArn)
+    ) {
+        await resolveGovCloudDeploymentCredentials(
+            credentialsId,
+            region,
+            adConfiguration,
+            fsxConfiguration,
+            sqlConfiguration
+        );
+    }
+
     const { workloadInstanceType } = ec2Configuration;
     const { sqlServerName, sqlAmiName } = sqlConfiguration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
@@ -833,6 +960,26 @@ async function getTerraformSetup(
             region,
             true
         );
+
+        if (fsxConfiguration.ssmParameterArn) {
+            templateParameters.push({
+                ParameterKey: 'FSxSsmParameterArn',
+                ParameterValue: fsxConfiguration.ssmParameterArn
+            });
+        }
+        if (adConfiguration.ssmParameterArn) {
+            templateParameters.push({
+                ParameterKey: 'ADSsmParameterArn',
+                ParameterValue: adConfiguration.ssmParameterArn
+            });
+        }
+        if (sqlConfiguration.ssmParameterArn) {
+            templateParameters.push({
+                ParameterKey: 'SQLSsmParameterArn',
+                ParameterValue: sqlConfiguration.ssmParameterArn
+            });
+        }
+
         const tfDeploymentName = `TF-${deploymentName.replace('Stack', '')}`;
         logger.debug(`Deployment ${tfDeploymentName} parameters ${JSON.stringify(templateParameters)}.`);
 
@@ -909,6 +1056,16 @@ async function getPGSQLTerraformSetup(
         region
     });
 
+    if (credentialsId && region && (fsxConfiguration.ssmParameterArn || sqlConfiguration.ssmParameterArn)) {
+        await resolveGovCloudDeploymentCredentials(
+            credentialsId,
+            region,
+            undefined,
+            fsxConfiguration,
+            sqlConfiguration
+        );
+    }
+
     const { workloadInstanceType } = ec2Configuration;
     const { databaseSize, fsxVolThroughput, fsxIOPS } = fsxConfiguration;
     const { sqlServerName } = sqlConfiguration;
@@ -938,6 +1095,19 @@ async function getPGSQLTerraformSetup(
             region,
             true // to skip the passwords param to be empty string
         );
+
+        if (fsxConfiguration.ssmParameterArn) {
+            templateParameters.push({
+                ParameterKey: 'FSxSsmParameterArn',
+                ParameterValue: fsxConfiguration.ssmParameterArn
+            });
+        }
+        if (sqlConfiguration.ssmParameterArn) {
+            templateParameters.push({
+                ParameterKey: 'SQLSsmParameterArn',
+                ParameterValue: sqlConfiguration.ssmParameterArn
+            });
+        }
 
         const tfDeploymentName = `TF-${deploymentName.replace('Stack', '')}`;
         logger.debug(`Deployment ${tfDeploymentName} parameters ${JSON.stringify(templateParameters)}.`);
@@ -1015,6 +1185,17 @@ async function deployStackOrCreateTemplateURL(
         tags,
         triggeredFrom
     });
+
+    if (fsxConfiguration.ssmParameterArn || adConfiguration.ssmParameterArn || sqlConfiguration.ssmParameterArn) {
+        await resolveGovCloudDeploymentCredentials(
+            credentialsId,
+            region,
+            adConfiguration,
+            fsxConfiguration,
+            sqlConfiguration
+        );
+    }
+
     updateLongRunningAuditGroup(undefined, undefined, sqlConfiguration?.sqlServerName);
     const { workloadInstanceType } = ec2Configuration;
     const { sqlServerName, sqlAmiName, sqlCollation } = sqlConfiguration;
@@ -1256,17 +1437,17 @@ async function createCloudFormationTemplateForUserDeployment(
         }
     }
 
-    const adUsernameDetails = splitDomainUsername(adConfiguration.domainUsername);
-    const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername);
-    const sqlUsernameDetails = splitDomainUsername(sqlConfiguration.serviceAccountName);
+    const adUsernameDetails = splitDomainUsername(adConfiguration.domainUsername || '');
+    const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername || '');
+    const sqlUsernameDetails = splitDomainUsername(sqlConfiguration.serviceAccountName || '');
     templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.DomainAdminUser}=${
-        adUsernameDetails?.username || adConfiguration.domainUsername
+        adUsernameDetails?.username || adConfiguration.domainUsername || ''
     }`;
     templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.FSxAdminUsername}=${
-        fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
+        fsxUsernameDetails?.username || fsxConfiguration.fsxUsername || ''
     }`;
     templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.SQLServiceAccountName}=${
-        sqlUsernameDetails?.username || sqlConfiguration.serviceAccountName
+        sqlUsernameDetails?.username || sqlConfiguration.serviceAccountName || ''
     }`;
 
     // Get the volume size of an ami.. Set to minimum value of 100 if its lesser than that
@@ -1549,16 +1730,36 @@ function prepareResourceActionMap(statements: PolicyStatement[]) {
     return resourcePolicyActions;
 }
 
+/**
+ * Rewrites ARN partition from commercial (arn:aws:) to GovCloud (arn:aws-us-gov:)
+ * in all Resource fields. The static workload-policies.json hosted on WF Console
+ * only contains commercial ARNs. For GovCloud accounts, SimulatePrincipalPolicy
+ * needs the correct partition to match the role's actual permissions.
+ *
+ * TODO: Remove this workaround once WF Console team hosts a GovCloud-specific
+ * workload-policies.json (or workload-policies-gov.json) with arn:aws-us-gov: ARNs.
+ */
+function rewriteArnPartitionForGovCloud(statements: PolicyStatement[]): PolicyStatement[] {
+    return statements.map(stmt => ({
+        ...stmt,
+        Resource: (Array.isArray(stmt.Resource) ? stmt.Resource : [stmt.Resource]).map(arn =>
+            typeof arn === 'string' && arn.startsWith('arn:aws:') ? arn.replace('arn:aws:', 'arn:aws-us-gov:') : arn
+        )
+    }));
+}
+
 async function checkAllMissingPermissions(credentialsId: string, region: string, action: string = VIEW) {
     logger.info('Check all missing permissions', { credentialsId, region, action });
     // checking the permissions for three different times to find out with different conditions like resource arn, conditions & resource set to *
-    let policyResourceActions;
     const { operate, view } = await getWlmdbPolicy();
-    if (action === OPERATE) {
-        policyResourceActions = prepareResourceActionMap(operate.Statement);
-    } else {
-        policyResourceActions = prepareResourceActionMap(view.Statement);
+
+    const isGovAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT);
+    let statements = action === OPERATE ? operate.Statement : view.Statement;
+    if (isGovAccount) {
+        logger.info('GovCloud account — rewriting ARN partition in policy resource ARNs');
+        statements = rewriteArnPartitionForGovCloud(statements);
     }
+    const policyResourceActions = prepareResourceActionMap(statements);
 
     const missedPermissions: MissingPermissionInterface = {
         implicitlyDenied: [],
@@ -1654,6 +1855,16 @@ async function deployPgSql(
         triggeredFrom,
         tags
     });
+
+    if (fsxConfiguration.ssmParameterArn || sqlConfiguration.ssmParameterArn) {
+        await resolveGovCloudDeploymentCredentials(
+            credentialsId,
+            region,
+            undefined,
+            fsxConfiguration,
+            sqlConfiguration
+        );
+    }
 
     updateLongRunningAuditGroup(undefined, undefined, sqlConfiguration?.sqlServerName);
 
@@ -2021,10 +2232,10 @@ async function formatPgSqlTemplateParameters(
         }
     });
 
-    const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername);
+    const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername || '');
     templateParams.push({
         ParameterKey: TEMPLATE_USERNAME_MAPPING.FSxAdminUsername,
-        ParameterValue: fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
+        ParameterValue: fsxUsernameDetails?.username || fsxConfiguration.fsxUsername || ''
     });
 
     const clubbedParamList = {
@@ -2178,10 +2389,10 @@ async function createCfTemplateForPgsqlDeployment(
         }
     }
 
-    const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername);
+    const fsxUsernameDetails = splitDomainUsername(fsxConfiguration.fsxUsername || '');
     // const sqlUsernameDetails = splitDomainUsername(sqlConfiguration.serviceAccountName);
     templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.FSxAdminUsername}=${
-        fsxUsernameDetails?.username || fsxConfiguration.fsxUsername
+        fsxUsernameDetails?.username || fsxConfiguration.fsxUsername || ''
     }`;
     // templateParams += `&param_${TEMPLATE_USERNAME_MAPPING.SQLServiceAccountName}=${
     //     sqlUsernameDetails?.username || sqlConfiguration.serviceAccountName

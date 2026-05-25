@@ -20,6 +20,7 @@ import {
     setOracleBulkDatabaseCredentials
 } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { CREDENTIAL_OPTIONS, DBType } from '../../../../../utils/consts';
+import SsmParameterArnField from '../../../../../common/SsmParameterArnField/SsmParameterArnField';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../../store/notificationSlice';
 import styles from './AuthenticateBulkInstance.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
@@ -41,7 +42,10 @@ export const Content = () => {
 
     // Redux state
     const credentialOption = useAppSelector(state => state.inventoryV2.credentialOption);
-    const { oracleUsername, oraclePassword } = useAppSelector(state => state.inventoryV2.oracleBulkDatabaseCredentials);
+    const { oracleUsername, oraclePassword, ssmParameterArn } = useAppSelector(
+        state => state.inventoryV2.oracleBulkDatabaseCredentials
+    );
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const instanceCredentials = useAppSelector(state => state.inventoryV2.instanceCredentials);
     const selectedMultiDetectInstances = useAppSelector(state => state.inventoryV2.selectedMultiDetectInstances);
     const instanceAuthStatus = useAppSelector(state => state.inventoryV2.instanceAuthStatus);
@@ -155,18 +159,28 @@ export const Content = () => {
                     hostType
                 );
 
-                if (authenticated && oracleUsername && oraclePassword) {
-                    // Only populate if not already set - use uniqueKey for credentials map
-                    if (!instanceCredentials[instance.uniqueKey]?.username) {
-                        dispatch(
-                            setInstanceCredentials({
-                                instanceId: instance.uniqueKey,
-                                credentials: {
-                                    username: oracleUsername,
-                                    password: oraclePassword
-                                }
-                            })
-                        );
+                if (authenticated) {
+                    if (isGovAccount && ssmParameterArn) {
+                        if (!instanceCredentials[instance.uniqueKey]?.ssmParameterArn) {
+                            dispatch(
+                                setInstanceCredentials({
+                                    instanceId: instance.uniqueKey,
+                                    credentials: { ssmParameterArn }
+                                })
+                            );
+                        }
+                    } else if (!isGovAccount && oracleUsername && oraclePassword) {
+                        if (!instanceCredentials[instance.uniqueKey]?.username) {
+                            dispatch(
+                                setInstanceCredentials({
+                                    instanceId: instance.uniqueKey,
+                                    credentials: {
+                                        username: oracleUsername,
+                                        password: oraclePassword
+                                    }
+                                })
+                            );
+                        }
                     }
                 }
             });
@@ -181,6 +195,8 @@ export const Content = () => {
         hostType,
         oracleUsername,
         oraclePassword,
+        ssmParameterArn,
+        isGovAccount,
         instanceCredentials
     ]);
 
@@ -364,46 +380,69 @@ export const Content = () => {
 
                     <div className={styles.formContainer}>
                         <div className={styles.oracleFormFields}>
-                            <DsTextField
-                                title={t('databases.register-flow.detect-oracle-username')}
-                                value={oracleUsername}
-                                onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
-                                    dispatch(
-                                        setOracleBulkDatabaseCredentials({ oracleUsername: event?.target?.value || '' })
-                                    )
-                                }
-                                placeholder={`${t('databases.general.enter')} ${t(
-                                    'databases.register-flow.detect-oracle-username'
-                                )}`}
-                                className={styles.textField}
-                                {...(allFailed && allErrorsSame
-                                    ? {
-                                          message: {
-                                              type: 'error',
-                                              value:
-                                                  (Object.values(instanceAuthErrors || {})[0] as string) ||
-                                                  t('databases.register-flow.authentication-failed') ||
-                                                  ''
-                                          }
-                                      }
-                                    : {})}
-                            />
+                            {isGovAccount ? (
+                                <SsmParameterArnField
+                                    value={ssmParameterArn}
+                                    onChange={value =>
+                                        dispatch(setOracleBulkDatabaseCredentials({ ssmParameterArn: value }))
+                                    }
+                                    className={styles.textField}
+                                    externalError={
+                                        allFailed && allErrorsSame
+                                            ? (Object.values(instanceAuthErrors || {})[0] as string) ||
+                                              t('databases.register-flow.authentication-failed') ||
+                                              ''
+                                            : ''
+                                    }
+                                />
+                            ) : (
+                                <>
+                                    <DsTextField
+                                        title={t('databases.register-flow.detect-oracle-username')}
+                                        value={oracleUsername}
+                                        onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
+                                            dispatch(
+                                                setOracleBulkDatabaseCredentials({
+                                                    oracleUsername: event?.target?.value || ''
+                                                })
+                                            )
+                                        }
+                                        placeholder={`${t('databases.general.enter')} ${t(
+                                            'databases.register-flow.detect-oracle-username'
+                                        )}`}
+                                        className={styles.textField}
+                                        {...(allFailed && allErrorsSame
+                                            ? {
+                                                  message: {
+                                                      type: 'error',
+                                                      value:
+                                                          (Object.values(instanceAuthErrors || {})[0] as string) ||
+                                                          t('databases.register-flow.authentication-failed') ||
+                                                          ''
+                                                  }
+                                              }
+                                            : {})}
+                                    />
 
-                            <PasswordField
-                                label={t('databases.register-flow.detect-oracle-password')}
-                                value={oraclePassword}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                    dispatch(setOracleBulkDatabaseCredentials({ oraclePassword: e.target.value }))
-                                }
-                                placeholder={t('databases.general.enter-password')}
-                                className={styles.passwordField}
-                                error={
-                                    allFailed && allErrorsSame
-                                        ? (Object.values(instanceAuthErrors || {})[0] as string) ||
-                                          t('databases.register-flow.authentication-failed')
-                                        : ''
-                                }
-                            />
+                                    <PasswordField
+                                        label={t('databases.register-flow.detect-oracle-password')}
+                                        value={oraclePassword}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                            dispatch(
+                                                setOracleBulkDatabaseCredentials({ oraclePassword: e.target.value })
+                                            )
+                                        }
+                                        placeholder={t('databases.general.enter-password')}
+                                        className={styles.passwordField}
+                                        error={
+                                            allFailed && allErrorsSame
+                                                ? (Object.values(instanceAuthErrors || {})[0] as string) ||
+                                                  t('databases.register-flow.authentication-failed')
+                                                : ''
+                                        }
+                                    />
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -450,51 +489,76 @@ export const Content = () => {
                                 </div>
 
                                 <div className={styles.instanceFields}>
-                                    <DsTextField
-                                        title={t('databases.register-flow.detect-oracle-username')}
-                                        value={creds.username}
-                                        onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
-                                            handleInstanceUpdate(
-                                                instance.uniqueKey,
-                                                'username',
-                                                event?.target?.value || ''
-                                            )
-                                        }
-                                        placeholder={`${t('databases.general.enter')} ${t(
-                                            'databases.register-flow.detect-oracle-username'
-                                        )}`}
-                                        className={styles.oracleInstanceTextField}
-                                        isDisabled={authenticated}
-                                        {...(failed
-                                            ? {
-                                                  message: {
-                                                      type: 'error',
-                                                      value:
-                                                          instanceError ||
-                                                          t('databases.register-flow.authentication-failed') ||
-                                                          ''
-                                                  }
-                                              }
-                                            : {})}
-                                    />
+                                    {isGovAccount ? (
+                                        <SsmParameterArnField
+                                            value={creds.ssmParameterArn || ''}
+                                            onChange={value =>
+                                                dispatch(
+                                                    setInstanceCredentials({
+                                                        instanceId: instance.uniqueKey,
+                                                        credentials: { ssmParameterArn: value }
+                                                    })
+                                                )
+                                            }
+                                            className={styles.oracleInstanceTextField}
+                                            isDisabled={authenticated}
+                                            externalError={
+                                                failed
+                                                    ? instanceError ||
+                                                      t('databases.register-flow.authentication-failed') ||
+                                                      ''
+                                                    : ''
+                                            }
+                                        />
+                                    ) : (
+                                        <>
+                                            <DsTextField
+                                                title={t('databases.register-flow.detect-oracle-username')}
+                                                value={creds.username}
+                                                onChange={(event?: React.ChangeEvent<HTMLInputElement>) =>
+                                                    handleInstanceUpdate(
+                                                        instance.uniqueKey,
+                                                        'username',
+                                                        event?.target?.value || ''
+                                                    )
+                                                }
+                                                placeholder={`${t('databases.general.enter')} ${t(
+                                                    'databases.register-flow.detect-oracle-username'
+                                                )}`}
+                                                className={styles.oracleInstanceTextField}
+                                                isDisabled={authenticated}
+                                                {...(failed
+                                                    ? {
+                                                          message: {
+                                                              type: 'error',
+                                                              value:
+                                                                  instanceError ||
+                                                                  t('databases.register-flow.authentication-failed') ||
+                                                                  ''
+                                                          }
+                                                      }
+                                                    : {})}
+                                            />
 
-                                    <PasswordField
-                                        label={t('databases.register-flow.detect-oracle-password')}
-                                        value={creds.password}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                            handleInstanceUpdate(instance.uniqueKey, 'password', e.target.value)
-                                        }
-                                        placeholder={t('databases.general.enter-password')}
-                                        className={styles.oracleInstancePasswordField}
-                                        isDisabled={authenticated}
-                                        error={
-                                            failed
-                                                ? instanceError || t('databases.register-flow.authentication-failed')
-                                                : ''
-                                        }
-                                    />
+                                            <PasswordField
+                                                label={t('databases.register-flow.detect-oracle-password')}
+                                                value={creds.password}
+                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                    handleInstanceUpdate(instance.uniqueKey, 'password', e.target.value)
+                                                }
+                                                placeholder={t('databases.general.enter-password')}
+                                                className={styles.oracleInstancePasswordField}
+                                                isDisabled={authenticated}
+                                                error={
+                                                    failed
+                                                        ? instanceError ||
+                                                          t('databases.register-flow.authentication-failed')
+                                                        : ''
+                                                }
+                                            />
+                                        </>
+                                    )}
 
-                                    {/* Reserve space for close button */}
                                     <div className={styles.closeButtonContainer}>
                                         {!authenticated && (
                                             <button
