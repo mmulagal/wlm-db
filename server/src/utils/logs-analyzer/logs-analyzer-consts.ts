@@ -9,9 +9,9 @@ const LOG_LEVEL = 'info';
 const LOGS_COUNT_TO_CONSIDER = 100;
 
 const LOGS_ANALYZER_MODEL_IDS = [
-    'anthropic.claude-sonnet-4-20250514-v1:0',
-    'anthropic.claude-3-7-sonnet-20250219-v1:0',
-    'anthropic.claude-3-5-sonnet-20240620-v1:0'
+    'anthropic.claude-sonnet-4-5-20250929-v1:0', // Active — GovCloud + Commercial
+    'anthropic.claude-sonnet-4-6', // Active — Commercial only (for now)
+    'anthropic.claude-sonnet-4-20250514-v1:0' // Legacy fallback — Commercial only
 ];
 
 enum MODEL_AVAILABILITY_STATUS {
