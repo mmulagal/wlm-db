@@ -357,6 +357,7 @@
             "govcloud-ssm-description-line2": "In AWS GovCloud, credentials must be retrieved from AWS SSM Parameter Store.",
             "govcloud-protection-not-supported": "Protection is not available for GovCloud accounts",
             "govcloud-ssm-description-line3": "Provide the SSM Parameter Store endpoint so the system can securely access the required credentials.",
+            "govcloud-fsx-require-auth": "FSx for ONTAP resources require authentication",
             "govcloud-ssm-learn-more": "Learn more about AWS GovCloud SSM Parameter Store",
             "govcloud-ssm-docs-url": "https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/govcloud-ssm.html",
             "govcloud-deploy-ssm-db-desc": "In GovCloud, provide the ARN of an SSM SecureString parameter containing JSON with \"username\" and \"password\" fields for the SQL service account.",

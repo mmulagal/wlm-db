@@ -20,9 +20,21 @@ data "aws_ssm_parameter" "sql_credentials" {
 locals {
   is_gov_region = can(regex("^us-gov-", var.aws_location))
 
-  fsx_creds = var.fsx_ssm_parameter_arn != "" ? jsondecode(data.aws_ssm_parameter.fsx_credentials[0].value) : null
-  ad_creds  = var.ad_ssm_parameter_arn != "" ? jsondecode(data.aws_ssm_parameter.ad_credentials[0].value) : null
-  sql_creds = var.sql_ssm_parameter_arn != "" ? jsondecode(data.aws_ssm_parameter.sql_credentials[0].value) : null
+  fsx_creds_raw = var.fsx_ssm_parameter_arn != "" ? jsondecode(data.aws_ssm_parameter.fsx_credentials[0].value) : null
+  ad_creds_raw  = var.ad_ssm_parameter_arn != "" ? jsondecode(data.aws_ssm_parameter.ad_credentials[0].value) : null
+  sql_creds_raw = var.sql_ssm_parameter_arn != "" ? jsondecode(data.aws_ssm_parameter.sql_credentials[0].value) : null
+
+  # Support both nested format ({ fsx: { username, password } }) and flat format ({ username, password })
+  fsx_creds = local.fsx_creds_raw != null ? (
+    try(local.fsx_creds_raw.fsx, null) != null ? local.fsx_creds_raw.fsx : local.fsx_creds_raw
+  ) : null
+  ad_creds = local.ad_creds_raw != null ? (
+    try(local.ad_creds_raw.domain[0], null) != null ? local.ad_creds_raw.domain[0] :
+    try(local.ad_creds_raw.domain, null) != null ? local.ad_creds_raw.domain : local.ad_creds_raw
+  ) : null
+  sql_creds = local.sql_creds_raw != null ? (
+    try(local.sql_creds_raw.sql[0], null) != null ? local.sql_creds_raw.sql[0] : local.sql_creds_raw
+  ) : null
 
   resolved_fsx_username = local.fsx_creds != null ? local.fsx_creds.username : var.fsx_admin_username
   resolved_fsx_password = local.fsx_creds != null ? local.fsx_creds.password : var.fsx_admin_password

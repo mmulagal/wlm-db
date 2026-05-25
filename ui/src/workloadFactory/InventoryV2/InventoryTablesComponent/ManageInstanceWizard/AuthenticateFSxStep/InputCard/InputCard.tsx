@@ -177,7 +177,11 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                     <div className={styles.topHeading}>
                         <div className={styles.headerPart}>
                             <DsTypography variant="Semibold_14">
-                                {t('databases.register-flow.all-fsx-for-ontap-resources')} ({fullFsxList.length})
+                                {isGovAccount
+                                    ? `${t('databases.register-flow.govcloud-fsx-require-auth')} (${fsxList.length})`
+                                    : `${t('databases.register-flow.all-fsx-for-ontap-resources')} (${
+                                          fullFsxList.length
+                                      })`}
                             </DsTypography>
                             <Popover
                                 popoverClass={CommonStyles.scrollablePopover}
@@ -192,9 +196,11 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                             </Popover>
                         </div>
 
-                        <DsTypography variant="Regular_14">
-                            {t('databases.register-flow.fsx-discovered-need-auth', { count: fsxList.length })}
-                        </DsTypography>
+                        {!isGovAccount && (
+                            <DsTypography variant="Regular_14">
+                                {t('databases.register-flow.fsx-discovered-need-auth', { count: fsxList.length })}
+                            </DsTypography>
+                        )}
                     </div>
 
                     {isGovAccount ? (
@@ -311,6 +317,44 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
 
             {selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.MANAGE_CRED_MANUALLY && (
                 <div className={styles.card2}>
+                    {isGovAccount && (
+                        <div className={styles.govCloudManualHeader}>
+                            <div className={styles.headerPart}>
+                                <DsTypography variant="Semibold_14">
+                                    {t('databases.register-flow.govcloud-fsx-require-auth')} ({fsxList.length})
+                                </DsTypography>
+                                <Popover
+                                    popoverClass={CommonStyles.scrollablePopover}
+                                    trigger="hover"
+                                    placement="bottom"
+                                    delayHide={200}
+                                    interactive
+                                    isAppendedToBody
+                                    container={<InfoIcon className={CommonStyles.infoIcon} />}
+                                >
+                                    {tooltipContent}
+                                </Popover>
+                            </div>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.register-flow.govcloud-ssm-description-line1', {
+                                    count: fsxList.length
+                                })}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14">
+                                {t('databases.register-flow.govcloud-ssm-description-line2')}
+                            </DsTypography>
+                            <a
+                                href={t('databases.register-flow.govcloud-ssm-docs-url')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.learnMoreLink}
+                            >
+                                {t('databases.register-flow.govcloud-ssm-learn-more')}
+                                <ExternalLinkIcon className={styles.externalLinkIcon} />
+                            </a>
+                        </div>
+                    )}
+
                     {uniqueFsxList.map((fsx: FsxItem, index: number) => {
                         const authStatus = getFsxAuthStatusById(fsx.fsxId);
                         const isAuthenticated =
@@ -468,18 +512,6 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                             </div>
                         );
                     })}
-
-                    {isGovAccount && (
-                        <a
-                            href={t('databases.register-flow.govcloud-ssm-docs-url')}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.learnMoreLink}
-                        >
-                            {t('databases.register-flow.govcloud-ssm-learn-more')}
-                            <ExternalLinkIcon className={styles.externalLinkIcon} />
-                        </a>
-                    )}
                 </div>
             )}
         </div>

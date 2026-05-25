@@ -255,24 +255,60 @@ async function readSsmCredential(credentialsId: string, region: string, ssmParam
         );
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let parsed: any;
     try {
-        const parsed = JSON.parse(paramValue);
-        if (!parsed.username || !parsed.password) {
-            throw createError(
-                HttpErrorCodes.BAD_REQUEST,
-                `SSM parameter for ${configName} must contain JSON with "username" and "password" fields.`
-            );
-        }
-        return parsed;
-    } catch (err: any) {
-        if (err.statusCode) {
-            throw err;
-        }
+        parsed = JSON.parse(paramValue);
+    } catch {
         throw createError(
             HttpErrorCodes.BAD_REQUEST,
             `SSM parameter value is not valid JSON for ${configName}: ${parameterName}`
         );
     }
+
+    const creds = extractCredentials(parsed, configName);
+    return creds;
+}
+
+/**
+ * Extracts username/password from SSM parameter JSON.
+ * Supports the nested format used by commercial registration (e.g. { fsx: { username, password } })
+ * and flat format ({ username, password }).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractCredentials(parsed: any, configName: string): { username: string; password: string } {
+    if (parsed.username && parsed.password) {
+        return { username: parsed.username, password: parsed.password };
+    }
+
+    if (configName === 'fsxConfiguration' && parsed.fsx?.username && parsed.fsx?.password) {
+        return { username: parsed.fsx.username, password: parsed.fsx.password };
+    }
+
+    if (configName === 'adConfiguration') {
+        const domain = Array.isArray(parsed.domain) ? parsed.domain[0] : parsed.domain;
+        if (domain?.username && domain?.password) {
+            return { username: domain.username, password: domain.password };
+        }
+    }
+
+    if (configName === 'sqlConfiguration') {
+        const sql = Array.isArray(parsed.sql) ? parsed.sql[0] : parsed.sql;
+        if (sql?.username && sql?.password) {
+            return { username: sql.username, password: sql.password };
+        }
+        const pgsql = Array.isArray(parsed.pgsql) ? parsed.pgsql[0] : parsed.pgsql;
+        if (pgsql?.username && pgsql?.password) {
+            return { username: pgsql.username, password: pgsql.password };
+        }
+    }
+
+    throw createError(
+        HttpErrorCodes.BAD_REQUEST,
+        `SSM parameter for ${configName} must contain credentials in one of these formats: ` +
+            '{ "username": "...", "password": "..." } or nested format matching the credential type ' +
+            '(e.g. { "fsx": { "username": "...", "password": "..." } }).'
+    );
 }
 
 async function resolveGovCloudDeploymentCredentials(
