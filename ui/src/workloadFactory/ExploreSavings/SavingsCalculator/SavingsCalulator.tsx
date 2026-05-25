@@ -60,7 +60,7 @@ import OracleEbsSavingsCalculatorApi from '../OracleTCO/OracleSavingsCalculator/
 const SavingsCalculator = ({ statusCheck }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const [printState, setPrintState] = useState(false);
+    const [pdfCaptureMode, setPdfCaptureMode] = useState(false);
     const [isMutliFsx, setIsMutliFsx] = useState(false);
     const buttonRef: any = useRef(null);
     const [isCardOpen, setIsCardOpen] = useState(false);
@@ -174,95 +174,111 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         return SAVINGS_CALC_MODE.ONPREM_MODE;
     };
 
+    const savingsCalculatorPdfOptions = (elem: HTMLElement) => ({
+        filename: `SavingsCalculator-${Date.now()}.pdf`,
+        compression: 'MEDIUM',
+        overrideWidth: elem.clientWidth,
+        excludeTagNames: ['button']
+    });
+
     const sendEmail = async () => {
-        setPrintState(true);
+        setPdfCaptureMode(true);
         setTimeout(async () => {
-            const elem = document.getElementById('export-pdf') as HTMLElement;
-            const options = {
-                filename: 'SavingsCalculator.pdf',
-                compression: 'MEDIUM'
-            };
-            const report = await downloadPdfEmail(elem, options, true, () => {});
-
-            const formData = new FormData();
-            formData.append('file', report, `SavingsCalculator-${Date.now()}.pdf`);
-            formData.append('userEmail', userMetadata?.email);
-            formData.append('emailType', 'savings-calculations');
-            formData.append('storageType', setEmailSubject());
-            formData.append(
-                'databaseType',
-                selectedTCOHostType === DBType.MSSQL ? DETECT_HOST_VAR.MSSQL : DETECT_HOST_VAR.ORACLE
-            );
-            const dynamicHostName = getDynamicBreadcrumbTitle();
-            if (dynamicHostName) {
-                formData.append('hostName', dynamicHostName);
-            }
-            getSendEmail({ payload: formData })
-                .then(resp => {
-                    if (!resp.error) {
-                        dispatch(
-                            addNotification({
-                                notificationType: NOTIFICATION_TYPES.SUCCESS,
-                                message: 'Calculation report was sent to you by email'
-                            })
-                        );
-                    } else {
-                        // @ts-ignore
-                        if (resp?.error?.data?.message === 'Too many requests') {
-                            dispatch(
-                                addNotification({
-                                    notificationType: NOTIFICATION_TYPES.ERROR,
-                                    // @ts-ignore
-                                    message: 'Calculation report was failed to be delivered.',
-                                    additionalText:
-                                        "You've reached the calculation result emails limit for the day. Try again tomorrow."
-                                })
-                            );
-                        } else {
-                            dispatch(
-                                addNotification({
-                                    notificationType: NOTIFICATION_TYPES.ERROR,
-                                    // @ts-ignore
-                                    message: resp?.error?.data?.message
-                                })
-                            );
-                        }
-                    }
-
-                    setPrintState(false);
-                })
-                .catch(err => {
+            try {
+                const elem = document.getElementById('export-pdf') as HTMLElement;
+                const report = await downloadPdfEmail(elem, savingsCalculatorPdfOptions(elem), true, () => {});
+                if (!report) {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.ERROR,
-                            message: 'Calculation report was failed to be delivered.'
+                            message: t('databases.explore-savings.pdf-download-error')
                         })
                     );
+                    return;
+                }
 
-                    setPrintState(false);
-                });
-        }, 10);
+                const formData = new FormData();
+                formData.append('file', report, `SavingsCalculator-${Date.now()}.pdf`);
+                formData.append('userEmail', userMetadata?.email);
+                formData.append('emailType', 'savings-calculations');
+                formData.append('storageType', setEmailSubject());
+                formData.append(
+                    'databaseType',
+                    selectedTCOHostType === DBType.MSSQL ? DETECT_HOST_VAR.MSSQL : DETECT_HOST_VAR.ORACLE
+                );
+                const dynamicHostName = getDynamicBreadcrumbTitle();
+                if (dynamicHostName) {
+                    formData.append('hostName', dynamicHostName);
+                }
+
+                const resp = await getSendEmail({ payload: formData });
+                if (!resp.error) {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: 'Calculation report was sent to you by email'
+                        })
+                    );
+                } else {
+                    // @ts-ignore
+                    if (resp?.error?.data?.message === 'Too many requests') {
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                // @ts-ignore
+                                message: 'Calculation report was failed to be delivered.',
+                                additionalText:
+                                    "You've reached the calculation result emails limit for the day. Try again tomorrow."
+                            })
+                        );
+                    } else {
+                        dispatch(
+                            addNotification({
+                                notificationType: NOTIFICATION_TYPES.ERROR,
+                                // @ts-ignore
+                                message: resp?.error?.data?.message
+                            })
+                        );
+                    }
+                }
+            } catch {
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: 'Calculation report was failed to be delivered.'
+                    })
+                );
+            } finally {
+                setPdfCaptureMode(false);
+            }
+        }, 500);
     };
 
     const printDocument = () => {
-        setPrintState(true);
+        setPdfCaptureMode(true);
         setTimeout(() => {
             const elem = document.getElementById('export-pdf') as HTMLElement;
-            const options = {
-                filename: `SavingsCalculator-${Date.now()}.pdf`,
-                compression: 'MEDIUM'
-            };
+            const options = savingsCalculatorPdfOptions(elem);
             // @ts-ignore
             downloadPdf(elem, options, (pdf: any) => {
-                setPrintState(false);
-                dispatch(
-                    addNotification({
-                        notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: t('databases.explore-savings.pdf-download-success')
-                    })
-                );
+                setPdfCaptureMode(false);
+                if (pdf) {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: t('databases.explore-savings.pdf-download-success')
+                        })
+                    );
+                } else {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: t('databases.explore-savings.pdf-download-error')
+                        })
+                    );
+                }
             });
-        }, 10);
+        }, 500);
     };
 
     const setManualBreadcrumbTitle = () => {
@@ -330,22 +346,22 @@ const SavingsCalculator = ({ statusCheck }: any) => {
 
     const setFirstContainerClass = () => {
         if (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_FSXW) {
-            if (printState) {
-                return `${styles.firstContainer} ${styles.classForManualFsx} ${styles.classForPrint}`;
-            }
             return `${styles.firstContainer} ${styles.classForManualFsx}`;
         }
-        if (printState) {
-            return `${styles.firstContainer} ${styles.classForPrint}`;
-        }
-        return `${styles.firstContainer} `;
+        return styles.firstContainer;
     };
 
     const handleOptimizeLinkButton = () => {
         dispatch(setShowOptimizeModal(true));
     };
     return (
-        <div style={{ height: 'inherit', overflow: 'auto', backgroundColor: 'var(--main-background)' }}>
+        <div
+            style={{
+                height: 'inherit',
+                overflow: pdfCaptureMode ? 'hidden' : 'auto',
+                backgroundColor: 'var(--main-background)'
+            }}
+        >
             {/* Oracle API handler components - conditionally rendered */}
             {isOracleOnPrem && <OracleSavingsCalculatorApi />}
             {isOracleEbs && <OracleEbsSavingsCalculatorApi />}
@@ -437,7 +453,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) &&
                         showOptimizeMode?.showCalcMode && (
                             <div className={styles.optimizeModeContainer}>
-                                <CalculatorMode printState={printState} />
+                                <CalculatorMode printState={false} />
                             </div>
                         )}
 
@@ -454,11 +470,11 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                     savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) && (
                                     <>
                                         <SavingsHeader />
-                                        <SavingsSelection printState={printState} />
+                                        <SavingsSelection printState={false} />
 
                                         {(savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
                                             savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) && (
-                                            <TCOBulkAccordion />
+                                            <TCOBulkAccordion printState={pdfCaptureMode} />
                                         )}
 
                                         {/* Condition for EBS TCO Bulk for Auto - accordions to be displayed */}
@@ -475,9 +491,9 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                     <>
                                         <SavingsHeader />
                                         <div className={styles.manualContentWrapper}>
-                                            <ManualTCOFields printState={printState} />
-                                            <ManualEC2 printState={printState} />
-                                            <ManualVolumeTypes printState={printState} />
+                                            <ManualTCOFields printState={false} />
+                                            <ManualEC2 printState={false} />
+                                            <ManualVolumeTypes printState={false} />
                                             {selectedManualDeploymentModel?.label ===
                                                 'Always on availability group' && <ManualTCOAccordion />}
                                         </div>
@@ -488,8 +504,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                     <>
                                         <SavingsHeader />
                                         <div className={styles.manualContentWrapper}>
-                                            <ManualTCOFields printState={printState} />
-                                            <ManualTCOFSXFields printState={printState} />
+                                            <ManualTCOFields printState={false} />
+                                            <ManualTCOFSXFields printState={false} />
                                             <ManualFSXEC2 />
                                         </div>
                                     </>
@@ -499,9 +515,9 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                     <>
                                         <SavingsHeader />
                                         <div className={styles.manualContentWrapper}>
-                                            <ManualTCOFields printState={printState} />
-                                            <ManualEC2 printState={printState} />
-                                            <ManualVolumeTypes printState={printState} />
+                                            <ManualTCOFields printState={false} />
+                                            <ManualEC2 printState={false} />
+                                            <ManualVolumeTypes printState={false} />
                                             {selectedManualDeploymentModel?.label ===
                                                 DATABASE_DEPLOYMENT_MODE.DATAGUARD && <ManualTCOAccordion />}
                                         </div>
@@ -511,13 +527,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         )}
 
                         {isOnPremMode && (
-                            <div
-                                className={
-                                    printState
-                                        ? `${styles.onPremiseContainer} ${styles.classForPrintOnPrem}`
-                                        : `${styles.onPremiseContainer} `
-                                }
-                            >
+                            <div className={styles.onPremiseContainer}>
                                 <SavingsHeader />
                                 <OnPremRegion />
 
@@ -525,8 +535,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                                     (savingsCalculatorFrom === SAVINGS_CALC_MODE.ONPREM &&
                                         selectedRowsForExploreSavingsOnPremBulk.length >= 1)) && (
                                     <>
-                                        <SavingsSelection printState={printState} />
-                                        <TCOOnPremBulkAccordion printState={printState} />
+                                        <SavingsSelection printState={pdfCaptureMode} />
+                                        <TCOOnPremBulkAccordion printState={pdfCaptureMode} />
                                     </>
                                 )}
                             </div>
@@ -589,7 +599,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     {/* Accordion here - RecommendedAccordion handles both MSSQL and Oracle */}
 
                     <RecommendedAccordion
-                        printState={printState}
+                        printState={pdfCaptureMode}
                         disableState={disableState}
                         isMutliFsx={isMutliFsx}
                         width={headingWidth}
@@ -602,7 +612,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     disableState={disableState}
                     isMutliFsx={isMutliFsx}
                     sendEmail={sendEmail}
-                    emailStatus={printState}
+                    emailStatus={pdfCaptureMode}
                     width={headingWidth}
                 />
             </div>

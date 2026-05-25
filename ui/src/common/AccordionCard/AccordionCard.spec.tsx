@@ -46,6 +46,18 @@ describe('AccordionCard', () => {
         expect(container).toBeTruthy();
     });
 
+    it('renders static chevron instead of button when printState is true', () => {
+        const { queryByTestId, container } = render(
+            <AccordionController isGrouped={false}>
+                <AccordionCard title="Heading" printState>
+                    <div>Content</div>
+                </AccordionCard>
+            </AccordionController>
+        );
+        expect(queryByTestId('chevron')).toBeNull();
+        expect(container.querySelector('svg')).toBeTruthy();
+    });
+
     it('should render with value prop', () => {
         const { container } = render(
             <AccordionController isGrouped={false}>

@@ -2089,31 +2089,29 @@ export const createFsxOnlyPayload = (fsxIds: string[], rowData: any) => {
                 }
             });
         }
+    } else if (selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED) {
+        fsxIds.forEach(fsxId => {
+            if (detectOntapUsername && detectOntapPassword) {
+                credList.push({
+                    resourceId: fsxId,
+                    resourceType: DETECT_HOST_VAR.FSX,
+                    username: detectOntapUsername,
+                    password: detectOntapPassword
+                });
+            }
+        });
     } else {
-        if (selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED) {
-            fsxIds.forEach(fsxId => {
-                if (detectOntapUsername && detectOntapPassword) {
-                    credList.push({
-                        resourceId: fsxId,
-                        resourceType: DETECT_HOST_VAR.FSX,
-                        username: detectOntapUsername,
-                        password: detectOntapPassword
-                    });
-                }
-            });
-        } else {
-            fsxIds.forEach(fsxId => {
-                const cred = detectOntapCredentialsByFsx[fsxId];
-                if (cred?.username && cred?.password) {
-                    credList.push({
-                        resourceId: fsxId,
-                        resourceType: DETECT_HOST_VAR.FSX,
-                        username: cred.username,
-                        password: cred.password
-                    });
-                }
-            });
-        }
+        fsxIds.forEach(fsxId => {
+            const cred = detectOntapCredentialsByFsx[fsxId];
+            if (cred?.username && cred?.password) {
+                credList.push({
+                    resourceId: fsxId,
+                    resourceType: DETECT_HOST_VAR.FSX,
+                    username: cred.username,
+                    password: cred.password
+                });
+            }
+        });
     }
 
     return { credentials: credList, checkManageReadiness: false };

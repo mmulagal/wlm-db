@@ -43,7 +43,7 @@ import AuthBulkDialog from '../../ExploreSavingsTableV2/AuthDialog/AuthBulkDialo
 import { useRegisterResourceCredentialsBulkMutation } from '../../../../utils/apiService';
 import { resetDialogComponent } from '../../../../store/workloadFactory/dialogComponentSlice';
 
-const TCOBulkAccordion = () => {
+const TCOBulkAccordion = ({ printState = false }: { printState?: boolean }) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -526,6 +526,7 @@ const TCOBulkAccordion = () => {
                 <div className={styles.accordionScrollContainer}>
                     {activeRows.map((host: any, index: number) => (
                         <AccordionCard
+                            printState={printState}
                             key={host.id || index}
                             ValueContent={() => (
                                 <div className={styles.centerValue}>

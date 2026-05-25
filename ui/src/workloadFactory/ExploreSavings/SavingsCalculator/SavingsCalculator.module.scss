@@ -50,6 +50,7 @@
         .firstContainer {
             width: 656px;
             min-width: 656px;
+            min-height: 0;
             height: 1315px;
             max-height: 1315px;
             overflow-y: auto;
@@ -61,17 +62,15 @@
         .onPremiseContainer {
             flex: 1 1 auto;
             min-width: 0;
+            min-height: 0;
             height: 1315px;
             max-height: 1315px;
+            display: flex;
+            flex-direction: column;
             overflow-y: auto;
             overflow-x: hidden;
             background-color: var(--content-background);
             box-shadow: 2px 2px 6px 0px var(--border);
-        }
-
-        .classForPrintOnPrem {
-            max-height: max-content;
-            height: max-content;
         }
 
         .secondContainer {
@@ -88,11 +87,6 @@
             overflow-x: unset;
         }
 
-        .classForPrint {
-            max-height: max-content;
-            height: max-content;
-        }
-
         .manualContentWrapper {
             padding: 40px;
         }
@@ -102,6 +96,7 @@
 
         .onPremiseContainer {
             flex: 1 1 0;
+            min-height: 0;
         }
 
         .secondContainer {
@@ -164,20 +159,10 @@
                 }
             }
 
-            .classForPrint {
-                max-height: max-content;
-                height: max-content;
-            }
-
             .onPremiseContainer {
                 height: 1356px;
                 max-height: 1356px;
             }
-            .classForPrintOnPrem {
-                max-height: max-content;
-                height: max-content;
-            }
-
             .secondContainer {
                 flex: 0 0 456px;
             }

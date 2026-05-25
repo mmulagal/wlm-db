@@ -397,14 +397,19 @@ const InstanceInformation = ({ host }: { host?: any }) => {
         return t('databases.explore-savings.instance-information');
     };
 
+    const isFsxw = savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW;
+
     return (
         <div
-            className={getInstanceClassName({
-                savingsCalculatorFrom,
-                selectedExploreSavingsTab,
-                isOracleOnPrem,
-                styles
-            })}
+            className={classNames(
+                getInstanceClassName({
+                    savingsCalculatorFrom,
+                    selectedExploreSavingsTab,
+                    isOracleOnPrem,
+                    styles
+                }),
+                { [styles.fsxwSection]: isFsxw }
+            )}
         >
             <DsTypography variant="Regular_14">{getSectionTitle()}</DsTypography>
             <div

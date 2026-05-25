@@ -1,4 +1,5 @@
 import { DsTypography, FlashingDotsLoader } from '@netapp/design-system';
+import classNames from 'classnames';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './SavingsSelectedHost.module.scss';
@@ -52,8 +53,14 @@ const SavingsSelectedHost = ({ host }: SavingsSelectedHostProps) => {
         }
     }, [selectedHostDetails, selectedPartnerHostDetails, selectedOnPremHostDetails, host]);
 
+    const isFsxw = savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW;
+
     return (
-        <div className={styles.selectedHosts}>
+        <div
+            className={classNames(styles.selectedHosts, {
+                [styles.fsxwSection]: isFsxw
+            })}
+        >
             <DsTypography variant="Regular_14" className={isDisabled ? styles.disabledHeading : ''}>
                 {t('databases.explore-savings.selected-host')}:
             </DsTypography>

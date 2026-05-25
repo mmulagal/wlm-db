@@ -1987,6 +1987,7 @@
             "findings-over-provisioned": "Over-provisioned",
             "findings-under-provisioned": "Under-provisioned",
             "pdf-download-success": "PDF file downloaded successfully.",
+            "pdf-download-error": "PDF file could not be generated. Please try again.",
             "explore-savings-title": "Explore savings",
             "oracle-deployment-mode-label": "Database deployment mode",
             "oracle-deployment-mode-text": "Database deployment mode selected based on the current database deployment mode.",

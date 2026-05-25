@@ -26,7 +26,12 @@ import {
 } from '../../../store/workloadFactory/exploreSavingsSlice';
 import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
 import { generateManualStorageSavingsPayload } from './savingsUtil';
-import { MAX_CLONED_COPIES, MAX_MONTHLY_CHANGE_RATE, SAVINGS_CALC_MODE } from '../../../utils/consts';
+import {
+    DATABASE_DEPLOYMENT_MODE,
+    MAX_CLONED_COPIES,
+    MAX_MONTHLY_CHANGE_RATE,
+    SAVINGS_CALC_MODE
+} from '../../../utils/consts';
 
 const SavingsCalculatorManualApi = () => {
     const dispatch = useAppDispatch();
@@ -169,6 +174,11 @@ const SavingsCalculatorManualApi = () => {
         }
     };
 
+    const isPayloadReadyForDeployment = (payload: any): boolean => {
+        if (selectedManualDeploymentModel?.label === DATABASE_DEPLOYMENT_MODE.STANDALONE) return true;
+        return payload?.ec2Instances?.length >= 2;
+    };
+
     const triggerManualStorageAPI = () => {
         dispatch(setStorageSavingsLoading(true));
         dispatch(setViewCalculationsLoading(true));
@@ -209,7 +219,8 @@ const SavingsCalculatorManualApi = () => {
                 Number(monthlyChangeRate) <= MAX_MONTHLY_CHANGE_RATE &&
                 volumeFilledStatus &&
                 selectedManualInstanceType &&
-                payload?.ec2Instances[0]?.volumes.length
+                payload?.ec2Instances[0]?.volumes.length &&
+                isPayloadReadyForDeployment(payload)
             ) {
                 dispatch(setDisableState(false));
                 dispatch(setRequestedPayload(payload));
@@ -315,7 +326,8 @@ const SavingsCalculatorManualApi = () => {
                 payload?.ec2Instances &&
                 payload?.ec2Instances[0] &&
                 payload?.ec2Instances[0]?.volumes &&
-                payload?.ec2Instances[0]?.volumes.length
+                payload?.ec2Instances[0]?.volumes.length &&
+                isPayloadReadyForDeployment(payload)
             ) {
                 dispatch(setDisableState(false));
                 dispatch(setRequestedPayload(payload));

@@ -112,7 +112,7 @@ const ComparisonChartStack = React.memo(
                                         {[...stack].reverse().map((value, revIndex) => {
                                             const stackIndex = stack.length - 1 - revIndex;
                                             const percentage = total > 0 ? (value / total) * 100 : 0;
-                                            const colorSet = index === 0 ? colors : (stackedBarColors || colors);
+                                            const colorSet = index === 0 ? colors : stackedBarColors || colors;
                                             const backgroundColor = colorSet
                                                 ? `var(--${colorSet[stackIndex]})`
                                                 : fullColors[stackIndex];
@@ -141,34 +141,41 @@ const ComparisonChartStack = React.memo(
                                                         }
                                                     >
                                                         <div className={styles.tooltipContainer}>
-                                                        <div className={styles.tooltipContentRowFirst}>
-                                                            <div
-                                                                className={styles.squareChart2}
-                                                                style={{ backgroundColor }}
-                                                            />
-                                                            {(index === 0
-                                                                ? (tooltipHeadingFirst?.[stackIndex] || tooltipHeading?.[stackIndex])
-                                                                : tooltipHeading?.[stackIndex]) && (
-                                                                <>
-                                                                    <DsTypography variant="Semibold_14">
-                                                                        {index === 0
-                                                                            ? (tooltipHeadingFirst?.[stackIndex] || tooltipHeading?.[stackIndex])
-                                                                            : tooltipHeading?.[stackIndex]}
-                                                                    </DsTypography>
-                                                                    <SeparatorComponent variant="vertical" height="20px" />
-                                                                </>
-                                                            )}
-                                                            <DsTypography variant="Semibold_14">
-                                                                {index === 0
-                                                                    ? (tooltipTextFirst?.[stackIndex] || tooltipText?.[stackIndex])
-                                                                    : tooltipText?.[stackIndex]}
-                                                            </DsTypography>
-                                                        </div>
+                                                            <div className={styles.tooltipContentRowFirst}>
+                                                                <div
+                                                                    className={styles.squareChart2}
+                                                                    style={{ backgroundColor }}
+                                                                />
+                                                                {(index === 0
+                                                                    ? tooltipHeadingFirst?.[stackIndex] ||
+                                                                      tooltipHeading?.[stackIndex]
+                                                                    : tooltipHeading?.[stackIndex]) && (
+                                                                    <>
+                                                                        <DsTypography variant="Semibold_14">
+                                                                            {index === 0
+                                                                                ? tooltipHeadingFirst?.[stackIndex] ||
+                                                                                  tooltipHeading?.[stackIndex]
+                                                                                : tooltipHeading?.[stackIndex]}
+                                                                        </DsTypography>
+                                                                        <SeparatorComponent
+                                                                            variant="vertical"
+                                                                            height="20px"
+                                                                        />
+                                                                    </>
+                                                                )}
+                                                                <DsTypography variant="Semibold_14">
+                                                                    {index === 0
+                                                                        ? tooltipTextFirst?.[stackIndex] ||
+                                                                          tooltipText?.[stackIndex]
+                                                                        : tooltipText?.[stackIndex]}
+                                                                </DsTypography>
+                                                            </div>
                                                             <DsTypography
                                                                 variant="Semibold_14"
                                                                 style={{ marginBottom: '8px' }}
                                                             >
-                                                                ${formatNumberWithCustomComma(data[index]?.[stackIndex])}
+                                                                $
+                                                                {formatNumberWithCustomComma(data[index]?.[stackIndex])}
                                                             </DsTypography>
                                                         </div>
                                                     </Popover>

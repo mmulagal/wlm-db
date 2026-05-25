@@ -89,3 +89,14 @@ $basePadding: 0 32px 0 40px;
         margin-right: 14px;
     }
 }
+
+.printChevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    --icon-primary-color: var(--icon-secondary);
+
+    .is-expanded {
+        transform: rotate(180deg);
+    }
+}

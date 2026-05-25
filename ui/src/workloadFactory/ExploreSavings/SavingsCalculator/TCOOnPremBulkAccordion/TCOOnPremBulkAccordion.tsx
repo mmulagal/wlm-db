@@ -266,14 +266,7 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
                     <DsTypography variant="Regular_14">{t('databases.explore-savings.ssd-tier-text')}</DsTypography>
                 </div>
             )}
-            <AccordionController isGrouped>
-                {isOracleOnPrem && !isOracleBulkMode && (
-                    <AutoExpandAccordions
-                        hostIds={hostsToDisplay.map((host: any, index: number) =>
-                            String(host?.resourceName || index + 1)
-                        )}
-                    />
-                )}
+            <div className={styles.hostListSection}>
                 <div className={styles.header}>
                     <DsTypography variant="Semibold_16">
                         {`${t('databases.explore-savings.selected-hosts')} (${hostsToDisplay.length})`}
@@ -286,65 +279,77 @@ const TCOOnPremBulkAccordion = ({ printState }: { printState: boolean }) => {
                         {t('databases.explore-savings.add-hosts')}
                     </DsButton>
                 </div>
-                <div className={styles.accordionScrollContainer}>
-                    {hostsToDisplay.map((host: any, index: number) => {
-                        const hostDetails = getHostDetails(host);
-                        const hostName = host?.resourceName || host;
+                <AccordionController isGrouped>
+                    {isOracleOnPrem && !isOracleBulkMode && (
+                        <AutoExpandAccordions
+                            hostIds={hostsToDisplay.map((host: any, index: number) =>
+                                String(host?.resourceName || index + 1)
+                            )}
+                        />
+                    )}
+                    <div className={styles.accordionScrollContainer}>
+                        {hostsToDisplay.map((host: any, index: number) => {
+                            const hostDetails = getHostDetails(host);
+                            const hostName = host?.resourceName || host;
 
-                        return (
-                            <AccordionCard
-                                key={hostName || index}
-                                ValueContent={() => (
-                                    <div className={styles.centerValue}>
-                                        <DsTypography variant="Regular_14" className={styles.centerText}>
-                                            {getHostInstanceCount(host)} {getInstanceLabel()}
-                                            {!isOracleOnPrem && (
-                                                <>
-                                                    <SeparatorComponent variant="vertical" height="16px" />
-                                                    {getHostNodeCount(host)}{' '}
-                                                    {hostDetails?.deploymentModel === 'Standalone' ? 'node' : 'nodes'}
-                                                </>
-                                            )}
+                            return (
+                                <AccordionCard
+                                    printState={printState}
+                                    key={hostName || index}
+                                    ValueContent={() => (
+                                        <div className={styles.centerValue}>
+                                            <DsTypography variant="Regular_14" className={styles.centerText}>
+                                                {getHostInstanceCount(host)} {getInstanceLabel()}
+                                                {!isOracleOnPrem && (
+                                                    <>
+                                                        <SeparatorComponent variant="vertical" height="16px" />
+                                                        {getHostNodeCount(host)}{' '}
+                                                        {hostDetails?.deploymentModel === 'Standalone'
+                                                            ? 'node'
+                                                            : 'nodes'}
+                                                    </>
+                                                )}
+                                            </DsTypography>
+                                        </div>
+                                    )}
+                                    id={String(hostName || index + 1)}
+                                    title={
+                                        <div className={isOracleOnPrem ? styles.oracleTitle : CommonStyles.title}>
+                                            {hostName || `Host ${index + 1}`}
+                                        </div>
+                                    }
+                                    RightWidget={() => (
+                                        <div className={styles.rightWidgetButton}>
+                                            <DsButton
+                                                type="text"
+                                                isDisabled={totalHostCount <= 1 || storageSavingsLoading}
+                                                onClick={event => handleRemoveHost(host, event)}
+                                            >
+                                                {t('databases.explore-savings.remove')}
+                                            </DsButton>
+                                        </div>
+                                    )}
+                                >
+                                    <AccordionCardContent className={styles.accordionContent}>
+                                        <DsTypography>
+                                            <SavingsSelectedHost host={hostDetails} />
                                         </DsTypography>
-                                    </div>
-                                )}
-                                id={String(hostName || index + 1)}
-                                title={
-                                    <div className={isOracleOnPrem ? styles.oracleTitle : CommonStyles.title}>
-                                        {hostName || `Host ${index + 1}`}
-                                    </div>
-                                }
-                                RightWidget={() => (
-                                    <div className={styles.rightWidgetButton}>
-                                        <DsButton
-                                            type="text"
-                                            isDisabled={totalHostCount <= 1 || storageSavingsLoading}
-                                            onClick={event => handleRemoveHost(host, event)}
-                                        >
-                                            {t('databases.explore-savings.remove')}
-                                        </DsButton>
-                                    </div>
-                                )}
-                            >
-                                <AccordionCardContent className={styles.accordionContent}>
-                                    <DsTypography>
-                                        <SavingsSelectedHost host={hostDetails} />
-                                    </DsTypography>
-                                    <DsTypography>
-                                        <InstanceInformation host={hostDetails} />
-                                    </DsTypography>
-                                    <DsTypography>
-                                        <ComputeInformation host={hostDetails} printState={printState} />
-                                    </DsTypography>
-                                    <DsTypography>
-                                        <StoragePerformance host={hostDetails} printState={printState} />
-                                    </DsTypography>
-                                </AccordionCardContent>
-                            </AccordionCard>
-                        );
-                    })}
-                </div>
-            </AccordionController>
+                                        <DsTypography>
+                                            <InstanceInformation host={hostDetails} />
+                                        </DsTypography>
+                                        <DsTypography>
+                                            <ComputeInformation host={hostDetails} printState={printState} />
+                                        </DsTypography>
+                                        <DsTypography>
+                                            <StoragePerformance host={hostDetails} printState={printState} />
+                                        </DsTypography>
+                                    </AccordionCardContent>
+                                </AccordionCard>
+                            );
+                        })}
+                    </div>
+                </AccordionController>
+            </div>
         </div>
     );
 };

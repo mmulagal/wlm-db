@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 import _isArray from 'lodash/isArray';
 
 import { DsFlashingDotsLoader, DsTypography } from '@netapp/design-system';
+import { ReactComponent as ChevronIcon } from '@netapp/icons/ic_card_arrow_expand.svg';
 import styles from './AccordionCard.module.scss';
 import { HashTable } from '../../utils/utilityFunctions';
 import { TransitionChevron } from '../TransitionChevron/TransitionChevron';
@@ -213,6 +214,8 @@ export interface AccordionCardProps {
     id?: string;
     /** If value is array, should the value tooltip be hidden? */
     isHideMultiValueTooltip?: boolean;
+    /** PDF capture: render static chevron (not a button) and keep accordion expanded */
+    printState?: boolean;
 }
 
 /**
@@ -237,7 +240,8 @@ export const AccordionCard = React.memo(
         isSelected,
         onSelect,
         isHideMultiValueTooltip = false,
-        id: _id
+        id: _id,
+        printState = false
     }: AccordionCardProps) => {
         const context = useAccordionContext();
         const { openChildren, toggleOpenChild } = context || {};
@@ -258,7 +262,7 @@ export const AccordionCard = React.memo(
                         [styles.clickable]: !isDisabled
                     })}
                     style={headerStyle}
-                    onClick={() => !isDisabled && toggleOpenChild && toggleOpenChild(id.current)}
+                    onClick={() => !printState && !isDisabled && toggleOpenChild && toggleOpenChild(id.current)}
                 >
                     <div className={classNames(styles.title, `at-${context?.id}`)}>
                         {/* {onSelect && (
@@ -292,13 +296,22 @@ export const AccordionCard = React.memo(
                     )}
                     {LeftWidget ? <LeftWidget /> : <div />}
                     {RightWidget ? <RightWidget /> : <div />}
-                    {hasInnerContent && (
-                        <TransitionChevron
-                            className={styles.accordionChevron}
-                            isDisabled={isExpandDisabled}
-                            isExpanded={isOpen || false}
-                        />
-                    )}
+                    {hasInnerContent &&
+                        (printState ? (
+                            <span className={styles.printChevron} aria-hidden>
+                                <ChevronIcon
+                                    className={classNames({
+                                        [styles['is-expanded']]: isOpen
+                                    })}
+                                />
+                            </span>
+                        ) : (
+                            <TransitionChevron
+                                className={styles.accordionChevron}
+                                isDisabled={isExpandDisabled}
+                                isExpanded={isOpen || false}
+                            />
+                        ))}
                     {!hasInnerContent && <div />}
                 </div>
                 <UnmountClosed isOpened={isOpen || false} theme={{ collapse: styles.animation }}>
