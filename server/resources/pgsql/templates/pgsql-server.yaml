@@ -148,12 +148,15 @@ Resources:
         Properties:
             SecondaryPrivateIpAddressCount: 2
             SubnetId: !Ref 'PrivateSubnet1ID'
-            GroupSet:
-                - !Ref 'WorkloadSecurityGroup'
-                - !If
-                  - ONTAPSGNotSelected
-                  - !Ref 'AWS::NoValue'
-                  - !Ref 'ONTAPSecurityGroupID'
+            GroupSet: !If
+                - ONTAPSGNotSelected
+                - - !Ref 'WorkloadSecurityGroup'
+                - !Split
+                  - ','
+                  - !Join
+                    - ','
+                    - - !Ref 'WorkloadSecurityGroup'
+                      - !Ref 'ONTAPSecurityGroupID'
             Tags:
                 -   Key: Name
                     Value: !Ref 'SqlFSxServerNetBIOSName1'
@@ -374,12 +377,15 @@ Resources:
         Properties:
             SecondaryPrivateIpAddressCount: 2
             SubnetId: !Ref 'PrivateSubnet2ID'
-            GroupSet:
-                - !Ref 'WorkloadSecurityGroup'
-                - !If
-                  - ONTAPSGNotSelected
-                  - !Ref 'AWS::NoValue'
-                  - !Ref 'ONTAPSecurityGroupID'
+            GroupSet: !If
+                - ONTAPSGNotSelected
+                - - !Ref 'WorkloadSecurityGroup'
+                - !Split
+                  - ','
+                  - !Join
+                    - ','
+                    - - !Ref 'WorkloadSecurityGroup'
+                      - !Ref 'ONTAPSecurityGroupID'
             Tags:
                 -   Key: Name
                     Value: !Ref 'SqlFSxServerNetBIOSName2'
@@ -603,12 +609,15 @@ Resources:
         Properties:
             SecondaryPrivateIpAddressCount: 2
             SubnetId: !Ref 'PrivateSubnet1ID'
-            GroupSet:
-                - !Ref 'WorkloadSecurityGroup'
-                - !If
-                  - ONTAPSGNotSelected
-                  - !Ref 'AWS::NoValue'
-                  - !Ref 'ONTAPSecurityGroupID'
+            GroupSet: !If
+                - ONTAPSGNotSelected
+                - - !Ref 'WorkloadSecurityGroup'
+                - !Split
+                  - ','
+                  - !Join
+                    - ','
+                    - - !Ref 'WorkloadSecurityGroup'
+                      - !Ref 'ONTAPSecurityGroupID'
             Tags:
                 -   Key: Name
                     Value: 'PgPoolServerNode'

@@ -337,16 +337,28 @@ Resources:
         Properties:
             SecondaryPrivateIpAddressCount: 2
             SubnetId: !Ref 'PrivateSubnetID'
-            GroupSet:
-                - !Ref 'WorkloadSecurityGroup'
-                - !If
-                  - ONTAPSGNotSelected
-                  - !Ref 'AWS::NoValue'
-                  - !Ref 'ONTAPSecurityGroupID'
+            GroupSet: !If
+                - ONTAPSGNotSelected
                 - !If
                   - ADSGNotSelected
-                  - !Ref 'AWS::NoValue'
-                  - !Ref 'DomainMemberSGID'
+                  - - !Ref 'WorkloadSecurityGroup'
+                  - - !Ref 'WorkloadSecurityGroup'
+                    - !Ref 'DomainMemberSGID'
+                - !If
+                  - ADSGNotSelected
+                  - !Split
+                    - ','
+                    - !Join
+                      - ','
+                      - - !Ref 'WorkloadSecurityGroup'
+                        - !Ref 'ONTAPSecurityGroupID'
+                  - !Split
+                    - ','
+                    - !Join
+                      - ','
+                      - - !Ref 'WorkloadSecurityGroup'
+                        - !Ref 'ONTAPSecurityGroupID'
+                        - !Ref 'DomainMemberSGID'
             Tags:
                 - Key: Name
                   Value: !Ref 'SqlFSxServerNetBIOSName'

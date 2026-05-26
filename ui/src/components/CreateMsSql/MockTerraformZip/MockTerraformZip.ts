@@ -325,7 +325,7 @@ module "ec2" {
   route_table_id                 = var.route_table1_id
   ebs_volume_size                = var.ebs_volume_size
   domain_member_sg_id            = var.domain_member_sg_id
-  ontap_security_group_id        = local.new_ontap_fsx ? module.fsxn.fsxn_security_group_id : var.ontap_security_group_id
+  ontap_security_group_id        = var.ontap_security_group_id
   mssql_media_bucket_name        = var.mssql_media_bucket_name
   sql_fsx_server_net_bios_name   = element(split(",", var.node_net_bios_names), 0)
   workload_instance_type         = var.workload_instance_type
@@ -1228,13 +1228,8 @@ variable "file_system_encryption_key_id" {
 }
 
 variable "ontap_security_group_id" {
-  description = "The ID of the ONTAP security group"
+  description = "The ID of the ONTAP security group. Comma-separated list of security group IDs is supported."
   type        = string
-
-  validation {
-    condition     = length(var.ontap_security_group_id) > 0
-    error_message = "The ontap_security_group_id value must not be empty."
-  }
 }
 
 variable "fsx_volume_snapshot_policy" {

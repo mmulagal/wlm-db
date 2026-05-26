@@ -22,7 +22,7 @@ locals {
   sql_fsx_server_net_bios_name   = element(split(",", var.node_net_bios_names), 0)
   sql_fsx_server_net_bios_name_2 = element(split(",", var.node_net_bios_names), 1)
   adsg_not_selected              = var.domain_member_sg_id == "" ? true : false
-  ontap_security_groups          = split(",", var.ontap_security_group_id)
+  ontap_security_groups          = var.ontap_security_group_id == "" ? [] : split(",", var.ontap_security_group_id)
   group_set                      = local.adsg_not_selected ? concat([aws_security_group.workload_security_group.id], local.ontap_security_groups) : concat([aws_security_group.workload_security_group.id], local.ontap_security_groups, [var.domain_member_sg_id])
   sql_fsx_fci_name               = var.sql_server_name
   # Terraform does not support doing validation of an variable based on another variable. So we have to do it like this.
@@ -658,14 +658,9 @@ variable "file_system_encryption_key_id" {
 }
 
 variable "ontap_security_group_id" {
-  description = "The ID of the ONTAP security group"
+  description = "Comma-separated ONTAP security group IDs, or an empty value"
   type        = string
   default     = "{{ontap_security_group_id}}"
-
-  validation {
-    condition     = length(var.ontap_security_group_id) > 0
-    error_message = "The ontap_security_group_id value must not be empty."
-  }
 }
 
 variable "fsx_volume_snapshot_policy" {
@@ -1031,7 +1026,7 @@ module "standalone_sql_node" {
   route_table_id                 = var.route_table1_id
   ebs_volume_size                = var.ebs_volume_size
   domain_member_sg_id            = var.domain_member_sg_id
-  ontap_security_group_id        = local.new_ontap_fsx ? module.fsxn_standalone[0].fsxn_security_group_id : var.ontap_security_group_id
+  ontap_security_group_id        = var.ontap_security_group_id
   mssql_media_bucket_name        = var.mssql_media_bucket_name
   sql_fsx_server_net_bios_name   = element(split(",", var.node_net_bios_names), 0)
   workload_instance_type         = var.workload_instance_type
@@ -1079,7 +1074,7 @@ module "fci_sql_node1" {
   route_table_id                 = var.route_table1_id
   ebs_volume_size                = var.ebs_volume_size
   domain_member_sg_id            = var.domain_member_sg_id
-  ontap_security_group_id        = local.new_ontap_fsx ? module.fsxn_fci[0].fsxn_security_group_id : var.ontap_security_group_id
+  ontap_security_group_id        = var.ontap_security_group_id
   mssql_media_bucket_name        = var.mssql_media_bucket_name
   mssql_media_path_key           = var.mssql_media_path_key
   sql_fsx_server_net_bios_name   = local.sql_fsx_server_net_bios_name
@@ -1136,7 +1131,7 @@ module "fci_sql_node2" {
   sql_node_aws_location          = var.aws_location
   ebs_volume_size                = var.ebs_volume_size
   domain_member_sg_id            = var.domain_member_sg_id
-  ontap_security_group_id        = local.new_ontap_fsx ? module.fsxn_fci[0].fsxn_security_group_id : var.ontap_security_group_id
+  ontap_security_group_id        = var.ontap_security_group_id
   mssql_media_bucket_name        = var.mssql_media_bucket_name
   mssql_media_path_key           = var.mssql_media_path_key
   workload_instance_type         = var.workload_instance_type
