@@ -89,11 +89,16 @@ async function authorizeJwt(
 ): Promise<AuthorizeJwtResult> {
     logger.debug('Authorize JWT:', { authToken, decodedToken, accountId });
     const tokenSub = decodedToken?.sub as string;
-    const isUserAuth = tokenSub?.includes('auth0');
+    // A user token is any Auth0 connection-prefixed sub (`auth0|...`, `samlp|...`,
+    // `oidc|...`, `waad|...`, `google-oauth2|...`, `ad|...`, etc.) that isn't a
+    // service-to-service token (those end with `@clients`). The previous check
+    // (`sub.includes('auth0')`) silently excluded every SAML/OIDC SSO connection
+    // and caused the tenancy `isGov` lookup to be skipped for every SSO session.
+    // Mirrors the `callerIsUser` pattern used by gg-skywalker's BlueXP services.
+    const isUserAuth = !isEmpty(tokenSub) && !tokenSub.endsWith('@clients') && tokenSub.includes('|');
     let isGovAccount: boolean | undefined;
 
-    if (isUserAuth && tokenSub && !isEmpty(tokenSub) && !tokenSub?.endsWith('@clients')) {
-        // service token ends with @clients, we cant get user permissions using service token so skipping auth for service token requests
+    if (isUserAuth) {
         const unauthorizedErrorMessage = 'You do not have permission to access this resource';
 
         let userTenancyAccounts: Account[];
