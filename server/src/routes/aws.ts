@@ -91,9 +91,8 @@ export default function awsRoutes(fastify: FastifyInstance) {
         return reply.send(response);
     });
 
-    // Uses service credentials (no credentialsId) — won't work for GovCloud regions since the
-    // server runs in commercial AWS. Gov users should use the customer-scoped variant below instead.
-    // If Gov support is needed here, require credentialsId or use DEFAULT_GOV_REGION + Gov role.
+    // For GovCloud regions, falls back to the Pricing API (no customer creds needed).
+    // For commercial regions, uses the server's own EC2 DescribeInstanceTypes call.
     server.get(
         '/v1/regions/:region/instance-types',
         { schema: GetGenericInstanceTypesSchema },

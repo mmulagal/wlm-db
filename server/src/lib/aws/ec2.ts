@@ -61,7 +61,13 @@ import {
 import { PaginationConfiguration } from '@aws-sdk/types';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
-import { DEFAULT_AWS_REGION, DEFAULT_GOV_REGION, GOV_ACCOUNT } from '../../utils/consts';
+import {
+    DEFAULT_AWS_REGION,
+    DEFAULT_GOV_REGION,
+    GOV_ACCOUNT,
+    EC2_INSTANCE_FAMILY_PREFIXES,
+    EC2_ALLOWED_MEMORY_MIB
+} from '../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import addCacheMiddleware from '../../utils/aws-sdk-middlewares';
 import { AWSSDKCacheParams } from '../../utils/common-types';
@@ -227,21 +233,11 @@ async function describeInstanceTypes(region: string, credentialsId?: string) {
                 { Name: 'vcpu-info.default-vcpus', Values: vcpuFilter },
                 {
                     Name: 'memory-info.size-in-mib',
-                    Values: [
-                        (4 * 1024).toString(),
-                        (8 * 1024).toString(),
-                        (16 * 1024).toString(),
-                        (32 * 1024).toString(),
-                        (64 * 1024).toString(),
-                        (128 * 1024).toString(),
-                        (160 * 1024).toString(),
-                        (256 * 1024).toString(),
-                        (512 * 1024).toString()
-                    ]
+                    Values: EC2_ALLOWED_MEMORY_MIB.map(String)
                 },
                 {
                     Name: 'instance-type',
-                    Values: ['m5*', 'm6*', 'm7*', 'm8*', 'c5*', 'c6*', 'c7*', 'c8*', 'r5*', 'r6*', 'r7*', 'r8*']
+                    Values: EC2_INSTANCE_FAMILY_PREFIXES.map(prefix => `${prefix}*`)
                 }
             ]
         }

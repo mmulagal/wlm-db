@@ -1853,6 +1853,10 @@ function isGovCloudRegion(region: string): boolean {
     return GOV_REGIONS.includes(region as (typeof GOV_REGIONS)[number]);
 }
 
+const EC2_INSTANCE_FAMILY_PREFIXES = ['m5', 'm6', 'm7', 'm8', 'c5', 'c6', 'c7', 'c8', 'r5', 'r6', 'r7', 'r8'];
+const EC2_ALLOWED_MEMORY_GIB = [4, 8, 16, 32, 64, 128, 160, 256, 512];
+const EC2_ALLOWED_MEMORY_MIB = EC2_ALLOWED_MEMORY_GIB.map(gb => gb * 1024);
+
 const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'netapp/wlmdb/ssm-response';
 const CLONE_AGE: number = config.has('clone-age-in-days') ? config.get('clone-age-in-days') : 60; // Fall Back to 60 days as default if not set in config
 const OTHER_CLONE = 'other';
@@ -2294,6 +2298,9 @@ export {
     RESTRICTED_FSX_REGIONS,
     GOV_REGIONS,
     isGovCloudRegion,
+    EC2_INSTANCE_FAMILY_PREFIXES,
+    EC2_ALLOWED_MEMORY_GIB,
+    EC2_ALLOWED_MEMORY_MIB,
     DEFAULT_GOV_REGION,
     GOV_ACCOUNT,
     CLONE_AGE,

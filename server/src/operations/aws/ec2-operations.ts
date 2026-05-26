@@ -16,7 +16,10 @@ import {
     DescribeNetworkInterfacesRequest,
     DescribeRouteTablesCommandInput
 } from '@aws-sdk/client-ec2';
+import { FilterType } from '@aws-sdk/client-pricing';
+import { LazyJsonString } from '@smithy/smithy-client';
 import { Static } from '@fastify/type-provider-typebox';
+import config from 'config';
 import ms from 'ms';
 import {
     AMI_OWNERS,
@@ -29,7 +32,10 @@ import {
     ORACLE_AUTOMATIC_TCO_DEPLOYMENT_STANDALONE,
     SqlServerDeploymentModel,
     WLMDB_COST_ALLOCATION_TAG,
-    GOV_ACCOUNT
+    GOV_ACCOUNT,
+    isGovCloudRegion,
+    EC2_INSTANCE_FAMILY_PREFIXES,
+    EC2_ALLOWED_MEMORY_MIB
 } from '../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import {
@@ -67,6 +73,7 @@ import {
 } from '../../utils/common-types';
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
 import describeAutoscalingInstances from '../../lib/aws/auto-scaling';
+import getProducts from '../../lib/aws/pricing';
 
 const logger = getLogger();
 
@@ -403,8 +410,65 @@ async function getAmiList(
     return { amis: response };
 }
 
+async function getInstanceTypesFromPricingApi(region: string) {
+    logger.info('Fetching GovCloud instance types via Pricing API', { region });
+
+    const vcpuFilter = (config.get('ec2.vcpu-filter') as Array<string>).map(Number);
+
+    const pricingResult = await getProducts({
+        ServiceCode: 'AmazonEC2',
+        FormatVersion: 'aws_v1',
+        Filters: [
+            { Type: FilterType.TERM_MATCH, Field: 'regionCode', Value: region },
+            { Type: FilterType.TERM_MATCH, Field: 'productFamily', Value: 'Compute Instance' },
+            { Type: FilterType.TERM_MATCH, Field: 'tenancy', Value: 'Shared' },
+            { Type: FilterType.TERM_MATCH, Field: 'capacitystatus', Value: 'Used' }
+        ]
+    });
+
+    const instanceTypesMap = new Map<
+        string,
+        { instanceType: string; vCpus: number; ramInMib: number; iopsInMbps?: number; architecture: string[] }
+    >();
+
+    for (const priceItem of pricingResult.PriceList || []) {
+        const product = (priceItem as LazyJsonString).deserializeJSON();
+        const { attributes: attrs } = product?.product || {};
+        if (attrs?.instanceType) {
+            const { instanceType } = attrs;
+            const matchesFamily = EC2_INSTANCE_FAMILY_PREFIXES.some(prefix => instanceType.startsWith(prefix));
+            const isGraviton = /\d+g/.test(instanceType);
+
+            if (matchesFamily && !isGraviton && !instanceTypesMap.has(instanceType)) {
+                const vCpus = parseInt(attrs.vcpu, 10) || 0;
+                const ramInMib = Math.round((parseFloat(attrs.memory) || 0) * 1024);
+
+                if (vcpuFilter.includes(vCpus) && EC2_ALLOWED_MEMORY_MIB.includes(ramInMib)) {
+                    const iopsInMbps = attrs.dedicatedEbsThroughput
+                        ? parseInt(attrs.dedicatedEbsThroughput.replace(/[^0-9]/g, ''), 10) || undefined
+                        : undefined;
+
+                    instanceTypesMap.set(instanceType, {
+                        instanceType,
+                        vCpus,
+                        ramInMib,
+                        iopsInMbps,
+                        architecture: ['x86_64']
+                    });
+                }
+            }
+        }
+    }
+
+    return { instanceTypes: Array.from(instanceTypesMap.values()) };
+}
+
 async function getInstanceTypes(region: string, credentialsId?: string) {
     logger.info('List Ec2 Instance Types in region', { region, credentialsId });
+
+    if (isGovCloudRegion(region) && !credentialsId) {
+        return getInstanceTypesFromPricingApi(region);
+    }
 
     const response = await describeInstanceTypes(region, credentialsId);
     /*
@@ -428,7 +492,6 @@ async function getInstanceTypes(region: string, credentialsId?: string) {
     selecting a certain instance type may not work in Malaysia region, hence limitng it to certain instance types in demo
     */
     if (IS_DEMO_FLOW && region === 'ap-southeast-5') {
-        // Filtering m6i* & c6i* instances for malaysia region, TODO: as DBS extends support for more regions, this call should be modified to be an actual AWS API call & not a static list
         filteredInstances = filteredInstances.filter(
             ({ instanceType }) => instanceType?.startsWith('m6i') || instanceType?.startsWith('c6i')
         );

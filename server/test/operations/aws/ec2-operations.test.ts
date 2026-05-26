@@ -69,6 +69,28 @@ describe('EC2 Operations', () => {
         expect(resp.instanceTypes).toBeDefined();
     });
 
+    it('should use Pricing API fallback for GovCloud region without credentialsId', async () => {
+        const resp = await getInstanceTypes('us-gov-west-1');
+        expect(resp.instanceTypes).toBeDefined();
+        expect(resp.instanceTypes.length).toBeGreaterThan(0);
+        for (const instance of resp.instanceTypes) {
+            expect(instance.instanceType).toBeDefined();
+            expect(instance.vCpus).toBeGreaterThan(0);
+            expect(instance.ramInMib).toBeGreaterThan(0);
+            expect(instance.architecture).toEqual(['x86_64']);
+        }
+    });
+
+    it('should use EC2 API for GovCloud region when credentialsId is provided', async () => {
+        const resp = await getInstanceTypes('us-gov-west-1', credentialsId);
+        expect(resp.instanceTypes).toBeDefined();
+    });
+
+    it('should use EC2 API for commercial region without credentialsId', async () => {
+        const resp = await getInstanceTypes('us-east-1');
+        expect(resp.instanceTypes).toBeDefined();
+    });
+
     it('List of key-pairs for a given region', async () => {
         const response = await getKeyPairsList(DEFAULT_AWS_CREDENTIALS_TYPE, DEFAULT_AWS_REGION);
         expect(response).toBeDefined();
