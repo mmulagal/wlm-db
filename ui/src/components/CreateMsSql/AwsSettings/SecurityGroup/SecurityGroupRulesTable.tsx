@@ -74,6 +74,11 @@ const SecurityGroupRulesTable = () => {
                     {t('databases.general.security-group-rules-dialog-description-fci')}
                 </DsTypography>
             )}
+            {isPgsql && (
+                <DsTypography variant="Regular_14" className={styles.descriptionText}>
+                    {t('databases.general.security-group-rules-dialog-description-pgsql')}
+                </DsTypography>
+            )}
             {/* @ts-ignore */}
             <Table tableProps={tableProps} variant="innerTable" />
         </div>

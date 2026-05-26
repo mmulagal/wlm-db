@@ -20,12 +20,6 @@
         overflow-x: hidden;
     }
 
-    [class*='Table-module_header-row'] {
-        position: sticky;
-        top: 0;
-        z-index: 2;
-    }
-
     ::-webkit-scrollbar {
         width: 4px;
     }
@@ -47,6 +41,16 @@
         display: block;
         color: var(--text-primary);
         line-height: 24px;
+    }
+
+    .toggleRow {
+        margin-top: 16px;
+        margin-bottom: 4px;
+    }
+
+    .additionalSGDescription {
+        margin-top: 8px;
+        margin-bottom: 4px;
     }
 
     .handleSelect {

@@ -8,6 +8,7 @@ import {
     useDialog
 } from '@netapp/design-system';
 import { optionType } from '@netapp/design-system/dist/components/Select';
+import { DsToggleSwitch } from '@tlveng/wlm-ds';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
@@ -40,6 +41,7 @@ const SecurityGroup = () => {
         (state: any) => state.mssqlForm.securityGroup.selectedExistingSecurityGroup
     );
 
+    const [isAdditionalSGEnabled, setIsAdditionalSGEnabled] = useState(false);
     const [pendingSelectedIds, setPendingSelectedIds] = useState<(string | number)[]>([]);
 
     const committedIds = useMemo(
@@ -114,6 +116,13 @@ const SecurityGroup = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateExistingSecurity]);
 
+    // Auto-enable toggle when a loaded config has pre-selected security groups
+    useEffect(() => {
+        if (isLoadConfig && committedIds.length > 0) {
+            setIsAdditionalSGEnabled(true);
+        }
+    }, [isLoadConfig, committedIds]);
+
     // eslint-disable-next-line consistent-return -- must return undefined (not a string) so DsSelect shows placeholder styling
     const labelForSGSelect = () => {
         if (selectedExistingSecurityGroup && selectedExistingSecurityGroup.length === 1) {
@@ -147,7 +156,7 @@ const SecurityGroup = () => {
                 : sg?.data?.id || sg?.id || sg?.label || '';
         return (
             <div className={styles.setHeaderStyle}>
-                <div>{t('databases.general.existing-security-group')}</div>
+                <div>{t('databases.general.new-security-group')}</div>
                 {additionalLabel && (
                     <>
                         <div className={styles.separator} />
@@ -181,12 +190,6 @@ const SecurityGroup = () => {
                 <AccordionCardContent>
                     <DsTypography>
                         <div className={styles.descriptionBlock}>
-                            <DsTypography variant="Regular_14" className={styles.descriptionText}>
-                                {t('databases.general.security-group-description-header')}
-                            </DsTypography>
-                            <DsTypography variant="Regular_14" className={styles.descriptionText}>
-                                {t('databases.general.security-group-description-body')}
-                            </DsTypography>
                             <div className={styles.descriptionTextRow}>
                                 <DsTypography variant="Regular_14" className={styles.descriptionText}>
                                     {t('databases.general.security-group-new-sg-description')}
@@ -196,14 +199,41 @@ const SecurityGroup = () => {
                                 </DsButton>
                             </div>
                         </div>
+                        <div className={styles.toggleRow}>
+                            <DsToggleSwitch
+                                value={isAdditionalSGEnabled}
+                                title={t('databases.general.add-additional-security-group')}
+                                onChange={(checked: boolean) => {
+                                    setIsAdditionalSGEnabled(checked);
+                                    if (!checked) {
+                                        dispatch(setSelectedExistingSecurityGroup([]));
+                                        dispatch(setIsWizardTouched(true));
+                                    }
+                                }}
+                            />
+                        </div>
+                        <div className={styles.additionalSGDescription}>
+                            <DsTypography variant="Regular_14" className={styles.descriptionText}>
+                                {t('databases.general.security-group-description-header')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14" className={styles.descriptionText}>
+                                {t('databases.general.security-group-description-body')}
+                            </DsTypography>
+                        </div>
                         <div className={styles.handleSelect}>
                             <div className={styles.selectLabelWrapper}>
-                                <DsTypography variant="Regular_14" className={styles.selectLabel}>
+                                <DsTypography
+                                    variant="Regular_14"
+                                    className={
+                                        !isAdditionalSGEnabled ? CommonStyles['text-disabled'] : styles.selectLabel
+                                    }
+                                >
                                     {t('databases.general.existing-security-group')}
                                 </DsTypography>
                             </div>
                             <DsSelect
                                 isLoading={sgLoading}
+                                isDisabled={!isAdditionalSGEnabled}
                                 title=""
                                 placeholder={t('databases.general.select-additional-security-groups')}
                                 formatLabel={labelForSGSelect}
