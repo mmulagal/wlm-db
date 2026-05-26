@@ -869,24 +869,27 @@ async function getActiveSqlInstanceName(
                         instance.instanceState === SQL_SERVICE_STATE.RUNNING && !instance.instanceName.includes('$')
                 )?.instanceName;
 
-                instancesDetails.forEach(obj => {
-                    (obj as any).isDefault = !obj.instanceName.includes('$');
+                instancesDetails.forEach((obj: InstanceDetails) => {
+                    obj.isDefault = !obj.instanceName.includes('$');
                     obj.instanceName = obj.instanceName.replace(/^.+\$/, '');
                     obj.sqlAuthEnabled = getSqlAuthEnabledStatus(obj.instanceName, sql, domain);
                 });
                 let isDefaultInstance = true;
 
-                // Issue: DBS-6183, In case of FCI, when node2 is active, we still show the node 1 as active.
-                // RCA: When the default instance is not running, we check whether there are any other instances in running state. If yes, we consider the node as active - but those instances are standalone.
-                // Fix: The check mentioned RCA can happen only in case of non - FCI
-                if (!selectedInstance && sqlDeploymentType !== SqlServerDeploymentModel.SQL_FCI_SHORT) {
+                if (!selectedInstance) {
                     const runningInstances = instancesDetails.filter(
-                        ({ instanceState }: { instanceState: string }) => instanceState === SQL_SERVICE_STATE.RUNNING
+                        (instance): instance is InstanceDetails => instance.instanceState === SQL_SERVICE_STATE.RUNNING
                     );
 
-                    // Select the first running instance
-                    selectedInstance = runningInstances.length > 0 ? runningInstances[0].instanceName : undefined;
-                    isDefaultInstance = false;
+                    // DBS-6183: under FCI, only accept the fallback when it is unambiguous.
+                    // With 2+ running instances on this FCI node we cannot distinguish the FCI's
+                    // active instance from an unrelated standalone, so leave selectedInstance
+                    // undefined and let getActiveSqlNode try the other node.
+                    const isFci = sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT;
+                    if (runningInstances.length > 0 && (!isFci || runningInstances.length === 1)) {
+                        selectedInstance = runningInstances[0].instanceName;
+                        isDefaultInstance = runningInstances[0].isDefault === true;
+                    }
                 }
                 if (selectedInstance !== undefined) {
                     const instanceName = getDatabaseInstanceName(selectedInstance, isDefaultInstance);
