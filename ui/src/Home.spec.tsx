@@ -310,7 +310,7 @@ describe('Home', () => {
             );
 
             const headerComponent = screen.getByTestId('header-component');
-            expect(headerComponent).toHaveAttribute('data-tab', WLF_TABS.EXPLORE_SAVINGS_EBS);
+            expect(headerComponent).toHaveAttribute('data-tab', WLF_TABS.SAVINGS_CALCULATOR);
         });
     });
 
@@ -413,7 +413,7 @@ describe('Home', () => {
             );
 
             const headerComponent = screen.getByTestId('header-component');
-            expect(headerComponent).toHaveAttribute('data-tab', WLF_TABS.EXPLORE_SAVINGS_EBS);
+            expect(headerComponent).toHaveAttribute('data-tab', WLF_TABS.SAVINGS_CALCULATOR);
         });
 
         it('should render fsxdb storage-saving-calculator route', () => {
@@ -424,7 +424,7 @@ describe('Home', () => {
             );
 
             const headerComponent = screen.getByTestId('header-component');
-            expect(headerComponent).toHaveAttribute('data-tab', WLF_TABS.EXPLORE_SAVINGS_EBS);
+            expect(headerComponent).toHaveAttribute('data-tab', WLF_TABS.SAVINGS_CALCULATOR);
         });
 
         it('should render fsxdb storage-saving-calculator-fsxw route', () => {
@@ -435,7 +435,7 @@ describe('Home', () => {
             );
 
             const headerComponent = screen.getByTestId('header-component');
-            expect(headerComponent).toHaveAttribute('data-tab', WLF_TABS.EXPLORE_SAVINGS_FsxW);
+            expect(headerComponent).toHaveAttribute('data-tab', WLF_TABS.SAVINGS_CALCULATOR);
         });
 
         it('should render fsxdb explore-savings-fsxw route', () => {

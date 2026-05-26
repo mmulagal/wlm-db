@@ -170,7 +170,7 @@ const Home = () => {
                         />
                         <Route
                             path="/databases/storage-saving-calculator"
-                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                            element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
                         />
                         <Route
                             path="/databases/explore-savings/explore-savings-fsxw"
@@ -279,11 +279,11 @@ const Home = () => {
                             />
                             <Route
                                 path="/fsxdb/storage-saving-calculator"
-                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                                element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
                             />
                             <Route
                                 path="/fsxdb/storage-saving-calculator-fsxw"
-                                element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_FsxW} />}
+                                element={<HeaderComponent tab={WLF_TABS.SAVINGS_CALCULATOR} />}
                             />
                             <Route
                                 path="/databases/explore-savings-fsxw"
