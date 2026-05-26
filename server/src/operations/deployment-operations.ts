@@ -89,7 +89,8 @@ import {
     CF_QUOTA_REACHED,
     HA,
     AMAZON_LINUX_AMI_PATH,
-    GOV_ACCOUNT
+    GOV_ACCOUNT,
+    isGovCloudRegion
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -410,13 +411,15 @@ async function formatTemplateParameters(
               )
             : {};
 
+    const effectiveCredentialsId = credentialsId ?? '';
+
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
         { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: VALIDATION_NODE_INSTANCETYPE },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
-        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: effectiveCredentialsId },
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },
         { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics },
@@ -605,6 +608,15 @@ async function getCloudformationTemplate(
         );
     }
 
+    const isGovCloud =
+        getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) || (region ? isGovCloudRegion(region) : false);
+    if (isGovCloud) {
+        logger.info('GovCloud deployment detected — disabling SaaS notification tracking (RoleCredentialsId cleared)', {
+            region
+        });
+        credentialsId = '';
+    }
+
     const { workloadInstanceType } = ec2Configuration;
     const { sqlServerName, sqlAmiName } = sqlConfiguration;
     const { databaseSize } = fsxConfiguration;
@@ -780,6 +792,15 @@ async function getPgSqlCfTemplate(
         sqlConfiguration.sqlAmiId = al2023AmiId;
     } else {
         throw createError(412, 'Amazon Linux 2023 AMI is not available');
+    }
+
+    const isGovCloud =
+        getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) || (region ? isGovCloudRegion(region) : false);
+    if (isGovCloud) {
+        logger.info('GovCloud deployment detected — disabling SaaS notification tracking (RoleCredentialsId cleared)', {
+            region
+        });
+        credentialsId = '';
     }
 
     const metrics = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
@@ -2206,13 +2227,15 @@ async function formatPgSqlTemplateParameters(
                   privateSubnet2Cidr
               )
             : {};
+    const effectiveCredentialsId = credentialsId ?? '';
+
     const templateParams: Array<Parameter> = [
         { ParameterKey: CF_DEPLOY_ROLE_NAME, ParameterValue: roleName },
         { ParameterKey: VALIDATION_AMI, ParameterValue: validationAmiImage },
         { ParameterKey: VALIDATION_INSTANCE_TYPE, ParameterValue: VALIDATION_NODE_INSTANCETYPE },
         { ParameterKey: TEMPLATE_ACCOUNT_ID, ParameterValue: accountId },
         { ParameterKey: TEMPLATE_CLOUD_PROVIDER_ID, ParameterValue: providerAccountId },
-        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: credentialsId },
+        { ParameterKey: TEMPLATE_CREDENTIALS_ID, ParameterValue: effectiveCredentialsId },
         { ParameterKey: TEMPLATE_METRICS, ParameterValue: metrics },
         { ParameterKey: TEMPLATE_WLMDB_AWS_ACCOUT_ID, ParameterValue: awsAccountId },
         { ParameterKey: TEMPLATE_JWT_TOKEN, ParameterValue: token },

@@ -24,7 +24,7 @@ import {
     PGSQL_CW_CONFIG
 } from '../utils/consts';
 import getLogger from '../utils/logger';
-import { getArtifactsRegionBucketName } from '../utils/utils';
+import { getArtifactsBucketRegion, getArtifactsRegionBucketName } from '../utils/utils';
 
 interface TemplateDetails {
     name: string;
@@ -53,13 +53,14 @@ async function generateSignedUrls(region: string, resourceType: DatabaseTypes) {
             break;
     }
 
+    const artifactsRegion = getArtifactsBucketRegion(region);
     const bucketname = getArtifactsRegionBucketName(region);
     if (assets?.length) {
         await Promise.all(
             assets.map(async resource => {
                 logger.info(`Creating signed url for ${resource.url} in region ${region}.`);
                 try {
-                    signedUrl = await getPreSignedUrl(region, bucketname, resource.url);
+                    signedUrl = await getPreSignedUrl(artifactsRegion, bucketname, resource.url);
                     signedUrls.set(resource.name, { name: resource.name, url: signedUrl, location: resource.url });
                 } catch (error) {
                     const errorMessage = SIGNED_URL_ERROR_MESSAGE(resource.url, region, error as string);
