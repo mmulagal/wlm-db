@@ -557,53 +557,54 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         </div>
                     </div>
 
-                    {/* Text Area */}
+                    {/* Recommendation section — starts on a new page in PDF export */}
+                    <div data-pdf-new-page>
+                        <div
+                            className={setCSSForTextArea()}
+                            style={headingWidth !== undefined ? { width: headingWidth } : undefined}
+                        >
+                            <div>
+                                {isMutliFsx && !isOracleOnPrem && !isOracleEbs && !isOracleManualEbs ? (
+                                    <SuggestionDisable />
+                                ) : (
+                                    <Suggestion />
+                                )}
+                            </div>
+                            <div className={styles.textContent}>
+                                <DsTypography
+                                    variant="Semibold_16"
+                                    className={
+                                        isMutliFsx && !isOracleOnPrem && !isOracleEbs && !isOracleManualEbs
+                                            ? styles.textDisable
+                                            : ''
+                                    }
+                                >
+                                    {t('databases.explore-savings.mssql-selection-based-text')}
+                                </DsTypography>
+                                <DsTypography
+                                    variant="Regular_14"
+                                    className={
+                                        isMutliFsx && !isOracleOnPrem && !isOracleEbs && !isOracleManualEbs
+                                            ? `${styles.secondText} ${styles.textDisable}`
+                                            : styles.secondText
+                                    }
+                                >
+                                    {isOracleOnPrem || isOracleEbs || isOracleManualEbs
+                                        ? t('databases.explore-savings.oracle-ec2-single-fsx')
+                                        : t('databases.explore-savings.mssql-selection-based-second-text')}
+                                </DsTypography>
+                            </div>
+                        </div>
 
-                    <div
-                        className={setCSSForTextArea()}
-                        style={headingWidth !== undefined ? { width: headingWidth } : undefined}
-                    >
-                        <div>
-                            {isMutliFsx && !isOracleOnPrem && !isOracleEbs && !isOracleManualEbs ? (
-                                <SuggestionDisable />
-                            ) : (
-                                <Suggestion />
-                            )}
-                        </div>
-                        <div className={styles.textContent}>
-                            <DsTypography
-                                variant="Semibold_16"
-                                className={
-                                    isMutliFsx && !isOracleOnPrem && !isOracleEbs && !isOracleManualEbs
-                                        ? styles.textDisable
-                                        : ''
-                                }
-                            >
-                                {t('databases.explore-savings.mssql-selection-based-text')}
-                            </DsTypography>
-                            <DsTypography
-                                variant="Regular_14"
-                                className={
-                                    isMutliFsx && !isOracleOnPrem && !isOracleEbs && !isOracleManualEbs
-                                        ? `${styles.secondText} ${styles.textDisable}`
-                                        : styles.secondText
-                                }
-                            >
-                                {isOracleOnPrem || isOracleEbs || isOracleManualEbs
-                                    ? t('databases.explore-savings.oracle-ec2-single-fsx')
-                                    : t('databases.explore-savings.mssql-selection-based-second-text')}
-                            </DsTypography>
-                        </div>
+                        {/* Accordion here - RecommendedAccordion handles both MSSQL and Oracle */}
+
+                        <RecommendedAccordion
+                            printState={pdfCaptureMode}
+                            disableState={disableState}
+                            isMutliFsx={isMutliFsx}
+                            width={headingWidth}
+                        />
                     </div>
-
-                    {/* Accordion here - RecommendedAccordion handles both MSSQL and Oracle */}
-
-                    <RecommendedAccordion
-                        printState={pdfCaptureMode}
-                        disableState={disableState}
-                        isMutliFsx={isMutliFsx}
-                        width={headingWidth}
-                    />
                 </div>
 
                 {/* last section */}

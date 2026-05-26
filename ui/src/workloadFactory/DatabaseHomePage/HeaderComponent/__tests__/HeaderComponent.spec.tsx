@@ -325,7 +325,11 @@ vi.mock('../../../../utils/appConstants', () => ({
 vi.mock('../../../../utils/consts', () => ({
     DBType: { MSSQL: 'Microsoft SQL Server', POSTGRESQL: 'PostgreSQL', ORACLE: 'Oracle' },
     LOCAL: 'local',
-    SAVINGS_CALC_MODE: { MANUAL_EBS: 'manual-ebs', MANUAL_FSXW: 'manual-fsxw' },
+    SAVINGS_CALC_MODE: {
+        MANUAL_EBS: 'manual-ebs',
+        MANUAL_FSXW: 'manual-fsxw',
+        ORACLE_MANUAL_EBS: 'oracle-manual-ebs'
+    },
     STAGING: 'staging',
     WLF_TABS: {
         DASHBOARD: 'dashboard',
@@ -506,7 +510,8 @@ const makeStore = (overrides: any = {}) =>
                 state = {
                     selectedExploreSavingsTab: overrides.selectedExploreSavingsTab ?? null,
                     selectedTCOHostType: overrides.selectedTCOHostType ?? null,
-                    selectedOracleExploreSavingsTab: overrides.selectedOracleExploreSavingsTab ?? null
+                    selectedOracleExploreSavingsTab: overrides.selectedOracleExploreSavingsTab ?? null,
+                    savingsCalculatorFrom: overrides.savingsCalculatorFrom ?? null
                 }
             ) => state
         }
@@ -1603,6 +1608,27 @@ describe('HeaderComponent', () => {
             // postBlueXPMessage should be called for redirect
             expect(postBlueXPMessage).toHaveBeenCalled();
         });
+
+        it.each([
+            ['manual-ebs', './storage-saving-calculator?type=ebs&mode=manual'],
+            ['oracle-manual-ebs', './storage-saving-calculator?type=ebs&mode=oracle-manual']
+        ])(
+            'does not redirect %s calculator back when leaving via explore savings nav (lands on MSSQL EBS)',
+            (savingsCalculatorFrom, calculatorPath) => {
+                postBlueXPMessage.mockClear();
+                renderComponent('explore-savings-ebs', {
+                    statusData: { isActive: false },
+                    selectedHeaderTab: 'explore-savings-ebs',
+                    savingsCalculatorFrom,
+                    isWorkloadFactory: true
+                });
+                expect(postBlueXPMessage).not.toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        payload: expect.objectContaining({ pathname: calculatorPath })
+                    })
+                );
+            }
+        );
 
         it('redirects EBS tab when statusData.isActive is false (isWorkloadFactory=false)', () => {
             renderComponent('explore-savings-ebs', {

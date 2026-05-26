@@ -166,6 +166,23 @@ const downloadPdf = (dom, options, cb) => {
         }
     }
 
+    Array.prototype.forEach.call(container.querySelectorAll('[data-pdf-new-page]'), el => {
+        let clientRect;
+        let offsetInPage;
+        let pad;
+        clientRect = el.getBoundingClientRect();
+        offsetInPage = clientRect.top % pageHeightPx;
+        if (offsetInPage !== 0) {
+            pad = _createElement('div', {
+                style: {
+                    display: 'block',
+                    height: `${pageHeightPx - offsetInPage}px`
+                }
+            });
+            el.parentNode.insertBefore(pad, el);
+        }
+    });
+
     Array.prototype.forEach.call(elements, el => {
         let clientRect;
         let endPage;

@@ -193,9 +193,8 @@ const HeaderComponent = ({ tab }: Tab) => {
     const { refreshTime, refreshTimeSandbox, secondaryCTAFlow } = useAppSelector(state => state.headers);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const { isDemoMode, accountId, userMetadata } = useAppSelector(state => state.auth);
-    const { selectedExploreSavingsTab, selectedTCOHostType, selectedOracleExploreSavingsTab } = useAppSelector(
-        state => state.exploreSavings
-    );
+    const { selectedExploreSavingsTab, selectedTCOHostType, selectedOracleExploreSavingsTab, savingsCalculatorFrom } =
+        useAppSelector(state => state.exploreSavings);
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
 
     const [createDemoResourcesApi] = useCreateDemoResourcesMutation();
@@ -257,6 +256,14 @@ const HeaderComponent = ({ tab }: Tab) => {
                 tabInfo === WLF_TABS.EXPLORE_SAVINGS_ORACLE_ONPREM ||
                 tabInfo === WLF_TABS.EXPLORE_SAVINGS_ORACLE_EBS
             ) {
+                const isReturningToExploreSavingsMssqlEbs =
+                    tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS &&
+                    (savingsCalculatorFrom === SAVINGS_CALC_MODE.MANUAL_EBS ||
+                        savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_MANUAL_EBS);
+                if (isReturningToExploreSavingsMssqlEbs) {
+                    setStatusChk(false);
+                    return;
+                }
                 if (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS) {
                     postBlueXPMessage({
                         type: BlueXPListeners.navigate,

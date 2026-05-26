@@ -168,39 +168,37 @@ const DatabaseCredentials = ({ wizardType }: DatabaseCredentialsProps) => {
                 <AccordionCardContent>
                     <DsTypography>
                         {isGovAccount ? (
-                            <>
-                                <div className={styles.secondContainer}>
-                                    <TextField
-                                        label={t('databases.register-flow.ssm-parameter-arn-label')}
-                                        placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
-                                        error={
-                                            !isDBPasswordFilled && !ssmParameterArn
-                                                ? GENERAL.ACTION_REQUIRED
-                                                : ssmParameterArn && !isValidSsmArn(ssmParameterArn)
-                                                ? t('databases.register-flow.ssm-parameter-arn-invalid')
-                                                : ''
-                                        }
-                                        // @ts-ignore
-                                        isErrorPrefixHidden
-                                        customErrorWarningIcon={
-                                            <WarningIcon
-                                                style={{
-                                                    width: '16px',
-                                                    height: '16px',
-                                                    // @ts-ignore
-                                                    '--icon-primary-color': 'var(--error)'
-                                                }}
-                                            />
-                                        }
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                            dispatch(setDBCredentialsSsmArn(e.target.value));
-                                            dispatch(setIsWizardTouched(true));
-                                        }}
-                                        value={ssmParameterArn}
-                                        className={styles.textField}
-                                    />
-                                </div>
-                            </>
+                            <div className={styles.secondContainer}>
+                                <TextField
+                                    label={t('databases.register-flow.ssm-parameter-arn-label')}
+                                    placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
+                                    error={
+                                        !isDBPasswordFilled && !ssmParameterArn
+                                            ? GENERAL.ACTION_REQUIRED
+                                            : ssmParameterArn && !isValidSsmArn(ssmParameterArn)
+                                            ? t('databases.register-flow.ssm-parameter-arn-invalid')
+                                            : ''
+                                    }
+                                    // @ts-ignore
+                                    isErrorPrefixHidden
+                                    customErrorWarningIcon={
+                                        <WarningIcon
+                                            style={{
+                                                width: '16px',
+                                                height: '16px',
+                                                // @ts-ignore
+                                                '--icon-primary-color': 'var(--error)'
+                                            }}
+                                        />
+                                    }
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        dispatch(setDBCredentialsSsmArn(e.target.value));
+                                        dispatch(setIsWizardTouched(true));
+                                    }}
+                                    value={ssmParameterArn}
+                                    className={styles.textField}
+                                />
+                            </div>
                         ) : (
                             <>
                                 <DsTypography variant="Regular_14" className={styles.subtext}>
