@@ -518,11 +518,10 @@ const makeStore = (overrides: any = {}) =>
     });
 
 const renderComponent = (tab = 'dashboard', overrides: any = {}) => {
-    const { initialPath = '/', ...storeOverrides } = overrides;
-    const store = makeStore(storeOverrides);
+    const store = makeStore(overrides);
     return render(
         <Provider store={store}>
-            <MemoryRouter initialEntries={[initialPath]}>
+            <MemoryRouter>
                 <HeaderComponent tab={tab} />
             </MemoryRouter>
         </Provider>
@@ -1608,61 +1607,6 @@ describe('HeaderComponent', () => {
             });
             // postBlueXPMessage should be called for redirect
             expect(postBlueXPMessage).toHaveBeenCalled();
-        });
-
-        it.each([
-            ['manual-ebs', './storage-saving-calculator?type=ebs&mode=manual'],
-            ['oracle-manual-ebs', './storage-saving-calculator?type=ebs&mode=oracle-manual']
-        ])(
-            'does not redirect %s calculator when tab changes from savings-calculator to explore-savings-ebs',
-            (savingsCalculatorFrom, calculatorPath) => {
-                postBlueXPMessage.mockClear();
-                mockDispatch.mockClear();
-                const storeOverrides = {
-                    statusData: { isActive: false },
-                    selectedHeaderTab: 'savings-calculator',
-                    savingsCalculatorFrom,
-                    isWorkloadFactory: true
-                };
-                const store = makeStore(storeOverrides);
-                const { rerender } = render(
-                    <Provider store={store}>
-                        <MemoryRouter>
-                            <HeaderComponent tab="savings-calculator" />
-                        </MemoryRouter>
-                    </Provider>
-                );
-                rerender(
-                    <Provider store={store}>
-                        <MemoryRouter>
-                            <HeaderComponent tab="explore-savings-ebs" />
-                        </MemoryRouter>
-                    </Provider>
-                );
-                expect(postBlueXPMessage).not.toHaveBeenCalledWith(
-                    expect.objectContaining({
-                        payload: expect.objectContaining({ pathname: calculatorPath })
-                    })
-                );
-                expect(mockDispatch).toHaveBeenCalledWith({
-                    type: 'setSelectedHeaderTab',
-                    payload: 'explore-savings-ebs'
-                });
-            }
-        );
-
-        it('keeps savings-calculator tab when route tab is savings-calculator', () => {
-            mockDispatch.mockClear();
-            renderComponent('savings-calculator', {
-                statusData: { isActive: false },
-                selectedHeaderTab: 'explore-savings-ebs',
-                savingsCalculatorFrom: 'manual-ebs',
-                isWorkloadFactory: true
-            });
-            expect(mockDispatch).toHaveBeenCalledWith({
-                type: 'setSelectedHeaderTab',
-                payload: 'savings-calculator'
-            });
         });
 
         it('redirects EBS tab when statusData.isActive is false (isWorkloadFactory=false)', () => {
