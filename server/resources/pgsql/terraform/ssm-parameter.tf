@@ -17,15 +17,19 @@ locals {
   fsx_creds_raw = var.fsx_ssm_parameter_arn != "" ? jsondecode(data.aws_ssm_parameter.fsx_credentials[0].value) : null
   sql_creds_raw = var.sql_ssm_parameter_arn != "" ? jsondecode(data.aws_ssm_parameter.sql_credentials[0].value) : null
 
-  # Support both nested format ({ fsx: { username, password } }) and flat format ({ username, password })
-  fsx_creds = local.fsx_creds_raw != null ? (
-    try(local.fsx_creds_raw.fsx, null) != null ? local.fsx_creds_raw.fsx : local.fsx_creds_raw
-  ) : null
-  sql_creds = local.sql_creds_raw != null ? (
-    try(local.sql_creds_raw.pgsql[0], null) != null ? local.sql_creds_raw.pgsql[0] :
-    try(local.sql_creds_raw.pgsql, null) != null ? local.sql_creds_raw.pgsql :
-    try(local.sql_creds_raw.sql[0], null) != null ? local.sql_creds_raw.sql[0] : local.sql_creds_raw
-  ) : null
+  # Normalize to consistent { username, password } shape to satisfy Terraform's type checker.
+  # Supports nested format ({ fsx: { username, password } }) and flat format ({ username, password }).
+  # Variadic try() evaluates left-to-right, returns first success; "" fallback is safe due to preconditions below.
+  fsx_creds = local.fsx_creds_raw != null ? {
+    username = try(local.fsx_creds_raw.fsx.username, local.fsx_creds_raw.username, "")
+    password = try(local.fsx_creds_raw.fsx.password, local.fsx_creds_raw.password, "")
+  } : null
+
+  # Supports nested pgsql/sql array or flat format
+  sql_creds = local.sql_creds_raw != null ? {
+    username = try(local.sql_creds_raw.pgsql[0].username, local.sql_creds_raw.pgsql.username, local.sql_creds_raw.sql[0].username, local.sql_creds_raw.username, "")
+    password = try(local.sql_creds_raw.pgsql[0].password, local.sql_creds_raw.pgsql.password, local.sql_creds_raw.sql[0].password, local.sql_creds_raw.password, "")
+  } : null
 
   resolved_fsx_username = local.fsx_creds != null ? local.fsx_creds.username : var.fsx_admin_username
   resolved_fsx_password = local.fsx_creds != null ? local.fsx_creds.password : var.fsx_admin_password
