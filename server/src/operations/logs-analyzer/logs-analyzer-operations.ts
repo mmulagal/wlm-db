@@ -1152,19 +1152,28 @@ async function handlePreReqCheck(
                         ready: false,
                         message: PRE_REQ_MESSAGES.BEDROCK_TOOL_NOT_FOUND
                     };
-                } else {
+                } else if (!bedrockPreRequisites || bedrockPreRequisites.ready !== false) {
                     bedrockPreRequisites = READY_TRUE;
                 }
 
-                if (jsonResponse?.error?.includes('not authorized to perform')) {
-                    instanceProfilePreRequisites = {
-                        ready: false,
-                        message: PRE_REQ_MESSAGES.IAM_INSTANCE_PROFILE
-                    };
+                const errorMsg = jsonResponse?.error || '';
+                const isAccessDenied =
+                    errorMsg.includes('not authorized to perform') ||
+                    errorMsg.includes('AccessDeniedException') ||
+                    /don.t have access/.test(errorMsg);
+                if (isAccessDenied) {
+                    if (!bedrockPreRequisites || bedrockPreRequisites.ready !== false) {
+                        instanceProfilePreRequisites = {
+                            ready: false,
+                            message: PRE_REQ_MESSAGES.IAM_INSTANCE_PROFILE
+                        };
+                    } else {
+                        instanceProfilePreRequisites = READY_TRUE;
+                    }
                 } else {
                     instanceProfilePreRequisites = READY_TRUE;
                 }
-                // Set networking as default not ready when other checks are ready
+
                 if (bedrockPreRequisites.ready && instanceProfilePreRequisites.ready) {
                     networkingPreRequisites = {
                         ready: false,
@@ -1176,6 +1185,12 @@ async function handlePreReqCheck(
                 instanceProfilePreRequisites = READY_TRUE;
                 networkingPreRequisites = READY_TRUE;
             }
+        }
+        if (!instanceProfilePreRequisites) {
+            instanceProfilePreRequisites = READY_TRUE;
+        }
+        if (!networkingPreRequisites) {
+            networkingPreRequisites = READY_TRUE;
         }
     } catch (error) {
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Unable to continue with logs analysis ${error}`);

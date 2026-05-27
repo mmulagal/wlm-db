@@ -210,7 +210,18 @@ async function validateRegisterSsmArn(
             `Invalid SSM parameter ARN format for ${configName}: ${ssmParameterArn}`
         );
     }
-    const parameterName = `/${arnParts[4]}`;
+    const paramPath = arnParts[4];
+    const parameterName = `/${paramPath}`;
+
+    if (credentialType === 'fsx') {
+        const arnFsxId = paramPath.split('/').pop();
+        if (arnFsxId !== resourceId) {
+            throw createError(
+                HttpErrorCodes.BAD_REQUEST,
+                `SSM parameter ARN references FSx '${arnFsxId}' but credential resourceId is '${resourceId}' in ${configName}. The FSx ID in the ARN path must match the resourceId.`
+            );
+        }
+    }
 
     const paramValue = await getParameter(credentialsId, region, parameterName);
     if (!paramValue) {
