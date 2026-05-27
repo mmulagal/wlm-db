@@ -192,7 +192,7 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     const { refreshTime, refreshTimeSandbox, secondaryCTAFlow } = useAppSelector(state => state.headers);
     const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
-    const { isDemoMode, accountId, userMetadata } = useAppSelector(state => state.auth);
+    const { isDemoMode, accountId, userMetadata, pathname } = useAppSelector(state => state.auth);
     const { selectedExploreSavingsTab, selectedTCOHostType, selectedOracleExploreSavingsTab } = useAppSelector(
         state => state.exploreSavings
     );
@@ -240,7 +240,7 @@ const HeaderComponent = ({ tab }: Tab) => {
         if (navType === NavigationType.Pop && isWorkloadFactory) {
             handleURL(tab, isWorkloadFactory);
         }
-    }, [tab, isWorkloadFactory]);
+    }, [tab, isWorkloadFactory, pathname]);
 
     useEffect(() => {
         if (isDemoMode || (statusData && statusData?.isActive)) {
