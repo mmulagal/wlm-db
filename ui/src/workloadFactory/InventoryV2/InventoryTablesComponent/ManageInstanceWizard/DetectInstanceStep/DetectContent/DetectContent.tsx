@@ -1,9 +1,10 @@
-import { DsTypography, PasswordField, RadioButton, TextField, TooltipInfo, useWizard } from '@netapp/design-system';
+import { DsTypography, PasswordField, RadioButton, TextField, useWizard } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import classNames from 'classnames';
 import styles from './DetectContent.module.scss';
+import SsmArnTooltipContent from '../../../../../../common/SsmArnTooltipContent/SsmArnTooltipContent';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import {
     ACTION_TYPE,
@@ -161,12 +162,20 @@ const DetectContent = () => {
             ? t('databases.register-flow.detect-fsx-heading')
             : t('databases.register-flow.detect-sql-heading');
 
+        const tooltipKey = isFsx
+            ? 'databases.register-flow.ssm-parameter-tooltip-fsx'
+            : 'databases.register-flow.ssm-parameter-tooltip-db';
+        const jsonKey = isFsx
+            ? 'databases.register-flow.ssm-tooltip-json-fsx'
+            : 'databases.register-flow.ssm-tooltip-json-db';
+
         return (
             <div className={isFsx ? styles.secondSection : styles.firstSection}>
                 <DsTypography variant="Semibold_14">{heading}</DsTypography>
                 <div className={styles.textFieldContainer}>
                     <TextField
                         label={t('databases.register-flow.ssm-parameter-arn-label')}
+                        info={<SsmArnTooltipContent tooltipKey={tooltipKey} tooltipJsonKey={jsonKey} />}
                         value={value}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                             setter(e.target.value);

@@ -18,9 +18,7 @@ type EstimatedCostProps = {
 const EstimatedCost = ({ hostData, hostsLoading }: EstimatedCostProps) => {
     const { t } = useTranslation();
     const { setDialog } = useDialog();
-    const { showNA: headerShowNA } = useAppSelector(state => state.headers);
-    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
-    const showNA = headerShowNA || isGovAccount;
+    const { showNA } = useAppSelector(state => state.headers);
 
     const [linkChk, setLinkChk] = useState(true);
 

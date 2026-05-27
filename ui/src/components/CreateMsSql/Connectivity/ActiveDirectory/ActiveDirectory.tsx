@@ -9,6 +9,7 @@ import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { GENERAL, SELECT_CONFIG } from '../../../../utils/appConstants';
 import styles from './ActiveDirectory.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import SsmArnTooltipContent from '../../../../common/SsmArnTooltipContent/SsmArnTooltipContent';
 import { adPassVal, generateOptionType, sortListOfDict, isValidOUPath } from '../../../../utils/utilityFunctions';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
@@ -323,6 +324,12 @@ const ActiveDirectory = () => {
                             {isGovAccount ? (
                                 <TextField
                                     label={t('databases.register-flow.ssm-parameter-arn-label')}
+                                    info={
+                                        <SsmArnTooltipContent
+                                            tooltipKey="databases.register-flow.ssm-parameter-tooltip-ad"
+                                            tooltipJsonKey="databases.register-flow.ssm-tooltip-json-ad"
+                                        />
+                                    }
                                     placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
                                     error={
                                         !isADNotFilled && !ssmParameterArn

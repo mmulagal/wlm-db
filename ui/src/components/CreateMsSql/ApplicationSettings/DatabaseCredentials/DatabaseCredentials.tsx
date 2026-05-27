@@ -24,6 +24,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 
 import styles from './DatabaseCredentials.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import SsmArnTooltipContent from '../../../../common/SsmArnTooltipContent/SsmArnTooltipContent';
 
 import AccordionError from '../../../../common/AccordionError/AccordionError';
 import { dbPassVal, isValidUserName } from '../../../../utils/utilityFunctions';
@@ -171,6 +172,12 @@ const DatabaseCredentials = ({ wizardType }: DatabaseCredentialsProps) => {
                             <div className={styles.secondContainer}>
                                 <TextField
                                     label={t('databases.register-flow.ssm-parameter-arn-label')}
+                                    info={
+                                        <SsmArnTooltipContent
+                                            tooltipKey="databases.register-flow.ssm-parameter-tooltip-db"
+                                            tooltipJsonKey="databases.register-flow.ssm-tooltip-json-db"
+                                        />
+                                    }
                                     placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
                                     error={
                                         !isDBPasswordFilled && !ssmParameterArn

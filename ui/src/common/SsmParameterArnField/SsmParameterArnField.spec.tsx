@@ -9,7 +9,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('@tlveng/wlm-ds', () => ({
-    DsTextField: ({ title, value, onChange, onBlur, placeholder, className, isDisabled, message }: any) => (
+    DsTextField: ({ title, value, onChange, onBlur, placeholder, className, isDisabled, message, tooltip }: any) => (
         <div data-testid="ds-text-field" className={className}>
             <label>{title}</label>
             <input
@@ -25,8 +25,10 @@ vi.mock('@tlveng/wlm-ds', () => ({
                     {message.value}
                 </span>
             )}
+            {tooltip && <span data-testid="tooltip-content">{tooltip.children}</span>}
         </div>
-    )
+    ),
+    DsTypography: ({ children }: any) => <span>{children}</span>
 }));
 
 vi.mock('../../utils/consts', () => ({

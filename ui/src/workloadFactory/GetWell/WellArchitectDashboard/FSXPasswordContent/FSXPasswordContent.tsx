@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 import { DsRadioButton } from '@tlveng/wlm-ds';
 import styles from './FSXPasswordContent.module.scss';
+import SsmArnTooltipContent from '../../../../common/SsmArnTooltipContent/SsmArnTooltipContent';
 import { GENERAL } from '../../../../utils/appConstants';
 import {
     setFsxAdminConfirmPassword,
@@ -129,6 +130,12 @@ const GovCloudArnContent = () => {
             <div className={styles.textArea}>
                 <TextField
                     label={t('databases.register-flow.ssm-parameter-arn-label')}
+                    info={
+                        <SsmArnTooltipContent
+                            tooltipKey="databases.register-flow.ssm-parameter-tooltip-fsx"
+                            tooltipJsonKey="databases.register-flow.ssm-tooltip-json-fsx"
+                        />
+                    }
                     value={credentialUpdateSsmArn}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         dispatch(setCredentialUpdateSsmArn(e.target.value))

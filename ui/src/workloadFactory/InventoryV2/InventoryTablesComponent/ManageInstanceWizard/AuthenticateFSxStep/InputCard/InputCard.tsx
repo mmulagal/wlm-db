@@ -7,6 +7,7 @@ import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info_tooltip.svg';
 import { ReactComponent as ExternalLinkIcon } from '@netapp/icons/ic_external_link.svg';
 import styles from './InputCard.module.scss';
 import CommonStyles from '../../../../../../utils/CommonStyles.module.scss';
+import SsmArnTooltipContent from '../../../../../../common/SsmArnTooltipContent/SsmArnTooltipContent';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import {
     setDetectONTAPPassword,
@@ -171,9 +172,14 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
     );
 
     return (
-        <div className={classNames(styles.inputCard, { [styles.disabled]: isLoading })}>
+        <div
+            className={classNames(styles.inputCard, {
+                [styles.disabled]: isLoading,
+                [styles.govCloudInputCard]: isGovAccount
+            })}
+        >
             {selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.USE_THE_SAME_CRED && (
-                <div className={styles.card1}>
+                <div className={classNames(styles.card1, { [styles.govCloudCard]: isGovAccount })}>
                     <div className={styles.topHeading}>
                         <div className={styles.headerPart}>
                             <DsTypography variant="Semibold_14">
@@ -196,7 +202,14 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                             </Popover>
                         </div>
 
-                        {!isGovAccount && (
+                        {isGovAccount ? (
+                            <DsTypography variant="Regular_14">
+                                {t('databases.register-flow.govcloud-ssm-description-line1', {
+                                    count: fsxList.length
+                                })}{' '}
+                                {t('databases.register-flow.govcloud-ssm-description-line2')}
+                            </DsTypography>
+                        ) : (
                             <DsTypography variant="Regular_14">
                                 {t('databases.register-flow.fsx-discovered-need-auth', { count: fsxList.length })}
                             </DsTypography>
@@ -205,61 +218,32 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
 
                     {isGovAccount ? (
                         <div className={styles.govCloudSection}>
-                            <div className={styles.govCloudDescription}>
-                                <DsTypography variant="Regular_14">
-                                    {t('databases.register-flow.govcloud-ssm-description-line1', {
-                                        count: fsxList.length
-                                    })}
-                                </DsTypography>
-                                <DsTypography variant="Regular_14">
-                                    {t('databases.register-flow.govcloud-ssm-description-line2')}
-                                </DsTypography>
-                                <DsTypography variant="Regular_14">
-                                    {t('databases.register-flow.govcloud-ssm-description-line3')}
-                                </DsTypography>
-                            </div>
-
-                            <div className={styles.govCloudFieldRow}>
-                                <TextField
-                                    label={t('databases.register-flow.govcloud-ssm-endpoint-label')}
-                                    value={inventoryV2State.detectOntapSsmParameterArn}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                        dispatch(setDetectONTAPSsmParameterArn(e.target.value));
-                                    }}
-                                    className={`${styles.govCloudTextField} ${
-                                        fsxAllAuthFailed ? styles.errorBorder : ''
-                                    }`}
-                                    error={
-                                        !inventoryV2State.detectOntapSsmParameterArn && hitNextForStep2
-                                            ? t('databases.general.action-required')
-                                            : inventoryV2State.detectOntapSsmParameterArn &&
-                                              !isValidSsmArn(inventoryV2State.detectOntapSsmParameterArn)
-                                            ? t('databases.register-flow.ssm-parameter-arn-invalid')
-                                            : fsxAllAuthFailed
-                                            ? t('databases.register-flow.fsx-authentication-failed')
-                                            : ''
-                                    }
-                                    placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
-                                    isDisabled={isLoading}
-                                />
-                                <Popover
-                                    popoverClass={CommonStyles.scrollablePopover}
-                                    trigger="hover"
-                                    placement="bottom"
-                                    delayHide={200}
-                                    interactive
-                                    isAppendedToBody
-                                    container={<InfoIcon className={CommonStyles.infoIcon} />}
-                                >
-                                    <div className={CommonStyles.popoverTooltipContent}>
-                                        <div className={CommonStyles.popoverTooltipTitle}>
-                                            <DsTypography variant="Regular_13">
-                                                {t('databases.register-flow.govcloud-ssm-endpoint-tooltip')}
-                                            </DsTypography>
-                                        </div>
-                                    </div>
-                                </Popover>
-                            </div>
+                            <TextField
+                                label={t('databases.register-flow.ssm-parameter-arn-label')}
+                                info={
+                                    <SsmArnTooltipContent
+                                        tooltipKey="databases.register-flow.ssm-parameter-tooltip-fsx"
+                                        tooltipJsonKey="databases.register-flow.ssm-tooltip-json-fsx"
+                                    />
+                                }
+                                value={inventoryV2State.detectOntapSsmParameterArn}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                    dispatch(setDetectONTAPSsmParameterArn(e.target.value));
+                                }}
+                                className={`${styles.govCloudTextField} ${fsxAllAuthFailed ? styles.errorBorder : ''}`}
+                                error={
+                                    !inventoryV2State.detectOntapSsmParameterArn && hitNextForStep2
+                                        ? t('databases.general.action-required')
+                                        : inventoryV2State.detectOntapSsmParameterArn &&
+                                          !isValidSsmArn(inventoryV2State.detectOntapSsmParameterArn)
+                                        ? t('databases.register-flow.ssm-parameter-arn-invalid')
+                                        : fsxAllAuthFailed
+                                        ? t('databases.register-flow.fsx-authentication-failed')
+                                        : ''
+                                }
+                                placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
+                                isDisabled={isLoading}
+                            />
 
                             <a
                                 href={t('databases.register-flow.govcloud-ssm-docs-url')}
@@ -316,7 +300,7 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
             )}
 
             {selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.MANAGE_CRED_MANUALLY && (
-                <div className={styles.card2}>
+                <div className={classNames(styles.card2, { [styles.govCloudCard]: isGovAccount })}>
                     {isGovAccount && (
                         <div className={styles.govCloudManualHeader}>
                             <div className={styles.headerPart}>
@@ -338,9 +322,7 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                             <DsTypography variant="Regular_14">
                                 {t('databases.register-flow.govcloud-ssm-description-line1', {
                                     count: fsxList.length
-                                })}
-                            </DsTypography>
-                            <DsTypography variant="Regular_14">
+                                })}{' '}
                                 {t('databases.register-flow.govcloud-ssm-description-line2')}
                             </DsTypography>
                             <a
@@ -383,56 +365,42 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
 
                                 <div className={styles.textFieldContainer}>
                                     {isGovAccount ? (
-                                        <div className={styles.govCloudFieldRow}>
-                                            <TextField
-                                                label={t('databases.register-flow.govcloud-ssm-endpoint-label')}
-                                                value={detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn || ''}
-                                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                    dispatch(
-                                                        setDetectONTAPCredentialsByFsx({
-                                                            fsxId: fsx.fsxId,
-                                                            ssmParameterArn: e.target.value
-                                                        })
-                                                    );
-                                                }}
-                                                className={`${styles.govCloudTextField} ${
-                                                    isFailed ? styles.errorBorder : ''
-                                                }`}
-                                                error={
-                                                    !detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn &&
-                                                    hitNextForStep2
-                                                        ? t('databases.general.action-required')
-                                                        : detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn &&
-                                                          !isValidSsmArn(
-                                                              detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn ||
-                                                                  ''
-                                                          )
-                                                        ? t('databases.register-flow.ssm-parameter-arn-invalid')
-                                                        : isFailed
-                                                        ? t('databases.general.action-required')
-                                                        : ''
-                                                }
-                                                placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
-                                                isDisabled={isAuthenticated || isLoading}
-                                            />
-                                            <Popover
-                                                popoverClass={CommonStyles.scrollablePopover}
-                                                trigger="hover"
-                                                placement="bottom"
-                                                delayHide={200}
-                                                interactive
-                                                isAppendedToBody
-                                                container={<InfoIcon className={CommonStyles.infoIcon} />}
-                                            >
-                                                <div className={CommonStyles.popoverTooltipContent}>
-                                                    <div className={CommonStyles.popoverTooltipTitle}>
-                                                        <DsTypography variant="Regular_13">
-                                                            {t('databases.register-flow.govcloud-ssm-endpoint-tooltip')}
-                                                        </DsTypography>
-                                                    </div>
-                                                </div>
-                                            </Popover>
-                                        </div>
+                                        <TextField
+                                            label={t('databases.register-flow.ssm-parameter-arn-label')}
+                                            info={
+                                                <SsmArnTooltipContent
+                                                    tooltipKey="databases.register-flow.ssm-parameter-tooltip-fsx"
+                                                    tooltipJsonKey="databases.register-flow.ssm-tooltip-json-fsx"
+                                                />
+                                            }
+                                            value={detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn || ''}
+                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                dispatch(
+                                                    setDetectONTAPCredentialsByFsx({
+                                                        fsxId: fsx.fsxId,
+                                                        ssmParameterArn: e.target.value
+                                                    })
+                                                );
+                                            }}
+                                            className={`${styles.govCloudTextField} ${
+                                                isFailed ? styles.errorBorder : ''
+                                            }`}
+                                            error={
+                                                !detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn &&
+                                                hitNextForStep2
+                                                    ? t('databases.general.action-required')
+                                                    : detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn &&
+                                                      !isValidSsmArn(
+                                                          detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn || ''
+                                                      )
+                                                    ? t('databases.register-flow.ssm-parameter-arn-invalid')
+                                                    : isFailed
+                                                    ? t('databases.general.action-required')
+                                                    : ''
+                                            }
+                                            placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
+                                            isDisabled={isAuthenticated || isLoading}
+                                        />
                                     ) : (
                                         <>
                                             <TextField

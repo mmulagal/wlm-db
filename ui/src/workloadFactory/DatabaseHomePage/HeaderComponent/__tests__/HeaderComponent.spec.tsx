@@ -1609,6 +1609,27 @@ describe('HeaderComponent', () => {
             expect(postBlueXPMessage).toHaveBeenCalled();
         });
 
+        it.each([
+            ['Manual_EBS', './storage-saving-calculator?type=ebs&mode=manual'],
+            ['Oracle_Manual_EBS', './storage-saving-calculator?type=ebs&mode=oracle-manual']
+        ])(
+            'does not redirect %s calculator back when leaving via explore savings nav (lands on MSSQL EBS)',
+            (savingsCalculatorFrom, calculatorPath) => {
+                postBlueXPMessage.mockClear();
+                renderComponent('explore-savings-ebs', {
+                    statusData: { isActive: false },
+                    selectedHeaderTab: 'explore-savings-ebs',
+                    savingsCalculatorFrom,
+                    isWorkloadFactory: true
+                });
+                expect(postBlueXPMessage).not.toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        payload: expect.objectContaining({ pathname: calculatorPath })
+                    })
+                );
+            }
+        );
+
         it('redirects EBS tab when statusData.isActive is false (isWorkloadFactory=false)', () => {
             renderComponent('explore-savings-ebs', {
                 statusData: { isActive: false },

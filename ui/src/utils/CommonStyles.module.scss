@@ -643,3 +643,28 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.ssmTooltip {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 380px;
+}
+
+.ssmTooltipCode {
+    word-break: break-all;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    background: var(--hover-background);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.ssmTooltipPre {
+    font-size: 12px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    background: var(--hover-background);
+    padding: 8px;
+    border-radius: 4px;
+    margin: 0;
+    white-space: pre-wrap;
+}

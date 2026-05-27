@@ -1,6 +1,7 @@
 import { useWizard } from '@netapp/design-system/dist/components/Wizard';
 import { useEffect, useRef, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
+import classNames from 'classnames';
 import ManageWizardFooter from '../ManageWizardFooter';
 import styles from './AuthenticateFSxStep.module.scss';
 
@@ -25,6 +26,7 @@ export const Content = () => {
     const inventoryV2State = useAppSelector(state => state.inventoryV2);
     const { manageSingleInstanceData, fsxAuthStatus, selectedMultiDetectInstances, registerHostType } =
         inventoryV2State;
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
 
     const fsxCredentialStatusObj = useMemo(
         () => getFsxCredStatusByEngine(inventoryV2State, registerHostType),
@@ -135,7 +137,11 @@ export const Content = () => {
         );
     };
 
-    return <div className={styles['authenticate-fsx-step']}>{renderContent()}</div>;
+    return (
+        <div className={classNames(styles['authenticate-fsx-step'], { [styles.govCloud]: isGovAccount })}>
+            {renderContent()}
+        </div>
+    );
 };
 
 export const Footer = () => {

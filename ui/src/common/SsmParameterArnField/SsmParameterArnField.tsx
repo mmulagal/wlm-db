@@ -1,9 +1,10 @@
-import { ChangeEvent } from 'react';
+import { ChangeEvent, ReactNode } from 'react';
 import { DsTextField } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import { isValidSsmArn } from '../../utils/consts';
 import styles from './SsmParameterArnField.module.scss';
+import SsmArnTooltipContent from '../SsmArnTooltipContent/SsmArnTooltipContent';
 
 export interface SsmParameterArnFieldProps {
     value: string;
@@ -21,6 +22,12 @@ export interface SsmParameterArnFieldProps {
     externalError?: string;
     /** Skip the built-in ARN format validation (caller handles it) */
     skipValidation?: boolean;
+    /** i18n key for the context-specific tooltip text shown at top of tooltip */
+    tooltipKey?: string;
+    /** i18n key for the JSON example shown in the tooltip */
+    tooltipJsonKey?: string;
+    /** Custom tooltip content (takes priority over auto-generated tooltip) */
+    tooltipContent?: ReactNode;
 }
 
 const SsmParameterArnField = ({
@@ -33,7 +40,10 @@ const SsmParameterArnField = ({
     placeholder,
     showRequiredError = false,
     externalError,
-    skipValidation = false
+    skipValidation = false,
+    tooltipKey = 'databases.register-flow.ssm-parameter-tooltip-fsx',
+    tooltipJsonKey = 'databases.register-flow.ssm-tooltip-json-fsx',
+    tooltipContent
 }: SsmParameterArnFieldProps) => {
     const { t } = useTranslation();
 
@@ -51,6 +61,10 @@ const SsmParameterArnField = ({
 
     const errorMessage = getErrorMessage();
 
+    const resolvedTooltip = tooltipContent || (
+        <SsmArnTooltipContent tooltipKey={tooltipKey} tooltipJsonKey={tooltipJsonKey} />
+    );
+
     return (
         <DsTextField
             title={resolvedLabel}
@@ -60,6 +74,7 @@ const SsmParameterArnField = ({
             placeholder={resolvedPlaceholder}
             className={classNames(styles.ssmArnField, className)}
             isDisabled={isDisabled}
+            tooltip={{ children: resolvedTooltip }}
             {...(errorMessage ? { message: { type: 'error', value: errorMessage } } : {})}
         />
     );

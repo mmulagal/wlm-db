@@ -34,6 +34,7 @@ import AccordionError from '../../../../common/AccordionError/AccordionError';
 
 import styles from './FSxNSystem.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
+import SsmArnTooltipContent from '../../../../common/SsmArnTooltipContent/SsmArnTooltipContent';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
 
 const FSxNSystem = ({ wizardType }: any) => {
@@ -341,6 +342,12 @@ const FSxNSystem = ({ wizardType }: any) => {
                             {isGovAccount ? (
                                 <TextField
                                     label={t('databases.register-flow.ssm-parameter-arn-label')}
+                                    info={
+                                        <SsmArnTooltipContent
+                                            tooltipKey="databases.register-flow.ssm-parameter-tooltip-fsx"
+                                            tooltipJsonKey="databases.register-flow.ssm-tooltip-json-fsx"
+                                        />
+                                    }
                                     placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
                                     error={
                                         !isFsxNotFilled && !fsxSsmParameterArn
