@@ -8,7 +8,13 @@ import {
 import { compact, isEmpty, sumBy } from 'lodash-es';
 import throat from 'throat';
 
-import { DEFAULT_AWS_REGION, HttpErrorCodes, ORACLE, OracleDeploymentModel } from '../../../utils/consts';
+import {
+    DEFAULT_AWS_REGION,
+    HttpErrorCodes,
+    isGovCloudRegion,
+    ORACLE,
+    OracleDeploymentModel
+} from '../../../utils/consts';
 import { ONPREM_TCO_CREDENTIALS_ID, NETWORK_PERF } from '../../../utils/continous-optimization-consts';
 import { convertGiBToBytes, sizeInGigaBytes } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
@@ -47,6 +53,7 @@ import {
     executeWithJobTracking,
     saveReportInReportingRegistry,
     fetchInstanceTypesByRetryWithPricing,
+    deriveGovCloudInstanceTypeViaPricingApi,
     validateAndGetRegion,
     deduplicateResourcesByLatestVersion,
     aggregateVolumesByType,
@@ -163,7 +170,11 @@ async function deriveOracleHostConfigBasedInstanceType(
     });
 
     try {
-        return await fetchInstanceTypesByRetryWithPricing(region, instanceRequirements, 'linux');
+        // GovCloud EC2 API is unreachable from the commercial server pod without partition credentials;
+        // explore-savings is a credential-less flow, so derive from the commercial Pricing API instead.
+        return isGovCloudRegion(region)
+            ? await deriveGovCloudInstanceTypeViaPricingApi(region, instanceRequirements, 'linux')
+            : await fetchInstanceTypesByRetryWithPricing(region, instanceRequirements, 'linux');
     } catch (error) {
         logger.error('Error deriving Oracle host-config-based instance type', { error });
         return undefined;
@@ -223,7 +234,11 @@ async function deriveOracleInstanceType(
     });
 
     try {
-        return await fetchInstanceTypesByRetryWithPricing(region, instanceRequirements, 'linux');
+        // GovCloud EC2 API is unreachable from the commercial server pod without partition credentials;
+        // explore-savings is a credential-less flow, so derive from the commercial Pricing API instead.
+        return isGovCloudRegion(region)
+            ? await deriveGovCloudInstanceTypeViaPricingApi(region, instanceRequirements, 'linux')
+            : await fetchInstanceTypesByRetryWithPricing(region, instanceRequirements, 'linux');
     } catch (error) {
         logger.error('Error deriving Oracle instance type', { error });
         return undefined;

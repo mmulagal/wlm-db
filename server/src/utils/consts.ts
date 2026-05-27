@@ -1853,7 +1853,28 @@ function isGovCloudRegion(region: string): boolean {
     return GOV_REGIONS.includes(region as (typeof GOV_REGIONS)[number]);
 }
 
-const EC2_INSTANCE_FAMILY_PREFIXES = ['m5', 'm6', 'm7', 'm8', 'c5', 'c6', 'c7', 'c8', 'r5', 'r6', 'r7', 'r8'];
+// Curated current-generation x86_64 family prefixes we recommend for SQL/Oracle workloads. AMD
+// (suffix 'a') and Graviton (suffix 'g') variants of these families are excluded at call sites
+// (`/\d+a/` and `/\d+g/` regex checks). Memory-optimized x-family Intel SKUs (`x1e`, `x2idn`,
+// `x2iedn`, `x2iezn`) are listed so Oracle/MSSQL on-prem TCO recommendations can reach them.
+const EC2_INSTANCE_FAMILY_PREFIXES = [
+    'm5',
+    'm6',
+    'm7',
+    'm8',
+    'c5',
+    'c6',
+    'c7',
+    'c8',
+    'r5',
+    'r6',
+    'r7',
+    'r8',
+    'x1e',
+    'x2idn',
+    'x2iedn',
+    'x2iezn'
+];
 const EC2_ALLOWED_MEMORY_GIB = [4, 8, 16, 32, 64, 128, 160, 256, 512];
 const EC2_ALLOWED_MEMORY_MIB = EC2_ALLOWED_MEMORY_GIB.map(gb => gb * 1024);
 

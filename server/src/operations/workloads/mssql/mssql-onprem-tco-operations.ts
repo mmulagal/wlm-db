@@ -12,6 +12,7 @@ import {
     DEFAULT_AWS_REGION,
     FINDING,
     HttpErrorCodes,
+    isGovCloudRegion,
     MSSQL,
     PRICING_LICENSE_KEYS,
     HOURS_IN_MONTH
@@ -42,6 +43,7 @@ import {
     assembleStorageSavingsResponse,
     saveReportInReportingRegistry,
     fetchInstanceTypesByRetryWithPricing,
+    deriveGovCloudInstanceTypeViaPricingApi,
     validateAndGetRegion,
     deduplicateResourcesByLatestVersion,
     buildInstanceRequirements,
@@ -511,7 +513,11 @@ async function deriveHostConfigBasedInstanceType(region: string, windowsConfig: 
     });
 
     const licenseType = resolveLicenseType(licenseEdition);
-    return fetchInstanceTypesByRetryWithPricing(region, instanceRequirements, 'windows', licenseType);
+    // GovCloud EC2 API is unreachable from the commercial server pod without partition credentials;
+    // explore-savings is a credential-less flow, so derive from the commercial Pricing API instead.
+    return isGovCloudRegion(region)
+        ? deriveGovCloudInstanceTypeViaPricingApi(region, instanceRequirements, 'windows', licenseType)
+        : fetchInstanceTypesByRetryWithPricing(region, instanceRequirements, 'windows', licenseType);
 }
 
 async function deriveSqlUsageBasedInstanceType(
@@ -527,7 +533,9 @@ async function deriveSqlUsageBasedInstanceType(
 
     const instanceRequirements = deriveInstanceRequirements(sqlInstancesDetails);
     const licenseType = resolveLicenseType(licenseEdition);
-    return fetchInstanceTypesByRetryWithPricing(region, instanceRequirements, 'windows', licenseType);
+    return isGovCloudRegion(region)
+        ? deriveGovCloudInstanceTypeViaPricingApi(region, instanceRequirements, 'windows', licenseType)
+        : fetchInstanceTypesByRetryWithPricing(region, instanceRequirements, 'windows', licenseType);
 }
 
 async function analyzeOnpremData(

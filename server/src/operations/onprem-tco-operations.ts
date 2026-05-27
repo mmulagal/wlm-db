@@ -29,6 +29,7 @@ import {
     ORACLE_DATA_COLLECTOR_SCRIPT_PATH
 } from '../utils/continous-optimization-consts';
 import { getSqlInstancePricingDetails } from './aws/pricing-operations';
+import { getInstanceTypesFromPricingApi } from './aws/ec2-operations';
 import {
     getManualModeStorageSavingsCalculationMetrics,
     performManualModeStorageSavingsCalculations
@@ -476,6 +477,121 @@ async function saveReportInReportingRegistry(accountId: string, fileName: string
         `${prefix}/${accountId}-${fileName}`,
         JSON.stringify(data)
     );
+}
+
+function matchesAllowedInstanceTypes(instanceType: string, allowed?: string[]): boolean {
+    if (!allowed || allowed.length === 0) {
+        return true;
+    }
+    return allowed.some(pattern => {
+        const regex = new RegExp(
+            `^${pattern
+                .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+                .replace(/\*/g, '.*')
+                .replace(/\?/g, '.')}$`
+        );
+        return regex.test(instanceType);
+    });
+}
+
+// Parse the Pricing API `networkPerformance` string ("10 Gigabit", "Up to 25 Gigabit", "Low",
+// "Moderate", "High"...) into a Gbps range. Returns undefined when the value is non-numeric so
+// the caller can decide how to treat unknown bandwidth.
+function parseNetworkPerformanceGbps(value: string | undefined): { min: number; max: number } | undefined {
+    const match = value?.match(/(\d+(?:\.\d+)?)\s*Gigabit/i);
+    if (!match) {
+        return undefined;
+    }
+    const gbps = parseFloat(match[1]);
+    // "Up to N Gigabit" is a burst ceiling, not a guaranteed floor — model the min as 0.
+    return /up to/i.test(value!) ? { min: 0, max: gbps } : { min: gbps, max: gbps };
+}
+
+// GovCloud fallback for credential-less explore-savings: source SKUs from the commercial Pricing
+// API and pick a best-fit instance type using the *same* InstanceRequirements that the commercial
+// EC2 GetInstanceTypesFromInstanceRequirements API would enforce, so the two paths produce the
+// same recommendation. Each constraint from `buildInstanceRequirements` is honored as follows:
+//   - ArchitectureTypes=[x86_64]: getInstanceTypesFromPricingApi hard-codes x86_64.
+//   - InstanceGenerations=[CURRENT]: EC2_INSTANCE_FAMILY_PREFIXES is curated current-gen.
+//   - CpuManufacturers=[Intel,AWS]: '/\\d+g/' filters Graviton at the fetcher; '/\\d+a/' here
+//     filters AMD (which still leaks via 'm5'/'c5'/'r5' bare prefixes).
+//   - AllowedInstanceTypes / VCpuCount / MemoryMiB / NetworkBandwidthGbps: filtered below.
+async function deriveGovCloudInstanceTypeViaPricingApi(
+    region: string,
+    instanceRequirements: GetInstanceTypesFromInstanceRequirementsCommandInput,
+    osType: string = 'linux',
+    licenseType?: string
+): Promise<string | undefined> {
+    logger.info('Deriving GovCloud instance type via Pricing API', { region, instanceRequirements });
+
+    const req = instanceRequirements.InstanceRequirements;
+    if (!req) {
+        logger.warn('GovCloud Pricing API fallback called without InstanceRequirements', { region });
+        return undefined;
+    }
+    const allowedInstanceTypes = req.AllowedInstanceTypes as string[] | undefined;
+    const vCpuMin = typeof req.VCpuCount?.Min === 'number' ? req.VCpuCount.Min : undefined;
+    const vCpuMax = typeof req.VCpuCount?.Max === 'number' ? req.VCpuCount.Max : undefined;
+    const memMin = typeof req.MemoryMiB?.Min === 'number' ? req.MemoryMiB.Min : undefined;
+    const memMax = typeof req.MemoryMiB?.Max === 'number' ? req.MemoryMiB.Max : undefined;
+    const netMin = typeof req.NetworkBandwidthGbps?.Min === 'number' ? req.NetworkBandwidthGbps.Min : undefined;
+    const netMax = typeof req.NetworkBandwidthGbps?.Max === 'number' ? req.NetworkBandwidthGbps.Max : undefined;
+
+    const { instanceTypes } = await getInstanceTypesFromPricingApi(region);
+
+    const candidates = instanceTypes.filter(({ instanceType, vCpus, ramInMib, networkPerformance }) => {
+        if (/\d+a/.test(instanceType)) {
+            return false;
+        }
+        if (!matchesAllowedInstanceTypes(instanceType, allowedInstanceTypes)) {
+            return false;
+        }
+        if (vCpuMin !== undefined && vCpus < vCpuMin) {
+            return false;
+        }
+        if (vCpuMax !== undefined && vCpus > vCpuMax) {
+            return false;
+        }
+        if (memMin !== undefined && ramInMib < memMin) {
+            return false;
+        }
+        if (memMax !== undefined && ramInMib > memMax) {
+            return false;
+        }
+        const networkPerformanceGbps = parseNetworkPerformanceGbps(networkPerformance);
+        // No bandwidth signal from Pricing API => can't prove a floor is met; exclude conservatively
+        // when Min is set so we never recommend a type that might miss a hard network requirement.
+        if (netMin !== undefined && (!networkPerformanceGbps || networkPerformanceGbps.max < netMin)) {
+            return false;
+        }
+        if (netMax !== undefined && networkPerformanceGbps && networkPerformanceGbps.min > netMax) {
+            return false;
+        }
+        return true;
+    });
+
+    if (isEmpty(candidates)) {
+        logger.warn('No GovCloud instance type matched the requirements via Pricing API', {
+            region,
+            instanceRequirements
+        });
+        return undefined;
+    }
+
+    // Prefer smallest vCPU then smallest memory so we pick the tightest-fitting (cheapest) candidate.
+    candidates.sort((a, b) => a.vCpus - b.vCpus || a.ramInMib - b.ramInMib);
+    const [{ instanceType: bestFitInstanceType }] = candidates;
+    let instanceType: string | undefined = bestFitInstanceType;
+
+    try {
+        const allPricing = await getSqlInstancePricingDetails(region, undefined, osType, undefined, licenseType);
+        const withPricing = compact(candidates.map(c => c.instanceType).filter(t => allPricing?.[t]));
+        instanceType = withPricing[0] || instanceType;
+    } catch (error) {
+        logger.warn('Error fetching GovCloud instance pricing for derived type', { error });
+    }
+
+    return instanceType;
 }
 
 async function fetchInstanceTypesByRetryWithPricing(
@@ -999,6 +1115,7 @@ export {
     assembleStorageSavingsResponse,
     saveReportInReportingRegistry,
     fetchInstanceTypesByRetryWithPricing,
+    deriveGovCloudInstanceTypeViaPricingApi,
     validateAndGetRegion,
     deduplicateResourcesByLatestVersion,
     buildInstanceRequirements,

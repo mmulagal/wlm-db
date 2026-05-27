@@ -428,7 +428,14 @@ async function getInstanceTypesFromPricingApi(region: string) {
 
     const instanceTypesMap = new Map<
         string,
-        { instanceType: string; vCpus: number; ramInMib: number; iopsInMbps?: number; architecture: string[] }
+        {
+            instanceType: string;
+            vCpus: number;
+            ramInMib: number;
+            iopsInMbps?: number;
+            architecture: string[];
+            networkPerformance?: string;
+        }
     >();
 
     for (const priceItem of pricingResult.PriceList || []) {
@@ -453,7 +460,8 @@ async function getInstanceTypesFromPricingApi(region: string) {
                         vCpus,
                         ramInMib,
                         iopsInMbps,
-                        architecture: ['x86_64']
+                        architecture: ['x86_64'],
+                        networkPerformance: attrs.networkPerformance
                     });
                 }
             }
@@ -1373,6 +1381,7 @@ export {
     getAmiList,
     getKeyPairsList,
     getInstanceTypes,
+    getInstanceTypesFromPricingApi,
     getWindowsServerBaseAmi,
     getSecurityGroupsList,
     getNetworkInterfacesList,
