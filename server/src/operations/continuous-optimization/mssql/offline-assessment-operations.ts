@@ -14,13 +14,15 @@ import {
     MSSQLDriftAssessmentResponseType,
     RssConfigDriftResponseType,
     ParameterDriftResponseType,
+    CloneDriftResponseType,
     MSSQLDriftAssessmentResponse
 } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { OfflineAssessmentListResponseType } from '../../../routes/types/offline-assessment.types';
 import { calculateStorageDrift } from './storage-assessment-operations';
 import { calculateRssConfigDrift } from './rssConfig-assessment-operations';
 import { calculateMaxDOPDrift } from './maxdop-assessment-operations';
-import { getHighAvailabilityDriftData } from './resilience-assessment-operation';
+import calculateOneTimeWADCloneDrift from '../clone-assessment-utils';
+import { getHighAvailabilityDriftData, getSnapshotPolicyDriftData } from './resilience-assessment-operation';
 import {
     generateSqlResourceId,
     calculateRecommendedMaxDOP,
@@ -42,7 +44,12 @@ import {
     Metadata,
     HighAvailabilityAssessment,
     RssConfigAssesment,
-    DatabaseInstance
+    DatabaseInstance,
+    CloneAssessment,
+    MappedOnTapVolumeResponse,
+    VolumeRecord,
+    VolumeDBMapEntry,
+    LunRecord
 } from '../../../utils/common-types';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import GOLDEN_CONFIG from './golden-config';
@@ -114,13 +121,35 @@ interface OfflineAssessmentHostLevelDetails {
     errors?: Record<string, unknown>;
 }
 
+interface MSSQLOfflineMappedVolumes {
+    volumes?: { records: VolumeRecord[] };
+    volumeDBMap?: VolumeDBMapEntry[];
+    luns?: LunRecord[];
+}
+
+/**
+ * Per-volume snapshot-policy projection collected by the MSSQL WAD `snapshotPolicy` block.
+ * Server-side `getSnapshotPolicyDriftData` consumes the same field shape via the storage
+ * assessment volumes; this is a slimmer, drift-focused view emitted symmetrically to `clone`.
+ */
+interface MSSQLOfflineSnapshotPolicy {
+    volumes?: Array<{
+        name: string;
+        uuid: string;
+        'snapshot-policy'?: string;
+        'most-recent-snapshot-timestamp'?: string;
+    }>;
+}
+
 /**
  * Interface for instance-level details from offline assessment input
  */
 interface OfflineAssessmentInstanceDetails {
     instanceDetails: MSSQLDatabaseInstanceData;
-    mappedVolumes?: Record<string, unknown>;
+    mappedVolumes?: MSSQLOfflineMappedVolumes;
     assessment?: Record<string, unknown>;
+    clone?: CloneAssessment;
+    snapshotPolicy?: MSSQLOfflineSnapshotPolicy;
 }
 
 /**
@@ -139,6 +168,8 @@ interface MSSQLOfflineAssessmentRawData {
     rssConfig?: ResourceAssessmentData;
     headroom?: OneTimeWADHeadroomData;
     hostLevelHighAvailability?: OfflineAssessmentHostLevelHA;
+    clone?: CloneAssessment;
+    snapshotPolicy?: MSSQLOfflineSnapshotPolicy;
     errors?: Record<string, unknown>;
 }
 
@@ -300,7 +331,7 @@ async function processOfflineAssessmentUpload(
             Object.entries(instanceLevelDetails || {})
                 .filter(([, data]) => data.instanceDetails?.databaseInstanceId)
                 .map(async ([instanceName, instanceData]) => {
-                    const { instanceDetails, mappedVolumes, assessment } = instanceData;
+                    const { instanceDetails, mappedVolumes, assessment, clone, snapshotPolicy } = instanceData;
                     const {
                         databaseInstanceId,
                         windowsClusterNodes,
@@ -355,6 +386,8 @@ async function processOfflineAssessmentUpload(
                             rssConfig: rssConfig || {},
                             headroom: headroom || {},
                             hostLevelHighAvailability: hostLevelHighAvailability || {},
+                            ...(clone && !isEmpty(clone) && { clone }),
+                            ...(snapshotPolicy && !isEmpty(snapshotPolicy) && { snapshotPolicy }),
                             errors: errors?.[instanceName] || errors || {}
                         },
                         mappedOntapVolumes: mappedVolumes || {},
@@ -578,8 +611,18 @@ async function fetchMssqlOfflineAssessment(
         ec2InstanceId,
         fciName
     } = metadata;
-    const { instanceLevelAssessment, rssConfig, headroom, hostLevelHighAvailability } = rawdata;
+    const { instanceLevelAssessment, rssConfig, headroom, hostLevelHighAvailability, clone } = rawdata;
     const { maxDop, highAvailability } = (instanceLevelAssessment as MSSQLInstanceLevelAssessment) || {};
+    const mappedOntapVolumes = (record.mapped_ontap_volumes as MSSQLOfflineMappedVolumes | null) ?? {};
+    const mappedVolumesForResilience = (isEmpty(mappedOntapVolumes)
+        ? {}
+        : {
+              [databaseInstanceName]: {
+                  volumeRecords: mappedOntapVolumes.volumes?.records ?? [],
+                  volumeDBMap: mappedOntapVolumes.volumeDBMap ?? [],
+                  lunRecords: mappedOntapVolumes.luns ?? []
+              } as MappedOnTapVolumeResponse
+          }) as unknown as MappedOnTapVolumeResponse[];
 
     let maxDopData: MaxDOPAssesment | undefined;
     if (maxDop) {
@@ -682,11 +725,40 @@ async function fetchMssqlOfflineAssessment(
         }
     }
 
+    let cloneDriftResponse: CloneDriftResponseType | undefined;
+    if (clone && !isEmpty(clone)) {
+        const cloneDrift = calculateOneTimeWADCloneDrift(
+            accountId,
+            resourceId,
+            databaseInstanceId,
+            clone as CloneAssessment,
+            DATABASE_TYPE.mssql
+        );
+        if (cloneDrift && !('errorMessage' in cloneDrift)) {
+            cloneDriftResponse = cloneDrift as CloneDriftResponseType;
+        }
+    }
+
+    const snapshotPolicyResponse =
+        !isEmpty(instanceLevelAssessment) && !isEmpty(storageWithEndpoint)
+            ? await getSnapshotPolicyDriftData(
+                  accountId,
+                  credentialsId ?? '',
+                  region ?? '',
+                  resourceId,
+                  databaseInstanceId,
+                  mappedVolumesForResilience,
+                  instanceLevelAssessment as unknown as StorageAssessment
+              )
+            : undefined;
+
     const driftAssessmentData: MSSQLDriftAssessmentResponseType = {
         storage: storageWithEndpoint,
         rssConfig: rssConfigResponse as RssConfigDriftResponseType | undefined,
         maxDOP: maxDOPResponse as ParameterDriftResponseType | undefined,
         highAvailability: highAvailabilityResponse,
+        ...(cloneDriftResponse && { clone: cloneDriftResponse }),
+        ...(snapshotPolicyResponse && !isEmpty(snapshotPolicyResponse) && { snapshotPolicy: snapshotPolicyResponse }),
         lastAssessmentTimestamp: assessmentTimestamp
             ? new Date(assessmentTimestamp).getTime()
             : record.created_time.getTime(),

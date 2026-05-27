@@ -1425,6 +1425,7 @@ export {
     initiateAWSBackupAssessment,
     initiateInstanceLevelHighAvailabilityAssessment,
     getHighAvailabilityDriftData,
+    getSnapshotPolicyDriftData,
     initiateHostLevelHighAvailabilityAssessment,
     getSqlServiceStartupAssessment
 };

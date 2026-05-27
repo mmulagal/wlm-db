@@ -428,6 +428,43 @@ export const offlineAssessmentDemoOracleNFS = {
                 ],
                 isDataGuardDeployed: false,
                 dataguardDetails: {},
+                clone: {
+                    cloneDetails: []
+                },
+                snapcenter: {
+                    isDataguardPrimary: false,
+                    volumes: [
+                        {
+                            svmId: '6c800e9f-06f2-11f1-a170-7143fc0c8c33',
+                            svmName: 'wlmdb_svm_demo',
+                            volumeId: 'ec0ea203-06f2-11f1-a170-7143fc0c8c33',
+                            volumeName: 'wlmdb_oracle_data_demo',
+                            hasSnapcenterSnapshot: false,
+                            foundInSnapcenterLogs: false
+                        },
+                        {
+                            svmId: '6c800e9f-06f2-11f1-a170-7143fc0c8c33',
+                            svmName: 'wlmdb_svm_demo',
+                            volumeId: '40365dd0-06f2-11f1-a170-7143fc0c8c33',
+                            volumeName: 'wlmdb_oracle_redo_demo',
+                            hasSnapcenterSnapshot: false,
+                            foundInSnapcenterLogs: false
+                        },
+                        {
+                            svmId: '6c800e9f-06f2-11f1-a170-7143fc0c8c33',
+                            svmName: 'wlmdb_svm_demo',
+                            volumeId: '162f3991-06f2-11f1-a170-7143fc0c8c33',
+                            volumeName: 'wlmdb_oracle_archive_demo',
+                            hasSnapcenterSnapshot: false,
+                            foundInSnapcenterLogs: false
+                        }
+                    ],
+                    standaloneCheck: {
+                        pluginServiceRunning: false,
+                        sidFoundInLogs: false
+                    },
+                    errorMessage: ''
+                },
                 adrInfo: {
                     'adr-home': '/u01/app/oracle/diag/rdbms/orcl/orcl',
                     'adr-home-mount': '/dev/nvme0n1p3',

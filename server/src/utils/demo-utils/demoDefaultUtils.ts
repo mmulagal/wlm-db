@@ -11,7 +11,6 @@ import {
     USER_TOKEN
 } from '../consts';
 import getLogger from '../logger';
-import { decodeBase64FileContent } from '../../operations/offline-assessment-operations';
 import {
     listOfflineAssessments,
     bulkUpsertOfflineAssessments,
@@ -29,7 +28,7 @@ import {
     offlineAssessmentOracleNFSUploadObject,
     offlineAssessmentOracleISCSIUploadObject
 } from './demoMockdata';
-import { parseAssessmentFileContent, generateSqlResourceId } from '../utils';
+import { parseAssessmentFileContent, decodeBase64FileContent, generateSqlResourceId } from '../utils';
 import {
     createAssessmentJobMockData,
     createDeploymentMockDataInDB,
@@ -635,7 +634,7 @@ async function prepopulateOfflineAssessmentData(accountId: string) {
             const { ec2InstanceId } = metadata;
 
             return Object.entries(instanceLevelDetails).map(([instanceName, instanceData]: [string, any]) => {
-                const { instanceDetails, mappedVolumes, assessment } = instanceData;
+                const { instanceDetails, mappedVolumes, assessment, clone } = instanceData;
                 const { databaseInstanceId, windowsClusterNodes, deploymentType, baseDeploymentType } = instanceDetails;
 
                 const isFciOrAoagFci =
@@ -658,6 +657,7 @@ async function prepopulateOfflineAssessmentData(accountId: string) {
                         rssConfig: hostLevelDetails.rssConfig || {},
                         headroom: hostLevelDetails.headroom || {},
                         hostLevelHighAvailability: hostLevelDetails.highAvailability || {},
+                        ...(clone && !isEmpty(clone) && { clone }),
                         errors: hostLevelDetails.errors?.[instanceName] || hostLevelDetails.errors || {}
                     },
                     mappedOntapVolumes: mappedVolumes || {},
@@ -694,7 +694,9 @@ async function prepopulateOfflineAssessmentData(accountId: string) {
                     os,
                     pluggableDatabases,
                     isDataGuardDeployed,
-                    dataguardDetails
+                    dataguardDetails,
+                    clone,
+                    snapcenter
                 } = instanceData;
                 const databaseInstanceId = instanceDetails?.sid || instanceName;
                 const resourceId = generateSqlResourceId(ec2InstanceId);
@@ -711,7 +713,9 @@ async function prepopulateOfflineAssessmentData(accountId: string) {
                         errors: rawdata.errors || [],
                         pluggableDatabases: pluggableDatabases || [],
                         isDataGuardDeployed: isDataGuardDeployed || false,
-                        dataguardDetails: dataguardDetails || {}
+                        dataguardDetails: dataguardDetails || {},
+                        ...(clone && !isEmpty(clone) && { clone }),
+                        ...(snapcenter && !isEmpty(snapcenter) && { snapcenter })
                     },
                     mappedOntapVolumes: mappedOntapVolumes || {},
                     metadata: {

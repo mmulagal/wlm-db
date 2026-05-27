@@ -529,6 +529,28 @@ export const offlineAssessmentDemoFCI = {
                             }
                         ]
                     }
+                },
+                clone: {
+                    cloneDetails: [
+                        {
+                            cloneDatabaseName: 'wlmdb_fci_sqldata_clone_demo',
+                            databaseHostName: 'SQL-PROD-FCI-01',
+                            databaseHostId: '',
+                            databaseInstanceName: 'MSSQLSERVER',
+                            clonedBy: 'other',
+                            cloneAge: 95,
+                            cloneSize: 137438953472,
+                            clonedVolumeDetails: [
+                                {
+                                    sourceVolumeName: 'wlmdb_fci_sqldata_1770775096801',
+                                    cloneVolumeName: 'wlmdb_fci_sqldata_clone_demo',
+                                    cloneVolumeUuid: 'c2f08f14-06f2-11f1-a170-7143fc0c8c34',
+                                    cloneVolumeCreateTime: '2025-11-22T10:15:00Z',
+                                    cloneDatabaseName: 'wlmdb_fci_sqldata_clone_demo'
+                                }
+                            ]
+                        }
+                    ]
                 }
             }
         }

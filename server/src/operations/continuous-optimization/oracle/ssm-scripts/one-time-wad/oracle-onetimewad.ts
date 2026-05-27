@@ -34,6 +34,7 @@ import {
     pythonOracleAssessmentFunctions
 } from './oracle-collectors';
 import { CHECK_SWAP_SPACE } from '../storage-assessment-scripts';
+import { snapcenterAssessmentWadFunction } from '../snapcenter-assessment-scripts';
 
 const ORACLE_ONETIMEWAD_SCRIPT_VERSION = '1.0.0';
 
@@ -103,6 +104,8 @@ ${pythonOntapUtilities}
 ${pythonStorageConfigFunctions}
 
 ${pythonIscsiAssessmentFunctions}
+
+${snapcenterAssessmentWadFunction}
 
 # ========================================
 # Storage Sizing Functions
@@ -389,6 +392,7 @@ def main():
         # Extract volume/LUN UUIDs and SVM info
         volume_uuids = set()
         volume_names = set()
+        volume_uuid_to_name = {}
         svm_uuids = set()
         svm_names = set()
         lun_uuids = set()
@@ -432,6 +436,8 @@ def main():
                         volume_uuids.add(vol_uuid)
                     if vol_name:
                         volume_names.add(vol_name)
+                    if vol_uuid and vol_name:
+                        volume_uuid_to_name[vol_uuid] = vol_name
                     svm_id = vol.get("svmId")
                     if svm_id:
                         svm_uuids.add(svm_id)
@@ -715,7 +721,6 @@ def main():
         # Queries all FlexClone volumes across the FSx filesystem (not filtered by SVM)
         # to detect cross-SVM clones where parent volume is in one SVM and clone is in another
         clone_assessment = {}
-        CLONE_AGE_THRESHOLD = 60
         FLEXCLONE_FIELDS = "clone.parent_volume.name,clone.is_flexclone,create_time,name,uuid,svm.name,svm.uuid,space.size,space.used,space.physical_used"
 
         if volume_names:
@@ -754,9 +759,6 @@ def main():
                 ]
 
                 clone_details = []
-                old_clone_details = []
-                old_clone_database_names = []
-                old_clones = 0
 
                 for record in relevant_clone_records:
                     clone_info = record.get("clone", {})
@@ -797,28 +799,32 @@ def main():
 
                     clone_details.append(clone_detail)
 
-                    if clone_age >= CLONE_AGE_THRESHOLD:
-                        old_clones += 1
-                        old_clone_details.append(clone_detail)
-                        old_clone_database_names.append(clone_volume_name)
-
-                is_optimized = old_clones == 0
                 clone_assessment = {
-                    "cloneDetails": clone_details,
-                    "status": "optimized" if is_optimized else "not-optimized",
-                    "oldClones": old_clones,
-                    "oldCloneDetails": old_clone_details,
-                    "oldCloneDatabaseNames": old_clone_database_names
+                    "cloneDetails": clone_details
                 }
 
-                log_info("Clone assessment: {} total clones, {} old clones, status={}".format(
-                    len(clone_details), old_clones, clone_assessment["status"]))
+                log_info("Clone assessment: {} total clones collected".format(len(clone_details)))
 
             except Exception as clone_err:
                 log_warning("Failed to collect FlexClone assessment data: {}".format(clone_err))
                 clone_assessment = {}
         else:
             log_info("Skipping clone assessment - no mapped volume names available")
+
+        is_dataguard_primary = (
+            dataguard_info.get("isDataGuardDeployed", False)
+            and dataguard_info.get("dataguardDetails", {}).get("isPrimaryNode", False)
+        )
+        snapcenter_volume_uuids = list(volume_uuid_to_name.keys())
+        snapcenter_volume_names = list(volume_uuid_to_name.values())
+        snapcenter_assessment = collect_snapcenter_assessment_wad(
+            ontap_config,
+            ORACLE_SID,
+            is_dataguard_primary,
+            snapcenter_volume_uuids,
+            snapcenter_volume_names,
+            []
+        )
 
         # Build instance level details
         instance_level = {
@@ -834,6 +840,8 @@ def main():
             instance_level["adrInfo"] = adr_info
         if clone_assessment:
             instance_level["clone"] = clone_assessment
+        if snapcenter_assessment:
+            instance_level["snapcenter"] = snapcenter_assessment
         result["rawdata"]["instanceLevelDetails"][ORACLE_SID] = instance_level
 
         if errors:

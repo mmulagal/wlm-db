@@ -582,6 +582,9 @@ export const offlineAssessmentDemoAOAG = {
                             }
                         ]
                     }
+                },
+                clone: {
+                    cloneDetails: []
                 }
             }
         }

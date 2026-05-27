@@ -1,5 +1,4 @@
 import createError from 'http-errors';
-import { decompressSync } from 'fflate';
 import { OfflineAssessmentUploadResponseType } from '../routes/types/offline-assessment.types';
 import {
     MSSQL_ONE_TIME_WAD,
@@ -11,7 +10,7 @@ import {
     oracleOneTimeWadPythonScript,
     ORACLE_ONETIMEWAD_SCRIPT_VERSION
 } from './continuous-optimization/oracle/ssm-scripts/one-time-wad/oracle-onetimewad';
-import { createStreamingZip, ASSESSMENT_SCRIPT_FILENAMES } from '../utils/utils';
+import { createStreamingZip, ASSESSMENT_SCRIPT_FILENAMES, decodeBase64FileContent } from '../utils/utils';
 import getLogger from '../utils/logger';
 import { DatabaseTypes, HttpErrorCodes } from '../utils/consts';
 import {
@@ -20,43 +19,6 @@ import {
 } from './continuous-optimization/one-time-assessment-consts';
 
 const logger = getLogger();
-
-/**
- * Decode file content supporting multiple formats:
- * 1. Raw JSON string
- * 2. Base64 compressed format (like TCO upload): base64 -> decompress -> base64 -> JSON
- */
-function decodeBase64FileContent(fileContent: string): string {
-    // First, try to parse as raw JSON
-    try {
-        JSON.parse(fileContent);
-        return fileContent;
-    } catch {
-        // Not raw JSON, continue with base64 decoding
-    }
-
-    try {
-        // Try compressed format (same as uploadOnpremTcoData):
-        // base64 -> decompress -> base64 -> JSON
-        const compressedUint8Array = Uint8Array.from(
-            atob(fileContent)
-                .split('')
-                .map(char => char.charCodeAt(0))
-        );
-
-        const decompressedData = decompressSync(compressedUint8Array);
-        const decompressedBase64 = new TextDecoder().decode(decompressedData);
-
-        // Remove BOM characters if present and decode inner base64
-        const cleanedBase64 = decompressedBase64.replace(/^ÿþ/, '');
-        const originalJsonString = atob(cleanedBase64);
-
-        return originalJsonString;
-    } catch (error) {
-        logger.debug('Failed to decode compressed base64, assuming raw content', { error });
-        return fileContent;
-    }
-}
 
 async function uploadOfflineAssessment(
     accountId: string,
@@ -141,4 +103,4 @@ async function downloadOfflineAssessmentScript(accountId: string, databaseType: 
     }
 }
 
-export { uploadOfflineAssessment, downloadOfflineAssessmentScript, decodeBase64FileContent };
+export { uploadOfflineAssessment, downloadOfflineAssessmentScript };

@@ -12,6 +12,7 @@ import { Tag } from '@aws-sdk/client-ec2';
 import createError from 'http-errors';
 import numeral from 'numeral';
 import isBase64 from 'is-base64';
+import { decompressSync } from 'fflate';
 import { gzipSync, inflateRaw } from 'node:zlib';
 import { promisify } from 'util';
 import randomize from 'randomatic';
@@ -656,6 +657,39 @@ function parseAssessmentFileContent(fileContent: string) {
         return JSON.parse(fileContent);
     } catch {
         throw createError(HttpErrorCodes.BAD_REQUEST, 'Invalid JSON file format');
+    }
+}
+
+/**
+ * Decode file content supporting multiple formats:
+ * 1. Raw JSON string
+ * 2. Base64 compressed format (like TCO upload): base64 -> decompress -> base64 -> JSON
+ */
+function decodeBase64FileContent(fileContent: string): string {
+    try {
+        JSON.parse(fileContent);
+        return fileContent;
+    } catch {
+        // Not raw JSON, continue with base64 decoding
+    }
+
+    try {
+        const compressedUint8Array = Uint8Array.from(
+            atob(fileContent)
+                .split('')
+                .map(char => char.charCodeAt(0))
+        );
+
+        const decompressedData = decompressSync(compressedUint8Array);
+        const decompressedBase64 = new TextDecoder().decode(decompressedData);
+
+        const cleanedBase64 = decompressedBase64.replace(/^ÿþ/, '');
+        const originalJsonString = atob(cleanedBase64);
+
+        return originalJsonString;
+    } catch (error) {
+        logger.debug('Failed to decode compressed base64, assuming raw content', { error });
+        return fileContent;
     }
 }
 
@@ -1757,6 +1791,7 @@ export {
     ASSESSMENT_SCRIPT_FILENAMES,
     compressSsmCommand,
     parseAssessmentFileContent,
+    decodeBase64FileContent,
     validateWithSchema,
     isDemoFlow
 };

@@ -12,6 +12,8 @@ import {
     mappedVolumesHelperFunctions,
     volumeDetailsAssessmentTemplate,
     lunDetailsAssessmentTemplate,
+    cloneAssessmentTemplate,
+    snapshotPolicyAssessmentTemplate,
     osConfigAssessmentTemplate,
     storageLayoutAssessmentTemplate,
     maxDopAssessmentTemplate,
@@ -995,7 +997,8 @@ if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
 }
 
 try {
-    $additionalFields = 'svm'
+    # Include clone.* + space.* so the same mapped-volume records can drive the clone assessment
+    $additionalFields = 'svm,clone.parent_volume.name,clone.is_flexclone,create_time,space.size,space.used,space.physical_used'
     $svmOntapUuid = ''
     $instanceLevelFsxnIds = @{}
     $includeLogVolumes = $true
@@ -1441,6 +1444,10 @@ ${SERVER_DETAILS}
             ${maxDopAssessmentTemplate}
 
             ${highAvailabilityAssessmentTemplate}
+
+            ${cloneAssessmentTemplate}
+
+            ${snapshotPolicyAssessmentTemplate}
 
             $FinalResponse['rawdata']['instanceLevelDetails'][$extractedInstanceName]['assessment'] = $DriftAssessmentData
 

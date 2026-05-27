@@ -587,6 +587,92 @@ const lunDetailsAssessmentTemplate = `
     }
 `;
 
+// Template for snapshot-policy assessment (raw block)
+// Expects in scope:
+//   $DriftAssessmentData        – populated by volumeDetailsAssessmentTemplate with per-volume
+//                                 `name`, `uuid`, `snapshot-policy`, `most-recent-snapshot-timestamp`
+//   $extractedInstanceName      – SQL Server instance short name
+//   $FinalResponse              – top-level WAD payload (snapshotPolicy is written under
+//                                 rawdata.instanceLevelDetails[$extractedInstanceName].snapshotPolicy)
+const snapshotPolicyAssessmentTemplate = `
+    # Snapshot Policy assessment - raw collection only; drift happens server-side.
+    $snapshotPolicyVolumes = @()
+    if ($DriftAssessmentData -and $DriftAssessmentData['volumes']) {
+        foreach ($vol in $DriftAssessmentData['volumes']) {
+            $snapshotPolicyVolumes += @{
+                name = $vol.name
+                uuid = $vol.uuid
+                'snapshot-policy' = $vol.'snapshot-policy'
+                'most-recent-snapshot-timestamp' = $vol.'most-recent-snapshot-timestamp'
+            }
+        }
+    }
+
+    $FinalResponse['rawdata']['instanceLevelDetails'][$extractedInstanceName]['snapshotPolicy'] = @{
+        volumes = $snapshotPolicyVolumes
+    }
+    Write-Log -Level "DEBUG" -Message "Snapshot policy assessment: $($snapshotPolicyVolumes.Count) volumes captured"
+`;
+
+// Template for clone (FlexClone) assessment - reads clone info directly from the mapped ONTAP volume records
+// Expects in scope:
+//   $ProcessedRecords          – mapped ONTAP volumes for this instance ({ records: [...] })
+//   $serverInstanceName        – SQL Server instance display name (used as databaseHostName)
+//   $extractedInstanceName     – SQL Server instance short name (used as databaseInstanceName)
+//   $FinalResponse             – top-level WAD payload
+
+const cloneAssessmentTemplate = `
+    # Clone Assessment (FlexClone) - reads from mapped volume records
+    $cloneDetailsList = @()
+
+    foreach ($vol in $ProcessedRecords.records) {
+        if ($vol.clone.is_flexclone -ne $true) { continue }
+
+        $cloneCreateTime = $vol.create_time
+        $cloneAge = 0
+        if ($cloneCreateTime) {
+            try {
+                $createDt = [DateTime]::Parse($cloneCreateTime)
+                $cloneAge = [int]([DateTime]::UtcNow - $createDt.ToUniversalTime()).TotalDays
+            } catch {
+                $cloneAge = 0
+            }
+        }
+
+        $clonedVolumeDetail = @{
+            sourceVolumeName = $vol.clone.parent_volume.name
+            cloneVolumeName = $vol.name
+            cloneVolumeUuid = $vol.uuid
+            cloneVolumeCreateTime = $cloneCreateTime
+            cloneDatabaseName = $vol.name
+        }
+
+        $cloneSize = 0
+        if ($vol.space) {
+            if ($vol.space.physical_used) { $cloneSize = $vol.space.physical_used }
+            elseif ($vol.space.used) { $cloneSize = $vol.space.used }
+        }
+
+        $cloneDetail = @{
+            cloneDatabaseName = $vol.name
+            databaseHostName = $serverInstanceName
+            databaseHostId = ""
+            databaseInstanceName = $extractedInstanceName
+            clonedBy = "other"
+            cloneAge = $cloneAge
+            cloneSize = $cloneSize
+            clonedVolumeDetails = @($clonedVolumeDetail)
+        }
+
+        $cloneDetailsList += $cloneDetail
+    }
+
+    $FinalResponse['rawdata']['instanceLevelDetails'][$extractedInstanceName]['clone'] = @{
+        cloneDetails = $cloneDetailsList
+    }
+    Write-Log -Level "DEBUG" -Message "Clone assessment: $($cloneDetailsList.Count) clones detected on mapped volumes"
+`;
+
 // Template for OS configuration assessment - MPIO and iSCSI
 // Expects: $DriftAssessmentData, Test-IscsiSessions function defined
 const osConfigAssessmentTemplate = `
@@ -1731,6 +1817,8 @@ export {
     mappedVolumesHelperFunctions,
     volumeDetailsAssessmentTemplate,
     lunDetailsAssessmentTemplate,
+    cloneAssessmentTemplate,
+    snapshotPolicyAssessmentTemplate,
     osConfigAssessmentTemplate,
     storageLayoutAssessmentTemplate,
     rssConfigAssessmentTemplate,

@@ -481,7 +481,44 @@ export const offlineAssessmentDemoOracleISCSI = {
                     }
                 ],
                 isDataGuardDeployed: false,
-                dataguardDetails: {}
+                dataguardDetails: {},
+                clone: {
+                    cloneDetails: []
+                },
+                snapcenter: {
+                    isDataguardPrimary: false,
+                    volumes: [
+                        {
+                            svmId: '6c800e9f-06f2-11f1-a170-7143fc0c8c33',
+                            svmName: 'wlmdb_svm_demo',
+                            volumeId: '8e0f0014-06f2-11f1-a170-7143fc0c8c33',
+                            volumeName: 'wlmdb_oracle_extra_demo',
+                            hasSnapcenterSnapshot: true,
+                            foundInSnapcenterLogs: true
+                        },
+                        {
+                            svmId: '6c800e9f-06f2-11f1-a170-7143fc0c8c33',
+                            svmName: 'wlmdb_svm_demo',
+                            volumeId: '102562ed-06f2-11f1-a170-7143fc0c8c33',
+                            volumeName: 'wlmdb_oracle_log_demo',
+                            hasSnapcenterSnapshot: true,
+                            foundInSnapcenterLogs: true
+                        },
+                        {
+                            svmId: '6c800e9f-06f2-11f1-a170-7143fc0c8c33',
+                            svmName: 'wlmdb_svm_demo',
+                            volumeId: '3432e123-06f2-11f1-a170-7143fc0c8c33',
+                            volumeName: 'wlmdb_oracle_recovery_demo',
+                            hasSnapcenterSnapshot: true,
+                            foundInSnapcenterLogs: true
+                        }
+                    ],
+                    standaloneCheck: {
+                        pluginServiceRunning: true,
+                        sidFoundInLogs: true
+                    },
+                    errorMessage: ''
+                }
             }
         },
         errors: []

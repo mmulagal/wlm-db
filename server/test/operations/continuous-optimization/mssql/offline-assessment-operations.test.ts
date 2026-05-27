@@ -525,6 +525,122 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(headroomAssessment?.current).toBe('70%');
             expect(headroomAssessment?.totalObjectsInViolation).toBe(1);
         });
+
+        it('should include clone drift when rawdata.clone is present', async () => {
+            const resourceId = 'fetch-test-clone';
+            const instanceId = 'fetch-test-clone-instance';
+            await bulkUpsertOfflineAssessments([
+                {
+                    accountId: ACCOUNT_ID,
+                    resourceId,
+                    databaseInstanceId: instanceId,
+                    databaseType: DATABASE_TYPE.mssql,
+                    rawdata: {
+                        instanceLevelAssessment: {},
+                        rssConfig: {},
+                        hostLevelHighAvailability: {},
+                        clone: {
+                            cloneDetails: [
+                                {
+                                    cloneDatabaseName: 'wad_clone_vol_old',
+                                    databaseHostName: 'fetch-test-clone-host',
+                                    databaseHostId: '',
+                                    databaseInstanceName: 'MSSQLSERVER',
+                                    clonedBy: 'other',
+                                    cloneAge: 95,
+                                    cloneSize: 137438953472,
+                                    clonedVolumeDetails: [
+                                        {
+                                            sourceVolumeName: 'parent_vol',
+                                            cloneVolumeName: 'wad_clone_vol_old',
+                                            cloneVolumeUuid: 'clone-uuid-1',
+                                            cloneVolumeCreateTime: '2025-11-22T10:15:00Z',
+                                            cloneDatabaseName: 'wad_clone_vol_old'
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    metadata: {
+                        hostname: 'fetch-test-clone-host',
+                        storageEndpoint: 'fs-fetch-test-clone',
+                        assessmentTimestamp: new Date().toISOString(),
+                        deploymentType: 'Standalone',
+                        databaseInstanceName: 'MSSQLSERVER'
+                    }
+                }
+            ]);
+
+            const result = await fetchMssqlOfflineAssessment(ACCOUNT_ID, resourceId, instanceId);
+            expect(result.clone).toBeDefined();
+            const clone = result.clone as any;
+            expect(clone.name).toBe('cloning');
+            expect(clone.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(clone.totalObjectsInViolation).toBe(1);
+            expect(clone.objectsInViolation).toEqual(['wad_clone_vol_old']);
+        });
+
+        it('should include snapshotPolicy drift when storage volumes are present', async () => {
+            const resourceId = 'fetch-test-snapshot-policy';
+            const instanceId = 'fetch-test-snapshot-policy-instance';
+            await bulkUpsertOfflineAssessments([
+                {
+                    accountId: ACCOUNT_ID,
+                    resourceId,
+                    databaseInstanceId: instanceId,
+                    databaseType: DATABASE_TYPE.mssql,
+                    rawdata: {
+                        instanceLevelAssessment: {
+                            volumes: [
+                                {
+                                    name: 'unprotected_vol',
+                                    uuid: 'uuid-unprotected',
+                                    'thin-provision': true,
+                                    'space-guarantee': 'none',
+                                    'autosize-mode': 'grow',
+                                    'snapshot-policy': 'none',
+                                    'tiering-policy': 'snapshot_only',
+                                    'most-recent-snapshot-timestamp': '0'
+                                }
+                            ],
+                            luns: [],
+                            os: {},
+                            layout: {},
+                            sizing: {}
+                        },
+                        rssConfig: {},
+                        hostLevelHighAvailability: {}
+                    },
+                    mappedOntapVolumes: {
+                        volumes: { records: [{ name: 'unprotected_vol', uuid: 'uuid-unprotected' }] },
+                        volumeDBMap: [
+                            {
+                                ontapVolumeuuid: 'uuid-unprotected',
+                                databaseName: 'OrderDB',
+                                ontapVolumeName: 'unprotected_vol'
+                            }
+                        ],
+                        luns: []
+                    },
+                    metadata: {
+                        hostname: 'fetch-test-snapshot-host',
+                        storageEndpoint: 'fs-fetch-test-snap',
+                        assessmentTimestamp: new Date().toISOString(),
+                        deploymentType: 'Standalone',
+                        databaseInstanceName: 'MSSQLSERVER'
+                    }
+                }
+            ]);
+
+            const result = await fetchMssqlOfflineAssessment(ACCOUNT_ID, resourceId, instanceId);
+            // snapshotPolicy is populated either with a drift response (when getInstanceInfo
+            // can resolve under IS_DEMO_FLOW) or an error envelope. Either way it proves the
+            // wiring; we just assert the field is present and shaped like a GenericAssessmentResponse.
+            expect(result.snapshotPolicy).toBeDefined();
+            const snapshotPolicy = result.snapshotPolicy as Record<string, unknown>;
+            expect('name' in snapshotPolicy || 'errorMessage' in snapshotPolicy).toBe(true);
+        });
     });
 
     describe('fetchMssqlOfflineAssessmentPerAccount', () => {

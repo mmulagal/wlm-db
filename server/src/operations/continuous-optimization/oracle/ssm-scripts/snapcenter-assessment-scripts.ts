@@ -13,6 +13,124 @@ import { LINUX_LOG_DIRECTORY } from '../consts';
 const SNAPCENTER_LOG_FILE = `${LINUX_LOG_DIRECTORY}/snapcenter-assessment.log`;
 const SNAPCENTER_LOG_FILE_NAME = 'snapcenter-assessment.log';
 
+/**
+ * Shared Python core for the SnapCenter assessment. Defines `collect_snapcenter_assessment`
+ * plus internal helpers — used by both the online flow's `snapcenterPythonTemplate` and the
+ * one-time WAD's `snapcenterAssessmentWadFunction`. Each call site supplies:
+ *   - `ontap_get(endpoint) -> dict` — wraps that context's ONTAP REST helper; must raise on error.
+ *   - `log_warn(msg) -> None`       — wraps that context's logger.
+ */
+const snapcenterCorePython = `
+def _sc_fetch_svm_lookup(ontap_get, volume_uuids, log_warn):
+    svm_lookup = {}
+    try:
+        uuid_filter = '|'.join(volume_uuids)
+        data = ontap_get("storage/volumes?uuid={}&fields=svm".format(uuid_filter))
+        for rec in (data or {}).get("records", []):
+            uid = rec.get("uuid", "")
+            svm_lookup[uid] = {
+                "svmId": rec.get("svm", {}).get("uuid", ""),
+                "svmName": rec.get("svm", {}).get("name", "")
+            }
+    except Exception as e:
+        log_warn("Failed to fetch volume SVM info for SnapCenter: {}".format(e))
+    return svm_lookup
+
+
+def _sc_volume_has_snapcenter_snapshot(ontap_get, vol_uuid, vol_name, log_warn):
+    try:
+        url = "storage/volumes/{}/snapshots?comment=creator%3Dsnapcenter&max_records=1&fields=comment".format(vol_uuid)
+        data = ontap_get(url)
+        return bool(data and data.get("num_records", 0) > 0)
+    except Exception as e:
+        log_warn("Failed to fetch SnapCenter snapshots for volume {}: {}".format(vol_name, e))
+        return False
+
+
+def _sc_check_plugin_running(log_warn):
+    try:
+        spl_check = subprocess.call(["systemctl", "is-active", "spl"],
+                                    stdout=open(os.devnull, "wb"), stderr=open(os.devnull, "wb"))
+        snapcenter_check = subprocess.call(["systemctl", "is-active", "snapcenter_spl"],
+                                           stdout=open(os.devnull, "wb"), stderr=open(os.devnull, "wb"))
+        return (spl_check == 0) or (snapcenter_check == 0)
+    except Exception as e:
+        log_warn("Error checking SnapCenter plugin services: {}".format(e))
+        return False
+
+
+def _sc_scan_logs(oracle_sid, snapcenter_volumes, log_warn):
+    sid_found_in_logs = False
+    sc_log_path = "/var/opt/snapcenter/spl/logs"
+    if not os.path.isdir(sc_log_path):
+        return sid_found_in_logs
+    try:
+        import time as _time
+        cutoff = _time.time() - 48 * 3600
+        recent_logs = []
+        for f in os.listdir(sc_log_path):
+            fpath = os.path.join(sc_log_path, f)
+            if f.endswith(".log") and os.path.isfile(fpath):
+                try:
+                    if os.path.getmtime(fpath) >= cutoff:
+                        recent_logs.append(fpath)
+                except OSError:
+                    pass
+        if recent_logs:
+            sid_grep = subprocess.call(["grep", "-l", oracle_sid] + recent_logs,
+                                       stdout=open(os.devnull, "wb"), stderr=open(os.devnull, "wb"))
+            sid_found_in_logs = sid_grep == 0
+            if sid_found_in_logs:
+                for vol in snapcenter_volumes:
+                    log_key = vol.get("logKey", "")
+                    search_key = log_key if log_key else vol["volumeName"]
+                    vol_grep = subprocess.call(["grep", "-l", search_key] + recent_logs,
+                                               stdout=open(os.devnull, "wb"), stderr=open(os.devnull, "wb"))
+                    vol["foundInSnapcenterLogs"] = vol_grep == 0
+    except Exception as e:
+        log_warn("Error during SnapCenter log check: {}".format(e))
+    return sid_found_in_logs
+
+
+def collect_snapcenter_assessment(ontap_get, oracle_sid, volume_uuids, volume_names, volume_log_keys, log_warn):
+    if not volume_uuids:
+        return {}
+
+    svm_lookup = _sc_fetch_svm_lookup(ontap_get, volume_uuids, log_warn)
+
+    snapcenter_volumes = []
+    for i, vol_uuid in enumerate(volume_uuids):
+        vol_name = volume_names[i] if i < len(volume_names) else ""
+        vol_log_key = volume_log_keys[i] if i < len(volume_log_keys) else ""
+        svm_info = svm_lookup.get(vol_uuid, {})
+        has_snapcenter = _sc_volume_has_snapcenter_snapshot(ontap_get, vol_uuid, vol_name, log_warn)
+        snapcenter_volumes.append({
+            "svmId": svm_info.get("svmId", ""),
+            "svmName": svm_info.get("svmName", ""),
+            "volumeId": vol_uuid,
+            "volumeName": vol_name,
+            "hasSnapcenterSnapshot": has_snapcenter,
+            "foundInSnapcenterLogs": False,
+            "logKey": vol_log_key
+        })
+
+    plugin_running = _sc_check_plugin_running(log_warn)
+    sid_found_in_logs = _sc_scan_logs(oracle_sid, snapcenter_volumes, log_warn) if plugin_running else False
+
+    for vol in snapcenter_volumes:
+        vol.pop("logKey", None)
+
+    return {
+        "isDataguardPrimary": False,
+        "volumes": snapcenter_volumes,
+        "standaloneCheck": {
+            "pluginServiceRunning": plugin_running,
+            "sidFoundInLogs": sid_found_in_logs
+        },
+        "errorMessage": ""
+    }
+`;
+
 const snapcenterPythonTemplate = (
     fsxId: string,
     region: string,
@@ -32,127 +150,24 @@ volume_uuids = json.loads('${JSON.stringify(volumeUuids)}')
 volume_log_keys = json.loads('${JSON.stringify(volumeLogKeys)}')
 
 log("Starting SnapCenter snapshot assessment")
-log(f"FSx ID: {filesystemid}, Region: {region}, Instance: {instance_name}")
-log(f"Volume names: {volume_names}, Volume UUIDs: {volume_uuids}")
-log(f"Volume log keys: {volume_log_keys}")
+log("FSx ID: {}, Region: {}, Instance: {}".format(filesystemid, region, instance_name))
+log("Volume names: {}, Volume UUIDs: {}".format(volume_names, volume_uuids))
+log("Volume log keys: {}".format(volume_log_keys))
 
-uuid_filter = '|'.join(volume_uuids)
-volume_info_url = f'storage/volumes?uuid={uuid_filter}&fields=svm'
-log(f"Fetching volume SVM info: {volume_info_url}")
-volume_info_data, vol_err = ontapRestApiRequest(filesystemid, region, 'GET', volume_info_url)
-if vol_err:
-    log(f"Warning: Failed to fetch volume SVM info: {vol_err}")
-    volume_info_data = {'records': []}
+# Adapter: ontapRestApiRequest returns (data, error); collect_snapcenter_assessment expects raise-on-error.
+def _ontap_get(endpoint):
+    data, err = ontapRestApiRequest(filesystemid, region, 'GET', endpoint)
+    if err:
+        raise Exception(err)
+    return data
 
-svm_lookup = {}
-for rec in volume_info_data.get('records', []):
-    uid = rec.get('uuid', '')
-    svm_lookup[uid] = {
-        'svmId': rec.get('svm', {}).get('uuid', ''),
-        'svmName': rec.get('svm', {}).get('name', '')
-    }
+def _log_warn(msg):
+    log("Warning: " + msg)
 
-volumes = []
-for i, vol_uuid in enumerate(volume_uuids):
-    vol_name = volume_names[i] if i < len(volume_names) else ''
-    vol_log_key = volume_log_keys[i] if i < len(volume_log_keys) else ''
-    log(f"Checking SnapCenter snapshots for volume: {vol_name} ({vol_uuid})")
+${snapcenterCorePython}
 
-    svm_info = svm_lookup.get(vol_uuid, {})
-    svm_id = svm_info.get('svmId', '')
-    svm_name = svm_info.get('svmName', '')
-
-    has_snapcenter = False
-    snap_url = f'storage/volumes/{vol_uuid}/snapshots?comment=creator%3Dsnapcenter&max_records=1&fields=comment'
-    snap_data, snap_err = ontapRestApiRequest(filesystemid, region, 'GET', snap_url)
-    if snap_err:
-        log(f"Warning: Failed to fetch snapshots for volume {vol_name}: {snap_err}")
-    elif snap_data:
-        record_count = snap_data.get('num_records', 0)
-        if record_count > 0:
-            has_snapcenter = True
-            log(f"Found SnapCenter snapshot for volume {vol_name}")
-        else:
-            log(f"No SnapCenter snapshot found for volume {vol_name}")
-    else:
-        log(f"Empty response from snapshot API for volume {vol_name}")
-
-    volumes.append({
-        'svmId': svm_id,
-        'svmName': svm_name,
-        'volumeId': vol_uuid,
-        'volumeName': vol_name,
-        'hasSnapcenterSnapshot': has_snapcenter,
-        'foundInSnapcenterLogs': False,
-        'logKey': vol_log_key
-    })
-
-log("Checking standalone SnapCenter plugin service")
-plugin_running = False
-try:
-    spl_check = subprocess.run(['systemctl', 'is-active', 'spl'],
-                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
-    snapcenter_check = subprocess.run(['systemctl', 'is-active', 'snapcenter_spl'],
-                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
-    plugin_running = spl_check.returncode == 0 or snapcenter_check.returncode == 0
-    log(f"SnapCenter plugin service: spl={'active' if spl_check.returncode == 0 else 'inactive'}, snapcenter_spl={'active' if snapcenter_check.returncode == 0 else 'inactive'}")
-except Exception as e:
-    log(f"Error checking SnapCenter plugin services: {e}")
-
-sid_found_in_logs = False
-sc_log_path = '/var/opt/snapcenter/spl/logs'
-
-if plugin_running and os.path.isdir(sc_log_path):
-    try:
-        import time as _time
-        cutoff = _time.time() - 48 * 3600
-        recent_logs = []
-        for f in os.listdir(sc_log_path):
-            fpath = os.path.join(sc_log_path, f)
-            if f.endswith('.log') and os.path.isfile(fpath):
-                try:
-                    if os.path.getmtime(fpath) >= cutoff:
-                        recent_logs.append(fpath)
-                except OSError:
-                    pass
-
-        if recent_logs:
-            log(f"Found {len(recent_logs)} SnapCenter log files modified in last 48h")
-            sid_grep = subprocess.run(['grep', '-l', instance_name] + recent_logs,
-                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                      universal_newlines=True, timeout=30)
-            sid_found_in_logs = sid_grep.returncode == 0
-            log(f"SID '{instance_name}' {'found' if sid_found_in_logs else 'not found'} in recent logs")
-
-            if sid_found_in_logs:
-                for vol in volumes:
-                    log_key = vol.get('logKey', '')
-                    search_key = log_key if log_key else vol['volumeName']
-                    vol_grep = subprocess.run(['grep', '-l', search_key] + recent_logs,
-                                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                              universal_newlines=True, timeout=30)
-                    vol['foundInSnapcenterLogs'] = vol_grep.returncode == 0
-                    log(f"Volume '{vol['volumeName']}' (search_key='{search_key}') {'found' if vol['foundInSnapcenterLogs'] else 'not found'} in recent logs")
-        else:
-            log("No SnapCenter log files modified in last 48h")
-    except Exception as e:
-        log(f"Error during SnapCenter log check: {e}")
-else:
-    log(f"Skipping log check: plugin_running={plugin_running}, log_path_exists={os.path.isdir(sc_log_path)}")
-
-for vol in volumes:
-    vol.pop('logKey', None)
-
-output = {
-    'isDataguardPrimary': False,
-    'volumes': volumes,
-    'standaloneCheck': {
-        'pluginServiceRunning': plugin_running,
-        'sidFoundInLogs': sid_found_in_logs
-    },
-    'errorMessage': ''
-}
-log(f"SnapCenter assessment complete: {json.dumps(output)}")
+output = collect_snapcenter_assessment(_ontap_get, instance_name, volume_uuids, volume_names, volume_log_keys, _log_warn)
+log("SnapCenter assessment complete: {}".format(json.dumps(output)))
 print(json.dumps(output))
 `;
 
@@ -244,4 +259,46 @@ echo "$scResult" >&3
 `;
 };
 
-export { SNAPCENTER_ASSESSMENT_SCRIPT };
+/**
+ * Module-level Python function for the SnapCenter assessment, adapted for the Oracle
+ * one-time WAD context.
+ *
+ * Return value matches `SnapcenterAssessmentData`. Surrounding code is expected to attach
+ */
+const snapcenterAssessmentWadFunction = `
+${snapcenterCorePython}
+
+def collect_snapcenter_assessment_wad(ontap_config, oracle_sid, is_dataguard_primary, volume_uuids, volume_names, volume_log_keys):
+    try:
+        if is_dataguard_primary:
+            log_info("Skipping SnapCenter assessment - DataGuard primary node")
+            return {
+                "isDataguardPrimary": True,
+                "volumes": [],
+                "standaloneCheck": {"pluginServiceRunning": False, "sidFoundInLogs": False},
+                "errorMessage": ""
+            }
+
+        if not volume_uuids:
+            log_info("Skipping SnapCenter assessment - no mapped volume UUIDs available")
+            return {}
+
+        log_info("Collecting SnapCenter snapshot assessment data...")
+
+        # Adapter: ontap_request already raises on error, so wrap it unchanged.
+        def _ontap_get(endpoint):
+            return ontap_request(ontap_config, "GET", endpoint)
+
+        result = collect_snapcenter_assessment(_ontap_get, oracle_sid, volume_uuids, volume_names, volume_log_keys, log_warning)
+        standalone = result.get("standaloneCheck", {})
+        log_info("SnapCenter assessment: {} volumes, plugin_running={}, sid_found_in_logs={}".format(
+            len(result.get("volumes", [])),
+            standalone.get("pluginServiceRunning", False),
+            standalone.get("sidFoundInLogs", False)))
+        return result
+    except Exception as snapcenter_err:
+        log_warning("Failed to collect SnapCenter assessment data: {}".format(snapcenter_err))
+        return {}
+`;
+
+export { SNAPCENTER_ASSESSMENT_SCRIPT, snapcenterAssessmentWadFunction };

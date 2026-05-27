@@ -19,7 +19,8 @@ import {
     OracleDriftAssessmentResponseType,
     StorageParameterDriftResponseType,
     GenericParameterDriftResponseType,
-    OracleCloneDriftResponseType
+    OracleCloneDriftResponseType,
+    OracleGenericParameterDriftResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import {
     generateSqlResourceId,
@@ -33,10 +34,16 @@ import { AWS_REGIONS, HttpErrorCodes, RESOURCESTYPE, STORAGE_PROTOCOLS } from '.
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { CloneAssessment, ComputeHostOsAssessment, DatabaseInstance } from '../../../utils/common-types';
-import { OracleMappedOntapVolumesResponse } from '../../workloads/oracle/common-types';
+import {
+    OracleMappedOntapVolumesResponse,
+    OracleMappedOntapVolumeRecord,
+    OracleSysFileTypes
+} from '../../workloads/oracle/common-types';
 import { calculateStorageDrift } from './storage-assessment-operations';
-import { calculateOracleCloneDrift } from './clone-assessment-operations';
+import calculateOneTimeWADCloneDrift from '../clone-assessment-utils';
 import { calculateComputeHostOsDrift } from './compute-assessment-operations';
+import { calculateSnapCenterDrift, SnapcenterAssessmentData } from './snapcenter-assessment-operations';
+import { getOntapVolumeIdsByFileType } from './assessment-operations';
 import { ISCIOSAssessment, NFSOSAssessment, StorageAssessment, StorageIscsiAssessment } from './common-types';
 import { AssessmentStatus, MIN_OPTIMIZED_HEADROOM_PERCENTAGE } from '../../../utils/continous-optimization-consts';
 import GOLDEN_CONFIG from './golden-config';
@@ -86,6 +93,7 @@ interface OracleStoredRawData {
     isDataGuardDeployed?: boolean;
     dataguardDetails?: DataGuardDetailsType;
     clone?: CloneAssessment;
+    snapcenter?: SnapcenterAssessmentData;
 }
 
 /** Oracle instance-level metadata (version, home, SID, CDB flag) nested inside each entry of `instanceLevelDetails`. */
@@ -118,6 +126,7 @@ interface OracleOfflineAssessmentInstanceData {
     isDataGuardDeployed?: boolean;
     dataguardDetails?: DataGuardDetailsType;
     clone?: CloneAssessment;
+    snapcenter?: SnapcenterAssessmentData;
 }
 
 /** Top-level `rawdata` block from the uploaded assessment JSON — maps SID keys to per-instance data plus host-level details. */
@@ -229,7 +238,8 @@ async function processOracleOfflineAssessmentUpload(
                     pluggableDatabases,
                     isDataGuardDeployed,
                     dataguardDetails,
-                    clone
+                    clone,
+                    snapcenter
                 } = instanceData;
 
                 const databaseInstanceId = instanceDetails?.sid || instanceName;
@@ -260,7 +270,8 @@ async function processOracleOfflineAssessmentUpload(
                         pluggableDatabases: pluggableDatabases || [],
                         isDataGuardDeployed: isDataGuardDeployed || false,
                         dataguardDetails: dataguardDetails || {},
-                        ...(clone && { clone })
+                        ...(clone && !isEmpty(clone) && { clone }),
+                        ...(snapcenter && !isEmpty(snapcenter) && { snapcenter })
                     },
                     mappedOntapVolumes: mappedOntapVolumes || {},
                     metadata: {
@@ -496,7 +507,7 @@ async function fetchOracleOfflineAssessment(
     } = metadata;
 
     const skipHeadroom = true;
-    const { instanceLevelAssessment, os, clone: cloneAssessmentData } = rawdata;
+    const { instanceLevelAssessment, os, clone: cloneAssessmentData, snapcenter: snapcenterAssessmentData } = rawdata;
     const fileSystemIdentifier = fsxId || storageEndpoint || '';
 
     const instanceAssessment = (instanceLevelAssessment || {}) as Record<string, unknown>;
@@ -554,16 +565,36 @@ async function fetchOracleOfflineAssessment(
 
     let cloneDriftResponse: OracleCloneDriftResponseType | undefined;
     if (!isEmpty(cloneAssessmentData)) {
-        const cloneDrift = calculateOracleCloneDrift(
+        const cloneDrift = calculateOneTimeWADCloneDrift(
             accountId,
-            credentialsId || '',
-            region || '',
             resourceId,
             databaseInstanceId,
-            cloneAssessmentData as CloneAssessment
+            cloneAssessmentData as CloneAssessment,
+            DATABASE_TYPE.oracle
         );
         if (cloneDrift && !('errorMessage' in cloneDrift)) {
             cloneDriftResponse = cloneDrift as OracleCloneDriftResponseType;
+        }
+    }
+
+    let snapcenterDriftResponse: OracleGenericParameterDriftResponseType | undefined;
+    if (!isEmpty(snapcenterAssessmentData)) {
+        const volumeMappings = mappedOntapVolumesData.volumeMappings || [];
+        const instanceVolumeMapping = volumeMappings.find(
+            (m: Record<string, OracleMappedOntapVolumeRecord>) => m[databaseInstanceName || databaseInstanceId]
+        )?.[databaseInstanceName || databaseInstanceId];
+        const volumeIdsByFileType = getOntapVolumeIdsByFileType(instanceVolumeMapping, [
+            OracleSysFileTypes.DATA_FILES,
+            OracleSysFileTypes.CONTROL_FILES,
+            OracleSysFileTypes.ARCHIVE_LOGS
+        ]);
+        const snapcenterDrift = calculateSnapCenterDrift(snapcenterAssessmentData as SnapcenterAssessmentData, {
+            dataFileVolumeIds: volumeIdsByFileType[OracleSysFileTypes.DATA_FILES] ?? [],
+            controlFileVolumeIds: volumeIdsByFileType[OracleSysFileTypes.CONTROL_FILES] ?? [],
+            archiveLogVolumeIds: volumeIdsByFileType[OracleSysFileTypes.ARCHIVE_LOGS] ?? []
+        });
+        if (snapcenterDrift && !('errorMessage' in snapcenterDrift)) {
+            snapcenterDriftResponse = snapcenterDrift as OracleGenericParameterDriftResponseType;
         }
     }
 
@@ -585,6 +616,7 @@ async function fetchOracleOfflineAssessment(
             ? (storageAssessmentResponse as StorageParameterDriftResponseType)
             : undefined,
         clone: cloneDriftResponse,
+        ...(snapcenterDriftResponse && { snapcenterSnapshot: snapcenterDriftResponse }),
         ...computeHostOsDriftData,
         lastAssessmentTimestamp: assessmentTimestamp
             ? new Date(assessmentTimestamp).getTime()

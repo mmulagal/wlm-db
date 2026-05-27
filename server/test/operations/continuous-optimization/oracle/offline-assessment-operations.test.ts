@@ -54,7 +54,7 @@ const createInstance = (databaseInstanceId: string, storageProtocol: 'iSCSI' | '
     databaseInstanceId,
     databaseInstanceName: databaseInstanceId,
     isDefault: true,
-    source: 'offline',
+    source: 'discovery',
     sqlDeploymentType: 'Standalone',
     fsxSvmId: { [fsxId]: 'svm-offline' },
     fsxnIds: fsxId,
@@ -158,5 +158,90 @@ describe('fetchOracleOfflineAssessment', () => {
         expect(response.tcpAdvancedOptions).toBeUndefined();
         expect(response.filesystemsIoOptions).toBeUndefined();
         expect(response.multiblockReadcount).toBeUndefined();
+    });
+
+    it('should include snapcenterSnapshot drift when rawdata.snapcenter is present', async () => {
+        const snapcenterInstanceId = 'ORASNAP';
+        await upsertDatabaseInstance(ACCOUNT_ID, createInstance(snapcenterInstanceId, 'iSCSI'));
+        await bulkUpsertOfflineAssessments([
+            {
+                accountId: ACCOUNT_ID,
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                resourceId,
+                databaseInstanceId: snapcenterInstanceId,
+                databaseType: DATABASE_TYPE.oracle,
+                rawdata: {
+                    ...rawdataFor(),
+                    snapcenter: {
+                        isDataguardPrimary: false,
+                        volumes: [
+                            {
+                                svmId: 'svm-offline',
+                                svmName: 'wlmdb_svm_demo',
+                                volumeId: 'vol-unprotected-1',
+                                volumeName: 'unprotected_vol',
+                                hasSnapcenterSnapshot: false,
+                                foundInSnapcenterLogs: false
+                            }
+                        ],
+                        standaloneCheck: { pluginServiceRunning: false, sidFoundInLogs: false },
+                        errorMessage: ''
+                    }
+                },
+                mappedOntapVolumes: mappedVolumesFor('iSCSI'),
+                metadata: metadataFor(snapcenterInstanceId)
+            }
+        ]);
+
+        const response = await fetchOracleOfflineAssessment(
+            ACCOUNT_ID,
+            resourceId,
+            snapcenterInstanceId,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION
+        );
+
+        expect(response.snapcenterSnapshot).toBeDefined();
+        const snapcenter = response.snapcenterSnapshot as OracleGenericParameterDriftResponseType;
+        expect(snapcenter.name).toBeDefined();
+        expect(snapcenter.status).toBe('not-optimized');
+        expect(snapcenter.totalObjectsInViolation).toBe(1);
+    });
+
+    it('should short-circuit snapcenter drift when DataGuard primary', async () => {
+        const dgPrimaryInstanceId = 'ORADGPRIM';
+        await upsertDatabaseInstance(ACCOUNT_ID, createInstance(dgPrimaryInstanceId, 'iSCSI'));
+        await bulkUpsertOfflineAssessments([
+            {
+                accountId: ACCOUNT_ID,
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                resourceId,
+                databaseInstanceId: dgPrimaryInstanceId,
+                databaseType: DATABASE_TYPE.oracle,
+                rawdata: {
+                    ...rawdataFor(),
+                    snapcenter: {
+                        isDataguardPrimary: true,
+                        volumes: [],
+                        standaloneCheck: { pluginServiceRunning: false, sidFoundInLogs: false },
+                        errorMessage: ''
+                    }
+                },
+                mappedOntapVolumes: mappedVolumesFor('iSCSI'),
+                metadata: metadataFor(dgPrimaryInstanceId)
+            }
+        ]);
+
+        const response = await fetchOracleOfflineAssessment(
+            ACCOUNT_ID,
+            resourceId,
+            dgPrimaryInstanceId,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION
+        );
+
+        expect(response.snapcenterSnapshot).toBeUndefined();
     });
 });

@@ -450,6 +450,9 @@ export const offlineAssessmentDemoSTD = {
                             }
                         ]
                     }
+                },
+                clone: {
+                    cloneDetails: []
                 }
             }
         }

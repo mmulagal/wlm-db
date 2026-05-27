@@ -1400,5 +1400,6 @@ export {
     fetchOracleDriftAssessmentPerAccount,
     fetchOraclePatchScan,
     initiateInstanceLevelAssessmentDataCollection,
-    triggerOracleAssessmentAfterOptimization
+    triggerOracleAssessmentAfterOptimization,
+    getOntapVolumeIdsByFileType
 };
