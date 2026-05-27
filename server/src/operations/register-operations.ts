@@ -2077,6 +2077,7 @@ async function registerResourceCredentials(
                     region,
                     ec2InstanceId,
                     credentials,
+                    clusterNodesIpAddress,
                     checkManageReadiness,
                     isReplicaInfoRequired
                 } = resource;
@@ -2088,7 +2089,7 @@ async function registerResourceCredentials(
                             region,
                             ec2InstanceId,
                             credentials,
-                            undefined,
+                            clusterNodesIpAddress,
                             checkManageReadiness,
                             false,
                             isReplicaInfoRequired
