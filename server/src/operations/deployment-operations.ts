@@ -89,8 +89,7 @@ import {
     CF_QUOTA_REACHED,
     HA,
     AMAZON_LINUX_AMI_PATH,
-    GOV_ACCOUNT,
-    isGovCloudRegion
+    GOV_ACCOUNT
 } from '../utils/consts';
 import {
     calculateSQLandWindowsVersion,
@@ -531,7 +530,23 @@ async function formatTemplateParameters(
         });
     });
 
+    clearGovCloudSaasTrackingParams(templateParams);
+
     return { stackName, templateParameters: templateParams };
+}
+
+function clearGovCloudSaasTrackingParams(templateParams: Array<Parameter>): void {
+    const isGovCloud = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) || false;
+    if (!isGovCloud) {
+        return;
+    }
+
+    for (const param of templateParams) {
+        if (param.ParameterKey === TEMPLATE_CREDENTIALS_ID) {
+            param.ParameterValue = '';
+        }
+    }
+    logger.info('GovCloud deployment — cleared RoleCredentialsId to disable SaaS notification tracking');
 }
 
 async function formatTemplateParametersToCf(
@@ -606,15 +621,6 @@ async function getCloudformationTemplate(
             fsxConfiguration,
             sqlConfiguration
         );
-    }
-
-    const isGovCloud =
-        getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) || (region ? isGovCloudRegion(region) : false);
-    if (isGovCloud) {
-        logger.info('GovCloud deployment detected — disabling SaaS notification tracking (RoleCredentialsId cleared)', {
-            region
-        });
-        credentialsId = '';
     }
 
     const { workloadInstanceType } = ec2Configuration;
@@ -792,15 +798,6 @@ async function getPgSqlCfTemplate(
         sqlConfiguration.sqlAmiId = al2023AmiId;
     } else {
         throw createError(412, 'Amazon Linux 2023 AMI is not available');
-    }
-
-    const isGovCloud =
-        getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) || (region ? isGovCloudRegion(region) : false);
-    if (isGovCloud) {
-        logger.info('GovCloud deployment detected — disabling SaaS notification tracking (RoleCredentialsId cleared)', {
-            region
-        });
-        credentialsId = '';
     }
 
     const metrics = `${TRIGGERED_FROM}:${triggeredFrom},${DEPLOYED_FROM}:${AWSServiceNames.CLOUDFORMATION},${INSTANCE_TYPE}:${workloadInstanceType},${SQL_VERSION}:${sqlVersion},${DATABASE_SIZE}:${databaseSize},${SQL_HOST_NAME}:${sqlServerName}`;
@@ -1482,7 +1479,11 @@ async function createCloudFormationTemplateForUserDeployment(
         { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr },
         { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr }
     ];
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${VALIDATION_NODE_INSTANCETYPE}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+    clearGovCloudSaasTrackingParams(templateParamsAsList);
+
+    const effectiveCredentialsId =
+        templateParamsAsList.find(p => p.ParameterKey === TEMPLATE_CREDENTIALS_ID)?.ParameterValue ?? '';
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${VALIDATION_NODE_INSTANCETYPE}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${effectiveCredentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
     if (fsxConfiguration.fsxPassword) {
         try {
             const encryptedFsxPassword = await encryptString(fsxConfiguration.fsxPassword);
@@ -2327,6 +2328,8 @@ async function formatPgSqlTemplateParameters(
         }
     });
 
+    clearGovCloudSaasTrackingParams(templateParams);
+
     return { stackName, templateParameters: templateParams };
 }
 
@@ -2434,8 +2437,11 @@ async function createCfTemplateForPgsqlDeployment(
         { ParameterKey: TEMPLATE_PRIVATESUBNET1_CIDRBLOCK, ParameterValue: privateSubnet1Cidr },
         { ParameterKey: TEMPLATE_PRIVATESUBNET2_CIDRBLOCK, ParameterValue: privateSubnet2Cidr }
     ];
+    clearGovCloudSaasTrackingParams(templateParamsAsList);
 
-    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${VALIDATION_NODE_INSTANCETYPE}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${credentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
+    const effectiveCredentialsId =
+        templateParamsAsList.find(p => p.ParameterKey === TEMPLATE_CREDENTIALS_ID)?.ParameterValue ?? '';
+    let templateParams: string = `stackName=${derivedParams.StackName}&param_${CF_DEPLOY_ROLE_NAME}=${roleName}&param_${VALIDATION_AMI}=${validationAmiImage}&param_${VALIDATION_INSTANCE_TYPE}=${VALIDATION_NODE_INSTANCETYPE}&param_${TEMPLATE_ACCOUNT_ID}=${accountId}&param_${TEMPLATE_JWT_TOKEN}=${token}&param_${TEMPLATE_CREDENTIALS_ID}=${effectiveCredentialsId}&param_${TEMPLATE_CLOUD_PROVIDER_ID}=${providerAccountId}&param_${TEMPLATE_WLMDB_AWS_ACCOUT_ID}=${awsAccountId}`;
 
     if (fsxConfiguration.fsxPassword) {
         try {
