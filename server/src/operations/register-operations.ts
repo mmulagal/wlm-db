@@ -2351,6 +2351,15 @@ async function rewriteOrDeleteSSMParameter(
     oracleAsmCredentials: RegisterCredentialsType[] = [],
     allOracleAsmCredentials: RegisterCredentialsType[] = []
 ) {
+    const isGovCloud = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
+    if (isGovCloud) {
+        logger.info('GovCloud account: skipping SSM parameter rewrite/delete — credentials are pre-provisioned', {
+            credentialsId,
+            region
+        });
+        return;
+    }
+
     logger.info('Calling rewriteOrDeleteSSMParameter', {
         credentialsId,
         region,
@@ -2773,6 +2782,7 @@ async function validateWindowsCredentials(
     const instancesToBeDeleted: string[] = [];
 
     if (fsxCredentials) {
+        const isGovCloudFsx = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
         parsedResponse.fsxResults.map(async (fsxResult: FSxCredsRegistration) => {
             if (fsxResult.ontapconnectivity === false && fsxResult.fsxId === fsxCredentials.resourceId) {
                 response.push({
@@ -2780,20 +2790,24 @@ async function validateWindowsCredentials(
                     resourceType: RESOURCESTYPE.FSX,
                     fsxnError: fsxResult.ontaperror
                 });
-                paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+                if (!isGovCloudFsx) {
+                    paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+                }
             } else if (fsxResult.ontapconnectivity === true && fsxResult.fsxId === fsxCredentials.resourceId) {
                 response.push({
                     resourceId: fsxCredentials.resourceId,
                     resourceType: RESOURCESTYPE.FSX,
                     fsxnError: ''
                 });
-                await registerFsxOntapCredentials(
-                    accountId,
-                    credentialsId,
-                    region,
-                    fsxCredentials.resourceId,
-                    fsxCredentials.password!
-                );
+                if (!isGovCloudFsx) {
+                    await registerFsxOntapCredentials(
+                        accountId,
+                        credentialsId,
+                        region,
+                        fsxCredentials.resourceId,
+                        fsxCredentials.password!
+                    );
+                }
             }
         });
     }
@@ -3044,18 +3058,21 @@ async function validateWindowsCredentials(
         }
     }
 
-    await rewriteOrDeleteSSMParameter(
-        credentialsId,
-        region,
-        instanceIds,
-        paramsToDelete,
-        instancesToBeDeleted,
-        fsxCredentials!,
-        newSqlCredentials,
-        windowsUserCredentials,
-        allDatabaseCredentials,
-        allWindowsUserCredentials
-    );
+    const isGovCloud = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
+    if (!isGovCloud) {
+        await rewriteOrDeleteSSMParameter(
+            credentialsId,
+            region,
+            instanceIds,
+            paramsToDelete,
+            instancesToBeDeleted,
+            fsxCredentials!,
+            newSqlCredentials,
+            windowsUserCredentials,
+            allDatabaseCredentials,
+            allWindowsUserCredentials
+        );
+    }
 
     return { response, replicaInfoObject };
 }
@@ -3199,6 +3216,7 @@ async function validateOracleCredentials(
         }
     }
     if (fsxCredentials) {
+        const isGovCloudFsx = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
         parsedResponse.fsxResults.map(async (fsxResult: FSxCredsRegistration) => {
             if (fsxResult.ontapconnectivity === false && fsxResult.fsxId === fsxCredentials.resourceId) {
                 response.push({
@@ -3206,19 +3224,23 @@ async function validateOracleCredentials(
                     resourceType: RESOURCESTYPE.FSX,
                     fsxnError: fsxResult.ontaperror
                 });
-                paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+                if (!isGovCloudFsx) {
+                    paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
+                }
             } else if (fsxResult.ontapconnectivity === true && fsxResult.fsxId === fsxCredentials.resourceId) {
                 response.push({
                     resourceId: fsxCredentials.resourceId,
                     resourceType: RESOURCESTYPE.FSX
                 });
-                await registerFsxOntapCredentials(
-                    accountId,
-                    credentialsId,
-                    region,
-                    fsxCredentials.resourceId,
-                    fsxCredentials.password!
-                );
+                if (!isGovCloudFsx) {
+                    await registerFsxOntapCredentials(
+                        accountId,
+                        credentialsId,
+                        region,
+                        fsxCredentials.resourceId,
+                        fsxCredentials.password!
+                    );
+                }
             }
         });
     }
@@ -3303,20 +3325,23 @@ async function validateOracleCredentials(
         });
     }
 
-    await rewriteOrDeleteSSMParameter(
-        credentialsId,
-        region,
-        instanceIds,
-        paramsToDelete,
-        instancesToBeDeleted,
-        fsxCredentials!,
-        oracleCredentials,
-        [],
-        allDatabaseCredentials,
-        [],
-        oracleAsmCredentials,
-        allOracleAsmCredentials
-    );
+    const isGovCloud = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
+    if (!isGovCloud) {
+        await rewriteOrDeleteSSMParameter(
+            credentialsId,
+            region,
+            instanceIds,
+            paramsToDelete,
+            instancesToBeDeleted,
+            fsxCredentials!,
+            oracleCredentials,
+            [],
+            allDatabaseCredentials,
+            [],
+            oracleAsmCredentials,
+            allOracleAsmCredentials
+        );
+    }
     return { response, replicaInfoObject };
 }
 
