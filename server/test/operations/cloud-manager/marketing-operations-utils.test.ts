@@ -279,6 +279,8 @@ describe('Marketing Operations Utils', () => {
     });
 
     describe('formatEbsCalculationObject', () => {
+        const GIB_IN_BYTE = 1024 ** 3;
+
         it('should format EBS calculation object correctly', () => {
             const ebsSummary: StorageSummary = {
                 capacity: 100,
@@ -289,13 +291,23 @@ describe('Marketing Operations Utils', () => {
                 clones: 15
             };
 
+            const numberOfVolumes = 2;
+            const ebsSnapshotPrice = 0.05;
+            const totalSnapshots = 10;
+            const ebsInstanceMonth = 1;
+            const amountChangedPerSnapshotPerVolGib = 51.2;
+            // Make incrementalSnapshotCost consistent with derivation from amountChangedPerSnapshot
+            // so the new across-all-volumes rollup matches: per-vol = amount × price × 0.5 × N_snap
+            const incrementalSnapshotCostPerVol =
+                amountChangedPerSnapshotPerVolGib * ebsSnapshotPrice * 0.5 * totalSnapshots;
+
             const ebsCostCalculation: Partial<EbsCostCalculation> = {
                 instanceAvgDuration: 720,
                 EBSCapacityPrice: { price: 0.1, unit: 'GB-Mo' },
-                numberOfVolumes: 2,
+                numberOfVolumes,
                 storageAmount: { size: 1024, unit: 'GiB' },
                 totalInstanceHours: 1440,
-                EBSInstanceMonth: 1,
+                EBSInstanceMonth: ebsInstanceMonth,
                 EBSStorageCost: 102.4,
                 billableIops: 3000,
                 totalBillableIops: 6000,
@@ -304,17 +316,17 @@ describe('Marketing Operations Utils', () => {
                 billableThroughputMBps: 250,
                 billableThroughputGBps: 0.25,
                 EBSThroughputCost: 11.25,
-                totalSnapshot: 10,
+                totalSnapshot: totalSnapshots,
                 initialSnapshotCost: 5,
-                monthlyCostPerSnapshot: 2,
-                discountForPartialStorageMonth: 0.5,
-                incrementalSnapshotCost: 15,
+                monthlyCostPerSnapshot: amountChangedPerSnapshotPerVolGib * ebsSnapshotPrice,
+                discountForPartialStorageMonth: amountChangedPerSnapshotPerVolGib * ebsSnapshotPrice * 0.5,
+                incrementalSnapshotCost: incrementalSnapshotCostPerVol,
                 totalSnapshotCost: 20,
                 totalEBSSnapshotCost: 20,
                 ebsSnapshotCost: 20,
                 AWSEBSTotalCostMonthly: 328.65,
-                ebsSnapshotPrice: { price: 0.05, unit: 'GB-Mo' },
-                amountChangedPerSnapshot: { size: 51.2, unit: 'GiB' }
+                ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: 'GB-Mo' },
+                amountChangedPerSnapshot: { size: amountChangedPerSnapshotPerVolGib, unit: 'GiB' }
             };
 
             const result = formatEbsCalculationObject(ebsSummary, ebsCostCalculation as EbsCostCalculation, 2, 30);
@@ -324,10 +336,28 @@ describe('Marketing Operations Utils', () => {
             expect(result.ebsCloneCalculation).toBeDefined();
             expect(result.ebsSnapshotCalculation).toBeDefined();
 
-            expect(result.ebsCostCalculation.numberOfVolumes).toBe(2);
+            expect(result.ebsCostCalculation.numberOfVolumes).toBe(numberOfVolumes);
             expect(result.ebsCloneCalculation.clonedCopiesCount).toBe(2);
             expect(result.ebsCloneCalculation.totalCloneMonthlyCost).toBe(700); // 2 * (100 + 200 + 50)
             expect(result.ebsSnapshotCalculation.monthlyChangeRatePercentage).toBe(30);
+
+            // GH-9225 follow-up: per-snapshot chain is rolled up to across-all-volumes.
+            const amountChangedAllVolBytes = amountChangedPerSnapshotPerVolGib * numberOfVolumes * GIB_IN_BYTE;
+            const monthlyCostPerSnapshotAllVol = amountChangedPerSnapshotPerVolGib * numberOfVolumes * ebsSnapshotPrice;
+            expect(result.ebsSnapshotCalculation.amountChangedPerSnapshot).toBeCloseTo(amountChangedAllVolBytes, 0);
+            expect(result.ebsSnapshotCalculation.monthlyCostPerSnapshot).toBeCloseTo(monthlyCostPerSnapshotAllVol, 6);
+            expect(result.ebsSnapshotCalculation.discountForPartialStorageMonth).toBeCloseTo(
+                monthlyCostPerSnapshotAllVol * 0.5,
+                6
+            );
+            // `incrementalSnapshotCost` is period-scaled by `instanceMonthsPerVolume` so that
+            // `totalSnapshotCost === initialSnapshotCost + incrementalSnapshotCost` (UI tooltip identity).
+            const instanceMonthsPerVolume = ebsInstanceMonth / numberOfVolumes;
+            expect(result.ebsSnapshotCalculation.incrementalSnapshotCost).toBeCloseTo(
+                monthlyCostPerSnapshotAllVol * 0.5 * totalSnapshots * instanceMonthsPerVolume,
+                6
+            );
+            expect(result.ebsSnapshotCalculation.monthlyCostOfSnapshots).toBeCloseTo(monthlyCostPerSnapshotAllVol, 6);
         });
 
         it('should recompute snapshot totals from all-volumes initial cost and per-volume incremental cost scaled by ebsInstanceMonth (multi-volume)', () => {
@@ -342,13 +372,19 @@ describe('Marketing Operations Utils', () => {
 
             const ebsSnapshotPrice = 0.05;
             const storageGiBTotal = 2048;
-            const incrementalSnapshotCost = 10.24;
+            const numberOfVolumes = 2;
             const ebsInstanceMonth = 2;
+            const totalSnapshots = 5;
+            // Per-volume `amountChangedPerSnapshot` derived from `incrementalSnapshotCost = 10.24` so
+            // the new across-all-volumes rollup preserves the historical totals:
+            //   incrementalPerVol = amount × price × 0.5 × totalSnapshots → 10.24 / (0.05 × 0.5 × 5) = 81.92 GiB.
+            const incrementalSnapshotCost = 10.24;
+            const amountChangedPerSnapshotPerVolGib = 81.92;
 
             const ebsCostCalculation: Partial<EbsCostCalculation> = {
                 instanceAvgDuration: 720,
                 EBSCapacityPrice: { price: 0.1, unit: 'GB-Mo' },
-                numberOfVolumes: 2,
+                numberOfVolumes,
                 storageAmount: { size: storageGiBTotal, unit: 'GiB' },
                 totalInstanceHours: 1440,
                 EBSInstanceMonth: ebsInstanceMonth,
@@ -360,17 +396,17 @@ describe('Marketing Operations Utils', () => {
                 billableThroughputMBps: 0,
                 billableThroughputGBps: 0,
                 EBSThroughputCost: 0,
-                totalSnapshot: 5,
+                totalSnapshot: totalSnapshots,
                 initialSnapshotCost: 102.4,
-                monthlyCostPerSnapshot: 1,
-                discountForPartialStorageMonth: 0,
+                monthlyCostPerSnapshot: amountChangedPerSnapshotPerVolGib * ebsSnapshotPrice,
+                discountForPartialStorageMonth: amountChangedPerSnapshotPerVolGib * ebsSnapshotPrice * 0.5,
                 incrementalSnapshotCost,
                 totalSnapshotCost: 50,
                 totalEBSSnapshotCost: 999,
                 ebsSnapshotCost: 888,
                 AWSEBSTotalCostMonthly: 0,
                 ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: 'GB-Mo' },
-                amountChangedPerSnapshot: { size: 100, unit: 'GiB' }
+                amountChangedPerSnapshot: { size: amountChangedPerSnapshotPerVolGib, unit: 'GiB' }
             };
 
             const result = formatEbsCalculationObject(ebsSummary, ebsCostCalculation as EbsCostCalculation, 0, 10);
@@ -380,12 +416,27 @@ describe('Marketing Operations Utils', () => {
             const totalSnapshotCostForAllVolumes =
                 initialSnapshotCostForAllVolumes + incrementalSnapshotCostForAllVolumes; // 122.88
 
-            expect(result.ebsSnapshotCalculation.initialSnapshotCost).toBe(initialSnapshotCostForAllVolumes);
-            expect(result.ebsSnapshotCalculation.totalSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
+            expect(result.ebsSnapshotCalculation.initialSnapshotCost).toBeCloseTo(initialSnapshotCostForAllVolumes, 6);
+            expect(result.ebsSnapshotCalculation.totalSnapshotCost).toBeCloseTo(totalSnapshotCostForAllVolumes, 6);
             // GH-9225 follow-up: totalEbsSnapshotCost and ebsSnapshotCost must NOT be re-multiplied by
             // ebsInstanceMonth (the previous fix did, double-counting the initial cost).
-            expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
-            expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
+            expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBeCloseTo(totalSnapshotCostForAllVolumes, 6);
+            expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBeCloseTo(totalSnapshotCostForAllVolumes, 6);
+
+            // GH-9225 follow-up: per-snapshot chain is rolled up to across-all-volumes-in-class.
+            const amountChangedAllVolBytes = amountChangedPerSnapshotPerVolGib * numberOfVolumes * GIB_IN_BYTE;
+            const monthlyCostPerSnapshotAllVol = amountChangedPerSnapshotPerVolGib * numberOfVolumes * ebsSnapshotPrice;
+            expect(result.ebsSnapshotCalculation.amountChangedPerSnapshot).toBeCloseTo(amountChangedAllVolBytes, 0);
+            expect(result.ebsSnapshotCalculation.monthlyCostPerSnapshot).toBeCloseTo(monthlyCostPerSnapshotAllVol, 6);
+            expect(result.ebsSnapshotCalculation.discountForPartialStorageMonth).toBeCloseTo(
+                monthlyCostPerSnapshotAllVol * 0.5,
+                6
+            );
+            expect(result.ebsSnapshotCalculation.incrementalSnapshotCost).toBeCloseTo(
+                monthlyCostPerSnapshotAllVol * 0.5 * totalSnapshots,
+                6
+            );
+            expect(result.ebsSnapshotCalculation.monthlyCostOfSnapshots).toBeCloseTo(monthlyCostPerSnapshotAllVol, 6);
         });
 
         it.each([
@@ -395,7 +446,10 @@ describe('Marketing Operations Utils', () => {
                 totalStorageGiB: 1024,
                 ebsSnapshotPrice: 0.08,
                 incrementalSnapshotCost: 12,
-                ebsInstanceMonth: 1.5
+                ebsInstanceMonth: 1.5,
+                totalSnapshots: 4,
+                // amount_perVol = incrementalPerVol / (price × 0.5 × N_snap) = 12 / (0.08×0.5×4) = 75 GiB
+                amountChangedPerSnapshotPerVolGib: 75
             },
             {
                 label: '3 gp3 volumes (rolled-up gp3 class)',
@@ -403,11 +457,22 @@ describe('Marketing Operations Utils', () => {
                 totalStorageGiB: 600,
                 ebsSnapshotPrice: 0.05,
                 incrementalSnapshotCost: 7.5,
-                ebsInstanceMonth: 2
+                ebsInstanceMonth: 2,
+                totalSnapshots: 4,
+                // amount_perVol = 7.5 / (0.05×0.5×4) = 75 GiB
+                amountChangedPerSnapshotPerVolGib: 75
             }
         ])(
             'recomputes snapshot totals per volume class — $label (GH-9225)',
-            ({ numberOfVolumes, totalStorageGiB, ebsSnapshotPrice, incrementalSnapshotCost, ebsInstanceMonth }) => {
+            ({
+                numberOfVolumes,
+                totalStorageGiB,
+                ebsSnapshotPrice,
+                incrementalSnapshotCost,
+                ebsInstanceMonth,
+                totalSnapshots,
+                amountChangedPerSnapshotPerVolGib
+            }) => {
                 const ebsSummary: StorageSummary = {
                     capacity: 1,
                     iops: 0,
@@ -432,17 +497,17 @@ describe('Marketing Operations Utils', () => {
                     billableThroughputMBps: 0,
                     billableThroughputGBps: 0,
                     EBSThroughputCost: 0,
-                    totalSnapshot: 4,
+                    totalSnapshot: totalSnapshots,
                     initialSnapshotCost: 0,
-                    monthlyCostPerSnapshot: 1,
-                    discountForPartialStorageMonth: 0,
+                    monthlyCostPerSnapshot: amountChangedPerSnapshotPerVolGib * ebsSnapshotPrice,
+                    discountForPartialStorageMonth: amountChangedPerSnapshotPerVolGib * ebsSnapshotPrice * 0.5,
                     incrementalSnapshotCost,
                     totalSnapshotCost: 0,
                     totalEBSSnapshotCost: 0,
                     ebsSnapshotCost: 0,
                     AWSEBSTotalCostMonthly: 0,
                     ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: 'GB-Mo' },
-                    amountChangedPerSnapshot: { size: 10, unit: 'GiB' }
+                    amountChangedPerSnapshot: { size: amountChangedPerSnapshotPerVolGib, unit: 'GiB' }
                 };
 
                 const result = formatEbsCalculationObject(ebsSummary, ebsCostCalculation as EbsCostCalculation, 0, 10);
@@ -452,16 +517,57 @@ describe('Marketing Operations Utils', () => {
                     initialSnapshotCostForAllVolumes + incrementalSnapshotCost * ebsInstanceMonth;
 
                 expect(result.ebsSnapshotCalculation.numberOfVolumes).toBe(numberOfVolumes);
-                expect(result.ebsSnapshotCalculation.initialSnapshotCost).toBe(initialSnapshotCostForAllVolumes);
-                expect(result.ebsSnapshotCalculation.totalSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
-                expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
-                expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
+                expect(result.ebsSnapshotCalculation.initialSnapshotCost).toBeCloseTo(
+                    initialSnapshotCostForAllVolumes,
+                    6
+                );
+                expect(result.ebsSnapshotCalculation.totalSnapshotCost).toBeCloseTo(totalSnapshotCostForAllVolumes, 6);
+                expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBeCloseTo(
+                    totalSnapshotCostForAllVolumes,
+                    6
+                );
+                expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBeCloseTo(totalSnapshotCostForAllVolumes, 6);
+
+                // GH-9225 follow-up: per-snapshot chain rolls up to across-all-volumes.
+                const amountChangedAllVolBytes = amountChangedPerSnapshotPerVolGib * numberOfVolumes * GIB_IN_BYTE;
+                const monthlyCostPerSnapshotAllVol =
+                    amountChangedPerSnapshotPerVolGib * numberOfVolumes * ebsSnapshotPrice;
+                expect(result.ebsSnapshotCalculation.amountChangedPerSnapshot).toBeCloseTo(amountChangedAllVolBytes, 0);
+                expect(result.ebsSnapshotCalculation.monthlyCostPerSnapshot).toBeCloseTo(
+                    monthlyCostPerSnapshotAllVol,
+                    6
+                );
+                expect(result.ebsSnapshotCalculation.discountForPartialStorageMonth).toBeCloseTo(
+                    monthlyCostPerSnapshotAllVol * 0.5,
+                    6
+                );
+                // `incrementalSnapshotCost` is period-scaled by `instanceMonthsPerVolume` so that
+                // `totalSnapshotCost === initialSnapshotCost + incrementalSnapshotCost` (UI tooltip identity).
+                const instanceMonthsPerVolume = ebsInstanceMonth / numberOfVolumes;
+                expect(result.ebsSnapshotCalculation.incrementalSnapshotCost).toBeCloseTo(
+                    monthlyCostPerSnapshotAllVol * 0.5 * totalSnapshots * instanceMonthsPerVolume,
+                    6
+                );
+                expect(result.ebsSnapshotCalculation.monthlyCostOfSnapshots).toBeCloseTo(
+                    monthlyCostPerSnapshotAllVol,
+                    6
+                );
+
+                // UI tooltip identity: displayed total must equal displayed initial + displayed incremental.
+                expect(result.ebsSnapshotCalculation.totalSnapshotCost).toBeCloseTo(
+                    result.ebsSnapshotCalculation.initialSnapshotCost +
+                        result.ebsSnapshotCalculation.incrementalSnapshotCost,
+                    6
+                );
             }
         );
 
         it('should scale per-volume initial by ebsInstanceMonth when storage comes from storageAmountPerVol (auto mode)', () => {
             // Simulator auto response: 4 × gp2 @ 1600 GiB/vol, ebsInstanceMonth = 4.
-            // storageAmountPerVol is per-volume; initial must be 1600 × 0.05 × 4 = 320, not 80.
+            // After GH-9225 follow-up: `storageAmount` displayed in `ebsSnapshotCalculation` is rolled
+            // up to across-all-volumes (1600 × 4 = 6400 GiB), and `initial = storageAcrossAll × price ×
+            // instanceMonthsPerVolume`, which is numerically identical to the prior
+            // `perVol × price × ebsInstanceMonth` for homogeneous volumes (= 320).
             const ebsSummary: StorageSummary = {
                 capacity: 182.4,
                 iops: 0,
@@ -473,13 +579,19 @@ describe('Marketing Operations Utils', () => {
 
             const ebsSnapshotPrice = 0.05;
             const storageGiBPerVol = 1600;
-            const incrementalSnapshotCost = 3.2;
+            const numberOfVolumes = 4;
             const ebsInstanceMonth = 4;
+            const totalSnapshots = 120;
+            const amountChangedPerSnapshotPerVolGib = 4.2666666666666675;
+            // Make incrementalSnapshotCost consistent with derivation from amountChangedPerSnapshot
+            // (per-vol = amount × price × 0.5 × N_snap) so the new across-all-volumes derivation
+            // preserves the historical total snapshot cost.
+            const incrementalSnapshotCost = amountChangedPerSnapshotPerVolGib * ebsSnapshotPrice * 0.5 * totalSnapshots;
 
             const ebsCostCalculation: Partial<EbsCostCalculation> = {
                 instanceAvgDuration: 2920,
                 EBSCapacityPrice: { price: 0.114, unit: 'UsdPerGiB' },
-                numberOfVolumes: 4,
+                numberOfVolumes,
                 storageAmountPerVol: { size: storageGiBPerVol, unit: 'GiB' },
                 totalInstanceHours: 2920,
                 EBSInstanceMonth: ebsInstanceMonth,
@@ -491,30 +603,51 @@ describe('Marketing Operations Utils', () => {
                 billableThroughputMBps: 0,
                 billableThroughputGBps: 0,
                 EBSThroughputCost: 0,
-                totalSnapshot: 120,
+                totalSnapshot: totalSnapshots,
                 initialSnapshotCost: 80,
-                monthlyCostPerSnapshot: 0.21333333333333337,
-                discountForPartialStorageMonth: 0.10666666666666669,
+                monthlyCostPerSnapshot: amountChangedPerSnapshotPerVolGib * ebsSnapshotPrice,
+                discountForPartialStorageMonth: amountChangedPerSnapshotPerVolGib * ebsSnapshotPrice * 0.5,
                 incrementalSnapshotCost,
                 totalSnapshotCost: 83.2,
                 totalEBSSnapshotCost: 83.2,
                 ebsSnapshotCost: 83.2,
                 AWSEBSTotalCostMonthly: 265.6,
                 ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: 'UsdPerGiB' },
-                amountChangedPerSnapshot: { size: 4.2666666666666675, unit: 'GiB' }
+                amountChangedPerSnapshot: { size: amountChangedPerSnapshotPerVolGib, unit: 'GiB' }
             };
 
             const result = formatEbsCalculationObject(ebsSummary, ebsCostCalculation as EbsCostCalculation, 0, 10);
 
             const initialSnapshotCostForAllVolumes = storageGiBPerVol * ebsSnapshotPrice * ebsInstanceMonth; // 320
-            const incrementalSnapshotCostForAllVolumes = incrementalSnapshotCost * ebsInstanceMonth; // 12.8
+            const incrementalSnapshotCostForAllVolumes = incrementalSnapshotCost * ebsInstanceMonth; // 51.2
             const totalSnapshotCostForAllVolumes =
-                initialSnapshotCostForAllVolumes + incrementalSnapshotCostForAllVolumes; // 332.8
+                initialSnapshotCostForAllVolumes + incrementalSnapshotCostForAllVolumes; // 371.2
 
-            expect(result.ebsSnapshotCalculation.initialSnapshotCost).toBe(initialSnapshotCostForAllVolumes);
-            expect(result.ebsSnapshotCalculation.totalSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
-            expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
-            expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBe(totalSnapshotCostForAllVolumes);
+            expect(result.ebsSnapshotCalculation.initialSnapshotCost).toBeCloseTo(initialSnapshotCostForAllVolumes, 6);
+            expect(result.ebsSnapshotCalculation.totalSnapshotCost).toBeCloseTo(totalSnapshotCostForAllVolumes, 6);
+            expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBeCloseTo(totalSnapshotCostForAllVolumes, 6);
+            expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBeCloseTo(totalSnapshotCostForAllVolumes, 6);
+
+            // GH-9225 follow-up: in auto mode, the displayed `storageAmount` rolls up the per-vol
+            // value by `numberOfVolumes` so the tooltip math
+            // `(monthlyChangeRate / totalSnapshots) × storageAmount = amountChangedPerSnapshot` holds.
+            expect(result.ebsSnapshotCalculation.storageAmount).toBeCloseTo(
+                storageGiBPerVol * numberOfVolumes * GIB_IN_BYTE,
+                0
+            );
+            const amountChangedAllVolBytes = amountChangedPerSnapshotPerVolGib * numberOfVolumes * GIB_IN_BYTE;
+            const monthlyCostPerSnapshotAllVol = amountChangedPerSnapshotPerVolGib * numberOfVolumes * ebsSnapshotPrice;
+            expect(result.ebsSnapshotCalculation.amountChangedPerSnapshot).toBeCloseTo(amountChangedAllVolBytes, 0);
+            expect(result.ebsSnapshotCalculation.monthlyCostPerSnapshot).toBeCloseTo(monthlyCostPerSnapshotAllVol, 6);
+            expect(result.ebsSnapshotCalculation.discountForPartialStorageMonth).toBeCloseTo(
+                monthlyCostPerSnapshotAllVol * 0.5,
+                6
+            );
+            expect(result.ebsSnapshotCalculation.incrementalSnapshotCost).toBeCloseTo(
+                monthlyCostPerSnapshotAllVol * 0.5 * totalSnapshots,
+                6
+            );
+            expect(result.ebsSnapshotCalculation.monthlyCostOfSnapshots).toBeCloseTo(monthlyCostPerSnapshotAllVol, 6);
         });
 
         it('should match AWS Pricing Calculator for the GH-9225 follow-up rollup (3 gp3 volumes summing to 1250 GiB)', () => {
@@ -572,6 +705,72 @@ describe('Marketing Operations Utils', () => {
             expect(result.ebsSnapshotCalculation.totalSnapshotCost).toBeCloseTo(71.87575, 5);
             expect(result.ebsSnapshotCalculation.totalEbsSnapshotCost).toBeCloseTo(71.87575, 5);
             expect(result.ebsSnapshotCalculation.ebsSnapshotCost).toBeCloseTo(71.87575, 5);
+
+            // GH-9225 follow-up: per-snapshot chain rolls up to across-all-volumes-in-class
+            // (3 gp3 volumes summing to 1250 GiB → amountChangedPerSnapshot ≈ 4.167 × 3 = 12.501 GiB).
+            const amountChangedPerSnapshotPerVolGib = 4.167;
+            const amountChangedAllVolBytes = amountChangedPerSnapshotPerVolGib * 3 * GIB_IN_BYTE;
+            const monthlyCostPerSnapshotAllVol = amountChangedPerSnapshotPerVolGib * 3 * ebsSnapshotPrice;
+            expect(result.ebsSnapshotCalculation.amountChangedPerSnapshot).toBeCloseTo(amountChangedAllVolBytes, 0);
+            expect(result.ebsSnapshotCalculation.monthlyCostPerSnapshot).toBeCloseTo(monthlyCostPerSnapshotAllVol, 5);
+            expect(result.ebsSnapshotCalculation.discountForPartialStorageMonth).toBeCloseTo(
+                monthlyCostPerSnapshotAllVol * 0.5,
+                5
+            );
+            expect(result.ebsSnapshotCalculation.incrementalSnapshotCost).toBeCloseTo(
+                monthlyCostPerSnapshotAllVol * 0.5 * 30,
+                5
+            );
+            expect(result.ebsSnapshotCalculation.monthlyCostOfSnapshots).toBeCloseTo(monthlyCostPerSnapshotAllVol, 5);
+        });
+
+        it('should return 0 (not NaN/Infinity) for per-volume derived fields when numberOfVolumes is 0', () => {
+            // Regression: mock/view-calculation fixtures may set numberOfVolumes: 0.
+            // Unguarded divisions by ebsNumberOfVolumes propagated NaN/Infinity to the UI.
+            const ebsSummary: StorageSummary = {
+                capacity: 0,
+                iops: 0,
+                throughput: 0,
+                total: 0,
+                snapshots: 0,
+                clones: 0
+            };
+
+            const ebsCostCalculation: Partial<EbsCostCalculation> = {
+                instanceAvgDuration: 720,
+                EBSCapacityPrice: { price: 0.1, unit: 'GB-Mo' },
+                numberOfVolumes: 0,
+                storageAmount: { size: 0, unit: 'GiB' },
+                totalInstanceHours: 0,
+                EBSInstanceMonth: 0,
+                EBSStorageCost: 0,
+                billableIops: 0,
+                totalBillableIops: 0,
+                EBSIopsCost: 0,
+                billableMBps: 0,
+                billableThroughputMBps: 0,
+                billableThroughputGBps: 0,
+                EBSThroughputCost: 0,
+                totalSnapshot: 0,
+                initialSnapshotCost: 0,
+                monthlyCostPerSnapshot: 0,
+                discountForPartialStorageMonth: 0,
+                incrementalSnapshotCost: 0,
+                totalSnapshotCost: 0,
+                totalEBSSnapshotCost: 0,
+                ebsSnapshotCost: 0,
+                AWSEBSTotalCostMonthly: 0,
+                ebsSnapshotPrice: { price: 0.05, unit: 'GB-Mo' },
+                amountChangedPerSnapshot: { size: 0, unit: 'GiB' }
+            };
+
+            const result = formatEbsCalculationObject(ebsSummary, ebsCostCalculation as EbsCostCalculation, 0, 0);
+
+            expect(result.ebsCostCalculation.instanceAvgDuration).toBe(0);
+            expect(Number.isFinite(result.ebsCostCalculation.instanceAvgDuration)).toBe(true);
+            expect(Number.isFinite(result.ebsSnapshotCalculation.totalSnapshotCost)).toBe(true);
+            expect(Number.isFinite(result.ebsSnapshotCalculation.incrementalSnapshotCost)).toBe(true);
+            expect(Number.isFinite(result.ebsSnapshotCalculation.initialSnapshotCost)).toBe(true);
         });
     });
 

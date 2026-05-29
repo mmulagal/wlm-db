@@ -314,26 +314,30 @@ function formatEbsCalculationObject(
         billableThroughputGBps: billableThroughputGbps,
         EBSThroughputCost: ebsThroughputCost,
         totalSnapshot: totalSnapshots,
-        // initialSnapshotCost,
-        monthlyCostPerSnapshot,
-        discountForPartialStorageMonth,
-        incrementalSnapshotCost,
+        // Per-volume snapshot chain (`monthlyCostPerSnapshot`, `discountForPartialStorageMonth`,
+        // `incrementalSnapshotCost`) is intentionally not destructured — derived below from
+        // `amountChangedPerSnapshot` × `ebsSnapshotPrice` (GH-9225 follow-up).
         AWSEBSTotalCostMonthly: ebsTotalCostMonthly,
         ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: ebsSnapshotPriceUnit },
         amountChangedPerSnapshot: { size: amountChangedPerSnapshotSize, unit: amountChangedPerSnapshotUnit }
     } = ebsCostCalculationObject;
 
-    const usesTotalStorageAmount = Boolean(storageAmountSize && storageAmountUnit);
-    const ebsStorageAmountSize =
-        storageAmountSize && storageAmountUnit
-            ? convertToBytes(storageAmountSize, storageAmountUnit) || 0
-            : storageAmountSizeAutoMode && storageAmountUnitAutoMode
-            ? convertToBytes(storageAmountSizeAutoMode, storageAmountUnitAutoMode) || 0
-            : 0;
+    // Detect mode by presence (not truthiness) so a valid `size: 0` from manual mode still routes
+    // through the manual branch instead of falling through to auto mode.
+    const usesTotalStorageAmount = storageAmountSize !== undefined && storageAmountUnit !== undefined;
+    // Manual mode supplies total storage; auto mode supplies per-volume — roll up so the displayed
+    // `storageAmount` is always across-all-volumes-in-class (bytes).
+    const ebsStorageAmountSize = usesTotalStorageAmount
+        ? convertToBytes(storageAmountSize, storageAmountUnit) || 0
+        : storageAmountSizeAutoMode !== undefined && storageAmountUnitAutoMode !== undefined
+        ? (convertToBytes(storageAmountSizeAutoMode, storageAmountUnitAutoMode) || 0) * ebsNumberOfVolumes
+        : 0;
 
     const ebsCostCalculation = {
         numberOfVolumes: ebsNumberOfVolumes,
-        instanceAvgDuration: instanceAvgDuration / ebsNumberOfVolumes, // V2 API gives total duration for all volumes, so dividing by number of volumes to get avg duration per volume
+        // V2 API gives total duration for all volumes; divide by number of volumes to get avg duration per volume.
+        // Guard against 0 volumes (e.g., mock fixtures) to avoid NaN/Infinity propagating to the UI.
+        instanceAvgDuration: ebsNumberOfVolumes > 0 ? instanceAvgDuration / ebsNumberOfVolumes : 0,
         hoursInAMonth: HOURS_IN_MONTH, // (365 * 24) / 12
         ebsCapacityPrice: { price: ebsCapacityPrice, unit: ebsCapacityPriceUnit },
         storageAmountPerVol: ebsStorageAmountSize,
@@ -357,41 +361,47 @@ function formatEbsCalculationObject(
         totalCloneMonthlyCost: clonedCopiesCount * (capacity + iops + throughput)
     };
 
-    const amountChangedPerSnapshot = convertToBytes(amountChangedPerSnapshotSize, amountChangedPerSnapshotUnit) || 0;
-    // GH-9225 (fix): Marketing returns per-volume snapshot numbers — `initialSnapshotCost` and
-    // `incrementalSnapshotCost` are both for a single volume of the class, while `EBSInstanceMonth`
-    // already aggregates across volumes (totalInstanceHours / hoursInMonth = numberOfVolumes ×
-    // instance-months-per-volume). Roll up per volume class as follows:
-    //   • Manual mode (`storageAmount` = total GiB across the class): initial = total × price; scale
-    //     only incremental by `ebsInstanceMonth`. Do not multiply initial again — that was the PR #9332
-    //     regression for heterogeneous gp3 rollups (see GH-9225 follow-up).
-    //   • Automatic mode (`storageAmountPerVol` = per-volume GiB): initial and incremental are both
-    //     per-volume; scale each by `ebsInstanceMonth` (equivalent to (initial + incremental) × N when
-    //     volumes are homogeneous, without double-counting initial after manual-mode total storage).
+    // GH-9225 follow-up: marketing returns the per-snapshot chain (`amountChangedPerSnapshot`,
+    // `monthlyCostPerSnapshot`, `discountForPartialStorageMonth`, `incrementalSnapshotCost`) per
+    // volume. Roll up by `ebsNumberOfVolumes` so the displayed values match the UI tooltip math
+    // `(monthlyChangeRate / totalSnapshots) × Total storage`. Initial cost stays asymmetric:
+    // manual mode = `total × price` (already all-volumes); auto mode scales by
+    // `instanceMonthsPerVolume = ebsInstanceMonth / numberOfVolumes` (= prior `perVol × ebsInstanceMonth`).
+    const amountChangedPerSnapshotPerVolume =
+        convertToBytes(amountChangedPerSnapshotSize, amountChangedPerSnapshotUnit) || 0;
+    const amountChangedPerSnapshotForAllVolumes = amountChangedPerSnapshotPerVolume * ebsNumberOfVolumes;
+    const monthlyCostPerSnapshotForAllVolumes =
+        sizeInGigaBytes(amountChangedPerSnapshotForAllVolumes, 'B') * ebsSnapshotPrice;
+    const discountForPartialStorageMonthForAllVolumes = monthlyCostPerSnapshotForAllVolumes * 0.5;
+    const incrementalSnapshotCostForAllVolumesPerInstanceMonth =
+        discountForPartialStorageMonthForAllVolumes * totalSnapshots;
+
+    const instanceMonthsPerVolume = ebsNumberOfVolumes > 0 ? ebsInstanceMonth / ebsNumberOfVolumes : 0;
     const initialSnapshotCostPerVolumeOrTotal = sizeInGigaBytes(ebsStorageAmountSize, 'B') * ebsSnapshotPrice;
     const initialSnapshotCostForAllVolumes = usesTotalStorageAmount
         ? initialSnapshotCostPerVolumeOrTotal
-        : initialSnapshotCostPerVolumeOrTotal * ebsInstanceMonth;
-    const incrementalSnapshotCostForAllVolumes = incrementalSnapshotCost * ebsInstanceMonth;
-    const totalSnapshotCostForAllVolumes = initialSnapshotCostForAllVolumes + incrementalSnapshotCostForAllVolumes;
+        : initialSnapshotCostPerVolumeOrTotal * instanceMonthsPerVolume;
+    const incrementalSnapshotCostForPeriod =
+        incrementalSnapshotCostForAllVolumesPerInstanceMonth * instanceMonthsPerVolume;
+    const totalSnapshotCostForAllVolumes = initialSnapshotCostForAllVolumes + incrementalSnapshotCostForPeriod;
 
     const ebsSnapshotCalculation = {
         storageAmount: ebsStorageAmountSize,
         numberOfVolumes: ebsNumberOfVolumes,
         ebsSnapshotPrice: { price: ebsSnapshotPrice, unit: ebsSnapshotPriceUnit },
-        amountChangedPerSnapshot,
-        monthlyCostOfSnapshots: sizeInGigaBytes(amountChangedPerSnapshot, 'B') * ebsSnapshotPrice,
+        amountChangedPerSnapshot: amountChangedPerSnapshotForAllVolumes,
+        monthlyCostOfSnapshots: monthlyCostPerSnapshotForAllVolumes,
         monthlyChangeRatePercentage,
         ebsInstanceMonth,
         totalSnapshots,
         initialSnapshotCost: initialSnapshotCostForAllVolumes,
-        monthlyCostPerSnapshot,
-        discountForPartialStorageMonth,
-        incrementalSnapshotCost,
+        monthlyCostPerSnapshot: monthlyCostPerSnapshotForAllVolumes,
+        discountForPartialStorageMonth: discountForPartialStorageMonthForAllVolumes,
+        // Return the period-scaled incremental cost (not the per-instance-month figure) so the UI
+        // tooltip identity holds: `totalSnapshotCost === initialSnapshotCost + incrementalSnapshotCost`.
+        incrementalSnapshotCost: incrementalSnapshotCostForPeriod,
         totalSnapshotCost: totalSnapshotCostForAllVolumes,
-        // totalEbsSnapshotCost and ebsSnapshotCost are the same money number from this point onwards;
-        // ebsInstanceMonth has already been rolled into incrementalSnapshotCostForAllVolumes above,
-        // so do NOT multiply again — that was the source of the original double-count regression.
+        // Same value — `instanceMonthsPerVolume` is already folded into `incrementalSnapshotCostForPeriod`.
         totalEbsSnapshotCost: totalSnapshotCostForAllVolumes,
         ebsSnapshotCost: totalSnapshotCostForAllVolumes
     };
