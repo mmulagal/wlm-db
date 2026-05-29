@@ -318,7 +318,7 @@ result=$(sudo -i -u oracle bash <<EOF
     export ORACLE_SID="$oracleSid"
     export ORACLE_HOME="$oracle_home_resolved"
     export PATH="$oracle_home_resolved/bin:\\$PATH"
-    $sqlplus_command
+    $sqlplus_command <<'EOSQL'
     WHENEVER SQLERROR EXIT SQL.SQLCODE
     SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
     SET LINESIZE 500
@@ -383,6 +383,7 @@ result=$(sudo -i -u oracle bash <<EOF
     ) AS result
     FROM io_stats, db_block, time_since_restart;
     EXIT;
+EOSQL
 EOF
 )
 
@@ -1140,7 +1141,7 @@ EOF
                     export ORACLE_SID="$ORACLE_SID"
                     export ORACLE_HOME="$ORACLE_HOME"
                     export PATH="$ORACLE_HOME/bin:\\$PATH"
-                    $sqlplus_command
+                    $sqlplus_command <<'EOSQL'
                         SET HEADING OFF
                         SET LINESIZE 500
                         SET FEEDBACK OFF
@@ -1153,6 +1154,8 @@ EOF
                                 'instance_state' value STATUS
                             ) AS instance_info
                         FROM V\\$INSTANCE;
+                        EXIT;
+EOSQL
 EOF
             fi
         else
@@ -1244,13 +1247,15 @@ const isOracleNativeProtectionEnabled = (ec2InstanceId: string, dbSid: string) =
             export ORACLE_SID="$oracleSid"
             export ORACLE_HOME="$oracle_home_resolved"
             export PATH="$oracle_home_resolved/bin:\\$PATH"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             select case 
                 when exists (select 1 from v\\$backup_set) then 'true' 
                 else 'false' 
                 end as has_rows
             from dual;
+            EXIT;
+EOSQL
 EOF
     }
 
@@ -1259,7 +1264,7 @@ EOF
             export ORACLE_SID="$oracleSid"
             export ORACLE_HOME="$oracle_home_resolved"
             export PATH="$oracle_home_resolved/bin:\\$PATH"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             select case 
                     when exists (
@@ -1271,6 +1276,8 @@ EOF
                     else 'false'
                 end as has_rows
             from dual;
+            EXIT;
+EOSQL
 EOF
     }
 
@@ -1326,10 +1333,11 @@ EOF
                 export ORACLE_SID="$oracleSid"
                 export ORACLE_HOME="$oracle_home_resolved"
                 export PATH="$oracle_home_resolved/bin:\\$PATH"
-                $sqlplus_command
+                $sqlplus_command <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
                 SELECT version FROM v\\$instance;
+EOSQL
 EOF
         }
 
@@ -1767,7 +1775,7 @@ const trendGraphCreateScriptForOracle = (dbSid: string, ec2InstanceId: string) =
         export ORACLE_SID="$oracleSid"
         export ORACLE_HOME="$oracle_home_resolved"
         export PATH="$oracle_home_resolved/bin:\\$PATH"
-        $sqlplus_command
+        $sqlplus_command <<'EOSQL'
         WHENEVER SQLERROR EXIT SQL.SQLCODE
         SET HEADING OFF FEEDBACK OFF PAGESIZE 0 VERIFY OFF ECHO OFF TRIMSPOOL ON
         SET LINESIZE 32767
@@ -1818,6 +1826,7 @@ const trendGraphCreateScriptForOracle = (dbSid: string, ec2InstanceId: string) =
             CROSS JOIN cpuCores
             CROSS JOIN ioStats;
             EXIT;
+EOSQL
 EOF
 )
 
@@ -1959,11 +1968,12 @@ const loadOracleUserPermissionsDetectionModule = `
             export ORACLE_SID="$oracleSid"
             export ORACLE_HOME="$permissions_oracle_home"
             export PATH="$permissions_oracle_home/bin:\\$PATH"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             SELECT 'OK' FROM dual;
             EXIT;
+EOSQL
 EOF
         )
 
@@ -1977,13 +1987,14 @@ EOF
             export ORACLE_SID="$oracleSid"
             export ORACLE_HOME="$permissions_oracle_home"
             export PATH="$permissions_oracle_home/bin:\\$PATH"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             SELECT CASE WHEN COUNT(*) > 0 THEN 'true' ELSE 'false' END
             FROM session_roles
             WHERE role = 'SELECT_CATALOG_ROLE';
             EXIT;
+EOSQL
 EOF
         )
         echo "$result" | grep -q "true" && echo "true" || echo "false"
@@ -1996,13 +2007,14 @@ EOF
             export ORACLE_SID="$oracleSid"
             export ORACLE_HOME="$permissions_oracle_home"
             export PATH="$permissions_oracle_home/bin:\\$PATH"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             SELECT CASE WHEN COUNT(*) > 0 THEN 'true' ELSE 'false' END
             FROM session_privs
             WHERE privilege = 'SET CONTAINER';
             EXIT;
+EOSQL
 EOF
         )
         echo "$result" | grep -q "true" && echo "true" || echo "false"
@@ -2015,12 +2027,13 @@ EOF
             export ORACLE_SID="$oracleSid"
             export ORACLE_HOME="$permissions_oracle_home"
             export PATH="$permissions_oracle_home/bin:\\$PATH"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             SELECT CASE WHEN COUNT(DISTINCT con_id) > 1 THEN 'true' ELSE 'false' END
             FROM cdb_objects;
             EXIT;
+EOSQL
 EOF
     )
         echo "$result" | grep -q "true" && echo "true" || echo "false"
@@ -2033,13 +2046,14 @@ EOF
                 export ORACLE_SID="$oracleSid"
                 export ORACLE_HOME="$permissions_oracle_home"
                 export PATH="$permissions_oracle_home/bin:\\$PATH"
-                $sqlplus_command
+                $sqlplus_command <<'EOSQL'
                 WHENEVER SQLERROR EXIT SQL.SQLCODE
                 SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
                 SELECT CASE WHEN COUNT(*) > 0 THEN 'true' ELSE 'false' END
                 FROM v\\$database
                 WHERE cdb = 'YES';
                 EXIT;
+EOSQL
 EOF
         )
         echo "$result" | grep -q "true" && echo "true" || echo "false"
@@ -2052,13 +2066,14 @@ EOF
             export ORACLE_SID="$oracleSid"
             export ORACLE_HOME="$permissions_oracle_home"
             export PATH="$permissions_oracle_home/bin:\\$PATH"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             SELECT CASE WHEN COUNT(*) > 0 THEN 'true' ELSE 'false' END
             FROM session_privs
             WHERE privilege = 'ALTER SYSTEM';
             EXIT;
+EOSQL
 EOF
         )
         echo "$result" | grep -q "true" && echo "true" || echo "false"
@@ -2071,13 +2086,14 @@ EOF
             export ORACLE_SID="$oracleSid"
             export ORACLE_HOME="$permissions_oracle_home"
             export PATH="$permissions_oracle_home/bin:\\$PATH"
-            $sqlplus_command
+            $sqlplus_command <<'EOSQL'
             WHENEVER SQLERROR EXIT SQL.SQLCODE
             SET PAGESIZE 0 FEEDBACK OFF VERIFY OFF HEADING OFF ECHO OFF
             SELECT CASE WHEN COUNT(*) > 1 THEN 'true' ELSE 'false' END
             FROM v\\$pdbs
             WHERE open_mode = 'READ WRITE' or open_mode = 'READ ONLY';
             EXIT;
+EOSQL
 EOF
         )
         echo "$result" | grep -q "true" && echo "true" || echo "false"
