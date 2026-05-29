@@ -834,7 +834,9 @@ export const INSTANCE_API_FIELDS = {
         'dbCount'
     ],
     UNMANAGED_PGSQL_DEFAULT: ['protection', 'performance', 'usageEstimation'],
-    UNMANAGED_ORACLE_DEFAULT: ['protection', 'performance', 'usageEstimation']
+    UNMANAGED_ORACLE_DEFAULT: ['protection', 'performance', 'usageEstimation'],
+    // Oracle EBS explore-savings hosts: inventory instance/DB tables skip EBS rows; only host cost is needed.
+    UNMANAGED_ORACLE_EBS_DEFAULT: ['usageEstimation']
 };
 
 export const PROTECTION_TEXT_STATUS = {

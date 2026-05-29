@@ -19,6 +19,7 @@ import {
     ERROR_ANALYZER_STATUS,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
+    INSTANCE_API_FIELDS,
     INVENTORY_ACTIONS,
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
@@ -2522,6 +2523,20 @@ export const getUnmanagedOracleHostInstances = (
         }
     });
     return instanceList;
+};
+
+/**
+ * Oracle EBS explore-savings hosts (storageType EBS) do not use protection/performance in inventory UI
+ * and the server cannot resolve FSxN protection without mount points. Request usageEstimation only.
+ */
+export const shouldSkipOracleProtectionField = (row: InventoryTableData): boolean =>
+    row?.storageType === DETECT_HOST_VAR.EBS;
+
+export const getOracleUnmanagedResourceApiFields = (row: InventoryTableData): string[] => {
+    if (shouldSkipOracleProtectionField(row)) {
+        return INSTANCE_API_FIELDS.UNMANAGED_ORACLE_EBS_DEFAULT;
+    }
+    return INSTANCE_API_FIELDS.UNMANAGED_ORACLE_DEFAULT;
 };
 
 export const updateInstancesApiResponse = (

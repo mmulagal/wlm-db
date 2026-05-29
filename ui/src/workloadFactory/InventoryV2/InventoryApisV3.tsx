@@ -92,6 +92,7 @@ import {
     getUnmanagedHostInstances,
     getUnmanagedPgsqlHostInstances,
     getUnmanagedOracleHostInstances,
+    getOracleUnmanagedResourceApiFields,
     uniqueHostRow,
     updateInstancesApiResponse,
     getExploreSavingsRowsMssql,
@@ -119,7 +120,11 @@ import {
     setPotentialSavingsValues
 } from '../../store/workloadFactory/databaseHomeSlice';
 import { checkIfEbsProtected } from '../ExploreSavings/SavingsCalculator/savingsUtil';
-import { OracleInstanceData, DiscoverOracleHostInterface } from '../../utils/types/inventoryV2Types';
+import {
+    OracleInstanceData,
+    DiscoverOracleHostInterface,
+    InventoryTableData
+} from '../../utils/types/inventoryV2Types';
 
 // Limit the number of concurrent API calls to avoid overloading the backend or hitting rate limits.
 // generalApiLimit: Used for general API calls (e.g., instance/resource data), allowing up to 5 concurrent requests.
@@ -1442,7 +1447,17 @@ const InventoryApisV3 = () => {
         }
     };
 
-    const callOracleResourceApi = (instancesList: Array<string>, isManagedHost: boolean, fields: Array<string>) => {
+    const callOracleResourceApi = (
+        instancesList: Array<string>,
+        isManagedHost: boolean,
+        fields: Array<string>,
+        inventoryTableData?: { [key: string]: InventoryTableData }
+    ) => {
+        const resolveFields = (ec2InstanceIdComb: string) => {
+            const row = inventoryTableData?.[ec2InstanceIdComb];
+            return row ? getOracleUnmanagedResourceApiFields(row) : fields;
+        };
+
         const oracleInstancesDataLoad: Record<string, OracleInstanceData> = {};
         const noRunningList: Array<string> = [];
         if (instancesList && instancesList.length > 0) {
@@ -1459,7 +1474,7 @@ const InventoryApisV3 = () => {
                     loading: true,
                     data: null,
                     error: null,
-                    fields
+                    fields: resolveFields(ec2InstanceIdComb)
                 };
                 noRunningList.push(ec2InstanceIdComb);
             });
@@ -1469,7 +1484,9 @@ const InventoryApisV3 = () => {
             // This is used to avoid throttling error from API.
             Promise.all(
                 noRunningList.map((ec2InstanceIdComb: any) =>
-                    generalApiLimit(() => getOracleData(ec2InstanceIdComb, isManagedHost, fields))
+                    generalApiLimit(() =>
+                        getOracleData(ec2InstanceIdComb, isManagedHost, resolveFields(ec2InstanceIdComb))
+                    )
                 )
             );
         }
@@ -2054,6 +2071,7 @@ const InventoryApisV3 = () => {
                 headerSelectedMultiRegionIdsListRef.current.includes(runningRegionId)
             ) {
                 const instanceData: any = {};
+                const hostInstanceIds = ebsHosts.map(({ id }) => id);
                 if (result && !result?.error && result?.data) {
                     instanceData[bulkKey] = {
                         error: null,
@@ -2061,7 +2079,8 @@ const InventoryApisV3 = () => {
                         loading: false,
                         storageType: DETECT_HOST_VAR.EBS,
                         isBulk: true,
-                        hostType: WIZARD_TYPE.ORACLE
+                        hostType: WIZARD_TYPE.ORACLE,
+                        hostIds: hostInstanceIds
                     };
                 } else {
                     instanceData[bulkKey] = {
@@ -2070,20 +2089,23 @@ const InventoryApisV3 = () => {
                         loading: false,
                         storageType: DETECT_HOST_VAR.EBS,
                         isBulk: true,
-                        hostType: WIZARD_TYPE.ORACLE
+                        hostType: WIZARD_TYPE.ORACLE,
+                        hostIds: hostInstanceIds
                     };
                 }
                 dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
             }
         } catch (error) {
             const instanceData: any = {};
+            const hostInstanceIds = ebsHosts.map(({ id }) => id);
             instanceData[bulkKey] = {
                 error,
                 data: null,
                 loading: false,
                 storageType: DETECT_HOST_VAR.EBS,
                 isBulk: true,
-                hostType: WIZARD_TYPE.ORACLE
+                hostType: WIZARD_TYPE.ORACLE,
+                hostIds: hostInstanceIds
             };
             dispatch(setPotentialSavingsHostData({ ...potentialSavingsHostDataRef.current, ...instanceData }));
         }
@@ -2200,14 +2222,15 @@ const InventoryApisV3 = () => {
             }
 
             // Set loading state for each batch
-            batches.forEach((_, batchIndex) => {
+            batches.forEach((batch, batchIndex) => {
                 instanceData[`bulk_oracle_ebs_${credId}_${regionId}_batch_${batchIndex}`] = {
                     error: null,
                     data: null,
                     loading: true,
                     storageType: DETECT_HOST_VAR.EBS,
                     isBulk: true,
-                    hostType: WIZARD_TYPE.ORACLE
+                    hostType: WIZARD_TYPE.ORACLE,
+                    hostIds: batch.map(({ id }) => id)
                 };
             });
 
@@ -2519,7 +2542,12 @@ const InventoryApisV3 = () => {
                 runningOracleInstanceListRef.current
             );
             if (unmanagedOracleHostList && unmanagedOracleHostList?.length > 0) {
-                callOracleResourceApi(unmanagedOracleHostList, false, INSTANCE_API_FIELDS.UNMANAGED_ORACLE_DEFAULT);
+                callOracleResourceApi(
+                    unmanagedOracleHostList,
+                    false,
+                    INSTANCE_API_FIELDS.UNMANAGED_ORACLE_DEFAULT,
+                    updatedResult
+                );
             }
 
             if (mssqlInstancesDataRef.current || pgsqlInstancesDataRef.current || oracleInstancesDataRef.current) {
