@@ -196,15 +196,16 @@ async function getStorageData(
 
         return response;
     } catch (error) {
-        const errorMessage = `Error while getting storage savings for resource ${resourceDetail} ,databaseInstance: id: ${
-            databaseInstanceDetails?.database_instance_id
-        } fsxId: ${databaseInstanceDetails?.fsxn_ids} error: ${JSON.stringify(error)}`;
-        let { message } = error as { message: string };
-        if (message?.toLowerCase().includes('ThrottlingException: Rate exceeded'.toLowerCase())) {
-            message += '. Retry the operation.';
-            throw createError(HttpErrorCodes.SERVICE_UNAVAILABLE, message);
+        const { message } = error as { message: string };
+        logger.error('Error while getting storage data', {
+            resourceId: resourceDetail?.resource_id,
+            databaseInstanceId: databaseInstanceDetails?.database_instance_id,
+            fsxId: databaseInstanceDetails?.fsxn_ids,
+            error
+        });
+        if (message?.toLowerCase().includes('throttlingexception: rate exceeded')) {
+            throw createError(HttpErrorCodes.SERVICE_UNAVAILABLE, `${message}. Retry the operation.`);
         }
-        throw createError(HttpErrorCodes.SERVICE_UNAVAILABLE, errorMessage);
     }
 }
 

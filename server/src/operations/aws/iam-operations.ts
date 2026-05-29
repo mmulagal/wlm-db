@@ -1,5 +1,11 @@
 import { isEmpty } from 'lodash-es';
-import { ContextEntry, PolicyEvaluationDecisionType, SimulatePrincipalPolicyCommandInput } from '@aws-sdk/client-iam'; // ES Modules import
+import {
+    ContextEntry,
+    EvaluationResult,
+    OrganizationsDecisionDetail as OrganizationsDecisionDetailType,
+    PolicyEvaluationDecisionType,
+    SimulatePrincipalPolicyCommandInput
+} from '@aws-sdk/client-iam';
 import { getRoleDetails } from '../cloud-manager/credentials-operations';
 import getLogger from '../../utils/logger';
 import simulatePrincipalPolicy from '../../lib/aws/iam';
@@ -7,6 +13,29 @@ import { MissingPermission } from '../../utils/common-types';
 import { PERMISSION_DENIAL_POSSIBLE_REASONS } from '../../utils/consts';
 
 const logger = getLogger();
+
+/**
+ * GovCloud accounts not enrolled in AWS Organizations do not return
+ * OrganizationsDecisionDetail from SimulatePrincipalPolicy. Treat the
+ * absence of this field as "not blocked by Organizations" — only flag
+ * SCP blocking when the field is explicitly present with
+ * AllowedByOrganizations === false.
+ */
+function isBlockedByOrganizations(detail: OrganizationsDecisionDetailType | undefined): boolean {
+    return detail !== undefined && detail !== null && detail.AllowedByOrganizations === false;
+}
+
+function isAllowedByOrganizations(detail: OrganizationsDecisionDetailType | undefined): boolean {
+    return detail === undefined || detail === null || detail.AllowedByOrganizations === true;
+}
+
+function parseServiceAndAction(evalActionName: string | undefined) {
+    const parts = evalActionName?.split(':');
+    return {
+        service: parts && parts.length > 1 ? parts[0] : evalActionName,
+        action: parts && parts.length > 1 ? parts[1] : evalActionName
+    };
+}
 
 export default async function getMissingPermissionsList(
     credentialsId: string,
@@ -34,19 +63,18 @@ export default async function getMissingPermissionsList(
 
     const { EvaluationResults: results } = await simulatePrincipalPolicy(credentialsId, region, command);
 
-    // Any implicity denied permission will be marked as missing which can be missed in policy, SCP or boundary.
+    // Any implicitly denied permission will be marked as missing which can be missed in policy, SCP or boundary.
     const implicitlyDenied =
         results
             ?.filter(
-                ({ EvalDecision, OrganizationsDecisionDetail }) =>
+                ({ EvalDecision, OrganizationsDecisionDetail }: EvaluationResult) =>
                     EvalDecision === PolicyEvaluationDecisionType.IMPLICIT_DENY &&
-                    OrganizationsDecisionDetail?.AllowedByOrganizations
+                    isAllowedByOrganizations(OrganizationsDecisionDetail)
             )
             .map(
-                ({ EvalActionName, MatchedStatements, PermissionsBoundaryDecisionDetail }) =>
+                ({ EvalActionName, MatchedStatements, PermissionsBoundaryDecisionDetail }: EvaluationResult) =>
                     ({
-                        service: EvalActionName?.split(':') ? EvalActionName?.split(':')[0] : EvalActionName,
-                        action: EvalActionName?.split(':') ? EvalActionName?.split(':')[1] : EvalActionName,
+                        ...parseServiceAndAction(EvalActionName),
                         reason:
                             PermissionsBoundaryDecisionDetail &&
                             !PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary
@@ -60,18 +88,19 @@ export default async function getMissingPermissionsList(
     // Any explicitly denied permission will be marked as blocked which could be from policy, SCP or boundary.
     const explicitlyDenied =
         results
-            ?.filter(({ EvalDecision }) => EvalDecision === PolicyEvaluationDecisionType.EXPLICIT_DENY)
+            ?.filter(
+                ({ EvalDecision }: EvaluationResult) => EvalDecision === PolicyEvaluationDecisionType.EXPLICIT_DENY
+            )
             .map(
                 ({
                     EvalActionName,
                     MatchedStatements,
                     OrganizationsDecisionDetail,
                     PermissionsBoundaryDecisionDetail
-                }) =>
+                }: EvaluationResult) =>
                     ({
-                        service: EvalActionName?.split(':') ? EvalActionName?.split(':')[0] : EvalActionName,
-                        action: EvalActionName?.split(':') ? EvalActionName?.split(':')[1] : EvalActionName,
-                        reason: !OrganizationsDecisionDetail?.AllowedByOrganizations
+                        ...parseServiceAndAction(EvalActionName),
+                        reason: isBlockedByOrganizations(OrganizationsDecisionDetail)
                             ? PERMISSION_DENIAL_POSSIBLE_REASONS.BLOCKED_SCP
                             : PermissionsBoundaryDecisionDetail &&
                               !PermissionsBoundaryDecisionDetail?.AllowedByPermissionsBoundary
@@ -85,12 +114,13 @@ export default async function getMissingPermissionsList(
     // SCP blocked permissions are returned as implicitDeny but needs to be classified as blocked.
     const blockedBySCP =
         results
-            ?.filter(({ OrganizationsDecisionDetail }) => !OrganizationsDecisionDetail?.AllowedByOrganizations)
+            ?.filter(({ OrganizationsDecisionDetail }: EvaluationResult) =>
+                isBlockedByOrganizations(OrganizationsDecisionDetail)
+            )
             .map(
-                ({ EvalActionName }) =>
+                ({ EvalActionName }: EvaluationResult) =>
                     ({
-                        service: EvalActionName?.split(':') ? EvalActionName?.split(':')[0] : EvalActionName,
-                        action: EvalActionName?.split(':') ? EvalActionName?.split(':')[1] : EvalActionName,
+                        ...parseServiceAndAction(EvalActionName),
                         reason: PERMISSION_DENIAL_POSSIBLE_REASONS.BLOCKED_SCP
                     } as MissingPermission)
             ) || [];

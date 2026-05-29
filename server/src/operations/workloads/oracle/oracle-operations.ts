@@ -411,7 +411,8 @@ async function getOracleProtectionStatus(
     logger.info('Fetching Oracle db protection status', { accountId, credentialsId, region, node1InstanceId });
 
     try {
-        if (isEmpty(mountPointDetails) || (isCDB === YES && mountPointDetails?.length !== pdbNames?.length)) {
+        const hasPdbs = isCDB === YES && pdbNames?.length > 0;
+        if (isEmpty(mountPointDetails) || (hasPdbs && mountPointDetails?.length !== pdbNames?.length)) {
             throw createError(
                 HttpErrorCodes.BAD_REQUEST,
                 `Missing mountpoints for: ${fsxnId}, ${credentialsId}, ${region}`
@@ -419,7 +420,7 @@ async function getOracleProtectionStatus(
         }
 
         const commands = [];
-        if (isCDB === YES && pdbNames?.length > 0) {
+        if (hasPdbs) {
             mountPointDetails?.forEach(mountPointDetail => {
                 const [{ mountIP, mountPoint, protocol }] = mountPointDetail;
                 if (!mountIP || !mountPoint || !protocol) {
@@ -470,7 +471,7 @@ async function getOracleProtectionStatus(
             const protectionResponse: any = {};
             const parsedResponse = parseMultipleCommandResponse(response);
 
-            if (isCDB === YES) {
+            if (hasPdbs) {
                 let commonIsSqlNativeBackupEnabled = false;
                 let commonIsFsxOntapSnapshotsEnabled = false;
                 let commonIsAwsBackupEnabled = false;
@@ -1337,27 +1338,40 @@ async function getOracleStorageInfoFromOntap(activeNodeInstanceId: string, insta
 
         const parsedResponse = sqlResponseParsing(response);
         if (!parsedResponse || isEmpty(parsedResponse)) {
-            const errorMessage = `No storage data found from ONTAP for Oracle instances: with ${credentialsId}, ${region}`;
-            logger.error(errorMessage);
-            throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+            logger.warn(`No storage data found from ONTAP for Oracle instances: with ${credentialsId}, ${region}`);
+            return;
         }
 
         const instancesResponse: Record<string, ontapStorageSummary> = {};
         Object.entries(parsedResponse).forEach(([instanceName, value]) => {
-            const records = (value as { records?: any[] }).records ?? [];
-            const storageSummary = records.reduce(
-                (acc, { space }) => ({
+            const instanceData = value as { records?: any[]; error?: unknown };
+            if (instanceData.error || !Array.isArray(instanceData.records) || instanceData.records.length === 0) {
+                logger.warn('Skipping ONTAP storage data for instance due to missing or errored response', {
+                    instanceName,
+                    hasError: Boolean(instanceData.error)
+                });
+                return;
+            }
+            const storageSummary = instanceData.records.reduce((acc, record) => {
+                const space = record?.space;
+                if (!space) {
+                    return acc;
+                }
+                return {
                     size: (acc.size || 0) + Number(space.size || 0),
                     used: (acc.used || 0) + Number(space.used || 0),
                     physicalUsed: (acc.physicalUsed || 0) + Number(space.physical_used || 0),
                     ssdUsed: (acc.ssdUsed || 0) + Number(space.performance_tier_footprint || 0),
                     capacityPoolUsed: (acc.capacityPoolUsed || 0) + Number(space.capacity_tier_footprint || 0),
-                    snapshotUsed: (acc.snapshotUsed || 0) + Number(space.snapshot.used || 0)
-                }),
-                {} as ontapStorageSummary
-            );
+                    snapshotUsed: (acc.snapshotUsed || 0) + Number(space.snapshot?.used || 0)
+                };
+            }, {} as ontapStorageSummary);
             instancesResponse[instanceName] = storageSummary;
         });
+        if (isEmpty(instancesResponse)) {
+            logger.warn('All ONTAP storage entries were skipped due to errors');
+            return;
+        }
         logger.debug('SSM response for Oracle storage data from ONTAP', { instancesResponse });
         return instancesResponse;
     } catch (error) {

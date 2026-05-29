@@ -56,23 +56,21 @@ resource "aws_ssm_parameter" "credentials_ssm_parameter" {
   name        = "/netapp/wlmdb/${var.deployment_name}"
   description = "SSM Parameter for active directory, FSxN and SQL service account credentials"
   type        = "SecureString"
-  value       = <<EOF
-{
-  "fsx": {
-    "username": "${local.resolved_fsx_username}",
-    "password": "${local.resolved_fsx_password}"
-  },
-  "domain": {
-    "username": "${local.resolved_ad_username}",
-    "password": "${local.resolved_ad_password}"
-  },
-  "sql": [{
-    "username": "${local.resolved_sql_username}",
-    "password": "${local.resolved_sql_password}",
-    "sqlinstancename": "MSSQL"
-  }]
-}
-EOF
+  value = jsonencode({
+    fsx = {
+      username = local.resolved_fsx_username
+      password = local.resolved_fsx_password
+    }
+    domain = {
+      username = local.resolved_ad_username
+      password = local.resolved_ad_password
+    }
+    sql = [{
+      username        = local.resolved_sql_username
+      password        = local.resolved_sql_password
+      sqlinstancename = "MSSQL"
+    }]
+  })
 
   tags = {
     creator = var.creator_tag

@@ -41,18 +41,16 @@ resource "aws_ssm_parameter" "credentials_ssm_parameter" {
   name        = "/netapp/wlmdb/${var.deployment_name}"
   description = "SSM Parameter for FSxN and other credentials"
   type        = "SecureString"
-  value       = <<EOF
-{
-  "fsx": {
-    "username": "${local.resolved_fsx_username}",
-    "password": "${local.resolved_fsx_password}"
-  },
-  "pgsql": [{
-    "username": "postgres",
-    "password": "${local.resolved_sql_password}"
-  }]
-}
-EOF
+  value = jsonencode({
+    fsx = {
+      username = local.resolved_fsx_username
+      password = local.resolved_fsx_password
+    }
+    pgsql = [{
+      username = "postgres"
+      password = local.resolved_sql_password
+    }]
+  })
 
   tags = {
     creator = var.creator_tag
