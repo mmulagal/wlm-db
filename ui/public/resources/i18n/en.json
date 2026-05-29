@@ -144,6 +144,8 @@
             "security-group-rules-dialog-description": "Following ports and protocols would be allowed from source IP of Active Directory DNS address.",
             "security-group-rules-dialog-description-fci": "In addition, All traffic would be allowed between the two SQL nodes created during deployment.",
             "security-group-rules-dialog-description-pgsql": "Following ports and protocols would be allowed from source IP of VPC.",
+            "security-group-rules-dialog-description-2": "Make sure that the security group attached to your existing FSx for ONTAP allows the necessary access.",
+            "security-group-rules-dialog-description-3": "If you are deploying a new FSx for NetApp ONTAP (FSxN), a new security group will be created to manage the connections.",
             "security-group-rules-col-type": "Type",
             "security-group-rules-col-protocol": "Protocol",
             "security-group-rules-col-port-range": "Port range",
