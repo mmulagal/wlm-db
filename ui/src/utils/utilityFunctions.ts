@@ -2674,7 +2674,7 @@ export const setTabValue = (tab: string, selectedHeaderTab: any | string) => {
         case WLF_TABS.SANDBOXES:
             return WLF_TABS.SANDBOXES;
         case WLF_TABS.EXPLORE_SAVINGS:
-            return WLF_TABS.EXPLORE_SAVINGS;
+            return WLF_TABS.EXPLORE_SAVINGS_EBS;
         case WLF_TABS.JOB_MONITORING:
             return WLF_TABS.JOB_MONITORING;
         case WLF_TABS.DASHBOARD:

@@ -162,7 +162,7 @@ const Home = () => {
                         {/* Routes For Explore savings */}
                         <Route
                             path="/databases/explore-savings"
-                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS_EBS} />}
+                            element={<HeaderComponent tab={WLF_TABS.EXPLORE_SAVINGS} />}
                         />
                         <Route
                             path="/databases/explore-savings/explore-savings-ebs"
