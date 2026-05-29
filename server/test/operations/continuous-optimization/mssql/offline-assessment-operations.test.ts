@@ -575,7 +575,7 @@ describe('MSSQL Offline Assessment Operations', () => {
             const result = await fetchMssqlOfflineAssessment(ACCOUNT_ID, resourceId, instanceId);
             expect(result.clone).toBeDefined();
             const clone = result.clone as any;
-            expect(clone.name).toBe('cloning');
+            expect(clone.name).toBe('clone-management');
             expect(clone.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(clone.totalObjectsInViolation).toBe(1);
             expect(clone.objectsInViolation).toEqual(['wad_clone_vol_old']);

@@ -1911,34 +1911,32 @@ const processOracleConfigurationData = (
                         getAssessmentGroupedByConfigurations?.severityObj?.oracleCrr;
                 }
 
-                // Skip oracleSnapcenterSnapshot counting for WAD instances (WAD-excluded config for Oracle)
-                if (!databaseHost?.isWad) {
-                    const isSnapcenterSnapshotOptimized = isOptimizedDashInner(
-                        instanceAssessmentData?.snapcenterSnapshot?.status,
-                        instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
-                    );
-                    setConfigState(
-                        configState,
-                        'oracleSnapcenterSnapshot',
-                        instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
-                    );
-                    getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.total++;
-                    getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.optimized +=
-                        isSnapcenterSnapshotOptimized ? 1 : 0;
-                    getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.dismissed += isDismissed(
-                        instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
-                    )
-                        ? 1
-                        : 0;
-                    getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.activating += isActivating(
-                        instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
-                    )
-                        ? 1
-                        : 0;
-                    getAssessmentGroupedByConfigurations.severityObj.oracleSnapcenterSnapshot =
-                        GETWELL_VALUES[instanceAssessmentData?.snapcenterSnapshot?.severity] ||
-                        getAssessmentGroupedByConfigurations?.severityObj?.oracleSnapcenterSnapshot;
-                }
+                const isSnapcenterSnapshotOptimized = isOptimizedDashInner(
+                    instanceAssessmentData?.snapcenterSnapshot?.status,
+                    instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                );
+                setConfigState(
+                    configState,
+                    'oracleSnapcenterSnapshot',
+                    instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                );
+                getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.total++;
+                getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.optimized += isSnapcenterSnapshotOptimized
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.oracleSnapcenterSnapshot.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.snapcenterSnapshot?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.oracleSnapcenterSnapshot =
+                    GETWELL_VALUES[instanceAssessmentData?.snapcenterSnapshot?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.oracleSnapcenterSnapshot;
 
                 // Skip oracleAwsBackup counting for WAD instances (WAD-excluded config for Oracle)
                 if (!databaseHost?.isWad) {
@@ -2923,25 +2921,22 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                 getAssessmentGroupedByConfigurations.severityObj.maxdopPatch =
                     GETWELL_VALUES[instanceAssessmentData?.maxDOP?.severity] ||
                     getAssessmentGroupedByConfigurations?.severityObj?.maxdopPatch;
-                // Skip scheduledLocalSnapshot counting for WAD instances (WAD-excluded config)
-                if (!databaseHost?.isWad) {
-                    getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.total++;
-                    getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.optimized +=
-                        isScheduledLocalSnapshotOptimized ? 1 : 0;
-                    getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.dismissed += isDismissed(
-                        instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
-                    )
-                        ? 1
-                        : 0;
-                    getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.activating += isActivating(
-                        instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
-                    )
-                        ? 1
-                        : 0;
-                    getAssessmentGroupedByConfigurations.severityObj.scheduledLocalSnapshot =
-                        GETWELL_VALUES[instanceAssessmentData?.snapshotPolicy?.severity] ||
-                        getAssessmentGroupedByConfigurations?.severityObj?.scheduledLocalSnapshot;
-                }
+                getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.total++;
+                getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.optimized +=
+                    isScheduledLocalSnapshotOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.scheduledLocalSnapshot.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.snapshotPolicy?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.scheduledLocalSnapshot =
+                    GETWELL_VALUES[instanceAssessmentData?.snapshotPolicy?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.scheduledLocalSnapshot;
 
                 // Skip scheduledawsBackup counting for WAD instances (WAD-excluded config)
                 if (!databaseHost?.isWad) {
@@ -2964,24 +2959,21 @@ export const getAssessmentGroupedByConfigurations = (assessmentData: any, oracle
                         getAssessmentGroupedByConfigurations?.severityObj?.scheduledawsBackup;
                 }
 
-                // Skip clone counting for WAD instances (WAD-excluded config)
-                if (!databaseHost?.isWad) {
-                    getAssessmentGroupedByConfigurations.clone.total++;
-                    getAssessmentGroupedByConfigurations.clone.optimized += isCloneOptimized ? 1 : 0;
-                    getAssessmentGroupedByConfigurations.clone.dismissed += isDismissed(
-                        instanceAssessmentData?.dismissedConfigurations?.clone?.configState
-                    )
-                        ? 1
-                        : 0;
-                    getAssessmentGroupedByConfigurations.clone.activating += isActivating(
-                        instanceAssessmentData?.dismissedConfigurations?.clone?.configState
-                    )
-                        ? 1
-                        : 0;
-                    getAssessmentGroupedByConfigurations.severityObj.clone =
-                        GETWELL_VALUES[instanceAssessmentData?.clone?.severity] ||
-                        getAssessmentGroupedByConfigurations?.severityObj?.clone;
-                }
+                getAssessmentGroupedByConfigurations.clone.total++;
+                getAssessmentGroupedByConfigurations.clone.optimized += isCloneOptimized ? 1 : 0;
+                getAssessmentGroupedByConfigurations.clone.dismissed += isDismissed(
+                    instanceAssessmentData?.dismissedConfigurations?.clone?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.clone.activating += isActivating(
+                    instanceAssessmentData?.dismissedConfigurations?.clone?.configState
+                )
+                    ? 1
+                    : 0;
+                getAssessmentGroupedByConfigurations.severityObj.clone =
+                    GETWELL_VALUES[instanceAssessmentData?.clone?.severity] ||
+                    getAssessmentGroupedByConfigurations?.severityObj?.clone;
 
                 // Skip crr counting for WAD instances (WAD-excluded config)
                 if (!databaseHost?.isWad) {

@@ -1457,10 +1457,8 @@ export const WAD_EXCLUDED_CONFIGS_MSSQL = [
     ASSESSMENT_CONFIG_NAMES.MTU,
     ASSESSMENT_CONFIG_NAMES.LICENSE,
     ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
-    ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
     ASSESSMENT_CONFIG_NAMES.CRR,
-    ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
-    ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT
+    ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
 ];
 
 /**
@@ -1471,7 +1469,6 @@ export const WAD_EXCLUDED_CONFIGS_MSSQL = [
 export const WAD_EXCLUDED_CONFIGS_ORACLE = [
     ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
     ASSESSMENT_CONFIG_NAMES.CRR,
-    ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
     ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
     ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH
 ];
@@ -1525,19 +1522,11 @@ export const WAD_EXCLUDED_API_FIELDS_MSSQL = new Set([
     'mtuAlignment',
     'license',
     'mssqlPatch',
-    'snapshotPolicy',
     'crr',
-    'awsBackup',
-    'clone'
-]);
-
-export const WAD_EXCLUDED_API_FIELDS_ORACLE = new Set([
-    'hostOsPatch',
-    'crr',
-    'oracleSecurityPatch',
-    'snapcenterSnapshot',
     'awsBackup'
 ]);
+
+export const WAD_EXCLUDED_API_FIELDS_ORACLE = new Set(['hostOsPatch', 'crr', 'oracleSecurityPatch', 'awsBackup']);
 
 /**
  * Maps API assessment field names to their Well-Architected category.

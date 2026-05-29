@@ -430,7 +430,7 @@ const GOLDEN_CONFIG = {
         }
     },
     cloning: {
-        name: 'cloning',
+        name: 'clone-management',
         tags: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
         category: 'cloning',
         subCategory: 'cloning',
