@@ -280,7 +280,7 @@ const DatabaseListTable = () => {
                       accessor: 'availabilityGroup',
                       filterOptions: 'auto' as const,
                       id: '7',
-                      width: 'auto',
+                      width: '12%',
                       renderCell: (cellData: any, rowData: any) => {
                           if (!cellData)
                               return (
@@ -330,14 +330,14 @@ const DatabaseListTable = () => {
             accessor: 'type',
             filterOptions: 'auto',
             id: '5',
-            width: 'auto'
+            width: '10%'
         },
         {
             Header: t('databases.general.collation'),
             accessor: 'collation',
             isSortable: true,
             id: '6',
-            width: 'auto',
+            width: '15%',
             renderCell: (cellData: any) => cellData || t('databases.general.not-available')
         }
     ];
