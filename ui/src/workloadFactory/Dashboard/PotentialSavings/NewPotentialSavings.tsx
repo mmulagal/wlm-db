@@ -57,15 +57,16 @@ const NewPotentialSavings = () => {
             const uniqueResourceList: Array<string> = [];
             unManagedHostFormatedList?.forEach((perRow: any) => {
                 // Include both MSSQL and Oracle hosts for EBS count
+                const uniqueKey = `${perRow?.ec2InstanceId}_${perRow?.regionId}`;
                 if (
                     (perRow?.hostType !== DBType.MSSQL && perRow?.hostType !== DBType.ORACLE) ||
                     !headerSelectedMultiCredIdsList?.includes(perRow?.credentialId) ||
                     !headerSelectedMultiRegionIdsList?.includes(perRow?.regionId) ||
-                    uniqueResourceList?.includes(perRow?.ec2InstanceId)
+                    uniqueResourceList?.includes(uniqueKey)
                 ) {
                     return;
                 }
-                uniqueResourceList.push(perRow?.ec2InstanceId);
+                uniqueResourceList.push(uniqueKey);
                 if (perRow?.storageType === GENERAL.EBS) {
                     if (perRow?.hostType === DBType.ORACLE) {
                         oracleEbsCount += 1;

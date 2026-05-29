@@ -84,14 +84,15 @@ export const getManagedHostCount = (data: any, dispatch: any, type: string = WIZ
 
     Object.keys(data).map((val: string) => {
         const keyList = val.split('_');
+        const uniqueKey = `${keyList?.[0]}_${keyList?.[2]}`;
         if (
             !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
             !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
-            uniqueResourceList.includes(keyList?.[0])
+            uniqueResourceList.includes(uniqueKey)
         ) {
             return;
         }
-        uniqueResourceList.push(keyList?.[0]);
+        uniqueResourceList.push(uniqueKey);
         totalhosts += 1;
         totalInstances += data[val]?.databaseInstanceDetails?.length || 0;
         data[val]?.databaseInstanceDetails?.map((per: any) => {
@@ -159,15 +160,16 @@ export const getManagedHostCountFromInventory = (
     const uniqueResourceList: Array<string> = [];
     Object.keys(inventoryTableData)?.forEach((key: any) => {
         const item = inventoryTableData[key];
+        const uniqueKey = `${item?.resourceId}_${item?.regionId}`;
         if (
-            uniqueResourceList.includes(item?.resourceId || '') ||
+            uniqueResourceList.includes(uniqueKey) ||
             item?.managedInstance === 0 ||
             item?.hostType !== type ||
             shouldSkipByHeaderFilters(item, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList)
         ) {
             return;
         }
-        uniqueResourceList.push(item?.resourceId || '');
+        uniqueResourceList.push(uniqueKey);
         totalhosts += 1;
 
         item?.sqlServerInstances?.forEach((instance: any) => {
@@ -275,14 +277,15 @@ export const getPotentialSavingsValues = (data: any) => {
 
         // Handle per-instance entries (format: instanceId_credId_regionId)
         const keyList = key.split('_');
+        const uniqueKey = `${keyList?.[0]}_${keyList?.[2]}`;
         if (
             !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
             !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
-            uniqueResourceList.includes(keyList?.[0])
+            uniqueResourceList.includes(uniqueKey)
         ) {
             return;
         }
-        uniqueResourceList.push(keyList?.[0]);
+        uniqueResourceList.push(uniqueKey);
 
         if (val?.loading) {
             result.loading = true;
@@ -329,15 +332,16 @@ export const getManagedAggrProtection = (data: any) => {
 
     Object.keys(data).map((key: string) => {
         const keyList = key.split('_');
+        const uniqueKey = `${keyList?.[0]}_${keyList?.[2]}`;
         if (
             !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
             !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
-            uniqueResourceList.includes(keyList?.[0])
+            uniqueResourceList.includes(uniqueKey)
         ) {
             return;
         }
 
-        uniqueResourceList.push(keyList?.[0]);
+        uniqueResourceList.push(uniqueKey);
 
         let protectedHostDb = 0;
         let unProtectedHostDb = 0;
@@ -407,15 +411,16 @@ export const getManagedAggrStorageSavings = (data: any, sandboxSavings?: any) =>
 
     Object.keys(data).map((key: string) => {
         const keyList = key.split('_');
+        const uniqueKey = `${keyList?.[0]}_${keyList?.[2]}`;
         if (
             !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
             !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
-            uniqueResourceList.includes(keyList?.[0])
+            uniqueResourceList.includes(uniqueKey)
         ) {
             return;
         }
 
-        uniqueResourceList.push(keyList?.[0]);
+        uniqueResourceList.push(uniqueKey);
 
         data[key]?.databaseInstancesSummary?.map((val: any) => {
             const fsxVal = val?.databaseInstanceTopology?.fileSystemId || '';
@@ -480,15 +485,16 @@ export const getManageAggrCost = (data: any) => {
 
     Object.keys(data).map((key: string) => {
         const keyList = key.split('_');
+        const uniqueKey = `${keyList?.[0]}_${keyList?.[2]}`;
         if (
             !headerSelectedMultiCredIdsList.includes(keyList?.[1]) ||
             !headerSelectedMultiRegionIdsList.includes(keyList?.[2]) ||
-            uniqueResourceList.includes(keyList?.[0])
+            uniqueResourceList.includes(uniqueKey)
         ) {
             return;
         }
 
-        uniqueResourceList.push(keyList?.[0]);
+        uniqueResourceList.push(uniqueKey);
         const val = data[key];
 
         if (val?.estimatedUsageCost?.compute) {
@@ -648,7 +654,7 @@ export const shouldSkipByHeaderFilters = (
 
 /**
  * Checks if a database host should be skipped during assessment data processing.
- * Filters out hosts based on credential/region header selections and deduplicates by host ID.
+ * Filters out hosts based on credential/region header selections and deduplicates by host ID and region.
  * If the host should NOT be skipped, it is added to the uniqueResourceList to prevent future duplicates.
  */
 export const shouldSkipDatabaseHost = (
@@ -657,7 +663,8 @@ export const shouldSkipDatabaseHost = (
     headerSelectedMultiRegionIdsList: string[],
     uniqueResourceList: string[]
 ): boolean => {
-    if (uniqueResourceList.includes(databaseHost?.databaseHostId)) {
+    const uniqueKey = `${databaseHost?.databaseHostId}_${databaseHost?.regionId}`;
+    if (uniqueResourceList.includes(uniqueKey)) {
         return true;
     }
 
@@ -665,7 +672,7 @@ export const shouldSkipDatabaseHost = (
         return true;
     }
 
-    uniqueResourceList.push(databaseHost?.databaseHostId);
+    uniqueResourceList.push(uniqueKey);
     return false;
 };
 
