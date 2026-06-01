@@ -1,12 +1,16 @@
 import { isEmpty } from 'lodash-es';
+import { _InstanceType } from '@aws-sdk/client-ec2';
 import {
     DiscoverMsSqlResponseBodyType,
     DiscoverOracleInstanceType,
     DiscoverOracleResponseBodyType,
     DiscoverOracleResponseType
 } from '../../routes/types/discover.types';
-import { DatabaseTypes, SINGLE_AZ } from '../consts';
+import { RecommendationOptionType } from '../../routes/types/storage-savings.types';
+import { DatabaseTypes, HOURS_IN_MONTH, SINGLE_AZ } from '../consts';
+import { getMonthlyPriceFromHourlyPrice } from '../utils';
 import { getDatabaseHostsSummaryV2 } from '../../operations/database-hosts-operations';
+import { getSqlInstancePricingDetails } from '../../operations/aws/pricing-operations';
 import { EC2InstanceDetailsResponseType } from '../../routes/types/database-hosts.types';
 
 const MANAGE_READINESS = {
@@ -1608,6 +1612,18 @@ async function discoverDemoDataOracle(
             'vol-0f7a8b9c0d1e00006'
         ];
         const oracleEbsTcoDemoMixedHostAllVols = [...oracleEbsTcoDemoMixedStdVols, ...oracleEbsTcoDemoMixedDgVols];
+        // ORCLSTD6 (Standalone) — 8-vol TCO set; first id retains the historical `vol-094b644283b4fd16a`
+        // so existing references in mock-server fixtures continue to resolve.
+        const oracleEbsTcoDemoOrclStd6Vols = [
+            'vol-094b644283b4fd16a',
+            'vol-094b644283b4f0002',
+            'vol-094b644283b4f0003',
+            'vol-094b644283b4f0004',
+            'vol-094b644283b4f0005',
+            'vol-094b644283b4f0006',
+            'vol-094b644283b4f0007',
+            'vol-094b644283b4f0008'
+        ];
 
         const discoveryRes = [
             {
@@ -1865,23 +1881,13 @@ async function discoverDemoDataOracle(
             },
             {
                 ec2InstanceId: 'i-12456768',
-                ec2InstanceType: 'm5.large',
+                ec2InstanceType: 'm5.2xlarge',
                 ec2InstanceName: 'oracle-node-5717',
                 ec2HostName: 'ORACLE-EBS-PRD-STG-ORCLSTD6',
                 ec2UsageOperation: 'RunInstances',
                 ssmState: 'connected',
-                ebsVolumeIDs: ['vol-094b644283b4fd16a'],
-                ebsVolumes: [
-                    {
-                        DeviceName: '/dev/xvda',
-                        Ebs: {
-                            AttachTime: '2025-03-07T03:34:27.000Z',
-                            DeleteOnTermination: true,
-                            Status: 'attached',
-                            VolumeId: ebsVolId
-                        }
-                    }
-                ],
+                ebsVolumeIDs: oracleEbsTcoDemoOrclStd6Vols,
+                ebsVolumes: mkOracleDemoEbsVolumes(oracleEbsTcoDemoOrclStd6Vols),
                 vpc: {
                     id: 'vpc-0100cefdf732ef9e9',
                     name: 'VPC-5',
@@ -1903,7 +1909,7 @@ async function discoverDemoDataOracle(
                             openMode: 'READ WRITE'
                         },
 
-                        storage: mkOracleDemoEbsStorageEntries(['vol-094b644283b4fd16a'], 'ap-south-1c'),
+                        storage: mkOracleDemoEbsStorageEntries(oracleEbsTcoDemoOrclStd6Vols, 'ap-south-1c'),
                         deploymentTypes: mkOracleDemoDeploymentTypes(['ap-south-1c']),
                         isInstanceStorageAsmManaged: false,
                         isDefaultAuthentication: true,
@@ -2546,4 +2552,56 @@ async function discoverDemoDataOracle(
     return ORACLE_DISCOVERY_RES as unknown as DiscoverOracleResponseBodyType;
 }
 
-export { inventoryDemoData, discoverDemoDataOracle };
+/**
+ * Demo-only fixture for Oracle TCO EBS hosts. Real AWS Compute Optimizer has no data for our seeded
+ * `i-…` ids, so for hosts in `ORACLE_TCO_DEMO_EBS_HOST_TCO_SIZE` (see `demo-operations.ts`) the
+ * Oracle storage-savings flow falls back to this map, which unblocks the UI recommended-instance-type
+ * dropdown without affecting non-demo flows.
+ *
+ * Each entry is keyed on the existing EC2 instance type and supplies a plausible right-sizing:
+ * the list always **starts with the existing type** (so it appears in the dropdown), followed by
+ * sensible alternates from the same/adjacent families. The first non-existing entry is the
+ * "recommended" default selection.
+ */
+const ORACLE_TCO_DEMO_INSTANCE_RECOMMENDATIONS: Readonly<Record<string, readonly string[]>> = {
+    'm5.2xlarge': ['m5.2xlarge', 'm6i.2xlarge', 'r6i.xlarge'],
+    'm5.4xlarge': ['m5.4xlarge', 'm6i.4xlarge', 'r6i.2xlarge']
+};
+
+const ORACLE_TCO_DEMO_DEFAULT_RECOMMENDATIONS: readonly string[] = ['m5.2xlarge', 'm6i.2xlarge', 'r6i.xlarge'];
+
+async function getLinuxInstanceHourlyPriceForDemo(region: string, instanceType: string): Promise<number> {
+    if (!instanceType) {
+        return 0;
+    }
+    const pricingMap = await getSqlInstancePricingDetails(region, instanceType as _InstanceType, 'Linux');
+    const row = pricingMap?.[instanceType]?.NA;
+    return row?.pricePerUnit ?? 0;
+}
+
+async function buildOracleTcoDemoRecommendation(
+    region: string,
+    existingInstanceType: string
+): Promise<{ recommendedInstanceType: string; recommendationOptions: RecommendationOptionType[] }> {
+    const types =
+        ORACLE_TCO_DEMO_INSTANCE_RECOMMENDATIONS[existingInstanceType] ?? ORACLE_TCO_DEMO_DEFAULT_RECOMMENDATIONS;
+    const hourlyPrices = await Promise.all(types.map(t => getLinuxInstanceHourlyPriceForDemo(region, t)));
+    const recommendationOptions: RecommendationOptionType[] = types.map((instanceType, idx) => {
+        const hourly = hourlyPrices[idx] || 0;
+        const monthly = getMonthlyPriceFromHourlyPrice(hourly);
+        return {
+            instanceType,
+            price: hourly,
+            basePrice: hourly,
+            computeMonthlyPrice: monthly,
+            instanceMonthlyPrice: monthly,
+            hoursInMonth: HOURS_IN_MONTH
+        };
+    });
+    // Recommended default = first alternate that differs from the existing type (so the user sees
+    // a real right-sizing suggestion); fall back to the existing type if none match.
+    const recommendedInstanceType = types.find(t => t !== existingInstanceType) ?? existingInstanceType;
+    return { recommendedInstanceType, recommendationOptions };
+}
+
+export { buildOracleTcoDemoRecommendation, discoverDemoDataOracle, inventoryDemoData };

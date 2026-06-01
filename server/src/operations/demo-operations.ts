@@ -692,7 +692,8 @@ const ORACLE_TCO_DEMO_EBS_8_PREFIXES = [
     'vol-0a1b2c3d4e5f',
     'vol-0b2c3d4e5f6a7',
     'vol-0c4d5e6f7a8b0',
-    'vol-0d5e6f7a8b9c0'
+    'vol-0d5e6f7a8b9c0',
+    'vol-094b644283b4f'
 ] as const;
 const ORACLE_TCO_DEMO_EBS_6_PREFIXES = ['vol-0e6f7a8b9c0d0', 'vol-0f7a8b9c0d1e0'] as const;
 
@@ -735,6 +736,11 @@ const ORACLE_TCO_DEMO_EBS_SPECS: Readonly<Record<string, OracleTcoEbsVolSpec>> =
         gp3: { Iops: 3000, Throughput: 125 },
         io2: { Iops: 8000, Throughput: 1000 }
     },
+    [ORACLE_TCO_DEMO_EBS_8_PREFIXES[4]]: {
+        sizeGiB: 300,
+        gp3: { Iops: 3000, Throughput: 125 },
+        io2: { Iops: 12000, Throughput: 1000 }
+    },
     [ORACLE_TCO_DEMO_EBS_6_PREFIXES[0]]: {
         sizeGiB: 128,
         gp3: { Iops: 3000, Throughput: 125 },
@@ -753,6 +759,7 @@ const ORACLE_TCO_DEMO_EBS_HOST_PREFIX: Readonly<Record<string, string>> = {
     'i-03b9d6f4c5e2a8b71': ORACLE_TCO_DEMO_EBS_8_PREFIXES[1], // orclstd2
     'i-04c8e5b3d6a9f12c4': ORACLE_TCO_DEMO_EBS_8_PREFIXES[2], // DG primary
     'i-05d7f6c4e3b8a9d52': ORACLE_TCO_DEMO_EBS_8_PREFIXES[3], // DG standby
+    'i-12456768': ORACLE_TCO_DEMO_EBS_8_PREFIXES[4], // ORCLSTD6 (Standalone)
     // Mixed 12-vol host: use std (smaller) group for the automatic marketing line item
     'i-06e9a7b5c8d4f3e12': ORACLE_TCO_DEMO_EBS_6_PREFIXES[0]
 };
@@ -776,6 +783,7 @@ const ORACLE_TCO_DEMO_EBS_HOST_TCO_SIZE: Readonly<Record<string, 'eight' | 'six'
     'i-03b9d6f4c5e2a8b71': 'eight', // orclstd2
     'i-04c8e5b3d6a9f12c4': 'eight', // DG primary
     'i-05d7f6c4e3b8a9d52': 'eight', // DG standby
+    'i-12456768': 'eight', // ORCLSTD6 (Standalone)
     'i-06e9a7b5c8d4f3e12': 'six' // mixed: two 6-vol groups
 };
 

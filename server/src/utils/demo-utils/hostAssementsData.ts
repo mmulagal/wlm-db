@@ -597,6 +597,29 @@ const mockResourceAssessmentDataAllOptimized = {
                 ...MSSQL_HOST_OS_NON_COMPLIANT_COUNTS
             }
         ],
+        highAvailability: {
+            clusterQuorum: {
+                status: 'optimized',
+                details: {
+                    isMajority: true,
+                    quorumType: 1,
+                    isPhysicalDisk: true,
+                    quorumResourceName: 'Cluster Disk 1',
+                    isPhysicalDiskAndMajority: true
+                }
+            },
+            heartbeat: {
+                status: 'optimized',
+                details: {
+                    CrossSiteDelay: { status: 'optimized', current: 1000, recommended: 1000 },
+                    SameSubnetDelay: { status: 'optimized', current: 1000, recommended: 1000 },
+                    CrossSubnetDelay: { status: 'optimized', current: 1000, recommended: 1000 },
+                    CrossSiteThreshold: { status: 'optimized', current: 20, recommended: 20 },
+                    SameSubnetThreshold: { status: 'optimized', current: 10, recommended: 10 },
+                    CrossSubnetThreshold: { status: 'optimized', current: 20, recommended: 20 }
+                }
+            }
+        },
         mtuAlignment: {
             fsxMTU: {
                 error: null,

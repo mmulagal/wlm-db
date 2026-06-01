@@ -28,10 +28,13 @@ import { StorageSummary } from '../../../utils/marketing-types';
 import {
     coerceBooleanFromLooseTrue,
     fsxStorageCapacityBreakdown,
-    getMonthlyPriceFromHourlyPrice
+    getMonthlyPriceFromHourlyPrice,
+    IS_DEMO_FLOW
 } from '../../../utils/utils';
 import { getOracleInstanceRecommendations } from '../../aws/compute-optimizer-operations';
 import { getSqlInstancePricingDetails } from '../../aws/pricing-operations';
+import { ORACLE_TCO_DEMO_EBS_HOST_TCO_SIZE } from '../../demo-operations';
+import { buildOracleTcoDemoRecommendation } from '../../../utils/demo-utils/demoInventoryData';
 import {
     formatManualStorageSavingsCalculationMetrics,
     formatStorageSavingsCalculationMetrics
@@ -286,6 +289,18 @@ async function retrieveOracleComputeCost(
             computeFinding = FINDING.INSUFFICIENT_DATA;
         }
         computeMessage = errorMessage;
+    }
+
+    // Demo-only augmentation: the production CO path above has already run unchanged. For seeded
+    // Oracle TCO demo hosts AWS Compute Optimizer returns no data, so we layer a fixed alternate-list
+    // on top — but only when production left `recommendationOptions` empty, so any real CO data is
+    // preserved as-is.
+    if (IS_DEMO_FLOW && recommendationOptions.length === 0 && ec2InstanceId in ORACLE_TCO_DEMO_EBS_HOST_TCO_SIZE) {
+        const demoRecommendation = await buildOracleTcoDemoRecommendation(region, ec2InstanceType);
+        recommendedInstanceType = demoRecommendation.recommendedInstanceType;
+        recommendationOptions = demoRecommendation.recommendationOptions;
+        computeFinding = FINDING.NOT_OPTIMIZED;
+        computeMessage = undefined;
     }
 
     const [existingHourlyPrice, recommendedHourlyPrice] = await Promise.all([
