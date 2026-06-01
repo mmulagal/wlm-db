@@ -221,7 +221,7 @@ Parameters:
         Description: User name for the SQL Server DB service account administrator. 
                     It can be the AD domain admin or other local or domain users.
         MaxLength: '25'
-        MinLength: '5'
+        MinLength: '1'
         Type: String
     NumberOfNodes:
         Default: '1'

@@ -259,7 +259,7 @@ Parameters:
         Description: User name to be used as MSSQL DB Service Account Administrator. It
             could be AD domain admin, other local or domain users.
         MaxLength: '25'
-        MinLength: '5'
+        MinLength: '1'
         Type: String
     NumberOfNodes:
         Default: '2'
