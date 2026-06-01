@@ -42,13 +42,19 @@ locals {
     password = try(local.sql_creds_raw.sql[0].password, local.sql_creds_raw.password, "")
   } : null
 
-  resolved_fsx_username = local.fsx_creds != null ? local.fsx_creds.username : var.fsx_admin_username
+  # Strip domain prefix from usernames (e.g. "wlm\administrator" → "administrator", "domain/user" → "user").
+  # PowerShell scripts prepend $env:USERDOMAIN themselves; server-side splitDomainUsername() does this for CF.
+  _fsx_username_parts = split("\\", replace(local.fsx_creds != null ? local.fsx_creds.username : var.fsx_admin_username, "/", "\\"))
+  _ad_username_parts  = split("\\", replace(local.ad_creds != null ? local.ad_creds.username : var.domain_admin_user, "/", "\\"))
+  _sql_username_parts = split("\\", replace(local.sql_creds != null ? local.sql_creds.username : var.sql_service_account_name, "/", "\\"))
+
+  resolved_fsx_username = element(local._fsx_username_parts, length(local._fsx_username_parts) - 1)
   resolved_fsx_password = local.fsx_creds != null ? local.fsx_creds.password : var.fsx_admin_password
 
-  resolved_ad_username = local.ad_creds != null ? local.ad_creds.username : var.domain_admin_user
+  resolved_ad_username = element(local._ad_username_parts, length(local._ad_username_parts) - 1)
   resolved_ad_password = local.ad_creds != null ? local.ad_creds.password : var.domain_admin_password
 
-  resolved_sql_username = local.sql_creds != null ? local.sql_creds.username : var.sql_service_account_name
+  resolved_sql_username = element(local._sql_username_parts, length(local._sql_username_parts) - 1)
   resolved_sql_password = local.sql_creds != null ? local.sql_creds.password : var.sql_service_account_password
 }
 

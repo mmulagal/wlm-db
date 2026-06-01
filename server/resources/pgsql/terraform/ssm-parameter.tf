@@ -31,7 +31,11 @@ locals {
     password = try(local.sql_creds_raw.pgsql[0].password, local.sql_creds_raw.pgsql.password, local.sql_creds_raw.sql[0].password, local.sql_creds_raw.password, "")
   } : null
 
-  resolved_fsx_username = local.fsx_creds != null ? local.fsx_creds.username : var.fsx_admin_username
+  # Strip domain prefix from FSx username (e.g. "domain\fsxadmin" → "fsxadmin").
+  # Server-side splitDomainUsername() does this for CF; replicate here for Terraform apply-time resolution.
+  _fsx_username_parts = split("\\", replace(local.fsx_creds != null ? local.fsx_creds.username : var.fsx_admin_username, "/", "\\"))
+
+  resolved_fsx_username = element(local._fsx_username_parts, length(local._fsx_username_parts) - 1)
   resolved_fsx_password = local.fsx_creds != null ? local.fsx_creds.password : var.fsx_admin_password
 
   resolved_sql_password = local.sql_creds != null ? local.sql_creds.password : var.sql_service_account_password
