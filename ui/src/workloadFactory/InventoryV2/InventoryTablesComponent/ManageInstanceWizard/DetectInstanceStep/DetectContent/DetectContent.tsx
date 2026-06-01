@@ -153,21 +153,26 @@ const DetectContent = () => {
 
     const ssmArnInputFields = (section: 'db' | 'fsx') => {
         const isFsx = section === 'fsx';
+        const isWindowsAuth = !isFsx && authenticationTypeSelected === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION;
         const value = isFsx ? ontapSsmArn : ssmArn;
         const setter = isFsx ? setOntapSsmArn : setSsmArn;
         const wizardKey = isFsx ? ONTAP_SSM_WIZARD_KEY : SSM_WIZARD_KEY;
         const storeValue = isFsx ? detectOntapSsmParameterArn : detectSsmParameterArn;
         const errorField = isFsx ? detectCredentialErrors?.fsxnError : detectCredentialErrors?.databaseServerError;
-        const heading = isFsx
-            ? t('databases.register-flow.detect-fsx-heading')
+        const dbHeading = isWindowsAuth
+            ? t('databases.register-flow.detect-windows-heading')
             : t('databases.register-flow.detect-sql-heading');
+        const heading = isFsx ? t('databases.register-flow.detect-fsx-heading') : dbHeading;
 
-        const tooltipKey = isFsx
-            ? 'databases.register-flow.ssm-parameter-tooltip-fsx'
+        const dbTooltipKey = isWindowsAuth
+            ? 'databases.register-flow.ssm-parameter-tooltip-ad'
             : 'databases.register-flow.ssm-parameter-tooltip-db';
-        const jsonKey = isFsx
-            ? 'databases.register-flow.ssm-tooltip-json-fsx'
+        const tooltipKey = isFsx ? 'databases.register-flow.ssm-parameter-tooltip-fsx' : dbTooltipKey;
+
+        const dbJsonKey = isWindowsAuth
+            ? 'databases.register-flow.ssm-tooltip-json-ad'
             : 'databases.register-flow.ssm-tooltip-json-db';
+        const jsonKey = isFsx ? 'databases.register-flow.ssm-tooltip-json-fsx' : dbJsonKey;
 
         return (
             <div className={isFsx ? styles.secondSection : styles.firstSection}>
@@ -359,6 +364,10 @@ const DetectContent = () => {
         <div className={styles.detectContent}>
             {wizardOperationType === ACTION_TYPE.SINGLE && (
                 <>
+                    {isAuthRequiredForInstance(manageSingleInstanceData, manageSingleInstanceData?.hostType) &&
+                        manageSingleInstanceData?.hostType === DBType.MSSQL &&
+                        authModeRadio()}
+
                     {isGovAccount ? (
                         <>
                             {isAuthRequiredForInstance(manageSingleInstanceData, manageSingleInstanceData?.hostType) &&
@@ -366,10 +375,6 @@ const DetectContent = () => {
                         </>
                     ) : (
                         <>
-                            {isAuthRequiredForInstance(manageSingleInstanceData, manageSingleInstanceData?.hostType) &&
-                                manageSingleInstanceData?.hostType === DBType.MSSQL &&
-                                authModeRadio()}
-
                             {isAuthRequiredForInstance(manageSingleInstanceData, manageSingleInstanceData?.hostType) &&
                                 (manageSingleInstanceData?.hostType === DBType.ORACLE ||
                                     authenticationTypeSelected === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION) &&
@@ -386,6 +391,10 @@ const DetectContent = () => {
 
             {wizardOperationType === ACTION_TYPE.BULK && (
                 <>
+                    {isAuthRequiredForInstance(bulkInstanceData, bulkInstanceData?.hostType) &&
+                        bulkInstanceData.hostType === DBType.MSSQL &&
+                        authModeRadio()}
+
                     {isGovAccount ? (
                         <>
                             {isAuthRequiredForInstance(bulkInstanceData, bulkInstanceData?.hostType) &&
@@ -394,10 +403,6 @@ const DetectContent = () => {
                         </>
                     ) : (
                         <>
-                            {isAuthRequiredForInstance(bulkInstanceData, bulkInstanceData?.hostType) &&
-                                bulkInstanceData.hostType === DBType.MSSQL &&
-                                authModeRadio()}
-
                             {isAuthRequiredForInstance(bulkInstanceData, bulkInstanceData?.hostType) &&
                                 authenticationTypeSelected === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION &&
                                 mssqlInputFields(bulkInstanceData?.hostType)}

@@ -847,7 +847,12 @@ const addCredentialsBasedOnEngineType = (
         })();
 
         if (needsDbAuth && detectSsmParameterArn) {
-            const resourceType = engineType === DBType.ORACLE ? DETECT_HOST_VAR.ORACLE : DETECT_HOST_VAR.MSSQL;
+            const resourceType =
+                engineType === DBType.ORACLE
+                    ? DETECT_HOST_VAR.ORACLE
+                    : authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+                    ? DETECT_HOST_VAR.WINDOWS
+                    : DETECT_HOST_VAR.MSSQL;
             credentials.push({
                 resourceId: sqlServerInstance,
                 resourceType,
