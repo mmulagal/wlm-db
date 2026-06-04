@@ -58,6 +58,7 @@ const ErrorInvestigationOverview = () => {
     const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
     const { showNA, multiDataLoading } = useAppSelector(state => state.headers);
+    const { isGovAccount } = useAppSelector(state => state.auth);
     const { allLogAnalysisLoading, allLogAnalysisOracleLoading, allLogAnalysisData, inventoryTableData } =
         useAppSelector(state => state.inventoryV2);
     const loading = useMemo(
@@ -304,7 +305,7 @@ const ErrorInvestigationOverview = () => {
                             children="Analyze"
                             variant="secondary"
                             isThin
-                            isDisabled={loading || showNA}
+                            isDisabled={loading || showNA || isGovAccount}
                             dropDown={{
                                 trigger: 'click',
                                 autoPosition: true,

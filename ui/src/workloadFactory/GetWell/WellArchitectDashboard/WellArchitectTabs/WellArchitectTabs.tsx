@@ -15,6 +15,7 @@ const WellArchitectTabs = () => {
     const dispatch = useDispatch();
     const [selectedTab, setSelectedTab] = useState<any>();
     const { selectedWellArchitectTab, isWad } = useAppSelector(state => state.getWellOptimize);
+    const { isGovAccount } = useAppSelector(state => state.auth);
     const { regionMapping } = useAppSelector(state => state.headers);
     const { selectedGwInstanceRegionId, selectedGwInstanceCredId, selectedResourceId, selectedDatabaseInstance } =
         useAppSelector(state => state.getWellOptimize);
@@ -110,11 +111,17 @@ const WellArchitectTabs = () => {
                 </DsTypography>
             </div>
 
-            {/* Error Investigation Tab - disabled for WAD or when Bedrock not supported */}
-            {(isWad || !isBedrockSupportedForRegion) && (
+            {/* Error Investigation Tab - disabled for WAD, GovCloud, or when Bedrock not supported */}
+            {(isWad || isGovAccount || !isBedrockSupportedForRegion) && (
                 <TooltipComponent
                     placement="bottom"
-                    title={isWad ? wadDisabledMessage : t('databases.log-analyzer.bedrock-in-region-not-supported')}
+                    title={
+                        isGovAccount
+                            ? t('databases.general.not-supported-in-govcloud')
+                            : isWad
+                            ? wadDisabledMessage
+                            : t('databases.log-analyzer.bedrock-in-region-not-supported')
+                    }
                     width={300}
                 >
                     <div className={`${styles.headers} ${styles.headerWidthSecond}`}>
@@ -127,7 +134,7 @@ const WellArchitectTabs = () => {
                     </div>
                 </TooltipComponent>
             )}
-            {!isWad && isBedrockSupportedForRegion && (
+            {!isWad && !isGovAccount && isBedrockSupportedForRegion && (
                 <div
                     className={
                         selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION

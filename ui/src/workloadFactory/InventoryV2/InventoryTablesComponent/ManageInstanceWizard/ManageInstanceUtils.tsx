@@ -207,6 +207,7 @@ export const callManageSingleInstanceApi = async (
             const updatedState = store.getState();
             const { inProgressInstances } = updatedState.inventoryV2;
             const isWorkloadFactoryStatus = updatedState.auth?.isWorkloadFactory;
+            const isGovAccount = updatedState.auth?.isGovAccount;
             const inProgressId = uniqueHostRow(
                 `${manageSingleInstanceChecks?.ec2InstanceId}_${manageSingleInstanceChecks?.databaseInstanceName}`,
                 manageSingleInstanceChecks?.credentialsId,
@@ -221,24 +222,26 @@ export const callManageSingleInstanceApi = async (
                         'single',
                         t
                     )}
-                    <Button
-                        Component="button"
-                        variant="text"
-                        onClick={() => {
-                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                            const path = store.getState().auth.isWorkloadFactory
-                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
-                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+                    {!isGovAccount && (
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                const path = store.getState().auth.isWorkloadFactory
+                                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
 
-                            postBlueXPMessage({
-                                type: BlueXPListeners.navigate,
-                                payload: { pathname: path, replace: true }
-                            });
-                            dispatch(clearNotifications());
-                        }}
-                    >
-                        {' Track progress.'}
-                    </Button>
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: path, replace: true }
+                                });
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {' Track progress.'}
+                        </Button>
+                    )}
                 </DsTypography>
             );
             // Reset auth/FSx credentials so next wizard opens with a clean state
@@ -548,6 +551,7 @@ export const callManageMultiInstanceApi = async (
             const updatedState = store.getState();
             const { inProgressInstances } = updatedState.inventoryV2;
             const isWorkloadFactoryStatus = updatedState.auth?.isWorkloadFactory;
+            const isGovAccount = updatedState.auth?.isGovAccount;
             // Use payload.items to create inProgressIDList, covering all databaseInstanceNames
             const inProgressIDList = payload.items.flatMap((item: any) =>
                 (item.databaseInstanceNames || [])?.map((dbInstanceName: string) =>
@@ -560,24 +564,26 @@ export const callManageMultiInstanceApi = async (
             const manageInstanceMsg = (
                 <DsTypography variant="Regular_14">
                     {createManageInstanceMessageText(engineType, inProgressIDList?.length, 'multi', t)}
-                    <Button
-                        Component="button"
-                        variant="text"
-                        onClick={() => {
-                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                            const path = store.getState().auth.isWorkloadFactory
-                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
-                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+                    {!isGovAccount && (
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                const path = store.getState().auth.isWorkloadFactory
+                                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
 
-                            postBlueXPMessage({
-                                type: BlueXPListeners.navigate,
-                                payload: { pathname: path, replace: true }
-                            });
-                            dispatch(clearNotifications());
-                        }}
-                    >
-                        {' Track progress.'}
-                    </Button>
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: path, replace: true }
+                                });
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {' Track progress.'}
+                        </Button>
+                    )}
                 </DsTypography>
             );
             // Reset auth/FSx credentials so next wizard opens with a clean state

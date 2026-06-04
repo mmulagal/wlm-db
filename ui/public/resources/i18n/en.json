@@ -94,6 +94,7 @@
             "last-update": "Last update:",
             "data-collection-date": "Data collection date:",
             "assess-now": "Analyze now",
+            "not-supported-in-govcloud": "This feature is not available for GovCloud accounts",
             "online": "ONLINE",
             "offline": "OFFLINE",
             "job-monitoring": "Job monitoring",

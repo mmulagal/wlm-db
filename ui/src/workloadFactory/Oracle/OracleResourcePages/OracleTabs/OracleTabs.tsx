@@ -17,6 +17,7 @@ const OracleTabs = () => {
     const { selectedOracleInnerPageTab } = useAppSelector(state => state.oracleSlice);
     const { selectedResourceId, selectedDatabaseInstanceName } = useAppSelector(state => state.workloadFactoryResource);
     const { inventoryTableData } = useAppSelector(state => state.inventoryV2);
+    const { isGovAccount } = useAppSelector(state => state.auth);
     const { regionMapping } = useAppSelector(state => state.headers);
     const {
         selectedGwInstanceRegionId,
@@ -137,11 +138,17 @@ const OracleTabs = () => {
                 </DsTypography>
             </div>
 
-            {/* Error Investigation Tab - disabled for WAD or when Bedrock not supported */}
-            {(isWad || !isBedrockSupportedForRegion) && (
+            {/* Error Investigation Tab - disabled for WAD, GovCloud, or when Bedrock not supported */}
+            {(isWad || isGovAccount || !isBedrockSupportedForRegion) && (
                 <TooltipComponent
                     placement="bottom"
-                    title={isWad ? wadDisabledMessage : t('databases.log-analyzer.bedrock-in-region-not-supported')}
+                    title={
+                        isGovAccount
+                            ? t('databases.general.not-supported-in-govcloud')
+                            : isWad
+                            ? wadDisabledMessage
+                            : t('databases.log-analyzer.bedrock-in-region-not-supported')
+                    }
                     width={300}
                 >
                     <div className={`${styles.headers} ${styles.headerWidthSecond}`}>
@@ -154,7 +161,7 @@ const OracleTabs = () => {
                     </div>
                 </TooltipComponent>
             )}
-            {!isWad && isBedrockSupportedForRegion && (
+            {!isWad && !isGovAccount && isBedrockSupportedForRegion && (
                 <div
                     className={
                         selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION

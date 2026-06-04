@@ -160,8 +160,10 @@ export const getInstanceTableMenuOptions = (
                 {
                     id: 'oracle-investigateErrors',
                     displayName: t('databases.databases-table.oracle.menu-options.investigate-errors'),
-                    disabled: !isBedRockAvailable || disableOption,
-                    infoText: !isBedRockAvailable
+                    disabled: !isBedRockAvailable || isGovAccount || disableOption,
+                    infoText: isGovAccount
+                        ? t('databases.general.not-supported-in-govcloud')
+                        : !isBedRockAvailable
                         ? t('databases.log-analyzer.bedrock-in-region-not-supported')
                         : disableMessage
                 },
@@ -195,8 +197,10 @@ export const getInstanceTableMenuOptions = (
                 {
                     id: 'mssql-investigateErrors',
                     displayName: t('databases.instance-table.menu-options.investigate-errors'),
-                    disabled: !isBedRockAvailable || disableOption,
-                    infoText: !isBedRockAvailable
+                    disabled: !isBedRockAvailable || isGovAccount || disableOption,
+                    infoText: isGovAccount
+                        ? t('databases.general.not-supported-in-govcloud')
+                        : !isBedRockAvailable
                         ? t('databases.log-analyzer.bedrock-in-region-not-supported')
                         : disableMessage
                 },
