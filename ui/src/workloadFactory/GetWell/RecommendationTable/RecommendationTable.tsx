@@ -1272,18 +1272,19 @@ const RecommendationTable = ({
                                         />
                                     ) : GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
                                       rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
-                                        <TooltipComponent
-                                            title={t('databases.well-architect.fix-disabled')}
-                                            placement="bottom"
-                                            width="120px"
-                                            height="30px"
-                                        >
-                                            <div>
-                                                <DsButton variant="secondary" isDisabled>
-                                                    {t('databases.well-architect.view-and-fix')}
-                                                </DsButton>
-                                            </div>
-                                        </TooltipComponent>
+                                        <Popover
+                                            popoverClass={styles['copy-popover']}
+                                            children={t('databases.well-architect.fix-disabled')}
+                                            trigger="hover"
+                                            isAppendedToBody
+                                            container={
+                                                <div>
+                                                    <DsButton variant="secondary" isDisabled>
+                                                        {t('databases.well-architect.view-and-fix')}
+                                                    </DsButton>
+                                                </div>
+                                            }
+                                        />
                                     ) : optimizingInstanceData &&
                                       rowData?.status !== GETWELL_STATUS.OPTIMIZED &&
                                       rowData?.status !== GETWELL_STATUS.OPTIMIZING ? (
