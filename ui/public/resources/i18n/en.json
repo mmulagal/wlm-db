@@ -2203,6 +2203,10 @@
             "tab-disabled-message-oracle": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
             "tab-disabled-message": "The one-time assessment provides only well-architected status and recommendations. Register instances to unlock more features.",
             "register-disabled-no-credentials": "Registration requires AWS credentials. Add database credentials to register this instance."
+        },
+        "marketing": {
+            "run-assessment": "Run Assessment",
+            "deploy-database": "Deploy Database"
         }
     }
 }

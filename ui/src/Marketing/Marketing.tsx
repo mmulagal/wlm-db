@@ -2,6 +2,7 @@ import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@net
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { ReactComponent as KB } from '../assets/DS - KB illustration.svg';
 import { ReactComponent as Unflattened } from '../assets/un-flattened 2.svg';
 import { ReactComponent as UnflattenedLarge } from '../assets/un-flattened-enlarge.svg';
@@ -20,6 +21,7 @@ import { setSecondaryCTAFlow } from '../store/workloadFactory/headersSlice';
 
 const Marketing = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { secondaryCTAFlow } = useAppSelector(state => state?.headers);
     const [isModalOpen, setModalOpen] = useState(false);
@@ -59,6 +61,35 @@ const Marketing = () => {
                         <div className={styles.buttonSection}>
                             <DsButton
                                 variant="Default"
+                                onClick={() => {
+                                    dispatch(setSecondaryCTAFlow(true));
+                                    if (isWorkloadFactory) {
+                                        navigate(FORM_TO_WLF_NAVIGATE_INVENTORY, {
+                                            state: { allowDashboardNoCred: true }
+                                        });
+                                        postBlueXPMessage({
+                                            type: BlueXPListeners.navigate,
+                                            payload: {
+                                                pathname: './databases/inventory',
+                                                replace: true
+                                            }
+                                        });
+                                    } else {
+                                        navigate('../../fsxdb/inventory', { state: { allowDashboardNoCred: true } });
+                                        postBlueXPMessage({
+                                            type: BlueXPListeners.navigate,
+                                            payload: {
+                                                pathname: '../../fsxdb/inventory',
+                                                replace: true
+                                            }
+                                        });
+                                    }
+                                }}
+                            >
+                                {t('databases.marketing.run-assessment')}
+                            </DsButton>
+                            <DsButton
+                                variant="secondary"
                                 dropDown={{
                                     trigger: 'click',
                                     autoPosition: true,
@@ -118,37 +149,7 @@ const Marketing = () => {
                                     ]
                                 }}
                             >
-                                Get Started
-                            </DsButton>
-                            <DsButton
-                                variant="secondary"
-                                onClick={() => {
-                                    dispatch(setSecondaryCTAFlow(true));
-                                    // Always navigate to inventory, regardless of credentials
-                                    if (isWorkloadFactory) {
-                                        navigate(FORM_TO_WLF_NAVIGATE_INVENTORY, {
-                                            state: { allowDashboardNoCred: true }
-                                        });
-                                        postBlueXPMessage({
-                                            type: BlueXPListeners.navigate,
-                                            payload: {
-                                                pathname: './databases/inventory',
-                                                replace: true
-                                            }
-                                        });
-                                    } else {
-                                        navigate('../../fsxdb/inventory', { state: { allowDashboardNoCred: true } });
-                                        postBlueXPMessage({
-                                            type: BlueXPListeners.navigate,
-                                            payload: {
-                                                pathname: '../../fsxdb/inventory',
-                                                replace: true
-                                            }
-                                        });
-                                    }
-                                }}
-                            >
-                                Discover
+                                {t('databases.marketing.deploy-database')}
                             </DsButton>
                         </div>
                     </div>
