@@ -1,0 +1,192 @@
+.govCloudSsmSection {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    .step {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .stepNumber {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+        padding-top: 1px;
+    }
+
+    .stepPipe {
+        width: 1px;
+        height: 13px;
+        background-color: var(--text-secondary, #6b778c);
+    }
+
+    .stepContent {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
+    }
+
+    .arnFieldContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-width: 764px;
+    }
+
+    .successMessage {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        svg {
+            width: 16px;
+            height: 16px;
+            fill: var(--text-success, #48a08b);
+        }
+    }
+
+    .successText {
+        color: var(--text-primary, #1c1c1c);
+    }
+
+    .learnMoreLink {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--color-link, #0067c5);
+        text-decoration: none;
+        font-size: 14px;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .externalLinkIcon {
+        width: 16px;
+        height: 16px;
+        fill: var(--color-link, #0067c5);
+    }
+}
+
+.govCloudSsmSectionInstructional {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-drop-shadow);
+    margin-bottom: 0;
+
+    .learnMoreLink {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--color-link, #0067c5);
+        text-decoration: none;
+        font-size: 14px;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .externalLinkIcon {
+        width: 16px;
+        height: 16px;
+        fill: var(--color-link, #0067c5);
+    }
+}
+
+.jsonToggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 0;
+
+    &:hover {
+        opacity: 0.8;
+    }
+}
+
+.chevronIcon {
+    width: 24px;
+    height: 24px;
+    transition: transform 0.2s ease;
+    fill: var(--icon-primary, #1c1c1c);
+
+    &.expanded {
+        transform: rotate(180deg);
+    }
+}
+
+.jsonSection {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.jsonBlock {
+    position: relative;
+    background: var(--main-background, #f5f5f5);
+    padding: 24px 32px;
+    border-radius: 4px;
+    max-width: 764px;
+
+    pre {
+        font-size: 14px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        margin: 0;
+        white-space: pre-wrap;
+        padding-right: 40px;
+        color: var(--text-primary, #1c1c1c);
+    }
+}
+
+.copyButton {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.copyIcon {
+    width: 24px;
+    height: 24px;
+    --icon-primary-color: var(--icon-primary, #1c1c1c);
+
+    &:hover {
+        --icon-primary-color: var(--icon-secondary);
+    }
+}
+
+.copiedText {
+    color: var(--notification-success, #48a08b);
+    white-space: nowrap;
+}
+
+.arnFormatTooltip {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 0;
+}
+
+.arnCopyLink {
+    color: var(--color-link, #0067c5);
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}

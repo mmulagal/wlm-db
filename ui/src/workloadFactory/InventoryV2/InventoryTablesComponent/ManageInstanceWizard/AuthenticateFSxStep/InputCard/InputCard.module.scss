@@ -98,16 +98,40 @@
 
         .govCloudTextField {
             flex: 1;
-            max-width: 560px;
-            min-width: 384px;
             margin-bottom: 0 !important;
         }
+
+        &.govCloudTextFieldContainer {
+            max-width: 535px;
+        }
+    }
+
+    .govCloudTextField {
+        flex: 1;
     }
 
     .card1 .textFieldContainer .textFieldStyle {
         flex: 1 1 59.3%;
         min-width: 300px;
         max-width: 480px;
+    }
+
+    .card1.govCloudCard {
+        gap: 24px;
+    }
+
+    .card2.govCloudCard {
+        gap: 0;
+
+        .govCloudManualTop + .row {
+            padding-top: 24px;
+        }
+    }
+
+    .govCloudManualTop {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
     }
 
     .govCloudManualHeader {
@@ -142,11 +166,10 @@
         align-items: flex-start;
         gap: 8px;
         flex: 1;
+        max-width: 535px;
 
         .govCloudTextField {
             flex: 1;
-            max-width: 560px;
-            min-width: 384px;
             margin-bottom: 0 !important;
         }
 

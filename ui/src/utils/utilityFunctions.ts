@@ -2005,9 +2005,15 @@ export const createAuthOnlyPayload = (sqlServerInstance: string, rowData: any) =
     let checkManageReadiness = false;
 
     if (isGovAccount && detectSsmParameterArn) {
+        const resourceType =
+            rowData?.hostType === DBType.MSSQL
+                ? authenticationType === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+                    ? DETECT_HOST_VAR.WINDOWS
+                    : DETECT_HOST_VAR.MSSQL
+                : rowData?.hostType?.toUpperCase();
         credList.push({
             resourceId: sqlServerInstance,
-            resourceType: rowData?.hostType === DBType.MSSQL ? DETECT_HOST_VAR.MSSQL : rowData?.hostType?.toUpperCase(),
+            resourceType,
             ssmParameterArn: detectSsmParameterArn
         });
         checkManageReadiness = true;

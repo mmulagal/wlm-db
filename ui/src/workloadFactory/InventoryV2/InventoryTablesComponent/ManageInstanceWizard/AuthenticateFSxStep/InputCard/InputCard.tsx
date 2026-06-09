@@ -4,10 +4,11 @@ import { useDispatch } from 'react-redux';
 import { useEffect, useRef, useMemo, useCallback } from 'react';
 import classNames from 'classnames';
 import { ReactComponent as InfoIcon } from '@netapp/icons/ic_info_tooltip.svg';
-import { ReactComponent as ExternalLinkIcon } from '@netapp/icons/ic_external_link.svg';
 import styles from './InputCard.module.scss';
 import CommonStyles from '../../../../../../utils/CommonStyles.module.scss';
-import SsmArnTooltipContent from '../../../../../../common/SsmArnTooltipContent/SsmArnTooltipContent';
+import GovCloudSsmSection, {
+    SsmArnFormatTooltip
+} from '../../../../../../common/GovCloudSsmSection/GovCloudSsmSection';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import {
     setDetectONTAPPassword,
@@ -217,44 +218,23 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                     </div>
 
                     {isGovAccount ? (
-                        <div className={styles.govCloudSection}>
-                            <TextField
-                                label={t('databases.register-flow.ssm-parameter-arn-label')}
-                                info={
-                                    <SsmArnTooltipContent
-                                        tooltipKey="databases.register-flow.ssm-parameter-tooltip-fsx"
-                                        tooltipJsonKey="databases.register-flow.ssm-tooltip-json-fsx"
-                                    />
-                                }
-                                value={inventoryV2State.detectOntapSsmParameterArn}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                    dispatch(setDetectONTAPSsmParameterArn(e.target.value));
-                                }}
-                                className={`${styles.govCloudTextField} ${fsxAllAuthFailed ? styles.errorBorder : ''}`}
-                                error={
-                                    !inventoryV2State.detectOntapSsmParameterArn && hitNextForStep2
-                                        ? t('databases.general.action-required')
-                                        : inventoryV2State.detectOntapSsmParameterArn &&
-                                          !isValidSsmArn(inventoryV2State.detectOntapSsmParameterArn)
-                                        ? t('databases.register-flow.ssm-parameter-arn-invalid')
-                                        : fsxAllAuthFailed
-                                        ? t('databases.register-flow.fsx-authentication-failed')
-                                        : ''
-                                }
-                                placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
-                                isDisabled={isLoading}
-                            />
-
-                            <a
-                                href={t('databases.register-flow.govcloud-ssm-docs-url')}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.learnMoreLink}
-                            >
-                                {t('databases.register-flow.govcloud-ssm-learn-more')}
-                                <ExternalLinkIcon className={styles.externalLinkIcon} />
-                            </a>
-                        </div>
+                        <GovCloudSsmSection
+                            arnValue={inventoryV2State.detectOntapSsmParameterArn}
+                            onArnChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                dispatch(setDetectONTAPSsmParameterArn(e.target.value));
+                            }}
+                            jsonExample="databases.register-flow.ssm-tooltip-json-fsx"
+                            errorMessage={
+                                fsxAllAuthFailed ? t('databases.register-flow.fsx-authentication-failed') : ''
+                            }
+                            isValid={
+                                !!inventoryV2State.detectOntapSsmParameterArn &&
+                                isValidSsmArn(inventoryV2State.detectOntapSsmParameterArn)
+                            }
+                            showRequiredError={!inventoryV2State.detectOntapSsmParameterArn && hitNextForStep2}
+                            isDisabled={isLoading}
+                            learnMoreUrl={t('databases.register-flow.govcloud-ssm-docs-url')}
+                        />
                     ) : (
                         <div className={styles.textFieldContainer}>
                             <TextField
@@ -302,38 +282,40 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
             {selectedFSxForOntapCredentials === FSX_FOR_ONTAP_CRED_OPTION.MANAGE_CRED_MANUALLY && (
                 <div className={classNames(styles.card2, { [styles.govCloudCard]: isGovAccount })}>
                     {isGovAccount && (
-                        <div className={styles.govCloudManualHeader}>
-                            <div className={styles.headerPart}>
-                                <DsTypography variant="Semibold_14">
-                                    {t('databases.register-flow.govcloud-fsx-require-auth')} ({fsxList.length})
+                        <div className={styles.govCloudManualTop}>
+                            <div className={styles.topHeading}>
+                                <div className={styles.headerPart}>
+                                    <DsTypography variant="Semibold_14">
+                                        {`${t('databases.register-flow.govcloud-fsx-require-auth')} (${
+                                            fsxList.length
+                                        })`}
+                                    </DsTypography>
+                                    <Popover
+                                        popoverClass={CommonStyles.scrollablePopover}
+                                        trigger="hover"
+                                        placement="bottom"
+                                        delayHide={200}
+                                        interactive
+                                        isAppendedToBody
+                                        container={<InfoIcon className={CommonStyles.infoIcon} />}
+                                    >
+                                        {tooltipContent}
+                                    </Popover>
+                                </div>
+
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.register-flow.govcloud-ssm-description-line1', {
+                                        count: fsxList.length
+                                    })}{' '}
+                                    {t('databases.register-flow.govcloud-ssm-description-line2')}
                                 </DsTypography>
-                                <Popover
-                                    popoverClass={CommonStyles.scrollablePopover}
-                                    trigger="hover"
-                                    placement="bottom"
-                                    delayHide={200}
-                                    interactive
-                                    isAppendedToBody
-                                    container={<InfoIcon className={CommonStyles.infoIcon} />}
-                                >
-                                    {tooltipContent}
-                                </Popover>
                             </div>
-                            <DsTypography variant="Regular_14">
-                                {t('databases.register-flow.govcloud-ssm-description-line1', {
-                                    count: fsxList.length
-                                })}{' '}
-                                {t('databases.register-flow.govcloud-ssm-description-line2')}
-                            </DsTypography>
-                            <a
-                                href={t('databases.register-flow.govcloud-ssm-docs-url')}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={styles.learnMoreLink}
-                            >
-                                {t('databases.register-flow.govcloud-ssm-learn-more')}
-                                <ExternalLinkIcon className={styles.externalLinkIcon} />
-                            </a>
+
+                            <GovCloudSsmSection
+                                instructionalOnly
+                                jsonExample="databases.register-flow.ssm-tooltip-json-fsx"
+                                learnMoreUrl={t('databases.register-flow.govcloud-ssm-docs-url')}
+                            />
                         </div>
                     )}
 
@@ -363,16 +345,21 @@ const InputCard = ({ isBulkMode = false, isLoading = false }: InputCardProps) =>
                                     </DsTypography>
                                 </div>
 
-                                <div className={styles.textFieldContainer}>
+                                <div
+                                    className={`${styles.textFieldContainer} ${
+                                        isGovAccount ? styles.govCloudTextFieldContainer : ''
+                                    }`}
+                                >
                                     {isGovAccount ? (
                                         <TextField
-                                            label={t('databases.register-flow.ssm-parameter-arn-label')}
-                                            info={
-                                                <SsmArnTooltipContent
-                                                    tooltipKey="databases.register-flow.ssm-parameter-tooltip-fsx"
-                                                    tooltipJsonKey="databases.register-flow.ssm-tooltip-json-fsx"
-                                                />
-                                            }
+                                            label={t('databases.register-flow.govcloud-ssm-endpoint-label')}
+                                            info={<SsmArnFormatTooltip />}
+                                            infoProps={{
+                                                interactive: true,
+                                                delayHide: 300,
+                                                placement: 'right',
+                                                isAppendedToBody: true
+                                            }}
                                             value={detectOntapCredentialsByFsx[fsx.fsxId]?.ssmParameterArn || ''}
                                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                                 dispatch(

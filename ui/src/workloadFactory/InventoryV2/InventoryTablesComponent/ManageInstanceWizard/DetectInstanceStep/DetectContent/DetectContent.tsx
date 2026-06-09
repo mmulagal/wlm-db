@@ -1,10 +1,10 @@
 import { DsTypography, PasswordField, RadioButton, TextField, useWizard } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import classNames from 'classnames';
 import styles from './DetectContent.module.scss';
-import SsmArnTooltipContent from '../../../../../../common/SsmArnTooltipContent/SsmArnTooltipContent';
+import GovCloudSsmSection from '../../../../../../common/GovCloudSsmSection/GovCloudSsmSection';
 import { useAppSelector } from '../../../../../../store/storeHooks';
 import {
     ACTION_TYPE,
@@ -159,15 +159,6 @@ const DetectContent = () => {
         const wizardKey = isFsx ? ONTAP_SSM_WIZARD_KEY : SSM_WIZARD_KEY;
         const storeValue = isFsx ? detectOntapSsmParameterArn : detectSsmParameterArn;
         const errorField = isFsx ? detectCredentialErrors?.fsxnError : detectCredentialErrors?.databaseServerError;
-        const dbHeading = isWindowsAuth
-            ? t('databases.register-flow.detect-windows-heading')
-            : t('databases.register-flow.detect-sql-heading');
-        const heading = isFsx ? t('databases.register-flow.detect-fsx-heading') : dbHeading;
-
-        const dbTooltipKey = isWindowsAuth
-            ? 'databases.register-flow.ssm-parameter-tooltip-ad'
-            : 'databases.register-flow.ssm-parameter-tooltip-db';
-        const tooltipKey = isFsx ? 'databases.register-flow.ssm-parameter-tooltip-fsx' : dbTooltipKey;
 
         const dbJsonKey = isWindowsAuth
             ? 'databases.register-flow.ssm-tooltip-json-ad'
@@ -176,28 +167,19 @@ const DetectContent = () => {
 
         return (
             <div className={isFsx ? styles.secondSection : styles.firstSection}>
-                <DsTypography variant="Semibold_14">{heading}</DsTypography>
-                <div className={styles.textFieldContainer}>
-                    <TextField
-                        label={t('databases.register-flow.ssm-parameter-arn-label')}
-                        info={<SsmArnTooltipContent tooltipKey={tooltipKey} tooltipJsonKey={jsonKey} />}
-                        value={value}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            setter(e.target.value);
-                            setState({ [wizardKey]: e.target.value });
-                        }}
-                        className={styles.textFieldStyle}
-                        error={
-                            errorField ||
-                            (!storeValue && hitNext ? t('databases.general.action-required') : '') ||
-                            (storeValue && !isValidSsmArn(storeValue)
-                                ? t('databases.register-flow.ssm-parameter-arn-invalid')
-                                : '')
-                        }
-                        isDisabled={isDetectHostLoading}
-                        placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
-                    />
-                </div>
+                <GovCloudSsmSection
+                    arnValue={value}
+                    onArnChange={(e: ChangeEvent<HTMLInputElement>) => {
+                        setter(e.target.value);
+                        setState({ [wizardKey]: e.target.value });
+                    }}
+                    jsonExample={jsonKey}
+                    errorMessage={errorField || ''}
+                    isValid={!!storeValue && isValidSsmArn(storeValue)}
+                    showRequiredError={!storeValue && hitNext}
+                    isDisabled={isDetectHostLoading}
+                    learnMoreUrl={t('databases.register-flow.govcloud-ssm-docs-url')}
+                />
             </div>
         );
     };

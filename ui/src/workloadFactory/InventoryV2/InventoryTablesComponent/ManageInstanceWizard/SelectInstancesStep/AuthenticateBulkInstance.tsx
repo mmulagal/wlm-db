@@ -1,4 +1,4 @@
-import { Popover, PasswordField, useDialog, DsTypography as NdsTypography } from '@netapp/design-system';
+import { Popover, PasswordField, useDialog, DsTypography as NdsTypography, TextField } from '@netapp/design-system';
 import { DsRadioButton, DsTextField, DsTypography } from '@tlveng/wlm-ds';
 import { SelectField, optionType } from '@netapp/design-system/dist/components/Select';
 import { ReactComponent as CloseIcon } from '@netapp/icons/ic_close.svg';
@@ -21,8 +21,8 @@ import {
     removeInstanceCredentials,
     setSelectedMultiDetectInstances
 } from '../../../../../store/workloadFactory/inventoryV2Slice';
-import { AUTHENTICATION_TYPE, CREDENTIAL_OPTIONS, DBType } from '../../../../../utils/consts';
-import SsmParameterArnField from '../../../../../common/SsmParameterArnField/SsmParameterArnField';
+import { AUTHENTICATION_TYPE, CREDENTIAL_OPTIONS, DBType, isValidSsmArn } from '../../../../../utils/consts';
+import GovCloudSsmSection, { SsmArnFormatTooltip } from '../../../../../common/GovCloudSsmSection/GovCloudSsmSection';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../../store/notificationSlice';
 import styles from './AuthenticateBulkInstance.module.scss';
 import CommonStyles from '../../../../../utils/CommonStyles.module.scss';
@@ -517,28 +517,42 @@ export const Content = () => {
                     </div>
 
                     <div className={styles.formFields}>
+                        <SelectField
+                            label={t('databases.register-flow.select-authentication-mode')}
+                            value={authMode}
+                            onChange={(selectedOption: optionType) =>
+                                dispatch(setBulkInstanceCredentials({ authMode: selectedOption }))
+                            }
+                            options={authModeOptions}
+                            isClearable={false}
+                            isSearchable={false}
+                            className={`${styles.selectField} ${allFailed ? styles.errorBorder : ''}`}
+                            isDisabled={isDetectHostLoading}
+                        />
+
                         {isGovAccount ? (
-                            <SsmParameterArnField
-                                value={ssmParameterArn}
-                                onChange={value => dispatch(setBulkInstanceCredentials({ ssmParameterArn: value }))}
-                                className={styles.textField}
+                            <GovCloudSsmSection
+                                arnValue={ssmParameterArn}
+                                onArnChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                    dispatch(setBulkInstanceCredentials({ ssmParameterArn: e.target.value }))
+                                }
+                                jsonExample={
+                                    authMode?.value === AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION
+                                        ? 'databases.register-flow.ssm-tooltip-json-ad'
+                                        : 'databases.register-flow.ssm-tooltip-json-db'
+                                }
+                                errorMessage={
+                                    allFailed && allErrorsSame
+                                        ? (Object.values(instanceAuthErrors || {})[0] as string) ||
+                                          t('databases.register-flow.authentication-failed')
+                                        : ''
+                                }
+                                isValid={!!ssmParameterArn && isValidSsmArn(ssmParameterArn)}
                                 isDisabled={isDetectHostLoading}
+                                learnMoreUrl={t('databases.register-flow.govcloud-ssm-docs-url')}
                             />
                         ) : (
                             <>
-                                <SelectField
-                                    label={t('databases.register-flow.select-authentication-mode')}
-                                    value={authMode}
-                                    onChange={(selectedOption: any) =>
-                                        dispatch(setBulkInstanceCredentials({ authMode: selectedOption }))
-                                    }
-                                    options={authModeOptions}
-                                    isClearable={false}
-                                    isSearchable={false}
-                                    className={`${styles.selectField} ${allFailed ? styles.errorBorder : ''}`}
-                                    isDisabled={isDetectHostLoading}
-                                />
-
                                 <DsTextField
                                     title={getAuthFieldLabels(authMode?.value, t).usernameLabel}
                                     value={username}
@@ -626,32 +640,54 @@ export const Content = () => {
                                 </div>
 
                                 <div className={styles.instanceFields}>
+                                    <SelectField
+                                        label={t('databases.register-flow.select-authentication-mode')}
+                                        value={creds.authMode}
+                                        onChange={(selectedOption: optionType) =>
+                                            handleInstanceUpdate(instance.uniqueKey, 'authMode', selectedOption)
+                                        }
+                                        options={authModeOptions}
+                                        isClearable={false}
+                                        isSearchable={false}
+                                        isDisabled={authenticated || isDetectHostLoading}
+                                        className={`${styles.instanceSelectField} ${failed ? styles.errorBorder : ''}`}
+                                    />
+
                                     {isGovAccount ? (
-                                        <SsmParameterArnField
+                                        <TextField
+                                            label={t('databases.register-flow.govcloud-ssm-endpoint-label')}
+                                            info={<SsmArnFormatTooltip />}
+                                            infoProps={{
+                                                interactive: true,
+                                                delayHide: 300,
+                                                placement: 'right',
+                                                isAppendedToBody: true
+                                            }}
                                             value={instanceCredentials[instance.uniqueKey]?.ssmParameterArn || ''}
-                                            onChange={value =>
-                                                handleInstanceUpdate(instance.uniqueKey, 'ssmParameterArn', value)
+                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                                handleInstanceUpdate(
+                                                    instance.uniqueKey,
+                                                    'ssmParameterArn',
+                                                    e.target.value
+                                                )
                                             }
                                             className={styles.instanceTextField}
                                             isDisabled={authenticated || isDetectHostLoading}
+                                            error={
+                                                failed
+                                                    ? instanceError ||
+                                                      t('databases.register-flow.authentication-failed')
+                                                    : instanceCredentials[instance.uniqueKey]?.ssmParameterArn &&
+                                                      !isValidSsmArn(
+                                                          instanceCredentials[instance.uniqueKey]?.ssmParameterArn || ''
+                                                      )
+                                                    ? t('databases.register-flow.ssm-parameter-arn-invalid')
+                                                    : ''
+                                            }
+                                            placeholder={t('databases.register-flow.ssm-parameter-arn-placeholder')}
                                         />
                                     ) : (
                                         <>
-                                            <SelectField
-                                                label={t('databases.register-flow.select-authentication-mode')}
-                                                value={creds.authMode}
-                                                onChange={(selectedOption: any) =>
-                                                    handleInstanceUpdate(instance.uniqueKey, 'authMode', selectedOption)
-                                                }
-                                                options={authModeOptions}
-                                                isClearable={false}
-                                                isSearchable={false}
-                                                isDisabled={authenticated || isDetectHostLoading}
-                                                className={`${styles.instanceSelectField} ${
-                                                    failed ? styles.errorBorder : ''
-                                                }`}
-                                            />
-
                                             <DsTextField
                                                 title={getAuthFieldLabels(creds.authMode?.value, t).usernameLabel}
                                                 value={creds.username}

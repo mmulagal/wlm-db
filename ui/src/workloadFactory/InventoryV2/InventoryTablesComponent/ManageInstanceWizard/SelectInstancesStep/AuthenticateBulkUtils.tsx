@@ -383,7 +383,6 @@ export const createBulkAuthPayload = (
             ssmParameterArn = creds?.ssmParameterArn || '';
         }
 
-        // Determine resource type based on auth mode
         const isSqlAuth = authMode === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION;
         const resourceType = isSqlAuth ? DETECT_HOST_VAR.MSSQL : DETECT_HOST_VAR.WINDOWS;
 
