@@ -5,15 +5,25 @@ import { ReactComponent as Bullet } from '../../../../../assets/ic_bullet.svg';
 import styles from './OneTimeWADDialogContent.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { DBType } from '../../../../../utils/consts';
+import WADEngineTypeSelector from '../../../../DatabaseHomePage/HeaderComponent/WADButton/WADEngineTypeSelector';
 
-const OneTimeWADDialogContent = () => {
+type OneTimeWADDialogContentProps = {
+    showEngineTypeSelector?: boolean;
+};
+
+const OneTimeWADDialogContent = ({ showEngineTypeSelector = false }: OneTimeWADDialogContentProps) => {
     const { t } = useTranslation();
-    const { selectedHostType } = useAppSelector(state => state.inventoryV2);
+    const { selectedHostType, selectedEngineTypeForWADDashboard } = useAppSelector(state => state.inventoryV2);
+    const engineType = showEngineTypeSelector ? selectedEngineTypeForWADDashboard : selectedHostType;
+
     return (
         <div className={styles.wadDialogContent}>
+            {showEngineTypeSelector && (
+                <WADEngineTypeSelector className={styles.dialogEngineTypeSelector} />
+            )}
             <div className={styles.partOne}>
                 <DsTypography variant="Regular_14">
-                    {selectedHostType === DBType.MSSQL
+                    {engineType === DBType.MSSQL
                         ? t('databases.inventory.one-time-wad-dialog-content')
                         : t('databases.inventory.one-time-wad-dialog-content-oracle')}
                 </DsTypography>
@@ -59,7 +69,7 @@ const OneTimeWADDialogContent = () => {
                             >
                                 <AccordionCardContent>
                                     <Typography variant="Regular_14">
-                                        {selectedHostType === DBType.MSSQL && (
+                                        {engineType === DBType.MSSQL && (
                                             <div className={styles.allContent}>
                                                 <div className={styles.listItems}>
                                                     <div className={styles.numberDigit}>1 &nbsp;|</div>
@@ -102,7 +112,7 @@ const OneTimeWADDialogContent = () => {
                                             </div>
                                         )}
 
-                                        {selectedHostType === DBType.ORACLE && (
+                                        {engineType === DBType.ORACLE && (
                                             <div className={styles.allContent}>
                                                 <div className={styles.listItems}>
                                                     <div className={styles.numberDigit}>1 &nbsp;|</div>
@@ -158,7 +168,7 @@ const OneTimeWADDialogContent = () => {
                             >
                                 <AccordionCardContent>
                                     <Typography variant="Regular_14">
-                                        {selectedHostType === DBType.MSSQL && (
+                                        {engineType === DBType.MSSQL && (
                                             <div className={styles.partOne}>
                                                 <div className={styles.list}>
                                                     <div className={styles.listItem} style={{ marginTop: '24px' }}>
@@ -191,7 +201,7 @@ const OneTimeWADDialogContent = () => {
                                             </div>
                                         )}
 
-                                        {selectedHostType === DBType.ORACLE && (
+                                        {engineType === DBType.ORACLE && (
                                             <div className={styles.partOne}>
                                                 <div className={styles.list}>
                                                     <div className={styles.listItem} style={{ marginTop: '24px' }}>
@@ -241,7 +251,7 @@ const OneTimeWADDialogContent = () => {
                             >
                                 <AccordionCardContent>
                                     <Typography variant="Regular_14">
-                                        {selectedHostType === DBType.MSSQL && (
+                                        {engineType === DBType.MSSQL && (
                                             <div className={styles.partOne}>
                                                 <div className={styles.list}>
                                                     <div className={styles.listItem} style={{ marginTop: '24px' }}>
@@ -348,7 +358,7 @@ const OneTimeWADDialogContent = () => {
                                                 </div>
                                             </div>
                                         )}
-                                        {selectedHostType === DBType.ORACLE && (
+                                        {engineType === DBType.ORACLE && (
                                             <div className={styles.partOne}>
                                                 <div className={styles.list}>
                                                     <div className={styles.listItem} style={{ marginTop: '24px' }}>

@@ -141,6 +141,7 @@ export interface InventorySliceData {
         [key: string]: any;
     };
     selectedHostType: string;
+    selectedEngineTypeForWADDashboard: string;
     hostTableRows: Array<any>;
     instanceTableRows: Array<any>;
     databaseTableRows: Array<any>;

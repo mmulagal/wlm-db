@@ -126,6 +126,7 @@ const initialInventoryV2State: InventorySliceData = {
         databaseTable: getInitialDatabaseTableColState(DBType.MSSQL)
     },
     selectedHostType: 'Microsoft SQL Server',
+    selectedEngineTypeForWADDashboard: DBType.MSSQL,
     hostTableRows: [],
     instanceTableRows: [],
     databaseTableRows: [],
@@ -607,6 +608,9 @@ const inventoryV2Slice = createSlice({
                 databaseTable: getInitialDatabaseTableColState(action.payload)
             };
         },
+        setSelectedEngineTypeForWADDashboard: (state, action: PayloadAction<string>) => {
+            state.selectedEngineTypeForWADDashboard = action.payload;
+        },
         setFullInventoryTablesRows: (state, action: PayloadAction<any>) => {
             state.fullHostTableRows = action.payload?.hosts;
             state.fullInstanceTableRows = action.payload?.instances;
@@ -835,6 +839,7 @@ export const {
     setDatabaseTableRows,
     setInventoryTablesRows,
     setSelectedHostType,
+    setSelectedEngineTypeForWADDashboard,
     setFullInventoryTablesRows,
     setDashSandboxListData,
     setDashSandboxListLoading,

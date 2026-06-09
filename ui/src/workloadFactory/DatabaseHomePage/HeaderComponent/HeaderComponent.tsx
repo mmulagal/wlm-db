@@ -124,6 +124,7 @@ import { clearDataMap } from '../../../store/workloadFactory/snapcenterSlice';
 import DashboardOverview from '../../Dashboard/DashboardOverview/DashboardOverview';
 import WellArchitectedTab from '../../WellArchitectedTab/WellArchitectedTab';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
+import WADButton from './WADButton/WADButton';
 
 type Tab = {
     tab: string;
@@ -1611,7 +1612,9 @@ const HeaderComponent = ({ tab }: Tab) => {
                             <div className={styles.inventoryHeaderSection}>
                                 <div className={styles.contentArea}>
                                     {selectMultipleComponents()}
-                                    <div className={styles.content}>{refreshComponent()}</div>
+                                    <div className={styles.content}>
+                                        <WADButton />
+                                        {refreshComponent()}</div>
                                 </div>
                             </div>
 

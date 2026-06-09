@@ -409,6 +409,7 @@
         .content {
             display: flex;
             gap: 24px;
+            align-items: center;
 
             .multiSelect {
                 [class*='dsTextFieldFrame'] {
