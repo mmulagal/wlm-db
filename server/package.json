@@ -1,6 +1,6 @@
 {
     "name": "server",
-    "version": "3.0.0",
+    "version": "3.0.1",
     "description": "Server App for Workload Manager for DB",
     "type": "module",
     "private": true,
@@ -63,8 +63,8 @@
         "@fastify/swagger-ui": "^5.2.6",
         "@fastify/type-provider-typebox": "^6.1.0",
         "@opentelemetry/instrumentation-fastify": "^0.57.0",
-        "@opentelemetry/instrumentation-http": "^0.215.0",
-        "@opentelemetry/sdk-node": "^0.215.0",
+        "@opentelemetry/instrumentation-http": "^0.218.0",
+        "@opentelemetry/sdk-node": "^0.218.0",
         "@prisma/client": "^6.19.3",
         "@prisma/instrumentation": "^6.19.3",
         "@smithy/protocol-http": "^5.4.3",
