@@ -1543,6 +1543,8 @@
             "package-installation-failed": "Failed Plug-in installation.",
             "delete-host-failed": "Failed to delete existing host",
             "select-engine-type": "Select engine type",
+            "select-engine-type-for-download": "Select engine type for the assessment script",
+            "select-engine-type-for-upload": "Select engine type for the uploaded assessment file",
             "mssql": "Microsoft SQL Server",
             "oracle": "Oracle",
             "pgsql": "PostgreSQL"

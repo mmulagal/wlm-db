@@ -98,11 +98,15 @@ const WADButton = () => {
         }
     };
 
-    const openEngineTypeDialog = (primaryButtonLabel: string, onConfirm: () => void) => {
+    const openEngineTypeDialog = (
+        primaryButtonLabel: string,
+        onConfirm: () => void,
+        context: 'download' | 'upload'
+    ) => {
         setDialog(
             <DialogComponent
                 header={t('databases.inventory.select-engine-type')}
-                content={<WADEngineTypeSelector showLabel={false} />}
+                content={<WADEngineTypeSelector context={context} />}
                 primaryButton={primaryButtonLabel}
                 secondaryButton={GENERAL.CLOSE}
                 callback={() => {
@@ -291,11 +295,15 @@ const WADButton = () => {
                             label: t('databases.inventory.download-script'),
                             isDisabled: false,
                             onClick: () => {
-                                openEngineTypeDialog(t('databases.inventory.download-script'), () => {
-                                    const engineType =
-                                        store.getState().inventoryV2.selectedEngineTypeForWADDashboard;
-                                    downloadWADScript(engineType);
-                                });
+                                openEngineTypeDialog(
+                                    t('databases.inventory.download-script'),
+                                    () => {
+                                        const engineType =
+                                            store.getState().inventoryV2.selectedEngineTypeForWADDashboard;
+                                        downloadWADScript(engineType);
+                                    },
+                                    'download'
+                                );
                             }
                         },
                         {
@@ -303,7 +311,11 @@ const WADButton = () => {
                             label: t('databases.inventory.upload-results'),
                             isDisabled: false,
                             onClick: () => {
-                                openEngineTypeDialog(t('databases.inventory.upload-results'), handleFileInputClick);
+                                openEngineTypeDialog(
+                                    t('databases.inventory.upload-results'),
+                                    handleFileInputClick,
+                                    'upload'
+                                );
                             }
                         }
                     ]
