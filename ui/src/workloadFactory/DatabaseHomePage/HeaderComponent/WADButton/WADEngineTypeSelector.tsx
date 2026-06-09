@@ -1,6 +1,7 @@
 import { DsRadioButton, DsSingleFileUpload, DsTypography } from '@tlveng/wlm-ds';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
+import { useAppDispatch } from '../../../../store/storeHooks';
 import { DBType } from '../../../../utils/consts';
 import { setSelectedEngineTypeForWADDashboard } from '../../../../store/workloadFactory/inventoryV2Slice';
 import styles from '../../../../common/EngineTypeSelector/EngineTypeSelector.module.scss';
@@ -11,13 +12,27 @@ type WADEngineTypeSelectorContext = 'learn' | 'download' | 'upload';
 type WADEngineTypeSelectorProps = {
     context?: WADEngineTypeSelectorContext;
     className?: string;
+    initialEngineType?: string;
+    onEngineTypeChange?: (engineType: string) => void;
     onFileChange?: (file: File | null) => void;
 };
 
-const WADEngineTypeSelector = ({ context = 'learn', className, onFileChange }: WADEngineTypeSelectorProps) => {
+const WADEngineTypeSelector = ({
+    context = 'learn',
+    className,
+    initialEngineType = DBType.MSSQL,
+    onEngineTypeChange,
+    onFileChange
+}: WADEngineTypeSelectorProps) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
-    const { selectedEngineTypeForWADDashboard } = useAppSelector(state => state.inventoryV2);
+    const [selectedEngineType, setSelectedEngineType] = useState(initialEngineType);
+
+    const handleEngineTypeChange = (engineType: string) => {
+        setSelectedEngineType(engineType);
+        dispatch(setSelectedEngineTypeForWADDashboard(engineType));
+        onEngineTypeChange?.(engineType);
+    };
 
     const descriptionText =
         context === 'download'
@@ -36,20 +51,22 @@ const WADEngineTypeSelector = ({ context = 'learn', className, onFileChange }: W
                     id="wad-dashboard-mssql-engine-type"
                     data-testid="wlm-db-wad-dashboard-mssql-engine-type-selector"
                     variant="Default"
+                    groupName="wad-dashboard-engine-type"
                     title={t('databases.inventory.mssql')}
-                    isSelected={selectedEngineTypeForWADDashboard === DBType.MSSQL}
+                    isSelected={selectedEngineType === DBType.MSSQL}
                     onClick={() => {
-                        dispatch(setSelectedEngineTypeForWADDashboard(DBType.MSSQL));
+                        handleEngineTypeChange(DBType.MSSQL);
                     }}
                 />
                 <DsRadioButton
                     id="wad-dashboard-oracle-engine-type"
                     data-testid="wlm-db-wad-dashboard-oracle-engine-type-selector"
                     variant="Default"
+                    groupName="wad-dashboard-engine-type"
                     title={t('databases.inventory.oracle')}
-                    isSelected={selectedEngineTypeForWADDashboard === DBType.ORACLE}
+                    isSelected={selectedEngineType === DBType.ORACLE}
                     onClick={() => {
-                        dispatch(setSelectedEngineTypeForWADDashboard(DBType.ORACLE));
+                        handleEngineTypeChange(DBType.ORACLE);
                     }}
                 />
             </div>

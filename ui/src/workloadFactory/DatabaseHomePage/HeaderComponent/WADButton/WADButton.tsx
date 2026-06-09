@@ -3,7 +3,6 @@ import { useRef } from 'react';
 import { compressSync } from 'fflate';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
-import store from '../../../../store/store';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     useGetOneTimeWADDownloadScriptMutation,
@@ -33,8 +32,8 @@ const WADButton = () => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
     const selectedUploadFileRef = useRef<File | null>(null);
+    const selectedEngineTypeRef = useRef(DBType.MSSQL);
 
-    const { selectedEngineTypeForWADDashboard } = useAppSelector(state => state.inventoryV2);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
     const { regionMapping, headerSelectedMultiRegionIdsList, getRegions, headerSelectedMultiRegion } = useAppSelector(
         state => state.headers
@@ -95,11 +94,16 @@ const WADButton = () => {
         selectedUploadFileRef.current = file;
     };
 
+    const handleEngineTypeChange = (engineType: string) => {
+        selectedEngineTypeRef.current = engineType;
+    };
+
     const openEngineTypeDialog = (
         primaryButtonLabel: string,
         context: 'download' | 'upload',
         onConfirm?: () => void
     ) => {
+        selectedEngineTypeRef.current = DBType.MSSQL;
         if (context === 'upload') {
             selectedUploadFileRef.current = null;
         }
@@ -114,6 +118,8 @@ const WADButton = () => {
                 content={
                     <WADEngineTypeSelector
                         context={context}
+                        initialEngineType={DBType.MSSQL}
+                        onEngineTypeChange={handleEngineTypeChange}
                         onFileChange={context === 'upload' ? handleUploadFileChange : undefined}
                     />
                 }
@@ -123,7 +129,10 @@ const WADButton = () => {
                     closeDialog();
                     if (context === 'upload') {
                         if (selectedUploadFileRef.current) {
-                            uploadWADScript(selectedUploadFileRef.current);
+                            uploadWADScript(
+                                selectedUploadFileRef.current,
+                                selectedEngineTypeRef.current
+                            );
                         } else {
                             dispatch(
                                 addNotification({
@@ -141,7 +150,7 @@ const WADButton = () => {
         );
     };
 
-    const uploadWADScript = async (selectedFile: File) => {
+    const uploadWADScript = async (selectedFile: File, engineType: string) => {
         if (!selectedFile) return;
 
         if (selectedFile.type !== 'application/json' && !selectedFile.name.endsWith('.json') && !isDemoMode) {
@@ -192,7 +201,7 @@ const WADButton = () => {
 
                 if (compressedBase64) {
                     const result = await getOneTimeWADUploadScript({
-                        type: getEngineApiType(selectedEngineTypeForWADDashboard),
+                        type: getEngineApiType(engineType),
                         payload: {
                             fileContent: compressedBase64,
                             fileName: selectedFile.name
@@ -249,7 +258,7 @@ const WADButton = () => {
 
                                     clearInterval(jobInterval);
 
-                                    if (selectedEngineTypeForWADDashboard === DBType.ORACLE) {
+                                    if (engineType === DBType.ORACLE) {
                                         refreshOfflineOracleAssessmentData(
                                             getAllOfflineOracleAssessmentAPI,
                                             dispatch,
@@ -311,9 +320,7 @@ const WADButton = () => {
                                     t('databases.inventory.download-script'),
                                     'download',
                                     () => {
-                                        const engineType =
-                                            store.getState().inventoryV2.selectedEngineTypeForWADDashboard;
-                                        downloadWADScript(engineType);
+                                        downloadWADScript(selectedEngineTypeRef.current);
                                     }
                                 );
                             }
