@@ -19,7 +19,10 @@ const OneTimeWADDialogContent = ({ showEngineTypeSelector = false }: OneTimeWADD
     return (
         <div className={styles.wadDialogContent}>
             {showEngineTypeSelector && (
-                <WADEngineTypeSelector className={styles.dialogEngineTypeSelector} />
+                <div className={styles.partOne}>
+                    <DsTypography variant="Semibold_14">{t('databases.inventory.select-engine-type')}</DsTypography>
+                    <WADEngineTypeSelector className={styles.dialogEngineTypeSelector} />
+                </div>
             )}
             <div className={styles.partOne}>
                 <DsTypography variant="Regular_14">

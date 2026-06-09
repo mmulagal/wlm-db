@@ -1,4 +1,4 @@
-import { DsRadioButton, DsTypography } from '@tlveng/wlm-ds';
+import { DsRadioButton, DsSingleFileUpload, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
 import { DBType } from '../../../../utils/consts';
@@ -11,9 +11,10 @@ type WADEngineTypeSelectorContext = 'learn' | 'download' | 'upload';
 type WADEngineTypeSelectorProps = {
     context?: WADEngineTypeSelectorContext;
     className?: string;
+    onFileChange?: (file: File | null) => void;
 };
 
-const WADEngineTypeSelector = ({ context = 'learn', className }: WADEngineTypeSelectorProps) => {
+const WADEngineTypeSelector = ({ context = 'learn', className, onFileChange }: WADEngineTypeSelectorProps) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const { selectedEngineTypeForWADDashboard } = useAppSelector(state => state.inventoryV2);
@@ -30,7 +31,7 @@ const WADEngineTypeSelector = ({ context = 'learn', className }: WADEngineTypeSe
             {descriptionText && (
                 <DsTypography variant="Regular_14">{descriptionText}</DsTypography>
             )}
-            <div className={`${styles['engine-type-selector']} ${className ?? ''}`}>                
+            <div className={`${styles['engine-type-selector-dialog']} ${className ?? ''}`}>                
                 <DsRadioButton
                     id="wad-dashboard-mssql-engine-type"
                     data-testid="wlm-db-wad-dashboard-mssql-engine-type-selector"
@@ -52,6 +53,19 @@ const WADEngineTypeSelector = ({ context = 'learn', className }: WADEngineTypeSe
                     }}
                 />
             </div>
+            {context === 'upload' && (
+                <DsSingleFileUpload
+                    style={{marginTop: '10px'}}
+                    title={t('databases.inventory.wad-upload-file-label')}
+                    placeholder={t('databases.inventory.wad-upload-file-placeholder')}                    
+                    acceptableTypes={['.json']}
+                    data-testid="wlm-db-wad-upload-file-uploader"
+                    onChange={uploadedFile => {
+                        const file = uploadedFile?.data?.get('file') as File | undefined;
+                        onFileChange?.(file ?? null);
+                    }}
+                />
+            )}
         </div>
     );
 };

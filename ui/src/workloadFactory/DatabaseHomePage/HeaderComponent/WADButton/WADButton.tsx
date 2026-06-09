@@ -26,20 +26,13 @@ import {
 } from '../../../InventoryV2/InventoryTablesComponent/InstancesTable/InstanceTableHelper';
 import WADEngineTypeSelector from './WADEngineTypeSelector';
 
-const WADDialogHeader = () => {
-    const { t } = useTranslation();
-    const { selectedEngineTypeForWADDashboard } = useAppSelector(state => state.inventoryV2);
 
-    return selectedEngineTypeForWADDashboard === DBType.MSSQL
-        ? t('databases.inventory.one-time-wad-dialog-heading-final')
-        : t('databases.inventory.one-time-wad-dialog-heading-oracle');
-};
 
 const WADButton = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const selectedUploadFileRef = useRef<File | null>(null);
 
     const { selectedEngineTypeForWADDashboard } = useAppSelector(state => state.inventoryV2);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
@@ -59,7 +52,7 @@ const WADButton = () => {
     const openWADDialog = () => {
         setDialog(
             <DialogComponent
-                header={<WADDialogHeader />}
+                header={t('databases.inventory.learn-about-one-time-assessment')}
                 content={<OneTimeWADDialogContent showEngineTypeSelector />}
                 secondaryButton={GENERAL.CLOSE}
                 closeCallback={() => {}}
@@ -98,32 +91,57 @@ const WADButton = () => {
         }
     };
 
+    const handleUploadFileChange = (file: File | null) => {
+        selectedUploadFileRef.current = file;
+    };
+
     const openEngineTypeDialog = (
         primaryButtonLabel: string,
-        onConfirm: () => void,
-        context: 'download' | 'upload'
+        context: 'download' | 'upload',
+        onConfirm?: () => void
     ) => {
+        if (context === 'upload') {
+            selectedUploadFileRef.current = null;
+        }
+
         setDialog(
             <DialogComponent
-                header={t('databases.inventory.select-engine-type')}
-                content={<WADEngineTypeSelector context={context} />}
+                header={
+                    context === 'download'
+                        ? t('databases.inventory.download-assessment-script')
+                        : t('databases.inventory.upload-assessment-script')
+                }
+                content={
+                    <WADEngineTypeSelector
+                        context={context}
+                        onFileChange={context === 'upload' ? handleUploadFileChange : undefined}
+                    />
+                }
                 primaryButton={primaryButtonLabel}
                 secondaryButton={GENERAL.CLOSE}
                 callback={() => {
                     closeDialog();
-                    onConfirm();
+                    if (context === 'upload') {
+                        if (selectedUploadFileRef.current) {
+                            uploadWADScript(selectedUploadFileRef.current);
+                        } else {
+                            dispatch(
+                                addNotification({
+                                    notificationType: NOTIFICATION_TYPES.ERROR,
+                                    message: t('databases.inventory.no-file-selected')
+                                })
+                            );
+                        }
+                    } else {
+                        onConfirm?.();
+                    }
                 }}
                 closeCallback={() => closeDialog()}
             />
         );
     };
 
-    const handleFileInputClick = () => {
-        fileInputRef.current?.click();
-    };
-
-    const uploadWADScript = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = event.target.files?.[0];
+    const uploadWADScript = async (selectedFile: File) => {
         if (!selectedFile) return;
 
         if (selectedFile.type !== 'application/json' && !selectedFile.name.endsWith('.json') && !isDemoMode) {
@@ -133,7 +151,6 @@ const WADButton = () => {
                     message: t('databases.inventory.invalid-file-type')
                 })
             );
-            event.target.value = '';
             return;
         }
 
@@ -148,7 +165,6 @@ const WADButton = () => {
                         t('databases.inventory.please-upload-smaller-file')
                 })
             );
-            event.target.value = '';
             return;
         }
 
@@ -268,10 +284,6 @@ const WADButton = () => {
         };
 
         reader.readAsText(selectedFile);
-
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
     };
 
     return (
@@ -297,12 +309,12 @@ const WADButton = () => {
                             onClick: () => {
                                 openEngineTypeDialog(
                                     t('databases.inventory.download-script'),
+                                    'download',
                                     () => {
                                         const engineType =
                                             store.getState().inventoryV2.selectedEngineTypeForWADDashboard;
                                         downloadWADScript(engineType);
-                                    },
-                                    'download'
+                                    }
                                 );
                             }
                         },
@@ -311,22 +323,11 @@ const WADButton = () => {
                             label: t('databases.inventory.upload-results'),
                             isDisabled: false,
                             onClick: () => {
-                                openEngineTypeDialog(
-                                    t('databases.inventory.upload-results'),
-                                    handleFileInputClick,
-                                    'upload'
-                                );
+                                openEngineTypeDialog(t('databases.inventory.upload-results'), 'upload');
                             }
                         }
                     ]
                 }}
-            />
-            <input
-                type="file"
-                ref={fileInputRef}
-                accept=".json"
-                style={{ display: 'none' }}
-                onChange={uploadWADScript}
             />
         </>
     );
