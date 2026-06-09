@@ -2229,7 +2229,8 @@ async function initiateStorageAssessmentCollection(
     } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
 
-    if (isEmpty(mappedVolumesUuids)) {
+    instanceRecord.mappedVolumesUuids = (mappedVolumesUuids ?? []).filter(Boolean);
+    if (isEmpty(instanceRecord.mappedVolumesUuids)) {
         errorMessage = mappedVolumeError
             ? `Found no FSx for ONTAP volumes for the database ${databaseInstanceName}. Oracle mount discovery failed: ${mappedVolumeError}`
             : `Found no FSx for ONTAP volumes for the database ${databaseInstanceName}.`;
