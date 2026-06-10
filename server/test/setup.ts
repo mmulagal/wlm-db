@@ -35,6 +35,7 @@ import './simulator/scopes/cloud-manager/workload-factory-notification-scope';
 import './simulator/scopes/cloud-manager/cloud-manager-audit-scope';
 import './simulator/scopes/cloud-manager/ubr-scope';
 import './simulator/scopes/cloud-manager/cloud-manager-notification-scope';
+import './simulator/scopes/cloud-manager/proxy-forwarder-scope';
 
 // Other Scopes
 import './simulator/scopes/opentelemetry-scope';
