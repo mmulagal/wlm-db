@@ -109,7 +109,7 @@ export const handleDialog = (
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass="innerPage"
+                customClass={isWad ? 'oneTimeWADDialog' : 'innerPage'}
             />
         );
     } else {
@@ -172,7 +172,7 @@ export const handleOntapDialog = (
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass="innerPage"
+                customClass={isWad ? 'oneTimeWADDialog' : 'innerPage'}
             />
         );
     } else {

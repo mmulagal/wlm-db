@@ -8,7 +8,7 @@ import {
     createStandardNotesSection
 } from './DialogContentHelper';
 
-const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
+const StorageLayoutOracleDialog = ({ type, isWad = false }: { type: string; isWad?: boolean }) => {
     const { t } = useTranslation();
     const setContent = () => {
         switch (type) {
@@ -158,16 +158,20 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                     t,
                     t('databases.well-architect.oracle-data-dg-lun-layout-action-summary'),
                     t('databases.well-architect.oracle-data-dg-lun-layout-what-will-happen'),
-                    createStandardNotesSection(),
-                    ''
+                    createStandardNotesSection(t, isWad),
+                    '',
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
                 return createStandardDialog(
                     t,
                     t('databases.well-architect.oracle-log-dg-lun-layout-action-summary'),
                     t('databases.well-architect.oracle-log-dg-lun-layout-what-will-happen'),
-                    createStandardNotesSection(),
-                    ''
+                    createStandardNotesSection(t, isWad),
+                    '',
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
             case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
@@ -175,8 +179,10 @@ const StorageLayoutOracleDialog = ({ type }: { type: string }) => {
                     t,
                     t('databases.well-architect.oracle-fra-dg-lun-layout-action-summary'),
                     t('databases.well-architect.oracle-fra-dg-lun-layout-what-will-happen'),
-                    createStandardNotesSection(),
-                    ''
+                    createStandardNotesSection(t, isWad),
+                    '',
+                    false,
+                    isWad
                 );
         }
     };

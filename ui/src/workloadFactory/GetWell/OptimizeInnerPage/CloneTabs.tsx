@@ -348,24 +348,29 @@ const CloneTabs = ({ fromPage = '', engineType = DBType.MSSQL }: any) => {
     };
 
     const handleBulkActionForClone = (actionType: string, operation?: string, rowData?: any) => {
-        const wadTooltipKey = isOracle
-            ? 'databases.wad.tab-disabled-message-oracle'
-            : 'databases.wad.tab-disabled-message';
         setDialog(
             <DialogComponent
                 header={`${actionType} clone`}
-                content={<DialogContent type={`${GENERAL.CLONE_MANAGEMENT} ${actionType}`} engineType={engineType} />}
-                primaryButton={GENERAL.CONTINUE}
-                secondaryButton={GENERAL.CANCEL}
+                content={
+                    <DialogContent
+                        type={`${GENERAL.CLONE_MANAGEMENT} ${actionType}`}
+                        engineType={engineType}
+                        isWad={isWad}
+                    />
+                }
+                primaryButton={isWad ? GENERAL.CLOSE : GENERAL.CONTINUE}
+                secondaryButton={!isWad ? GENERAL.CANCEL : undefined}
                 callback={() => {
-                    callCloneOptimizeApi(actionType, operation, rowData);
+                    if (isWad) {
+                        closeDialog();
+                    } else {
+                        callCloneOptimizeApi(actionType, operation, rowData);
+                    }
                 }}
                 closeCallback={() => {
                     closeDialog();
                 }}
-                customClass="innerPage"
-                primaryButtonDisabled={isWad}
-                primaryButtonTooltip={isWad ? t(wadTooltipKey) : ''}
+                customClass={isWad ? 'oneTimeWADDialog' : 'innerPage'}
             />
         );
     };

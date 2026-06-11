@@ -89,20 +89,41 @@ export const createCodeBoxWithCopy = (command: string, copiedMessage: string) =>
 );
 
 // Helper function to create standard notes section
-export const createStandardNotesSection = () =>
-    createSection(GENERAL.NOTE, createContentWithBullets([GENERAL.NOTE_PONT_ONE, GENERAL.NOTE_PONT_TWO]), {
+export const createStandardNotesSection = (t?: any, isWad: boolean = false) => {
+    if (isWad) {
+        // For one-time assessment: show only informational note with bullet, no authorization
+        return createSection(GENERAL.NOTE, createContentWithBullets([GENERAL.NOTE_PONT_ONE]), { width: '712px' });
+    }
+
+    // For managed instances: show all notes including authorization
+    return createSection(GENERAL.NOTE, createContentWithBullets([GENERAL.NOTE_PONT_ONE, GENERAL.NOTE_PONT_TWO]), {
         width: '712px'
     });
+};
 
 // Helper function to create OS notes section
-export const createOSNotesSection = () =>
-    createSection(GENERAL.NOTE, createContentWithBullets([GENERAL.OS_NOTE_POINT_ONE, GENERAL.OS_NOTE_POINT_TWO]), {
-        width: '712px'
-    });
+export const createOSNotesSection = (isWad: boolean = false) =>
+    createSection(
+        GENERAL.NOTE,
+        createContentWithBullets(
+            isWad ? [GENERAL.OS_NOTE_POINT_ONE] : [GENERAL.OS_NOTE_POINT_ONE, GENERAL.OS_NOTE_POINT_TWO]
+        ),
+        { width: '712px' }
+    );
 
 // Helper function to create failover cluster notes section
-export const createFailoverClusterNotesSection = (t: any) =>
-    createSection(
+export const createFailoverClusterNotesSection = (t: any, isWad: boolean = false) => {
+    if (isWad) {
+        // For one-time assessment: only informational note with bullet, no authorization
+        return createSection(
+            GENERAL.NOTE,
+            createContentWithBullets([t('databases.well-architect.failover-cluster-note1')]),
+            { width: '712px' }
+        );
+    }
+
+    // For managed instances: include authorization note
+    return createSection(
         GENERAL.NOTE,
         createContentWithBullets([
             t('databases.well-architect.failover-cluster-note1'),
@@ -110,6 +131,7 @@ export const createFailoverClusterNotesSection = (t: any) =>
         ]),
         { width: '712px' }
     );
+};
 
 // Helper function to create drive letter notes section
 export const createDriveLetterNotesSection = (t: any) =>
@@ -118,8 +140,14 @@ export const createDriveLetterNotesSection = (t: any) =>
     });
 
 // Helper function to create cluster quorum and SQL server notes section
-export const createClusterQuorumSQLNotesSection = (t: any) =>
-    createSection(
+export const createClusterQuorumSQLNotesSection = (t: any, isWad: boolean = false) => {
+    if (isWad) {
+        // For one-time assessment: only show downtime warning note
+        return createSection(GENERAL.NOTE, t('databases.well-architect.failover-cluster-note3'), { width: '712px' });
+    }
+
+    // For managed instances: include authorization note
+    return createSection(
         GENERAL.NOTE,
         createContentWithBullets([
             t('databases.well-architect.failover-cluster-note3'),
@@ -127,6 +155,7 @@ export const createClusterQuorumSQLNotesSection = (t: any) =>
         ]),
         { width: '712px' }
     );
+};
 
 const noticeHelper = (t: TFunction) => (
     <div className={styles.noticeSection}>
@@ -145,12 +174,14 @@ export const createStandardDialog = (
     whatWillHappen: string | React.ReactNode,
     notesSection: React.ReactNode,
     configSection?: React.ReactNode,
-    assessmentStatus?: boolean
+    assessmentStatus?: boolean,
+    isWad: boolean = false
 ) => (
     <div className={styles['storage-tier-block']}>
         {assessmentStatus && noticeHelper(t)}
         {createSection(t('databases.well-architect.action-summary'), actionSummary)}
-        {createSection(t('databases.well-architect.what-will-happen'), whatWillHappen, { width: '712px' })}
+        {/* Conditionally render "What will happen" - skip for one-time assessment */}
+        {!isWad && createSection(t('databases.well-architect.what-will-happen'), whatWillHappen, { width: '712px' })}
         {configSection}
         {notesSection}
     </div>
@@ -162,7 +193,8 @@ export const createFailoverClusterDialog = (
     actionSummaries: string[],
     whatWillHappen: string | React.ReactNode,
     configSection?: React.ReactNode,
-    notesSection?: React.ReactNode
+    notesSection?: React.ReactNode,
+    isWad: boolean = false
 ) => (
     <div className={styles['storage-tier-block']}>
         <div className={styles['first-section']}>
@@ -174,12 +206,14 @@ export const createFailoverClusterDialog = (
             ))}
         </div>
 
-        {whatWillHappen &&
+        {/* Conditionally render "What will happen" - skip for one-time assessment */}
+        {!isWad &&
+            whatWillHappen &&
             createSection(t('databases.well-architect.what-will-happen'), whatWillHappen, { width: '712px' })}
 
         {configSection}
 
-        {notesSection || createFailoverClusterNotesSection(t)}
+        {notesSection || createFailoverClusterNotesSection(t, isWad)}
     </div>
 );
 

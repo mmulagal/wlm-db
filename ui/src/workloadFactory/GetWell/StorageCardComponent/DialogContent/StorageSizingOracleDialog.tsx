@@ -16,12 +16,14 @@ const StorageSizingOracleDialog = ({
     type,
     status,
     missingPermissions,
-    recommendedSizeInGib
+    recommendedSizeInGib,
+    isWad = false
 }: {
     type: string;
     status?: string;
     missingPermissions?: string[];
     recommendedSizeInGib?: number;
+    isWad?: boolean;
 }) => {
     const { t } = useTranslation();
     const setContent = () => {
@@ -43,10 +45,11 @@ const StorageSizingOracleDialog = ({
                                     t('databases.well-architect.oracle-filesystem-headroom-action-summary-bullet3')
                                 ])
                             )}
-                            {createSection(
-                                t('databases.well-architect.what-will-happen'),
-                                t('databases.well-architect.oracle-filesystem-headroom-what-will-happen')
-                            )}
+                            {!isWad &&
+                                createSection(
+                                    t('databases.well-architect.what-will-happen'),
+                                    t('databases.well-architect.oracle-filesystem-headroom-what-will-happen')
+                                )}
                             {createSection(
                                 t('databases.well-architect.optimization-steps'),
                                 t('databases.well-architect.oracle-filesystem-headroom-optimization-steps')
@@ -146,7 +149,10 @@ const StorageSizingOracleDialog = ({
                     `${t('databases.well-architect.file-system-headroom-with-permission-content')}${
                         recommendedSizeInGib ? ` to ${recommendedSizeInGib} GiB.` : '.'
                     }`,
-                    createStandardNotesSection()
+                    createStandardNotesSection(t, isWad),
+                    '',
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
                 return (

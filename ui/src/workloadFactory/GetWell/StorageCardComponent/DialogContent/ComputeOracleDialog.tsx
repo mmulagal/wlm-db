@@ -17,6 +17,7 @@ import {
 type ComputeOracleDialogProps = {
     type?: string;
     createComputeConfigSection?: () => React.ReactNode;
+    isWad?: boolean;
 };
 
 // Shape of a single host-OS patch row returned by /assessment/patch-scan for
@@ -40,7 +41,7 @@ interface OracleHostOsPatchResponse {
 
 type OracleHostOsPatchRow = OracleHostOsPatchDetail & { instanceName?: string };
 
-function ComputeOracleDialog({ type, createComputeConfigSection }: ComputeOracleDialogProps) {
+function ComputeOracleDialog({ type, createComputeConfigSection, isWad = false }: ComputeOracleDialogProps) {
     const { t } = useTranslation();
     const { selectedResourceId, selectedDatabaseInstance, selectedGwInstanceCredId, selectedGwInstanceRegionId } =
         useAppSelector(state => state.getWellOptimize);
@@ -123,16 +124,20 @@ function ComputeOracleDialog({ type, createComputeConfigSection }: ComputeOracle
                 t,
                 t('databases.well-architect.oracle-transparent-hugepages-action-summary'),
                 t('databases.well-architect.oracle-transparent-hugepages-what-will-happen'),
-                createStandardNotesSection(),
-                createComputeConfigSection?.()
+                createStandardNotesSection(t, isWad),
+                createComputeConfigSection?.(),
+                false,
+                isWad
             );
         case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
             return createStandardDialog(
                 t,
                 t('databases.well-architect.oracle-tcp-action-summary'),
                 t('databases.well-architect.oracle-tcp-what-will-happen'),
-                createStandardNotesSection(),
-                createComputeConfigSection?.()
+                createStandardNotesSection(t, isWad),
+                createComputeConfigSection?.(),
+                false,
+                isWad
             );
         case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
             return (
@@ -157,8 +162,10 @@ function ComputeOracleDialog({ type, createComputeConfigSection }: ComputeOracle
                 t,
                 t('databases.well-architect.oracle-multiblock-readcount-action-summary'),
                 t('databases.well-architect.oracle-multiblock-readcount-what-will-happen'),
-                createStandardNotesSection(),
-                createComputeConfigSection?.()
+                createStandardNotesSection(t, isWad),
+                createComputeConfigSection?.(),
+                false,
+                isWad
             );
         case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
         default:

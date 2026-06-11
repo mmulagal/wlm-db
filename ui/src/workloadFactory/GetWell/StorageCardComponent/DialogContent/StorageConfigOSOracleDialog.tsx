@@ -10,7 +10,15 @@ import {
     createActionOptionSection
 } from './DialogContentHelper';
 
-const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: string; createOSConfigSection: any }) => {
+const StorageConfigOSOracleDialog = ({
+    type,
+    createOSConfigSection,
+    isWad = false
+}: {
+    type: string;
+    createOSConfigSection: any;
+    isWad?: boolean;
+}) => {
     const { t } = useTranslation();
     const setContent = () => {
         switch (type) {
@@ -39,48 +47,60 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                     t,
                     t('databases.well-architect.oracle-host-utility-action-summary'),
                     t('databases.well-architect.oracle-host-utility-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
+                    createStandardNotesSection(t, isWad),
+                    createOSConfigSection(),
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.SELINUX:
                 return createStandardDialog(
                     t,
                     t('databases.well-architect.oracle-selinux-action-summary'),
                     t('databases.well-architect.oracle-selinux-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
+                    createStandardNotesSection(t, isWad),
+                    createOSConfigSection(),
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
                 return createStandardDialog(
                     t,
                     t('databases.well-architect.oracle-iscsi-replacement-action-summary'),
                     t('databases.well-architect.oracle-iscsi-replacement-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
+                    createStandardNotesSection(t, isWad),
+                    createOSConfigSection(),
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
                 return createStandardDialog(
                     t,
                     t('databases.well-architect.oracle-multipath-friendly-action-summary'),
                     t('databases.well-architect.oracle-multipath-friendly-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
+                    createStandardNotesSection(t, isWad),
+                    createOSConfigSection(),
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
                 return createStandardDialog(
                     t,
                     t('databases.well-architect.oracle-multipath-io-sessions-action-summary'),
                     t('databases.well-architect.oracle-multipath-io-sessions-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
+                    createStandardNotesSection(t, isWad),
+                    createOSConfigSection(),
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
                 return createStandardDialog(
                     t,
                     t('databases.well-architect.oracle-multipath-config-action-summary'),
                     t('databases.well-architect.oracle-multipath-config-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
+                    createStandardNotesSection(t, isWad),
+                    createOSConfigSection(),
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.ASM_SETUP:
                 return (
@@ -176,8 +196,10 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                     t,
                     t('databases.well-architect.oracle-kernel-parameters-action-summary'),
                     t('databases.well-architect.oracle-kernel-parameters-what-will-happen'),
-                    createStandardNotesSection(),
-                    createOSConfigSection()
+                    createStandardNotesSection(t, isWad),
+                    createOSConfigSection(),
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
                 return (
@@ -290,7 +312,11 @@ const StorageConfigOSOracleDialog = ({ type, createOSConfigSection }: { type: st
                         ])}
                         {createSection(
                             t('databases.well-architect.note'),
-                            t('databases.well-architect.dnfs-config-file-note')
+                            t(
+                                isWad
+                                    ? 'databases.well-architect.dnfs-config-file-note-wad'
+                                    : 'databases.well-architect.dnfs-config-file-note'
+                            )
                         )}
                     </div>
                 );

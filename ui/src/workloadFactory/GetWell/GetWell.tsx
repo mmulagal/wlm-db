@@ -178,7 +178,7 @@ const GetWell = () => {
 
     const printDocument = async () => {
         try {
-            await generateReport(JSON.stringify(driftAssessmentData), DBType.MSSQL);
+            await generateReport(JSON.stringify(driftAssessmentData), DBType.MSSQL, cardData?.isWad || false);
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.SUCCESS,

@@ -1281,6 +1281,7 @@
             "dnfs-config-file-optimization-step-1": "Update oranfstab with the correct server, export path, mount point, and options.",
             "dnfs-config-file-optimization-step-2": " Restart the Oracle instance.",
             "dnfs-config-file-note": "No disruption to your services is expected during this process. Select Continue to authorize Workload Factory to automatically perform these actions on your behalf.",
+            "dnfs-config-file-note-wad": "No disruption to your services is expected during this process.",
             "dnfs-no-shared-cache-action-summary": "Workload Factory recommends configuring the nosharecache mount option for environments where Direct NFS (dNFS) is enabled, and a source volume is mounted more than once on a single server with nested NFS mounts. This configuration prevents cache sharing between mounts, ensuring data consistency and optimal performance.",
             "dnfs-no-shared-cache-optimization-step-1": "Shut down the Oracle database.",
             "dnfs-no-shared-cache-optimization-step-2": "Unmount the file systems.",

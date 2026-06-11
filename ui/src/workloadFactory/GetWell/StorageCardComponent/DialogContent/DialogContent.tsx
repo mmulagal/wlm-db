@@ -209,7 +209,7 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
                 case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
                 case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
-                    return <StorageLayoutOracleDialog type={type} />;
+                    return <StorageLayoutOracleDialog type={type} isWad={isWad} />;
 
                 // Oracle storage config ONTAP assessment
                 case 'Thin provisioning':
@@ -231,7 +231,11 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY:
                 case ASSESSMENT_CONFIG_NAMES.EXPORT_POLICY:
                     return (
-                        <StorageConfigOracleDialog type={type} createONTAPConfigSection={createONTAPConfigSection} />
+                        <StorageConfigOracleDialog
+                            type={type}
+                            createONTAPConfigSection={createONTAPConfigSection}
+                            isWad={isWad}
+                        />
                     );
                 // Oracle storage config OS dialogs -
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
@@ -253,7 +257,13 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT:
                 case ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE:
                 case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE:
-                    return <StorageConfigOSOracleDialog type={type} createOSConfigSection={createONTAPConfigSection} />;
+                    return (
+                        <StorageConfigOSOracleDialog
+                            type={type}
+                            createOSConfigSection={createONTAPConfigSection}
+                            isWad={isWad}
+                        />
+                    );
 
                 // Oracle storage sizing cards
                 case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
@@ -263,10 +273,11 @@ const DialogContent = ({
                             status={status}
                             missingPermissions={missingPermissions}
                             recommendedSizeInGib={recommendedSizeInGib}
+                            isWad={isWad}
                         />
                     );
                 case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
-                    return <StorageSizingOracleDialog type={type} />;
+                    return <StorageSizingOracleDialog type={type} isWad={isWad} />;
 
                 // oracle compute cards
                 case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
@@ -274,7 +285,13 @@ const DialogContent = ({
                 case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
                 case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
                 case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
-                    return <ComputeOracleDialog type={type} createComputeConfigSection={createONTAPConfigSection} />;
+                    return (
+                        <ComputeOracleDialog
+                            type={type}
+                            createComputeConfigSection={createONTAPConfigSection}
+                            isWad={isWad}
+                        />
+                    );
 
                 // oracle application cards
                 case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:
@@ -298,10 +315,13 @@ const DialogContent = ({
                         GENERAL.NOTE,
                         createContentWithBullets([
                             t('databases.well-architect.note1'),
-                            t('databases.well-architect.note2')
+                            ...(!isWad ? [t('databases.well-architect.note2')] : [])
                         ]),
                         { width: '712px' }
-                    )
+                    ),
+                    '',
+                    false,
+                    isWad
                 );
             case GENERAL.CLONE_MANAGEMENT_DELETE:
                 return createStandardDialog(
@@ -312,10 +332,13 @@ const DialogContent = ({
                         GENERAL.NOTE,
                         createContentWithBullets([
                             t('databases.well-architect.note1'),
-                            t('databases.well-architect.note2')
+                            ...(!isWad ? [t('databases.well-architect.note2')] : [])
                         ]),
                         { width: '712px' }
-                    )
+                    ),
+                    '',
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 return createStandardDialog(
@@ -326,9 +349,10 @@ const DialogContent = ({
                         t('databases.well-architect.storage-tier-what-will-happen-content2'),
                         t('databases.well-architect.storage-tier-what-will-happen-content3')
                     ]),
-                    createStandardNotesSection(),
+                    createStandardNotesSection(t, isWad),
                     '',
-                    assessmentStatus
+                    assessmentStatus,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
                 // Handle MSSQL over-provisioned headroom case
@@ -350,10 +374,11 @@ const DialogContent = ({
                                 { width: '712px' }
                             )}
 
-                            {createSection(
-                                t('databases.well-architect.what-will-happen'),
-                                t('databases.well-architect.mssql-headroom-over-provisioned-what-will-happen')
-                            )}
+                            {!isWad &&
+                                createSection(
+                                    t('databases.well-architect.what-will-happen'),
+                                    t('databases.well-architect.mssql-headroom-over-provisioned-what-will-happen')
+                                )}
 
                             {createSection(
                                 t('databases.well-architect.optimization-steps'),
@@ -509,7 +534,10 @@ const DialogContent = ({
                         `${t('databases.well-architect.file-system-headroom-with-permission-content')}${
                             recommendedSizeInGib ? ` to ${recommendedSizeInGib} GiB.` : '.'
                         }`,
-                        createStandardNotesSection()
+                        createStandardNotesSection(t, isWad),
+                        '',
+                        false,
+                        isWad
                     )
                 );
 
@@ -520,9 +548,10 @@ const DialogContent = ({
                           t,
                           t('databases.well-architect.log-drive-size-action-summary'),
                           createContentWithBullets([t('databases.well-architect.log-drive-size-what-will-happen')]),
-                          createStandardNotesSection(),
+                          createStandardNotesSection(t, isWad),
                           '',
-                          assessmentStatus
+                          assessmentStatus,
+                          isWad
                       );
 
             case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
@@ -532,7 +561,10 @@ const DialogContent = ({
                           t,
                           t('databases.well-architect.tempdb-drive-size-action-summary'),
                           createContentWithBullets([t('databases.well-architect.tempdb-drive-size-what-will-happen')]),
-                          createStandardNotesSection()
+                          createStandardNotesSection(t, isWad),
+                          '',
+                          false,
+                          isWad
                       );
             case 'Thin provisioning':
             case 'Autosize':
@@ -551,8 +583,10 @@ const DialogContent = ({
                     t,
                     t('databases.well-architect.autosize-action-summary', { engineType: engineTypeText(engineType) }),
                     t('databases.well-architect.autosize-what-will-happen', { engineType: engineTypeText(engineType) }),
-                    createStandardNotesSection(),
-                    createONTAPConfigSection()
+                    createStandardNotesSection(t, isWad),
+                    createONTAPConfigSection(),
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_COPY_RESERVE:
                 return createStandardDialog(
@@ -564,11 +598,13 @@ const DialogContent = ({
                         createContentWithBullets([
                             t('databases.well-architect.failover-cluster-note1'),
                             t('databases.well-architect.snapshot-copy-reserve-aoag-note'),
-                            t('databases.well-architect.failover-cluster-note2')
+                            ...(!isWad ? [t('databases.well-architect.failover-cluster-note2')] : [])
                         ]),
                         { width: '712px' }
                     ),
-                    createONTAPConfigSection()
+                    createONTAPConfigSection(),
+                    false,
+                    isWad
                 );
             case 'OS type':
             case 'Space reservation':
@@ -581,8 +617,10 @@ const DialogContent = ({
                     t('databases.well-architect.os-type-space-allocation-reservation-what-will-happen', {
                         engineType: engineTypeText(engineType)
                     }),
-                    createStandardNotesSection(),
-                    createONTAPConfigSection()
+                    createStandardNotesSection(t, isWad),
+                    createONTAPConfigSection(),
+                    false,
+                    isWad
                 );
 
             case 'Multipath I/O Status':
@@ -591,8 +629,10 @@ const DialogContent = ({
                     t,
                     t('databases.well-architect.mpio-status-policy-action-summary'),
                     t('databases.well-architect.mpio-status-policy-what-will-happen'),
-                    createOSNotesSection(),
-                    createONTAPConfigSection()
+                    createOSNotesSection(isWad),
+                    createONTAPConfigSection(),
+                    false,
+                    isWad
                 );
 
             case 'Multipath I/O Timeout':
@@ -601,7 +641,9 @@ const DialogContent = ({
                     t('databases.well-architect.mpio-timeout-action-summary'),
                     t('databases.well-architect.mpio-timeout-what-will-happen'),
                     createSection(GENERAL.NOTE, t('databases.well-architect.note1'), { width: '712px' }),
-                    createONTAPConfigSection()
+                    createONTAPConfigSection(),
+                    false,
+                    isWad
                 );
 
             case 'Multipath I/O Sessions':
@@ -609,8 +651,10 @@ const DialogContent = ({
                     t,
                     t('databases.well-architect.mpio-session-action-summary'),
                     t('databases.well-architect.mpio-session-what-will-happen'),
-                    createStandardNotesSection(),
-                    createONTAPConfigSection()
+                    createStandardNotesSection(t, isWad),
+                    createONTAPConfigSection(),
+                    false,
+                    isWad
                 );
 
             case 'Microsoft SQL Server patch':
@@ -662,7 +706,8 @@ const DialogContent = ({
                     t('databases.well-architect.shared-storage-what-will-happen'),
                     // createONTAPConfigSection(),     will be added again after the dynamic values are populated
                     <></>,
-                    createFailoverClusterNotesSection(t)
+                    createFailoverClusterNotesSection(t, isWad),
+                    isWad
                 );
             case 'Drive Letter':
                 return createFailoverClusterDialog(
@@ -698,7 +743,8 @@ const DialogContent = ({
                         t('databases.well-architect.heartbeat-setting-what-will-happen-content6')
                     ]),
                     <></>, // Placeholder to maintain parameter order when skipping optional sections
-                    createFailoverClusterNotesSection(t)
+                    createFailoverClusterNotesSection(t, isWad),
+                    isWad
                 );
             case 'Cluster Quorum':
                 return createFailoverClusterDialog(
@@ -713,7 +759,8 @@ const DialogContent = ({
                     t('databases.well-architect.cluster-quorum-what-will-happen'),
                     // createONTAPConfigSection(),  will be added again after the dynamic values are populated
                     <></>,
-                    createClusterQuorumSQLNotesSection(t)
+                    createClusterQuorumSQLNotesSection(t, isWad),
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE:
                 if (selectedDatabaseStorageType === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE_CAPS) {
@@ -725,7 +772,8 @@ const DialogContent = ({
                         ],
                         t('databases.well-architect.sql-server-configuration-fci-what-will-happen'),
                         createONTAPConfigSection(),
-                        createClusterQuorumSQLNotesSection(t)
+                        createClusterQuorumSQLNotesSection(t, isWad),
+                        isWad
                     );
                 }
                 return createFailoverClusterDialog(
@@ -736,7 +784,8 @@ const DialogContent = ({
                     ],
                     t('databases.well-architect.sql-server-configuration-what-will-happen'),
                     createONTAPConfigSection(),
-                    createClusterQuorumSQLNotesSection(t)
+                    createClusterQuorumSQLNotesSection(t, isWad),
+                    isWad
                 );
 
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
@@ -875,7 +924,10 @@ const DialogContent = ({
                     t,
                     t('databases.well-architect.maxdop-action-summary'),
                     t('databases.well-architect.maxdop-what-will-happen'),
-                    createStandardNotesSection()
+                    createStandardNotesSection(t, isWad),
+                    '',
+                    false,
+                    isWad
                 );
             case ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION:
                 return (
@@ -885,17 +937,18 @@ const DialogContent = ({
                             t('databases.well-architect.rss-action-summary')
                         )}
 
-                        {createSection(
-                            t('databases.well-architect.what-will-happen'),
-                            createContentWithBullets([
-                                t('databases.well-architect.rss-what-will-happen-content1'),
-                                t('databases.well-architect.rss-what-will-happen-content2'),
-                                t('databases.well-architect.rss-what-will-happen-content3'),
-                                t('databases.well-architect.rss-what-will-happen-content4'),
-                                t('databases.well-architect.rss-what-will-happen-content5')
-                            ]),
-                            { width: '712px' }
-                        )}
+                        {!isWad &&
+                            createSection(
+                                t('databases.well-architect.what-will-happen'),
+                                createContentWithBullets([
+                                    t('databases.well-architect.rss-what-will-happen-content1'),
+                                    t('databases.well-architect.rss-what-will-happen-content2'),
+                                    t('databases.well-architect.rss-what-will-happen-content3'),
+                                    t('databases.well-architect.rss-what-will-happen-content4'),
+                                    t('databases.well-architect.rss-what-will-happen-content5')
+                                ]),
+                                { width: '712px' }
+                            )}
 
                         {createSection(
                             selectedDatabaseStorageType === 'FCI'
@@ -905,11 +958,11 @@ const DialogContent = ({
                                 selectedDatabaseStorageType === 'FCI'
                                     ? [
                                           GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_FCI[0],
-                                          GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_FCI[1]
+                                          ...(!isWad ? [GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_FCI[1]] : [])
                                       ]
                                     : [
                                           GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_STANDALONE[0],
-                                          GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_STANDALONE[1]
+                                          ...(!isWad ? [GETWELL_DIALOG_CONTENT.COMPUTE_RS_DTW_NOTES_STANDALONE[1]] : [])
                                       ]
                             ),
                             { width: '712px' }

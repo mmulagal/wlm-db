@@ -287,6 +287,7 @@ interface ComprehensiveAssessmentData {
     deploymentType?: string;
     baseDeploymentType?: string;
     databaseHostName?: string;
+    isWad?: boolean;
 }
 
 const EXCLUDED_FIELDS = [
@@ -837,7 +838,8 @@ const createComputeRightsizingData = (config: AssessmentItem, details: any[]) =>
 const createBaseConfigurationObject = (
     config: AssessmentItem,
     databaseType: string,
-    data: ComprehensiveAssessmentData
+    data: ComprehensiveAssessmentData,
+    isWad: boolean = false
 ) => ({
     'Configuration name': getConfigurationDisplayName(config.name, databaseType),
     ...(config.status && { Status: config.status }),
@@ -851,7 +853,8 @@ const createBaseConfigurationObject = (
             databaseType,
             config.objectsInViolation,
             data?.deploymentType,
-            data?.baseDeploymentType
+            data?.baseDeploymentType,
+            isWad
         ) || 'n/a',
     'Impacted resources (X out of Y)':
         'errorMessage' in config && config.errorMessage
@@ -1057,7 +1060,8 @@ const createFileLocationData = (config: AssessmentItem, details: any[]) => {
 function generateDetailedConfigurationData(
     data: ComprehensiveAssessmentData,
     configName: string,
-    databaseType: string
+    databaseType: string,
+    isWad: boolean = false
 ) {
     const allItems = getAllItems(data);
     const config = allItems.find(item => item.name === configName);
@@ -1075,7 +1079,7 @@ function generateDetailedConfigurationData(
     const details: any[] = [];
 
     // Base configuration info
-    const baseConfig = createBaseConfigurationObject(config, databaseType, data);
+    const baseConfig = createBaseConfigurationObject(config, databaseType, data, isWad);
 
     details.push(baseConfig);
 
@@ -1953,7 +1957,8 @@ const addConfigurationAutoFilter = (
 // Main workbook generation function
 async function generateProperXlsxWorkbook(
     data: ComprehensiveAssessmentData,
-    databaseType: string
+    databaseType: string,
+    isWad: boolean = false
 ): Promise<{ fileName: string; arrayBuffer: ArrayBuffer }> {
     const workbook = new ExcelJS.Workbook();
 
@@ -2035,7 +2040,7 @@ async function generateProperXlsxWorkbook(
         const internalName = displayToInternal.get(displayName);
         if (!internalName) return;
 
-        const configDetails = generateDetailedConfigurationData(data, internalName, databaseType);
+        const configDetails = generateDetailedConfigurationData(data, internalName, databaseType, isWad);
         if (configDetails.length === 0) return;
 
         const sheetName = sanitizeWorksheetName(displayName);
@@ -2187,7 +2192,7 @@ async function generateProperXlsxWorkbook(
 }
 
 // Export function
-async function generateReport(jsonString: string, databaseType: string): Promise<void> {
+async function generateReport(jsonString: string, databaseType: string, isWad: boolean = false): Promise<void> {
     try {
         let jsonData;
         try {
@@ -2197,7 +2202,8 @@ async function generateReport(jsonString: string, databaseType: string): Promise
         }
         const { fileName, arrayBuffer } = await generateProperXlsxWorkbook(
             jsonData as unknown as ComprehensiveAssessmentData,
-            databaseType
+            databaseType,
+            isWad
         );
 
         if (!arrayBuffer) {
