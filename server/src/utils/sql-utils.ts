@@ -151,11 +151,18 @@ function parseMappedVolumeData(configData: any, fsxId: string, dbType: DatabaseT
             }
             const processVolumeRecords = (
                 fileType: string,
-                volumeRecords: OracleVolumeRecord[],
+                volumeRecords: OracleVolumeRecord[] | { records?: OracleVolumeRecord[] } | null | undefined,
                 sid: string,
                 tenancy?: string
             ) => {
-                volumeRecords.forEach((record: OracleVolumeRecord) => {
+                let normalizedVolumeRecords: OracleVolumeRecord[] = [];
+                if (Array.isArray(volumeRecords)) {
+                    normalizedVolumeRecords = volumeRecords;
+                } else if (Array.isArray(volumeRecords?.records)) {
+                    normalizedVolumeRecords = volumeRecords.records;
+                }
+
+                normalizedVolumeRecords.forEach((record: OracleVolumeRecord) => {
                     if (
                         record?.volumeId &&
                         record?.volumeId !== 'null' &&
