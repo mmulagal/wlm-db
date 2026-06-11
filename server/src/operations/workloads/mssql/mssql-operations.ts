@@ -1511,14 +1511,24 @@ async function getActiveSqlNodeAndInstanceDetails(
                 inActiveNodes.push({ nodeId, connStatus: connectionStatus?.Status ?? '' });
             }
         }
+        const allNodesDisconnected = inActiveNodes.length === nodeIds.length && nodeIds.length > 0;
         const errorMessage = `Instance ${databaseInstanceName} is not running on nodes ${JSON.stringify([
             ...inActiveNodes
         ])} for resourceid: ${resourceId}, resource name : ${resourceName}    `;
+        if (allNodesDisconnected) {
+            logger.warn(
+                `All registered nodes are disconnected (connStatus: notconnected) for resource: ${resourceId}, resource name: ${resourceName}. Skipping assessment.`
+            );
+        }
         throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
-    } catch (err) {
+    } catch (err: unknown) {
         const errorMessage = `Error while checking SSM connection or SQL server status for resource: ${resourceId}, resource name: ${resourceName} credentialsId: ${credentialsId}, region: ${region}, nodeIds:${nodeIds} , ${err}`;
         logger.error(errorMessage);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        const statusCode =
+            err && typeof err === 'object' && 'statusCode' in err && typeof err.statusCode === 'number'
+                ? err.statusCode
+                : HttpErrorCodes.INTERNAL_SERVER_ERROR;
+        throw createError(statusCode, errorMessage);
     }
 }
 
