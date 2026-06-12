@@ -11,7 +11,12 @@ import {
 } from '../../../src/operations/continuous-optimization/assessment-dismiss-operations';
 import { fetchMssqlDriftAssessment } from '../../../src/operations/continuous-optimization/mssql/assessment-operations';
 import { fetchOracleDriftAssessment } from '../../../src/operations/continuous-optimization/oracle/assessment-operations';
-import { createResource, deleteDatabaseInstance, upsertDatabaseInstance } from '../../../src/lib/database/db';
+import {
+    createResource,
+    deleteDatabaseInstance,
+    deleteResource,
+    upsertDatabaseInstance
+} from '../../../src/lib/database/db';
 import {
     DatabaseInstanceDismissConfigs,
     DismissHostGroup,
@@ -111,6 +116,7 @@ describe('MSSQL Assessment Dismiss Operations', () => {
         await deleteDatabaseInstance(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DATABASE_INSTANCE_RECORD.resourceId, [
             'non-existing-instance'
         ]);
+        await deleteResource(ACCOUNT_ID, DATABASE_INSTANCE_RECORD.resourceId);
     });
 
     describe('High Availability Dismiss Configuration Tests', () => {
@@ -155,6 +161,7 @@ describe('MSSQL Assessment Dismiss Operations', () => {
         afterEach(async () => {
             // Cleanup test data
             await deleteDatabaseInstance(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, testResourceId, [testInstanceId]);
+            await deleteResource(ACCOUNT_ID, testResourceId);
         });
 
         it('Should dismiss heartbeat settings (host level) and verify in assessment', async () => {
@@ -187,9 +194,8 @@ describe('MSSQL Assessment Dismiss Operations', () => {
                 testInstanceId
             );
 
-            expect(driftAssessment.dismissedConfigurations?.highAvailability).toBeDefined();
-            const haConfigs = driftAssessment.dismissedConfigurations?.highAvailability as InstanceDismissParams[];
-            const heartbeatConfig = haConfigs?.find(config => config.configurationName === 'heartbeat-settings');
+            const haConfigs = driftAssessment.dismissedConfigurations ?? [];
+            const heartbeatConfig = haConfigs.find(config => config.configurationName === 'heartbeat-settings');
             expect(heartbeatConfig).toBeDefined();
             expect(heartbeatConfig?.configState).toBe('DISMISSED');
         });
@@ -225,9 +231,8 @@ describe('MSSQL Assessment Dismiss Operations', () => {
                 testInstanceId
             );
 
-            expect(driftAssessment.dismissedConfigurations?.highAvailability).toBeDefined();
-            const haConfigs2 = driftAssessment.dismissedConfigurations?.highAvailability as InstanceDismissParams[];
-            const sharedStorageConfig = haConfigs2?.find(config => config.configurationName === 'shared-storage');
+            const haConfigs2 = driftAssessment.dismissedConfigurations ?? [];
+            const sharedStorageConfig = haConfigs2.find(config => config.configurationName === 'shared-storage');
             expect(sharedStorageConfig).toBeDefined();
             expect(sharedStorageConfig?.configState).toBe('POSTPONED');
             expect(sharedStorageConfig?.endTime).toBeDefined();
@@ -278,10 +283,9 @@ describe('MSSQL Assessment Dismiss Operations', () => {
             );
 
             const { dismissedConfigurations } = driftAssessment;
-            expect(dismissedConfigurations?.highAvailability).toBeDefined();
 
             // Verify host level config
-            const haConfigs3 = dismissedConfigurations?.highAvailability as InstanceDismissParams[];
+            const haConfigs3 = dismissedConfigurations ?? [];
             const foundHeartbeatConfig = haConfigs3?.find(config => config.configurationName === 'heartbeat-settings');
             expect(foundHeartbeatConfig).toBeDefined();
             expect(foundHeartbeatConfig?.configState).toBe('DISMISSED');
@@ -859,7 +863,7 @@ describe('Oracle Assessment Dismiss Operations', () => {
             databaseInstanceName: 'ORACLE_DB',
             isDefault: true,
             source: 'deployment',
-            sqlDeploymentType: 'STANDALONE',
+            sqlDeploymentType: 'Standalone',
             fsxSvmId: { 'fs-oracle-test': 'svm-oracle-test' },
             fsxnIds: 'fs-oracle-test',
             databaseType: '',
@@ -870,6 +874,7 @@ describe('Oracle Assessment Dismiss Operations', () => {
     afterEach(async () => {
         // Cleanup test data
         await deleteDatabaseInstance(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, testResourceId, [testInstanceId]);
+        await deleteResource(ACCOUNT_ID, testResourceId);
     });
 
     it('Should filter out fields based on dismissed storage configurations for Oracle', () => {
@@ -1173,10 +1178,8 @@ describe('Oracle Assessment Dismiss Operations', () => {
             testInstanceId
         );
 
-        expect(driftAssessment.dismissedConfigurations?.storage?.configuration?.volumes).toBeDefined();
-        const volumeConfigs = driftAssessment.dismissedConfigurations?.storage?.configuration
-            ?.volumes as InstanceDismissParams[];
-        const thinProvisionConfig = volumeConfigs?.find(config => config.configurationName === 'thin-provision');
+        const volumeConfigs = driftAssessment.dismissedConfigurations ?? [];
+        const thinProvisionConfig = volumeConfigs.find(config => config.configurationName === 'thin-provision');
         expect(thinProvisionConfig).toBeDefined();
         expect(thinProvisionConfig?.configState).toBe('DISMISSED');
     });
@@ -1212,9 +1215,8 @@ describe('Oracle Assessment Dismiss Operations', () => {
             testInstanceId
         );
 
-        expect(driftAssessment.dismissedConfigurations?.storage?.layout).toBeDefined();
-        const layoutConfigs = driftAssessment.dismissedConfigurations?.storage?.layout as InstanceDismissParams[];
-        const datafilesPlacementConfig = layoutConfigs?.find(
+        const layoutConfigs = driftAssessment.dismissedConfigurations ?? [];
+        const datafilesPlacementConfig = layoutConfigs.find(
             config => config.configurationName === 'datafiles-placement'
         );
         expect(datafilesPlacementConfig).toBeDefined();

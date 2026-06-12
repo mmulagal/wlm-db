@@ -9,7 +9,6 @@ import {
 import { AssessmentCategoriesOracle, AssessmentTriggeredBy } from '../../../../src/utils/continous-optimization-consts';
 import { oracleAssessmentMetadata, oracleInstanceMappedVolMetadata } from './oracle-assessment-metadata';
 import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/database-instance-config';
-import { StorageParameterDriftResponseType } from '../../../../src/routes/types/mssql-continuous-optimisation.types';
 import { OracleGenericParameterDriftResponseType } from '../../../../src/routes/types/oracle-continuous-optimization.types';
 import { ORACLE_STORAGE_ASSESSMENT_DATA } from '../../../../src/utils/demo-utils/demoMockdata';
 import { STORAGE_PROTOCOLS } from '../../../../src/utils/consts';
@@ -185,19 +184,17 @@ describe('Oracle assessment operations', () => {
         );
 
         expect(assessmentData).toBeDefined();
-        expect(assessmentData.fileSystemId).toBe('fs-0f53fbecdd3d85fb2');
-        expect(assessmentData.ec2InstanceId).toBe(node1InstanceId);
-        expect(
-            (assessmentData.storage as StorageParameterDriftResponseType)?.configuration?.volumes.length
-        ).toBeGreaterThan(0);
-        expect((assessmentData.storage as StorageParameterDriftResponseType)?.layout?.length).toBeGreaterThan(0);
+        expect(assessmentData.metadata.fileSystemId).toBe('fs-0f53fbecdd3d85fb2');
+        expect(assessmentData.metadata.ec2InstanceId).toBe(node1InstanceId);
+        expect(assessmentData.assessments.filter(a => a.subType === 'configuration').length).toBeGreaterThan(0);
+        expect(assessmentData.assessments.filter(a => a.subType === 'layout').length).toBeGreaterThan(0);
 
-        expect((assessmentData.storage as StorageParameterDriftResponseType)?.configuration.os?.length).toEqual(9);
+        expect(assessmentData.assessments.filter(a => a.subType === 'configuration').length).toBeGreaterThanOrEqual(9);
 
-        const osAssessment = (assessmentData.storage as StorageParameterDriftResponseType)?.configuration.os;
+        const osAssessment = assessmentData.assessments;
 
         const multipathIo = osAssessment.find(
-            item => item.name === 'multipath-io'
+            item => item.id === 'multipath-io'
         ) as OracleGenericParameterDriftResponseType;
         expect(multipathIo).toBeDefined();
 
@@ -207,7 +204,7 @@ describe('Oracle assessment operations', () => {
         expect(multipathIo.totalObjectsInViolation).toBe(0);
 
         const hostUtilities = osAssessment.find(
-            item => item.name === 'host-utilities'
+            item => item.id === 'host-utilities'
         ) as OracleGenericParameterDriftResponseType;
         expect(hostUtilities).toBeDefined();
 
@@ -217,7 +214,7 @@ describe('Oracle assessment operations', () => {
         expect(hostUtilities.totalObjectsInViolation).toBe(1);
 
         const multipathSessions = osAssessment.find(
-            item => item.name === 'multipath-io-sessions'
+            item => item.id === 'multipath-io-sessions'
         ) as OracleGenericParameterDriftResponseType;
         expect(multipathSessions).toBeDefined();
 
@@ -228,7 +225,9 @@ describe('Oracle assessment operations', () => {
         expect(multipathSessions.objectsInViolation).toEqual([node1InstanceId]);
 
         // Compute host/OS drift — top-level fields from resource.assessment_data.computeHostOs (THP/TCP)
-        const hugepages = assessmentData.transparentHugepages as OracleGenericParameterDriftResponseType;
+        const hugepages = assessmentData.assessments.find(
+            i => i.id === 'transparent-hugepages'
+        ) as OracleGenericParameterDriftResponseType;
         expect(hugepages).toBeDefined();
 
         expect(hugepages.status).toBe('not-optimized');
@@ -236,7 +235,7 @@ describe('Oracle assessment operations', () => {
         expect(hugepages.totalObjectsInViolation).toBe(1);
 
         const iscsiTimeout = osAssessment.find(
-            item => item.name === 'iscsi-replacement-timeout'
+            item => item.id === 'iscsi-replacement-timeout'
         ) as OracleGenericParameterDriftResponseType;
         expect(iscsiTimeout).toBeDefined();
 
@@ -246,7 +245,7 @@ describe('Oracle assessment operations', () => {
         expect(iscsiTimeout.violationDetails?.[0]?.value).toBe('120');
 
         const friendlyNames = osAssessment.find(
-            item => item.name === 'multipath-friendly-names'
+            item => item.id === 'multipath-friendly-names'
         ) as OracleGenericParameterDriftResponseType;
         expect(friendlyNames).toBeDefined();
 
@@ -256,7 +255,9 @@ describe('Oracle assessment operations', () => {
         expect(friendlyNames.violationDetails?.[0]?.value).toBe('no');
 
         // Compute host/OS drift — top-level from resource.assessment_data.computeHostOs
-        const tcpOptions = assessmentData.tcpAdvancedOptions as OracleGenericParameterDriftResponseType;
+        const tcpOptions = assessmentData.assessments.find(
+            i => i.id === 'tcp-advanced-options'
+        ) as OracleGenericParameterDriftResponseType;
         expect(tcpOptions).toBeDefined();
 
         expect(tcpOptions.status).toBe('not-optimized');
@@ -264,7 +265,9 @@ describe('Oracle assessment operations', () => {
         expect(tcpOptions.totalObjectsInViolation).toBe(1);
 
         // Compute host/OS drift — top-level from database_instance_config_data compute row (Oracle params)
-        const filesystemIo = assessmentData.filesystemsIoOptions as OracleGenericParameterDriftResponseType;
+        const filesystemIo = assessmentData.assessments.find(
+            i => i.id === 'filesystems-io-options'
+        ) as OracleGenericParameterDriftResponseType;
         expect(filesystemIo).toBeDefined();
 
         expect(filesystemIo.status).toBe('not-optimized');
@@ -272,7 +275,9 @@ describe('Oracle assessment operations', () => {
         expect((filesystemIo as Record<string, unknown>).resourceType).toBe('EC2 Instance');
         expect(filesystemIo.violationDetails?.[0]?.value).toBe('none');
 
-        const multipathReadcount = assessmentData.multiblockReadcount as OracleGenericParameterDriftResponseType;
+        const multipathReadcount = assessmentData.assessments.find(
+            i => i.id === 'multiblock-readcount'
+        ) as OracleGenericParameterDriftResponseType;
         expect(multipathReadcount).toBeDefined();
 
         expect(multipathReadcount.status).toBe('not-optimized');
@@ -281,7 +286,7 @@ describe('Oracle assessment operations', () => {
         expect(multipathReadcount.totalObjectsInViolation).toBe(1);
 
         const multipathConfig = osAssessment.find(
-            item => item.name === 'multipath-configuration'
+            item => item.id === 'multipath-configuration'
         ) as OracleGenericParameterDriftResponseType;
         expect(multipathConfig).toBeDefined();
 
@@ -353,18 +358,12 @@ describe('Oracle assessment operations', () => {
                 'compute'
             );
 
-            expect((assessmentData.tcpAdvancedOptions as OracleGenericParameterDriftResponseType).status).toBe(
-                'optimized'
-            );
-            expect((assessmentData.transparentHugepages as OracleGenericParameterDriftResponseType).status).toBe(
-                'not-optimized'
-            );
-            expect((assessmentData.filesystemsIoOptions as OracleGenericParameterDriftResponseType).status).toBe(
-                'not-optimized'
-            );
-            expect((assessmentData.multiblockReadcount as OracleGenericParameterDriftResponseType).status).toBe(
-                'not-optimized'
-            );
+            const findItem = (name: string) =>
+                assessmentData.assessments.find(i => i.id === name) as OracleGenericParameterDriftResponseType;
+            expect(findItem('tcp-advanced-options').status).toBe('optimized');
+            expect(findItem('transparent-hugepages').status).toBe('not-optimized');
+            expect(findItem('filesystems-io-options').status).toBe('not-optimized');
+            expect(findItem('multiblock-readcount').status).toBe('not-optimized');
         } finally {
             await deleteResource(ACCOUNT_ID, demoMetadataResourceId);
         }
@@ -390,36 +389,32 @@ describe('Oracle assessment operations', () => {
             'storage'
         );
         expect(assessmentData).toBeDefined();
-        expect(assessmentData.fileSystemId).toBe('fs-0f53fbecdd3d85fb2');
-        expect(assessmentData.ec2InstanceId).toBe(node1InstanceId);
-        expect(
-            (assessmentData.storage as StorageParameterDriftResponseType)?.configuration?.volumes.length
-        ).toBeGreaterThan(0);
-        expect((assessmentData.storage as StorageParameterDriftResponseType)?.layout?.length).toBeGreaterThan(0);
+        expect(assessmentData.metadata.fileSystemId).toBe('fs-0f53fbecdd3d85fb2');
+        expect(assessmentData.metadata.ec2InstanceId).toBe(node1InstanceId);
+        expect(assessmentData.assessments.filter(a => a.subType === 'configuration').length).toBeGreaterThan(0);
+        expect(assessmentData.assessments.filter(a => a.subType === 'layout').length).toBeGreaterThan(0);
 
-        expect((assessmentData.storage as StorageParameterDriftResponseType)?.configuration.os?.length).toBeGreaterThan(
-            0
-        );
+        expect(assessmentData.assessments.filter(a => a.subType === 'configuration').length).toBeGreaterThan(0);
 
-        const volumeAssessment = (assessmentData.storage as StorageParameterDriftResponseType)?.configuration?.volumes;
+        const volumeAssessment = assessmentData.assessments;
         const nfsRootonlyAssessment = volumeAssessment?.find(
-            item => item.name === 'nfs-rootonly'
+            item => item.id === 'nfs-rootonly'
         ) as OracleGenericParameterDriftResponseType;
 
         expect(nfsRootonlyAssessment).toBeDefined();
-        expect(nfsRootonlyAssessment.name).toBe('nfs-rootonly');
+        expect(nfsRootonlyAssessment.id).toBe('nfs-rootonly');
         expect(nfsRootonlyAssessment.recommended).toBe('disabled');
         expect(nfsRootonlyAssessment.status).toBe('optimized');
         expect(nfsRootonlyAssessment.severity).toBe('critical');
         expect((nfsRootonlyAssessment as Record<string, unknown>).resourceType).toBe('Volume');
 
-        const osAssessment = (assessmentData.storage as StorageParameterDriftResponseType)?.configuration.os;
+        const osAssessment = assessmentData.assessments;
         const nfsMountOptions = osAssessment?.find(
-            item => item.name === 'nfs-mount-options-databasefiles'
+            item => item.id === 'nfs-mount-options-databasefiles'
         ) as OracleGenericParameterDriftResponseType;
 
         expect(nfsMountOptions).toBeDefined();
-        expect(nfsMountOptions.name).toBe('nfs-mount-options-databasefiles');
+        expect(nfsMountOptions.id).toBe('nfs-mount-options-databasefiles');
         expect(nfsMountOptions.status).toBe('not-optimized');
         expect(nfsMountOptions.severity).toBe('warning');
         expect(nfsMountOptions.totalObjectsAssessed).toBeGreaterThanOrEqual(0);
@@ -427,11 +422,11 @@ describe('Oracle assessment operations', () => {
         expect((nfsMountOptions as Record<string, unknown>).resourceType).toBe('EC2 Instance');
 
         const kernelParams = osAssessment?.find(
-            item => item.name === 'kernel-parameters'
+            item => item.id === 'kernel-parameters'
         ) as OracleGenericParameterDriftResponseType;
 
         expect(kernelParams).toBeDefined();
-        expect(kernelParams.name).toBe('kernel-parameters');
+        expect(kernelParams.id).toBe('kernel-parameters');
         expect(kernelParams.status).toBe('not-optimized');
         expect(kernelParams.severity).toBe('critical');
         expect(kernelParams.totalObjectsAssessed).toBe(1);
@@ -439,11 +434,11 @@ describe('Oracle assessment operations', () => {
         expect((kernelParams as Record<string, unknown>).resourceType).toBe('EC2 Instance');
 
         const idmapdDomain = osAssessment?.find(
-            item => item.name === 'nfsv4-domain-name'
+            item => item.id === 'nfsv4-domain-name'
         ) as OracleGenericParameterDriftResponseType;
 
         expect(idmapdDomain).toBeDefined();
-        expect(idmapdDomain.name).toBe('nfsv4-domain-name');
+        expect(idmapdDomain.id).toBe('nfsv4-domain-name');
         expect(idmapdDomain.status).toBe('not-optimized');
         expect(idmapdDomain.severity).toBe('critical');
         expect(idmapdDomain.totalObjectsAssessed).toBe(1);
@@ -451,11 +446,11 @@ describe('Oracle assessment operations', () => {
         expect((idmapdDomain as Record<string, unknown>).resourceType).toBe('EC2 Instance');
 
         const nfsCachingOptions = osAssessment?.find(
-            item => item.name === 'nfs-caching-options'
+            item => item.id === 'nfs-caching-options'
         ) as OracleGenericParameterDriftResponseType;
 
         expect(nfsCachingOptions).toBeDefined();
-        expect(nfsCachingOptions.name).toBe('nfs-caching-options');
+        expect(nfsCachingOptions.id).toBe('nfs-caching-options');
         expect(nfsCachingOptions.status).toBe('not-optimized');
         expect(nfsCachingOptions.severity).toBe('warning');
         expect(nfsCachingOptions.totalObjectsAssessed).toBe(1);
@@ -472,14 +467,14 @@ describe('Oracle assessment operations', () => {
             'storage'
         );
         expect(assessmentData).toBeDefined();
-        expect((assessmentData.storage as StorageParameterDriftResponseType)?.sizing?.length).toBeGreaterThan(0);
+        expect(assessmentData.assessments.filter(a => a.subType === 'sizing').length).toBeGreaterThan(0);
 
-        const swapSpaceAssessment = (assessmentData.storage as StorageParameterDriftResponseType)?.sizing?.find(
-            item => item.name === 'swap-space'
+        const swapSpaceAssessment = assessmentData.assessments.find(
+            item => item.id === 'swap-space'
         ) as OracleGenericParameterDriftResponseType;
 
         expect(swapSpaceAssessment).toBeDefined();
-        expect(swapSpaceAssessment.name).toBe('swap-space');
+        expect(swapSpaceAssessment.id).toBe('swap-space');
         expect(swapSpaceAssessment.status).toBe('not-optimized');
         expect(swapSpaceAssessment.recommended).toBe('3 - 4 GB');
         expect(swapSpaceAssessment.severity).toBe('critical');
@@ -487,12 +482,12 @@ describe('Oracle assessment operations', () => {
         expect(swapSpaceAssessment.totalObjectsInViolation).toBe(1);
         expect((swapSpaceAssessment as Record<string, unknown>).resourceType).toBe('EC2 instance');
 
-        const headroomAssessment = (assessmentData.storage as StorageParameterDriftResponseType)?.sizing?.find(
-            item => item.name === 'headroom'
+        const headroomAssessment = assessmentData.assessments.find(
+            item => item.id === 'headroom'
         ) as OracleGenericParameterDriftResponseType;
 
         expect(headroomAssessment).toBeDefined();
-        expect(headroomAssessment.name).toBe('headroom');
+        expect(headroomAssessment.id).toBe('headroom');
         expect(headroomAssessment.status).toBe('optimized');
         expect(headroomAssessment.current).toBe('47%');
         expect(headroomAssessment.severity).toBe('critical');

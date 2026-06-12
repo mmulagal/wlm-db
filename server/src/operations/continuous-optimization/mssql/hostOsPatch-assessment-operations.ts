@@ -7,9 +7,6 @@ import getLogger from '../../../utils/logger';
 import {
     AssessmentCategories,
     AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    SEVERITY,
-    ASSESSMENT_RESOURCE_TYPE,
     TEST_CONNECTION_COMMAND
 } from '../../../utils/continous-optimization-consts';
 import { HostOsPatchAssessmentObject, Metadata, ResourceAssessmentData } from '../../../utils/common-types';
@@ -20,9 +17,13 @@ import { getInstancesPatchStatus, runAwsPatchBaseline } from '../../aws/ospatch-
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
 import { getResourceNameFromTags } from '../../../utils/utils';
-import { HostOsPatchScanResponseType } from '../../../routes/types/mssql-continuous-optimisation.types';
-import { ErrorResponseType } from '../../../routes/types/continuous-optimization.types';
+import {
+    HostOsPatchScanResponseType,
+    MssqlAssessmentItemType
+} from '../../../routes/types/mssql-continuous-optimisation.types';
+import type { AssessmentErrorItemType, ErrorResponseType } from '../../../routes/types/continuous-optimization.types';
 import { checkIfPatchBaselineInProgress, updatePatchBaselineStatusForHost } from '../assessment-utils';
+import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 
 const logger = getLogger();
 const PATCH_ASSESSMENT_IN_PROGRESS = 'Another patch assessment is already in progress';
@@ -104,18 +105,18 @@ function calculateHostOsPatchDrift(
     region: string,
     databaseHostId: string,
     assessmentData: ResourceAssessmentData
-) {
+): MssqlAssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculating Host OS patch drift', { accountId, credentialsId, region, databaseHostId });
-    let errorMessage = '';
+    const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'host-os-patch');
 
     try {
         const { hostOsPatch, errors } = assessmentData;
         if (isEmpty(hostOsPatch)) {
-            errorMessage = errors?.hostOsPatch
+            const errorMessage = errors?.hostOsPatch
                 ? errors?.hostOsPatch
                 : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HOST_OS_PATCH);
             logger.error({ errorMessage });
-            return { errorMessage };
+            return { ...goldenConfig, errorMessage };
         }
 
         const hostOsPatchAssessment = hostOsPatch as HostOsPatchAssessmentObject[];
@@ -128,27 +129,19 @@ function calculateHostOsPatchDrift(
             ec2InstancesToPatch && ec2InstancesToPatch.length > 0
                 ? AssessmentStatus.NOT_OPTIMIZED
                 : AssessmentStatus.OPTIMIZED;
-        const recommendationMessage =
-            findingValue === AssessmentStatus.NOT_OPTIMIZED
-                ? 'Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.'
-                : 'Your database infrastructure OS is up-to-date.';
 
         return {
-            name: 'host-os-patch',
+            ...goldenConfig,
             status: findingValue,
             recommended: AssessmentStatus.OPTIMIZED,
-            severity: SEVERITY.CRITICAL,
-            recommendation: recommendationMessage,
             objectsInViolation: ec2InstancesToPatch?.map(({ ec2InstanceId }) => ec2InstanceId),
-            tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-            ec2InstancesToPatch,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
+            ec2InstancesToPatch
         };
     } catch (error) {
-        errorMessage = `Error while calculating host os patch drift. ${error}`;
+        const errorMessage = `Error while calculating host os patch drift. ${error}`;
         logger.error({ errorMessage });
+        return { ...goldenConfig, errorMessage };
     }
-    return { errorMessage };
 }
 
 async function managedHostOsPatchAssessment(

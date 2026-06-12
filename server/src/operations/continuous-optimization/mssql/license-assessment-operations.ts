@@ -8,17 +8,14 @@ import {
 } from '../../recommendation-operations';
 
 import getLogger from '../../../utils/logger';
-import { LicenseAssessment, ResourceAssessmentData } from '../../../utils/common-types';
+import { ResourceAssessmentData } from '../../../utils/common-types';
 import { ENT_ENGINE_EDITION, FINDING, GENERIC_ASSESSMENT_ERROR_MESSAGE, SQL_STD } from '../../../utils/consts';
-import {
-    ASSESSMENT_RESOURCE_TYPE,
-    AssessmentCategories,
-    AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    SEVERITY
-} from '../../../utils/continous-optimization-consts';
+import { AssessmentCategories, AssessmentStatus } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getMatchingAssessmentStatus } from '../assessment-utils';
+import type { AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
+import type { MssqlAssessmentItemType } from '../../../routes/types/mssql-continuous-optimisation.types';
+import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 
 const logger = getLogger();
 
@@ -29,47 +26,36 @@ function calculateLicenseDrift(
     databaseHostId: string,
     databaseInstanceId: string,
     assessmentData: ResourceAssessmentData
-) {
+): MssqlAssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculating license drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
-    let errorMessage = '';
-    let licenseAssessment;
+    const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'sql-license');
 
     try {
         const { license, errors } = assessmentData;
 
         if (isEmpty(license)) {
-            errorMessage = errors?.license
+            const errorMessage = errors?.license
                 ? errors?.license
                 : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.LICENSE);
             logger.error({ errorMessage });
-            return { errorMessage };
+            return { ...goldenConfig, errorMessage };
         }
 
-        licenseAssessment = license as LicenseAssessment;
-
-        const { licenseFinding, sqlServerInstances } = licenseAssessment;
+        const { licenseFinding, sqlServerInstances } = license;
         const matchingLicenseAssessmentStatus = getMatchingAssessmentStatus(licenseFinding);
-        const recommendationMessage =
-            licenseFinding === FINDING.NOT_OPTIMIZED
-                ? 'The SQL Server license assessment is at the host level. A license is considered not optimized when Workload Factory detects that any instance running on the host is not using the Enterprise license features you are paying for. A license that is not optimized might result in unnecessary additional costs.'
-                : 'A license is considered optimized when every instance on the host that uses an Enterprise license uses Enterprise features, or when the license for your commercial software database meets your performance requirements.';
 
         return {
-            name: 'sql-license',
+            ...goldenConfig,
             status: matchingLicenseAssessmentStatus,
             recommended: AssessmentStatus.OPTIMIZED,
-            severity: SEVERITY.WARNING,
-            recommendation: recommendationMessage,
-            tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
-            sqlServerInstances,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
+            sqlServerInstances
         };
     } catch (error: any) {
-        errorMessage = `Error while calculating license drift. ${error.message}`;
+        const errorMessage = `Error while calculating license drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        return { ...goldenConfig, errorMessage };
     }
-    return { errorMessage };
 }
 
 async function managedHostsLicenseAssessment(

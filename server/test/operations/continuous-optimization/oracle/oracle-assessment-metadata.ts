@@ -7,7 +7,7 @@ const oracleAssessmentMetadata = {
             },
             {
                 name: 'datafiles-placement',
-                tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                 status: 'not-optimized',
                 severity: 'warning',
                 parameter: 'datafiles-placement',
@@ -20,7 +20,7 @@ const oracleAssessmentMetadata = {
             },
             {
                 name: 'controlfiles-placement',
-                tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                 status: 'optimized',
                 severity: 'warning',
                 parameter: 'controlfiles-placement',
@@ -33,7 +33,7 @@ const oracleAssessmentMetadata = {
             },
             {
                 name: 'redologs-placement',
-                tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                 status: 'not-optimized',
                 severity: 'warning',
                 parameter: 'redologs-placement',
@@ -46,7 +46,7 @@ const oracleAssessmentMetadata = {
             },
             {
                 name: 'templogs-placement',
-                tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                 status: 'not-optimized',
                 severity: 'warning',
                 parameter: 'templogs-placement',
@@ -59,7 +59,7 @@ const oracleAssessmentMetadata = {
             },
             {
                 name: 'oracle-binary-placement',
-                tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                 status: 'optimized',
                 severity: 'warning',
                 parameter: 'oracle-binary-placement',
@@ -72,7 +72,7 @@ const oracleAssessmentMetadata = {
             },
             {
                 name: 'data-dg-lun-layout',
-                tags: ['Operational excellence', 'Performance efficiency'],
+                categories: ['Operational excellence', 'Performance efficiency'],
                 status: 'not-optimized',
                 severity: 'warning',
                 parameter: 'data-dg-lun-layout',
@@ -85,7 +85,7 @@ const oracleAssessmentMetadata = {
             },
             {
                 name: 'redolog-dg-lun-layout',
-                tags: ['Operational excellence', 'Performance efficiency'],
+                categories: ['Operational excellence', 'Performance efficiency'],
                 status: 'optimized',
                 severity: 'warning',
                 parameter: 'redolog-dg-lun-layout',
@@ -98,7 +98,7 @@ const oracleAssessmentMetadata = {
             },
             {
                 name: 'fra-dg-lun-layout',
-                tags: ['Operational excellence', 'Performance efficiency'],
+                categories: ['Operational excellence', 'Performance efficiency'],
                 status: 'not-optimized',
                 severity: 'warning',
                 parameter: 'fra-dg-lun-layout',
@@ -114,7 +114,7 @@ const oracleAssessmentMetadata = {
             luns: [
                 {
                     name: 'space-reservation-enabled',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: true,
                     status: 'optimized',
                     severity: 'critical',
@@ -129,7 +129,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'space-allocation-allocated',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: true,
                     status: 'optimized',
                     severity: 'critical',
@@ -146,7 +146,7 @@ const oracleAssessmentMetadata = {
             volumes: [
                 {
                     name: 'thin-provision',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: 'none',
                     status: 'optimized',
                     severity: 'warning',
@@ -162,7 +162,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'autosize',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: 'on',
                     status: 'not-optimized',
                     severity: 'critical',
@@ -204,7 +204,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'autosize-mode',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: 'grow',
                     status: 'not-optimized',
                     severity: 'critical',
@@ -246,7 +246,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'fractional-reserve',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: 0,
                     status: 'optimized',
                     severity: 'critical',
@@ -262,7 +262,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'snapshot-policy',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: 'none',
                     status: 'not-optimized',
                     severity: 'warning',
@@ -304,7 +304,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'snapshot-copy-reserve',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: 0,
                     status: 'not-optimized',
                     severity: 'warning',
@@ -346,7 +346,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'snapshot-autodelete',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: true,
                     status: 'not-optimized',
                     severity: 'warning',
@@ -388,7 +388,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'space-mgmt-try-first',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: 'volume_grow',
                     status: 'optimized',
                     severity: 'warning',
@@ -404,7 +404,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'tiering-policy',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: 'snapshot_only',
                     status: 'not-optimized',
                     severity: 'critical',
@@ -435,7 +435,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'tiering-min-cooling-days',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: '',
                     status: 'optimized',
                     severity: 'critical',
@@ -451,7 +451,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'compression',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: '',
                     status: 'not-optimized',
                     severity: 'critical',
@@ -493,7 +493,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'deduplication',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: '',
                     status: 'not-optimized',
                     severity: 'critical',
@@ -535,7 +535,7 @@ const oracleAssessmentMetadata = {
                 },
                 {
                     name: 'compaction',
-                    tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
+                    categories: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
                     value: 'enabled',
                     status: 'optimized',
                     severity: 'critical',
@@ -559,7 +559,7 @@ const oracleAssessmentMetadata = {
                 severity: 'critical',
                 recommendation:
                     'Workload Factory recommends enabling Multipath I/O (MPIO) on database hosts that connect to ISCSI LUNs for Oracle databases. This host-level configuration enhances storage reliability and performance by providing redundant data paths between the server and storage. With multipath enabled, the system can automatically reroute I/O operations in the event of a path failure, minimizing downtime and ensuring consistent access to critical data.',
-                tags: ['Reliability', 'Operational excellence'],
+                categories: ['Reliability', 'Operational excellence'],
                 objectsInViolation: [],
                 violationDetails: [],
                 totalObjectsAssessed: 1,
@@ -572,7 +572,7 @@ const oracleAssessmentMetadata = {
                 severity: 'warning',
                 recommendation:
                     'Workload Factory recommends installing host utilities for LUN and multipath management on systems hosting Oracle databases. These utilities ensure optimal compatibility, performance, and reliability when connecting to enterprise storage systems. Proper installation of host utilities helps streamline storage operations and supports best practices for Oracle deployments.',
-                tags: ['Reliability', 'Operational excellence'],
+                categories: ['Reliability', 'Operational excellence'],
                 objectsInViolation: ['i-03ed3dc17db570670'],
                 violationDetails: [
                     {
@@ -591,7 +591,7 @@ const oracleAssessmentMetadata = {
                 severity: 'warning',
                 recommendation:
                     'Workload Factory recommends configuring host with four iSCSI sessions to each FSx ONTAP iSCSI endpoint in order to fully leverage multipath I/O',
-                tags: ['Reliability', 'Performance efficiency'],
+                categories: ['Reliability', 'Performance efficiency'],
                 objectsInViolation: ['172.31.48.72', '172.31.6.100'],
                 violationDetails: [
                     {
@@ -615,7 +615,7 @@ const oracleAssessmentMetadata = {
                 severity: 'warning',
                 recommendation:
                     'Workload Factory recommends disabling Transparent HugePages (THP) on database hosts running Oracle databases. Disabling THP is an Oracle best practice to prevent potential performance issues and ensure optimal database stability.',
-                tags: ['Performance efficiency'],
+                categories: ['Performance efficiency'],
                 objectsInViolation: [],
                 violationDetails: [],
                 totalObjectsAssessed: 1,
@@ -628,7 +628,7 @@ const oracleAssessmentMetadata = {
                 severity: 'warning',
                 recommendation:
                     'Workload Factory recommends disabling SELinux on Oracle database hosts by setting SELINUX=disabled or SELINUX=permissive in the system configuration. Disabling or setting SELinux to permissive mode can help avoid compatibility issues and administrative overhead associated with managing SELinux policies for Oracle workloads. When disabled, SELinux will no longer enforce access controls; when set to permissive, it will log policy violations without blocking operations. In either case, ensure that your environment is otherwise secured.',
-                tags: ['Security', 'Operational excellence'],
+                categories: ['Security', 'Operational excellence'],
                 objectsInViolation: ['i-03ed3dc17db570670'],
                 violationDetails: [
                     {
@@ -647,7 +647,7 @@ const oracleAssessmentMetadata = {
                 severity: 'critical',
                 recommendation:
                     'Workload Factory recommends setting node.session.timeo.replacement_timeout = 5 in /etc/iscsi/iscsid.conf for Oracle database hosts using multipath I/O. This adjustment reduces the time required to detect and recover from iSCSI path failures, ensuring that database operations remain highly available and responsive. After applying this change and restarting the iSCSI service, the host will be able to fail over to alternate paths within 5 seconds of a path failure, minimizing the risk of application downtime.',
-                tags: ['Reliability', 'Performance efficiency'],
+                categories: ['Reliability', 'Performance efficiency'],
                 objectsInViolation: ['i-03ed3dc17db570670'],
                 violationDetails: [
                     {
@@ -666,7 +666,7 @@ const oracleAssessmentMetadata = {
                 severity: 'warning',
                 recommendation:
                     'Workload Factory recommends enabling Multipath Friendly Names in the multipath configuration for Oracle database hosts. This setting simplifies device identification by assigning human-readable names to multipath devices, making storage management and troubleshooting more efficient and reducing the risk of configuration errors.',
-                tags: ['Operational excellence'],
+                categories: ['Operational excellence'],
                 objectsInViolation: ['i-03ed3dc17db570670'],
                 violationDetails: [
                     {
@@ -685,7 +685,7 @@ const oracleAssessmentMetadata = {
                 severity: 'warning',
                 recommendation:
                     'Workload Factory recommends enabling TCP timestamps, SACK, and window scaling for best network performance and reliability.',
-                tags: ['Reliability', 'Performance efficiency'],
+                categories: ['Reliability', 'Performance efficiency'],
                 objectsInViolation: [],
                 violationDetails: [],
                 totalObjectsAssessed: 1,
@@ -698,7 +698,7 @@ const oracleAssessmentMetadata = {
                 severity: 'warning',
                 recommendation:
                     'Workload Factory recommends setting filesystemio_options = setall for optimal I/O performance. Adjust SGA size if needed when moving away from buffered I/O.',
-                tags: ['Performance efficiency'],
+                categories: ['Performance efficiency'],
                 objectsInViolation: ['asm04y'],
                 violationDetails: [
                     {
@@ -718,7 +718,7 @@ const oracleAssessmentMetadata = {
                 severity: 'warning',
                 recommendation:
                     'Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.',
-                tags: ['Performance efficiency'],
+                categories: ['Performance efficiency'],
                 objectsInViolation: [],
                 violationDetails: [],
                 totalObjectsAssessed: 1,
@@ -732,7 +732,7 @@ const oracleAssessmentMetadata = {
                 severity: 'critical',
                 recommendation:
                     'Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP LUNs, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.',
-                tags: ['Reliability', 'Operational excellence'],
+                categories: ['Reliability', 'Operational excellence'],
                 objectsInViolation: ['i-03ed3dc17db570670'],
                 violationDetails: [
                     {

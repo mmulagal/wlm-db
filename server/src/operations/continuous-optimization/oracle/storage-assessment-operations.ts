@@ -20,13 +20,13 @@ import {
     SSM_RUN_SHELL_SCRIPT_DOC_VERSION,
     supportedOracleOsVersions
 } from '../../workloads/oracle/consts';
-import storageGoldenConfigData from './golden-config';
+import ORACLE_GOLDEN_CONFIG from './golden-config';
 import { ORACLE_FILE_TYPE_LABEL_ORDER, ORACLE_FILE_TYPE_LABELS } from './consts';
-import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
 import {
-    GenericParameterDriftResponseType,
-    StorageParameterDriftResponseType
-} from '../../../routes/types/oracle-continuous-optimization.types';
+    GenericViolationResponseType,
+    AssessmentItemType,
+    AssessmentErrorItemType
+} from '../../../routes/types/continuous-optimization.types';
 import {
     OracleMappedOntapVolumesResponse,
     OracleSysFileTypes,
@@ -45,7 +45,7 @@ import { OS_ASSESSMENT } from './ssm-scripts/os-iscsi-assessment-scripts';
 import { NFS_OS_ASSESSMENT } from './ssm-scripts/os-nfs-assessment-scripts';
 import { ORACLE_STORAGE_SIZING_ASSESSMENT, VOLUME_LUN_CONFIGURATION } from './ssm-scripts/storage-assessment-scripts';
 import { getHeadroomDrift } from '../headroom-assessment';
-import { normalizeNfsVersion, isPdbGroupedVolumes } from '../assessment-utils';
+import { normalizeNfsVersion, isPdbGroupedVolumes, type GoldenConfigEntry } from '../assessment-utils';
 
 const logger = getLogger();
 
@@ -83,12 +83,34 @@ function addNosharecacheViolationIfNeeded(
     }
 }
 
-const volumeConfigData = storageGoldenConfigData.configuration.volume;
-const volumeNfsConfigData = storageGoldenConfigData.configuration.volume_nfs;
-const lunConfigData = storageGoldenConfigData.configuration.lun;
-const osIsciConfigData = storageGoldenConfigData.configuration.os_iscsi;
-const osNfsConfigData = storageGoldenConfigData.configuration.os_nfs;
-const sizingConfigData = storageGoldenConfigData.sizing;
+const storageConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.type === 'storage');
+const volumeConfigData = ORACLE_GOLDEN_CONFIG.filter(
+    e => e.type === 'storage' && e.subType === 'configuration' && !e.applicableTo && e.resourceType === 'Volume'
+);
+const volumeNfsConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'nfs' && e.resourceType === 'Volume');
+const lunConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'iscsi' && e.resourceType === 'Lun');
+const osIsciConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'iscsi' && e.resourceType !== 'Lun');
+const osNfsConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'nfs' && e.resourceType !== 'Volume');
+const sizingConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'sizing');
+const asmOSConfig = ORACLE_GOLDEN_CONFIG.filter(
+    e =>
+        e.type === 'storage' &&
+        e.subType === 'configuration' &&
+        !e.applicableTo &&
+        e.resourceType !== 'Volume' &&
+        e.resourceType !== 'Lun'
+);
+
+const [archivePlacementConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'archive-placement');
+const [datafilesPlacementConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'datafiles-placement');
+const [controlfilesPlacementConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'controlfiles-placement');
+const [redologsPlacementConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'redologs-placement');
+const [templogsPlacementConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'templogs-placement');
+const [oracleBinaryPlacementConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'oracle-binary-placement');
+const [dataDiskLunLayoutConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'data-dg-lun-layout');
+const [redoLogDiskLunLayoutConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'redolog-dg-lun-layout');
+const [fraDiskLunLayoutConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'fra-dg-lun-layout');
+const [archivelogDiskLunLayoutConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'archivelog-dg-lun-layout');
 
 function mapVolumeTypesToIdName(
     databaseInstanceName: string,
@@ -144,13 +166,6 @@ function mapVolumeTypesToIdName(
     }, {} as Record<OracleSysFileTypes, OracleVolumeRecord[]>);
 }
 
-function createEmptyVolumeAssessment(configData: any, volumeType: string) {
-    return {
-        name: configData.name,
-        errorMessage: `No ${volumeType} volumes found.`
-    };
-}
-
 function createViolationDetail(
     objectName: string,
     objectType: string,
@@ -168,39 +183,41 @@ function createViolationDetail(
 }
 
 function createAssessment(
-    config: any,
+    config: GoldenConfigEntry,
     totalObjectsAssessed: number,
     objectsInViolation: string[],
     violationDetails: GenericViolationResponseType[]
-) {
+): AssessmentItemType {
     const status = violationDetails.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
-    objectsInViolation = status === AssessmentStatus.NOT_OPTIMIZED ? objectsInViolation : [];
-
+    const resolvedViolations = status === AssessmentStatus.NOT_OPTIMIZED ? objectsInViolation : [];
     return {
         ...config,
+        recommended: config.recommended ?? '',
         status,
-        objectsInViolation,
+        objectsInViolation: resolvedViolations,
         totalObjectsAssessed,
-        totalObjectsInViolation: [...new Set(objectsInViolation)].length,
+        totalObjectsInViolation: [...new Set(resolvedViolations)].length,
         violationDetails
     };
 }
 
-function getAsmOSConfigDrift(osData: ISCIOSAssessment, databaseInstanceName: string) {
+function getAsmOSConfigDrift(
+    osData: ISCIOSAssessment,
+    databaseInstanceName: string
+): (AssessmentItemType | AssessmentErrorItemType)[] {
     try {
         const asmOsConfigData = osData?.['asm-os-config'];
-        const driftData: StorageParameterDriftResponseType['configuration']['os'] = [];
-        const goldenConfig = storageGoldenConfigData.configuration.asmOS;
+        const driftData: (AssessmentItemType | AssessmentErrorItemType)[] = [];
         if (asmOsConfigData && !isEmpty(asmOsConfigData) && asmOsConfigData?.isIscsi === 'true') {
-            goldenConfig.forEach(config => {
+            asmOSConfig.forEach(config => {
                 const violationDetails: GenericViolationResponseType[] = [];
-                switch (config.name) {
+                switch (config.id) {
                     case 'asm-setup': {
                         if (asmOsConfigData?.isIscsi === 'true') {
                             if (asmOsConfigData['asm-setup'] !== 'true') {
                                 violationDetails.push(
                                     createViolationDetail(
-                                        config.name,
+                                        config.id,
                                         'configuration',
                                         asmOsConfigData['asm-setup'] || 'false',
                                         'true'
@@ -224,7 +241,7 @@ function getAsmOSConfigDrift(osData: ISCIOSAssessment, databaseInstanceName: str
                         }
                         if (asmOsConfigData?.['asm-external-redundancy']?.error) {
                             driftData.push({
-                                name: config.name,
+                                ...config,
                                 errorMessage: asmOsConfigData?.['asm-external-redundancy']?.error
                             });
                         } else if (asmOsConfigData?.['asm-external-redundancy']?.assessment) {
@@ -256,13 +273,13 @@ function getAsmOSConfigDrift(osData: ISCIOSAssessment, databaseInstanceName: str
                         }
                         if (asmOsConfigData?.['afd-logical-block-size']?.error) {
                             driftData.push({
-                                name: config.name,
+                                ...config,
                                 errorMessage: asmOsConfigData?.['afd-logical-block-size']?.error
                             });
                         } else if (asmOsConfigData?.['afd-logical-block-size']?.assessment) {
                             if (asmOsConfigData?.['afd-logical-block-size']?.assessment?.result === '0') {
                                 violationDetails.push(
-                                    createViolationDetail(config.name, 'configuration', 'false', 'true')
+                                    createViolationDetail(config.id, 'configuration', 'false', 'true')
                                 );
                             }
                             driftData.push(
@@ -284,7 +301,7 @@ function getAsmOSConfigDrift(osData: ISCIOSAssessment, databaseInstanceName: str
                         }
                         if (asmOsConfigData?.['asmlib-logical-block-size']?.error) {
                             driftData.push({
-                                name: config.name,
+                                ...config,
                                 errorMessage: asmOsConfigData?.['asmlib-logical-block-size']?.error
                             });
                         } else if (asmOsConfigData?.['asmlib-logical-block-size']?.assessment) {
@@ -294,7 +311,7 @@ function getAsmOSConfigDrift(osData: ISCIOSAssessment, databaseInstanceName: str
                             if (isUnoptimized) {
                                 violationDetails.push(
                                     createViolationDetail(
-                                        config.name,
+                                        config.id,
                                         'configuration',
                                         asmOsConfigData?.[
                                             'asmlib-logical-block-size'
@@ -330,13 +347,15 @@ function getOSConfigDrift(
     ec2InstanceId: string,
     databaseInstanceName: string,
     storageAssessmentData: StorageIscsiAssessment
-) {
+): (AssessmentItemType | AssessmentErrorItemType)[] {
     logger.info('Fetching iSCSI OS configuration drift', { ec2InstanceId, databaseInstanceName });
     const { os } = storageAssessmentData;
-    const osDrift: StorageParameterDriftResponseType['configuration']['os'] = [];
+    const osDrift: (AssessmentItemType | AssessmentErrorItemType)[] = [];
 
     if (!os || isEmpty(os)) {
-        osDrift.push({ errorMessage: 'No OS assessment data found.' });
+        osIsciConfigData.forEach(config => {
+            osDrift.push({ ...config, errorMessage: 'No OS assessment data found.' });
+        });
         return osDrift;
     }
 
@@ -487,7 +506,7 @@ function getOSConfigDrift(
             case 'multipath-io-sessions': {
                 const iscsiTargetSessions = os?.['iscsi-targets-sessions'];
                 if (iscsiTargetSessions?.error) {
-                    osDrift.push({ name: config.name, errorMessage: iscsiTargetSessions.error });
+                    osDrift.push({ ...config, errorMessage: iscsiTargetSessions.error });
                 } else {
                     const targetSessions = iscsiTargetSessions?.['iscsi-sessions-per-target'] || {};
                     violationDetails = Object.entries(targetSessions)
@@ -526,13 +545,15 @@ function getNfsOSConfigDrift(
     databaseInstanceName: string,
     deploymentType: string,
     storageAssessmentData: StorageNfsAssessment
-) {
+): (AssessmentItemType | AssessmentErrorItemType)[] {
     logger.info('Fetching NFS OS configuration drift', { ec2InstanceId, databaseInstanceName, deploymentType });
     const { os, volumes, nfsv4DomainData } = storageAssessmentData;
-    const osDrift: StorageParameterDriftResponseType['configuration']['os'] = [];
+    const osDrift: (AssessmentItemType | AssessmentErrorItemType)[] = [];
 
     if (!os || isEmpty(os)) {
-        osDrift.push({ errorMessage: 'No OS assessment data found.' });
+        osNfsConfigData.forEach(config => {
+            osDrift.push({ ...config, errorMessage: 'No OS assessment data found.' });
+        });
         return osDrift;
     }
 
@@ -577,7 +598,7 @@ function getNfsOSConfigDrift(
                 const kernelParamsData = os?.['kernel-parameters'];
                 const sunrpcTcpSlotEntries = kernelParamsData?.['sunrpc-tcp-slot-entries'];
                 if (kernelParamsData?.error) {
-                    osDrift.push({ name: config.name, errorMessage: kernelParamsData.error });
+                    osDrift.push({ ...config, errorMessage: kernelParamsData.error });
                 } else {
                     const tcpMaxSlotTable = sunrpcTcpSlotEntries?.['tcp-max-slot-table'] || '';
                     const tcpSlotTable = sunrpcTcpSlotEntries?.['tcp-slot-table'] || '';
@@ -594,7 +615,7 @@ function getNfsOSConfigDrift(
             }
             case 'nfs-mount-options-databasefiles': {
                 if ('error' in dbMountsResult) {
-                    osDrift.push({ name: config.name, errorMessage: dbMountsResult.error });
+                    osDrift.push({ ...config, errorMessage: dbMountsResult.error });
                     break;
                 }
                 dbMountsResult.mounts.forEach(mount => {
@@ -639,7 +660,7 @@ function getNfsOSConfigDrift(
                     return;
                 }
                 if ('error' in dbMountsResult) {
-                    osDrift.push({ name: config.name, errorMessage: dbMountsResult.error });
+                    osDrift.push({ ...config, errorMessage: dbMountsResult.error });
                     break;
                 }
                 dbMountsResult.mounts.forEach(mount => {
@@ -775,7 +796,7 @@ function getNfsOSConfigDrift(
                 const dnfsServers = storageAssessmentData?.dnfsServers;
                 if (dnfsServers?.error) {
                     osDrift.push({
-                        name: config.name,
+                        ...config,
                         errorMessage: `Failed to retrieve dNFS server configuration: ${dnfsServers.error}`
                     });
                     break;
@@ -856,10 +877,7 @@ function getNfsOSConfigDrift(
                         oranfstabData?.error && `oranfstab: ${oranfstabData.error}`,
                         nfsMountData?.error && `NFS mount options: ${nfsMountData.error}`
                     ].filter(Boolean);
-                    osDrift.push({
-                        name: config.name,
-                        errorMessage: `Failed to retrieve configuration: ${errors.join('; ')}`
-                    });
+                    osDrift.push({ ...config, errorMessage: `Failed to retrieve configuration: ${errors.join('; ')}` });
                     break;
                 }
 
@@ -1012,7 +1030,7 @@ function getNfsOSConfigDrift(
 
                 if (nfsMountData?.error) {
                     osDrift.push({
-                        name: config.name,
+                        ...config,
                         errorMessage: `Failed to retrieve NFS mount options: ${nfsMountData.error}`
                     });
                     break;
@@ -1093,7 +1111,7 @@ function prepareASMLunLayoutAssessment(
 
     const lunsGroupedByDiskGroup = groupBy(luns, lun => lun.diskGroup!);
     if (isEmpty(luns)) {
-        goldenConfig = createEmptyVolumeAssessment(goldenConfig, diskGroupLabel);
+        goldenConfig = { ...goldenConfig, errorMessage: `No ${diskGroupLabel} volumes found.` };
     } else {
         goldenConfig.status = AssessmentStatus.OPTIMIZED;
         goldenConfig.totalObjectsInViolation = 0;
@@ -1122,18 +1140,20 @@ function prepareASMLunLayoutAssessment(
     return goldenConfig;
 }
 
-function getNfsVolumeConfigDrift(storageAssessmentData: StorageNfsAssessment) {
+function getNfsVolumeConfigDrift(
+    storageAssessmentData: StorageNfsAssessment
+): (AssessmentItemType | AssessmentErrorItemType)[] {
     logger.info('Fetching NFS volume configuration drift');
     const { volumes, dnfsServers, nfsRootonly, binaryVolumes } = storageAssessmentData;
     const { data: volumesData } = volumes;
 
-    const nfsVolumeConfigDrift: StorageParameterDriftResponseType['configuration']['volumes'] = [];
+    const nfsVolumeConfigDrift: (AssessmentItemType | AssessmentErrorItemType)[] = [];
 
     volumeNfsConfigData.forEach(config => {
         let totalObjectsAssessed = 0;
         const objectsInViolation: string[] = [];
         const violationDetails: GenericViolationResponseType[] = [];
-        const recommended = config.value.toString();
+        const recommended = (config.value ?? '').toString();
 
         switch (config.parameter) {
             case 'nfs-rootonly': {
@@ -1256,14 +1276,14 @@ function getNfsVolumeConfigDrift(storageAssessmentData: StorageNfsAssessment) {
         }
     });
 
-    return nfsVolumeConfigDrift as StorageParameterDriftResponseType['configuration']['volumes'];
+    return nfsVolumeConfigDrift;
 }
 
 function getVolumeConfigDrift(
     volumeTypeMap: Record<OracleSysFileTypes, OracleVolumeRecord[]>,
     storageAssessmentData: StorageAssessment,
     storageProtocol: string
-) {
+): (AssessmentItemType | AssessmentErrorItemType)[] {
     logger.info(`Fetching volume configuration drift ${storageProtocol}`);
     const {
         CONTROL_FILES: controlFileVolumes,
@@ -1276,14 +1296,24 @@ function getVolumeConfigDrift(
 
     const allVolumeNames = Object.values(volumeTypeMap).flat();
     if (isEmpty(allVolumeNames)) {
-        return [{ errorMessage: 'Found no FSx for ONTAP volumes for the database.' }];
+        return [
+            ...volumeConfigData.map(config => ({
+                ...config,
+                errorMessage: 'Found no FSx for ONTAP volumes for the database.'
+            }))
+        ];
     }
 
     const { volumes, fraEnabled, rmanCompressionEnabled } = storageAssessmentData;
     const { data: volumesData, error } = volumes;
 
     if (error) {
-        return [{ errorMessage: error }];
+        return [
+            ...volumeConfigData.map(config => ({
+                ...config,
+                errorMessage: error
+            }))
+        ];
     }
 
     const tieringPolicyRecommendations = {
@@ -1321,163 +1351,161 @@ function getVolumeConfigDrift(
     ];
     const isIn = (list: string[], id: string) => list.includes(id);
 
-    const volumeConfigDrift: StorageParameterDriftResponseType['configuration']['volumes'] = volumeConfigData.map(
-        config => {
-            const objectsInViolation: GenericViolationResponseType[] = [];
-            const objectsInViolationNames: string[] = [];
-            let totalObjectsAssessed = volumesData.length;
-            volumesData.forEach(volume => {
-                let value = (volume[config.parameter] ?? '').toString();
-                const objectName = volume.name || '';
-                const objectId = volume.uuid || '';
-                let recommended = config.value.toString();
-                let isViolated = false;
-                let dataCategory = '';
+    const volumeConfigDrift: (AssessmentItemType | AssessmentErrorItemType)[] = volumeConfigData.map(config => {
+        const objectsInViolation: GenericViolationResponseType[] = [];
+        const objectsInViolationNames: string[] = [];
+        let totalObjectsAssessed = volumesData.length;
+        volumesData.forEach(volume => {
+            let value = (volume[config.parameter!] ?? '').toString();
+            const objectName = volume.name || '';
+            const objectId = volume.uuid || '';
+            let recommended = (config.value ?? '').toString();
+            let isViolated = false;
+            let dataCategory = '';
 
-                const volumeMembership = [
-                    controlDataFileVolumeIds,
-                    redoLogsTempLogsVolumeIds,
-                    archiveLogVolumeIds
-                ].filter(list => isIn(list, objectId)).length;
+            const volumeMembership = [controlDataFileVolumeIds, redoLogsTempLogsVolumeIds, archiveLogVolumeIds].filter(
+                list => isIn(list, objectId)
+            ).length;
 
-                switch (config.parameter) {
-                    case 'compaction':
-                        value = value !== 'none' ? 'enabled' : value;
-                        if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
-                            recommended = compactionRecommendations['log-files'];
-                            dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
-                        } else {
-                            recommended = compactionRecommendations.others;
-                            dataCategory = 'non-log-files';
-                        }
-                        isViolated = value !== recommended;
-                        break;
+            switch (config.parameter) {
+                case 'compaction':
+                    value = value !== 'none' ? 'enabled' : value;
+                    if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
+                        recommended = compactionRecommendations['log-files'];
+                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
+                    } else {
+                        recommended = compactionRecommendations.others;
+                        dataCategory = 'non-log-files';
+                    }
+                    isViolated = value !== recommended;
+                    break;
 
-                    case 'tieringMinCoolingDays':
-                        totalObjectsAssessed = archiveLogVolumeIds.length;
-                        if (isIn(redoLogsTempLogsVolumeIds, objectId) || isIn(controlDataFileVolumeIds, objectId)) {
-                            return;
-                        }
-                        recommended =
-                            isIn(archiveLogVolumeIds, objectId) &&
-                            fraEnabled === 'yes' &&
-                            rmanCompressionEnabled === 'no'
-                                ? '14'
-                                : '2';
-                        isViolated = value !== recommended;
-                        break;
+                case 'tieringMinCoolingDays':
+                    totalObjectsAssessed = archiveLogVolumeIds.length;
+                    if (isIn(redoLogsTempLogsVolumeIds, objectId) || isIn(controlDataFileVolumeIds, objectId)) {
+                        return;
+                    }
+                    recommended =
+                        isIn(archiveLogVolumeIds, objectId) && fraEnabled === 'yes' && rmanCompressionEnabled === 'no'
+                            ? '14'
+                            : '2';
+                    isViolated = value !== recommended;
+                    break;
 
-                    case 'tieringPolicy':
-                        if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
-                            recommended = tieringPolicyRecommendations['log-files'];
-                            dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
-                        } else if (isIn(controlDataFileVolumeIds, objectId)) {
-                            recommended = tieringPolicyRecommendations['data-control-files'];
-                            dataCategory = volumeMembership >= 2 ? 'mixed' : 'data-control-files';
-                        } else if (isIn(archiveLogVolumeIds, objectId)) {
-                            recommended = tieringPolicyRecommendations['archive-log-files'];
-                            dataCategory = 'archive-log-files';
-                        }
-
-                        isViolated = value !== recommended;
-                        break;
-
-                    case 'compressionType': {
-                        const currentCompression = (volume.compression ?? '').toString();
-                        const recommendations = compressionRecommendations;
-                        if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
-                            value = currentCompression === 'none' ? 'none' : value;
-                            recommended = recommendations['log-files'];
-                            dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
-                        } else {
-                            recommended = recommendations.others;
-                            dataCategory = 'non-log-files';
-                        }
-                        isViolated = value !== recommended;
-                        break;
+                case 'tieringPolicy':
+                    if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
+                        recommended = tieringPolicyRecommendations['log-files'];
+                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
+                    } else if (isIn(controlDataFileVolumeIds, objectId)) {
+                        recommended = tieringPolicyRecommendations['data-control-files'];
+                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'data-control-files';
+                    } else if (isIn(archiveLogVolumeIds, objectId)) {
+                        recommended = tieringPolicyRecommendations['archive-log-files'];
+                        dataCategory = 'archive-log-files';
                     }
 
-                    case 'deduplication': {
-                        const recommendations = deduplicationRecommendations;
-                        let multirecommendations = recommendations['log-files'];
-                        if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
-                            dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
-                            recommended = 'none';
-                        } else {
-                            multirecommendations = recommendations.others;
-                            dataCategory = 'non-log-files';
-                            recommended = 'inline';
-                        }
-                        isViolated = !multirecommendations.includes(value);
-                        break;
+                    isViolated = value !== recommended;
+                    break;
+
+                case 'compressionType': {
+                    const currentCompression = (volume.compression ?? '').toString();
+                    const recommendations = compressionRecommendations;
+                    if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
+                        value = currentCompression === 'none' ? 'none' : value;
+                        recommended = recommendations['log-files'];
+                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
+                    } else {
+                        recommended = recommendations.others;
+                        dataCategory = 'non-log-files';
                     }
-
-                    case 'snapshotAutodelete':
-                        // Determine snapshot autodelete status and order
-                        recommended = value === 'true' ? 'oldest_first' : 'enabled';
-                        value = value === 'true' ? (volume.snapshotDeleteOrder ?? '').toString() : 'disabled';
-                        isViolated = value !== recommended;
-                        break;
-
-                    default:
-                        isViolated = value !== recommended;
-                        break;
+                    isViolated = value !== recommended;
+                    break;
                 }
 
-                if (isViolated) {
-                    objectsInViolation.push({
-                        objectName,
-                        value: value?.toString() || '',
-                        objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                        recommended,
-                        dataCategory
-                    });
-                    objectsInViolationNames.push(objectName);
+                case 'deduplication': {
+                    const recommendations = deduplicationRecommendations;
+                    let multirecommendations = recommendations['log-files'];
+                    if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
+                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
+                        recommended = 'none';
+                    } else {
+                        multirecommendations = recommendations.others;
+                        dataCategory = 'non-log-files';
+                        recommended = 'inline';
+                    }
+                    isViolated = !multirecommendations.includes(value);
+                    break;
                 }
-            });
 
-            return {
-                ...config,
-                recommended: config.value.toString(),
-                status: objectsInViolation.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
-                objectsInViolation: [...new Set(objectsInViolationNames)],
-                totalObjectsAssessed,
-                totalObjectsInViolation: objectsInViolation.length,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                violationDetails: objectsInViolation
-            };
-        }
-    );
+                case 'snapshotAutodelete':
+                    // Determine snapshot autodelete status and order
+                    recommended = value === 'true' ? 'oldest_first' : 'enabled';
+                    value = value === 'true' ? (volume.snapshotDeleteOrder ?? '').toString() : 'disabled';
+                    isViolated = value !== recommended;
+                    break;
+
+                default:
+                    isViolated = value !== recommended;
+                    break;
+            }
+
+            if (isViolated) {
+                objectsInViolation.push({
+                    objectName,
+                    value: value?.toString() || '',
+                    objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                    recommended,
+                    dataCategory
+                });
+                objectsInViolationNames.push(objectName);
+            }
+        });
+
+        return {
+            ...config,
+            recommended: (config.value ?? '').toString(),
+            status: objectsInViolation.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
+            objectsInViolation: [...new Set(objectsInViolationNames)],
+            totalObjectsAssessed,
+            totalObjectsInViolation: objectsInViolation.length,
+            violationDetails: objectsInViolation
+        };
+    });
 
     if (storageProtocol === 'NFS') {
-        const nfsVolumeDrift = getNfsVolumeConfigDrift(storageAssessmentData as StorageNfsAssessment);
-        volumeConfigDrift.push(...nfsVolumeDrift);
+        volumeConfigDrift.push(...getNfsVolumeConfigDrift(storageAssessmentData as StorageNfsAssessment));
     }
     return volumeConfigDrift;
 }
 
-function getLunConfigDrift(storageAssessmentData: StorageAssessment) {
+function getLunConfigDrift(storageAssessmentData: StorageAssessment): (AssessmentItemType | AssessmentErrorItemType)[] {
     logger.info('Fetching LUN configuration drift');
     const { luns = { data: [], error: '' } } = storageAssessmentData;
     const { data: lunsData, error } = luns;
 
     if (error) {
-        return [{ errorMessage: error }];
+        return [...ORACLE_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'configuration')].map(
+            config => ({
+                ...config,
+                errorMessage: error
+            })
+        );
     }
 
     return lunConfigData.map(config => {
+        const param = config.parameter!;
         const violationDetails = lunsData
-            .filter(lun => lun[config.parameter] !== config.value)
+            .filter(lun => lun[param] !== config.value)
             .map(lun => ({
                 objectName: lun.name,
                 objectType: ASSESSMENT_RESOURCE_TYPE.LUN,
-                value: lun[config.parameter]?.toString() || '',
-                recommended: config.value.toString()
+                value: lun[param]?.toString() || '',
+                recommended: (config.value ?? '').toString()
             }));
 
         return {
             ...config,
-            recommended: config.value.toString(),
+            recommended: (config.value ?? '').toString(),
             status: violationDetails.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
             objectsInViolation: violationDetails.map(detail => detail.objectName),
             violationDetails,
@@ -1531,9 +1559,9 @@ function volumeIdsSet(...groups: readonly OracleVolumeRecord[][]): Set<string> {
 function getVolumeLayoutDrift(
     volumeTypeMap: Record<OracleSysFileTypes, OracleVolumeRecord[]>,
     storageAssessmentData: StorageAssessment
-) {
+): (AssessmentItemType | AssessmentErrorItemType)[] {
     logger.info('Fetching volume layout drift');
-    const volumeLayoutDrift: StorageParameterDriftResponseType['layout'] = [];
+    const volumeLayoutDrift: (AssessmentItemType | AssessmentErrorItemType)[] = [];
 
     const binaryVolumeIds = storageAssessmentData.binaryVolumes?.data?.map(volume => volume.volumeId) || [];
 
@@ -1550,7 +1578,7 @@ function getVolumeLayoutDrift(
 
     const archiveFraLogVolumes = [...archiveLogVolumes, ...fraVolumes];
     if (isEmpty(archiveFraLogVolumes)) {
-        volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.archivePlacement, 'archive log'));
+        volumeLayoutDrift.push({ ...archivePlacementConfig, errorMessage: 'No archive log volumes found.' });
     } else {
         const archiveSharesWithVolumeIds = volumeIdsSet(
             controlFileVolumes,
@@ -1572,7 +1600,8 @@ function getVolumeLayoutDrift(
                 ? `Archive logs currently shared with ${formatTypeList(archiveSharedLabels)}`
                 : undefined;
         volumeLayoutDrift.push({
-            ...storageGoldenConfigData.archivePlacement,
+            ...archivePlacementConfig,
+            recommended: archivePlacementConfig.recommended ?? '',
             status,
             ...(archiveCurrent && { current: archiveCurrent }),
             objectsInViolation:
@@ -1585,7 +1614,7 @@ function getVolumeLayoutDrift(
     }
 
     if (isEmpty(dataFileVolumes)) {
-        volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.datafilesPlacement, 'data file'));
+        volumeLayoutDrift.push({ ...datafilesPlacementConfig, errorMessage: 'No data file volumes found.' });
     } else {
         const dataSharesWithVolumeIds = volumeIdsSet(redoLogVolumes, archiveLogVolumes, tempFileVolumes);
         const dataFileConflicts = [...new Set(dataFileVolumes.filter(v => dataSharesWithVolumeIds.has(v.volumeId)))];
@@ -1600,7 +1629,8 @@ function getVolumeLayoutDrift(
                 ? `Data files currently shared with ${formatTypeList(dataSharedLabels)}`
                 : undefined;
         volumeLayoutDrift.push({
-            ...storageGoldenConfigData.datafilesPlacement,
+            ...datafilesPlacementConfig,
+            recommended: datafilesPlacementConfig.recommended ?? '',
             status,
             ...(dataCurrent && { current: dataCurrent }),
             objectsInViolation:
@@ -1613,9 +1643,7 @@ function getVolumeLayoutDrift(
     let hasConflicts;
     let insufficientMultiplexing;
     if (isEmpty(controlFileVolumes)) {
-        volumeLayoutDrift.push(
-            createEmptyVolumeAssessment(storageGoldenConfigData.controlfilesPlacement, 'control file')
-        );
+        volumeLayoutDrift.push({ ...controlfilesPlacementConfig, errorMessage: 'No control file volumes found.' });
     } else {
         // Control files can be on separate volume or shared with data/redo/temp and maintain at least two, preferably three, control file copies across separate volumes
         const archiveVolumeIdSet = volumeIdsSet(archiveLogVolumes);
@@ -1673,7 +1701,7 @@ function getVolumeLayoutDrift(
             controlCurrent = `Control files have ${controlMultiplexingFragment}`;
         }
         volumeLayoutDrift.push({
-            ...storageGoldenConfigData.controlfilesPlacement,
+            ...controlfilesPlacementConfig,
             recommended,
             status,
             ...(controlCurrent && { current: controlCurrent }),
@@ -1684,7 +1712,7 @@ function getVolumeLayoutDrift(
     }
 
     if (isEmpty(redoLogVolumes)) {
-        volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.redologsPlacement, 'redo log'));
+        volumeLayoutDrift.push({ ...redologsPlacementConfig, errorMessage: 'No redo log volumes found.' });
     } else {
         // Redo logs can be on separate or shared with temp/control
         const redoSharesWithVolumeIds = volumeIdsSet(dataFileVolumes, archiveLogVolumes);
@@ -1752,7 +1780,7 @@ function getVolumeLayoutDrift(
         }
 
         volumeLayoutDrift.push({
-            ...storageGoldenConfigData.redologsPlacement,
+            ...redologsPlacementConfig,
             recommended,
             status,
             ...(redoCurrent && { current: redoCurrent }),
@@ -1771,7 +1799,7 @@ function getVolumeLayoutDrift(
     }
 
     if (isEmpty(tempFileVolumes)) {
-        volumeLayoutDrift.push(createEmptyVolumeAssessment(storageGoldenConfigData.templogsPlacement, 'temp log'));
+        volumeLayoutDrift.push({ ...templogsPlacementConfig, errorMessage: 'No temp log volumes found.' });
     } else {
         // Temp logs can be on separate or shared with redo/control
         const tempSharesWithVolumeIds = volumeIdsSet(dataFileVolumes, archiveLogVolumes);
@@ -1787,7 +1815,8 @@ function getVolumeLayoutDrift(
                 ? `Temp files currently shared with ${formatTypeList(tempSharedLabels)}`
                 : undefined;
         volumeLayoutDrift.push({
-            ...storageGoldenConfigData.templogsPlacement,
+            ...templogsPlacementConfig,
+            recommended: templogsPlacementConfig.recommended ?? '',
             status,
             ...(tempCurrent && { current: tempCurrent }),
             objectsInViolation:
@@ -1798,9 +1827,7 @@ function getVolumeLayoutDrift(
     }
 
     if (isEmpty(binaryVolumeIds)) {
-        volumeLayoutDrift.push(
-            createEmptyVolumeAssessment(storageGoldenConfigData.oracleBinaryPlacement, 'binary log')
-        );
+        volumeLayoutDrift.push({ ...oracleBinaryPlacementConfig, errorMessage: 'No binary log volumes found.' });
     } else {
         const oracleDataVolumeIds = volumeIdsSet(
             controlFileVolumes,
@@ -1817,7 +1844,8 @@ function getVolumeLayoutDrift(
                 ? `Oracle binaries currently shared with ${formatTypeList(binarySharedLabels)}`
                 : undefined;
         volumeLayoutDrift.push({
-            ...storageGoldenConfigData.oracleBinaryPlacement,
+            ...oracleBinaryPlacementConfig,
+            recommended: oracleBinaryPlacementConfig.recommended ?? '',
             status,
             ...(binaryCurrent && { current: binaryCurrent }),
             objectsInViolation: binaryVolumeConflicts.length > 0 ? binaryVolumeConflicts : [],
@@ -1832,7 +1860,7 @@ function getVolumeLayoutDrift(
 function getLunLayoutDrift(
     volumeTypeMap: Record<OracleSysFileTypes, OracleVolumeRecord[]>,
     storageAssessmentData: StorageAssessment
-) {
+): (AssessmentItemType | AssessmentErrorItemType)[] {
     logger.info('Fetching LUN layout drift');
     const {
         DATA_FILES: dataFileLuns,
@@ -1841,18 +1869,13 @@ function getLunLayoutDrift(
         FRA: fraLuns
     } = volumeTypeMap;
     const { fraEnabled } = storageAssessmentData;
-    const result = [];
+    const result: (AssessmentItemType | AssessmentErrorItemType)[] = [];
     result.push(
-        prepareASMLunLayoutAssessment(
-            storageGoldenConfigData.dataDiskLunLayout,
-            dataFileLuns,
-            MIN_OPTIMAL_LUN_PER_DG.DATA,
-            'Data'
-        )
+        prepareASMLunLayoutAssessment(dataDiskLunLayoutConfig, dataFileLuns, MIN_OPTIMAL_LUN_PER_DG.DATA, 'Data')
     );
     result.push(
         prepareASMLunLayoutAssessment(
-            storageGoldenConfigData.redoLogDiskLunLayout,
+            redoLogDiskLunLayoutConfig,
             redoLogLuns,
             MIN_OPTIMAL_LUN_PER_DG.LOG_RECOVERY,
             'Redo Log'
@@ -1860,17 +1883,12 @@ function getLunLayoutDrift(
     );
     if (fraEnabled === 'yes') {
         result.push(
-            prepareASMLunLayoutAssessment(
-                storageGoldenConfigData.fraDiskLunLayout,
-                fraLuns,
-                MIN_OPTIMAL_LUN_PER_DG.LOG_RECOVERY,
-                'FRA'
-            )
+            prepareASMLunLayoutAssessment(fraDiskLunLayoutConfig, fraLuns, MIN_OPTIMAL_LUN_PER_DG.LOG_RECOVERY, 'FRA')
         );
     } else {
         result.push(
             prepareASMLunLayoutAssessment(
-                storageGoldenConfigData.archivelogDiskLunLayout,
+                archivelogDiskLunLayoutConfig,
                 archiveLogLuns,
                 MIN_OPTIMAL_LUN_PER_DG.LOG_RECOVERY,
                 'Archive Log'
@@ -1885,7 +1903,7 @@ function getSwapSpaceDrift(
     ec2InstanceId: string,
     databaseInstanceName: string,
     storageAssessmentData: StorageAssessment
-): GenericParameterDriftResponseType {
+): AssessmentItemType | AssessmentErrorItemType {
     logger.info('Fetching swap space drift', { accountId, ec2InstanceId, databaseInstanceName });
 
     const swapSpaceConfig = sizingConfigData.find(config => config.parameter === 'swap-space');
@@ -1896,14 +1914,14 @@ function getSwapSpaceDrift(
             ec2InstanceId,
             databaseInstanceName
         });
-        return { name: 'swap-space', errorMessage: 'No swap space sizing data found in the assessment.' };
+        return { ...swapSpaceConfig!, errorMessage: 'No swap space sizing data found in the assessment.' };
     }
 
     const { ramSizeInKb, swapSizeInKb, hugepagesSizeInKb, error } = swapSpace;
 
     if (error) {
         logger.error('Error in stored swap space sizing data', accountId, error);
-        return { name: 'swap-space', errorMessage: 'Error in stored swap space sizing data' };
+        return { ...swapSpaceConfig!, errorMessage: 'Error in stored swap space sizing data' };
     }
 
     const ramTotal = Math.round(sizeInGigaBytes(ramSizeInKb, 'KiB') * 100) / 100;
@@ -1935,7 +1953,7 @@ function getSwapSpaceDrift(
             hugepageSize
         });
         return {
-            name: 'swap-space',
+            ...swapSpaceConfig!,
             errorMessage: 'Unable to determine recommended swap space due to insufficient RAM data.'
         };
     }
@@ -1971,7 +1989,7 @@ async function getOracleHeadroomDrift(
     ec2InstanceId: string,
     databaseInstanceName: string,
     fileSystemId: string
-): Promise<GenericParameterDriftResponseType> {
+): Promise<AssessmentItemType | AssessmentErrorItemType> {
     logger.info('Fetching storage headroom drift', { accountId, ec2InstanceId, databaseInstanceName });
 
     const headroomConfig = sizingConfigData.find(config => config.parameter === 'headroom');
@@ -2005,7 +2023,7 @@ async function getOracleHeadroomDrift(
             error
         });
         return {
-            name: 'headroom',
+            ...headroomConfig!,
             errorMessage: `Failed to fetch FSx storage details or CloudWatch metrics; Error: ${error}`
         };
     }
@@ -2020,15 +2038,17 @@ async function getStorageSizingDrift(
     storageAssessmentData: StorageAssessment,
     fsxFileSystemId: string,
     skipHeadroom: boolean = false
-) {
+): Promise<(AssessmentItemType | AssessmentErrorItemType)[]> {
     logger.info('Fetching storage sizing drift', { accountId, ec2InstanceId, databaseInstanceName });
 
-    const result: GenericParameterDriftResponseType[] = [];
+    const result: (AssessmentItemType | AssessmentErrorItemType)[] = [];
     const { sizing: sizingData } = storageAssessmentData;
 
     if (!sizingData || isEmpty(sizingData)) {
-        result.push({ errorMessage: 'No sizing assessment data found.' });
-        return result;
+        return [...ORACLE_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'sizing')].map(config => ({
+            ...config,
+            errorMessage: 'No sizing assessment data found.'
+        }));
     }
 
     const asyncAssessments: Promise<void>[] = [];
@@ -2083,7 +2103,7 @@ async function calculateStorageDrift(
     mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>,
     storageAssessmentData: StorageAssessment,
     skipHeadroom: boolean = false
-) {
+): Promise<(AssessmentItemType | AssessmentErrorItemType)[]> {
     logger.info('Calculating storage drift', {
         accountId,
         credentialsId,
@@ -2099,17 +2119,24 @@ async function calculateStorageDrift(
 
     if (isEmpty(storageAssessmentData)) {
         if (mappedVolumeError) {
-            return {
+            return [...storageConfigData].map(config => ({
+                ...config,
                 errorMessage: `Mapped ONTAP volume discovery failed for ${databaseInstanceName}: ${mappedVolumeError}`
-            };
+            }));
         }
         const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
-        return { errorMessage };
+        return [...storageConfigData].map(config => ({
+            ...config,
+            errorMessage
+        }));
     }
 
     if (!mappedOntapVolumes || isEmpty(mappedOntapVolumes)) {
         const errorMessage = `No mapped ONTAP volumes found for file system ${fsxFileSystemId}. Please ensure the instance has been properly discovered and configured.`;
-        return { errorMessage };
+        return [...storageConfigData].map(config => ({
+            ...config,
+            errorMessage
+        }));
     }
 
     const protocol = mappedOntapVolumes[fsxFileSystemId]?.protocol;
@@ -2117,49 +2144,44 @@ async function calculateStorageDrift(
 
     const volumeTypeMap = mapVolumeTypesToIdName(databaseInstanceName, fsxFileSystemId, mappedOntapVolumes);
 
-    const storageDriftData: StorageParameterDriftResponseType = {
-        configuration: { volumes: [] },
-        layout: [],
-        sizing: []
-    };
+    const items: (AssessmentItemType | AssessmentErrorItemType)[] = [];
 
-    const layoutAssessment = getVolumeLayoutDrift(volumeTypeMap, storageAssessmentData);
-
-    storageDriftData.layout = layoutAssessment;
-
-    storageDriftData.configuration.volumes = getVolumeConfigDrift(volumeTypeMap, storageAssessmentData, protocol!);
+    items.push(...getVolumeConfigDrift(volumeTypeMap, storageAssessmentData, protocol!));
 
     if (protocol === STORAGE_PROTOCOLS.ISCSI) {
-        storageDriftData.configuration.luns = getLunConfigDrift(storageAssessmentData);
-        storageDriftData.configuration.os = getOSConfigDrift(
-            ec2InstanceId,
-            databaseInstanceName,
-            storageAssessmentData
-        );
-        if (isASMManaged) {
-            storageDriftData.layout.push(...getLunLayoutDrift(volumeTypeMap, storageAssessmentData));
-        }
+        items.push(...getLunConfigDrift(storageAssessmentData));
+        items.push(...getOSConfigDrift(ec2InstanceId, databaseInstanceName, storageAssessmentData));
     } else {
-        storageDriftData.configuration.os = getNfsOSConfigDrift(
-            ec2InstanceId,
-            databaseInstanceName,
-            deploymentType,
-            storageAssessmentData as StorageNfsAssessment
+        items.push(
+            ...getNfsOSConfigDrift(
+                ec2InstanceId,
+                databaseInstanceName,
+                deploymentType,
+                storageAssessmentData as StorageNfsAssessment
+            )
         );
     }
 
-    storageDriftData.sizing = await getStorageSizingDrift(
-        accountId,
-        credentialsId,
-        region,
-        ec2InstanceId,
-        databaseInstanceName,
-        storageAssessmentData,
-        fsxFileSystemId,
-        skipHeadroom
+    items.push(...getVolumeLayoutDrift(volumeTypeMap, storageAssessmentData));
+
+    if (protocol === STORAGE_PROTOCOLS.ISCSI && isASMManaged) {
+        items.push(...getLunLayoutDrift(volumeTypeMap, storageAssessmentData));
+    }
+
+    items.push(
+        ...(await getStorageSizingDrift(
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            databaseInstanceName,
+            storageAssessmentData,
+            fsxFileSystemId,
+            skipHeadroom
+        ))
     );
 
-    return storageDriftData;
+    return items;
 }
 
 async function registerAssessmentJobs(
@@ -2344,5 +2366,6 @@ export {
     mapVolumeTypesToIdName,
     getBaseVolume,
     createAssessment,
-    createViolationDetail
+    createViolationDetail,
+    GoldenConfigEntry
 };

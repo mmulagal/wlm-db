@@ -3,7 +3,7 @@ import { createResource, deleteResource, upsertDatabaseInstance } from '../../..
 import { optimizeOracleStorageLayout } from '../../../../src/operations/continuous-optimization/oracle/storage-optimize-operations';
 import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/database-instance-config';
 import { AssessmentCategoriesOracle } from '../../../../src/utils/continous-optimization-consts';
-import GOLDEN_CONFIG from '../../../../src/operations/continuous-optimization/oracle/golden-config';
+import ORACLE_GOLDEN_CONFIG from '../../../../src/operations/continuous-optimization/oracle/golden-config';
 import { getJobs } from '../../../../src/operations/database/job-operations';
 import waitForJobCompletion from '../../../utils/utils';
 
@@ -69,7 +69,10 @@ beforeAll(async () => {
         config_data: {
             layout: [
                 {
-                    name: GOLDEN_CONFIG.dataDiskLunLayout.name,
+                    name: (() => {
+                        const [config] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'data-dg-lun-layout');
+                        return config.id;
+                    })(),
                     violationDetails: [{ objectName: 'DATADG', value: '0', recommended: '1' }]
                 }
             ]
@@ -93,7 +96,13 @@ describe('optimizeOracleStorageLayout (integration style)', () => {
             databaseHostId: RESOURCE_ID,
             databaseInstanceId: dbInstanceSid,
             optimizationTargets: [
-                { configurationName: GOLDEN_CONFIG.dataDiskLunLayout.name, objectsToOptimize: ['DATADG'] }
+                {
+                    configurationName: (() => {
+                        const [config] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'data-dg-lun-layout');
+                        return config.id;
+                    })(),
+                    objectsToOptimize: ['DATADG']
+                }
             ]
         });
 

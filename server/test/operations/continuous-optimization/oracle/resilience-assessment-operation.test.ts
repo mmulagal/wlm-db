@@ -9,6 +9,10 @@ import {
     AwsWellArchitecturedPillars,
     SEVERITY
 } from '../../../../src/utils/continous-optimization-consts';
+import {
+    AssessmentErrorItemType,
+    AssessmentItemType
+} from '../../../../src/routes/types/continuous-optimization.types';
 
 const BASE_INSTANCE_RECORD: WorkloadInstance = {
     id: 'oracle-instance-1',
@@ -157,8 +161,15 @@ describe('getCrrDriftData', () => {
             ]
         };
 
-        const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
-        expect(result).not.toHaveProperty('errorMessage');
+        const result = getCrrDriftData(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            crrData
+        ) as AssessmentItemType;
+
         expect(result.status).toBe(AssessmentStatus.OPTIMIZED);
         expect(result.objectsInViolation).toEqual([]);
         expect(result.totalObjectsInViolation).toBe(0);
@@ -185,7 +196,14 @@ describe('getCrrDriftData', () => {
             ]
         };
 
-        const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
+        const result = getCrrDriftData(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            crrData
+        ) as AssessmentItemType;
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
         expect(result.objectsInViolation).toEqual([
             { ontapVolumeName: 'log_vol', ontapVolumeUuid: 'uuid-log', fsxVolumeId: 'fsvol-log' }
@@ -214,7 +232,14 @@ describe('getCrrDriftData', () => {
             ]
         };
 
-        const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
+        const result = getCrrDriftData(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            crrData
+        ) as AssessmentItemType;
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
         expect(result.objectsInViolation).toEqual([
             { ontapVolumeName: 'data_vol', ontapVolumeUuid: 'uuid-data', fsxVolumeId: 'fsvol-data' },
@@ -228,10 +253,17 @@ describe('getCrrDriftData', () => {
             crrDetails: [{ volumeName: 'data_vol', isCRREnabled: true, isSnapMirrored: true }]
         };
 
-        const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
-        expect(result.name).toBe('crr');
+        const result = getCrrDriftData(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            crrData
+        ) as AssessmentItemType;
+        expect(result.id).toBe('crr');
         expect(result.severity).toBe(SEVERITY.WARNING);
-        expect(result.tags).toEqual([AwsWellArchitecturedPillars.RELIABILITY]);
+        expect(result.categories).toEqual([AwsWellArchitecturedPillars.RELIABILITY]);
         expect(result.resourceType).toBe(ASSESSMENT_RESOURCE_TYPE.VOLUME);
         expect(result.recommended).toBe('crr-enabled');
     });
@@ -244,7 +276,7 @@ describe('getCrrDriftData', () => {
             databaseHostId,
             databaseInstanceId,
             {} as CrrAssessment
-        );
+        ) as AssessmentErrorItemType;
         expect(result).toHaveProperty('errorMessage');
         expect((result as { errorMessage: string }).errorMessage).toContain('crr');
     });
@@ -262,7 +294,14 @@ describe('getCrrDriftData', () => {
             ]
         };
 
-        const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
+        const result = getCrrDriftData(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            crrData
+        ) as AssessmentItemType;
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
         expect(result.objectsInViolation).toEqual([
             { ontapVolumeName: 'data_vol', ontapVolumeUuid: 'uuid-data', fsxVolumeId: 'fsvol-data' }
@@ -276,7 +315,14 @@ describe('getCrrDriftData', () => {
             crrDetails: [{ volumeName: 'data_vol', isCRREnabled: false, isSnapMirrored: false }]
         };
 
-        const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
+        const result = getCrrDriftData(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            crrData
+        ) as AssessmentItemType;
         expect(result.objectsInViolation).toEqual([
             { ontapVolumeName: 'data_vol', ontapVolumeUuid: undefined, fsxVolumeId: undefined }
         ]);
@@ -285,7 +331,14 @@ describe('getCrrDriftData', () => {
     it('should handle empty crrDetails array', () => {
         const crrData: CrrAssessment = { crrDetails: [] };
 
-        const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
+        const result = getCrrDriftData(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            crrData
+        ) as AssessmentItemType;
         expect(result.status).toBe(AssessmentStatus.OPTIMIZED);
         expect(result.totalObjectsAssessed).toBe(0);
         expect(result.totalObjectsInViolation).toBe(0);
@@ -311,7 +364,14 @@ describe('getCrrDriftData', () => {
             ]
         };
 
-        const result = getCrrDriftData(accountId, credentialsId, region, databaseHostId, databaseInstanceId, crrData);
+        const result = getCrrDriftData(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            databaseInstanceId,
+            crrData
+        ) as AssessmentItemType;
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
         expect(result.totalObjectsInViolation).toBe(2);
         expect(result.objectsInViolation).toEqual([
@@ -357,7 +417,7 @@ describe('getCrrDriftData', () => {
                 crrData,
                 ['uuid-ctrl-1', 'uuid-ctrl-2'],
                 ['uuid-ctrl-1', 'uuid-ctrl-2']
-            );
+            ) as AssessmentItemType;
             expect(result.status).toBe(AssessmentStatus.OPTIMIZED);
             expect(result.objectsInViolation).toEqual([]);
             expect(result.totalObjectsInViolation).toBe(0);
@@ -400,7 +460,7 @@ describe('getCrrDriftData', () => {
                 crrData,
                 ['uuid-ctrl-1', 'uuid-ctrl-2'],
                 ['uuid-ctrl-1', 'uuid-ctrl-2']
-            );
+            ) as AssessmentItemType;
             expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(result.objectsInViolation).toEqual([
                 { ontapVolumeName: 'ctrl_vol_1', ontapVolumeUuid: 'uuid-ctrl-1', fsxVolumeId: 'fsvol-ctrl-1' },
@@ -438,7 +498,7 @@ describe('getCrrDriftData', () => {
                 crrData,
                 ['uuid-shared', 'uuid-ctrl-only'],
                 ['uuid-ctrl-only']
-            );
+            ) as AssessmentItemType;
             expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(result.objectsInViolation).toEqual([
                 { ontapVolumeName: 'shared_data_ctrl_vol', ontapVolumeUuid: 'uuid-shared', fsxVolumeId: 'fsvol-shared' }
@@ -475,7 +535,7 @@ describe('getCrrDriftData', () => {
                 crrData,
                 ['uuid-shared', 'uuid-ctrl-only'],
                 ['uuid-ctrl-only']
-            );
+            ) as AssessmentItemType;
             expect(result.status).toBe(AssessmentStatus.OPTIMIZED);
             expect(result.objectsInViolation).toEqual([]);
             expect(result.totalObjectsInViolation).toBe(0);
@@ -508,7 +568,7 @@ describe('getCrrDriftData', () => {
                 databaseHostId,
                 databaseInstanceId,
                 crrData
-            );
+            ) as AssessmentItemType;
             expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(result.objectsInViolation).toEqual([
                 { ontapVolumeName: 'vol_b', ontapVolumeUuid: 'uuid-b', fsxVolumeId: 'fsvol-b' }
@@ -543,7 +603,7 @@ describe('getCrrDriftData', () => {
                 crrData,
                 ['uuid-ctrl-1', 'uuid-ctrl-2'],
                 ['uuid-ctrl-1', 'uuid-ctrl-2']
-            );
+            ) as AssessmentItemType;
             expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(result.objectsInViolation).toEqual([
                 { ontapVolumeName: 'ctrl_vol_2', ontapVolumeUuid: undefined, fsxVolumeId: undefined }
@@ -674,9 +734,9 @@ describe('getOracleAwsBackupDriftData', () => {
             databaseInstanceId,
             assessmentData
         ) as OracleGenericParameterDriftResponseType;
-        expect(result.name).toBe('backup-configuration');
+        expect(result.id).toBe('backup-configuration');
         expect(result.severity).toBe(SEVERITY.WARNING);
-        expect(result.tags).toEqual([AwsWellArchitecturedPillars.RELIABILITY]);
+        expect(result.categories).toEqual([AwsWellArchitecturedPillars.RELIABILITY]);
         expect(result.resourceType).toBe(ASSESSMENT_RESOURCE_TYPE.VOLUME);
         expect(result.recommended).toBe('aws-backup-enabled');
     });

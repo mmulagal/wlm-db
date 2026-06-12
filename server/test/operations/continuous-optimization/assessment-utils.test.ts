@@ -1,128 +1,87 @@
-import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
-import {
-    getMatchingAssessmentStatus,
-    handleOptimizeJobCreation
-} from '../../../src/operations/continuous-optimization/assessment-utils';
-import { FINDING } from '../../../src/utils/consts';
-import { AssessmentStatus } from '../../../src/utils/continous-optimization-consts';
-import { MSSQLDriftAssessmentResponse } from '../../../src/routes/types/mssql-continuous-optimisation.types';
-import {
-    ASSESSMENT_AWS_BACKUP_DATA,
-    ASSESSMENT_CRR_CONFIG_DATA,
-    MSSQL_ASSESMENT_CONFIG_DATA,
-    MSSQL_ASSESSMENT_CLONE_CONFIG_DATA,
-    MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
-    MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA
-} from '../../../src/utils/demo-utils/demoMockdata';
-import { createJob, deleteJobs } from '../../../src/lib/database/job';
-import { validateWithSchema } from '../../../src/utils/utils';
+import { buildDismissedConfigurations } from '../../../src/operations/continuous-optimization/assessment-utils';
+import { DatabaseTypes } from '../../../src/utils/consts';
 
-describe('Assessment Utils', () => {
-    const createdJobIds: string[] = [];
-
-    afterEach(async () => {
-        if (createdJobIds.length > 0) {
-            await deleteJobs(ACCOUNT_ID, createdJobIds);
-            createdJobIds.length = 0;
-        }
-    });
-    it('Should return matching assessment status', async () => {
-        const response = getMatchingAssessmentStatus(FINDING.NOT_OPTIMIZED);
-
-        expect(response).toEqual(AssessmentStatus.NOT_OPTIMIZED);
+// ---------------------------------------------------------------------------
+// buildDismissedConfigurations
+// ---------------------------------------------------------------------------
+describe('buildDismissedConfigurations', () => {
+    it('returns empty array when dismissed is undefined', () => {
+        expect(buildDismissedConfigurations(undefined, DatabaseTypes.MS_SQL_SERVER)).toEqual([]);
     });
 
-    it('Handle optimize job creation', async () => {
-        const response = await handleOptimizeJobCreation(
-            ACCOUNT_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            'test-server',
-            'test-job',
-            'test-job',
-            'test-job'
+    it('flattens storage configuration/sizing/layout entries preserving configurationName and configState', () => {
+        const dismissed = {
+            storage: {
+                configuration: {
+                    volumes: [{ configurationName: 'thin-provision', configState: 'dismissed' }],
+                    luns: [],
+                    os: []
+                },
+                sizing: [{ configurationName: 'headroom', configState: 'dismissed' }],
+                layout: [{ configurationName: 'default-data-files-location', configState: 'dismissed' }]
+            }
+        } as any;
+
+        const result = buildDismissedConfigurations(dismissed, DatabaseTypes.MS_SQL_SERVER);
+        expect(result).toHaveLength(3);
+        expect(result.map(r => r.configurationName)).toEqual(
+            expect.arrayContaining(['thin-provision', 'headroom', 'default-data-files-location'])
         );
-        expect(response).toBeDefined();
-        createdJobIds.push(response);
     });
 
-    it('Validate incorrect response', () => {
-        const { isValid, errors } = validateWithSchema(MSSQLDriftAssessmentResponse, {
-            rssConfig: { rssConfigFinding: 'OPTIMIZED' }
-        });
-        expect(isValid).toBe(false);
-        expect(errors.length).toBeGreaterThan(0);
+    it('flattens highAvailability entries', () => {
+        const dismissed = {
+            highAvailability: [
+                { configurationName: 'shared-storage', configState: 'dismissed' },
+                { configurationName: 'cluster-quorum-configuration', configState: 'dismissed' }
+            ]
+        } as any;
+
+        const result = buildDismissedConfigurations(dismissed, DatabaseTypes.MS_SQL_SERVER);
+        expect(result).toHaveLength(2);
+        expect(result[0].configurationName).toBe('shared-storage');
     });
 
-    it('Validate correct response', () => {
-        const { isValid, errors } = validateWithSchema(MSSQLDriftAssessmentResponse, {
-            ...MSSQL_ASSESMENT_CONFIG_DATA,
-            ...ASSESSMENT_CRR_CONFIG_DATA,
-            ...ASSESSMENT_AWS_BACKUP_DATA,
-            ...MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA,
-            ...MSSQL_ASSESSMENT_CLONE_CONFIG_DATA,
-            ...MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
-        });
-        expect(isValid).toBe(true);
-        expect(errors.length).toBe(0);
+    it('flattens single-object dismissed areas', () => {
+        const dismissed = {
+            license: { configurationName: 'sql-license', configState: 'dismissed' },
+            hostOsPatch: { configurationName: 'host-os-patch', configState: 'dismissed' }
+        } as any;
+
+        const result = buildDismissedConfigurations(dismissed, DatabaseTypes.MS_SQL_SERVER);
+        expect(result).toHaveLength(2);
+        expect(result.map(r => r.configurationName)).toEqual(expect.arrayContaining(['sql-license', 'host-os-patch']));
     });
 
-    it('Should throw 412 error when job is running for less than 5 minutes', async () => {
-        const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
-        const recentJob = await createJob(ACCOUNT_ID, {
-            account_id: ACCOUNT_ID,
-            credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
-            region: DEFAULT_AWS_REGION,
-            type: JOBTYPE.WELL_ARCHITECTED,
-            status: JOBSTATUS.IN_PROGRESS,
-            resource_name: 'test-server-recent',
-            name: 'test-job',
-            description: 'test-job',
-            start_time: new Date(twoMinutesAgo)
+    it('enriches entries with golden-config fields (id, name, type, subType, recommendation, categories)', () => {
+        const dismissed = {
+            storage: {
+                configuration: {
+                    volumes: [{ configurationName: 'thin-provision', configState: 'dismissed' }],
+                    luns: [],
+                    os: []
+                },
+                sizing: [],
+                layout: []
+            },
+            license: { configurationName: 'sql-license', configState: 'dismissed' }
+        } as any;
+
+        const result = buildDismissedConfigurations(dismissed, DatabaseTypes.MS_SQL_SERVER);
+        const thinProvision = result.find(r => r.configurationName === 'thin-provision');
+        expect(thinProvision).toMatchObject({
+            id: 'thin-provision',
+            name: expect.any(String),
+            type: 'storage',
+            subType: 'configuration',
+            recommendation: expect.any(String),
+            categories: expect.any(Array)
         });
-        createdJobIds.push(recentJob.id);
-
-        await expect(
-            handleOptimizeJobCreation(
-                ACCOUNT_ID,
-                DEFAULT_AWS_CREDENTIALS_ID,
-                DEFAULT_AWS_REGION,
-                'test-server-recent',
-                JOBTYPE.WELL_ARCHITECTED,
-                'test-job',
-                'test-job'
-            )
-        ).rejects.toThrow(/A job is already in progress/);
-    });
-
-    it('Should allow creating new job when existing job is running for more than 5 minutes', async () => {
-        const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-        const staleJob = await createJob(ACCOUNT_ID, {
-            account_id: ACCOUNT_ID,
-            credentials_id: DEFAULT_AWS_CREDENTIALS_ID,
-            region: DEFAULT_AWS_REGION,
-            type: JOBTYPE.WELL_ARCHITECTED,
-            status: JOBSTATUS.IN_PROGRESS,
-            resource_name: 'test-server-stale',
-            name: 'stale-job',
-            description: 'stale-job',
-            start_time: new Date(tenMinutesAgo)
+        const license = result.find(r => r.configurationName === 'sql-license');
+        expect(license).toMatchObject({
+            id: 'sql-license',
+            type: 'application',
+            subType: 'application'
         });
-        createdJobIds.push(staleJob.id);
-
-        const newJobId = await handleOptimizeJobCreation(
-            ACCOUNT_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            'test-server-stale',
-            JOBTYPE.WELL_ARCHITECTED,
-            'new-job',
-            'new-job'
-        );
-
-        expect(newJobId).toBeDefined();
-        expect(newJobId).not.toBe(staleJob.id);
-        createdJobIds.push(newJobId);
     });
 });

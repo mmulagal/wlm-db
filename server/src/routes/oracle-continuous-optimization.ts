@@ -8,14 +8,18 @@ import {
 import castRequest from './utils';
 import {
     fetchOracleDriftAssessment,
+    fetchOracleDriftAssessmentV1,
     fetchOracleDriftAssessmentPerAccount,
+    fetchOracleDriftAssessmentPerAccountV1,
     fetchOracleDriftAssessmentPerHost,
     fetchOraclePatchScan,
     onDemandTriggerOracleDriftAssessment
 } from '../operations/continuous-optimization/oracle/assessment-operations';
 import {
     DriftAssessmentDataCollection,
+    DriftAssessmentDataCollectionV1,
     DriftAssessmentPerAccount,
+    DriftAssessmentPerAccountV1,
     DriftAssessmentPerHost,
     FetchOraclePatchScanSchema,
     OracleOptimizeSchema,
@@ -33,7 +37,9 @@ import { SSMDocument } from '../utils/common-types';
 import { downloadOfflineAssessmentScript, uploadOfflineAssessment } from '../operations/offline-assessment-operations';
 import {
     fetchOracleOfflineAssessment,
+    fetchOracleOfflineAssessmentV1,
     fetchOracleOfflineAssessmentPerAccount,
+    fetchOracleOfflineAssessmentPerAccountV1,
     deleteOracleOfflineAssessmentRecord
 } from '../operations/continuous-optimization/oracle/offline-assessment-operations';
 import {
@@ -41,13 +47,17 @@ import {
     OfflineAssessmentUploadSchema,
     OfflineAssessmentListSchema,
     OfflineAssessmentGetByIdSchema,
+    OracleOfflineAssessmentGetByIdSchemaV1,
+    OracleOfflineAssessmentListSchemaV1,
     DeleteOfflineAssessment
 } from './schemas/offline-assessment-schema';
 import getLogger from '../utils/logger';
+import { OfflineAssessmentListResponseType } from './types/offline-assessment.types';
 
 const logger = getLogger();
 
 const API_PREFIX_PATH = '/v1/oracle/credentials/:credentialsId/regions/:region';
+const API_PREFIX_PATH_V2 = '/v2/oracle/credentials/:credentialsId/regions/:region';
 const ORACLE_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/oracle';
 
 export default function oracleContinuousOptimizationRoutes(fastify: FastifyInstance) {
@@ -76,6 +86,25 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
         )
         .get(
             `${API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
+            { schema: DriftAssessmentDataCollectionV1 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
+                    query: { fields }
+                } = castRequest(request);
+                const response = await fetchOracleDriftAssessmentV1(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
             { schema: DriftAssessmentDataCollection },
             async (request, reply) => {
                 const {
@@ -151,7 +180,22 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
                 return reply.send(response);
             }
         )
-        .get(`${API_PREFIX_PATH}/assessment`, { schema: DriftAssessmentPerAccount }, async (request, reply) => {
+        .get(`${API_PREFIX_PATH}/assessment`, { schema: DriftAssessmentPerAccountV1 }, async (request, reply) => {
+            const {
+                params: { accountId, credentialsId, region },
+                query: { nextToken, pageSize }
+            } = castRequest(request);
+
+            const response = await fetchOracleDriftAssessmentPerAccountV1(
+                accountId,
+                credentialsId,
+                region,
+                nextToken,
+                pageSize
+            );
+            return reply.send(response);
+        })
+        .get(`${API_PREFIX_PATH_V2}/assessment`, { schema: DriftAssessmentPerAccount }, async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region },
                 query: { nextToken, pageSize }
@@ -275,6 +319,25 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
         )
         .get(
             '/v1/oracle/offline-assessment',
+            { schema: OracleOfflineAssessmentListSchemaV1() },
+            async (request, reply) => {
+                const {
+                    params: { accountId },
+                    query: { pageSize, nextToken, credentialsId, region }
+                } = castRequest(request);
+
+                const response = await fetchOracleOfflineAssessmentPerAccountV1(
+                    accountId,
+                    pageSize,
+                    credentialsId,
+                    region,
+                    nextToken
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            '/v2/oracle/offline-assessment',
             { schema: OfflineAssessmentListSchema(DatabaseTypes.ORACLE) },
             async (request, reply) => {
                 const {
@@ -289,11 +352,33 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
                     region,
                     nextToken
                 );
+                return reply.send(response as OfflineAssessmentListResponseType);
+            }
+        )
+        // Get specific offline assessment by resource ID and database instance ID (v1 - deprecated)
+        .get(
+            '/v1/oracle/database-hosts/:resourceId/database-instances/:databaseInstanceId/offline-assessment',
+            { schema: OracleOfflineAssessmentGetByIdSchemaV1() },
+            async (request, reply) => {
+                const {
+                    params: { accountId, resourceId, databaseInstanceId },
+                    query: { fields, credentialsId, region }
+                } = castRequest(request);
+
+                const response = await fetchOracleOfflineAssessmentV1(
+                    accountId,
+                    resourceId,
+                    databaseInstanceId,
+                    credentialsId,
+                    region,
+                    fields
+                );
                 return reply.send(response);
             }
         )
+        // Get specific offline assessment by resource ID and database instance ID (v2)
         .get(
-            '/v1/oracle/database-hosts/:resourceId/database-instances/:databaseInstanceId/offline-assessment',
+            '/v2/oracle/database-hosts/:resourceId/database-instances/:databaseInstanceId/offline-assessment',
             { schema: OfflineAssessmentGetByIdSchema(DatabaseTypes.ORACLE) },
             async (request, reply) => {
                 const {

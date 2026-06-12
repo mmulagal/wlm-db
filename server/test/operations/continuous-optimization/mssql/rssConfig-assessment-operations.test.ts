@@ -97,7 +97,7 @@ describe('calculateRssConfigDrift', () => {
             metadata as unknown as Metadata,
             assessmentData as unknown as ResourceAssessmentData
         );
-        expect(rssConfigAssessmentResponse.name).toEqual('rss-config');
+        expect(rssConfigAssessmentResponse.id).toEqual('rss-config');
     });
 
     it('perform rss config assessment for managed hosts', async () => {

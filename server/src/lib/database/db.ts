@@ -994,82 +994,116 @@ async function getGroupedDatabaseInstancesBySeverity({
             ? Prisma.sql`AND di.region IN (${Prisma.join(regionList)})`
             : Prisma.empty;
 
-    // Using raw SQL query to perform recursive JSON traversal and aggregation
-    // Getting tag, severity, and resource names (prioritizing database_instance_name over resource_name)
-    // from nested assessment_results JSON where status is not 'optimized'
-    return prisma.client.$queryRaw`WITH RECURSIVE walk AS (
-        SELECT
-            di.id,
-            '$' AS jpath,
-            di.assessment_results AS node,
-            JSON_TYPE(di.assessment_results) AS kind
-        FROM database_instances di
-        WHERE di.account_id = ${accountId}
-        ${credentialsFilter}
-        ${regionFilter}
-        UNION ALL
-
-        -- step into object members
-        SELECT
-            w.id,
-            CONCAT(w.jpath, '.', JSON_UNQUOTE(k.key_name)) AS jpath,
-            JSON_EXTRACT(w.node, CONCAT('$."', JSON_UNQUOTE(k.key_name), '"')) AS node,
-            JSON_TYPE(JSON_EXTRACT(w.node, CONCAT('$."', JSON_UNQUOTE(k.key_name), '"'))) AS kind
-        FROM walk w
-        JOIN JSON_TABLE(
-            JSON_KEYS(w.node),
-            '$[*]' COLUMNS (key_name VARCHAR(200) PATH '$')
-        ) k
-        ON w.kind = 'OBJECT'
-
-        UNION ALL
-
-        -- step into array elements
-        SELECT
-            w.id,
-            CONCAT(w.jpath, '[', a.ord - 1, ']') AS jpath,
-            JSON_EXTRACT(w.node, CONCAT('$[', a.ord - 1, ']')) AS node,
-            JSON_TYPE(JSON_EXTRACT(w.node, CONCAT('$[', a.ord - 1, ']'))) AS kind
-        FROM walk w
-        JOIN JSON_TABLE(
-            w.node,
-            '$[*]' COLUMNS (ord FOR ORDINALITY, value JSON PATH '$')
-        ) a
-        ON w.kind = 'ARRAY'
-        )
-        SELECT
-            labeled.default_label AS name,
-            labeled.severity,
-            labeled.database_type AS engineType,
-            COUNT(*) AS count,
-            GROUP_CONCAT(DISTINCT labeled.resource_name ORDER BY labeled.resource_name SEPARATOR ',') AS resourceNames
-        FROM (
+    // `assessment_results` is persisted in two shapes; JSON_TYPE (the leading `[` vs `{`) tells them apart:
+    //   - v2 (new): a flat array  [ {assessment item}, ... ]                     -> 'ARRAY'
+    //   - v1 (old): a nested object { storage: { ... }, compute: { ... }, ... }  -> 'OBJECT'
+    // Both are normalized into a single `items` set of (name, severity, status, engineType, resourceName),
+    // then non-optimized items are grouped by name, severity and engine type. Resource names prioritize
+    // database_instance_name over resource_name.
+    return prisma.client.$queryRaw`
+        WITH RECURSIVE
+        -- v1 (object): recursively walk the tree so every nested assessment node is found, however deep.
+        -- Navigation uses the node value itself (no JSON path is tracked), so labels stay clean.
+        walk AS (
             SELECT
+                di.id,
+                di.assessment_results AS node,
+                JSON_TYPE(di.assessment_results) AS kind
+            FROM database_instances di
+            WHERE di.account_id = ${accountId}
+                ${credentialsFilter}
+                ${regionFilter}
+                AND JSON_TYPE(di.assessment_results) = 'OBJECT'
+
+            UNION ALL
+            -- step into object members
+            SELECT
+                w.id,
+                JSON_EXTRACT(w.node, CONCAT('$."', JSON_UNQUOTE(k.key_name), '"')) AS node,
+                JSON_TYPE(JSON_EXTRACT(w.node, CONCAT('$."', JSON_UNQUOTE(k.key_name), '"'))) AS kind
+            FROM walk w
+            JOIN JSON_TABLE(
+                JSON_KEYS(w.node),
+                '$[*]' COLUMNS (key_name VARCHAR(200) PATH '$')
+            ) k ON w.kind = 'OBJECT'
+
+            UNION ALL
+            -- step into array elements
+            SELECT
+                w.id,
+                JSON_EXTRACT(w.node, CONCAT('$[', a.ord - 1, ']')) AS node,
+                JSON_TYPE(JSON_EXTRACT(w.node, CONCAT('$[', a.ord - 1, ']'))) AS kind
+            FROM walk w
+            JOIN JSON_TABLE(
                 w.node,
-                w.id AS di_id,
+                '$[*]' COLUMNS (ord FOR ORDINALITY)
+            ) a ON w.kind = 'ARRAY'
+        ),
+        -- One unified row per assessment item, from whichever shape the row is stored in.
+        items AS (
+            -- v1 (object): a leaf node is an assessment item when it carries an id/name and a severity.
+            SELECT
+                COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(w.node, '$.id')),
+                    JSON_UNQUOTE(JSON_EXTRACT(w.node, '$.name'))
+                ) AS name,
                 JSON_UNQUOTE(JSON_EXTRACT(w.node, '$.severity')) AS severity,
-                di.database_type,
-                CASE
-                    WHEN JSON_EXTRACT(w.node, '$.name') IS NOT NULL
-                    THEN CONCAT(
-                        REGEXP_REPLACE(SUBSTRING(w.jpath, 3), '\\[[0-9]+\\]', ''),
-                        JSON_UNQUOTE(JSON_EXTRACT(w.node, '$.name'))
-                    )
-                    ELSE REGEXP_REPLACE(SUBSTRING(w.jpath, 3), '\\[[0-9]+\\]', '')
-                END AS default_label,
-                COALESCE(NULLIF(di.database_instance_name, ''), r.resource_name, di.resource_id) AS resource_name
+                JSON_UNQUOTE(JSON_EXTRACT(w.node, '$.status')) AS status,
+                di.database_type AS engineType,
+                COALESCE(NULLIF(di.database_instance_name, ''), r.resource_name, di.resource_id) AS resourceName
             FROM walk w
             JOIN database_instances di ON di.id = w.id
             LEFT JOIN resource r ON r.account_id = di.account_id
                 AND r.credentials_id = di.credentials_id
                 AND r.region = di.region
                 AND r.resource_id = di.resource_id
-        ) AS labeled
-        WHERE labeled.severity IS NOT NULL
-            AND TRIM(labeled.severity) <> ''
-            AND JSON_UNQUOTE(JSON_EXTRACT(labeled.node, '$.status')) <> 'optimized'
-        GROUP BY labeled.default_label, labeled.severity, labeled.database_type
-        ORDER BY labeled.severity, count DESC;
+            WHERE JSON_EXTRACT(w.node, '$.severity') IS NOT NULL
+                AND (
+                    JSON_EXTRACT(w.node, '$.id') IS NOT NULL
+                    OR JSON_EXTRACT(w.node, '$.name') IS NOT NULL
+                )
+
+            UNION ALL
+
+            -- v2 (array): each element is already an assessment item, read it directly.
+            SELECT
+                COALESCE(item.item_id, item.item_name) AS name,
+                item.severity AS severity,
+                item.status AS status,
+                di.database_type AS engineType,
+                COALESCE(NULLIF(di.database_instance_name, ''), r.resource_name, di.resource_id) AS resourceName
+            FROM database_instances di
+            LEFT JOIN resource r ON r.account_id = di.account_id
+                AND r.credentials_id = di.credentials_id
+                AND r.region = di.region
+                AND r.resource_id = di.resource_id
+            JOIN JSON_TABLE(
+                di.assessment_results,
+                '$[*]' COLUMNS (
+                    item_id VARCHAR(255) PATH '$.id',
+                    item_name VARCHAR(255) PATH '$.name',
+                    severity VARCHAR(50) PATH '$.severity',
+                    status VARCHAR(50) PATH '$.status'
+                )
+            ) AS item
+            WHERE di.account_id = ${accountId}
+                ${credentialsFilter}
+                ${regionFilter}
+                AND JSON_TYPE(di.assessment_results) = 'ARRAY'
+        )
+        SELECT
+            name,
+            severity,
+            engineType,
+            COUNT(*) AS count,
+            GROUP_CONCAT(DISTINCT resourceName ORDER BY resourceName SEPARATOR ',') AS resourceNames
+        FROM items
+        WHERE name IS NOT NULL
+            AND severity IS NOT NULL
+            AND TRIM(severity) <> ''
+            AND status <> 'optimized'
+        GROUP BY name, severity, engineType
+        ORDER BY severity, count DESC;
     `;
 }
 

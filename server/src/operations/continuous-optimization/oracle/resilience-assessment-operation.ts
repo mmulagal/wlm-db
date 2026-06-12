@@ -3,13 +3,7 @@ import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
-import {
-    AssessmentCategoriesOracle,
-    AssessmentStatus,
-    ASSESSMENT_RESOURCE_TYPE,
-    AwsWellArchitecturedPillars,
-    SEVERITY
-} from '../../../utils/continous-optimization-consts';
+import { AssessmentCategoriesOracle, AssessmentStatus } from '../../../utils/continous-optimization-consts';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes } from '../../../utils/consts';
 import { sqlResponseParsing } from '../../../utils/utils';
 import { CrrAssessment, CrrDetails, WorkloadInstance } from '../../../utils/common-types';
@@ -19,8 +13,8 @@ import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { ORACLE_CRR_ASSESSMENT_SCRIPT } from './ssm-scripts/resiliency-assessment-scripts';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
-import storageGoldenConfigData from './golden-config';
-import { OracleGenericParameterDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
+import ORACLE_GOLDEN_CONFIG from './golden-config';
+import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 
 const logger = getLogger();
 
@@ -160,7 +154,7 @@ function getCrrDriftData(
     crrAssessmentData: CrrAssessment,
     controlFileVolumeIds: string[] = [],
     controlFileOnlyVolumeIds: string[] = []
-): OracleGenericParameterDriftResponseType & { errorMessage?: string } {
+): AssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculate Oracle CRR drift data for:', {
         accountId,
         region,
@@ -169,9 +163,11 @@ function getCrrDriftData(
         databaseHostId
     });
 
+    const [goldenConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'crr');
+
     if (isEmpty(crrAssessmentData)) {
         const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategoriesOracle.CRR);
-        return { errorMessage } as OracleGenericParameterDriftResponseType & { errorMessage: string };
+        return { ...goldenConfig, errorMessage };
     }
 
     const { crrDetails } = crrAssessmentData;
@@ -197,29 +193,21 @@ function getCrrDriftData(
         const volumesInViolation = crrDetails.filter(isVolumeInViolation);
         const allVolumesOptimized = volumesInViolation.length === 0;
 
-        const response: OracleGenericParameterDriftResponseType = {
-            name: 'crr',
+        return {
+            ...goldenConfig,
             status: allVolumesOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-            severity: SEVERITY.WARNING,
-            recommendation: storageGoldenConfigData.resiliency.crr.recommendation,
+            recommended: 'crr-enabled',
             objectsInViolation: volumesInViolation.map(detail => ({
                 ontapVolumeName: detail.volumeName,
                 ontapVolumeUuid: detail.volumeUuid,
                 fsxVolumeId: detail.fsxVolumeId
             })),
             totalObjectsAssessed: crrDetails.length,
-            totalObjectsInViolation: volumesInViolation.length,
-            tags: [AwsWellArchitecturedPillars.RELIABILITY],
-            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-            recommended: 'crr-enabled'
+            totalObjectsInViolation: volumesInViolation.length
         };
-
-        return response;
     } catch (error) {
         logger.error('Error fetching Oracle CRR drift data:', error);
-        return { errorMessage: (error as Error).message } as OracleGenericParameterDriftResponseType & {
-            errorMessage: string;
-        };
+        return { ...goldenConfig, errorMessage: (error as Error).message };
     }
 }
 

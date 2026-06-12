@@ -1,14 +1,7 @@
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { Metadata, ResourceAssessmentData, RssConfigAssesment } from '../../../utils/common-types';
-import {
-    AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    NUMASTATIC,
-    SEVERITY,
-    ASSESSMENT_RESOURCE_TYPE,
-    AssessmentCategories
-} from '../../../utils/continous-optimization-consts';
+import { AssessmentStatus, NUMASTATIC, AssessmentCategories } from '../../../utils/continous-optimization-consts';
 import getLogger from '../../../utils/logger';
 import { sqlResponseParsing, IS_DEMO_FLOW } from '../../../utils/utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
@@ -16,6 +9,9 @@ import { callSsmExecution } from '../../aws/ssm-operations';
 import { GET_RSS_CONFIG_DETAILS } from '../../workloads/mssql/assessment-scripts';
 
 import { registerJob, updateJobDetails } from '../../database/job-operations';
+import type { AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
+import type { MssqlAssessmentItemType } from '../../../routes/types/mssql-continuous-optimisation.types';
+import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 
 const logger = getLogger();
 
@@ -26,23 +22,22 @@ function calculateRssConfigDrift(
     databaseHostId: string,
     metadata: Metadata,
     assessmentData: ResourceAssessmentData
-) {
+): MssqlAssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculating RSS drift', { accountId, credentialsId, region, databaseHostId });
-    let errorMessage = '';
-    let rssConfigAssessment;
+    const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'rss-config');
 
     try {
         const { rssConfig, errors } = assessmentData;
 
         if (isEmpty(rssConfig)) {
-            errorMessage = errors?.rssConfig
+            const errorMessage = errors?.rssConfig
                 ? errors?.rssConfig
                 : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.RSS_CONFIG);
             logger.error({ errorMessage });
-            return { errorMessage };
+            return { ...goldenConfig, errorMessage };
         }
 
-        rssConfigAssessment = rssConfig as RssConfigAssesment;
+        const rssConfigAssessment = rssConfig as RssConfigAssesment;
         if (IS_DEMO_FLOW) {
             rssConfigAssessment.rssAdapters = rssConfigAssessment?.rssAdapters?.filter(
                 adapter => !(metadata as Metadata)?.isRssConfigOptimized?.includes(adapter.adapterName)
@@ -60,30 +55,22 @@ function calculateRssConfigDrift(
             totalObjectsInViolation,
             totalObjectsAssessed
         } = rssConfigAssessment;
-        const recommendationMessage =
-            rssConfigFinding === AssessmentStatus.NOT_OPTIMIZED
-                ? 'To enhance network performance and system efficiency for your SQL Server EC2 instance, we recommend optimizing your Receive Side Scaling (RSS) configuration. Proper RSS settings distribute network processing across multiple processors, reducing latency and improving application responsiveness. Adhering to best practices ensures efficient handling of network traffic, leading to better stability and reliability.'
-                : 'When the Receive Side Scaling (RSS) configuration values meets the best practices, the instance is considered optimized';
 
         return {
-            name: 'rss-config',
-            status: rssConfigFinding,
+            ...goldenConfig,
+            status: rssConfigFinding as AssessmentStatus,
             recommended: AssessmentStatus.OPTIMIZED,
-            severity: SEVERITY.WARNING,
-            recommendation: recommendationMessage,
-            tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
             rssAdapters,
             recommendedAdapterSettings,
             tcpOffloadState,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_ADAPTER,
             totalObjectsInViolation,
             totalObjectsAssessed
         };
     } catch (error: any) {
-        errorMessage = `Error while calculating rss config drift. ${error.message}`;
+        const errorMessage = `Error while calculating rss config drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        return { ...goldenConfig, errorMessage };
     }
-    return { errorMessage };
 }
 
 async function managedHostsRssConfigAssessment(

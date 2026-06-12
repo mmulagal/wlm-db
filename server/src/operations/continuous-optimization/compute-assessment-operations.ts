@@ -7,17 +7,14 @@ import { checkComputeOptimizerEnrollmentStatus } from '../recommendation-operati
 import getLogger from '../../utils/logger';
 import { translateFindingReasonCode } from '../aws/compute-optimizer-operations';
 import { getEc2Arn } from '../../utils/utils';
-import {
-    ASSESSMENT_RESOURCE_TYPE,
-    AssessmentCategories,
-    AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    SEVERITY
-} from '../../utils/continous-optimization-consts';
+import { AssessmentCategories, AssessmentStatus } from '../../utils/continous-optimization-consts';
 import { ComputeAssessment, ResourceAssessmentData } from '../../utils/common-types';
 import { registerJob, updateJobDetails } from '../database/job-operations';
 import { getMatchingAssessmentStatus } from './assessment-utils';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
+import type { AssessmentErrorItemType } from '../../routes/types/continuous-optimization.types';
+import type { MssqlAssessmentItemType } from '../../routes/types/mssql-continuous-optimisation.types';
+import { MSSQL_GOLDEN_CONFIG } from './mssql/golden-config';
 
 const logger = getLogger();
 
@@ -100,27 +97,27 @@ function calculateComputeDrift(
     databaseHostId: string,
     databaseInstanceId: string,
     assessmentData: ResourceAssessmentData
-) {
+): MssqlAssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculating compute drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
 
-    let errorMessage = '';
+    const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'compute-rightsizing');
 
     try {
         const { compute, errors } = assessmentData;
 
         if (isEmpty(compute)) {
-            errorMessage = errors?.compute
+            const errorMessage = errors?.compute
                 ? errors?.compute
                 : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.COMPUTE);
 
             logger.error({ errorMessage });
-            return { errorMessage };
+            return { ...goldenConfig, errorMessage };
         }
 
         const { finding, findingReasonCodes, currentInstanceType, recommendationOptions } =
             compute as ComputeAssessment;
 
-        let recommendationMessage = 'Analyzing instance for rightsizing. Check later for recommendations.';
+        let recommendation = 'Analyzing instance for rightsizing. Check later for recommendations.';
         let findingValue = AssessmentStatus.ANALYZING;
         let objectsInViolation: string[] = [];
 
@@ -133,34 +130,31 @@ function calculateComputeDrift(
                 // under_provisioned or over_provisioned
                 const genericRecommendationMessage =
                     'Click Fix to view cost comparison between current and recommended instance types to understand potential savings.';
-                recommendationMessage =
+                recommendation =
                     findingValue === AssessmentStatus.UNDER_PROVISIONED
                         ? underProvisionedRecommendationMessage
                         : overProvisionedRecommendationMessage;
-                recommendationMessage += ` ${genericRecommendationMessage}`;
+                recommendation += ` ${genericRecommendationMessage}`;
             } else {
-                recommendationMessage = 'Optimized instance for your workload.';
+                recommendation = 'Optimized instance for your workload.';
             }
 
             objectsInViolation = findingReasonCodes?.map(code => translateFindingReasonCode(code));
         }
 
         return {
-            name: 'compute-rightsizing',
+            ...goldenConfig,
             status: findingValue,
             recommended: AssessmentStatus.OPTIMIZED,
-            severity: SEVERITY.WARNING,
-            recommendation: recommendationMessage,
+            recommendation,
             objectsInViolation,
-            tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-            recommendationOptions,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
+            recommendationOptions
         };
     } catch (error: any) {
-        errorMessage = `Error while calculating compute drift. ${error.message}`;
+        const errorMessage = `Error while calculating compute drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        return { ...goldenConfig, errorMessage };
     }
-    return { errorMessage };
 }
 
 async function managedHostsComputeAssessment(

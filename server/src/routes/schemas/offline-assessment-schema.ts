@@ -9,13 +9,15 @@ import {
     OfflineAssessmentPathParams,
     OfflineAssessmentListQueryParams,
     OfflineAssessmentListResponse,
+    OfflineAssessmentListResponseV1,
+    OracleOfflineAssessmentListResponseV1,
     UploadOfflineAssessmentFileBody,
     OfflineAssessmentDatabasesResponse,
     OfflineAssessmentDatabasesPerAccountResponse
 } from '../types/offline-assessment.types';
-import { MSSQLDriftAssessmentResponse } from '../types/mssql-continuous-optimisation.types';
-import { OracleDriftAssessmentResponse } from '../types/oracle-continuous-optimization.types';
 import { RouteTags, DatabaseTypes } from '../../utils/consts';
+import { MssqlAssessmentResponse, MssqlAssessmentResponseV1 } from '../types/mssql-continuous-optimisation.types';
+import { OracleAssessmentResponse, OracleDriftAssessmentResponse } from '../types/oracle-continuous-optimization.types';
 
 /**
  * Helper function to get the appropriate route tag(s) for a database type
@@ -53,7 +55,7 @@ const OfflineAssessmentGetByIdSchema = (databaseType?: string) => ({
     params: OfflineAssessmentGetByIdParams,
     querystring: OfflineAssessmentGetByIdQueryParams,
     response: {
-        200: databaseType === DatabaseTypes.ORACLE ? OracleDriftAssessmentResponse : MSSQLDriftAssessmentResponse
+        200: databaseType === DatabaseTypes.ORACLE ? OracleAssessmentResponse : MssqlAssessmentResponse
     }
 });
 
@@ -113,11 +115,63 @@ const OfflineAssessmentDatabasesPerAccountSchema = (databaseType?: string) => ({
     }
 });
 
+const OfflineAssessmentGetByIdSchemaV1 = () => ({
+    summary: 'Get Microsoft SQL Server one-time assessment results [Deprecated]',
+    description:
+        'Get one-time WAD assessment by resource ID and database instance ID with drift assessment results for Microsoft SQL Server, [Deprecated]',
+    tags: [RouteTags.MSSQL_ASSESSMENT],
+    params: OfflineAssessmentGetByIdParams,
+    querystring: OfflineAssessmentGetByIdQueryParams,
+    response: {
+        200: MssqlAssessmentResponseV1
+    }
+});
+
+const OfflineAssessmentListSchemaV1 = () => ({
+    summary: 'List Microsoft SQL Server one-time assessments [Deprecated]',
+    description:
+        'List all Microsoft SQL Server one-time assessments in an account with optional filtering and pagination, [Deprecated]',
+    tags: [RouteTags.MSSQL_ASSESSMENT],
+    params: OfflineAssessmentPathParams,
+    querystring: OfflineAssessmentListQueryParams,
+    response: {
+        200: OfflineAssessmentListResponseV1
+    }
+});
+
+const OracleOfflineAssessmentGetByIdSchemaV1 = () => ({
+    summary: 'Get Oracle one-time assessment results [Deprecated]',
+    description:
+        'Get one-time WAD assessment by resource ID and database instance ID with drift assessment results for Oracle, [Deprecated]',
+    tags: [RouteTags.ORACLE_ASSESSMENT],
+    params: OfflineAssessmentGetByIdParams,
+    querystring: OfflineAssessmentGetByIdQueryParams,
+    response: {
+        200: OracleDriftAssessmentResponse
+    }
+});
+
+const OracleOfflineAssessmentListSchemaV1 = () => ({
+    summary: 'List Oracle one-time assessments [Deprecated]',
+    description:
+        'List all Oracle one-time assessments in an account with optional filtering and pagination, [Deprecated]',
+    tags: [RouteTags.ORACLE_ASSESSMENT],
+    params: OfflineAssessmentPathParams,
+    querystring: OfflineAssessmentListQueryParams,
+    response: {
+        200: OracleOfflineAssessmentListResponseV1
+    }
+});
+
 export {
     OfflineAssessmentUploadSchema,
     OfflineAssessmentGetByIdSchema,
+    OfflineAssessmentGetByIdSchemaV1,
     OfflineAssessmentDownloadSchema,
     OfflineAssessmentListSchema,
+    OfflineAssessmentListSchemaV1,
+    OracleOfflineAssessmentGetByIdSchemaV1,
+    OracleOfflineAssessmentListSchemaV1,
     DeleteOfflineAssessment,
     OfflineAssessmentDatabasesSchema,
     OfflineAssessmentDatabasesPerAccountSchema,

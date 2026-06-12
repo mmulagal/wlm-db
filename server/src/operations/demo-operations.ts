@@ -3,7 +3,7 @@ import randomize from 'randomatic';
 import { Volume, type DescribeVolumesResult } from '@aws-sdk/client-ec2';
 import { DEPLOYMENT_MODEL, STORAGE_TYPE } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { compact, isEmpty, sample } from 'lodash-es';
+import { compact, sample } from 'lodash-es';
 import {
     CloudProviders,
     RESOURCESTYPE,
@@ -67,7 +67,6 @@ import {
     AssessmentStatus,
     OptimizeOracleComputeHostOs
 } from '../utils/continous-optimization-consts';
-import { ORACLE_COMPUTE_DRIFT_RESPONSE_KEYS } from './continuous-optimization/oracle/consts';
 import { offlineAssessmentDemoFCI } from '../utils/demo-utils/offlineAssessmentRecords/offlineAssessmentDemoFCI';
 import { offlineAssessmentDemoOracleISCSI } from '../utils/demo-utils/offlineAssessmentRecords/offlineAssessmentDemoOracleISCSI';
 import { getInstanceInfo, updateInstanceMetadata, updateResourceMetaData } from './database/database-operations';
@@ -83,20 +82,10 @@ import {
 import {
     ParameterDriftResponseType,
     CloneDetailType,
-    CloneDriftResponseType,
-    ComputeDriftResponseType,
-    MSSQLDriftAssessmentResponseType,
-    HostOsPatchDriftResponseType,
-    LicenseDriftResponseType,
-    StorageParameterDriftResponseType
+    CloneDriftResponseType
 } from '../routes/types/mssql-continuous-optimisation.types';
 import { OracleDeploymentTenacy, STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS } from './workloads/oracle/consts';
-import {
-    OracleDriftAssessmentResponseType,
-    OracleGenericParameterDriftResponseType,
-    OracleCloneDriftResponseType,
-    HostOsPatchDriftResponseType as OracleHostOsPatchDriftResponseType
-} from '../routes/types/oracle-continuous-optimization.types';
+import type { AssessmentItemType, AssessmentErrorItemType } from '../routes/types/continuous-optimization.types';
 import { StorageIscsiAssessment } from './continuous-optimization/oracle/common-types';
 
 const logger = getLogger();
@@ -1545,125 +1534,81 @@ function prepareDemoSandboxMetadata(
 function handleGetMssqlAssessmentForDemo(
     accountId: string,
     instanceDetail: DatabaseInstance,
-    assessmentData: MSSQLDriftAssessmentResponseType
-) {
+    assessments: (AssessmentItemType | AssessmentErrorItemType)[]
+): (AssessmentItemType | AssessmentErrorItemType)[] {
     logger.info('Handling demo for assessment', { accountId });
     const { resource: { metadata = {} } = {}, metadata: instanceMetadata } =
         instanceDetail as unknown as DatabaseInstance;
-    const computeData = assessmentData?.compute as ComputeDriftResponseType;
-    if (!isEmpty(computeData)) {
-        const computeConfigsOptimized = (metadata as unknown as Metadata).isComputeOptimized;
-        if (computeConfigsOptimized) {
-            computeData.status = AssessmentStatus.OPTIMIZED;
-            computeData.recommendation = 'Optimized instance for your workload.';
+
+    const storageConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
+    const osConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.OS || [];
+    const sizingConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
+    const maxDopConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.maxdop || [];
+    const cloneConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.CLONE || [];
+
+    return assessments.map(item => {
+        const i = { ...item } as AssessmentItemType & Record<string, unknown>;
+
+        if (i.id === 'compute-rightsizing' && !('errorMessage' in i)) {
+            const computeConfigsOptimized = (metadata as unknown as Metadata).isComputeOptimized;
+            if (computeConfigsOptimized) {
+                i.status = AssessmentStatus.OPTIMIZED;
+                i.recommendation = 'Optimized instance for your workload.';
+            }
+        } else if (i.id === 'sql-license' && !('errorMessage' in i)) {
+            const licenseConfigsOptimized = (metadata as unknown as Metadata).isLicenseOptimized;
+            if (licenseConfigsOptimized) {
+                i.status = AssessmentStatus.OPTIMIZED;
+                i.recommendation = 'Your current SQL license is optimized for your workload.';
+            }
+        } else if (i.id === 'host-os-patch' && !('errorMessage' in i)) {
+            const hostOsPatchOptimized = (metadata as unknown as Metadata).isHostOsPatchOptimized;
+            if (hostOsPatchOptimized) {
+                i.status = AssessmentStatus.OPTIMIZED;
+                i.recommendation = 'Your current windows host is optimized with security best practices.';
+            }
+        } else if (i.id === 'clone-management' && !('errorMessage' in i)) {
+            const cloneResponse = i as AssessmentItemType & CloneDriftResponseType;
+            if (cloneConfigsOptimized.length > 0) {
+                const { oldCloneDetails = [], cloneDetails = [] } = cloneResponse;
+                const cloneDatabaseNamesToRemove = new Set(
+                    (cloneConfigsOptimized as CloneDetail[]).map(({ cloneDatabaseName }) => cloneDatabaseName)
+                );
+                const filteredOldCloneDetails = oldCloneDetails.filter(
+                    ({ cloneDatabaseName }) => !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
+                );
+                const totalObjectsInViolation = filteredOldCloneDetails.length;
+                cloneResponse.oldCloneDetails = filteredOldCloneDetails;
+                cloneResponse.totalObjectsInViolation = totalObjectsInViolation;
+                cloneResponse.status =
+                    totalObjectsInViolation === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+                cloneResponse.objectsInViolation = filteredOldCloneDetails.map(
+                    ({ cloneDatabaseName }) => cloneDatabaseName as string
+                );
+                cloneResponse.cloneDriftMessage = `${filteredOldCloneDetails.length} out of ${cloneDetails.length} clones are old and divergent`;
+            }
+        } else if (i.id === 'maxdop' && !('errorMessage' in i)) {
+            if (maxDopConfigsOptimized.length > 0 && maxDopConfigsOptimized.includes(i.id)) {
+                i.status = AssessmentStatus.OPTIMIZED;
+                i.objectsInViolation = [];
+                i.violationDetails = [];
+                i.totalObjectsInViolation = 0;
+                i.current = '4';
+            }
+        } else if (i.category === 'storage' && i.subCategory === 'configuration' && !('errorMessage' in i)) {
+            if (storageConfigsOptimized.includes(i.id) || osConfigsOptimized.includes(i.id)) {
+                optimizeDriftConfig(i as ParameterDriftResponseType);
+            }
+        } else if (i.category === 'storage' && i.subCategory === 'sizing' && !('errorMessage' in i)) {
+            if (sizingConfigsOptimized.includes(i.id)) {
+                i.status = AssessmentStatus.OPTIMIZED;
+                i.objectsInViolation = [];
+                i.totalObjectsInViolation = 0;
+            }
         }
-        assessmentData.compute = computeData;
-    }
-    const licenseData = assessmentData?.license as LicenseDriftResponseType;
-    if (!isEmpty(licenseData)) {
-        const licenseConfigsOptimized = (metadata as unknown as Metadata).isLicenseOptimized;
-        if (licenseConfigsOptimized) {
-            licenseData.status = AssessmentStatus.OPTIMIZED;
-            licenseData.recommendation = 'Your current SQL license is optimized for your workload.';
-            assessmentData.license = licenseData;
-        }
-    }
-    const hostOsPatchAssessmentResponse = assessmentData?.hostOsPatch as HostOsPatchDriftResponseType;
-    if (!isEmpty(hostOsPatchAssessmentResponse)) {
-        const hostOsPatchOptimized = (metadata as unknown as Metadata).isHostOsPatchOptimized;
-        if (hostOsPatchOptimized) {
-            hostOsPatchAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
-            hostOsPatchAssessmentResponse.recommendation =
-                'Your current windows host is optimized with security best practices.';
-            assessmentData.hostOsPatch = hostOsPatchAssessmentResponse as HostOsPatchDriftResponseType;
-        }
-    }
-    const cloneResponse = assessmentData.clone as CloneDriftResponseType;
-    if (!isEmpty(cloneResponse) && !('errorMessage' in cloneResponse)) {
-        const { oldCloneDetails = [], cloneDetails = [] } = cloneResponse;
-        const cloneConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.CLONE || [];
 
-        if (cloneConfigsOptimized.length > 0) {
-            // Destructure cloneDatabaseName from each optimized config
-            const cloneDatabaseNamesToRemove = new Set(
-                (cloneConfigsOptimized as CloneDetail[]).map(({ cloneDatabaseName }) => cloneDatabaseName)
-            );
-
-            // Filter out optimized clones from oldCloneDetails
-            const filteredOldCloneDetails = oldCloneDetails.filter(
-                ({ cloneDatabaseName }) => !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
-            );
-
-            const totalObjectsInViolation = filteredOldCloneDetails.length;
-            const objectsInViolation = filteredOldCloneDetails.map(
-                ({ cloneDatabaseName }) => cloneDatabaseName as string
-            );
-            const status = totalObjectsInViolation === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            const cloneDriftMessage = `${filteredOldCloneDetails.length} out of ${cloneDetails.length} clones are old and divergent`;
-
-            cloneResponse.oldCloneDetails = filteredOldCloneDetails;
-            cloneResponse.totalObjectsInViolation = totalObjectsInViolation;
-            cloneResponse.status = status;
-            cloneResponse.objectsInViolation = objectsInViolation;
-            cloneResponse.cloneDriftMessage = cloneDriftMessage;
-        }
-        assessmentData.clone = cloneResponse as CloneDriftResponseType;
-    }
-    const storageAssessmentResponse = assessmentData.storage as StorageParameterDriftResponseType;
-    if (!isEmpty(storageAssessmentResponse) && !('errorMessage' in storageAssessmentResponse)) {
-        const storageConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
-        const osConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.OS || [];
-        const sizingConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
-
-        if (storageConfigsOptimized.length > 0) {
-            storageAssessmentResponse.configuration.volumes = optimizeConfig(
-                storageAssessmentResponse.configuration.volumes as ParameterDriftResponseType[],
-                storageConfigsOptimized
-            );
-
-            storageAssessmentResponse.configuration.luns = optimizeConfig(
-                storageAssessmentResponse.configuration.luns as ParameterDriftResponseType[],
-                storageConfigsOptimized
-            );
-        }
-        if (osConfigsOptimized.length > 0) {
-            storageAssessmentResponse.configuration.os = storageAssessmentResponse.configuration.os.map(osConfig => {
-                const os = osConfig as ParameterDriftResponseType;
-                if (osConfigsOptimized.includes(os.name)) {
-                    os.status = AssessmentStatus.OPTIMIZED;
-                }
-                return os;
-            });
-        }
-        if (sizingConfigsOptimized.length > 0) {
-            storageAssessmentResponse.sizing = storageAssessmentResponse.sizing.map(sizingConfig => {
-                const sizing = sizingConfig as ParameterDriftResponseType;
-                if (sizingConfigsOptimized.includes(sizing.name)) {
-                    sizing.status = AssessmentStatus.OPTIMIZED;
-                    sizing.objectsInViolation = [];
-                    sizing.totalObjectsInViolation = 0;
-                }
-                return sizing;
-            });
-        }
-        assessmentData.storage = storageAssessmentResponse as StorageParameterDriftResponseType;
-    }
-
-    const maxDopAssessmentResponse = assessmentData.maxDOP as ParameterDriftResponseType;
-    if (!isEmpty(maxDopAssessmentResponse) && !('errorMessage' in maxDopAssessmentResponse)) {
-        const maxDopConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.maxdop || [];
-
-        if (maxDopConfigsOptimized.length > 0 && maxDopConfigsOptimized.includes(maxDopAssessmentResponse.name)) {
-            maxDopAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
-            maxDopAssessmentResponse.objectsInViolation = [];
-            maxDopAssessmentResponse.violationDetails = [];
-            maxDopAssessmentResponse.totalObjectsInViolation = 0;
-            maxDopAssessmentResponse.current = '4';
-        }
-        assessmentData.maxDOP = maxDopAssessmentResponse;
-    }
-
-    return assessmentData;
+        return i;
+    });
 }
 
 async function updateAllOptimizedClonesDemoFlow(
@@ -1806,167 +1751,124 @@ function loadAndModifyDemoOracleISCSIData() {
 function handleGetOracleAssessmentForDemo(
     accountId: string,
     instanceDetail: DatabaseInstance,
-    assessmentData: OracleDriftAssessmentResponseType
-) {
+    assessments: (AssessmentItemType | AssessmentErrorItemType)[]
+): (AssessmentItemType | AssessmentErrorItemType)[] {
     logger.info('Handling Oracle demo for assessment', { accountId });
     const { resource: { metadata = {} } = {}, metadata: instanceMetadata } =
         instanceDetail as unknown as DatabaseInstance;
 
-    // Handle Oracle host OS patch assessment
-    const hostOsPatchAssessmentResponse = assessmentData?.hostOsPatch as OracleHostOsPatchDriftResponseType;
-    if (!isEmpty(hostOsPatchAssessmentResponse)) {
-        const hostOsPatchOptimized = (metadata as unknown as Metadata).isHostOsPatchOptimized;
-        if (hostOsPatchOptimized) {
-            hostOsPatchAssessmentResponse.status = AssessmentStatus.OPTIMIZED;
-            hostOsPatchAssessmentResponse.recommendation =
-                'Your current Linux host is optimized with security best practices.';
-            assessmentData.hostOsPatch = hostOsPatchAssessmentResponse;
-        }
-    }
-
-    // Handle Oracle clone assessment (independent of storage)
-    const cloneResponse = assessmentData.clone as OracleCloneDriftResponseType;
-    if (!isEmpty(cloneResponse) && !('errorMessage' in cloneResponse)) {
-        const { oldCloneDetails = [], cloneDetails = [] } = cloneResponse;
-        const cloneConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.CLONE || [];
-
-        if (cloneConfigsOptimized.length > 0) {
-            const cloneDatabaseNamesToRemove = new Set(
-                (cloneConfigsOptimized as { cloneDatabaseName?: string }[])
-                    .map(({ cloneDatabaseName }) => cloneDatabaseName)
-                    .filter((name): name is string => typeof name === 'string' && name.trim() !== '')
-            );
-
-            const filteredCloneDetails = cloneDetails.filter(
-                ({ cloneDatabaseName }) =>
-                    typeof cloneDatabaseName === 'string' && !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
-            );
-
-            const filteredOldCloneDetails = oldCloneDetails.filter(
-                ({ cloneDatabaseName }) =>
-                    typeof cloneDatabaseName === 'string' && !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
-            );
-
-            const totalObjectsInViolation = filteredOldCloneDetails.length;
-            const objectsInViolation = filteredOldCloneDetails
-                .map(({ cloneDatabaseName }) => cloneDatabaseName)
-                .filter((name): name is string => typeof name === 'string');
-            const status = totalObjectsInViolation === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            const cloneDriftMessage = `${filteredOldCloneDetails.length} out of ${filteredCloneDetails.length} clones are old and divergent`;
-
-            cloneResponse.cloneDetails = filteredCloneDetails;
-            cloneResponse.totalObjectsAssessed = filteredCloneDetails.length;
-            cloneResponse.oldCloneDetails = filteredOldCloneDetails;
-            cloneResponse.totalObjectsInViolation = totalObjectsInViolation;
-            cloneResponse.status = status;
-            cloneResponse.objectsInViolation = objectsInViolation;
-            cloneResponse.cloneDriftMessage = cloneDriftMessage;
-        }
-        assessmentData.clone = cloneResponse;
-    }
-
     const oracleComputeHostOsDemoOptimized = (metadata as unknown as Metadata).oracleComputeHostOsDemoOptimized || [];
     const oracleComputeHostOsDemoOptimizedConfigs = new Set<string>(oracleComputeHostOsDemoOptimized);
-
-    if (oracleComputeHostOsDemoOptimizedConfigs.size > 0) {
-        ORACLE_COMPUTE_DRIFT_RESPONSE_KEYS.forEach(topKey => {
-            const drift = assessmentData[topKey] as ParameterDriftResponseType | undefined;
-            if (
-                drift &&
-                typeof drift === 'object' &&
-                'name' in drift &&
-                oracleComputeHostOsDemoOptimizedConfigs.has(drift.name)
-            ) {
-                optimizeDriftConfig(drift);
-            }
-        });
-    }
-
-    // Handle Oracle storage assessment
-    const storageAssessmentResponse = assessmentData.storage as StorageParameterDriftResponseType;
-
-    if (isEmpty(storageAssessmentResponse) || 'errorMessage' in storageAssessmentResponse) {
-        return assessmentData;
-    }
 
     const storageConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.STORAGE || [];
     const osConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.OS || [];
     const sizingConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SIZING || [];
-    if (storageConfigsOptimized.length > 0) {
-        storageAssessmentResponse.configuration.volumes = optimizeConfig(
-            storageAssessmentResponse.configuration.volumes as ParameterDriftResponseType[],
-            storageConfigsOptimized
-        );
-
-        if (assessmentData.storageProtocol === STORAGE_PROTOCOLS.ISCSI) {
-            storageAssessmentResponse.configuration.luns = optimizeConfig(
-                storageAssessmentResponse.configuration.luns as ParameterDriftResponseType[],
-                storageConfigsOptimized
-            );
-        }
-    }
-
-    if (storageAssessmentResponse.layout) {
-        if (assessmentData.storageProtocol !== STORAGE_PROTOCOLS.ISCSI) {
-            storageAssessmentResponse.layout = storageAssessmentResponse.layout.filter(
-                assm => !STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS.includes(assm.name)
-            );
-        } else if (storageConfigsOptimized.length > 0) {
-            storageAssessmentResponse.layout = optimizeConfig(
-                storageAssessmentResponse.layout as ParameterDriftResponseType[],
-                storageConfigsOptimized
-            );
-        }
-    }
-
-    if (osConfigsOptimized.length > 0 || oracleComputeHostOsDemoOptimizedConfigs.size > 0) {
-        storageAssessmentResponse.configuration.os = storageAssessmentResponse.configuration.os.map(osConfig => {
-            const os = osConfig as ParameterDriftResponseType;
-            const isOracleComputeHostOsConfig = ORACLE_COMPUTE_HOST_OS_DEMO_CONFIG_NAMES.has(os.name);
-            const isOptimized = isOracleComputeHostOsConfig
-                ? oracleComputeHostOsDemoOptimizedConfigs.has(os.name)
-                : osConfigsOptimized.includes(os.name);
-
-            if (isOptimized) {
-                optimizeDriftConfig(os);
-            }
-            return os;
-        });
-    }
-
-    if (sizingConfigsOptimized.length > 0) {
-        storageAssessmentResponse.sizing = storageAssessmentResponse.sizing.map(sizingConfig => {
-            const sizing = sizingConfig as ParameterDriftResponseType;
-            if (sizingConfigsOptimized.includes(sizing.name)) {
-                sizing.status = AssessmentStatus.OPTIMIZED;
-                sizing.objectsInViolation = [];
-                sizing.totalObjectsInViolation = 0;
-            }
-            return sizing;
-        });
-    }
-
-    assessmentData.storage = storageAssessmentResponse;
-
+    const cloneConfigsOptimized = (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.CLONE || [];
     const snapcenterConfigsOptimized =
         (instanceMetadata as DatabaseInstanceMetadata)?.configsOptimized?.SNAPCENTER_SNAPSHOT || [];
-    if (assessmentData.snapcenterSnapshot && snapcenterConfigsOptimized.length > 0) {
-        const snapcenterData = assessmentData.snapcenterSnapshot as OracleGenericParameterDriftResponseType;
-        if (snapcenterConfigsOptimized.includes(snapcenterData.name)) {
-            snapcenterData.status = AssessmentStatus.OPTIMIZED;
-            snapcenterData.objectsInViolation = [];
-            snapcenterData.totalObjectsInViolation = 0;
-        }
-        assessmentData.snapcenterSnapshot = snapcenterData;
-    }
 
-    // Dataguard primary instances are currently excluded  from Snapcenter snapshot assesssment
-    // since the data related to a dataguard node isn't available in assessment flow, we're handling it here
-    if (ORACLE_DATAGUARD_INSTANCES.primary.includes(instanceDetail.database_instance_id)) {
-        assessmentData.snapcenterSnapshot = undefined;
-    }
+    // Remove snapcenter item for dataguard primary instances.
+    const isDataguardPrimary = ORACLE_DATAGUARD_INSTANCES.primary.includes(instanceDetail.database_instance_id);
 
-    return assessmentData;
+    const hasIscsiItems = assessments.some(
+        item =>
+            item.type === 'storage' &&
+            item.subType === 'configuration' &&
+            (item.id === 'os-type' || item.id === 'space-reservation-enabled')
+    );
+
+    return assessments
+        .filter(item => {
+            // Remove snapcenter item for dataguard primary instances.
+            if (isDataguardPrimary && item.id === 'snapcenter-snapshot') {
+                return false;
+            }
+            return true;
+        })
+        .map(item => {
+            const i = { ...item } as AssessmentItemType & Record<string, unknown>;
+
+            if (i.id === 'host-os-patch' && !('errorMessage' in i)) {
+                const hostOsPatchOptimized = (metadata as unknown as Metadata).isHostOsPatchOptimized;
+                if (hostOsPatchOptimized) {
+                    i.status = AssessmentStatus.OPTIMIZED;
+                    i.recommendation = 'Your current Linux host is optimized with security best practices.';
+                }
+            } else if (i.id === 'clone-management' && !('errorMessage' in i)) {
+                const cloneResponse = i as AssessmentItemType & CloneDriftResponseType & Record<string, unknown>;
+                if (cloneConfigsOptimized.length > 0) {
+                    const cloneDetails = (cloneResponse.cloneDetails as { cloneDatabaseName?: string }[]) ?? [];
+                    const oldCloneDetails = (cloneResponse.oldCloneDetails as { cloneDatabaseName?: string }[]) ?? [];
+                    const cloneDatabaseNamesToRemove = new Set(
+                        (cloneConfigsOptimized as { cloneDatabaseName?: string }[])
+                            .map(({ cloneDatabaseName }) => cloneDatabaseName)
+                            .filter((name): name is string => typeof name === 'string' && name.trim() !== '')
+                    );
+                    const filteredCloneDetails = cloneDetails.filter(
+                        ({ cloneDatabaseName }) =>
+                            typeof cloneDatabaseName === 'string' && !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
+                    );
+                    const filteredOldCloneDetails = oldCloneDetails.filter(
+                        ({ cloneDatabaseName }) =>
+                            typeof cloneDatabaseName === 'string' && !cloneDatabaseNamesToRemove.has(cloneDatabaseName)
+                    );
+                    const totalObjectsInViolation = filteredOldCloneDetails.length;
+                    const objectsInViolation = filteredOldCloneDetails
+                        .map(({ cloneDatabaseName }) => cloneDatabaseName)
+                        .filter((name): name is string => typeof name === 'string');
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    cloneResponse.cloneDetails = filteredCloneDetails as any;
+                    cloneResponse.totalObjectsAssessed = filteredCloneDetails.length;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    cloneResponse.oldCloneDetails = filteredOldCloneDetails as any;
+                    cloneResponse.totalObjectsInViolation = totalObjectsInViolation;
+                    cloneResponse.status =
+                        totalObjectsInViolation === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+                    cloneResponse.objectsInViolation = objectsInViolation;
+                    cloneResponse.cloneDriftMessage = `${filteredOldCloneDetails.length} out of ${filteredCloneDetails.length} clones are old and divergent`;
+                }
+            } else if (i.id === 'snapcenter-snapshot' && !('errorMessage' in i)) {
+                if (snapcenterConfigsOptimized.includes(i.id)) {
+                    i.status = AssessmentStatus.OPTIMIZED;
+                    i.objectsInViolation = [];
+                    i.totalObjectsInViolation = 0;
+                }
+            } else if (
+                i.category === 'compute' &&
+                i.subCategory === 'configuration' &&
+                ORACLE_COMPUTE_HOST_OS_DEMO_CONFIG_NAMES.has(i.id) &&
+                oracleComputeHostOsDemoOptimizedConfigs.has(i.id) &&
+                !('errorMessage' in i)
+            ) {
+                // Oracle compute host-OS items (transparent-hugepages, tcp-advanced-options, etc.)
+                optimizeDriftConfig(i as ParameterDriftResponseType);
+            } else if (i.category === 'storage' && i.subCategory === 'configuration' && !('errorMessage' in i)) {
+                const isOracleComputeHostOsConfig = ORACLE_COMPUTE_HOST_OS_DEMO_CONFIG_NAMES.has(i.id);
+                const isOptimized = isOracleComputeHostOsConfig
+                    ? oracleComputeHostOsDemoOptimizedConfigs.has(i.id)
+                    : osConfigsOptimized.includes(i.id) || storageConfigsOptimized.includes(i.id);
+                if (isOptimized) {
+                    optimizeDriftConfig(i as ParameterDriftResponseType);
+                }
+            } else if (i.category === 'storage' && i.subCategory === 'sizing' && !('errorMessage' in i)) {
+                if (sizingConfigsOptimized.includes(i.id)) {
+                    i.status = AssessmentStatus.OPTIMIZED;
+                    i.objectsInViolation = [];
+                    i.totalObjectsInViolation = 0;
+                }
+            } else if (i.category === 'storage' && i.subCategory === 'layout' && !('errorMessage' in i)) {
+                if (!hasIscsiItems && STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS.includes(i.id)) {
+                    // Non-iSCSI: these layout items should be filtered out entirely
+                    return null as unknown as AssessmentItemType;
+                }
+                if (hasIscsiItems && storageConfigsOptimized.includes(i.id)) {
+                    optimizeDriftConfig(i as ParameterDriftResponseType);
+                }
+            }
+
+            return i;
+        })
+        .filter((item): item is AssessmentItemType => item !== null);
 }
 
 function optimizeDriftConfig(config: ParameterDriftResponseType) {
@@ -1975,15 +1877,6 @@ function optimizeDriftConfig(config: ParameterDriftResponseType) {
     config.violationDetails = [];
     config.totalObjectsInViolation = 0;
     return config;
-}
-
-function optimizeConfig(configArray: ParameterDriftResponseType[], optimizedConfigs: string[]) {
-    return configArray.map(config => {
-        if (optimizedConfigs.includes(config.name)) {
-            optimizeDriftConfig(config);
-        }
-        return config;
-    });
 }
 
 function buildDemoComputeHostOsAssessmentInputs(metadata: Metadata): {

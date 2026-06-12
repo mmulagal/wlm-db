@@ -73,7 +73,7 @@ describe('Compute assessment operations', () => {
             assessmentData as ResourceAssessmentData
         );
 
-        expect(response.name).toEqual('compute-rightsizing');
+        expect(response.id).toEqual('compute-rightsizing');
     });
 
     it('Should perform compute assessment for managed hosts', async () => {

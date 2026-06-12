@@ -602,7 +602,7 @@ export default async function optimizeCompute(
     });
     const [{ resource_name: resourceName, metadata, assessment_data: assessmentData }] = resourceDetails;
 
-    const { recommendationOptions } = calculateComputeDrift(
+    const computeDrift = calculateComputeDrift(
         accountId,
         credentialsId,
         region,
@@ -610,6 +610,9 @@ export default async function optimizeCompute(
         databaseInstanceId,
         assessmentData as ResourceAssessmentData
     );
+    const { recommendationOptions } = (computeDrift ?? {}) as {
+        recommendationOptions?: Array<{ instanceType?: string; platformDifferences?: unknown[] }>;
+    };
     const recommendedInstanceTypes =
         recommendationOptions?.map(({ instanceType: recommendedInstanceType }) => recommendedInstanceType) || [];
     if (!IS_DEMO_FLOW && !recommendedInstanceTypes.includes(instanceType)) {

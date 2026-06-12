@@ -15,13 +15,9 @@ import {
     OfflineAssessmentUploadResponseType
 } from '../../../routes/types/offline-assessment.types';
 import {
-    OracleDriftAssessmentResponse,
-    OracleDriftAssessmentResponseType,
-    StorageParameterDriftResponseType,
-    GenericParameterDriftResponseType,
-    OracleCloneDriftResponseType,
-    OracleGenericParameterDriftResponseType
-} from '../../../routes/types/oracle-continuous-optimization.types';
+    type AssessmentItemType,
+    type AssessmentErrorItemType
+} from '../../../routes/types/continuous-optimization.types';
 import {
     generateSqlResourceId,
     parseAssessmentFileContent,
@@ -33,7 +29,7 @@ import getLogger from '../../../utils/logger';
 import { AWS_REGIONS, HttpErrorCodes, RESOURCESTYPE, STORAGE_PROTOCOLS } from '../../../utils/consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
-import { CloneAssessment, ComputeHostOsAssessment, DatabaseInstance } from '../../../utils/common-types';
+import { CloneAssessment, DatabaseInstance } from '../../../utils/common-types';
 import {
     OracleMappedOntapVolumesResponse,
     OracleMappedOntapVolumeRecord,
@@ -43,11 +39,17 @@ import { calculateStorageDrift } from './storage-assessment-operations';
 import calculateOneTimeWADCloneDrift from '../clone-assessment-utils';
 import { calculateComputeHostOsDrift } from './compute-assessment-operations';
 import { calculateSnapCenterDrift, SnapcenterAssessmentData } from './snapcenter-assessment-operations';
-import { getOntapVolumeIdsByFileType } from './assessment-operations';
-import { ISCIOSAssessment, NFSOSAssessment, StorageAssessment, StorageIscsiAssessment } from './common-types';
+import { getOntapVolumeIdsByFileType, ORACLE_V1_MAP_CONFIG } from './assessment-operations';
+import { mapAssessmentToV1 } from '../assessment-utils';
+import { ISCIOSAssessment, NFSOSAssessment, StorageAssessment } from './common-types';
 import { AssessmentStatus, MIN_OPTIMIZED_HEADROOM_PERCENTAGE } from '../../../utils/continous-optimization-consts';
-import GOLDEN_CONFIG from './golden-config';
+import ORACLE_GOLDEN_CONFIG from './golden-config';
 import { loadAndModifyDemoOracleISCSIData } from '../../demo-operations';
+import {
+    OracleAssessmentResponse,
+    OracleAssessmentResponseType,
+    OracleDriftAssessmentResponseType
+} from '../../../routes/types/oracle-continuous-optimization.types';
 
 const logger = getLogger();
 
@@ -148,7 +150,7 @@ interface OneTimeWADHeadroomData {
 function calculateOracleOneTimeWADHeadroomDrift(fsxFileSystemId: string, headroomData: OneTimeWADHeadroomData) {
     const { ssdStorageCapacityInBytes, storageUsedInBytes, headroomPercent } = headroomData;
 
-    const headroomGoldenConfig = GOLDEN_CONFIG.sizing.find(data => data.parameter === 'headroom');
+    const [headroomGoldenConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'headroom');
     if (!headroomGoldenConfig) {
         logger.warn('Headroom golden config not found');
         return undefined;
@@ -467,7 +469,7 @@ async function fetchOracleOfflineAssessment(
     region?: string,
     fields?: string,
     databaseRecord?: OfflineAssessmentDBSchema
-): Promise<OracleDriftAssessmentResponseType> {
+): Promise<OracleAssessmentResponseType> {
     logger.info('Fetching Oracle offline assessment', {
         accountId,
         resourceId,
@@ -488,8 +490,12 @@ async function fetchOracleOfflineAssessment(
         );
     }
 
-    if (!isEmpty(record.assessment_results)) {
-        return record.assessment_results as OracleDriftAssessmentResponseType;
+    const { assessment_results: assessmentResults } = record;
+    if (!isEmpty(assessmentResults)) {
+        const { isValid } = validateWithSchema(OracleAssessmentResponse, assessmentResults);
+        if (isValid) {
+            return assessmentResults as OracleAssessmentResponseType;
+        }
     }
 
     const rawdata = (record.rawdata as OracleStoredRawData) || {};
@@ -520,7 +526,7 @@ async function fetchOracleOfflineAssessment(
         [fileSystemIdentifier]: mappedOntapVolumesData
     };
 
-    let storageAssessmentResponse = await calculateStorageDrift(
+    const storageAssessmentResponse = await calculateStorageDrift(
         accountId,
         credentialsId || '',
         region || '',
@@ -536,51 +542,26 @@ async function fetchOracleOfflineAssessment(
     );
 
     const { headroom } = rawdata.hostLevelDetails || {};
+    const headroomDrift = !isEmpty(headroom)
+        ? calculateOracleOneTimeWADHeadroomDrift(fileSystemIdentifier, headroom as OneTimeWADHeadroomData)
+        : undefined;
 
-    if (!isEmpty(headroom)) {
-        const headroomDrift = calculateOracleOneTimeWADHeadroomDrift(
-            fileSystemIdentifier,
-            headroom as OneTimeWADHeadroomData
-        ) as GenericParameterDriftResponseType;
-        if (headroomDrift) {
-            if (!storageAssessmentResponse) {
-                const fallbackStorage: StorageParameterDriftResponseType = {
-                    configuration: { volumes: [], luns: [], os: [] },
-                    sizing: [headroomDrift],
-                    layout: []
-                };
-                storageAssessmentResponse = fallbackStorage;
-            } else {
-                const existingSizing =
-                    'sizing' in storageAssessmentResponse && storageAssessmentResponse.sizing
-                        ? storageAssessmentResponse.sizing
-                        : [];
-                storageAssessmentResponse = {
-                    ...storageAssessmentResponse,
-                    sizing: [...existingSizing, headroomDrift]
-                };
-            }
-        }
-    }
+    const cloneDriftResponse = !isEmpty(cloneAssessmentData)
+        ? calculateOneTimeWADCloneDrift(
+              accountId,
+              resourceId,
+              databaseInstanceId,
+              cloneAssessmentData as CloneAssessment,
+              DATABASE_TYPE.oracle
+          )
+        : undefined;
 
-    let cloneDriftResponse: OracleCloneDriftResponseType | undefined;
-    if (!isEmpty(cloneAssessmentData)) {
-        const cloneDrift = calculateOneTimeWADCloneDrift(
-            accountId,
-            resourceId,
-            databaseInstanceId,
-            cloneAssessmentData as CloneAssessment,
-            DATABASE_TYPE.oracle
-        );
-        if (cloneDrift && !('errorMessage' in cloneDrift)) {
-            cloneDriftResponse = cloneDrift as OracleCloneDriftResponseType;
-        }
-    }
+    const { protocol, isASMManaged, volumeMappings } = mappedOntapVolumesData;
 
-    let snapcenterDriftResponse: OracleGenericParameterDriftResponseType | undefined;
+    let snapcenterDriftResponse: AssessmentItemType | AssessmentErrorItemType | undefined;
     if (!isEmpty(snapcenterAssessmentData)) {
-        const volumeMappings = mappedOntapVolumesData.volumeMappings || [];
-        const instanceVolumeMapping = volumeMappings.find(
+        const volumeMaps = volumeMappings || [];
+        const instanceVolumeMapping = volumeMaps.find(
             (m: Record<string, OracleMappedOntapVolumeRecord>) => m[databaseInstanceName || databaseInstanceId]
         )?.[databaseInstanceName || databaseInstanceId];
         const volumeIdsByFileType = getOntapVolumeIdsByFileType(instanceVolumeMapping, [
@@ -588,63 +569,57 @@ async function fetchOracleOfflineAssessment(
             OracleSysFileTypes.CONTROL_FILES,
             OracleSysFileTypes.ARCHIVE_LOGS
         ]);
-        const snapcenterDrift = calculateSnapCenterDrift(snapcenterAssessmentData as SnapcenterAssessmentData, {
+        snapcenterDriftResponse = calculateSnapCenterDrift(snapcenterAssessmentData as SnapcenterAssessmentData, {
             dataFileVolumeIds: volumeIdsByFileType[OracleSysFileTypes.DATA_FILES] ?? [],
             controlFileVolumeIds: volumeIdsByFileType[OracleSysFileTypes.CONTROL_FILES] ?? [],
             archiveLogVolumeIds: volumeIdsByFileType[OracleSysFileTypes.ARCHIVE_LOGS] ?? []
         });
-        if (snapcenterDrift && !('errorMessage' in snapcenterDrift)) {
-            snapcenterDriftResponse = snapcenterDrift as OracleGenericParameterDriftResponseType;
-        }
     }
 
+    const iscsiOs = protocol === STORAGE_PROTOCOLS.ISCSI ? os : undefined;
     const computeHostOsDriftData =
-        mappedOntapVolumesData.protocol === STORAGE_PROTOCOLS.ISCSI && !isEmpty(os)
+        protocol === STORAGE_PROTOCOLS.ISCSI && !isEmpty(os)
             ? calculateComputeHostOsDrift(
                   ec2InstanceId || '',
                   databaseInstanceName || databaseInstanceId,
-                  {
-                      transparentHugepages: (os as ISCIOSAssessment)['transparent-hugepages'],
-                      tcpAdvancedOptions: (os as ISCIOSAssessment)['tcp-advanced-options']
-                  } as ComputeHostOsAssessment,
-                  { os } as StorageIscsiAssessment
+                  iscsiOs && {
+                      transparentHugepages: (iscsiOs as ISCIOSAssessment)?.['transparent-hugepages'] ?? undefined,
+                      tcpAdvancedOptions: (iscsiOs as ISCIOSAssessment)?.['tcp-advanced-options'] ?? undefined
+                  },
+                  { os }
               )
-            : {};
+            : [];
 
-    const driftAssessmentData: OracleDriftAssessmentResponseType = {
-        storage: !isEmpty(storageAssessmentResponse)
-            ? (storageAssessmentResponse as StorageParameterDriftResponseType)
-            : undefined,
-        clone: cloneDriftResponse,
-        ...(snapcenterDriftResponse && { snapcenterSnapshot: snapcenterDriftResponse }),
-        ...computeHostOsDriftData,
-        lastAssessmentTimestamp: assessmentTimestamp
-            ? new Date(assessmentTimestamp).getTime()
-            : record.created_time.getTime(),
-        fileSystemId: fileSystemIdentifier,
-        databaseInstanceName,
-        ec2InstanceId,
-        databaseHostName: hostname || '',
-        deploymentType,
-        storageProtocol: mappedOntapVolumesData.protocol,
-        isASMManaged: mappedOntapVolumesData.isASMManaged
+    const assessments: (AssessmentItemType | AssessmentErrorItemType)[] = [];
+    [storageAssessmentResponse, computeHostOsDriftData].forEach(item => {
+        if (!isEmpty(item) && item.length > 0) {
+            assessments.push(...item);
+        }
+    });
+    [headroomDrift, cloneDriftResponse, snapcenterDriftResponse].forEach(item => {
+        if (!isEmpty(item)) {
+            assessments.push(item);
+        }
+    });
+
+    const assessmentResponse = {
+        assessments,
+        dismissedConfigurations: [],
+        metadata: {
+            lastAssessmentTimestamp: assessmentTimestamp
+                ? new Date(assessmentTimestamp).getTime()
+                : record.created_time.getTime(),
+            fileSystemId: fileSystemIdentifier,
+            databaseInstanceName,
+            ec2InstanceId,
+            databaseHostName: hostname || '',
+            deploymentType,
+            storageProtocol: protocol,
+            isASMManaged
+        }
     };
 
-    const { isValid, errors: validationErrors } = validateWithSchema(
-        OracleDriftAssessmentResponse,
-        driftAssessmentData
-    );
-    if (!isValid) {
-        logger.error('Oracle offline assessment data validation failed', {
-            accountId,
-            resourceId,
-            databaseInstanceId,
-            validationErrors
-        });
-        return {} as OracleDriftAssessmentResponseType;
-    }
-
-    updateOfflineAssessmentResults(accountId, resourceId, databaseInstanceId, driftAssessmentData).catch(err =>
+    updateOfflineAssessmentResults(accountId, resourceId, databaseInstanceId, assessmentResponse).catch(err =>
         logger.warn('Failed to persist Oracle offline assessment results', {
             accountId,
             resourceId,
@@ -653,7 +628,13 @@ async function fetchOracleOfflineAssessment(
         })
     );
 
-    return driftAssessmentData;
+    const { isValid, errors } = validateWithSchema(OracleAssessmentResponse, assessmentResponse);
+    if (!isValid) {
+        logger.error('Invalid Oracle offline assessment response', { errors });
+        return { assessments: [], dismissedConfigurations: [], metadata: {} };
+    }
+
+    return assessmentResponse;
 }
 
 async function fetchOracleOfflineAssessmentPerAccount(
@@ -731,8 +712,15 @@ async function fetchOracleOfflineAssessmentPerAccount(
                 };
 
                 try {
-                    const assessments = !isEmpty(item.assessment_results)
-                        ? (assessmentResults as OracleDriftAssessmentResponseType)
+                    let forceRunAssessment = false;
+                    if (!isEmpty(item.assessment_results)) {
+                        const { isValid } = validateWithSchema(OracleAssessmentResponse, item.assessment_results);
+                        if (!isValid) {
+                            forceRunAssessment = true;
+                        }
+                    }
+                    const assessments = !forceRunAssessment
+                        ? assessmentResults
                         : await fetchOracleOfflineAssessment(
                               accountId,
                               resourceId,
@@ -794,9 +782,65 @@ async function deleteOracleOfflineAssessmentRecord(accountId: string, databaseHo
     }
 }
 
+async function fetchOracleOfflineAssessmentV1(
+    accountId: string,
+    resourceId: string,
+    databaseInstanceId: string,
+    credentialsId?: string,
+    region?: string,
+    fields?: string,
+    databaseRecord?: OfflineAssessmentDBSchema
+): Promise<OracleDriftAssessmentResponseType> {
+    const v2Response = await fetchOracleOfflineAssessment(
+        accountId,
+        resourceId,
+        databaseInstanceId,
+        credentialsId,
+        region,
+        fields,
+        databaseRecord
+    );
+    // v1 schemas omit `id`/`categories`; Fastify's response serializer drops them from the payload.
+    return mapAssessmentToV1(v2Response, ORACLE_V1_MAP_CONFIG) as unknown as OracleDriftAssessmentResponseType;
+}
+
+async function fetchOracleOfflineAssessmentPerAccountV1(
+    accountId: string,
+    pageSize?: number,
+    credentialsId?: string,
+    region?: string,
+    nextToken?: string
+) {
+    const v2Result = await fetchOracleOfflineAssessmentPerAccount(
+        accountId,
+        pageSize,
+        credentialsId,
+        region,
+        nextToken
+    );
+
+    return {
+        ...v2Result,
+        items: v2Result.items.map(item => {
+            const rawAssessments = (item as Record<string, unknown>).assessments;
+            return {
+                ...item,
+                assessments: rawAssessments
+                    ? (mapAssessmentToV1(
+                          rawAssessments as OracleAssessmentResponseType,
+                          ORACLE_V1_MAP_CONFIG
+                      ) as unknown as OracleDriftAssessmentResponseType)
+                    : undefined
+            };
+        })
+    };
+}
+
 export {
     uploadOracleOfflineAssessment,
     fetchOracleOfflineAssessment,
+    fetchOracleOfflineAssessmentV1,
     fetchOracleOfflineAssessmentPerAccount,
+    fetchOracleOfflineAssessmentPerAccountV1,
     deleteOracleOfflineAssessmentRecord
 };

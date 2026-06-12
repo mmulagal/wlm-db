@@ -110,7 +110,7 @@ describe('Host OS Patch assessment operations', () => {
                 assessmentData as unknown as ResourceAssessmentData
             );
 
-            expect(response.name).toEqual('host-os-patch');
+            expect(response.id).toEqual('host-os-patch');
         }
     });
 

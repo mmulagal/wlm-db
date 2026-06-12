@@ -1,7 +1,7 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import moment from 'moment';
 import throat from 'throat';
-import { compact, isEmpty, omit } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import createError from 'http-errors';
 import getLogger from '../../../utils/logger';
 import { extractSqlInstanceName, IS_DEMO_FLOW, sleep, validateWithSchema } from '../../../utils/utils';
@@ -37,7 +37,8 @@ import {
 import {
     AssessmentCategories,
     AssessmentStatus,
-    AssessmentTriggeredBy
+    AssessmentTriggeredBy,
+    MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP
 } from '../../../utils/continous-optimization-consts';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import { calculateComputeDrift, managedHostsComputeAssessment } from '../compute-assessment-operations';
@@ -72,26 +73,30 @@ import {
 } from './resilience-assessment-operation';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getInstanceDetails } from '../../database-hosts-operations';
-import { getLatestInstanceAssessmentTime } from '../assessment-utils';
+import {
+    buildDismissedConfigurations,
+    getLatestInstanceAssessmentTime,
+    mapAssessmentToV1,
+    type MapAssessmentToV1Config
+} from '../assessment-utils';
 import {
     updateFieldsBasedOnDismissedConfigurations,
     mergeDismissConfigurations,
     processDismissedConfigurations
 } from '../assessment-dismiss-operations';
 import {
-    ParameterDriftResponseType,
-    ComputeDriftResponseType,
-    LicenseDriftResponseType,
-    HostOsPatchDriftResponseType,
-    RssConfigDriftResponseType,
-    MtuAlignmentDriftResponseType,
-    MSSQLPatchDriftResponseType,
-    MSSQLDriftAssessmentResponseType,
-    StorageParameterDriftResponseType,
     DriftAssessmentResponsePerHostType,
-    MSSQLDriftAssessmentResponse,
-    MssqlPatchScanFieldType
+    DriftAssessmentResponsePerAccountV1Type,
+    MssqlPatchScanFieldType,
+    MssqlAssessmentResponse,
+    MssqlAssessmentResponseType,
+    MssqlAssessmentResponseV1Type,
+    MssqlAssessmentResponseV1
 } from '../../../routes/types/mssql-continuous-optimisation.types';
+import {
+    type AssessmentItemType,
+    type AssessmentErrorItemType
+} from '../../../routes/types/continuous-optimization.types';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { handleGetMssqlAssessmentForDemo } from '../../demo-operations';
 import { listJobs } from '../../../lib/database/job';
@@ -109,41 +114,38 @@ const STANDALONE_AOAG_EXCLUDED_HA_ITEMS = ['shared-storage', 'drive-letter', 'cl
 const AOAG_EXCLUDED_STORAGE_VOLUME_CONFIG = ['snapshot-copy-reserve'];
 
 /**
- * Filter assessment data for AOAG deployments
- * Removes categories and items not applicable to AOAG
+ * Filter flat assessment items for AOAG deployments.
+ * Removes items not applicable to AOAG (excluded storage volume configs, excluded HA items,
+ * and when `excludeCategories` is set, items whose category matches).
  */
-function filterAssessmentForAoag(
-    assessmentData: MSSQLDriftAssessmentResponseType,
-    hostLevelData?: Record<string, unknown>
-): { filteredAssessment: MSSQLDriftAssessmentResponseType; filteredHostData: Record<string, unknown> } {
-    const filteredAssessment = { ...assessmentData };
-
-    if (filteredAssessment.storage && 'sizing' in filteredAssessment.storage) {
-        const storageData = filteredAssessment.storage as StorageParameterDriftResponseType;
-        if (storageData.configuration?.volumes) {
-            storageData.configuration.volumes = storageData.configuration.volumes.filter(
-                (item: { name?: string }) => !AOAG_EXCLUDED_STORAGE_VOLUME_CONFIG.includes(item.name || '')
-            );
-        }
-    }
-
-    const isStandaloneAoag = assessmentData.baseDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT;
-    const excludedHaItems = isStandaloneAoag
+function filterAoagItems(
+    assessments: (AssessmentItemType | AssessmentErrorItemType)[],
+    opts: { isStandaloneAoag: boolean; excludeCategories?: string[] }
+): (AssessmentItemType | AssessmentErrorItemType)[] {
+    const excludedHaItems = opts.isStandaloneAoag
         ? [...AOAG_EXCLUDED_HA_ITEMS, ...STANDALONE_AOAG_EXCLUDED_HA_ITEMS]
         : AOAG_EXCLUDED_HA_ITEMS;
 
-    if (filteredAssessment.highAvailability && Array.isArray(filteredAssessment.highAvailability)) {
-        const filteredHA = filteredAssessment.highAvailability.filter(
-            (item: { name?: string }) => !excludedHaItems.includes(item.name || '')
-        );
-        filteredAssessment.highAvailability = filteredHA.length > 0 ? filteredHA : undefined;
-    }
-
-    const filteredHostData: Record<string, unknown> = hostLevelData
-        ? omit(hostLevelData, AOAG_EXCLUDED_CATEGORIES)
-        : {};
-
-    return { filteredAssessment, filteredHostData };
+    return assessments.filter(item => {
+        if (
+            item.type === 'storage' &&
+            item.subType === 'configuration' &&
+            AOAG_EXCLUDED_STORAGE_VOLUME_CONFIG.includes(item.id)
+        ) {
+            return false;
+        }
+        if (item.subType === 'highAvailability' && excludedHaItems.includes(item.id)) {
+            return false;
+        }
+        if (
+            opts.excludeCategories?.length &&
+            item.type &&
+            opts.excludeCategories.map(c => c.toLowerCase()).includes(item.type.toLowerCase())
+        ) {
+            return false;
+        }
+        return true;
+    });
 }
 
 function hostLevelDriftData(
@@ -155,7 +157,7 @@ function hostLevelDriftData(
     metadata: Metadata,
     hostLevelAssessmentData: ResourceAssessmentData,
     fieldsValues: string[]
-) {
+): (AssessmentItemType | AssessmentErrorItemType)[] {
     logger.info('Fetching host level drift data', {
         accountId,
         credentialsId,
@@ -171,86 +173,65 @@ function hostLevelDriftData(
         hostOsPatch: fieldsValues?.includes(AssessmentCategories.HOST_OS_PATCH.toLowerCase()),
         rssConfig: fieldsValues?.includes(AssessmentCategories.RSS_CONFIG.toLowerCase()),
         mtuAlignment: fieldsValues?.includes(AssessmentCategories.MTU_ALIGNMENT.toLowerCase()),
-        mssqlPatch: fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase()),
-        highAvailability: fieldsValues?.includes(AssessmentCategories.HIGH_AVAILABILITY.toLowerCase())
+        mssqlPatch: fieldsValues?.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase())
     };
 
-    const [
-        computeAssessmentResponse,
-        licenseAssessmentResponse,
-        hostOsPatchAssessmentResponse,
-        rssConfigResponse,
-        mtuAlignmentResponse,
-        mssqlPatchAssessmentResponse
-    ] = [
-        assessmentFlags.compute
-            ? calculateComputeDrift(
-                  accountId,
-                  credentialsId,
-                  region,
-                  databaseHostId,
-                  databaseInstanceId,
-                  hostLevelAssessmentData
-              )
-            : {},
-        assessmentFlags.license
-            ? calculateLicenseDrift(
-                  accountId,
-                  credentialsId,
-                  region,
-                  databaseHostId,
-                  databaseInstanceId,
-                  hostLevelAssessmentData
-              )
-            : {},
-        assessmentFlags.hostOsPatch
-            ? calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId, hostLevelAssessmentData)
-            : {},
-        assessmentFlags.rssConfig
-            ? calculateRssConfigDrift(
-                  accountId,
-                  credentialsId,
-                  region,
-                  databaseHostId,
-                  metadata as Metadata,
-                  hostLevelAssessmentData
-              )
-            : {},
-        assessmentFlags.mtuAlignment
-            ? calculateMTUAlignmentDrift(
-                  accountId,
-                  credentialsId,
-                  region,
-                  databaseHostId,
-                  metadata as Metadata,
-                  hostLevelAssessmentData
-              )
-            : {},
-        assessmentFlags.mssqlPatch
-            ? calculateMSSQLPatchDrift(accountId, credentialsId, region, databaseHostId, hostLevelAssessmentData)
-            : {}
+    return [
+        ...(assessmentFlags.compute
+            ? [
+                  calculateComputeDrift(
+                      accountId,
+                      credentialsId,
+                      region,
+                      databaseHostId,
+                      databaseInstanceId,
+                      hostLevelAssessmentData
+                  )
+              ]
+            : []),
+        ...(assessmentFlags.license
+            ? [
+                  calculateLicenseDrift(
+                      accountId,
+                      credentialsId,
+                      region,
+                      databaseHostId,
+                      databaseInstanceId,
+                      hostLevelAssessmentData
+                  )
+              ]
+            : []),
+        ...(assessmentFlags.hostOsPatch
+            ? [calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId, hostLevelAssessmentData)]
+            : []),
+        ...(assessmentFlags.rssConfig
+            ? [
+                  calculateRssConfigDrift(
+                      accountId,
+                      credentialsId,
+                      region,
+                      databaseHostId,
+                      metadata as Metadata,
+                      hostLevelAssessmentData
+                  )
+              ]
+            : []),
+        ...(assessmentFlags.mtuAlignment
+            ? [
+                  calculateMTUAlignmentDrift(
+                      accountId,
+                      credentialsId,
+                      region,
+                      databaseHostId,
+                      metadata as Metadata,
+                      hostLevelAssessmentData
+                  )
+              ]
+            : []),
+        ...(assessmentFlags.mssqlPatch
+            ? [calculateMSSQLPatchDrift(accountId, credentialsId, region, databaseHostId, hostLevelAssessmentData)]
+            : [])
     ];
-
-    const result = {
-        compute: !isEmpty(computeAssessmentResponse)
-            ? (computeAssessmentResponse as ComputeDriftResponseType)
-            : undefined,
-        license: !isEmpty(licenseAssessmentResponse)
-            ? (licenseAssessmentResponse as LicenseDriftResponseType)
-            : undefined,
-        hostOsPatch: !isEmpty(hostOsPatchAssessmentResponse)
-            ? (hostOsPatchAssessmentResponse as HostOsPatchDriftResponseType)
-            : undefined,
-        rssConfig: !isEmpty(rssConfigResponse) ? (rssConfigResponse as RssConfigDriftResponseType) : undefined,
-        mtuAlignment: !isEmpty(mtuAlignmentResponse)
-            ? (mtuAlignmentResponse as MtuAlignmentDriftResponseType)
-            : undefined,
-        mssqlPatch: !isEmpty(mssqlPatchAssessmentResponse)
-            ? (mssqlPatchAssessmentResponse as MSSQLPatchDriftResponseType)
-            : undefined
-    };
-
-    return result;
 }
 
 async function fetchMssqlDriftAssessment(
@@ -261,7 +242,7 @@ async function fetchMssqlDriftAssessment(
     databaseInstanceId: string,
     fields?: string,
     databaseInstance?: DatabaseInstance
-) {
+): Promise<MssqlAssessmentResponseType> {
     logger.info('Fetching drift assessment', {
         accountId,
         credentialsId,
@@ -363,7 +344,7 @@ async function fetchMssqlDriftAssessment(
                       ? { databaseRoles: storedAoagDetails.databaseRoles }
                       : undefined
               )
-            : Promise.resolve({}),
+            : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([]),
         assessmentFlags.resilience
             ? getResilienceDriftAssessment(
                   accountId,
@@ -376,7 +357,7 @@ async function fetchMssqlDriftAssessment(
                   hostLevelAssessmentData as ResourceAssessmentData,
                   databaseInstanceConfigData
               )
-            : Promise.resolve({})
+            : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([])
     ]);
 
     const [maxDOPResponse, cloneResponse, hostLevelData] = [
@@ -389,7 +370,7 @@ async function fetchMssqlDriftAssessment(
                   databaseInstanceId,
                   assessmentDataMap[AssessmentCategories.MAXDOP] as MaxDOPAssesment
               )
-            : {},
+            : undefined,
         assessmentFlags.clone
             ? calculateCloneDrift(
                   accountId,
@@ -399,7 +380,7 @@ async function fetchMssqlDriftAssessment(
                   databaseInstanceId,
                   assessmentDataMap[AssessmentCategories.CLONE] as CloneAssessment
               )
-            : {},
+            : undefined,
         assessmentFlags.compute ||
         assessmentFlags.license ||
         assessmentFlags.hostOsPatch ||
@@ -416,57 +397,171 @@ async function fetchMssqlDriftAssessment(
                   hostLevelAssessmentData as ResourceAssessmentData,
                   fieldsValues
               )
-            : {}
+            : []
     ];
 
     const latestInstanceAssessmentTime = getLatestInstanceAssessmentTime(databaseInstanceConfigData).getTime();
 
-    let driftAssessmentData: MSSQLDriftAssessmentResponseType = {
-        storage: !isEmpty(storageAssessmentResponse)
-            ? (storageAssessmentResponse as StorageParameterDriftResponseType)
-            : undefined,
-        maxDOP: !isEmpty(maxDOPResponse) ? (maxDOPResponse as ParameterDriftResponseType) : undefined,
-        clone: !isEmpty(cloneResponse) ? (cloneResponse as ParameterDriftResponseType) : undefined,
-        ...(!isEmpty(hostLevelData) ? hostLevelData : undefined),
-        ...resilienceAssessmentResponse,
-        dismissedConfigurations,
-        lastAssessmentTimestamp: (() => {
-            try {
-                const latestHostTime =
-                    Number((hostLevelAssessmentData as ResourceAssessmentData).lastAssessedDate) || 0;
-                return moment(Math.max(latestInstanceAssessmentTime, latestHostTime)).unix() * 1000;
-            } catch {
-                return undefined;
-            }
-        })(),
-        fileSystemId,
-        databaseInstanceName,
-        ec2InstanceId: (resourceMetadata as Metadata)?.node1InstanceId,
-        deploymentType: databaseDeploymentType,
-        ...(isAoagDeployment && {
-            baseDeploymentType: (hostLevelAssessmentData as ResourceAssessmentData)?.aoagDetails?.baseDeploymentType,
-            replicaRole: (hostLevelAssessmentData as ResourceAssessmentData)?.aoagDetails?.replicaRole
-        }),
-        databaseHostName: resourceName || ''
+    const baseDeploymentType = isAoagDeployment
+        ? (hostLevelAssessmentData as ResourceAssessmentData)?.aoagDetails?.baseDeploymentType
+        : undefined;
+    const isStandaloneAoag = baseDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT;
+
+    // Append all assessments together (storage, instance-level, host-level, resilience).
+    const assessments: (AssessmentItemType | AssessmentErrorItemType)[] = [];
+
+    [storageAssessmentResponse, hostLevelData, resilienceAssessmentResponse].forEach(item => {
+        if (!isEmpty(item) && item.length > 0) {
+            assessments.push(...item);
+        }
+    });
+    [maxDOPResponse, cloneResponse].forEach(item => {
+        if (!isEmpty(item)) {
+            assessments.push(item);
+        }
+    });
+
+    // Apply AOAG-specific filtering on the flat array
+    let filteredAssessments = isAoagDeployment
+        ? filterAoagItems(assessments, { isStandaloneAoag: !!isStandaloneAoag })
+        : assessments;
+
+    // Demo overrides on flat array
+    if (IS_DEMO_FLOW) {
+        filteredAssessments = handleGetMssqlAssessmentForDemo(accountId, instanceDetail, filteredAssessments);
+    }
+
+    let lastAssessmentTimestamp: number | undefined;
+    try {
+        const latestHostTime = Number((hostLevelAssessmentData as ResourceAssessmentData).lastAssessedDate) || 0;
+        lastAssessmentTimestamp = moment(Math.max(latestInstanceAssessmentTime, latestHostTime)).unix() * 1000;
+    } catch {
+        lastAssessmentTimestamp = undefined;
+    }
+
+    const assessmentResponse = {
+        assessments: filteredAssessments,
+        dismissedConfigurations: buildDismissedConfigurations(dismissedConfigurations, DatabaseTypes.MS_SQL_SERVER),
+        metadata: {
+            lastAssessmentTimestamp,
+            fileSystemId,
+            databaseInstanceName,
+            ec2InstanceId: (resourceMetadata as Metadata)?.node1InstanceId,
+            deploymentType: databaseDeploymentType,
+            baseDeploymentType,
+            replicaRole: isAoagDeployment
+                ? (hostLevelAssessmentData as ResourceAssessmentData)?.aoagDetails?.replicaRole
+                : undefined,
+            databaseHostName: resourceName || '',
+            storageEndpoint: undefined
+        }
     };
 
-    // Apply AOAG-specific filtering
-    if (isAoagDeployment) {
-        const { filteredAssessment } = filterAssessmentForAoag(driftAssessmentData);
-        driftAssessmentData = filteredAssessment;
-    }
-
-    if (IS_DEMO_FLOW) {
-        driftAssessmentData = handleGetMssqlAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
-    }
-
-    const { isValid, errors: validationErrors } = validateWithSchema(MSSQLDriftAssessmentResponse, driftAssessmentData);
+    const { isValid, errors } = validateWithSchema(MssqlAssessmentResponse, assessmentResponse);
     if (!isValid) {
-        logger.error('Assessment data validation failed for', { databaseHostId, databaseInstanceId, validationErrors });
-        return {};
+        logger.error('Invalid MSSQL assessment response', { errors });
+        return { assessments: [], dismissedConfigurations: [], metadata: {} };
     }
 
-    return driftAssessmentData;
+    return assessmentResponse;
+}
+
+// golden-config `id` -> v1 top-level response key
+const SINGLE_ASSESSMENT_KEY_BY_ID: Record<string, string> = {
+    'compute-rightsizing': 'compute',
+    'mtu-alignment': 'mtuAlignment',
+    'host-os-patch': 'hostOsPatch',
+    'rss-config': 'rssConfig',
+    'sql-license': 'license',
+    maxdop: 'maxDOP',
+    'mssql-patch': 'mssqlPatch',
+    'snapshot-policy': 'snapshotPolicy',
+    'backup-configuration': 'awsBackup',
+    crr: 'crr',
+    'clone-management': 'clone'
+};
+
+// golden-config `configurationName` -> v1 dismissedConfigurations key
+const DISMISS_SINGLE_KEY_BY_NAME: Record<string, string> = {
+    'compute-rightsizing': 'compute',
+    'sql-license': 'license',
+    'host-os-patch': 'hostOsPatch',
+    'rss-config': 'rssConfig',
+    maxdop: 'maxDOP',
+    'mssql-patch': 'mssqlPatch',
+    crr: 'crr',
+    'clone-management': 'clone',
+    'snapshot-policy': 'snapshotPolicy',
+    'backup-configuration': 'awsBackup',
+    'mtu-alignment': 'mtuAlignment'
+};
+
+// golden-config `id` -> v1 mapping config for MSSQL assessments
+const MSSQL_V1_MAP_CONFIG: MapAssessmentToV1Config = {
+    metadataSelector: metadata => ({ ...metadata }),
+    storageConfigMap: MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
+    singleKeyById: SINGLE_ASSESSMENT_KEY_BY_ID,
+    dismissSingleKeyByName: DISMISS_SINGLE_KEY_BY_NAME,
+    supportsHighAvailability: true,
+    storageExtraSelector: metadata => ({ fileSystems: metadata.fileSystemId ? [metadata.fileSystemId] : [] }),
+    validate: response => validateWithSchema(MssqlAssessmentResponseV1, response),
+    dbLabel: 'MSSQL'
+};
+
+async function fetchMssqlDriftAssessmentV1(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    fields?: string,
+    databaseInstance?: DatabaseInstance
+): Promise<MssqlAssessmentResponseV1Type> {
+    const v2Response = await fetchMssqlDriftAssessment(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        fields,
+        databaseInstance
+    );
+    // v1 schemas omit `id`/`categories`; Fastify's response serializer drops them from the payload.
+    return mapAssessmentToV1(v2Response, MSSQL_V1_MAP_CONFIG) as unknown as MssqlAssessmentResponseV1Type;
+}
+
+async function fetchMssqlDriftAssessmentPerAccountV1(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    fields?: string,
+    clientNextToken?: string,
+    pageSize?: number
+): Promise<DriftAssessmentResponsePerAccountV1Type> {
+    const v2Result = await fetchMssqlDriftAssessmentPerAccount(
+        accountId,
+        credentialsId,
+        region,
+        fields,
+        clientNextToken,
+        pageSize
+    );
+
+    return {
+        ...v2Result,
+        assessmentsPerAccount: v2Result.assessmentsPerAccount.map(host => ({
+            ...host,
+            instancesAssessment: host.instancesAssessment.map(instance => ({
+                ...instance,
+                assessments: instance.assessments
+                    ? (mapAssessmentToV1(
+                          instance.assessments,
+                          MSSQL_V1_MAP_CONFIG
+                      ) as unknown as MssqlAssessmentResponseV1Type)
+                    : undefined
+            }))
+        }))
+    };
 }
 
 async function fetchMssqlDriftAssessmentPerHost(
@@ -519,7 +614,7 @@ async function fetchMssqlDriftAssessmentPerHost(
               Object.values(AssessmentCategories).includes(field as AssessmentCategories)
           );
 
-    let hostLevelData = {};
+    let hostLevelData: (AssessmentItemType | AssessmentErrorItemType)[] = [];
     if (!isEmpty(hostFieldsToQuery)) {
         const [{ database_instance_id: databaseInstanceId }] = instancesManaged;
         hostLevelData = hostLevelDriftData(
@@ -532,12 +627,12 @@ async function fetchMssqlDriftAssessmentPerHost(
             hostLevelAssessmentData as ResourceAssessmentData,
             hostFieldsToQuery
         );
+    }
 
-        const { isValid, errors: validationErrors } = validateWithSchema(MSSQLDriftAssessmentResponse, hostLevelData);
-        if (!isValid) {
-            logger.error('Host level assessment validation failed for :', { databaseHostId, validationErrors });
-            hostLevelData = {};
-        }
+    const { isValid, errors: validationErrors } = validateWithSchema(MssqlAssessmentResponse, hostLevelData);
+    if (!isValid) {
+        logger.error('Host level assessment validation failed for :', { databaseHostId, validationErrors });
+        hostLevelData = [];
     }
 
     const driftAssessments = await Promise.all(
@@ -573,19 +668,22 @@ async function fetchMssqlDriftAssessmentPerHost(
                         { ...instance, resource: resourceDetail } as DatabaseInstancesIncludingResource
                     );
 
-                    // Apply AOAG-specific filtering
-                    let filteredHostLevelData: Record<string, unknown> = hostLevelData;
-                    let filteredDriftAssessment: MSSQLDriftAssessmentResponseType = driftAssessment;
-                    if (deploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
-                        const result = filterAssessmentForAoag(driftAssessment, hostLevelData);
-                        filteredDriftAssessment = result.filteredAssessment;
-                        filteredHostLevelData = result.filteredHostData;
-                    }
+                    // Apply AOAG exclusion to the shared host-level items if needed.
+                    const filteredHostItems =
+                        deploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
+                            ? filterAoagItems(hostLevelData, {
+                                  isStandaloneAoag: false,
+                                  excludeCategories: AOAG_EXCLUDED_CATEGORIES
+                              })
+                            : hostLevelData;
 
                     return {
                         databaseInstanceId,
                         databaseInstanceName,
-                        assessments: { ...filteredDriftAssessment, ...filteredHostLevelData }
+                        assessments: {
+                            ...driftAssessment,
+                            assessments: [...driftAssessment.assessments, ...filteredHostItems]
+                        }
                     };
                 } catch (error: any) {
                     logger.error(`Error while fetching drift assessment for ${databaseInstanceId}: ${error.message}`);
@@ -922,14 +1020,13 @@ async function initiateHostLevelAssessmentDataCollection(
             { ...(databaseInstanceObject as DatabaseInstance), resource }
         );
         if (!IS_DEMO_FLOW) {
-            await updateDatabaseHostAssessmentResults(accountId, credentialsId, region, databaseHostId, {
-                license: assessmentResults.license,
-                compute: assessmentResults.compute,
-                hostOsPatch: assessmentResults.hostOsPatch,
-                rssConfig: assessmentResults.rssConfig,
-                mssqlPatch: assessmentResults.mssqlPatch,
-                highAvailability: assessmentResults.highAvailability
-            });
+            await updateDatabaseHostAssessmentResults(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                assessmentResults
+            );
         }
     }
 }
@@ -1481,7 +1578,8 @@ async function updateAssessmentResultsInInstanceMetadata(managedInstance: Databa
             region,
             databaseHostId,
             databaseInstanceId,
-            driftAssessmentData
+            driftAssessmentData,
+            managedInstance.metadata
         );
     } catch (error) {
         logger.error('Error while updating assessment results in instance table', {
@@ -1560,9 +1658,12 @@ export {
     triggerMssqlAssessment,
     onDemandTriggerMssqlDriftAssessment,
     fetchMssqlDriftAssessment,
+    fetchMssqlDriftAssessmentV1,
     fetchMssqlDriftAssessmentPerHost,
     fetchMssqlDriftAssessmentPerAccount,
+    fetchMssqlDriftAssessmentPerAccountV1,
     fetchMssqlPatchScan,
     updateAssessmentResultsInInstanceMetadata,
-    triggerMssqlAssessmentAfterOptimization
+    triggerMssqlAssessmentAfterOptimization,
+    MSSQL_V1_MAP_CONFIG
 };

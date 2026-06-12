@@ -5,12 +5,11 @@ import { CloneAssessment, CloneDetail } from '../../utils/common-types';
 import { CLONE_AGE, GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
 import { AssessmentCategories, AssessmentStatus } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
-import MSSQL_GOLDEN_CONFIG from './mssql/golden-config';
+import type { AssessmentItemType, AssessmentErrorItemType } from '../../routes/types/continuous-optimization.types';
+import { MSSQL_GOLDEN_CONFIG } from './mssql/golden-config';
 import ORACLE_GOLDEN_CONFIG from './oracle/golden-config';
 
 const logger = getLogger();
-
-const CLONE_DRIFT_OPTIMIZED_RECOMMENDATION = 'All clones are up-to-date. No old FlexClone volumes detected.';
 
 function calculateOneTimeWADCloneDrift(
     accountId: string,
@@ -18,7 +17,7 @@ function calculateOneTimeWADCloneDrift(
     databaseInstanceId: string,
     cloneAssessmentData: CloneAssessment,
     databaseType: DATABASE_TYPE
-) {
+): AssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculating one-time WAD clone drift', {
         accountId,
         databaseHostId,
@@ -26,14 +25,15 @@ function calculateOneTimeWADCloneDrift(
         databaseType
     });
 
+    const goldenConfig = (databaseType === DATABASE_TYPE.oracle ? ORACLE_GOLDEN_CONFIG : MSSQL_GOLDEN_CONFIG).filter(
+        e => e.id === 'clone-management'
+    )[0];
+
     if (isEmpty(cloneAssessmentData)) {
         const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.CLONE);
         logger.warn(errorMessage);
-        return { errorMessage };
+        return { ...goldenConfig, errorMessage };
     }
-
-    const goldenConfig =
-        databaseType === DATABASE_TYPE.oracle ? ORACLE_GOLDEN_CONFIG.cloneManagement : MSSQL_GOLDEN_CONFIG.cloning;
 
     try {
         const cloneDetails = cloneAssessmentData.cloneDetails ?? [];
@@ -50,24 +50,21 @@ function calculateOneTimeWADCloneDrift(
         const oldClones = oldCloneDetails.length;
         const status = oldClones === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
 
-        const recommendation =
-            status === AssessmentStatus.NOT_OPTIMIZED
-                ? goldenConfig.recommendation
-                : CLONE_DRIFT_OPTIMIZED_RECOMMENDATION;
-
         return {
-            name: goldenConfig.name,
+            ...goldenConfig,
             status,
             recommended: AssessmentStatus.OPTIMIZED,
-            severity: goldenConfig.severity,
-            recommendation,
-            tags: goldenConfig.tags,
-            resourceType: goldenConfig.resourceType,
-            cloneDetails,
+            cloneDetails: cloneDetails.map(detail => ({
+                ...detail,
+                tag: detail.tag ?? undefined
+            })),
             totalObjectsAssessed: cloneDetails.length,
             totalObjectsInViolation: oldClones,
             objectsInViolation: oldCloneDatabaseNames,
-            oldCloneDetails,
+            oldCloneDetails: oldCloneDetails.map(detail => ({
+                ...detail,
+                tag: detail.tag ?? undefined
+            })),
             cloneDriftMessage: `${oldClones} out of ${cloneDetails.length} clones are old and divergent`
         };
     } catch (error) {
@@ -75,7 +72,7 @@ function calculateOneTimeWADCloneDrift(
             error instanceof Error ? error.message : String(error)
         }`;
         logger.error(errorMessage, { accountId, databaseHostId, databaseInstanceId, error });
-        return { errorMessage };
+        return { ...goldenConfig, errorMessage };
     }
 }
 

@@ -10,12 +10,14 @@ import {
 } from '../types/continuous-optimization.types';
 import {
     DriftAssessmentResponsePerAccount,
+    DriftAssessmentResponsePerAccountV1,
     DriftAssessmentResponsePerHost,
     HostOsPatchScanResponse,
     OptimizeRequestBody,
     OptimizeStorageRequestBody,
     OraclePatchScanField,
     OracleSecurityPatchScanResponse,
+    OracleAssessmentResponse,
     OracleDriftAssessmentResponse
 } from '../types/oracle-continuous-optimization.types';
 import { resourceRequest } from './database-hosts-schemas';
@@ -29,7 +31,33 @@ const DriftAssessmentDataCollection = {
     tags: [RouteTags.ORACLE_ASSESSMENT],
     querystring: OracleContinuousOptimizationQueryString,
     response: {
+        200: OracleAssessmentResponse
+    }
+};
+
+const DriftAssessmentDataCollectionV1 = {
+    ...resourceRequest,
+    summary: 'Get Oracle database instance parameters drift from recommended settings [Deprecated]',
+    description: 'Get Oracle database instance parameters drift from recommended settings, [Deprecated]',
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    tags: [RouteTags.ORACLE_ASSESSMENT],
+    querystring: OracleContinuousOptimizationQueryString,
+    response: {
         200: OracleDriftAssessmentResponse
+    }
+};
+
+const DriftAssessmentPerAccountV1 = {
+    ...resourceRequest,
+    summary:
+        'Get Oracle database parameter drift from recommended settings for all registered instances on an account [Deprecated]',
+    description:
+        'Get Oracle database parameter drift from recommended settings for all registered instances on an account, [Deprecated]',
+    params: CredentialsIdParams,
+    tags: [RouteTags.ORACLE_ASSESSMENT],
+    querystring: OracleAssessmentQueryStringPerAccount,
+    response: {
+        200: DriftAssessmentResponsePerAccountV1
     }
 };
 
@@ -112,8 +140,10 @@ const DriftAssessmentPerAccount = {
 
 export {
     DriftAssessmentDataCollection,
+    DriftAssessmentDataCollectionV1,
     DriftAssessmentPerHost,
     DriftAssessmentPerAccount,
+    DriftAssessmentPerAccountV1,
     OracleOptimizeStorageSchema,
     OracleOptimizeStorageConfigurationSchema,
     OracleOptimizeStorageLayoutSchema,

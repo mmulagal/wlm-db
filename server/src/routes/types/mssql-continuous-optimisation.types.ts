@@ -14,14 +14,18 @@ import {
     OptimizeStorageTierParams
 } from '../../utils/continous-optimization-consts';
 import {
-    DismissedConfigurationsResponse,
     ErrorResponse,
-    GenericAssessmentResponse,
     GenericParameterDriftResponse,
     OntapVolume,
     CloneDetailSchema,
     ClonedVolumeDetailSchema,
-    FsxBackupOptimizationFields
+    FsxBackupOptimizationFields,
+    BaseAssessmentItem,
+    AssessmentErrorItem,
+    DismissedConfiguration,
+    AssessmentMetadata,
+    GenericAssessmentResponseV1,
+    DismissedConfigurationsResponse
 } from './continuous-optimization.types';
 import { CLONE_ACTION } from '../../utils/consts';
 
@@ -75,6 +79,7 @@ const ParameterDriftResponse = Type.Intersect([
 type ParameterDriftResponseType = Static<typeof ParameterDriftResponse>;
 
 const StorageParameterErrorResponse = Type.Object({
+    id: Type.String(),
     name: Type.String(),
     errorMessage: Type.String()
 });
@@ -278,20 +283,167 @@ const MtuAlignmentDriftResponse = Type.Intersect([
 ]);
 type MtuAlignmentDriftResponseType = Static<typeof MtuAlignmentDriftResponse>;
 
-const MSSQLDriftAssessmentResponse = Type.Object({
-    storage: Type.Optional(Type.Union([StorageParameterDriftResponse, ErrorResponse])),
-    compute: Type.Optional(Type.Union([ComputeDriftResponse, ErrorResponse])),
-    snapshotPolicy: Type.Optional(GenericAssessmentResponse),
-    crr: Type.Optional(GenericAssessmentResponse),
-    awsBackup: Type.Optional(GenericAssessmentResponse),
-    highAvailability: Type.Optional(Type.Array(Type.Union([ParameterDriftResponse, ErrorResponse]))),
-    license: Type.Optional(Type.Union([LicenseDriftResponse, ErrorResponse])),
-    hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponse, ErrorResponse])),
-    rssConfig: Type.Optional(Type.Union([RssConfigDriftResponse, ErrorResponse])),
-    maxDOP: Type.Optional(Type.Union([ParameterDriftResponse, ErrorResponse])),
-    mssqlPatch: Type.Optional(Type.Union([MSSQLPatchDriftResponse, ErrorResponse])),
-    mtuAlignment: Type.Optional(Type.Union([MtuAlignmentDriftResponse, ErrorResponse])),
-    clone: Type.Optional(Type.Union([CloneDriftResponse, ErrorResponse])),
+/** SQL Server instance details carried by the sql-license assessment. */
+const SqlServerInstanceInfo = Type.Object({
+    sqlServerInstance: Type.Optional(Type.String()),
+    sqlServerState: Type.Optional(Type.String()),
+    sqlServerVersion: Type.Optional(Type.String()),
+    sqlServerProductYear: Type.Optional(Type.Number()),
+    sqlServerEdition: Type.Optional(Type.String()),
+    sqlServerEngineEdition: Type.Optional(Type.Number()),
+    sqlServerName: Type.Optional(Type.String())
+});
+
+/** EC2 instance carried by host-os-patch assessments. */
+const Ec2InstanceToPatch = Type.Object({
+    baselineId: Type.Optional(Type.String()),
+    criticalNonCompliantCount: Type.Optional(Type.Number()),
+    otherNonCompliantCount: Type.Optional(Type.Number()),
+    ec2InstanceId: Type.String(),
+    ec2InstanceName: Type.Optional(Type.String()),
+    operationStartTime: Type.Optional(Type.Number()),
+    operationEndTime: Type.Optional(Type.Number()),
+    securityNonCompliantCount: Type.Optional(Type.Number())
+});
+
+/** Network adapter carried by the rss-config assessment. */
+const RssAdapterDetail = Type.Object({
+    adapterName: Type.String(),
+    rssEnabled: Type.Boolean(),
+    rssProfile: Type.String(),
+    baseProcessorNumber: Type.Optional(Type.Number()),
+    numberOfReceiveQueues: Type.Number()
+});
+
+const RecommendedAdapterSettings = Type.Object({
+    recommendedRssProfile: Type.Optional(Type.String()),
+    recommendedBaseProcessorNumber: Type.Optional(Type.Number()),
+    recommendedReceiveQueues: Type.Optional(Type.Number())
+});
+
+/** Network interface carried by the mtu-alignment assessment. */
+const Ec2InterfaceToFix = Type.Object({
+    ec2InstanceId: Type.Optional(Type.String()),
+    name: Type.String(),
+    currentMTU: Type.Number(),
+    recommendedMTU: Type.Number(),
+    interfaceIndex: Type.Number()
+});
+
+/** EC2 instance carried by the mssql-patch assessment. */
+const MissingPatchInEc2Instance = Type.Object({
+    criticalMissingPatchesCount: Type.Optional(Type.Number()),
+    importantMissingPatchesCount: Type.Optional(Type.Number()),
+    ec2InstanceId: Type.String(),
+    ec2InstanceName: Type.Optional(Type.String()),
+    missingPatchesCount: Type.Optional(Type.Number())
+});
+
+const SizingViolations = Type.Optional(
+    Type.Object(
+        {
+            overProvisionedDrives: Type.Optional(Type.Array(SizingViolationResponse)),
+            underProvisionedDrives: Type.Optional(Type.Array(SizingViolationResponse)),
+            ignoredDrives: Type.Optional(Type.Array(SizingViolationResponse))
+        },
+        { description: 'storage-sizing (tempdb-drive-size, log-drive-size)' }
+    )
+);
+
+const RecommendationOptions = Type.Optional(
+    Type.Array(
+        Type.Object({
+            instanceType: Type.Optional(Type.String()),
+            rank: Type.Optional(Type.Number()),
+            savingsOpportunity: Type.Optional(
+                Type.Object({
+                    savingsOpportunityPercentage: Type.Optional(Type.Number()),
+                    estimatedMonthlySavings: Type.Optional(
+                        Type.Object({
+                            currency: Type.Optional(Type.String()),
+                            value: Type.Optional(Type.Number())
+                        })
+                    )
+                })
+            ),
+            platformDifferences: Type.Optional(Type.Array(Type.String()))
+        }),
+        { description: 'EC2 instance type recommendations with cost savings' }
+    )
+);
+
+/** MSSQL-specific assessment item with storage sizing and compute/license/patch properties. */
+const MssqlAssessmentItem = Type.Intersect([
+    BaseAssessmentItem,
+    Type.Object({
+        sizingViolations: SizingViolations,
+        recommendationOptions: RecommendationOptions,
+        sqlServerInstances: Type.Optional(
+            Type.Array(SqlServerInstanceInfo, { description: 'SQL Server instances and their license information' })
+        ),
+        ec2InstancesToPatch: Type.Optional(
+            Type.Array(Ec2InstanceToPatch, { description: 'EC2 instances requiring OS patches' })
+        ),
+        rssAdapters: Type.Optional(
+            Type.Array(RssAdapterDetail, { description: 'Network adapters and their RSS configuration' })
+        ),
+        recommendedAdapterSettings: Type.Optional(RecommendedAdapterSettings),
+        tcpOffloadState: Type.Optional(Type.String({ description: 'TCP offload state for network optimization' })),
+        ec2InterfacesToFix: Type.Optional(
+            Type.Array(Ec2InterfaceToFix, { description: 'Network interfaces requiring MTU alignment' })
+        ),
+        missingPatchesInEc2Instances: Type.Optional(
+            Type.Array(MissingPatchInEc2Instance, { description: 'MSSQL patches missing in EC2 instances' })
+        ),
+        missingPatchesCount: Type.Optional(Type.Number({ description: 'Count of missing security patches' }))
+    })
+]);
+type MssqlAssessmentItemType = Static<typeof MssqlAssessmentItem>;
+
+/** MSSQL-specific assessment response that preserves all MSSQL-specific assessment fields. */
+const MssqlAssessmentResponse = Type.Object({
+    assessments: Type.Array(Type.Union([MssqlAssessmentItem, AssessmentErrorItem])),
+    dismissedConfigurations: Type.Array(DismissedConfiguration),
+    metadata: AssessmentMetadata
+});
+type MssqlAssessmentResponseType = Static<typeof MssqlAssessmentResponse>;
+
+// v1 omits the v2-only `id`/`categories` fields (renamed to `name`/`tags` in v1). Derive v1 item
+// schemas from their v2 counterparts via `Type.Omit` so the strict v2 schemas stay intact.
+const ParameterDriftResponseV1 = Type.Omit(ParameterDriftResponse, ['id', 'categories']);
+const ComputeDriftResponseV1 = Type.Omit(ComputeDriftResponse, ['id', 'categories']);
+const LicenseDriftResponseV1 = Type.Omit(LicenseDriftResponse, ['id', 'categories']);
+const HostOsPatchDriftResponseV1 = Type.Omit(HostOsPatchDriftResponse, ['id', 'categories']);
+const RssConfigDriftResponseV1 = Type.Omit(RssConfigDriftResponse, ['id', 'categories']);
+const MSSQLPatchDriftResponseV1 = Type.Omit(MSSQLPatchDriftResponse, ['id', 'categories']);
+const MtuAlignmentDriftResponseV1 = Type.Omit(MtuAlignmentDriftResponse, ['id', 'categories']);
+const CloneDriftResponseV1 = Type.Omit(CloneDriftResponse, ['id', 'categories']);
+const StorageParameterErrorResponseV1 = Type.Omit(StorageParameterErrorResponse, ['id']);
+const StorageParameterDriftResponseV1 = Type.Object({
+    configuration: Type.Object({
+        volumes: Type.Array(Type.Union([ParameterDriftResponseV1, ErrorResponse])),
+        luns: Type.Array(Type.Union([ParameterDriftResponseV1, ErrorResponse])),
+        os: Type.Array(Type.Union([ParameterDriftResponseV1, StorageParameterErrorResponseV1]))
+    }),
+    sizing: Type.Array(Type.Union([ParameterDriftResponseV1, StorageParameterErrorResponseV1])),
+    layout: Type.Array(Type.Union([ParameterDriftResponseV1, StorageParameterErrorResponseV1])),
+    fileSystems: Type.Array(Type.String())
+});
+
+const MssqlAssessmentResponseV1 = Type.Object({
+    storage: Type.Optional(Type.Union([StorageParameterDriftResponseV1, ErrorResponse])),
+    compute: Type.Optional(Type.Union([ComputeDriftResponseV1, ErrorResponse])),
+    snapshotPolicy: Type.Optional(GenericAssessmentResponseV1),
+    crr: Type.Optional(GenericAssessmentResponseV1),
+    awsBackup: Type.Optional(GenericAssessmentResponseV1),
+    highAvailability: Type.Optional(Type.Array(Type.Union([ParameterDriftResponseV1, ErrorResponse]))),
+    license: Type.Optional(Type.Union([LicenseDriftResponseV1, ErrorResponse])),
+    hostOsPatch: Type.Optional(Type.Union([HostOsPatchDriftResponseV1, ErrorResponse])),
+    rssConfig: Type.Optional(Type.Union([RssConfigDriftResponseV1, ErrorResponse])),
+    maxDOP: Type.Optional(Type.Union([ParameterDriftResponseV1, ErrorResponse])),
+    mssqlPatch: Type.Optional(Type.Union([MSSQLPatchDriftResponseV1, ErrorResponse])),
+    mtuAlignment: Type.Optional(Type.Union([MtuAlignmentDriftResponseV1, ErrorResponse])),
+    clone: Type.Optional(Type.Union([CloneDriftResponseV1, ErrorResponse])),
     lastAssessmentTimestamp: Type.Optional(Type.Number()),
     dismissedConfigurations: Type.Optional(DismissedConfigurationsResponse),
     fileSystemId: Type.Optional(Type.String()),
@@ -304,12 +456,12 @@ const MSSQLDriftAssessmentResponse = Type.Object({
     databaseHostName: Type.Optional(Type.String())
 });
 
-type MSSQLDriftAssessmentResponseType = Static<typeof MSSQLDriftAssessmentResponse>;
+type MssqlAssessmentResponseV1Type = Static<typeof MssqlAssessmentResponseV1>;
 
 const DriftAssessmentResponsePerInstance = Type.Object({
     databaseInstanceId: Type.String({ minLength: 1 }),
     databaseInstanceName: Type.String(),
-    assessments: Type.Optional(MSSQLDriftAssessmentResponse),
+    assessments: Type.Optional(MssqlAssessmentResponse),
     error: Type.Optional(Type.String())
 });
 
@@ -320,6 +472,27 @@ const DriftAssessmentResponsePerHost = Type.Object({
 });
 
 type DriftAssessmentResponsePerHostType = Static<typeof DriftAssessmentResponsePerHost>;
+
+const DriftAssessmentResponsePerInstanceV1 = Type.Object({
+    databaseInstanceId: Type.String({ minLength: 1 }),
+    databaseInstanceName: Type.String(),
+    assessments: Type.Optional(MssqlAssessmentResponseV1),
+    error: Type.Optional(Type.String())
+});
+
+const DriftAssessmentResponsePerHostV1 = Type.Object({
+    databaseHostId: Type.String({ minLength: 1 }),
+    databaseHostName: Type.String(),
+    instancesAssessment: Type.Array(DriftAssessmentResponsePerInstanceV1)
+});
+
+const DriftAssessmentResponsePerAccountV1 = Type.Object({
+    count: Type.Number(),
+    assessmentsPerAccount: Type.Array(DriftAssessmentResponsePerHostV1),
+    nextToken: Type.Optional(Type.String())
+});
+
+type DriftAssessmentResponsePerAccountV1Type = Static<typeof DriftAssessmentResponsePerAccountV1>;
 
 const OptimizeStorageRequestBody = Type.Object({
     assessments: Type.Optional(Type.Array(OptimizeStorageRequestParams))
@@ -628,8 +801,10 @@ const BulkOptimizeHASharedStorageBody = Type.Object({
 type BulkOptimizeHASharedStorageBodyType = Static<typeof BulkOptimizeHASharedStorageBody>;
 
 export {
-    MSSQLDriftAssessmentResponse,
-    MSSQLDriftAssessmentResponseType,
+    MssqlAssessmentItem,
+    MssqlAssessmentItemType,
+    MssqlAssessmentResponse,
+    MssqlAssessmentResponseType,
     ComputeDriftResponseType,
     LicenseDriftResponseType,
     HostOsPatchDriftResponse,
@@ -699,6 +874,10 @@ export {
     BulkDismissConfigurationRequestBody,
     BulkDismissConfigurationResponse,
     DriftAssessmentResponsePerHostType,
+    DriftAssessmentResponsePerInstanceV1,
+    DriftAssessmentResponsePerHostV1,
+    DriftAssessmentResponsePerAccountV1,
+    DriftAssessmentResponsePerAccountV1Type,
     BulkOptimizeHASharedStorageBody,
     BulkOptimizeHASharedStorageBodyType,
     OptimizeHASharedStorageRequestBodyType,
@@ -707,5 +886,7 @@ export {
     BulkOptimizeMTUPerHostRequestBodyType,
     BulkOptimizeBackupPerHostRequestBodyType,
     MssqlPatchScanField,
-    MssqlPatchScanFieldType
+    MssqlPatchScanFieldType,
+    MssqlAssessmentResponseV1,
+    MssqlAssessmentResponseV1Type
 };

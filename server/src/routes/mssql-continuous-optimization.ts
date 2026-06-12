@@ -32,7 +32,9 @@ import {
     BulkOptimizeClusterQuorumSchema,
     BulkOptimizeHeartbeatSchema,
     BulkOptimizeMTUAlignmentSchema,
-    FetchMssqlPatchScanSchema
+    FetchMssqlPatchScanSchema,
+    DriftAssessmentDataCollectionV1,
+    DriftAssessmentPerAccountV1
 } from './schemas/mssql-continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -61,7 +63,9 @@ import { DatabaseTypes } from '../utils/consts';
 import {
     fetchMssqlDriftAssessment,
     fetchMssqlDriftAssessmentPerAccount,
+    fetchMssqlDriftAssessmentPerAccountV1,
     fetchMssqlDriftAssessmentPerHost,
+    fetchMssqlDriftAssessmentV1,
     fetchMssqlPatchScan,
     onDemandTriggerMssqlDriftAssessment
 } from '../operations/continuous-optimization/mssql/assessment-operations';
@@ -72,7 +76,9 @@ import {
 import { SSMDocument } from '../utils/common-types';
 import {
     fetchMssqlOfflineAssessmentPerAccount,
+    fetchMssqlOfflineAssessmentPerAccountV1,
     fetchMssqlOfflineAssessment,
+    fetchMssqlOfflineAssessmentV1,
     listMssqlOfflineAssessmentDatabases,
     deleteOfflineAssessmentRecord,
     listMssqlOfflineAssessmentDatabasesPerAccount
@@ -80,8 +86,10 @@ import {
 import { uploadOfflineAssessment, downloadOfflineAssessmentScript } from '../operations/offline-assessment-operations';
 import {
     OfflineAssessmentListSchema,
+    OfflineAssessmentListSchemaV1,
     OfflineAssessmentUploadSchema,
     OfflineAssessmentGetByIdSchema,
+    OfflineAssessmentGetByIdSchemaV1,
     OfflineAssessmentDownloadSchema,
     DeleteOfflineAssessment,
     OfflineAssessmentDatabasesSchema,
@@ -92,6 +100,7 @@ import getLogger from '../utils/logger';
 const logger = getLogger();
 
 const MSSQL_API_PREFIX_PATH = '/v1/mssql/credentials/:credentialsId/regions/:region';
+const MSSQL_API_PREFIX_PATH_V2 = '/v2/mssql/credentials/:credentialsId/regions/:region';
 const MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH = '/v1/mssql';
 
 export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstance) {
@@ -100,6 +109,25 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
     server
         .get(
             `${MSSQL_API_PREFIX_PATH}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
+            { schema: DriftAssessmentDataCollectionV1 },
+            async (request, reply) => {
+                const {
+                    params: { accountId, databaseHostId, credentialsId, region, databaseInstanceId },
+                    query: { fields }
+                } = castRequest(request);
+                const response = await fetchMssqlDriftAssessmentV1(
+                    accountId,
+                    credentialsId,
+                    region,
+                    databaseHostId,
+                    databaseInstanceId,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+        .get(
+            `${MSSQL_API_PREFIX_PATH_V2}/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
             { schema: DriftAssessmentDataCollection },
             async (request, reply) => {
                 const {
@@ -280,13 +308,13 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                 return reply.send(response);
             }
         )
-        .get(`${MSSQL_API_PREFIX_PATH}/assessment`, { schema: DriftAssessmentPerAccount }, async (request, reply) => {
+        .get(`${MSSQL_API_PREFIX_PATH}/assessment`, { schema: DriftAssessmentPerAccountV1 }, async (request, reply) => {
             const {
                 params: { accountId, credentialsId, region },
                 query: { fields, nextToken, pageSize }
             } = castRequest(request);
 
-            const response = await fetchMssqlDriftAssessmentPerAccount(
+            const response = await fetchMssqlDriftAssessmentPerAccountV1(
                 accountId,
                 credentialsId,
                 region,
@@ -296,6 +324,26 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
             );
             return reply.send(response);
         })
+        .get(
+            `${MSSQL_API_PREFIX_PATH_V2}/assessment`,
+            { schema: DriftAssessmentPerAccount },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region },
+                    query: { fields, nextToken, pageSize }
+                } = castRequest(request);
+
+                const response = await fetchMssqlDriftAssessmentPerAccount(
+                    accountId,
+                    credentialsId,
+                    region,
+                    fields,
+                    nextToken,
+                    pageSize
+                );
+                return reply.send(response);
+            }
+        )
         .post(
             `${MSSQL_BULK_OPTIMIZATION_API_PREFIX_PATH}/database-hosts/optimize/storage-sizing`,
             { schema: BulkOptimizeStorageSizingSchema },
@@ -542,8 +590,23 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                 return reply.send(response);
             }
         )
+        .get('/v1/mssql/offline-assessment', { schema: OfflineAssessmentListSchemaV1() }, async (request, reply) => {
+            const {
+                params: { accountId },
+                query: { pageSize, nextToken, credentialsId, region }
+            } = castRequest(request);
+
+            const response = await fetchMssqlOfflineAssessmentPerAccountV1(
+                accountId,
+                pageSize,
+                credentialsId,
+                region,
+                nextToken
+            );
+            return reply.send(response);
+        })
         .get(
-            '/v1/mssql/offline-assessment',
+            '/v2/mssql/offline-assessment',
             { schema: OfflineAssessmentListSchema(DatabaseTypes.MS_SQL_SERVER) },
             async (request, reply) => {
                 const {
@@ -607,9 +670,30 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                 return reply.send(response);
             }
         )
-        // Get specific offline assessment by resource ID and database instance ID
+        // Get specific offline assessment by resource ID and database instance ID (v1 - deprecated)
         .get(
             '/v1/mssql/database-hosts/:resourceId/database-instances/:databaseInstanceId/offline-assessment',
+            { schema: OfflineAssessmentGetByIdSchemaV1() },
+            async (request, reply) => {
+                const {
+                    params: { accountId, resourceId, databaseInstanceId },
+                    query: { fields, credentialsId, region }
+                } = castRequest(request);
+
+                const response = await fetchMssqlOfflineAssessmentV1(
+                    accountId,
+                    resourceId,
+                    databaseInstanceId,
+                    credentialsId,
+                    region,
+                    fields
+                );
+                return reply.send(response);
+            }
+        )
+        // Get specific offline assessment by resource ID and database instance ID (v2)
+        .get(
+            '/v2/mssql/database-hosts/:resourceId/database-instances/:databaseInstanceId/offline-assessment',
             { schema: OfflineAssessmentGetByIdSchema(DatabaseTypes.MS_SQL_SERVER) },
             async (request, reply) => {
                 const {

@@ -10,14 +10,7 @@ import {
     updateOfflineAssessmentResults,
     OfflineAssessmentRecord
 } from '../../../lib/database/offline-assessment';
-import {
-    MSSQLDriftAssessmentResponseType,
-    RssConfigDriftResponseType,
-    ParameterDriftResponseType,
-    CloneDriftResponseType,
-    MSSQLDriftAssessmentResponse
-} from '../../../routes/types/mssql-continuous-optimisation.types';
-import { OfflineAssessmentListResponseType } from '../../../routes/types/offline-assessment.types';
+import { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import { calculateStorageDrift } from './storage-assessment-operations';
 import { calculateRssConfigDrift } from './rssConfig-assessment-operations';
 import { calculateMaxDOPDrift } from './maxdop-assessment-operations';
@@ -32,11 +25,7 @@ import {
 } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
 import { AWS_REGIONS, HttpErrorCodes, MSSQL_DATABASE_TYPES, MSSQL_SYSTEM_DATABASES } from '../../../utils/consts';
-import {
-    ASSESSMENT_RESOURCE_TYPE,
-    AssessmentStatus,
-    MIN_OPTIMIZED_HEADROOM_PERCENTAGE
-} from '../../../utils/continous-optimization-consts';
+import { AssessmentStatus, MIN_OPTIMIZED_HEADROOM_PERCENTAGE } from '../../../utils/continous-optimization-consts';
 import {
     StorageAssessment,
     MaxDOPAssesment,
@@ -52,9 +41,17 @@ import {
     LunRecord
 } from '../../../utils/common-types';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
-import GOLDEN_CONFIG from './golden-config';
+import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { loadAndModifyDemoFCIData } from '../../demo-operations';
+import {
+    MssqlAssessmentResponse,
+    MssqlAssessmentResponseType,
+    MssqlAssessmentResponseV1Type
+} from '../../../routes/types/mssql-continuous-optimisation.types';
+import { MSSQL_V1_MAP_CONFIG } from './assessment-operations';
+import { mapAssessmentToV1 } from '../assessment-utils';
+import { OfflineAssessmentListResponseType } from '../../../routes/types/offline-assessment.types';
 
 const logger = getLogger();
 
@@ -242,19 +239,17 @@ interface MSSQLOfflineAssessmentMetadataType {
  * @param headroomData - Headroom data collected from ONTAP REST API aggregates endpoint
  * @returns Headroom assessment result compatible with storage sizing drift response
  */
-function calculateOneTimeWADHeadroomDrift(headroomData: OneTimeWADHeadroomData) {
+function calculateOneTimeWADHeadroomDrift(
+    headroomData: OneTimeWADHeadroomData
+): AssessmentItemType | AssessmentErrorItemType {
     const { ssdStorageCapacityInBytes, storageUsedInBytes, headroomPercent } = headroomData;
 
-    // Get headroom golden config using dot operator
-    const headroomGoldenConfig = GOLDEN_CONFIG.sizing.find(data => data.parameter === 'headroom');
-    if (!headroomGoldenConfig) {
-        logger.warn('Headroom golden config not found');
-        return undefined;
-    }
+    // Get headroom golden config using array destructuring
+    const [headroomGoldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'headroom');
 
     if (!ssdStorageCapacityInBytes || headroomPercent === undefined) {
         logger.warn('Headroom data not available in one-time WAD assessment');
-        return undefined;
+        return { ...headroomGoldenConfig!, errorMessage: 'Headroom data not available in one-time WAD assessment' };
     }
 
     const minOptimizedHeadroomPercent = MIN_OPTIMIZED_HEADROOM_PERCENTAGE.MSSQL;
@@ -280,17 +275,13 @@ function calculateOneTimeWADHeadroomDrift(headroomData: OneTimeWADHeadroomData) 
     }
 
     return {
-        name: 'headroom',
+        ...headroomGoldenConfig,
         recommended: `${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.MSSQL}%`,
         status,
-        severity: headroomGoldenConfig.severity,
-        recommendation: headroomGoldenConfig.recommendation,
-        tags: headroomGoldenConfig.tags,
         current: `${headroomPercent}%`,
         recommendedSizeInGib,
         totalObjectsAssessed: 1,
-        totalObjectsInViolation: status !== AssessmentStatus.OPTIMIZED ? 1 : 0,
-        resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
+        totalObjectsInViolation: status !== AssessmentStatus.OPTIMIZED ? 1 : 0
     };
 }
 
@@ -573,7 +564,7 @@ async function fetchMssqlOfflineAssessment(
     region?: string,
     fields?: string,
     databaseRecord?: OfflineAssessmentDBSchema
-): Promise<MSSQLDriftAssessmentResponseType> {
+): Promise<MssqlAssessmentResponseType> {
     logger.info('Fetching MSSQL offline assessment', {
         accountId,
         resourceId,
@@ -593,9 +584,12 @@ async function fetchMssqlOfflineAssessment(
             `WAD assessment not found for resource ${resourceId} and instance ${databaseInstanceId}`
         );
     }
-
-    if (!isEmpty(record.assessment_results)) {
-        return record.assessment_results as MSSQLDriftAssessmentResponseType;
+    const { assessment_results: assessmentResults } = record;
+    if (!isEmpty(assessmentResults)) {
+        const { isValid } = validateWithSchema(MssqlAssessmentResponse, assessmentResults);
+        if (isValid) {
+            return assessmentResults as MssqlAssessmentResponseType;
+        }
     }
 
     const rawdata = (record.rawdata as MSSQLOfflineAssessmentRawData) || {};
@@ -654,7 +648,7 @@ async function fetchMssqlOfflineAssessment(
         }
     } as ResourceAssessmentData;
 
-    const [storageAssessmentResponse, haResult] = await Promise.all([
+    const [storageWithEndpoint, haResult] = await Promise.all([
         !isEmpty(instanceLevelAssessment)
             ? calculateStorageDrift(
                   accountId,
@@ -664,7 +658,7 @@ async function fetchMssqlOfflineAssessment(
                   databaseInstanceId,
                   instanceLevelAssessment as unknown as StorageAssessment
               )
-            : Promise.resolve(undefined),
+            : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([]),
         (deploymentType === 'FCI' || deploymentType === 'AOAG') && hasHAData
             ? getHighAvailabilityDriftData(
                   accountId,
@@ -676,7 +670,7 @@ async function fetchMssqlOfflineAssessment(
                   resourceAssessmentDataWithHA,
                   highAvailability as HighAvailabilityAssessment
               )
-            : Promise.resolve(undefined)
+            : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([])
     ]);
 
     const rssConfigResponse = !isEmpty(rssConfig)
@@ -689,55 +683,25 @@ async function fetchMssqlOfflineAssessment(
         ? calculateMaxDOPDrift(accountId, '', '', resourceId, databaseInstanceId, maxDopData)
         : undefined;
 
-    // For offline assessments, only include cluster-quorum and heartbeat settings
-    // Filter out shared-storage, drive-letter, and sqlServer-service
-    const highAvailabilityResponse = Array.isArray(haResult)
-        ? haResult.filter((item: any) => item?.name === 'cluster-quorum' || item?.name === 'heartbeat-settings')
-        : undefined;
+    // For offline assessments, only include cluster-quorum and heartbeat settings.
+    const highAvailabilityResponse = haResult.filter(
+        item => item?.id === 'cluster-quorum' || item?.id === 'heartbeat-settings'
+    );
 
-    // Add fsxId to storage.fileSystems for offline assessments
-    // and add headroom assessment to sizing if available
     const fileSystemIdentifier = fsxId || storageEndpoint;
-    let storageWithEndpoint = storageAssessmentResponse;
-    if (storageAssessmentResponse && fileSystemIdentifier) {
-        storageWithEndpoint = { ...storageAssessmentResponse, fileSystems: [fileSystemIdentifier] };
-    }
 
-    // Add headroom assessment to storage sizing if headroom data is available
-    if (headroom && !isEmpty(headroom)) {
-        const headroomDrift = calculateOneTimeWADHeadroomDrift(headroom);
-        if (headroomDrift) {
-            if (storageWithEndpoint && 'sizing' in storageWithEndpoint && storageWithEndpoint.sizing) {
-                // Append headroom to existing sizing array
-                storageWithEndpoint = {
-                    ...storageWithEndpoint,
-                    sizing: [...storageWithEndpoint.sizing, headroomDrift as any]
-                };
-            } else if (!storageWithEndpoint) {
-                // Create minimal storage response with just headroom when no storage assessment exists
-                storageWithEndpoint = {
-                    configuration: { volumes: [], luns: [], os: [] },
-                    sizing: [headroomDrift as any],
-                    layout: [],
-                    fileSystems: fileSystemIdentifier ? [fileSystemIdentifier] : []
-                } as any;
-            }
-        }
-    }
+    const headroomItem = headroom && !isEmpty(headroom) ? calculateOneTimeWADHeadroomDrift(headroom) : undefined;
 
-    let cloneDriftResponse: CloneDriftResponseType | undefined;
-    if (clone && !isEmpty(clone)) {
-        const cloneDrift = calculateOneTimeWADCloneDrift(
-            accountId,
-            resourceId,
-            databaseInstanceId,
-            clone as CloneAssessment,
-            DATABASE_TYPE.mssql
-        );
-        if (cloneDrift && !('errorMessage' in cloneDrift)) {
-            cloneDriftResponse = cloneDrift as CloneDriftResponseType;
-        }
-    }
+    const cloneDriftResponse =
+        clone && !isEmpty(clone)
+            ? calculateOneTimeWADCloneDrift(
+                  accountId,
+                  resourceId,
+                  databaseInstanceId,
+                  clone as CloneAssessment,
+                  DATABASE_TYPE.mssql
+              )
+            : undefined;
 
     const snapshotPolicyResponse =
         !isEmpty(instanceLevelAssessment) && !isEmpty(storageWithEndpoint)
@@ -752,37 +716,42 @@ async function fetchMssqlOfflineAssessment(
               )
             : undefined;
 
-    const driftAssessmentData: MSSQLDriftAssessmentResponseType = {
-        storage: storageWithEndpoint,
-        rssConfig: rssConfigResponse as RssConfigDriftResponseType | undefined,
-        maxDOP: maxDOPResponse as ParameterDriftResponseType | undefined,
-        highAvailability: highAvailabilityResponse,
-        ...(cloneDriftResponse && { clone: cloneDriftResponse }),
-        ...(snapshotPolicyResponse && !isEmpty(snapshotPolicyResponse) && { snapshotPolicy: snapshotPolicyResponse }),
-        lastAssessmentTimestamp: assessmentTimestamp
-            ? new Date(assessmentTimestamp).getTime()
-            : record.created_time.getTime(),
-        storageEndpoint: fileSystemIdentifier,
-        databaseInstanceName,
-        ec2InstanceId,
-        databaseHostName: fciName && fciName.trim() !== '' ? fciName : hostname,
-        deploymentType,
-        baseDeploymentType: baseDeploymentType ?? ''
+    const assessments: (AssessmentItemType | AssessmentErrorItemType)[] = [];
+    [storageWithEndpoint, highAvailabilityResponse].forEach(item => {
+        if (!isEmpty(item) && item.length > 0) {
+            assessments.push(...item);
+        }
+    });
+    [headroomItem, rssConfigResponse, maxDOPResponse, cloneDriftResponse, snapshotPolicyResponse].forEach(item => {
+        if (!isEmpty(item)) {
+            assessments.push(item);
+        }
+    });
+
+    const assessmentResponse = {
+        assessments,
+        dismissedConfigurations: [],
+        metadata: {
+            lastAssessmentTimestamp: assessmentTimestamp
+                ? new Date(assessmentTimestamp).getTime()
+                : record.created_time.getTime(),
+            storageEndpoint: fileSystemIdentifier,
+            databaseInstanceName,
+            ec2InstanceId,
+            databaseHostName: fciName && fciName.trim() !== '' ? fciName : hostname,
+            deploymentType,
+            baseDeploymentType: baseDeploymentType ?? ''
+        }
     };
 
-    const { isValid, errors: validationErrors } = validateWithSchema(MSSQLDriftAssessmentResponse, driftAssessmentData);
+    const { isValid, errors } = validateWithSchema(MssqlAssessmentResponse, assessmentResponse);
     if (!isValid) {
-        logger.error('Offline assessment data validation failed', {
-            accountId,
-            resourceId,
-            databaseInstanceId,
-            validationErrors
-        });
-        return {} as MSSQLDriftAssessmentResponseType;
+        logger.error('Invalid MSSQL offline assessment response', { errors });
+        return { assessments: [], dismissedConfigurations: [], metadata: {} };
     }
 
     // Persist computed results so future GETs are served from cache
-    updateOfflineAssessmentResults(accountId, resourceId, databaseInstanceId, driftAssessmentData).catch(err =>
+    updateOfflineAssessmentResults(accountId, resourceId, databaseInstanceId, assessmentResponse).catch(err =>
         logger.warn('Failed to persist MSSQL offline assessment results', {
             accountId,
             resourceId,
@@ -791,7 +760,7 @@ async function fetchMssqlOfflineAssessment(
         })
     );
 
-    return driftAssessmentData;
+    return assessmentResponse;
 }
 
 async function fetchMssqlOfflineAssessmentPerAccount(
@@ -867,9 +836,16 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                     clusterNodes
                 };
 
+                let forceRunAssessment = false;
+                if (!isEmpty(item.assessment_results)) {
+                    const { isValid } = validateWithSchema(MssqlAssessmentResponse, item.assessment_results);
+                    if (!isValid) {
+                        forceRunAssessment = true;
+                    }
+                }
                 try {
-                    const assessments = !isEmpty(item.assessment_results)
-                        ? (assessmentResults as MSSQLDriftAssessmentResponseType)
+                    const assessments = !forceRunAssessment
+                        ? (assessmentResults as MssqlAssessmentResponseType)
                         : await fetchMssqlOfflineAssessment(
                               accountId,
                               resourceId,
@@ -1084,10 +1060,54 @@ async function deleteOfflineAssessmentRecord(
     }
 }
 
+async function fetchMssqlOfflineAssessmentV1(
+    accountId: string,
+    resourceId: string,
+    databaseInstanceId: string,
+    credentialsId?: string,
+    region?: string,
+    fields?: string,
+    databaseRecord?: OfflineAssessmentDBSchema
+): Promise<MssqlAssessmentResponseV1Type> {
+    const v2Response = await fetchMssqlOfflineAssessment(
+        accountId,
+        resourceId,
+        databaseInstanceId,
+        credentialsId,
+        region,
+        fields,
+        databaseRecord
+    );
+    // v1 schemas omit `id`/`categories`; Fastify's response serializer drops them from the payload.
+    return mapAssessmentToV1(v2Response, MSSQL_V1_MAP_CONFIG) as unknown as MssqlAssessmentResponseV1Type;
+}
+
+async function fetchMssqlOfflineAssessmentPerAccountV1(
+    accountId: string,
+    pageSize?: number,
+    credentialsId?: string,
+    region?: string,
+    nextToken?: string
+) {
+    const v2Result = await fetchMssqlOfflineAssessmentPerAccount(accountId, pageSize, credentialsId, region, nextToken);
+
+    return {
+        ...v2Result,
+        items: v2Result.items.map(item => ({
+            ...item,
+            assessments: item.assessments
+                ? (mapAssessmentToV1(item.assessments, MSSQL_V1_MAP_CONFIG) as unknown as MssqlAssessmentResponseV1Type)
+                : undefined
+        }))
+    };
+}
+
 export {
     uploadMssqlOfflineAssessment,
     fetchMssqlOfflineAssessment,
+    fetchMssqlOfflineAssessmentV1,
     fetchMssqlOfflineAssessmentPerAccount,
+    fetchMssqlOfflineAssessmentPerAccountV1,
     listMssqlOfflineAssessmentDatabasesPerAccount,
     listMssqlOfflineAssessmentDatabases,
     deleteOfflineAssessmentRecord

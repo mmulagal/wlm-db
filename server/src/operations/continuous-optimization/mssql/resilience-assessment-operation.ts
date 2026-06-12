@@ -2,26 +2,19 @@ import createError from 'http-errors';
 import moment from 'moment';
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import {
-    ErrorResponseType,
-    GenericAssessmentResponseType,
+import type {
+    AssessmentItemType,
+    AssessmentErrorItemType,
     OntapVolumeType
 } from '../../../routes/types/continuous-optimization.types';
-import {
-    MSSQLDriftAssessmentResponseType,
-    ParameterDriftResponseType
-} from '../../../routes/types/mssql-continuous-optimisation.types';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import {
     AssessmentCategories,
     AssessmentStatus,
-    OptimizeStorageConfigs,
-    SEVERITY,
-    AwsWellArchitecturedPillars,
-    ASSESSMENT_RESOURCE_TYPE
+    OptimizeStorageConfigs
 } from '../../../utils/continous-optimization-consts';
-import storageGoldenConfigData from './golden-config';
+import { MSSQL_GOLDEN_CONFIG, MSSQL_HEARTBEAT_SETTINGS } from './golden-config';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes, SqlServerDeploymentModel } from '../../../utils/consts';
 import { IS_DEMO_FLOW, parseMultipleCommandResponse, sqlResponseParsing } from '../../../utils/utils';
 import {
@@ -181,7 +174,7 @@ async function getResilienceDriftAssessment(
     fieldsValues: string[] = [],
     resourceAssessmentData: ResourceAssessmentData = {},
     databaseInstanceConfigData: Array<{ config_data_type: string; config_data: any }> = []
-) {
+): Promise<(AssessmentItemType | AssessmentErrorItemType)[]> {
     logger.info('Getting resilience drift assessment for:', {
         credentialsId,
         databaseInstanceId,
@@ -261,20 +254,11 @@ async function getResilienceDriftAssessment(
                 : Promise.resolve(undefined)
         ]);
 
-        const haChecksArray =
-            haChecks && !Array.isArray(haChecks) && haChecks.errorMessage
-                ? [haChecks]
-                : Array.isArray(haChecks)
-                ? haChecks
-                : [];
+        const haChecksArray = Array.isArray(haChecks) ? haChecks : haChecks ? [haChecks] : [];
 
-        const assessmentData: MSSQLDriftAssessmentResponseType = {
-            snapshotPolicy,
-            crr: crrData,
-            awsBackup: awsBackup as ParameterDriftResponseType,
-            highAvailability: !isEmpty(haChecksArray) ? haChecksArray : undefined
-        };
-        return assessmentData;
+        return [snapshotPolicy, crrData, awsBackup, ...haChecksArray].filter(
+            (item): item is AssessmentItemType | AssessmentErrorItemType => !isEmpty(item)
+        );
     } catch (error) {
         logger.error('Error getting resilience drift assessment', JSON.stringify(error));
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, JSON.stringify(error));
@@ -289,7 +273,7 @@ async function getSnapshotPolicyDriftData(
     databaseInstanceId: string,
     mappedVolumesData: MappedOnTapVolumeResponse[],
     storageAssessmentData: StorageAssessment
-): Promise<GenericAssessmentResponseType> {
+): Promise<AssessmentItemType | AssessmentErrorItemType> {
     logger.info('Calculate snapshot policy drift data for:', {
         accountId,
         credentialsId,
@@ -298,9 +282,10 @@ async function getSnapshotPolicyDriftData(
         databaseHostId
     });
     let errorMessage;
-    const snapshotPolicyAssessmentData: ParameterDriftResponseType = {
-        ...storageGoldenConfigData.resiliency.snapshotPolicy,
-        name: AssessmentCategories.SNAPSHOT_POLICY,
+    const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'snapshot-policy');
+    const snapshotPolicyAssessmentData: AssessmentItemType = {
+        ...goldenConfig,
+        recommended: goldenConfig.recommended ?? '',
         status: AssessmentStatus.NOT_OPTIMIZED,
         objectsInViolation: [],
         totalObjectsInViolation: 0
@@ -308,13 +293,13 @@ async function getSnapshotPolicyDriftData(
     try {
         if (isEmpty(storageAssessmentData)) {
             errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.SNAPSHOT_POLICY);
-            return { errorMessage };
+            return { ...goldenConfig, errorMessage };
         }
 
         const { volumes, errors } = storageAssessmentData as unknown as StorageAssessment;
 
         if (errors?.volumes) {
-            return { errorMessage: errors.volumes };
+            return { ...goldenConfig, errorMessage: errors.volumes };
         }
 
         // Check if mapped volumes data is available and filter out only data and log volumes
@@ -361,7 +346,7 @@ async function getSnapshotPolicyDriftData(
             snapshotPolicyAssessmentData?.objectsInViolation?.length ?? 0;
     } catch (error) {
         errorMessage = `Error getting snapshot policy drift data: ${error}`;
-        return { errorMessage };
+        return { ...goldenConfig, errorMessage };
     }
     return snapshotPolicyAssessmentData;
 }
@@ -425,7 +410,7 @@ function getAwsBackupDriftDataForMssql(
         databaseHostId,
         databaseInstanceId
     });
-
+    const [config] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'backup-configuration');
     return getSharedAwsBackupDriftData(
         accountId,
         credentialsId,
@@ -433,8 +418,8 @@ function getAwsBackupDriftDataForMssql(
         databaseHostId,
         databaseInstanceId,
         awsBackupAssessmentData,
-        storageGoldenConfigData.resiliency.awsBackup
-    ) as ParameterDriftResponseType;
+        config
+    );
 }
 
 async function initiateCrossRegionResiliencyAssessment(
@@ -544,7 +529,7 @@ async function getCrrDriftData(
     isAoag?: boolean,
     aoagDatabaseRoles?: Array<{ databaseName: string; agName: string; replicaRole: string }>,
     mappedVolumesData?: Record<string, MappedOnTapVolumeResponse>
-) {
+): Promise<AssessmentItemType | AssessmentErrorItemType> {
     logger.info('Calculate crr drift data for:', {
         accountId,
         region,
@@ -553,9 +538,11 @@ async function getCrrDriftData(
         databaseHostId
     });
 
+    const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'crr');
+
     if (isEmpty(crrAssessmentData)) {
         const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.CRR);
-        return { errorMessage } as ParameterDriftResponseType & { errorMessage: string };
+        return { ...goldenConfig, errorMessage };
     }
 
     const { crrDetails } = crrAssessmentData;
@@ -602,10 +589,9 @@ async function getCrrDriftData(
 
         const allVolumesOptimized: boolean = filteredCrrDetails.every((detail: CrrDetails) => detail.isCRREnabled);
 
-        const response: ParameterDriftResponseType = {
-            name: 'crr',
+        return {
+            ...goldenConfig,
             status: allVolumesOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-            severity: SEVERITY.WARNING,
             recommendation: isAoag ? CRR_RECOMMENDATION_AOAG : CRR_RECOMMENDATION_DEFAULT,
             objectsInViolation: allVolumesOptimized
                 ? []
@@ -614,15 +600,11 @@ async function getCrrDriftData(
             totalObjectsInViolation: allVolumesOptimized
                 ? 0
                 : filteredCrrDetails.filter(detail => !detail.isCRREnabled).length,
-            tags: [AwsWellArchitecturedPillars.RELIABILITY],
-            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             recommended: 'crr-enabled'
         };
-
-        return response;
     } catch (error) {
         logger.error('Error fetching crr drift data:', error);
-        return { errorMessage: (error as Error).message } as ParameterDriftResponseType & { errorMessage: string };
+        return { ...goldenConfig, errorMessage: (error as Error).message };
     }
 }
 
@@ -816,15 +798,6 @@ async function getDriveLetterAssessment(
         logger.error('Exception running SSM for drive-letter:', err);
         return { status: AssessmentStatus.NOT_OPTIMIZED, details: null, error: err?.toString() };
     }
-}
-
-interface HeartbeatSettings {
-    CrossSiteDelay: number;
-    SameSubnetDelay: number;
-    CrossSubnetDelay: number;
-    CrossSiteThreshold: number;
-    SameSubnetThreshold: number;
-    CrossSubnetThreshold: number;
 }
 
 async function getSqlServiceStartupAssessment(
@@ -1108,7 +1081,7 @@ async function initiateHostLevelHighAvailabilityAssessment(
             };
         }
 
-        const recommendedHeartbeatSettings = storageGoldenConfigData.resiliency.heartbeatSettings as HeartbeatSettings;
+        const recommendedHeartbeatSettings = MSSQL_HEARTBEAT_SETTINGS;
         let heartbeatResult: {
             status: AssessmentStatus;
             details: Record<string, { current: number; recommended: number; status: AssessmentStatus }> | null;
@@ -1266,7 +1239,7 @@ async function getHighAvailabilityDriftData(
     databaseInstanceId: string,
     resourceAssessmentData: ResourceAssessmentData,
     highAvailabilityAssessmentData: HighAvailabilityAssessment
-) {
+): Promise<(AssessmentItemType | AssessmentErrorItemType)[]> {
     logger.info('Initiating High availability resiliency assessment for:', {
         accountId,
         credentialsId,
@@ -1279,7 +1252,9 @@ async function getHighAvailabilityDriftData(
     if (isEmpty(highAvailabilityAssessmentData)) {
         const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.HIGH_AVAILABILITY);
         logger.error('No high availability assessment data found.');
-        return { errorMessage } as ErrorResponseType;
+        return MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'resiliency' && e.subType === 'highAvailability').map(
+            config => ({ ...config, errorMessage })
+        );
     }
 
     try {
@@ -1316,16 +1291,24 @@ async function getHighAvailabilityDriftData(
                 });
             }
         }
-        const resiliencyConfig = storageGoldenConfigData.resiliency;
+        const [sharedStorageConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'shared-storage');
+        const [driveLetterConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'drive-letter');
+        const [clusterQuorumConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'cluster-quorum');
+        const [heartbeatConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'heartbeat-settings');
+        const [sqlServerServiceConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'sql-server-service');
 
-        const haChecks: GenericAssessmentResponseType[] = [
+        const haChecks: (AssessmentItemType | AssessmentErrorItemType)[] = [
             isEmpty(sharedStorage)
-                ? { name: 'shared-storage', errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('shared-storage') }
+                ? {
+                      ...sharedStorageConfig,
+                      errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('shared-storage')
+                  }
                 : sharedStorage.error
-                ? { name: 'shared-storage', errorMessage: sharedStorage.error }
+                ? { ...sharedStorageConfig, errorMessage: sharedStorage.error }
                 : {
-                      ...resiliencyConfig.highAvailability.sharedStorage,
+                      ...sharedStorageConfig,
                       name: 'shared-storage',
+                      recommended: sharedStorageConfig.recommended ?? '',
                       status: sharedStorage.status as AssessmentStatus,
                       objectsInViolation:
                           sharedStorage.lunDetails
@@ -1337,24 +1320,26 @@ async function getHighAvailabilityDriftData(
                       totalObjectsAssessed: sharedStorage.lunDetails?.length || 0
                   },
             isEmpty(driveLetter)
-                ? { name: 'drive-letter', errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('drive-letter') }
+                ? { ...driveLetterConfig, errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('drive-letter') }
                 : driveLetter.error
-                ? { name: 'drive-letter', errorMessage: driveLetter.error }
+                ? { ...driveLetterConfig, errorMessage: driveLetter.error }
                 : {
-                      ...resiliencyConfig.highAvailability.driveLetter,
+                      ...driveLetterConfig,
                       name: 'drive-letter',
+                      recommended: driveLetterConfig.recommended ?? '',
                       status: driveLetter.status as AssessmentStatus,
                       objectsInViolation: [...new Set(driveLetter.details.missingDriveLetters || [])],
                       totalObjectsInViolation: [...new Set(driveLetter.details.missingDriveLetters || [])].length || 0,
                       totalObjectsAssessed: [...new Set(driveLetter.details.primaryNodeDriveLetters || [])].length || 0
                   },
             isEmpty(clusterQuorum)
-                ? { name: 'cluster-quorum', errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('cluster-quorum') }
+                ? { ...clusterQuorumConfig, errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('cluster-quorum') }
                 : clusterQuorum.error
-                ? { name: 'cluster-quorum', errorMessage: clusterQuorum.error }
+                ? { ...clusterQuorumConfig, errorMessage: clusterQuorum.error }
                 : {
-                      ...resiliencyConfig.highAvailability.clusterQuorum,
+                      ...clusterQuorumConfig,
                       name: 'cluster-quorum',
+                      recommended: clusterQuorumConfig.recommended ?? '',
                       status: clusterQuorum.status as AssessmentStatus,
                       objectsInViolation: clusterQuorum.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
                       violationDetails:
@@ -1371,12 +1356,13 @@ async function getHighAvailabilityDriftData(
                       totalObjectsInViolation: clusterQuorum.status !== AssessmentStatus.OPTIMIZED ? 1 : 0
                   },
             isEmpty(heartbeat)
-                ? { name: 'heartbeat-settings', errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('heartbeat') }
+                ? { ...heartbeatConfig, errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('heartbeat') }
                 : heartbeat.error
-                ? { name: 'heartbeat-settings', errorMessage: heartbeat.error }
+                ? { ...heartbeatConfig, errorMessage: heartbeat.error }
                 : {
-                      ...resiliencyConfig.highAvailability.heartbeat,
+                      ...heartbeatConfig,
                       name: 'heartbeat-settings',
+                      recommended: heartbeatConfig.recommended ?? '',
                       status: heartbeat.status as AssessmentStatus,
                       objectsInViolation: heartbeat.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
                       violationDetails:
@@ -1393,12 +1379,13 @@ async function getHighAvailabilityDriftData(
                       totalObjectsInViolation: heartbeat.status === AssessmentStatus.OPTIMIZED ? 0 : 1
                   },
             isEmpty(sqlServerServices) || !sqlServerServices.status
-                ? { name: 'sqlServer-service', errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('sql-server-service') }
+                ? { ...sqlServerServiceConfig, errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('sql-server-service') }
                 : sqlServerServices.error
-                ? { name: 'sqlServer-service', errorMessage: sqlServerServices.error }
+                ? { ...sqlServerServiceConfig, errorMessage: sqlServerServices.error }
                 : {
-                      ...resiliencyConfig.highAvailability.sqlServerService,
+                      ...sqlServerServiceConfig,
                       name: 'sqlServer-service',
+                      recommended: sqlServerServiceConfig.recommended ?? '',
                       status: sqlServerServices.status as AssessmentStatus,
                       objectsInViolation:
                           sqlServerServices.status !== AssessmentStatus.OPTIMIZED
@@ -1412,7 +1399,10 @@ async function getHighAvailabilityDriftData(
         return haChecks;
     } catch (error) {
         logger.error('Error calculating high availability drift data:', error);
-        return { errorMessage: (error as Error).message } as ParameterDriftResponseType & { errorMessage: string };
+        const errorMessage = (error as Error).message;
+        return MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'resiliency' && e.subType === 'highAvailability').map(
+            config => ({ ...config, errorMessage })
+        );
     }
 }
 

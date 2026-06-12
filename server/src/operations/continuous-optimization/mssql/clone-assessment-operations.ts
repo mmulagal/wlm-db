@@ -17,21 +17,17 @@ import {
     HttpErrorCodes,
     CLONE_AGE
 } from '../../../utils/consts';
-import {
-    ASSESSMENT_RESOURCE_TYPE,
-    AssessmentCategories,
-    AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    SEVERITY
-} from '../../../utils/continous-optimization-consts';
+import { AssessmentCategories, AssessmentStatus } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { GET_SANDBOX_DETAILS } from '../../workloads/mssql/assessment-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { calculateDaysSince, sqlResponseParsing } from '../../../utils/utils';
+import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { GET_SANDBOXES } from '../../workloads/mssql/queries';
 import { getProperty, getSourceDetails } from '../../sandbox-operations';
 import { getMappedOntapVolumes } from '../../aws/fsx-operations';
+import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 
 const logger = getLogger();
 
@@ -47,46 +43,43 @@ function calculateCloneDrift(
     databaseHostId: string,
     databaseInstanceId: string,
     cloneAssessmentData: CloneAssessment
-) {
+): AssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculating Clone drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
-    let errorMessage = '';
+    const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'clone-management');
     try {
         logger.debug('Persisted Clone configuration data from DB', cloneAssessmentData);
 
         if (isEmpty(cloneAssessmentData)) {
-            errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.CLONE);
+            const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.CLONE);
             logger.error(errorMessage);
-            return { errorMessage };
+            return { ...goldenConfig, errorMessage };
         }
         const { cloneDetails, status, oldClones, oldCloneDetails, oldCloneDatabaseNames } =
             cloneAssessmentData as CloneAssessment;
         logger.debug('Clone assessment result', cloneDetails);
 
-        const recommendationMessage =
-            status === AssessmentStatus.NOT_OPTIMIZED
-                ? 'Old and divergent clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
-                : 'All clones are proper and up-to-date with the source.';
-
         return {
-            name: 'clone-management',
+            ...goldenConfig,
             status: status as AssessmentStatus,
             recommended: AssessmentStatus.OPTIMIZED,
-            severity: SEVERITY.WARNING,
-            recommendation: recommendationMessage,
-            tags: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
-            resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
-            cloneDetails,
+            cloneDetails: cloneDetails?.map(detail => ({
+                ...detail,
+                tag: detail.tag ?? undefined
+            })),
             totalObjectsAssessed: cloneDetails?.length,
             totalObjectsInViolation: oldClones,
             objectsInViolation: oldCloneDatabaseNames,
-            oldCloneDetails,
+            oldCloneDetails: oldCloneDetails?.map(detail => ({
+                ...detail,
+                tag: detail.tag ?? undefined
+            })),
             cloneDriftMessage: `${oldClones} out of ${cloneDetails?.length} clones are old and divergent`
         };
     } catch (error: any) {
-        errorMessage = `Error while calculating clone drift. ${error.message}`;
+        const errorMessage = `Error while calculating clone drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        return { ...goldenConfig, errorMessage };
     }
-    return { errorMessage };
 }
 
 async function managedHostsCloneAssessment(

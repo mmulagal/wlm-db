@@ -177,8 +177,9 @@ describe('Resilience drift assessment', () => {
                 AssessmentCategories.HIGH_AVAILABILITY.toLowerCase()
             ]
         );
-        expect(res.snapshotPolicy).toBeDefined();
-        expect(isEmpty(res.snapshotPolicy)).toBeFalsy();
+        const snapshotPolicy = res.find(item => item.id === AssessmentCategories.SNAPSHOT_POLICY);
+        expect(snapshotPolicy).toBeDefined();
+        expect(isEmpty(snapshotPolicy)).toBeFalsy();
     });
 });
 describe('High Availability Assessment', () => {

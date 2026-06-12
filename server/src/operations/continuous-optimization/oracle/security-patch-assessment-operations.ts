@@ -11,14 +11,18 @@ import { callSsmExecution } from '../../aws/ssm-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import ORACLE_SECURITY_PATCH_ASSESSMENT from './ssm-scripts/security-patch-assessment-scripts';
 import { loadCpuCatalog, type CPUCatalogEntry } from './oracle-cpu-catalog-operations';
-import GOLDEN_CONFIG from './golden-config';
+import ORACLE_GOLDEN_CONFIG from './golden-config';
 import { OracleSecurityPatchSsmResponse } from './common-types';
 import {
     OracleSecurityPatchDriftResponseType,
     OracleSecurityPatchMissingPatchType,
     OracleSecurityPatchScanResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
-import { ErrorResponseType } from '../../../routes/types/continuous-optimization.types';
+import type {
+    AssessmentItemType,
+    AssessmentErrorItemType,
+    ErrorResponseType
+} from '../../../routes/types/continuous-optimization.types';
 
 const logger = getLogger();
 
@@ -141,9 +145,9 @@ async function runOracleSecurityPatchAssessment(
     const status = missingPatches.length === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
 
     const objectsInViolation = status === AssessmentStatus.NOT_OPTIMIZED ? [databaseInstanceName] : [];
-
+    const [securityPatchConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'oracle-security-patch');
     return {
-        ...GOLDEN_CONFIG.oracleSecurityPatch,
+        ...securityPatchConfig,
         status,
         recommended: AssessmentStatus.OPTIMIZED,
         objectsInViolation,
@@ -189,12 +193,14 @@ async function collectSecurityPatchData(
 
 function calculateOracleSecurityPatchDrift(
     assessmentData: OracleSecurityPatchDriftResponseType | undefined
-): OracleSecurityPatchDriftResponseType | { errorMessage: string } {
+): AssessmentItemType | AssessmentErrorItemType {
+    const [goldenConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'oracle-security-patch');
     if (!assessmentData || !assessmentData.status || assessmentData.totalObjectsAssessed === 0) {
-        return { errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH) };
+        const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH);
+        return { ...goldenConfig, errorMessage };
     }
 
-    return assessmentData;
+    return { ...goldenConfig, ...assessmentData };
 }
 
 async function initiateOracleSecurityPatchAssessmentCollection(

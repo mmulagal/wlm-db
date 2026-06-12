@@ -91,6 +91,12 @@ describe('calculateMTUAlignmentDrift', () => {
             assessmentData
         );
 
+        // Type guard to ensure result is not an error item
+        expect(result).not.toHaveProperty('errorMessage');
+        if ('errorMessage' in result) {
+            throw new Error('Expected assessment item, got error item');
+        }
+
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
         expect(result.objectsInViolation).toEqual(['Ethernet 3']); // Only Ethernet 3 has misaligned MTU
         expect(result.totalObjectsAssessed).toBe(2);
@@ -145,6 +151,12 @@ describe('calculateMTUAlignmentDrift', () => {
             metadata,
             assessmentData
         );
+
+        // Type guard to ensure result is not an error item
+        expect(result).not.toHaveProperty('errorMessage');
+        if ('errorMessage' in result) {
+            throw new Error('Expected assessment item, got error item');
+        }
 
         expect(result.status).toBe(AssessmentStatus.OPTIMIZED);
         expect(result.objectsInViolation).toEqual([]);

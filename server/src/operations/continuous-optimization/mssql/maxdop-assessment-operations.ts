@@ -5,19 +5,15 @@ import getLogger from '../../../utils/logger';
 import { MaxDOPAssesment } from '../../../utils/common-types';
 import { getInstanceDetails } from '../../database-hosts-operations';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
-import {
-    ASSESSMENT_RESOURCE_TYPE,
-    AssessmentCategories,
-    AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    SEVERITY
-} from '../../../utils/continous-optimization-consts';
+import { AssessmentCategories, AssessmentStatus } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { GET_VCPU_AND_MAXDOP_DETAILS } from '../../workloads/mssql/assessment-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { sqlResponseParsing, calculateRecommendedMaxDOP } from '../../../utils/utils';
-import { ParameterDriftResponseType } from '../../../routes/types/mssql-continuous-optimisation.types';
+import type { AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
+import type { MssqlAssessmentItemType } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
+import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 
 const logger = getLogger();
 
@@ -28,42 +24,30 @@ function calculateMaxDOPDrift(
     databaseHostId: string,
     databaseInstanceId: string,
     maxdopAssessmentData: MaxDOPAssesment
-) {
+): MssqlAssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculating Max DOP drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
-    let errorMessage = '';
+    const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'maxdop');
     try {
         logger.debug('Persisted max DOP configuration data from DB', maxdopAssessmentData);
 
         if (isEmpty(maxdopAssessmentData)) {
-            errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.MAXDOP);
+            const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.MAXDOP);
             logger.error({ errorMessage });
-            return { errorMessage };
+            return { ...goldenConfig, errorMessage };
         }
 
-        const maxDOPAssessment = maxdopAssessmentData as MaxDOPAssesment;
-
-        const { current, recommendedMaxDOP, status } = maxDOPAssessment;
-        const recommendationMessage =
-            status === AssessmentStatus.NOT_OPTIMIZED
-                ? 'For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16. Your current settings are not optimized.'
-                : 'Your MSSQL instance is optimized with the recommended MAXDOP settings for optimal performance.';
-
-        const maxDOPResponse: ParameterDriftResponseType = {
-            name: 'maxdop',
+        const { current, recommendedMaxDOP, status } = maxdopAssessmentData as MaxDOPAssesment;
+        return {
+            ...goldenConfig,
             status: status as AssessmentStatus,
             recommended: recommendedMaxDOP,
-            severity: SEVERITY.WARNING,
-            recommendation: recommendationMessage,
-            current: current?.toString(),
-            tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-            resourceType: ASSESSMENT_RESOURCE_TYPE.SQL_INSTANCE
+            current: current?.toString()
         };
-        return maxDOPResponse;
     } catch (error: any) {
-        errorMessage = `Error while calculating max DOP drift. ${error.message}`;
+        const errorMessage = `Error while calculating max DOP drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        return { ...goldenConfig, errorMessage };
     }
-    return { errorMessage };
 }
 
 async function managedHostsMaxDOPAssessment(

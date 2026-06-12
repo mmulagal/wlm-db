@@ -4,13 +4,7 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../../utils/logger';
 import { getAllClusterNodeDetails } from '../../database-hosts-operations';
-import {
-    ASSESSMENT_RESOURCE_TYPE,
-    AssessmentCategories,
-    AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    SEVERITY
-} from '../../../utils/continous-optimization-consts';
+import { AssessmentCategories, AssessmentStatus, SEVERITY } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getAvailablePatches, getInstalledSQLPatchDetails } from '../../aws/mssqlPatch-ssm-operations';
 import { MSSQLPatchAssessmentObject, PatchDetail, ResourceAssessmentData } from '../../../utils/common-types';
@@ -27,8 +21,12 @@ import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import { updateDatabaseHostAssessmentData } from '../../database/database-operations';
-import { ErrorResponseType } from '../../../routes/types/continuous-optimization.types';
-import { MSSQLPatchScanResponseType } from '../../../routes/types/mssql-continuous-optimisation.types';
+import type { AssessmentErrorItemType, ErrorResponseType } from '../../../routes/types/continuous-optimization.types';
+import type {
+    MssqlAssessmentItemType,
+    MSSQLPatchScanResponseType
+} from '../../../routes/types/mssql-continuous-optimisation.types';
+import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 
 const logger = getLogger();
 
@@ -44,7 +42,7 @@ function calculateMSSQLPatchDrift(
     region: string,
     databaseHostId: string,
     assessmentData: ResourceAssessmentData
-) {
+): MssqlAssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculating MSSQL Patch drift', {
         accountId,
         credentialsId,
@@ -52,21 +50,20 @@ function calculateMSSQLPatchDrift(
         databaseHostId,
         assessmentData
     });
-    let errorMessage = '';
-    let patchAssessment: MSSQLPatchAssessmentObject[] = [];
+    const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'mssql-patch');
 
     try {
         const { mssqlPatch, errors } = assessmentData;
 
         if (isEmpty(mssqlPatch)) {
-            errorMessage = errors?.mssqlPatch
+            const errorMessage = errors?.mssqlPatch
                 ? errors?.mssqlPatch
                 : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.MSSQL_PATCH);
             logger.error({ errorMessage });
-            return { errorMessage };
+            return { ...goldenConfig, errorMessage };
         }
 
-        patchAssessment = mssqlPatch as MSSQLPatchAssessmentObject[];
+        const patchAssessment = mssqlPatch as MSSQLPatchAssessmentObject[];
 
         const criticalPatchesCount = patchAssessment.reduce(
             (sum, { criticalMissingPatchesCount = 0 }) => sum + criticalMissingPatchesCount,
@@ -81,7 +78,7 @@ function calculateMSSQLPatchDrift(
                 ? AssessmentStatus.NOT_OPTIMIZED
                 : AssessmentStatus.OPTIMIZED;
 
-        const recommendationMessage: string =
+        const recommendation =
             status === AssessmentStatus.NOT_OPTIMIZED
                 ? `Critical (${criticalPatchesCount}) and important (${importantPatchesCount}) patches are missing. We recommend applying the latest patches to ensure your MSSQL instance is secure and up-to-date.`
                 : 'Your MSSQL instance is up-to-date with all critical and important patches applied.';
@@ -89,28 +86,24 @@ function calculateMSSQLPatchDrift(
         const objectsInViolation: string[] =
             status === AssessmentStatus.NOT_OPTIMIZED ? patchAssessment?.map(({ ec2InstanceId }) => ec2InstanceId) : [];
 
-        // Determine severity based on patch counts
-        let severity = SEVERITY.CRITICAL; // Default to CRITICAL
-        if (criticalPatchesCount === 0 && importantPatchesCount > 0) {
-            severity = SEVERITY.WARNING;
-        }
+        // Severity is downgraded to warning when only important (non-critical) patches are missing
+        const severity =
+            criticalPatchesCount === 0 && importantPatchesCount > 0 ? SEVERITY.WARNING : goldenConfig.severity;
 
         return {
-            name: 'mssql-patch',
-            status: status as AssessmentStatus,
+            ...goldenConfig,
+            status,
             recommended: AssessmentStatus.OPTIMIZED,
             missingPatchesInEc2Instances: patchAssessment,
             severity,
-            recommendation: recommendationMessage,
-            tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-            objectsInViolation,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.SQL_INSTANCE
+            recommendation,
+            objectsInViolation
         };
     } catch (error: any) {
-        errorMessage = `Error while calculating MSSQL patch drift. ${error.message}`;
+        const errorMessage = `Error while calculating MSSQL patch drift. ${error.message}`;
         logger.error({ errorMessage, error });
+        return { ...goldenConfig, errorMessage };
     }
-    return { errorMessage };
 }
 
 async function managedHostMSSQLPatchAssessment(

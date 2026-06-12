@@ -27,7 +27,9 @@ import { IS_DEMO_FLOW, sleep, validateWithSchema } from '../../../utils/utils';
 import {
     AssessmentCategories,
     AssessmentCategoriesOracle,
-    AssessmentTriggeredBy
+    AssessmentTriggeredBy,
+    ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
+    ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP
 } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
@@ -70,17 +72,27 @@ import { calculateOracleCloneDrift, initiateOracleCloneAssessmentCollection } fr
 
 import {
     DriftAssessmentResponsePerAccountType,
+    DriftAssessmentResponsePerAccountV1Type,
     DriftAssessmentResponsePerHostType,
-    GenericParameterDriftResponseType,
-    HostOsPatchDriftResponseType,
-    OracleDriftAssessmentResponse,
-    OracleDriftAssessmentResponseType,
     OraclePatchScanFieldType,
     OracleSecurityPatchDriftResponseType,
-    StorageParameterDriftResponseType
+    OracleAssessmentResponse,
+    OracleAssessmentResponseType,
+    OracleDriftAssessmentResponse,
+    OracleDriftAssessmentResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
+import {
+    type AssessmentItemType,
+    type AssessmentErrorItemType
+} from '../../../routes/types/continuous-optimization.types';
 import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoMockdata';
-import { getLatestInstanceAssessmentTime, isPdbGroupedVolumes } from '../assessment-utils';
+import {
+    buildDismissedConfigurations,
+    getLatestInstanceAssessmentTime,
+    isPdbGroupedVolumes,
+    mapAssessmentToV1,
+    type MapAssessmentToV1Config
+} from '../assessment-utils';
 import {
     updateFieldsBasedOnDismissedConfigurations,
     processDismissedConfigurations,
@@ -125,7 +137,7 @@ function hostLevelDriftData(
     _metadata: Metadata,
     hostLevelAssessmentData: ResourceAssessmentData,
     fieldsValues: string[]
-) {
+): (AssessmentItemType | AssessmentErrorItemType)[] {
     logger.info('Fetching host level drift data for Oracle', {
         accountId,
         credentialsId,
@@ -139,15 +151,9 @@ function hostLevelDriftData(
         hostOsPatch: fieldsValues?.includes(AssessmentCategoriesOracle.HOST_OS_PATCH.toLowerCase())
     };
 
-    const hostOsPatchAssessmentResponse = assessmentFlags.hostOsPatch
-        ? calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId, hostLevelAssessmentData)
-        : undefined;
-
-    const result: { hostOsPatch: HostOsPatchDriftResponseType | { errorMessage: string } | undefined } = {
-        hostOsPatch: hostOsPatchAssessmentResponse
-    };
-
-    return result;
+    return assessmentFlags.hostOsPatch
+        ? [calculateHostOsPatchDrift(accountId, credentialsId, region, databaseHostId, hostLevelAssessmentData)]
+        : [];
 }
 
 async function initiateHostLevelAssessmentDataCollection(
@@ -794,7 +800,14 @@ async function onDemandTriggerOracleDriftAssessment(
             : Object.values(AssessmentCategoriesOracle).map(category => category.toLowerCase());
         // Fire-and-forget: HTTP on-demand only registers the child job; callers that need completion (e.g.
         // `triggerOracleAssessmentAfterOptimization`) poll sub-jobs under the parent optimize job.
-        triggerOracleAssessment(managedInstance, jobId, fieldsValues, true, initiatedBy);
+        triggerOracleAssessment(managedInstance, jobId, fieldsValues, true, initiatedBy).catch(error => {
+            logger.error('Background Oracle assessment failed', {
+                accountId,
+                databaseHostId,
+                databaseInstanceId,
+                error
+            });
+        });
 
         return { jobId };
     } catch (error: any) {
@@ -879,7 +892,7 @@ async function fetchOracleDriftAssessment(
     databaseInstanceId: string,
     fields?: string,
     databaseInstance?: DatabaseInstance
-) {
+): Promise<OracleAssessmentResponseType> {
     logger.info('Fetching oracle drift assessment', {
         accountId,
         credentialsId,
@@ -1028,7 +1041,7 @@ async function fetchOracleDriftAssessment(
                   mappedOntapVolumes,
                   assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessment
               )
-            : Promise.resolve({}),
+            : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([]),
         assessmentFlags.hostOsPatch
             ? Promise.resolve(
                   hostLevelDriftData(
@@ -1042,7 +1055,7 @@ async function fetchOracleDriftAssessment(
                       fieldsValues
                   )
               )
-            : Promise.resolve({ hostOsPatch: undefined }),
+            : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([]),
         assessmentFlags.awsBackup && awsBackupAssessmentData
             ? Promise.resolve(
                   getOracleAwsBackupDriftData(
@@ -1108,44 +1121,53 @@ async function fetchOracleDriftAssessment(
                       demoComputeInputs?.oracleParamsConfigData ?? assessmentDataMap[AssessmentCategoriesOracle.COMPUTE]
                   )
               )
-            : Promise.resolve({})
+            : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([])
     ]);
 
-    let driftAssessmentData: OracleDriftAssessmentResponseType = {
-        storage: isEmpty(storageDriftData) ? undefined : (storageDriftData as StorageParameterDriftResponseType),
-        ...hostLevelComputeDriftData,
-        hostOsPatch: isEmpty(hostLevelData.hostOsPatch) ? undefined : hostLevelData.hostOsPatch,
-        ...(awsBackupDriftData && { awsBackup: awsBackupDriftData as GenericParameterDriftResponseType }),
-        oracleSecurityPatch: oracleSecurityPatchData,
-        crr: crrData,
-        snapcenterSnapshot: snapcenterDriftData || undefined,
-        clone: isEmpty(cloneDriftData) ? undefined : cloneDriftData,
-        dismissedConfigurations,
-        fileSystemId,
-        databaseInstanceName,
-        ec2InstanceId: node1InstanceId,
-        deploymentType: databaseDeploymentType,
-        lastAssessmentTimestamp:
-            latestInstanceAssessmentTime instanceof Date ? new Date(latestInstanceAssessmentTime).valueOf() : undefined,
-        storageProtocol,
-        isASMManaged,
-        databaseHostName: databaseHostName || ''
+    // Append all assessments together.
+    const assessments: (AssessmentItemType | AssessmentErrorItemType)[] = [];
+
+    [storageDriftData, hostLevelComputeDriftData, hostLevelData].forEach(item => {
+        if (!isEmpty(item) && item.length > 0) {
+            assessments.push(...item);
+        }
+    });
+    [awsBackupDriftData, crrData, snapcenterDriftData, oracleSecurityPatchData, cloneDriftData].forEach(item => {
+        if (!isEmpty(item)) {
+            assessments.push(item);
+        }
+    });
+
+    // Demo overrides on flat array
+    const finalAssessments = IS_DEMO_FLOW
+        ? handleGetOracleAssessmentForDemo(accountId, instanceDetail, assessments)
+        : assessments;
+
+    const assessmentResponse = {
+        assessments: finalAssessments,
+        dismissedConfigurations: buildDismissedConfigurations(dismissedConfigurations, DatabaseTypes.ORACLE),
+        metadata: {
+            lastAssessmentTimestamp:
+                latestInstanceAssessmentTime instanceof Date
+                    ? new Date(latestInstanceAssessmentTime).valueOf()
+                    : undefined,
+            fileSystemId,
+            databaseInstanceName,
+            ec2InstanceId: node1InstanceId,
+            deploymentType: databaseDeploymentType,
+            databaseHostName: databaseHostName || '',
+            storageProtocol,
+            isASMManaged
+        }
     };
 
-    if (IS_DEMO_FLOW) {
-        driftAssessmentData = handleGetOracleAssessmentForDemo(accountId, instanceDetail, driftAssessmentData);
-    }
-
-    const { isValid, errors: validationErrors } = validateWithSchema(
-        OracleDriftAssessmentResponse,
-        driftAssessmentData
-    );
+    const { isValid, errors } = validateWithSchema(OracleAssessmentResponse, assessmentResponse);
     if (!isValid) {
-        logger.error('Assessment data validation failed for', { databaseHostId, databaseInstanceId, validationErrors });
-        return {};
+        logger.error('Invalid Oracle assessment response', { errors });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Invalid Oracle assessment response');
     }
 
-    return driftAssessmentData;
+    return assessmentResponse;
 }
 
 async function updateAssessmentResultsInInstanceMetadata(managedInstance: DatabaseInstancesIncludingResource) {
@@ -1180,7 +1202,8 @@ async function updateAssessmentResultsInInstanceMetadata(managedInstance: Databa
             region,
             databaseHostId,
             databaseInstanceId,
-            driftAssessmentData
+            driftAssessmentData,
+            managedInstance.metadata
         );
     } catch (error) {
         logger.error('Error while updating assessment results in instance table', {
@@ -1392,14 +1415,120 @@ async function fetchOraclePatchScan(
     }
 }
 
+// golden-config `id` -> v1 top-level response key (single-item areas)
+const ORACLE_SINGLE_ASSESSMENT_KEY_BY_ID: Record<string, string> = {
+    'transparent-hugepages': 'transparentHugepages',
+    'tcp-advanced-options': 'tcpAdvancedOptions',
+    'filesystems-io-options': 'filesystemsIoOptions',
+    'multiblock-readcount': 'multiblockReadcount',
+    'host-os-patch': 'hostOsPatch',
+    'oracle-security-patch': 'oracleSecurityPatch',
+    'snapcenter-snapshot': 'snapcenterSnapshot',
+    crr: 'crr',
+    'backup-configuration': 'awsBackup',
+    'clone-management': 'clone'
+};
+
+// golden-config `configurationName` -> v1 dismissedConfigurations key (single-item areas)
+const ORACLE_DISMISS_SINGLE_KEY_BY_NAME: Record<string, string> = {
+    'transparent-hugepages': 'transparentHugepages',
+    'tcp-advanced-options': 'tcpAdvancedOptions',
+    'filesystems-io-options': 'filesystemsIoOptions',
+    'multiblock-readcount': 'multiblockReadcount',
+    'host-os-patch': 'hostOsPatch',
+    'oracle-security-patch': 'oracleSecurityPatch',
+    'snapcenter-snapshot': 'snapcenterSnapshot',
+    crr: 'crr',
+    'backup-configuration': 'awsBackup',
+    'clone-management': 'clone'
+};
+
+// golden-config `id` -> v1 mapping config for Oracle assessments
+const ORACLE_V1_MAP_CONFIG: MapAssessmentToV1Config = {
+    metadataSelector: metadata => ({
+        lastAssessmentTimestamp: metadata.lastAssessmentTimestamp,
+        fileSystemId: metadata.fileSystemId,
+        ec2InstanceId: metadata.ec2InstanceId,
+        ec2InstanceName: metadata.ec2InstanceName,
+        databaseInstanceName: metadata.databaseInstanceName,
+        deploymentType: metadata.deploymentType,
+        storageProtocol: metadata.storageProtocol,
+        isASMManaged: metadata.isASMManaged,
+        databaseHostName: metadata.databaseHostName
+    }),
+    storageConfigMap: ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
+    storageSizingLayoutMap: ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP,
+    singleKeyById: ORACLE_SINGLE_ASSESSMENT_KEY_BY_ID,
+    dismissSingleKeyByName: ORACLE_DISMISS_SINGLE_KEY_BY_NAME,
+    validate: response => validateWithSchema(OracleDriftAssessmentResponse, response),
+    dbLabel: 'Oracle'
+};
+
+async function fetchOracleDriftAssessmentV1(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    databaseHostId: string,
+    databaseInstanceId: string,
+    fields?: string,
+    databaseInstance?: DatabaseInstance
+): Promise<OracleDriftAssessmentResponseType> {
+    const v2Response = await fetchOracleDriftAssessment(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        databaseInstanceId,
+        fields,
+        databaseInstance
+    );
+    // v1 schemas omit `id`/`categories`; Fastify's response serializer drops them from the payload.
+    return mapAssessmentToV1(v2Response, ORACLE_V1_MAP_CONFIG) as unknown as OracleDriftAssessmentResponseType;
+}
+
+async function fetchOracleDriftAssessmentPerAccountV1(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    clientNextToken?: string,
+    pageSize?: number
+): Promise<DriftAssessmentResponsePerAccountV1Type> {
+    const v2Result = await fetchOracleDriftAssessmentPerAccount(
+        accountId,
+        credentialsId,
+        region,
+        clientNextToken,
+        pageSize
+    );
+
+    return {
+        ...v2Result,
+        assessmentsPerAccount: v2Result.assessmentsPerAccount.map(host => ({
+            ...host,
+            instancesAssessment: host.instancesAssessment.map(instance => ({
+                ...instance,
+                assessments: instance.assessments
+                    ? (mapAssessmentToV1(
+                          instance.assessments,
+                          ORACLE_V1_MAP_CONFIG
+                      ) as unknown as OracleDriftAssessmentResponseType)
+                    : undefined
+            }))
+        }))
+    };
+}
+
 export {
     triggerOracleAssessment,
     onDemandTriggerOracleDriftAssessment,
     fetchOracleDriftAssessment,
+    fetchOracleDriftAssessmentV1,
     fetchOracleDriftAssessmentPerHost,
     fetchOracleDriftAssessmentPerAccount,
+    fetchOracleDriftAssessmentPerAccountV1,
     fetchOraclePatchScan,
     initiateInstanceLevelAssessmentDataCollection,
     triggerOracleAssessmentAfterOptimization,
-    getOntapVolumeIdsByFileType
+    getOntapVolumeIdsByFileType,
+    ORACLE_V1_MAP_CONFIG
 };

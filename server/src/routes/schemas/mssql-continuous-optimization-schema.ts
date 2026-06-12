@@ -16,11 +16,11 @@ import {
 } from '../types/continuous-optimization.types';
 import {
     OptimizeStorageRequestBody,
-    MSSQLDriftAssessmentResponse,
     OptimizeComputeRequestBody,
     OptimizeOperatingSystemRequestBody,
     DriftAssessmentResponsePerHost,
     DriftAssessmentResponsePerAccount,
+    DriftAssessmentResponsePerAccountV1,
     BulkOptimizeGeneralRequestBody,
     BulkOptimizeMTURequestBody,
     AvailableSnapshotPoliciesResponse,
@@ -34,9 +34,37 @@ import {
     BulkOptimizeBackupRequestBody,
     HostOsPatchScanResponse,
     MSSQLPatchScanResponse,
-    MssqlPatchScanField
+    MssqlPatchScanField,
+    MssqlAssessmentResponse,
+    MssqlAssessmentResponseV1
 } from '../types/mssql-continuous-optimisation.types';
 import { resourceRequest } from './database-hosts-schemas';
+
+const DriftAssessmentDataCollectionV1 = {
+    ...resourceRequest,
+    summary: 'Get MSSQL database instance parameters drift from recommended settings [Deprecated]',
+    description: 'Get MSSQL database instance parameters drift from recommended settings, [Deprecated]',
+    params: DatabaseHostOptionalInstanceSummaryParams,
+    tags: [RouteTags.MSSQL_ASSESSMENT],
+    querystring: ContinuousOptimizationQueryString,
+    response: {
+        200: MssqlAssessmentResponseV1
+    }
+};
+
+const DriftAssessmentPerAccountV1 = {
+    ...resourceRequest,
+    summary:
+        'Get MSSQL database parameter drift from recommended settings for all registered instances on an account [Deprecated]',
+    description:
+        'Get MSSQL database parameter drift from recommended settings for all registered instances on an account, [Deprecated]',
+    params: CredentialsIdParams,
+    tags: [RouteTags.MSSQL_ASSESSMENT],
+    querystring: AssessmentQueryStringPerAccount,
+    response: {
+        200: DriftAssessmentResponsePerAccountV1
+    }
+};
 
 const DriftAssessmentDataCollection = {
     ...resourceRequest,
@@ -46,7 +74,7 @@ const DriftAssessmentDataCollection = {
     tags: [RouteTags.MSSQL_ASSESSMENT],
     querystring: ContinuousOptimizationQueryString,
     response: {
-        200: MSSQLDriftAssessmentResponse
+        200: MssqlAssessmentResponse
     }
 };
 
@@ -365,5 +393,7 @@ export {
     BulkOptimizeMTUAlignmentSchema,
     BulkDismissOracleConfigurationSchema,
     TriggerOracleDriftAssessmentSchema,
-    FetchMssqlPatchScanSchema
+    FetchMssqlPatchScanSchema,
+    DriftAssessmentDataCollectionV1,
+    DriftAssessmentPerAccountV1
 };

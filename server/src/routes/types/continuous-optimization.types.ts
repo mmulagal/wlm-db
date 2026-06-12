@@ -65,10 +65,15 @@ const OntapVolume = Type.Object({
 });
 type OntapVolumeType = Static<typeof OntapVolume>;
 
-const ErrorResponse = Type.Object({ name: Type.Optional(Type.String()), errorMessage: Type.String() });
+const ErrorResponse = Type.Object({
+    id: Type.Optional(Type.String()),
+    name: Type.Optional(Type.String()),
+    errorMessage: Type.String()
+});
 type ErrorResponseType = Static<typeof ErrorResponse>;
 
 const GenericParameterDriftResponse = Type.Object({
+    id: Type.String(),
     name: Type.String(),
     status: Type.Enum(AssessmentStatus),
     recommended: Type.String(),
@@ -76,7 +81,9 @@ const GenericParameterDriftResponse = Type.Object({
     recommendation: Type.String(),
     objectsInViolation: Type.Optional(Type.Array(Type.Union([Type.String(), OntapVolume]))),
     violationDetails: Type.Optional(Type.Array(GenericViolationResponse)),
-    tags: Type.Array(Type.Enum(AwsWellArchitecturedPillars)),
+    categories: Type.Array(Type.Enum(AwsWellArchitecturedPillars)),
+    // v1 exposed the AWS Well-Architected pillars as `tags`; v2 renamed it to `categories`.
+    tags: Type.Optional(Type.Array(Type.Enum(AwsWellArchitecturedPillars))),
     missingPermissions: Type.Optional(Type.Array(Type.String())),
     recommendedSizeInGib: Type.Optional(Type.Number()),
     current: Type.Optional(Type.String()),
@@ -87,6 +94,11 @@ const GenericParameterDriftResponse = Type.Object({
 
 const GenericAssessmentResponse = Type.Union([GenericParameterDriftResponse, ErrorResponse]);
 type GenericAssessmentResponseType = Static<typeof GenericAssessmentResponse>;
+
+// v1 responses rename `id`->`name` and `categories`->`tags`, so they never carry `id`/`categories`.
+// Derive v1 schemas by omitting those fields, keeping the strict base intact for v2 item typing.
+const GenericParameterDriftResponseV1 = Type.Omit(GenericParameterDriftResponse, ['id', 'categories']);
+const GenericAssessmentResponseV1 = Type.Union([GenericParameterDriftResponseV1, ErrorResponse]);
 
 const FsxBackupOptimizationFields = Type.Object({
     fsxFileSystemId: Type.Optional(Type.String()),
@@ -164,6 +176,104 @@ const CloneDetailSchema = Type.Object({
     clonedBy: Type.Optional(Type.String())
 });
 
+/** Clone entry carried by clone-management assessments (MSSQL and Oracle). */
+const CloneDetailItem = Type.Intersect([
+    CloneDetailSchema,
+    Type.Object({
+        tag: Type.Optional(Type.String({ nullable: true })),
+        tags: Type.Optional(Type.String()),
+        clonedVolumeDetails: Type.Optional(
+            Type.Array(
+                Type.Intersect([
+                    ClonedVolumeDetailSchema,
+                    Type.Object({
+                        cloneVolumeType: Type.Optional(Type.String()),
+                        isFlexClone: Type.Optional(Type.Boolean())
+                    })
+                ])
+            )
+        )
+    })
+]);
+
+/** Golden-config static properties shared across assessment items, error items, and dismissed configurations. */
+const BaseAssessmentObject = Type.Object({
+    id: Type.String(),
+    name: Type.String(),
+    type: Type.String(),
+    subType: Type.Optional(Type.String()),
+    severity: Type.String(),
+    recommendation: Type.String(),
+    categories: Type.Array(Type.Enum(AwsWellArchitecturedPillars)),
+    resourceType: Type.Optional(Type.String())
+});
+type GoldenConfigPropertiesType = Static<typeof BaseAssessmentObject>;
+
+/** Base assessment item properties shared by both MSSQL and Oracle. */
+const BaseAssessmentItem = Type.Intersect([
+    BaseAssessmentObject,
+    Type.Object({
+        status: Type.Enum(AssessmentStatus),
+        recommended: Type.String(),
+        objectsInViolation: Type.Optional(Type.Array(Type.Union([Type.String(), OntapVolume]))),
+        violationDetails: Type.Optional(Type.Array(GenericViolationResponse)),
+        missingPermissions: Type.Optional(Type.Array(Type.String())),
+        recommendedSizeInGib: Type.Optional(Type.Number()),
+        current: Type.Optional(Type.String()),
+        totalObjectsAssessed: Type.Optional(Type.Number()),
+        totalObjectsInViolation: Type.Optional(Type.Number()),
+        focusWidgetName: Type.Optional(Type.String()),
+        cloneDetails: Type.Optional(
+            Type.Array(CloneDetailItem, { description: 'Current clone instances and their details' })
+        ),
+        oldCloneDetails: Type.Optional(
+            Type.Array(CloneDetailItem, { description: 'Previous clone instances for drift comparison' })
+        ),
+        cloneDriftMessage: Type.Optional(Type.String({ description: 'Message describing clone drift status' }))
+    })
+]);
+
+/** Type for base assessment items - use MssqlAssessmentItemType or OracleAssessmentItemType for specific implementations */
+type AssessmentItemType = Static<typeof BaseAssessmentItem>;
+
+/** Error entry for an assessment area that failed to compute; carries full golden-config static content plus errorMessage. */
+const AssessmentErrorItem = Type.Intersect([
+    BaseAssessmentObject,
+    Type.Object({
+        errorMessage: Type.String()
+    })
+]);
+type AssessmentErrorItemType = Static<typeof AssessmentErrorItem>;
+
+/** A dismissed-configuration entry, enriched with the matching golden-config static content. */
+const DismissedConfiguration = Type.Intersect([
+    BaseAssessmentObject,
+    Type.Object({
+        configurationName: Type.String(),
+        configState: Type.String(),
+        startTime: Type.Optional(Type.Number()),
+        endTime: Type.Optional(Type.Number())
+    })
+]);
+type DismissedConfigurationType = Static<typeof DismissedConfiguration>;
+
+/** Instance/host identity and timing metadata extracted out of the flattened assessment response. */
+const AssessmentMetadata = Type.Object({
+    lastAssessmentTimestamp: Type.Optional(Type.Number()),
+    fileSystemId: Type.Optional(Type.String()),
+    storageEndpoint: Type.Optional(Type.String()),
+    ec2InstanceId: Type.Optional(Type.String()),
+    ec2InstanceName: Type.Optional(Type.String()),
+    databaseInstanceName: Type.Optional(Type.String()),
+    deploymentType: Type.Optional(Type.String()),
+    baseDeploymentType: Type.Optional(Type.String()),
+    replicaRole: Type.Optional(Type.String()),
+    databaseHostName: Type.Optional(Type.String()),
+    storageProtocol: Type.Optional(Type.String()),
+    isASMManaged: Type.Optional(Type.Boolean())
+});
+type AssessmentMetadataType = Static<typeof AssessmentMetadata>;
+
 export {
     OntapVolume,
     OntapVolumeType,
@@ -171,11 +281,13 @@ export {
     GenericViolationResponseType,
     GenericAssessmentResponse,
     GenericAssessmentResponseType,
+    GenericAssessmentResponseV1,
     ContinuousOptimizationQueryString,
     OracleContinuousOptimizationQueryString,
     AssessmentQueryStringPerAccount,
     OracleAssessmentQueryStringPerAccount,
     GenericParameterDriftResponse,
+    GenericParameterDriftResponseV1,
     ErrorResponse,
     ErrorResponseType,
     DismissedConfigurationsResponse,
@@ -183,5 +295,15 @@ export {
     CloneDetailSchema,
     ClonedVolumeDetailSchema,
     FsxBackupOptimizationFields,
-    FsxBackupOptimizationFieldsType
+    FsxBackupOptimizationFieldsType,
+    BaseAssessmentObject,
+    GoldenConfigPropertiesType,
+    BaseAssessmentItem,
+    AssessmentItemType,
+    AssessmentErrorItem,
+    AssessmentErrorItemType,
+    DismissedConfiguration,
+    DismissedConfigurationType,
+    AssessmentMetadata,
+    AssessmentMetadataType
 };

@@ -295,7 +295,7 @@ describe('MSSql Patch assessment operations', () => {
             RESOURCE_ID,
             assessmentData as unknown as ResourceAssessmentData
         );
-        expect(response.name).toEqual('mssql-patch');
+        expect(response.id).toEqual('mssql-patch');
     });
 
     it('Should perform mssql patch assessment for managed hosts clustered', async () => {

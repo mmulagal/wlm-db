@@ -6,490 +6,595 @@ import {
     MIN_OPTIMIZED_HEADROOM_PERCENTAGE,
     SEVERITY
 } from '../../../utils/continous-optimization-consts';
+import type { GoldenConfigEntry } from '../assessment-utils';
 
-const GOLDEN_CONFIG = {
-    configuration: {
-        volume: [
-            {
-                parameter: 'thin-provision',
-                value: true,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ]
-            },
-            {
-                parameter: 'autosize',
-                value: 'on',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ]
-            },
-            {
-                parameter: 'autosize-mode',
-                value: 'grow',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ]
-            },
-            {
-                parameter: 'fractional-reserve',
-                value: 0,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ]
-            },
-            {
-                parameter: 'snapshot-copy-reserve',
-                value: 0,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ]
-            },
-            {
-                parameter: 'snapshot-autodelete',
-                value: true,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.WARNING,
-                recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ]
-            },
-            {
-                parameter: 'space-mgmt-try-first',
-                value: 'volume_grow',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.WARNING,
-                recommendation:
-                    'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ]
-            },
-            {
-                parameter: 'tiering-policy',
-                value: 'snapshot_only',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'tiering-min-cooling-days',
-                value: 7,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.WARNING,
-                recommendation:
-                    'For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.',
-                tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION]
-            }
-        ],
-        lun: [
-            {
-                parameter: 'os-type',
-                value: 'windows_2008',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'space-reservation-enabled',
-                value: true,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'When space reservation is enabled, ONTAP reserves enough space in the volume so that writes to those LUNs do not fail because of a lack of disk space.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY]
-            },
-            {
-                parameter: 'space-allocation-allocated',
-                value: true,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'This option ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY]
-            }
-        ],
-        os: [
-            {
-                parameter: 'mpio-enabled',
-                value: true,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
-                resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH
-            },
-            {
-                parameter: 'mpio-load-balance-policy',
-                value: 'RR',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
-                resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE
-            },
-            {
-                parameter: 'mpio-iscsi-count',
-                value: '5',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
-                resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH
-            },
-            {
-                parameter: 'ntfs-allocation-unit-size',
-                value: 65536,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-                resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE
-            },
-            {
-                parameter: 'mpio-timeout',
-                value: DEFAULT_MPIO_TIMEOUT,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                recommendation:
-                    'Ensure the Multipath I/O Timeout setting on the host is configured to 60 seconds to maintain connectivity and stability during FSxN failovers. Properly configured Multipath I/O Timeout settings prevent disconnections from the disk, which can occur during FSX failovers. Insufficient timeout settings can lead to temporary disconnections, application errors, and potential data loss.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY],
-                resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH
-            }
-        ]
+interface HeartbeatSettings {
+    SameSubnetDelay: number;
+    SameSubnetThreshold: number;
+    CrossSubnetDelay: number;
+    CrossSubnetThreshold: number;
+    CrossSiteDelay: number;
+    CrossSiteThreshold: number;
+}
+
+const MSSQL_HEARTBEAT_SETTINGS: HeartbeatSettings = {
+    SameSubnetDelay: 1000,
+    SameSubnetThreshold: 40,
+    CrossSubnetDelay: 1000,
+    CrossSubnetThreshold: 40,
+    CrossSiteDelay: 1000,
+    CrossSiteThreshold: 40
+};
+
+const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
+    // ── configuration / volume ──────────────────────────────────────────────
+    {
+        id: 'thin-provision',
+        name: 'Thin provisioning',
+        parameter: 'thin-provision',
+        value: true,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+        categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
-    layout: [
-        {
-            parameter: 'default-data-files-location',
-            value: 'separate-drive',
-            category: 'storage',
-            subCategory: 'layout',
-            focusWidgetName: 'Data files (.mdf)',
-            severity: SEVERITY.CRITICAL,
-            recommendation:
-                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality',
-            tags: [
-                AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
-                AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-            ]
-        },
-        {
-            parameter: 'default-log-files-location',
-            value: 'separate-drive',
-            category: 'storage',
-            subCategory: 'layout',
-            focusWidgetName: 'Log Files (.ldf)',
-            severity: SEVERITY.CRITICAL,
-            recommendation:
-                'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality',
-            tags: [
-                AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
-                AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-            ]
-        },
-        {
-            parameter: 'tempdb-files-location',
-            value: 'separate-drive',
-            category: 'storage',
-            subCategory: 'layout',
-            focusWidgetName: 'TempDB placement',
-            severity: SEVERITY.CRITICAL,
-            recommendation:
-                'Isolate TempDB I/O and avoid I/O contention from other databases by placing TempDB on its own dedicated drive. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.',
-            tags: [
-                AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
-                AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-            ]
-        }
-    ],
-    sizing: [
-        {
-            parameter: 'performance-tier',
-            value: '100%',
-            category: 'storage',
-            subCategory: 'sizing',
-            focusWidgetName: 'Storage tier',
-            severity: SEVERITY.CRITICAL,
-            recommendation:
-                'For optimal storage performance, provision FSx ONTAP volumes on the primary SSD tier. Using the capacity pool tier may result in slower performance and high latency',
-            tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-        },
-        {
-            parameter: 'headroom',
-            value: `${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.MSSQL}%`,
-            category: 'storage',
-            subCategory: 'sizing',
-            focusWidgetName: 'File system headroom',
-            severity: SEVERITY.CRITICAL,
-            recommendation:
-                'For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.',
-            tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-        },
-        {
-            parameter: 'log-drive-size',
-            value: '25%',
-            category: 'storage',
-            subCategory: 'sizing',
-            focusWidgetName: 'Log drive size',
-            severity: SEVERITY.WARNING,
-            recommendation:
-                'Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.',
-            tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
-        },
-        {
-            parameter: 'tempdb-drive-size',
-            value: '10%',
-            category: 'storage',
-            subCategory: 'sizing',
-            focusWidgetName: 'TempDB drive size',
-            severity: SEVERITY.WARNING,
-            recommendation:
-                'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to optimize performance and maintain overall stability. Properly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
-            tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
-        }
-    ],
-    mtuAlignment: {
-        name: 'mtu-alignment',
+    {
+        id: 'autosize',
+        name: 'Autosize',
+        parameter: 'autosize',
+        value: 'on',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+        categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        id: 'autosize-mode',
+        name: 'Autosize mode',
+        parameter: 'autosize-mode',
+        value: 'grow',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+        categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        id: 'fractional-reserve',
+        name: 'Fractional reserve',
+        parameter: 'fractional-reserve',
+        value: 0,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+        categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        id: 'snapshot-copy-reserve',
+        name: 'Snapshot copy reserve',
+        parameter: 'snapshot-copy-reserve',
+        value: 0,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+        categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        id: 'snapshot-autodelete',
+        name: 'Snapshot autodelete',
+        parameter: 'snapshot-autodelete',
+        value: true,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+        categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        id: 'space-mgmt-try-first',
+        name: 'Space management',
+        parameter: 'space-mgmt-try-first',
+        value: 'volume_grow',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+        categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        id: 'tiering-policy',
+        name: 'Tiering policy',
+        parameter: 'tiering-policy',
+        value: 'snapshot_only',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        id: 'tiering-min-cooling-days',
+        name: 'Tiering minimum cooling days',
+        parameter: 'tiering-min-cooling-days',
+        value: 7,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.',
+        categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+
+    // ── configuration / lun ─────────────────────────────────────────────────
+    {
+        id: 'os-type',
+        name: 'OS type',
+        parameter: 'os-type',
+        value: 'windows_2008',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
+        recommendation:
+            'ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+    },
+    {
+        id: 'space-reservation-enabled',
+        name: 'Space reservation enabled',
+        parameter: 'space-reservation-enabled',
+        value: true,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
+        recommendation:
+            'When space reservation is enabled, ONTAP reserves enough space in the volume so that writes to those LUNs do not fail because of a lack of disk space.',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY]
+    },
+    {
+        id: 'space-allocation-allocated',
+        name: 'Space allocation allocated',
+        parameter: 'space-allocation-allocated',
+        value: true,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
+        recommendation:
+            'This option ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY]
+    },
+
+    // ── configuration / os ──────────────────────────────────────────────────
+    {
+        id: 'mpio-enabled',
+        name: 'Multipath I/O (MPIO)',
+        parameter: 'mpio-enabled',
+        value: true,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH
+    },
+    {
+        id: 'mpio-load-balance-policy',
+        name: 'MPIO load balance policy',
+        parameter: 'mpio-load-balance-policy',
+        value: 'RR',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE
+    },
+    {
+        id: 'mpio-iscsi-count',
+        name: 'MPIO iSCSI session count',
+        parameter: 'mpio-iscsi-count',
+        value: '5',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH
+    },
+    {
+        id: 'ntfs-allocation-unit-size',
+        name: 'NTFS allocation unit size',
+        parameter: 'ntfs-allocation-unit-size',
+        value: 65536,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE
+    },
+    {
+        id: 'mpio-timeout',
+        name: 'MPIO timeout',
+        parameter: 'mpio-timeout',
+        value: DEFAULT_MPIO_TIMEOUT,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'Ensure the Multipath I/O Timeout setting on the host is configured to 60 seconds to maintain connectivity and stability during FSxN failovers. Properly configured Multipath I/O Timeout settings prevent disconnections from the disk, which can occur during FSX failovers. Insufficient timeout settings can lead to temporary disconnections, application errors, and potential data loss.',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH
+    },
+
+    // ── layout ───────────────────────────────────────────────────────────────
+    {
+        id: 'data-files-location',
+        name: 'Data files (.mdf)',
+        parameter: 'default-data-files-location',
+        value: 'separate-drive',
+        type: 'storage',
+        subType: 'layout',
+        focusWidgetName: 'Data files (.mdf)',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity',
+        categories: [
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
+    },
+    {
+        id: 'log-files-location',
+        name: 'Log files (.ldf)',
+        parameter: 'default-log-files-location',
+        value: 'separate-drive',
+        type: 'storage',
+        subType: 'layout',
+        focusWidgetName: 'Log Files (.ldf)',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity',
+        categories: [
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
+    },
+    {
+        id: 'tempdb-files-location',
+        name: 'TempDB placement',
+        parameter: 'tempdb-files-location',
+        value: 'separate-drive',
+        type: 'storage',
+        subType: 'layout',
+        focusWidgetName: 'TempDB placement',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Isolate TempDB I/O and avoid I/O contention from other databases by placing TempDB on its own dedicated drive.\nThis optimization improves overall SQL Server performance and stability.\nFailure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.',
+        categories: [
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
+    },
+
+    // ── sizing ───────────────────────────────────────────────────────────────
+    {
+        id: 'performance-tier',
+        name: 'Storage tier',
+        parameter: 'performance-tier',
+        value: '100%',
+        type: 'storage',
+        subType: 'sizing',
+        focusWidgetName: 'Storage tier',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier.\nUsing the capacity pool tier may result in slower performance and higher latency.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+    },
+    {
+        id: 'headroom',
+        name: 'File system headroom',
+        parameter: 'headroom',
+        value: `${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.MSSQL}%`,
+        type: 'storage',
+        subType: 'sizing',
+        focusWidgetName: 'File system headroom',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
+    },
+    {
+        id: 'log-drive-size',
+        name: 'Log drive size',
+        parameter: 'log-drive-size',
+        value: '25%',
+        type: 'storage',
+        subType: 'sizing',
+        focusWidgetName: 'Log drive size',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.\nAn additional 20% buffer is required if the drive is hosting a primary replica of Always On Availability Group.',
+        categories: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
+    },
+    {
+        id: 'tempdb-drive-size',
+        name: 'TempDB drive size',
+        parameter: 'tempdb-drive-size',
+        value: '10%',
+        type: 'storage',
+        subType: 'sizing',
+        focusWidgetName: 'TempDB drive size',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to well-architect performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
+        categories: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
+    },
+
+    // ── compute ──────────────────────────────────────────────────────────────
+    {
+        id: 'mtu-alignment',
+        name: 'MTU alignment',
         status: AssessmentStatus.OPTIMIZED,
         recommended: AssessmentStatus.OPTIMIZED,
-        category: 'compute',
-        subCategory: 'compute',
+        type: 'compute',
+        subType: 'compute',
         focusWidgetName: 'MTU alignment',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'Workload Factory recommends aligning EC2 instance Maximum Transmission Unit (MTU) settings with your FSX for ONTAP file system to prevent network fragmentation and optimize SQL Server performance. Fixing MTU misalignment ensures consistent MTU configuration across all nodes and network paths.',
-        tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
+            'Workload Factory recommends aligning EC2 instance Maximum Transmission Unit (MTU) settings with your \nFSx for ONTAP file system to prevent network fragmentation and optimize SQL Server performance. \nFixing MTU misalignment ensures consistent MTU configuration across all nodes and network paths.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_INTERFACE
     },
-    resiliency: {
-        snapshotPolicy: {
-            tags: [AwsWellArchitecturedPillars.RELIABILITY],
-            category: 'resiliency',
-            subCategory: 'resiliency',
-            focusWidgetName: 'Scheduled local snapshot',
-            severity: SEVERITY.WARNING,
-            recommended: AssessmentStatus.OPTIMIZED,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-            recommendation:
-                'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.Use local snapshots as an additional backup mechanism for quick restores or for testing.'
-        },
-        awsBackup: {
-            name: 'backup-configuration',
-            tags: [AwsWellArchitecturedPillars.RELIABILITY],
-            category: 'resiliency',
-            subCategory: 'resiliency',
-            focusWidgetName: 'Backup Configuration',
-            severity: SEVERITY.WARNING,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-            recommendation:
-                'Backup Configuration recommendation: Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. If using both, consider removing redundant backups manually.'
-        },
-        heartbeatSettings: {
-            SameSubnetDelay: 1000,
-            SameSubnetThreshold: 40,
-            CrossSubnetDelay: 1000,
-            CrossSubnetThreshold: 40,
-            CrossSiteDelay: 1000,
-            CrossSiteThreshold: 40
-        },
-        highAvailability: {
-            sharedStorage: {
-                parameter: 'shared-storage',
-                value: true,
-                category: 'resiliency',
-                subCategory: 'highAvailability',
-                focusWidgetName: 'Microsoft SQL Server High Availability',
-                severity: SEVERITY.CRITICAL,
-                tags: [AwsWellArchitecturedPillars.RELIABILITY],
-                resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
-                recommendation:
-                    'All shared disks (iSCSI LUNs) must be accessible by both nodes in the FCI deployment model to allow failover.',
-                recommended: ''
-            },
-            driveLetter: {
-                parameter: 'drive-letter-consistency',
-                value: true,
-                category: 'resiliency',
-                subCategory: 'highAvailability',
-                focusWidgetName: 'Microsoft SQL Server High Availability',
-                severity: SEVERITY.CRITICAL,
-                tags: [AwsWellArchitecturedPillars.RELIABILITY],
-                resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
-                recommendation: 'Validate availability of the same drive letters on the secondary node.',
-                recommended: ''
-            },
-            clusterQuorum: {
-                parameter: 'cluster-quorum-configuration',
-                value: 'majority',
-                category: 'resiliency',
-                subCategory: 'highAvailability',
-                focusWidgetName: 'Microsoft SQL Server High Availability',
-                severity: SEVERITY.CRITICAL,
-                tags: [AwsWellArchitecturedPillars.RELIABILITY],
-                resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-                recommendation:
-                    'The quorum configuration should be tailored to a 2-node Windows Failover Cluster, using Node and Disk Majority with a Disk Witness to ensure high availability.',
-                recommended: ''
-            },
-            heartbeat: {
-                parameter: 'cluster-heartbeat-interval',
-                value: 1000,
-                category: 'resiliency',
-                subCategory: 'highAvailability',
-                focusWidgetName: 'Microsoft SQL Server High Availability',
-                severity: SEVERITY.CRITICAL,
-                tags: [AwsWellArchitecturedPillars.RELIABILITY],
-                resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-                recommendation:
-                    'Set heartbeat thresholds to 40 heartbeats, specifically optimized for cloud deployments, to ensure high availability and prevent unnecessary failovers.',
-                recommended: ''
-            },
-            sqlServerService: {
-                parameter: 'sql-server-service-recovery',
-                value: 'automatic',
-                category: 'resiliency',
-                subCategory: 'highAvailability',
-                focusWidgetName: 'Microsoft SQL Server High Availability',
-                severity: SEVERITY.CRITICAL,
-                tags: [AwsWellArchitecturedPillars.RELIABILITY],
-                resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-                recommendation: 'SQL Server service must be configured for automatic failover and startup.',
-                recommended: ''
-            }
-        }
-    },
-    cloning: {
-        name: 'clone-management',
-        tags: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
-        category: 'cloning',
-        subCategory: 'cloning',
-        focusWidgetName: 'Clone cleanup',
-        severity: SEVERITY.WARNING,
-        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
-        recommendation:
-            'Old and divergent clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
-    },
-    hostOsPatch: {
-        tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-        category: 'compute',
-        subCategory: 'compute',
+    {
+        id: 'host-os-patch',
+        name: 'Operating system patch',
+        categories: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
+        type: 'compute',
+        subType: 'compute',
         focusWidgetName: 'Operating system patch',
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
         recommendation:
             'Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.'
     },
-    license: {
-        tags: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
-        category: 'application',
-        subCategory: 'application',
+    {
+        id: 'rss-config',
+        name: 'Network adapter settings',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        type: 'compute',
+        subType: 'compute',
+        focusWidgetName: 'Network adapter settings',
+        severity: SEVERITY.WARNING,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_ADAPTER,
+        recommendation:
+            'To enhance network performance and system efficiency for your SQL Server EC2 instance, we recommend optimizing your Receive Side Scaling (RSS) configuration. Proper RSS settings distribute network processing across multiple processors, reducing latency and improving application responsiveness. Adhering to best practices ensures efficient handling of network traffic, leading to better stability and reliability.'
+    },
+    {
+        id: 'compute-rightsizing',
+        name: 'Compute rightsizing',
+        type: 'compute',
+        subType: 'compute',
+        focusWidgetName: 'Compute rightsizing',
+        severity: SEVERITY.WARNING,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+        categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        recommendation:
+            'To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, right-size your EC2 instance to match the workload requirements of your SQL Server database.'
+    },
+
+    // ── resiliency ───────────────────────────────────────────────────────────
+    {
+        id: 'snapshot-policy',
+        name: 'Snapshot policy',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        type: 'resiliency',
+        subType: 'resiliency',
+        focusWidgetName: 'Scheduled local snapshot',
+        severity: SEVERITY.WARNING,
+        recommended: AssessmentStatus.OPTIMIZED,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        recommendation:
+            'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.\nUse local snapshots as an additional backup mechanism for quick restores or for testing.'
+    },
+    {
+        id: 'backup-configuration',
+        name: 'Backup configuration',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        type: 'resiliency',
+        subType: 'resiliency',
+        focusWidgetName: 'Backup Configuration',
+        severity: SEVERITY.WARNING,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        recommendation:
+            'Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. \nIf using both, consider removing redundant backups manually.'
+    },
+    {
+        id: 'crr',
+        name: 'Cross-Region Replication (CRR)',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        type: 'resiliency',
+        subType: 'resiliency',
+        focusWidgetName: 'Cross-Region Replication (CRR)',
+        severity: SEVERITY.WARNING,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        recommendation:
+            'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability.'
+    },
+
+    // ── resiliency / highAvailability ────────────────────────────────────────
+    {
+        id: 'shared-storage',
+        name: 'Shared storage',
+        parameter: 'shared-storage',
+        value: true,
+        type: 'resiliency',
+        subType: 'highAvailability',
+        focusWidgetName: 'Microsoft SQL Server High Availability',
+        severity: SEVERITY.CRITICAL,
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
+        recommendation:
+            'All shared disks (iSCSI LUNs) must be accessible by both nodes in the FCI deployment model to allow failover.',
+        recommended: ''
+    },
+    {
+        id: 'drive-letter',
+        name: 'Drive letter',
+        parameter: 'drive-letter-consistency',
+        value: true,
+        type: 'resiliency',
+        subType: 'highAvailability',
+        focusWidgetName: 'Microsoft SQL Server High Availability',
+        severity: SEVERITY.CRITICAL,
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
+        recommendation: 'Validate availability of the same drive letters on the secondary node.',
+        recommended: ''
+    },
+    {
+        id: 'cluster-quorum',
+        name: 'Cluster quorum',
+        parameter: 'cluster-quorum-configuration',
+        value: 'majority',
+        type: 'resiliency',
+        subType: 'highAvailability',
+        focusWidgetName: 'Microsoft SQL Server High Availability',
+        severity: SEVERITY.CRITICAL,
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+        recommendation:
+            'The quorum configuration should be tailored to a 2-node Windows Failover Cluster, using Node and Disk Majority with a Disk Witness to ensure high availability.',
+        recommended: ''
+    },
+    {
+        id: 'heartbeat-settings',
+        name: 'Heartbeat settings',
+        parameter: 'cluster-heartbeat-interval',
+        value: 1000,
+        type: 'resiliency',
+        subType: 'highAvailability',
+        focusWidgetName: 'Microsoft SQL Server High Availability',
+        severity: SEVERITY.CRITICAL,
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+        recommendation:
+            'Set heartbeat thresholds to 40 heartbeats, specifically optimized for cloud deployments, to ensure high availability and prevent unnecessary failovers.',
+        recommended: ''
+    },
+    {
+        id: 'sql-server-service',
+        name: 'SQL Server service',
+        parameter: 'sql-server-service-recovery',
+        value: 'automatic',
+        type: 'resiliency',
+        subType: 'highAvailability',
+        focusWidgetName: 'Microsoft SQL Server High Availability',
+        severity: SEVERITY.CRITICAL,
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+        recommendation: 'SQL Server service must be configured for automatic failover and startup.',
+        recommended: ''
+    },
+
+    // ── application ──────────────────────────────────────────────────────────
+    {
+        id: 'sql-license',
+        name: 'License',
+        categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
+        type: 'application',
+        subType: 'application',
         focusWidgetName: 'License',
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-        recommendation:
-            'The SQL Server license assessment is at the host level. A license is considered not optimized when Workload Factory detects that any instance running on the host is not using the enterprise license features you are paying for. A license that is not optimized might result in unnecessary additional costs.'
+        recommendation: 'The SQL Server license assessment is at the host level. A license is considered'
     },
-    maxdop: {
-        tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        category: 'application',
-        subCategory: 'application',
+    {
+        id: 'maxdop',
+        name: 'MAXDOP',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        type: 'application',
+        subType: 'application',
         focusWidgetName: 'MAXDOP',
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.SQL_INSTANCE,
         recommendation:
             'For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16. Your current settings are not optimized.'
     },
-    mssqlPatch: {
-        tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-        category: 'application',
-        subCategory: 'application',
+    {
+        id: 'mssql-patch',
+        name: 'Microsoft SQL Server patch',
+        categories: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
+        type: 'application',
+        subType: 'application',
         focusWidgetName: 'Microsoft SQL Server patch',
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.SQL_INSTANCE,
         recommendation:
             'Critical (criticalPatchesCount) and important (importantPatchesCount) patches are missing. We recommend applying the latest patches to ensure your MSSQL instance is secure and up-to-date.'
     },
-    rssConfig: {
-        tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        category: 'compute',
-        subCategory: 'compute',
-        focusWidgetName: 'Network adapter settings',
-        severity: SEVERITY.WARNING,
-        resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_ADAPTER,
-        recommendation:
-            'To enhance network performance and system efficiency for your SQL Server EC2 instance, we recommend optimizing your Receive Side Scaling (RSS) configuration. Proper RSS settings distribute network processing across multiple processors, reducing latency and improving application responsiveness. Adhering to best practices ensures efficient handling of network traffic, leading to better stability and reliability.'
-    }
-};
 
-export default GOLDEN_CONFIG;
+    // ── cloning ──────────────────────────────────────────────────────────────
+    {
+        id: 'clone-management',
+        name: 'Clone cleanup',
+        categories: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
+        type: 'cloning',
+        subType: 'cloning',
+        focusWidgetName: 'Clone cleanup',
+        severity: SEVERITY.WARNING,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+        recommendation:
+            'Old and divergent clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
+    }
+];
+
+export { MSSQL_HEARTBEAT_SETTINGS, MSSQL_GOLDEN_CONFIG };

@@ -528,10 +528,20 @@ async function updateDatabaseInstanceAssessmentResults(
     region: string,
     databaseHostId: string,
     instanceId: string,
-    assessmentResults: any
+    assessmentResponse: any,
+    existingMetadata?: any
 ) {
-    logger.info('Update instance configurations', { accountId, instanceId });
-    return updateDatabaseInstance({ accountId, credentialsId, region, databaseHostId, instanceId, assessmentResults });
+    logger.info('Update instance assessment results', { accountId, instanceId });
+    const { assessments, metadata } = assessmentResponse ?? {};
+    return updateDatabaseInstance({
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        instanceId,
+        metaData: { ...existingMetadata, ...metadata },
+        assessmentResults: assessments
+    });
 }
 
 async function populateDbInstances(resourceDetails: ResourceDetails) {

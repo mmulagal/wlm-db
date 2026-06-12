@@ -3,29 +3,16 @@ import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
-import {
-    AssessmentCategories,
-    AssessmentStatus,
-    AwsWellArchitecturedPillars
-} from '../../utils/continous-optimization-consts';
+import { AssessmentCategories, AssessmentStatus } from '../../utils/continous-optimization-consts';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes } from '../../utils/consts';
 import { AWSBackupAssessment } from '../../utils/common-types';
+import type { AssessmentItemType, AssessmentErrorItemType } from '../../routes/types/continuous-optimization.types';
 import { describeFSx } from '../../lib/aws/fsx';
 import { isFsxnAwsBackupEnabled } from '../aws/fsx-operations';
 import { registerJob, updateJobDetails } from '../database/job-operations';
+import { GoldenConfigEntry } from './assessment-utils';
 
 const logger = getLogger();
-
-interface AwsBackupGoldenConfig {
-    name: string;
-    tags: AwsWellArchitecturedPillars[];
-    category: string;
-    subCategory: string;
-    focusWidgetName: string;
-    severity: string;
-    resourceType: string;
-    recommendation: string;
-}
 
 interface AwsBackupAssessmentResult {
     isAWSBackupEnabled: boolean;
@@ -204,8 +191,8 @@ function getAwsBackupDriftData(
     databaseHostId: string,
     databaseInstanceId: string,
     awsBackupAssessmentData: AWSBackupAssessment,
-    goldenConfig: AwsBackupGoldenConfig
-) {
+    goldenConfig: GoldenConfigEntry
+): AssessmentItemType | AssessmentErrorItemType {
     logger.info('Get Scheduled FSx for ONTAP backup assessment data', {
         accountId,
         credentialsId,
@@ -215,14 +202,14 @@ function getAwsBackupDriftData(
     });
 
     if (isEmpty(awsBackupAssessmentData)) {
-        const errorMsg = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.AWS_BACKUP);
-        logger.error(errorMsg);
-        return { errorMessage: errorMsg };
+        const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.AWS_BACKUP);
+        logger.error(errorMessage);
+        return { ...goldenConfig, errorMessage };
     }
 
     const { fileSystemId, isAWSBackupEnabled, errorMessage, volumeBackupDetails } = awsBackupAssessmentData;
     if (errorMessage) {
-        return { errorMessage };
+        return { ...goldenConfig, errorMessage };
     }
 
     const volumesWithoutBackup = volumeBackupDetails
@@ -239,4 +226,4 @@ function getAwsBackupDriftData(
     };
 }
 
-export { assessAwsBackupForVolumes, initiateAwsBackupAssessment, getAwsBackupDriftData, AwsBackupGoldenConfig };
+export { assessAwsBackupForVolumes, initiateAwsBackupAssessment, getAwsBackupDriftData };

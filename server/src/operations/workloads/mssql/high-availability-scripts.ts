@@ -1,10 +1,8 @@
 import { IgroupMissingInitiators } from '../../../utils/common-types';
-import GOLDEN_CONFIG from '../../continuous-optimization/mssql/golden-config';
+import { MSSQL_HEARTBEAT_SETTINGS } from '../../continuous-optimization/mssql/golden-config';
 import { ontapRestRequest } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
 import { readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
-
-const { heartbeatSettings } = GOLDEN_CONFIG.resiliency;
 
 const DRIVE_LETTER = `
 # Get available drive letters
@@ -179,12 +177,12 @@ Write-Output "Starting heartbeat settings remediation" | Out-Null
 $status = "success"
 $errorMessage = ""
 $expectedSettings = @{
-    SameSubnetDelay = ${heartbeatSettings.SameSubnetDelay}
-    SameSubnetThreshold = ${heartbeatSettings.SameSubnetThreshold}
-    CrossSubnetDelay = ${heartbeatSettings.CrossSubnetDelay}
-    CrossSubnetThreshold = ${heartbeatSettings.CrossSubnetThreshold}
-    CrossSiteDelay = ${heartbeatSettings.CrossSiteDelay}
-    CrossSiteThreshold = ${heartbeatSettings.CrossSiteThreshold}
+    SameSubnetDelay = ${MSSQL_HEARTBEAT_SETTINGS.SameSubnetDelay}
+    SameSubnetThreshold = ${MSSQL_HEARTBEAT_SETTINGS.SameSubnetThreshold}
+    CrossSubnetDelay = ${MSSQL_HEARTBEAT_SETTINGS.CrossSubnetDelay}
+    CrossSubnetThreshold = ${MSSQL_HEARTBEAT_SETTINGS.CrossSubnetThreshold}
+    CrossSiteDelay = ${MSSQL_HEARTBEAT_SETTINGS.CrossSiteDelay}
+    CrossSiteThreshold = ${MSSQL_HEARTBEAT_SETTINGS.CrossSiteThreshold}
 }
 
 Write-Output "Expected heartbeat settings: $($expectedSettings | ConvertTo-Json -Compress)" | Out-Null

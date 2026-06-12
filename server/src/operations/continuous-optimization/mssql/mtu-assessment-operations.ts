@@ -3,9 +3,7 @@ import getLogger from '../../../utils/logger';
 import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentStatus,
-    AwsWellArchitecturedPillars,
-    DEFAULT_FSX_MTU_VALUE,
-    SEVERITY
+    DEFAULT_FSX_MTU_VALUE
 } from '../../../utils/continous-optimization-consts';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
 import { IS_DEMO_FLOW } from '../../../utils/utils';
@@ -14,6 +12,9 @@ import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getInstanceInfo } from '../../database/database-operations';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { FETCH_MSSQL_INSTANCE_MTU_DETAILS, FETCH_FSX_MTU_DETAILS } from '../../workloads/mssql/mtu-scripts';
+import type { AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
+import type { MssqlAssessmentItemType } from '../../../routes/types/mssql-continuous-optimisation.types';
+import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 
 const logger = getLogger();
 interface SqlInterface {
@@ -126,31 +127,31 @@ function calculateMTUAlignmentDrift(
     databaseHostId: string,
     metadata: Metadata,
     assessmentData: ResourceAssessmentData
-) {
+): MssqlAssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculating MTU alignment drift', { accountId, region, databaseHostId, credentialsId });
-    let errorMessage = '';
+    const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'mtu-alignment');
 
     try {
         const { mtuAlignment, errors } = assessmentData;
 
         if (!mtuAlignment) {
-            errorMessage = errors?.mtuAlignment || GENERIC_ASSESSMENT_ERROR_MESSAGE('MTU alignment');
+            const errorMessage = errors?.mtuAlignment || GENERIC_ASSESSMENT_ERROR_MESSAGE('MTU alignment');
             logger.error({ errorMessage });
-            return { errorMessage };
+            return { ...goldenConfig, errorMessage };
         }
 
         const { sqlServerMTU, fsxMTU } = mtuAlignment;
 
         if (!sqlServerMTU || !fsxMTU) {
-            errorMessage = 'SQL Server or FSx MTU data not found';
+            const errorMessage = 'SQL Server or FSx MTU data not found';
             logger.error({ errorMessage });
-            return { errorMessage };
+            return { ...goldenConfig, errorMessage };
         }
 
         if (sqlServerMTU.error || fsxMTU.error) {
-            errorMessage = `MTU assessment failed: ${sqlServerMTU.error || fsxMTU.error}`;
+            const errorMessage = `MTU assessment failed: ${sqlServerMTU.error || fsxMTU.error}`;
             logger.error({ errorMessage });
-            return { errorMessage };
+            return { ...goldenConfig, errorMessage };
         }
 
         const fsxMtuValue =
@@ -207,30 +208,23 @@ function calculateMTUAlignmentDrift(
 
         const status = objectsInViolation.length === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
 
-        const recommendation =
-            'Workload Factory recommends aligning EC2 instance Maximum Transmission Unit (MTU) settings with your FSX for ONTAP file system to prevent network fragmentation and optimize SQL Server performance. Fixing MTU misalignment ensures consistent MTU configuration across all nodes and network paths.';
-
         const totalObjectsAssessed = sqlServerMTU.sqlInterfaces?.length || 0;
         const totalObjectsInViolation = objectsInViolation.length;
 
         return {
-            name: 'mtu-alignment',
+            ...goldenConfig,
             status,
             recommended: AssessmentStatus.OPTIMIZED,
-            severity: SEVERITY.CRITICAL,
-            recommendation,
-            tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
             objectsInViolation,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_INTERFACE,
             totalObjectsAssessed,
             totalObjectsInViolation,
             violationDetails,
             ec2InterfacesToFix
         };
     } catch (error) {
-        errorMessage = `Error calculating MTU alignment drift: ${error}`;
+        const errorMessage = `Error calculating MTU alignment drift: ${error}`;
         logger.error(errorMessage);
-        return { errorMessage };
+        return { ...goldenConfig, errorMessage };
     }
 }
 

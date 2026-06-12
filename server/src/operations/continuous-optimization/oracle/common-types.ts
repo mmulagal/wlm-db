@@ -1,5 +1,3 @@
-import { GenericParameterDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
-
 interface ISCIOSAssessment {
     'host-utilities'?: {
         error?: string | null;
@@ -275,15 +273,6 @@ interface OracleSecurityPatchSsmResponse {
     error?: string;
 }
 
-type ComputeDriftEntry = GenericParameterDriftResponseType | { errorMessage: string };
-
-type ComputeHostOsDriftTopLevel = Partial<{
-    transparentHugepages: ComputeDriftEntry;
-    tcpAdvancedOptions: ComputeDriftEntry;
-    filesystemsIoOptions: ComputeDriftEntry;
-    multiblockReadcount: ComputeDriftEntry;
-}>;
-
 export {
     ISCIOSAssessment,
     NFSOSAssessment,
@@ -294,7 +283,5 @@ export {
     netappMultipathExpected,
     nfsMountOptionExpected,
     OptimizeOSParams,
-    OracleSecurityPatchSsmResponse,
-    ComputeDriftEntry,
-    ComputeHostOsDriftTopLevel
+    OracleSecurityPatchSsmResponse
 };

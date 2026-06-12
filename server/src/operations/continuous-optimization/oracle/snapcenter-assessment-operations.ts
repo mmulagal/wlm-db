@@ -3,18 +3,14 @@ import { isEmpty } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { WorkloadInstance } from '../../../utils/common-types';
 import { ASSESSMENT_SSM_EXECUTION_TIMEOUT } from '../../../utils/consts';
-import {
-    AssessmentCategoriesOracle,
-    AssessmentStatus,
-    AwsWellArchitecturedPillars
-} from '../../../utils/continous-optimization-consts';
-import { OracleGenericParameterDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
+import { AssessmentCategoriesOracle, AssessmentStatus } from '../../../utils/continous-optimization-consts';
+import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { registerJob } from '../../database/job-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import { SNAPCENTER_ASSESSMENT_SCRIPT } from './ssm-scripts/snapcenter-assessment-scripts';
-import GOLDEN_CONFIG from './golden-config';
+import ORACLE_GOLDEN_CONFIG from './golden-config';
 
 const logger = getLogger();
 
@@ -172,7 +168,9 @@ async function initiateSnapCenterAssessmentCollection(
 function calculateSnapCenterDrift(
     assessmentData: SnapcenterAssessmentData,
     volumeIds: SnapcenterRelevantVolumeIds
-): OracleGenericParameterDriftResponseType | { errorMessage: string } | undefined {
+): AssessmentItemType | AssessmentErrorItemType | undefined {
+    const [goldenConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'snapcenter-snapshot');
+
     if (!assessmentData || isEmpty(assessmentData)) {
         return undefined;
     }
@@ -181,11 +179,10 @@ function calculateSnapCenterDrift(
         return undefined;
     }
 
-    const goldenConfig = GOLDEN_CONFIG.resiliency.snapcenterSnapshot;
     const { volumes = [], standaloneCheck, errorMessage } = assessmentData;
 
     if (errorMessage) {
-        return { errorMessage };
+        return { ...goldenConfig, errorMessage };
     }
 
     const { dataFileVolumeIds = [], controlFileVolumeIds = [], archiveLogVolumeIds = [] } = volumeIds || {};
@@ -208,13 +205,9 @@ function calculateSnapCenterDrift(
     const isOptimized = volumesToAssess.length > 0 && unprotectedVolumes.length === 0;
 
     return {
-        name: goldenConfig.name,
+        ...goldenConfig,
+        recommended: goldenConfig.recommended ?? '',
         status: isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-        recommended: goldenConfig.recommended,
-        severity: goldenConfig.severity,
-        recommendation: goldenConfig.recommendation,
-        tags: goldenConfig.tags as AwsWellArchitecturedPillars[],
-        resourceType: goldenConfig.resourceType,
         totalObjectsAssessed: volumesToAssess.length,
         totalObjectsInViolation: unprotectedVolumes.length,
         objectsInViolation: unprotectedVolumes.map(v => ({

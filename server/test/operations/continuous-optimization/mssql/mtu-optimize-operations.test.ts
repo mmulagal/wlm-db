@@ -3,12 +3,12 @@ import {
     getFSxMTUValue,
     validateMTUOptimizationRequest
 } from '../../../../src/operations/continuous-optimization/mssql/mtu-optimize-operations';
-import { createResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
+import { createResource, deleteResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_REGION, DEFAULT_AWS_CREDENTIALS_ID } from '../../../utils/consts';
 
 describe('MTU optimization', () => {
-    const RESOURCE_ID = '6cbdabbfe3fb147e';
-    const DATABASE_INSTANCE_ID = 'f4b7c5d3-e1f6-4g2a-9b5d';
+    const RESOURCE_ID = 'a1b2c3d4e5f60001';
+    const DATABASE_INSTANCE_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
     const ACTIVE_NODE_INSTANCE_ID = 'i-07e76a4b916548dc0';
 
     beforeAll(async () => {
@@ -42,6 +42,10 @@ describe('MTU optimization', () => {
             fsxnIds: 'fs-0f53fbecdd3d85fb2',
             databaseType: 'MSSQL'
         });
+    });
+
+    afterAll(async () => {
+        await deleteResource(ACCOUNT_ID, RESOURCE_ID);
     });
 
     const accountId = ACCOUNT_ID;

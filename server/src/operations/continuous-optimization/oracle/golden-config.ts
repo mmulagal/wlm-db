@@ -2,848 +2,960 @@ import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentStatus,
     AwsWellArchitecturedPillars,
-    MIN_OPTIMIZED_HEADROOM_PERCENTAGE,
     SEVERITY
 } from '../../../utils/continous-optimization-consts';
+import type { GoldenConfigEntry } from '../assessment-utils';
 
-const GOLDEN_CONFIG = {
-    configuration: {
-        volume: [
-            {
-                parameter: 'spaceGuarantee',
-                name: 'thin-provision',
-                value: 'none',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.WARNING,
-                recommendation:
-                    'Workload Factory recommends configuring thin provisioning for FSx for ONTAP volumes hosting Oracle databases. This approach optimizes storage efficiency and cost-effectiveness by allowing more logical data to be stored than physically available.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'autosize',
-                name: 'autosize',
-                value: 'on',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'Workload Factory recommends enabling volume autogrow for FSx for ONTAP volumes for Oracle databases. This configuration enhances flexibility, availability, and scalability for Oracle databases by allowing volumes to grow dynamically to accommodate unexpected data growth, preventing space shortages and avoiding downtime if a volume runs out of space. Volume autogrow is essential when using thin provisioning.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'autosizeMode',
-                name: 'autosize-mode',
-                value: 'grow',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'Workload Factory recommends enabling volume autogrow for FSx for ONTAP volumes for Oracle databases. This configuration enhances flexibility and availability by allowing volumes to grow dynamically to accommodate unexpected data growth. This prevents space shortages and helps avoid downtime if a volume runs out of space, ensuring seamless scalability for Oracle databases. Volume autogrow is essential when using thin provisioning.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'fractionalReserve',
-                name: 'fractional-reserve',
-                value: 0,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'Workload Factory recommends disabling fractional reserve to eliminate unnecessary space reservation for overwrites thereby optimizing space utilization and cost-effectiveness for thin-provisioned FSx for ONTAP volumes. This configuration is essential when using thin provisioning with Oracle databases.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'snapshotPolicy',
-                name: 'snapshot-policy',
-                value: 'none',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.WARNING,
-                recommendation:
-                    'Workload Factory recommends disabling snapshots for FSx for ONTAP volumes for Oracle databases to save space and lower costs. Oracle snapshots should be managed externally via tools like SnapCenter, which creates application-consistent snapshots, preventing corruption during restoration.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'snapshotCopyReserve',
-                name: 'snapshot-copy-reserve',
-                value: 0,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.WARNING,
-                recommendation:
-                    'Workload Factory recommends that capacity isnt reserved for snapshots on FSx for ONTAP volumes used by databases, making the entire volume capacity available for active data and any snapshots that are created.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'snapshotAutodelete',
-                name: 'snapshot-autodelete',
-                value: true,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.WARNING,
-                recommendation:
-                    'Workload Factory recommends configuring the snapshot autodelete feature in FSx for ONTAP for Oracle databases to delete older snapshots first. This feature is designed to automatically manage snapshot storage by deleting the oldest snapshots when a volume approaches its capacity limit. This configuration helps in thin-provisioned environments, where more logical storage is allocated than physically available.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'spaceMgmtTryFirst',
-                name: 'space-mgmt-try-first',
-                value: 'volume_grow',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.WARNING,
-                recommendation:
-                    'Workload Factory recommends configuring space management to prioritize volume expansion over snapshot deletion for thin-provisioned FSx for ONTAP volumes with volume autogrow enabled.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'tieringPolicy',
-                name: 'tiering-policy',
-                value: 'snapshot_only',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'Workload Factory recommends enabling tiering for database volumes on FSx for ONTAP when it makes sense. Tiering automatically moves less-used data, such as snapshots and archived logs, to lower-cost storage while keeping active data and redo logs on high-performance storage. This lowers storage costs, helps protect performance for critical workloads, and reduces manual management. You can set different tiering policies for Oracle data files, redo logs, and archive logs.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'tieringMinCoolingDays',
-                name: 'tiering-min-cooling-days',
-                value: '',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'Workload Factory recommends setting the appropriate minimum cooling days for a volume because it determines when data becomes eligible to move to cost-effective capacity tiers, optimizing storage costs while maintaining performance for frequently accessed data. Archive/FRA Volumes (tiering-minimum-cooling-days=2(for RMAN-compressed backups) tiering-minimum-cooling-days=14(for uncompressed backups)).',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'compressionType',
-                name: 'compression',
-                value: '',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle’s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'deduplication',
-                name: 'deduplication',
-                value: '',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle’s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'compaction',
-                name: 'compaction',
-                value: 'enabled',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle’s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            }
+const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
+    // ── configuration / volume ──────────────────────────────────────────────
+    {
+        parameter: 'spaceGuarantee',
+        id: 'thin-provision',
+        name: 'Thin provisioning',
+        value: 'none',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'Workload Factory recommends configuring thin provisioning for FSx for ONTAP volumes hosting Oracle databases. This approach optimizes storage efficiency and cost-effectiveness by allowing more logical data to be stored than physically available.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        volume_nfs: [
-            {
-                parameter: 'nfs-rootonly',
-                name: 'nfs-rootonly',
-                value: 'disabled',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'Volume',
-                recommendation:
-                    'Workload Factory recommends disabling the nfs-rootonly parameter for dNFS. ONTAPs nfs-rootonly setting restricts NFS connections to privileged ports (<1024). Since dNFS processes in NFSv4+ do not run as root and use higher ports, disabling this parameter allows necessary connections.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
-            },
-            {
-                parameter: 'export-policy',
-                name: 'export-policy',
-                value: 'superuser: sys, allow_suid: true',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'Volume',
-                recommendation:
-                    'Workload Factory recommends ensuring that if Oracle binaries are located on an NFS share, the export policy includes superuser and setuid permissions.Superuser (root) access allows NFS clients to map as root, needed for binary execution.',
-                tags: [
-                    AwsWellArchitecturedPillars.SECURITY,
-                    AwsWellArchitecturedPillars.RELIABILITY,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ]
-            }
-        ],
-        lun: [
-            {
-                name: 'space-reservation-enabled',
-                parameter: 'spaceReservationEnabled',
-                value: true,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'Workload Factory recommends enabling space reservation on LUNs used by Oracle databases to reserve enough space in the volume so that writes to those LUNs dont fail.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                name: 'space-allocation-allocated',
-                parameter: 'spaceAllocationAllocated',
-                value: true,
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'ONTAP',
-                severity: SEVERITY.CRITICAL,
-                recommendation:
-                    'Workload Factory recommends enabling the space allocation feature on LUNs used by Oracle databases to ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.',
-                tags: [
-                    AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            }
-        ],
-        os_iscsi: [
-            {
-                parameter: 'multipath-io',
-                name: 'multipath-io',
-                recommended: 'enabled',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends enabling Multipath I/O (MPIO) on database hosts that connect to ISCSI LUNs for Oracle databases. This host-level configuration enhances storage reliability and performance by providing redundant data paths between the server and storage. With multipath enabled, the system can automatically reroute I/O operations in the event of a path failure, minimizing downtime and ensuring consistent access to critical data.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
-            },
-            {
-                parameter: 'host-utilities',
-                name: 'host-utilities',
-                recommended: 'installed',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends installing host utilities for LUN and multipath management on systems hosting Oracle databases. These utilities ensure optimal compatibility, performance, and reliability when connecting to enterprise storage systems. Proper installation of host utilities helps streamline storage operations and supports best practices for Oracle deployments.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
-            },
-            {
-                parameter: 'multipath-io-sessions',
-                name: 'multipath-io-sessions',
-                recommended: '4',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends configuring host with four iSCSI sessions to each FSx ONTAP iSCSI endpoint in order to fully leverage multipath I/O',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'transparent-hugepages',
-                name: 'transparent-hugepages',
-                recommended: 'disabled',
-                category: 'compute',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends disabling Transparent HugePages (THP) on database hosts running Oracle databases. Disabling THP is an Oracle best practice to prevent potential performance issues and ensure optimal database stability.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'iscsi-replacement-timeout',
-                name: 'iscsi-replacement-timeout',
-                recommended: '5',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends setting node.session.timeo.replacement_timeout = 5 in /etc/iscsi/iscsid.conf for Oracle database hosts using multipath I/O. This adjustment reduces the time required to detect and recover from iSCSI path failures, ensuring that database operations remain highly available and responsive. After applying this change and restarting the iSCSI service, the host will be able to fail over to alternate paths within 5 seconds of a path failure, minimizing the risk of application downtime.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'multipath-friendly-names',
-                name: 'multipath-friendly-names',
-                recommended: 'enabled',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends enabling Multipath Friendly Names in the multipath configuration for Oracle database hosts. This setting simplifies device identification by assigning human-readable names to multipath devices, making storage management and troubleshooting more efficient and reducing the risk of configuration errors.',
-                tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
-            },
-            {
-                parameter: 'tcp-advanced-options',
-                name: 'tcp-advanced-options',
-                recommended: 'enabled',
-                category: 'compute',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends enabling TCP timestamps, SACK, and window scaling for best network performance and reliability.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'filesystems-io-options',
-                name: 'filesystems-io-options',
-                recommended: 'setall',
-                category: 'compute',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends setting filesystemio_options = setall for optimal I/O performance. Adjust SGA size if needed when moving away from buffered I/O.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'multiblock-readcount',
-                name: 'multiblock-readcount',
-                recommended: 'disabled',
-                category: 'compute',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'multipath-configuration',
-                name: 'multipath-configuration',
-                recommended: '',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP LUNs, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
-            }
-        ],
-        asmOS: [
-            {
-                parameter: 'asm-setup',
-                name: 'asm-setup',
-                recommended: '',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends using Oracle Automatic Storage Management (ASM) for iSCSI-based storage, such as FSx for NetApp ONTAP, to optimize performance, simplify storage management, and enhance scalability for Oracle Database deployments.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'asm-external-redundancy',
-                name: 'asm-external-redundancy',
-                recommended: '',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                resourceType: 'ASM Disk Group',
-                recommendation:
-                    'Workload Factory recommends configuring Oracle ASM disk groups with External Redundancy for FSxN iSCSI LUNs to leverage FSxN’s built-in high availability, optimize storage efficiency, and reduce costs by avoiding Oracle-level data mirroring.',
-                tags: [AwsWellArchitecturedPillars.COST_EFFICIENCY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'afd-logical-block-size',
-                name: 'afd-logical-block-size',
-                recommended: '1',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends configuring the Oracle ASM Filter Driver (AFD) to use the logical block size of the underlying FSx for NetApp ONTAP. This ensures that AFD aligns I/O operations with the storage’s block size, optimizing performance by minimizing latency and reducing unnecessary I/O overhead.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'asmlib-logical-block-size',
-                name: 'asmlib-logical-block-size',
-                recommended: 'true',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends configuring Oracle ASMLib to use the logical block size of the underlying FSx for NetApp ONTAP, by setting the appropriate option in the ASMLib configuration file. This ensures that ASMLib aligns I/O operations with the storage’s block size, optimizing performance by minimizing latency and reducing unnecessary I/O overhead.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            }
-        ],
-        os_nfs: [
-            {
-                parameter: 'kernel-parameters',
-                name: 'kernel-parameters',
-                recommended: '',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends configuring the kernel parameters for the TCP slot table to 128, optimized specifically for Oracle workloads.',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'nfs-mount-options-databasefiles',
-                name: 'nfs-mount-options-databasefiles',
-                recommended: '',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends using optimized NFS mount options for database files: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144,nointr. This configuration is designed to improve database performance and resilience, particularly in high-throughput environments.',
-                tags: [
-                    AwsWellArchitecturedPillars.RELIABILITY,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-                ]
-            },
-            {
-                parameter: 'nfs-mount-options-adrhome',
-                name: 'nfs-mount-options-adrhome',
-                recommended: '',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends using optimized NFS mount options for ADR home: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144 ',
-                tags: [
-                    AwsWellArchitecturedPillars.RELIABILITY,
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ]
-            },
-            {
-                parameter: 'nfsv4-domain-name',
-                name: 'nfsv4-domain-name',
-                recommended: '',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends matching NFSv4 domain names between the host (/etc/idmapd.conf or hostname -d) and NFS server (v4-id-domain in ONTAP).',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.SECURITY]
-            },
-            {
-                parameter: 'nfs-caching-options',
-                name: 'nfs-caching-options',
-                recommended: '',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.WARNING,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends avoiding the use of the following mount options in standalone deployments to prevent disabling cache: "cio", "actimeo=0", "noac", and "forcedirectio".',
-                tags: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
-            },
-            {
-                parameter: 'dnfs-enabled',
-                name: 'dnfs-enabled',
-                recommended: 'Enabled',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends enabling Direct NFS (dNFS) for your Oracle environment. Enabling dNFS can improve database performance and simplify NFS storage management by allowing Oracle to manage NFS I/O directly.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
-            },
-            {
-                parameter: 'dnfs-consistent-ip-resolution',
-                name: 'dnfs-consistent-ip-resolution',
-                recommended: 'No round-robin IP resolution',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends avoiding the use of Direct NFS (dNFS) with any type of round-robin name resolution, including DNS, DDNS, NIS, or any other method. This includes the DNS load balancing feature available in ONTAP. Ensuring consistent IP address resolution is crucial for maintaining database stability and preventing potential crashes or data corruption.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
-            },
-            {
-                parameter: 'dnfs-configuration-file',
-                name: 'dnfs-configuration-file',
-                recommended: 'Optimized oranfstab content',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends verifying and optimizing the oranfstab file content to ensure proper Direct NFS (dNFS) usage. The oranfstab file is essential for configuring advanced dNFS features such as multipathing and specific NFS options. Proper configuration ensures efficient data access and management.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
-            },
-            {
-                parameter: 'dnfs-no-shared-cache',
-                name: 'dnfs-no-shared-cache',
-                recommended: 'Enabled nosharecache mount option',
-                category: 'storage',
-                subCategory: 'configuration',
-                focusWidgetName: 'Operating system',
-                severity: SEVERITY.CRITICAL,
-                resourceType: 'EC2 Instance',
-                recommendation:
-                    'Workload Factory recommends configuring the nosharecache mount option for environments where Direct NFS (dNFS) is enabled, and a source volume is mounted more than once on a single server with nested NFS mounts. This configuration prevents cache sharing between mounts, ensuring data consistency and optimal performance.',
-                tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY]
-            }
-        ]
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
-    archivePlacement: {
+    {
+        parameter: 'autosize',
+        id: 'autosize',
+        name: 'Autosize',
+        value: 'on',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Workload Factory recommends enabling volume autogrow for FSx for ONTAP volumes for Oracle databases. This configuration enhances flexibility, availability, and scalability for Oracle databases by allowing volumes to grow dynamically to accommodate unexpected data growth, preventing space shortages and avoiding downtime if a volume runs out of space. Volume autogrow is essential when using thin provisioning.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        parameter: 'autosizeMode',
+        id: 'autosize-mode',
+        name: 'Autosize mode',
+        value: 'grow',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Workload Factory recommends enabling volume autogrow for FSx for ONTAP volumes for Oracle databases. This configuration enhances flexibility and availability by allowing volumes to grow dynamically to accommodate unexpected data growth. This prevents space shortages and helps avoid downtime if a volume runs out of space, ensuring seamless scalability for Oracle databases. Volume autogrow is essential when using thin provisioning.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        parameter: 'fractionalReserve',
+        id: 'fractional-reserve',
+        name: 'Fractional reserve',
+        value: 0,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Workload Factory recommends disabling fractional reserve to eliminate unnecessary space reservation for overwrites thereby optimizing space utilization and cost-effectiveness for thin-provisioned FSx for ONTAP volumes. This configuration is essential when using thin provisioning with Oracle databases.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        parameter: 'snapshotPolicy',
+        id: 'snapshot-policy',
+        name: 'Snapshot policy',
+        value: 'none',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'Workload Factory recommends disabling snapshots for FSx for ONTAP volumes for Oracle databases to save space and lower costs. Oracle snapshots should be managed externally via tools like SnapCenter, which creates application-consistent snapshots, preventing corruption during restoration.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        parameter: 'snapshotCopyReserve',
+        id: 'snapshot-copy-reserve',
+        name: 'Snapshot copy reserve',
+        value: 0,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'Workload Factory recommends that capacity isnt reserved for snapshots on FSx for ONTAP volumes used by databases, making the entire volume capacity available for active data and any snapshots that are created.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        parameter: 'snapshotAutodelete',
+        id: 'snapshot-autodelete',
+        name: 'Snapshot autodelete',
+        value: true,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'Workload Factory recommends configuring the snapshot autodelete feature in FSx for ONTAP for Oracle databases to delete older snapshots first. This feature is designed to automatically manage snapshot storage by deleting the oldest snapshots when a volume approaches its capacity limit. This configuration helps in thin-provisioned environments, where more logical storage is allocated than physically available.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        parameter: 'spaceMgmtTryFirst',
+        id: 'space-mgmt-try-first',
+        name: 'Space management',
+        value: 'volume_grow',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'Workload Factory recommends configuring space management to prioritize volume expansion over snapshot deletion for thin-provisioned FSx for ONTAP volumes with volume autogrow enabled.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        parameter: 'tieringPolicy',
+        id: 'tiering-policy',
+        name: 'Tiering policy',
+        value: 'snapshot_only',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Workload Factory recommends enabling tiering for database volumes on FSx for ONTAP when it makes sense. Tiering automatically moves less-used data, such as snapshots and archived logs, to lower-cost storage while keeping active data and redo logs on high-performance storage. This lowers storage costs, helps protect performance for critical workloads, and reduces manual management. You can set different tiering policies for Oracle data files, redo logs, and archive logs.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        parameter: 'tieringMinCoolingDays',
+        id: 'tiering-min-cooling-days',
+        name: 'Tiering minimum cooling days',
+        value: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Workload Factory recommends setting the appropriate minimum cooling days for a volume because it determines when data becomes eligible to move to cost-effective capacity tiers, optimizing storage costs while maintaining performance for frequently accessed data. Archive/FRA Volumes (tiering-minimum-cooling-days=2(for RMAN-compressed backups) tiering-minimum-cooling-days=14(for uncompressed backups)).',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        parameter: 'compressionType',
+        id: 'compression',
+        name: 'Compression',
+        value: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle\u2019s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        parameter: 'deduplication',
+        id: 'deduplication',
+        name: 'Deduplication',
+        value: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle\u2019s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+    {
+        parameter: 'compaction',
+        id: 'compaction',
+        name: 'Compaction',
+        value: 'enabled',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle\u2019s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+    },
+
+    // ── configuration / volume_nfs (applicableTo: nfs) ──────────────────────
+    {
+        parameter: 'nfs-rootonly',
+        id: 'nfs-rootonly',
+        name: 'NFS root only',
+        value: 'disabled',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        recommendation:
+            'Workload Factory recommends disabling the nfs-rootonly parameter for dNFS. ONTAPs nfs-rootonly setting restricts NFS connections to privileged ports (<1024). Since dNFS processes in NFSv4+ do not run as root and use higher ports, disabling this parameter allows necessary connections.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
+        applicableTo: 'nfs'
+    },
+    {
+        parameter: 'export-policy',
+        id: 'export-policy',
+        name: 'Export policy',
+        value: 'superuser: sys, allow_suid: true',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        recommendation:
+            'Workload Factory recommends ensuring that if Oracle binaries are located on an NFS share, the export policy includes superuser and setuid permissions.Superuser (root) access allows NFS clients to map as root, needed for binary execution.',
+        categories: [
+            AwsWellArchitecturedPillars.SECURITY,
+            AwsWellArchitecturedPillars.RELIABILITY,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+        ],
+        applicableTo: 'nfs'
+    },
+
+    // ── configuration / lun (applicableTo: iscsi) ──────────────────────────
+    {
+        id: 'space-reservation-enabled',
+        name: 'Space reservation enabled',
+        parameter: 'spaceReservationEnabled',
+        value: true,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
+        recommendation:
+            'Workload Factory recommends enabling space reservation on LUNs used by Oracle databases to reserve enough space in the volume so that writes to those LUNs dont fail.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        applicableTo: 'iscsi'
+    },
+    {
+        id: 'space-allocation-allocated',
+        name: 'Space allocation allocated',
+        parameter: 'spaceAllocationAllocated',
+        value: true,
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
+        recommendation:
+            'Workload Factory recommends enabling the space allocation feature on LUNs used by Oracle databases to ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        applicableTo: 'iscsi'
+    },
+
+    // ── configuration / os_iscsi (applicableTo: iscsi) ─────────────────────
+    {
+        parameter: 'multipath-io',
+        id: 'multipath-io',
+        name: 'Multipath I/O',
+        recommended: 'enabled',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends enabling Multipath I/O (MPIO) on database hosts that connect to ISCSI LUNs for Oracle databases. This host-level configuration enhances storage reliability and performance by providing redundant data paths between the server and storage. With multipath enabled, the system can automatically reroute I/O operations in the event of a path failure, minimizing downtime and ensuring consistent access to critical data.',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        applicableTo: 'iscsi'
+    },
+    {
+        parameter: 'host-utilities',
+        id: 'host-utilities',
+        name: 'Host utilities',
+        recommended: 'installed',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends installing host utilities for LUN and multipath management on systems hosting Oracle databases. These utilities ensure optimal compatibility, performance, and reliability when connecting to enterprise storage systems. Proper installation of host utilities helps streamline storage operations and supports best practices for Oracle deployments.',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        applicableTo: 'iscsi'
+    },
+    {
+        parameter: 'multipath-io-sessions',
+        id: 'multipath-io-sessions',
+        name: 'Multipath I/O sessions',
+        recommended: '4',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends configuring host with four iSCSI sessions to each FSx ONTAP iSCSI endpoint in order to fully leverage multipath I/O',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        applicableTo: 'iscsi'
+    },
+    {
+        parameter: 'transparent-hugepages',
+        id: 'transparent-hugepages',
+        name: 'Transparent hugepages',
+        recommended: 'disabled',
+        type: 'compute',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends disabling Transparent HugePages (THP) on database hosts running Oracle databases. \nDisabling THP is an Oracle best practice to prevent potential performance issues and ensure optimal database stability.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        applicableTo: 'iscsi'
+    },
+    {
+        parameter: 'iscsi-replacement-timeout',
+        id: 'iscsi-replacement-timeout',
+        name: 'iSCSI replacement timeout',
+        recommended: '5',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends setting node.session.timeo.replacement_timeout = 5 in /etc/iscsi/iscsid.conf for Oracle database hosts using multipath I/O. This adjustment reduces the time required to detect and recover from iSCSI path failures, ensuring that database operations remain highly available and responsive. After applying this change and restarting the iSCSI service, the host will be able to fail over to alternate paths within 5 seconds of a path failure, minimizing the risk of application downtime.',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        applicableTo: 'iscsi'
+    },
+    {
+        parameter: 'multipath-friendly-names',
+        id: 'multipath-friendly-names',
+        name: 'Multipath friendly names',
+        recommended: 'enabled',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends enabling Multipath Friendly Names in the multipath configuration for Oracle database hosts. This setting simplifies device identification by assigning human-readable names to multipath devices, making storage management and troubleshooting more efficient and reducing the risk of configuration errors.',
+        categories: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        applicableTo: 'iscsi'
+    },
+    {
+        parameter: 'tcp-advanced-options',
+        id: 'tcp-advanced-options',
+        name: 'TCP advanced options',
+        recommended: 'enabled',
+        type: 'compute',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        resourceType: 'EC2 Instance',
+        recommendation: 'Workload Factory recommends enabling TCP features such as TCP window scaling',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        applicableTo: 'iscsi'
+    },
+    {
+        parameter: 'filesystems-io-options',
+        id: 'filesystems-io-options',
+        name: 'Filesystems I/O options',
+        recommended: 'setall',
+        type: 'compute',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends setting filesystemio_options = setall for optimal I/O performance. \nAdjust SGA size if needed when moving away from buffered I/O.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        applicableTo: 'iscsi'
+    },
+    {
+        parameter: 'multiblock-readcount',
+        id: 'multiblock-readcount',
+        name: 'Multiblock read count',
+        recommended: 'disabled',
+        type: 'compute',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        applicableTo: 'iscsi'
+    },
+    {
+        parameter: 'multipath-configuration',
+        id: 'multipath-configuration',
+        name: 'Multipath configuration',
+        recommended: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP LUNs, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        applicableTo: 'iscsi'
+    },
+
+    // ── configuration / asmOS ──────────────────────────────────────────────
+    {
+        parameter: 'asm-setup',
+        id: 'asm-setup',
+        name: 'ASM setup',
+        recommended: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends using Oracle Automatic Storage Management (ASM) for iSCSI-based storage, such as FSx for NetApp ONTAP, to optimize performance, simplify storage management, and enhance scalability for Oracle Database deployments.',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+    },
+    {
+        parameter: 'asm-external-redundancy',
+        id: 'asm-external-redundancy',
+        name: 'ASM external redundancy',
+        recommended: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        resourceType: 'ASM Disk Group',
+        recommendation:
+            'Workload Factory recommends configuring Oracle ASM disk groups with External Redundancy for FSxN iSCSI LUNs to leverage FSxN\u2019s built-in high availability, optimize storage efficiency, and reduce costs by avoiding Oracle-level data mirroring.',
+        categories: [AwsWellArchitecturedPillars.COST_EFFICIENCY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+    },
+    {
+        parameter: 'afd-logical-block-size',
+        id: 'afd-logical-block-size',
+        name: 'AFD logical block size',
+        recommended: '1',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends configuring the Oracle ASM Filter Driver (AFD) to use the logical block size of the underlying FSx for NetApp ONTAP. This ensures that AFD aligns I/O operations with the storage\u2019s block size, optimizing performance by minimizing latency and reducing unnecessary I/O overhead.',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+    },
+    {
+        parameter: 'asmlib-logical-block-size',
+        id: 'asmlib-logical-block-size',
+        name: 'ASMLIB logical block size',
+        recommended: 'true',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends configuring Oracle ASMLib to use the logical block size of the underlying FSx for NetApp ONTAP, by setting the appropriate option in the ASMLib configuration file. This ensures that ASMLib aligns I/O operations with the storage\u2019s block size, optimizing performance by minimizing latency and reducing unnecessary I/O overhead.',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+    },
+
+    // ── configuration / os_nfs (applicableTo: nfs) ──────────────────────────
+    {
+        parameter: 'kernel-parameters',
+        id: 'kernel-parameters',
+        name: 'Kernel parameters',
+        recommended: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends configuring the kernel parameters for the TCP slot table to 128, optimized specifically for Oracle workloads.',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        applicableTo: 'nfs'
+    },
+    {
+        parameter: 'nfs-mount-options-databasefiles',
+        id: 'nfs-mount-options-databasefiles',
+        name: 'NFS mount options (database files)',
+        recommended: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends using optimized NFS mount options for database files: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144,nointr. This configuration is designed to improve database performance and resilience, particularly in high-throughput environments.',
+        categories: [
+            AwsWellArchitecturedPillars.RELIABILITY,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        applicableTo: 'nfs'
+    },
+    {
+        parameter: 'nfs-mount-options-adrhome',
+        id: 'nfs-mount-options-adrhome',
+        name: 'NFS mount options (ADR home)',
+        recommended: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends using optimized NFS mount options for ADR home: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144 ',
+        categories: [
+            AwsWellArchitecturedPillars.RELIABILITY,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+        ],
+        applicableTo: 'nfs'
+    },
+    {
+        parameter: 'nfsv4-domain-name',
+        id: 'nfsv4-domain-name',
+        name: 'NFSv4 domain name',
+        recommended: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends matching NFSv4 domain names between the host (/etc/idmapd.conf or hostname -d) and NFS server (v4-id-domain in ONTAP).',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.SECURITY],
+        applicableTo: 'nfs'
+    },
+    {
+        parameter: 'nfs-caching-options',
+        id: 'nfs-caching-options',
+        name: 'NFS caching options',
+        recommended: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.WARNING,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends avoiding the use of the following mount options in standalone deployments to prevent disabling cache: "cio", "actimeo=0", "noac", and "forcedirectio".',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        applicableTo: 'nfs'
+    },
+    {
+        parameter: 'dnfs-enabled',
+        id: 'dnfs-enabled',
+        name: 'dNFS enabled',
+        recommended: 'Enabled',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends enabling Direct NFS (dNFS) for your Oracle environment. Enabling dNFS can improve database performance and simplify NFS storage management by allowing Oracle to manage NFS I/O directly.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
+        applicableTo: 'nfs'
+    },
+    {
+        parameter: 'dnfs-consistent-ip-resolution',
+        id: 'dnfs-consistent-ip-resolution',
+        name: 'dNFS consistent IP resolution',
+        recommended: 'No round-robin IP resolution',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends avoiding the use of Direct NFS (dNFS) with any type of round-robin name resolution, including DNS, DDNS, NIS, or any other method. This includes the DNS load balancing feature available in ONTAP. Ensuring consistent IP address resolution is crucial for maintaining database stability and preventing potential crashes or data corruption.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
+        applicableTo: 'nfs'
+    },
+    {
+        parameter: 'dnfs-configuration-file',
+        id: 'dnfs-configuration-file',
+        name: 'dNFS configuration file',
+        recommended: 'Optimized oranfstab content',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends verifying and optimizing the oranfstab file content to ensure proper Direct NFS (dNFS) usage. The oranfstab file is essential for configuring advanced dNFS features such as multipathing and specific NFS options. Proper configuration ensures efficient data access and management.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
+        applicableTo: 'nfs'
+    },
+    {
+        parameter: 'dnfs-no-shared-cache',
+        id: 'dnfs-no-shared-cache',
+        name: 'dNFS no shared cache',
+        recommended: 'Enabled nosharecache mount option',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'Operating system',
+        severity: SEVERITY.CRITICAL,
+        resourceType: 'EC2 Instance',
+        recommendation:
+            'Workload Factory recommends configuring the nosharecache mount option for environments where Direct NFS (dNFS) is enabled, and a source volume is mounted more than once on a single server with nested NFS mounts. This configuration prevents cache sharing between mounts, ensuring data consistency and optimal performance.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
+        applicableTo: 'nfs'
+    },
+
+    // ── layout ───────────────────────────────────────────────────────────────
+    {
         parameter: 'archive-placement',
-        name: 'archive-placement',
+        id: 'archive-placement',
+        name: 'Archive placement',
         recommended: 'separate-volume',
-        category: 'storage',
-        subCategory: 'layout',
+        type: 'storage',
+        subType: 'layout',
         focusWidgetName: 'Archive placement',
         severity: SEVERITY.WARNING,
         recommendation:
             'Placing archive logs on a dedicated volume enhances performance and recovery processes. This isolation prevents high I/O demands from interfering with other operations, ensuring efficient logging, sorting, and reliable backup and recovery.',
-        tags: [
+        categories: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
-    datafilesPlacement: {
+    {
         parameter: 'datafiles-placement',
-        name: 'datafiles-placement',
+        id: 'datafiles-placement',
+        name: 'Data files placement',
         recommended: 'separate-volume-or-shared-with-control-files',
-        category: 'storage',
-        subCategory: 'layout',
+        type: 'storage',
+        subType: 'layout',
         focusWidgetName: 'Data files placement',
         severity: SEVERITY.WARNING,
         recommendation:
             'Placing data files on a dedicated volume or shared with control files boosts performance by isolating their random I/O from redo or archive log writes, reducing contention. This separation allows you to benefit from customized snapshot configurations, tiering policies, and efficiency mechanisms to optimize performance and cost.',
-        tags: [
+        categories: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
-    controlfilesPlacement: {
+    {
         parameter: 'controlfiles-placement',
-        name: 'controlfiles-placement',
+        id: 'controlfiles-placement',
+        name: 'Control files placement',
         recommended: 'separate-volume-or-shared-with-data-redo-temp',
-        category: 'storage',
-        subCategory: 'layout',
+        type: 'storage',
+        subType: 'layout',
         focusWidgetName: 'Control files placement',
         severity: SEVERITY.WARNING,
         recommendation:
             'Oracle strongly recommends multiplexing control files to avoid a single point of failure in production environments. Maintain at least two, preferably three, control file copies across separate volumes or disks to enhance redundancy and reduce the risk of losing all copies. Control files can be placed on a dedicated volume or shared with redo logs or data files, but avoid placing them on volumes tiered to object storage, such as archive volumes, as its slower access pattern is incompatible with control file performance needs.',
-        tags: [
+        categories: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
-    redologsPlacement: {
+    {
         parameter: 'redologs-placement',
-        name: 'redologs-placement',
+        id: 'redologs-placement',
+        name: 'Redo logs placement',
         recommended: 'separate-volume-or-shared-with-temp-control-files',
-        category: 'storage',
-        subCategory: 'layout',
+        type: 'storage',
+        subType: 'layout',
         focusWidgetName: 'Redo logs placement',
         severity: SEVERITY.WARNING,
         recommendation:
             'Placing redo logs, whether multiplexed or not, on a dedicated volume or shared with temp/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed redo log copy should reside on a separate volume for redundancy. Frequent changes make redo logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Redo logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storages slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency.',
-        tags: [
+        categories: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
-    templogsPlacement: {
+    {
         parameter: 'templogs-placement',
-        name: 'templogs-placement',
+        id: 'templogs-placement',
+        name: 'Temp placement',
         recommended: 'separate-volume-or-shared-with-redo-control-files',
-        category: 'storage',
-        subCategory: 'layout',
+        type: 'storage',
+        subType: 'layout',
         focusWidgetName: 'Temp placement',
         severity: SEVERITY.WARNING,
         recommendation:
             'Placing temp logs on a dedicated volume or shared with redo/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed temp log copy should reside on a separate volume for redundancy. Frequent changes make temp logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Temp logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storages slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency.',
-        tags: [
+        categories: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
-    oracleBinaryPlacement: {
+    {
         parameter: 'oracle-binary-placement',
-        name: 'oracle-binary-placement',
+        id: 'oracle-binary-placement',
+        name: 'Oracle binary placement',
         recommended: 'separate-volume',
-        category: 'storage',
-        subCategory: 'layout',
+        type: 'storage',
+        subType: 'layout',
         focusWidgetName: 'Oracle binary placement',
         severity: SEVERITY.WARNING,
         recommendation:
             'Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files. This separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.',
-        tags: [
+        categories: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
-    dataDiskLunLayout: {
+    {
         parameter: 'data-dg-lun-layout',
-        name: 'data-dg-lun-layout',
+        id: 'data-dg-lun-layout',
+        name: 'ASM data disk group LUNs',
         recommended: 'associated-lun-count',
-        category: 'storage',
-        subCategory: 'layout',
+        type: 'storage',
+        subType: 'layout',
         focusWidgetName: 'ASM data disk group LUNs',
         severity: SEVERITY.WARNING,
         recommendation:
             'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains data files will consist of at least 4-8 LUNs.',
-        tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        categories: [
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
     },
-    redoLogDiskLunLayout: {
+    {
         parameter: 'redolog-dg-lun-layout',
-        name: 'redolog-dg-lun-layout',
+        id: 'redolog-dg-lun-layout',
+        name: 'ASM logs disk group LUNs',
         recommended: 'associated-lun-count',
-        category: 'storage',
-        subCategory: 'layout',
+        type: 'storage',
+        subType: 'layout',
         focusWidgetName: 'ASM logs disk group LUNs',
         severity: SEVERITY.WARNING,
         recommendation:
             'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.',
-        tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        categories: [
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
     },
-    fraDiskLunLayout: {
+    {
         parameter: 'fra-dg-lun-layout',
-        name: 'fra-dg-lun-layout',
+        id: 'fra-dg-lun-layout',
+        name: 'ASM FRA disk group LUNs',
         recommended: 'associated-lun-count',
-        category: 'storage',
-        subCategory: 'layout',
+        type: 'storage',
+        subType: 'layout',
         focusWidgetName: 'ASM archive log disk group LUNs',
         severity: SEVERITY.WARNING,
         recommendation:
             'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.',
-        tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        categories: [
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
     },
-    archivelogDiskLunLayout: {
+    {
         parameter: 'archivelog-dg-lun-layout',
-        name: 'archivelog-dg-lun-layout',
+        id: 'archivelog-dg-lun-layout',
+        name: 'ASM archive log disk group LUNs',
         recommended: 'associated-lun-count',
-        category: 'storage',
-        subCategory: 'layout',
+        type: 'storage',
+        subType: 'layout',
         focusWidgetName: 'ASM archive log disk group LUNs',
         severity: SEVERITY.WARNING,
         recommendation:
             'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.',
-        tags: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        categories: [
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
     },
-    sizing: [
-        {
-            parameter: 'swap-space',
-            name: 'swap-space',
-            category: 'storage',
-            subCategory: 'sizing',
-            focusWidgetName: 'Swap space',
-            severity: SEVERITY.CRITICAL,
-            recommendation: `Swap space sizing recommendation Proper swap sizing ensures that the system can handle memory pressure gracefully, avoiding potential performance degradation or system crashes. Swap space should be sized relatively to RAM: 
-                - Between 1 GB and 2 GB: 1.5 times the size of the RAM 
-                - Between 2 GB and 16 GB: Equal to the size of the RAM 
-                - More than 16 GB: 16 GB`,
-            tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-            resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
-        },
-        {
-            parameter: 'headroom',
-            name: 'headroom',
-            category: 'storage',
-            subCategory: 'sizing',
-            focusWidgetName: 'File system headroom',
-            severity: SEVERITY.CRITICAL,
-            recommendation: `File system headroom recommendation to optimize storage performance, provision file system capacity as 1.2 times of total size of provisioned volume. File system headroom percentages are as follows: Under-provisioned: <${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.ORACLE}%; Optimized: ${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.ORACLE}%-50%; Over-provisioned: >50%`,
-            tags: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-            resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
-        }
-    ],
-    resiliency: {
-        snapcenterSnapshot: {
-            name: 'snapcenter-snapshot',
-            tags: [AwsWellArchitecturedPillars.RELIABILITY],
-            category: 'resiliency',
-            subCategory: 'protection',
-            focusWidgetName: 'Application-consistent snapshots',
-            severity: SEVERITY.WARNING,
-            recommended: AssessmentStatus.OPTIMIZED,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-            recommendation:
-                'Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.'
-        },
-        crr: {
-            tags: [AwsWellArchitecturedPillars.RELIABILITY],
-            category: 'resiliency',
-            subCategory: 'resiliency',
-            focusWidgetName: 'Cross-Region Replication (CRR)',
-            severity: SEVERITY.WARNING,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-            recommendation:
-                'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.'
-        },
-        awsBackup: {
-            name: 'backup-configuration',
-            tags: [AwsWellArchitecturedPillars.RELIABILITY],
-            category: 'resiliency',
-            subCategory: 'resiliency',
-            focusWidgetName: 'Backup Configuration',
-            severity: SEVERITY.WARNING,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-            recommendation:
-                'Backup Configuration recommendation: Enable FSx Backup or AWS Backup for Oracle database volumes to support data retention and compliance. If using both, consider removing redundant backups manually.'
-        }
+
+    // ── sizing ───────────────────────────────────────────────────────────────
+    {
+        parameter: 'swap-space',
+        id: 'swap-space',
+        name: 'Swap space',
+        type: 'storage',
+        subType: 'sizing',
+        focusWidgetName: 'Swap space',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Proper swap sizing ensures that the system can handle memory pressure gracefully, avoiding potential performance degradation or system crashes.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
     },
-    hostOsPatch: {
-        name: 'host-os-patch',
-        tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-        category: 'compute',
-        subCategory: 'compute',
+    {
+        parameter: 'headroom',
+        id: 'headroom',
+        name: 'File system headroom',
+        type: 'storage',
+        subType: 'sizing',
+        focusWidgetName: 'File system headroom',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'To optimize storage performance, provision file system capacity as 1.2 times of total size of provisioned volume.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
+    },
+
+    // ── resiliency ───────────────────────────────────────────────────────────
+    {
+        id: 'snapcenter-snapshot',
+        name: 'Application-consistent snapshots',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        type: 'resiliency',
+        subType: 'protection',
+        focusWidgetName: 'Application-consistent snapshots',
+        severity: SEVERITY.WARNING,
+        recommended: AssessmentStatus.OPTIMIZED,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        recommendation:
+            'Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.'
+    },
+    {
+        id: 'crr',
+        name: 'Cross-Region Replication (CRR)',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        type: 'resiliency',
+        subType: 'resiliency',
+        focusWidgetName: 'Cross-Region Replication (CRR)',
+        severity: SEVERITY.WARNING,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        recommendation:
+            'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.'
+    },
+    {
+        id: 'backup-configuration',
+        name: 'Backup configuration',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        type: 'resiliency',
+        subType: 'resiliency',
+        focusWidgetName: 'Backup Configuration',
+        severity: SEVERITY.WARNING,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        recommendation:
+            'Backup Configuration recommendation: Enable FSx Backup or AWS Backup for Oracle database volumes to support data retention and compliance. If using both, consider removing redundant backups manually.'
+    },
+
+    // ── compute ──────────────────────────────────────────────────────────────
+    {
+        id: 'host-os-patch',
+        name: 'Operating system patch',
+        categories: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
+        type: 'compute',
+        subType: 'compute',
         focusWidgetName: 'Operating system patch',
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
         recommendation:
             'Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.'
     },
-    oracleSecurityPatch: {
-        name: 'oracle-security-patch',
-        tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-        category: 'compute',
-        subCategory: 'compute',
+    {
+        id: 'oracle-security-patch',
+        name: 'Oracle critical security patch',
+        categories: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
+        type: 'compute',
+        subType: 'compute',
         focusWidgetName: 'Oracle security patch',
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
         recommendation:
             'Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.'
     },
-    cloneManagement: {
-        name: 'clone-management',
-        tags: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
+
+    // ── cloning ──────────────────────────────────────────────────────────────
+    {
+        id: 'clone-management',
+        name: 'Clone cleanup',
+        type: 'cloning',
+        subType: 'cloning',
+        categories: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
         recommendation:
             'Old clones can incur significant costs. Consider deleting these clones to optimize your storage expenses.'
     }
-};
+];
 
-export default GOLDEN_CONFIG;
+export default ORACLE_GOLDEN_CONFIG;

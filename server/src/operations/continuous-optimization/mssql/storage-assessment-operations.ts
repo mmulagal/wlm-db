@@ -4,15 +4,21 @@ import { countBy, isEmpty, isNull } from 'lodash-es';
 import {
     AssessmentCategories,
     AssessmentStatus,
-    AwsWellArchitecturedPillars,
     ASSESSMENT_RESOURCE_TYPE,
     VALID_MPIO_LB_POLICIES,
     MIN_OPTIMIZED_HEADROOM_PERCENTAGE
 } from '../../../utils/continous-optimization-consts';
 import getLogger from '../../../utils/logger';
 
-import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
-import storageGoldenConfigData from './golden-config';
+import {
+    AssessmentErrorItemType,
+    GenericViolationResponseType
+} from '../../../routes/types/continuous-optimization.types';
+import type {
+    MssqlAssessmentItemType,
+    SizingViolationResponseType
+} from '../../../routes/types/mssql-continuous-optimisation.types';
+import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 import {
     LogDriveDetails,
     StorageAssessment,
@@ -32,10 +38,6 @@ import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from '../../workloads/mssql/storage-scripts';
 import { collectSnapshotCopyData } from './resilience-assessment-operation';
-import {
-    SizingViolationResponseType,
-    StorageParameterDriftResponseType
-} from '../../../routes/types/mssql-continuous-optimisation.types';
 import { checkForMissingOptimizePermissions } from '../assessment-utils';
 import { getHeadroomDrift } from '../headroom-assessment';
 
@@ -69,11 +71,18 @@ interface DatabaseVolumeRecord {
     databaseDetails?: Array<DatabaseRecord>;
 }
 
-const volumeConfigData = storageGoldenConfigData.configuration.volume;
-const lunConfigData = storageGoldenConfigData.configuration.lun;
-const osConfigData = storageGoldenConfigData.configuration.os;
-const layoutConfigData = storageGoldenConfigData.layout;
-const sizingConfigData = storageGoldenConfigData.sizing;
+const volumeConfigData = MSSQL_GOLDEN_CONFIG.filter(
+    e => e.type === 'storage' && e.subType === 'configuration' && e.resourceType === 'Volume'
+);
+const lunConfigData = MSSQL_GOLDEN_CONFIG.filter(
+    e => e.type === 'storage' && e.subType === 'configuration' && e.resourceType === 'Lun'
+);
+const osConfigData = MSSQL_GOLDEN_CONFIG.filter(
+    e =>
+        e.type === 'storage' && e.subType === 'configuration' && e.resourceType !== 'Volume' && e.resourceType !== 'Lun'
+);
+const layoutConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'layout');
+const sizingConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'sizing');
 
 async function initiateStorageAssessmentCollection(
     accountId: string,
@@ -475,21 +484,20 @@ async function calculateStorageDrift(
 
     if (isEmpty(storageAssessmentData)) {
         const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
-        return { errorMessage };
+        return [...volumeConfigData, ...lunConfigData, ...osConfigData, ...layoutConfigData, ...sizingConfigData].map(
+            config => ({ ...config, errorMessage })
+        );
     }
 
-    const driftAssessmentData: StorageParameterDriftResponseType = {
-        configuration: { volumes: [], luns: [], os: [] },
-        sizing: [],
-        layout: [],
-        fileSystems: []
-    };
+    const driftAssessmentData: (MssqlAssessmentItemType | AssessmentErrorItemType)[] = [];
 
     const { volumes, luns, os, layout, sizing, filesystemId, errors } =
         storageAssessmentData as unknown as StorageAssessment;
 
     if (errors && errors.volumes) {
-        driftAssessmentData.configuration.volumes.push({ errorMessage: errors.volumes });
+        volumeConfigData.forEach(config => {
+            driftAssessmentData.push({ ...config, errorMessage: errors.volumes });
+        });
     } else {
         volumeConfigData.forEach(config => {
             let overallStatus = AssessmentStatus.OPTIMIZED;
@@ -516,23 +524,21 @@ async function calculateStorageDrift(
                 });
             });
 
-            driftAssessmentData.configuration.volumes.push({
-                name: config.parameter,
-                recommended: config.value.toString(),
+            driftAssessmentData.push({
+                ...config,
+                recommended: (config.value ?? '').toString(),
                 status: overallStatus,
                 objectsInViolation,
-                severity: config.severity,
-                recommendation: config.recommendation,
-                tags: config.tags,
                 totalObjectsAssessed: volumes.length,
                 totalObjectsInViolation: objectsInViolation.length,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
                 violationDetails
             });
         });
     }
     if (errors && errors.luns) {
-        driftAssessmentData.configuration.luns.push({ errorMessage: errors.luns });
+        lunConfigData.forEach(config => {
+            driftAssessmentData.push({ ...config, errorMessage: errors.luns });
+        });
     } else {
         lunConfigData.forEach(config => {
             let overallStatus = AssessmentStatus.OPTIMIZED;
@@ -560,14 +566,11 @@ async function calculateStorageDrift(
                 });
             });
 
-            driftAssessmentData.configuration.luns.push({
-                name: config.parameter,
-                recommended: config.value.toString(),
+            driftAssessmentData.push({
+                ...config,
+                recommended: (config.value ?? '').toString(),
                 status: overallStatus,
                 objectsInViolation: [...new Set(objectsInViolation)],
-                severity: config.severity,
-                recommendation: config.recommendation,
-                tags: config.tags,
                 totalObjectsAssessed: luns.length,
                 totalObjectsInViolation: objectsInViolation.length,
                 resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
@@ -576,7 +579,9 @@ async function calculateStorageDrift(
         });
     }
     if (errors && errors['mpio-policy']) {
-        driftAssessmentData.configuration.os.push({ name: 'mpio-policy', errorMessage: errors['mpio-policy'] });
+        osConfigData.forEach(config => {
+            driftAssessmentData.push({ ...config, errorMessage: errors['mpio-policy'] });
+        });
     }
 
     let assessmentDetails = [];
@@ -628,17 +633,14 @@ async function calculateStorageDrift(
                 value = Number(value);
             }
             const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
-            driftAssessmentData.configuration.os.push({
+            driftAssessmentData.push({
+                ...goldenData,
                 name: key,
-                recommended: goldenData.value.toString(),
+                recommended: (goldenData.value ?? '').toString(),
                 status,
-                severity: goldenData.severity,
-                recommendation: goldenData.recommendation,
-                tags: goldenData.tags,
                 violationDetails: objectsInViolation,
                 totalObjectsAssessed: assessmentDetails.length,
-                totalObjectsInViolation: objectsInViolation.length,
-                resourceType: goldenData.resourceType
+                totalObjectsInViolation: objectsInViolation.length
             });
         }
     });
@@ -646,11 +648,9 @@ async function calculateStorageDrift(
     // Complete layout and sizing assessment failure
     let userDatabaseLayoutAssessment = { data: [], log: [], tempDb: [] };
     if (errors && errors.layout) {
-        driftAssessmentData.layout.push(
-            { name: 'data-files-location', errorMessage: errors.layout },
-            { name: 'log-files-location', errorMessage: errors.layout },
-            { name: 'tempdb-files-location', errorMessage: errors.layout }
-        );
+        layoutConfigData.forEach(config => {
+            driftAssessmentData.push({ ...config, errorMessage: errors.layout });
+        });
     } else {
         let tempdbFilesLocationAssessment;
         Object.entries(layout).forEach(([key, value]) => {
@@ -661,12 +661,9 @@ async function calculateStorageDrift(
             }
         });
 
-        let goldenData = layoutConfigData.find(data => data.parameter === 'tempdb-files-location');
+        let goldenData = layoutConfigData.find(data => data.id === 'tempdb-files-location');
         if (errors && !isEmpty(errors['tempdb-files-location'])) {
-            driftAssessmentData.layout.push({
-                name: 'tempdb-files-location',
-                errorMessage: errors['tempdb-files-location']
-            });
+            driftAssessmentData.push({ ...goldenData!, errorMessage: errors['tempdb-files-location'] });
         } else if (!isEmpty(goldenData)) {
             const status =
                 goldenData?.value === tempdbFilesLocationAssessment
@@ -687,18 +684,14 @@ async function calculateStorageDrift(
                           }
                       ]
                     : [];
-            driftAssessmentData.layout.push({
-                name: 'tempdb-files-location',
-                recommended: goldenData.value.toString(),
+            driftAssessmentData.push({
+                ...goldenData,
+                recommended: (goldenData.value ?? '').toString(),
                 status,
-                severity: goldenData.severity,
-                recommendation: goldenData.recommendation,
-                tags: goldenData.tags,
                 current: status === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
                 objectsInViolation: status === AssessmentStatus.OPTIMIZED ? [] : ['tempdb'],
                 totalObjectsAssessed: 1,
                 totalObjectsInViolation: status === AssessmentStatus.OPTIMIZED ? 0 : 1,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
                 violationDetails: tempdbViolationDetails.length > 0 ? tempdbViolationDetails : undefined
             });
         }
@@ -851,40 +844,31 @@ async function calculateStorageDrift(
             };
         });
 
-        driftAssessmentData.layout.push(
+        const dataFilesGoldenData = layoutConfigData.find(data => data.parameter === 'default-data-files-location');
+        const logFilesGoldenData = layoutConfigData.find(data => data.parameter === 'default-log-files-location');
+        driftAssessmentData.push(
             {
-                name: 'data-files-location',
+                ...dataFilesGoldenData!,
                 recommended,
                 status: dataFilesLayoutStatus,
                 severity,
                 recommendation: recommendationString,
-                tags: [
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ],
                 current: dataFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
                 objectsInViolation: databasesInViolation,
                 totalObjectsAssessed: dataLogVolumeDetails.length,
                 totalObjectsInViolation: databasesInViolation.length,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
                 violationDetails: dataViolationDetails.length > 0 ? dataViolationDetails : undefined
             },
-
             {
-                name: 'log-files-location',
+                ...logFilesGoldenData!,
                 recommended,
                 status: logFilesLayoutStatus,
                 severity,
                 recommendation: recommendationString,
-                tags: [
-                    AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
-                    AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
-                ],
                 current: logFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
                 objectsInViolation: databasesInViolation,
                 totalObjectsAssessed: dataLogVolumeDetails.length,
                 totalObjectsInViolation: databasesInViolation.length,
-                resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
                 violationDetails: logViolationDetails.length > 0 ? logViolationDetails : undefined
             }
         );
@@ -901,17 +885,15 @@ async function calculateStorageDrift(
 
     if (errors && (errors.sizing || errors['volumes-footprint'])) {
         const errorMessage = errors.sizing || errors['volumes-footprint'];
-        driftAssessmentData.sizing.push(
-            { name: 'performance-tier', errorMessage },
-            { name: 'tempdb-drive-size', errorMessage },
-            { name: 'log-drive-size', errorMessage }
-        );
+        sizingConfigData.forEach(config => {
+            driftAssessmentData.push({ ...config, errorMessage });
+        });
     } else {
         if (errors && !isEmpty(errors['data-tempdb-drive-details'])) {
-            driftAssessmentData.sizing.push({
-                name: 'tempdb-drive-size',
-                errorMessage: errors['data-tempdb-drive-details']
-            });
+            const tempdbSizingConfig = sizingConfigData.find(c => c.parameter === 'tempdb-drive-size');
+            if (tempdbSizingConfig) {
+                driftAssessmentData.push({ ...tempdbSizingConfig, errorMessage: errors['data-tempdb-drive-details'] });
+            }
         }
 
         for (let [key, value] of Object.entries(sizing)) {
@@ -1035,13 +1017,11 @@ async function calculateStorageDrift(
                         ? undefined
                         : { overProvisionedDrives, underProvisionedDrives, ignoredDrives };
                 const tierViolations = key === 'performance-tier' ? storageTierViolations : undefined;
-                driftAssessmentData.sizing.push({
+                driftAssessmentData.push({
+                    ...goldenData,
                     name: key,
-                    recommended: goldenData.value.toString(),
+                    recommended: (goldenData.value ?? '').toString(),
                     status,
-                    severity: goldenData.severity,
-                    recommendation: goldenData.recommendation,
-                    tags: goldenData.tags,
                     sizingViolations,
                     missingPermissions,
                     current: currentSizeRange,
@@ -1057,7 +1037,7 @@ async function calculateStorageDrift(
     // Headroom drift assessment
 
     try {
-        const goldenData = sizingConfigData.find(data => data.parameter === 'headroom');
+        const [goldenData] = sizingConfigData.filter(data => data.parameter === 'headroom');
         const { status, headroomPercent, missingPermissions, newFsxStorageCapacityGiB } = await getHeadroomDrift(
             credentialsId,
             region,
@@ -1066,17 +1046,13 @@ async function calculateStorageDrift(
             accountId
         );
 
-        driftAssessmentData.sizing.push({
-            name: 'headroom',
+        driftAssessmentData.push({
+            ...goldenData,
             recommended: `${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.MSSQL}%`,
             status,
-            severity: goldenData!.severity,
-            recommendation: goldenData!.recommendation,
-            tags: goldenData!.tags,
             missingPermissions,
             recommendedSizeInGib: newFsxStorageCapacityGiB ? Math.ceil(newFsxStorageCapacityGiB) : 0,
-            current: `${headroomPercent}%`,
-            resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
+            current: `${headroomPercent}%`
         });
     } catch (error: any) {
         logger.error(
@@ -1084,9 +1060,6 @@ async function calculateStorageDrift(
             error
         );
     }
-
-    // Add file system id to the response
-    driftAssessmentData.fileSystems.push(filesystemId);
 
     return driftAssessmentData;
 }

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { AssessmentStatus } from '../../../../src/utils/continous-optimization-consts';
-import type { OracleGenericParameterDriftResponseType } from '../../../../src/routes/types/oracle-continuous-optimization.types';
 import {
     calculateSnapCenterDrift,
     SnapcenterAssessmentData
 } from '../../../../src/operations/continuous-optimization/oracle/snapcenter-assessment-operations';
+import { AssessmentItemType } from '../../../../src/routes/types/continuous-optimization.types';
 
 const BASE_ASSESSMENT_DATA: SnapcenterAssessmentData = {
     isDataguardPrimary: false,
@@ -23,10 +23,16 @@ const BASE_VOLUME_IDS = {
 };
 
 function assertSuccessfulDrift(
-    drift: OracleGenericParameterDriftResponseType | { errorMessage: string } | undefined
-): asserts drift is OracleGenericParameterDriftResponseType {
+    drift: AssessmentItemType | { errorMessage: string } | undefined
+): asserts drift is AssessmentItemType & {
+    status: AssessmentStatus;
+    totalObjectsAssessed?: number;
+    totalObjectsInViolation?: number;
+    objectsInViolation?: unknown[];
+} {
     expect(drift).toBeDefined();
     expect(drift && 'errorMessage' in drift).toBe(false);
+    expect(drift && 'status' in drift).toBe(true);
 }
 
 describe('calculateSnapCenterDrift', () => {

@@ -123,22 +123,30 @@ describe('fetchOracleOfflineAssessment', () => {
         );
 
         expect(response).toBeDefined();
-        expect(response.storageProtocol).toBe('iSCSI');
-        expect(response.fileSystemId).toBe(fsxId);
+        expect(response.metadata.storageProtocol).toBe('iSCSI');
+        expect(response.metadata.fileSystemId).toBe(fsxId);
 
-        const thp = response.transparentHugepages as OracleGenericParameterDriftResponseType;
+        const thp = response.assessments.find(
+            i => i.id === 'transparent-hugepages'
+        ) as OracleGenericParameterDriftResponseType;
         expect(thp).toBeDefined();
         expect(thp.recommended).toBe('disabled');
 
-        const tcp = response.tcpAdvancedOptions as OracleGenericParameterDriftResponseType;
+        const tcp = response.assessments.find(
+            i => i.id === 'tcp-advanced-options'
+        ) as OracleGenericParameterDriftResponseType;
         expect(tcp).toBeDefined();
         expect(tcp.recommended).toBe('enabled');
 
-        const filesystemIo = response.filesystemsIoOptions as OracleGenericParameterDriftResponseType;
+        const filesystemIo = response.assessments.find(
+            i => i.id === 'filesystems-io-options'
+        ) as OracleGenericParameterDriftResponseType;
         expect(filesystemIo).toBeDefined();
         expect(filesystemIo.recommended).toBe('setall');
 
-        const multiblock = response.multiblockReadcount as OracleGenericParameterDriftResponseType;
+        const multiblock = response.assessments.find(
+            i => i.id === 'multiblock-readcount'
+        ) as OracleGenericParameterDriftResponseType;
         expect(multiblock).toBeDefined();
         expect(multiblock.recommended).toBe('disabled');
     });
@@ -153,11 +161,11 @@ describe('fetchOracleOfflineAssessment', () => {
         );
 
         expect(response).toBeDefined();
-        expect(response.storageProtocol).toBe('NFS');
-        expect(response.transparentHugepages).toBeUndefined();
-        expect(response.tcpAdvancedOptions).toBeUndefined();
-        expect(response.filesystemsIoOptions).toBeUndefined();
-        expect(response.multiblockReadcount).toBeUndefined();
+        expect(response.metadata.storageProtocol).toBe('NFS');
+        expect(response.assessments.find(i => i.id === 'transparent-hugepages')).toBeUndefined();
+        expect(response.assessments.find(i => i.id === 'tcp-advanced-options')).toBeUndefined();
+        expect(response.assessments.find(i => i.id === 'filesystems-io-options')).toBeUndefined();
+        expect(response.assessments.find(i => i.id === 'multiblock-readcount')).toBeUndefined();
     });
 
     it('should include snapcenterSnapshot drift when rawdata.snapcenter is present', async () => {
@@ -202,8 +210,10 @@ describe('fetchOracleOfflineAssessment', () => {
             DEFAULT_AWS_REGION
         );
 
-        expect(response.snapcenterSnapshot).toBeDefined();
-        const snapcenter = response.snapcenterSnapshot as OracleGenericParameterDriftResponseType;
+        const snapcenter = response.assessments.find(
+            a => a.type === 'resiliency'
+        ) as OracleGenericParameterDriftResponseType;
+        expect(snapcenter).toBeDefined();
         expect(snapcenter.name).toBeDefined();
         expect(snapcenter.status).toBe('not-optimized');
         expect(snapcenter.totalObjectsInViolation).toBe(1);
@@ -242,6 +252,6 @@ describe('fetchOracleOfflineAssessment', () => {
             DEFAULT_AWS_REGION
         );
 
-        expect(response.snapcenterSnapshot).toBeUndefined();
+        expect(response.assessments.find(a => a.type === 'resiliency')).toBeUndefined();
     });
 });

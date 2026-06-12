@@ -10,12 +10,12 @@ import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
 import { getResourceNameFromTags, sqlResponseParsing } from '../../../utils/utils';
 import {
-    HostOsPatchDriftResponseType,
-    HostOsPatchScanResponseType
+    HostOsPatchScanResponseType,
+    OracleAssessmentItemType
 } from '../../../routes/types/oracle-continuous-optimization.types';
-import { ErrorResponseType } from '../../../routes/types/continuous-optimization.types';
+import type { AssessmentErrorItemType, ErrorResponseType } from '../../../routes/types/continuous-optimization.types';
 import { checkLinuxRepoConnectivityScript } from './ssm-scripts/host-assessment-scripts';
-import GOLDEN_CONFIG from './golden-config';
+import ORACLE_GOLDEN_CONFIG from './golden-config';
 import { checkIfPatchBaselineInProgress, updatePatchBaselineStatusForHost } from '../assessment-utils';
 
 const logger = getLogger();
@@ -80,19 +80,18 @@ function calculateHostOsPatchDrift(
     region: string,
     databaseHostId: string,
     assessmentData: ResourceAssessmentData
-): HostOsPatchDriftResponseType | { errorMessage: string } {
+): OracleAssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculating Host OS patch drift for Oracle', { accountId, credentialsId, region, databaseHostId });
-
-    let errorMessage = '';
+    const [goldenConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'host-os-patch');
 
     try {
         const { hostOsPatch, errors } = assessmentData;
         if (isEmpty(hostOsPatch)) {
-            errorMessage = errors?.hostOsPatch
+            const errorMessage = errors?.hostOsPatch
                 ? errors?.hostOsPatch
                 : GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategoriesOracle.HOST_OS_PATCH);
             logger.error({ errorMessage });
-            return { errorMessage };
+            return { ...goldenConfig, errorMessage };
         }
 
         const hostOsPatchAssessment = hostOsPatch as HostOsPatchAssessmentObject[];
@@ -130,17 +129,17 @@ function calculateHostOsPatchDrift(
         );
 
         return {
-            ...GOLDEN_CONFIG.hostOsPatch,
+            ...goldenConfig,
             status: findingValue,
             recommended: AssessmentStatus.OPTIMIZED,
             objectsInViolation: ec2InstancesToPatch?.map(({ ec2InstanceId }) => ec2InstanceId),
             ec2InstancesToPatch: mappedEc2InstancesToPatch
         };
     } catch (error) {
-        errorMessage = `Error while calculating host os patch drift for Oracle. ${error}`;
+        const errorMessage = `Error while calculating host os patch drift for Oracle. ${error}`;
         logger.error({ errorMessage });
+        return { ...goldenConfig, errorMessage };
     }
-    return { errorMessage };
 }
 
 async function runLinuxOsPatchAssessment(

@@ -398,8 +398,8 @@ describe('MSSQL Offline Assessment Operations', () => {
             const result = await fetchMssqlOfflineAssessment(ACCOUNT_ID, 'fetch-test-resource', 'fetch-test-instance');
 
             expect(result).toBeDefined();
-            expect(result.databaseHostName).toBe('fetch-test-host');
-            expect(result.storageEndpoint).toBe('fs-fetch-test');
+            expect(result.metadata.databaseHostName).toBe('fetch-test-host');
+            expect(result.metadata.storageEndpoint).toBe('fs-fetch-test');
         });
 
         it('should persist computed assessment_results to DB when record has empty assessment_results (lazy backfill)', async () => {
@@ -476,11 +476,7 @@ describe('MSSQL Offline Assessment Operations', () => {
             );
 
             expect(result).toBeDefined();
-            expect(result.storage).toBeDefined();
-            const storage = result.storage as any;
-            expect(storage?.sizing).toBeDefined();
-
-            const headroomAssessment = storage?.sizing?.find((s: any) => s.name === 'headroom');
+            const headroomAssessment = result.assessments.find(a => a.id === 'headroom') as any;
             expect(headroomAssessment).toBeDefined();
             expect(headroomAssessment?.status).toBe(AssessmentStatus.UNDER_PROVISIONED);
             expect(headroomAssessment?.current).toBe('25%');
@@ -496,11 +492,7 @@ describe('MSSQL Offline Assessment Operations', () => {
             );
 
             expect(result).toBeDefined();
-            expect(result.storage).toBeDefined();
-            const storage = result.storage as any;
-            expect(storage?.sizing).toBeDefined();
-
-            const headroomAssessment = storage?.sizing?.find((s: any) => s.name === 'headroom');
+            const headroomAssessment = result.assessments.find(a => a.id === 'headroom') as any;
             expect(headroomAssessment).toBeDefined();
             expect(headroomAssessment?.status).toBe(AssessmentStatus.OPTIMIZED);
             expect(headroomAssessment?.current).toBe('40%');
@@ -515,11 +507,7 @@ describe('MSSQL Offline Assessment Operations', () => {
             );
 
             expect(result).toBeDefined();
-            expect(result.storage).toBeDefined();
-            const storage = result.storage as any;
-            expect(storage?.sizing).toBeDefined();
-
-            const headroomAssessment = storage?.sizing?.find((s: any) => s.name === 'headroom');
+            const headroomAssessment = result.assessments.find(a => a.id === 'headroom') as any;
             expect(headroomAssessment).toBeDefined();
             expect(headroomAssessment?.status).toBe(AssessmentStatus.OVER_PROVISIONED);
             expect(headroomAssessment?.current).toBe('70%');
@@ -573,9 +561,9 @@ describe('MSSQL Offline Assessment Operations', () => {
             ]);
 
             const result = await fetchMssqlOfflineAssessment(ACCOUNT_ID, resourceId, instanceId);
-            expect(result.clone).toBeDefined();
-            const clone = result.clone as any;
-            expect(clone.name).toBe('clone-management');
+            const clone = result.assessments.find(a => a.id === 'clone-management') as any;
+            expect(clone).toBeDefined();
+            expect(clone.id).toBe('clone-management');
             expect(clone.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(clone.totalObjectsInViolation).toBe(1);
             expect(clone.objectsInViolation).toEqual(['wad_clone_vol_old']);
@@ -637,8 +625,8 @@ describe('MSSQL Offline Assessment Operations', () => {
             // snapshotPolicy is populated either with a drift response (when getInstanceInfo
             // can resolve under IS_DEMO_FLOW) or an error envelope. Either way it proves the
             // wiring; we just assert the field is present and shaped like a GenericAssessmentResponse.
-            expect(result.snapshotPolicy).toBeDefined();
-            const snapshotPolicy = result.snapshotPolicy as Record<string, unknown>;
+            const snapshotPolicy = result.assessments.find(a => a.type === 'resiliency') as Record<string, unknown>;
+            expect(snapshotPolicy).toBeDefined();
             expect('name' in snapshotPolicy || 'errorMessage' in snapshotPolicy).toBe(true);
         });
     });

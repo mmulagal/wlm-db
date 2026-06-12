@@ -5,7 +5,11 @@ import { CommandFilterKey } from '@aws-sdk/client-ssm';
 import { getJobs, registerJob } from '../database/job-operations';
 import { getServerNameWithHostname, getTimeDifferenceInMinutes } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
-import { AssessmentCategoriesOracle, AssessmentStatus } from '../../utils/continous-optimization-consts';
+import {
+    AssessmentCategoriesOracle,
+    AssessmentStatus,
+    AwsWellArchitecturedPillars
+} from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import type {
     DatabaseInstance,
@@ -24,8 +28,34 @@ import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { listSsmCommands } from '../../lib/aws/ssm';
 import { listResources } from '../../lib/database/db';
 import { RESOURCE_DEFAULT_SELECT_FIELDS } from '../../utils/database-consts';
+import type {
+    AssessmentItemType,
+    AssessmentErrorItemType,
+    AssessmentMetadataType,
+    DismissedConfigurationType,
+    DismissedConfigurationsResponseType
+} from '../../routes/types/continuous-optimization.types';
+import { MSSQL_GOLDEN_CONFIG } from './mssql/golden-config';
+import ORACLE_GOLDEN_CONFIG from './oracle/golden-config';
 
 const logger = getLogger();
+
+interface GoldenConfigEntry {
+    id: string;
+    name: string;
+    parameter?: string;
+    type: string;
+    subType: string;
+    severity: string;
+    recommendation: string;
+    categories: AwsWellArchitecturedPillars[];
+    resourceType?: string;
+    focusWidgetName?: string;
+    value?: string | number | boolean;
+    recommended?: string;
+    status?: string;
+    applicableTo?: 'iscsi' | 'nfs';
+}
 
 interface UnOptimizedDiskGroups {
     diskGroupName: string;
@@ -311,6 +341,231 @@ function isPdbGroupedVolumes(isCDB: boolean, ontapVolumes: OracleMappedOntapVolu
     return isCDB && values.length > 0 && !Array.isArray(values[0]);
 }
 
+// Built once at module load; covers both MSSQL and Oracle configs.
+const GOLDEN_CONFIG_LOOKUP = {
+    [DatabaseTypes.MS_SQL_SERVER]: new Map(MSSQL_GOLDEN_CONFIG.map(entry => [entry.id, entry])),
+    [DatabaseTypes.ORACLE]: new Map(ORACLE_GOLDEN_CONFIG.map(entry => [entry.id, entry]))
+};
+
+function enrichWithGoldenConfig(
+    entry: DismissedConfigurationType,
+    databaseType: DatabaseTypes
+): DismissedConfigurationType {
+    const match = GOLDEN_CONFIG_LOOKUP[databaseType as keyof typeof GOLDEN_CONFIG_LOOKUP]?.get(entry.configurationName);
+    if (!match) {
+        logger.error('No golden config found for the dismiss configuration name:', entry.configurationName);
+        return entry;
+    }
+    return {
+        ...entry,
+        id: match.id,
+        name: match.name,
+        type: match.type,
+        subType: match.subType,
+        severity: match.severity,
+        recommendation: match.recommendation,
+        categories: match.categories
+    };
+}
+
+function buildDismissedConfigurations(
+    dismissed: DismissedConfigurationsResponseType | undefined,
+    databaseType: DatabaseTypes
+): DismissedConfigurationType[] {
+    if (!dismissed) {
+        return [];
+    }
+    const items: DismissedConfigurationType[] = [];
+
+    const { storage, highAvailability, ...singleAreas } = dismissed;
+    const { volumes = [], luns = [], os = [] } = storage?.configuration ?? {};
+
+    for (const entry of [...volumes, ...luns, ...os, ...(storage?.sizing ?? []), ...(storage?.layout ?? [])]) {
+        items.push(enrichWithGoldenConfig(entry as DismissedConfigurationType, databaseType));
+    }
+    for (const entry of highAvailability ?? []) {
+        if (entry) {
+            items.push(enrichWithGoldenConfig(entry as DismissedConfigurationType, databaseType));
+        }
+    }
+    for (const [, value] of Object.entries(singleAreas)) {
+        if (value) {
+            items.push(enrichWithGoldenConfig(value as DismissedConfigurationType, databaseType));
+        }
+    }
+
+    return items;
+}
+
+interface MapAssessmentToV1Config {
+    /**
+     * Selects and shapes the metadata fields that become the v1 top-level response properties.
+     * DB-specific: MSSQL spreads all metadata fields; Oracle picks a specific subset.
+     */
+    metadataSelector: (metadata: AssessmentMetadataType) => Record<string, unknown>;
+    /** Lookup map that classifies storage assessment ids into luns vs os buckets. */
+    storageConfigMap: { luns: string[]; os: string[] };
+    /**
+     * Optional id-based sizing/layout classification (in addition to subType checks).
+     * Used by Oracle; omit for MSSQL.
+     */
+    storageSizingLayoutMap?: { sizing: string[]; layout: string[] };
+    /** Maps assessment `id` to the v1 top-level response key for single-item areas. */
+    singleKeyById: Record<string, string>;
+    /** Maps dismissed `configurationName` to the v1 dismissedConfigurations key. */
+    dismissSingleKeyByName: Record<string, string>;
+    /** When true, collects a `highAvailability` bucket. Currently only MSSQL. */
+    supportsHighAvailability?: boolean;
+    /**
+     * Returns extra fields merged into the `storage` object (e.g., MSSQL `fileSystems`).
+     * Evaluated lazily from metadata so configs remain static constants.
+     */
+    storageExtraSelector?: (metadata: AssessmentMetadataType) => Record<string, unknown>;
+    /** Validates the assembled v1 response; returns `{ isValid, errors }`. */
+    validate: (response: unknown) => { isValid: boolean; errors: unknown };
+    /** Database label used in validation error log messages (e.g., 'MSSQL', 'Oracle'). */
+    dbLabel: string;
+}
+
+/**
+ * Maps a v2 flat assessment response back into the nested v1 shape.
+ *
+ * v2 renamed `name`→`id` and `tags`→`categories`, flattened storage sub-groups into a single
+ * `assessments[]`, and lifted identity/timing fields into `metadata`. This function reverses all of
+ * those changes in a DB-agnostic way; DB-specific behaviour is supplied via `config`.
+ *
+ * Returns `{}` when schema validation fails.
+ */
+function mapAssessmentToV1(
+    v2Response: {
+        assessments: (AssessmentItemType | AssessmentErrorItemType)[];
+        dismissedConfigurations: DismissedConfigurationType[];
+        metadata: AssessmentMetadataType;
+    },
+    config: MapAssessmentToV1Config
+): Record<string, unknown> {
+    const { assessments, dismissedConfigurations, metadata } = v2Response;
+    const {
+        metadataSelector,
+        storageConfigMap,
+        storageSizingLayoutMap,
+        singleKeyById,
+        dismissSingleKeyByName,
+        supportsHighAvailability = false,
+        storageExtraSelector,
+        validate,
+        dbLabel
+    } = config;
+
+    const response: Record<string, unknown> = { ...metadataSelector(metadata) };
+    const storageConfiguration: { volumes: unknown[]; luns: unknown[]; os: unknown[] } = {
+        volumes: [],
+        luns: [],
+        os: []
+    };
+    const storageSizing: unknown[] = [];
+    const storageLayout: unknown[] = [];
+    const highAvailability: unknown[] = [];
+    let hasStorage = false;
+
+    for (const item of assessments) {
+        const { id, type, subType } = item;
+        // v1 keys the item by `name` (v2 renamed it to `id`) and exposes the pillars as `tags` (v2 `categories`).
+        // Fastify's response serializer will exclude `id` and `categories` based on the schema definition.
+        const v1Item = { ...item, name: item.id, tags: item.categories };
+
+        if (type === 'storage') {
+            hasStorage = true;
+            if (subType === 'sizing' || storageSizingLayoutMap?.sizing.includes(id)) {
+                storageSizing.push(v1Item);
+            } else if (subType === 'layout' || storageSizingLayoutMap?.layout.includes(id)) {
+                storageLayout.push(v1Item);
+            } else if (storageConfigMap.luns.includes(id)) {
+                storageConfiguration.luns.push(v1Item);
+            } else if (storageConfigMap.os.includes(id)) {
+                storageConfiguration.os.push(v1Item);
+            } else {
+                storageConfiguration.volumes.push(v1Item);
+            }
+        } else if (supportsHighAvailability && subType === 'highAvailability') {
+            highAvailability.push(v1Item);
+        } else {
+            const responseKey = singleKeyById[id];
+            if (responseKey) {
+                response[responseKey] = v1Item;
+            }
+        }
+    }
+
+    if (hasStorage) {
+        response.storage = {
+            configuration: storageConfiguration,
+            sizing: storageSizing,
+            layout: storageLayout,
+            ...storageExtraSelector?.(metadata)
+        };
+    }
+    if (supportsHighAvailability && !isEmpty(highAvailability)) {
+        response.highAvailability = highAvailability;
+    }
+
+    // v2 flattened dismissed configurations into an array; rebuild the keyed v1 object.
+    if (!isEmpty(dismissedConfigurations)) {
+        const dismissed: Record<string, unknown> = {};
+        const dismissConfiguration: Record<string, unknown[]> = { volumes: [], luns: [], os: [] };
+        const dismissSizing: unknown[] = [];
+        const dismissLayout: unknown[] = [];
+        const dismissHighAvailability: unknown[] = [];
+        let hasDismissStorage = false;
+
+        for (const entry of dismissedConfigurations) {
+            const { configurationName, configState, startTime, endTime, type, subType } = entry;
+            // v2 enriches each dismissed entry with golden-config static props; v1 keeps only the dismiss fields.
+            const dismissItem = { configurationName, configState, startTime, endTime };
+            if (type === 'storage') {
+                hasDismissStorage = true;
+                if (subType === 'sizing' || storageSizingLayoutMap?.sizing.includes(configurationName)) {
+                    dismissSizing.push(dismissItem);
+                } else if (subType === 'layout' || storageSizingLayoutMap?.layout.includes(configurationName)) {
+                    dismissLayout.push(dismissItem);
+                } else if (storageConfigMap.luns.includes(configurationName)) {
+                    dismissConfiguration.luns.push(dismissItem);
+                } else if (storageConfigMap.os.includes(configurationName)) {
+                    dismissConfiguration.os.push(dismissItem);
+                } else {
+                    dismissConfiguration.volumes.push(dismissItem);
+                }
+            } else if (supportsHighAvailability && subType === 'highAvailability') {
+                dismissHighAvailability.push(dismissItem);
+            } else {
+                const dismissKey = dismissSingleKeyByName[configurationName];
+                if (dismissKey) {
+                    dismissed[dismissKey] = dismissItem;
+                }
+            }
+        }
+
+        if (hasDismissStorage) {
+            dismissed.storage = {
+                configuration: dismissConfiguration,
+                sizing: dismissSizing,
+                layout: dismissLayout
+            };
+        }
+        if (supportsHighAvailability && !isEmpty(dismissHighAvailability)) {
+            dismissed.highAvailability = dismissHighAvailability;
+        }
+        response.dismissedConfigurations = dismissed;
+    }
+
+    const { isValid, errors } = validate(response);
+    if (!isValid) {
+        logger.error(`Invalid ${dbLabel} assessment V1 response`, { errors });
+        return {};
+    }
+    return response;
+}
+
 export {
     getMatchingAssessmentStatus,
     handleOptimizeJobCreation,
@@ -323,5 +578,9 @@ export {
     checkIfPatchBaselineInProgress,
     updatePatchBaselineStatusForHost,
     isPdbGroupedVolumes,
+    buildDismissedConfigurations,
+    mapAssessmentToV1,
     JobMetadata
 };
+
+export type { GoldenConfigEntry, MapAssessmentToV1Config };

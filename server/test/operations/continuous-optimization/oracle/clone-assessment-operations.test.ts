@@ -122,9 +122,9 @@ describe('calculateOracleCloneDrift', () => {
         expect(drift.objectsInViolation).toEqual(['old_clone_vol']);
         expect(drift.oldCloneDetails).toHaveLength(1);
         expect(drift.cloneDriftMessage).toBe('1 out of 2 clones are old and divergent');
-        expect(drift.name).toBe('clone-management');
+        expect(drift.id).toBe('clone-management');
         expect(drift.severity).toBeDefined();
-        expect(drift.tags).toBeDefined();
+        expect(drift.categories).toBeDefined();
     });
 
     it('returns correct drift message for multiple old clones', () => {
@@ -215,10 +215,10 @@ describe('calculateOracleCloneDrift', () => {
         );
 
         const drift = result as Record<string, unknown>;
-        expect(drift.name).toBe('clone-management');
+        expect(drift.id).toBe('clone-management');
         expect(drift.resourceType).toBe('Database');
         expect(drift.severity).toBe('warning');
-        expect(Array.isArray(drift.tags)).toBe(true);
+        expect(Array.isArray(drift.categories)).toBe(true);
     });
 
     it('includes cloneDetails and oldCloneDetails in drift response', () => {

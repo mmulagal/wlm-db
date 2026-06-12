@@ -88,8 +88,8 @@ describe('calculateHostOsPatchDrift (oracle)', () => {
             assessmentData
         );
 
-        expect('status' in result).toBe(true);
-        if ('status' in result) {
+        expect('errorMessage' in result).toBe(false);
+        if (!('errorMessage' in result)) {
             expect(result.status).toEqual(AssessmentStatus.OPTIMIZED);
             expect(result.ec2InstancesToPatch).toEqual([]);
         }

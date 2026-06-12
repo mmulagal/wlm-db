@@ -10,7 +10,11 @@ import { parseMultipleCommandResponse } from '../../../utils/utils';
 import { ComputeHostOsAssessment, WorkloadInstance } from '../../../utils/common-types';
 import getLogger from '../../../utils/logger';
 
-import { GenericViolationResponseType } from '../../../routes/types/continuous-optimization.types';
+import {
+    AssessmentErrorItemType,
+    AssessmentItemType,
+    GenericViolationResponseType
+} from '../../../routes/types/continuous-optimization.types';
 
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 
@@ -18,17 +22,17 @@ import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 
-import { ComputeDriftEntry, ComputeHostOsDriftTopLevel, StorageIscsiAssessment } from './common-types';
-import storageGoldenConfigData from './golden-config';
+import { ISCIOSAssessment, StorageIscsiAssessment } from './common-types';
+import ORACLE_GOLDEN_CONFIG from './golden-config';
 import {
     HOST_OS_COMPUTE_ASSESSMENT,
     ORACLE_PARAMS_COMPUTE_ASSESSMENT
 } from './ssm-scripts/compute-host-os-assessment-scripts';
-import { createAssessment, createViolationDetail } from './storage-assessment-operations';
+import { createAssessment, createViolationDetail, GoldenConfigEntry } from './storage-assessment-operations';
 
 const logger = getLogger();
 
-const osIsciConfigData = storageGoldenConfigData.configuration.os_iscsi;
+const osIsciConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'iscsi');
 const COMPUTE_HOST_OS_CONFIG_NAMES = new Set<string>(ORACLE_COMPUTE_HOST_OS_ASSESSMENT_CONFIGS);
 
 const MISSING_DATA_ERROR_MESSAGE =
@@ -39,43 +43,27 @@ function toErrorMessage(error: unknown): string {
 }
 
 /**
- * Evaluate drift for the supplied compute configs and populate `drift` by response key.
- * When the source data is missing, each requested config gets an `errorMessage` entry so the
- * API response always surfaces all 4 top-level fields.
+ * Evaluate drift for the supplied compute configs and return a flat array.
+ * When the source data is missing each requested config gets an error item so the
+ * API response always surfaces all 4 assessment fields.
  */
 function calculateComputeOsDrift(
     ec2InstanceId: string,
     databaseInstanceName: string,
-    assessmentData: StorageIscsiAssessment | undefined,
+    os: ISCIOSAssessment | undefined,
     configNames: Set<string>
-): ComputeHostOsDriftTopLevel {
+): (AssessmentItemType | AssessmentErrorItemType)[] {
     logger.info('Fetching compute OS configuration drift', { ec2InstanceId, databaseInstanceName });
-    const drift: ComputeHostOsDriftTopLevel = {};
-    const os = assessmentData?.os;
+    const items: (AssessmentItemType | AssessmentErrorItemType)[] = [];
     const configsToEvaluate = osIsciConfigData.filter(
-        c => COMPUTE_HOST_OS_CONFIG_NAMES.has(c.name) && configNames.has(c.name)
+        c => COMPUTE_HOST_OS_CONFIG_NAMES.has(c.id) && configNames.has(c.id)
     );
 
     if (!os || isEmpty(os)) {
         configsToEvaluate.forEach(config => {
-            switch (config.parameter) {
-                case 'transparent-hugepages':
-                    drift.transparentHugepages = { errorMessage: MISSING_DATA_ERROR_MESSAGE };
-                    break;
-                case 'tcp-advanced-options':
-                    drift.tcpAdvancedOptions = { errorMessage: MISSING_DATA_ERROR_MESSAGE };
-                    break;
-                case 'filesystems-io-options':
-                    drift.filesystemsIoOptions = { errorMessage: MISSING_DATA_ERROR_MESSAGE };
-                    break;
-                case 'multiblock-readcount':
-                    drift.multiblockReadcount = { errorMessage: MISSING_DATA_ERROR_MESSAGE };
-                    break;
-                default:
-                    break;
-            }
+            items.push({ ...config, errorMessage: MISSING_DATA_ERROR_MESSAGE });
         });
-        return drift;
+        return items;
     }
 
     configsToEvaluate.forEach(config => {
@@ -83,47 +71,33 @@ function calculateComputeOsDrift(
 
         switch (config.parameter) {
             case 'transparent-hugepages': {
-                const thpData = os?.['transparent-hugepages'];
+                const thpData = os['transparent-hugepages'];
                 if (thpData?.['thp-disabled'] === false) {
                     violationDetails.push(
                         createViolationDetail(
                             'transparent-hugepages',
                             'configuration',
-                            `${thpData?.['thp-value'] || 'enabled'}`,
+                            `${thpData['thp-value'] || 'enabled'}`,
                             'always madvise [never]'
                         )
                     );
                 }
-                drift.transparentHugepages = createAssessment(
-                    config,
-                    1,
-                    [ec2InstanceId],
-                    violationDetails
-                ) as ComputeDriftEntry;
+                items.push(createAssessment(config as GoldenConfigEntry, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
             case 'tcp-advanced-options': {
-                const tcpData = os?.['tcp-advanced-options'];
-                const tcpFeatures = tcpData?.['tcp-features'] || {};
+                const tcpFeatures = os['tcp-advanced-options']?.['tcp-features'] ?? {};
                 const requiredFeatures = ['tcp-sack-enabled', 'tcp-window-scaling-enabled', 'tcp-timestamps-enabled'];
-                const disabledFeatures = requiredFeatures.filter(
-                    feature => !tcpFeatures[feature as keyof typeof tcpFeatures]
-                );
-                violationDetails = disabledFeatures.map(feature =>
-                    createViolationDetail(feature.replace('-enabled', ''), 'configuration', '0', '1')
-                );
-                drift.tcpAdvancedOptions = createAssessment(
-                    config,
-                    1,
-                    [ec2InstanceId],
-                    violationDetails
-                ) as ComputeDriftEntry;
+                violationDetails = requiredFeatures
+                    .filter(feature => !tcpFeatures[feature as keyof typeof tcpFeatures])
+                    .map(feature => createViolationDetail(feature.replace('-enabled', ''), 'configuration', '0', '1'));
+                items.push(createAssessment(config as GoldenConfigEntry, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
             case 'filesystems-io-options': {
-                const oracleParamsData = os?.['oracle-parameters']?.['filesystemio-options'];
+                const oracleParamsData = os['oracle-parameters']?.['filesystemio-options'];
                 if (oracleParamsData?.found === false || oracleParamsData?.value?.toLowerCase() !== 'setall') {
                     violationDetails = [
                         createViolationDetail(
@@ -134,26 +108,17 @@ function calculateComputeOsDrift(
                         )
                     ];
                 }
-                drift.filesystemsIoOptions = createAssessment(
-                    config,
-                    1,
-                    [ec2InstanceId],
-                    violationDetails
-                ) as ComputeDriftEntry;
+                items.push(createAssessment(config as GoldenConfigEntry, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
             case 'multiblock-readcount': {
-                const initOracleParams = os?.['oracle-parameters-from-init'];
-                const assessmentError = initOracleParams?.error;
-                if (assessmentError) {
-                    drift.multiblockReadcount = {
-                        name: config.name,
-                        errorMessage: assessmentError
-                    };
+                const initOracleParams = os['oracle-parameters-from-init'];
+                if (initOracleParams?.error) {
+                    items.push({ ...config, errorMessage: initOracleParams.error });
                     break;
                 }
-                const oracleParamsData = initOracleParams?.['db-file-multiblock-read-count-in-init'] || [];
+                const oracleParamsData = initOracleParams?.['db-file-multiblock-read-count-in-init'] ?? [];
                 violationDetails = oracleParamsData
                     .filter(paramRecord => paramRecord['parameter-found'])
                     .map(paramRecord =>
@@ -164,12 +129,7 @@ function calculateComputeOsDrift(
                             'db_file_multiblock_read_count should not be set'
                         )
                     );
-                drift.multiblockReadcount = createAssessment(
-                    config,
-                    1,
-                    [ec2InstanceId],
-                    violationDetails
-                ) as ComputeDriftEntry;
+                items.push(createAssessment(config as GoldenConfigEntry, 1, [ec2InstanceId], violationDetails));
                 break;
             }
 
@@ -178,14 +138,14 @@ function calculateComputeOsDrift(
         }
     });
 
-    return drift;
+    return items;
 }
 
 const HOST_LEVEL_COMPUTE_CONFIG_NAMES = new Set(['transparent-hugepages', 'tcp-advanced-options']);
 const ORACLE_PARAMS_COMPUTE_CONFIG_NAMES = new Set(['filesystems-io-options', 'multiblock-readcount']);
 
 /**
- * Drift for the four compute host/OS checks (GH-8882-1).
+ * Drift for the four compute host/OS checks.
  * THP/TCP drift from `resource.assessment_data.computeHostOs` (host level).
  * Oracle params (filesystemio, multiblock) from `database_instance_config_data` compute row (instance level).
  */
@@ -194,31 +154,23 @@ function calculateComputeHostOsDrift(
     databaseInstanceName: string,
     computeHostOs: ComputeHostOsAssessment | undefined,
     oracleParamsConfigData: unknown
-): ComputeHostOsDriftTopLevel {
-    const hostPayload = computeHostOs
-        ? ({
-              os: {
-                  'transparent-hugepages': computeHostOs.transparentHugepages,
-                  'tcp-advanced-options': computeHostOs.tcpAdvancedOptions
-              }
-          } as StorageIscsiAssessment)
+): (AssessmentItemType | AssessmentErrorItemType)[] {
+    const hostOs: ISCIOSAssessment | undefined = computeHostOs
+        ? {
+              'transparent-hugepages': computeHostOs.transparentHugepages,
+              'tcp-advanced-options': computeHostOs.tcpAdvancedOptions
+          }
         : undefined;
 
-    const hostDrift = calculateComputeOsDrift(
-        ec2InstanceId,
-        databaseInstanceName,
-        hostPayload,
-        HOST_LEVEL_COMPUTE_CONFIG_NAMES
-    );
-
-    const oracleDrift = calculateComputeOsDrift(
-        ec2InstanceId,
-        databaseInstanceName,
-        oracleParamsConfigData as StorageIscsiAssessment | undefined,
-        ORACLE_PARAMS_COMPUTE_CONFIG_NAMES
-    );
-
-    return { ...hostDrift, ...oracleDrift };
+    return [
+        ...calculateComputeOsDrift(ec2InstanceId, databaseInstanceName, hostOs, HOST_LEVEL_COMPUTE_CONFIG_NAMES),
+        ...calculateComputeOsDrift(
+            ec2InstanceId,
+            databaseInstanceName,
+            (oracleParamsConfigData as unknown as { os?: ISCIOSAssessment })?.os,
+            ORACLE_PARAMS_COMPUTE_CONFIG_NAMES
+        )
+    ];
 }
 
 /**

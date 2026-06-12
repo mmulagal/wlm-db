@@ -21,8 +21,8 @@ describe('Golden Config Utils', () => {
             // Check a known parameter
             const thinProvisionEntry = map.get('thin-provision');
             expect(thinProvisionEntry).toBeDefined();
-            expect(thinProvisionEntry).toHaveProperty('category');
-            expect(thinProvisionEntry).toHaveProperty('subCategory');
+            expect(thinProvisionEntry).toHaveProperty('type');
+            expect(thinProvisionEntry).toHaveProperty('subType');
         });
 
         it('should map storage configuration parameters', () => {
@@ -32,8 +32,8 @@ describe('Golden Config Utils', () => {
             storageParams.forEach(param => {
                 const entry = map.get(param);
                 expect(entry).toBeDefined();
-                expect(entry?.category).toBe('storage');
-                expect(entry?.subCategory).toBe('configuration');
+                expect(entry?.type).toBe('storage');
+                expect(entry?.subType).toBe('configuration');
             });
         });
 
@@ -41,10 +41,10 @@ describe('Golden Config Utils', () => {
             const map = generateMsSqlParameterCategoryMap();
 
             // Check for parameters that should exist in the map
-            const entry = map.get('license');
+            const entry = map.get('sql-license');
             expect(entry).toBeDefined();
-            expect(entry?.category).toBe('application');
-            expect(entry?.subCategory).toBe('application');
+            expect(entry?.type).toBe('application');
+            expect(entry?.subType).toBe('application');
         });
 
         it('should include OS configuration parameters', () => {
@@ -54,22 +54,22 @@ describe('Golden Config Utils', () => {
             osParams.forEach(param => {
                 const entry = map.get(param);
                 expect(entry).toBeDefined();
-                expect(entry?.category).toBe('storage');
+                expect(entry?.type).toBe('storage');
             });
         });
 
-        it('should map compute and application category items', () => {
+        it('should map compute and application type items', () => {
             const map = generateMsSqlParameterCategoryMap();
 
-            // Check for application category parameters
-            const licenseEntry = map.get('license');
+            // Check for application type parameters (id-based key, no parameter field)
+            const licenseEntry = map.get('sql-license');
             expect(licenseEntry).toBeDefined();
-            expect(licenseEntry?.category).toBe('application');
+            expect(licenseEntry?.type).toBe('application');
 
-            // Check for cloning category parameters
-            const cloningEntry = map.get('cloning');
+            // Check for cloning type parameters (id-based key, no parameter field)
+            const cloningEntry = map.get('clone-management');
             expect(cloningEntry).toBeDefined();
-            expect(cloningEntry?.category).toBe('cloning');
+            expect(cloningEntry?.type).toBe('cloning');
         });
 
         it('should not have duplicate parameter entries', () => {
@@ -80,14 +80,14 @@ describe('Golden Config Utils', () => {
             expect(parameterNames.length).toBe(uniqueNames.size);
         });
 
-        it('should have non-empty category and subCategory values', () => {
+        it('should have non-empty type and subType values', () => {
             const map = generateMsSqlParameterCategoryMap();
 
             map.forEach(entry => {
-                expect(entry.category).toBeTruthy();
-                expect(entry.subCategory).toBeTruthy();
-                expect(typeof entry.category).toBe('string');
-                expect(typeof entry.subCategory).toBe('string');
+                expect(entry.type).toBeTruthy();
+                expect(entry.subType).toBeTruthy();
+                expect(typeof entry.type).toBe('string');
+                expect(typeof entry.subType).toBe('string');
             });
         });
     });
@@ -103,23 +103,23 @@ describe('Golden Config Utils', () => {
         it('should have correct structure for parameter entries', () => {
             const map = generateOracleParameterCategoryMap();
 
-            // Check a known parameter using hyphenated name (from 'name' field in config)
+            // Check a known parameter using its id (entry.id is used as the map key)
             const spaceGuaranteeEntry = map.get('thin-provision');
             expect(spaceGuaranteeEntry).toBeDefined();
-            expect(spaceGuaranteeEntry).toHaveProperty('category');
-            expect(spaceGuaranteeEntry).toHaveProperty('subCategory');
+            expect(spaceGuaranteeEntry).toHaveProperty('type');
+            expect(spaceGuaranteeEntry).toHaveProperty('subType');
         });
 
         it('should map storage configuration parameters', () => {
             const map = generateOracleParameterCategoryMap();
 
-            // Use hyphenated names from the 'name' field in Oracle config
+            // Use id values from Oracle config (entry.id is used as the map key)
             const storageParams = ['thin-provision', 'autosize', 'autosize-mode'];
             storageParams.forEach(param => {
                 const entry = map.get(param);
                 expect(entry).toBeDefined();
-                expect(entry?.category).toBe('storage');
-                expect(entry?.subCategory).toBe('configuration');
+                expect(entry?.type).toBe('storage');
+                expect(entry?.subType).toBe('configuration');
             });
         });
 
@@ -131,14 +131,14 @@ describe('Golden Config Utils', () => {
             expect(parameterNames.length).toBe(uniqueNames.size);
         });
 
-        it('should have non-empty category and subCategory values', () => {
+        it('should have non-empty type and subType values', () => {
             const map = generateOracleParameterCategoryMap();
 
             map.forEach(entry => {
-                expect(entry.category).toBeTruthy();
-                expect(entry.subCategory).toBeTruthy();
-                expect(typeof entry.category).toBe('string');
-                expect(typeof entry.subCategory).toBe('string');
+                expect(entry.type).toBeTruthy();
+                expect(entry.subType).toBeTruthy();
+                expect(typeof entry.type).toBe('string');
+                expect(typeof entry.subType).toBe('string');
             });
         });
 
@@ -171,12 +171,8 @@ describe('Golden Config Utils', () => {
             const mssqlMap = generateMsSqlParameterCategoryMap();
             const oracleMap = generateOracleParameterCategoryMap();
 
-            const mssqlStorageParams = Array.from(mssqlMap.entries()).filter(
-                ([, value]) => value.category === 'storage'
-            );
-            const oracleStorageParams = Array.from(oracleMap.entries()).filter(
-                ([, value]) => value.category === 'storage'
-            );
+            const mssqlStorageParams = Array.from(mssqlMap.entries()).filter(([, value]) => value.type === 'storage');
+            const oracleStorageParams = Array.from(oracleMap.entries()).filter(([, value]) => value.type === 'storage');
 
             expect(mssqlStorageParams.length).toBeGreaterThan(0);
             expect(oracleStorageParams.length).toBeGreaterThan(0);
@@ -186,12 +182,12 @@ describe('Golden Config Utils', () => {
             const map = generateMsSqlParameterCategoryMap();
 
             // Check for top-level resiliency object - the key should be 'resiliency' itself
-            // since it has category and subCategory properties
+            // since it has type and subType properties
             const resiliencyEntry = map.get('resiliency');
             if (resiliencyEntry) {
                 // If it's in the map, verify it has the correct structure
-                expect(resiliencyEntry).toHaveProperty('category');
-                expect(resiliencyEntry).toHaveProperty('subCategory');
+                expect(resiliencyEntry).toHaveProperty('type');
+                expect(resiliencyEntry).toHaveProperty('subType');
             }
         });
 
@@ -201,7 +197,7 @@ describe('Golden Config Utils', () => {
 
             // Get all resiliency entries from MSSQL map
             const mssqlResiliencyEntries = Array.from(mssqlMap.entries()).filter(
-                ([, value]) => value.category === 'resiliency'
+                ([, value]) => value.type === 'resiliency'
             );
 
             // Verify all MSSQL resiliency entries are in combined map
@@ -238,25 +234,28 @@ describe('Golden Config Utils', () => {
         it('should include snapshot-policy parameter in the combined map', () => {
             const combinedMap = generateCombinedParameterCategoryMaps();
 
-            // snapshot-policy should exist in the map (from Oracle config - stored with both names)
+            // snapshot-policy exists in both MSSQL (resiliency) and Oracle (storage/configuration),
+            // but MSSQL takes precedence in the combined map
             const snapshotPolicyEntry = combinedMap.get('snapshot-policy');
             expect(snapshotPolicyEntry).toBeDefined();
-            expect(snapshotPolicyEntry?.category).toBe('storage');
-            expect(snapshotPolicyEntry?.subCategory).toBe('configuration');
+            expect(snapshotPolicyEntry?.type).toBe('resiliency');
+            expect(snapshotPolicyEntry?.subType).toBe('resiliency');
         });
 
-        it('should verify snapshot-policy comes from Oracle map with correct category', () => {
+        it('should verify snapshot-policy comes from Oracle map with correct type', () => {
             const oracleMap = generateOracleParameterCategoryMap();
             const combinedMap = generateCombinedParameterCategoryMaps();
 
-            // Check both the hyphenated and camelCase versions
+            // Oracle map has snapshot-policy with type='storage' (using entry.id as key)
             const oracleSnapshotPolicyHyphenated = oracleMap.get('snapshot-policy');
             const combinedSnapshotPolicy = combinedMap.get('snapshot-policy');
 
             if (oracleSnapshotPolicyHyphenated) {
-                expect(combinedSnapshotPolicy).toEqual(oracleSnapshotPolicyHyphenated);
-                expect(combinedSnapshotPolicy?.category).toBe('storage');
-                expect(combinedSnapshotPolicy?.subCategory).toBe('configuration');
+                // Oracle map has type='storage'
+                expect(oracleSnapshotPolicyHyphenated?.type).toBe('storage');
+                expect(oracleSnapshotPolicyHyphenated?.subType).toBe('configuration');
+                // Combined map has MSSQL's version (resiliency) since MSSQL takes precedence
+                expect(combinedSnapshotPolicy?.type).toBe('resiliency');
             }
         });
     });

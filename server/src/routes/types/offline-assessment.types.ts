@@ -1,7 +1,7 @@
-import { Static, Type } from 'typebox';
+import { Static, TSchema, Type } from 'typebox';
 import { API_DESCRIPTION } from '../../utils/schema-description-consts';
-import { MSSQLDriftAssessmentResponse } from './mssql-continuous-optimisation.types';
-import { OracleDriftAssessmentResponse } from './oracle-continuous-optimization.types';
+import { OracleAssessmentResponse, OracleDriftAssessmentResponse } from './oracle-continuous-optimization.types';
+import { MssqlAssessmentResponse, MssqlAssessmentResponseV1 } from './mssql-continuous-optimisation.types';
 
 const DataGuardDetails = Type.Object({
     dbUniqueName: Type.Optional(Type.String()),
@@ -71,45 +71,61 @@ const OfflineAssessmentListQueryParams = Type.Object({
 
 type OfflineAssessmentListQueryParamsType = Static<typeof OfflineAssessmentListQueryParams>;
 
-// List response
-const OfflineAssessmentListResponse = Type.Object({
-    items: Type.Array(
-        Type.Object({
-            resourceId: Type.String(),
-            databaseInstanceId: Type.String(),
-            databaseInstanceName: Type.Optional(Type.String()),
-            credentialsId: Type.Optional(Type.String()),
-            region: Type.Optional(Type.String()),
-            regionName: Type.Optional(Type.String()),
-            vmName: Type.Optional(Type.String()),
-            vmPlatform: Type.Optional(Type.String()),
-            vmInstanceId: Type.Optional(Type.String()),
-            virtualNetworkId: Type.Optional(Type.String()),
-            virtualNetworkName: Type.Optional(Type.String()),
-            numberOfDatabaseInstances: Type.Optional(Type.Number()),
-            agName: Type.Optional(Type.String()),
-            clusterNodes: Type.Optional(
-                Type.Array(
-                    Type.Object({
-                        vmInstanceId: Type.String(),
-                        nodeName: Type.Optional(Type.String()),
-                        nodeState: Type.Optional(Type.String())
-                    })
-                )
-            ),
-            pluggableDatabases: Type.Optional(Type.Array(PluggableDatabase)),
-            isDataGuardDeployed: Type.Optional(Type.Boolean()),
-            dataguardDetails: Type.Optional(DataGuardDetails),
-            tenancyType: Type.Optional(Type.String()),
-            assessments: Type.Optional(Type.Union([MSSQLDriftAssessmentResponse, OracleDriftAssessmentResponse])),
-            error: Type.Optional(Type.String())
-        })
+// Common per-item fields shared across all list responses; only `assessments` differs by version/engine.
+const offlineAssessmentListItemBaseProps = {
+    resourceId: Type.String(),
+    databaseInstanceId: Type.String(),
+    databaseInstanceName: Type.Optional(Type.String()),
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(Type.String()),
+    regionName: Type.Optional(Type.String()),
+    vmName: Type.Optional(Type.String()),
+    vmPlatform: Type.Optional(Type.String()),
+    vmInstanceId: Type.Optional(Type.String()),
+    virtualNetworkId: Type.Optional(Type.String()),
+    virtualNetworkName: Type.Optional(Type.String()),
+    numberOfDatabaseInstances: Type.Optional(Type.Number()),
+    agName: Type.Optional(Type.String()),
+    clusterNodes: Type.Optional(
+        Type.Array(
+            Type.Object({
+                vmInstanceId: Type.String(),
+                nodeName: Type.Optional(Type.String()),
+                nodeState: Type.Optional(Type.String())
+            })
+        )
     ),
-    count: Type.Number(),
-    nextToken: Type.Optional(Type.String())
-});
+    pluggableDatabases: Type.Optional(Type.Array(PluggableDatabase)),
+    isDataGuardDeployed: Type.Optional(Type.Boolean()),
+    dataguardDetails: Type.Optional(DataGuardDetails),
+    tenancyType: Type.Optional(Type.String()),
+    error: Type.Optional(Type.String())
+};
+
+const buildOfflineAssessmentListResponse = <T extends TSchema>(assessments: T) =>
+    Type.Object({
+        items: Type.Array(
+            Type.Object({ ...offlineAssessmentListItemBaseProps, assessments: Type.Optional(assessments) })
+        ),
+        count: Type.Number(),
+        nextToken: Type.Optional(Type.String())
+    });
+
+// List response
+const OfflineAssessmentListResponse = buildOfflineAssessmentListResponse(
+    Type.Union([MssqlAssessmentResponse, OracleAssessmentResponse])
+);
 
 type OfflineAssessmentListResponseType = Static<typeof OfflineAssessmentListResponse>;
+
+// v1 list responses: identical shape to the v2 list, only the `assessments` schema differs.
+const OfflineAssessmentListResponseV1 = buildOfflineAssessmentListResponse(MssqlAssessmentResponseV1);
+
+type OfflineAssessmentListResponseV1Type = Static<typeof OfflineAssessmentListResponseV1>;
+
+const OracleOfflineAssessmentListResponseV1 = buildOfflineAssessmentListResponse(OracleDriftAssessmentResponse);
+
+type OracleOfflineAssessmentListResponseV1Type = Static<typeof OracleOfflineAssessmentListResponseV1>;
 
 // Upload response - returns only job ID
 const OfflineAssessmentUploadResponse = Type.Object({
@@ -212,6 +228,10 @@ export {
     OfflineAssessmentListQueryParamsType,
     OfflineAssessmentListResponse,
     OfflineAssessmentListResponseType,
+    OfflineAssessmentListResponseV1,
+    OfflineAssessmentListResponseV1Type,
+    OracleOfflineAssessmentListResponseV1,
+    OracleOfflineAssessmentListResponseV1Type,
     OfflineAssessmentUploadResponse,
     OfflineAssessmentUploadResponseType,
     OfflineAssessmentGetByIdParams,

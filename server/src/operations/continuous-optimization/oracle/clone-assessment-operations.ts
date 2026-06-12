@@ -17,7 +17,8 @@ import { createDatabaseInstanceConfigData } from '../../../lib/database/database
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { calculateDaysSince } from '../../../utils/utils';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
-import storageGoldenConfigData from './golden-config';
+import ORACLE_GOLDEN_CONFIG from './golden-config';
+import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import { buildFlexCloneQueryScript } from './ssm-scripts/clone-assessment-scripts';
 
 const logger = getLogger();
@@ -255,7 +256,7 @@ function calculateOracleCloneDrift(
     databaseHostId: string,
     databaseInstanceId: string,
     cloneAssessmentData: CloneAssessment
-) {
+): AssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculating Oracle clone drift', {
         accountId,
         credentialsId,
@@ -264,15 +265,16 @@ function calculateOracleCloneDrift(
         databaseInstanceId
     });
 
+    const [goldenConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'clone-management');
+
     if (isEmpty(cloneAssessmentData)) {
         const errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategoriesOracle.CLONE);
         logger.warn(errorMessage);
-        return { errorMessage };
+        return { ...goldenConfig, errorMessage };
     }
 
     try {
         const { cloneDetails, status, oldClones, oldCloneDetails, oldCloneDatabaseNames } = cloneAssessmentData;
-        const { cloneManagement: goldenConfig } = storageGoldenConfigData;
 
         const recommendationMessage =
             status === AssessmentStatus.NOT_OPTIMIZED
@@ -280,24 +282,27 @@ function calculateOracleCloneDrift(
                 : 'All clones are up-to-date. No old FlexClone volumes detected.';
 
         return {
-            name: goldenConfig.name,
+            ...goldenConfig,
             status: status as AssessmentStatus,
             recommended: AssessmentStatus.OPTIMIZED,
-            severity: goldenConfig.severity,
             recommendation: recommendationMessage,
-            tags: goldenConfig.tags,
-            resourceType: goldenConfig.resourceType,
-            cloneDetails,
+            cloneDetails: cloneDetails?.map(detail => ({
+                ...detail,
+                tag: detail.tag ?? undefined
+            })),
             totalObjectsAssessed: cloneDetails?.length ?? 0,
             totalObjectsInViolation: oldClones,
             objectsInViolation: oldCloneDatabaseNames,
-            oldCloneDetails,
+            oldCloneDetails: oldCloneDetails?.map(detail => ({
+                ...detail,
+                tag: detail.tag ?? undefined
+            })),
             cloneDriftMessage: `${oldClones} out of ${cloneDetails?.length ?? 0} clones are old and divergent`
         };
     } catch (error) {
         const errorMessage = 'Error while calculating Oracle clone drift';
         logger.error(errorMessage, { accountId, databaseHostId, databaseInstanceId, error });
-        return { errorMessage };
+        return { ...goldenConfig, errorMessage };
     }
 }
 

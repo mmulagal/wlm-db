@@ -46,7 +46,7 @@ const buildStorageAssessment = (binaryVolumes: { volumeId: string; volumeName: s
     } as any);
 
 const findAssessment = (drift: ReturnType<typeof getVolumeLayoutDrift>, name: string): LayoutAssessment =>
-    drift.find(d => d.name === name) as LayoutAssessment;
+    drift.find(d => d.id === name) as LayoutAssessment;
 
 describe('getBaseVolume', () => {
     const exportsByServer: Record<string, string[]> = {
@@ -407,6 +407,7 @@ describe('getVolumeLayoutDrift - current message', () => {
 });
 
 type DriftEntry = {
+    id?: string;
     name?: string;
     errorMessage?: string;
     status?: AssessmentStatus;
@@ -414,8 +415,8 @@ type DriftEntry = {
     totalObjectsInViolation?: number;
 };
 
-const findEntry = (drift: unknown[], name: string): DriftEntry | undefined =>
-    (drift as DriftEntry[]).find(entry => entry?.name === name);
+const findEntry = (drift: unknown[], id: string): DriftEntry | undefined =>
+    (drift as DriftEntry[]).find(entry => entry?.id === id);
 
 describe('getNfsOSConfigDrift - SID-scoped mount filtering (TS-side filter on host-wide nfs-mount-options)', () => {
     const ec2InstanceId = 'i-1234567890abcdef0';
@@ -533,7 +534,7 @@ describe('getNfsOSConfigDrift - SID-scoped mount filtering (TS-side filter on ho
             });
 
             const drift = getNfsOSConfigDrift(ec2InstanceId, databaseInstanceName, 'Standalone', data);
-            const dbFilesEntries = (drift as DriftEntry[]).filter(e => e?.name === 'nfs-mount-options-databasefiles');
+            const dbFilesEntries = (drift as DriftEntry[]).filter(e => e?.id === 'nfs-mount-options-databasefiles');
             expect(dbFilesEntries).toHaveLength(1);
             expect(dbFilesEntries[0].errorMessage).toContain('No mapped DB-instance volumes');
             expect(dbFilesEntries[0].status).toBeUndefined();
@@ -545,7 +546,7 @@ describe('getNfsOSConfigDrift - SID-scoped mount filtering (TS-side filter on ho
             });
 
             const drift = getNfsOSConfigDrift(ec2InstanceId, databaseInstanceName, 'Standalone', data);
-            const dbFilesEntries = (drift as DriftEntry[]).filter(e => e?.name === 'nfs-mount-options-databasefiles');
+            const dbFilesEntries = (drift as DriftEntry[]).filter(e => e?.id === 'nfs-mount-options-databasefiles');
             expect(dbFilesEntries).toHaveLength(1);
             expect(dbFilesEntries[0].errorMessage).toBe('mount: command failed');
             expect(dbFilesEntries[0].status).toBeUndefined();
@@ -613,7 +614,7 @@ describe('getNfsOSConfigDrift - SID-scoped mount filtering (TS-side filter on ho
             });
 
             const drift = getNfsOSConfigDrift(ec2InstanceId, databaseInstanceName, 'Standalone', data);
-            const cachingEntries = (drift as DriftEntry[]).filter(e => e?.name === 'nfs-caching-options');
+            const cachingEntries = (drift as DriftEntry[]).filter(e => e?.id === 'nfs-caching-options');
             expect(cachingEntries).toHaveLength(1);
             expect(cachingEntries[0].errorMessage).toContain('No mapped DB-instance volumes');
             expect(cachingEntries[0].status).toBeUndefined();

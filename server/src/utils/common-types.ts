@@ -250,8 +250,23 @@ interface MtuAlignmentAssessment {
 }
 
 interface ComputeHostOsAssessment {
-    transparentHugepages?: Record<string, unknown>;
-    tcpAdvancedOptions?: Record<string, unknown>;
+    transparentHugepages?: {
+        error?: string | null;
+        'thp-value'?: string;
+        'thp-status'?: string;
+        'thp-disabled'?: boolean;
+    };
+    tcpAdvancedOptions?: {
+        error?: string | null;
+        'tcp-features'?: {
+            'tcp-sack-value'?: string;
+            'tcp-sack-enabled'?: boolean;
+            'tcp-timestamps-value'?: string;
+            'tcp-timestamps-enabled'?: boolean;
+            'tcp-window-scaling-value'?: string;
+            'tcp-window-scaling-enabled'?: boolean;
+        };
+    };
 }
 
 interface ResourceAssessmentData {

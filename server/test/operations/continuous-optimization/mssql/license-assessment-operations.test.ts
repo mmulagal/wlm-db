@@ -157,7 +157,7 @@ describe('License assessment operations', () => {
             assessmentData as unknown as ResourceAssessmentData
         );
 
-        expect(response.name).toEqual('sql-license');
+        expect(response.id).toEqual('sql-license');
     });
 
     it('Should perform license assessment for managed hosts', async () => {

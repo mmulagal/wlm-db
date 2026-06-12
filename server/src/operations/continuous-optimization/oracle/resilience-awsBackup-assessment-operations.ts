@@ -1,7 +1,7 @@
 import { AWSBackupAssessment, WorkloadInstance } from '../../../utils/common-types';
 import { initiateAwsBackupAssessment, getAwsBackupDriftData } from '../resilience-awsBackup-operations';
-import { GenericParameterDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
-import GOLDEN_CONFIG from './golden-config';
+import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
+import ORACLE_GOLDEN_CONFIG from './golden-config';
 
 async function initiateOracleAWSBackupAssessment(
     accountId: string,
@@ -44,7 +44,8 @@ function getOracleAwsBackupDriftData(
     databaseHostId: string,
     databaseInstanceId: string,
     awsBackupAssessmentData: AWSBackupAssessment
-): GenericParameterDriftResponseType {
+): AssessmentItemType | AssessmentErrorItemType {
+    const [goldenConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'backup-configuration');
     return getAwsBackupDriftData(
         accountId,
         credentialsId,
@@ -52,8 +53,8 @@ function getOracleAwsBackupDriftData(
         databaseHostId,
         databaseInstanceId,
         awsBackupAssessmentData,
-        GOLDEN_CONFIG.resiliency.awsBackup
-    ) as GenericParameterDriftResponseType;
+        goldenConfig
+    );
 }
 
 export { initiateOracleAWSBackupAssessment, getOracleAwsBackupDriftData };

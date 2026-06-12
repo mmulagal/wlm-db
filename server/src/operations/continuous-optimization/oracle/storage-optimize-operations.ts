@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { isEmpty, uniq } from 'lodash-es';
 import {
+    ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
     AssessmentCategoriesOracle,
     AssessmentTriggeredBy,
@@ -12,6 +13,7 @@ import {
     OptimizeStorageRequestParams,
     OptimizeStorageRequestParamsType
 } from '../../../utils/continous-optimization-consts';
+import ORACLE_GOLDEN_CONFIG from './golden-config';
 import { StorageAssessment } from './common-types';
 import getLogger from '../../../utils/logger';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
@@ -22,10 +24,7 @@ import {
     triggerOracleAssessmentAfterOptimization
 } from './assessment-operations';
 import { DatabaseInstanceMetadata, DatabaseInstancesIncludingResource, Metadata } from '../../../utils/common-types';
-import {
-    OracleGenericParameterDriftResponseType,
-    StorageParameterDriftResponseType
-} from '../../../routes/types/oracle-continuous-optimization.types';
+import { OracleGenericParameterDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
 import { listDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { IS_DEMO_FLOW, sqlResponseParsing } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
@@ -35,7 +34,6 @@ import { OracleMappedOntapVolumesResponse } from '../../workloads/oracle/common-
 import { activeSqlNodeDetails, handleOptimizeJobCreation, UnOptimizedDiskGroups } from '../assessment-utils';
 import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../../../utils/consts';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
-import GOLDEN_CONFIG from './golden-config';
 import { getOracleDatabaseMappedVolumes } from '../../workloads/oracle/oracle-operations';
 import {
     optimizeAfdDriftConfigParam,
@@ -49,12 +47,12 @@ import { headroomOptimization } from '../headroom-assessment';
 
 const logger = getLogger();
 
-const STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS = [
-    GOLDEN_CONFIG.dataDiskLunLayout.name,
-    GOLDEN_CONFIG.redoLogDiskLunLayout.name,
-    GOLDEN_CONFIG.fraDiskLunLayout.name,
-    GOLDEN_CONFIG.archivelogDiskLunLayout.name
-];
+const STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS = ORACLE_GOLDEN_CONFIG.filter(
+    entry =>
+        entry.type === 'storage' &&
+        entry.subType === 'layout' &&
+        entry.resourceType === ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
+).map(entry => entry.id);
 
 interface OptimizeAsmConfigParams {
     accountId: string;
@@ -438,17 +436,18 @@ async function triggerAssessmentAndStartOptimization(
             AssessmentCategoriesOracle.STORAGE,
             managedInstance
         );
-        if (!driftAssessment?.storage || !(driftAssessment.storage as StorageParameterDriftResponseType).layout) {
+        // Storage layout drift items are flattened entries carrying subType 'layout'.
+        const lunLayoutDrift = (driftAssessment?.assessments ?? []).filter(item =>
+            STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS.includes(item.id)
+        );
+        if (isEmpty(lunLayoutDrift)) {
             throw Error('No drift assessment found after triggering assessment for storage optimization');
         }
-        const lunLayoutDrift = ((driftAssessment?.storage as StorageParameterDriftResponseType).layout ?? []).filter(
-            target => typeof target.name === 'string' && STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS.includes(target.name)
-        );
 
         const unOptimizedDiskGroups: UnOptimizedDiskGroups[] = [];
         const targetConfigNamesForDemo: string[] = [];
         lunLayoutDrift.forEach(lunDrift => {
-            const targetConfig = storageLayoutTargets.find(target => target.configurationName === lunDrift.name);
+            const targetConfig = storageLayoutTargets.find(target => target.configurationName === lunDrift.id);
             if (targetConfig) {
                 targetConfig.objectsToOptimize.forEach(diskGroupName => {
                     const violationDetails = (
@@ -648,12 +647,8 @@ async function getOracleStorageConfigRecommendationMap(
             };
         } = {};
 
-        const storageDriftTyped = storageDrift as StorageParameterDriftResponseType;
-        if (isEmpty(storageDriftTyped.configuration)) {
-            return;
-        }
-
-        const { volumes } = storageDriftTyped.configuration;
+        // calculateStorageDrift now returns a flat array; filter by type/subType.
+        const volumes = storageDrift.filter(item => item.type === 'storage' && item.subType === 'configuration');
         if (isEmpty(volumes)) {
             return;
         }
