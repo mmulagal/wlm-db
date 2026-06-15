@@ -789,7 +789,7 @@ const DialogContent = ({
                 );
 
             case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
-                return <ScheduledLocalSnapshotDalog type={type} data={bulkRecommendationOptions} />;
+                return <ScheduledLocalSnapshotDalog type={type} data={bulkRecommendationOptions} isWad={isWad} />;
             case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
                 return (
                     <div className={styles['storage-tier-block']}>
