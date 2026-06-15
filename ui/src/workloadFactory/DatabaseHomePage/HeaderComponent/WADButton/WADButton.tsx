@@ -1,5 +1,5 @@
 import { DsButton, useDialog } from '@netapp/design-system';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { compressSync } from 'fflate';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
@@ -25,13 +25,48 @@ import {
 } from '../../../InventoryV2/InventoryTablesComponent/InstancesTable/InstanceTableHelper';
 import WADEngineTypeSelector from './WADEngineTypeSelector';
 
+type WADUploadDialogProps = {
+    primaryButtonLabel: string;
+    onUpload: (file: File, engineType: string) => void;
+};
 
+const WADUploadDialog = ({ primaryButtonLabel, onUpload }: WADUploadDialogProps) => {
+    const { t } = useTranslation();
+    const { closeDialog } = useDialog();
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const selectedEngineTypeRef = useRef(DBType.MSSQL);
+
+    return (
+        <DialogComponent
+            header={t('databases.inventory.upload-assessment-script')}
+            content={
+                <WADEngineTypeSelector
+                    context="upload"
+                    initialEngineType={DBType.MSSQL}
+                    onEngineTypeChange={engineType => {
+                        selectedEngineTypeRef.current = engineType;
+                    }}
+                    onFileChange={setSelectedFile}
+                />
+            }
+            primaryButton={primaryButtonLabel}
+            secondaryButton={GENERAL.CLOSE}
+            primaryButtonDisabled={!selectedFile}
+            callback={() => {
+                closeDialog();
+                if (selectedFile) {
+                    onUpload(selectedFile, selectedEngineTypeRef.current);
+                }
+            }}
+            closeCallback={() => closeDialog()}
+        />
+    );
+};
 
 const WADButton = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
-    const selectedUploadFileRef = useRef<File | null>(null);
     const selectedEngineTypeRef = useRef(DBType.MSSQL);
 
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
@@ -90,10 +125,6 @@ const WADButton = () => {
         }
     };
 
-    const handleUploadFileChange = (file: File | null) => {
-        selectedUploadFileRef.current = file;
-    };
-
     const handleEngineTypeChange = (engineType: string) => {
         selectedEngineTypeRef.current = engineType;
     };
@@ -103,47 +134,30 @@ const WADButton = () => {
         context: 'download' | 'upload',
         onConfirm?: () => void
     ) => {
-        selectedEngineTypeRef.current = DBType.MSSQL;
         if (context === 'upload') {
-            selectedUploadFileRef.current = null;
+            setDialog(
+                <WADUploadDialog primaryButtonLabel={primaryButtonLabel} onUpload={uploadWADScript} />
+            );
+            return;
         }
+
+        selectedEngineTypeRef.current = DBType.MSSQL;
 
         setDialog(
             <DialogComponent
-                header={
-                    context === 'download'
-                        ? t('databases.inventory.download-assessment-script')
-                        : t('databases.inventory.upload-assessment-script')
-                }
+                header={t('databases.inventory.download-assessment-script')}
                 content={
                     <WADEngineTypeSelector
                         context={context}
                         initialEngineType={DBType.MSSQL}
                         onEngineTypeChange={handleEngineTypeChange}
-                        onFileChange={context === 'upload' ? handleUploadFileChange : undefined}
                     />
                 }
                 primaryButton={primaryButtonLabel}
                 secondaryButton={GENERAL.CLOSE}
                 callback={() => {
                     closeDialog();
-                    if (context === 'upload') {
-                        if (selectedUploadFileRef.current) {
-                            uploadWADScript(
-                                selectedUploadFileRef.current,
-                                selectedEngineTypeRef.current
-                            );
-                        } else {
-                            dispatch(
-                                addNotification({
-                                    notificationType: NOTIFICATION_TYPES.ERROR,
-                                    message: t('databases.inventory.no-file-selected')
-                                })
-                            );
-                        }
-                    } else {
-                        onConfirm?.();
-                    }
+                    onConfirm?.();
                 }}
                 closeCallback={() => closeDialog()}
             />
