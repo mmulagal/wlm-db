@@ -1333,13 +1333,13 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
     if (type === RECOMMENDED_TEMPLATES.DEV_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
         // setting instance type
-        const value = 'm5.xlarge';
-        const label2 = '4vCPU, 16 GiB RAM, 4750Mbps';
+        const value = 'r8in.xlarge';
+        const label2 = '4vCPU, 32 GiB RAM, 10000Mbps';
         const data = {
-            instanceType: 'm5.xlarge',
+            instanceType: 'r8in.xlarge',
             vCpus: 4,
-            ramInMib: 16384,
-            iopsInMbps: 4750,
+            ramInMib: 32768,
+            iopsInMbps: 10000,
             architecture: ['x86_64']
         };
         const option = generateOptionType(value, value, label2, false, '', data);
@@ -1363,14 +1363,16 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
         result.throughput = '128';
     } else if (type === RECOMMENDED_TEMPLATES.PROD_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
-        // setting instance type
-        const value = 'm5.2xlarge';
-        const label2 = '8vCPU, 32 GiB RAM, 4750Mbps';
+        // setting instance type. r8in.2xlarge is the MEDIUM tier; pairs with
+        // the 1 TiB starting capacity below so the preset agrees with the
+        // size-based recommendation in `getRecommendedInstanceTypeForCapacity`.
+        const value = 'r8in.2xlarge';
+        const label2 = '8vCPU, 64 GiB RAM, 17500Mbps';
         const data = {
-            instanceType: 'm5.2xlarge',
+            instanceType: 'r8in.2xlarge',
             vCpus: 8,
-            ramInMib: 32768,
-            iopsInMbps: 4750,
+            ramInMib: 65536,
+            iopsInMbps: 17500,
             architecture: ['x86_64']
         };
         const option = generateOptionType(value, value, label2, false, '', data);
@@ -1385,9 +1387,11 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
             label: GENERAL.FAILOVER_CLUSTER,
             value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
         };
-        // Data drive Size
+        // Data drive Size. 1 TiB (1024 GiB) sits at the SMALL/MEDIUM tier
+        // boundary; MEDIUM (r8in.2xlarge) is what the size-based helper
+        // returns for this value.
         result.storageCapacity = {
-            capacity: '500',
+            capacity: '1024',
             unit: 'GiB'
         };
         // Throughput value

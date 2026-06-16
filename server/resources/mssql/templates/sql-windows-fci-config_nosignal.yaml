@@ -84,7 +84,7 @@ Metadata:
                 default: VPCCIDR for instances launched in existing VPC. Also used for setting
                     up security groups. e.g 10.0.0.8/16
             WorkloadInstanceType:
-                default: Workload Servers Instance Type for SQL EC2 Instances e.g r4.xlarge
+                default: Workload Servers Instance Type for SQL EC2 Instances e.g r8in.xlarge
             DomainAdminUser:
                 default: Domain Admin User Name e.g Administrator
             DomainDNSName:
@@ -240,7 +240,7 @@ Parameters:
         Description: ID of the Domain Member Security Group (e.g., sg-9cb7d0e5).
         Type: String
     WorkloadInstanceType:
-        Default: r5.large
+        Default: r8in.xlarge
         Description: EC2 instance type for the workload instances.
         Type: String
     MSSQLMediaBucketName:

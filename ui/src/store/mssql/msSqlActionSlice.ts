@@ -23,6 +23,10 @@ const initialState: any = {
         isLoading: false
     },
     isRecommendedInstance: null, // To load default instance type on recommended templates load
+    // True until the instance type is explicitly chosen by the user (dropdown
+    // pick), a recommended-template tile, or a restored config. Controls the
+    // size-based auto-recommendation effect in InstanceType.tsx.
+    isAutoRecommendedSelection: true,
     refetchJobSummaryApi: false,
     permissionWarning: false,
     permissionData: {},
@@ -113,6 +117,9 @@ const msSqlActionSlice = createSlice({
         setIsRecommendedInstance(state, action: PayloadAction<any>) {
             state.isRecommendedInstance = action.payload;
         },
+        setIsAutoRecommendedSelection(state, action: PayloadAction<boolean>) {
+            state.isAutoRecommendedSelection = action.payload;
+        },
         setRefetchJobSummaryApi(state, action: PayloadAction<any>) {
             state.refetchJobSummaryApi = action.payload;
         },
@@ -180,6 +187,7 @@ export const {
     setRefetchApiCountRan,
     setRefetchApiCountLoading,
     setIsRecommendedInstance,
+    setIsAutoRecommendedSelection,
     setRefetchJobSummaryApi,
     setPermissionWarning,
     setPermissionData,

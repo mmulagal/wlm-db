@@ -14,7 +14,12 @@ import {
 } from '../../../store/mssql/mssqlFormSlice';
 import store from '../../../store/store';
 import { GENERAL } from '../../../utils/appConstants';
-import { DEAFULT_INSTANCE_VALUE, FORM_OPTIONS } from '../../../utils/consts';
+import {
+    DEAFULT_INSTANCE_VALUE,
+    FORM_OPTIONS,
+    MSSQL_DB_SIZE_TIB_THRESHOLDS,
+    MSSQL_RECOMMENDED_INSTANCE_BY_DB_SIZE
+} from '../../../utils/consts';
 import { formatSize, generateOptionType, isFsxnExisting } from '../../../utils/utilityFunctions';
 
 export const selectDefaultSecurityGroup = (dispatch: any) => {
@@ -129,6 +134,38 @@ export const selectFsxIops = (selectedFsxnType: string, selectedExistingFsxnName
         dispatch(setProvisionedIOPSValue(''));
     }
 };
+
+// Returns the recommended MSSQL EC2 instance type for a user-entered database
+// size. `capacity` is the raw textual value from the form, `unitLabel` is the
+// selected unit ('GiB' or 'TiB'). When `capacity` is empty/non-numeric/zero we
+// fall back to the SMALL tier so an unfilled form still renders a sensible
+// default selection during initial mount.
+export const getRecommendedInstanceTypeForCapacity = (capacity: string | undefined, unitLabel: string | undefined) => {
+    const numeric = Number(capacity);
+    if (!capacity || !Number.isFinite(numeric) || numeric <= 0) {
+        return MSSQL_RECOMMENDED_INSTANCE_BY_DB_SIZE.SMALL;
+    }
+    const GIB_PER_TIB = 1024;
+    const sizeInTib = unitLabel === 'TiB' ? numeric : numeric / GIB_PER_TIB;
+    if (sizeInTib < MSSQL_DB_SIZE_TIB_THRESHOLDS.SMALL_MAX_TIB_EXCLUSIVE) {
+        return MSSQL_RECOMMENDED_INSTANCE_BY_DB_SIZE.SMALL;
+    }
+    if (sizeInTib <= MSSQL_DB_SIZE_TIB_THRESHOLDS.MEDIUM_MAX_TIB_INCLUSIVE) {
+        return MSSQL_RECOMMENDED_INSTANCE_BY_DB_SIZE.MEDIUM;
+    }
+    return MSSQL_RECOMMENDED_INSTANCE_BY_DB_SIZE.LARGE;
+};
+
+// Set of instance types that the auto-recommendation flow is allowed to
+// overwrite without user intervention: the alphabetical fallback default plus
+// every value the recommendation itself can produce. Any selection outside
+// this set (manual pick, preset tile, or restored config) is left untouched.
+export const MSSQL_AUTO_OVERWRITABLE_INSTANCE_TYPES: ReadonlySet<string> = new Set<string>([
+    DEAFULT_INSTANCE_VALUE,
+    MSSQL_RECOMMENDED_INSTANCE_BY_DB_SIZE.SMALL,
+    MSSQL_RECOMMENDED_INSTANCE_BY_DB_SIZE.MEDIUM,
+    MSSQL_RECOMMENDED_INSTANCE_BY_DB_SIZE.LARGE
+]);
 
 export const selectFsxKmsKey = (selectedFsxnType: string, selectedExistingFsxnName: any, dispatch: any) => {
     if (isFsxnExisting(selectedFsxnType) && selectedExistingFsxnName) {

@@ -856,7 +856,7 @@ describe('setRecommendedValues', () => {
     it('Return recommended values for dev', () => {
         const result = setRecommendedValues({}, '0');
         expect(result?.selectConfig).toEqual(SELECT_CONFIG.STANDARD_CREATE);
-        expect(result?.instanceType?.value).toEqual('m5.xlarge');
+        expect(result?.instanceType?.value).toEqual('r8in.xlarge');
         expect(result?.dbEdition?.value).toEqual(GENERAL.SQL_SERVER_STANDARD);
         expect(result?.dbDeploymentModel?.value).toEqual(SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE);
         expect(result?.storageCapacity?.capacity).toEqual('120');
@@ -865,10 +865,10 @@ describe('setRecommendedValues', () => {
     it('Return recommended values for prod', () => {
         const result = setRecommendedValues({}, '1');
         expect(result?.selectConfig).toEqual(SELECT_CONFIG.STANDARD_CREATE);
-        expect(result?.instanceType?.value).toEqual('m5.2xlarge');
+        expect(result?.instanceType?.value).toEqual('r8in.2xlarge');
         expect(result?.dbEdition?.value).toEqual(GENERAL.SQL_SERVER_STANDARD);
         expect(result?.dbDeploymentModel?.value).toEqual(SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE);
-        expect(result?.storageCapacity?.capacity).toEqual('500');
+        expect(result?.storageCapacity?.capacity).toEqual('1024');
         expect(result?.throughput).toEqual('128');
     });
 });

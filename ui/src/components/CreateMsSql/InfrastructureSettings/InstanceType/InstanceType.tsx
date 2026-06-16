@@ -9,8 +9,12 @@ import { formatSize, generateOptionType, sortListOfDict } from '../../../../util
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setInstanceType } from '../../../../store/mssql/mssqlFormSlice';
 import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
-import { setIsRecommendedInstance } from '../../../../store/mssql/msSqlActionSlice';
+import { setIsAutoRecommendedSelection, setIsRecommendedInstance } from '../../../../store/mssql/msSqlActionSlice';
 import { setIsWizardTouched } from '../../../../store/chatbot/chatbotSlice';
+import {
+    getRecommendedInstanceTypeForCapacity,
+    MSSQL_AUTO_OVERWRITABLE_INSTANCE_TYPES
+} from '../../MSSqlServer/MSSqlUtils';
 
 const InstanceType = () => {
     const dispatch = useDispatch();
@@ -22,8 +26,10 @@ const InstanceType = () => {
 
     const { credentialData } = useAppSelector(state => state.mssql.getCredentials);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
-    const { movingFromChatbot } = useAppSelector(state => state.chatbot);
     const isRecommendedInstance = useAppSelector(state => state.msSqlAction.isRecommendedInstance);
+    const isAutoRecommendedSelection = useAppSelector(state => state.msSqlAction.isAutoRecommendedSelection);
+    const storageCapacity = useAppSelector(state => state.mssqlForm.storageCapacity?.capacity);
+    const storageUnitLabel = useAppSelector(state => state.mssqlForm.storageCapacity?.unit?.value ?? state.mssqlForm.storageCapacity?.unit?.label ?? state.mssqlForm.storageCapacity?.unit);
 
     // Function to generate the options for Select Field
     const generateInstances = useMemo<optionType[]>((): optionType[] => {
@@ -62,7 +68,10 @@ const InstanceType = () => {
         if (isRecommendedInstance && instanceTypeData && instanceTypeData?.instanceTypes) {
             dispatch(setInstanceType(isRecommendedInstance));
             dispatch(setIsRecommendedInstance(null));
-        } else if (!isLoadConfig && !isRecommendedInstance && !movingFromChatbot) {
+            // A preset tile locks in its own instance type; subsequent capacity
+            // edits must not silently overwrite it via the size-based effect.
+            dispatch(setIsAutoRecommendedSelection(false));
+        } else if (!isLoadConfig && !isRecommendedInstance) {
             const newInstanceList = generateInstances?.filter(perRow => perRow?.label === selectedInstanceType?.label);
             if (!selectedInstanceType || !newInstanceList?.length) {
                 dispatch(setInstanceType(generateInstances?.[0]));
@@ -70,6 +79,50 @@ const InstanceType = () => {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [generateInstances]);
+
+    // Size-based auto-recommendation: while the user has not made an explicit
+    // selection (manual pick, preset tile, or loaded config), keep the instance
+    // type aligned with the entered database size. Guarded so we never override
+    // anything outside the auto-overwritable set, and skipped entirely until
+    // the user has actually entered a capacity (avoids an empty-state -> SMALL
+    // dispatch immediately followed by a debounce-driven correction).
+    useEffect(() => {
+        if (
+            !isAutoRecommendedSelection ||
+            isLoadConfig ||
+            isRecommendedInstance ||
+            !storageCapacity ||
+            !generateInstances?.length
+        ) {
+            return;
+        }
+        const currentValue = selectedInstanceType?.value;
+        if (currentValue && !MSSQL_AUTO_OVERWRITABLE_INSTANCE_TYPES.has(currentValue)) {
+            return;
+        }
+        const recommendedType = getRecommendedInstanceTypeForCapacity(storageCapacity, storageUnitLabel);
+        if (currentValue === recommendedType) {
+            return;
+        }
+        // Look the option up in the already-built (and architecture-filtered)
+        // dropdown list so the auto-recommendation always matches what the
+        // user can actually pick. If the recommendation isn't available in
+        // this region/license combo, leave the existing selection alone.
+        const optionFromList = generateInstances.find(opt => opt?.value === recommendedType);
+        if (!optionFromList) {
+            return;
+        }
+        dispatch(setInstanceType(optionFromList));
+    }, [
+        storageCapacity,
+        storageUnitLabel,
+        generateInstances,
+        isAutoRecommendedSelection,
+        isLoadConfig,
+        isRecommendedInstance,
+        selectedInstanceType?.value,
+        dispatch
+    ]);
 
     // Set the Header text here
     const setHeader = () => {
@@ -101,6 +154,7 @@ const InstanceType = () => {
                                 defaultValue={selectedInstanceType ? [selectedInstanceType] : [generateInstances[0]]}
                                 onChange={(selectedOptions: any): void => {
                                     dispatch(setInstanceType(selectedOptions));
+                                    dispatch(setIsAutoRecommendedSelection(false));
                                     dispatch(setIsWizardTouched(true));
                                 }}
                                 isSearchable={generateInstances.length > 5}

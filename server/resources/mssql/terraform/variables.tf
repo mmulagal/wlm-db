@@ -588,7 +588,7 @@ variable "is_custom_ami" {
 variable "workload_instance_type" {
   description = "The instance type of the workload"
   type        = string
-  default     = "m5.large"
+  default     = "r8in.xlarge"
 
   validation {
     condition     = length(var.workload_instance_type) > 0

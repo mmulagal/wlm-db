@@ -57,6 +57,22 @@ export const DEFAULT_MASTER_KEY = 'aws/fsx';
 // Default instance type
 export const DEAFULT_INSTANCE_VALUE = 'm5.xlarge';
 
+// MSSQL deployment-form recommended instance type tiers, keyed off the
+// user-entered database (storage) size. Boundaries are interpreted as:
+//   tib < SMALL_MAX_TIB_EXCLUSIVE                 -> SMALL
+//   SMALL_MAX_TIB_EXCLUSIVE <= tib <= MEDIUM_MAX_TIB_INCLUSIVE -> MEDIUM
+//   tib > MEDIUM_MAX_TIB_INCLUSIVE                -> LARGE
+export const MSSQL_DB_SIZE_TIB_THRESHOLDS = {
+    SMALL_MAX_TIB_EXCLUSIVE: 1,
+    MEDIUM_MAX_TIB_INCLUSIVE: 5
+} as const;
+
+export const MSSQL_RECOMMENDED_INSTANCE_BY_DB_SIZE = {
+    SMALL: 'r8in.xlarge',
+    MEDIUM: 'r8in.2xlarge',
+    LARGE: 'r8in.4xlarge'
+} as const;
+
 // Add credentials link
 export const CREDENTIAL_STAGE_LINK = 'https://staging.console.netapp.com/fsxadministration/credentials';
 export const CREDENTIAL_PROD_LINK = 'https://console.netapp.com/fsxadministration/credentials';
