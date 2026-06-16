@@ -1,0 +1,42 @@
+[
+  {
+    "query": "show registered drift findings for my mssql instance",
+    "should_trigger": true
+  },
+  {
+    "query": "run on-demand reassessment for this oracle database host",
+    "should_trigger": true
+  },
+  {
+    "query": "dismiss this oracle drift finding",
+    "should_trigger": true
+  },
+  {
+    "query": "what does workload factory say about this database drift posture",
+    "should_trigger": true
+  },
+  {
+    "query": "fetch sql server patch scan findings from registered assessment",
+    "should_trigger": true
+  },
+  {
+    "query": "trigger logs analysis for this mssql instance",
+    "should_trigger": false
+  },
+  {
+    "query": "run explore savings tco for oracle",
+    "should_trigger": false
+  },
+  {
+    "query": "optimize storage layout and apply recommended changes now",
+    "should_trigger": false
+  },
+  {
+    "query": "run one-time offline wad upload from this zip file",
+    "should_trigger": false
+  },
+  {
+    "query": "add a new route in server for assessment aggregation",
+    "should_trigger": false
+  }
+]

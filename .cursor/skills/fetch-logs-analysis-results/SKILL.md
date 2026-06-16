@@ -71,6 +71,24 @@ If MCP tools prefixed with `mcp_netapp-wf-sta` are available, prefer them over r
 | GET | `/{db}/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/logs-analysis/reports?pageSize=100` | List of report identifiers `{ id, creationTime, startTime, endTime }` newest-first |
 | GET | `/{db}/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/logs-analysis?jobId=&id=` | Aggregated `remediationRecommendation[]` (filter by `jobId` or report `id`; omit both to aggregate across all reports for that instance) |
 
+## Read routing
+
+| User asks for | Endpoint | Do not use |
+|---------------|----------|------------|
+| Region-wide latest per instance | `GET .../logs-analysis/summary` | Instance-scoped GET without host/instance context |
+| All recommendations for one instance | `GET .../database-hosts/{hostId}/database-instances/{instanceId}/logs-analysis` (no query) | Summary only |
+| **Specific report by id** | **`GET .../database-hosts/{hostId}/database-instances/{instanceId}/logs-analysis?id={reportId}`** | **Summary — it cannot filter by report id** |
+| Specific job | `GET .../logs-analysis?jobId={jobId}` | POST trigger |
+
+When the user mentions **report id**, you **must** execute the `id` query-parameter GET on the instance path. If host, instance, or id are missing, resolve them (`database-hosts` → `reports` list → `id` GET) — do not substitute summary for report-by-id reads.
+
+**Report-by-id workflow (required):**
+
+1. Resolve `databaseHostId` and `databaseInstanceId` (from user, summary, or `GET .../database-hosts`).
+2. If report id is missing, `GET .../logs-analysis/reports?pageSize=20` and use the newest id (or ask the user).
+3. **Execute** `GET .../database-hosts/{hostId}/database-instances/{instanceId}/logs-analysis?id={reportId}` — documenting this path is not sufficient; the curl must appear in the transcript.
+4. Summarize `remediationRecommendation[]` (or explain 404 / empty). Do **not** stop at summary-only when the user asked for report-by-id scope.
+
 ### Prerequisites (read-only)
 
 | Method | Path | Notes |
@@ -319,6 +337,10 @@ Verbatim messages emitted on failure:
 - **Timestamps**: All response time fields are epoch milliseconds.
 - **PostgreSQL not supported**: routes only exist for MSSQL and Oracle; `pgsql` paths return 404 "Route not found".
 - **Trigger is fire-and-forget**: the POST returns a `jobId` immediately; SSM execution + Bedrock analysis runs in the background and writes the report on completion.
+
+## Evals
+
+Functional evals: `evals/evals.json`, `evals/trigger-eval.json`, `agents/grader.md`. Run via [../evals/ORCHESTRATE.md](../evals/ORCHESTRATE.md); finish with `python3 .cursor/skills/evals/run.py finish --iteration <N>`.
 
 ## Troubleshooting (console vs curl / agent)
 

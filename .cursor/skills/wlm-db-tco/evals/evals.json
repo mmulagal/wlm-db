@@ -1,0 +1,224 @@
+{
+  "skill_name": "wlm-db-tco",
+  "evals": [
+    {
+      "id": 1,
+      "name": "manual-mssql-ebs-whatif",
+      "prompt": "I'm scoping a migration for a standalone SQL Server Standard Edition box in us-east-1 — m5.2xlarge with one 2 TB gp3 volume, 3000 IOPS, 125 MB/s throughput. Daily snapshots, 3 clone copies, 10% monthly change. What's the Explore Savings TCO vs FSx for ONTAP?",
+      "expected_output": "Manual EBS what-if TCO: monthly savings, existing vs recommended costs, compute recommendation, and storage breakdown. No AWS credential discovery.",
+      "files": [],
+      "expectations": [
+        "Routes to manual-cloud mode (not automatic discovery)",
+        "Uses POST .../mssql/regions/us-east-1/manual-storage-savings/ebs",
+        "Does not require CREDENTIALS_ID or EC2 discovery",
+        "Body includes sqlServerDeploymentType, sqlServerEdition, ec2Instances with volumes[]",
+        "Presents monthly savings computed from totalSummary (existing minus recommended)",
+        "Includes compute.recommended instanceType and finding",
+        "Fetches or mentions calculation breakdown (second POST to .../calculations)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "automatic-ebs-bulk",
+      "prompt": "We have Workload Factory AWS credentials in us-west-2. Can you run Explore Savings for our discovered SQL Server EC2 instances? Use daily snapshots, 3 clones, 10% change rate, daily clone refresh. I don't know the instance ids.",
+      "expected_output": "Discovers EC2 instances, runs automatic EBS bulk TCO for selected host(s), presents savings and breakdown.",
+      "files": [],
+      "expectations": [
+        "Routes to automatic-ebs reference (not manual or FSxW)",
+        "Calls GET .../discover before POST when instance ids are unknown",
+        "Uses bulk POST .../storage-savings/ebs with hosts[] (not instance-scoped path)",
+        "Body includes cloneRefreshFrequency (EBS-specific field)",
+        "Uses CREDENTIALS_ID and region from context or asks user",
+        "Makes two POSTs with the same body: summary then /calculations",
+        "Presents answer in the six-part format (savings, comparison, compute, license, storage, context)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "automatic-fsxw-single",
+      "prompt": "Instance i-0abc123def456789 in us-east-1 is on FSx for Windows File Server under our WF credential. Run TCO — weekly snapshots, 1 clone copy, 15% monthly change.",
+      "expected_output": "Single-instance automatic FSxW TCO with summary and calculations. No bulk hosts[] API.",
+      "files": [],
+      "expectations": [
+        "Routes to automatic-fsxw reference (not EBS bulk)",
+        "Uses POST .../instances/{instanceId}/storage-savings/fsxw",
+        "Body has snapshot fields only — no hosts[] and no cloneRefreshFrequency",
+        "Validates ec2InstanceId format (^i-[0-9a-f]{8,17}$)",
+        "Makes two POSTs: summary then /calculations with same body",
+        "Does not use bulk EBS path (.../storage-savings/ebs)"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "onprem-mssql-explore",
+      "prompt": "We already uploaded on-prem SQL Server collector data to Workload Factory. List resources and run explore-savings for us-east-1 with daily snapshots, 1 clone, 20% change.",
+      "expected_output": "Lists on-prem MSSQL resources, runs single POST explore-savings, presents savings from storageSavings.totalSummary.",
+      "files": [],
+      "expectations": [
+        "Routes to onprem-mssql reference",
+        "Calls GET .../mssql/onprem-tco/resources to list resourceId values",
+        "Uses single POST .../mssql/onprem-tco/explore-savings (not separate /calculations)",
+        "Body includes regionCode, resources[], and snapshotInfo",
+        "Reads savings from storageSavings.totalSummary (not top-level totalSummary)",
+        "Does not call upload endpoint (data already uploaded)"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "oracle-manual-ebs",
+      "prompt": "Oracle 19c standalone on m5.4xlarge in eu-west-1 — one 4 TB gp3 data volume. Weekly snapshots, no clones, 5% change. Manual what-if TCO please.",
+      "expected_output": "Oracle manual EBS TCO only. No FSxW path.",
+      "files": [],
+      "expectations": [
+        "Substitutes /oracle/... paths (not /mssql/)",
+        "Uses POST .../oracle/regions/eu-west-1/manual-storage-savings/ebs",
+        "Body uses oracleDeploymentType (not sqlServerDeploymentType); no ec2InstanceDescription",
+        "Does not call manual-storage-savings/fsxw (Oracle has no FSxW manual path)",
+        "Presents monthly savings and cost comparison",
+        "Does not require CREDENTIALS_ID"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "reject-postgresql",
+      "prompt": "Can you run Explore Savings TCO for our PostgreSQL RDS instance in us-east-1?",
+      "expected_output": "Politely declines — PostgreSQL is not supported by this skill. Does not call wlmdb TCO APIs.",
+      "files": [],
+      "expectations": [
+        "States PostgreSQL is not supported for Explore Savings TCO",
+        "Does not call POST .../storage-savings or manual-storage-savings endpoints",
+        "Does not invent TCO numbers for PostgreSQL"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "upload-requires-confirmation",
+      "prompt": "Here's my on-prem Oracle collector output file oracle-collector.json.gz — please upload it and run TCO for us-west-2.",
+      "expected_output": "Asks user to confirm destructive upload before POST. Does not upload without confirmation.",
+      "files": [],
+      "expectations": [
+        "Identifies upload as mutating/destructive workflow",
+        "Asks user to confirm before POST .../onprem-tco/upload",
+        "Mentions engine (oracle) and that records will be created/updated",
+        "Shows filename/path and target regionCode (us-west-2) in confirmation prompt",
+        "Does not POST upload in the same turn without explicit user confirmation",
+        "Does not run explore-savings on existing resources when upload was requested but not confirmed",
+        "Does not return TCO numbers in the confirmation turn"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "reject-post-migration-dashboard",
+      "prompt": "Show me the post-migration storage savings dashboard for my managed SQL Server host in Workload Factory.",
+      "expected_output": "Declines or redirects — post-migration managed-host savings dashboards are out of scope.",
+      "files": [],
+      "expectations": [
+        "Does not treat this as an Explore Savings / TCO API request",
+        "Explains this skill covers Explore Savings TCO, not post-migration managed-host dashboards",
+        "Does not call explore-savings or storage-savings endpoints for managed-host dashboard data"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "automatic-oracle-ebs-bulk",
+      "prompt": "Run Explore Savings TCO for our discovered Oracle EC2 databases in us-east-1 under WF credential beae8370-8243-45ac-9cf5-78b97c5b1c44. Daily snapshots, 2 clones, 10% change, daily clone refresh.",
+      "expected_output": "Oracle automatic EBS bulk TCO via /oracle/.../storage-savings/ebs with hosts[] (ec2InstanceId only — no monthlySqlByolCost).",
+      "files": [],
+      "expectations": [
+        "Routes to automatic-ebs reference with /oracle/ path substitution",
+        "Calls GET .../oracle/credentials/{credId}/regions/{region}/discover when ids unknown",
+        "Uses bulk POST .../oracle/.../storage-savings/ebs with hosts[]",
+        "Does not include monthlySqlByolCost in Oracle hosts[] entries",
+        "Body includes cloneRefreshFrequency",
+        "Makes two POSTs: summary then /calculations",
+        "Does not call FSxW paths"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "oracle-manual-dataguard",
+      "prompt": "Oracle Data Guard pair in us-west-2 — two m5.2xlarge nodes, each with 1 TB gp3. Daily snapshots, 1 clone, 10% change. Manual what-if TCO.",
+      "expected_output": "Oracle manual EBS with oracleDeploymentType Data Guard and exactly 2 ec2Instances[].",
+      "files": [],
+      "expectations": [
+        "Uses POST .../oracle/regions/us-west-2/manual-storage-savings/ebs",
+        "Body has oracleDeploymentType: Data Guard",
+        "ec2Instances[] has exactly 2 entries with isPrimary true/false",
+        "Does not use sqlServerDeploymentType or sqlServerEdition",
+        "Makes summary and /calculations POSTs"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "onprem-oracle-explore-byol",
+      "prompt": "On-prem Oracle collector data is already in Workload Factory. List resources and run explore-savings for us-west-2 with daily snapshots, no clones, 10% change. BYOL is $5000/month.",
+      "expected_output": "Oracle on-prem bulk explore-savings with monthlyByolCost per resource.",
+      "files": [],
+      "expectations": [
+        "Routes to onprem-oracle reference",
+        "Calls GET .../oracle/onprem-tco/resources",
+        "Uses POST .../oracle/onprem-tco/explore-savings only (no single-resource endpoint)",
+        "resources[] includes monthlyByolCost",
+        "Body includes regionCode and snapshotInfo",
+        "Reads savings from storageSavings.totalSummary",
+        "Single POST — no separate /calculations call"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "onprem-mssql-single-resource",
+      "prompt": "For on-prem SQL Server resource WLMDBSTD1 already uploaded — run explore-savings for us-east-1 only that host. Daily snapshots, 1 clone, 20% change. Use the single-resource endpoint if there's one.",
+      "expected_output": "MSSQL on-prem via POST .../resources/{resourceId}/explore-savings with regionCode and snapshotInfo.",
+      "files": [],
+      "expectations": [
+        "Resolves resourceId via GET .../mssql/onprem-tco/resources or by name",
+        "Uses POST .../mssql/onprem-tco/resources/{resourceId}/explore-savings",
+        "Body has regionCode and snapshotInfo (not bulk resources[])",
+        "Does not use bulk .../explore-savings when user asked for single host",
+        "Single POST returns storageSavings and calculations"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "onprem-mssql-bulk-multi",
+      "prompt": "Run on-prem SQL Server explore-savings for all uploaded resources in us-east-1 (up to 2 hosts). Daily snapshots, 1 clone, 20% change.",
+      "expected_output": "Bulk POST .../mssql/onprem-tco/explore-savings with 2 resources[] entries when available.",
+      "files": [],
+      "expectations": [
+        "Lists resources via GET .../mssql/onprem-tco/resources",
+        "Uses POST .../mssql/onprem-tco/explore-savings with resources[] (1–2 items)",
+        "Body includes regionCode and shared snapshotInfo",
+        "Presents aggregated savings from storageSavings.totalSummary",
+        "Does not call upload endpoint"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "reject-oracle-fsxw",
+      "prompt": "Our Oracle RAC is on FSx for Windows in us-east-1 — run automatic FSxW Explore Savings TCO.",
+      "expected_output": "Declines FSxW for Oracle; explains Oracle automatic TCO is EBS only.",
+      "files": [],
+      "expectations": [
+        "States Oracle has no automatic or manual FSxW TCO path",
+        "Does not call .../storage-savings/fsxw under /oracle/",
+        "Suggests Oracle automatic EBS or manual EBS what-if instead",
+        "Does not invent TCO numbers"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "manual-mssql-fsxw-whatif",
+      "prompt": "Manual what-if for SQL Server Enterprise in us-east-1: m5.xlarge with FSx for Windows (Single, SSD, 1 TB, 3000 IOPS, 128 MB/s), weekly snapshots, 1 clone, 15% monthly change. Run Explore Savings TCO.",
+      "expected_output": "MSSQL manual FSxW TCO with summary + calculations using manual-storage-savings/fsxw.",
+      "files": [],
+      "expectations": [
+        "Routes to manual-cloud FSxW mode",
+        "Uses POST .../mssql/regions/us-east-1/manual-storage-savings/fsxw",
+        "Body includes ec2Instances[].fsxw (deploymentType, storageVolumeType, storageAmount, volumeIops, throughput)",
+        "Does not include hosts[] or cloneRefreshFrequency in manual FSxW body",
+        "Makes two POSTs with same body: summary then /calculations",
+        "Presents monthly savings from totalSummary existing minus recommended"
+      ]
+    }
+  ]
+}

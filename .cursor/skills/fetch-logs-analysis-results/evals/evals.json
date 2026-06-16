@@ -1,0 +1,88 @@
+{
+  "skill_name": "fetch-logs-analysis-results",
+  "evals": [
+    {
+      "id": 1,
+      "name": "summary-read-mssql",
+      "prompt": "Fetch the latest MSSQL logs-analysis summary for us-east-1 under my credential and summarize severity counts per instance.",
+      "expected_output": "Uses region summary endpoint and returns severity-oriented summary.",
+      "files": [],
+      "expectations": [
+        "Uses GET .../{db}/credentials/{credId}/regions/{region}/logs-analysis/summary",
+        "Does not trigger POST .../logs-analysis for read-only summary request",
+        "Summarizes latestReport severityCounts and errorCount"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "trigger-requires-confirmation",
+      "prompt": "Please trigger logs analysis now for this database instance and share recommendations.",
+      "expected_output": "Asks for explicit confirmation before triggering destructive logs analysis call.",
+      "files": [],
+      "expectations": [
+        "Identifies trigger as mutating and cost-incurring workflow",
+        "Asks for explicit confirmation before POST .../logs-analysis",
+        "Mentions host/instance scope and scan window before waiting for confirmation"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "reject-postgresql",
+      "prompt": "Run logs analysis for postgresql in workload factory.",
+      "expected_output": "Declines because PostgreSQL is unsupported by this skill.",
+      "files": [],
+      "expectations": [
+        "States PostgreSQL is not supported",
+        "Does not call MSSQL/Oracle logs-analysis endpoints for PostgreSQL request"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "oracle-prereq-post-readonly",
+      "prompt": "Check Oracle logs-analysis prerequisites for host h-1 in us-east-1; is this mutating?",
+      "expected_output": "Clarifies Oracle prerequisites endpoint uses POST but remains read-only.",
+      "files": [],
+      "expectations": [
+        "States Oracle pre-requisites endpoint uses POST but is non-mutating/read-only",
+        "Mentions Oracle prerequisites require databaseInstanceName in the request item",
+        "Does not ask for destructive trigger confirmation for prerequisites-only request"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "read-report-by-id-nontrigger",
+      "prompt": "Fetch logs-analysis for this instance by report id and summarize top recommendations.",
+      "expected_output": "Uses read path scoped by id and avoids trigger workflow.",
+      "files": [],
+      "expectations": [
+        "Uses GET logs-analysis endpoint with id query parameter for specific report retrieval",
+        "Does not trigger POST logs-analysis when user asks to read existing report",
+        "Summarizes remediationRecommendation entries for the selected report"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "summary-empty-results-handling",
+      "prompt": "Get logs-analysis summary for this region and tell me what it means if there are no results.",
+      "expected_output": "Handles empty summary data gracefully without escalating as an error.",
+      "files": [],
+      "expectations": [
+        "States summary endpoint may return HTTP 200 with items empty when no reports exist",
+        "Does not treat empty summary items as trigger failure requiring POST",
+        "Provides clear no-data guidance instead of fabricated recommendations"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "prereq-not-ready-blocks-trigger",
+      "prompt": "If prerequisites are not ready, what should happen before logs-analysis trigger?",
+      "expected_output": "Blocks trigger when readiness checks fail and surfaces prerequisite messages.",
+      "files": [],
+      "expectations": [
+        "States trigger should not proceed when any prerequisite ready flag is false",
+        "Surfaces prerequisite failure messages to the user",
+        "Requires prerequisites check before trigger execution"
+      ]
+    }
+  ]
+}

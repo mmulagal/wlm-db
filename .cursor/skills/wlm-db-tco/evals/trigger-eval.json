@@ -1,0 +1,98 @@
+[
+  {
+    "query": "my boss wants a cost breakdown for moving our SQL Server from EBS to FSx for ONTAP in us-east-1 — can you run explore savings?",
+    "should_trigger": true
+  },
+  {
+    "query": "what's the migration ROI if we switch this m5.2xlarge + 2TB gp3 setup to netapp fsx? manual what-if is fine",
+    "should_trigger": true
+  },
+  {
+    "query": "we uploaded the on-prem oracle collector last week — run TCO for us-west-2 with daily snaps",
+    "should_trigger": true
+  },
+  {
+    "query": "instance i-0a1b2c3d4e5f6789 is fsxw in our wf aws account, need storage savings numbers",
+    "should_trigger": true
+  },
+  {
+    "query": "compare existing vs recommended monthly costs for discovered ec2 sql hosts under credential abc-123 in us-west-2",
+    "should_trigger": true
+  },
+  {
+    "query": "how much would we save per month migrating oracle standalone on gp3 to fsx ontap? eu-west-1 hypothetical",
+    "should_trigger": true
+  },
+  {
+    "query": "oracle data guard manual what-if tco in us-west-2, two m5.2xlarge nodes with 1tb gp3 each",
+    "should_trigger": true
+  },
+  {
+    "query": "on-prem oracle collector already uploaded — explore savings for us-west-2 with $5k/month byol",
+    "should_trigger": true
+  },
+  {
+    "query": "run automatic oracle ebs explore savings for discovered hosts in us-east-1 under our wf credential",
+    "should_trigger": true
+  },
+  {
+    "query": "run explore savings tco — ENVIRONMENT is Demo, account-j3aZttuL, need simulator-friendly numbers",
+    "should_trigger": true
+  },
+  {
+    "query": "customer has 3 on-prem sql server resources already in workload factory, bulk explore-savings for us-east-1 pls",
+    "should_trigger": true
+  },
+  {
+    "query": "TCO",
+    "should_trigger": true
+  },
+  {
+    "query": "storage savings assessment for our managed database — what's workload factory say about costs?",
+    "should_trigger": true
+  },
+  {
+    "query": "fix the wlmdb explore-savings route handler — POST body validation is wrong",
+    "should_trigger": false
+  },
+  {
+    "query": "add a button to the Explore Savings UI tab for clone refresh frequency",
+    "should_trigger": false
+  },
+  {
+    "query": "show me the post-migration savings dashboard for my managed oracle host",
+    "should_trigger": false
+  },
+  {
+    "query": "run registered drift assessment findings for this sql server instance",
+    "should_trigger": false
+  },
+  {
+    "query": "analyze postgres slow query logs and recommend indexes",
+    "should_trigger": false
+  },
+  {
+    "query": "fetch database logs analysis remediation report for mssql instance xyz",
+    "should_trigger": false
+  },
+  {
+    "query": "what's our aws bill this month for the whole account?",
+    "should_trigger": false
+  },
+  {
+    "query": "create a pr to add tco unit tests in server/routes/storage-savings.test.ts",
+    "should_trigger": false
+  },
+  {
+    "query": "run explore savings for postgresql rds — same api as mssql right?",
+    "should_trigger": false
+  },
+  {
+    "query": "optimize storage layout for this managed host — apply the recommended fsx configuration now",
+    "should_trigger": false
+  },
+  {
+    "query": "oracle rac on fsx for windows — run automatic fsxw storage savings tco in us-east-1",
+    "should_trigger": true
+  }
+]

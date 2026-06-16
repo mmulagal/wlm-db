@@ -1,0 +1,16 @@
+# Local eval credentials (copy from local.env.example.json)
+evals/local.env.json
+
+# skill-creator workspace (sibling to each skill dir)
+*-workspace/
+
+# per-skill runtime output (e.g. manual upload runs)
+**/workspace/
+
+# JSON validation run timestamps
+evals/results/
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+*skill-creator/*

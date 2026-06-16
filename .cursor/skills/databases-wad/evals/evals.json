@@ -1,0 +1,65 @@
+{
+  "skill_name": "databases-wad",
+  "evals": [
+    {
+      "id": 1,
+      "name": "mssql-account-assessment-read",
+      "prompt": "Show me SQL Server registered drift assessment for this account and region.",
+      "expected_output": "Uses MSSQL registered-assessment read flow.",
+      "files": [],
+      "expectations": [
+        "Routes to MSSQL registered assessment path",
+        "Uses read endpoint (GET) for assessment summary",
+        "Summarizes not-optimized findings with recommendation context"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "cross-engine-account-summary",
+      "prompt": "Give me one summary of registered drift findings across both MSSQL and Oracle.",
+      "expected_output": "Runs both engines and merges output.",
+      "files": [],
+      "expectations": [
+        "Identifies this as a cross-engine request",
+        "Calls both MSSQL and Oracle account-scope assessment reads",
+        "Labels merged summary by engine"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "trigger-reassessment-confirmation",
+      "prompt": "Trigger on-demand reassessment for this Oracle instance now.",
+      "expected_output": "Requires explicit confirmation before mutating trigger call.",
+      "files": [],
+      "expectations": [
+        "Treats reassessment trigger as mutating operation",
+        "Asks for explicit confirmation with engine and host or instance scope",
+        "Mentions polling jobs endpoint after trigger"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "dismiss-finding-confirmation",
+      "prompt": "Dismiss this drift finding for the MSSQL instance.",
+      "expected_output": "Requires explicit confirmation before dismissal.",
+      "files": [],
+      "expectations": [
+        "Treats dismissal as mutating workflow",
+        "Requests explicit confirmation before sending dismiss call",
+        "Does not substitute optimize or remediate endpoints"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "refuse-optimize-flow",
+      "prompt": "Apply the recommended storage optimization for this managed database now.",
+      "expected_output": "Refuses optimize/apply flow as out of scope for registered drift skill.",
+      "files": [],
+      "expectations": [
+        "States optimize/apply or fix-now actions are out of scope",
+        "Offers registered drift assessment capabilities instead",
+        "Does not call optimize endpoints"
+      ]
+    }
+  ]
+}

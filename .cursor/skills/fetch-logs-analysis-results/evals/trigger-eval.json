@@ -1,0 +1,46 @@
+[
+  {
+    "query": "show me the latest logs analysis summary for mssql in us-east-1",
+    "should_trigger": true
+  },
+  {
+    "query": "list logs-analysis reports for database host host-123 instance db-456",
+    "should_trigger": true
+  },
+  {
+    "query": "trigger logs analysis for oracle host h-1 instance i-1 and poll the job",
+    "should_trigger": true
+  },
+  {
+    "query": "check logs analysis prerequisites for ec2 instance i-0123456789abcdef0",
+    "should_trigger": true
+  },
+  {
+    "query": "for oracle, run logs-analysis prerequisites and tell me readiness",
+    "should_trigger": true
+  },
+  {
+    "query": "run explore savings tco for sql server ebs vs fsx",
+    "should_trigger": false
+  },
+  {
+    "query": "show me registered drift assessment findings for oracle",
+    "should_trigger": false
+  },
+  {
+    "query": "analyze postgresql logs and recommend indexes",
+    "should_trigger": false
+  },
+  {
+    "query": "add a button to the logs page in the ui",
+    "should_trigger": false
+  },
+  {
+    "query": "dismiss drift findings for this oracle database instance",
+    "should_trigger": false
+  },
+  {
+    "query": "run logs analyzer package unit tests in this repo",
+    "should_trigger": false
+  }
+]
