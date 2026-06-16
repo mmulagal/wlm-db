@@ -1303,10 +1303,15 @@ const initializeResultObject = `
     fi
 `;
 
-const validateOracleInstanceConnectivity = (ec2InstanceId: string, dbSid: string, isReplicaInfoRequired: boolean) => `
+const validateOracleInstanceConnectivity = (
+    ec2InstanceId: string,
+    dbSid: string,
+    isReplicaInfoRequired: boolean,
+    isGovCloud: boolean = false
+) => `
     ec2InstanceId="${ec2InstanceId}"
     oracleSid="${dbSid}"
-    oracleSid_temp="${dbSid}_temp"
+    oracleSid_temp="${isGovCloud ? dbSid : `${dbSid}_temp`}"
     isReplicaInfoRequired="${isReplicaInfoRequired}"
 
     ${oracleUserAuthLoginCommand}
@@ -2100,10 +2105,10 @@ EOF
 }
 `;
 
-const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string) => `
+const checkRequiredOracleUserPermissions = (ec2InstanceId: string, dbSid: string, isGovCloud: boolean = false) => `
     ec2InstanceId="${ec2InstanceId}"
     oracleSid="${dbSid}"
-    oracleSid_temp="${dbSid}_temp"
+    oracleSid_temp="${isGovCloud ? dbSid : `${dbSid}_temp`}"
 
     ${initializeResultObject}
     ${oracleUserAuthLoginCommand}

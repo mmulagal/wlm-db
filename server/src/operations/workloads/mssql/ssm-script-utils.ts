@@ -667,13 +667,20 @@ const validateSQLInstanceConnectivity = (
     sqlInstanceNames: string[] = [DEFAULT_MSSQL_INSTANCE_NAME],
     windowsUser: boolean = false,
     checkManageReadiness: boolean = false,
-    isReplicaInfoRequired: boolean = false
+    isReplicaInfoRequired: boolean = false,
+    isGovCloud: boolean = false
 ) => ` 
     $env:Path += ';C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\'   
     $ProgressPreference = 'SilentlyContinue'
     $checkManageReadiness = [System.Convert]::ToBoolean('${checkManageReadiness}')
     $windowsUser = [System.Convert]::ToBoolean('${windowsUser}')
     $isReplicaInfoRequired = [System.Convert]::ToBoolean('${isReplicaInfoRequired}')
+    $isGovCloud = [System.Convert]::ToBoolean('${isGovCloud}')
+    if ($isGovCloud) {
+        $credSuffix = ''
+    } else {
+        $credSuffix = '_temp'
+    }
 
     $connection = Test-Connection -ComputerName ${GOOGLE_DNS} -Quiet -Count 1
     if ($connection -ne $True) {
@@ -739,7 +746,7 @@ const validateSQLInstanceConnectivity = (
                             ? `
                             $domainList = $credobject.domain
                             if ($domainList -ne $null) {
-                                $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToLower() -eq "$($sqlinstancename.ToLower())_temp" } | Select-Object -First 1
+                                $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToLower() -eq "$($sqlinstancename.ToLower())$credSuffix" } | Select-Object -First 1
                                 if ($sqlCredentials -eq $null) {
                                     $sqlCredentials = $domainList | Where-Object { $_.sqlinstancename.ToUpper() -eq 'MSSQLSERVER' } | Select-Object -First 1
                                 }
@@ -750,7 +757,7 @@ const validateSQLInstanceConnectivity = (
                             : `
                             $sqlList = $credobject.sql
                             if ($sqlList -ne $null) {
-                                $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq "$($sqlinstancename.ToLower())_temp" } | Select-Object -First 1
+                                $sqlCredentials = $sqlList | Where-Object { $_.sqlinstancename.ToLower() -eq "$($sqlinstancename.ToLower())$credSuffix" } | Select-Object -First 1
                             } else {
                                 $sqlCredentials = $null
                             }

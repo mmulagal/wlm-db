@@ -2736,6 +2736,8 @@ async function validateWindowsCredentials(
         command += `${validateOntapConnectivity([fsxCredentials.resourceId], region)};\n`;
     }
 
+    const isGovCloudAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
+
     if (sqlCredentials.length) {
         const resourcesWithSqlAuth = sqlCredentials.map(cred => cred.resourceId);
         command += `${validateSQLInstanceConnectivity(
@@ -2743,7 +2745,8 @@ async function validateWindowsCredentials(
             resourcesWithSqlAuth,
             false,
             checkManageReadiness,
-            isReplicaInfoRequired
+            isReplicaInfoRequired,
+            isGovCloudAccount
         )};\n`;
     }
 
@@ -2754,7 +2757,8 @@ async function validateWindowsCredentials(
             resourcesWithWindowsAuth,
             true,
             checkManageReadiness,
-            isReplicaInfoRequired
+            isReplicaInfoRequired,
+            isGovCloudAccount
         )};\n`;
     }
 
@@ -3115,6 +3119,8 @@ async function validateOracleCredentials(
     const makeSignedUrl = await getPreSignedUrl(artifactsRegion, bucketname, MAKE_LINUX_RELATIVE_PATH);
     const signedUrls = [awsCliSignedUrl, jqSignedUrl, makeSignedUrl];
 
+    const isGovCloudOracle = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
+
     command += `${initializeResultObject}\n`;
     if (checkManageReadiness) {
         command += `${checkAndInstallRequiredOracleDependentModules(signedUrls)}\n`;
@@ -3122,7 +3128,7 @@ async function validateOracleCredentials(
         if (oracleCredentials.length) {
             command += oracleCredentials.reduce(
                 (acc: string, { resourceId }) =>
-                    `${acc}${checkRequiredOracleUserPermissions(instanceId, resourceId)}\n`,
+                    `${acc}${checkRequiredOracleUserPermissions(instanceId, resourceId, isGovCloudOracle)}\n`,
                 ''
             );
         }
@@ -3137,7 +3143,12 @@ async function validateOracleCredentials(
     if (oracleCredentials.length) {
         command += oracleCredentials.reduce(
             (acc: string, { resourceId }) =>
-                `${acc}${validateOracleInstanceConnectivity(instanceId, resourceId, isReplicaInfoRequired)}\n`,
+                `${acc}${validateOracleInstanceConnectivity(
+                    instanceId,
+                    resourceId,
+                    isReplicaInfoRequired,
+                    isGovCloudOracle
+                )}\n`,
             ''
         );
     }
