@@ -13,8 +13,8 @@ vi.mock('@netapp/design-system', () => ({
             {children}
         </span>
     ),
-    Button: ({ children, onClick, variant, className }: any) => (
-        <button data-testid={`button-${variant}`} className={className} onClick={onClick}>
+    Button: ({ children, onClick, variant, isDisabled, className }: any) => (
+        <button data-testid={`button-${variant}`} className={className} onClick={onClick} disabled={isDisabled}>
             {children}
         </button>
     ),
@@ -22,6 +22,12 @@ vi.mock('@netapp/design-system', () => ({
         <button data-testid={`ds-button-${variant}`} className={className} onClick={onClick}>
             {children}
         </button>
+    ),
+    Popover: ({ children, container }: any) => (
+        <div data-testid="popover">
+            {container}
+            <div data-testid="popover-content">{children}</div>
+        </div>
     ),
     useDialog: () => ({ setDialog: mockSetDialog, closeDialog: vi.fn() })
 }));
@@ -927,6 +933,77 @@ describe('DashboardConfigsTable', () => {
         const activeNoViolationCell = screen.getByTestId('cell-4-4');
         expect(activeNoViolationCell.textContent).toContain('0 out of 0');
         expect(activeNoViolationCell.querySelector('[data-testid="button-text"]')).toBeNull();
+    });
+
+    // ── renderCountWithView: offline instance disables View ──
+    describe('renderCountWithView — offline instance behaviour', () => {
+        const getCustomCol = (configType: string) => {
+            render(
+                <Provider store={makeStore()}>
+                    <DashboardConfigsTable {...defaultProps} configType={configType} />
+                </Provider>
+            );
+            // The custom column for patch configs uses accessor 'current'
+            return capturedColumns.find((col: any) => col.accessor === 'current');
+        };
+
+        it('renders enabled View button (no Popover) for online instance (status Up)', () => {
+            const col = getCustomCol('Microsoft SQL Server patch');
+            const { queryByTestId } = render(
+                col.renderCell('3', { configState: 'ACTIVE', status: 'Up', loadingStatus: false })
+            );
+            expect(queryByTestId('popover')).toBeNull();
+        });
+
+        it('renders enabled View button (no Popover) for online instance (status Running)', () => {
+            const col = getCustomCol('Microsoft SQL Server patch');
+            const { queryByTestId } = render(
+                col.renderCell('3', { configState: 'ACTIVE', status: 'Running', loadingStatus: false })
+            );
+            expect(queryByTestId('popover')).toBeNull();
+        });
+
+        it('renders disabled View button in Popover for offline instance (status Down)', () => {
+            const col = getCustomCol('Microsoft SQL Server patch');
+            const { getByTestId, getByText } = render(
+                col.renderCell('3', { configState: 'ACTIVE', status: 'Down', loadingStatus: false })
+            );
+            expect(getByTestId('popover')).toBeTruthy();
+            expect((getByText('databases.dashboard.view').closest('button') as HTMLButtonElement).disabled).toBe(true);
+            expect(getByTestId('popover-content').textContent).toBe(
+                'databases.well-architect.view-offline-instance-disabled'
+            );
+        });
+
+        it('does not attach onClick handler for offline instance — dialog not opened', () => {
+            mockSetDialog.mockClear();
+            const col = getCustomCol('Microsoft SQL Server patch');
+            const { getByText } = render(
+                col.renderCell('3', { configState: 'ACTIVE', status: 'Down', loadingStatus: false })
+            );
+            const viewBtn = getByText('databases.dashboard.view').closest('button') as HTMLButtonElement;
+            fireEvent.click(viewBtn);
+            expect(mockSetDialog).not.toHaveBeenCalled();
+        });
+
+        it('renders enabled View button (no Popover) when loadingStatus is true (inventory still fetching)', () => {
+            const col = getCustomCol('Microsoft SQL Server patch');
+            const { queryByTestId } = render(
+                col.renderCell('3', { configState: 'ACTIVE', status: undefined, loadingStatus: true })
+            );
+            expect(queryByTestId('popover')).toBeNull();
+        });
+
+        it('also works for Oracle OS patch config', () => {
+            const col = getCustomCol('Operating system patch');
+            const { getByTestId } = render(
+                col.renderCell('5', { configState: 'ACTIVE', status: 'Stopped', loadingStatus: false })
+            );
+            expect(getByTestId('popover')).toBeTruthy();
+            expect(getByTestId('popover-content').textContent).toBe(
+                'databases.well-architect.view-offline-instance-disabled'
+            );
+        });
     });
 
     // ── Skip host when cred/region not matching ──

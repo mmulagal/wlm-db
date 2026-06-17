@@ -609,6 +609,7 @@
             "bulk-fix-disable-for-asm": "Bulk fix is not supported for ASM configurations.",
             "coming-soon": "Coming soon",
             "fix-disabled": "Fix is not supported for this configuration.",
+            "view-offline-instance-disabled": "Missing patches lists not available for offline instances.",
             "over-provisioned-fix-disabled": "Over provisioned {{configName}} can not be optimized.",
             "under-provisioned-missing-permissions-fix-disabled": "Under provisioned {{configName}} with missing permissions can not be optimized.",
             "bulk-action-enabled-on-selected": "Bulk action is enabled on selected rows",

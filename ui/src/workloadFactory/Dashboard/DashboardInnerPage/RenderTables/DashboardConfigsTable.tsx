@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { DsToggleSwitch } from '@tlveng/wlm-ds';
-import { Button, DsTypography, useDialog } from '@netapp/design-system';
+import { Button, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { TFunction } from 'i18next';
 import styles from './RenderTables.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
@@ -27,6 +27,7 @@ import {
     FSXN_STORAGE_PROTOCOLS,
     GETWELL_STATUS,
     GETWELL_VALUES,
+    ONLINE_INSTANCE_STATUSES,
     ORACLE_ISCSI_ONLY_CONFIG_TYPES
 } from '../../../../utils/consts';
 import {
@@ -118,24 +119,40 @@ const renderCountWithView = (
     handleImpactedResourceDialog: HandleImpactedResourceDialog
 ) => {
     const count = Number(cellData) || 0;
+    const statusLower = rowData?.status?.toLowerCase?.() ?? '';
+    const isOnline = rowData?.loadingStatus === true || ONLINE_INSTANCE_STATUSES.has(statusLower);
     return (
         <div className={CommonStyles.impactedDrivesCell}>
             {cellData != null && String(cellData) !== ''
                 ? cellData
                 : t('databases.general.not-available-table-columns')}
-            {count > 0 && (
-                <Button
-                    variant="text"
-                    onClick={() =>
-                        handleImpactedResourceDialog({
-                            ...rowData,
-                            configurationName: configNameOverride
-                        })
-                    }
-                >
-                    {t('databases.dashboard.view')}
-                </Button>
-            )}
+            {count > 0 &&
+                (isOnline ? (
+                    <Button
+                        variant="text"
+                        onClick={() =>
+                            handleImpactedResourceDialog({
+                                ...rowData,
+                                configurationName: configNameOverride
+                            })
+                        }
+                    >
+                        {t('databases.dashboard.view')}
+                    </Button>
+                ) : (
+                    <Popover
+                        trigger="hover"
+                        container={
+                            <span>
+                                <Button variant="text" isDisabled>
+                                    {t('databases.dashboard.view')}
+                                </Button>
+                            </span>
+                        }
+                    >
+                        {t('databases.well-architect.view-offline-instance-disabled')}
+                    </Popover>
+                ))}
         </div>
     );
 };
