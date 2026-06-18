@@ -1,14 +1,7 @@
 import { TooltipInfo } from '@netapp/design-system';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { TFunction } from 'i18next';
-import {
-    CONFIG_STATES,
-    ASSESSMENT_CONFIG_NAMES,
-    GETWELL_CONFIG,
-    FSXN_STORAGE_PROTOCOLS,
-    ORACLE_ISCSI_ONLY_CARD_KEYS,
-    WA_FLAG_SKIP
-} from '../../utils/consts';
+import { CONFIG_STATES, ASSESSMENT_CONFIG_NAMES, GETWELL_CONFIG, WA_FLAG_SKIP } from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
 import { ReactComponent as Postpone } from '../../assets/Schedule.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
@@ -187,36 +180,6 @@ export const checkHasDismissedConfigurations = (cardData: any, assessmentData?: 
     return hasStandardDismissed || hasStorageSizingDismissed || hasSubConfigsDismissed;
 };
 
-// Helper function to check if a configuration should be counted based on Oracle-specific conditions for MSSQL we do not have any condition so will go to else block
-const shouldCountOracleMSSQLConfiguration = (key: string, cardData: any): boolean => {
-    if (key === 'log_dg_lun_layout' || key === 'data_dg_lun_layout') {
-        return cardData.isASMManaged && cardData?.storageProtocol === FSXN_STORAGE_PROTOCOLS.ISCSI;
-    }
-    if (key === 'archivelog_dg_lun_layout' || key === 'fra_dg_lun_layout') {
-        if (
-            key === 'archivelog_dg_lun_layout' &&
-            !cardData.isStorageLayoutFra &&
-            cardData.isASMManaged &&
-            cardData?.storageProtocol === FSXN_STORAGE_PROTOCOLS.ISCSI
-        ) {
-            return true;
-        }
-        if (
-            key === 'fra_dg_lun_layout' &&
-            cardData.isStorageLayoutFra &&
-            cardData.isASMManaged &&
-            cardData?.storageProtocol === FSXN_STORAGE_PROTOCOLS.ISCSI
-        ) {
-            return true;
-        }
-        return false;
-    }
-    if ((ORACLE_ISCSI_ONLY_CARD_KEYS as readonly string[]).includes(key)) {
-        return cardData?.storageProtocol === FSXN_STORAGE_PROTOCOLS.ISCSI;
-    }
-    return true;
-};
-
 // Helper function to get total count based on dismissed configuration state
 export const calculateTotalConfigCount = (
     cardData: any,
@@ -252,16 +215,12 @@ export const calculateTotalConfigCount = (
         if (showDismissedConfigurations) {
             // Count only dismissed and postponed configurations
             if (configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED) {
-                if (shouldCountOracleMSSQLConfiguration(key, cardData)) {
-                    count++;
-                }
+                count++;
             }
         } else {
             // Count only active configurations
             if (!configState || configState === CONFIG_STATES.ACTIVE || configState === CONFIG_STATES.ACTIVATING) {
-                if (shouldCountOracleMSSQLConfiguration(key, cardData)) {
-                    count++;
-                }
+                count++;
             }
         }
     });
@@ -311,9 +270,9 @@ export const calculateTotalConfigCount = (
 };
 
 // Helper function to calculate postpone information for configurations
-export const calculatePostponeInfo = (cardData: any, key: string) => {
+export const calculatePostponeInfo = (cardData: any, key: string, fullCardData?: any) => {
     const configState = cardData[key]?.dismissedObj?.configState;
-    if (configState !== CONFIG_STATES.POSTPONED) {
+    if (configState !== CONFIG_STATES.POSTPONED && configState !== CONFIG_STATES.DISMISSED) {
         return null;
     }
 
@@ -321,23 +280,35 @@ export const calculatePostponeInfo = (cardData: any, key: string) => {
     const startTime = cardData[key]?.dismissedObj?.startTime;
     const endTime = cardData[key]?.dismissedObj?.endTime;
 
-    const postponeStartDate = new Date(startTime);
-    const postponeEndDate = new Date(endTime);
-    const today = new Date();
+    let postponeDateFormatted = '';
+    let daysLeft = 0;
 
-    const daysLeft = Math.max(0, Math.ceil((postponeEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
+    // Only calculate date info for POSTPONED state
+    if (configState === CONFIG_STATES.POSTPONED && startTime && endTime) {
+        const postponeStartDate = new Date(startTime);
+        const postponeEndDate = new Date(endTime);
+        const today = new Date();
 
-    // Format postpone date
-    const postponeDateFormatted = postponeStartDate.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-    });
+        daysLeft = Math.max(0, Math.ceil((postponeEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
 
-    return {
+        // Format postpone date
+        postponeDateFormatted = postponeStartDate.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        });
+    }
+
+    // Get config name from block_one
+    const configName = cardData[key]?.block_one?.value || '';
+
+    const result = {
         postponeDate: postponeDateFormatted,
-        daysLeft
+        daysLeft,
+        configName
     };
+
+    return result;
 };
 
 // Helper function to check if all sub-configurations are in ACTIVATING state

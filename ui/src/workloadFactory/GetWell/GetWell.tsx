@@ -28,7 +28,6 @@ import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
 
 import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, DBType, WLF_TABS } from '../../utils/consts';
-import RecommendationTable from './RecommendationTable/RecommendationTable';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
 import {
@@ -37,8 +36,10 @@ import {
     resetGwValuesOnRefresh,
     generateDynamicFilterOptions,
     formatGetWellData,
+    formatGetWellDataFlat,
     isAoagDeployment as checkIsAoagDeployment,
-    isMssqlHaDeployment
+    groupConfigurationsByCategory,
+    getCategoryTranslationKey
 } from './GetWellUtils';
 import { setDefaultFilterOptions, setOptimizeFilterTags } from '../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../store/storeHooks';
@@ -71,9 +72,6 @@ import {
     checkHasDismissedConfigurations,
     calculateTotalConfigCount,
     calculatePostponeInfo,
-    areAllOntapSubConfigurationsActivating,
-    areAllOsSubConfigurationsActivating,
-    areAllHaSubConfigurationsActivating,
     checkAllConfigurationsDismissed
 } from './GetWellHelper';
 import generateReport from '../../utils/generateWellArchitectedExcel';
@@ -87,9 +85,6 @@ const GetWell = () => {
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const {
         cardData,
-        ontapConfigTableData,
-        osConfigTableData,
-        mssqlHighAvailabilityTableData,
         isAssessmentAvailable,
         selectedResourceId,
         selectedDatabaseInstance,
@@ -128,6 +123,13 @@ const GetWell = () => {
             setShowChartArea(Boolean(gwTimestamp && gwTimestamp !== '0'));
         } else {
             setShowChartArea(true);
+        }
+    }, [loading]);
+
+    // Clear filtered card data when loading starts to prevent showing stale data
+    useEffect(() => {
+        if (loading) {
+            setFilteredCardData({});
         }
     }, [loading]);
 
@@ -213,23 +215,12 @@ const GetWell = () => {
     );
 
     // Helper function to calculate postpone information for configurations
-    const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key), [cardData]);
+    const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key, cardData), [cardData]);
 
     // Helper function to check if all configurations are dismissed
     const allConfigurationsDismissed = useMemo(
         () => checkAllConfigurationsDismissed(cardData, driftAssessmentData),
         [cardData, driftAssessmentData]
-    );
-
-    // Memoize sub-configuration activation states to avoid redundant computation
-    const areAllOntapActivating = useMemo(
-        () => areAllOntapSubConfigurationsActivating(driftAssessmentData),
-        [driftAssessmentData]
-    );
-
-    const areAllOsActivating = useMemo(
-        () => areAllOsSubConfigurationsActivating(driftAssessmentData),
-        [driftAssessmentData]
     );
 
     // Automatically enable dismissed toggle when all configurations are dismissed
@@ -251,22 +242,26 @@ const GetWell = () => {
         setFilteredCardData(data);
         setInstanceDeploymentType(cardData?.deploymentType || '');
         setConfigCount(configCount);
-    }, [
-        cardData,
-        optimizeFilterTags,
-        ontapConfigTableData,
-        osConfigTableData,
-        selectedDatabaseStorageType,
-        showDismissedConfigurations,
-        driftAssessmentData
-    ]);
+    }, [cardData, optimizeFilterTags, selectedDatabaseStorageType, showDismissedConfigurations, driftAssessmentData]);
 
     // Update table data when dismissed view state changes
     useEffect(() => {
         if (driftAssessmentData) {
-            formatGetWellData(dispatch, driftAssessmentData, showDismissedConfigurations);
+            // Detect if data is flat structure by checking if assessments property exists
+            const isFlatStructure =
+                'assessments' in driftAssessmentData && Array.isArray((driftAssessmentData as any).assessments);
+
+            if (isFlatStructure) {
+                // Pass skipDriftDataDispatch=true to prevent infinite loop
+                formatGetWellDataFlat(dispatch, driftAssessmentData as any, showDismissedConfigurations, false, true);
+            } else {
+                formatGetWellData(dispatch, driftAssessmentData, showDismissedConfigurations);
+            }
         }
     }, [showDismissedConfigurations, driftAssessmentData]);
+
+    // Group configurations by category for dynamic rendering
+    const groupedConfigurations = useMemo(() => groupConfigurationsByCategory(filteredCardData), [filteredCardData]);
 
     const handleFilterClearAll = useCallback(() => {
         dispatch(setOptimizeFilterTags([]));
@@ -334,45 +329,80 @@ const GetWell = () => {
         isExpanded && clickedAccordionId === id && setExpandedValue(id);
     };
 
-    // Helper function to render PostponeInfo/ActivatingInfo based on showDismissedConfigurations
-    const renderPostponeActivatingInfo = (configKey: string) => (
-        <>
-            {showDismissedConfigurations && (
-                <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} translation={t} />
-            )}
-
-            {!showDismissedConfigurations && (
-                <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} />
-            )}
-        </>
-    );
-
-    // Helper function to render ActivatingInfo for sub-configurations when all are in ACTIVATING state
-    const renderSubConfigActivatingInfo = (configType: 'ontap' | 'os' | 'ha') => {
-        if (showDismissedConfigurations) return null;
-
-        let areAllActivating = false;
-
-        switch (configType) {
-            case ASSESSMENT_CONFIG_NAMES.ONTAP:
-                areAllActivating = areAllOntapActivating;
-                break;
-            case ASSESSMENT_CONFIG_NAMES.OS:
-                areAllActivating = areAllOsActivating;
-                break;
-            case ASSESSMENT_CONFIG_NAMES.HA:
-                areAllActivating = areAllHaSubConfigurationsActivating(driftAssessmentData);
-                break;
-        }
-
-        if (!areAllActivating) return null;
+    // Helper function to render a configuration card dynamically
+    const renderConfigurationCard = (configKey: string, config: any, index: number) => {
+        const accordionId = `${configKey}-${index}`;
 
         return (
-            <ActivatingInfo
-                configKey={configType}
-                cardData={{ [configType]: { dismissedObj: { configState: CONFIG_STATES.ACTIVATING } } }}
-                translation={t}
-            />
+            <div key={configKey} className={styles.combineComponent}>
+                <StorageCardComponent
+                    cardData={config}
+                    optimizePrintState={optimizePrintState}
+                    type={config.mapName}
+                    showDismissedConfigurations={showDismissedConfigurations}
+                    setShowDismissedConfigurations={setShowDismissedConfigurations}
+                />
+                <DsAccordion
+                    id={accordionId}
+                    variant="Default"
+                    isDisabled={loading || showDismissedConfigurations}
+                    isExpanded={isAccordionExpanded(accordionId, optimizePrintState)}
+                    onExpandChange={isExpanded => {
+                        handleAccordionExpanded(accordionId, isExpanded);
+                    }}
+                    onClick={() => setClickedAccordionId(accordionId)}
+                    title={
+                        <div className={styles.tagPlacement}>
+                            {config?.tags?.map((perTag: string, tagIndex: number) => (
+                                <div
+                                    className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                    key={tagIndex}
+                                >
+                                    <Tag text={perTag} />
+                                </div>
+                            ))}
+                        </div>
+                    }
+                    headerActions={[
+                        <div className={styles.headerAction}>
+                            {renderPostponeActivatingInfo(configKey)}
+                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
+                            </div>
+                            <div
+                                style={{
+                                    color:
+                                        loading || showDismissedConfigurations
+                                            ? 'var(--text-disabled)'
+                                            : 'var(--text-button-primary)'
+                                }}
+                            >
+                                {t('databases.well-architect.actions.view-recommendation')}
+                            </div>
+                        </div>
+                    ]}
+                    children={<RecommendationText data={config?.recommendation} />}
+                />
+            </div>
+        );
+    };
+
+    // Helper function to render PostponeInfo/ActivatingInfo based on showDismissedConfigurations
+    const renderPostponeActivatingInfo = (configKey: string) => {
+        // Check config state to show appropriate component
+        const configState = cardData[configKey]?.dismissedObj?.configState;
+        const isPostponed = configState === CONFIG_STATES.POSTPONED;
+
+        return (
+            <>
+                {showDismissedConfigurations && isPostponed && (
+                    <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} translation={t} />
+                )}
+
+                {!showDismissedConfigurations && (
+                    <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} />
+                )}
+            </>
         );
     };
 
@@ -672,39 +702,6 @@ const GetWell = () => {
                                                             variant="underline"
                                                         />
                                                     </div>
-                                                    <div className={styles.dropDown}>
-                                                        <DsSelect
-                                                            title=""
-                                                            selectedOptionIds={
-                                                                defaultFilterOptions['sub-catagories']
-                                                                    ? defaultFilterOptions['sub-catagories']
-                                                                    : []
-                                                            }
-                                                            isExpanded={isAccordionOpen ? undefined : false}
-                                                            formatLabel={() =>
-                                                                `Sub categories: ${
-                                                                    !defaultFilterOptions['sub-catagories']?.length ||
-                                                                    defaultFilterOptions['sub-catagories'].length ===
-                                                                        dynamicFilterOptions.subCategories.length
-                                                                        ? 'All'
-                                                                        : ''
-                                                                }(${
-                                                                    defaultFilterOptions['sub-catagories']?.length > 0
-                                                                        ? defaultFilterOptions['sub-catagories']?.length
-                                                                        : dynamicFilterOptions.subCategories.length
-                                                                })`
-                                                            }
-                                                            placeholder="Placeholder text"
-                                                            isCleanable={false}
-                                                            options={dynamicFilterOptions.subCategories}
-                                                            selectionType="multi"
-                                                            isWithActions
-                                                            onSelect={(option: any) =>
-                                                                handleSelect(option, 'sub-catagories')
-                                                            }
-                                                            variant="underline"
-                                                        />
-                                                    </div>
                                                     <div
                                                         className={`${styles.dropDown} ${styles['optimized-drop-down']}`}
                                                     >
@@ -922,35 +919,6 @@ const GetWell = () => {
                                                         }}
                                                         variant="Regular_14"
                                                     >
-                                                        Sub categories:
-                                                    </DsTypography>
-                                                    <DsTypography
-                                                        style={{
-                                                            color:
-                                                                loading || !isAssessmentAvailable
-                                                                    ? 'var(--text-disabled)'
-                                                                    : 'var(--text-primary)'
-                                                        }}
-                                                        variant="Semibold_14"
-                                                    >
-                                                        {!defaultFilterOptions['sub-catagories']?.length ||
-                                                        defaultFilterOptions['sub-catagories']?.length ===
-                                                            dynamicFilterOptions.subCategories.length
-                                                            ? `All(${dynamicFilterOptions.subCategories.length})`
-                                                            : `${defaultFilterOptions['sub-catagories']?.length}/${dynamicFilterOptions.subCategories.length}`}
-                                                    </DsTypography>
-                                                </div>
-
-                                                <div className={styles.items}>
-                                                    <DsTypography
-                                                        style={{
-                                                            color:
-                                                                loading || !isAssessmentAvailable
-                                                                    ? 'var(--text-disabled)'
-                                                                    : 'var(--text-primary)'
-                                                        }}
-                                                        variant="Regular_14"
-                                                    >
                                                         Status:
                                                     </DsTypography>
                                                     <DsTypography
@@ -1065,1831 +1033,59 @@ const GetWell = () => {
                             {/* Adding dummy div to have consistent spacing after filters */}
                             <div style={{ marginTop: '40px' }} />
 
-                            {/* Section one */}
-                            {(filteredCardData?.storage_tier ||
-                                filteredCardData?.file_system_headroom ||
-                                filteredCardData?.transaction_log_drive_size ||
-                                filteredCardData?.tempdb_drive_size) && (
+                            {/* Loading state for configuration cards */}
+                            {loading && Object.keys(filteredCardData).length === 0 && (
                                 <div className={styles.sectionClass}>
-                                    <div className={styles['header-buttons']}>
-                                        <DsTypography
-                                            style={{
-                                                padding: '0 0 8px'
-                                            }}
-                                            variant="Semibold_16"
-                                        >
-                                            {t('databases.well-architect.sections.storage-sizing')}
-                                        </DsTypography>
-                                    </div>
-
-                                    <div className={styles.accordionGroups}>
-                                        {filteredCardData?.storage_tier && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.storage_tier}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={ASSESSMENT_CONFIG_NAMES.STORAGE_TIER}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="1"
-                                                    variant="Default"
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('1', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('1', isExpanded);
-                                                        // accordion.onExpandChange && accordion.onExpandChange(isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('1')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.storage_tier?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('storage_tier')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.storage_tier?.recommendation}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {filteredCardData?.file_system_headroom && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.file_system_headroom}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="2"
-                                                    variant="Default"
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('2', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('2', isExpanded);
-                                                        // accordion.onExpandChange && accordion.onExpandChange(isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('2')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.file_system_headroom?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('file_system_headroom')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={
-                                                                filteredCardData?.file_system_headroom?.recommendation
-                                                            }
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {filteredCardData?.transaction_log_drive_size && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.transaction_log_drive_size}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="3"
-                                                    variant="Default"
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('3', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('3', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('3')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.transaction_log_drive_size?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('transaction_log_drive_size')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={
-                                                                filteredCardData?.transaction_log_drive_size
-                                                                    ?.recommendation
-                                                            }
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {filteredCardData?.tempdb_drive_size && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.tempdb_drive_size}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="4"
-                                                    variant="Default"
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('4', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('4', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('4')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.tempdb_drive_size?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('tempdb_drive_size')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.tempdb_drive_size?.recommendation}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            padding: '60px 0',
+                                            minHeight: '200px'
+                                        }}
+                                    >
+                                        <Spinner isLarge />
                                     </div>
                                 </div>
                             )}
 
-                            {/* Section two */}
-                            {(filteredCardData?.user_data_files ||
-                                filteredCardData?.transaction_log_files ||
-                                filteredCardData?.tempdb_files) && (
-                                <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
-                                    <div className={styles['header-buttons']}>
-                                        <DsTypography
-                                            style={{
-                                                padding: '0 0 8px'
-                                            }}
-                                            variant="Semibold_16"
-                                        >
-                                            {t('databases.well-architect.sections.storage-layout')}
-                                        </DsTypography>
-                                    </div>
+                            {/* Dynamic configuration sections - Renders ALL configurations from API grouped by category */}
+                            {!loading && Object.keys(filteredCardData).length > 0 && (
+                                <>
+                                    {['storage', 'compute', 'application', 'resiliency', 'cloning'].map(category => {
+                                        const configs = groupedConfigurations[category] || [];
 
-                                    <div className={styles.accordionGroups}>
-                                        {filteredCardData?.user_data_files && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.user_data_files}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="5"
-                                                    variant="Default"
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('5', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('5', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('5')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.user_data_files?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('user_data_files')}
+                                        if (configs.length === 0) {
+                                            return null;
+                                        }
 
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.user_data_files?.recommendation}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {filteredCardData?.transaction_log_files && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.transaction_log_files}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="6"
-                                                    variant="Default"
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.transaction_log_files?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('6', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('6', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('6')}
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('transaction_log_files')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={
-                                                                filteredCardData?.transaction_log_files?.recommendation
-                                                            }
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {filteredCardData?.tempdb_files && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.tempdb_files}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="7"
-                                                    variant="Default"
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('7', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('7', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('7')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.tempdb_files?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('tempdb_files')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.tempdb_files?.recommendation}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Section three */}
-                            {(filteredCardData?.ontap_configuration || filteredCardData?.os_configuration) && (
-                                <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
-                                    <div className={styles['header-buttons']}>
-                                        <DsTypography
-                                            style={{
-                                                padding: '0 0 8px'
-                                            }}
-                                            variant="Semibold_16"
-                                        >
-                                            {t('databases.well-architect.sections.storage-configuration')}
-                                        </DsTypography>
-                                    </div>
-
-                                    <div className={styles.accordionGroups}>
-                                        {filteredCardData?.ontap_configuration && (
-                                            <div className={`${styles.combineComponent} ${styles.storageConfig}`}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.ontap_configuration}
-                                                    optimizePrintState={optimizePrintState}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                    isAllSubConfigActivating={areAllOntapActivating}
-                                                />
-                                                <DsAccordion
-                                                    id="9"
-                                                    variant="Default"
-                                                    isDisabled={loading || false}
-                                                    isExpanded={isAccordionExpanded('9', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('9', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('9')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.ontap_configuration?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('ontap_configuration')}
-
-                                                            {/* Show full ActivatingInfo if all sub-configs are activating */}
-                                                            {areAllOntapActivating &&
-                                                                !showDismissedConfigurations &&
-                                                                renderSubConfigActivatingInfo('ontap')}
-
-                                                            {/* Show normal view button if not all sub-configs are activating or in dismissed view */}
-                                                            {(!areAllOntapActivating ||
-                                                                showDismissedConfigurations) && (
-                                                                <>
-                                                                    <div
-                                                                        className={
-                                                                            isDarkTheme && !loading
-                                                                                ? styles['dark-theme-light']
-                                                                                : ''
-                                                                        }
-                                                                    >
-                                                                        {loading ? <LightDisabled /> : <Light />}
-                                                                    </div>
-                                                                    <div
-                                                                        style={{
-                                                                            color: loading
-                                                                                ? 'var(--text-disabled)'
-                                                                                : 'var(--text-button-primary)'
-                                                                        }}
-                                                                    >
-                                                                        {t(
-                                                                            'databases.well-architect.actions.view-recommendations-optimizations'
-                                                                        )}
-                                                                    </div>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationTable
-                                                            tableData={ontapConfigTableData}
-                                                            isLoading={loading}
-                                                            optimizePrintState={optimizePrintState}
-                                                            from={WLF_TABS.INVENTORY}
-                                                            showDismissedConfigurations={showDismissedConfigurations}
-                                                            setShowDismissedConfigurations={
-                                                                setShowDismissedConfigurations
-                                                            }
-                                                            driftAssessmentData={driftAssessmentData}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {filteredCardData?.os_configuration && (
-                                            <div className={`${styles.combineComponent} ${styles.storageConfig}`}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.os_configuration}
-                                                    optimizePrintState={optimizePrintState}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                    isAllSubConfigActivating={areAllOsActivating}
-                                                />
-                                                <DsAccordion
-                                                    id="10"
-                                                    isDisabled={loading || false}
-                                                    isExpanded={isAccordionExpanded('10', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('10', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('10')}
-                                                    variant="Default"
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.os_configuration?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('os_configuration')}
-
-                                                            {/* Show full ActivatingInfo if all sub-configs are activating */}
-                                                            {areAllOsActivating &&
-                                                                !showDismissedConfigurations &&
-                                                                renderSubConfigActivatingInfo('os')}
-
-                                                            {/* Show normal view button if not all sub-configs are activating or in dismissed view */}
-                                                            {(!areAllOsActivating || showDismissedConfigurations) && (
-                                                                <>
-                                                                    <div
-                                                                        className={
-                                                                            isDarkTheme && !loading
-                                                                                ? styles['dark-theme-light']
-                                                                                : ''
-                                                                        }
-                                                                    >
-                                                                        {loading ? <LightDisabled /> : <Light />}
-                                                                    </div>
-                                                                    <div
-                                                                        style={{
-                                                                            color: loading
-                                                                                ? 'var(--text-disabled)'
-                                                                                : 'var(--text-button-primary)'
-                                                                        }}
-                                                                    >
-                                                                        {t(
-                                                                            'databases.well-architect.actions.view-recommendations-optimizations'
-                                                                        )}
-                                                                    </div>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationTable
-                                                            tableData={osConfigTableData}
-                                                            isLoading={loading}
-                                                            optimizePrintState={optimizePrintState}
-                                                            from={WLF_TABS.INVENTORY}
-                                                            showDismissedConfigurations={showDismissedConfigurations}
-                                                            setShowDismissedConfigurations={
-                                                                setShowDismissedConfigurations
-                                                            }
-                                                            driftAssessmentData={driftAssessmentData}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Section four */}
-                            {(filteredCardData?.compute_rightsizing ||
-                                filteredCardData?.host_os_patch ||
-                                filteredCardData?.rss_config ||
-                                filteredCardData?.mtu) && (
-                                <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
-                                    <div className={styles['header-buttons']}>
-                                        <DsTypography
-                                            style={{
-                                                padding: '0 0 8px'
-                                            }}
-                                            variant="Semibold_16"
-                                        >
-                                            {t('databases.well-architect.sections.compute')}
-                                        </DsTypography>
-                                    </div>
-
-                                    <div className={styles.accordionGroups}>
-                                        {filteredCardData?.compute_rightsizing && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.compute_rightsizing}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={t('databases.well-architect.actions.compute-rightsizing')}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="11"
-                                                    variant="Default"
-                                                    isDisabled={
-                                                        loading ||
-                                                        showDismissedConfigurations ||
-                                                        filteredCardData?.compute_rightsizing?.isMissingPermissions
-                                                    }
-                                                    onClick={() => setClickedAccordionId('11')}
-                                                    isExpanded={isAccordionExpanded('11', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('11', isExpanded);
-                                                    }}
-                                                    title={
-                                                        filteredCardData?.compute_rightsizing?.isMissingPermissions ? (
-                                                            <div className={styles.missingPermissionText}>
-                                                                <Error />
-                                                                <DsTypography
-                                                                    variant="Semibold_14"
-                                                                    style={{ marginLeft: '8px' }}
-                                                                >
-                                                                    Error:
-                                                                </DsTypography>
-                                                                &nbsp;
-                                                                <DsTypography variant="Regular_14">
-                                                                    {t(
-                                                                        'databases.well-architect.actions.compute-rightsizing-unavailable'
-                                                                    )}
-                                                                    missing permissions.
-                                                                </DsTypography>
-                                                                &nbsp;
-                                                                <DsButton
-                                                                    type="text"
-                                                                    onClick={e => {
-                                                                        e.stopPropagation();
-                                                                        handleLearnHowClick();
-                                                                    }}
-                                                                >
-                                                                    {t(
-                                                                        'databases.well-architect.actions.learn-compute-rightsizing'
-                                                                    )}
-                                                                </DsButton>
-                                                            </div>
-                                                        ) : (
-                                                            <div className={styles.tagPlacement}>
-                                                                {filteredCardData?.compute_rightsizing?.tags?.map(
-                                                                    (perTag: string, index: number) => (
-                                                                        <div
-                                                                            className={`${
-                                                                                showDismissedConfigurations
-                                                                                    ? styles.dismissed
-                                                                                    : ''
-                                                                            }`}
-                                                                            key={index}
-                                                                        >
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    )
-                                                                )}
-                                                            </div>
-                                                        )
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('compute_rightsizing')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.compute_rightsizing?.recommendation}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {filteredCardData?.host_os_patch && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.host_os_patch}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={GENERAL.OPERATING_SYSTEM_PATCH}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="12"
-                                                    variant="Default"
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.host_os_patch?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('12', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('12', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('12')}
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('host_os_patch')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.host_os_patch?.recommendation}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {filteredCardData?.rss_config && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.rss_config}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={GENERAL.RSS_CONFIGURATION}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="13"
-                                                    variant="Default"
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.rss_config?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('13', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('13', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('13')}
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('rss_config')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.rss_config?.recommendation}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-                                        {filteredCardData?.mtu && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.mtu}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={t('databases.general.mtu')}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="21"
-                                                    variant="Default"
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.mtu?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('21', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('21', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('21')}
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('mtu')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.mtu?.recommendation}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Section five */}
-                            {((filteredCardData?.sql_licenses && !isAoagDeployment) ||
-                                filteredCardData?.microsoft_sql_patch ||
-                                filteredCardData?.maxdop) && (
-                                <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
-                                    <div className={styles['header-buttons']}>
-                                        <DsTypography
-                                            style={{
-                                                padding: '0 0 8px'
-                                            }}
-                                            variant="Semibold_16"
-                                        >
-                                            {GENERAL.APPLICATION}
-                                        </DsTypography>
-                                    </div>
-
-                                    <div className={styles.accordionGroups}>
-                                        {/* License (SQL Server) card is not supported for AOAG deployments */}
-                                        {filteredCardData?.sql_licenses && !isAoagDeployment && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.sql_licenses}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={GENERAL.LICENSE_SQL_SERVER}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="14"
-                                                    variant="Default"
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('14', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('14', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('14')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.sql_licenses?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('sql_licenses')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.sql_licenses?.recommendation}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {filteredCardData?.microsoft_sql_patch && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.microsoft_sql_patch}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={GENERAL.MICROSOFT_SQL_PATCH}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="15"
-                                                    variant="Default"
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('15', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('15', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('15')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.microsoft_sql_patch?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('microsoft_sql_patch')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.microsoft_sql_patch?.recommendation}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {filteredCardData?.maxdop && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.maxdop}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={GENERAL.MAXDOP_PATCH}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="16"
-                                                    variant="Default"
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('16', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('16', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('16')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.maxdop?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('maxdop')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.maxdop?.recommendation}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Section six */}
-                            {(filteredCardData?.scheduled_local_snapshot ||
-                                filteredCardData?.crr ||
-                                filteredCardData?.scheduled_fsx_for_ontap_backups ||
-                                (isMssqlHaDeployment(instanceDeploymentType) &&
-                                    filteredCardData?.mssql_high_availability)) && (
-                                <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
-                                    <div className={styles['header-buttons']}>
-                                        <DsTypography
-                                            style={{
-                                                padding: '0 0 8px'
-                                            }}
-                                            variant="Semibold_16"
-                                        >
-                                            {GENERAL.RESILIENCY}
-                                        </DsTypography>
-                                    </div>
-
-                                    <div className={styles.accordionGroups}>
-                                        {filteredCardData?.scheduled_local_snapshot && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.scheduled_local_snapshot}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={GENERAL.SCHEDULED_LOCAL_SNAPSHOT}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="17"
-                                                    variant="Default"
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('17', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('17', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('17')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.scheduled_local_snapshot?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('scheduled_local_snapshot')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={
-                                                                filteredCardData?.scheduled_local_snapshot
-                                                                    ?.recommendation
-                                                            }
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-                                        {filteredCardData?.crr && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.crr}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={ASSESSMENT_CONFIG_NAMES.CRR}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="18"
-                                                    variant="Default"
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('18', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('18', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('18')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.crr?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('crr')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.crr?.recommendation}
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {filteredCardData?.scheduled_fsx_for_ontap_backups && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.scheduled_fsx_for_ontap_backups}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="19"
-                                                    variant="Default"
-                                                    isDisabled={loading || showDismissedConfigurations}
-                                                    isExpanded={isAccordionExpanded('19', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('19', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('19')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.scheduled_fsx_for_ontap_backups?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div
-                                                                        className={`${
-                                                                            showDismissedConfigurations
-                                                                                ? styles.dismissed
-                                                                                : ''
-                                                                        }`}
-                                                                        key={index}
-                                                                    >
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo(
-                                                                'scheduled_fsx_for_ontap_backups'
-                                                            )}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading || showDismissedConfigurations ? (
-                                                                    <LightDisabled />
-                                                                ) : (
-                                                                    <Light />
-                                                                )}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color:
-                                                                        loading || showDismissedConfigurations
-                                                                            ? 'var(--text-disabled)'
-                                                                            : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={
-                                                                filteredCardData?.scheduled_fsx_for_ontap_backups
-                                                                    ?.recommendation
-                                                            }
-                                                        />
-                                                    }
-                                                />
-                                            </div>
-                                        )}
-
-                                        {isMssqlHaDeployment(instanceDeploymentType) &&
-                                            filteredCardData?.mssql_high_availability && (
-                                                <div className={`${styles.combineComponent} ${styles.storageConfig}`}>
-                                                    <StorageCardComponent
-                                                        cardData={filteredCardData?.mssql_high_availability}
-                                                        optimizePrintState={optimizePrintState}
-                                                        type={GENERAL.MSSQL_HIGH_AVAILABILITY}
-                                                        showDismissedConfigurations={showDismissedConfigurations}
-                                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                        isAllSubConfigActivating={areAllHaSubConfigurationsActivating(
-                                                            driftAssessmentData
-                                                        )}
-                                                    />
-                                                    <DsAccordion
-                                                        id="22"
-                                                        variant="Default"
-                                                        isDisabled={loading || false}
-                                                        isExpanded={isAccordionExpanded('22', optimizePrintState)}
-                                                        onExpandChange={isExpanded => {
-                                                            handleAccordionExpanded('22', isExpanded);
+                                        return (
+                                            <div
+                                                key={category}
+                                                className={styles.sectionClass}
+                                                style={{ marginTop: category !== 'storage' ? '40px' : '0' }}
+                                            >
+                                                <div className={styles['header-buttons']}>
+                                                    <DsTypography
+                                                        style={{
+                                                            padding: '0 0 8px'
                                                         }}
-                                                        onClick={() => setClickedAccordionId('22')}
-                                                        title={
-                                                            <div className={styles.tagPlacement}>
-                                                                {filteredCardData?.mssql_high_availability?.tags?.map(
-                                                                    (perTag: string, index: number) => (
-                                                                        <div
-                                                                            className={`${
-                                                                                showDismissedConfigurations
-                                                                                    ? styles.dismissed
-                                                                                    : ''
-                                                                            }`}
-                                                                            key={index}
-                                                                        >
-                                                                            <Tag text={perTag} />
-                                                                        </div>
-                                                                    )
-                                                                )}
-                                                            </div>
-                                                        }
-                                                        headerActions={[
-                                                            <div className={styles.headerAction}>
-                                                                {renderPostponeActivatingInfo(
-                                                                    'mssql_high_availability'
-                                                                )}
-
-                                                                {/* Show full ActivatingInfo if all sub-configs are activating */}
-                                                                {areAllHaSubConfigurationsActivating(
-                                                                    driftAssessmentData
-                                                                ) &&
-                                                                    !showDismissedConfigurations &&
-                                                                    renderSubConfigActivatingInfo('ha')}
-
-                                                                {/* Show normal view button if not all sub-configs are activating or in dismissed view */}
-                                                                {(!areAllHaSubConfigurationsActivating(
-                                                                    driftAssessmentData
-                                                                ) ||
-                                                                    showDismissedConfigurations) && (
-                                                                    <>
-                                                                        <div
-                                                                            className={
-                                                                                isDarkTheme && !loading
-                                                                                    ? styles['dark-theme-light']
-                                                                                    : ''
-                                                                            }
-                                                                        >
-                                                                            {loading ? <LightDisabled /> : <Light />}
-                                                                        </div>
-                                                                        <div
-                                                                            style={{
-                                                                                color: loading
-                                                                                    ? 'var(--text-disabled)'
-                                                                                    : 'var(--text-button-primary)'
-                                                                            }}
-                                                                        >
-                                                                            {t(
-                                                                                'databases.well-architect.actions.view-recommendations-optimizations'
-                                                                            )}
-                                                                        </div>
-                                                                    </>
-                                                                )}
-                                                            </div>
-                                                        ]}
-                                                        children={
-                                                            <RecommendationTable
-                                                                tableData={mssqlHighAvailabilityTableData}
-                                                                isLoading={loading}
-                                                                optimizePrintState={optimizePrintState}
-                                                                from={WLF_TABS.INVENTORY}
-                                                                showDismissedConfigurations={
-                                                                    showDismissedConfigurations
-                                                                }
-                                                                setShowDismissedConfigurations={
-                                                                    setShowDismissedConfigurations
-                                                                }
-                                                                driftAssessmentData={driftAssessmentData}
-                                                            />
-                                                        }
-                                                    />
+                                                        variant="Semibold_16"
+                                                    >
+                                                        {t(getCategoryTranslationKey(category))}
+                                                    </DsTypography>
                                                 </div>
-                                            )}
-                                    </div>
-                                </div>
-                            )}
-                            {/* Section seven */}
-                            {filteredCardData?.clone_management && (
-                                <div className={styles.sectionClass} style={{ marginTop: '40px' }}>
-                                    <div className={styles['header-buttons']}>
-                                        <DsTypography
-                                            style={{
-                                                padding: '0 0 8px'
-                                            }}
-                                            variant="Semibold_16"
-                                        >
-                                            {GENERAL.CLONING}
-                                        </DsTypography>
-                                    </div>
 
-                                    <div className={styles.accordionGroups}>
-                                        {filteredCardData?.clone_management && (
-                                            <div className={styles.combineComponent}>
-                                                <StorageCardComponent
-                                                    cardData={filteredCardData?.clone_management}
-                                                    optimizePrintState={optimizePrintState}
-                                                    type={GENERAL.CLONE_MANAGEMENT}
-                                                    showDismissedConfigurations={showDismissedConfigurations}
-                                                    setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                                />
-                                                <DsAccordion
-                                                    id="20"
-                                                    variant="Default"
-                                                    isDisabled={loading || false}
-                                                    isExpanded={isAccordionExpanded('20', optimizePrintState)}
-                                                    onExpandChange={isExpanded => {
-                                                        handleAccordionExpanded('20', isExpanded);
-                                                    }}
-                                                    onClick={() => setClickedAccordionId('20')}
-                                                    title={
-                                                        <div className={styles.tagPlacement}>
-                                                            {filteredCardData?.clone_management?.tags?.map(
-                                                                (perTag: string, index: number) => (
-                                                                    <div key={index}>
-                                                                        <Tag text={perTag} />
-                                                                    </div>
-                                                                )
-                                                            )}
-                                                        </div>
-                                                    }
-                                                    headerActions={[
-                                                        <div className={styles.headerAction}>
-                                                            {renderPostponeActivatingInfo('clone_management')}
-
-                                                            <div
-                                                                className={
-                                                                    isDarkTheme && !loading
-                                                                        ? styles['dark-theme-light']
-                                                                        : ''
-                                                                }
-                                                            >
-                                                                {loading ? <LightDisabled /> : <Light />}
-                                                            </div>
-                                                            <div
-                                                                style={{
-                                                                    color: loading
-                                                                        ? 'var(--text-disabled)'
-                                                                        : 'var(--text-button-primary)'
-                                                                }}
-                                                            >
-                                                                {t(
-                                                                    'databases.well-architect.actions.view-recommendation'
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ]}
-                                                    children={
-                                                        <RecommendationText
-                                                            data={filteredCardData?.clone_management?.recommendation}
-                                                        />
-                                                    }
-                                                />
+                                                <div className={styles.accordionGroups}>
+                                                    {configs.map(({ key, config }, index) =>
+                                                        renderConfigurationCard(key, config, index)
+                                                    )}
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
+                                        );
+                                    })}
+                                </>
                             )}
                         </div>
                     </>

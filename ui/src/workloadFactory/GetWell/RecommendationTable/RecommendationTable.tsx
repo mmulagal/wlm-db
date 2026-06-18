@@ -774,31 +774,49 @@ const RecommendationTable = ({
     // Helper function to check if a configuration is postponed
     const isConfigurationPostponed = (rowData: any) => rowData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
 
+    // Helper function to check if a configuration is dismissed (but not postponed)
+    const isConfigurationDismissed = (rowData: any) => rowData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED;
+
     // Helper function to calculate postpone info for a specific configuration using existing logic
     const calculateConfigPostponeInfo = (rowData: any) => {
-        if (!isConfigurationPostponed(rowData)) return null;
+        const configState = rowData?.dismissedObj?.configState;
+        if (configState !== CONFIG_STATES.POSTPONED && configState !== CONFIG_STATES.DISMISSED) {
+            return null;
+        }
 
         // Create a structure that matches what calculatePostponeInfo expects
         const mockCardData = {
             config: {
-                dismissedObj: rowData.dismissedObj
+                dismissedObj: rowData.dismissedObj,
+                block_one: { value: rowData.name },
+                category: rowData.category || ''
             }
         };
 
-        // Reuse the existing calculatePostponeInfo function
-        return calculatePostponeInfo(mockCardData, 'config');
+        // Reuse the existing calculatePostponeInfo function with fullCardData
+        return calculatePostponeInfo(mockCardData, 'config', fullCardData);
     };
 
-    // Component to render postpone indicator for individual configurations
-    const renderConfigPostponeInfo = (rowData: any) => {
-        if (!isConfigurationPostponed(rowData)) return null;
+    // Component to render postpone/dismiss indicator for individual configurations
+    const renderConfigDismissInfo = (rowData: any) => {
+        const isPostponed = isConfigurationPostponed(rowData);
+        const isDismissed = isConfigurationDismissed(rowData);
+
+        if (!isPostponed && !isDismissed) return null;
 
         // Create a getPostponeInfo function that returns the calculated postpone info
         const getPostponeInfo = () => calculateConfigPostponeInfo(rowData);
 
         return (
             <div className={styles.postponeInfoContainer}>
-                <PostponeInfo configKey="config" getPostponeInfo={getPostponeInfo} translation={t} placement="bottom" />
+                {isPostponed && (
+                    <PostponeInfo
+                        configKey="config"
+                        getPostponeInfo={getPostponeInfo}
+                        translation={t}
+                        placement="bottom"
+                    />
+                )}
             </div>
         );
     };
@@ -1223,8 +1241,8 @@ const RecommendationTable = ({
                         {/* Reactivate button for dismissed configurations */}
                         {showDismissedConfigurations && (
                             <div className={styles.reactivateButtonContainer}>
-                                {/* Show postpone indicator if configuration is postponed */}
-                                {renderConfigPostponeInfo(rowData)}
+                                {/* Show postpone/dismiss indicator if configuration is dismissed or postponed */}
+                                {renderConfigDismissInfo(rowData)}
 
                                 <div
                                     className={styles.buttonSection}

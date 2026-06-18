@@ -3,8 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { DsToggleSwitch } from '@tlveng/wlm-ds';
-import { Button, DsTypography, Popover, useDialog } from '@netapp/design-system';
-import { TFunction } from 'i18next';
+import { Button, DsTypography, useDialog } from '@netapp/design-system';
 import styles from './RenderTables.module.scss';
 import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -20,21 +19,17 @@ import {
 import { checkBoxHandle, formatDateWithTime, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
 import {
-    ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATE_ACTIONS,
     CONFIG_STATES,
     DBType,
     FSXN_STORAGE_PROTOCOLS,
     GETWELL_STATUS,
-    GETWELL_VALUES,
-    ONLINE_INSTANCE_STATUSES,
-    ORACLE_ISCSI_ONLY_CONFIG_TYPES
+    GETWELL_VALUES
 } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase,
-    isConfigSkippedForAoag,
-    isWadExcludedConfig
+    isConfigSkippedForAoag
 } from '../../../GetWell/GetWellUtils';
 import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
 import { useTable } from '../../../../common/Lib/Table/useTable';
@@ -43,7 +38,6 @@ import { Table } from '../../../../common/Lib/Table/Table';
 import { ButtonWithDropdown } from '../../../../common/ButtonWithDropdown/ButtonWithDropdown';
 import FirstColumnComponent from './FirstColumnComponent';
 import BulkCombineActionController from '../../../../common/BulkAction/BulkCombineActionController';
-import { GwSqlServerInstanceInterface, RSSConfigAdapterInterface } from '../../../../utils/types/getWellTypes';
 import {
     bulkDismissPostponeDisableCheck,
     bulkFixDisableCheck,
@@ -54,17 +48,15 @@ import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import ImpactedResourceDialog from './ImpactedResourceDialog/ImpactedResourceDialog';
 import { GENERAL } from '../../../../utils/appConstants';
-
-interface ConfigTableRowData {
-    totalObjectsAssessed?: number;
-    totalObjectsInViolation?: number;
-    configState?: string;
-    configurationName?: string;
-    name?: string;
-    [key: string]: any;
-}
-
-type HandleImpactedResourceDialog = (rowData: ConfigTableRowData) => void;
+import {
+    getAssessmentById,
+    getDismissedConfig,
+    getLastAssessmentTimestamp,
+    hasAssessmentTimestamp,
+    isWadExcludedAssessmentConfigId,
+    resolveConfigDisplayName
+} from '../../../WellArchitectedTab/assessmentFormatUtils';
+import { ORACLE_ISCSI_ONLY_CONFIG_IDS, resolveDashboardTableConfig } from './dashboardTableConfigOverrides';
 
 interface DashboardConfigsTableProps {
     configType: string;
@@ -73,986 +65,6 @@ interface DashboardConfigsTableProps {
     handleSingleDismissPostpone: any;
     handleBulkDismissPostpone: any;
 }
-
-/**
- * DashConfigsTable - Unified table component for dashboard configurations
- *
- * This component consolidates all dashboard table configurations into a single, reusable component.
- * It eliminates code duplication and provides a consistent interface for all assessment configurations.
- *
- * How to add a new configuration:
- * 1. Add a new entry to CONFIG_MAPPING with:
- *    - assessmentPath: Array path to the assessment data (e.g., ['storage', 'sizing'])
- *    - configName: Name of the configuration in assessments
- *    - dismissConfigName: Name used in dismissedConfigurations
- *    - isFixSupported: Boolean flag to indicate if fix functionality is supported (default: true)
- *    - dataMapping: Function to extract specific data fields
- *    - customColumns: Array of column definitions specific to this config
- *
- * 2. Update DashboardInnerPage renderTable() to use DashConfigsTable for the new config
- *
- * 3. Add translation keys for any new column headers
- *
- * Example:
- * [ASSESSMENT_CONFIG_NAMES.NEW_CONFIG]: {
- *   assessmentPath: ['category', 'subcategory'],
- *   configName: 'config-name',
- *   dismissConfigName: 'config-name',
- *   isFixSupported: true, // Set to false to show "Coming Soon" and disable fix button
- *   dataMapping: (obj, instanceData) => ({
- *     customField: obj?.value
- *   }),
- *   customColumns: [{
- *     Header: 'translation.key',
- *     accessor: 'customField',
- *     id: '4',
- *     width: '200px'
- *   }]
- * }
- */
-
-const renderCountWithView = (
-    configNameOverride: string,
-    cellData: string,
-    rowData: ConfigTableRowData,
-    t: TFunction,
-    handleImpactedResourceDialog: HandleImpactedResourceDialog
-) => {
-    const count = Number(cellData) || 0;
-    const statusLower = rowData?.status?.toLowerCase?.() ?? '';
-    const isOnline = rowData?.loadingStatus === true || ONLINE_INSTANCE_STATUSES.has(statusLower);
-    return (
-        <div className={CommonStyles.impactedDrivesCell}>
-            {cellData != null && String(cellData) !== ''
-                ? cellData
-                : t('databases.general.not-available-table-columns')}
-            {count > 0 &&
-                (isOnline ? (
-                    <Button
-                        variant="text"
-                        onClick={() =>
-                            handleImpactedResourceDialog({
-                                ...rowData,
-                                configurationName: configNameOverride
-                            })
-                        }
-                    >
-                        {t('databases.dashboard.view')}
-                    </Button>
-                ) : (
-                    <Popover
-                        trigger="hover"
-                        container={
-                            <span>
-                                <Button variant="text" isDisabled>
-                                    {t('databases.dashboard.view')}
-                                </Button>
-                            </span>
-                        }
-                    >
-                        {t('databases.well-architect.view-offline-instance-disabled')}
-                    </Popover>
-                ))}
-        </div>
-    );
-};
-
-// Helper function to count total OS patches across all EC2 instances using the
-// non-compliant counters present in the assessment (missingPatchDetails is
-// fetched on demand in the dialog, not inline with the assessment response).
-const countHostOsMissingPatches = (ec2InstancesToPatch: any[] | undefined): number => {
-    let totalPatches = 0;
-    ec2InstancesToPatch?.forEach((instance: any) => {
-        totalPatches += instance?.criticalNonCompliantCount || 0;
-        totalPatches += instance?.securityNonCompliantCount || 0;
-        totalPatches += instance?.otherNonCompliantCount || 0;
-    });
-    return totalPatches;
-};
-
-// Configuration mapping for different assessment types
-const CONFIG_MAPPING: Record<string, any> = {
-    [ASSESSMENT_CONFIG_NAMES.STORAGE_TIER]: {
-        assessmentPath: ['storage', 'sizing'],
-        configName: 'performance-tier',
-        dismissConfigName: 'performance-tier',
-        isFixSupported: true,
-        dataMapping: (obj: any) => ({
-            current: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation,
-            violationDetails: obj?.violationDetails || [],
-            configurationName: 'performance-tier'
-        }),
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-volumes',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '220px',
-                renderCell: (
-                    cellData: string,
-                    rowData: ConfigTableRowData,
-                    t: TFunction,
-                    handleImpactedResourceDialog: HandleImpactedResourceDialog
-                ) => (
-                    <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
-                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
-                                {t('databases.dashboard.view')}
-                            </Button>
-                        )}
-                    </div>
-                )
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM]: {
-        assessmentPath: ['storage', 'sizing'],
-        configName: 'headroom',
-        dismissConfigName: 'headroom',
-        isFixSupported: true,
-        dataMapping: (obj: any) => ({
-            fileSystemHeadroom: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation
-        }),
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.file-system-headroom',
-                accessor: 'fileSystemHeadroom',
-                id: '4',
-                width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    cellData || t('databases.general.not-available-table-columns')
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE]: {
-        assessmentPath: ['storage', 'sizing'],
-        configName: 'log-drive-size',
-        dismissConfigName: 'log-drive-size',
-        isFixSupported: true,
-        dataMapping: (obj: any) => ({
-            percentDataDriveSize: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation,
-            sizingViolations: obj?.sizingViolations || {},
-            configurationName: 'log-drive-size'
-        }),
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-drives',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '200px',
-                renderCell: (
-                    cellData: string,
-                    rowData: ConfigTableRowData,
-                    t: TFunction,
-                    handleImpactedResourceDialog: HandleImpactedResourceDialog
-                ) => (
-                    <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
-                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
-                                {t('databases.dashboard.view')}
-                            </Button>
-                        )}
-                    </div>
-                )
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE]: {
-        assessmentPath: ['storage', 'sizing'],
-        configName: 'tempdb-drive-size',
-        dismissConfigName: 'tempdb-drive-size',
-        isFixSupported: true,
-        dataMapping: (obj: any) => ({
-            percentDataDriveSize: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation,
-            sizingViolations: obj?.sizingViolations || {},
-            configurationName: 'tempdb-drive-size'
-        }),
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-drives',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '200px',
-                renderCell: (
-                    cellData: string,
-                    rowData: ConfigTableRowData,
-                    t: TFunction,
-                    handleImpactedResourceDialog: HandleImpactedResourceDialog
-                ) => (
-                    <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
-                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
-                                {t('databases.dashboard.view')}
-                            </Button>
-                        )}
-                    </div>
-                )
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF]: {
-        assessmentPath: ['storage', 'layout'],
-        configName: 'data-files-location',
-        dismissConfigName: 'data-files-location',
-        dataMapping: (obj: any) => ({
-            userDataFiles: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation,
-            objectsInViolation: obj?.objectsInViolation || [],
-            violationDetails: obj?.violationDetails || [],
-            configurationName: 'data-files-location'
-        }),
-        isFixSupported: false,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-databases',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '200px',
-                renderCell: (
-                    cellData: string,
-                    rowData: ConfigTableRowData,
-                    t: TFunction,
-                    handleImpactedResourceDialog: HandleImpactedResourceDialog
-                ) => (
-                    <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} {t('databases.general.out-of')}{' '}
-                        {rowData?.totalObjectsAssessed || 0}
-                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
-                                {t('databases.dashboard.view')}
-                            </Button>
-                        )}
-                    </div>
-                )
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF]: {
-        assessmentPath: ['storage', 'layout'],
-        configName: 'log-files-location',
-        dismissConfigName: 'log-files-location',
-        dataMapping: (obj: any) => ({
-            userDataFiles: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation,
-            objectsInViolation: obj?.objectsInViolation || [],
-            violationDetails: obj?.violationDetails || [],
-            configurationName: 'log-files-location'
-        }),
-        isFixSupported: false,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-databases',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '200px',
-                renderCell: (
-                    cellData: string,
-                    rowData: ConfigTableRowData,
-                    t: TFunction,
-                    handleImpactedResourceDialog: HandleImpactedResourceDialog
-                ) => (
-                    <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} {t('databases.general.out-of')}{' '}
-                        {rowData?.totalObjectsAssessed || 0}
-                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
-                                {t('databases.dashboard.view')}
-                            </Button>
-                        )}
-                    </div>
-                )
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT]: {
-        assessmentPath: ['storage', 'layout'],
-        configName: 'tempdb-files-location',
-        dismissConfigName: 'tempdb-files-location',
-        dataMapping: (obj: any) => ({
-            tempDBPlacement: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed,
-            totalObjectsInViolation: obj?.totalObjectsInViolation,
-            objectsInViolation: obj?.objectsInViolation || [],
-            violationDetails: obj?.violationDetails || [],
-            configurationName: 'tempdb-files-location'
-        }),
-        isFixSupported: false,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-databases',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '200px',
-                renderCell: (
-                    cellData: string,
-                    rowData: ConfigTableRowData,
-                    t: TFunction,
-                    handleImpactedResourceDialog: HandleImpactedResourceDialog
-                ) => (
-                    <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} {t('databases.general.out-of')}{' '}
-                        {rowData?.totalObjectsAssessed || 0}
-                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
-                                {t('databases.dashboard.view')}
-                            </Button>
-                        )}
-                    </div>
-                )
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING]: {
-        assessmentPath: [], // Empty array means direct access to instanceData?.assessments?.compute
-        configName: 'compute', // Direct property name
-        dismissConfigName: 'compute', // Direct property name
-        dataMapping: (obj: any) => ({
-            findingReasons: `${obj?.objectsInViolation?.length || 0} Findings`,
-            recommendationOptions: obj?.recommendationOptions,
-            isMissingPermissions: obj?.errorMessage?.includes('is not authorized to perform: ') || false
-        }),
-        isFixSupported: true,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.finding-reasons',
-                accessor: 'findingReasons',
-                id: '4',
-                width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    cellData || t('databases.general.not-available-table-columns')
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: {
-        assessmentPath: [], // Empty array means direct access to instanceData?.assessments?.hostOsPatch
-        configName: 'hostOsPatch', // Direct property name
-        dismissConfigName: 'hostOsPatch', // Direct property name
-        isFixSupported: false, // Fix is not supported for OS patch configurations
-        dataMapping: (obj: any) => ({
-            current: `${countHostOsMissingPatches(obj?.ec2InstancesToPatch)}`
-        }),
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.missing-patches',
-                accessor: 'current',
-                id: '4',
-                width: '200px',
-                renderCell: (
-                    cellData: string,
-                    rowData: ConfigTableRowData,
-                    t: TFunction,
-                    handleImpactedResourceDialog: HandleImpactedResourceDialog
-                ) =>
-                    renderCountWithView(
-                        ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-                        cellData,
-                        rowData,
-                        t,
-                        handleImpactedResourceDialog
-                    )
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION]: {
-        assessmentPath: [], // Empty array means direct access to instanceData?.assessments?.rssConfig
-        configName: 'rssConfig', // Direct property name
-        dismissConfigName: 'rssConfig', // Direct property name
-        dataMapping: (obj: any) => {
-            let nonOptimizedAdapters = 0;
-            obj?.rssAdapters?.map((adapter: RSSConfigAdapterInterface) => {
-                if (!adapter?.rssEnabled) {
-                    nonOptimizedAdapters++;
-                } else if (
-                    adapter?.rssProfile !== obj?.recommendedAdapterSettings?.recommendedRssProfile ||
-                    adapter?.baseProcessorNumber !== obj?.recommendedAdapterSettings?.recommendedBaseProcessorNumber ||
-                    adapter?.numberOfReceiveQueues !== obj?.recommendedAdapterSettings?.recommendedReceiveQueues
-                ) {
-                    nonOptimizedAdapters++;
-                }
-            });
-            return {
-                totalObjectsAssessed: obj?.rssAdapters?.length || 0,
-                totalObjectsInViolation: nonOptimizedAdapters,
-                networkAdapters: obj?.rssAdapters?.map((adapter: any) => adapter?.adapterName)
-            };
-        },
-        isFixSupported: true,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-network-adapters',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.MTU]: {
-        assessmentPath: [], // Empty array means direct access to instanceData?.assessments?.mtuAlignment
-        configName: 'mtuAlignment', // Direct property name
-        dismissConfigName: 'mtuAlignment', // Direct property name
-        dataMapping: (obj: any, instanceData: any) => ({
-            current: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
-            totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
-            objectsInViolation: obj?.objectsInViolation || [instanceData?.databaseInstanceId]
-        }),
-        isFixSupported: true,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.network-interface',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.LICENSE]: {
-        assessmentPath: [], // Empty array means direct access to instanceData?.assessments?.license
-        configName: 'license', // Direct property name
-        dismissConfigName: 'license', // Direct property name
-        dataMapping: (obj: any, instanceData: any) => {
-            let licenseVal = '';
-            const instance = obj?.sqlServerInstances?.find(
-                (instance: GwSqlServerInstanceInterface) =>
-                    instance?.sqlServerInstance === instanceData?.databaseInstanceName
-            );
-            const selectedDatabaseLicense = instance?.sqlServerEdition || '';
-            if (selectedDatabaseLicense.includes('Standard')) {
-                licenseVal = 'Standard';
-            } else if (selectedDatabaseLicense.includes('Enterprise')) {
-                licenseVal = 'Enterprise';
-            } else if (selectedDatabaseLicense.includes('Developer')) {
-                licenseVal = 'Developer';
-            } else {
-                licenseVal = selectedDatabaseLicense;
-            }
-            return {
-                current: licenseVal
-            };
-        },
-        isFixSupported: false,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.license-edition',
-                accessor: 'current',
-                id: '4',
-                width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    cellData || t('databases.general.not-available-table-columns')
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH]: {
-        assessmentPath: [], // Empty array means direct access to instanceData?.assessments?.mssqlPatch
-        configName: 'mssqlPatch', // Direct property name
-        dismissConfigName: 'mssqlPatch', // Direct property name
-        isFixSupported: false, // Fix is not supported for SQL Server patch configurations
-        dataMapping: (obj: any) => {
-            let totalPatches = 0;
-            obj?.missingPatchesInEc2Instances?.forEach(
-                (perInstance: { criticalMissingPatchesCount: any; importantMissingPatchesCount: any }) => {
-                    totalPatches += perInstance?.criticalMissingPatchesCount || 0;
-                    totalPatches += perInstance?.importantMissingPatchesCount || 0;
-                }
-            );
-            return {
-                current: totalPatches
-            };
-        },
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.missing-patches',
-                accessor: 'current',
-                id: '4',
-                width: '200px',
-                renderCell: (
-                    cellData: string,
-                    rowData: ConfigTableRowData,
-                    t: TFunction,
-                    handleImpactedResourceDialog: HandleImpactedResourceDialog
-                ) =>
-                    renderCountWithView(
-                        ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
-                        cellData,
-                        rowData,
-                        t,
-                        handleImpactedResourceDialog
-                    )
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.MAXDOP]: {
-        assessmentPath: [], // Empty array means direct access to instanceData?.assessments?.maxdop
-        configName: 'maxDOP', // Direct property name
-        dismissConfigName: 'maxDOP', // Direct property name
-        dataMapping: (obj: any) => ({
-            current: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
-            totalObjectsInViolation: obj?.totalObjectsInViolation || 0
-        }),
-        isFixSupported: true,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.maxdop-value',
-                accessor: 'current',
-                id: '4',
-                width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    cellData || t('databases.general.not-available-table-columns')
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT]: {
-        assessmentPath: [], // Nested path navigation
-        configName: 'snapshotPolicy', // Configuration name
-        dismissConfigName: 'snapshotPolicy', // Dismissed configuration name
-        dataMapping: (obj: any) => ({
-            current: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
-            totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
-            objectsInViolation: obj?.objectsInViolation || [],
-            configurationName: 'snapshot-policy'
-        }),
-        isFixSupported: true,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-volumes',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '200px',
-                renderCell: (
-                    cellData: string,
-                    rowData: ConfigTableRowData,
-                    t: TFunction,
-                    handleImpactedResourceDialog: HandleImpactedResourceDialog
-                ) => (
-                    <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
-                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
-                                {t('databases.dashboard.view')}
-                            </Button>
-                        )}
-                    </div>
-                )
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.CRR]: {
-        assessmentPath: [], // Nested path navigation
-        configName: 'crr', // Configuration name
-        dismissConfigName: 'crr', // Dismissed configuration name
-        dataMapping: (obj: any) => ({
-            current: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
-            totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
-            objectsInViolation: obj?.objectsInViolation || [],
-            configurationName: 'crr'
-        }),
-        isFixSupported: false,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-volumes',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '200px',
-                renderCell: (
-                    cellData: string,
-                    rowData: ConfigTableRowData,
-                    t: TFunction,
-                    handleImpactedResourceDialog: HandleImpactedResourceDialog
-                ) => (
-                    <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
-                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
-                                {t('databases.dashboard.view')}
-                            </Button>
-                        )}
-                    </div>
-                )
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT]: {
-        assessmentPath: [],
-        configName: 'snapcenterSnapshot',
-        dismissConfigName: 'snapcenterSnapshot',
-        dataMapping: (obj: any) => ({
-            current: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
-            totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
-            objectsInViolation: obj?.objectsInViolation || [],
-            violationDetails: obj?.violationDetails || [],
-            configurationName: 'snapcenter-snapshot'
-        }),
-        isFixSupported: false,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-volumes',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '200px',
-                renderCell: (
-                    cellData: string,
-                    rowData: ConfigTableRowData,
-                    t: TFunction,
-                    handleImpactedResourceDialog: HandleImpactedResourceDialog
-                ) => (
-                    <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
-                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
-                                {t('databases.dashboard.view')}
-                            </Button>
-                        )}
-                    </div>
-                )
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS]: {
-        assessmentPath: [], // Nested path navigation
-        configName: 'awsBackup', // Configuration name
-        dismissConfigName: 'awsBackup', // Dismissed configuration name
-        dataMapping: (obj: any) => ({
-            current: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
-            totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
-            objectsInViolation: obj?.objectsInViolation || [],
-            configurationName: 'backup-configuration'
-        }),
-        isFixSupported: true,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-volumes',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '200px',
-                renderCell: (
-                    cellData: string,
-                    rowData: ConfigTableRowData,
-                    t: TFunction,
-                    handleImpactedResourceDialog: HandleImpactedResourceDialog
-                ) => (
-                    <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
-                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedResourceDialog(rowData)}>
-                                {t('databases.dashboard.view')}
-                            </Button>
-                        )}
-                    </div>
-                )
-            }
-        ]
-    },
-    [ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]: {
-        assessmentPath: [],
-        configName: 'clone', // Configuration name
-        dismissConfigName: 'clone', // Dismissed configuration name
-        dataMapping: (obj: any) => ({
-            current: obj?.current,
-            totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
-            totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
-            violations: obj?.violations,
-            cloneDetails: obj?.cloneDetails,
-            objectsInViolation: obj?.objectsInViolation,
-            tags: obj?.tags,
-            severity: obj?.severity
-        }),
-        isFixSupported: true,
-        customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.impacted-databases',
-                accessor: 'totalObjectsInViolation',
-                id: '4',
-                width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`
-            }
-        ]
-    }
-};
-
-const PLACEMENT_CONFIGS_WITH_VIEW = new Set([
-    'oracle-binary-placement',
-    'datafiles-placement',
-    'controlfiles-placement',
-    'redologs-placement',
-    'templogs-placement',
-    'archive-placement'
-]);
-
-// Helper function to create Oracle placement configuration
-const createOraclePlacementConfig = (configName: string, isFixSupported: boolean) => ({
-    assessmentPath: ['storage', 'layout'],
-    configName,
-    dismissConfigName: configName,
-    dataMapping: (obj: any) => ({
-        current: obj?.current,
-        totalObjectsAssessed: obj?.totalObjectsAssessed,
-        totalObjectsInViolation: obj?.totalObjectsInViolation,
-        objectsInViolation: obj?.objectsInViolation || [],
-        violationDetails: obj?.violationDetails || []
-    }),
-    isFixSupported, // Fix is not supported for Oracle placement configurations
-    customColumns: [
-        {
-            Header: 'databases.well-architect.dashboard-table-headers.impacted-volumes',
-            accessor: 'totalObjectsInViolation',
-            id: '4',
-            width: '220px',
-            renderCell: (
-                cellData: string,
-                rowData: ConfigTableRowData,
-                t: TFunction,
-                handleImpactedResourceDialog: HandleImpactedResourceDialog
-            ) => {
-                if (PLACEMENT_CONFIGS_WITH_VIEW.has(configName)) {
-                    const newObj = { ...rowData, name: configName };
-                    return (
-                        <div className={CommonStyles.impactedDrivesCell}>
-                            {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
-                            {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                                <Button variant="text" onClick={() => handleImpactedResourceDialog(newObj)}>
-                                    {t('databases.dashboard.view')}
-                                </Button>
-                            )}
-                        </div>
-                    );
-                }
-                return `${rowData?.totalObjectsInViolation || 0} out of ${rowData?.totalObjectsAssessed || 0}`;
-            }
-        }
-    ]
-});
-
-// Helper function to create Oracle storage sizing configuration
-const createOracleStorageSizingConfig = (
-    configName: string,
-    dismissConfigName: string,
-    headerKey: string,
-    accessor: string,
-    isFixSupported: boolean = false
-) => ({
-    assessmentPath: ['storage', 'sizing'],
-    configName,
-    dismissConfigName,
-    isFixSupported, // Fix support can be enabled for specific Oracle storage sizing configurations
-    dataMapping: (obj: any) => ({
-        [accessor]: obj?.current,
-        totalObjectsAssessed: obj?.totalObjectsAssessed,
-        totalObjectsInViolation: obj?.totalObjectsInViolation
-    }),
-    customColumns: [
-        {
-            Header: headerKey,
-            accessor,
-            id: '4',
-            width: '200px',
-            renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                cellData || t('databases.general.not-available-table-columns')
-        }
-    ]
-});
-
-// Oracle placement configurations mapping
-const oraclePlacementConfigs = {
-    [ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT]: createOraclePlacementConfig('oracle-binary-placement', false),
-    [ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT]: createOraclePlacementConfig('datafiles-placement', false),
-    [ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT]: createOraclePlacementConfig('controlfiles-placement', false),
-    [ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT]: createOraclePlacementConfig('redologs-placement', false),
-    [ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT]: createOraclePlacementConfig('templogs-placement', false),
-    [ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT]: createOraclePlacementConfig('archive-placement', false),
-    [ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT]: createOraclePlacementConfig('data-dg-lun-layout', true),
-    [ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT]: createOraclePlacementConfig('redolog-dg-lun-layout', true),
-    [ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT]: createOraclePlacementConfig('fra-dg-lun-layout', true),
-    [ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT]: createOraclePlacementConfig('archivelog-dg-lun-layout', true)
-};
-
-// Oracle storage sizing configurations mapping
-const oracleStorageSizingConfigs = {
-    [ASSESSMENT_CONFIG_NAMES.SWAP_SPACE]: createOracleStorageSizingConfig(
-        'swap-space',
-        'swap-space',
-        'databases.well-architect.dashboard-table-headers.swap-space',
-        'swapSpace'
-    )
-};
-
-// Oracle-specific FILE_SYSTEM_HEADROOM configuration
-const oracleFileSystemHeadroomConfig = createOracleStorageSizingConfig(
-    'headroom',
-    'headroom',
-    'databases.well-architect.dashboard-table-headers.file-system-headroom',
-    'fileSystemHeadroom',
-    true // Enable fix support for Oracle file system headroom
-);
-
-// Helper function to create Oracle host OS patch configuration
-const createOracleHostOsPatchConfig = () => ({
-    assessmentPath: [],
-    configName: 'hostOsPatch',
-    dismissConfigName: 'hostOsPatch',
-    isFixSupported: false, // Fix is not supported for Oracle OS patch configurations
-    dataMapping: (obj: any) => ({
-        current: `${countHostOsMissingPatches(obj?.ec2InstancesToPatch)}`
-    }),
-    customColumns: [
-        {
-            Header: 'databases.well-architect.dashboard-table-headers.missing-patches',
-            accessor: 'current',
-            id: '4',
-            width: '200px',
-            renderCell: (
-                cellData: string,
-                rowData: ConfigTableRowData,
-                t: TFunction,
-                handleImpactedResourceDialog: HandleImpactedResourceDialog
-            ) =>
-                renderCountWithView(
-                    ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-                    cellData,
-                    rowData,
-                    t,
-                    handleImpactedResourceDialog
-                )
-        }
-    ]
-});
-
-// Helper function to create Oracle compute assessment configuration (violation count + view)
-// assessmentKey: camelCase key used to look up data in the assessment API response (e.g. 'transparentHugepages')
-// displayName: display name constant used for dialog switch-case matching (e.g. ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES)
-const createOracleComputeAssessmentConfig = (
-    assessmentKey: string,
-    displayName: string,
-    isFixSupported: boolean = false
-) => ({
-    assessmentPath: [],
-    configName: assessmentKey,
-    dismissConfigName: assessmentKey,
-    isFixSupported,
-    dataMapping: (obj: any) => ({
-        totalObjectsAssessed: obj?.totalObjectsAssessed || 0,
-        totalObjectsInViolation: obj?.totalObjectsInViolation || 0,
-        objectsInViolation: obj?.objectsInViolation || [],
-        violationDetails: obj?.violationDetails || []
-    }),
-    customColumns: [
-        {
-            Header: 'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-            accessor: 'totalObjectsInViolation',
-            id: '4',
-            width: '200px',
-            renderCell: (
-                cellData: string,
-                rowData: ConfigTableRowData,
-                t: TFunction,
-                handleImpactedResourceDialog: HandleImpactedResourceDialog
-            ) => {
-                const newObj = { ...rowData, name: displayName };
-                return (
-                    <div className={CommonStyles.impactedDrivesCell}>
-                        {rowData?.totalObjectsInViolation || 0} out of {rowData?.totalObjectsAssessed || 0}
-                        {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
-                            <Button variant="text" onClick={() => handleImpactedResourceDialog(newObj)}>
-                                {t('databases.dashboard.view')}
-                            </Button>
-                        )}
-                    </div>
-                );
-            }
-        }
-    ]
-});
-
-// Oracle COMPUTE configurations mapping
-const oracleComputeConfigs = {
-    [ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH]: createOracleHostOsPatchConfig(),
-    [ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES]: createOracleComputeAssessmentConfig(
-        'transparentHugepages',
-        ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES,
-        true
-    ),
-    [ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS]: createOracleComputeAssessmentConfig(
-        'tcpAdvancedOptions',
-        ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS,
-        true
-    ),
-    [ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS]: createOracleComputeAssessmentConfig(
-        'filesystemsIoOptions',
-        ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS
-    ),
-    [ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT]: createOracleComputeAssessmentConfig(
-        'multiblockReadcount',
-        ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT,
-        true
-    )
-};
-
-const createOracleSecurityPatchConfig = () => ({
-    assessmentPath: [],
-    configName: 'oracleSecurityPatch',
-    dismissConfigName: 'oracleSecurityPatch',
-    isFixSupported: false,
-    dataMapping: (obj: any) => ({
-        current: `${obj?.missingPatchesCount || 0}`
-    }),
-    customColumns: [
-        {
-            Header: 'databases.well-architect.dashboard-table-headers.missing-patches',
-            accessor: 'current',
-            id: '4',
-            width: '200px',
-            renderCell: (
-                cellData: string,
-                rowData: ConfigTableRowData,
-                t: TFunction,
-                handleImpactedResourceDialog: HandleImpactedResourceDialog
-            ) =>
-                renderCountWithView(
-                    ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH,
-                    cellData,
-                    rowData,
-                    t,
-                    handleImpactedResourceDialog
-                )
-        }
-    ]
-});
-
-// Oracle APPLICATION configurations mapping
-const oracleApplicationConfigs = {
-    [ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH]: createOracleSecurityPatchConfig()
-};
-
-// Merge all configurations
-const FULL_CONFIG_MAPPING = {
-    ...CONFIG_MAPPING,
-    ...oraclePlacementConfigs,
-    ...oracleStorageSizingConfigs,
-    ...oracleComputeConfigs,
-    ...oracleApplicationConfigs
-};
 
 const DashboardConfigsTable = ({
     configType,
@@ -1075,16 +87,10 @@ const DashboardConfigsTable = ({
     const { credentialData } = useAppSelector(state => state.headers.getCredentials);
     const { regionsData } = useAppSelector(state => state.headers.getRegions);
 
-    let config;
-    if (configType === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM && configEngineType === DBType.ORACLE) {
-        config = oracleFileSystemHeadroomConfig;
-    } else {
-        config = FULL_CONFIG_MAPPING[configType];
-    }
-
-    if (!config) {
-        return null;
-    }
+    const config = useMemo(
+        () => resolveDashboardTableConfig(configType, configEngineType),
+        [configType, configEngineType]
+    );
 
     const tableData = useMemo(() => {
         let assessmentData: any = [];
@@ -1106,84 +112,62 @@ const DashboardConfigsTable = ({
             }
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
-                    let configObj;
-                    let configStateObj;
-
-                    // Handle direct access vs nested path navigation
-                    if (config.assessmentPath.length === 0) {
-                        // Direct access (e.g., compute rightsizing)
-                        configObj = instanceData?.assessments?.[config.configName];
-                        configStateObj = instanceData?.assessments?.dismissedConfigurations?.[config.dismissConfigName];
-                    } else {
-                        // Nested path navigation (e.g., storage configurations)
-                        let assessmentObj = instanceData?.assessments;
-                        for (const path of config.assessmentPath) {
-                            assessmentObj = assessmentObj?.[path];
-                        }
-                        configObj = assessmentObj?.find((item: any) => item.name === config.configName);
-
-                        // Get dismissed configuration
-                        let dismissedConfigObj = instanceData?.assessments?.dismissedConfigurations;
-                        for (const path of config.assessmentPath) {
-                            dismissedConfigObj = dismissedConfigObj?.[path];
-                        }
-                        configStateObj = dismissedConfigObj?.find(
-                            (item: any) => item?.configurationName === config.dismissConfigName
-                        );
-                    }
-
-                    const matchingCredEntry =
-                        credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);
-                    const matchingRegionEntry =
-                        regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
-
-                    // Use custom data mapping function
-                    const customData = config.dataMapping(configObj, instanceData);
-
-                    // Filter Oracle ASM-related configurations
-                    if (!filterDatabaseRowsForNonAsm(config.configName, instanceData?.assessments)) {
-                        return;
-                    }
-
-                    // Skip configurations not supported for AOAG deployments (e.g., License)
-                    if (isConfigSkippedForAoag(configType, instanceData?.assessments?.deploymentType)) {
-                        return;
-                    }
-
-                    // Skip WAD-excluded configurations for WAD (offline assessment) instances
-                    if (isWadExcludedConfig(configType, hostData?.isWad, configEngineType)) {
-                        return;
-                    }
-
-                    // Skip iSCSI-only Oracle compute cards for non-iSCSI instances
-                    if (
-                        ORACLE_ISCSI_ONLY_CONFIG_TYPES.has(configType) &&
-                        instanceData?.assessments?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI
-                    ) {
-                        return;
-                    }
-
-                    assessmentData.push({
-                        credentialId: hostData?.credentialId,
-                        configState: configStateObj?.configState,
-                        regionId: hostData?.regionId,
-                        databaseHostId: hostData?.databaseHostId,
-                        instanceId: instanceData?.databaseInstanceId,
-                        serverInstanceName: instanceData?.databaseInstanceName,
-                        id: `${hostData?.databaseHostId}_${instanceData?.databaseInstanceId}`,
-                        hostName: hostData?.databaseHostName,
-                        lastAssessmentTimestamp: instanceData?.assessments?.lastAssessmentTimestamp,
-                        assessmentStatus: GETWELL_VALUES[configObj?.status] || '',
-                        data: instanceData,
-                        configObj: configStateObj,
-                        credentialName: matchingCredEntry?.name,
-                        regionName: matchingRegionEntry?.regionName,
-                        accountId: matchingCredEntry?.providerAccountId,
-                        isWad: hostData?.isWad,
-                        ...customData
-                    });
+                const instanceAssessments = instanceData?.assessments;
+                if (instanceData?.error || !hasAssessmentTimestamp(instanceAssessments)) {
+                    return;
                 }
+
+                const configObj = getAssessmentById(instanceAssessments, config.configId);
+                if (!configObj) {
+                    return;
+                }
+                const configStateObj = getDismissedConfig(instanceAssessments, config.dismissConfigName);
+
+                const matchingCredEntry =
+                    credentialData && credentialData?.find(entry => entry.credentialsId === hostData?.credentialId);
+                const matchingRegionEntry =
+                    regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
+
+                const customData = config.dataMapping(configObj, instanceData);
+
+                if (!filterDatabaseRowsForNonAsm(config.configName, instanceAssessments)) {
+                    return;
+                }
+
+                if (isConfigSkippedForAoag(resolveConfigDisplayName(configType), instanceAssessments?.deploymentType)) {
+                    return;
+                }
+
+                if (isWadExcludedAssessmentConfigId(config.configId, hostData?.isWad, configEngineType)) {
+                    return;
+                }
+
+                if (
+                    ORACLE_ISCSI_ONLY_CONFIG_IDS.has(configType) &&
+                    instanceAssessments?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI
+                ) {
+                    return;
+                }
+
+                assessmentData.push({
+                    credentialId: hostData?.credentialId,
+                    configState: configStateObj?.configState,
+                    regionId: hostData?.regionId,
+                    databaseHostId: hostData?.databaseHostId,
+                    instanceId: instanceData?.databaseInstanceId,
+                    serverInstanceName: instanceData?.databaseInstanceName,
+                    id: `${hostData?.databaseHostId}_${instanceData?.databaseInstanceId}`,
+                    hostName: hostData?.databaseHostName,
+                    lastAssessmentTimestamp: getLastAssessmentTimestamp(instanceAssessments),
+                    assessmentStatus: GETWELL_VALUES[configObj?.status] || '',
+                    data: instanceData,
+                    configObj: configStateObj,
+                    credentialName: matchingCredEntry?.name,
+                    regionName: matchingRegionEntry?.regionName,
+                    accountId: matchingCredEntry?.providerAccountId,
+                    isWad: hostData?.isWad,
+                    ...customData
+                });
             });
         });
 
@@ -1201,7 +185,11 @@ const DashboardConfigsTable = ({
         getDatabaseHosts,
         headerSelectedMultiCredIdsList,
         headerSelectedMultiRegionIdsList,
-        config
+        config,
+        configType,
+        configEngineType,
+        credentialData,
+        regionsData
     ]);
 
     // Update tableData when selection changes
@@ -1325,11 +313,9 @@ const DashboardConfigsTable = ({
     const { setDialog } = useDialog();
 
     const handleImpactedResourceDialog: HandleImpactedResourceDialog = rowData => {
-        const viewColumnHeader = config?.customColumns?.[0]?.Header;
-        const headerText = viewColumnHeader ? t(viewColumnHeader) : t('databases.well-architect.impacted-resources');
         setDialog(
             <DialogComponent
-                header={headerText}
+                header={t('databases.well-architect.impacted-resources')}
                 content={<ImpactedResourceDialog data={rowData} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}

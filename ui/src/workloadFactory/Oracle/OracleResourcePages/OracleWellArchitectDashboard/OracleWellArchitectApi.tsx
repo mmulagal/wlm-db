@@ -44,7 +44,7 @@ const useOracleWellArchitectApi = () => {
     const runOfflineAssessmentApi = async () => {
         try {
             dispatch(setOptimizePageLoading(true));
-            dispatch(setCardData(oracleCardData));
+            dispatch(setCardData({}));
             const result: { data?: any; error?: any } = await getOfflineOracleAssessmentData({
                 databaseHostId: selectedResourceId || getWellResourceId,
                 instanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance,
@@ -57,7 +57,9 @@ const useOracleWellArchitectApi = () => {
                     ...result.data,
                     isWad: true
                 };
-                if (!assessmentData.storage) {
+                const isFlatApi = Array.isArray(assessmentData.assessments) && assessmentData.assessments.length > 0;
+                // Only add mock storage for nested (old) API structure — flat API doesn't use storage object
+                if (!isFlatApi && !assessmentData.storage) {
                     const dynamicMockData = generateDynamicOracleStorageMockData(assessmentData);
                     assessmentData = { ...assessmentData, ...dynamicMockData };
                 }
@@ -76,7 +78,8 @@ const useOracleWellArchitectApi = () => {
                 );
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
-                dispatch(setGwSelectedRowFsxId(result?.data?.fileSystemId));
+                // WAD (offline) assessments use flat API structure with metadata.fileSystemId
+                dispatch(setGwSelectedRowFsxId(result?.data?.metadata?.fileSystemId));
             } else {
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(false));
@@ -93,7 +96,7 @@ const useOracleWellArchitectApi = () => {
     const runAssessmentDetailsApi = async () => {
         try {
             dispatch(setOptimizePageLoading(true));
-            dispatch(setCardData(oracleCardData));
+            dispatch(setCardData({})); // Clear any previous data to prevent showing stale cards
             const result = await getOracleAssessmentDataApi({
                 credentialId: selectedResourceCredId || credIdFromJM,
                 regionId: selectedResourceRegionId || regionFromJM,
@@ -102,7 +105,9 @@ const useOracleWellArchitectApi = () => {
             });
 
             if (result && !result?.error && result?.data) {
-                if (!result.data.storage) {
+                const isFlatApi = Array.isArray(result.data.assessments) && result.data.assessments.length > 0;
+                // Only add mock storage for nested (old) API structure — flat API doesn't use storage object
+                if (!isFlatApi && !result.data.storage) {
                     const dynamicMockData = generateDynamicOracleStorageMockData(result.data);
                     result.data = { ...result.data, ...dynamicMockData };
                 }
@@ -121,7 +126,8 @@ const useOracleWellArchitectApi = () => {
                 );
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
-                dispatch(setGwSelectedRowFsxId(result?.data?.fileSystemId));
+                // Flat API v2 uses metadata.fileSystemId, nested API uses top-level fileSystemId
+                dispatch(setGwSelectedRowFsxId(result?.data?.metadata?.fileSystemId));
             } else {
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(false));

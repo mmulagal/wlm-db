@@ -69,6 +69,7 @@ import { ReactComponent as CopyIcon } from '../../assets/ic_copy.svg';
 import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
 import { HostAssessmentResponseInterface } from '../../utils/types/getWellTypes';
+import { getAssessmentMetadata, hasAssessmentTimestamp } from '../WellArchitectedTab/assessmentFormatUtils';
 import CopyToClipboardCommon from '../../common/CopyToClipboard/copyToClipboard';
 import {
     completeProtectionStep1,
@@ -155,6 +156,7 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
 
         instances.forEach((instanceData: any) => {
             const assessments = instanceData?.assessments;
+            const assessmentMetadata = getAssessmentMetadata(assessments);
 
             // Build storage array from assessments.storage.fileSystems for instance level (same as host level logic)
             const instanceStorageArray: DiscoveredStorageObj[] = [];
@@ -173,9 +175,9 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
             }
 
             const aoagDetails =
-                assessments?.deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS
+                assessmentMetadata.deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS
                     ? {
-                          baseDeploymentType: assessments?.baseDeploymentType,
+                          baseDeploymentType: assessmentMetadata.baseDeploymentType,
                           ...(instanceData?.agName ? { availabilityGroups: [{ agName: instanceData.agName }] } : {})
                       }
                     : undefined;
@@ -185,7 +187,7 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
                 databaseInstanceName: instanceData?.databaseInstanceName,
                 databaseHostId: hostId, // Added for WAD API calls
                 statusColText: INVENTORY_STATUS.UNMANAGED,
-                sqlServerDeploymentType: assessments?.deploymentType,
+                sqlServerDeploymentType: assessmentMetadata.deploymentType,
                 fsxId: assessments?.storageEndpoint,
                 isDetected: false,
                 isManaged: false,
@@ -196,10 +198,12 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
             });
         });
 
+        const firstInstanceAssessmentMetadata = getAssessmentMetadata(firstInstance?.assessments);
+
         // Get VM details from clusterNodes if available (new structure uses clusterNodes instead of vmNodes)
         const ec2Details: EC2DetailsInterface[] = [];
         if (
-            firstInstance?.assessments?.deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS &&
+            firstInstanceAssessmentMetadata.deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS &&
             firstInstance?.clusterNodes &&
             Array.isArray(firstInstance.clusterNodes)
         ) {
@@ -220,7 +224,7 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
         const inventoryEntry: InventoryTableData = {
             id: hostId,
             resourceId: hostId,
-            name: firstInstance?.assessments?.databaseHostName,
+            name: firstInstanceAssessmentMetadata.databaseHostName,
             hostType: DBType.MSSQL, // WAD data is for MSSQL
             ec2InstanceId: firstInstance?.vmInstanceId,
             ec2InstanceName: firstInstance?.vmName,
@@ -304,16 +308,17 @@ export const formatOracleOfflineAssessmentToInventoryData = (
 
         instances.forEach((instanceData: any) => {
             const assessments = instanceData?.assessments;
+            const assessmentMetadata = getAssessmentMetadata(assessments);
 
             // Build storage array from assessments.storage.fileSystems for instance level
             const instanceStorageArray: DiscoveredStorageObj[] = [];
-            const fsxIdValue = assessments?.fileSystemId || assessments?.storageEndpoint;
+            const fsxIdValue = assessmentMetadata.fileSystemId || assessments?.storageEndpoint;
             const instanceFileSystems = assessments?.storage?.fileSystems || (fsxIdValue ? [fsxIdValue] : []);
             if (instanceFileSystems && Array.isArray(instanceFileSystems)) {
                 instanceFileSystems.forEach((fsId: string) => {
                     instanceStorageArray.push({
                         id: fsId,
-                        protocol: assessments?.storageProtocol || '',
+                        protocol: assessmentMetadata.storageProtocol || '',
                         svmId: '',
                         type: DETECT_HOST_VAR.FSXN
                     });
@@ -337,17 +342,17 @@ export const formatOracleOfflineAssessmentToInventoryData = (
                 databaseInstanceName: instanceData?.databaseInstanceName,
                 databaseHostId: hostId,
                 statusColText: INVENTORY_STATUS.UNMANAGED,
-                sqlServerDeploymentType: assessments?.deploymentType,
+                sqlServerDeploymentType: assessmentMetadata.deploymentType,
                 oracleServerDeploymentType: instanceData?.isDataGuardDeployed
                     ? DATABASE_DEPLOYMENT_MODE.DATAGUARD
-                    : assessments?.deploymentType || DATABASE_DEPLOYMENT_MODE.STANDALONE,
+                    : assessmentMetadata.deploymentType || DATABASE_DEPLOYMENT_MODE.STANDALONE,
                 dataguardDetails: instanceData?.isDataGuardDeployed ? instanceData?.dataguardDetails : undefined,
                 instanceType:
                     instanceData?.tenancyType?.toUpperCase() === ORACLE_DATABASES_COMPONENTS.MULTI_TENANT_API_RESPONSE
                         ? ORACLE_DATABASES_COMPONENTS.MULTI_TENANT
                         : ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT,
                 fsxId: fsxIdValue,
-                protocol: assessments?.storageProtocol || '',
+                protocol: assessmentMetadata.storageProtocol || '',
                 isDetected: false,
                 isManaged: false,
                 isWad: true,
@@ -356,6 +361,8 @@ export const formatOracleOfflineAssessmentToInventoryData = (
                 databases: databases && databases.length > 0 ? databases : undefined
             });
         });
+
+        const firstInstanceAssessmentMetadata = getAssessmentMetadata(firstInstance?.assessments);
 
         // Get VM details
         const ec2Details: EC2DetailsInterface[] = [];
@@ -370,7 +377,7 @@ export const formatOracleOfflineAssessmentToInventoryData = (
         const inventoryEntry: InventoryTableData = {
             id: hostId,
             resourceId: hostId,
-            name: firstInstance?.assessments?.databaseHostName,
+            name: firstInstanceAssessmentMetadata.databaseHostName,
             hostType: DBType.ORACLE, // WAD data is for Oracle
             ec2InstanceId: firstInstance?.vmInstanceId,
             ec2InstanceName: firstInstance?.vmName,
@@ -3819,7 +3826,7 @@ export const getProtectionText = (data: any) => {
  */
 export const getWadOptimizationStatus = (wadAssessmentData: any) => {
     let optimizationStatus = '';
-    if (wadAssessmentData && wadAssessmentData?.lastAssessmentTimestamp) {
+    if (wadAssessmentData && hasAssessmentTimestamp(wadAssessmentData)) {
         // Ensure isWad flag is set for WAD assessment data so that WAD excluded configs are properly filtered
         const assessmentDataWithWadFlag = { ...wadAssessmentData, isWad: true };
         const { cardsData } = getCardsData(assessmentDataWithWadFlag, {});
@@ -3830,7 +3837,7 @@ export const getWadOptimizationStatus = (wadAssessmentData: any) => {
                     ? `${optBreakDown?.total?.notOptimized} issue`
                     : `${optBreakDown?.total?.notOptimized} issues`
                 : ACTION_CTA.WELL_ARCHITECTED;
-    } else if (wadAssessmentData && !wadAssessmentData?.lastAssessmentTimestamp) {
+    } else if (wadAssessmentData && !hasAssessmentTimestamp(wadAssessmentData)) {
         optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
     }
     return optimizationStatus;
@@ -3848,7 +3855,7 @@ export const getWadOptimizationStatus = (wadAssessmentData: any) => {
  */
 export const getOracleWadOptimizationStatus = (wadAssessmentData: any) => {
     let optimizationStatus = '';
-    if (wadAssessmentData && wadAssessmentData?.lastAssessmentTimestamp) {
+    if (wadAssessmentData && hasAssessmentTimestamp(wadAssessmentData)) {
         // Ensure isWad flag is set for WAD assessment data so that WAD excluded configs are properly filtered
         const assessmentDataWithWadFlag = { ...wadAssessmentData, isWad: true };
         const { cardsData } = getOracleCardsData(assessmentDataWithWadFlag, {});
@@ -3859,7 +3866,7 @@ export const getOracleWadOptimizationStatus = (wadAssessmentData: any) => {
                     ? `${optBreakDown?.total?.notOptimized} issue`
                     : `${optBreakDown?.total?.notOptimized} issues`
                 : ACTION_CTA.WELL_ARCHITECTED;
-    } else if (wadAssessmentData && !wadAssessmentData?.lastAssessmentTimestamp) {
+    } else if (wadAssessmentData && !hasAssessmentTimestamp(wadAssessmentData)) {
         optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
     }
     return optimizationStatus;
@@ -3875,7 +3882,7 @@ export const getOptimizationStatus = (
     }
     const instanceRow = optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId);
     let optimizationStatus = '';
-    if (instanceRow && instanceRow?.assessments && instanceRow?.assessments?.lastAssessmentTimestamp) {
+    if (instanceRow && hasAssessmentTimestamp(instanceRow?.assessments)) {
         if (hostType === DBType.ORACLE) {
             const { cardsData } = getOracleCardsData(instanceRow?.assessments, {});
             const optBreakDown = formatOracleOptimizationBreakDown(cardsData);
@@ -3897,7 +3904,7 @@ export const getOptimizationStatus = (
         }
     } else if (instanceRow?.error && instanceRow?.error.includes(' No storage assessment data found')) {
         optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
-    } else if (instanceRow?.assessments && !instanceRow?.assessments?.lastAssessmentTimestamp) {
+    } else if (instanceRow?.assessments && !hasAssessmentTimestamp(instanceRow?.assessments)) {
         optimizationStatus = INVENTORY_STATUS.IN_PROGRESS;
     }
     return optimizationStatus;

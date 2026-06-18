@@ -12,6 +12,7 @@ import {
 import { useGetMssqlAssessmentDataMutation, useLazyGetOfflineMssqlAssessmentDataQuery } from '../../utils/apiService';
 import {
     formatGetWellData,
+    formatGetWellDataFlat,
     resetGwValuesOnRefresh,
     storageMockData,
     updateAccountLevelAssessmentData
@@ -63,15 +64,26 @@ const GetWellApi = () => {
                 regionId: selectedGwInstanceRegionId || null
             });
             if (result && !result?.error && result?.data) {
-                let assessmentData = {
-                    ...result.data,
-                    isWad: true
-                };
-                if (!assessmentData.storage) {
-                    assessmentData = { ...assessmentData, ...storageMockData };
+                // Offline assessments now return flat structure (with assessments array)
+                const isFlatStructure = result.data.assessments && Array.isArray(result.data.assessments);
+
+                let assessmentData = result.data;
+
+                if (isFlatStructure) {
+                    // New flat structure - use formatGetWellDataFlat
+                    dispatch(setDriftAssessmentData(assessmentData));
+                    formatGetWellDataFlat(dispatch, assessmentData, false, isRefresh);
+                    dispatch(setGwSelectedRowFsxId(assessmentData.metadata?.fileSystemId));
+                } else {
+                    // Old nested structure (backward compatibility)
+                    if (!assessmentData.storage) {
+                        assessmentData = { ...assessmentData, ...storageMockData };
+                    }
+                    dispatch(setDriftAssessmentData(assessmentData));
+                    formatGetWellData(dispatch, assessmentData, false, isRefresh);
+                    dispatch(setGwSelectedRowFsxId(assessmentData?.fileSystemId));
                 }
-                dispatch(setDriftAssessmentData(assessmentData));
-                formatGetWellData(dispatch, assessmentData, false, isRefresh);
+
                 updateAccountLevelAssessmentData(dispatch, assessmentData, {
                     databaseHostId: selectedResourceId,
                     databaseInstanceId: selectedDatabaseInstance,
@@ -80,7 +92,6 @@ const GetWellApi = () => {
                 });
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
-                dispatch(setGwSelectedRowFsxId(assessmentData?.fileSystemId));
             } else {
                 dispatch(setIsAssessmentAvailable(false));
                 dispatch(setOptimizePageLoading(false));
@@ -104,11 +115,24 @@ const GetWellApi = () => {
                 instanceId: selectedDatabaseInstance
             });
             if (result && !result?.error && result?.data) {
-                if (!result.data.storage) {
-                    result.data = { ...result.data, ...storageMockData };
+                // Check if response is flat structure (has assessments array)
+                const isFlatStructure = result.data.assessments && Array.isArray(result.data.assessments);
+
+                if (isFlatStructure) {
+                    // New flat structure
+                    dispatch(setDriftAssessmentData(result.data));
+                    formatGetWellDataFlat(dispatch, result.data, false, isRefresh);
+                    dispatch(setGwSelectedRowFsxId(result.data.metadata?.fileSystemId));
+                } else {
+                    // Old nested structure (backward compatibility)
+                    if (!result.data.storage) {
+                        result.data = { ...result.data, ...storageMockData };
+                    }
+                    dispatch(setDriftAssessmentData(result.data));
+                    formatGetWellData(dispatch, result.data, false, isRefresh);
+                    dispatch(setGwSelectedRowFsxId(result?.data?.fileSystemId));
                 }
-                dispatch(setDriftAssessmentData(result.data));
-                formatGetWellData(dispatch, result.data, false, isRefresh);
+
                 updateAccountLevelAssessmentData(dispatch, result.data, {
                     databaseHostId: selectedResourceId,
                     databaseInstanceId: selectedDatabaseInstance,
@@ -117,7 +141,6 @@ const GetWellApi = () => {
                 });
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(true));
-                dispatch(setGwSelectedRowFsxId(result?.data?.fileSystemId));
             } else {
                 dispatch(setIsAssessmentAvailable(false));
                 dispatch(setOptimizePageLoading(false));

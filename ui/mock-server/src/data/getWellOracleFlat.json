@@ -1,0 +1,1352 @@
+{
+    "metadata": {
+        "lastAssessmentTimestamp": 1755629404593,
+        "fileSystemId": "fs-0d5efc3057c4f12cb",
+        "ec2InstanceId": "i-05fbc9747d558cf12",
+        "databaseInstanceName": "pdb21cnas1",
+        "isASMManaged": true,
+        "storageProtocol": "iSCSI"
+    },
+    "assessments": [
+        {
+            "name": "Thin provisioning",
+            "status": "optimized",
+            "severity": "warning",
+            "current": "enabled",
+            "recommended": "enabled",
+            "recommendation": "Workload Factory recommends configuring thin provisioning for FSx for ONTAP volumes hosting Oracle databases. This approach optimizes storage efficiency and cost-effectiveness by allowing more logical data to be stored than physically available.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 0,
+            "objectsInViolation": [],
+            "violationDetails": [],
+            "id": "thin_provision",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Autosize",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "off",
+            "recommended": "on",
+            "recommendation": "Workload Factory recommends enabling volume autogrow for FSx for ONTAP volumes for Oracle databases. This configuration enhances flexibility, availability, and scalability for Oracle databases by allowing volumes to grow dynamically to accommodate unexpected data growth, preventing space shortages and avoiding downtime if a volume runs out of space. Volume autogrow is essential when using thin provisioning.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 3,
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oracleredo2",
+                    "value": "off",
+                    "objectType": "Volume",
+                    "recommended": "on",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oraclearch2",
+                    "value": "off",
+                    "objectType": "Volume",
+                    "recommended": "on",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oracledata2",
+                    "value": "off",
+                    "objectType": "Volume",
+                    "recommended": "on",
+                    "dataCategory": ""
+                }
+            ],
+            "id": "autosize",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Autosize mode",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "off",
+            "recommended": "grow",
+            "recommendation": "Workload Factory recommends enabling volume autogrow for FSx for ONTAP volumes for Oracle databases. This configuration enhances flexibility and availability by allowing volumes to grow dynamically to accommodate unexpected data growth. This prevents space shortages and helps avoid downtime if a volume runs out of space, ensuring seamless scalability for Oracle databases. Volume autogrow is essential when using thin provisioning.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 3,
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oracleredo2",
+                    "value": "off",
+                    "objectType": "Volume",
+                    "recommended": "grow",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oraclearch2",
+                    "value": "off",
+                    "objectType": "Volume",
+                    "recommended": "grow",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oracledata2",
+                    "value": "off",
+                    "objectType": "Volume",
+                    "recommended": "grow",
+                    "dataCategory": ""
+                }
+            ],
+            "id": "autosize_mode",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Fractional reserve",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "100",
+            "recommended": "0",
+            "recommendation": "Workload Factory recommends disabling fractional reserve to eliminate unnecessary space reservation for overwrites thereby optimizing space utilization and cost-effectiveness for thin-provisioned FSx for ONTAP volumes. This configuration is essential when using thin provisioning with Oracle databases.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 3,
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oracleredo2",
+                    "value": "100",
+                    "objectType": "Volume",
+                    "recommended": "0",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oraclearch2",
+                    "value": "100",
+                    "objectType": "Volume",
+                    "recommended": "0",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oracledata2",
+                    "value": "100",
+                    "objectType": "Volume",
+                    "recommended": "0",
+                    "dataCategory": ""
+                }
+            ],
+            "id": "fractional_reserve",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Snapshot policy",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "default",
+            "recommended": "none",
+            "recommendation": "Workload Factory recommends disabling snapshots for FSx for ONTAP volumes for Oracle databases to save space and lower costs. Oracle snapshots should be managed externally via tools like SnapCenter, which creates application-consistent snapshots, preventing corruption during restoration.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 3,
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oracleredo2",
+                    "value": "default",
+                    "objectType": "Volume",
+                    "recommended": "none",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oraclearch2",
+                    "value": "default",
+                    "objectType": "Volume",
+                    "recommended": "none",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oracledata2",
+                    "value": "default",
+                    "objectType": "Volume",
+                    "recommended": "none",
+                    "dataCategory": ""
+                }
+            ],
+            "id": "snapshot_policy",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Snapshot copy reserve",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "5%",
+            "recommended": "0%",
+            "recommendation": "Workload Factory recommends that capacity isn't reserved for snapshots on FSx for ONTAP volumes used by databases, making the entire volume capacity available for active data and any snapshots that are created.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 3,
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oracleredo2",
+                    "value": "5",
+                    "objectType": "Volume",
+                    "recommended": "0",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oraclearch2",
+                    "value": "5",
+                    "objectType": "Volume",
+                    "recommended": "0",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oracledata2",
+                    "value": "5",
+                    "objectType": "Volume",
+                    "recommended": "0",
+                    "dataCategory": ""
+                }
+            ],
+            "id": "snapshot_copy_reserve",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Snapshot autodelete",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "false",
+            "recommended": "true",
+            "recommendation": "Workload Factory recommends configuring the snapshot autodelete feature in FSx for ONTAP for Oracle databases to delete older snapshots first. This feature is designed to automatically manage snapshot storage by deleting the oldest snapshots when a volume approaches its capacity limit. This configuration helps in thin-provisioned environments, where more logical storage is allocated than physically available.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 3,
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oracleredo2",
+                    "value": "false",
+                    "objectType": "Volume",
+                    "recommended": "true",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oraclearch2",
+                    "value": "false",
+                    "objectType": "Volume",
+                    "recommended": "true",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oracledata2",
+                    "value": "false",
+                    "objectType": "Volume",
+                    "recommended": "true",
+                    "dataCategory": ""
+                }
+            ],
+            "id": "snapshot_autodelete",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Space management try first",
+            "status": "optimized",
+            "severity": "Warning",
+            "current": "volume_grow",
+            "recommended": "volume_grow",
+            "recommendation": "Workload Factory recommends configuring space management to prioritize volume expansion over snapshot deletion for thin-provisioned FSx for ONTAP volumes with volume autogrow enabled.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 0,
+            "objectsInViolation": [],
+            "violationDetails": [],
+            "id": "space_mgmt_try_first",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Tiering policy",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "none/all",
+            "recommended": "snapshot_only",
+            "recommendation": "Workload Factory recommends enabling tiering for database volumes on FSx for ONTAP when it makes sense. Tiering automatically moves less-used data, such as snapshots and archived logs, to lower-cost storage while keeping active data and redo logs on high-performance storage. This lowers storage costs, helps protect performance for critical workloads, and reduces manual management. You can set different tiering policies for Oracle data files, redo logs, and archive logs.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 2,
+            "objectsInViolation": [
+                "oraclearch2",
+                "oracledata2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oraclearch2",
+                    "value": "none",
+                    "objectType": "Volume",
+                    "recommended": "auto",
+                    "dataCategory": "archive-log-files"
+                },
+                {
+                    "objectName": "oracledata2",
+                    "value": "all",
+                    "objectType": "Volume",
+                    "recommended": "none",
+                    "dataCategory": "data-control-files"
+                }
+            ],
+            "id": "tiering_policy",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Tiering minimum cooling days",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "4 days",
+            "recommended": "2 days",
+            "recommendation": "Workload Factory recommends setting the appropriate minimum cooling days for a volume because it determines when data becomes eligible to move to cost-effective capacity tiers, optimizing storage costs while maintaining performance for frequently accessed data. Tailored settings for each volume type—data, redo log, and archive (FRA)—ensure efficient resource utilization. Data Volumes (tiering-minimum-cooling-days=2) Archive/FRA Volumes (tiering-minimum-cooling-days=2(for RMAN-compressed backups) tiering-minimum-cooling-days=14(for uncompressed backups)).",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 2,
+            "objectsInViolation": [
+                "oraclearch2",
+                "oracledata2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oraclearch2",
+                    "value": "4",
+                    "objectType": "Volume",
+                    "recommended": "2",
+                    "dataCategory": ""
+                },
+                {
+                    "objectName": "oracledata2",
+                    "value": "4",
+                    "objectType": "Volume",
+                    "recommended": "2",
+                    "dataCategory": ""
+                }
+            ],
+            "id": "tiering_min_cooling_days",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Compression",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "adaptive",
+            "recommended": "none (for log files)",
+            "recommendation": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle's I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "oracleredo2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oracleredo2",
+                    "value": "adaptive",
+                    "objectType": "Volume",
+                    "recommended": "none",
+                    "dataCategory": "log-files"
+                }
+            ],
+            "id": "compression",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Deduplication",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "both",
+            "recommended": "inline (non-log) / none (log)",
+            "recommendation": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle's I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 3,
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oracleredo2",
+                    "value": "both",
+                    "objectType": "Volume",
+                    "recommended": "none",
+                    "dataCategory": "log-files"
+                },
+                {
+                    "objectName": "oraclearch2",
+                    "value": "both",
+                    "objectType": "Volume",
+                    "recommended": "inline",
+                    "dataCategory": "non-log-files"
+                },
+                {
+                    "objectName": "oracledata2",
+                    "value": "both",
+                    "objectType": "Volume",
+                    "recommended": "inline",
+                    "dataCategory": "non-log-files"
+                }
+            ],
+            "id": "deduplication",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Compaction",
+            "status": "optimized",
+            "severity": "Critical",
+            "current": "enabled",
+            "recommended": "enabled",
+            "recommendation": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle's I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 0,
+            "objectsInViolation": [],
+            "violationDetails": [],
+            "id": "compaction",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "NFS rootonly",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "enabled",
+            "recommended": "disabled",
+            "recommendation": "Workload Factory recommends disabling the nfs-rootonly parameter for dNFS. ONTAP's nfs-rootonly setting restricts NFS connections to privileged ports (<1024). Since dNFS processes in NFSv4+ do not run as root and use higher ports, disabling this parameter allows necessary connections.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 4,
+            "totalObjectsInViolation": 3,
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oracleredo2",
+                    "value": "enabled",
+                    "objectType": "Volume",
+                    "recommended": "disabled",
+                    "dataCategory": "log-files"
+                },
+                {
+                    "objectName": "oraclearch2",
+                    "value": "enabled",
+                    "objectType": "Volume",
+                    "recommended": "disabled",
+                    "dataCategory": "archive-files"
+                },
+                {
+                    "objectName": "oracledata2",
+                    "value": "enabled",
+                    "objectType": "Volume",
+                    "recommended": "disabled",
+                    "dataCategory": "data-files"
+                }
+            ],
+            "id": "nfs_rootonly",
+            "categories": [
+                "Reliability",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Export policy",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "restricted",
+            "recommended": "superuser + setuid",
+            "recommendation": "Workload Factory recommends ensuring that If Oracle binaries are located on an NFS share, the export policy includes superuser and setuid permissions.Superuser (root) access allows NFS clients to map as root, needed for binary execution.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 4,
+            "totalObjectsInViolation": 3,
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oracleredo2",
+                    "value": "restricted",
+                    "objectType": "Volume",
+                    "recommended": "superuser + setuid",
+                    "dataCategory": "log-files"
+                },
+                {
+                    "objectName": "oraclearch2",
+                    "value": "restricted",
+                    "objectType": "Volume",
+                    "recommended": "superuser + setuid",
+                    "dataCategory": "archive-files"
+                },
+                {
+                    "objectName": "oracledata2",
+                    "value": "restricted",
+                    "objectType": "Volume",
+                    "recommended": "superuser + setuid",
+                    "dataCategory": "data-files"
+                }
+            ],
+            "id": "export_policy",
+            "categories": [
+                "Reliability",
+                "Performance efficiency",
+                "Operational excellence"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "LUN OS type",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "windows",
+            "recommended": "linux",
+            "recommendation": "Workload Factory recommends ensuring that the ONTAP LUN operating system (OS) type value matches the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration might reduce performance.",
+            "resourceType": "Lun",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "oracleredo2"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oracleredo2",
+                    "value": "adaptive",
+                    "objectType": "Volume",
+                    "recommended": "none",
+                    "dataCategory": "log-files"
+                }
+            ],
+            "id": "os_type",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "LUN space reservation",
+            "status": "optimized",
+            "severity": "Critical",
+            "current": "enabled",
+            "recommended": "enabled",
+            "recommendation": "Workload Factory recommends enabling space reservation on LUNs used by Oracle databases to reserve enough space in the volume so that writes to those LUNs don't fail.",
+            "resourceType": "Lun",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 0,
+            "objectsInViolation": [],
+            "violationDetails": [],
+            "id": "space_reservation_enabled",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "LUN space allocation",
+            "status": "optimized",
+            "severity": "Critical",
+            "current": "enabled",
+            "recommended": "enabled",
+            "recommendation": "Workload Factory recommends enabling space allocation on LUNs used by Oracle databases to avoid write failures and inefficient space utilization. Space allocation ensures that FSx for ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also lets FSx for ONTAP automatically reclaim space when the Oracle database on the EC2 host deletes data.",
+            "resourceType": "Lun",
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 0,
+            "objectsInViolation": [],
+            "violationDetails": [],
+            "id": "space_allocation_allocated",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Multipath I/O",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "disabled",
+            "recommended": "enabled",
+            "recommendation": "Workload Factory recommends enabling Multipath I/O (MPIO) on database hosts that connect to ISCSI LUNs for Oracle databases. This host-level configuration enhances storage reliability and performance by providing redundant data paths between the server and storage. With multipath enabled, the system can automatically reroute I/O operations in the event of a path failure, minimizing downtime and ensuring consistent access to critical data.",
+            "resourceType": "EC2 instance",
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "i-08b88d1026a035b68"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "i-08b88d1026a035b68",
+                    "value": "false",
+                    "objectType": "EC2 instance"
+                }
+            ],
+            "id": "multipath_io",
+            "categories": [
+                "Reliability",
+                "Operational excellence"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Host utilities",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "not installed",
+            "recommended": "installed",
+            "recommendation": "Workload Factory recommends installing host utilities for Oracle databases. This host-level configuration enhances storage reliability and performance by providing redundant data paths between the server and storage. With multipath enabled, the system can automatically reroute I/O operations in the event of a path failure, minimizing downtime and ensuring consistent access to critical data.",
+            "resourceType": "EC2 instance",
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "i-08b88d1026a035b68"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "i-08b88d1026a035b68",
+                    "value": "false",
+                    "objectType": "EC2 instance"
+                }
+            ],
+            "id": "host_utilities",
+            "categories": [
+                "Reliability",
+                "Operational excellence"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "SELinux",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "enforcing",
+            "recommended": "disabled",
+            "recommendation": "Workload Factory recommends disabling SELinux on Oracle database hosts by setting SELINUX=disabled in the system configuration. Disabling SELinux can help avoid compatibility issues and administrative overhead associated with managing SELinux policies for Oracle workloads. After this change, SELinux will no longer enforce access controls, so ensure that your environment is otherwise secured.",
+            "resourceType": "EC2 instance",
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "i-08b88d1026a035b68"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "i-08b88d1026a035b68",
+                    "value": "enforcing",
+                    "objectType": "EC2 instance"
+                }
+            ],
+            "id": "selinux",
+            "categories": [
+                "Security",
+                "Operational excellence"
+            ],
+            "type": "application"
+        },
+        {
+            "name": "iSCSI replacement timeout",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "120 seconds",
+            "recommended": "5 seconds",
+            "recommendation": "Workload Factory recommends setting the iSCSI replacement timeout to 5 seconds on Oracle database hosts. This setting helps ensure that iSCSI connections are properly managed and can recover quickly from interruptions, minimizing potential downtime for database workloads.",
+            "resourceType": "EC2 instance",
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "i-08b88d1026a035b68"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "i-08b88d1026a035b68",
+                    "value": "120",
+                    "objectType": "EC2 instance"
+                }
+            ],
+            "id": "iscsi_replacement_timeout",
+            "categories": [
+                "Reliability",
+                "Performance efficiency"
+            ],
+            "type": "storage"
+        },
+        {
+            "name": "Swap space",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "8 GB",
+            "recommended": "3 - 4 GB",
+            "recommendation": "Swap space sizing recommendation Proper swap sizing ensures that the system can handle memory pressure gracefully, avoiding potential performance degradation or system crashes. Swap space should be sized relatively to RAM: \n                - Between 1 GB and 2 GB: 1.5 times the size of the RAM \n                - Between 2 GB and 16 GB: Equal to the size of the RAM \n                - More than 16 GB: 16 GB.",
+            "resourceType": "EC2 Instance",
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "i-08b88d1026a035b68"
+            ],
+            "id": "swap_space",
+            "categories": [
+                "Performance efficiency"
+            ],
+            "type": "storage",
+            "violationDetails": [
+                {
+                    "objectName": "i-08b88d1026a035b68",
+                    "value": "8 GB",
+                    "objectType": "EC2 Instance",
+                    "recommended": "3 - 4 GB"
+                }
+            ]
+        },
+        {
+            "name": "File system headroom",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "15%",
+            "recommended": "35%",
+            "recommendation": "Workload Factory recommends maintaining adequate storage headroom for Oracle database volumes to accommodate data growth and prevent storage-related outages. A minimum of 35% free space is recommended to ensure optimal performance, allow for temporary file operations, and provide buffer for unexpected data growth.",
+            "resourceType": "File system (FSx for ONTAP)",
+            "recommendedSizeInGib": 350,
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "fs-0d5efc3057c4f12cb"
+            ],
+            "id": "file_system_headroom",
+            "categories": [
+                "Performance efficiency"
+            ],
+            "type": "storage",
+            "violationDetails": [
+                {
+                    "objectName": "fs-0d5efc3057c4f12cb",
+                    "value": "15%",
+                    "objectType": "File system (FSx for ONTAP)",
+                    "recommended": "35%"
+                }
+            ]
+        },
+        {
+            "name": "Transparent HugePages",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "enabled",
+            "recommended": "disabled",
+            "recommendation": "Workload Factory recommends disabling Transparent HugePages (THP) on database hosts running Oracle databases. Disabling THP is an Oracle best practice to prevent potential performance issues and ensure optimal database stability.",
+            "resourceType": "EC2 Instance",
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "i-031858c121f213fb7"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "transparent-hugepages",
+                    "value": "enabled",
+                    "objectType": "configuration",
+                    "recommended": "always madvise [never]"
+                }
+            ],
+            "id": "transparent_hugepages",
+            "categories": [
+                "Performance efficiency"
+            ],
+            "type": "compute"
+        },
+        {
+            "name": "TCP advanced options",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "disabled",
+            "recommended": "enabled",
+            "recommendation": "Workload Factory recommends enabling TCP timestamps, SACK, and window scaling for best network performance and reliability.",
+            "resourceType": "EC2 Instance",
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "i-031858c121f213fb7"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "net.ipv4.tcp_timestamps",
+                    "value": "0",
+                    "objectType": "kernel parameter",
+                    "recommended": "1"
+                }
+            ],
+            "id": "tcp_advanced_options",
+            "categories": [
+                "Reliability",
+                "Performance efficiency"
+            ],
+            "type": "compute"
+        },
+        {
+            "name": "Filesystems I/O options",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "none",
+            "recommended": "setall",
+            "recommendation": "Workload Factory recommends setting filesystemio_options = setall for optimal I/O performance. Adjust SGA size if needed when moving away from buffered I/O.",
+            "resourceType": "EC2 Instance",
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "i-06d58265235cd42df"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "filesystemio_options",
+                    "value": "none",
+                    "objectType": "oracle parameter",
+                    "recommended": "SETALL"
+                }
+            ],
+            "id": "filesystems_io_options",
+            "categories": [
+                "Performance efficiency"
+            ],
+            "type": "compute"
+        },
+        {
+            "name": "Multiblock read count",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "128",
+            "recommended": "disabled",
+            "recommendation": "Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.",
+            "resourceType": "EC2 Instance",
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "i-031858c121f213fb7"
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "db_file_multiblock_read_count",
+                    "value": "128",
+                    "objectType": "oracle parameter",
+                    "recommended": "not set"
+                }
+            ],
+            "id": "multiblock_readcount",
+            "categories": [
+                "Performance efficiency"
+            ],
+            "type": "compute"
+        },
+        {
+            "name": "Host OS patch",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "outdated",
+            "recommended": "up-to-date",
+            "recommendation": "Critical security patches are missing. We recommend applying the latest patches to ensure your Oracle database infrastructure is secure and up-to-date.",
+            "resourceType": "EC2 Instance",
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "i-0f73ec408b54d3824"
+            ],
+            "ec2InstancesToPatch": [
+                {
+                    "baselineId": "pb-05b6196cbb3be9d2c",
+                    "criticalNonCompliantCount": 1,
+                    "ec2InstanceId": "i-0f73ec408b54d3824",
+                    "ec2InstanceName": "ip-171-30-40-16.ap-southeast-1.compute.internal",
+                    "operationStartTime": 1768928500000,
+                    "operationEndTime": 1768928603000,
+                    "securityNonCompliantCount": 1,
+                    "otherNonCompliantCount": 0
+                }
+            ],
+            "id": "host_os_patch",
+            "categories": [
+                "Security",
+                "Reliability"
+            ],
+            "type": "compute",
+            "violationDetails": [
+                {
+                    "objectName": "i-0f73ec408b54d3824",
+                    "value": "outdated",
+                    "objectType": "EC2 Instance",
+                    "recommended": "up-to-date"
+                }
+            ]
+        },
+        {
+            "name": "Cross-region replication",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "disabled",
+            "recommended": "enabled",
+            "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 4,
+            "totalObjectsInViolation": 2,
+            "objectsInViolation": [
+                {
+                    "ontapVolumeName": "oraclefra2",
+                    "ontapVolumeUuid": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+                    "fsxVolumeId": "fsvol-08c26bf83c7f76d80"
+                },
+                {
+                    "fsxVolumeId": "fsvol-08c981a6605d0c871",
+                    "ontapVolumeName": "oraclebinaries2",
+                    "ontapVolumeUuid": "d4e5f6a7-b8c9-0123-defa-234567890123"
+                }
+            ],
+            "id": "crr",
+            "categories": [
+                "Reliability"
+            ],
+            "type": "resiliency",
+            "violationDetails": [
+                {
+                    "objectName": "object-0",
+                    "value": "disabled",
+                    "objectType": "Volume",
+                    "recommended": "enabled"
+                },
+                {
+                    "objectName": "object-1",
+                    "value": "disabled",
+                    "objectType": "Volume",
+                    "recommended": "enabled"
+                }
+            ]
+        },
+        {
+            "name": "Clone management",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "3 old clones",
+            "recommended": "no old clones",
+            "recommendation": "Old clones can incur significant costs. Consider deleting these clones to optimize your storage expenses.",
+            "resourceType": "Database",
+            "totalObjectsAssessed": 4,
+            "totalObjectsInViolation": 3,
+            "cloneDetails": [
+                {
+                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                    "databaseHostId": "a4d6aaa59ae0fba9",
+                    "databaseInstanceName": "pdb21cnas1",
+                    "cloneDatabaseName": "oracle_data_vol_002_clone",
+                    "cloneAge": 90,
+                    "cloneSize": 1073741824,
+                    "clonedBy": "other",
+                    "clonedVolumeDetails": [
+                        {
+                            "cloneVolumeUuid": "aabb1122-3344-5566-7788-99aabbccddee",
+                            "cloneVolumeName": "oracle_data_vol_002_clone",
+                            "cloneVolumeCreateTime": "2026-01-15T10:30:00+00:00",
+                            "sourceVolumeName": "oracle_data_vol_002",
+                            "cloneDatabaseName": "oracle_data_vol_002_clone"
+                        }
+                    ]
+                },
+                {
+                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                    "databaseHostId": "a4d6aaa59ae0fba9",
+                    "databaseInstanceName": "pdb21cnas1",
+                    "cloneDatabaseName": "oracle_redo_vol_001_clone",
+                    "cloneAge": 120,
+                    "cloneSize": 536870912,
+                    "clonedBy": "other",
+                    "clonedVolumeDetails": [
+                        {
+                            "cloneVolumeUuid": "ccdd3344-5566-7788-99aa-bbccddeeff00",
+                            "cloneVolumeName": "oracle_redo_vol_001_clone",
+                            "cloneVolumeCreateTime": "2025-12-16T08:15:00+00:00",
+                            "sourceVolumeName": "oracle_redo_vol_001",
+                            "cloneDatabaseName": "oracle_redo_vol_001_clone"
+                        }
+                    ]
+                },
+                {
+                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                    "databaseHostId": "a4d6aaa59ae0fba9",
+                    "databaseInstanceName": "pdb21cnas1",
+                    "cloneDatabaseName": "oracle_arch_vol_003_clone",
+                    "cloneAge": 75,
+                    "cloneSize": 268435456,
+                    "clonedBy": "other",
+                    "clonedVolumeDetails": [
+                        {
+                            "cloneVolumeUuid": "eeff5566-7788-99aa-bbcc-ddeeff001122",
+                            "cloneVolumeName": "oracle_arch_vol_003_clone",
+                            "cloneVolumeCreateTime": "2026-01-30T14:45:00+00:00",
+                            "sourceVolumeName": "oracle_arch_vol_003",
+                            "cloneDatabaseName": "oracle_arch_vol_003_clone"
+                        }
+                    ]
+                },
+                {
+                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                    "databaseHostId": "a4d6aaa59ae0fba9",
+                    "databaseInstanceName": "pdb21cnas1",
+                    "cloneDatabaseName": "oracle_data_vol_001_clone",
+                    "cloneAge": 30,
+                    "cloneSize": 2147483648,
+                    "clonedBy": "other",
+                    "clonedVolumeDetails": [
+                        {
+                            "cloneVolumeUuid": "11223344-5566-7788-99aa-bbccddeeff33",
+                            "cloneVolumeName": "oracle_data_vol_001_clone",
+                            "cloneVolumeCreateTime": "2026-03-16T09:00:00+00:00",
+                            "sourceVolumeName": "oracle_data_vol_001",
+                            "cloneDatabaseName": "oracle_data_vol_001_clone"
+                        }
+                    ]
+                }
+            ],
+            "oldCloneDetails": [
+                {
+                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                    "databaseHostId": "a4d6aaa59ae0fba9",
+                    "databaseInstanceName": "pdb21cnas1",
+                    "cloneDatabaseName": "oracle_data_vol_002_clone",
+                    "cloneAge": 90,
+                    "cloneSize": 1073741824,
+                    "clonedBy": "other",
+                    "clonedVolumeDetails": [
+                        {
+                            "cloneVolumeUuid": "aabb1122-3344-5566-7788-99aabbccddee",
+                            "cloneVolumeName": "oracle_data_vol_002_clone",
+                            "cloneVolumeCreateTime": "2026-01-15T10:30:00+00:00",
+                            "sourceVolumeName": "oracle_data_vol_002",
+                            "cloneDatabaseName": "oracle_data_vol_002_clone"
+                        }
+                    ]
+                },
+                {
+                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                    "databaseHostId": "a4d6aaa59ae0fba9",
+                    "databaseInstanceName": "pdb21cnas1",
+                    "cloneDatabaseName": "oracle_redo_vol_001_clone",
+                    "cloneAge": 120,
+                    "cloneSize": 536870912,
+                    "clonedBy": "other",
+                    "clonedVolumeDetails": [
+                        {
+                            "cloneVolumeUuid": "ccdd3344-5566-7788-99aa-bbccddeeff00",
+                            "cloneVolumeName": "oracle_redo_vol_001_clone",
+                            "cloneVolumeCreateTime": "2025-12-16T08:15:00+00:00",
+                            "sourceVolumeName": "oracle_redo_vol_001",
+                            "cloneDatabaseName": "oracle_redo_vol_001_clone"
+                        }
+                    ]
+                },
+                {
+                    "databaseHostName": "oracle19c-pdb-nfs-asm-250825234438",
+                    "databaseHostId": "a4d6aaa59ae0fba9",
+                    "databaseInstanceName": "pdb21cnas1",
+                    "cloneDatabaseName": "oracle_arch_vol_003_clone",
+                    "cloneAge": 75,
+                    "cloneSize": 268435456,
+                    "clonedBy": "other",
+                    "clonedVolumeDetails": [
+                        {
+                            "cloneVolumeUuid": "eeff5566-7788-99aa-bbcc-ddeeff001122",
+                            "cloneVolumeName": "oracle_arch_vol_003_clone",
+                            "cloneVolumeCreateTime": "2026-01-30T14:45:00+00:00",
+                            "sourceVolumeName": "oracle_arch_vol_003",
+                            "cloneDatabaseName": "oracle_arch_vol_003_clone"
+                        }
+                    ]
+                }
+            ],
+            "oldCloneDatabaseNames": [
+                "oracle_data_vol_002_clone",
+                "oracle_redo_vol_001_clone",
+                "oracle_arch_vol_003_clone"
+            ],
+            "objectsInViolation": [
+                "oracle_data_vol_002_clone",
+                "oracle_redo_vol_001_clone",
+                "oracle_arch_vol_003_clone"
+            ],
+            "cloneDriftMessage": "3 out of 4 clones are old and divergent",
+            "id": "clone_management",
+            "categories": [
+                "Cost efficiency"
+            ],
+            "type": "cloning",
+            "violationDetails": [
+                {
+                    "objectName": "oracle_data_vol_002_clone",
+                    "value": "3 old clones",
+                    "objectType": "Database",
+                    "recommended": "no old clones",
+                    "dataCategory": "data-files"
+                },
+                {
+                    "objectName": "oracle_redo_vol_001_clone",
+                    "value": "3 old clones",
+                    "objectType": "Database",
+                    "recommended": "no old clones",
+                    "dataCategory": "log-files"
+                },
+                {
+                    "objectName": "oracle_arch_vol_003_clone",
+                    "value": "3 old clones",
+                    "objectType": "Database",
+                    "recommended": "no old clones",
+                    "dataCategory": "archive-files"
+                }
+            ]
+        },
+        {
+            "name": "SnapCenter snapshot",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "not configured",
+            "recommended": "configured",
+            "recommendation": "Application-consistent snapshots with NetApp SnapCenter enable you to capture precise, reliable point-in-time images of your data volumes, ensuring that your applications remain fully operational and data integrity is maintained. Use SnapCenter to streamline backup processes and facilitate rapid, accurate restores—minimizing downtime and safeguarding your business-critical workloads.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 4,
+            "totalObjectsInViolation": 2,
+            "objectsInViolation": [
+                "vol_data_01",
+                "vol_log_01"
+            ],
+            "id": "snapcenter_snapshot",
+            "categories": [
+                "Reliability"
+            ],
+            "type": "resiliency",
+            "violationDetails": [
+                {
+                    "objectName": "vol_data_01",
+                    "value": "not configured",
+                    "objectType": "Volume",
+                    "recommended": "configured",
+                    "dataCategory": "data-files"
+                },
+                {
+                    "objectName": "vol_log_01",
+                    "value": "not configured",
+                    "objectType": "Volume",
+                    "recommended": "configured",
+                    "dataCategory": "log-files"
+                }
+            ]
+        },
+        {
+            "name": "AWS Backup",
+            "status": "not-optimized",
+            "severity": "Warning",
+            "current": "not enabled",
+            "recommended": "enabled",
+            "recommendation": "Backup Configuration recommendation: Enable FSx Backup or AWS Backup for Oracle volumes to support data retention and compliance. Avoid redundant backups to optimize costs.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 4,
+            "totalObjectsInViolation": 2,
+            "objectsInViolation": [
+                {
+                    "ontapVolumeName": "oracledata2",
+                    "ontapVolumeUuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                },
+                {
+                    "ontapVolumeName": "oraclearch2",
+                    "ontapVolumeUuid": "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+                }
+            ],
+            "id": "aws_backup",
+            "categories": [
+                "Reliability"
+            ],
+            "type": "resiliency",
+            "violationDetails": [
+                {
+                    "objectName": "object-0",
+                    "value": "not enabled",
+                    "objectType": "Volume",
+                    "recommended": "enabled"
+                },
+                {
+                    "objectName": "object-1",
+                    "value": "not enabled",
+                    "objectType": "Volume",
+                    "recommended": "enabled"
+                }
+            ]
+        },
+        {
+            "name": "Oracle security patch",
+            "status": "not-optimized",
+            "severity": "Critical",
+            "current": "missing patches",
+            "recommended": "up-to-date",
+            "recommendation": "Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.",
+            "resourceType": "Database",
+            "missingPatchesCount": 2,
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": [
+                "oracleSid"
+            ],
+            "id": "oracle_security_patch",
+            "categories": [
+                "Security",
+                "Reliability"
+            ],
+            "type": "application",
+            "violationDetails": [
+                {
+                    "objectName": "oracleSid",
+                    "value": "missing patches",
+                    "objectType": "Database",
+                    "recommended": "up-to-date"
+                }
+            ]
+        }
+    ],
+    "dismissedConfigurations": [
+        {
+            "id": "autosize",
+            "name": "Autosize",
+            "type": "storage",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "configState": "DISMISSED",
+            "startTime": 1739934199000
+        },
+        {
+            "id": "snapshot_policy",
+            "name": "Snapshot policy",
+            "type": "storage",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "configState": "POSTPONED",
+            "startTime": 1757503448000,
+            "endTime": 1760095448000
+        },
+        {
+            "id": "thin_provision",
+            "name": "Thin provisioning",
+            "type": "storage",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "configState": "DISMISSED",
+            "startTime": 1748870400000
+        },
+        {
+            "id": "fractional_reserve",
+            "name": "Fractional reserve",
+            "type": "storage",
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
+            "configState": "POSTPONED",
+            "startTime": 1749129600000,
+            "endTime": 1751721600000
+        }
+    ]
+}

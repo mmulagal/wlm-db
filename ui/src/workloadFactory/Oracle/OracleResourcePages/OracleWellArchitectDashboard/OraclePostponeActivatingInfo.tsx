@@ -10,16 +10,21 @@ const useOraclePostponeInfo = () => {
     const getPostponeInfo = useMemo(() => (key: string) => calculatePostponeInfo(cardData, key), [cardData]);
 
     const renderPostponeActivatingInfo = useCallback(
-        (configKey: string, showDismissedConfigurations: boolean) => (
-            <>
-                {showDismissedConfigurations && (
-                    <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} translation={t} />
-                )}
-                {!showDismissedConfigurations && (
-                    <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} />
-                )}
-            </>
-        ),
+        (configKey: string, showDismissedConfigurations: boolean) => {
+            const postponeInfo = getPostponeInfo(configKey);
+            const isPostponed = postponeInfo?.postponeDate && postponeInfo?.daysLeft !== undefined;
+
+            return (
+                <>
+                    {showDismissedConfigurations && isPostponed && (
+                        <PostponeInfo configKey={configKey} getPostponeInfo={getPostponeInfo} translation={t} />
+                    )}
+                    {!showDismissedConfigurations && (
+                        <ActivatingInfo configKey={configKey} cardData={cardData} translation={t} />
+                    )}
+                </>
+            );
+        },
         [getPostponeInfo, cardData, t]
     );
 

@@ -135,9 +135,7 @@ const WADButton = () => {
         onConfirm?: () => void
     ) => {
         if (context === 'upload') {
-            setDialog(
-                <WADUploadDialog primaryButtonLabel={primaryButtonLabel} onUpload={uploadWADScript} />
-            );
+            setDialog(<WADUploadDialog primaryButtonLabel={primaryButtonLabel} onUpload={uploadWADScript} />);
             return;
         }
 
@@ -310,47 +308,41 @@ const WADButton = () => {
     };
 
     return (
-        <>
-            <DsButton
-                children={t('databases.inventory.one-time-assessment')}
-                variant="Default"
-                dropDown={{
-                    trigger: 'click',
-                    autoPosition: true,
-                    items: [
-                        {
-                            id: 'wlm-db-learn-assessment-wad-dashboard',
-                            label: t('databases.inventory.learn-about-assessment'),
-                            onClick: () => {
-                                openWADDialog();
-                            }
-                        },
-                        {
-                            id: 'wlm-db-download-script-wad-dashboard',
-                            label: t('databases.inventory.download-script'),
-                            isDisabled: false,
-                            onClick: () => {
-                                openEngineTypeDialog(
-                                    t('databases.inventory.download-script'),
-                                    'download',
-                                    () => {
-                                        downloadWADScript(selectedEngineTypeRef.current);
-                                    }
-                                );
-                            }
-                        },
-                        {
-                            id: 'wlm-db-upload-results-wad-dashboard',
-                            label: t('databases.inventory.upload-results'),
-                            isDisabled: false,
-                            onClick: () => {
-                                openEngineTypeDialog(t('databases.inventory.upload-results'), 'upload');
-                            }
+        <DsButton
+            children={t('databases.inventory.one-time-assessment')}
+            variant="Default"
+            dropDown={{
+                trigger: 'click',
+                autoPosition: true,
+                items: [
+                    {
+                        id: 'wlm-db-learn-assessment-wad-dashboard',
+                        label: t('databases.inventory.learn-about-assessment'),
+                        onClick: () => {
+                            openWADDialog();
                         }
-                    ]
-                }}
-            />
-        </>
+                    },
+                    {
+                        id: 'wlm-db-download-script-wad-dashboard',
+                        label: t('databases.inventory.download-script'),
+                        isDisabled: false,
+                        onClick: () => {
+                            openEngineTypeDialog(t('databases.inventory.download-script'), 'download', () => {
+                                downloadWADScript(selectedEngineTypeRef.current);
+                            });
+                        }
+                    },
+                    {
+                        id: 'wlm-db-upload-results-wad-dashboard',
+                        label: t('databases.inventory.upload-results'),
+                        isDisabled: false,
+                        onClick: () => {
+                            openEngineTypeDialog(t('databases.inventory.upload-results'), 'upload');
+                        }
+                    }
+                ]
+            }}
+        />
     );
 };
 

@@ -78,6 +78,7 @@
             "not_protected": "Not protected",
             "manage-analysis-state": "Manage Analysis State",
             "not-available": "n/a",
+            "clear-all": "Clear all",
             "not-available-table-columns": "n/a",
             "filter-options-search-placeholder": "Search",
             "filter-options-no-matches": "No matching options",
@@ -781,6 +782,11 @@
             "mtu-alignment-note2": "Workload Factory recommends that you perform this operation during a scheduled maintenance window to minimize the impact on users and applications.",
             "mtu-alignment-note3": "Click Continue to authorize Workload Factory to automatically perform these actions on your behalf.",
             "network-interface-name": "Network interface name",
+            "network-adapter-name": "Network adapter name",
+            "rss-status": "RSS status",
+            "rss-profile": "RSS profile",
+            "base-processor-number": "Base processor number",
+            "receive-queues": "Receive queues",
             "mtu-value": "MTU value",
             "impacted-network-interfaces": "Impacted network interfaces",
             "impacted-network-interface": "Impacted network interface",
@@ -1079,7 +1085,8 @@
                 "oracle-host-name": "Oracle host name",
                 "sql-instance-name-clone": "SQL instance name",
                 "sql-host-name-clone": "SQL host name",
-                "impacted-ec2-instances": "Impacted EC2 instances"
+                "impacted-ec2-instances": "Impacted EC2 instances",
+                "impacted-resources": "Impacted resources"
             },
             "unavailable": "Unavailable",
             "application-oracle-server": "Application (Oracle Server)",
@@ -1351,10 +1358,14 @@
                 "recommendation": "View recommendation"
             },
             "sections": {
+                "storage": "Storage",
                 "storage-sizing": "Storage sizing",
                 "storage-layout": "Storage layout",
                 "storage-configuration": "Storage configuration",
-                "compute": "Compute"
+                "compute": "Compute",
+                "application": "Application",
+                "resiliency": "Resiliency",
+                "cloning": "Cloning"
             },
             "actions": {
                 "view-recommendation": "View recommendation",

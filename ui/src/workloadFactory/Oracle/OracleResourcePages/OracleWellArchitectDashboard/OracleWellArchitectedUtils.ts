@@ -1,4 +1,5 @@
 import store from '../../../../store/store';
+import { getRecommendation } from '../../../../utils/recommendations';
 import {
     setCardData,
     setDriftAssessmentData,
@@ -7,11 +8,9 @@ import {
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
-    setOntapConfigTableData,
     setOptimizationBreakDown,
     setOptimizingData,
-    setOptimizingInstanceData,
-    setOsConfigTableData
+    setOptimizingInstanceData
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { addAllOracleHostAssessmentData } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
@@ -27,6 +26,9 @@ import {
     ORACLE_ISCSI_ONLY_CARD_IDS,
     ORACLE_ISCSI_ONLY_CARD_KEYS,
     WA_FLAG_SKIP,
+    WELL_ARCHITECTED_CATEGORIES,
+    WELL_ARCHITECTED_CATEGORY_LABELS,
+    WELL_ARCHITECTED_STATUS,
     oracleCategoryOptions
 } from '../../../../utils/consts';
 import { groupByType, mapDismissedValues } from '../../../../utils/resourceUtils';
@@ -1696,11 +1698,248 @@ const createOsConfigurationBlock = (
 };
 
 // Optimized function to get cards data
+// Helper function to group Oracle configurations by category for dynamic rendering
+export const groupOracleConfigurationsByCategory = (cardData: any): Record<string, any[]> => {
+    const grouped: Record<string, any[]> = {
+        storage: [],
+        compute: [],
+        application: [],
+        resiliency: [],
+        cloning: []
+    };
+
+    if (!cardData) return grouped;
+
+    // Iterate through all keys in cardData (except metadata fields)
+    Object.keys(cardData).forEach(key => {
+        // Skip metadata fields
+        if (WA_FLAG_SKIP.includes(key)) {
+            return;
+        }
+
+        const config = cardData[key];
+        if (config && config.category) {
+            const category = config.category.toLowerCase();
+            if (grouped[category]) {
+                grouped[category].push({
+                    key,
+                    config
+                });
+            }
+        }
+    });
+
+    return grouped;
+};
+
+// Helper function to check if a category has configurations
+export const hasOracleCategoryConfigs = (groupedConfigs: Record<string, any[]>, category: string): boolean =>
+    groupedConfigs[category] && groupedConfigs[category].length > 0;
+
+// Helper function to detect if API response is flat structure
+const isOracleFlatApiResponse = (data: any): boolean => data && Array.isArray(data.assessments);
+
+// Map category to the Oracle sub-header text shown under the card title
+const getOracleBlockOneType = (category: string): string =>
+    WELL_ARCHITECTED_CATEGORY_LABELS[category?.toLowerCase() as keyof typeof WELL_ARCHITECTED_CATEGORY_LABELS] ||
+    category ||
+    '';
+
+// Helper function to format flat assessment to card format
+const formatOracleFlatAssessmentToCard = (
+    assessment: any,
+    optimizingData: Record<string, string>,
+    assessmentData: any
+): any => {
+    const configId = assessment.id;
+    const displayName = assessment.name || getConfigurationDisplayName(configId);
+
+    // Map status
+    let status = '';
+    if (assessment.status === WELL_ARCHITECTED_STATUS.OPTIMIZED) {
+        status = GETWELL_STATUS.OPTIMIZED;
+    } else if (assessment.status === WELL_ARCHITECTED_STATUS.NOT_OPTIMIZED) {
+        status = GETWELL_STATUS.NOT_OPTIMIZED;
+    } else {
+        status = GETWELL_STATUS.NOT_APPLICABLE;
+    }
+
+    // Capitalize severity to match constants
+    const severity = assessment.severity
+        ? assessment.severity.charAt(0).toUpperCase() + assessment.severity.slice(1)
+        : '';
+
+    // Dismiss state will be populated by processOracleFlatAssessments from the dismissedConfigurations array
+    // Do not try to read it here as dismissedConfigurations is an array, not an object keyed by configId
+
+    // Get category from type
+    const category = assessment.type || WELL_ARCHITECTED_CATEGORIES.STORAGE;
+
+    // Get tags from categories
+    const tags = assessment.categories || [];
+
+    return {
+        id: configId,
+        configurationId: configId, // Store for dismiss flow and tooltip matching
+        mapName: displayName,
+        name: configId,
+        displayName,
+        category,
+        configurationName: displayName,
+        block_one: {
+            value: displayName,
+            type: getOracleBlockOneType(category)
+        },
+        block_two: {
+            type: 'Status',
+            value: status
+        },
+        block_three: {
+            type: 'Current',
+            value: assessment.current ?? ''
+        },
+        block_four: {
+            type: 'Severity',
+            value: severity
+        },
+        block_five: {
+            type: 'Resource type',
+            value: assessment.resourceType || '',
+            count: {
+                totalObjectsInViolation: assessment.totalObjectsInViolation ?? 0,
+                totalObjectsAssessed: assessment.totalObjectsAssessed ?? 0
+            }
+        },
+        block_six: {
+            type: displayName,
+            value:
+                assessment.totalObjectsInViolation || assessment.totalObjectsAssessed
+                    ? `${assessment.totalObjectsInViolation ?? 0} out of ${assessment.totalObjectsAssessed ?? 0}`
+                    : '',
+            count:
+                assessment.totalObjectsAssessed !== undefined
+                    ? {
+                          totalObjectsInViolation: assessment.totalObjectsInViolation ?? 0,
+                          totalObjectsAssessed: assessment.totalObjectsAssessed ?? 0
+                      }
+                    : undefined,
+            smallFont: true
+        },
+        recommendation: (() => {
+            // Use static recommendations from UI files instead of API response
+            // API team cannot provide all recommendation details
+            const staticRecommendation = getRecommendation(configId, DBType.ORACLE);
+
+            if (staticRecommendation) {
+                return {
+                    title: staticRecommendation.title || `${displayName} recommendation`,
+                    description: staticRecommendation.description,
+                    descriptionList: staticRecommendation.descriptionList,
+                    descriptionRssConfig: staticRecommendation.descriptionRssConfig,
+                    info: staticRecommendation.info,
+                    valuesHeading: staticRecommendation.valuesHeading,
+                    values: staticRecommendation.values
+                };
+            }
+
+            // Fallback to API response if no static recommendation exists
+            return assessment.recommendation
+                ? {
+                      title: `${displayName} recommendation`,
+                      description: assessment.recommendation
+                  }
+                : undefined;
+        })(),
+        recommendationText: (() => {
+            const staticRecommendation = getRecommendation(configId, DBType.ORACLE);
+            return staticRecommendation?.description || assessment.recommendation;
+        })(),
+        tags,
+        objectsInViolation: assessment.objectsInViolation || [],
+        violationDetails: assessment.violationDetails || [],
+        totalObjectsAssessed: assessment.totalObjectsAssessed ?? 0,
+        totalObjectsInViolation: assessment.totalObjectsInViolation ?? 0,
+        status: optimizingData[configId] || '',
+        ...(assessment.ec2InstancesToPatch && { ec2InstancesToPatch: assessment.ec2InstancesToPatch }),
+        ...(assessment.cloneDetails && { cloneDetails: assessment.cloneDetails }),
+        ...(assessment.oldCloneDetails && { oldCloneDetails: assessment.oldCloneDetails }),
+        ...(assessment.oldCloneDatabaseNames && { oldCloneDatabaseNames: assessment.oldCloneDatabaseNames }),
+        ...(assessment.cloneDriftMessage && { cloneDriftMessage: assessment.cloneDriftMessage }),
+        ...(assessment.missingPatchesCount !== undefined && { missingPatchesCount: assessment.missingPatchesCount }),
+        ...(assessment.recommendedSizeInGib && { recommendedSizeInGib: assessment.recommendedSizeInGib })
+    };
+};
+
+// Helper function to process flat Oracle assessments
+const processOracleFlatAssessments = (data: any, optimizingData: Record<string, string>): Record<string, any> => {
+    // Start with EMPTY cardsData — flat API provides all data, no template needed
+    const cardsData: Record<string, any> = {};
+
+    if (!data.assessments || !Array.isArray(data.assessments)) {
+        return cardsData;
+    }
+
+    // Process each assessment - use id directly as the card key
+    data.assessments.forEach((assessment: any) => {
+        const configKey = assessment.id;
+        if (!configKey) return;
+        cardsData[configKey] = formatOracleFlatAssessmentToCard(assessment, optimizingData, data);
+    });
+
+    // Map dismissedConfigurations to cards (critical for dismiss/reactivate/activating states)
+    if (data.dismissedConfigurations && Array.isArray(data.dismissedConfigurations)) {
+        data.dismissedConfigurations.forEach((dismissedConfig: any) => {
+            // Use id as the primary key for matching
+            const configId = dismissedConfig.id;
+
+            // First try direct match with id (card key)
+            let matchingCardKey = Object.keys(cardsData).find(key => key === configId);
+
+            // If not found, try matching by the card's name field (fallback for legacy data)
+            if (!matchingCardKey) {
+                matchingCardKey = Object.keys(cardsData).find(key => {
+                    const card = cardsData[key];
+                    return card?.name === configId || card?.block_one?.value === configId;
+                });
+            }
+
+            if (matchingCardKey && cardsData[matchingCardKey]) {
+                // Add dismissedObj to the card
+                cardsData[matchingCardKey].dismissedObj = {
+                    configState: dismissedConfig.configState,
+                    startTime: dismissedConfig.startTime,
+                    endTime: dismissedConfig.endTime
+                };
+            }
+        });
+    }
+
+    // Add metadata
+    cardsData.isASMManaged = data.metadata?.isASMManaged || false;
+    cardsData.storageProtocol = data.metadata?.storageProtocol || '';
+    cardsData.isWad = data.metadata?.isWad || false;
+    cardsData.deploymentType = data.metadata?.deploymentType || '';
+    cardsData.baseDeploymentType = data.metadata?.baseDeploymentType || '';
+
+    return cardsData;
+};
+
 export const getOracleCardsData = (
     data: AssessmentResponseInterface,
     optimizingData: Record<string, string>,
     showDismissedView: boolean = false
 ) => {
+    // Check if this is flat API response
+    if (isOracleFlatApiResponse(data)) {
+        const cardsData = processOracleFlatAssessments(data, optimizingData);
+        return {
+            cardsData,
+            formatOntapConfigList: [],
+            formatOsConfigList: []
+        };
+    }
+
+    // Original nested structure processing
     const {
         formatOntapConfigList,
         ontapTagsList,
@@ -1887,7 +2126,7 @@ export const formatOracleOptimizationBreakDown = (
             if (isDismissed || isPostponed) {
                 storageCount.dismissedOrPostponed++;
                 storageCount.hasDismissedOrPostponed = true;
-                // Use proper display names for parent cards
+                // Use actual ID, not display name
                 if (cardItem?.id === 'ontap_configuration' || cardItem?.id === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
                     storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
                 } else if (
@@ -1896,7 +2135,7 @@ export const formatOracleOptimizationBreakDown = (
                 ) {
                     storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
                 } else {
-                    storageCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);
+                    storageCount.dismissedIds.push(cardItem?.id);
                 }
             } else if (isOptimized) {
                 storageCount.optimized++;
@@ -1930,7 +2169,7 @@ export const formatOracleOptimizationBreakDown = (
             if (isDismissed || isPostponed) {
                 computeCount.dismissedOrPostponed++;
                 computeCount.hasDismissedOrPostponed = true;
-                computeCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);
+                computeCount.dismissedIds.push(cardItem?.id);
             } else if (isOptimized) {
                 computeCount.optimized++;
                 if (isOptimizedViaDismissal) {
@@ -1955,7 +2194,7 @@ export const formatOracleOptimizationBreakDown = (
             if (isDismissed || isPostponed) {
                 applicationCount.dismissedOrPostponed++;
                 applicationCount.hasDismissedOrPostponed = true;
-                applicationCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);
+                applicationCount.dismissedIds.push(cardItem?.id);
             } else if (isOptimized) {
                 applicationCount.optimized++;
                 if (isOptimizedViaDismissal) {
@@ -1980,7 +2219,7 @@ export const formatOracleOptimizationBreakDown = (
             if (isDismissed || isPostponed) {
                 resiliencyCount.dismissedOrPostponed++;
                 resiliencyCount.hasDismissedOrPostponed = true;
-                resiliencyCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);
+                resiliencyCount.dismissedIds.push(cardItem?.id);
             } else if (isOptimized) {
                 resiliencyCount.optimized++;
                 if (isOptimizedViaDismissal) {
@@ -2005,7 +2244,7 @@ export const formatOracleOptimizationBreakDown = (
             if (isDismissed || isPostponed) {
                 cloningCount.dismissedOrPostponed++;
                 cloningCount.hasDismissedOrPostponed = true;
-                cloningCount.dismissedIds.push(cardItem?.mapName || cardItem?.id);
+                cloningCount.dismissedIds.push(cardItem?.id);
             } else if (isOptimized) {
                 cloningCount.optimized++;
                 if (isOptimizedViaDismissal) {
@@ -2042,7 +2281,7 @@ export const formatOracleOptimizationBreakDown = (
                 if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
                     storageCount.dismissedOrPostponed++;
                     storageCount.hasDismissedOrPostponed = true;
-                    storageCount.dismissedIds.push(getConfigurationDisplayName(config.configurationName));
+                    storageCount.dismissedIds.push(config.configurationName);
                 }
             });
         }
@@ -2063,7 +2302,7 @@ export const formatOracleOptimizationBreakDown = (
                 if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
                     storageCount.dismissedOrPostponed++;
                     storageCount.hasDismissedOrPostponed = true;
-                    storageCount.dismissedIds.push(getConfigurationDisplayName(config.configurationName));
+                    storageCount.dismissedIds.push(config.configurationName);
                 }
             });
         }
@@ -2182,6 +2421,7 @@ export const formatOracleWellArchitectedData = (
         optimizingData = {};
         dispatch(setOptimizingData({}));
     }
+
     const { cardsData, formatOntapConfigList, formatOsConfigList } = getOracleCardsData(
         assessmentData,
         optimizingData,
@@ -2189,13 +2429,13 @@ export const formatOracleWellArchitectedData = (
     );
     const optBreakDown = formatOracleOptimizationBreakDown(cardsData, assessmentData);
 
+    const timestamp = assessmentData?.metadata?.lastAssessmentTimestamp;
+
     // Batch dispatch all data to store
     const dispatchActions = [
         () => dispatch(setCardData(cardsData)),
-        () => dispatch(setOntapConfigTableData(formatOntapConfigList)),
-        () => dispatch(setOsConfigTableData(formatOsConfigList)),
         () => dispatch(setOptimizationBreakDown(optBreakDown)),
-        () => dispatch(setGwTimestamp(formatTimestamp(assessmentData?.lastAssessmentTimestamp))),
+        () => dispatch(setGwTimestamp(timestamp ? formatTimestamp(timestamp) : getCurrentDateTime())),
         () => dispatch(setGwRefreshTimestamp(getCurrentDateTime())),
         () => dispatch(setDriftAssessmentData(assessmentData))
     ];
@@ -2221,7 +2461,7 @@ export const oracleApplyFilter = (
 
     Object.keys(cardData)?.forEach((key: any) => {
         if (WA_FLAG_SKIP.includes(key)) {
-            return; // Skip deploymentType, isASMManaged and isStorageLayoutFra as they are not cards
+            return;
         }
 
         // Skip if cardData[key] is null/undefined
@@ -2244,10 +2484,19 @@ export const oracleApplyFilter = (
             return;
         }
 
-        const categoryInfo = categoryData[key as keyof typeof categoryData];
-        const checkCategory = !filters['all-catagories'] || filters['all-catagories']?.includes(categoryInfo?.category);
-        const checkSubCategory =
-            !filters['sub-catagories'] || filters['sub-catagories']?.includes(categoryInfo?.subCategory);
+        // For flat API, use category directly from config if available
+        let currentCategory: string | undefined;
+
+        if (cardData[key].category) {
+            // Flat API: category is directly on the card
+            currentCategory = cardData[key].category;
+        } else {
+            // Nested structure: look up category from mapping
+            const categoryInfo = categoryData[key as keyof typeof categoryData];
+            currentCategory = categoryInfo?.category;
+        }
+
+        const checkCategory = !filters['all-catagories'] || filters['all-catagories']?.includes(currentCategory);
 
         const isOptmized = isOracleConfigOptimized(
             cardData[key].block_two.value,
@@ -2311,7 +2560,6 @@ export const oracleApplyFilter = (
 
         if (
             checkCategory &&
-            checkSubCategory &&
             checkStatus &&
             checkSeverity &&
             checkTags &&
@@ -2320,9 +2568,8 @@ export const oracleApplyFilter = (
             checkDismissedFilter
         ) {
             filteredCardData[key] = cardData[key];
-            const categoryInfo = categoryData[key as keyof typeof categoryData];
             if (
-                categoryInfo &&
+                currentCategory &&
                 (cardData[key].block_two.value || key === 'ontap_configuration' || key === 'os_configuration')
             ) {
                 configCount++;
@@ -2468,7 +2715,6 @@ export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploy
     // Use static mapping here as this is for generating filter options based on cards that exist
     const categoryData = getOracleCategoryData();
     const availableCategories = new Set();
-    const availableSubCategories = new Set();
     const availableSeverities = new Set();
     const availableTags = new Set();
     const availableResourceTypes = new Set();
@@ -2486,11 +2732,15 @@ export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploy
             return;
         }
 
-        const categoryInfo = categoryData[key as keyof typeof categoryData];
-
-        if (categoryInfo) {
-            availableCategories.add(categoryInfo.category);
-            availableSubCategories.add(categoryInfo.subCategory);
+        // For flat API, use category directly from config if available
+        if (config.category) {
+            availableCategories.add(config.category);
+        } else {
+            // Fall back to category mapping for old nested structure
+            const categoryInfo = categoryData[key as keyof typeof categoryData];
+            if (categoryInfo) {
+                availableCategories.add(categoryInfo.category);
+            }
         }
 
         if (!config?.block_two?.value) {
@@ -2529,14 +2779,11 @@ export const generateOracleDynamicFilterOptions = (cardData: any, instanceDeploy
     return {
         categories: sortedCategories.map(category => ({
             id: category as string,
-            label: category as string,
+            label:
+                WELL_ARCHITECTED_CATEGORY_LABELS[
+                    (category as string)?.toLowerCase() as keyof typeof WELL_ARCHITECTED_CATEGORY_LABELS
+                ] || (category as string),
             value: category as string
-        })),
-        subCategories: Array.from(availableSubCategories).map(subCategory => ({
-            id: subCategory as string,
-            label: subCategory as string,
-            value: subCategory as string,
-            category: getOracleCategoryForSubCategory(subCategory as string)
         })),
         severities: Array.from(availableSeverities).map(severity => ({
             id: severity as string,

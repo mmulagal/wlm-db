@@ -1,5 +1,11 @@
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, DBType } from '../../../utils/consts';
-import { getCategoryData, getConfigurationTechnicalName } from '../GetWellUtils';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATES,
+    DBType,
+    WELL_ARCHITECTED_CATEGORY_LABELS,
+    WA_FLAG_SKIP
+} from '../../../utils/consts';
+import { getCategoryData } from '../GetWellUtils';
 import { getDynamicOracleCategoryData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 
 // Special parent-child configuration mappings for ONTAP, OS, and HA
@@ -123,18 +129,82 @@ export const getOracleTechnicalKeyToDisplayNameMapping = () => {
     return techToDisplay;
 };
 
-// Helper function to group configurations by category with hierarchical structure
+// Helper function to group configurations by category
 export const groupConfigurationsByCategory = (
     configIds: string[],
     assessmentData?: any,
     cardsData?: any,
     databaseType?: string
 ) => {
-    // Determine database type if not provided
-    const dbType = databaseType || DBType.MSSQL;
+    // Check if using flat API (dismissedConfigurations is an array)
+    const isFlatApi = Array.isArray(assessmentData?.dismissedConfigurations);
 
-    // Use appropriate category data and mappings based on database type
-    // For Oracle, use dynamic category data based on actual assessment response
+    if (isFlatApi) {
+        // FLAT API: Group by category and check for fully dismissed categories
+        const configsByCategory: { [category: string]: { id: string; displayName: string }[] } = {};
+
+        // Group configs by category
+        configIds.forEach(configId => {
+            // Direct lookup by ID
+            const card = cardsData?.[configId];
+
+            if (card && card.mapName) {
+                const displayName = card.mapName;
+                const { category } = card;
+
+                // Only process if category exists
+                if (category) {
+                    if (!configsByCategory[category]) {
+                        configsByCategory[category] = [];
+                    }
+
+                    configsByCategory[category].push({ id: configId, displayName });
+                }
+            }
+        });
+
+        // Check which categories are fully dismissed
+        const fullyDismissedCategories: string[] = [];
+        const individualConfigs: string[] = [];
+
+        Object.keys(configsByCategory).forEach(category => {
+            // Get all configs in this category from cardsData (API gives us only what should be shown)
+            const allConfigsInCategory = Object.keys(cardsData || {}).filter(key => {
+                const card = cardsData[key];
+                // Skip metadata fields
+                if (WA_FLAG_SKIP.includes(key)) return false;
+                return card?.category?.toLowerCase() === category.toLowerCase();
+            });
+
+            const dismissedConfigsInCategory = configsByCategory[category];
+
+            // If ALL configs in this category are dismissed, it's a fully dismissed category
+            if (allConfigsInCategory.length > 0 && dismissedConfigsInCategory.length === allConfigsInCategory.length) {
+                // Map category to display label
+                const displayLabel =
+                    WELL_ARCHITECTED_CATEGORY_LABELS[
+                        category.toLowerCase() as keyof typeof WELL_ARCHITECTED_CATEGORY_LABELS
+                    ] || category;
+                fullyDismissedCategories.push(displayLabel);
+            } else {
+                // Otherwise, list individual configs
+                dismissedConfigsInCategory.forEach(config => {
+                    individualConfigs.push(config.displayName);
+                });
+            }
+        });
+
+        return {
+            fullyDismissedCategories,
+            individualConfigs: {} as { [category: string]: string[] },
+            parentConfigurations: [] as string[],
+            configurations: individualConfigs,
+            flatApiCategories: fullyDismissedCategories
+        };
+    }
+
+    // NESTED API: Logic for categories and configurations
+    const dbType = databaseType || DBType.MSSQL;
     const categoryData = dbType === DBType.ORACLE ? getDynamicOracleCategoryData(assessmentData) : getCategoryData();
     const displayNameToTechnicalKey =
         dbType === DBType.ORACLE ? getOracleDisplayNameToTechnicalKeyMapping() : getDisplayNameToTechnicalKeyMapping();
@@ -143,85 +213,43 @@ export const groupConfigurationsByCategory = (
     const technicalKeyToDisplayName =
         dbType === DBType.ORACLE ? getOracleTechnicalKeyToDisplayNameMapping() : getTechnicalKeyToDisplayNameMapping();
 
-    // Separate parent configurations (ONTAP, OS, HA) for special handling
     const parentConfigurations: string[] = [];
-    const subConfigurations: string[] = [];
     const regularConfigurations: string[] = [];
 
     configIds.forEach(configId => {
-        const technicalKey = displayNameToTechnicalKey[configId];
+        const technicalKey = displayNameToTechnicalKey[configId] || configId;
         const isParentConfig = Object.keys(parentChildConfigs).includes(configId);
-        const isSubConfig = Object.values(parentChildConfigs).flat().includes(technicalKey);
-
-        // Check if this configId is an individual sub-configuration from assessment data
-        let isIndividualSubConfig = false;
-        if (assessmentData?.dismissedConfigurations) {
-            // Check ONTAP sub-configurations (volumes and LUNs)
-            const ontapSubConfigs = [
-                ...(assessmentData.dismissedConfigurations.storage?.configuration?.volumes || []),
-                ...(assessmentData.dismissedConfigurations.storage?.configuration?.luns || [])
-            ];
-            const isOntapSubConfig = ontapSubConfigs.some((config: any) => {
-                // Convert display name to technical name for comparison
-                const technicalName = getConfigurationTechnicalName(configId, config.type || 'volume');
-                return technicalName === config.configurationName;
-            });
-
-            // Check OS sub-configurations
-            const osSubConfigs = assessmentData.dismissedConfigurations.storage?.configuration?.os || [];
-            const isOsSubConfig = osSubConfigs.some((config: any) => {
-                // Convert display name to technical name for comparison
-                const technicalName = getConfigurationTechnicalName(configId, 'os');
-                return technicalName === config.configurationName;
-            });
-
-            // Check HA sub-configurations (only for MSSQL)
-            const haSubConfigs = assessmentData.dismissedConfigurations.highAvailability || [];
-            const isHaSubConfig = haSubConfigs.some((config: any) => {
-                // Convert display name to technical name for comparison
-                const technicalName = getConfigurationTechnicalName(configId, 'mssqlhighavailability');
-                return technicalName === config.configurationName;
-            });
-
-            isIndividualSubConfig = isOntapSubConfig || isOsSubConfig || isHaSubConfig;
-        }
 
         if (isParentConfig) {
             parentConfigurations.push(configId);
-        } else if (isSubConfig || isIndividualSubConfig) {
-            subConfigurations.push(configId);
         } else {
             regularConfigurations.push(configId);
         }
     });
 
-    // Build complete category and subcategory structures including parent configurations
-    const allCategoriesWithSubCategories = Object.keys(categoryData).reduce((acc, configKey) => {
-        const { category, subCategory } = categoryData[configKey as keyof typeof categoryData];
+    // Build category structure
+    const allCategoriesWithConfigs = Object.keys(categoryData).reduce((acc, configKey) => {
+        const configInfo = categoryData[configKey as keyof typeof categoryData];
+        const { category } = configInfo;
         if (!acc[category]) {
-            acc[category] = {};
+            acc[category] = [];
         }
-        if (!acc[category][subCategory]) {
-            acc[category][subCategory] = [];
-        }
-        acc[category][subCategory].push(configKey);
+        acc[category].push(configKey);
         return acc;
-    }, {} as { [category: string]: { [subCategory: string]: string[] } });
+    }, {} as { [category: string]: string[] });
 
-    // Process both regular and parent configurations for categories and subcategories
-    // Include parent configurations in category analysis since ONTAP/OS are Storage category
-    const allProcessingTechnicalKeys = [
-        ...regularConfigurations.map(configId => displayNameToTechnicalKey[configId]).filter(Boolean),
-        ...parentConfigurations.map(configId => displayNameToTechnicalKey[configId]).filter(Boolean)
+    // Process both regular and parent configurations for categories
+    const allProcessingTechnicalKeys: string[] = [
+        ...regularConfigurations.map(configId => displayNameToTechnicalKey[configId] || configId),
+        ...parentConfigurations.map(configId => displayNameToTechnicalKey[configId] || configId)
     ];
 
     const fullyDismissedCategories: string[] = [];
-    const fullyDismissedSubCategories: { [subCategory: string]: { category: string; configs: string[] } } = {};
-    const individualConfigs: { [category: string]: { [subCategory: string]: string[] } } = {};
+    const individualConfigs: { [category: string]: string[] } = {};
 
     // Check for fully dismissed categories
-    Object.keys(allCategoriesWithSubCategories).forEach(category => {
-        const allConfigsInCategory = Object.values(allCategoriesWithSubCategories[category]).flat();
+    Object.keys(allCategoriesWithConfigs).forEach(category => {
+        const allConfigsInCategory = allCategoriesWithConfigs[category];
         const dismissedConfigsInCategory = allProcessingTechnicalKeys.filter((key: string) =>
             allConfigsInCategory.includes(key)
         );
@@ -232,110 +260,17 @@ export const groupConfigurationsByCategory = (
         ) {
             fullyDismissedCategories.push(category);
         } else if (dismissedConfigsInCategory.length > 0) {
-            // Check for fully dismissed subcategories within this category
-            Object.keys(allCategoriesWithSubCategories[category]).forEach(subCategory => {
-                const allConfigsInSubCategory = allCategoriesWithSubCategories[category][subCategory];
-                const dismissedConfigsInSubCategory = allProcessingTechnicalKeys.filter((key: string) =>
-                    allConfigsInSubCategory.includes(key)
-                );
-
-                if (
-                    allConfigsInSubCategory.length === dismissedConfigsInSubCategory.length &&
-                    dismissedConfigsInSubCategory.length > 0
-                ) {
-                    fullyDismissedSubCategories[subCategory] = {
-                        category,
-                        configs: dismissedConfigsInSubCategory.map(
-                            (key: string) => technicalKeyToDisplayName[key] || key
-                        )
-                    };
-                } else if (dismissedConfigsInSubCategory.length > 0) {
-                    // Individual configurations
-                    if (!individualConfigs[category]) {
-                        individualConfigs[category] = {};
-                    }
-                    if (!individualConfigs[category][subCategory]) {
-                        individualConfigs[category][subCategory] = [];
-                    }
-                    individualConfigs[category][subCategory] = dismissedConfigsInSubCategory.map(
-                        (key: string) => technicalKeyToDisplayName[key] || key
-                    );
-                }
-            });
+            individualConfigs[category] = dismissedConfigsInCategory.map(
+                (key: string) => technicalKeyToDisplayName[key] || key
+            );
         }
     });
 
-    // Handle sub-configurations from bulk dismissed parent configurations
-    const subConfigurationsFromBulkDismissed: string[] = [];
-
-    if (assessmentData?.dismissedConfigurations && cardsData) {
-        // Simplify the logic: check if parent cards are dismissed and extract all their sub-configs
-        // regardless of whether they're in parentConfigurations or not
-
-        // Check ONTAP card dismissal
-        const ontapCardDismissed =
-            cardsData?.ontap_configuration?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
-            cardsData?.ontap_configuration?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
-
-        if (ontapCardDismissed) {
-            // Extract ONTAP sub-configurations (volumes and LUNs)
-            const ontapSubConfigs = [
-                ...(assessmentData.dismissedConfigurations.storage?.configuration?.volumes || []),
-                ...(assessmentData.dismissedConfigurations.storage?.configuration?.luns || [])
-            ];
-            ontapSubConfigs.forEach((config: any) => {
-                if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
-                    if (!subConfigurationsFromBulkDismissed.includes(config.configurationName)) {
-                        subConfigurationsFromBulkDismissed.push(config.configurationName);
-                    }
-                }
-            });
-        }
-
-        // Check OS card dismissal
-        const osCardDismissed =
-            cardsData?.os_configuration?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
-            cardsData?.os_configuration?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
-
-        if (osCardDismissed) {
-            // Extract OS sub-configurations
-            const osSubConfigs = assessmentData.dismissedConfigurations.storage?.configuration?.os || [];
-            osSubConfigs.forEach((config: any) => {
-                if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
-                    if (!subConfigurationsFromBulkDismissed.includes(config.configurationName)) {
-                        subConfigurationsFromBulkDismissed.push(config.configurationName);
-                    }
-                }
-            });
-        }
-
-        // Check HA card dismissal
-        const haCardDismissed =
-            cardsData?.mssql_high_availability?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
-            cardsData?.mssql_high_availability?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
-
-        if (haCardDismissed) {
-            // Extract HA sub-configurations
-            const haSubConfigs = assessmentData.dismissedConfigurations.highAvailability || [];
-            haSubConfigs.forEach((config: any) => {
-                if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
-                    if (!subConfigurationsFromBulkDismissed.includes(config.configurationName)) {
-                        subConfigurationsFromBulkDismissed.push(config.configurationName);
-                    }
-                }
-            });
-        }
-    }
-
-    // Combine existing sub-configurations with those from bulk dismissed parents
-    const allSubConfigurations = [...subConfigurations, ...subConfigurationsFromBulkDismissed];
-
     return {
         fullyDismissedCategories,
-        fullyDismissedSubCategories,
         individualConfigs,
         parentConfigurations,
-        subConfigurations: allSubConfigurations
+        configurations: [] as string[]
     };
 };
 
@@ -349,27 +284,44 @@ export const generateDisplayText = (
 ) => {
     if (!dismissedIds?.length) return '';
 
-    const {
-        fullyDismissedCategories,
-        fullyDismissedSubCategories,
-        individualConfigs,
-        parentConfigurations,
-        subConfigurations
-    } = groupConfigurationsByCategory(dismissedIds, assessmentData, cardsData, databaseType);
+    // Check if using flat API
+    const isFlatApi = Array.isArray(assessmentData?.dismissedConfigurations);
 
-    // Use appropriate mappings based on database type
+    if (isFlatApi) {
+        // FLAT API: Show categories and configurations dynamically
+        const result = groupConfigurationsByCategory(dismissedIds, assessmentData, cardsData, databaseType);
+        const categoryCount = result.flatApiCategories?.length || 0;
+        const configCount = result.configurations?.length || 0;
+
+        const parts: string[] = [];
+
+        if (categoryCount > 0) {
+            parts.push(`${categoryCount} categor${categoryCount > 1 ? 'ies' : 'y'}`);
+        }
+
+        if (configCount > 0) {
+            parts.push(`${configCount} configuration${configCount > 1 ? 's' : ''}`);
+        }
+
+        return parts.length > 0
+            ? `Dismissed: ${parts.join(' | ')}`
+            : `Dismissed: ${dismissedOrPostponed} Configuration${dismissedOrPostponed > 1 ? 's' : ''}`;
+    }
+
+    // NESTED API: Logic for categories and configurations
+    const { fullyDismissedCategories, individualConfigs, parentConfigurations } = groupConfigurationsByCategory(
+        dismissedIds,
+        assessmentData,
+        cardsData,
+        databaseType
+    );
+
     const dbType = databaseType || DBType.MSSQL;
     const categoryData = dbType === DBType.ORACLE ? getDynamicOracleCategoryData(assessmentData) : getCategoryData();
     const technicalKeyToDisplayName =
         dbType === DBType.ORACLE ? getOracleTechnicalKeyToDisplayNameMapping() : getTechnicalKeyToDisplayNameMapping();
 
-    // Get parent-child mappings
-    const parentChildConfigs =
-        dbType === DBType.ORACLE ? getOracleParentChildConfigurations() : getParentChildConfigurations();
-
-    // Calculate individual configurations (not in categories or subcategories)
     const configurationSources = [
-        // Configurations from fully dismissed categories
         ...fullyDismissedCategories
             .map(category => {
                 const configsInCategory = Object.keys(categoryData).filter(
@@ -378,19 +330,9 @@ export const generateDisplayText = (
                 return configsInCategory.map(configKey => technicalKeyToDisplayName[configKey] || configKey);
             })
             .flat(),
-        // Configurations from fully dismissed sub-categories
-        ...Object.entries(fullyDismissedSubCategories)
-            .map(([, data]) => data.configs)
-            .flat(),
-        // Individual configurations from different sub-categories
         ...Object.entries(individualConfigs)
-            .map(([, subCategories]) =>
-                Object.entries(subCategories)
-                    .map(([, configs]) => configs)
-                    .flat()
-            )
+            .map(([, configs]) => configs)
             .flat(),
-        // Parent configurations (ONTAP, OS, HA) - only if not already included above
         ...parentConfigurations.filter(parentConfig => {
             const technicalKey = Object.keys(categoryData).find(key => technicalKeyToDisplayName[key] === parentConfig);
             if (!technicalKey) return true;
@@ -399,32 +341,15 @@ export const generateDisplayText = (
             if (!configData) return true;
 
             if (fullyDismissedCategories.includes(configData.category)) return false;
-            if (fullyDismissedSubCategories[configData.subCategory]) return false;
 
             const individualConfigsForCategory = individualConfigs[configData.category];
-            if (individualConfigsForCategory?.[configData.subCategory]?.includes(parentConfig)) return false;
+            if (individualConfigsForCategory?.includes(parentConfig)) return false;
 
             return true;
         })
     ];
 
     const allConfigurations = [...new Set(configurationSources)];
-
-    // Filter sub-configurations to exclude those whose parent is already dismissed
-    const relevantSubConfigurations = subConfigurations.filter(
-        subConfig =>
-            // Check if any parent configuration is already dismissed
-            !Object.entries(parentChildConfigs).some(([parentKey, childKeys]) => {
-                const parentDisplayName = technicalKeyToDisplayName[parentKey];
-                return childKeys.some(childKey => {
-                    const childDisplayName = technicalKeyToDisplayName[childKey];
-                    return (
-                        allConfigurations.includes(parentDisplayName) &&
-                        assessmentData?.[childKey]?.subConfigurations?.some((sc: any) => sc.displayName === subConfig)
-                    );
-                });
-            })
-    );
 
     // Build the display text
     const parts: string[] = [];
@@ -435,12 +360,6 @@ export const generateDisplayText = (
 
     if (allConfigurations.length > 0) {
         parts.push(`${allConfigurations.length} configuration${allConfigurations.length > 1 ? 's' : ''}`);
-    }
-
-    if (relevantSubConfigurations.length > 0) {
-        parts.push(
-            `${relevantSubConfigurations.length} sub-configuration${relevantSubConfigurations.length > 1 ? 's' : ''}`
-        );
     }
 
     return parts.length > 0

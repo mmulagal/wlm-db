@@ -234,10 +234,10 @@ const InventoryV2 = () => {
                         // For WAD (offline assessment) data, use getWadOptimizationStatus
                         if (perRow?.isWad && inventoryTableData?.[key]?.hostType === DBType.MSSQL) {
                             optimizationStatus = getWadOptimizationStatus(perRow?.wadAssessmentData);
-                            optimizationLastTimestamp = perRow?.wadAssessmentData?.lastAssessmentTimestamp;
+                            optimizationLastTimestamp = perRow?.wadAssessmentData?.metadata?.lastAssessmentTimestamp;
                         } else if (perRow?.isWad && inventoryTableData?.[key]?.hostType === DBType.ORACLE) {
                             optimizationStatus = getOracleWadOptimizationStatus(perRow?.wadAssessmentData);
-                            optimizationLastTimestamp = perRow?.wadAssessmentData?.lastAssessmentTimestamp;
+                            optimizationLastTimestamp = perRow?.wadAssessmentData?.metadata?.lastAssessmentTimestamp;
                         } else {
                             optimizationStatus = getOptimizationStatus(
                                 perRow?.databaseInstanceId,

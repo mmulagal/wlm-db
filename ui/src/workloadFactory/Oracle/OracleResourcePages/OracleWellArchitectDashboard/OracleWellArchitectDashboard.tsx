@@ -1,27 +1,28 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DsPopover, DsSpinner, DsToggleSwitch, DsTypography } from '@tlveng/wlm-ds';
+import { DsAccordion, DsPopover, DsSpinner, DsToggleSwitch, DsTypography } from '@tlveng/wlm-ds';
 import { useAppSelector, useAppDispatch } from '../../../../store/storeHooks';
 import TotalOptimizationScore from '../../../GetWell/TotalOptimizationScore/TotalOptimizationScore';
 import OptimizationBreakdown from '../../../GetWell/OptimizationBreakdown/OptimizationBreakdown';
 import styles from './OracleWellArchitectDashboard.module.scss';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
-import StorageLayoutSection from './Categories/StorageLayoutSection';
-import StorageSizingSection from './Categories/StorageSizingSection';
-import ComputeSection from './Categories/ComputeSection';
-import ApplicationSection from './Categories/ApplicationSection';
-import ResiliencySection from './Categories/ResiliencySection';
-import CloningSection from './Categories/CloningSection';
+import OracleCardComponent from './OracleCardComponent/OracleCardComponent';
+import Tag from '../../../../common/Tag/Tag';
+import RecommendationText from '../../../GetWell/RecommendationText/RecommendationText';
+import { ReactComponent as Light } from '../../../../assets/Light.svg';
+import { ReactComponent as LightDisabled } from '../../../../assets/Light-Disabled.svg';
+import useOraclePostponeInfo from './OraclePostponeActivatingInfo';
 import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
 import useOracleWellArchitectApi from './OracleWellArchitectApi';
-import StorageConfigurationSection from './Categories/StorageConfigurationSection';
 import OracleExportPDF from './ExportPDFComponent/OracleExportPDF';
 import OracleWellArchitectBanner from './OracleWellArchitectBanner';
 import { checkHasDismissedConfigurations } from '../../../GetWell/GetWellHelper';
+import { getCategoryTranslationKey } from '../../../GetWell/GetWellUtils';
 import {
     generateOracleDynamicFilterOptions,
     oracleApplyFilter,
-    checkAllOracleConfigurationsDismissed
+    checkAllOracleConfigurationsDismissed,
+    groupOracleConfigurationsByCategory
 } from './OracleWellArchitectedUtils';
 import { DBType } from '../../../../utils/consts';
 import {
@@ -80,6 +81,13 @@ const OracleWellArchitectDashboard = () => {
         }
     }, [loading]);
 
+    // Clear filtered card data when loading starts to prevent showing stale data
+    useEffect(() => {
+        if (loading) {
+            setFilteredCardData({});
+        }
+    }, [loading]);
+
     useEffect(() => {
         handleFilterClearAll();
         setShowDismissedConfigurations(false);
@@ -99,6 +107,12 @@ const OracleWellArchitectDashboard = () => {
     const allConfigurationsDismissed = useMemo(
         () => checkAllOracleConfigurationsDismissed(cardData, driftAssessmentData),
         [cardData, driftAssessmentData]
+    );
+
+    // Group configurations by category for dynamic rendering
+    const groupedConfigurations = useMemo(
+        () => groupOracleConfigurationsByCategory(filteredCardData),
+        [filteredCardData]
     );
 
     // Automatically enable dismissed toggle when all configurations are dismissed
@@ -138,6 +152,77 @@ const OracleWellArchitectDashboard = () => {
         dispatch(setOracleDefaultFilterOptions({}));
         setShowDismissedConfigurations(false);
     }, [dispatch]);
+
+    const { renderPostponeActivatingInfo } = useOraclePostponeInfo();
+
+    const renderConfigurationCard = useCallback(
+        (configKey: string, config: any, index: number) => {
+            const accordionId = `${configKey}-${index}`;
+
+            return (
+                <div key={configKey}>
+                    <OracleCardComponent
+                        cardData={config}
+                        showDismissedConfigurations={showDismissedConfigurations}
+                        setShowDismissedConfigurations={setShowDismissedConfigurations}
+                        driftAssessmentData={driftAssessmentData}
+                    />
+                    <DsAccordion
+                        id={accordionId}
+                        variant="Default"
+                        isDisabled={loading || showDismissedConfigurations}
+                        isExpanded={isAccordionExpanded(accordionId, optimizePrintState)}
+                        onExpandChange={(isExpanded: boolean) => {
+                            handleAccordionExpanded(accordionId, isExpanded);
+                        }}
+                        onClick={() => setClickedAccordionId(accordionId)}
+                        title={
+                            <div className={styles.tagPlacement}>
+                                {config?.tags?.map((perTag: string, tagIndex: number) => (
+                                    <div
+                                        className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                        key={tagIndex}
+                                    >
+                                        <Tag text={perTag} />
+                                    </div>
+                                ))}
+                            </div>
+                        }
+                        headerActions={[
+                            <div className={styles.headerAction}>
+                                {renderPostponeActivatingInfo(configKey, showDismissedConfigurations)}
+                                <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                    {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
+                                </div>
+                                <div
+                                    style={{
+                                        color:
+                                            loading || showDismissedConfigurations
+                                                ? 'var(--text-disabled)'
+                                                : 'var(--text-button-primary)'
+                                    }}
+                                >
+                                    {t('databases.oracle-inner-page.view-recommendation')}
+                                </div>
+                            </div>
+                        ]}
+                        children={<RecommendationText data={config?.recommendation} />}
+                    />
+                </div>
+            );
+        },
+        [
+            showDismissedConfigurations,
+            driftAssessmentData,
+            loading,
+            optimizePrintState,
+            isDarkTheme,
+            renderPostponeActivatingInfo,
+            isAccordionExpanded,
+            handleAccordionExpanded,
+            t
+        ]
+    );
 
     // Generate dynamic filter options based on actual card data
     const dynamicFilterOptions = useMemo(() => {
@@ -283,159 +368,54 @@ const OracleWellArchitectDashboard = () => {
                         {/* Adding dummy div to have consistent spacing after filters */}
                         <div style={{ marginBottom: '20px' }} />
 
-                        {(filteredCardData?.file_system_headroom || filteredCardData?.swap_space) && (
+                        {/* Loading state for configuration cards */}
+                        {loading && Object.keys(filteredCardData).length === 0 && (
                             <div className={styles.sectionTwo}>
                                 <div className={styles.sectionClass}>
-                                    <StorageSizingSection
-                                        styles={styles}
-                                        isAccordionExpanded={isAccordionExpanded}
-                                        setClickedAccordionId={setClickedAccordionId}
-                                        loading={loading}
-                                        handleAccordionExpanded={handleAccordionExpanded}
-                                        isDarkTheme={isDarkTheme}
-                                        optimizePrintState={optimizePrintState}
-                                        oracleCardData={filteredCardData}
-                                        showDismissedConfigurations={showDismissedConfigurations}
-                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                        driftAssessmentData={driftAssessmentData}
-                                    />
+                                    <div className={styles.loadingSpinner}>
+                                        <DsSpinner isLarge />
+                                    </div>
                                 </div>
                             </div>
                         )}
 
-                        {(filteredCardData?.redologs_placement ||
-                            filteredCardData?.templogs_placement ||
-                            filteredCardData?.archive_placement ||
-                            filteredCardData?.datafiles_placement ||
-                            filteredCardData?.controlfiles_placement ||
-                            filteredCardData?.oracle_binary_placement ||
-                            filteredCardData?.data_dg_lun_layout ||
-                            filteredCardData?.log_dg_lun_layout ||
-                            filteredCardData?.fra_dg_lun_layout ||
-                            filteredCardData?.archivelog_dg_lun_layout) && (
-                            <div className={styles.sectionTwo}>
-                                <div className={styles.sectionClass}>
-                                    <StorageLayoutSection
-                                        styles={styles}
-                                        isAccordionExpanded={isAccordionExpanded}
-                                        setClickedAccordionId={setClickedAccordionId}
-                                        loading={loading}
-                                        handleAccordionExpanded={handleAccordionExpanded}
-                                        isDarkTheme={isDarkTheme}
-                                        optimizePrintState={optimizePrintState}
-                                        oracleCardData={filteredCardData}
-                                        showDismissedConfigurations={showDismissedConfigurations}
-                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                        driftAssessmentData={driftAssessmentData}
-                                    />
-                                </div>
-                            </div>
-                        )}
+                        {/* Dynamic configuration sections - Renders ALL configurations from API grouped by category */}
+                        {!loading && Object.keys(filteredCardData).length > 0 && (
+                            <>
+                                {['storage', 'compute', 'application', 'resiliency', 'cloning'].map(category => {
+                                    const configs = groupedConfigurations[category] || [];
 
-                        {(filteredCardData?.ontap_configuration || filteredCardData?.os_configuration) && (
-                            <div className={styles.sectionTwo}>
-                                <div className={styles.sectionClass}>
-                                    <StorageConfigurationSection
-                                        styles={styles}
-                                        isAccordionExpanded={isAccordionExpanded}
-                                        setClickedAccordionId={setClickedAccordionId}
-                                        loading={loading}
-                                        handleAccordionExpanded={handleAccordionExpanded}
-                                        isDarkTheme={isDarkTheme}
-                                        optimizePrintState={optimizePrintState}
-                                        oracleCardData={filteredCardData}
-                                        showDismissedConfigurations={showDismissedConfigurations}
-                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                        driftAssessmentData={driftAssessmentData}
-                                    />
-                                </div>
-                            </div>
-                        )}
+                                    if (configs.length === 0) {
+                                        return null;
+                                    }
 
-                        {(filteredCardData?.host_os_patch ||
-                            filteredCardData?.transparent_hugepages ||
-                            filteredCardData?.tcp_advanced_options ||
-                            filteredCardData?.filesystems_io_options ||
-                            filteredCardData?.multiblock_readcount) && (
-                            <div className={styles.sectionTwo}>
-                                <div className={styles.sectionClass}>
-                                    <ComputeSection
-                                        styles={styles}
-                                        isAccordionExpanded={isAccordionExpanded}
-                                        setClickedAccordionId={setClickedAccordionId}
-                                        loading={loading}
-                                        handleAccordionExpanded={handleAccordionExpanded}
-                                        isDarkTheme={isDarkTheme}
-                                        optimizePrintState={optimizePrintState}
-                                        oracleCardData={filteredCardData}
-                                        showDismissedConfigurations={showDismissedConfigurations}
-                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                        driftAssessmentData={driftAssessmentData}
-                                    />
-                                </div>
-                            </div>
-                        )}
+                                    return (
+                                        <div key={category} className={styles.sectionTwo}>
+                                            <div className={styles.sectionClass}>
+                                                <div className={styles['header-buttons']}>
+                                                    <DsTypography
+                                                        style={{
+                                                            padding: '0 0 8px'
+                                                        }}
+                                                        variant="Semibold_16"
+                                                    >
+                                                        {t(getCategoryTranslationKey(category))}
+                                                    </DsTypography>
+                                                </div>
 
-                        {filteredCardData?.oracle_security_patch && (
-                            <div className={styles.sectionTwo}>
-                                <div className={styles.sectionClass}>
-                                    <ApplicationSection
-                                        styles={styles}
-                                        isAccordionExpanded={isAccordionExpanded}
-                                        setClickedAccordionId={setClickedAccordionId}
-                                        loading={loading}
-                                        handleAccordionExpanded={handleAccordionExpanded}
-                                        isDarkTheme={isDarkTheme}
-                                        optimizePrintState={optimizePrintState}
-                                        oracleCardData={filteredCardData}
-                                        showDismissedConfigurations={showDismissedConfigurations}
-                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                        driftAssessmentData={driftAssessmentData}
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {(filteredCardData?.crr ||
-                            filteredCardData?.snapcenter_snapshot ||
-                            filteredCardData?.aws_backup) && (
-                            <div className={styles.sectionTwo}>
-                                <div className={styles.sectionClass}>
-                                    <ResiliencySection
-                                        styles={styles}
-                                        isAccordionExpanded={isAccordionExpanded}
-                                        setClickedAccordionId={setClickedAccordionId}
-                                        loading={loading}
-                                        handleAccordionExpanded={handleAccordionExpanded}
-                                        isDarkTheme={isDarkTheme}
-                                        optimizePrintState={optimizePrintState}
-                                        oracleCardData={filteredCardData}
-                                        showDismissedConfigurations={showDismissedConfigurations}
-                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                        driftAssessmentData={driftAssessmentData}
-                                    />
-                                </div>
-                            </div>
-                        )}
-
-                        {filteredCardData?.clone_management && (
-                            <div className={styles.sectionTwo}>
-                                <div className={styles.sectionClass}>
-                                    <CloningSection
-                                        styles={styles}
-                                        isAccordionExpanded={isAccordionExpanded}
-                                        setClickedAccordionId={setClickedAccordionId}
-                                        loading={loading}
-                                        handleAccordionExpanded={handleAccordionExpanded}
-                                        isDarkTheme={isDarkTheme}
-                                        optimizePrintState={optimizePrintState}
-                                        oracleCardData={filteredCardData}
-                                        showDismissedConfigurations={showDismissedConfigurations}
-                                        setShowDismissedConfigurations={setShowDismissedConfigurations}
-                                        driftAssessmentData={driftAssessmentData}
-                                    />
-                                </div>
-                            </div>
+                                                <div className={styles.accordionGroups}>
+                                                    {configs.map(
+                                                        (
+                                                            { key, config }: { key: string; config: any },
+                                                            index: number
+                                                        ) => renderConfigurationCard(key, config, index)
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </>
                         )}
                     </>
                 )}

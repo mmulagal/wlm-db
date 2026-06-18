@@ -112,7 +112,7 @@ const DashboardMultiTableConfig = ({
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
-                if (!instanceData?.error && instanceData?.assessments?.lastAssessmentTimestamp) {
+                if (!instanceData?.error && instanceData?.assessments?.metadata?.lastAssessmentTimestamp) {
                     let mergedData: any = [];
                     let mergedDismissedData: any = [];
                     if (configType === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
@@ -151,7 +151,7 @@ const DashboardMultiTableConfig = ({
 
                     if (
                         configType === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY &&
-                        !isMssqlHaDeployment(instanceData?.assessments?.deploymentType)
+                        !isMssqlHaDeployment(instanceData?.assessments?.metadata?.deploymentType)
                     ) {
                         return;
                     }
@@ -166,7 +166,7 @@ const DashboardMultiTableConfig = ({
                             instanceData?.assessments?.storage?.configuration?.volumes?.[0]?.errorMessage) ||
                         instanceData?.assessments?.storage?.errorMessage;
 
-                    const fullData = formatAssessmentTableData(mergedData, mergedDismissedData, configEngineType);
+                    const fullData = formatAssessmentTableData(mergedData, mergedDismissedData);
                     const notOptimized = fullData.filter(
                         (item: any) =>
                             item.status !== GETWELL_STATUS.OPTIMIZED &&
@@ -199,7 +199,7 @@ const DashboardMultiTableConfig = ({
                         serverInstanceName: instanceData?.databaseInstanceName,
                         configuration: !errorCase ? `${notOptimized.length} out of ${totalRows.length}` : '0 out of 0',
                         hostName: hostData?.databaseHostName,
-                        lastAssessmentTimestamp: instanceData?.assessments?.lastAssessmentTimestamp,
+                        lastAssessmentTimestamp: instanceData?.assessments?.metadata?.lastAssessmentTimestamp,
                         fullData,
                         credentialName: matchingCredEntry?.name,
                         regionName: matchingRegionEntry?.regionName,

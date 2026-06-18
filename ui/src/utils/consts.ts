@@ -253,6 +253,12 @@ export const SQL_SERVER_EDITIONS = [
     'SQL server Developer'
 ] as const;
 
+export const SQL_SERVER_EDITION_LABELS = {
+    STANDARD: 'Standard',
+    ENTERPRISE: 'Enterprise',
+    DEVELOPER: 'Developer'
+} as const;
+
 export const ORACLE_EDITIONS = ['Enterprise Edition', 'Standard Edition 2'] as const;
 
 export const DATABASE_STATUS = {
@@ -1173,6 +1179,100 @@ export const ASSESSMENT_CONFIG_NAMES = {
     MICROSOFT_SQL_SERVER_PATCH_SHORT: 'Microsoft SQL Server patch'
 };
 
+export const ASSESSMENT_CONFIG_IDS = {
+    AFD_LOGICAL_BLOCK_SIZE: 'afd-logical-block-size',
+    ARCHIVELOG_DG_LUN_LAYOUT: 'archivelog-dg-lun-layout',
+    ARCHIVE_PLACEMENT: 'archive-placement',
+    ASMLIB_LOGICAL_BLOCK_SIZE: 'asmlib-logical-block-size',
+    ASM_EXTERNAL_REDUNDANCY: 'asm-external-redundancy',
+    ASM_SETUP: 'asm-setup',
+    AUTOSIZE: 'autosize',
+    AUTOSIZE_MODE: 'autosize-mode',
+    CLONE_MANAGEMENT: 'clone-management',
+    CLUSTER_QUORUM: 'cluster-quorum',
+    COMPACTION: 'compaction',
+    COMPRESSION: 'compression',
+    COMPUTE_RIGHTSIZING: 'compute-rightsizing',
+    CONTROLFILES_PLACEMENT: 'controlfiles-placement',
+    CRR: 'crr',
+    DATAFILES_PLACEMENT: 'datafiles-placement',
+    DATA_DG_LUN_LAYOUT: 'data-dg-lun-layout',
+    DATA_FILES_MDF: 'data-files-location',
+    DEDUPLICATION: 'deduplication',
+    DNFS_CONFIGURATION_FILE: 'dnfs-configuration-file',
+    DNFS_CONSISTENT_IP_RESOLUTION: 'dnfs-consistent-ip-resolution',
+    DNFS_ENABLEMENT: 'dnfs-enabled',
+    DNFS_NO_SHARED_CACHE: 'dnfs-no-shared-cache',
+    DRIVE_LETTER: 'drive-letter',
+    EXPORT_POLICY: 'export-policy',
+    FILESYSTEMS_IO_OPTIONS: 'filesystems-io-options',
+    FILE_SYSTEM_HEADROOM: 'headroom',
+    FRACTIONAL_RESERVE: 'fractional-reserve',
+    FRA_DG_LUN_LAYOUT: 'fra-dg-lun-layout',
+    HA: 'ha',
+    HEARTBEAT_SETTINGS: 'heartbeat-settings',
+    HIGH_AVAILABILITY: 'high-availability',
+    HOST_UTILITIES: 'host-utilities',
+    ISCSI_REPLACEMENT_TIMEOUT: 'iscsi-replacement-timeout',
+    KERNEL_PARAMETERS: 'kernel-parameters',
+    LICENSE: 'sql-license',
+    LOG_DG_LUN_LAYOUT: 'log-dg-lun-layout',
+    LOG_DRIVE_SIZE: 'log-drive-size',
+    LOG_FILES_LDF: 'log-files-location',
+    MAXDOP: 'maxdop',
+    MICROSOFT_SQL_SERVER_PATCH: 'mssql-patch',
+    MPIO_ISCSI_COUNT: 'mpio-iscsi-count',
+    MSSQL_HIGH_AVAILABILITY: 'mssql-high-availability',
+    MTU: 'mtu-alignment',
+    MULTIPATH_CONFIGURATION: 'multipath-configuration',
+    MULTIPATH_FRIENDLY_NAMES: 'multipath-friendly-names',
+    MULTIPATH_IO: 'multipath-io',
+    MULTIPATH_IO_POLICY: 'mpio-load-balance-policy',
+    MULTIPATH_IO_SESSIONS: 'multipath-io-sessions',
+    MULTIPATH_IO_STATUS: 'mpio-enabled',
+    MULTIPATH_IO_TIMEOUT: 'mpio-timeout',
+    MULTIPATH_READCOUNT: 'multiblock-readcount',
+    NFSV4_DOMAIN_NAME: 'nfsv4-domain-name',
+    NFS_CACHING_OPTIONS: 'nfs-caching-options',
+    NFS_MOUNT_OPTIONS_ADRHOME: 'nfs-mount-options-adrhome',
+    NFS_MOUNT_OPTIONS_DATABASEFILES: 'nfs-mount-options-databasefiles',
+    NFS_ROOTONLY: 'nfs-rootonly',
+    NTFS_ALLOCATION_SIZE: 'ntfs-allocation-size',
+    NTFS_ALLOCATION_UNIT_SIZE: 'ntfs-allocation-unit-size',
+    OPERATING_SYSTEM: 'operating-system',
+    OPERATING_SYSTEM_PATCH: 'host-os-patch',
+    ORACLE_BINARY_PLACEMENT: 'oracle-binary-placement',
+    ORACLE_SECURITY_PATCH: 'oracle-security-patch',
+    OS: 'os',
+    OS_TYPE: 'os-type',
+    REDO_LOGS_PLACEMENT: 'redologs-placement',
+    RSS_CONFIGURATION: 'rss-config',
+    SCHEDULED_FSX_FOR_ONTAP_BACKUPS: 'backup-configuration',
+    SCHEDULED_LOCAL_SNAPSHOT: 'snapshot-policy',
+    SELINUX: 'selinux',
+    SHARED_STORAGE: 'shared-storage',
+    SNAPCENTER_SNAPSHOT: 'snapcenter-snapshot',
+    SNAPSHOT_AUTODELETE: 'snapshot-autodelete',
+    SNAPSHOT_COPY_RESERVE: 'snapshot-copy-reserve',
+    SNAPSHOT_POLICY: 'snapshot-policy-vol',
+    SPACE_ALLOCATION: 'space-allocation-allocated',
+    SPACE_MANAGEMENT: 'space-mgmt-try-first',
+    SPACE_RESERVATION: 'space-reservation-enabled',
+    SQL_SERVER_SERVICE: 'sqlServer-service',
+    STORAGE_TIER: 'performance-tier',
+    SWAP_SPACE: 'swap-space',
+    TCP_ADVANCED_OPTIONS: 'tcp-advanced-options',
+    TEMPDB_DRIVE_SIZE: 'tempdb-drive-size',
+    TEMPDB_PLACEMENT: 'tempdb-files-location',
+    TEMP_LOGS_PLACEMENT: 'templogs-placement',
+    THIN_PROVISIONING: 'thin-provision',
+    TIERING_MINIMUM_COOLING_DAYS: 'tiering-min-cooling-days',
+    TIERING_POLICY: 'tiering-policy',
+    TRANSPARENT_HUGEPAGES: 'transparent-hugepages'
+} as const;
+
+export type AssessmentConfigId = (typeof ASSESSMENT_CONFIG_IDS)[keyof typeof ASSESSMENT_CONFIG_IDS];
+
 // Configurations not supported for AOAG (Always On Availability Group) MSSQL deployments
 // Uses ASSESSMENT_CONFIG_NAMES values (mapName) for comparison
 export const AOAG_NOT_SUPPORTED_CONFIGS = [ASSESSMENT_CONFIG_NAMES.LICENSE];
@@ -1246,6 +1346,7 @@ export const ORACLE_ISCSI_ONLY_API_KEYS = new Set([
     'oracleMultipathReadcount'
 ]);
 
+// TODO: confirm with API why it has Special configurations with _ instead of -.
 // Configuration names mapping for unified display names for the export pdf
 export const CONFIG_NAMES = {
     // Oracle Storage sizing configurations
@@ -1546,11 +1647,57 @@ export const WAD_EXCLUDED_API_FIELDS_MSSQL = new Set([
 
 export const WAD_EXCLUDED_API_FIELDS_ORACLE = new Set(['hostOsPatch', 'crr', 'oracleSecurityPatch', 'awsBackup']);
 
+/** Flat assessment config ids excluded from WAD (offline) instance scoring — keep in sync with WAD_EXCLUDED_API_FIELDS_* */
+// TODO: Remove once backend handles WAD exclusions server-side.
+export const WAD_EXCLUDED_FLAT_CONFIG_IDS_MSSQL = new Set<string>([
+    ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING,
+    ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH,
+    ASSESSMENT_CONFIG_IDS.MTU,
+    ASSESSMENT_CONFIG_IDS.LICENSE,
+    ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH,
+    ASSESSMENT_CONFIG_IDS.CRR,
+    ASSESSMENT_CONFIG_IDS.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
+]);
+
+export const WAD_EXCLUDED_FLAT_CONFIG_IDS_ORACLE = new Set<string>([
+    ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH,
+    ASSESSMENT_CONFIG_IDS.CRR,
+    ASSESSMENT_CONFIG_IDS.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
+    ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH
+]);
+
 /**
  * Maps API assessment field names to their Well-Architected category.
  * Used for counting configurations by category in dashboard summaries.
  */
 export type WellArchitectedCategory = 'storage' | 'compute' | 'application' | 'resiliency' | 'cloning';
+
+// Well-Architected category constants
+export const WELL_ARCHITECTED_CATEGORIES = {
+    STORAGE: 'storage' as WellArchitectedCategory,
+    COMPUTE: 'compute' as WellArchitectedCategory,
+    APPLICATION: 'application' as WellArchitectedCategory,
+    RESILIENCY: 'resiliency' as WellArchitectedCategory,
+    CLONING: 'cloning' as WellArchitectedCategory
+};
+
+// Well-Architected category display names
+export const WELL_ARCHITECTED_CATEGORY_LABELS: Record<WellArchitectedCategory, string> = {
+    storage: 'Storage',
+    compute: 'Compute',
+    application: 'Application',
+    resiliency: 'Resiliency',
+    cloning: 'Cloning'
+};
+
+// Well-Architected status values
+export const WELL_ARCHITECTED_STATUS = {
+    OPTIMIZED: 'optimized',
+    NOT_OPTIMIZED: 'not-optimized',
+    OPTIMIZING: 'optimizing',
+    NOT_APPLICABLE: 'not-applicable',
+    ANALYZING: 'analyzing'
+};
 
 export const MSSQL_API_FIELD_TO_CATEGORY: Record<string, WellArchitectedCategory> = {
     compute: 'compute',
@@ -1586,6 +1733,33 @@ export const severityOptions = ['Critical', 'Warning'];
 export const oracleCategoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];
 
 export const oracleSeverityOptions = ['Critical', 'Warning'];
+
+/** Property keys on `getAssessmentGroupedByConfigurations()` result for config catalogs. */
+export const ASSESSMENT_CONFIG_CATALOG_KEYS = {
+    COMBINED: 'configCatalog',
+    MSSQL: 'mssqlConfigCatalog',
+    ORACLE: 'oracleConfigCatalog'
+} as const;
+
+/** Property keys on `getAssessmentGroupedByConfigurations()` result for per-engine grouped data. */
+export const ASSESSMENT_GROUPED_CONFIG_KEYS = {
+    CONFIG_IDS: {
+        MSSQL: 'mssqlConfigIds',
+        ORACLE: 'oracleConfigIds'
+    },
+    STATS: {
+        MSSQL: 'mssqlStats',
+        ORACLE: 'oracleStats'
+    },
+    CONFIG_STATE: {
+        MSSQL: 'mssqlConfigState',
+        ORACLE: 'oracleConfigState'
+    },
+    SEVERITY_OBJ: {
+        MSSQL: 'mssqlSeverityObj',
+        ORACLE: 'oracleSeverityObj'
+    }
+} as const;
 
 export const CONFIG_STATES = {
     ACTIVE: 'ACTIVE',
@@ -1854,9 +2028,9 @@ export const PATCH_DIALOG_TYPE = {
 
 // `field` query-string values sent to the /assessment/patch-scan endpoint
 export const PATCH_SCAN_FIELD = {
-    MSSQL_PATCH: 'mssql-patch',
-    HOST_OS_PATCH: 'host-os-patch',
-    ORACLE_SECURITY_PATCH: 'oracle-security-patch'
+    MSSQL_PATCH: ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH,
+    HOST_OS_PATCH: ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH,
+    ORACLE_SECURITY_PATCH: ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH
 } as const;
 
 export const SSM_ARN_REGEX = /^arn:aws(-us-gov)?:ssm:[^:]+:\d{12}:parameter\/netapp\/wlmdb\/.+$/;

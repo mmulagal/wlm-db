@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { TooltipInfo } from '@netapp/design-system';
 import { DsAccordion, DsButton, DsSelect, DsTypography } from '@tlveng/wlm-ds';
 import { ReactComponent as RowArrow } from '../../../../../assets/row arrow-down.svg';
@@ -24,7 +25,6 @@ interface OracleFilterComponentProps {
     driftAssessmentData: any;
     dynamicFilterOptions?: {
         categories: any[];
-        subCategories: any[];
         severities: any[];
         tags: any[];
         resourceTypes: any[];
@@ -38,6 +38,7 @@ const OracleFilterComponent = ({
     driftAssessmentData,
     dynamicFilterOptions
 }: OracleFilterComponentProps) => {
+    const { t } = useTranslation();
     const dispatch = useDispatch();
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { oracleDefaultFilterOptions, oracleOptimizeFilterTags } = useAppSelector(state => state.oracleSlice);
@@ -57,8 +58,7 @@ const OracleFilterComponent = ({
     const {
         optimizePageLoading: loading,
         isAssessmentAvailable,
-        cardData,
-        ontapConfigTableData
+        cardData
     } = useAppSelector(state => state.getWellOptimize);
 
     const totalConfigCount = useAppSelector(state => {
@@ -94,7 +94,7 @@ const OracleFilterComponent = ({
         );
         setFilteredCardData(data);
         setConfigCount(configCount);
-    }, [cardData, oracleOptimizeFilterTags, ontapConfigTableData, showDismissedConfigurations, driftAssessmentData]);
+    }, [cardData, oracleOptimizeFilterTags, showDismissedConfigurations, driftAssessmentData]);
 
     const handleSelect = (filters: any, filterLabel: any) => {
         handleSelectForFilter(
@@ -149,37 +149,6 @@ const OracleFilterComponent = ({
             selectionType="multi"
             isWithActions
             onSelect={(option: any) => handleSelect(option, 'all-catagories')}
-            variant="underline"
-        />
-    );
-
-    const subCategoriesSelectBox = () => (
-        <DsSelect
-            title=""
-            selectedOptionIds={
-                oracleDefaultFilterOptions['sub-catagories'] ? oracleDefaultFilterOptions['sub-catagories'] : []
-            }
-            dropDown={{
-                isCloseOnClickOutside: true
-            }}
-            formatLabel={() =>
-                `Sub categories: ${
-                    !oracleDefaultFilterOptions['sub-catagories']?.length ||
-                    oracleDefaultFilterOptions['sub-catagories'].length === safeFilterOptions.subCategories.length
-                        ? 'All'
-                        : ''
-                }(${
-                    oracleDefaultFilterOptions['sub-catagories']?.length > 0
-                        ? oracleDefaultFilterOptions['sub-catagories']?.length
-                        : safeFilterOptions.subCategories.length
-                })`
-            }
-            placeholder="Placeholder text"
-            isCleanable={false}
-            options={safeFilterOptions.subCategories}
-            selectionType="multi"
-            isWithActions
-            onSelect={(option: any) => handleSelect(option, 'sub-catagories')}
             variant="underline"
         />
     );
@@ -343,7 +312,7 @@ const OracleFilterComponent = ({
                         >
                             Configurations:{' '}
                             {loading
-                                ? GENERAL.NOT_AVAILABLE
+                                ? t('databases.general.not-available')
                                 : `${
                                       getTotalConfigCount === totalConfigCount
                                           ? `All(${getTotalConfigCount})`
@@ -361,7 +330,6 @@ const OracleFilterComponent = ({
                     >
                         <div className={styles.dropdownList}>
                             <div className={styles.dropDown}>{categoriesSelectBox()}</div>
-                            <div className={styles.dropDown}>{subCategoriesSelectBox()}</div>
                             <div className={`${styles.dropDown} ${styles['optimized-drop-down']}`}>
                                 {statusSelectBox()}
                             </div>
@@ -394,7 +362,7 @@ const OracleFilterComponent = ({
                             {oracleOptimizeFilterTags.length ? (
                                 <div className={styles.clearAll}>
                                     <DsButton type="text" onClick={handleFilterClearAll}>
-                                        {GENERAL.CLEAR_ALL}
+                                        {t('databases.general.clear-all')}
                                     </DsButton>
                                 </div>
                             ) : (
@@ -426,39 +394,13 @@ const OracleFilterComponent = ({
                                 }}
                                 variant="Semibold_14"
                             >
-                                {!oracleDefaultFilterOptions['all-catagories']?.length ||
-                                oracleDefaultFilterOptions['all-catagories']?.length === 1
-                                    ? 'All(1)'
-                                    : `${oracleDefaultFilterOptions['all-catagories']?.length}/1`}
-                            </DsTypography>
-                        </div>
-
-                        <div className={styles.items}>
-                            <DsTypography
-                                style={{
-                                    color:
-                                        loading || !isAssessmentAvailable
-                                            ? 'var(--text-disabled)'
-                                            : 'var(--text-primary)'
-                                }}
-                                variant="Regular_14"
-                            >
-                                Sub categories:
-                            </DsTypography>
-                            <DsTypography
-                                style={{
-                                    color:
-                                        loading || !isAssessmentAvailable
-                                            ? 'var(--text-disabled)'
-                                            : 'var(--text-primary)'
-                                }}
-                                variant="Semibold_14"
-                            >
-                                {!oracleDefaultFilterOptions['sub-catagories']?.length ||
-                                oracleDefaultFilterOptions['sub-catagories']?.length ===
-                                    safeFilterOptions.subCategories.length
-                                    ? `All(${safeFilterOptions.subCategories.length})`
-                                    : `${oracleDefaultFilterOptions['sub-catagories']?.length}/${safeFilterOptions.subCategories.length}`}
+                                {loading
+                                    ? t('databases.general.not-available')
+                                    : !oracleDefaultFilterOptions['all-catagories']?.length ||
+                                      oracleDefaultFilterOptions['all-catagories']?.length ===
+                                          safeFilterOptions.categories.length
+                                    ? `All(${safeFilterOptions.categories.length})`
+                                    : `${oracleDefaultFilterOptions['all-catagories']?.length}/${safeFilterOptions.categories.length}`}
                             </DsTypography>
                         </div>
 
@@ -483,10 +425,12 @@ const OracleFilterComponent = ({
                                 }}
                                 variant="Semibold_14"
                             >
-                                {!oracleDefaultFilterOptions.status?.length ||
-                                oracleDefaultFilterOptions.status?.length === 2
-                                    ? 'All(2)'
-                                    : `${oracleDefaultFilterOptions.status?.length}/2`}
+                                {loading
+                                    ? t('databases.general.not-available')
+                                    : !oracleDefaultFilterOptions.status?.length ||
+                                      oracleDefaultFilterOptions.status?.length === safeFilterOptions.statuses.length
+                                    ? `All(${safeFilterOptions.statuses.length})`
+                                    : `${oracleDefaultFilterOptions.status?.length}/${safeFilterOptions.statuses.length}`}
                             </DsTypography>
                         </div>
 
@@ -511,10 +455,13 @@ const OracleFilterComponent = ({
                                 }}
                                 variant="Semibold_14"
                             >
-                                {!oracleDefaultFilterOptions.severity?.length ||
-                                oracleDefaultFilterOptions.severity?.length === 2
-                                    ? 'All(2)'
-                                    : `${oracleDefaultFilterOptions.severity?.length}/2`}
+                                {loading
+                                    ? t('databases.general.not-available')
+                                    : !oracleDefaultFilterOptions.severity?.length ||
+                                      oracleDefaultFilterOptions.severity?.length ===
+                                          safeFilterOptions.severities.length
+                                    ? `All(${safeFilterOptions.severities.length})`
+                                    : `${oracleDefaultFilterOptions.severity?.length}/${safeFilterOptions.severities.length}`}
                             </DsTypography>
                         </div>
 
@@ -539,10 +486,12 @@ const OracleFilterComponent = ({
                                 }}
                                 variant="Semibold_14"
                             >
-                                {!oracleDefaultFilterOptions.tags?.length ||
-                                oracleDefaultFilterOptions.tags?.length === 5
-                                    ? 'All(5)'
-                                    : `${oracleDefaultFilterOptions.tags?.length}/5`}
+                                {loading
+                                    ? t('databases.general.not-available')
+                                    : !oracleDefaultFilterOptions.tags?.length ||
+                                      oracleDefaultFilterOptions.tags?.length === safeFilterOptions.tags.length
+                                    ? `All(${safeFilterOptions.tags.length})`
+                                    : `${oracleDefaultFilterOptions.tags?.length}/${safeFilterOptions.tags.length}`}
                             </DsTypography>
                         </div>
 
@@ -567,10 +516,13 @@ const OracleFilterComponent = ({
                                 }}
                                 variant="Semibold_14"
                             >
-                                {!oracleDefaultFilterOptions.resourceType?.length ||
-                                oracleDefaultFilterOptions.resourceType?.length === 4
-                                    ? 'All(4)'
-                                    : `${oracleDefaultFilterOptions.resourceType?.length}/4`}
+                                {loading
+                                    ? t('databases.general.not-available')
+                                    : !oracleDefaultFilterOptions.resourceType?.length ||
+                                      oracleDefaultFilterOptions.resourceType?.length ===
+                                          safeFilterOptions.resourceTypes.length
+                                    ? `All(${safeFilterOptions.resourceTypes.length})`
+                                    : `${oracleDefaultFilterOptions.resourceType?.length}/${safeFilterOptions.resourceTypes.length}`}
                             </DsTypography>
                         </div>
                     </div>

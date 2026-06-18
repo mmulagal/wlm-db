@@ -9,7 +9,13 @@ import {
 import { GENERAL } from '../../../utils/appConstants';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import { setDriftAssessmentData } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import { formatGetWellData, updateConfigStatePerInstance, updateConfigStateStatus } from '../GetWellUtils';
+import {
+    formatGetWellData,
+    formatGetWellDataFlat,
+    updateConfigStatePerInstance,
+    updateConfigStateStatus
+} from '../GetWellUtils';
+import { FlatAssessmentResponse } from '../../../utils/types/getWellTypes';
 
 // Helper function to check if sub-configurations are not in active state for ONTAP, OS, and HA cards
 export const areSubConfigurationsNotActive = (cardData: any, driftAssessmentData: any) => {
@@ -133,6 +139,12 @@ export const getSubConfigurationData = (cardData: any) => {
 };
 
 export const getConfigurationName = (cardData: any) => {
+    // For flat API, use configurationId if available (e.g., storage_tier, compute_rightsizing)
+    if (cardData?.configurationId) {
+        return cardData.configurationId;
+    }
+
+    // Legacy nested API handling
     let configName = '';
     switch (cardData?.mapName) {
         case ASSESSMENT_CONFIG_NAMES.ONTAP:
@@ -303,7 +315,7 @@ export const handleDismissResponse = (
             updatedState = updatedState?.toUpperCase();
         }
 
-        const targetId = cardData?.id || cardData?.block_one?.value;
+        const targetId = cardData?.configurationId || cardData?.id || cardData?.block_one?.value;
 
         if (!targetId || !updatedState) return;
 
@@ -320,12 +332,20 @@ export const handleDismissResponse = (
         // Set drift assessment data (used by both MSSQL and Oracle)
         dispatch(setDriftAssessmentData(newData));
 
-        // Use the provided format function, or default to formatGetWellData
+        // Use the provided format function if available
+        // If not provided, detect structure and use appropriate formatter
         if (formatDataFunction) {
             formatDataFunction(dispatch, newData, showDismissedConfigurations);
         } else {
-            // @ts-ignore
-            formatGetWellData(dispatch, newData, showDismissedConfigurations);
+            // Detect if data is flat structure by checking if assessments property exists
+            const isFlatStructure = 'assessments' in newData && Array.isArray(newData.assessments);
+
+            if (isFlatStructure) {
+                formatGetWellDataFlat(dispatch, newData as FlatAssessmentResponse, showDismissedConfigurations);
+            } else {
+                // @ts-ignore
+                formatGetWellData(dispatch, newData, showDismissedConfigurations);
+            }
         }
 
         // Below code is to reset dashboard level assessment value also

@@ -1,7 +1,11 @@
 import { BASE_URL, delay, generateResponse } from '../utils/appUtils';
 import GetWellJson from '../data/getWell.json';
+import GetWellFlatJson from '../data/getWellFlat.json';
+import GetWellOracleFlatJson from '../data/getWellOracleFlat.json';
 import GetWellOfflineJson from '../data/getWellOffline.json';
+import GetWellOfflineFlatJson from '../data/getWellOfflineFlat.json';
 import OracleAssessmentOfflineJson from '../data/offlineOracleAssessment.json';
+import OracleAssessmentOfflineFlatJson from '../data/offlineOracleAssessmentFlat.json';
 import GetWellHostJson from '../data/getWellHost.json';
 import SnapshotPolicies from '../data/snapshotPolicies.json';
 import GetWellAccJson from '../data/getWellAcc.json';
@@ -73,6 +77,24 @@ router.get(
         }, 20);
     }
 );
+
+router.get(
+    `${BASE_URL}/v2/mssql/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/offline-assessment`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, GetWellOfflineFlatJson);
+        }, 500);
+    }
+);
+
+router.get(
+    `${BASE_URL}/v2/oracle/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/offline-assessment`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, OracleAssessmentOfflineFlatJson);
+        }, 500);
+    }
+);
 router.get(
     `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/snapshot-policies`,
     async (req: {}, res: any) => {
@@ -89,11 +111,15 @@ router.get(
             generateResponse(res, 200, GetWellJson);
         }, 2000);
     }
-    // For compute missing permissions case update compute object as below under getWell.json
-    // "compute": {
-    //     "errorMessage":"Error while calculating compute drift. Failed to get compute optimizer recommendation options for the selected database host during Continuous Assessment. User: arn:aws:sts::464262061435:assumed-role/preprod_automation_role/CredentialsAssumeRoleValidator is not authorized to perform: compute-optimizer:GetEnrollmentStatus on resource: * because no identity-based policy allows the compute-optimizer:GetEnrollmentStatus action",
-    //     "error":{}
-    // }
+);
+
+router.get(
+    `${BASE_URL}/v2/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, GetWellFlatJson);
+        }, 2000);
+    }
 );
 
 router.get(
@@ -101,6 +127,15 @@ router.get(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, OracleAssessmentJson);
+        }, 2000);
+    }
+);
+
+router.get(
+    `${BASE_URL}/v2/oracle/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 200, GetWellOracleFlatJson);
         }, 2000);
     }
 );
@@ -194,53 +229,77 @@ router.post(`${BASE_URL}/v1/mssql/database-hosts/optimize/storage-sizing`, async
     }, 100);
 });
 
-router.post(`${BASE_URL}/v1/mssql/assessment/dismiss`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/mssql/assessment/dismiss`, async (req: any, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 202, {
-            dismissedConfigurations: [
-                {
-                    configurationName: 'clone-management',
-                    configState: 'active',
-                    startTime: 1744588921000,
-                    endTime: 1744588921000,
-                    databaseHosts: [
-                        {
-                            id: 'resource-id-4',
-                            sqlServerInstances: ['41', '42'],
-                            credentialsId: '3ad8702c-a2fd-48d2-be50-1ba6ce83acd5',
-                            region: 'us-east-1',
-                            status: 'Success', // If only some instances are updated successfully, the status will be marked as 'partial', and the error message will indicate how many instances succeeded versus failed.
-                            failedInstances: {}
-                        }
-                    ]
-                }
-            ]
+        // Extract configurations from request body
+        const { configurationsToDismiss } = req.body;
+
+        if (!configurationsToDismiss || !Array.isArray(configurationsToDismiss)) {
+            generateResponse(res, 400, { error: 'Invalid request: configurationsToDismiss is required' });
+            return;
+        }
+
+        // Build dynamic response based on request
+        const dismissedConfigurations = configurationsToDismiss.map((config: any) => {
+            const currentTime = Date.now();
+            const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+
+            return {
+                configurationId: config.configurationId || config.configurationName,
+                configurationName: config.configurationName,
+                configState: config.configState || 'DISMISSED',
+                startTime: currentTime,
+                // Add endTime only for POSTPONED state (30 days from now)
+                ...(config.configState === 'POSTPONED' && { endTime: currentTime + thirtyDaysInMs }),
+                databaseHosts: (config.databaseHosts || []).map((host: any) => ({
+                    id: host.id,
+                    sqlServerInstances: host.sqlServerInstances || [],
+                    credentialsId: host.credentialsId,
+                    region: host.region,
+                    status: 'Success',
+                    failedInstances: {}
+                }))
+            };
         });
+
+        generateResponse(res, 202, { dismissedConfigurations });
     }, 1000);
 });
 
-router.post(`${BASE_URL}/v1/oracle/assessment/dismiss`, async (req: {}, res: any) => {
+router.post(`${BASE_URL}/v1/oracle/assessment/dismiss`, async (req: any, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 202, {
-            dismissedConfigurations: [
-                {
-                    configurationName: 'oracle-binary-placement',
-                    configState: 'DISMISSED',
-                    startTime: 1744588921000,
-                    endTime: 1744588921000,
-                    databaseHosts: [
-                        {
-                            id: 'resource-id-4',
-                            sqlServerInstances: ['41', '42'],
-                            credentialsId: '3ad8702c-a2fd-48d2-be50-1ba6ce83acd5',
-                            region: 'us-east-1',
-                            status: 'Success', // If only some instances are updated successfully, the status will be marked as 'partial', and the error message will indicate how many instances succeeded versus failed.
-                            failedInstances: {}
-                        }
-                    ]
-                }
-            ]
+        // Extract configurations from request body
+        const { configurationsToDismiss } = req.body;
+
+        if (!configurationsToDismiss || !Array.isArray(configurationsToDismiss)) {
+            generateResponse(res, 400, { error: 'Invalid request: configurationsToDismiss is required' });
+            return;
+        }
+
+        // Build dynamic response based on request
+        const dismissedConfigurations = configurationsToDismiss.map((config: any) => {
+            const currentTime = Date.now();
+            const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+
+            return {
+                configurationId: config.configurationId || config.configurationName,
+                configurationName: config.configurationName,
+                configState: config.configState || 'DISMISSED',
+                startTime: currentTime,
+                // Add endTime only for POSTPONED state (30 days from now)
+                ...(config.configState === 'POSTPONED' && { endTime: currentTime + thirtyDaysInMs }),
+                databaseHosts: (config.databaseHosts || []).map((host: any) => ({
+                    id: host.id,
+                    oracleInstances: host.oracleInstances || [],
+                    credentialsId: host.credentialsId,
+                    region: host.region,
+                    status: 'Success',
+                    failedInstances: {}
+                }))
+            };
         });
+
+        generateResponse(res, 202, { dismissedConfigurations });
     }, 1000);
 });
 

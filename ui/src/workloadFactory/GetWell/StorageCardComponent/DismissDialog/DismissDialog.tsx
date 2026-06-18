@@ -2,29 +2,18 @@ import { useTranslation } from 'react-i18next';
 import { DsRadioButton, DsTypography } from '@tlveng/wlm-ds';
 import { useState } from 'react';
 import { TFunction } from 'i18next';
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATE_ACTIONS } from '../../../../utils/consts';
+import { CONFIG_STATE_ACTIONS } from '../../../../utils/consts';
 import styles from './DismissDialog.module.scss';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 
 interface DismissDialogProps {
     type: string;
     storageTier?: string;
-    isSubConfiguration?: boolean;
-    subConfigurationName?: string;
-    subConfigurationCount?: number;
     callback: (dismissOption: string) => void;
     closeCallback: () => void;
 }
 
-export const DismissDialog = ({
-    type,
-    storageTier,
-    isSubConfiguration,
-    subConfigurationName,
-    subConfigurationCount,
-    callback,
-    closeCallback
-}: DismissDialogProps) => {
+export const DismissDialog = ({ type, storageTier, callback, closeCallback }: DismissDialogProps) => {
     const { t } = useTranslation();
     const [selectedOption, setSelectedOption] = useState<string>(CONFIG_STATE_ACTIONS.DISMISS);
 
@@ -39,9 +28,6 @@ export const DismissDialog = ({
                 <DismissDialogOptions
                     type={type}
                     storageTier={storageTier}
-                    isSubConfiguration={isSubConfiguration}
-                    subConfigurationName={subConfigurationName}
-                    subConfigurationCount={subConfigurationCount}
                     selectedOption={selectedOption}
                     onOptionChange={handleOptionSelect}
                     translation={t}
@@ -60,9 +46,6 @@ export const DismissDialog = ({
 interface DismissDialogOptionsProps {
     type: string;
     storageTier?: string;
-    isSubConfiguration?: boolean;
-    subConfigurationName?: string;
-    subConfigurationCount?: number;
     selectedOption: string;
     onOptionChange: (option: string) => void;
     translation: TFunction;
@@ -76,9 +59,6 @@ enum DismissOption {
 const DismissDialogOptions = ({
     type,
     storageTier,
-    isSubConfiguration,
-    subConfigurationName,
-    subConfigurationCount,
     selectedOption,
     onOptionChange,
     translation
@@ -91,34 +71,6 @@ const DismissDialogOptions = ({
     const generateMessage = () => {
         const configName = storageTier || type;
 
-        if (isSubConfiguration && subConfigurationName) {
-            // For sub-configurations inside ONTAP, OS and MTU
-            return (
-                <>
-                    {translation('databases.well-architect.dismiss.dialog-message-content1')}{' '}
-                    <span style={{ fontWeight: '500' }}>{subConfigurationName}</span>{' '}
-                    {translation('databases.well-architect.dismiss.dialog-message-subConfiguration')}
-                </>
-            );
-        }
-        if (
-            (configName === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-                configName === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
-                configName === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) &&
-            subConfigurationCount
-        ) {
-            // For ONTAP/OS/MSSQL_HIGH_AVAILABILITY with sub-configurations
-            return (
-                <>
-                    {translation('databases.well-architect.dismiss.dialog-message-content1')}{' '}
-                    <span style={{ fontWeight: '500' }}>{configName}</span>{' '}
-                    {translation('databases.well-architect.dismiss.dialog-message-configuration')}{' '}
-                    <span style={{ fontWeight: '500' }}>{configName}</span>{' '}
-                    {translation('databases.well-architect.dismiss.dialog-message-content2')} {subConfigurationCount}{' '}
-                    {translation('databases.well-architect.dismiss.dialog-message-subConfiguration')}
-                </>
-            );
-        }
         // For regular configurations
         return (
             <>

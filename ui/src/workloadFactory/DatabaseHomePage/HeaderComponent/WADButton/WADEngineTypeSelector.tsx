@@ -38,15 +38,13 @@ const WADEngineTypeSelector = ({
         context === 'download'
             ? t('databases.inventory.select-engine-type-for-download')
             : context === 'upload'
-              ? t('databases.inventory.select-engine-type-for-upload')
-              : null;
+            ? t('databases.inventory.select-engine-type-for-upload')
+            : null;
 
     return (
         <div className={selectorStyles.wadEngineTypeSelector}>
-            {descriptionText && (
-                <DsTypography variant="Regular_14">{descriptionText}</DsTypography>
-            )}
-            <div className={`${styles['engine-type-selector-dialog']} ${className ?? ''}`}>                
+            {descriptionText && <DsTypography variant="Regular_14">{descriptionText}</DsTypography>}
+            <div className={`${styles['engine-type-selector-dialog']} ${className ?? ''}`}>
                 <DsRadioButton
                     id="wad-dashboard-mssql-engine-type"
                     data-testid="wlm-db-wad-dashboard-mssql-engine-type-selector"
@@ -72,9 +70,9 @@ const WADEngineTypeSelector = ({
             </div>
             {context === 'upload' && (
                 <DsSingleFileUpload
-                    style={{marginTop: '10px'}}
+                    style={{ marginTop: '10px' }}
                     title={t('databases.inventory.wad-upload-file-label')}
-                    placeholder={t('databases.inventory.wad-upload-file-placeholder')}                    
+                    placeholder={t('databases.inventory.wad-upload-file-placeholder')}
                     acceptableTypes={['.json']}
                     data-testid="wlm-db-wad-upload-file-uploader"
                     onChange={uploadedFile => {

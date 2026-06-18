@@ -18,9 +18,6 @@ const initialState: GetWellSliceInterface = {
     selectedDatabaseAoagStorageType: '',
     selectedRowFsxId: '',
     cardData: cardDataDefault,
-    osConfigTableData: null,
-    ontapConfigTableData: null,
-    mssqlHighAvailabilityTableData: null,
     optimizationBreakDown: null,
     gwRefreshPage: false,
     gwRefreshTimestamp: '',
@@ -135,15 +132,6 @@ const getWellOptimizeSlice = createSlice({
         setCardData: (state, action: PayloadAction<any>) => {
             state.cardData = action.payload;
         },
-        setOsConfigTableData: (state, action: PayloadAction<any>) => {
-            state.osConfigTableData = action.payload;
-        },
-        setOntapConfigTableData: (state, action: PayloadAction<any>) => {
-            state.ontapConfigTableData = action.payload;
-        },
-        setMssqlHighAvailabilityTableData: (state, action: PayloadAction<any>) => {
-            state.mssqlHighAvailabilityTableData = action.payload;
-        },
         setOptimizationBreakDown: (state, action: PayloadAction<any>) => {
             state.optimizationBreakDown = action.payload;
         },
@@ -168,9 +156,6 @@ const getWellOptimizeSlice = createSlice({
             state.selectedDatabaseAoagStorageType = '';
             state.selectedRowFsxId = '';
             state.cardData = cardDataDefault;
-            state.osConfigTableData = null;
-            state.ontapConfigTableData = null;
-            state.mssqlHighAvailabilityTableData = null;
             state.optimizationBreakDown = null;
             state.optimizingData = null;
             state.optimizingInstanceData = false;
@@ -276,9 +261,6 @@ export const {
     setGwDatabaseStorageType,
     setGwDatabaseAoagStorageType,
     setCardData,
-    setOsConfigTableData,
-    setOntapConfigTableData,
-    setMssqlHighAvailabilityTableData,
     setOptimizationBreakDown,
     setGwRefreshPage,
     setGwTimestamp,

@@ -14,6 +14,7 @@ import {
     WLF_TABS
 } from '../../../utils/consts';
 import { categorizeStateInstances } from '../../DatabaseHomePage/DatabaseHomeUtils';
+import { resolveConfigDisplayName } from '../../WellArchitectedTab/assessmentFormatUtils';
 import { updateConfigStateStatus } from '../../GetWell/GetWellUtils';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { updateConfigStateStatusOracle } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
@@ -487,6 +488,7 @@ export const bulkFixDisableCheck = (
     t: any,
     configEngineType?: string
 ) => {
+    configType = resolveConfigDisplayName(configType);
     let isFixDisabled = false;
     let fixDisableMsg = '';
     const state = store.getState();

@@ -92,7 +92,7 @@ const OptimizationChart = ({ unProtectColor, hostData }: MultiRingDoughnutPropTy
                     ))}
                 {optimizePageLoading && (
                     <DsTypography variant="Regular_32" style={{ lineHeight: 'unset' }}>
-                        {hostData?.percent || 0}%
+                        0%
                     </DsTypography>
                 )}
 

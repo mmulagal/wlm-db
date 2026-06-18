@@ -5,9 +5,9 @@ import styles from './RecommendationText.module.scss';
 import { ReactComponent as Bullet } from '../../../assets/ic_bullet.svg';
 
 type RecommendationTextProps = {
-    data: {
+    data?: {
         title: string;
-        description: string;
+        description?: string;
         values?: Array<string>;
         valuesHeading?: string;
         descriptionList?: Array<{ title: string; description: string }> | undefined;

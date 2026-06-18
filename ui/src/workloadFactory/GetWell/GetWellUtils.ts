@@ -2,7 +2,7 @@ import { TFunction } from 'i18next';
 import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSlice';
 import store from '../../store/store';
 import { setSelectedConfigSummary } from '../../store/workloadFactory/databaseHomeSlice';
-import { areAllSubConfigurationsActivating } from './GetWellHelper';
+import { getRecommendation } from '../../utils/recommendations';
 import {
     setCardData,
     setCloneDashboardData,
@@ -14,12 +14,9 @@ import {
     setInProgressOptimizationData,
     setInProgressResourceOptimizeData,
     setIsInnerPageOptimize,
-    setOntapConfigTableData,
-    setMssqlHighAvailabilityTableData,
     setOptimizationBreakDown,
     setOptimizingData,
     setOptimizingInstanceData,
-    setOsConfigTableData,
     setGwDatabaseStorageType,
     setGwDatabaseAoagStorageType
 } from '../../store/workloadFactory/getWellOptimizeSlice';
@@ -34,6 +31,7 @@ import {
     AOAG_NOT_SUPPORTED_CONFIGS,
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_NAME_TO_ID_MAPPING,
+    CONFIG_NAMES,
     CONFIG_STATES,
     CONFIG_STATES_UI,
     CONFIG_STATE_ACTIONS,
@@ -53,6 +51,8 @@ import {
     isConfigKeyWadExcluded,
     ORACLE_ISCSI_ONLY_API_KEYS,
     WA_FLAG_SKIP,
+    WELL_ARCHITECTED_CATEGORIES,
+    WELL_ARCHITECTED_CATEGORY_LABELS,
     WLF_TABS
 } from '../../utils/consts';
 import { groupByType, mapDismissedValues } from '../../utils/resourceUtils';
@@ -71,6 +71,13 @@ import {
     sortListOfDict
 } from '../../utils/utilityFunctions';
 import { isOptimized } from '../DatabaseHomePage/DatabaseHomeUtils';
+import {
+    getConfigSeverity,
+    getConfigStateList,
+    getConfigStatsBucket,
+    hasConfigStats,
+    resolveConfigDisplayName
+} from '../WellArchitectedTab/assessmentFormatUtils';
 import { formatOracleWellArchitectedData } from '../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 
 /**
@@ -81,7 +88,8 @@ export const isConfigSkippedForAoag = (configName: string, deploymentType?: stri
     if (!configName || !deploymentType) {
         return false;
     }
-    return AOAG_NOT_SUPPORTED_CONFIGS.includes(configName) && deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS;
+    const displayName = CONFIG_NAMES[configName as keyof typeof CONFIG_NAMES] || configName;
+    return AOAG_NOT_SUPPORTED_CONFIGS.includes(displayName) && deploymentType === DATABASE_DEPLOYMENT_MODE.AOAG_CAPS;
 };
 
 /**
@@ -100,31 +108,31 @@ export const isMssqlHaDeployment = (deploymentType?: string): boolean =>
 
 // Category and subcategory mapping for configurations
 export const getCategoryData = () => ({
-    file_system_headroom: { category: 'Storage', subCategory: 'Storage sizing' },
-    storage_tier: { category: 'Storage', subCategory: 'Storage sizing' },
-    transaction_log_drive_size: { category: 'Storage', subCategory: 'Storage sizing' },
-    tempdb_drive_size: { category: 'Storage', subCategory: 'Storage sizing' },
-    user_data_files: { category: 'Storage', subCategory: 'Storage layout' },
-    transaction_log_files: { category: 'Storage', subCategory: 'Storage layout' },
-    tempdb_files: { category: 'Storage', subCategory: 'Storage layout' },
-    ontap_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
-    os_configuration: { category: 'Storage', subCategory: 'Storage configuration' },
-    compute_rightsizing: { category: 'Compute', subCategory: 'Compute_sub' },
-    host_os_patch: { category: 'Compute', subCategory: 'Compute_sub' },
-    transparent_hugepages: { category: 'Compute', subCategory: 'Compute_sub' },
-    tcp_advanced_options: { category: 'Compute', subCategory: 'Compute_sub' },
-    filesystems_io_options: { category: 'Compute', subCategory: 'Compute_sub' },
-    multiblock_readcount: { category: 'Compute', subCategory: 'Compute_sub' },
-    rss_config: { category: 'Compute', subCategory: 'Compute_sub' },
-    mtu: { category: 'Compute', subCategory: 'Compute_sub' },
-    sql_licenses: { category: 'Application', subCategory: 'Application_sub' },
-    microsoft_sql_patch: { category: 'Application', subCategory: 'Application_sub' },
-    maxdop: { category: 'Application', subCategory: 'Application_sub' },
-    scheduled_local_snapshot: { category: 'Resiliency', subCategory: 'Protection' },
-    scheduled_fsx_for_ontap_backups: { category: 'Resiliency', subCategory: 'Protection' },
-    crr: { category: 'Resiliency', subCategory: 'Protection' },
-    clone_management: { category: 'Cloning', subCategory: 'Cloning' },
-    mssql_high_availability: { category: 'Resiliency', subCategory: 'Protection' }
+    file_system_headroom: { category: 'Storage' },
+    storage_tier: { category: 'Storage' },
+    transaction_log_drive_size: { category: 'Storage' },
+    tempdb_drive_size: { category: 'Storage' },
+    user_data_files: { category: 'Storage' },
+    transaction_log_files: { category: 'Storage' },
+    tempdb_files: { category: 'Storage' },
+    ontap_configuration: { category: 'Storage' },
+    os_configuration: { category: 'Storage' },
+    compute_rightsizing: { category: 'Compute' },
+    host_os_patch: { category: 'Compute' },
+    transparent_hugepages: { category: 'Compute' },
+    tcp_advanced_options: { category: 'Compute' },
+    filesystems_io_options: { category: 'Compute' },
+    multiblock_readcount: { category: 'Compute' },
+    rss_config: { category: 'Compute' },
+    mtu: { category: 'Compute' },
+    sql_licenses: { category: 'Application' },
+    microsoft_sql_patch: { category: 'Application' },
+    maxdop: { category: 'Application' },
+    scheduled_local_snapshot: { category: 'Resiliency' },
+    scheduled_fsx_for_ontap_backups: { category: 'Resiliency' },
+    crr: { category: 'Resiliency' },
+    clone_management: { category: 'Cloning' },
+    mssql_high_availability: { category: 'Resiliency' }
 });
 
 /**
@@ -149,9 +157,7 @@ export const isWadExcludedConfig = (configMapName: string | undefined, isWad: bo
 
 // Generate dynamic filter options based on actual card data
 export const generateDynamicFilterOptions = (cardData: any, deploymentType?: string) => {
-    const categoryData = getCategoryData();
     const availableCategories = new Set();
-    const availableSubCategories = new Set();
     const availableSeverities = new Set();
     const availableTags = new Set();
     const availableResourceTypes = new Set();
@@ -174,11 +180,9 @@ export const generateDynamicFilterOptions = (cardData: any, deploymentType?: str
         if (isConfigSkippedForAoag(config?.mapName, deploymentType)) {
             return; // Skip this card for AOAG instances
         }
-        const categoryInfo = categoryData[key as keyof typeof categoryData];
 
-        if (categoryInfo) {
-            availableCategories.add(categoryInfo.category);
-            availableSubCategories.add(categoryInfo.subCategory);
+        if (config.category) {
+            availableCategories.add(config.category);
         }
 
         // Add severity if available
@@ -209,19 +213,11 @@ export const generateDynamicFilterOptions = (cardData: any, deploymentType?: str
     return {
         categories: Array.from(availableCategories).map(category => ({
             id: category as string,
-            label: category as string,
-            value: category as string
-        })),
-        subCategories: Array.from(availableSubCategories).map(subCategory => ({
-            id: subCategory as string,
             label:
-                subCategory === 'Compute_sub'
-                    ? 'Compute'
-                    : subCategory === 'Application_sub'
-                    ? 'Application'
-                    : (subCategory as string),
-            value: subCategory as string,
-            category: getCategoryForSubCategory(subCategory as string)
+                WELL_ARCHITECTED_CATEGORY_LABELS[
+                    (category as string)?.toLowerCase() as keyof typeof WELL_ARCHITECTED_CATEGORY_LABELS
+                ] || (category as string),
+            value: category as string
         })),
         severities: Array.from(availableSeverities).map(severity => ({
             id: severity as string,
@@ -244,13 +240,6 @@ export const generateDynamicFilterOptions = (cardData: any, deploymentType?: str
             value: status as string
         }))
     };
-};
-
-// Helper function to get category for a subcategory
-const getCategoryForSubCategory = (subCategory: string) => {
-    const categoryData = getCategoryData();
-    const entry = Object.values(categoryData).find((item: any) => item.subCategory === subCategory);
-    return entry ? entry.category : '';
 };
 
 // This is strutcure of cardDataDefault. It is used to set the default values for the card data.
@@ -1053,7 +1042,7 @@ export const formatApplicationCardMainConfig = (
     cardsData: any
 ) => {
     const item: any = data?.license;
-    const categoryVal = 'application';
+    const categoryVal = WELL_ARCHITECTED_CATEGORIES.APPLICATION;
     let itemName = item?.name || 'sql-license';
     let status = item?.status || '';
     const severity = item?.severity || '';
@@ -1120,7 +1109,7 @@ export const formatMicrosoftSqlPatchCardConfig = (
     cardsData: any
 ) => {
     const item: any = data?.mssqlPatch;
-    const categoryVal = 'application';
+    const categoryVal = WELL_ARCHITECTED_CATEGORIES.APPLICATION;
     let itemName = item?.name || 'mssql-patch';
     let status = item?.status || '';
     const severity = item?.severity || '';
@@ -1184,7 +1173,7 @@ export const formatMaxdopPatchCardConfig = (
     cardsData: any
 ) => {
     const item: any = data?.maxDOP;
-    const categoryVal = 'application';
+    const categoryVal = WELL_ARCHITECTED_CATEGORIES.APPLICATION;
     let itemName = item?.name || 'maxdop';
     let status = item?.status || '';
     const severity = item?.severity || '';
@@ -1234,7 +1223,7 @@ export const formatSnapshotPolicyCardConfig = (
     cardsData: any
 ) => {
     const item: any = data?.snapshotPolicy;
-    const categoryVal = 'resiliency';
+    const categoryVal = WELL_ARCHITECTED_CATEGORIES.RESILIENCY;
     let itemName = 'snapshot-policy';
     let status = item?.status || '';
     const severity = item?.severity || '';
@@ -1289,7 +1278,7 @@ export const formatAWSBackUpPolicyCardConfig = (
     cardsData: any
 ) => {
     const item: any = data?.awsBackup;
-    const categoryVal = 'resiliency';
+    const categoryVal = WELL_ARCHITECTED_CATEGORIES.RESILIENCY;
     let itemName = item?.name || 'backup-configuration';
     let status = item?.status || '';
     const severity = item?.severity || '';
@@ -1345,7 +1334,7 @@ export const formatCRRCardConfig = (
     cardsData: any
 ) => {
     const item: any = data?.crr;
-    const categoryVal = 'resiliency';
+    const categoryVal = WELL_ARCHITECTED_CATEGORIES.RESILIENCY;
     let itemName = item?.name || 'crr';
     let status = item?.status || '';
     const severity = item?.severity || '';
@@ -1457,7 +1446,7 @@ export const formatOsPatchCardConfig = (
     cardsData: any
 ) => {
     const item: any = data?.hostOsPatch;
-    const categoryVal = 'compute';
+    const categoryVal = WELL_ARCHITECTED_CATEGORIES.COMPUTE;
     let itemName = item?.name || 'host-os-patch';
     let status = item?.status || '';
     const severity = item?.severity || '';
@@ -1526,7 +1515,7 @@ export const formatRssConfigCardConfig = (
     cardsData: any
 ) => {
     const item: any = data?.rssConfig;
-    const categoryVal = 'compute';
+    const categoryVal = WELL_ARCHITECTED_CATEGORIES.COMPUTE;
     let itemName = item?.name || 'rss-config';
     let status = item?.status || '';
     const severity = item?.severity || '';
@@ -1694,7 +1683,7 @@ export const formatMTUCardConfig = (
     cardsData: any
 ) => {
     const item: any = data?.mtuAlignment;
-    const categoryVal = 'compute';
+    const categoryVal = WELL_ARCHITECTED_CATEGORIES.COMPUTE;
     let itemName = item?.name || 'mtu-alignment';
     let status = item?.status || '';
     const severity = item?.severity || '';
@@ -1777,9 +1766,9 @@ export const formatIndividualCardMainConfig = (
     cardMainConfig?.map((category, index) => {
         let categoryVal = '';
         if (index === 0 || index === 1) {
-            categoryVal = 'storage';
+            categoryVal = WELL_ARCHITECTED_CATEGORIES.STORAGE;
         } else if (index === 2) {
-            categoryVal = 'compute';
+            categoryVal = WELL_ARCHITECTED_CATEGORIES.COMPUTE;
         }
 
         category?.map((item: PerConfigInterface) => {
@@ -1792,7 +1781,7 @@ export const formatIndividualCardMainConfig = (
             itemName = GETWELL_CONFIG?.[itemName] || itemName;
 
             let blockThreeValue = '';
-            if (categoryVal === 'storage') {
+            if (categoryVal === WELL_ARCHITECTED_CATEGORIES.STORAGE) {
                 blockThreeValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
             } else {
                 blockThreeValue = GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended;
@@ -1815,7 +1804,7 @@ export const formatIndividualCardMainConfig = (
                 };
             } else if (itemName === 'file_system_headroom') {
                 blockSixValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
-            } else if (categoryVal === 'storage') {
+            } else if (categoryVal === WELL_ARCHITECTED_CATEGORIES.STORAGE) {
                 blockSixValue = GETWELL_VALUES?.[item?.current || ''] || item?.current;
             } else {
                 blockSixValue = GETWELL_VALUES?.[item?.recommended || ''] || item?.recommended;
@@ -2991,38 +2980,18 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
         const isPostponed = dismissedState === CONFIG_STATES.POSTPONED;
         const isOptimizedViaDismissal = dismissedState === CONFIG_STATES.ACTIVATING;
 
-        if (nestedObject?.category === 'storage') {
-            // Check if all sub-configurations are in ACTIVATING state for ONTAP/OS cards
-            let allSubConfigsActivating = false;
-            if (key === 'ontap_configuration' && assessmentData?.dismissedConfigurations) {
-                const dismissedOntapSubConfigs = [
-                    ...(assessmentData?.dismissedConfigurations?.storage?.configuration?.volumes || []),
-                    ...(assessmentData?.dismissedConfigurations?.storage?.configuration?.luns || [])
-                ];
-                allSubConfigsActivating = areAllSubConfigurationsActivating(dismissedOntapSubConfigs, 'ontap');
-            } else if (key === 'os_configuration' && assessmentData?.dismissedConfigurations) {
-                const dismissedOsSubConfigs = assessmentData?.dismissedConfigurations?.storage?.configuration?.os || [];
-                allSubConfigsActivating = areAllSubConfigurationsActivating(dismissedOsSubConfigs, 'os');
-            }
+        // For dismissedIds, use configurationId if available (flat API), otherwise use mapName (nested API)
+        // This ensures proper matching in tooltip helper functions
+        const dismissedId = nestedObject?.configurationId || nestedObject?.mapName;
 
+        if (nestedObject?.category === WELL_ARCHITECTED_CATEGORIES.STORAGE) {
             if (isDismissed || isPostponed) {
                 dismissedOrPostponedStorage++;
                 hasDismissedOrPostponedStorage = true;
-                // Use proper display names for parent cards
-                if (key === 'ontap_configuration') {
-                    dismissedStorageIds.push(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
-                } else if (key === 'os_configuration') {
-                    dismissedStorageIds.push(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
-                } else {
-                    dismissedStorageIds.push(nestedObject?.mapName);
-                }
-            } else if (
-                nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED ||
-                isOptimizedViaDismissal ||
-                allSubConfigsActivating
-            ) {
+                dismissedStorageIds.push(dismissedId);
+            } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedStorage++;
-                if (isOptimizedViaDismissal || allSubConfigsActivating) hasDismissedOrPostponedStorage = true;
+                if (isOptimizedViaDismissal) hasDismissedOrPostponedStorage = true;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
                 notOptimizedStorage++;
                 criticalStorage++;
@@ -3032,11 +3001,11 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
             } else {
                 notOptimizedStorage++;
             }
-        } else if (nestedObject?.category === 'compute') {
+        } else if (nestedObject?.category === WELL_ARCHITECTED_CATEGORIES.COMPUTE) {
             if (isDismissed || isPostponed) {
                 dismissedOrPostponedCompute++;
                 hasDismissedOrPostponedCompute = true;
-                dismissedComputeIds.push(nestedObject?.mapName);
+                dismissedComputeIds.push(dismissedId);
             } else if (
                 nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED ||
                 nestedObject?.block_two?.value === GETWELL_STATUS.ANALYZING ||
@@ -3053,11 +3022,11 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
             } else {
                 notOptimizedCompute++;
             }
-        } else if (nestedObject?.category === 'application') {
+        } else if (nestedObject?.category === WELL_ARCHITECTED_CATEGORIES.APPLICATION) {
             if (isDismissed || isPostponed) {
                 dismissedOrPostponedApplication++;
                 hasDismissedOrPostponedApplication = true;
-                dismissedApplicationIds.push(nestedObject?.mapName);
+                dismissedApplicationIds.push(dismissedId);
             } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedApplication++;
                 if (isOptimizedViaDismissal) hasDismissedOrPostponedApplication = true;
@@ -3070,7 +3039,7 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
             } else {
                 notOptimizedApplication++;
             }
-        } else if (nestedObject?.category === 'resiliency') {
+        } else if (nestedObject?.category === WELL_ARCHITECTED_CATEGORIES.RESILIENCY) {
             // Skip MSSQL High Availability for non-HA instances (only show for FCI and AOAG)
             const isMSSQLHighAvailability =
                 key === 'mssql_high_availability' || nestedObject?.id === 'mssql-high-availability';
@@ -3078,35 +3047,13 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
                 return; // Skip this card for non-HA instances
             }
 
-            // Check if all sub-configurations are in ACTIVATING state for MSSQL HA
-            let allSubConfigsActivating = false;
-            if (isMSSQLHighAvailability && assessmentData?.dismissedConfigurations) {
-                const dismissedHaSubConfigs =
-                    assessmentData?.dismissedConfigurations?.highAvailability ||
-                    (assessmentData?.dismissedConfigurations as any)?.['high-availability'] ||
-                    [];
-                allSubConfigsActivating = areAllSubConfigurationsActivating(
-                    dismissedHaSubConfigs,
-                    'mssqlHighAvailability'
-                );
-            }
-
             if (isDismissed || isPostponed) {
                 dismissedOrPostponedResiliency++;
                 hasDismissedOrPostponedResiliency = true;
-                // Use proper display name for MSSQL High Availability
-                if (key === GETWELL_CONFIG.mssqlhighavailability) {
-                    dismissedResiliencyIds.push(ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY);
-                } else {
-                    dismissedResiliencyIds.push(nestedObject?.mapName);
-                }
-            } else if (
-                nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED ||
-                isOptimizedViaDismissal ||
-                allSubConfigsActivating
-            ) {
+                dismissedResiliencyIds.push(dismissedId);
+            } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedResiliency++;
-                if (isOptimizedViaDismissal || allSubConfigsActivating) hasDismissedOrPostponedResiliency = true;
+                if (isOptimizedViaDismissal) hasDismissedOrPostponedResiliency = true;
             } else if (nestedObject?.block_four?.value === GETWELL_STATUS.CRITICAL) {
                 notOptimizedResiliency++;
                 criticalResiliency++;
@@ -3116,11 +3063,11 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
             } else {
                 notOptimizedResiliency++;
             }
-        } else if (nestedObject?.category === 'cloning') {
+        } else if (nestedObject?.category === WELL_ARCHITECTED_CATEGORIES.CLONING) {
             if (isDismissed || isPostponed) {
                 dismissedOrPostponedCloning++;
                 hasDismissedOrPostponedCloning = true;
-                dismissedCloningIds.push(nestedObject?.mapName);
+                dismissedCloningIds.push(dismissedId);
             } else if (nestedObject?.block_two?.value === GETWELL_STATUS.OPTIMIZED || isOptimizedViaDismissal) {
                 optimizedCloning++;
                 if (isOptimizedViaDismissal) hasDismissedOrPostponedCloning = true;
@@ -3135,77 +3082,6 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
             }
         }
     });
-
-    // Count sub-configurations from assessment data
-    if (assessmentData?.dismissedConfigurations) {
-        const dismissedConfigs = assessmentData.dismissedConfigurations;
-
-        // Handle ONTAP sub-configurations (Storage category)
-        const ontapSubConfigs = [
-            ...(dismissedConfigs.storage?.configuration?.volumes || []),
-            ...(dismissedConfigs.storage?.configuration?.luns || [])
-        ];
-
-        const ontapCardDismissed =
-            cardsData?.ontap_configuration?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
-            cardsData?.ontap_configuration?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
-
-        if (ontapCardDismissed) {
-            // Bulk dismissal - parent card name is already added in the main loop above
-            // Don't add individual sub-config names
-        } else {
-            // Individual sub-config dismissals - add individual names
-            ontapSubConfigs.forEach((config: any) => {
-                if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
-                    dismissedOrPostponedStorage++;
-                    hasDismissedOrPostponedStorage = true;
-                    dismissedStorageIds.push(getConfigurationDisplayName(config.configurationName));
-                }
-            });
-        }
-
-        // Handle OS sub-configurations (Storage category)
-        const osSubConfigs = dismissedConfigs.storage?.configuration?.os || [];
-
-        const osCardDismissed =
-            cardsData?.os_configuration?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
-            cardsData?.os_configuration?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
-
-        if (osCardDismissed) {
-            // Bulk dismissal - parent card name is already added in the main loop above
-            // Don't add individual sub-config names
-        } else {
-            // Individual sub-config dismissals - add individual names
-            osSubConfigs.forEach((config: any) => {
-                if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
-                    dismissedOrPostponedStorage++;
-                    hasDismissedOrPostponedStorage = true;
-                    dismissedStorageIds.push(getConfigurationDisplayName(config.configurationName));
-                }
-            });
-        }
-
-        // Handle High Availability sub-configurations (Resiliency category)
-        const haSubConfigs = dismissedConfigs.highAvailability || [];
-
-        const haCardDismissed =
-            cardsData?.mssql_high_availability?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
-            cardsData?.mssql_high_availability?.dismissedObj?.configState === CONFIG_STATES.POSTPONED;
-
-        if (haCardDismissed) {
-            // Bulk dismissal - parent card name is already added in the main loop above
-            // Don't add individual sub-config names
-        } else {
-            // Individual sub-config dismissals - add individual names
-            haSubConfigs.forEach((config: any) => {
-                if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
-                    dismissedOrPostponedResiliency++;
-                    hasDismissedOrPostponedResiliency = true;
-                    dismissedResiliencyIds.push(getConfigurationDisplayName(config.configurationName));
-                }
-            });
-        }
-    }
 
     const storageCount = {
         hasDismissedOrPostponed: hasDismissedOrPostponedStorage,
@@ -3662,15 +3538,6 @@ export const formatGetWellData = (
     // Dispatch the formatted cards data to the store
     dispatch(setCardData(cardsData));
 
-    // Dispatch the formatted ONTAP configuration data to the store
-    dispatch(setOntapConfigTableData(formatOntapConfigList));
-
-    // Dispatch the formatted OS configuration data to the store
-    dispatch(setOsConfigTableData(formatOsConfigList));
-
-    // Dispatch the formatted MSSQL High Availability configuration data to the store
-    dispatch(setMssqlHighAvailabilityTableData(formatMssqlHighAvailabilityConfigList));
-
     // Dispatch the formatted optimization breakdown data to the store
     dispatch(setOptimizationBreakDown(optBreakDown));
 
@@ -3743,10 +3610,8 @@ export const applyFilter = (
 
         const checkCategory =
             !filters['all-catagories'] ||
+            filters['all-catagories']?.includes(cardData[key]?.category) ||
             filters['all-catagories']?.includes(categoryData[key as keyof typeof categoryData]?.category);
-        const checkSubCategory =
-            !filters['sub-catagories'] ||
-            filters['sub-catagories']?.includes(categoryData[key as keyof typeof categoryData]?.subCategory);
 
         const isOptmized = isOptimized(cardData[key]?.block_two?.value, cardData[key].dismissedObj?.configState);
         const checkStatus =
@@ -3813,7 +3678,6 @@ export const applyFilter = (
 
         if (
             checkCategory &&
-            checkSubCategory &&
             checkStatus &&
             checkSeverity &&
             checkTags &&
@@ -3822,9 +3686,9 @@ export const applyFilter = (
             checkDismissedFilter
         ) {
             filteredCardData[key] = cardData[key];
-            // Count configurations based on category mapping, not block_two.value as in error condition it will fail
-            // This ensures consistency with calculateTotalConfigCount
-            if (categoryData[key as keyof typeof categoryData]) {
+            // Count configurations - for flat structure, any valid config should be counted
+            // For nested structure, check if it exists in category mapping
+            if (cardData[key]?.category || categoryData[key as keyof typeof categoryData]) {
                 configCount++;
             }
         }
@@ -3835,8 +3699,6 @@ export const applyFilter = (
 export const resetGwValuesOnRefresh = (dispatch: any) => {
     dispatch(setDriftAssessmentData(null));
     dispatch(setCardData(cardDataDefault));
-    dispatch(setOsConfigTableData(null));
-    dispatch(setOntapConfigTableData(null));
     dispatch(setOptimizationBreakDown(null));
     dispatch(setOptimizingData({}));
     dispatch(setOptimizingInstanceData(false));
@@ -5201,6 +5063,50 @@ export const updateConfigStatePerInstance = (
         }
     }
 
+    // Check if using flat API structure (has assessments array)
+    const isFlatApi =
+        !!(driftAssessmentData as any)?.assessments && Array.isArray((driftAssessmentData as any).assessments);
+
+    // For flat API, dismissedConfigurations is a flat array at root level
+    if (isFlatApi) {
+        const existingDismissed = driftAssessmentData?.dismissedConfigurations || [];
+
+        // Find if this config already exists in dismissedConfigurations
+        const existingIndex = existingDismissed.findIndex((item: any) => item?.id === name);
+
+        let updatedDismissedConfigs;
+        if (existingIndex !== -1) {
+            // Update existing entry
+            updatedDismissedConfigs = existingDismissed.map((item: any, index: number) =>
+                index === existingIndex
+                    ? {
+                          ...item,
+                          configState: setAction,
+                          endTime,
+                          startTime
+                      }
+                    : item
+            );
+        } else {
+            // Add new entry with id
+            updatedDismissedConfigs = [
+                ...existingDismissed,
+                {
+                    id: name,
+                    configState: setAction,
+                    endTime,
+                    startTime
+                }
+            ];
+        }
+
+        return {
+            ...driftAssessmentData,
+            dismissedConfigurations: updatedDismissedConfigs
+        };
+    }
+
+    // Below is the original nested API handling code
     const storageSizingMap: any = ['log-drive-size', 'performance-tier', 'headroom', 'tempdb-drive-size', 'swap-space'];
     const storageLayoutMap: any = [
         'data-files-location',
@@ -5561,6 +5467,7 @@ export const checkIfDisableForOptimize = (
     selectedRowsForOptimize?: any,
     dbType?: string
 ) => {
+    name = resolveConfigDisplayName(name);
     let isDisabled = false;
     let errorMessage = '';
     if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
@@ -5825,212 +5732,49 @@ export const nameToIdConfigMapping = (name: string) =>
         : '';
 
 export const setOptimizeInnerpageSummary = (type: string, configData: any, dispatch: any, dbType?: string) => {
-    let configKey = '';
-    switch (type) {
-        case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
-            configKey = 'storageTier';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
-            configKey = dbType === DBType.ORACLE ? 'oracleFileSystemHeadroom' : 'fileSystemHeadroom';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
-            configKey = 'logDriveSize';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
-            configKey = 'tempdbDriveSize';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
-            configKey = 'userDataFiles';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
-            configKey = 'logFiles';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
-            configKey = 'tempdbPlacement';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS:
-            if (dbType === DBType.ORACLE) {
-                configKey = 'oracleOntapConfiguration';
-            } else {
-                configKey = 'ontapConfiguration';
-            }
-            break;
-        case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM:
-            if (dbType === DBType.ORACLE) {
-                configKey = 'oracleOperatingSystem';
-            } else {
-                configKey = 'operatingSystem';
-            }
-            break;
-        case GENERAL.COMPUTE_RIGHTSIZING:
-            configKey = 'computeRightsizing';
-            break;
-        case GENERAL.OPERATING_SYSTEM_PATCH:
-            configKey = dbType === DBType.ORACLE ? 'oracleOperatingSystemPatch' : 'operatingSystemPatch';
-            break;
-        case GENERAL.RSS_CONFIGURATION:
-            configKey = 'rssConfiguration';
-            break;
-        case GENERAL.LICENSE_SQL_SERVER:
-            configKey = 'applicationSqlServer';
-            break;
-        case GENERAL.MICROSOFT_SQL_PATCH:
-            configKey = 'mssqlPatch';
-            break;
-        case GENERAL.MAXDOP_PATCH:
-            configKey = 'maxdopPatch';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
-            configKey = 'scheduledLocalSnapshot';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.CRR:
-            configKey = dbType === DBType.ORACLE ? 'oracleCrr' : 'crr';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
-            configKey = 'oracleSnapcenterSnapshot';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-            configKey = dbType === DBType.ORACLE ? 'oracleAwsBackup' : 'scheduledawsBackup';
-            break;
-
-        case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
-            configKey = 'mssqlhighAvailability';
-            break;
-
-        case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
-            configKey = dbType === DBType.ORACLE ? 'oracleCloneManagement' : 'clone';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.MTU:
-            configKey = 'mtuConfiguration';
-            break;
-        // Oracle configurations
-        case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
-            configKey = 'oracleBinaryPlacement';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
-            configKey = 'datafilesPlacement';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
-            configKey = 'controlfilesPlacement';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
-            configKey = 'redoLogsPlacement';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
-            configKey = 'tempLogsPlacement';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
-            configKey = 'archivePlacement';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
-            configKey = 'dataDgLunLayout';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
-            configKey = 'logDgLunLayout';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
-            configKey = 'fraDgLunLayout';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
-            configKey = 'archiveLogDgLunLayout';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.SWAP_SPACE:
-            configKey = 'oracleSwapSpace';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH:
-            configKey = 'oracleSecurityPatch';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
-            configKey = 'oracleTransparentHugepages';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
-            configKey = 'oracleTcpAdvancedOptions';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
-            configKey = 'oracleFilesystemsIoOptions';
-            break;
-        case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
-            configKey = 'oracleMultipathReadcount';
-            break;
+    if (!hasConfigStats(configData, type, dbType)) {
+        return;
     }
-    const optimizedInstances = configData?.[configKey]?.optimized || 0;
-    const dismissedInstances = configData?.[configKey]?.dismissed || 0;
-    const activatingInstances = configData?.[configKey]?.activating || 0;
-    const partialDismissInstances = configData?.[configKey]?.partiallyDismissed || 0;
+
+    const configKey = type;
+    const configStats = getConfigStatsBucket(configData, configKey, dbType);
+    const optimizedInstances = configStats?.optimized ?? 0;
+    const dismissedInstances = configStats?.dismissed ?? 0;
+    const activatingInstances = configStats?.activating ?? 0;
+    const partialDismissInstances = configStats?.partiallyDismissed ?? 0;
+    const configStateList = getConfigStateList(configData, configKey, dbType);
     let configStateValue = '';
-    if (!configData?.configState?.[configKey] || configData?.configState?.[configKey]?.includes(CONFIG_STATES.ACTIVE)) {
+    if (!configStateList || configStateList.includes(CONFIG_STATES.ACTIVE)) {
         configStateValue = CONFIG_STATES_UI.ACTIVE;
-    } else if (configData?.configState?.[configKey].includes(CONFIG_STATES.POSTPONED)) {
+    } else if (configStateList.includes(CONFIG_STATES.POSTPONED)) {
         configStateValue = CONFIG_STATES_UI.POSTPONED;
-    } else if (configData?.configState?.[configKey].includes(CONFIG_STATES.DISMISSED)) {
+    } else if (configStateList.includes(CONFIG_STATES.DISMISSED)) {
         configStateValue = CONFIG_STATES_UI.DISMISSED;
     }
 
     let tooltipText = '';
     if (
-        configData?.configState?.[configKey]?.includes(CONFIG_STATES.ACTIVE) &&
-        (configData?.configState?.[configKey]?.includes(CONFIG_STATES.POSTPONED) ||
-            configData?.configState?.[configKey]?.includes(CONFIG_STATES.DISMISSED))
+        configStateList?.includes(CONFIG_STATES.ACTIVE) &&
+        (configStateList.includes(CONFIG_STATES.POSTPONED) || configStateList.includes(CONFIG_STATES.DISMISSED))
     ) {
         tooltipText = GENERAL.DISMISS_MIX_CASE_TOOLTIP;
     }
-    if (dbType === DBType.ORACLE) {
-        let totalDb = 0;
-        // Configs that have dynamic total (ASM filtering)
-        const oracleAsmConfigs = ['dataDgLunLayout', 'logDgLunLayout', 'fraDgLunLayout', 'archiveLogDgLunLayout'];
-        // Check if config should use dynamic total (ASM configs, iSCSI configs OR WAD-excluded configs)
-        const usesDynamicTotal =
-            oracleAsmConfigs.includes(configKey) ||
-            ORACLE_ISCSI_ONLY_API_KEYS.has(configKey) ||
-            isConfigKeyWadExcluded(configKey, DBType.ORACLE);
-        if (usesDynamicTotal) {
-            // For above configs we need to calculate dynamic total database (ASM or WAD exclusion).
-            totalDb = configData?.[configKey]?.total || 0;
-        } else {
-            totalDb = configData?.oracleTotal || 0;
-        }
-        dispatch(
-            setSelectedConfigSummary({
-                totalInstances: totalDb,
-                optimizedInstances,
-                dismissedInstances,
-                activatingInstances,
-                partialDismissInstances,
-                notOptimizedInstances: totalDb - (optimizedInstances + dismissedInstances + activatingInstances),
-                optimizationScore: `${Math.round((optimizedInstances / (totalDb || 1)) * 100)}%`,
-                severity: configData?.severityObj?.[configKey] || '',
-                configState: configStateValue,
-                tooltipText
-            })
-        );
-    } else {
-        let totalInstance = 0;
-        // Configs that have dynamic total for non-WAD reasons (FCI/AOAG filtering)
-        const specialMssqlConfigs = ['mssqlhighAvailability', 'applicationSqlServer'];
-        // Check if config should use dynamic total (special configs OR WAD-excluded configs)
-        const usesDynamicTotal =
-            specialMssqlConfigs.includes(configKey) || isConfigKeyWadExcluded(configKey, DBType.MSSQL);
-        if (usesDynamicTotal) {
-            // Use config-specific total for configs that need WAD/AOAG/FCI exclusion
-            totalInstance = configData?.[configKey]?.total || 0;
-        } else {
-            totalInstance = configData?.total || 0;
-        }
-        dispatch(
-            setSelectedConfigSummary({
-                totalInstances: totalInstance,
-                optimizedInstances,
-                dismissedInstances,
-                activatingInstances,
-                partialDismissInstances,
-                notOptimizedInstances: totalInstance - (optimizedInstances + dismissedInstances + activatingInstances),
-                optimizationScore: `${Math.round((optimizedInstances / (totalInstance || 1)) * 100)}%`,
-                severity: configData?.severityObj?.[configKey] || '',
-                configState: configStateValue,
-                tooltipText
-            })
-        );
-    }
+
+    const totalInstances = configStats?.total || 0;
+    dispatch(
+        setSelectedConfigSummary({
+            totalInstances,
+            optimizedInstances,
+            dismissedInstances,
+            activatingInstances,
+            partialDismissInstances,
+            notOptimizedInstances: totalInstances - (optimizedInstances + dismissedInstances + activatingInstances),
+            optimizationScore: `${Math.round((optimizedInstances / (totalInstances || 1)) * 100)}%`,
+            severity: getConfigSeverity(configData, configKey, dbType),
+            configState: configStateValue,
+            tooltipText
+        })
+    );
 };
 
 // storageMockData used when all the storage configurations are dismissed then storage object will not be coming in the Assessment response so will add mock storage object
@@ -6422,4 +6166,285 @@ export const getShouldShowHeader = (
         return cardStates.hasDismissedCards;
     }
     return cardStates.hasActiveCards;
+};
+
+/**
+ * Helper function to get block_one.type based on configurationId and category
+ * For flat structure, we use top-level categories only (Storage, Compute, Application, Resiliency, Cloning)
+ */
+const getBlockOneType = (configId: string, category: string): string =>
+    // Map category to display name using constants
+    WELL_ARCHITECTED_CATEGORY_LABELS[category as keyof typeof WELL_ARCHITECTED_CATEGORY_LABELS] ||
+    (category ? category.charAt(0).toUpperCase() + category.slice(1) : '');
+/**
+ * Format flat assessment response into cardData structure
+ * This replaces getCardsData() for the new flat API response
+ */
+export const formatFlatAssessments = (
+    data: import('../../utils/types/getWellTypes').FlatAssessmentResponse,
+    optimizingData: any,
+    showDismissedView: boolean = false
+): { cardsData: any } => {
+    const cardsData: any = {
+        deploymentType: data.metadata.deploymentType || '',
+        baseDeploymentType: data.metadata.baseDeploymentType || '',
+        isWad: data.metadata.isWad || false
+    };
+
+    // Always process assessments array, not dismissedConfigurations
+    // dismissedConfigurations is used to add dismiss state to cards, not as the source of cards
+    const allConfigs = data.assessments || [];
+
+    allConfigs.forEach(assessment => {
+        // Use id as the key (e.g., storage_tier, compute_rightsizing)
+        const configKey = assessment.id;
+        if (!configKey) {
+            return;
+        }
+
+        // Get display name from name
+        const displayName = assessment.name || '';
+
+        // Map status - the API sends "optimized" or "not-optimized"
+        let status = '';
+        if (assessment.status === 'optimized') {
+            status = GETWELL_STATUS.OPTIMIZED;
+        } else if (assessment.status === 'not-optimized') {
+            status = GETWELL_STATUS.NOT_OPTIMIZED;
+        } else {
+            status = GENERAL.UNAVAILABLE;
+        }
+
+        // Capitalize severity to match constants
+        const severity = assessment.severity
+            ? assessment.severity.charAt(0).toUpperCase() + assessment.severity.slice(1)
+            : '';
+
+        // Get category from type
+        const category = assessment.type || '';
+
+        // Get the correct block_one type based on configuration
+        const blockOneType = getBlockOneType(configKey, category);
+
+        // Get tags from categories
+        const tags = assessment.categories || [];
+
+        // Create card structure matching existing format
+        cardsData[configKey] = {
+            id: configKey,
+            configurationId: configKey, // Store the config id for dismiss flow
+            mapName: displayName,
+            category,
+            block_one: {
+                value: displayName,
+                type: blockOneType
+            },
+            block_two: {
+                type: 'Status',
+                value: status
+            },
+            block_three: {
+                type: 'Current',
+                value: assessment.current ?? GENERAL.UNAVAILABLE
+            },
+            block_four: {
+                type: 'Severity',
+                value: severity
+            },
+            block_five: {
+                type: 'Resource type',
+                value: assessment.resourceType || '',
+                count: {
+                    totalObjectsInViolation: assessment.totalObjectsInViolation || 0,
+                    totalObjectsAssessed: assessment.totalObjectsAssessed || 0
+                }
+            },
+            block_six: {
+                type: 'Impacted resources',
+                value: assessment.objectsInViolation?.length ? `${assessment.objectsInViolation.length}` : '0'
+            },
+            recommendation: (() => {
+                // Use static recommendations from UI files instead of API response
+                // API team cannot provide all recommendation details
+                const staticRecommendation = getRecommendation(configKey, DBType.MSSQL);
+
+                if (staticRecommendation) {
+                    return {
+                        title: staticRecommendation.title || `${displayName} recommendation`,
+                        description: staticRecommendation.description,
+                        descriptionList: staticRecommendation.descriptionList,
+                        descriptionRssConfig: staticRecommendation.descriptionRssConfig,
+                        info: staticRecommendation.info,
+                        valuesHeading: staticRecommendation.valuesHeading,
+                        values: staticRecommendation.values
+                    };
+                }
+
+                // Fallback to API response if no static recommendation exists
+                return assessment.recommendation
+                    ? {
+                          title: `${displayName} recommendation`,
+                          description: assessment.recommendation
+                      }
+                    : undefined;
+            })(),
+            recommendationText: (() => {
+                const staticRecommendation = getRecommendation(configKey, DBType.MSSQL);
+                return staticRecommendation?.description || assessment.recommendation;
+            })(),
+            recommendationOptions: assessment.recommendationOptions,
+            tags,
+            errorMessage: assessment.errorMessage,
+            violationDetails: assessment.violationDetails,
+            // Preserve optimizing state if present
+            status: optimizingData?.[configKey] || ''
+        };
+
+        // Only add dismissedObj if the card is actually dismissed/postponed/activating
+        const dismissState = getDismissedState(assessment, data.dismissedConfigurations || []);
+        if (dismissState.configState && dismissState.configState !== CONFIG_STATES.ACTIVE) {
+            cardsData[configKey].dismissedObj = dismissState;
+        }
+    });
+
+    return { cardsData };
+};
+
+/**
+ * Helper to get dismissed state for a configuration
+ */
+const getDismissedState = (
+    assessment: import('../../utils/types/getWellTypes').FlatAssessmentItem,
+    dismissedConfigurations: import('../../utils/types/getWellTypes').FlatAssessmentItem[]
+): any => {
+    const dismissed = dismissedConfigurations.find(d => d.id === assessment.id);
+
+    if (!dismissed) {
+        return { configState: CONFIG_STATES.ACTIVE };
+    }
+
+    // Return the dismiss state if found in dismissed array
+    // Handle both old format (status) and new format (configState)
+    const state = (dismissed as any).configState || (dismissed as any).status;
+
+    // Normalize state to uppercase for comparison with CONFIG_STATES constants
+    const normalizedState = state?.toUpperCase();
+    const mappedState =
+        normalizedState === CONFIG_STATES.DISMISSED
+            ? CONFIG_STATES.DISMISSED
+            : normalizedState === CONFIG_STATES.POSTPONED
+            ? CONFIG_STATES.POSTPONED
+            : normalizedState === CONFIG_STATES.ACTIVATING
+            ? CONFIG_STATES.ACTIVATING
+            : CONFIG_STATES.ACTIVE;
+
+    return {
+        configState: mappedState,
+        startTime: (dismissed as any).startTime,
+        endTime: (dismissed as any).endTime
+    };
+};
+
+/**
+ * New formatGetWellData for flat structure
+ * This replaces the existing formatGetWellData when using flat API
+ */
+export const formatGetWellDataFlat = (
+    dispatch: any,
+    data: import('../../utils/types/getWellTypes').FlatAssessmentResponse | undefined,
+    showDismissedView: boolean = false,
+    isRefresh: boolean = false,
+    skipDriftDataDispatch: boolean = false
+) => {
+    if (!data) {
+        return;
+    }
+
+    // Get optimizing data from store if not a refresh
+    const optimizingData = isRefresh ? {} : store.getState().getWellOptimize?.optimizingData || {};
+
+    const { cardsData } = formatFlatAssessments(data, optimizingData, showDismissedView);
+
+    // Calculate optimization breakdown
+    const optBreakDown = formatOptimizationBreakDown(cardsData, data as any);
+
+    // Dispatch to Redux
+    dispatch(setCardData(cardsData));
+    dispatch(setOptimizationBreakDown(optBreakDown));
+
+    // Only dispatch drift assessment data if this is fresh data from API
+    // Skip if we're just reformatting for dismissed view toggle to prevent infinite loop
+    if (!skipDriftDataDispatch) {
+        dispatch(setDriftAssessmentData(data));
+    }
+
+    // Set timestamps
+    if (isRefresh) {
+        dispatch(setGwRefreshTimestamp(getCurrentDateTime()));
+    } else {
+        dispatch(setGwTimestamp(data.metadata?.lastAssessmentTimestamp || getCurrentDateTime()));
+    }
+
+    // Set deployment type via instance details
+    if (data.metadata.deploymentType) {
+        dispatch(
+            setInstanceDetailsData({
+                deploymentType: data.metadata.deploymentType,
+                baseDeploymentType: data.metadata.baseDeploymentType
+            })
+        );
+    }
+};
+
+/**
+ * Group card data by category for dynamic rendering
+ * @param cardData - The card data object with all configurations
+ * @returns Object with configurations grouped by category
+ */
+export const groupConfigurationsByCategory = (cardData: any): Record<string, any[]> => {
+    const grouped: Record<string, any[]> = {
+        storage: [],
+        compute: [],
+        application: [],
+        resiliency: [],
+        cloning: []
+    };
+
+    if (!cardData) return grouped;
+
+    // Iterate through all keys in cardData (except metadata fields)
+    Object.keys(cardData).forEach(key => {
+        // Skip metadata fields
+        if (key === 'deploymentType' || key === 'baseDeploymentType' || key === 'isWad') {
+            return;
+        }
+
+        const config = cardData[key];
+        if (config && config.category) {
+            const category = config.category.toLowerCase();
+            if (grouped[category]) {
+                grouped[category].push({
+                    key,
+                    config
+                });
+            }
+        }
+    });
+
+    return grouped;
+};
+
+/**
+ * Get category translation key
+ */
+export const getCategoryTranslationKey = (category: string): string => {
+    const categoryMap: Record<string, string> = {
+        storage: 'databases.well-architect.sections.storage',
+        compute: 'databases.well-architect.sections.compute',
+        application: 'databases.well-architect.sections.application',
+        resiliency: 'databases.well-architect.sections.resiliency',
+        cloning: 'databases.well-architect.sections.cloning'
+    };
+
+    return categoryMap[category.toLowerCase()] || category;
 };

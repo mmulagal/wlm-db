@@ -7,7 +7,7 @@ import { ReactComponent as Severity } from '../../../../assets/severity-icon.svg
 import styles from './TagComponent.module.scss';
 import Tag from '../../../../common/Tag/Tag';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { ASSESSMENT_CONFIG_NAMES, DBType } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_IDS, ASSESSMENT_CONFIG_NAMES, DBType } from '../../../../utils/consts';
 import { GENERAL } from '../../../../utils/appConstants';
 
 type TagComponentProps = {
@@ -15,14 +15,25 @@ type TagComponentProps = {
     type?: string;
     engineType?: string;
     severity?: string;
+    categories?: string[];
 };
 
-const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: TagComponentProps) => {
+const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity, categories }: TagComponentProps) => {
     const { t } = useTranslation();
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const [tagData, setTagData] = useState<any>([]);
 
     useEffect(() => {
+        if (categories?.length) {
+            setTagData(
+                categories.map(category => ({
+                    label: category,
+                    value: category.toLowerCase().replace(/\s+/g, '')
+                }))
+            );
+            return;
+        }
+
         if (engineType && engineType === DBType.ORACLE) {
             // Handle specific Oracle configurations with their appropriate tags
             switch (selectedConfig || type) {
@@ -168,11 +179,18 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
             switch (selectedConfig || type) {
                 case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
                 case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
+                case ASSESSMENT_CONFIG_IDS.STORAGE_TIER:
+                case ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM:
                 case 'MAXDOP':
+                case ASSESSMENT_CONFIG_IDS.MAXDOP:
                 case GENERAL.RSS_CONFIGURATION:
-                case 'NTFS allocation unit size':
-                case 'OS type':
-                case 'Tiering policy':
+                case ASSESSMENT_CONFIG_IDS.RSS_CONFIGURATION:
+                case ASSESSMENT_CONFIG_NAMES.NTFS_ALLOCATION_UNIT_SIZE:
+                case ASSESSMENT_CONFIG_IDS.NTFS_ALLOCATION_UNIT_SIZE:
+                case ASSESSMENT_CONFIG_NAMES.OS_TYPE:
+                case ASSESSMENT_CONFIG_IDS.OS_TYPE:
+                case ASSESSMENT_CONFIG_NAMES.TIERING_POLICY:
+                case ASSESSMENT_CONFIG_IDS.TIERING_POLICY:
                     setTagData([
                         {
                             label: t('databases.well-architect.tags.performanceEfficiency'),
@@ -181,13 +199,20 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                     ]);
                     break;
 
-                case 'Thin provisioning':
-                case 'Autosize':
-                case 'Autosize-mode':
-                case 'Fractional reserve':
-                case 'Snapshot copy reserve':
-                case 'Snapshot autodelete':
-                case 'Space management':
+                case ASSESSMENT_CONFIG_NAMES.THIN_PROVISIONING:
+                case ASSESSMENT_CONFIG_IDS.THIN_PROVISIONING:
+                case ASSESSMENT_CONFIG_NAMES.AUTOSIZE:
+                case ASSESSMENT_CONFIG_IDS.AUTOSIZE:
+                case ASSESSMENT_CONFIG_NAMES.AUTOSIZE_MODE:
+                case ASSESSMENT_CONFIG_IDS.AUTOSIZE_MODE:
+                case ASSESSMENT_CONFIG_NAMES.FRACTIONAL_RESERVE:
+                case ASSESSMENT_CONFIG_IDS.FRACTIONAL_RESERVE:
+                case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_COPY_RESERVE:
+                case ASSESSMENT_CONFIG_IDS.SNAPSHOT_COPY_RESERVE:
+                case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_AUTODELETE:
+                case ASSESSMENT_CONFIG_IDS.SNAPSHOT_AUTODELETE:
+                case ASSESSMENT_CONFIG_NAMES.SPACE_MANAGEMENT:
+                case ASSESSMENT_CONFIG_IDS.SPACE_MANAGEMENT:
                     setTagData([
                         { label: t('databases.well-architect.tags.costOptimization'), value: 'costOptimization' },
                         {
@@ -208,9 +233,13 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                     break;
 
                 case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
-                case 'Space allocation':
-                case 'Space reservation':
-                case 'Multipath I/O Timeout':
+                case ASSESSMENT_CONFIG_IDS.SCHEDULED_LOCAL_SNAPSHOT:
+                case ASSESSMENT_CONFIG_NAMES.SPACE_ALLOCATION:
+                case ASSESSMENT_CONFIG_IDS.SPACE_ALLOCATION:
+                case ASSESSMENT_CONFIG_NAMES.SPACE_RESERVATION:
+                case ASSESSMENT_CONFIG_IDS.SPACE_RESERVATION:
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_TIMEOUT:
+                case ASSESSMENT_CONFIG_IDS.MULTIPATH_IO_TIMEOUT:
                     setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
                     break;
 
@@ -226,8 +255,12 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                     setTagData([{ label: t('databases.well-architect.tags.security'), value: 'security' }]);
                     break;
 
-                case 'Multipath I/O Policy':
+                case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_POLICY:
+                case ASSESSMENT_CONFIG_IDS.MULTIPATH_IO_POLICY:
+                case ASSESSMENT_CONFIG_IDS.MULTIPATH_IO_STATUS:
+                case ASSESSMENT_CONFIG_IDS.MPIO_ISCSI_COUNT:
                 case ASSESSMENT_CONFIG_NAMES.MTU:
+                case ASSESSMENT_CONFIG_IDS.MTU:
                     setTagData([
                         {
                             label: t('databases.well-architect.tags.performanceEfficiency'),
@@ -260,7 +293,8 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                     break;
 
                 case GENERAL.LICENSE_SQL_SERVER:
-                case 'Tiering minimum cooling days':
+                case ASSESSMENT_CONFIG_NAMES.TIERING_MINIMUM_COOLING_DAYS:
+                case ASSESSMENT_CONFIG_IDS.TIERING_MINIMUM_COOLING_DAYS:
                     setTagData([
                         { label: t('databases.well-architect.tags.costOptimization'), value: 'costOptimization' }
                     ]);
@@ -271,10 +305,15 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                     break;
                 case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
                 case ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE:
+                case ASSESSMENT_CONFIG_IDS.SHARED_STORAGE:
                 case ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER:
+                case ASSESSMENT_CONFIG_IDS.DRIVE_LETTER:
                 case ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS:
+                case ASSESSMENT_CONFIG_IDS.HEARTBEAT_SETTINGS:
                 case ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM:
+                case ASSESSMENT_CONFIG_IDS.CLUSTER_QUORUM:
                 case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE:
+                case ASSESSMENT_CONFIG_IDS.SQL_SERVER_SERVICE:
                     setTagData([{ label: t('databases.well-architect.tags.reliability'), value: 'reliability' }]);
                     break;
                 case ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS:
@@ -409,7 +448,7 @@ const TagComponent = ({ tagHeight, type, engineType = DBType.MSSQL, severity }: 
                     setTagData([{ label: t('databases.well-architect.tags.noTagsAvailable'), value: '' }]);
             }
         }
-    }, [selectedConfig, t, type, engineType]);
+    }, [selectedConfig, t, type, engineType, categories]);
     return (
         <div className={styles.tagComponent} style={{ height: tagHeight }}>
             <div className={styles.topSection}>

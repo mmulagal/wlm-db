@@ -14,18 +14,14 @@ import {
 } from '../../store/workloadFactory/workloadFactoryResourceSlice';
 import { DBType, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../utils/consts';
 import { LunFilesMap, LunFilterOption } from '../../utils/types/workloadFactoryResourceTypes';
+import { dashboardRedirectionToWellArchitected } from '../../utils/utilityFunctions';
 import {
-    dashboardRedirection,
-    dashboardRedirectionToWellArchitected,
-    sortListOfDict
-} from '../../utils/utilityFunctions';
-import { mapHostStatusToAssessmentData, shouldSkipDatabaseHost } from '../DatabaseHomePage/DatabaseHomeUtils';
-import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
+    mapHostStatusToAssessmentData,
+    shouldSkipDatabaseHost,
+    getInstanceOptimizationBreakdown
+} from '../DatabaseHomePage/DatabaseHomeUtils';
 import { sortAnalyzedResourceData } from '../InventoryV2/InventoryUtilsV2';
-import {
-    formatOracleOptimizationBreakDown,
-    getOracleCardsData
-} from '../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+import { getLastAssessmentTimestamp, hasAssessmentTimestamp } from './assessmentFormatUtils';
 
 /**
  * Returns the unique, non-empty LUN path names across a database's dataFiles and logFiles,
@@ -78,13 +74,14 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
         }
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
-            if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
-                const assessmentWithWadFlag = { ...instance?.assessments, isWad: !!databaseHost?.isWad };
-                const { cardsData } = getCardsData(assessmentWithWadFlag, {});
-                const optBreakDown = formatOptimizationBreakDown(cardsData, assessmentWithWadFlag);
-                let score = '';
-                score = `${optBreakDown?.total?.percent || 0}`;
-                const optimized = optBreakDown?.total?.optimized || 0;
+            if (!instance?.error && hasAssessmentTimestamp(instance?.assessments)) {
+                const optimizationBreakdown = getInstanceOptimizationBreakdown(
+                    instance?.assessments,
+                    !!databaseHost?.isWad,
+                    DBType.MSSQL
+                );
+                const score = `${optimizationBreakdown.percent || 0}`;
+                const { optimized } = optimizationBreakdown;
                 const perTableData: any = {
                     id: id++,
                     hostName: databaseHost?.databaseHostName,
@@ -98,7 +95,7 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
                     regionId: databaseHost?.regionId,
                     type: DBType.MSSQL,
                     isWad: databaseHost?.isWad,
-                    lastAssessmentTimestamp: instance?.assessments?.lastAssessmentTimestamp
+                    lastAssessmentTimestamp: getLastAssessmentTimestamp(instance?.assessments)
                 };
                 tableData.push(perTableData);
             }
@@ -118,13 +115,14 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
         }
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
-            if (!instance?.error && instance?.assessments?.lastAssessmentTimestamp) {
-                const assessmentWithWadFlag = { ...instance?.assessments, isWad: !!databaseHost?.isWad };
-                const { cardsData } = getOracleCardsData(assessmentWithWadFlag, {});
-                const optBreakDown = formatOracleOptimizationBreakDown(cardsData, assessmentWithWadFlag);
-                let score = '';
-                score = `${optBreakDown?.total?.percent || 0}`;
-                const optimized = optBreakDown?.total?.optimized || 0;
+            if (!instance?.error && hasAssessmentTimestamp(instance?.assessments)) {
+                const optimizationBreakdown = getInstanceOptimizationBreakdown(
+                    instance?.assessments,
+                    !!databaseHost?.isWad,
+                    DBType.ORACLE
+                );
+                const score = `${optimizationBreakdown.percent || 0}`;
+                const { optimized } = optimizationBreakdown;
                 const perTableData: any = {
                     id: id++,
                     hostName: databaseHost?.databaseHostName,
@@ -138,7 +136,7 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
                     regionId: databaseHost?.regionId,
                     type: DBType.ORACLE,
                     isWad: databaseHost?.isWad,
-                    lastAssessmentTimestamp: instance?.assessments?.lastAssessmentTimestamp
+                    lastAssessmentTimestamp: getLastAssessmentTimestamp(instance?.assessments)
                 };
                 tableData.push(perTableData);
             }

@@ -77,7 +77,6 @@ const StorageCardComponent = ({
     type,
     showDismissedConfigurations,
     setShowDismissedConfigurations,
-    isAllSubConfigActivating,
     engineType = DBType.MSSQL
 }: any) => {
     const dispatch = useDispatch();
@@ -116,16 +115,7 @@ const StorageCardComponent = ({
             return true;
         }
 
-        // For ONTAP, OS, and HA cards: apply dismissed style if all sub-configs are activating
-        if (
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY
-        ) {
-            return showDismissedConfigurations || isAllSubConfigActivating;
-        }
-
-        // For other normal cards
+        // For normal cards
         return showDismissedConfigurations || cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING;
     };
 
@@ -136,16 +126,7 @@ const StorageCardComponent = ({
             return true;
         }
 
-        // For ONTAP, OS, and HA cards: apply dismissed style if all sub-configs are activating
-        if (
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY
-        ) {
-            return isAllSubConfigActivating;
-        }
-
-        // For other normal cards
+        // For normal cards
         return cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING;
     };
 
@@ -1100,32 +1081,8 @@ const StorageCardComponent = ({
                     </div>
                 )}
 
-                {/* Empty Column for ONTAP and Operating System so that dismiss button is aligned at last column */}
-                {(cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-                    cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) && (
-                    <div className={`${styles.column} ${styles.emptyColumn}`} />
-                )}
-
-                {/* Buttons - Handling for ONTAP, Operating system, and MSSQL High Availability cards */}
-                {(cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-                    cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
-                    cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) &&
-                !showDismissedConfigurations &&
-                !areAllSubConfigurationsActivatingHelper(cardData, driftAssessmentData) &&
-                cardData?.block_two?.value ? (
-                    <div className={`${styles.column} ${styles.lastColumnAlignment}`}>
-                        {/* Dismiss Button - Show for ONTAP, Operating system, and MSSQL High Availability in last grid column */}
-                        {renderDismissButton()}
-                    </div>
-                ) : null}
-
                 {/* Buttons for regular cards */}
                 {!showDismissedConfigurations &&
-                    !(
-                        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-                        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM ||
-                        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY
-                    ) &&
                     !optimizePrintState &&
                     (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
                     cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (

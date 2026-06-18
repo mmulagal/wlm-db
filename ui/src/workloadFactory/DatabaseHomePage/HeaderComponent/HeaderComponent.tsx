@@ -1614,7 +1614,8 @@ const HeaderComponent = ({ tab }: Tab) => {
                                     {selectMultipleComponents()}
                                     <div className={styles.content}>
                                         <WADButton />
-                                        {refreshComponent()}</div>
+                                        {refreshComponent()}
+                                    </div>
                                 </div>
                             </div>
 

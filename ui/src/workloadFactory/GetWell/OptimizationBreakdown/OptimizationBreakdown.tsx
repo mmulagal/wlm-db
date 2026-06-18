@@ -33,18 +33,55 @@ const OptimizationBreakdown = ({
     const renderTooltipContent = () => {
         if (!optimizationBreakDown?.total?.dismissedIds?.length) return null;
 
-        const {
-            fullyDismissedCategories,
-            fullyDismissedSubCategories,
-            individualConfigs,
-            parentConfigurations,
-            subConfigurations
-        } = groupConfigurationsByCategory(
+        const result = groupConfigurationsByCategory(
             optimizationBreakDown.total.dismissedIds,
             driftAssessmentData,
             cardData,
             engineType
         );
+
+        // Check if using flat API
+        const isFlatApi = Array.isArray(driftAssessmentData?.dismissedConfigurations);
+
+        if (isFlatApi) {
+            // FLAT API: Show categories and configurations dynamically
+            const { flatApiCategories = [], configurations = [] } = result;
+
+            // If no data to show, return null
+            if (flatApiCategories.length === 0 && configurations.length === 0) {
+                return null;
+            }
+
+            return (
+                <div>
+                    {flatApiCategories.length > 0 && (
+                        <>
+                            <DsTypography variant="Semibold_14" className={styles.dismissTooltipHeader}>
+                                {t('databases.well-architect.category')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14" className={styles.tooltipConfigText}>
+                                {flatApiCategories.join(' | ')}
+                            </DsTypography>
+                        </>
+                    )}
+
+                    {configurations.length > 0 && (
+                        <>
+                            {flatApiCategories.length > 0 && <div className={styles.tooltipDivider} />}
+                            <DsTypography variant="Semibold_14" className={styles.dismissTooltipHeader}>
+                                {t('databases.well-architect.configuration')}
+                            </DsTypography>
+                            <DsTypography variant="Regular_14" className={styles.tooltipConfigText}>
+                                {configurations.join(' | ')}
+                            </DsTypography>
+                        </>
+                    )}
+                </div>
+            );
+        }
+
+        // NESTED API: Logic with categories and configurations
+        const { fullyDismissedCategories, individualConfigs, parentConfigurations } = result;
 
         const categoryData =
             engineType === DBType.ORACLE ? getDynamicOracleCategoryData(driftAssessmentData) : getCategoryData();
@@ -53,24 +90,7 @@ const OptimizationBreakdown = ({
                 ? getOracleTechnicalKeyToDisplayNameMapping()
                 : getTechnicalKeyToDisplayNameMapping();
 
-        // Collect all sub-categories (from fully dismissed categories and standalone dismissed sub-categories)
-        const allSubCategories = [
-            // Sub-categories from fully dismissed categories
-            ...fullyDismissedCategories
-                .map(category => {
-                    const subCategories = Object.keys(categoryData)
-                        .filter(configKey => categoryData[configKey as keyof typeof categoryData].category === category)
-                        .map(configKey => categoryData[configKey as keyof typeof categoryData].subCategory);
-                    return [...new Set(subCategories)];
-                })
-                .flat(),
-            // Standalone fully dismissed sub-categories
-            ...Object.keys(fullyDismissedSubCategories)
-        ];
-
-        // Collect ALL configurations from all sources (avoid duplicates)
         const configurationSources = [
-            // Configurations from fully dismissed categories
             ...fullyDismissedCategories
                 .map(category => {
                     const configsInCategory = Object.keys(categoryData).filter(
@@ -79,49 +99,31 @@ const OptimizationBreakdown = ({
                     return configsInCategory.map(configKey => technicalKeyToDisplayName[configKey] || configKey);
                 })
                 .flat(),
-            // Configurations from fully dismissed sub-categories
-            ...Object.entries(fullyDismissedSubCategories)
-                .map(([subCategory, data]) => data.configs)
-                .flat(),
-            // Individual configurations from different sub-categories
             ...Object.entries(individualConfigs)
-                .map(([category, subCategories]) =>
-                    Object.entries(subCategories)
-                        .map(([subCategory, configs]) => configs)
-                        .flat()
-                )
+                .map(([, configs]) => configs)
                 .flat(),
-            // Parent configurations (ONTAP, OS, HA) - only if not already included above
             ...parentConfigurations.filter(parentConfig => {
-                // Check if this parent config is already included in category/subcategory dismissals
                 const technicalKey = Object.keys(categoryData).find(
                     key => technicalKeyToDisplayName[key] === parentConfig
                 );
-                if (!technicalKey) return true; // Include if we can't find the mapping
+                if (!technicalKey) return true;
 
                 const configData = categoryData[technicalKey as keyof typeof categoryData];
                 if (!configData) return true;
 
-                // Don't include if the category is fully dismissed
                 if (fullyDismissedCategories.includes(configData.category)) return false;
 
-                // Don't include if the subcategory is fully dismissed
-                if (fullyDismissedSubCategories[configData.subCategory]) return false;
-
-                // Don't include if it's in individual configs
                 const individualConfigsForCategory = individualConfigs[configData.category];
-                if (individualConfigsForCategory?.[configData.subCategory]?.includes(parentConfig)) return false;
+                if (individualConfigsForCategory?.includes(parentConfig)) return false;
 
                 return true;
             })
         ];
 
-        // Remove duplicates from all configurations
         const allConfigurations = [...new Set(configurationSources)];
 
         return (
             <div>
-                {/* Categories Section */}
                 {fullyDismissedCategories.length > 0 && (
                     <>
                         <DsTypography variant="Semibold_14" className={styles.dismissTooltipHeader}>
@@ -133,43 +135,14 @@ const OptimizationBreakdown = ({
                     </>
                 )}
 
-                {/* Sub-categories Section */}
-                {allSubCategories.length > 0 && (
-                    <>
-                        {fullyDismissedCategories.length > 0 && <div className={styles.tooltipDivider} />}
-                        <DsTypography variant="Semibold_14" className={styles.dismissTooltipHeader}>
-                            {t('databases.well-architect.sub-category')}
-                        </DsTypography>
-                        <DsTypography variant="Regular_14" className={styles.tooltipConfigText}>
-                            {[...new Set(allSubCategories)].join(' | ')}
-                        </DsTypography>
-                    </>
-                )}
-
-                {/* Single Configurations Section - consolidates ALL configurations */}
                 {allConfigurations.length > 0 && (
                     <>
-                        {(fullyDismissedCategories.length > 0 || allSubCategories.length > 0) && (
-                            <div className={styles.tooltipDivider} />
-                        )}
+                        {fullyDismissedCategories.length > 0 && <div className={styles.tooltipDivider} />}
                         <DsTypography variant="Semibold_14" className={styles.dismissTooltipHeader}>
                             {t('databases.well-architect.configuration')}
                         </DsTypography>
                         <DsTypography variant="Regular_14" className={styles.tooltipConfigText}>
                             {allConfigurations.join(' | ')}
-                        </DsTypography>
-                    </>
-                )}
-
-                {/* Sub-configurations under parent configurations */}
-                {subConfigurations.length > 0 && (
-                    <>
-                        <div className={styles.tooltipDivider} />
-                        <DsTypography variant="Semibold_14" className={styles.dismissTooltipHeader}>
-                            {t('databases.well-architect.sub-configuration')}
-                        </DsTypography>
-                        <DsTypography variant="Regular_14" className={styles.tooltipConfigText}>
-                            {subConfigurations.join(' | ')}
                         </DsTypography>
                     </>
                 )}
@@ -206,7 +179,7 @@ const OptimizationBreakdown = ({
             <div className={styles.mainSection}>
                 <div className={styles.leftSide}>
                     <OptimizeComponent
-                        value={optimizationBreakDown?.storage?.percent || 0}
+                        value={loading ? 0 : optimizationBreakDown?.storage?.percent || 0}
                         data={optimizationBreakDown?.storage}
                         text="Storage"
                         image={<Storage />}
@@ -215,7 +188,7 @@ const OptimizationBreakdown = ({
                         isDisabled={(optimizationBreakDown?.storage?.total ?? 0) === 0}
                     />
                     <OptimizeComponent
-                        value={optimizationBreakDown?.compute?.percent || 0}
+                        value={loading ? 0 : optimizationBreakDown?.compute?.percent || 0}
                         data={optimizationBreakDown?.compute}
                         text="Compute"
                         image={<Compute />}
@@ -224,7 +197,7 @@ const OptimizationBreakdown = ({
                         isDisabled={(optimizationBreakDown?.compute?.total ?? 0) === 0}
                     />
                     <OptimizeComponent
-                        value={optimizationBreakDown?.application?.percent || 0}
+                        value={loading ? 0 : optimizationBreakDown?.application?.percent || 0}
                         data={optimizationBreakDown?.application}
                         text={
                             engineType === DBType.ORACLE
@@ -232,6 +205,7 @@ const OptimizationBreakdown = ({
                                 : GENERAL.APPLICATION
                         }
                         image={<Applications />}
+                        isComingSoon={false}
                         allConfigurationsDismissed={allConfigurationsDismissed}
                         isDisabled={(optimizationBreakDown?.application?.total ?? 0) === 0}
                     />
@@ -239,7 +213,7 @@ const OptimizationBreakdown = ({
 
                 <div className={styles.rightSide}>
                     <OptimizeComponent
-                        value={optimizationBreakDown?.resiliency?.percent || 0}
+                        value={loading ? 0 : optimizationBreakDown?.resiliency?.percent || 0}
                         data={optimizationBreakDown?.resiliency}
                         text="Resiliency"
                         image={<Resiliency />}
@@ -248,7 +222,7 @@ const OptimizationBreakdown = ({
                         isDisabled={(optimizationBreakDown?.resiliency?.total ?? 0) === 0}
                     />
                     <OptimizeComponent
-                        value={optimizationBreakDown?.cloning?.percent || 0}
+                        value={loading ? 0 : optimizationBreakDown?.cloning?.percent || 0}
                         data={optimizationBreakDown?.cloning}
                         text="Cloning"
                         image={<Cloning />}

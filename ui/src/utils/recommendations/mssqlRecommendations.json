@@ -1,0 +1,169 @@
+{
+    "thin-provision": {
+        "name": "Thin Provision",
+        "title": "Thin provisioning recommendation",
+        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+    },
+    "autosize": {
+        "name": "Autosize",
+        "title": "Autosize recommendation",
+        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+    },
+    "autosize-mode": {
+        "name": "Autosize Mode",
+        "title": "Autosize mode recommendation",
+        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+    },
+    "fractional-reserve": {
+        "name": "Fractional Reserve",
+        "title": "Fractional reserve recommendation",
+        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+    },
+    "snapshot-copy-reserve": {
+        "name": "Snapshot Copy Reserve",
+        "title": "Snapshot copy reserve recommendation",
+        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+    },
+    "snapshot-autodelete": {
+        "name": "Snapshot Autodelete",
+        "title": "Snapshot autodelete recommendation",
+        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+    },
+    "space-mgmt-try-first": {
+        "name": "Space Mgmt Try First",
+        "title": "Space management try first recommendation",
+        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+    },
+    "tiering-policy": {
+        "name": "Tiering Policy",
+        "title": "Tiering policy recommendation",
+        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+    },
+    "tiering-min-cooling-days": {
+        "name": "Tiering Min Cooling Days",
+        "title": "Tiering minimum cooling days recommendation",
+        "description": "Workload Factory recommends setting the appropriate minimum cooling days for a volume because it determines when data becomes eligible to move to cost-effective capacity tiers, optimizing storage costs while maintaining performance for frequently accessed data."
+    },
+    "mpio-enabled": {
+        "name": "Mpio Enabled",
+        "title": "Multipath I/O recommendation",
+        "description": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails."
+    },
+    "mpio-iscsi-count": {
+        "name": "Mpio Iscsi Count",
+        "title": "MPIO iSCSI session count recommendation",
+        "description": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails."
+    },
+    "mpio-timeout": {
+        "name": "Mpio Timeout",
+        "title": "MPIO timeout recommendation",
+        "description": "Configure the Microsoft Multipath I/O (MPIO) timeout setting on the host to 60 seconds to ensure connectivity and stability during FSx for ONTAP failovers. The 60-second setting prevents disk disconnections, application errors, and potential data loss caused by insufficient timeout settings."
+    },
+    "ntfs-allocation-unit-size": {
+        "name": "Ntfs Allocation Unit Size",
+        "title": "NTFS allocation unit size recommendation",
+        "description": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance."
+    },
+    "mpio-load-balance-policy": {
+        "name": "Mpio Load Balance Policy",
+        "title": "MPIO load balance policy recommendation",
+        "description": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails."
+    },
+    "compute-rightsizing": {
+        "name": "Compute Rightsizing",
+        "title": "Compute rightsizing recommendation",
+        "description": "Your current EC2 instance is not optimally sized for your SQL Server workload. Workload Factory recommends rightsizing your instance to reduce costs while maintaining performance. Click Optimize to view cost comparison between current and recommended instance types to understand potential savings. Rightsizing ensures you're not over-provisioning resources and paying for unused capacity."
+    },
+    "rss-config": {
+        "name": "Rss Config",
+        "title": "Network adapter settings recommendation",
+        "descriptionRssConfig": {
+            "first": "Accurate configuration of receive side scaling (RSS) is essential for optimal network performance in Microsoft SQL Server instances. RSS distributes network processing across multiple processors, preventing bottlenecks and enhancing system performance.",
+            "second": "Recommended RSS settings:",
+            "points": [
+                "Disable TCP Offloading Features: Ensure all TCP offloading features are disabled.",
+                "Number of Receive Queues: Set to 8 if vCPUs > 8. Set to the number of vCPUs if vCPUs ≤ 8.",
+                "RSS Profile: Set to NUMAStatic.",
+                "Base Processor Number: Set to 2."
+            ],
+            "last": "Following these settings will improve the performance and reliability of your Microsoft SQL Server instances. We suggest that you test the recommended settings to determine performance improvements before making changes to your production environment."
+        }
+    },
+    "mtu-alignment": {
+        "name": "Mtu Alignment",
+        "title": "MTU alignment recommendation",
+        "description": "Workload Factory recommends aligning EC2 instance Maximum Transmission Unit (MTU) settings with your FSx for ONTAP file system to prevent network fragmentation and optimize SQL Server performance. Fixing MTU misalignment ensures consistent MTU configuration across all nodes and network paths, preventing packet fragmentation and improving throughput."
+    },
+    "host-os-patch": {
+        "name": "Host Os Patch",
+        "title": "Operating system patch recommendation",
+        "description": "Whenever possible, apply the latest patches to ensure security and stability. Applying the latest patch helps protect your SQL Server databases from vulnerabilities and significantly improves overall system reliability. Critical security patches address known vulnerabilities that could be exploited by attackers."
+    },
+    "sql-license": {
+        "name": "Sql License",
+        "title": "License recommendation",
+        "descriptionList": [
+            {
+                "title": "Not optimized: ",
+                "description": "The SQL Server license assessment is at the host level. A license is considered \"not optimized\" when Workload Factory detects that any instance running on the host is not using the Enterprise license features you're paying for. An unoptimized license might result in unnecessary costs."
+            },
+            {
+                "title": "Optimized: ",
+                "description": "A license is considered \"optimized\" when every instance on the host that uses an Enterprise license uses Enterprise features, or when the commercial software license for your databases meets your performance requirements."
+            }
+        ],
+        "info": "The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized."
+    },
+    "mssql-patch": {
+        "name": "Mssql Patch",
+        "title": "Microsoft SQL Server patch recommendation",
+        "description": "Whenever possible, apply the latest patches to ensure security and stability. Applying the latest patch helps protect your SQL Server databases from vulnerabilities and significantly improves overall system reliability. Critical and important security patches should be applied promptly to protect against known vulnerabilities."
+    },
+    "maxdop": {
+        "name": "Maxdop",
+        "title": "MAXDOP recommendation",
+        "descriptionRssConfig": {
+            "first": "Set the Maximum Degree of Parallelism (MAXDOP) to optimize query performance by balancing parallel processing. Accurate MAXDOP configuration enhances performance and efficiency. Setting MAXDOP to 4, 8, or 16 generally provides the best results in most use cases. We recommend that you test your workload and monitor for any parallelism-related wait types such as CXPACKET."
+        }
+    },
+    "snapshot-policy": {
+        "name": "Snapshot Policy",
+        "title": "Scheduled local snapshot recommendation",
+        "description": "Local snapshots allow you to create instantaneous capacity efficient point-in-time images of your SQL Server data volumes. Use local snapshots as an additional backup mechanism for quick restores or for testing. Enabling snapshot policies ensures regular backup protection for your database volumes."
+    },
+    "crr": {
+        "name": "Crr",
+        "title": "Cross-region replication recommendation",
+        "description": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving SQL Server. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements."
+    },
+    "shared-storage": {
+        "name": "Shared Storage",
+        "title": "Shared storage recommendation",
+        "description": "For SQL Server Failover Cluster Instances (FCI) and Always On Availability Groups (AOAG), Workload Factory recommends using shared storage on FSx for ONTAP to enable high availability and seamless failover capabilities. Shared storage ensures that all nodes in the cluster can access the same data."
+    },
+    "drive-letter": {
+        "name": "Drive Letter",
+        "title": "Drive letter recommendation",
+        "description": "Workload Factory recommends using consistent drive letter assignments across all nodes in a SQL Server high availability configuration. Consistent drive letters simplify management and ensure proper failover behavior."
+    },
+    "cluster-quorum": {
+        "name": "Cluster Quorum",
+        "title": "Cluster quorum recommendation",
+        "description": "For SQL Server Failover Cluster Instances, Workload Factory recommends properly configuring the cluster quorum to ensure cluster health and proper failover behavior. The quorum configuration determines how many node failures the cluster can sustain."
+    },
+    "heartbeat-settings": {
+        "name": "Heartbeat Settings",
+        "title": "Heartbeat settings recommendation",
+        "description": "Workload Factory recommends configuring appropriate heartbeat settings for SQL Server high availability clusters. Proper heartbeat configuration prevents unnecessary failovers while ensuring timely detection of actual failures."
+    },
+    "sqlServer-service": {
+        "name": "SqlServer Service",
+        "title": "SQL Server service recommendation",
+        "description": "Workload Factory recommends ensuring SQL Server services are properly configured for high availability scenarios. This includes appropriate service account permissions, startup types, and dependencies to ensure reliable operation."
+    },
+    "clone-management": {
+        "name": "Clone Management",
+        "title": "Clone management recommendation",
+        "description": "Old and divergent database clones can incur significant costs. Workload Factory recommends regularly reviewing and deleting or refreshing these clones to optimize your storage expenses. Space-efficient clones on FSx for ONTAP can be used for development, testing, and analytics without consuming full storage capacity."
+    }
+}

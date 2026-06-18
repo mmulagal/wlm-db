@@ -32,6 +32,31 @@ export interface PerDriveObjInterface {
     dataDriveTotalSizeMB?: number;
 }
 
+export type AssessmentConfigCategoryType = 'storage' | 'compute' | 'application' | 'resiliency' | 'cloning';
+
+export interface AssessmentMetadata {
+    lastAssessmentTimestamp?: number | string;
+    fileSystemId?: string;
+    ec2InstanceId?: string;
+    databaseInstanceName?: string;
+    deploymentType?: string;
+    databaseHostName?: string;
+    storageProtocol?: string;
+    isASMManaged?: boolean;
+    baseDeploymentType?: string;
+    isStorageLayoutFra?: boolean;
+    isWad?: boolean;
+}
+
+export interface DismissedConfigurationItem {
+    name: string;
+    id: string;
+    configurationName?: string; // TODO: remove it as part of dismiss workflow mirgration. use id instead of it.
+    configState: string;
+    startTime: number;
+    endTime?: number;
+}
+
 export interface PerConfigInterface {
     id?: string;
     type?: string;
@@ -42,6 +67,9 @@ export interface PerConfigInterface {
     severity?: string;
     recommendation?: string;
     tags?: string[];
+    subType?: string;
+    categories?: string[];
+    focusWidgetName?: string;
     objectsInViolation?: string[] | null;
     recommendationOptions?: any;
     errorMessage?: string;
@@ -81,20 +109,14 @@ export interface PerConfigInterface {
         underProvisionedDrives?: Array<PerDriveObjInterface>;
         ignoredDrives?: Array<PerDriveObjInterface>;
     };
+    cloneDetails?: any;
 }
 
 export interface AssessmentResponseInterface {
-    dismissedConfigurations?: any;
-    fileSystemId: string;
-    ec2InstanceId: string;
-    databaseHostName: string;
-    databaseInstanceName: string;
-    lastAssessmentTimestamp?: string;
-    deploymentType?: string;
-    baseDeploymentType?: string;
-    isASMManaged?: boolean;
-    storageProtocol?: string;
-    isStorageLayoutFra?: boolean;
+    /** List of configuration assessment items (new API response shape) */
+    assessments?: PerConfigInterface[];
+    metadata?: AssessmentMetadata;
+    dismissedConfigurations?: DismissedConfigurationItem[] | Record<string, unknown>;
     storage?: {
         timestamp?: string;
         optimisedCount?: {
@@ -127,7 +149,6 @@ export interface AssessmentResponseInterface {
     filesystemsIoOptions?: PerConfigInterface;
     multiblockReadcount?: PerConfigInterface;
     clone?: PerConfigInterface;
-    isWad?: boolean;
 }
 
 export interface HostAssessmentResponseInterface {
@@ -135,6 +156,29 @@ export interface HostAssessmentResponseInterface {
     deploymentType?: string;
     assessments?: AssessmentResponseInterface;
     error?: string;
+}
+
+// New flat assessment response structure
+export interface FlatAssessmentItem extends PerConfigInterface {
+    id: string;
+    name: string;
+    type: string; // 'storage' | 'compute' | 'application' | 'resiliency' | 'cloning'
+    categories: string[];
+}
+
+export interface FlatAssessmentResponse {
+    assessments: FlatAssessmentItem[];
+    dismissedConfigurations: FlatAssessmentItem[];
+    metadata: {
+        lastAssessmentTimestamp: number;
+        fileSystemId: string;
+        ec2InstanceId: string;
+        databaseInstanceName: string;
+        deploymentType: string;
+        databaseHostName: string;
+        baseDeploymentType?: string;
+        isWad?: boolean;
+    };
 }
 
 export interface GwPerConfigCardInterface {
@@ -220,9 +264,6 @@ export interface GetWellSliceInterface {
     selectedDatabaseAoagStorageType: string;
     selectedRowFsxId: string;
     cardData: any;
-    osConfigTableData: PerConfigInterface[] | null;
-    ontapConfigTableData: PerConfigInterface[] | null;
-    mssqlHighAvailabilityTableData: PerConfigInterface[] | null;
     optimizationBreakDown: {
         storage?: CountBreakDown;
         compute?: CountBreakDown;

@@ -1,0 +1,180 @@
+{
+    "thin_provision": {
+        "name": "Thin provisioning",
+        "title": "Thin provisioning recommendation",
+        "description": "Workload Factory recommends configuring thin provisioning for FSx for ONTAP volumes hosting Oracle databases. This approach optimizes storage efficiency and cost-effectiveness by allowing more logical data to be stored than physically available."
+    },
+    "autosize": {
+        "name": "Autosize",
+        "title": "Autosize recommendation",
+        "description": "Workload Factory recommends enabling volume autogrow for FSx for ONTAP volumes for Oracle databases. This configuration enhances flexibility, availability, and scalability for Oracle databases by allowing volumes to grow dynamically to accommodate unexpected data growth, preventing space shortages and avoiding downtime if a volume runs out of space. Volume autogrow is essential when using thin provisioning."
+    },
+    "autosize_mode": {
+        "name": "Autosize mode",
+        "title": "Autosize mode recommendation",
+        "description": "Workload Factory recommends enabling volume autogrow for FSx for ONTAP volumes for Oracle databases. This configuration enhances flexibility and availability by allowing volumes to grow dynamically to accommodate unexpected data growth. This prevents space shortages and helps avoid downtime if a volume runs out of space, ensuring seamless scalability for Oracle databases. Volume autogrow is essential when using thin provisioning."
+    },
+    "fractional_reserve": {
+        "name": "Fractional reserve",
+        "title": "Fractional reserve recommendation",
+        "description": "Workload Factory recommends disabling fractional reserve to eliminate unnecessary space reservation for overwrites thereby optimizing space utilization and cost-effectiveness for thin-provisioned FSx for ONTAP volumes. This configuration is essential when using thin provisioning with Oracle databases."
+    },
+    "snapshot_policy": {
+        "name": "Snapshot policy",
+        "title": "Snapshot policy recommendation",
+        "description": "Workload Factory recommends disabling snapshots for FSx for ONTAP volumes for Oracle databases to save space and lower costs. Oracle snapshots should be managed externally via tools like SnapCenter, which creates application-consistent snapshots, preventing corruption during restoration."
+    },
+    "snapshot_copy_reserve": {
+        "name": "Snapshot copy reserve",
+        "title": "Snapshot copy reserve recommendation",
+        "description": "Workload Factory recommends that capacity isn't reserved for snapshots on FSx for ONTAP volumes used by databases, making the entire volume capacity available for active data and any snapshots that are created."
+    },
+    "snapshot_autodelete": {
+        "name": "Snapshot autodelete",
+        "title": "Snapshot autodelete recommendation",
+        "description": "Workload Factory recommends configuring the snapshot autodelete feature in FSx for ONTAP for Oracle databases to delete older snapshots first. This feature is designed to automatically manage snapshot storage by deleting the oldest snapshots when a volume approaches its capacity limit. This configuration helps in thin-provisioned environments, where more logical storage is allocated than physically available."
+    },
+    "space_mgmt_try_first": {
+        "name": "Space management try first",
+        "title": "Space management try first recommendation",
+        "description": "Workload Factory recommends configuring space management to prioritize volume expansion over snapshot deletion for thin-provisioned FSx for ONTAP volumes with volume autogrow enabled."
+    },
+    "tiering_policy": {
+        "name": "Tiering policy",
+        "title": "Tiering policy recommendation",
+        "description": "Workload Factory recommends enabling tiering for database volumes on FSx for ONTAP when it makes sense. Tiering automatically moves less-used data, such as snapshots and archived logs, to lower-cost storage while keeping active data and redo logs on high-performance storage. This lowers storage costs, helps protect performance for critical workloads, and reduces manual management. You can set different tiering policies for Oracle data files, redo logs, and archive logs."
+    },
+    "tiering_min_cooling_days": {
+        "name": "Tiering minimum cooling days",
+        "title": "Tiering minimum cooling days recommendation",
+        "description": "Workload Factory recommends setting the appropriate minimum cooling days for a volume because it determines when data becomes eligible to move to cost-effective capacity tiers, optimizing storage costs while maintaining performance for frequently accessed data. Tailored settings for each volume type—data, redo log, and archive (FRA)—ensure efficient resource utilization. Data Volumes (tiering-minimum-cooling-days=2) Archive/FRA Volumes (tiering-minimum-cooling-days=2(for RMAN-compressed backups) tiering-minimum-cooling-days=14(for uncompressed backups))."
+    },
+    "compression": {
+        "name": "Compression",
+        "title": "Compression recommendation",
+        "description": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle's I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features."
+    },
+    "deduplication": {
+        "name": "Deduplication",
+        "title": "Deduplication recommendation",
+        "description": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle's I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features."
+    },
+    "compaction": {
+        "name": "Compaction",
+        "title": "Compaction recommendation",
+        "description": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle's I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features."
+    },
+    "nfs_rootonly": {
+        "name": "NFS rootonly",
+        "title": "NFS rootonly recommendation",
+        "description": "Workload Factory recommends disabling the nfs-rootonly parameter for dNFS. ONTAP's nfs-rootonly setting restricts NFS connections to privileged ports (<1024). Since dNFS processes in NFSv4+ do not run as root and use higher ports, disabling this parameter allows necessary connections."
+    },
+    "export_policy": {
+        "name": "Export policy",
+        "title": "Export policy recommendation",
+        "description": "Workload Factory recommends ensuring that If Oracle binaries are located on an NFS share, the export policy includes superuser and setuid permissions.Superuser (root) access allows NFS clients to map as root, needed for binary execution."
+    },
+    "os_type": {
+        "name": "LUN OS type",
+        "title": "LUN OS type recommendation",
+        "description": "Workload Factory recommends ensuring that the ONTAP LUN operating system (OS) type value matches the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration might reduce performance."
+    },
+    "space_reservation_enabled": {
+        "name": "LUN space reservation",
+        "title": "LUN space reservation recommendation",
+        "description": "Workload Factory recommends enabling space reservation on LUNs used by Oracle databases to reserve enough space in the volume so that writes to those LUNs don't fail."
+    },
+    "space_allocation_allocated": {
+        "name": "LUN space allocation",
+        "title": "LUN space allocation recommendation",
+        "description": "Workload Factory recommends enabling space allocation on LUNs used by Oracle databases to avoid write failures and inefficient space utilization. Space allocation ensures that FSx for ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also lets FSx for ONTAP automatically reclaim space when the Oracle database on the EC2 host deletes data."
+    },
+    "multipath_io": {
+        "name": "Multipath I/O",
+        "title": "Multipath I/O recommendation",
+        "description": "Workload Factory recommends enabling Multipath I/O (MPIO) on database hosts that connect to ISCSI LUNs for Oracle databases. This host-level configuration enhances storage reliability and performance by providing redundant data paths between the server and storage. With multipath enabled, the system can automatically reroute I/O operations in the event of a path failure, minimizing downtime and ensuring consistent access to critical data."
+    },
+    "host_utilities": {
+        "name": "Host utilities",
+        "title": "Host utilities recommendation",
+        "description": "Workload Factory recommends installing host utilities for Oracle databases. This host-level configuration enhances storage reliability and performance by providing redundant data paths between the server and storage. With multipath enabled, the system can automatically reroute I/O operations in the event of a path failure, minimizing downtime and ensuring consistent access to critical data."
+    },
+    "selinux": {
+        "name": "SELinux",
+        "title": "SELinux recommendation",
+        "description": "Workload Factory recommends disabling SELinux on Oracle database hosts by setting SELINUX=disabled in the system configuration. Disabling SELinux can help avoid compatibility issues and administrative overhead associated with managing SELinux policies for Oracle workloads. After this change, SELinux will no longer enforce access controls, so ensure that your environment is otherwise secured."
+    },
+    "iscsi_replacement_timeout": {
+        "name": "iSCSI replacement timeout",
+        "title": "iSCSI replacement timeout recommendation",
+        "description": "Workload Factory recommends setting the iSCSI replacement timeout to 5 seconds on Oracle database hosts. This setting helps ensure that iSCSI connections are properly managed and can recover quickly from interruptions, minimizing potential downtime for database workloads."
+    },
+    "swap_space": {
+        "name": "Swap space",
+        "title": "Swap space sizing recommendation",
+        "description": "Proper swap sizing ensures that the system can handle memory pressure gracefully, avoiding potential performance degradation or system crashes.",
+        "valuesHeading": "Swap space should be sized relatively to RAM:",
+        "values": [
+            "Between 1 GB and 2 GB: 1.5 times the size of the RAM",
+            "Between 2 GB and 16 GB: Equal to the size of the RAM",
+            "More than 16 GB: 16 GB"
+        ]
+    },
+    "file_system_headroom": {
+        "name": "File system headroom",
+        "title": "File system headroom sizing recommendation",
+        "description": "To optimize storage performance, provision file system capacity as 1.2 times of total size of provisioned volume.",
+        "valuesHeading": "File system headroom percentages are as follows:",
+        "values": ["Under-provisioned: <20%", "Optimized: 20-50%", "Over-provisioned: >50%"]
+    },
+    "transparent_hugepages": {
+        "name": "Transparent HugePages",
+        "title": "Transparent HugePages recommendation",
+        "description": "Workload Factory recommends disabling Transparent HugePages (THP) on database hosts running Oracle databases. Disabling THP is an Oracle best practice to prevent potential performance issues and ensure optimal database stability."
+    },
+    "tcp_advanced_options": {
+        "name": "TCP advanced options",
+        "title": "TCP advanced options recommendation",
+        "description": "Workload Factory recommends enabling TCP timestamps, SACK, and window scaling for best network performance and reliability."
+    },
+    "filesystems_io_options": {
+        "name": "Filesystems I/O options",
+        "title": "Filesystems I/O options recommendation",
+        "description": "Workload Factory recommends setting filesystemio_options = setall for optimal I/O performance. Adjust SGA size if needed when moving away from buffered I/O."
+    },
+    "multiblock_readcount": {
+        "name": "Multiblock read count",
+        "title": "Multiblock read count recommendation",
+        "description": "Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically."
+    },
+    "host_os_patch": {
+        "name": "Host OS patch",
+        "title": "Host OS patch recommendation",
+        "description": "Critical security patches are missing. We recommend applying the latest patches to ensure your Oracle database infrastructure is secure and up-to-date."
+    },
+    "crr": {
+        "name": "Cross-region replication",
+        "title": "Cross-region replication recommendation",
+        "description": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time."
+    },
+    "clone_management": {
+        "name": "Clone management",
+        "title": "Clone management recommendation",
+        "description": "Old clones can incur significant costs. Consider deleting these clones to optimize your storage expenses."
+    },
+    "snapcenter_snapshot": {
+        "name": "SnapCenter snapshot",
+        "title": "SnapCenter snapshot recommendation",
+        "description": "Application-consistent snapshots with NetApp SnapCenter enable you to capture precise, reliable point-in-time images of your data volumes, ensuring that your applications remain fully operational and data integrity is maintained. Use SnapCenter to streamline backup processes and facilitate rapid, accurate restores—minimizing downtime and safeguarding your business-critical workloads."
+    },
+    "aws_backup": {
+        "name": "AWS Backup",
+        "title": "AWS Backup recommendation",
+        "description": "Backup Configuration recommendation: Enable FSx Backup or AWS Backup for Oracle volumes to support data retention and compliance. Avoid redundant backups to optimize costs."
+    },
+    "oracle_security_patch": {
+        "name": "Oracle security patch",
+        "title": "Oracle security patch recommendation",
+        "description": "Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability."
+    }
+}

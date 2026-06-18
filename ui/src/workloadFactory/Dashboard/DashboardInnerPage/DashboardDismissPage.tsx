@@ -32,6 +32,7 @@ import {
     shouldSkipDatabaseHost
 } from '../../DatabaseHomePage/DatabaseHomeUtils';
 
+import { findFlatConfigItem, hasConfigStats } from '../../WellArchitectedTab/assessmentFormatUtils';
 import DismissTable from './DismissTables/DismissTable';
 import { useDismissMssqlAssessmentMutation } from '../../../utils/apiService';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
@@ -263,325 +264,38 @@ const DashboardDismissPage = () => {
             });
     };
 
+    const configData = useMemo(
+        () => getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData),
+        [allmssqlHostAssessmentData]
+    );
+
     useEffect(() => {
         if (selectedConfig) {
-            const configData = getAssessmentGroupedByConfigurations(allmssqlHostAssessmentData);
             setOptimizeInnerpageSummary(selectedConfig, configData, dispatch);
         }
-    }, [allmssqlHostAssessmentData]);
+    }, [selectedConfig, configData, dispatch]);
 
     useEffect(() => {
-        switch (selectedConfig) {
-            case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.storage_tier?.recommendation?.description
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-
-                break;
-            case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '184px',
-                    tagHeight: '281px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.file_system_headroom?.recommendation?.description,
-                        values: cardDataDefault?.file_system_headroom?.recommendation?.values,
-                        valuesHeading: cardDataDefault?.file_system_headroom?.recommendation?.valuesHeading
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '228px',
-                    tagHeight: '325px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.transaction_log_drive_size?.recommendation?.description,
-                        values: cardDataDefault?.transaction_log_drive_size?.recommendation?.values,
-                        valuesHeading: cardDataDefault?.transaction_log_drive_size?.recommendation?.valuesHeading
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-
-            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '232px',
-                    tagHeight: '329px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.tempdb_drive_size?.recommendation?.description,
-                        values: cardDataDefault?.tempdb_drive_size?.recommendation?.values,
-                        valuesHeading: cardDataDefault?.tempdb_drive_size?.recommendation?.valuesHeading
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '190px',
-                    tagHeight: '287px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.user_data_files?.recommendation?.description
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '190px',
-                    tagHeight: '287px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.transaction_log_files?.recommendation?.description
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '160px',
-                    tagHeight: '257px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.tempdb_files?.recommendation?.description
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-
-            case 'ONTAP':
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '112px',
-                    tagHeight: '209px',
-                    data: {
-                        title: 'Recommendations',
-                        description: 'Expand instances to view recommendations.'
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-
-            case 'Operating system':
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '112px',
-                    tagHeight: '209px',
-                    data: {
-                        title: 'Recommendations',
-                        description: 'Expand instances to view recommendations.'
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-            case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '112px',
-                    tagHeight: '209px',
-                    data: {
-                        title: 'Recommendations',
-                        description: 'Expand instances to view recommendations.'
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-            case GENERAL.COMPUTE_RIGHTSIZING:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '214px',
-                    tagHeight: '311px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.compute_rightsizing?.recommendation?.description
-                    },
-                    cardName: 'compute_right_sizing',
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-            case GENERAL.OPERATING_SYSTEM_PATCH:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.host_os_patch?.recommendation?.description
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-            case GENERAL.RSS_CONFIGURATION:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '450px',
-                    tagHeight: '547px',
-                    data: {
-                        title: 'Recommendations',
-                        descriptionRssConfig: cardDataDefault?.rss_config?.recommendation?.descriptionRssConfig
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-            case ASSESSMENT_CONFIG_NAMES.MTU:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '214px',
-                    tagHeight: '311px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.mtu?.recommendation?.description
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-            case GENERAL.LICENSE_SQL_SERVER:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '228px',
-                    tagHeight: '325px',
-                    data: cardDataDefault?.sql_licenses?.recommendation,
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-            case GENERAL.MICROSOFT_SQL_PATCH:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '160px',
-                    tagHeight: '257px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.microsoft_sql_patch?.recommendation?.description
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-            case GENERAL.MAXDOP_PATCH:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '216px',
-                    tagHeight: '313px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.maxdop?.recommendation?.descriptionRssConfig?.first
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-
-            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.scheduled_local_snapshot?.recommendation?.description
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-
-                break;
-
-            case ASSESSMENT_CONFIG_NAMES.CRR:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '156px',
-                    tagHeight: '253px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.crr?.recommendation?.description
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-
-                break;
-
-            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '136px',
-                    tagHeight: '233px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.scheduled_fsx_for_ontap_backups?.recommendation?.description
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
-
-            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
-                setValueCardData({
-                    instances: selectedConfigSummary.totalInstances,
-                    configurationState: selectedConfigSummary.configState,
-                    severity: selectedConfigSummary.severity,
-                    cardHeight: '126px',
-                    tagHeight: '223px',
-                    data: {
-                        title: 'Recommendations',
-                        description: cardDataDefault?.clone_management?.recommendation?.description
-                    },
-                    tooltipText: selectedConfigSummary?.tooltipText
-                });
-                break;
+        if (!selectedConfig) {
+            return;
         }
-    }, [selectedConfig, selectedConfigSummary]);
+
+        // TODO: Change the Recommendation by taking it from new UI file.
+        if (hasConfigStats(configData, selectedConfig)) {
+            setValueCardData((prev: any) => ({
+                ...selectedConfigSummary,
+                configurationState: selectedConfigSummary.configState,
+                cardHeight: prev.cardHeight || '136px',
+                tagHeight: prev.tagHeight || '233px',
+                data: {
+                    title: 'Recommendations',
+                    description: findFlatConfigItem(allmssqlHostAssessmentData, selectedConfig)?.recommendation ?? ''
+                },
+                tooltipText: selectedConfigSummary?.tooltipText,
+                cardName: selectedConfig
+            }));
+        }
+    }, [selectedConfig, selectedConfigSummary, configData, allmssqlHostAssessmentData]);
 
     /** type = like Storage tier
      * rowData = row data values

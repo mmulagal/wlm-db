@@ -1446,7 +1446,7 @@ export const getWellApi = createApi({
         }),
         getMssqlAssessmentData: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                url: `v1/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
+                url: `v2/mssql/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
             })
         }),
         getMissingPatchAssessmentData: builder.query({
@@ -1461,8 +1461,8 @@ export const getWellApi = createApi({
                 if (regionId) params.append('region', regionId);
                 const queryString = params.toString();
                 return queryString
-                    ? `v1/mssql/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment?${queryString}`
-                    : `v1/mssql/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment`;
+                    ? `v2/mssql/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment?${queryString}`
+                    : `v2/mssql/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment`;
             }
         }),
         getOfflineOracleAssessmentData: builder.query({
@@ -1472,13 +1472,13 @@ export const getWellApi = createApi({
                 if (regionId) params.append('region', regionId);
                 const queryString = params.toString();
                 return queryString
-                    ? `v1/oracle/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment?${queryString}`
-                    : `v1/oracle/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment`;
+                    ? `v2/oracle/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment?${queryString}`
+                    : `v2/oracle/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment`;
             }
         }),
         getOracleAssessmentData: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
-                url: `v1/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
+                url: `v2/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
             })
         }),
         triggerOracleInstanceAssessment: builder.mutation({
