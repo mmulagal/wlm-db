@@ -38,7 +38,8 @@ import {
     selectDefaultSecurityGroup,
     selectFsxIops,
     selectFsxKmsKey,
-    selectFsxThroughput
+    selectFsxThroughput,
+    selectSizeBasedInstanceType
 } from '../../MSSqlServer/MSSqlUtils';
 import { generateRandomDBName } from '../../../../utils/utilityFunctions';
 
@@ -60,6 +61,13 @@ const PreviewDefault = () => {
     const selectedExistingFsxnName = useAppSelector(state => state.mssqlForm.fsxN.fsxNExistingName);
     const encryptionType = useAppSelector(state => state.mssqlForm.encryption?.encryptionType);
     const encryptionArn = useAppSelector(state => state.mssqlForm.encryption?.encryptionArn);
+    const storageCapacity = useAppSelector(state => state.mssqlForm.storageCapacity?.capacity);
+    const storageUnitLabel = useAppSelector(
+        state =>
+            state.mssqlForm.storageCapacity?.unit?.value ??
+            state.mssqlForm.storageCapacity?.unit?.label ??
+            state.mssqlForm.storageCapacity?.unit
+    );
 
     useEffect(() => {
         if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
@@ -91,7 +99,19 @@ const PreviewDefault = () => {
             selectDefaultLicense(amiData, dispatch);
             selectDefaultCollation(collationList, dispatch);
             dispatch(setDBName(generateRandomDBName()));
-            selectDefaultInstanceType(instanceTypeData, dispatch);
+            // Prefer the size-based recommendation in Quick create; fall back to
+            // the alphabetical default if the recommended type isn't available
+            // in the current region/license combo.
+            const setBySize = selectSizeBasedInstanceType(
+                instanceTypeData,
+                dispatch,
+                storageCapacity,
+                storageUnitLabel,
+                amiLicense
+            );
+            if (!setBySize) {
+                selectDefaultInstanceType(instanceTypeData, dispatch);
+            }
             selectDefaultEncryption(kmsData, dispatch);
             dispatch(setTags([{ key: '', value: '' }]));
             dispatch(setSNSState(false));
@@ -108,6 +128,18 @@ const PreviewDefault = () => {
         selectFsxKmsKey(selectedFsxnType, selectedExistingFsxnName, dispatch);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFsxnType, selectedExistingFsxnName]);
+
+    // Keep the Quick create instance type aligned with the entered DB size.
+    // The <InstanceType /> accordion isn't rendered in Easy create, so its
+    // own auto-recommendation effect never runs in this mode; this effect is
+    // the size-driven analogue scoped to the Quick create flow.
+    useEffect(() => {
+        if (selectedConfig !== SELECT_CONFIG.EASY_CREATE) {
+            return;
+        }
+        selectSizeBasedInstanceType(instanceTypeData, dispatch, storageCapacity, storageUnitLabel, amiLicense);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedConfig, storageCapacity, storageUnitLabel, instanceTypeData, amiLicense]);
 
     const data = [
         {

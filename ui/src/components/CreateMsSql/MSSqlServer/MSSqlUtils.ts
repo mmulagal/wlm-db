@@ -147,7 +147,7 @@ export const getRecommendedInstanceTypeForCapacity = (capacity: string | undefin
     }
     const GIB_PER_TIB = 1024;
     const sizeInTib = unitLabel === 'TiB' ? numeric : numeric / GIB_PER_TIB;
-    if (sizeInTib < MSSQL_DB_SIZE_TIB_THRESHOLDS.SMALL_MAX_TIB_EXCLUSIVE) {
+    if (sizeInTib <= MSSQL_DB_SIZE_TIB_THRESHOLDS.SMALL_MAX_TIB_INCLUSIVE) {
         return MSSQL_RECOMMENDED_INSTANCE_BY_DB_SIZE.SMALL;
     }
     if (sizeInTib <= MSSQL_DB_SIZE_TIB_THRESHOLDS.MEDIUM_MAX_TIB_INCLUSIVE) {
@@ -166,6 +166,58 @@ export const MSSQL_AUTO_OVERWRITABLE_INSTANCE_TYPES: ReadonlySet<string> = new S
     MSSQL_RECOMMENDED_INSTANCE_BY_DB_SIZE.MEDIUM,
     MSSQL_RECOMMENDED_INSTANCE_BY_DB_SIZE.LARGE
 ]);
+
+// Dispatches the size-based recommended instance type for the given DB capacity
+// into the mssqlForm slice. Used by the Quick create flow (PreviewDefault +
+// MssqlApis) where the standard <InstanceType /> accordion is not rendered and
+// therefore the InstanceType.tsx auto-recommendation effect never runs.
+//
+// Returns true if a matching option was found in the catalog and dispatched.
+// Returns false if the recommended type isn't available in the current
+// region/license combo so the caller can fall back to selectDefaultInstanceType.
+export const selectSizeBasedInstanceType = (
+    instanceTypeData: {
+        instanceTypes?: Array<{
+            instanceType?: string;
+            vCpus?: number;
+            ramInMib?: number;
+            iopsInMbps?: number;
+            architecture?: string[] | string;
+        }>;
+    } | null | undefined,
+    dispatch: (action: ReturnType<typeof setInstanceType>) => void,
+    capacity: string | undefined,
+    unitLabel: string | undefined,
+    selectedLicense: { data?: { architecture?: string } } | null | undefined
+): boolean => {
+    const instanceTypes = instanceTypeData?.instanceTypes;
+    if (!instanceTypes?.length) {
+        return false;
+    }
+    const recommendedType = getRecommendedInstanceTypeForCapacity(capacity, unitLabel);
+    const archVal = selectedLicense?.data?.architecture;
+    const match = instanceTypes.find(
+        it =>
+            it?.instanceType === recommendedType &&
+            (!archVal || !it?.architecture || it.architecture.includes(archVal))
+    );
+    if (!match) {
+        return false;
+    }
+    let label2 = '';
+    if (match?.vCpus) {
+        label2 += `${match.vCpus}vCPU, `;
+    }
+    if (match?.ramInMib) {
+        label2 += `${formatSize(match.ramInMib, 'mib')} RAM, `;
+    }
+    if (match?.iopsInMbps) {
+        label2 += `${match.iopsInMbps}Mbps`;
+    }
+    const option = generateOptionType(match.instanceType, match.instanceType, label2, false, '', match);
+    dispatch(setInstanceType(option));
+    return true;
+};
 
 export const selectFsxKmsKey = (selectedFsxnType: string, selectedExistingFsxnName: any, dispatch: any) => {
     if (isFsxnExisting(selectedFsxnType) && selectedExistingFsxnName) {

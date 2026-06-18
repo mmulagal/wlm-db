@@ -59,11 +59,13 @@ export const DEAFULT_INSTANCE_VALUE = 'm5.xlarge';
 
 // MSSQL deployment-form recommended instance type tiers, keyed off the
 // user-entered database (storage) size. Boundaries are interpreted as:
-//   tib < SMALL_MAX_TIB_EXCLUSIVE                 -> SMALL
-//   SMALL_MAX_TIB_EXCLUSIVE <= tib <= MEDIUM_MAX_TIB_INCLUSIVE -> MEDIUM
-//   tib > MEDIUM_MAX_TIB_INCLUSIVE                -> LARGE
+//   tib <= SMALL_MAX_TIB_INCLUSIVE                              -> SMALL
+//   SMALL_MAX_TIB_INCLUSIVE <  tib <= MEDIUM_MAX_TIB_INCLUSIVE  -> MEDIUM
+//   tib >  MEDIUM_MAX_TIB_INCLUSIVE                             -> LARGE
+// (Exact 1 TiB is intentionally in the SMALL bucket so the fresh-wizard
+//  default of 1024 GiB picks r8in.xlarge.)
 export const MSSQL_DB_SIZE_TIB_THRESHOLDS = {
-    SMALL_MAX_TIB_EXCLUSIVE: 1,
+    SMALL_MAX_TIB_INCLUSIVE: 1,
     MEDIUM_MAX_TIB_INCLUSIVE: 5
 } as const;
 

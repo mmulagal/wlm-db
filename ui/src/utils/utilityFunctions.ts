@@ -1363,9 +1363,11 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
         result.throughput = '128';
     } else if (type === RECOMMENDED_TEMPLATES.PROD_ID) {
         result.selectConfig = SELECT_CONFIG.STANDARD_CREATE;
-        // setting instance type. r8in.2xlarge is the MEDIUM tier; pairs with
-        // the 1 TiB starting capacity below so the preset agrees with the
-        // size-based recommendation in `getRecommendedInstanceTypeForCapacity`.
+        // setting instance type. Prod deliberately ships the MEDIUM tier
+        // (r8in.2xlarge) for headroom even though the 1 TiB starting capacity
+        // sits in the SMALL bucket of `getRecommendedInstanceTypeForCapacity`.
+        // The preset path disarms `isAutoRecommendedSelection`, so the
+        // size-based effect won't downgrade this on subsequent renders.
         const value = 'r8in.2xlarge';
         const label2 = '8vCPU, 64 GiB RAM, 17500Mbps';
         const data = {
@@ -1387,9 +1389,9 @@ export const setRecommendedValues = (initialFormData: any, type: string) => {
             label: GENERAL.FAILOVER_CLUSTER,
             value: SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
         };
-        // Data drive Size. 1 TiB (1024 GiB) sits at the SMALL/MEDIUM tier
-        // boundary; MEDIUM (r8in.2xlarge) is what the size-based helper
-        // returns for this value.
+        // Data drive Size. 1 TiB (1024 GiB) is the upper edge of the SMALL
+        // tier; the Prod preset deliberately pairs it with MEDIUM-tier
+        // compute above.
         result.storageCapacity = {
             capacity: '1024',
             unit: 'GiB'

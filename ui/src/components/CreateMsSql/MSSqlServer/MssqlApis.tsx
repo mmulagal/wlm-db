@@ -45,7 +45,8 @@ import {
     selectDefaultCollation,
     selectDefaultEncryption,
     selectDefaultInstanceType,
-    selectDefaultLicense
+    selectDefaultLicense,
+    selectSizeBasedInstanceType
 } from './MSSqlUtils';
 import { setIsReceivingMsg } from '../../../store/chatbot/chatbotSlice';
 
@@ -87,6 +88,14 @@ const MssqlApis = () => {
     const dbVersion = useAppSelector(state => state.mssqlForm.dbVersion);
     const isLoadConfig = useAppSelector(state => state.msSqlAction.isLoadConfig);
     const refetchApiCount = useAppSelector(state => state.msSqlAction.refetchApiCount);
+    const storageCapacity = useAppSelector(state => state.mssqlForm.storageCapacity?.capacity);
+    const storageUnitLabel = useAppSelector(
+        state =>
+            state.mssqlForm.storageCapacity?.unit?.value ??
+            state.mssqlForm.storageCapacity?.unit?.label ??
+            state.mssqlForm.storageCapacity?.unit
+    );
+    const selectedLicenseId = useAppSelector(state => state.mssqlForm.license?.selectedLicenseId);
 
     const { data: policiesList, isFetching: policiesLoading, isError: policiesError } = useGetWlmdbPoliciesQuery({});
 
@@ -523,7 +532,16 @@ const MssqlApis = () => {
         } else {
             dispatch(addInstanceTypeList({ instanceTypeData, instanceTypeLoading, instanceTypeError }));
             if (selectedConfig === SELECT_CONFIG.EASY_CREATE) {
-                selectDefaultInstanceType(instanceTypeData, dispatch);
+                const setBySize = selectSizeBasedInstanceType(
+                    instanceTypeData,
+                    dispatch,
+                    storageCapacity,
+                    storageUnitLabel,
+                    selectedLicenseId
+                );
+                if (!setBySize) {
+                    selectDefaultInstanceType(instanceTypeData, dispatch);
+                }
             }
         }
         if (

@@ -30,7 +30,8 @@ vi.mock('./MSSqlUtils', () => ({
     selectDefaultLicense: vi.fn(),
     selectDefaultCollation: vi.fn(),
     selectDefaultEncryption: vi.fn(),
-    selectDefaultInstanceType: vi.fn()
+    selectDefaultInstanceType: vi.fn(),
+    selectSizeBasedInstanceType: vi.fn(() => false)
 }));
 
 vi.mock('../../../utils/utilityFunctions', () => ({

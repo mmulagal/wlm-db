@@ -17,7 +17,8 @@ vi.mock('../../MSSqlServer/MSSqlUtils.ts', () => ({
     selectDefaultSecurityGroup: vi.fn(),
     selectFsxIops: vi.fn(),
     selectFsxKmsKey: vi.fn(),
-    selectFsxThroughput: vi.fn()
+    selectFsxThroughput: vi.fn(),
+    selectSizeBasedInstanceType: vi.fn(() => false)
 }));
 
 vi.mock('../../../../utils/utilityFunctions', () => ({
