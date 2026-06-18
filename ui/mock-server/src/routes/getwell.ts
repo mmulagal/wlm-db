@@ -17,25 +17,25 @@ import MissingPatchJson from '../data/missingPatch.json';
 
 const router = require('express').Router();
 
-router.get(`${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/assessment`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v2/mssql/credentials/:credentialsId/regions/:region/assessment`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, GetWellAccJson);
     }, 20);
 });
 
-router.get(`${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/assessment`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v2/oracle/credentials/:credentialsId/regions/:region/assessment`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, OracleAssessmentAccJson);
     }, 20);
 });
 
-router.get(`${BASE_URL}/v1/mssql/offline-assessment`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v2/mssql/offline-assessment`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, GetWellAccOfflineJson);
     }, 20);
 });
 
-router.get(`${BASE_URL}/v1/oracle/offline-assessment`, async (req: {}, res: any) => {
+router.get(`${BASE_URL}/v2/oracle/offline-assessment`, async (req: {}, res: any) => {
     setTimeout(() => {
         generateResponse(res, 200, GetWellAccOfflineOracleJson);
     }, 20);

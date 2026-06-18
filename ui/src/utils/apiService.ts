@@ -919,7 +919,7 @@ export const inventoryApiV2 = createApi({
                 if (regionId) params.append('region', regionId);
                 if (nextToken) params.append('nextToken', nextToken);
                 const queryString = params.toString();
-                return queryString ? `v1/mssql/offline-assessment?${queryString}` : 'v1/mssql/offline-assessment';
+                return queryString ? `v2/mssql/offline-assessment?${queryString}` : 'v2/mssql/offline-assessment';
             }
         }),
         getOfflineMssqlAssessmentDatabases: builder.query({
@@ -944,7 +944,7 @@ export const inventoryApiV2 = createApi({
                 if (regionId) params.append('region', regionId);
                 if (nextToken) params.append('nextToken', nextToken);
                 const queryString = params.toString();
-                return queryString ? `v1/oracle/offline-assessment?${queryString}` : 'v1/oracle/offline-assessment';
+                return queryString ? `v2/oracle/offline-assessment?${queryString}` : 'v2/oracle/offline-assessment';
             }
         }),
         getDatabaseHostsFullDataV2: builder.query({
@@ -1132,17 +1132,17 @@ export const inventoryApiV2 = createApi({
         getAllMssqlHostsAssessmentData: builder.query({
             query: ({ credentialId, regionId, nextToken = null }) => {
                 if (nextToken) {
-                    return `v1/mssql/credentials/${credentialId}/regions/${regionId}/assessment?nextToken=${nextToken}`;
+                    return `v2/mssql/credentials/${credentialId}/regions/${regionId}/assessment?nextToken=${nextToken}`;
                 }
-                return `v1/mssql/credentials/${credentialId}/regions/${regionId}/assessment`;
+                return `v2/mssql/credentials/${credentialId}/regions/${regionId}/assessment`;
             }
         }),
         getAllOracleHostsAssessmentData: builder.query({
             query: ({ credentialId, regionId, nextToken = null }) => {
                 if (nextToken) {
-                    return `v1/oracle/credentials/${credentialId}/regions/${regionId}/assessment?nextToken=${nextToken}`;
+                    return `v2/oracle/credentials/${credentialId}/regions/${regionId}/assessment?nextToken=${nextToken}`;
                 }
-                return `v1/oracle/credentials/${credentialId}/regions/${regionId}/assessment`;
+                return `v2/oracle/credentials/${credentialId}/regions/${regionId}/assessment`;
             }
         }),
         manageBulkV2MssqlInstance: builder.mutation({
