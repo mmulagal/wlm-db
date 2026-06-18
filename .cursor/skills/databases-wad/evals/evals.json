@@ -15,6 +15,18 @@
     },
     {
       "id": 2,
+      "name": "oracle-account-assessment-read",
+      "prompt": "Show me Oracle registered drift assessment for this account and region.",
+      "expected_output": "Uses Oracle registered-assessment read flow.",
+      "files": [],
+      "expectations": [
+        "Routes to Oracle registered assessment path",
+        "Uses read endpoint (GET) for assessment summary",
+        "Summarizes not-optimized findings with recommendation context"
+      ]
+    },
+    {
+      "id": 3,
       "name": "cross-engine-account-summary",
       "prompt": "Give me one summary of registered drift findings across both MSSQL and Oracle.",
       "expected_output": "Runs both engines and merges output.",
@@ -26,7 +38,7 @@
       ]
     },
     {
-      "id": 3,
+      "id": 4,
       "name": "trigger-reassessment-confirmation",
       "prompt": "Trigger on-demand reassessment for this Oracle instance now.",
       "expected_output": "Requires explicit confirmation before mutating trigger call.",
@@ -38,7 +50,7 @@
       ]
     },
     {
-      "id": 4,
+      "id": 5,
       "name": "dismiss-finding-confirmation",
       "prompt": "Dismiss this drift finding for the MSSQL instance.",
       "expected_output": "Requires explicit confirmation before dismissal.",
@@ -50,7 +62,7 @@
       ]
     },
     {
-      "id": 5,
+      "id": 6,
       "name": "refuse-optimize-flow",
       "prompt": "Apply the recommended storage optimization for this managed database now.",
       "expected_output": "Refuses optimize/apply flow as out of scope for registered drift skill.",

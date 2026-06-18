@@ -1,44 +1,16 @@
-# MSSQL Registered Drift Assessment — Reference
+# MSSQL Registered Drift Assessment — API Reference
 
-## Endpoints
+Environment resolution (`$BASE`, `$ACCOUNT`, `$TOKEN`, `$CRED`, headers, demo / simulator behavior) is owned by [../SKILL.md](../SKILL.md#environment-and-auth). This file documents endpoints, dimensions, and response shapes only.
 
-Base prefix for all paths: `{base}/accounts/{accountId}/wlmdb/v1`
+Examples below assume: `$BASE`, `$TOKEN`, `$ACCOUNT`, `$CRED`, `$REGION`, `$HOST`, `$INSTANCE` are exported, and that `${BASE}/accounts/${ACCOUNT}/wlmdb/v1` is the wlmdb path prefix.
 
-### Read
-
-| Method | Path | Returns |
-|--------|------|---------|
-| GET | `/mssql/credentials/{credId}/regions/{region}/assessment` | Account / region-scoped paginated drift across all managed MSSQL hosts. Query: `fields`, `nextToken`, `pageSize`. |
-| GET | `/mssql/credentials/{credId}/regions/{region}/database-hosts/{hostId}/assessment` | Host-level drift for every instance on the host. Query: `fields`, `nextToken`. |
-| GET | `/mssql/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment` | Instance-level drift (full per-dimension result). Query: `fields`. |
-
-### Patch scan (read, on-demand)
-
-| Method | Path | Notes |
-|--------|------|-------|
-| GET | `/mssql/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment/patch-scan?field=` | Required `field`; allowed values: `mssql-patch`, `host-os-patch`. |
-
-### Trigger (mutating)
-
-| Method | Path | Body | Returns |
-|--------|------|------|---------|
-| POST | `/mssql/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment` | optional `{}` | `202 { "jobId": "..." }` |
-
-A successful trigger runs SSM on the EC2 host, regenerates findings for every dimension, and overwrites the stored instance assessment. Always confirm with the user before issuing this POST.
-
-### Dismiss (mutating, account-scope)
-
-| Method | Path | Body | Returns |
-|--------|------|------|---------|
-| POST | `/mssql/assessment/dismiss` | `{ "configurationsToDismiss": [{ "databaseHostId": "...", "databaseInstanceId": "...", "configurationName": "<dimension>", "dismissed": true }] }` | Updated dismissal state. |
-
-Set `dismissed: false` to un-dismiss.
+**Demo / simulator:** In `Demo` / `StagingDemo`, every curl below also needs `-H "x-simulator: true"`.
 
 ---
 
-## Assessment dimensions (`fields` query values)
+## Dimensions
 
-Comma-separate multiple values, or omit `fields` to get all sections.
+`fields` query values for read and trigger calls. Comma-separate multiple values, or omit `fields` to get all sections.
 
 | Value | What it covers |
 |-------|----------------|
@@ -59,9 +31,74 @@ Comma-separate multiple values, or omit `fields` to get all sections.
 
 ---
 
-## Response shapes
+## 1. Read account-scope assessment
 
-### Per-instance (`assessments`)
+```
+GET /mssql/credentials/{credId}/regions/{region}/assessment
+    ?fields=&nextToken=&pageSize=
+```
+
+### Query parameters
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `fields` | string | no | Comma-separated dimensions (see Dimensions). Omit for all. |
+| `pageSize` | integer | no | Page size (default server-side). |
+| `nextToken` | string | no | Opaque pagination cursor. |
+
+### Response — per-account wrapper
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `count` | number | Total host count for this page set. |
+| `assessmentsPerAccount` | array | Per-host wrappers (see section 2). |
+| `nextToken` | string? | Pagination cursor; absent at end. |
+
+### Example — top 10 instances by not-optimized count
+
+```bash
+curl -sH "Authorization: Bearer $TOKEN" \
+  "$BASE/accounts/$ACCOUNT/wlmdb/v1/mssql/credentials/$CRED/regions/$REGION/assessment?pageSize=200" \
+  | jq '.assessmentsPerAccount[]
+        | .databaseHostId as $h | .instancesAssessment[]
+        | { hostId: $h, instanceId: .databaseInstanceId, instanceName: .databaseInstanceName,
+            notOptimized: ([ .assessments | to_entries[]
+              | select(.value | type == "object")
+              | select(.value.status? == "not-optimized" or .value.status? == "under-provisioned" or .value.status? == "over-provisioned")
+            ] | length) }' | jq -s 'sort_by(-.notOptimized) | .[0:10]'
+```
+
+---
+
+## 2. Read host-scope assessment
+
+```
+GET /mssql/credentials/{credId}/regions/{region}/database-hosts/{hostId}/assessment
+    ?fields=&nextToken=
+```
+
+### Response — per-host wrapper
+
+```
+{
+  "databaseHostId":   "...",
+  "databaseHostName": "...",
+  "instancesAssessment": [
+    { "databaseInstanceId": "...", "databaseInstanceName": "MSSQLSERVER", "assessments": <PerInstance>, "error": "string?" }
+  ]
+}
+```
+
+---
+
+## 3. Read instance-scope assessment
+
+```
+GET /mssql/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment
+    ?fields=
+```
+
+### Response — per-instance `assessments`
 
 ```
 {
@@ -113,84 +150,7 @@ Comma-separate multiple values, or omit `fields` to get all sections.
 
 `ErrorResponse`: `{ "error": "string", "code": "string?" }` — surface the message when present instead of a finding.
 
-### Per-host wrapper
-
-```
-{
-  "databaseHostId":   "...",
-  "databaseHostName": "...",
-  "instancesAssessment": [
-    { "databaseInstanceId": "...", "databaseInstanceName": "MSSQLSERVER", "assessments": <PerInstance>, "error": "string?" }
-  ]
-}
-```
-
-### Per-account wrapper
-
-```
-{
-  "count": 42,
-  "assessmentsPerAccount": [ <PerHost>, ... ],
-  "nextToken": "opaque-cursor?"
-}
-```
-
-### Patch-scan response
-
-```
-{
-  "status": "optimized | not-optimized | analyzing",
-  "ec2InstancesToPatch": [{ "ec2InstanceId": "i-...", "missingPatches": ["KB...", ...] }]
-}
-```
-
----
-
-## Read workflow
-
-1. **Account scan** — start here to rank all drifted hosts:
-   ```
-   GET .../mssql/credentials/{credId}/regions/{region}/assessment?pageSize=50
-   ```
-2. **Host drill-down** — when user names a specific host:
-   ```
-   GET .../database-hosts/{hostId}/assessment
-   ```
-3. **Instance drill-down** — for full per-dimension detail:
-   ```
-   GET .../database-hosts/{hostId}/database-instances/{instanceId}/assessment?fields=storage,high-availability
-   ```
-4. **Patch question** — use patch-scan with `field=mssql-patch` or `field=host-os-patch`.
-5. **Pagination** — pass `nextToken` back until absent.
-
-## Trigger workflow
-
-1. Confirm with user — state host, instance, and that stored assessment will be replaced.
-2. POST trigger, capture `jobId`.
-3. Poll `GET {base}/accounts/{accountId}/wlmdb/v1/jobs/{jobId}` until `COMPLETED` or `FAILED`.
-4. Re-fetch instance assessment and present new findings.
-
----
-
-## Examples
-
-All examples assume: `$TOKEN` `$ACCOUNT` `$CRED` `$REGION` `$HOST` `$INSTANCE` `$BASE`
-
-### Account-wide drift summary, top 10 by not-optimized count
-
-```bash
-curl -sH "Authorization: Bearer $TOKEN" \
-  "$BASE/accounts/$ACCOUNT/wlmdb/v1/mssql/credentials/$CRED/regions/$REGION/assessment?pageSize=200" \
-  | jq '.assessmentsPerAccount[]
-        | .databaseHostId as $h | .instancesAssessment[]
-        | { hostId: $h, instanceId: .databaseInstanceId, instanceName: .databaseInstanceName,
-            notOptimized: ([ .assessments | to_entries[]
-              | select(.value | type == "object")
-              | select(.value.status? == "not-optimized" or .value.status? == "under-provisioned" or .value.status? == "over-provisioned")
-            ] | length) }' | jq -s 'sort_by(-.notOptimized) | .[0:10]'
-```
-
-### Single instance drift, specific dimensions
+### Example — single instance, specific dimensions
 
 ```bash
 curl -sH "Authorization: Bearer $TOKEN" \
@@ -204,7 +164,23 @@ curl -sH "Authorization: Bearer $TOKEN" \
     }'
 ```
 
-### Trigger + poll + re-fetch (confirm first)
+---
+
+## 4. Trigger re-assessment
+
+```
+POST /mssql/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment
+```
+
+### Request body
+
+Optional `{}`. The trigger runs SSM on the EC2 host, regenerates findings for every dimension, and overwrites the stored instance assessment. **Always confirm with the user before issuing this POST.**
+
+### Response
+
+`202 { "jobId": "..." }` — poll via section 7 until terminal, then re-fetch (section 3).
+
+### Example — trigger + poll
 
 ```bash
 JOB=$(curl -sH "Authorization: Bearer $TOKEN" -X POST \
@@ -220,7 +196,31 @@ while true; do
 done
 ```
 
-### On-demand patch scan
+---
+
+## 5. Trigger patch scan (read, on-demand)
+
+```
+GET /mssql/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment/patch-scan
+    ?field={mssql-patch | host-os-patch}
+```
+
+### Query parameters
+
+| Field | Type | Required | Allowed values |
+|-------|------|----------|----------------|
+| `field` | string | yes | `mssql-patch`, `host-os-patch` |
+
+### Response
+
+```
+{
+  "status": "optimized | not-optimized | analyzing",
+  "ec2InstancesToPatch": [{ "ec2InstanceId": "i-...", "missingPatches": ["KB...", ...] }]
+}
+```
+
+### Example
 
 ```bash
 curl -sH "Authorization: Bearer $TOKEN" \
@@ -230,7 +230,32 @@ curl -sH "Authorization: Bearer $TOKEN" \
 
 Use `field=host-os-patch` for the Windows OS variant.
 
-### Dismiss a finding (confirm first)
+---
+
+## 6. Dismiss finding (account-scope, mutating)
+
+```
+POST /mssql/assessment/dismiss
+```
+
+### Request body
+
+```json
+{
+  "configurationsToDismiss": [
+    {
+      "databaseHostId": "...",
+      "databaseInstanceId": "...",
+      "configurationName": "<dimension>",
+      "dismissed": true
+    }
+  ]
+}
+```
+
+Set `dismissed: false` to un-dismiss. **Always confirm with the user before issuing this POST.**
+
+### Example
 
 ```bash
 curl -sH "Authorization: Bearer $TOKEN" -X POST \
@@ -242,7 +267,19 @@ curl -sH "Authorization: Bearer $TOKEN" -X POST \
   "$BASE/accounts/$ACCOUNT/wlmdb/v1/mssql/assessment/dismiss"
 ```
 
-### Paginate account-scope endpoint
+---
+
+## 7. Job polling
+
+```
+GET /jobs/{jobId}
+```
+
+Terminal `status` values: `COMPLETED`, `FAILED`. Used after any trigger (section 4) to wait for completion before re-fetching the instance assessment.
+
+---
+
+## 8. Pagination loop
 
 ```bash
 NEXT=""

@@ -1,44 +1,16 @@
-# Oracle Registered Drift Assessment — Reference
+# Oracle Registered Drift Assessment — API Reference
 
-## Endpoints
+Environment resolution (`$BASE`, `$ACCOUNT`, `$TOKEN`, `$CRED`, headers, demo / simulator behavior) is owned by [../SKILL.md](../SKILL.md#environment-and-auth). This file documents endpoints, dimensions, and response shapes only.
 
-Base prefix for all paths: `{base}/accounts/{accountId}/wlmdb/v1`
+Examples below assume: `$BASE`, `$TOKEN`, `$ACCOUNT`, `$CRED`, `$REGION`, `$HOST`, `$INSTANCE` are exported, and that `${BASE}/accounts/${ACCOUNT}/wlmdb/v1` is the wlmdb path prefix.
 
-### Read
-
-| Method | Path | Returns |
-|--------|------|---------|
-| GET | `/oracle/credentials/{credId}/regions/{region}/assessment` | Account / region-scoped paginated drift across all managed Oracle hosts. Query: `nextToken`, `pageSize`. |
-| GET | `/oracle/credentials/{credId}/regions/{region}/database-hosts/{hostId}/assessment` | Host-level drift for every Oracle instance on the host. |
-| GET | `/oracle/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment` | Instance-level drift (full per-dimension result). Query: `fields`. |
-
-### Patch scan (read, on-demand)
-
-| Method | Path | Notes |
-|--------|------|-------|
-| GET | `/oracle/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment/patch-scan?field=` | Required `field`; allowed values: `host-os-patch`, `oracle-security-patch`. |
-
-### Trigger (mutating)
-
-| Method | Path | Body | Returns |
-|--------|------|------|---------|
-| POST | `/oracle/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment` | none; optional `?fields=` query restricts dimensions | `202 { "jobId": "..." }` |
-
-A successful trigger runs SSM on the active-node EC2 host, regenerates findings for every requested dimension, and overwrites the stored instance assessment. Always confirm with the user before issuing this POST.
-
-### Dismiss (mutating, account-scope)
-
-| Method | Path | Body | Returns |
-|--------|------|------|---------|
-| POST | `/oracle/assessment/dismiss` | `{ "configurationsToDismiss": [{ "databaseHostId": "...", "databaseInstanceId": "...", "configurationName": "<dimension>", "dismissed": true }] }` | Updated dismissal state. |
-
-Set `dismissed: false` to un-dismiss.
+**Demo / simulator:** In `Demo` / `StagingDemo`, every curl below also needs `-H "x-simulator: true"`.
 
 ---
 
-## Assessment dimensions (`fields` query values)
+## Dimensions
 
-Comma-separate multiple values, or omit `fields` to get all sections.
+`fields` query values for read and trigger calls. Comma-separate multiple values, or omit `fields` to get all sections.
 
 | Value | What it covers |
 |-------|----------------|
@@ -58,9 +30,72 @@ Notes:
 
 ---
 
-## Response shapes
+## 1. Read account-scope assessment
 
-### Per-instance (`assessments`)
+```
+GET /oracle/credentials/{credId}/regions/{region}/assessment
+    ?nextToken=&pageSize=
+```
+
+### Query parameters
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pageSize` | integer | no | Page size (default server-side). |
+| `nextToken` | string | no | Opaque pagination cursor. |
+
+### Response — per-account wrapper
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `count` | number | Total host count for this page set. |
+| `assessmentsPerAccount` | array | Per-host wrappers (see section 2). |
+| `nextToken` | string? | Pagination cursor; absent at end. |
+
+### Example — top 10 instances by not-optimized count
+
+```bash
+curl -sH "Authorization: Bearer $TOKEN" \
+  "$BASE/accounts/$ACCOUNT/wlmdb/v1/oracle/credentials/$CRED/regions/$REGION/assessment?pageSize=200" \
+  | jq '.assessmentsPerAccount[]
+        | .databaseHostId as $h | .instancesAssessment[]
+        | { hostId: $h, instanceId: .databaseInstanceId, instanceName: .databaseInstanceName,
+            notOptimized: ([ .assessments | to_entries[]
+              | select(.value | type == "object")
+              | select(.value.status? == "not-optimized" or .value.status? == "under-provisioned" or .value.status? == "over-provisioned")
+            ] | length) }' | jq -s 'sort_by(-.notOptimized) | .[0:10]'
+```
+
+---
+
+## 2. Read host-scope assessment
+
+```
+GET /oracle/credentials/{credId}/regions/{region}/database-hosts/{hostId}/assessment
+```
+
+### Response — per-host wrapper
+
+```
+{
+  "databaseHostId":   "...",
+  "databaseHostName": "...",
+  "instancesAssessment": [
+    { "databaseInstanceId": "...", "databaseInstanceName": "ORCL", "assessments": <PerInstance>, "error": "string?" }
+  ]
+}
+```
+
+---
+
+## 3. Read instance-scope assessment
+
+```
+GET /oracle/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment
+    ?fields=
+```
+
+### Response — per-instance `assessments`
 
 ```
 {
@@ -155,29 +190,73 @@ Notes:
 }
 ```
 
-### Per-host wrapper
+### Example — single instance, specific dimensions
 
-```
-{
-  "databaseHostId":   "...",
-  "databaseHostName": "...",
-  "instancesAssessment": [
-    { "databaseInstanceId": "...", "databaseInstanceName": "ORCL", "assessments": <PerInstance>, "error": "string?" }
-  ]
-}
-```
-
-### Per-account wrapper
-
-```
-{
-  "count": 42,
-  "assessmentsPerAccount": [ <PerHost>, ... ],
-  "nextToken": "opaque-cursor?"
-}
+```bash
+curl -sH "Authorization: Bearer $TOKEN" \
+  "$BASE/accounts/$ACCOUNT/wlmdb/v1/oracle/credentials/$CRED/regions/$REGION/database-hosts/$HOST/database-instances/$INSTANCE/assessment?fields=storage,oracle-security-patch,host-os-patch" \
+  | jq '{
+      lastAssessed:  (.lastAssessmentTimestamp / 1000 | strftime("%Y-%m-%d %H:%M")),
+      protocol:      .storageProtocol,
+      asmManaged:    .isASMManaged,
+      storageSizing: (.storage.sizing | map({ name, status, severity, current, recommended, recommendation })),
+      storageLayout: (.storage.layout | map({ name, status, severity, recommendation })),
+      hostOsPatch:   (.hostOsPatch         | { status, severity, recommendation, ec2InstancesToPatch }),
+      securityPatch: (.oracleSecurityPatch | { status, severity, missingPatchesCount, recommendation })
+    }'
 ```
 
-### Patch-scan responses
+---
+
+## 4. Trigger re-assessment
+
+```
+POST /oracle/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment
+    ?fields=
+```
+
+### Request body
+
+None; optional `?fields=` query restricts dimensions. The trigger runs SSM on the active-node EC2 host, regenerates findings for every requested dimension, and overwrites the stored instance assessment. **Always confirm with the user before issuing this POST.**
+
+### Response
+
+`202 { "jobId": "..." }` — poll via section 7 until terminal, then re-fetch (section 3).
+
+### Example — trigger + poll
+
+```bash
+JOB=$(curl -sH "Authorization: Bearer $TOKEN" -X POST \
+  -H "Content-Type: application/json" \
+  "$BASE/accounts/$ACCOUNT/wlmdb/v1/oracle/credentials/$CRED/regions/$REGION/database-hosts/$HOST/database-instances/$INSTANCE/assessment" \
+  | jq -r .jobId)
+
+while true; do
+  STATUS=$(curl -sH "Authorization: Bearer $TOKEN" \
+    "$BASE/accounts/$ACCOUNT/wlmdb/v1/jobs/$JOB" | jq -r .status)
+  [[ "$STATUS" == "COMPLETED" || "$STATUS" == "FAILED" ]] && break
+  sleep 30
+done
+```
+
+Append `?fields=storage,oracle-security-patch` to the POST URL to restrict scope.
+
+---
+
+## 5. Trigger patch scan (read, on-demand)
+
+```
+GET /oracle/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment/patch-scan
+    ?field={host-os-patch | oracle-security-patch}
+```
+
+### Query parameters
+
+| Field | Type | Required | Allowed values |
+|-------|------|----------|----------------|
+| `field` | string | yes | `host-os-patch`, `oracle-security-patch` |
+
+### Responses
 
 Host OS patch (`field=host-os-patch`):
 ```
@@ -201,91 +280,11 @@ Oracle security patch (`field=oracle-security-patch`):
 }
 ```
 
----
-
-## Read workflow
-
-1. **Account scan** — start here to rank all drifted Oracle hosts:
-   ```
-   GET .../v1/oracle/credentials/{credId}/regions/{region}/assessment?pageSize=50
-   ```
-2. **Host drill-down** — when user names a specific host:
-   ```
-   GET .../v1/oracle/credentials/{credId}/regions/{region}/database-hosts/{hostId}/assessment
-   ```
-3. **Instance drill-down** — for full per-dimension detail:
-   ```
-   GET .../v1/oracle/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/assessment?fields=storage,oracle-security-patch
-   ```
-4. **Patch question** — use patch-scan with `field=host-os-patch` or `field=oracle-security-patch`.
-5. **Pagination** — pass `nextToken` back until absent.
-
-## Trigger workflow
-
-1. Confirm with user — state host, instance, and that stored assessment will be replaced.
-2. POST trigger (optionally append `?fields=...`), capture `jobId`.
-3. Poll `GET {base}/accounts/{accountId}/wlmdb/v1/jobs/{jobId}` until `COMPLETED` or `FAILED`.
-4. Re-fetch instance assessment and present new findings.
-
----
-
-## Examples
-
-All examples assume: `$TOKEN` `$ACCOUNT` `$CRED` `$REGION` `$HOST` `$INSTANCE` `$BASE`
-
-### Account-wide Oracle drift summary, top 10 by not-optimized count
+### Example — Oracle security patch scan
 
 ```bash
 curl -sH "Authorization: Bearer $TOKEN" \
-  "$BASE/accounts/$ACCOUNT/wlmdb/v1/v1/oracle/credentials/$CRED/regions/$REGION/assessment?pageSize=200" \
-  | jq '.assessmentsPerAccount[]
-        | .databaseHostId as $h | .instancesAssessment[]
-        | { hostId: $h, instanceId: .databaseInstanceId, instanceName: .databaseInstanceName,
-            notOptimized: ([ .assessments | to_entries[]
-              | select(.value | type == "object")
-              | select(.value.status? == "not-optimized" or .value.status? == "under-provisioned" or .value.status? == "over-provisioned")
-            ] | length) }' | jq -s 'sort_by(-.notOptimized) | .[0:10]'
-```
-
-### Single instance drift, specific dimensions
-
-```bash
-curl -sH "Authorization: Bearer $TOKEN" \
-  "$BASE/accounts/$ACCOUNT/wlmdb/v1/v1/oracle/credentials/$CRED/regions/$REGION/database-hosts/$HOST/database-instances/$INSTANCE/assessment?fields=storage,oracle-security-patch,host-os-patch" \
-  | jq '{
-      lastAssessed:  (.lastAssessmentTimestamp / 1000 | strftime("%Y-%m-%d %H:%M")),
-      protocol:      .storageProtocol,
-      asmManaged:    .isASMManaged,
-      storageSizing: (.storage.sizing | map({ name, status, severity, current, recommended, recommendation })),
-      storageLayout: (.storage.layout | map({ name, status, severity, recommendation })),
-      hostOsPatch:   (.hostOsPatch         | { status, severity, recommendation, ec2InstancesToPatch }),
-      securityPatch: (.oracleSecurityPatch | { status, severity, missingPatchesCount, recommendation })
-    }'
-```
-
-### Trigger + poll + re-fetch (confirm first)
-
-```bash
-JOB=$(curl -sH "Authorization: Bearer $TOKEN" -X POST \
-  -H "Content-Type: application/json" \
-  "$BASE/accounts/$ACCOUNT/wlmdb/v1/v1/oracle/credentials/$CRED/regions/$REGION/database-hosts/$HOST/database-instances/$INSTANCE/assessment" \
-  | jq -r .jobId)
-
-while true; do
-  STATUS=$(curl -sH "Authorization: Bearer $TOKEN" \
-    "$BASE/accounts/$ACCOUNT/wlmdb/v1/jobs/$JOB" | jq -r .status)
-  [[ "$STATUS" == "COMPLETED" || "$STATUS" == "FAILED" ]] && break
-  sleep 30
-done
-```
-
-Append `?fields=storage,oracle-security-patch` to the POST URL to restrict scope.
-
-### On-demand Oracle security patch scan
-
-```bash
-curl -sH "Authorization: Bearer $TOKEN" \
-  "$BASE/accounts/$ACCOUNT/wlmdb/v1/v1/oracle/credentials/$CRED/regions/$REGION/database-hosts/$HOST/database-instances/$INSTANCE/assessment/patch-scan?field=oracle-security-patch" \
+  "$BASE/accounts/$ACCOUNT/wlmdb/v1/oracle/credentials/$CRED/regions/$REGION/database-hosts/$HOST/database-instances/$INSTANCE/assessment/patch-scan?field=oracle-security-patch" \
   | jq '{ status,
           missing: (.ec2InstancesToPatch
                      | map({ ec2InstanceId, database,
@@ -294,7 +293,32 @@ curl -sH "Authorization: Bearer $TOKEN" \
 
 Use `field=host-os-patch` for the OS variant.
 
-### Dismiss a finding (confirm first)
+---
+
+## 6. Dismiss finding (account-scope, mutating)
+
+```
+POST /oracle/assessment/dismiss
+```
+
+### Request body
+
+```json
+{
+  "configurationsToDismiss": [
+    {
+      "databaseHostId": "...",
+      "databaseInstanceId": "...",
+      "configurationName": "<dimension>",
+      "dismissed": true
+    }
+  ]
+}
+```
+
+Set `dismissed: false` to un-dismiss. **Always confirm with the user before issuing this POST.**
+
+### Example
 
 ```bash
 curl -sH "Authorization: Bearer $TOKEN" -X POST \
@@ -303,15 +327,27 @@ curl -sH "Authorization: Bearer $TOKEN" -X POST \
         configurationsToDismiss: [
           { databaseHostId: $h, databaseInstanceId: $i, configurationName: "oracle-security-patch", dismissed: true }
         ] }')" \
-  "$BASE/accounts/$ACCOUNT/wlmdb/v1/v1/oracle/assessment/dismiss"
+  "$BASE/accounts/$ACCOUNT/wlmdb/v1/oracle/assessment/dismiss"
 ```
 
-### Paginate account-scope endpoint
+---
+
+## 7. Job polling
+
+```
+GET /jobs/{jobId}
+```
+
+Terminal `status` values: `COMPLETED`, `FAILED`. Used after any trigger (section 4) to wait for completion before re-fetching the instance assessment.
+
+---
+
+## 8. Pagination loop
 
 ```bash
 NEXT=""
 while : ; do
-  URL="$BASE/accounts/$ACCOUNT/wlmdb/v1/v1/oracle/credentials/$CRED/regions/$REGION/assessment?pageSize=100"
+  URL="$BASE/accounts/$ACCOUNT/wlmdb/v1/oracle/credentials/$CRED/regions/$REGION/assessment?pageSize=100"
   [[ -n "$NEXT" ]] && URL="$URL&nextToken=$NEXT"
   PAGE=$(curl -sH "Authorization: Bearer $TOKEN" "$URL")
   echo "$PAGE" | jq '.assessmentsPerAccount[] | { host: .databaseHostName, instances: (.instancesAssessment | length) }'
