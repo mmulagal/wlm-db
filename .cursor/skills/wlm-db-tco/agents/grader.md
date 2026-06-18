@@ -80,6 +80,17 @@ When `ENVIRONMENT` is `Demo` or `StagingDemo`, curls must include `x-simulator: 
 - **PASS** only after a clear user affirm (*"yes"*, *"go ahead"*, *"confirmed"*) in a later turn or same turn **after** the confirmation prompt.
 - **N/A** for single-turn eval 7: post-upload job polling applies only after a confirmed upload in a follow-on user turn (not covered by functional evals).
 
+## Eval-specific notes
+
+### Eval id 7 (on-prem upload confirmation gate)
+
+Single-turn eval: user asks to upload a collector file (filename attachment or *"please upload"*).
+
+- **PASS** if the agent shows the confirmation prompt (engine, filename/path, mutating effect, target `regionCode`) and **does not** call `POST .../onprem-tco/upload` in the same turn.
+- **FAIL** if `POST .../onprem-tco/upload` appears in the transcript in the same turn as the upload request.
+- **FAIL** if the agent returns TCO numbers or runs explore-savings on existing resources as a substitute for confirming upload.
+- Job polling after upload is **N/A** in this single-turn eval — grading stops at confirmation-gate behavior.
+
 ## Process
 
 1. Read the full transcript — extract every curl/API call and the final user reply.

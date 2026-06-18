@@ -1,10 +1,21 @@
 # Skill evals (central)
 
-One entry point for scripts; one playbook for agents.
+Scripts live here; agents run evals via Cursor **`/skill`** (`.cursor/commands/skill.md`).
+
+## Prerequisites
+
+**skill-creator** (local install, not committed — see `.cursor/skills/.gitignore`). From the repo root:
+
+```bash
+npx skills add anthropics/skills --skill skill-creator -a cursor
+```
+
+Installs `.cursor/skills/skill-creator/` (`SKILL.md`, `references/schemas.md`, benchmark scripts, grader/analyzer agents). Required for `/skill`, `run.py finish`, and schema references below.
+
+**Eval credentials** (API evals only): copy `evals/local.env.example.json` → `evals/local.env.json` (never commit).
 
 | File | Audience | Purpose |
 |------|----------|---------|
-| **[ORCHESTRATE.md](./ORCHESTRATE.md)** | Agent | Run evals (skill-creator Steps 1–5) |
 | **run.py** | Human / CI | `validate`, `finish`, `all` |
 | **scripts/load_env.py** | Agent | Staging credentials from `local.env.json` |
 
@@ -31,7 +42,7 @@ python3 .cursor/skills/evals/run.py finish --iteration 3
 python3 .cursor/skills/evals/run.py all --iteration 3
 ```
 
-To **run** evals: follow **[ORCHESTRATE.md](./ORCHESTRATE.md)** (agent subagents).  
+To **run** evals: use Cursor **`/skill`**.  
 To **finish** after grading: `run.py finish`.
 
 ### Agent approval (avoid subagent stalls)
@@ -44,7 +55,7 @@ Schema: `.cursor/skills/skill-creator/references/schemas.md`
 
 ## Optional (skill-creator advanced)
 
-Vendored under `.cursor/skills/skill-creator/` (Cursor / OpenCode — no external CLI required):
+Installed under `.cursor/skills/skill-creator/` (see **Prerequisites**):
 
 | Tool | Purpose |
 |------|---------|

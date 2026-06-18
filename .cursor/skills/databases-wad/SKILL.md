@@ -1,6 +1,9 @@
 ---
 name: databases-wad
 description: Master skill for NetApp Workload Factory registered (continuous) drift assessment for managed databases. Routes to the engine-specific reference for MSSQL (SQL Server) or Oracle - account, host, and instance-level findings, on-demand re-assessment, patch scans, and dismissal of findings. Use when the user asks about registered / drift assessment, "what does Workload Factory say about this database?", on-demand re-assessment, patch scans, or dismissing findings, with or without specifying the engine. Does not cover offline / one-time WAD upload flows or any optimize / apply / remediate / fix flows.
+metadata:
+  author: wlm-db
+  version: 1.0.0
 ---
 
 # Workload Factory Registered Assessment

@@ -164,8 +164,8 @@ def cmd_finish(root: Path, iteration: int, names: list[str] | None) -> int:
 
 
 def cmd_plan(root: Path, iteration: int) -> None:
-    """Print short checklist; full steps in ORCHESTRATE.md."""
-    print("Full agent playbook: .cursor/skills/evals/ORCHESTRATE.md")
+    """Print short checklist; full steps in .cursor/commands/skill.md."""
+    print("Full agent playbook: .cursor/commands/skill.md (/skill)")
     print(f"Iteration: {iteration}\n")
     for skill_dir in discover_skills(root):
         evals_path = skill_dir / "evals" / "evals.json"

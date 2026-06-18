@@ -10,6 +10,9 @@ description: >
   redirect to Oracle EBS (Oracle has no FSxW path). Do not trigger for PostgreSQL TCO,
   wlmdb source/route/UI edits, drift assessment, logs analysis, apply/remediate flows, or
   post-migration managed-host savings dashboards. PostgreSQL is not supported.
+metadata:
+  author: wlm-db
+  version: 1.0.0
 ---
 
 # Explore Savings / TCO (Workload Factory Databases)
@@ -179,5 +182,5 @@ Details: [onprem-mssql.md](references/onprem-mssql.md), [onprem-oracle.md](refer
 | [references/onprem-oracle.md](references/onprem-oracle.md) | On-prem Oracle explore-savings |
 | [references/shared-fields.md](references/shared-fields.md) | Snapshot fields and response mapping |
 | [references/examples.md](references/examples.md) | curl command examples |
-| [../evals/ORCHESTRATE.md](../evals/ORCHESTRATE.md) | Eval loop ([skill-creator](https://www.skills.sh/anthropics/skills/skill-creator)) |
+| [../evals/README.md](../evals/README.md) | Eval framework; run via Cursor **`/skill`** |
 

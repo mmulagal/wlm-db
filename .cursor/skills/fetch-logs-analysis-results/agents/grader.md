@@ -31,6 +31,16 @@ Grade whether the agent routes correctly between read and trigger workflows, avo
 - PostgreSQL is unsupported.
 - Fail if the agent calls MSSQL/Oracle logs-analysis APIs as a substitute.
 
+## Eval-specific notes
+
+### Report-by-id (do not substitute summary)
+
+When an expectation or prompt asks for a **specific report id** (or eval metadata references report-by-id scope):
+
+- **PASS** only if the transcript shows `GET .../database-hosts/{hostId}/database-instances/{instanceId}/logs-analysis?id={reportId}` (or equivalent MCP call with `id` query param).
+- **FAIL** if the agent used summary-only (`GET .../logs-analysis/summary`) or instance aggregate without `id` when report-by-id was required.
+- **FAIL** if the agent documented the report-by-id path but never executed the GET in the transcript.
+
 ## Output format
 
 Write `grading.json` with:
