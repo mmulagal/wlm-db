@@ -44,7 +44,7 @@
         "marketingUrl": "/databases/marketing",
         "marketingBlueXPUrl": "/fsxdb/marketing",
         "dataUrl": "/wlmdb/v1/widget-status",
-        "primaryCtaLabel": "Manage",
+        "primaryCtaLabel": "Run assessment",
         "primaryCtaTo": "/databases/inventory",
         "primaryCtaBluexpTo": "/fsxdb/inventory",
         "noCredentialCtaLabel": "Explore savings",
