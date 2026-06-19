@@ -72,6 +72,42 @@
         "Offers registered drift assessment capabilities instead",
         "Does not call optimize endpoints"
       ]
+    },
+    {
+      "id": 7,
+      "name": "reassessment-after-confirmation",
+      "prompt": "User previously asked to re-assess Oracle instance host-prod-orcl-01 / ORCL; you asked for confirmation and they replied yes, go ahead. Run the reassessment now.",
+      "expected_output": "POSTs reassessment after explicit confirmation, polls job, re-fetches assessment.",
+      "files": [],
+      "expectations": [
+        "Treats prior yes/go ahead as explicit confirmation for mutating POST",
+        "Calls POST .../database-hosts/{hostId}/database-instances/{instanceId}/assessment for Oracle",
+        "Polls GET .../jobs/{jobId} until COMPLETED or FAILED and re-fetches instance assessment"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "reject-offline-wad-upload",
+      "prompt": "Run a one-time offline WAD collector upload from this zip file for my database.",
+      "expected_output": "Refuses offline WAD upload as out of scope for registered drift skill.",
+      "files": [],
+      "expectations": [
+        "States offline or one-time WAD collector upload is out of scope",
+        "Does not call registered assessment endpoints as a substitute for WAD upload",
+        "Offers registered drift assessment read capabilities instead"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "reject-tco-redirect",
+      "prompt": "Run explore savings TCO for this Oracle database.",
+      "expected_output": "Refuses TCO scope and redirects to wlm-db-tco.",
+      "files": [],
+      "expectations": [
+        "States TCO or Explore Savings is out of scope for this skill",
+        "Redirects to wlm-db-tco for storage savings or TCO",
+        "Does not call assessment endpoints for a TCO request"
+      ]
     }
   ]
 }

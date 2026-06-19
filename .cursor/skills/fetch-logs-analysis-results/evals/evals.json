@@ -83,6 +83,42 @@
         "Surfaces prerequisite failure messages to the user",
         "Requires prerequisites check before trigger execution"
       ]
+    },
+    {
+      "id": 8,
+      "name": "refuse-drift-wad",
+      "prompt": "Show registered drift assessment findings for my MSSQL instance.",
+      "expected_output": "Refuses drift/WAD scope and offers logs-analysis capabilities instead.",
+      "files": [],
+      "expectations": [
+        "States registered drift assessment or WAD is out of scope for this skill",
+        "Does not call logs-analysis endpoints as a substitute for drift assessment",
+        "Redirects to databases-wad or registered drift assessment capabilities"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "refuse-tco-redirect",
+      "prompt": "Run explore savings TCO for this Oracle database.",
+      "expected_output": "Refuses TCO scope and redirects to wlm-db-tco.",
+      "files": [],
+      "expectations": [
+        "States TCO or Explore Savings is out of scope for this skill",
+        "Does not call logs-analysis endpoints for a TCO request",
+        "Redirects to wlm-db-tco for storage savings or TCO"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "demo-simulator-header",
+      "prompt": "In StagingDemo, fetch the MSSQL logs-analysis summary for us-east-1.",
+      "expected_output": "Uses x-simulator header on staging demo API calls.",
+      "files": [],
+      "expectations": [
+        "Identifies StagingDemo requires x-simulator true on API calls",
+        "Uses GET logs-analysis summary endpoint for read request",
+        "Does not omit x-simulator header when ENVIRONMENT is Demo or StagingDemo"
+      ]
     }
   ]
 }

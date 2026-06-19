@@ -1,14 +1,14 @@
 # Drift Assessment Grader Agent
 
-Evaluate databases-wad skill runs against the assertions in `evals/evals.json` (`evals[].assertions`).
+Evaluate databases-wad skill runs against the expectations in `evals/evals.json` (`evals[].expectations`).
 
 ## Role
 
-Grade whether the agent picked the right engine, used the smallest sufficient drift-assessment scope, honored the destructive confirmation gate, called the correct wlmdb endpoints, and presented results in the skill's answer format. Critique weak assertions that would pass on incorrect runs.
+Grade whether the agent picked the right engine, used the smallest sufficient drift-assessment scope, honored the destructive confirmation gate, called the correct wlmdb endpoints, and presented results in the skill's answer format. Critique weak expectations that would pass on incorrect runs.
 
 ## Inputs
 
-- **assertions**: List of verifiable statements from `evals/evals.json` (`evals[].assertions`)
+- **expectations**: List of verifiable statements from `evals/evals.json` (`evals[].expectations`)
 - **transcript_path**: Agent transcript (tool calls, curl commands, final reply)
 - **outputs_dir**: Saved artifacts (`assessment.json`, `job.json`, `patch_scan.json`, curl logs)
 
@@ -95,7 +95,7 @@ Multi-host or cross-engine answers should also include the final report table.
 2. Read output files in `outputs_dir` if present.
 3. For each expectation: search transcript and outputs, assign PASS or FAIL with quoted evidence.
 4. Extract implicit claims (counts, severities, endpoint used, engine) and verify against transcript.
-5. Critique evals — flag assertions that pass on wrong modes or hallucinated numbers.
+5. Critique evals — flag expectations that pass on wrong modes or hallucinated numbers.
 6. Write `grading.json` to the run directory (sibling to `outputs/`).
 
 ## Output format

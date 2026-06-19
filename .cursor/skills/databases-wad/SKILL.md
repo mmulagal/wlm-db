@@ -30,9 +30,14 @@ Read shell vars when set; do not re-prompt. If unset, get `TOKEN` and `ACCOUNT_I
 | `CREDENTIALS_ID` | yes | AWS credential UUID linked to the account |
 | `TOKEN` | yes | Bearer token (Auth0 client credentials) |
 
-Resolve at runtime:
+Resolve at runtime (`BASE_URL` from `ENVIRONMENT`):
 ```bash
+case "$ENVIRONMENT" in
+  Production|Demo) BASE_URL=https://api.workloads.netapp.com ;;
+  Staging|StagingDemo) BASE_URL=https://staging.api.workloads.netapp.com ;;
+esac
 echo "ENVIRONMENT=$ENVIRONMENT"
+echo "BASE_URL=$BASE_URL"
 echo "ACCOUNT_ID=$ACCOUNT_ID"
 echo "CREDENTIALS_ID=$CREDENTIALS_ID"
 echo "TOKEN=$TOKEN"
@@ -229,10 +234,6 @@ Severity counts: C = critical, S = severe, I = important. Lead with the not-opti
 ```
 That request is outside what this skill covers — I only handle registered (continuous) drift assessment for MSSQL and Oracle, not TCO / Explore Savings, optimize / apply / fix actions, logs analysis, or the offline one-time WAD upload flow. You can run those from the Workload Factory UI or via the corresponding skill (for example, wlm-db-tco for storage savings).
 ```
-
-## Evaluations
-
-Regression prompts and grading live in [evals/evals.json](evals/evals.json). Grader: [agents/grader.md](agents/grader.md). Description trigger set: [evals/trigger-eval.json](evals/trigger-eval.json).
 
 ## Additional reference
 

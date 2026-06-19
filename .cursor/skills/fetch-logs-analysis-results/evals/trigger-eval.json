@@ -4,7 +4,15 @@
     "should_trigger": true
   },
   {
+    "query": "fetch bedrock log scan remediation recommendations for my oracle instance",
+    "should_trigger": true
+  },
+  {
     "query": "list logs-analysis reports for database host host-123 instance db-456",
+    "should_trigger": true
+  },
+  {
+    "query": "get error pattern remediation from database logs analysis report by id",
     "should_trigger": true
   },
   {
@@ -25,6 +33,10 @@
   },
   {
     "query": "show me registered drift assessment findings for oracle",
+    "should_trigger": false
+  },
+  {
+    "query": "run one-time offline wad upload from this zip file",
     "should_trigger": false
   },
   {

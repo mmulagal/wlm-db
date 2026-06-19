@@ -1,6 +1,14 @@
 # Logs analysis — API reference
 
+Environment resolution (`$BASE`, `$ACCOUNT`, `$TOKEN`, `$CRED`, headers, demo / simulator behavior) is owned by [../SKILL.md](../SKILL.md#environment-and-auth). This file documents endpoints, routing, and response behavior only.
+
 All paths relative to `/accounts/{accountId}/wlmdb/v1`. Replace `{db}` with `mssql` or `oracle`.
+
+Examples assume `$TOKEN`, `$ACCOUNT`, `$CRED`, `$REGION`, `$HOST`, `$INSTANCE`, `$BASE` are exported.
+
+**Demo / simulator:** In `Demo` / `StagingDemo`, every curl below also needs `-H "x-simulator: true"`.
+
+---
 
 ## Read endpoints
 
@@ -9,6 +17,8 @@ All paths relative to `/accounts/{accountId}/wlmdb/v1`. Replace `{db}` with `mss
 | GET | `/{db}/credentials/{credId}/regions/{region}/logs-analysis/summary` | Latest report per database instance for the region (severity counts, error counts, time window) |
 | GET | `/{db}/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/logs-analysis/reports?pageSize=100` | List of report identifiers `{ id, creationTime, startTime, endTime }` newest-first |
 | GET | `/{db}/credentials/{credId}/regions/{region}/database-hosts/{hostId}/database-instances/{instanceId}/logs-analysis?jobId=&id=` | Aggregated `remediationRecommendation[]` (filter by `jobId` or report `id`; omit both to aggregate across all reports for that instance) |
+
+`pageSize` on `/logs-analysis/reports` defaults to **100** server-side; pass explicitly when paging (use `pageSize=100` unless you need fewer, e.g. compare last two scans with `pageSize=2`).
 
 ## Read routing
 
@@ -24,7 +34,7 @@ When the user mentions **report id**, you **must** execute the `id` query-parame
 **Report-by-id workflow (required):**
 
 1. Resolve `databaseHostId` and `databaseInstanceId` (from user, summary, or `GET .../database-hosts`).
-2. If report id is missing, `GET .../logs-analysis/reports?pageSize=20` and use the newest id (or ask the user).
+2. If report id is missing, `GET .../logs-analysis/reports?pageSize=100` and use the newest id (or ask the user).
 3. **Execute** `GET .../database-hosts/{hostId}/database-instances/{instanceId}/logs-analysis?id={reportId}` — documenting this path is not sufficient; the curl must appear in the transcript.
 4. Summarize `remediationRecommendation[]` (or explain 404 / empty). Do **not** stop at summary-only when the user asked for report-by-id scope.
 
@@ -51,15 +61,13 @@ For most "show me logs analysis results" tasks:
 3. **For a specific scan**, list reports and pass `id`:
 
    ```
-   GET .../logs-analysis/reports?pageSize=20
+   GET .../logs-analysis/reports?pageSize=100
    GET .../logs-analysis?id={reportId}
    ```
 
 4. **For a specific job** (e.g. just-triggered), pass `jobId` instead.
 
 ## Examples
-
-All examples assume `$TOKEN`, `$ACCOUNT`, `$CRED`, `$REGION`, `$HOST`, `$INSTANCE`, `$BASE` (e.g. `https://api.workloads.netapp.com`) are set.
 
 ### Example 1 — Region-wide summary, ranked by severity
 
@@ -113,7 +121,7 @@ done
   - `/logs-analysis` → HTTP 404 only when **zero** reports exist for that instance. If reports exist but yield no errors after aggregation, returns HTTP 200 with `{ remediationRecommendation: [] }`.
 - **404 on `GET .../logs-analysis?id=...`:** No matching row for that host+instance+id (not "empty remediation"). Confirm the id via `GET .../logs-analysis/reports` with the same path params.
 - **Timestamps:** All response time fields are epoch milliseconds.
-- **Browser vs curl:** Reproduce DevTools requests verbatim (method, query, headers). Include `x-simulator: true` on demo flows when the UI sends it.
+- **Browser vs curl:** Reproduce DevTools requests verbatim (method, query, headers). In Demo / StagingDemo include `x-simulator: true` on every request.
 
 ## Aggregation (instance GET without `id` or `jobId`)
 
