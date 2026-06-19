@@ -1,8 +1,8 @@
 {
     "author": "",
     "dependencies": {
-        "@aws-sdk/client-bedrock-runtime": "^3.988.0",
-        "@aws-sdk/client-cloudwatch-logs": "^3.988.0",
+        "@aws-sdk/client-bedrock-runtime": "^3.1072.0",
+        "@aws-sdk/client-cloudwatch-logs": "^3.1072.0",
         "@types/node": "^25.2.3",
         "commander": "^14.0.3",
         "execa": "^9.6.1",
@@ -23,7 +23,7 @@
         "@types/ms": "^2.1.0",
         "@types/yargs": "^17.0.33",
         "@yao-pkg/pkg": "^6.6.0",
-        "esbuild": "^0.27.3",
+        "esbuild": "^0.28.1",
         "eslint": "^9.31.0",
         "globals": "^16.3.0",
         "typescript": "^5.8.3",

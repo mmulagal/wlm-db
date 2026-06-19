@@ -15,3 +15,7 @@ description: Load applicable .github/instructions/ files (by applyTo) before age
 Do **not** treat `.github/copilot/*.md` as part of this flow; those runbooks are for GitHub Copilot / cloud agents (see `.github/copilot-instructions.md`). Read a file under `.github/copilot/` only when the user’s task is an **`error-agent`** issue or they explicitly ask.
 
 Skip this entire block for non-coding tasks such as answering questions, explaining concepts, or general conversation.
+
+---
+
+See also: `.cursor/rules/ponytail.mdc` — lazy senior dev mode (always applied).
