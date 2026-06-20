@@ -314,10 +314,8 @@ const OracleFilterComponent = ({
                             {loading
                                 ? t('databases.general.not-available')
                                 : `${
-                                      getTotalConfigCount === totalConfigCount
+                                      getTotalConfigCount === configCount
                                           ? `All(${getTotalConfigCount})`
-                                          : getTotalConfigCount === configCount
-                                          ? `${getTotalConfigCount}`
                                           : `${configCount}/${getTotalConfigCount}`
                                   }`}
                         </DsTypography>

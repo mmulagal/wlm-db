@@ -1696,6 +1696,8 @@ export const WELL_ARCHITECTED_CATEGORY_LABELS: Record<WellArchitectedCategory, s
 export const WELL_ARCHITECTED_STATUS = {
     OPTIMIZED: 'optimized',
     NOT_OPTIMIZED: 'not-optimized',
+    UNDER_PROVISIONED: 'under-provisioned',
+    OVER_PROVISIONED: 'over-provisioned',
     OPTIMIZING: 'optimizing',
     NOT_APPLICABLE: 'not-applicable',
     ANALYZING: 'analyzing'

@@ -1,7 +1,7 @@
 {
     "metadata": {
         "lastAssessmentTimestamp": 1770653885000,
-        "storageEndpoint": "fs-030a8e61dd0631815",
+        "fileSystemId": "fs-030a8e61dd0631815",
         "databaseInstanceName": "MSSQLSERVER",
         "deploymentType": "FCI",
         "databaseHostName": "SQLNODE1-57329",

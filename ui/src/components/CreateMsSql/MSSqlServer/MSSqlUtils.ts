@@ -176,15 +176,18 @@ export const MSSQL_AUTO_OVERWRITABLE_INSTANCE_TYPES: ReadonlySet<string> = new S
 // Returns false if the recommended type isn't available in the current
 // region/license combo so the caller can fall back to selectDefaultInstanceType.
 export const selectSizeBasedInstanceType = (
-    instanceTypeData: {
-        instanceTypes?: Array<{
-            instanceType?: string;
-            vCpus?: number;
-            ramInMib?: number;
-            iopsInMbps?: number;
-            architecture?: string[] | string;
-        }>;
-    } | null | undefined,
+    instanceTypeData:
+        | {
+              instanceTypes?: Array<{
+                  instanceType?: string;
+                  vCpus?: number;
+                  ramInMib?: number;
+                  iopsInMbps?: number;
+                  architecture?: string[] | string;
+              }>;
+          }
+        | null
+        | undefined,
     dispatch: (action: ReturnType<typeof setInstanceType>) => void,
     capacity: string | undefined,
     unitLabel: string | undefined,
@@ -198,8 +201,7 @@ export const selectSizeBasedInstanceType = (
     const archVal = selectedLicense?.data?.architecture;
     const match = instanceTypes.find(
         it =>
-            it?.instanceType === recommendedType &&
-            (!archVal || !it?.architecture || it.architecture.includes(archVal))
+            it?.instanceType === recommendedType && (!archVal || !it?.architecture || it.architecture.includes(archVal))
     );
     if (!match) {
         return false;

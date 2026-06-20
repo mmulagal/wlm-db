@@ -1,5 +1,6 @@
 import { useDispatch } from 'react-redux';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../store/storeHooks';
 import {
     setDriftAssessmentData,
@@ -21,6 +22,7 @@ import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const { credIdFromJM, regionFromJM, landingFrom, landingFromInnerPage, isWad } = useAppSelector(
         state => state.getWellOptimize
     );
@@ -72,7 +74,7 @@ const GetWellApi = () => {
                 if (isFlatStructure) {
                     // New flat structure - use formatGetWellDataFlat
                     dispatch(setDriftAssessmentData(assessmentData));
-                    formatGetWellDataFlat(dispatch, assessmentData, false, isRefresh);
+                    formatGetWellDataFlat(dispatch, assessmentData, false, isRefresh, false, t);
                     dispatch(setGwSelectedRowFsxId(assessmentData.metadata?.fileSystemId));
                 } else {
                     // Old nested structure (backward compatibility)
@@ -121,7 +123,7 @@ const GetWellApi = () => {
                 if (isFlatStructure) {
                     // New flat structure
                     dispatch(setDriftAssessmentData(result.data));
-                    formatGetWellDataFlat(dispatch, result.data, false, isRefresh);
+                    formatGetWellDataFlat(dispatch, result.data, false, isRefresh, false, t);
                     dispatch(setGwSelectedRowFsxId(result.data.metadata?.fileSystemId));
                 } else {
                     // Old nested structure (backward compatibility)

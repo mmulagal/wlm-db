@@ -341,7 +341,14 @@ export const handleDismissResponse = (
             const isFlatStructure = 'assessments' in newData && Array.isArray(newData.assessments);
 
             if (isFlatStructure) {
-                formatGetWellDataFlat(dispatch, newData as FlatAssessmentResponse, showDismissedConfigurations);
+                formatGetWellDataFlat(
+                    dispatch,
+                    newData as FlatAssessmentResponse,
+                    showDismissedConfigurations,
+                    false,
+                    false,
+                    t
+                );
             } else {
                 // @ts-ignore
                 formatGetWellData(dispatch, newData, showDismissedConfigurations);

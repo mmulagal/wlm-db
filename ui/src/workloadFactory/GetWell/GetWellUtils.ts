@@ -5043,7 +5043,7 @@ export const updateAccountLevelAssessmentData = (
 
 export const updateConfigStatePerInstance = (
     setAction: any,
-    name: string,
+    configId: string,
     endTime: any,
     startTime: any,
     engineType?: string
@@ -5072,7 +5072,7 @@ export const updateConfigStatePerInstance = (
         const existingDismissed = driftAssessmentData?.dismissedConfigurations || [];
 
         // Find if this config already exists in dismissedConfigurations
-        const existingIndex = existingDismissed.findIndex((item: any) => item?.id === name);
+        const existingIndex = existingDismissed.findIndex((item: any) => item?.id === configId);
 
         let updatedDismissedConfigs;
         if (existingIndex !== -1) {
@@ -5092,7 +5092,7 @@ export const updateConfigStatePerInstance = (
             updatedDismissedConfigs = [
                 ...existingDismissed,
                 {
-                    id: name,
+                    id: configId,
                     configState: setAction,
                     endTime,
                     startTime
@@ -5164,7 +5164,7 @@ export const updateConfigStatePerInstance = (
     };
 
     // Special handling for ONTAP card dismissal (dismiss all ONTAP configurations)
-    if (name === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
+    if (configId === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
         const volumeConfigs = driftAssessmentData?.storage?.configuration?.volumes || [];
         const lunConfigs = driftAssessmentData?.storage?.configuration?.luns || [];
 
@@ -5199,7 +5199,7 @@ export const updateConfigStatePerInstance = (
     }
 
     // Special handling for OS card dismissal (dismiss all OS configurations)
-    if (name === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) {
+    if (configId === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) {
         const osConfigs = driftAssessmentData?.storage?.configuration?.os || [];
 
         const dismissedOsConfigs = osConfigs.map((config: any) => ({
@@ -5225,7 +5225,7 @@ export const updateConfigStatePerInstance = (
     }
 
     // Special handling for MSSQL High Availability card dismissal (dismiss all MSSQL HA configurations)
-    if (name === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY || name === 'high-availability') {
+    if (configId === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY || configId === 'high-availability') {
         const mssqlHAConfigs =
             driftAssessmentData?.highAvailability || (driftAssessmentData as any)?.['high-availability'] || [];
 
@@ -5245,7 +5245,7 @@ export const updateConfigStatePerInstance = (
         };
     }
 
-    if (storageSizingMap.includes(name)) {
+    if (storageSizingMap.includes(configId)) {
         return {
             ...driftAssessmentData,
             dismissedConfigurations: {
@@ -5256,7 +5256,7 @@ export const updateConfigStatePerInstance = (
                         ? (() => {
                               const existingSizing = driftAssessmentData?.dismissedConfigurations?.storage?.sizing;
                               const itemIndex = existingSizing.findIndex(
-                                  (item: any) => item?.configurationName === name
+                                  (item: any) => item?.configurationName === configId
                               );
 
                               if (itemIndex !== -1) {
@@ -5276,7 +5276,7 @@ export const updateConfigStatePerInstance = (
                               return [
                                   ...existingSizing,
                                   {
-                                      configurationName: name,
+                                      configurationName: configId,
                                       configState: setAction,
                                       endTime,
                                       startTime
@@ -5285,7 +5285,7 @@ export const updateConfigStatePerInstance = (
                           })()
                         : [
                               {
-                                  configurationName: name,
+                                  configurationName: configId,
                                   configState: setAction,
                                   endTime,
                                   startTime
@@ -5295,7 +5295,7 @@ export const updateConfigStatePerInstance = (
             }
         };
     }
-    if (haMssqlMap.includes(name)) {
+    if (haMssqlMap.includes(configId)) {
         return {
             ...driftAssessmentData,
             dismissedConfigurations: {
@@ -5303,7 +5303,7 @@ export const updateConfigStatePerInstance = (
                 highAvailability: driftAssessmentData?.dismissedConfigurations?.highAvailability
                     ? (() => {
                           const existingHa = driftAssessmentData?.dismissedConfigurations?.highAvailability;
-                          const itemIndex = existingHa.findIndex((item: any) => item?.configurationName === name);
+                          const itemIndex = existingHa.findIndex((item: any) => item?.configurationName === configId);
 
                           if (itemIndex !== -1) {
                               // Update the existing item
@@ -5322,7 +5322,7 @@ export const updateConfigStatePerInstance = (
                           return [
                               ...existingHa,
                               {
-                                  configurationName: name,
+                                  configurationName: configId,
                                   configState: setAction,
                                   endTime,
                                   startTime
@@ -5331,7 +5331,7 @@ export const updateConfigStatePerInstance = (
                       })()
                     : [
                           {
-                              configurationName: name,
+                              configurationName: configId,
                               configState: setAction,
                               endTime,
                               startTime
@@ -5340,7 +5340,7 @@ export const updateConfigStatePerInstance = (
             }
         };
     }
-    if (storageLayoutMap.includes(name)) {
+    if (storageLayoutMap.includes(configId)) {
         return {
             ...driftAssessmentData,
             dismissedConfigurations: {
@@ -5351,7 +5351,7 @@ export const updateConfigStatePerInstance = (
                         ? (() => {
                               const existingLayout = driftAssessmentData?.dismissedConfigurations?.storage?.layout;
                               const itemIndex = existingLayout.findIndex(
-                                  (item: any) => item?.configurationName === name
+                                  (item: any) => item?.configurationName === configId
                               );
 
                               if (itemIndex !== -1) {
@@ -5371,7 +5371,7 @@ export const updateConfigStatePerInstance = (
                               return [
                                   ...existingLayout,
                                   {
-                                      configurationName: name,
+                                      configurationName: configId,
                                       configState: setAction,
                                       endTime,
                                       startTime
@@ -5380,7 +5380,7 @@ export const updateConfigStatePerInstance = (
                           })()
                         : [
                               {
-                                  configurationName: name,
+                                  configurationName: configId,
                                   configState: setAction,
                                   endTime,
                                   startTime
@@ -5390,14 +5390,14 @@ export const updateConfigStatePerInstance = (
             }
         };
     }
-    if (newStorageConfigurationMap[name]) {
-        const key = newStorageConfigurationMap[name];
+    if (newStorageConfigurationMap[configId]) {
+        const key = newStorageConfigurationMap[configId];
 
         // Get existing dismissed configurations for this subcategory
         const existingConfigs = driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key] || [];
 
         // Find if this configuration already exists in dismissed list
-        const existingIndex = existingConfigs.findIndex((item: any) => item?.configurationName === name);
+        const existingIndex = existingConfigs.findIndex((item: any) => item?.configurationName === configId);
 
         let updatedConfigs;
         if (existingIndex !== -1) {
@@ -5410,7 +5410,7 @@ export const updateConfigStatePerInstance = (
             updatedConfigs = [
                 ...existingConfigs,
                 {
-                    configurationName: name,
+                    configurationName: configId,
                     configState: setAction,
                     endTime,
                     startTime
@@ -5434,8 +5434,8 @@ export const updateConfigStatePerInstance = (
 
         return result;
     }
-    if (otherConfigMap[name]) {
-        const key = otherConfigMap[name];
+    if (otherConfigMap[configId]) {
+        const key = otherConfigMap[configId];
         return {
             ...driftAssessmentData,
             dismissedConfigurations: {
@@ -5448,7 +5448,7 @@ export const updateConfigStatePerInstance = (
                           startTime
                       }
                     : {
-                          configurationName: name,
+                          configurationName: configId,
                           configState: setAction,
                           endTime,
                           startTime
@@ -6183,7 +6183,8 @@ const getBlockOneType = (configId: string, category: string): string =>
 export const formatFlatAssessments = (
     data: import('../../utils/types/getWellTypes').FlatAssessmentResponse,
     optimizingData: any,
-    showDismissedView: boolean = false
+    showDismissedView: boolean = false,
+    t: TFunction
 ): { cardsData: any } => {
     const cardsData: any = {
         deploymentType: data.metadata.deploymentType || '',
@@ -6205,15 +6206,8 @@ export const formatFlatAssessments = (
         // Get display name from name
         const displayName = assessment.name || '';
 
-        // Map status - the API sends "optimized" or "not-optimized"
-        let status = '';
-        if (assessment.status === 'optimized') {
-            status = GETWELL_STATUS.OPTIMIZED;
-        } else if (assessment.status === 'not-optimized') {
-            status = GETWELL_STATUS.NOT_OPTIMIZED;
-        } else {
-            status = GENERAL.UNAVAILABLE;
-        }
+        // Map status using GETWELL_VALUES to handle all supported statuses consistently
+        const status = (assessment.status && GETWELL_VALUES[assessment.status]) || t('databases.general.unavailable');
 
         // Capitalize severity to match constants
         const severity = assessment.severity
@@ -6241,11 +6235,11 @@ export const formatFlatAssessments = (
             },
             block_two: {
                 type: 'Status',
-                value: status
+                value: assessment.errorMessage ? t('databases.general.unavailable') : status
             },
             block_three: {
                 type: 'Current',
-                value: assessment.current ?? GENERAL.UNAVAILABLE
+                value: assessment.current ?? t('databases.general.unavailable')
             },
             block_four: {
                 type: 'Severity',
@@ -6354,7 +6348,8 @@ export const formatGetWellDataFlat = (
     data: import('../../utils/types/getWellTypes').FlatAssessmentResponse | undefined,
     showDismissedView: boolean = false,
     isRefresh: boolean = false,
-    skipDriftDataDispatch: boolean = false
+    skipDriftDataDispatch: boolean = false,
+    t: TFunction
 ) => {
     if (!data) {
         return;
@@ -6363,7 +6358,7 @@ export const formatGetWellDataFlat = (
     // Get optimizing data from store if not a refresh
     const optimizingData = isRefresh ? {} : store.getState().getWellOptimize?.optimizingData || {};
 
-    const { cardsData } = formatFlatAssessments(data, optimizingData, showDismissedView);
+    const { cardsData } = formatFlatAssessments(data, optimizingData, showDismissedView, t);
 
     // Calculate optimization breakdown
     const optBreakDown = formatOptimizationBreakDown(cardsData, data as any);
@@ -6379,10 +6374,17 @@ export const formatGetWellDataFlat = (
     }
 
     // Set timestamps
-    if (isRefresh) {
-        dispatch(setGwRefreshTimestamp(getCurrentDateTime()));
-    } else {
-        dispatch(setGwTimestamp(data.metadata?.lastAssessmentTimestamp || getCurrentDateTime()));
+    // Format and dispatch the assessment timestamp
+    const formattedTimestamp =
+        data.metadata?.lastAssessmentTimestamp && !isNaN(Number(data.metadata?.lastAssessmentTimestamp))
+            ? formatDateWithTime(data.metadata?.lastAssessmentTimestamp)
+            : getCurrentDateTime();
+
+    dispatch(setGwTimestamp(formattedTimestamp));
+
+    // Only update refresh timestamp when processing fresh API data (not when reformatting for dismissed view toggle)
+    if (!skipDriftDataDispatch) {
+        dispatch(setGwRefreshTimestamp(formattedTimestamp));
     }
 
     // Set deployment type via instance details

@@ -253,7 +253,14 @@ const GetWell = () => {
 
             if (isFlatStructure) {
                 // Pass skipDriftDataDispatch=true to prevent infinite loop
-                formatGetWellDataFlat(dispatch, driftAssessmentData as any, showDismissedConfigurations, false, true);
+                formatGetWellDataFlat(
+                    dispatch,
+                    driftAssessmentData as any,
+                    showDismissedConfigurations,
+                    false,
+                    true,
+                    t
+                );
             } else {
                 formatGetWellData(dispatch, driftAssessmentData, showDismissedConfigurations);
             }

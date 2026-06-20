@@ -29,7 +29,12 @@ const InstanceType = () => {
     const isRecommendedInstance = useAppSelector(state => state.msSqlAction.isRecommendedInstance);
     const isAutoRecommendedSelection = useAppSelector(state => state.msSqlAction.isAutoRecommendedSelection);
     const storageCapacity = useAppSelector(state => state.mssqlForm.storageCapacity?.capacity);
-    const storageUnitLabel = useAppSelector(state => state.mssqlForm.storageCapacity?.unit?.value ?? state.mssqlForm.storageCapacity?.unit?.label ?? state.mssqlForm.storageCapacity?.unit);
+    const storageUnitLabel = useAppSelector(
+        state =>
+            state.mssqlForm.storageCapacity?.unit?.value ??
+            state.mssqlForm.storageCapacity?.unit?.label ??
+            state.mssqlForm.storageCapacity?.unit
+    );
 
     // Function to generate the options for Select Field
     const generateInstances = useMemo<optionType[]>((): optionType[] => {

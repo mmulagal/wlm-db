@@ -22,6 +22,7 @@
         "general": {
             "loading": "Loading",
             "out-of": "out of",
+            "unavailable": "Unavailable",
             "assessment-unavailable-with-tooltip": "Configuration data is not available.",
             "save": "Save",
             "availability-groups": "Availability Groups",

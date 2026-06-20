@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import store from '../../../../store/store';
 import { getRecommendation } from '../../../../utils/recommendations';
 import {
@@ -1760,6 +1761,10 @@ const formatOracleFlatAssessmentToCard = (
         status = GETWELL_STATUS.OPTIMIZED;
     } else if (assessment.status === WELL_ARCHITECTED_STATUS.NOT_OPTIMIZED) {
         status = GETWELL_STATUS.NOT_OPTIMIZED;
+    } else if (assessment.status === WELL_ARCHITECTED_STATUS.UNDER_PROVISIONED) {
+        status = GETWELL_STATUS.UNDER_PROVISIONED;
+    } else if (assessment.status === WELL_ARCHITECTED_STATUS.OVER_PROVISIONED) {
+        status = GETWELL_STATUS.OVER_PROVISIONED;
     } else {
         status = GETWELL_STATUS.NOT_APPLICABLE;
     }
@@ -1778,7 +1783,7 @@ const formatOracleFlatAssessmentToCard = (
     // Get tags from categories
     const tags = assessment.categories || [];
 
-    return {
+    const card = {
         id: configId,
         configurationId: configId, // Store for dismiss flow and tooltip matching
         mapName: displayName,
@@ -1792,7 +1797,7 @@ const formatOracleFlatAssessmentToCard = (
         },
         block_two: {
             type: 'Status',
-            value: status
+            value: assessment.errorMessage ? i18next.t('databases.general.unavailable') : status
         },
         block_three: {
             type: 'Current',
@@ -1855,6 +1860,7 @@ const formatOracleFlatAssessmentToCard = (
             return staticRecommendation?.description || assessment.recommendation;
         })(),
         tags,
+        errorMessage: assessment.errorMessage,
         objectsInViolation: assessment.objectsInViolation || [],
         violationDetails: assessment.violationDetails || [],
         totalObjectsAssessed: assessment.totalObjectsAssessed ?? 0,
@@ -1868,6 +1874,8 @@ const formatOracleFlatAssessmentToCard = (
         ...(assessment.missingPatchesCount !== undefined && { missingPatchesCount: assessment.missingPatchesCount }),
         ...(assessment.recommendedSizeInGib && { recommendedSizeInGib: assessment.recommendedSizeInGib })
     };
+
+    return card;
 };
 
 // Helper function to process flat Oracle assessments
@@ -2432,11 +2440,12 @@ export const formatOracleWellArchitectedData = (
     const timestamp = assessmentData?.metadata?.lastAssessmentTimestamp;
 
     // Batch dispatch all data to store
+    const formattedTimestamp = timestamp ? formatTimestamp(timestamp) : getCurrentDateTime();
     const dispatchActions = [
         () => dispatch(setCardData(cardsData)),
         () => dispatch(setOptimizationBreakDown(optBreakDown)),
-        () => dispatch(setGwTimestamp(timestamp ? formatTimestamp(timestamp) : getCurrentDateTime())),
-        () => dispatch(setGwRefreshTimestamp(getCurrentDateTime())),
+        () => dispatch(setGwTimestamp(formattedTimestamp)),
+        () => dispatch(setGwRefreshTimestamp(formattedTimestamp)),
         () => dispatch(setDriftAssessmentData(assessmentData))
     ];
 
