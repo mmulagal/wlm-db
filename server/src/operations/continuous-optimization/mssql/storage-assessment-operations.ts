@@ -635,7 +635,6 @@ async function calculateStorageDrift(
             const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
             driftAssessmentData.push({
                 ...goldenData,
-                name: key,
                 recommended: (goldenData.value ?? '').toString(),
                 status,
                 violationDetails: objectsInViolation,
@@ -1019,7 +1018,6 @@ async function calculateStorageDrift(
                 const tierViolations = key === 'performance-tier' ? storageTierViolations : undefined;
                 driftAssessmentData.push({
                     ...goldenData,
-                    name: key,
                     recommended: (goldenData.value ?? '').toString(),
                     status,
                     sizingViolations,

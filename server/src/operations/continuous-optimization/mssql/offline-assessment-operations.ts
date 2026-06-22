@@ -584,11 +584,12 @@ async function fetchMssqlOfflineAssessment(
             `WAD assessment not found for resource ${resourceId} and instance ${databaseInstanceId}`
         );
     }
-    const { assessment_results: assessmentResults } = record;
+    const { assessment_results: assessmentResultsWithMetadata = {} } = record;
+    const { assessments: assessmentResults } = assessmentResultsWithMetadata as MssqlAssessmentResponseType;
     if (!isEmpty(assessmentResults)) {
-        const { isValid } = validateWithSchema(MssqlAssessmentResponse, assessmentResults);
+        const { isValid } = validateWithSchema(MssqlAssessmentResponse, assessmentResultsWithMetadata);
         if (isValid) {
-            return assessmentResults as MssqlAssessmentResponseType;
+            return assessmentResultsWithMetadata as MssqlAssessmentResponseType;
         }
     }
 
@@ -799,7 +800,7 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                     metadata,
                     credentials_id: itemCredentialsId,
                     region: itemRegion,
-                    assessment_results: assessmentResults
+                    assessment_results: assessmentResultsWithMetadata
                 } = item;
                 const {
                     databaseInstanceName,
@@ -836,16 +837,18 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                     clusterNodes
                 };
 
-                let forceRunAssessment = false;
-                if (!isEmpty(item.assessment_results)) {
-                    const { isValid } = validateWithSchema(MssqlAssessmentResponse, item.assessment_results);
-                    if (!isValid) {
-                        forceRunAssessment = true;
+                let forceRunAssessment = true;
+                const { assessments: assessmentsResults } =
+                    assessmentResultsWithMetadata as MssqlAssessmentResponseType;
+                if (!isEmpty(assessmentsResults)) {
+                    const { isValid } = validateWithSchema(MssqlAssessmentResponse, assessmentResultsWithMetadata);
+                    if (isValid) {
+                        forceRunAssessment = false;
                     }
                 }
                 try {
                     const assessments = !forceRunAssessment
-                        ? (assessmentResults as MssqlAssessmentResponseType)
+                        ? (assessmentResultsWithMetadata as MssqlAssessmentResponseType)
                         : await fetchMssqlOfflineAssessment(
                               accountId,
                               resourceId,

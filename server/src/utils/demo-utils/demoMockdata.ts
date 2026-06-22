@@ -6763,10 +6763,11 @@ const ORACLE_SECURITY_PATCH_MISSING_COUNT = 4;
 
 function buildOracleSecurityPatchAssessmentData(databaseInstanceName: string) {
     return {
-        name: 'oracle-security-patch',
-        tags: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-        category: 'compute',
-        subCategory: 'compute',
+        id: 'oracle-security-patch',
+        name: 'Oracle critical security patch',
+        categories: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
+        type: 'compute',
+        subType: 'compute',
         focusWidgetName: 'Oracle security patch',
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,

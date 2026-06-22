@@ -1307,7 +1307,6 @@ async function getHighAvailabilityDriftData(
                 ? { ...sharedStorageConfig, errorMessage: sharedStorage.error }
                 : {
                       ...sharedStorageConfig,
-                      name: 'shared-storage',
                       recommended: sharedStorageConfig.recommended ?? '',
                       status: sharedStorage.status as AssessmentStatus,
                       objectsInViolation:
@@ -1325,7 +1324,6 @@ async function getHighAvailabilityDriftData(
                 ? { ...driveLetterConfig, errorMessage: driveLetter.error }
                 : {
                       ...driveLetterConfig,
-                      name: 'drive-letter',
                       recommended: driveLetterConfig.recommended ?? '',
                       status: driveLetter.status as AssessmentStatus,
                       objectsInViolation: [...new Set(driveLetter.details.missingDriveLetters || [])],
@@ -1338,7 +1336,6 @@ async function getHighAvailabilityDriftData(
                 ? { ...clusterQuorumConfig, errorMessage: clusterQuorum.error }
                 : {
                       ...clusterQuorumConfig,
-                      name: 'cluster-quorum',
                       recommended: clusterQuorumConfig.recommended ?? '',
                       status: clusterQuorum.status as AssessmentStatus,
                       objectsInViolation: clusterQuorum.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
@@ -1361,7 +1358,6 @@ async function getHighAvailabilityDriftData(
                 ? { ...heartbeatConfig, errorMessage: heartbeat.error }
                 : {
                       ...heartbeatConfig,
-                      name: 'heartbeat-settings',
                       recommended: heartbeatConfig.recommended ?? '',
                       status: heartbeat.status as AssessmentStatus,
                       objectsInViolation: heartbeat.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
@@ -1384,7 +1380,6 @@ async function getHighAvailabilityDriftData(
                 ? { ...sqlServerServiceConfig, errorMessage: sqlServerServices.error }
                 : {
                       ...sqlServerServiceConfig,
-                      name: 'sqlServer-service',
                       recommended: sqlServerServiceConfig.recommended ?? '',
                       status: sqlServerServices.status as AssessmentStatus,
                       objectsInViolation:

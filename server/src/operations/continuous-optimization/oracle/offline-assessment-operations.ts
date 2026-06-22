@@ -490,11 +490,12 @@ async function fetchOracleOfflineAssessment(
         );
     }
 
-    const { assessment_results: assessmentResults } = record;
+    const { assessment_results: assessmentResultsWithMetadata = {} } = record;
+    const { assessments: assessmentResults } = assessmentResultsWithMetadata as OracleAssessmentResponseType;
     if (!isEmpty(assessmentResults)) {
-        const { isValid } = validateWithSchema(OracleAssessmentResponse, assessmentResults);
+        const { isValid } = validateWithSchema(OracleAssessmentResponse, assessmentResultsWithMetadata);
         if (isValid) {
-            return assessmentResults as OracleAssessmentResponseType;
+            return assessmentResultsWithMetadata as OracleAssessmentResponseType;
         }
     }
 
@@ -674,7 +675,7 @@ async function fetchOracleOfflineAssessmentPerAccount(
                     rawdata: itemRawdata,
                     credentials_id: itemCredentialsId,
                     region: itemRegion,
-                    assessment_results: assessmentResults
+                    assessment_results: assessmentResultsWithMetadata
                 } = item;
                 const {
                     databaseInstanceName,
@@ -712,15 +713,17 @@ async function fetchOracleOfflineAssessmentPerAccount(
                 };
 
                 try {
-                    let forceRunAssessment = false;
-                    if (!isEmpty(item.assessment_results)) {
-                        const { isValid } = validateWithSchema(OracleAssessmentResponse, item.assessment_results);
-                        if (!isValid) {
-                            forceRunAssessment = true;
+                    let forceRunAssessment = true;
+                    const { assessments: assessmentResults } =
+                        assessmentResultsWithMetadata as OracleAssessmentResponseType;
+                    if (!isEmpty(assessmentResults)) {
+                        const { isValid } = validateWithSchema(OracleAssessmentResponse, assessmentResultsWithMetadata);
+                        if (isValid) {
+                            forceRunAssessment = false;
                         }
                     }
                     const assessments = !forceRunAssessment
-                        ? assessmentResults
+                        ? (assessmentResultsWithMetadata as OracleAssessmentResponseType)
                         : await fetchOracleOfflineAssessment(
                               accountId,
                               resourceId,
