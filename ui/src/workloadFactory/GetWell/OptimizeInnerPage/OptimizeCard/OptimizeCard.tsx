@@ -4,8 +4,18 @@ import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../../store/storeHooks';
 import styles from './OptimizeCard.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
-import { WLF_TABS, ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
+import { WLF_TABS } from '../../../../utils/consts';
 import RecommendationText from '../../RecommendationText/RecommendationText';
+import { getCardMetadata } from '../../../../utils/getWellConfigRegistry';
+
+/**
+ * Helper to extract nested value from object using dot notation path.
+ * Example: getNestedValue(data, 'recommendation.description') returns data?.recommendation?.description
+ */
+const getNestedValue = (obj: any, path: string): any => {
+    if (!path) return undefined;
+    return path.split('.').reduce((current, key) => current?.[key], obj);
+};
 
 const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
     const { t } = useTranslation();
@@ -40,357 +50,59 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
     }, [cloneDashboardData]);
 
     const getCardData = (config: string, data: any) => {
-        switch (config) {
-            // Below are storage layout Oracle assessment
-            case ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT:
-            case ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT:
-            case ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT:
-            case ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT:
-            case ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT:
-            case ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT:
-                return {
-                    block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
-                    data: data?.recommendation
-                };
-            case ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT:
-            case ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT:
-            case ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT:
-            case ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT:
-                return {
-                    block_one: { type: 'Impacted disk groups', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
-                    data: data?.recommendation
-                };
-            // Below are storage config
-            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO:
-            case ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES:
-            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION:
-            case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
-            case ASSESSMENT_CONFIG_NAMES.SELINUX:
-            case ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT:
-            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES:
-            case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
-            case ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE:
-            case ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE:
-            case ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS:
-            case ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME:
-                return {
-                    block_one: { type: 'Impacted EC2 instance', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case ASSESSMENT_CONFIG_NAMES.ASM_SETUP:
-            case ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY:
-            case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES:
-            case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME:
-            case ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS:
-                return {
-                    block_one: { type: 'Impacted EC2 instance', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE:
-            case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE:
-                return {
-                    block_one: { type: 'Impacted EC2 instance', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
-            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT:
-                return {
-                    block_one: { type: 'Impacted databases', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS:
-                return {
-                    block_one: { type: 'Impacted volumes', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            // MSSQL Assessment
-            case 'Storage tier':
-            case 'ONTAP / Tiering policy':
-                return {
-                    block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
-                    data: data?.recommendation
-                };
-            case 'File system headroom':
-                return {
-                    block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText }
-                };
-            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
-            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
-                return {
-                    block_one: { type: 'Impacted drives', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: {
-                        type: 'View recommendation',
-                        value: data?.recommendationText,
-                        valueHeading: data?.recommendation?.valuesHeading,
-                        values: data?.recommendation?.values
-                    },
-                    data: data?.recommendation
-                };
-            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
-                return {
-                    block_one: {
-                        type: t('databases.well-architect.impacted-databases'),
-                        value: data.impactedCount || '0'
-                    },
-                    block_two: { type: t('databases.well-architect.severity'), value: data.severity || 'Warning' },
-                    block_three: { type: t('databases.well-architect.tags.title'), value: data.tags },
-                    recommendationText: {
-                        type: t('databases.well-architect.view-recommendation'),
-                        value: data?.recommendation?.description
-                    },
-                    data: data?.recommendation
-                };
-            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
-                return {
-                    block_one: {
-                        type: t('databases.well-architect.impacted-databases'),
-                        value: data.impactedCount || '0'
-                    },
-                    block_two: { type: t('databases.well-architect.severity'), value: data.severity || 'Warning' },
-                    block_three: { type: t('databases.well-architect.tags.title'), value: data.tags },
-                    recommendationText: {
-                        type: t('databases.well-architect.view-recommendation'),
-                        value: data?.recommendation?.description
-                    },
-                    data: data?.recommendation
-                };
-            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
-                return {
-                    block_one: {
-                        type: t('databases.well-architect.impacted-databases'),
-                        value: data.impactedCount || '0'
-                    },
-                    block_two: { type: t('databases.well-architect.severity'), value: data.severity || 'Warning' },
-                    block_three: { type: t('databases.well-architect.tags.title'), value: data.tags },
-                    recommendationText: {
-                        type: t('databases.well-architect.view-recommendation'),
-                        value: data?.recommendation?.description
-                    },
-                    data: data?.recommendation
-                };
-            case 'Thin provisioning':
-            case 'Autosize':
-            case 'Autosize-mode':
-            case 'Fractional reserve':
-            case 'Snapshot copy reserve':
-            case 'Snapshot autodelete':
-            case 'Space management':
-                return {
-                    block_one: { type: 'Impacted volumes', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case ASSESSMENT_CONFIG_NAMES.COMPACTION:
-            case ASSESSMENT_CONFIG_NAMES.DEDUPLICATION:
-            case ASSESSMENT_CONFIG_NAMES.COMPRESSION:
-            case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_POLICY:
-            case ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY:
-            case ASSESSMENT_CONFIG_NAMES.EXPORT_POLICY:
-            case 'Tiering policy':
-            case 'Tiering minimum cooling days':
-                return {
-                    block_one: { type: 'Impacted volumes', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case 'OS type':
-                return {
-                    block_one: { type: 'Impacted LUNs', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case 'Space reservation':
-            case 'Space allocation':
-                return {
-                    block_one: { type: 'Impacted LUNs', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case 'Multipath I/O Policy':
-                return {
-                    block_one: { type: 'Impacted drives', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case 'NTFS allocation unit size':
-                return {
-                    block_one: { type: 'Impacted drives', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case 'Network adapter settings':
-            case 'Network adapters':
-                return {
-                    block_one: { type: 'Impacted network adapters', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: {
-                        type: 'View recommendation',
-                        value: data?.recommendation?.descriptionRssConfig
-                    },
-                    data: data?.recommendation
-                };
-            case ASSESSMENT_CONFIG_NAMES.MTU:
-                return {
-                    block_one: { type: 'Impacted network interfaces', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
-                    data: {
-                        title: 'MTU alignment recommendation',
-                        description: data?.recommendationText
-                    }
-                };
-            case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:
-                return {
-                    block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
-                    data: data?.recommendation
-                };
-            case ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY:
-            case ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS:
-                return {
-                    block_one: { type: 'Impacted heartbeat settings', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM:
-                return {
-                    block_one: { type: 'Impacted clusters', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE:
-                return {
-                    block_one: { type: 'Impacted SQL instances', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE:
-                return {
-                    block_one: { type: 'Impacted LUNs', value: data.totalObjectsInViolation || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Critical' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendation },
-                    data: {
-                        title: `${config} recommendation`,
-                        description: data?.recommendation
-                    }
-                };
-            case ASSESSMENT_CONFIG_NAMES.CRR:
-            case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
-                return {
-                    block_one: { type: 'Impacted volumes', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: { type: 'View recommendation', value: data?.recommendationText },
-                    data: data?.recommendation
-                };
-            case GENERAL.CLONE_MANAGEMENT:
-                return {
-                    block_one: { type: 'Impacted databases', value: data.impactedCount || '0' },
-                    block_two: { type: 'Severity', value: data.severity || 'Warning' },
-                    block_three: { type: 'Tags', value: data.tags },
-                    recommendationText: {
-                        type: 'View recommendation',
-                        value: data?.recommendation?.description
-                    },
-                    data: data?.recommendation
-                };
-            default:
-                return null;
+        // Get card metadata from registry
+        const metadata = getCardMetadata(config);
+
+        // Determine the count value based on metadata
+        const countValue =
+            metadata.countSource === 'impactedCount'
+                ? data.impactedCount
+                : data.totalObjectsInViolation || data?.violationDetails?.length;
+
+        // Get recommendation text from configured source or fallback to recommendation field
+        let recommendationTextValue;
+        if (metadata.recommendationSource) {
+            recommendationTextValue = getNestedValue(data, metadata.recommendationSource);
+        } else {
+            // Fallback: try recommendationText first, then recommendation
+            recommendationTextValue = data?.recommendationText || data?.recommendation;
         }
+
+        // Handle recommendation data structure
+        const recommendation = data?.recommendation;
+        const isRecommendationObject = typeof recommendation === 'object' && recommendation !== null;
+
+        // Special handling for log-drive-size and tempdb-drive-size which have additional fields
+        const hasValueHeading = data?.recommendation?.valuesHeading || data?.recommendation?.values;
+
+        return {
+            block_one: {
+                type: metadata.impactedLabel,
+                value: countValue || '0'
+            },
+            block_two: {
+                type: 'Severity',
+                value: data.severity
+            },
+            block_three: {
+                type: 'Tags',
+                value: data.tags
+            },
+            recommendationText: {
+                type: 'View recommendation',
+                value: typeof recommendationTextValue === 'string' ? recommendationTextValue : undefined,
+                ...(hasValueHeading && {
+                    valueHeading: data?.recommendation?.valuesHeading,
+                    values: data?.recommendation?.values
+                })
+            },
+            data: isRecommendationObject
+                ? recommendation
+                : {
+                      title: `${data?.name || config} recommendation`,
+                      description: typeof recommendation === 'string' ? recommendation : recommendationTextValue
+                  }
+        };
     };
 
     return (
@@ -413,7 +125,7 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                 </div>
             </div>
 
-            <div className={styles.recommendation} style={{ height: recommendationHeight }}>
+            <div className={styles.recommendation} style={recommendationHeight ? { height: recommendationHeight } : {}}>
                 <RecommendationText data={setCardData?.data} from="dashboard" cardName={setCardData?.cardName} />
             </div>
         </div>

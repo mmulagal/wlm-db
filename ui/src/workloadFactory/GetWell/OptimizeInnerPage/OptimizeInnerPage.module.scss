@@ -19,14 +19,25 @@
         .mainSection {
             display: flex;
             justify-content: center;
+            align-items: flex-start;
             margin-top: 24px;
+            background-color: var(--content-background);
+            box-shadow: 2px 2px 6px 0px var(--border);
 
             .contentSection {
-                width: 80%;
+                flex: 1;
+                min-width: 0;
             }
 
             .tagSection {
-                width: 20%;
+                flex-shrink: 0;
+                width: 300px;
+                border-left: 1px solid var(--border);
+
+                // Remove shadow from TagComponent when inside mainSection
+                > * {
+                    box-shadow: none !important;
+                }
             }
 
             .leftSection {
@@ -36,7 +47,8 @@
 
                 .recommendation {
                     background-color: var(--content-background);
-                    box-shadow: 2px 2px 6px 0px var(--border);
+                    box-shadow: none;
+                    border-top: 1px solid var(--border);
                 }
             }
         }
@@ -52,15 +64,6 @@
                 [class*='dsButtons'] {
                     border-radius: 20px !important;
                 }
-            }
-        }
-
-        .mainSection {
-            display: flex;
-            .contentSection {
-                display: flex;
-                justify-content: center;
-                width: 80%;
             }
         }
     }

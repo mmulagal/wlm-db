@@ -1,9 +1,10 @@
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@netapp/design-system';
+import { useMemo } from 'react';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
-import { ASSESSMENT_CONFIG_NAMES, WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, DBType, WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../../store/storeHooks';
 import CloneTabs from '../../GetWell/OptimizeInnerPage/CloneTabs';
@@ -11,12 +12,21 @@ import OptimizeCard from '../../GetWell/OptimizeInnerPage/OptimizeCard/OptimizeC
 import TagComponent from './TagComponent/TagComponent';
 import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
 import { engineTypeBasedResourceStr } from '../../WellArchitectedTab/WellArchitectedTabUtils';
+import { findFlatConfigItem } from '../../WellArchitectedTab/assessmentFormatUtils';
 
 const DashboardOptimizeInnerPage = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedConfig } = useAppSelector(state => state.databaseHome);
     const { configEngineType } = useAppSelector(state => state.getWellOptimize);
+    const { allmssqlHostAssessmentData, allOracleHostAssessmentData } = useAppSelector(state => state.inventoryV2);
+
+    // Get full config item with categories from API data
+    const configItem = useMemo(() => {
+        if (!selectedConfig) return undefined;
+        const hosts = configEngineType === DBType.ORACLE ? allOracleHostAssessmentData : allmssqlHostAssessmentData;
+        return findFlatConfigItem(hosts, selectedConfig);
+    }, [selectedConfig, configEngineType, allmssqlHostAssessmentData, allOracleHostAssessmentData]);
 
     return (
         <div className={styles.dashboardInnerPage}>
@@ -61,7 +71,7 @@ const DashboardOptimizeInnerPage = () => {
                     </div>
 
                     <div className={styles.tagSection} style={{ width: '20%' }}>
-                        <TagComponent tagHeight="236px" type={selectedConfig} engineType={configEngineType} />
+                        <TagComponent tagHeight="236px" categories={configItem?.categories} />
                     </div>
                 </div>
 

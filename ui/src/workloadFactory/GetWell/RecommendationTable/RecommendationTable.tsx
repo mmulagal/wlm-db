@@ -545,8 +545,7 @@ const RecommendationTable = ({
     };
 
     // Function to check if configuration is activating
-    const isRowConfigurationActivating = (rowData: any) =>
-        isTableRowConfigurationActivating(rowData, fullCardData);
+    const isRowConfigurationActivating = (rowData: any) => isTableRowConfigurationActivating(rowData, fullCardData);
 
     const handleOntapDialog = (rowData: any) => {
         // Oracle configs in ORACLE_UNSUPPORTED_FIX_TYPES should show Close button (includes placement, ASM, NFS, patches, etc.)
@@ -671,11 +670,11 @@ const RecommendationTable = ({
         if (from === WLF_TABS.DASHBOARD) {
             return showDismissedConfigurations || rowData?.configState === CONFIG_STATES.ACTIVATING;
         }
-        return isTableRowConfigurationInState(
-            rowData,
-            fullCardData,
-            [CONFIG_STATES.ACTIVATING, CONFIG_STATES.DISMISSED, CONFIG_STATES.POSTPONED]
-        );
+        return isTableRowConfigurationInState(rowData, fullCardData, [
+            CONFIG_STATES.ACTIVATING,
+            CONFIG_STATES.DISMISSED,
+            CONFIG_STATES.POSTPONED
+        ]);
     };
 
     // Function For Dismiss

@@ -6,22 +6,12 @@ import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import {
-    CONFIG_STATES,
-    CONFIG_STATE_ACTIONS,
-    DBType,
-    FROM_DIALOG,
-    WLF_TABS
-} from '../../../utils/consts';
+import { CONFIG_STATES, CONFIG_STATE_ACTIONS, DBType, FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
 import { getRecommendation } from '../../../utils/recommendations';
 import { useAppSelector } from '../../../store/storeHooks';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
-import {
-    isWadExcludedConfig,
-    setOptimizeInnerpageSummary,
-    updateConfigStateStatus
-} from '../../GetWell/GetWellUtils';
+import { isWadExcludedConfig, setOptimizeInnerpageSummary, updateConfigStateStatus } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';

@@ -495,6 +495,7 @@ export const WLF_TABS = {
     DASHBOARD_INNER_PAGE: 'DashboardInnerPage',
     DASHBOARD_DISMISS_PAGE: 'DashboardDismissPage',
     OPTIMIZE_INNER_PAGE: 'OptimizeInnerPage',
+    DYNAMIC_OPTIMIZE_INNER_PAGE: 'DynamicOptimizeInnerPage',
     DASHBOARD_OPTIMIZE_INNER_PAGE: 'DashboardOptimizeInnerPage',
     OPTIMIZE_ONTAP_INNER_PAGE: 'OptimizeOntapInnerPage',
     INVENTORY: 'Inventory',

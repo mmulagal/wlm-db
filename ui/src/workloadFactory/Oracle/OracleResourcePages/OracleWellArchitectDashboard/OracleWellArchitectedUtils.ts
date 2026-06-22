@@ -1746,10 +1746,7 @@ const getOracleBlockOneType = (category: string): string =>
     '';
 
 // Helper function to format flat assessment to card format
-const formatOracleFlatAssessmentToCard = (
-    assessment: any,
-    optimizingData: Record<string, string>
-): any => {
+const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Record<string, string>): any => {
     const configId = assessment.id;
     const displayName = assessment.name || getConfigurationDisplayName(configId);
 
@@ -1778,14 +1775,10 @@ const formatOracleFlatAssessmentToCard = (
     // Get category from type
     const category = assessment.type || WELL_ARCHITECTED_CATEGORIES.STORAGE;
 
-    // Get tags from categories
-    const tags = assessment.categories || [];
-
     const card = {
         id: configId,
         configurationId: configId, // Store for dismiss flow and tooltip matching
-        mapName: displayName,
-        name: configId,
+        name: displayName, // Display name from flat API
         displayName,
         category,
         configurationName: displayName,
@@ -1857,7 +1850,7 @@ const formatOracleFlatAssessmentToCard = (
             const staticRecommendation = getRecommendation(configId, DBType.ORACLE);
             return staticRecommendation?.description || assessment.recommendation;
         })(),
-        tags,
+        categories: assessment.categories || [], // Categories from flat API
         errorMessage: assessment.errorMessage,
         objectsInViolation: assessment.objectsInViolation || [],
         violationDetails: assessment.violationDetails || [],
@@ -2822,7 +2815,6 @@ const getOracleCategoryForSubCategory = (subCategory: string) => {
     return entry ? entry.category : '';
 };
 
-
 export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, action: any) => {
     let setAction = '';
     if (action === CONFIG_STATE_ACTIONS.DISMISS) {
@@ -2858,9 +2850,7 @@ export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, actio
                         };
                         const updatedDismissed =
                             idx >= 0
-                                ? existingDismissed.map((d: any, i: number) =>
-                                      i === idx ? { ...d, ...entry } : d
-                                  )
+                                ? existingDismissed.map((d: any, i: number) => (i === idx ? { ...d, ...entry } : d))
                                 : [...existingDismissed, entry];
                         return {
                             ...instance,

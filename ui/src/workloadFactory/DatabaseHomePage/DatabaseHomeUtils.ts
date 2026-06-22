@@ -1589,9 +1589,7 @@ export const formatAssessmentTableData = (data: any, dismissedData: any) => {
             };
 
             // Check if there's a matching dismissed data entry
-            const matchingDismissedItem = dismissedData?.find(
-                (dismissedItem: any) => dismissedItem?.id === item?.id
-            );
+            const matchingDismissedItem = dismissedData?.find((dismissedItem: any) => dismissedItem?.id === item?.id);
 
             if (matchingDismissedItem) {
                 const formattedDismissedItem = {

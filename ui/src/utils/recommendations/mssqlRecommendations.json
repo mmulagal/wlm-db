@@ -161,6 +161,36 @@
         "title": "SQL Server service recommendation",
         "description": "Workload Factory recommends ensuring SQL Server services are properly configured for high availability scenarios. This includes appropriate service account permissions, startup types, and dependencies to ensure reliable operation."
     },
+    "os-type": {
+        "name": "OS Type",
+        "title": "OS type recommendation",
+        "description": "ONTAP LUN os type value shall match the operating system partitioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance."
+    },
+    "space-reservation-enabled": {
+        "name": "Space Reservation Enabled",
+        "title": "Space reservation recommendation",
+        "description": "Enable space reservation to ensure data integrity and prevent out-of-space conditions. Space reservation guarantees that the required space is available for write operations."
+    },
+    "space-allocation-allocated": {
+        "name": "Space Allocation Allocated",
+        "title": "Space allocation recommendation",
+        "description": "Enable space allocation to allow ONTAP to efficiently manage space and notify the host when a LUN runs out of space. Space allocation improves storage efficiency and prevents unexpected out-of-space errors."
+    },
+    "data-files-location": {
+        "name": "Data Files Location",
+        "title": "Data files (.mdf) placement recommendation",
+        "description": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity, independent backup schedules, and improved restore functionality. We recommend separating data and log LUN paths into different volumes for smaller databases. This separation is required when there is more than one large database (> 500 GiB)."
+    },
+    "log-files-location": {
+        "name": "Log Files Location",
+        "title": "Log files (.ldf) placement recommendation",
+        "description": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity, independent backup schedules, and improved restore functionality. We recommend separating data and log LUN paths into different volumes for smaller databases. This separation is required when there is more than one large database (> 500 GiB)."
+    },
+    "tempdb-files-location": {
+        "name": "TempDB Files Location",
+        "title": "TempDB placement recommendation",
+        "description": "Separating TempDB files onto dedicated drives improves performance by isolating temporary data operations from user database I/O. We recommend placing TempDB on separate volumes with fast storage to enhance SQL Server performance."
+    },
     "clone-management": {
         "name": "Clone Management",
         "title": "Clone management recommendation",

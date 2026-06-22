@@ -161,11 +161,8 @@ vi.mock('../../../Dashboard/DashboardInnerPage/DashboardOptimizeInnerPage', () =
 vi.mock('../../../Dashboard/DashboardOverview/DashboardOverview', () => ({
     default: () => <div data-testid="dashboard-overview" />
 }));
-vi.mock('../../../GetWell/OptimizeInnerPage/OptimizeInnerPage', () => ({
-    default: () => <div data-testid="optimize-inner-page" />
-}));
-vi.mock('../../../GetWell/OptimizeInnerPage/OptimizeOntapInnerPage', () => ({
-    default: () => <div data-testid="optimize-ontap-inner-page" />
+vi.mock('../../../GetWell/OptimizeInnerPage/DynamicOptimizeInnerPage', () => ({
+    default: () => <div data-testid="dynamic-optimize-inner-page" />
 }));
 vi.mock('../../../GetWell/WellArchitectDashboard/WellArchitectDashboard', () => ({
     default: () => <div data-testid="well-architect-dashboard" />

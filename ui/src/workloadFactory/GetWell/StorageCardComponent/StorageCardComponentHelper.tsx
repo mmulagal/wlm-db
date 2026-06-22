@@ -1,10 +1,5 @@
 import { TFunction } from 'i18next';
-import {
-    ASSESSMENT_CONFIG_NAMES,
-    CONFIG_STATES,
-    CONFIG_STATE_ACTIONS,
-    RESPONSE_STATUS
-} from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATE_ACTIONS, RESPONSE_STATUS } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import { setDriftAssessmentData } from '../../../store/workloadFactory/getWellOptimizeSlice';

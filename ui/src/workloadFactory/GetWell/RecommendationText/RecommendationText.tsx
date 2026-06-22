@@ -24,12 +24,9 @@ type RecommendationTextProps = {
 };
 
 const RecommendationText = ({ data, from = 'optimize', cardName }: RecommendationTextProps) => (
-    <div
-        className={styles.recommendationText}
-        style={{ padding: from === 'dashboard' ? '24px 40px' : '32px 0px 16px 0px' }}
-    >
+    <div className={styles.recommendationText} data-from={from}>
         {from === 'optimize' && (
-            <DsTypography variant="Semibold_14" style={{ minWidth: 'fit-content', width: 'fit-content' }}>
+            <DsTypography variant="Semibold_14" className={styles.title}>
                 {data?.title}
             </DsTypography>
         )}
@@ -37,7 +34,7 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
         {from === 'dashboard' && (
             <div className={styles.dashboardHeading}>
                 <Light />
-                <DsTypography variant="Semibold_14" style={{ minWidth: 'fit-content', width: 'fit-content' }}>
+                <DsTypography variant="Semibold_14" className={styles.title}>
                     {data?.title}
                 </DsTypography>
             </div>
@@ -48,37 +45,22 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                 <div className={styles.setSVG}>
                     <InfoIcon />
                 </div>
-                <DsTypography style={{ minWidth: '570px' }} variant="Regular_14">
+                <DsTypography className={styles.infoText} variant="Regular_14">
                     {data?.info}
                 </DsTypography>
             </div>
         )}
 
         {data?.description && (
-            <div
-                className={styles.desc}
-                style={{
-                    // @ts-ignore
-                    whiteSpace: 'pre-wrap',
-                    width: from === 'dashboard' ? 'unset' : '1400px'
-                }}
-            >
+            <div className={styles.desc} data-from={from}>
                 <DsTypography variant="Regular_14">{data?.description}</DsTypography>
             </div>
         )}
 
         {data?.descriptionList?.map((item: any, index: number) => (
-            <div
-                key={index + Math.random()}
-                style={{
-                    // @ts-ignore
-                    whiteSpace: from === 'dashboard' ? '' : 'pre-wrap',
-                    width: from === 'dashboard' ? 'unset' : '1400px',
-                    marginBottom: '10px'
-                }}
-            >
+            <div key={index + Math.random()} className={styles.descriptionItem} data-from={from}>
                 <DsTypography variant="Regular_14">
-                    <span style={{ fontWeight: 500 }}>{item?.title}</span>
+                    <span className={styles.itemTitle}>{item?.title}</span>
                     {item?.description}
                 </DsTypography>
             </div>
@@ -95,19 +77,17 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
                 {/* <DsTypography variant="Semibold_14">Values</DsTypography> */}
                 <div className={styles.values}>
                     {data?.values.map((value, index) => (
-                        <div key={index + Math.random()} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div key={index + Math.random()} className={styles.valueItem}>
                             {index !== 0 && <div className={styles.seperator} />}
 
                             <DsTypography
                                 key={index}
                                 variant="Regular_14"
-                                style={{
-                                    width:
-                                        value.includes('Under-provisioned') || value.includes('Over-provisioned')
-                                            ? '180px'
-                                            : 'fit-content',
-                                    whiteSpace: 'nowrap'
-                                }}
+                                className={`${styles.valueText} ${
+                                    value.includes('Under-provisioned') || value.includes('Over-provisioned')
+                                        ? styles.provisioned
+                                        : ''
+                                }`}
                             >
                                 {value}
                             </DsTypography>
@@ -118,14 +98,7 @@ const RecommendationText = ({ data, from = 'optimize', cardName }: Recommendatio
         )}
 
         {data?.descriptionRssConfig && (
-            <div
-                className={styles.rssConfig}
-                style={{
-                    // @ts-ignore
-                    whiteSpace: from === 'dashboard' && cardName === 'compute_right_sizing' ? '' : 'pre-wrap',
-                    width: from === 'dashboard' ? 'unset' : '1400px'
-                }}
-            >
+            <div className={styles.rssConfig} data-from={from} data-card-name={cardName}>
                 <DsTypography variant="Regular_14">{data?.descriptionRssConfig?.first}</DsTypography>
                 {data?.descriptionRssConfig?.second && (
                     <DsTypography variant="Regular_14">{data?.descriptionRssConfig?.second}</DsTypography>

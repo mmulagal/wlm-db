@@ -303,14 +303,12 @@ const OracleCardComponent = ({
     };
 
     const handleDismissButtonClick = () => {
-        const { isSubConfiguration, subConfigurationCount, storageTier } = getSubConfigurationData(cardData);
+        const { storageTier } = getSubConfigurationData(cardData);
 
         setDialog(
             <DismissDialog
                 type="single"
                 storageTier={storageTier}
-                isSubConfiguration={isSubConfiguration}
-                subConfigurationCount={subConfigurationCount}
                 callback={(selectedAction: string) => {
                     handleSingleAction(selectedAction);
                 }}

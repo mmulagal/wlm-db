@@ -70,6 +70,11 @@ import {
     areSubConfigurationsNotActive,
     areAllSubConfigurationsActivating as areAllSubConfigurationsActivatingHelper
 } from './StorageCardComponentHelper';
+import {
+    hasInnerPage,
+    getButtonText as getButtonTextFromRegistry,
+    getColumnConfig
+} from '../../../utils/getWellConfigRegistry';
 
 const StorageCardComponent = ({
     cardData,
@@ -817,88 +822,51 @@ const StorageCardComponent = ({
         });
     };
 
-    const handleNavigateToOptimizePage = (type: string) => {
-        dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_INNER_PAGE));
-        // Storing data to identify which config is selected from inner optimize page for MSSQL
-        dispatch(setSelectedOptimizeConfig({ type, data: cardData, engineType: DBType.MSSQL }));
+    const handleNavigateToOptimizePage = (configId: string) => {
+        const hasColumnConfig = getColumnConfig(configId);
+        const tab = hasColumnConfig ? WLF_TABS.DYNAMIC_OPTIMIZE_INNER_PAGE : WLF_TABS.OPTIMIZE_INNER_PAGE;
+        dispatch(setSelectedHeaderTab(tab));
+
+        // cardData now has both API fields (name, categories) and legacy fields (mapName, tags)
+        // No need for fallback logic anymore
+        dispatch(setSelectedOptimizeConfig({ type: configId, data: cardData, engineType }));
     };
 
     // Check if this is a WAD (offline assessment) instance
     const isWad = fullCardData?.isWad || false;
 
+    // Get the config ID from API (flat structure) or fallback to legacy type prop
+    const configId = cardData?.id || type;
+
     // Check if button would call handleDialog (vs navigation to optimize page)
-    const wouldCallHandleDialog = () =>
-        !(
-            type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
-            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
-            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
-            type === ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF ||
-            type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF ||
-            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT ||
-            type === GENERAL.RSS_CONFIGURATION ||
-            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
-            type === ASSESSMENT_CONFIG_NAMES.CRR ||
-            type === GENERAL.CLONE_MANAGEMENT ||
-            type === ASSESSMENT_CONFIG_NAMES.MTU
-        );
+    // Use registry to determine inner page vs dialog
+    const wouldCallHandleDialog = () => !hasInnerPage(configId, engineType);
 
     // This is for inner page navigation
     const handleDifferentNavigation = () => {
         if (!wouldCallHandleDialog()) {
-            handleNavigateToOptimizePage(type);
+            handleNavigateToOptimizePage(configId);
         } else {
             handleDialog(
                 setDialog,
-                type,
+                configId, // Pass config ID instead of legacy type
                 callOptimizeApi,
                 closeDialog,
                 cardData,
                 undefined,
                 undefined,
-                DBType.MSSQL,
+                engineType,
                 isWad
             );
         }
     };
 
     const setButtonText = () => {
-        if (
-            type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER ||
-            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
-            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
-            type === GENERAL.RSS_CONFIGURATION ||
-            type === GENERAL.SCHEDULED_LOCAL_SNAPSHOT ||
-            type === GENERAL.CLONE_MANAGEMENT ||
-            type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS ||
-            (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
-                cardData?.block_two?.value === GETWELL_STATUS.UNDER_PROVISIONED)
-        ) {
-            return GENERAL.VIEW_AND_FIX;
-        }
-        if (
-            type === ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF ||
-            type === ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF ||
-            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT ||
-            type === GENERAL.OPERATING_SYSTEM_PATCH ||
-            type === GENERAL.MICROSOFT_SQL_PATCH ||
-            type === ASSESSMENT_CONFIG_NAMES.CRR ||
-            type === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
-            type === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
-            type === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
-            type === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
-            type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
-            type === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
-            type === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
-            type === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
-            type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
-            type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
-            (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
-                cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) ||
-            type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH
-        ) {
-            return t('databases.well-architect.view');
-        }
-        return GENERAL.VIEW_AND_FIX;
+        // Get config status for special cases (e.g., headroom over-provisioned/under-provisioned)
+        const status = cardData?.block_two?.value?.toLowerCase();
+
+        // Use registry to determine button text
+        return getButtonTextFromRegistry(configId, engineType, status);
     };
 
     // Function For Dismiss
@@ -947,14 +915,12 @@ const StorageCardComponent = ({
     };
 
     const handleDismissButtonClick = () => {
-        const { isSubConfiguration, subConfigurationCount, storageTier } = getSubConfigurationData(cardData);
+        const { storageTier } = getSubConfigurationData(cardData);
 
         setDialog(
             <DismissDialog
                 type="single"
                 storageTier={storageTier}
-                isSubConfiguration={isSubConfiguration}
-                subConfigurationCount={subConfigurationCount}
                 callback={(selectedAction: string) => {
                     const configName = cardData?.block_one?.value;
                     handleSingleAction(selectedAction);

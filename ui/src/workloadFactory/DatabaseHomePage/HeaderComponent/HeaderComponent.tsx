@@ -108,8 +108,7 @@ import {
 } from '../../../store/workloadFactory/databaseHomeSlice';
 import { useOnPremData } from '../../ExploreSavings/ExploreSavingsOnPremiseTable/useOnPremData';
 import FetchingDataNotification from '../FetchingDataNotification/FetchingDataNotification';
-import OptimizeInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeInnerPage';
-import OptimizeOntapInnerPage from '../../GetWell/OptimizeInnerPage/OptimizeOntapInnerPage';
+import DynamicOptimizeInnerPage from '../../GetWell/OptimizeInnerPage/DynamicOptimizeInnerPage';
 import InventoryApisV3 from '../../InventoryV2/InventoryApisV3';
 import { setIsRefreshedSandbox } from '../../../store/workloadFactory/sandboxSlice';
 import store from '../../../store/store';
@@ -1693,9 +1692,12 @@ const HeaderComponent = ({ tab }: Tab) => {
 
                     {selectedHeaderTab === WLF_TABS.DASHBOARD_DISMISS_PAGE && <DashboardDismissPage />}
 
-                    {selectedHeaderTab === WLF_TABS.OPTIMIZE_INNER_PAGE && <OptimizeInnerPage />}
+                    {/* Unified Dynamic Inner Page - handles all configs */}
+                    {(selectedHeaderTab === WLF_TABS.OPTIMIZE_INNER_PAGE ||
+                        selectedHeaderTab === WLF_TABS.DYNAMIC_OPTIMIZE_INNER_PAGE ||
+                        selectedHeaderTab === WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE) && <DynamicOptimizeInnerPage />}
+
                     {selectedHeaderTab === WLF_TABS.DASHBOARD_OPTIMIZE_INNER_PAGE && <DashboardOptimizeInnerPage />}
-                    {selectedHeaderTab === WLF_TABS.OPTIMIZE_ONTAP_INNER_PAGE && <OptimizeOntapInnerPage />}
 
                     {selectedHeaderTab === WLF_TABS.SANDBOXES && (
                         <>

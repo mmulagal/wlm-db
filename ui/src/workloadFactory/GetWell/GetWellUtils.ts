@@ -4621,12 +4621,7 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any, engineType
     }
 };
 
-export const updateConfigStateStatus = (
-    rowList: any,
-    dispatch: any,
-    action: any,
-    engineType?: string
-) => {
+export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any, engineType?: string) => {
     let setAction = '';
     if (action === CONFIG_STATE_ACTIONS.DISMISS) {
         setAction = CONFIG_STATES.DISMISSED;
@@ -4667,12 +4662,11 @@ export const updateConfigStateStatus = (
                         };
 
                         // Step 2: Get the current flat dismissed array (or empty array if none yet)
-                        const existingDismissed: DismissedEntry[] =
-                            instance.assessments?.dismissedConfigurations ?? [];
+                        const existingDismissed: DismissedEntry[] = instance.assessments?.dismissedConfigurations ?? [];
 
                         // Step 3: Check if this config already has an entry in the array
                         const existingEntryIndex = existingDismissed.findIndex(
-                            (dismissedItem) => dismissedItem.id === configId
+                            dismissedItem => dismissedItem.id === configId
                         );
 
                         // Step 4: Build the new/updated entry.
@@ -4830,7 +4824,6 @@ export const updateConfigStatePerInstance = (
             dismissedConfigurations: updatedDismissedConfigs
         };
     }
-
 
     return driftAssessmentData;
 };
@@ -5595,14 +5588,11 @@ export const formatFlatAssessments = (
         // Get the correct block_one type based on configuration
         const blockOneType = getBlockOneType(configKey, category);
 
-        // Get tags from categories
-        const tags = assessment.categories || [];
-
         // Create card structure matching existing format
         cardsData[configKey] = {
             id: configKey,
             configurationId: configKey, // Store the config id for dismiss flow
-            mapName: displayName,
+            name: displayName, // Display name from flat API
             category,
             block_one: {
                 value: displayName,
@@ -5662,9 +5652,10 @@ export const formatFlatAssessments = (
                 return staticRecommendation?.description || assessment.recommendation;
             })(),
             recommendationOptions: assessment.recommendationOptions,
-            tags,
+            categories: assessment.categories || [], // Categories from flat API
             errorMessage: assessment.errorMessage,
             violationDetails: assessment.violationDetails,
+            objectsInViolation: assessment.objectsInViolation,
             // Preserve optimizing state if present
             status: optimizingData?.[configKey] || ''
         };

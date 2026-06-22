@@ -3,44 +3,26 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+    padding: 8px 40px;
 
-    .rssConfig {
-        display: flex;
-        gap: 16px;
-        flex-direction: column;
+    &[data-from='dashboard'] {
+        padding: 24px 40px;
+    }
 
-        .points {
-            display: flex;
-            gap: 16px;
-            align-items: center;
-            height: 24px;
-
-            .bullet {
-                margin-top: 5px;
-            }
-        }
+    .title {
+        min-width: fit-content;
+        width: fit-content;
     }
 
     .dashboardHeading {
         display: flex;
         gap: 8px;
         margin-bottom: 12px;
-    }
 
-    .valuesHeading {
-        margin-top: 8px;
-    }
-
-    .values {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-    }
-
-    .seperator {
-        height: 20px;
-        border-right: 1px solid var(--border);
-        position: relative;
+        .title {
+            min-width: fit-content;
+            width: fit-content;
+        }
     }
 
     .info {
@@ -53,9 +35,96 @@
                 width: 16px;
                 height: 16px;
                 margin-top: 3px;
+
                 path {
                     fill: #518bec;
                 }
+            }
+        }
+
+        .infoText {
+            min-width: 570px;
+        }
+    }
+
+    .desc {
+        white-space: pre-wrap;
+        width: 1400px;
+
+        &[data-from='dashboard'] {
+            width: unset;
+        }
+    }
+
+    .descriptionItem {
+        white-space: pre-wrap;
+        width: 1400px;
+        margin-bottom: 10px;
+
+        &[data-from='dashboard'] {
+            white-space: normal;
+            width: unset;
+        }
+
+        .itemTitle {
+            font-weight: 500;
+        }
+    }
+
+    .valuesHeading {
+        margin-top: 8px;
+    }
+
+    .values {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .valueItem {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+
+            .valueText {
+                width: fit-content;
+                white-space: nowrap;
+
+                &.provisioned {
+                    width: 180px;
+                }
+            }
+        }
+    }
+
+    .seperator {
+        height: 20px;
+        border-right: 1px solid var(--border);
+        position: relative;
+    }
+
+    .rssConfig {
+        display: flex;
+        gap: 16px;
+        flex-direction: column;
+        white-space: pre-wrap;
+        width: 1400px;
+
+        &[data-from='dashboard'] {
+            width: unset;
+
+            &[data-card-name='compute_right_sizing'] {
+                white-space: normal;
+            }
+        }
+
+        .points {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            height: 24px;
+
+            .bullet {
+                margin-top: 5px;
             }
         }
     }

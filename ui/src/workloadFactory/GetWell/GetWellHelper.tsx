@@ -1,18 +1,10 @@
 import { TooltipInfo } from '@netapp/design-system';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { TFunction } from 'i18next';
-import {
-    CONFIG_STATES,
-    GETWELL_CONFIG,
-    WA_FLAG_SKIP
-} from '../../utils/consts';
+import { CONFIG_STATES, GETWELL_CONFIG, WA_FLAG_SKIP } from '../../utils/consts';
 import { ReactComponent as Postpone } from '../../assets/Schedule.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
-import {
-    isConfigSkippedForAoag,
-    isMssqlHaDeployment,
-    isWadExcludedConfig
-} from './GetWellUtils';
+import { isConfigSkippedForAoag, isMssqlHaDeployment, isWadExcludedConfig } from './GetWellUtils';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
 
 // Helper component for postpone information
@@ -125,10 +117,7 @@ export const checkHasDismissedConfigurations = (cardData: any): boolean => {
 };
 
 // Helper function to get total count based on dismissed configuration state
-export const calculateTotalConfigCount = (
-    cardData: any,
-    showDismissedConfigurations: boolean
-): number => {
+export const calculateTotalConfigCount = (cardData: any, showDismissedConfigurations: boolean): number => {
     if (!cardData) return 0;
 
     // Check if this is a WAD (offline assessment) instance
@@ -213,14 +202,8 @@ export const calculatePostponeInfo = (cardData: any, key: string, fullCardData?:
     return result;
 };
 
-
-
 // Helper function to check if a table row configuration is in specific state(s)
-export const isTableRowConfigurationInState = (
-    rowData: any,
-    cardData: any,
-    targetStates: string[]
-): boolean => {
+export const isTableRowConfigurationInState = (rowData: any, cardData: any, targetStates: string[]): boolean => {
     const configName = rowData?.name;
 
     if (!configName) return false;
