@@ -1,4 +1,4 @@
-import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import { JOBSTATUS, JOBTYPE, DATABASE_DEPLOYMENT_TYPE } from '@prisma/client';
 import createError from 'http-errors';
 import throat from 'throat';
 import { isEmpty } from 'lodash-es';
@@ -15,7 +15,7 @@ import {
     CloneAssessment,
     CrrAssessment,
     DatabaseInstance,
-    DatabaseInstanceConfigurations,
+    DismissConfig,
     DatabaseInstancesIncludingResource,
     Metadata,
     ResourceAssessmentData,
@@ -87,20 +87,17 @@ import {
 } from '../../../routes/types/continuous-optimization.types';
 import { ORACLE_MAPPED_ONTAP_VOLUMES_DATA } from '../../../utils/demo-utils/demoMockdata';
 import {
-    buildDismissedConfigurations,
+    enrichWithGoldenConfig,
     getLatestInstanceAssessmentTime,
     isPdbGroupedVolumes,
     mapAssessmentToV1,
+    resolveAssessmentTypes,
     type MapAssessmentToV1Config
 } from '../assessment-utils';
-import {
-    updateFieldsBasedOnDismissedConfigurations,
-    processDismissedConfigurations,
-    mergeDismissConfigurations
-} from '../assessment-dismiss-operations';
 import { buildDemoComputeHostOsAssessmentInputs, handleGetOracleAssessmentForDemo } from '../../demo-operations';
 import { StorageAssessment } from './common-types';
 import { listJobs } from '../../../lib/database/job';
+import { filterExpiredDismissConfigs } from '../assessment-dismiss-operations';
 
 const logger = getLogger();
 
@@ -598,14 +595,12 @@ async function triggerOracleAssessment(
         }
 
         const { configurations: instanceConfigurations } = managedInstance;
-
-        const instanceDismissedConfigs = (instanceConfigurations as unknown as DatabaseInstanceConfigurations)
-            ?.dismissedConfigurations;
-        const hostDismissedConfigs = (hostConfigurations as unknown as DatabaseInstanceConfigurations)
-            ?.dismissedConfigurations;
-
-        // Process dismissed configurations using common method
-        const finalDismissedConfigurations = await processDismissedConfigurations(
+        // older dismissConfig was an Object so checking array
+        const instanceDismissedConfigs = Array.isArray(instanceConfigurations)
+            ? (instanceConfigurations as unknown as DismissConfig[])
+            : [];
+        const hostDismissedConfigs = Array.isArray(hostConfigurations) ? (hostConfigurations as DismissConfig[]) : [];
+        const { dismissedIds } = filterExpiredDismissConfigs(
             accountId,
             credentialsId,
             region,
@@ -615,19 +610,15 @@ async function triggerOracleAssessment(
             databaseInstanceId
         );
 
-        if (!isEmpty(finalDismissedConfigurations)) {
-            fields = updateFieldsBasedOnDismissedConfigurations(
-                fields,
-                finalDismissedConfigurations,
-                DatabaseTypes.ORACLE,
-                storageProtocol ?? STORAGE_PROTOCOLS.ISCSI
-            );
-        }
-
-        const effectiveProtocol = storageProtocol ?? STORAGE_PROTOCOLS.ISCSI;
-        if (effectiveProtocol !== STORAGE_PROTOCOLS.ISCSI) {
-            fields = fields.filter(field => field.toLowerCase() !== AssessmentCategoriesOracle.COMPUTE.toLowerCase());
-        }
+        fields = resolveAssessmentTypes(
+            DatabaseTypes.ORACLE,
+            fields,
+            {
+                storageProtocol: storageProtocol ?? STORAGE_PROTOCOLS.ISCSI,
+                isDataGuardDeployed: managedInstance.database_deployment_type === DATABASE_DEPLOYMENT_TYPE.DG
+            },
+            dismissedIds
+        );
 
         const instanceRecord: WorkloadInstance = {
             id: databaseInstanceId,
@@ -918,16 +909,13 @@ async function fetchOracleDriftAssessment(
             assessment_data: hostLevelAssessmentData
         }
     } = instanceDetail as DatabaseInstance;
-
-    const instanceDismissedConfigs = (instanceConfigurations as DatabaseInstanceConfigurations)
-        ?.dismissedConfigurations;
-    const hostDismissedConfigs = (hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations;
+    // older dismissConfig was an Object so checking array
+    const instanceDismissedConfigs = Array.isArray(instanceConfigurations)
+        ? (instanceConfigurations as DismissConfig[])
+        : [];
+    const hostDismissedConfigs = Array.isArray(hostConfigurations) ? (hostConfigurations as DismissConfig[]) : [];
 
     const { node1InstanceId } = resourceMetadata as Metadata;
-
-    let fieldsValues =
-        fields?.toLowerCase().replace(/\s+/g, '').split(',') ||
-        Object.values(AssessmentCategoriesOracle).map(category => category.toLowerCase());
 
     const databaseInstanceConfigData = await listDatabaseInstanceConfigData({
         accountId,
@@ -954,34 +942,36 @@ async function fetchOracleDriftAssessment(
     storageProtocol = storageProtocol || (mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.protocol : '');
     const isASMManaged = mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.isASMManaged : false;
 
-    const dismissedConfigurations = mergeDismissConfigurations(instanceDismissedConfigs, hostDismissedConfigs);
+    const { dismissedIds, dismissedConfigs } = filterExpiredDismissConfigs(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        instanceDismissedConfigs,
+        hostDismissedConfigs,
+        databaseInstanceId
+    );
 
-    if (!isEmpty(dismissedConfigurations)) {
-        fieldsValues = updateFieldsBasedOnDismissedConfigurations(
-            fieldsValues,
-            dismissedConfigurations,
-            DatabaseTypes.ORACLE,
-            storageProtocol ?? STORAGE_PROTOCOLS.ISCSI,
-            isASMManaged
-        );
-    }
-
-    const effectiveProtocol = storageProtocol ?? STORAGE_PROTOCOLS.ISCSI;
-    if (effectiveProtocol !== STORAGE_PROTOCOLS.ISCSI) {
-        fieldsValues = fieldsValues.filter(
-            field => field.toLowerCase() !== AssessmentCategoriesOracle.COMPUTE.toLowerCase()
-        );
-    }
+    const assessmentTypes = resolveAssessmentTypes(
+        DatabaseTypes.ORACLE,
+        fields,
+        {
+            storageProtocol,
+            isAsmManaged: isASMManaged ?? false,
+            isDataGuardDeployed: databaseDeploymentType === DATABASE_DEPLOYMENT_TYPE.DG
+        },
+        dismissedIds
+    );
 
     const assessmentFlags = {
-        storage: fieldsValues.includes(AssessmentCategoriesOracle.STORAGE.toLowerCase()),
-        compute: fieldsValues.includes(AssessmentCategoriesOracle.COMPUTE.toLowerCase()),
-        hostOsPatch: fieldsValues.includes(AssessmentCategoriesOracle.HOST_OS_PATCH.toLowerCase()),
-        awsBackup: fieldsValues.includes(AssessmentCategoriesOracle.AWS_BACKUP.toLowerCase()),
-        crr: fieldsValues.includes(AssessmentCategoriesOracle.CRR.toLowerCase()),
-        snapcenterSnapshot: fieldsValues.includes(AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT.toLowerCase()),
-        oracleSecurityPatch: fieldsValues.includes(AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH.toLowerCase()),
-        clone: fieldsValues.includes(AssessmentCategoriesOracle.CLONE.toLowerCase())
+        storage: assessmentTypes.includes(AssessmentCategoriesOracle.STORAGE),
+        compute: assessmentTypes.includes(AssessmentCategoriesOracle.COMPUTE),
+        hostOsPatch: assessmentTypes.includes(AssessmentCategoriesOracle.HOST_OS_PATCH),
+        awsBackup: assessmentTypes.includes(AssessmentCategoriesOracle.AWS_BACKUP),
+        crr: assessmentTypes.includes(AssessmentCategoriesOracle.CRR),
+        snapcenterSnapshot: assessmentTypes.includes(AssessmentCategoriesOracle.SNAPCENTER_SNAPSHOT),
+        oracleSecurityPatch: assessmentTypes.includes(AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH),
+        clone: assessmentTypes.includes(AssessmentCategoriesOracle.CLONE)
     };
     const demoComputeInputs =
         IS_DEMO_FLOW && assessmentFlags.compute && storageProtocol === STORAGE_PROTOCOLS.ISCSI
@@ -1052,7 +1042,7 @@ async function fetchOracleDriftAssessment(
                       databaseInstanceId,
                       resourceMetadata as Metadata,
                       hostLevelAssessmentData as ResourceAssessmentData,
-                      fieldsValues
+                      assessmentTypes
                   )
               )
             : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([]),
@@ -1145,7 +1135,7 @@ async function fetchOracleDriftAssessment(
 
     const assessmentResponse = {
         assessments: finalAssessments,
-        dismissedConfigurations: buildDismissedConfigurations(dismissedConfigurations, DatabaseTypes.ORACLE),
+        dismissedConfigurations: enrichWithGoldenConfig(dismissedConfigs, DatabaseTypes.ORACLE),
         metadata: {
             lastAssessmentTimestamp:
                 latestInstanceAssessmentTime instanceof Date

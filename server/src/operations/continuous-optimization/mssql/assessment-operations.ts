@@ -15,8 +15,8 @@ import {
 import {
     CloneAssessment,
     DatabaseInstance,
-    DatabaseInstanceConfigurations,
     DatabaseInstancesIncludingResource,
+    DismissConfig,
     MappedOnTapVolumeResponse,
     MaxDOPAssesment,
     Metadata,
@@ -74,16 +74,12 @@ import {
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getInstanceDetails } from '../../database-hosts-operations';
 import {
-    buildDismissedConfigurations,
+    enrichWithGoldenConfig,
     getLatestInstanceAssessmentTime,
     mapAssessmentToV1,
+    resolveAssessmentTypes,
     type MapAssessmentToV1Config
 } from '../assessment-utils';
-import {
-    updateFieldsBasedOnDismissedConfigurations,
-    mergeDismissConfigurations,
-    processDismissedConfigurations
-} from '../assessment-dismiss-operations';
 import {
     DriftAssessmentResponsePerHostType,
     DriftAssessmentResponsePerAccountV1Type,
@@ -100,11 +96,12 @@ import {
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { handleGetMssqlAssessmentForDemo } from '../../demo-operations';
 import { listJobs } from '../../../lib/database/job';
+import { filterExpiredDismissConfigs } from '../assessment-dismiss-operations';
 
 const logger = getLogger();
 
 // Categories to exclude from assessment response for AOAG deployment type
-const AOAG_EXCLUDED_CATEGORIES = [AssessmentCategories.LICENSE];
+const AOAG_EXCLUDED_IDS = ['sql-license'];
 
 // HA items to exclude for all AOAG deployments (sqlServer-service runs for both FCI and standalone AOAG)
 const AOAG_EXCLUDED_HA_ITEMS: string[] = [];
@@ -268,49 +265,45 @@ async function fetchMssqlDriftAssessment(
         }
     } = instanceDetail as DatabaseInstance;
 
-    const instanceDismissedConfigs = (instanceConfigurations as DatabaseInstanceConfigurations)
-        ?.dismissedConfigurations;
-    const hostDismissedConfigs = (hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations;
-
-    const dismissedConfigurations = mergeDismissConfigurations(instanceDismissedConfigs, hostDismissedConfigs);
-
-    const isAoagDeployment = databaseDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT;
-
-    let fieldsValues = (
-        fields?.toLowerCase().replace(/\s+/g, '').split(',') ||
-        Object.values(AssessmentCategories).map(category => category.toLowerCase())
-    ).filter(
-        field =>
-            !(
-                databaseDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&
-                field === AssessmentCategories.HIGH_AVAILABILITY.toLowerCase()
-            ) && !(isAoagDeployment && AOAG_EXCLUDED_CATEGORIES.map(cat => cat.toLowerCase()).includes(field))
+    // older dismissConfig was an Object so checking array
+    const instanceDismissedConfigs = Array.isArray(instanceConfigurations)
+        ? (instanceConfigurations as DismissConfig[])
+        : [];
+    const hostDismissedConfigs = Array.isArray(hostConfigurations) ? (hostConfigurations as DismissConfig[]) : [];
+    const { dismissedIds, dismissedConfigs } = filterExpiredDismissConfigs(
+        accountId,
+        credentialsId,
+        region,
+        databaseHostId,
+        instanceDismissedConfigs,
+        hostDismissedConfigs,
+        databaseInstanceId
     );
 
-    if (!isEmpty(dismissedConfigurations)) {
-        fieldsValues = updateFieldsBasedOnDismissedConfigurations(
-            fieldsValues,
-            dismissedConfigurations,
-            DatabaseTypes.MS_SQL_SERVER
-        );
-    }
+    const isAoagDeployment = databaseDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT;
+    const assessmentTypes = resolveAssessmentTypes(
+        DatabaseTypes.MS_SQL_SERVER,
+        fields,
+        { deploymentType: databaseDeploymentType },
+        dismissedIds
+    );
 
     const assessmentFlags = {
-        storage: fieldsValues.includes(AssessmentCategories.STORAGE.toLowerCase()),
-        compute: fieldsValues.includes(AssessmentCategories.COMPUTE.toLowerCase()),
-        license: fieldsValues.includes(AssessmentCategories.LICENSE.toLowerCase()),
-        hostOsPatch: fieldsValues.includes(AssessmentCategories.HOST_OS_PATCH.toLowerCase()),
-        rssConfig: fieldsValues.includes(AssessmentCategories.RSS_CONFIG.toLowerCase()),
-        mtuAlignment: fieldsValues.includes(AssessmentCategories.MTU_ALIGNMENT.toLowerCase()),
-        maxDOP: fieldsValues.includes(AssessmentCategories.MAXDOP.toLowerCase()),
-        mssqlPatch: fieldsValues.includes(AssessmentCategories.MSSQL_PATCH.toLowerCase()),
+        storage: assessmentTypes.includes(AssessmentCategories.STORAGE),
+        compute: assessmentTypes.includes(AssessmentCategories.COMPUTE),
+        license: assessmentTypes.includes(AssessmentCategories.LICENSE),
+        hostOsPatch: assessmentTypes.includes(AssessmentCategories.HOST_OS_PATCH),
+        rssConfig: assessmentTypes.includes(AssessmentCategories.RSS_CONFIG),
+        mtuAlignment: assessmentTypes.includes(AssessmentCategories.MTU_ALIGNMENT),
+        maxDOP: assessmentTypes.includes(AssessmentCategories.MAXDOP),
+        mssqlPatch: assessmentTypes.includes(AssessmentCategories.MSSQL_PATCH),
         resilience: [
             AssessmentCategories.SNAPSHOT_POLICY,
             AssessmentCategories.AWS_BACKUP,
             AssessmentCategories.CRR,
             AssessmentCategories.HIGH_AVAILABILITY
-        ].some(category => fieldsValues.includes(category.toLowerCase())),
-        clone: fieldsValues.includes(AssessmentCategories.CLONE.toLowerCase())
+        ].some(category => assessmentTypes.includes(category)),
+        clone: assessmentTypes.includes(AssessmentCategories.CLONE)
     };
 
     const databaseInstanceConfigData = await listDatabaseInstanceConfigData({
@@ -353,7 +346,7 @@ async function fetchMssqlDriftAssessment(
                   databaseHostId,
                   resourceName!,
                   databaseInstanceId,
-                  fieldsValues,
+                  assessmentTypes,
                   hostLevelAssessmentData as ResourceAssessmentData,
                   databaseInstanceConfigData
               )
@@ -395,7 +388,7 @@ async function fetchMssqlDriftAssessment(
                   databaseInstanceId,
                   resourceMetadata as Metadata,
                   hostLevelAssessmentData as ResourceAssessmentData,
-                  fieldsValues
+                  assessmentTypes
               )
             : []
     ];
@@ -441,7 +434,7 @@ async function fetchMssqlDriftAssessment(
 
     const assessmentResponse = {
         assessments: filteredAssessments,
-        dismissedConfigurations: buildDismissedConfigurations(dismissedConfigurations, DatabaseTypes.MS_SQL_SERVER),
+        dismissedConfigurations: enrichWithGoldenConfig(dismissedConfigs, DatabaseTypes.MS_SQL_SERVER),
         metadata: {
             lastAssessmentTimestamp,
             fileSystemId,
@@ -606,16 +599,14 @@ async function fetchMssqlDriftAssessmentPerHost(
         logger.info(message);
         throw createError(HttpErrorCodes.NOT_FOUND, message);
     }
-
-    const fieldsList = fields?.toLowerCase()?.replace(/\s+/g, '')?.split(',');
-    const hostFieldsToQuery = isEmpty(fieldsList)
-        ? Object.values(AssessmentCategories).filter(category => category !== AssessmentCategories.STORAGE)
-        : (fieldsList ?? []).filter(field =>
-              Object.values(AssessmentCategories).includes(field as AssessmentCategories)
-          );
-
+    const hostApplicableAssessmentCategories = resolveAssessmentTypes(
+        DatabaseTypes.MS_SQL_SERVER,
+        fields,
+        { deploymentType: '', storageProtocol: '', isAsmManaged: false, isDataGuardDeployed: false },
+        new Set()
+    );
     let hostLevelData: (AssessmentItemType | AssessmentErrorItemType)[] = [];
-    if (!isEmpty(hostFieldsToQuery)) {
+    if (!isEmpty(hostApplicableAssessmentCategories)) {
         const [{ database_instance_id: databaseInstanceId }] = instancesManaged;
         hostLevelData = hostLevelDriftData(
             accountId,
@@ -625,7 +616,7 @@ async function fetchMssqlDriftAssessmentPerHost(
             databaseInstanceId,
             metadata as Metadata,
             hostLevelAssessmentData as ResourceAssessmentData,
-            hostFieldsToQuery
+            hostApplicableAssessmentCategories
         );
     }
 
@@ -673,7 +664,7 @@ async function fetchMssqlDriftAssessmentPerHost(
                         deploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
                             ? filterAoagItems(hostLevelData, {
                                   isStandaloneAoag: false,
-                                  excludeCategories: AOAG_EXCLUDED_CATEGORIES
+                                  excludeCategories: AOAG_EXCLUDED_IDS
                               })
                             : hostLevelData;
 
@@ -1286,13 +1277,13 @@ async function triggerMssqlAssessment(
         const { configurations: instanceConfigurations, resource: resourceDetail } =
             newDatabaseInstanceDetails as DatabaseInstance;
         const { configurations: hostConfigurations, resource_name: resourceName } = resourceDetail as ResourceDetails;
+        // older dismissConfig was an Object so checking array
+        const instanceDismissedConfigs = Array.isArray(instanceConfigurations)
+            ? (instanceConfigurations as DismissConfig[])
+            : [];
+        const hostDismissedConfigs = Array.isArray(hostConfigurations) ? (hostConfigurations as DismissConfig[]) : [];
 
-        const instanceDismissedConfigs = (instanceConfigurations as DatabaseInstanceConfigurations)
-            ?.dismissedConfigurations;
-        const hostDismissedConfigs = (hostConfigurations as DatabaseInstanceConfigurations)?.dismissedConfigurations;
-
-        // Process dismissed configurations using common method
-        const finalDismissedConfigurations = await processDismissedConfigurations(
+        const { dismissedIds } = filterExpiredDismissConfigs(
             accountId,
             credentialsId,
             region,
@@ -1302,14 +1293,6 @@ async function triggerMssqlAssessment(
             databaseInstanceId
         );
 
-        if (!isEmpty(finalDismissedConfigurations)) {
-            fields = updateFieldsBasedOnDismissedConfigurations(
-                fields,
-                finalDismissedConfigurations,
-                DatabaseTypes.MS_SQL_SERVER
-            );
-        }
-
         const {
             database_instance_name: savedInstanceName,
             fsxn_ids: fileSystemId,
@@ -1317,6 +1300,8 @@ async function triggerMssqlAssessment(
             sqlAuthEnabled,
             database_deployment_type: deploymentType
         } = newDatabaseInstanceDetails;
+
+        fields = resolveAssessmentTypes(DatabaseTypes.MS_SQL_SERVER, fields, { deploymentType }, dismissedIds);
 
         const instanceRecord: WorkloadInstance = {
             id: databaseInstanceId,
@@ -1331,19 +1316,6 @@ async function triggerMssqlAssessment(
             svmId: (fsxSvmId as Record<string, string>)[fileSystemId!] || '',
             databaseInstanceObject: newDatabaseInstanceDetails
         };
-
-        if (
-            deploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT &&
-            fields.includes(AssessmentCategories.HIGH_AVAILABILITY)
-        ) {
-            logger.warn('High availabilty assessment is not supported on standalone instance.', {
-                accountId,
-                credentialsId,
-                databaseHostId,
-                databaseInstanceId
-            });
-            fields = fields.filter(e => e !== AssessmentCategories.HIGH_AVAILABILITY);
-        }
 
         const shouldRunInstanceLevelAssessment = fields.some(field =>
             [

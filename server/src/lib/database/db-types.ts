@@ -1,11 +1,6 @@
 import { DATABASE_TYPE, DEPLOYMENT_MODEL, DEPLOYMENT_STATUS, Prisma, STORAGE_TYPE } from '@prisma/client';
 import { JsonValue } from '@prisma/client/runtime/binary';
-import {
-    CrrDetails,
-    DatabaseInstanceConfigurations,
-    DatabaseInstanceMetadata,
-    ResourceDetails
-} from '../../utils/common-types';
+import { CrrDetails, DatabaseInstanceMetadata, DismissConfig, ResourceDetails } from '../../utils/common-types';
 
 interface Deployment {
     deploymentId: string;
@@ -74,7 +69,7 @@ interface DatabaseInstanceRecord {
     metaData?: DatabaseInstanceMetadata;
     databaseType: string;
     storageType?: string;
-    configurations?: DatabaseInstanceConfigurations;
+    configurations?: DismissConfig[];
     checkOfflineAssessment?: boolean;
 }
 
@@ -113,7 +108,7 @@ interface DatabaseInstanceDetails {
     storage_type?: string;
     sqlAuthEnabled?: boolean;
     isManaged?: boolean;
-    configurations?: DatabaseInstanceConfigurations | JsonValue;
+    configurations?: DismissConfig[] | JsonValue;
     crrConfigData?: { crrDetails: CrrDetails[] };
 }
 interface DatabaseInstanceConfigData {

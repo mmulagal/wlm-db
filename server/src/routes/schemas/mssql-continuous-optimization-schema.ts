@@ -28,8 +28,6 @@ import {
     OptimizeGenericRequestBody,
     BulkOptimizeComputeRequestBody,
     BulkOptimizeCloneBody,
-    BulkDismissConfigurationRequestBody,
-    BulkDismissConfigurationResponse,
     BulkOptimizeHASharedStorageBody,
     BulkOptimizeBackupRequestBody,
     HostOsPatchScanResponse,
@@ -39,6 +37,7 @@ import {
     MssqlAssessmentResponseV1
 } from '../types/mssql-continuous-optimisation.types';
 import { resourceRequest } from './database-hosts-schemas';
+import { BaseBulkDismissConfigurationSchema } from './generic-schemas';
 
 const DriftAssessmentDataCollectionV1 = {
     ...resourceRequest,
@@ -273,27 +272,11 @@ const BulkOptimizeAwsBackupSchema = {
     }
 };
 
-const BaseBulkDismissConfigurationSchema = {
-    params: AccountIdParams,
-    tags: [RouteTags.MSSQL_ASSESSMENT],
-    body: BulkDismissConfigurationRequestBody,
-    summary: 'Dismiss Assessment Configurations for MSSQL database',
-    description: 'Dismiss Assessment Configurations for selected MSSQL database instances.',
-    response: {
-        200: BulkDismissConfigurationResponse
-    }
-};
-
 const BulkDismissConfigurationSchema = {
     ...BaseBulkDismissConfigurationSchema,
+    summary: 'Dismiss Assessment Configurations for MSSQL database',
+    description: 'Dismiss Assessment Configurations for selected MSSQL database instances.',
     tags: [RouteTags.MSSQL_ASSESSMENT]
-};
-
-const BulkDismissOracleConfigurationSchema = {
-    ...BaseBulkDismissConfigurationSchema,
-    summary: 'Dismiss Assessment Configurations for Oracle database',
-    description: 'Dismiss Assessment Configurations for selected Oracle database instances.',
-    tags: [RouteTags.ORACLE_ASSESSMENT]
 };
 
 const BulkOptimizeCloneSchema = {
@@ -391,7 +374,6 @@ export {
     BulkOptimizeClusterQuorumSchema,
     BulkOptimizeSQLServerServiceSchema,
     BulkOptimizeMTUAlignmentSchema,
-    BulkDismissOracleConfigurationSchema,
     TriggerOracleDriftAssessmentSchema,
     FetchMssqlPatchScanSchema,
     DriftAssessmentDataCollectionV1,

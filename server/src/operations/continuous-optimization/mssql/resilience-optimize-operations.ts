@@ -20,7 +20,8 @@ import {
     WorkloadInstance,
     MappedOnTapVolumeResponse,
     IgroupMissingInitiators,
-    DatabaseInstance
+    DatabaseInstance,
+    JobMetadata
 } from '../../../utils/common-types';
 import {
     AuditStatus,
@@ -42,7 +43,7 @@ import { SET_VOLUME_SNAPSHOT_POLICY } from '../../workloads/mssql/optimization-s
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
 import { getMappedOntapVolumes, getMZFsxnNodePreference } from '../../aws/fsx-operations';
-import { activeSqlNodeDetails, handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
+import { activeSqlNodeDetails, handleOptimizeJobCreation } from '../assessment-utils';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';

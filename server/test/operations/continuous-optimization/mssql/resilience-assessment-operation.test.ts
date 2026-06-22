@@ -171,10 +171,10 @@ describe('Resilience drift assessment', () => {
             RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d',
             [
-                AssessmentCategories.SNAPSHOT_POLICY.toLowerCase(),
-                AssessmentCategories.CRR.toLowerCase(),
-                AssessmentCategories.AWS_BACKUP.toLowerCase(),
-                AssessmentCategories.HIGH_AVAILABILITY.toLowerCase()
+                AssessmentCategories.SNAPSHOT_POLICY,
+                AssessmentCategories.CRR,
+                AssessmentCategories.AWS_BACKUP,
+                AssessmentCategories.HIGH_AVAILABILITY
             ]
         );
         const snapshotPolicy = res.find(item => item.id === AssessmentCategories.SNAPSHOT_POLICY);

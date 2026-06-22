@@ -674,61 +674,6 @@ const DISMISS_UPDATE_STATUS = {
     PARTIAL: 'PARTIAL'
 };
 
-const INSTANCE_LEVEL_CONFIGURATIONS = [
-    // Common instance-level configurations
-    'storage',
-    'maxdop',
-    'mssql-patch',
-    'mapped-ontap-volumes',
-    'clone',
-    'crr',
-    'shared-storage',
-    'sqlServer-service',
-    'drive-letter',
-    // Expand MSSQL storage configuration assessment map
-    ...MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP.volumes,
-    ...MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP.luns,
-    ...MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
-    // Expand MSSQL storage assessment configs map
-    ...MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP.sizing,
-    ...MSSQL_STORAGE_ASSESSMENT_CONFIGS_MAP.layout,
-    // Expand Oracle storage configuration assessment map
-    ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.volumes,
-    ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.luns,
-    ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
-    // Expand Oracle storage assessment configs map
-    ...ORACLE_STORAGE_ASSESSMENT_CONFIGS_MAP.sizing,
-    // Oracle compute host/OS assessment configs (independent of storage)
-    ...ORACLE_COMPUTE_HOST_OS_ASSESSMENT_CONFIGS,
-    'clone-management',
-    'snapcenter-snapshot',
-    'oracle-security-patch',
-    // Oracle layout configurations
-    'archive-placement',
-    'datafiles-placement',
-    'controlfiles-placement',
-    'redologs-placement',
-    'templogs-placement',
-    'oracle-binary-placement',
-    'data-dg-lun-layout',
-    'redolog-dg-lun-layout',
-    'fra-dg-lun-layout',
-    'archivelog-dg-lun-layout',
-    // Oracle-ISCSI-specific configurations
-    ...ORACLE_ASM_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os
-];
-
-const HOST_LEVEL_CONFIGURATIONS = [
-    'sql-license',
-    'host-os-patch',
-    'rss-config',
-    'compute-rightsizing',
-    'backup-configuration',
-    'mtu-alignment',
-    'heartbeat-settings',
-    'cluster-quorum'
-];
-
 const DEFAULT_MPIO_TIMEOUT = 60; // seconds
 
 const DEFAULT_FSX_MTU_VALUE = 9001;
@@ -779,8 +724,6 @@ export {
     DISMISS_DEACTIVATION_REASON,
     DISMISS_STATUS,
     DISMISS_UPDATE_STATUS,
-    INSTANCE_LEVEL_CONFIGURATIONS,
-    HOST_LEVEL_CONFIGURATIONS,
     MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     HIGH_AVAILABILITY,

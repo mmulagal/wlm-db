@@ -1,10 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import { FastifyInstance } from 'fastify/types/instance';
 import { AssessmentTriggeredBy, OptimizeStorageParams } from '../utils/continous-optimization-consts';
-import {
-    BulkDismissOracleConfigurationSchema,
-    TriggerOracleDriftAssessmentSchema
-} from './schemas/mssql-continuous-optimization-schema';
+import { TriggerOracleDriftAssessmentSchema } from './schemas/mssql-continuous-optimization-schema';
 import castRequest from './utils';
 import {
     fetchOracleDriftAssessment,
@@ -16,6 +13,7 @@ import {
     onDemandTriggerOracleDriftAssessment
 } from '../operations/continuous-optimization/oracle/assessment-operations';
 import {
+    BulkDismissOracleConfigurationSchema,
     DriftAssessmentDataCollection,
     DriftAssessmentDataCollectionV1,
     DriftAssessmentPerAccount,

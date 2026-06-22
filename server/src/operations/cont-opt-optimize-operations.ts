@@ -17,7 +17,8 @@ import {
     StorageTierParams,
     MaxDOPAssesment,
     OptimizeMpioTimeoutParams,
-    SSMDocument
+    SSMDocument,
+    JobMetadata
 } from '../utils/common-types';
 import {
     HttpErrorCodes,
@@ -91,8 +92,7 @@ import {
     buildBlockDeviceSpaceManagementEntry,
     buildVolumeCombinedEntry,
     expandCombinedTargets,
-    handleOptimizeJobCreation,
-    JobMetadata
+    handleOptimizeJobCreation
 } from './continuous-optimization/assessment-utils';
 import { getLogVolumeDrift, getTempDbVolumeDrift } from './continuous-optimization/mssql/storage-assessment-operations';
 import { resetCache } from '../utils/cache';

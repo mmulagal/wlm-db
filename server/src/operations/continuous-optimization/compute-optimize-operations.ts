@@ -6,7 +6,8 @@ import {
     Metadata,
     NodeDetails,
     ResourceAssessmentData,
-    SsmSqlServerRunningStatus
+    SsmSqlServerRunningStatus,
+    JobMetadata
 } from '../../utils/common-types';
 import { AuditStatus } from '../../utils/consts';
 import {
@@ -40,7 +41,7 @@ import {
 import { listResources } from '../../lib/database/db';
 import { CLUSTER_NETWORK_IP_INFO_PS1, FAILURE_INFO } from '../workloads/mssql/discover-consts';
 import { calculateComputeDrift } from './compute-assessment-operations';
-import { handleOptimizeJobCreation, JobMetadata } from './assessment-utils';
+import { handleOptimizeJobCreation } from './assessment-utils';
 import { ENABLE_MPIO_AND_CONFIGURE } from '../workloads/mssql/mpio-remediation-scripts';
 import {
     getInstanceInfo,

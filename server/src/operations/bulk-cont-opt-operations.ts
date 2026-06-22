@@ -13,7 +13,8 @@ import {
     OptimizeHASharedStorageRequestBodyType,
     BulkOptimizeHASharedStorageRequestBodyType
 } from '../routes/types/mssql-continuous-optimisation.types';
-import { handleOptimizeJobCreation, JobMetadata } from './continuous-optimization/assessment-utils';
+import { JobMetadata } from '../utils/common-types';
+import { handleOptimizeJobCreation } from './continuous-optimization/assessment-utils';
 import {
     handleUpdateAwsBackup,
     optimizeMaxDop,

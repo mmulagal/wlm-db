@@ -310,21 +310,21 @@ async function createDemoResourcesPerRegion(
                 await Promise.all(
                     sqlInstances.map(async sqlInstance => {
                         const { sqlInstanceId, sqlInstanceName } = sqlInstance;
-                        const dismissedConfigurations = {
-                            crr: {
-                                configurationName: 'crr',
+                        // Stored directly as a DismissConfig[] (no wrapper key)
+                        const databaseConfigurationData = [
+                            {
+                                id: 'crr',
                                 configState: 'POSTPONED',
                                 startTime: Date.now(),
                                 endTime: Date.now() + 30 * 24 * 60 * 60 * 1000
                             },
-                            maxDOP: {
-                                configurationName: 'maxdop',
+                            {
+                                id: 'maxdop',
                                 configState: 'POSTPONED',
                                 startTime: Date.now(),
                                 endTime: Date.now() + 30 * 24 * 60 * 60 * 1000
                             }
-                        };
-                        const databaseConfigurationData = { dismissedConfigurations };
+                        ];
                         // create sandbox metadata for resource and instance
                         let sqlInstanceSandboxMetadata: any = {};
                         if (databaseType === DatabaseTypes.MS_SQL_SERVER) {

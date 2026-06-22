@@ -358,12 +358,12 @@ interface DatabaseInstanceMetadata {
     numberOfTimesAssessedOffline?: number;
 }
 
-interface DatabaseInstanceConfigurations {
-    dismissedConfigurations: DatabaseInstanceDismissConfigs;
-}
-
-interface DatabaseHostConfigurations {
-    dismissedConfigurations: DatabaseInstanceDismissConfigs;
+interface DismissConfig {
+    id: string;
+    configState: string;
+    startTime: number;
+    endTime?: number;
+    reactivationReason?: string;
 }
 
 interface CreateDbMetrics {
@@ -440,7 +440,7 @@ interface ResourceDetails {
     clusterNodeDetails?: NodeDetails[];
     database_instances?: DatabaseInstance[];
     ec2UsageOperation?: string; // internal field used to store the ec2 usage operation for the unmanaged MSSQL resource
-    configurations?: DatabaseInstanceConfigurations | JsonValue;
+    configurations?: DismissConfig[] | JsonValue;
     assessment_data?: ResourceAssessmentData | JsonValue;
     assessment_results?: ResourceAssessmentResults | JsonValue;
 }
@@ -548,7 +548,7 @@ interface DatabaseInstance {
     sqlAuthEnabled?: boolean;
     isManaged?: boolean;
     resource: ResourceDetails;
-    configurations?: DatabaseInstanceConfigurations | JsonValue;
+    configurations?: DismissConfig[] | JsonValue;
     crrConfigData?: { crrDetails: CrrDetails[] };
     account_id?: string;
     resource_id?: string;
@@ -875,55 +875,6 @@ interface InstancesResponse {
     [key: string]: MappedOnTapVolumeResponse;
 }
 
-interface InstanceDismissParams {
-    configurationName: string;
-    configState: string;
-    startTime: number;
-    endTime?: number;
-    reactivationReason?: string;
-}
-
-interface StorageDismissConfigs {
-    configuration?: {
-        volumes?: InstanceDismissParams[];
-        luns?: InstanceDismissParams[];
-        os?: InstanceDismissParams[];
-    };
-    sizing?: InstanceDismissParams[];
-    layout?: InstanceDismissParams[];
-}
-
-interface DatabaseInstanceDismissConfigs {
-    storage?: StorageDismissConfigs;
-    rssConfig?: InstanceDismissParams;
-    maxDop?: InstanceDismissParams;
-    mssqlPatch?: InstanceDismissParams;
-    crr?: InstanceDismissParams;
-    snapshotPolicy?: InstanceDismissParams;
-    awsBackup?: InstanceDismissParams;
-    clone?: InstanceDismissParams;
-    compute?: InstanceDismissParams;
-    license?: InstanceDismissParams;
-    hostOsPatch?: InstanceDismissParams;
-    oracleSecurityPatch?: InstanceDismissParams;
-    mtuAlignment?: InstanceDismissParams;
-    snapcenterSnapshot?: InstanceDismissParams;
-    transparentHugepages?: InstanceDismissParams;
-    tcpAdvancedOptions?: InstanceDismissParams;
-    filesystemsIoOptions?: InstanceDismissParams;
-    multiblockReadcount?: InstanceDismissParams;
-    highAvailability?: InstanceDismissParams[];
-}
-
-// Configuration grouping types for bulk dismiss operations
-interface DismissConfigItem {
-    configName: string;
-    configState: string;
-    startTime: number;
-    endTime: number | undefined;
-    originalConfigIndex: number;
-}
-
 interface BulkDismissConfigurationType {
     configurationName: string;
     configState: string;
@@ -941,17 +892,12 @@ interface BulkDismissConfigurationType {
     }>;
 }
 
-interface DismissBaseGroup {
+interface DismissGroup {
     credentialsId: string;
     region: string;
     hostId: string;
-    configs: DismissConfigItem[];
-}
-
-interface DismissHostGroup extends DismissBaseGroup {}
-
-interface DismissInstanceGroup extends DismissBaseGroup {
-    instanceId: string;
+    instanceId?: string; // Present for instance-level configs; absent for host-level configs.
+    configs: Array<DismissConfig & { configIndex: number }>;
 }
 
 // Bulk dismiss operation interfaces
@@ -1081,10 +1027,7 @@ export {
     ResourceAssessmentData,
     ClonedVolumeDetail,
     MappedVolumeResponseForClone,
-    InstanceDismissParams,
-    DatabaseInstanceDismissConfigs,
-    DatabaseInstanceConfigurations,
-    DatabaseHostConfigurations,
+    DismissConfig,
     CrrAssessment,
     CrrDetails,
     OptimizeMpioTimeoutParams,
@@ -1098,14 +1041,10 @@ export {
     IgroupMissingInitiators,
     HighAvailabilitySharedStorage,
     UserDatabaseLayout,
-    DismissConfigItem,
-    DismissBaseGroup,
-    DismissHostGroup,
-    DismissInstanceGroup,
+    DismissGroup,
     BulkDismissConfigurationResponseItem,
     PerHostJobMetadata,
     JobMetadata,
-    StorageDismissConfigs,
     SSMDocument,
     ComputeHostOsAssessment
 };

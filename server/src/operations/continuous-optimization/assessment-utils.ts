@@ -6,6 +6,7 @@ import { getJobs, registerJob } from '../database/job-operations';
 import { getServerNameWithHostname, getTimeDifferenceInMinutes } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import {
+    AssessmentCategories,
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategoriesOracle,
     AssessmentStatus,
@@ -23,12 +24,13 @@ import type {
     JobMetadata,
     Metadata,
     ResourceAssessmentData,
-    ResourceDetails
+    ResourceDetails,
+    DismissConfig
 } from '../../utils/common-types';
 import { OracleJobMetadata } from './oracle/consts';
 import { OracleMappedOntapVolumeRecordType } from '../workloads/oracle/common-types';
 import getMissingPermissionsList from '../aws/iam-operations';
-import { DatabaseTypes, HttpErrorCodes } from '../../utils/consts';
+import { DatabaseTypes, HttpErrorCodes, SqlServerDeploymentModel, STORAGE_PROTOCOLS } from '../../utils/consts';
 import { getInstanceInfo, updateDatabaseHostAssessmentData } from '../database/database-operations';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { listSsmCommands } from '../../lib/aws/ssm';
@@ -40,7 +42,6 @@ import type {
     AssessmentMetadataType,
     ConfigDetailType,
     DismissedConfigurationType,
-    DismissedConfigurationsResponseType,
     GenericViolationResponseType,
     ViolatedConfigType
 } from '../../routes/types/continuous-optimization.types';
@@ -73,7 +74,8 @@ interface GoldenConfigEntry {
     value?: string | number | boolean;
     recommended?: string;
     status?: string;
-    applicableTo?: 'iscsi' | 'nfs';
+    applicableTo?: 'iscsi' | 'nfs' | 'asm';
+    configLevel: 'host' | 'database';
     // Combined (aggregate) entries fan out into per-sub-parameter children at drift / optimize time.
     // MSSQL combined entry uses `parameter`/`value`/`source`; Oracle entries also carry `name`/`objectType`.
     components?: GoldenConfigComponent[];
@@ -369,62 +371,24 @@ const GOLDEN_CONFIG_LOOKUP = {
     [DatabaseTypes.ORACLE]: new Map(ORACLE_GOLDEN_CONFIG.map(entry => [entry.id, entry]))
 };
 
-/**
- * Merges golden-config display metadata (id, name, severity, recommendation, etc.) into a
- * dismissed-configuration record that only stores `configurationName` in the database.
- */
-function enrichWithGoldenConfig(
-    entry: DismissedConfigurationType,
-    databaseType: DatabaseTypes
-): DismissedConfigurationType {
-    const match = GOLDEN_CONFIG_LOOKUP[databaseType as keyof typeof GOLDEN_CONFIG_LOOKUP]?.get(entry.configurationName);
-    if (!match) {
-        logger.error('No golden config found for the dismiss configuration name:', entry.configurationName);
-        return entry;
-    }
-    return {
-        ...entry,
-        id: match.id,
-        name: match.name,
-        type: match.type,
-        subType: match.subType,
-        severity: match.severity,
-        recommendation: match.recommendation,
-        categories: match.categories
-    };
-}
-
-/**
- * Flattens the nested v2 `dismissedConfigurations` shape (storage buckets + single-item areas)
- * into a uniform array enriched with golden-config metadata for API responses.
- */
-function buildDismissedConfigurations(
-    dismissed: DismissedConfigurationsResponseType | undefined,
-    databaseType: DatabaseTypes
-): DismissedConfigurationType[] {
-    if (!dismissed) {
-        return [];
-    }
-    const items: DismissedConfigurationType[] = [];
-
-    const { storage, highAvailability, ...singleAreas } = dismissed;
-    const { volumes = [], luns = [], os = [] } = storage?.configuration ?? {};
-
-    for (const entry of [...volumes, ...luns, ...os, ...(storage?.sizing ?? []), ...(storage?.layout ?? [])]) {
-        items.push(enrichWithGoldenConfig(entry as DismissedConfigurationType, databaseType));
-    }
-    for (const entry of highAvailability ?? []) {
-        if (entry) {
-            items.push(enrichWithGoldenConfig(entry as DismissedConfigurationType, databaseType));
-        }
-    }
-    for (const [, value] of Object.entries(singleAreas)) {
-        if (value) {
-            items.push(enrichWithGoldenConfig(value as DismissedConfigurationType, databaseType));
-        }
-    }
-
-    return items;
+function enrichWithGoldenConfig(entries: DismissConfig[], databaseType: DatabaseTypes): DismissedConfigurationType[] {
+    const lookup = GOLDEN_CONFIG_LOOKUP[databaseType as keyof typeof GOLDEN_CONFIG_LOOKUP];
+    return entries.map(entry => {
+        const match = lookup?.get(entry.id);
+        return {
+            id: match?.id ?? entry.id,
+            configurationName: match?.id ?? entry.id,
+            configState: entry.configState,
+            startTime: entry.startTime,
+            endTime: entry.endTime,
+            name: match?.name ?? entry.id,
+            type: match?.type ?? '',
+            subType: match?.subType,
+            severity: match?.severity ?? '',
+            recommendation: match?.recommendation ?? '',
+            categories: match?.categories ?? []
+        };
+    });
 }
 
 interface MapAssessmentToV1Config {
@@ -596,6 +560,106 @@ function mapAssessmentToV1(
     return response;
 }
 
+function shouldKeepGoldenConfigEntries(
+    entries: GoldenConfigEntry[],
+    isIscsi: boolean,
+    isAsmManaged: boolean | undefined,
+    dismissedIds: Set<string>
+): boolean {
+    if (!entries.length) {
+        return true;
+    }
+    return (
+        (isIscsi || !entries.every(e => e.applicableTo === 'iscsi')) &&
+        (isAsmManaged !== false || !entries.every(e => e.applicableTo === 'asm')) &&
+        (dismissedIds.size === 0 || entries.some(e => !dismissedIds.has(e.id)))
+    );
+}
+
+function resolveAssessmentTypes(
+    databaseType: DatabaseTypes,
+    fields: string | string[] | undefined,
+    context: {
+        deploymentType?: string;
+        storageProtocol?: string;
+        isAsmManaged?: boolean;
+        isDataGuardDeployed?: boolean;
+    },
+    dismissedIds: Set<string>
+): string[] {
+    const parsed = Array.isArray(fields) ? fields : fields?.toLowerCase().replace(/\s+/g, '').split(',');
+    const requested =
+        parsed ??
+        (databaseType === DatabaseTypes.MS_SQL_SERVER
+            ? Object.values(AssessmentCategories)
+            : Object.values(AssessmentCategoriesOracle));
+
+    const goldenConfig = databaseType === DatabaseTypes.MS_SQL_SERVER ? MSSQL_GOLDEN_CONFIG : ORACLE_GOLDEN_CONFIG;
+    const { deploymentType, storageProtocol, isAsmManaged } = context;
+    const isIscsi = (storageProtocol ?? STORAGE_PROTOCOLS.ISCSI) === STORAGE_PROTOCOLS.ISCSI;
+
+    return requested.filter(category => {
+        switch (category) {
+            case AssessmentCategories.LICENSE:
+                if (deploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+                    return false;
+                }
+                return shouldKeepGoldenConfigEntries(
+                    goldenConfig.filter(e => e.id === 'sql-license'),
+                    isIscsi,
+                    isAsmManaged,
+                    dismissedIds
+                );
+
+            case AssessmentCategories.HIGH_AVAILABILITY:
+                if (deploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
+                    return false;
+                }
+                return shouldKeepGoldenConfigEntries(
+                    goldenConfig.filter(e => e.subType === 'highAvailability'),
+                    isIscsi,
+                    isAsmManaged,
+                    dismissedIds
+                );
+
+            case AssessmentCategories.AWS_BACKUP:
+                return shouldKeepGoldenConfigEntries(
+                    goldenConfig.filter(e => e.id === 'backup-configuration'),
+                    isIscsi,
+                    isAsmManaged,
+                    dismissedIds
+                );
+
+            case AssessmentCategories.CLONE:
+                return shouldKeepGoldenConfigEntries(
+                    goldenConfig.filter(e => e.id === 'clone-management'),
+                    isIscsi,
+                    isAsmManaged,
+                    dismissedIds
+                );
+
+            case AssessmentCategories.STORAGE:
+                return shouldKeepGoldenConfigEntries(
+                    goldenConfig.filter(e => e.type === 'storage'),
+                    isIscsi,
+                    isAsmManaged,
+                    dismissedIds
+                );
+
+            case AssessmentCategories.COMPUTE: {
+                return goldenConfig.filter(e => e.id === 'compute-rightsizing');
+            }
+            default:
+                return shouldKeepGoldenConfigEntries(
+                    goldenConfig.filter(e => e.id === category),
+                    isIscsi,
+                    isAsmManaged,
+                    dismissedIds
+                );
+        }
+    });
+}
+
 /** Minimal drift payload used when expanding combined optimize targets. */
 interface CombinedDriftEntry {
     id?: string;
@@ -678,7 +742,7 @@ function buildVolumeCombinedEntry(
         totalObjectsInViolation: objectsInViolation.length,
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         violationDetails,
-        configDetails: components.map(component => ({
+        configDetails: components.map((component: GoldenConfigComponent) => ({
             name: component.name ?? component.parameter,
             recommended: String(component.value),
             objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
@@ -739,13 +803,13 @@ function buildBlockDeviceSpaceManagementEntry(
     const componentObjectType = (source: 'lun' | 'volume' | undefined) =>
         source === 'lun' ? ASSESSMENT_RESOURCE_TYPE.LUN : ASSESSMENT_RESOURCE_TYPE.VOLUME;
 
-    const configDetails: ConfigDetailType[] = components.map(component => ({
+    const configDetails: ConfigDetailType[] = components.map((component: GoldenConfigComponent) => ({
         name: component.name ?? component.parameter,
         recommended: String(component.value),
         objectType: componentObjectType(component.source)
     }));
-    const lunComponents = components.filter(component => component.source === 'lun');
-    const volumeComponents = components.filter(component => component.source === 'volume');
+    const lunComponents = components.filter((component: GoldenConfigComponent) => component.source === 'lun');
+    const volumeComponents = components.filter((component: GoldenConfigComponent) => component.source === 'volume');
 
     const violationDetails: GenericViolationResponseType[] = [];
 
@@ -861,16 +925,16 @@ export {
     handleOptimizeJobCreation,
     hasNotOptimizedStatus,
     getLatestInstanceAssessmentTime,
-    UnOptimizedDiskGroups,
     checkForMissingOptimizePermissions,
     activeSqlNodeDetails,
     normalizeNfsVersion,
     checkIfPatchBaselineInProgress,
     updatePatchBaselineStatusForHost,
     isPdbGroupedVolumes,
-    buildDismissedConfigurations,
+    enrichWithGoldenConfig,
     mapAssessmentToV1,
-    JobMetadata
+    resolveAssessmentTypes,
+    GOLDEN_CONFIG_LOOKUP
 };
 
-export type { GoldenConfigEntry, GoldenConfigComponent, MapAssessmentToV1Config };
+export type { GoldenConfigEntry, GoldenConfigComponent, MapAssessmentToV1Config, UnOptimizedDiskGroups };

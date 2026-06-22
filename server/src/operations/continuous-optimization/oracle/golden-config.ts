@@ -24,7 +24,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         parameter: 'autosize',
@@ -42,7 +43,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         parameter: 'autosizeMode',
@@ -60,7 +62,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         parameter: 'snapshotPolicy',
@@ -78,7 +81,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         parameter: 'snapshotCopyReserve',
@@ -96,7 +100,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         parameter: 'snapshotAutodelete',
@@ -114,7 +119,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         parameter: 'spaceMgmtTryFirst',
@@ -132,7 +138,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         id: 'storage-efficiencies',
@@ -153,7 +160,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             { parameter: 'compressionType', name: 'compression', value: '', objectType: 'Volume' },
             { parameter: 'deduplication', name: 'deduplication', value: '', objectType: 'Volume' },
             { parameter: 'compaction', name: 'compaction', value: 'enabled', objectType: 'Volume' }
-        ]
+        ],
+        configLevel: 'database'
     },
     {
         id: 'tiering-tco-optimization',
@@ -173,7 +181,65 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         components: [
             { parameter: 'tieringPolicy', name: 'tiering-policy', value: '', objectType: 'Volume' },
             { parameter: 'tieringMinCoolingDays', name: 'tiering-min-cooling-days', value: '', objectType: 'Volume' }
-        ]
+        ],
+        configLevel: 'database'
+    },
+    {
+        parameter: 'compressionType',
+        id: 'compression',
+        name: 'Compression',
+        value: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Workload Factory recommends implementing storage efficiencies\u2014compression, compaction, and deduplication\u2014in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle\u2019s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
+    },
+    {
+        parameter: 'deduplication',
+        id: 'deduplication',
+        name: 'Deduplication',
+        value: '',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Workload Factory recommends implementing storage efficiencies\u2014compression, compaction, and deduplication\u2014in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle\u2019s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
+    },
+    {
+        parameter: 'compaction',
+        id: 'compaction',
+        name: 'Compaction',
+        value: 'enabled',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.CRITICAL,
+        recommendation:
+            'Workload Factory recommends implementing storage efficiencies\u2014compression, compaction, and deduplication\u2014in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle\u2019s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
 
     // ── configuration / volume_nfs (applicableTo: nfs) ──────────────────────
@@ -190,7 +256,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends disabling the nfs-rootonly parameter for dNFS. ONTAPs nfs-rootonly setting restricts NFS connections to privileged ports (<1024). Since dNFS processes in NFSv4+ do not run as root and use higher ports, disabling this parameter allows necessary connections.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
-        applicableTo: 'nfs'
+        applicableTo: 'nfs',
+        configLevel: 'database'
     },
     {
         parameter: 'export-policy',
@@ -209,7 +276,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.RELIABILITY,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
         ],
-        applicableTo: 'nfs'
+        applicableTo: 'nfs',
+        configLevel: 'database'
     },
 
     // ── configuration / volume_or_lun (applicableTo: iscsi) ────────────────
@@ -218,7 +286,6 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         name: 'Block device space management',
         type: 'storage',
         subType: 'configuration',
-        applicableTo: 'iscsi',
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME_OR_LUN,
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.CRITICAL,
@@ -229,11 +296,13 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
+        applicableTo: 'iscsi',
         components: [
             { parameter: 'spaceReservationEnabled', name: 'space-reservation-enabled', value: true, source: 'lun' },
             { parameter: 'spaceAllocationAllocated', name: 'space-allocation-allocated', value: true, source: 'lun' },
             { parameter: 'fractionalReserve', name: 'fractional-reserve', value: 0, source: 'volume' }
-        ]
+        ],
+        configLevel: 'database'
     },
 
     // ── configuration / os_iscsi (applicableTo: iscsi) ─────────────────────
@@ -250,7 +319,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends enabling Multipath I/O (MPIO) on database hosts that connect to ISCSI LUNs for Oracle databases. This host-level configuration enhances storage reliability and performance by providing redundant data paths between the server and storage. With multipath enabled, the system can automatically reroute I/O operations in the event of a path failure, minimizing downtime and ensuring consistent access to critical data.',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
-        applicableTo: 'iscsi'
+        applicableTo: 'iscsi',
+        configLevel: 'database'
     },
     {
         parameter: 'host-utilities',
@@ -265,7 +335,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends installing host utilities for LUN and multipath management on systems hosting Oracle databases. These utilities ensure optimal compatibility, performance, and reliability when connecting to enterprise storage systems. Proper installation of host utilities helps streamline storage operations and supports best practices for Oracle deployments.',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
-        applicableTo: 'iscsi'
+        applicableTo: 'iscsi',
+        configLevel: 'database'
     },
     {
         parameter: 'multipath-io-sessions',
@@ -280,7 +351,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends configuring host with four iSCSI sessions to each FSx ONTAP iSCSI endpoint in order to fully leverage multipath I/O',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        applicableTo: 'iscsi'
+        applicableTo: 'iscsi',
+        configLevel: 'database'
     },
     {
         parameter: 'transparent-hugepages',
@@ -295,7 +367,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends disabling Transparent HugePages (THP) on database hosts running Oracle databases. \nDisabling THP is an Oracle best practice to prevent potential performance issues and ensure optimal database stability.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        applicableTo: 'iscsi'
+        applicableTo: 'iscsi',
+        configLevel: 'database'
     },
     {
         parameter: 'iscsi-replacement-timeout',
@@ -310,7 +383,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends setting node.session.timeo.replacement_timeout = 5 in /etc/iscsi/iscsid.conf for Oracle database hosts using multipath I/O. This adjustment reduces the time required to detect and recover from iSCSI path failures, ensuring that database operations remain highly available and responsive. After applying this change and restarting the iSCSI service, the host will be able to fail over to alternate paths within 5 seconds of a path failure, minimizing the risk of application downtime.',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        applicableTo: 'iscsi'
+        applicableTo: 'iscsi',
+        configLevel: 'database'
     },
     {
         parameter: 'multipath-friendly-names',
@@ -325,7 +399,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends enabling Multipath Friendly Names in the multipath configuration for Oracle database hosts. This setting simplifies device identification by assigning human-readable names to multipath devices, making storage management and troubleshooting more efficient and reducing the risk of configuration errors.',
         categories: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
-        applicableTo: 'iscsi'
+        applicableTo: 'iscsi',
+        configLevel: 'database'
     },
     {
         parameter: 'tcp-advanced-options',
@@ -339,7 +414,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: 'EC2 Instance',
         recommendation: 'Workload Factory recommends enabling TCP features such as TCP window scaling',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        applicableTo: 'iscsi'
+        applicableTo: 'iscsi',
+        configLevel: 'database'
     },
     {
         parameter: 'filesystems-io-options',
@@ -354,7 +430,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends setting filesystemio_options = setall for optimal I/O performance. \nAdjust SGA size if needed when moving away from buffered I/O.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        applicableTo: 'iscsi'
+        applicableTo: 'iscsi',
+        configLevel: 'database'
     },
     {
         parameter: 'multiblock-readcount',
@@ -369,7 +446,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        applicableTo: 'iscsi'
+        applicableTo: 'iscsi',
+        configLevel: 'database'
     },
     {
         parameter: 'multipath-configuration',
@@ -384,7 +462,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP LUNs, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
-        applicableTo: 'iscsi'
+        applicableTo: 'iscsi',
+        configLevel: 'database'
     },
 
     // ── configuration / asmOS ──────────────────────────────────────────────
@@ -400,7 +479,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: 'EC2 Instance',
         recommendation:
             'Workload Factory recommends using Oracle Automatic Storage Management (ASM) for iSCSI-based storage, such as FSx for NetApp ONTAP, to optimize performance, simplify storage management, and enhance scalability for Oracle Database deployments.',
-        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        applicableTo: 'asm',
+        configLevel: 'database'
     },
     {
         parameter: 'asm-external-redundancy',
@@ -414,7 +495,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: 'ASM Disk Group',
         recommendation:
             'Workload Factory recommends configuring Oracle ASM disk groups with External Redundancy for FSxN iSCSI LUNs to leverage FSxN\u2019s built-in high availability, optimize storage efficiency, and reduce costs by avoiding Oracle-level data mirroring.',
-        categories: [AwsWellArchitecturedPillars.COST_EFFICIENCY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+        categories: [AwsWellArchitecturedPillars.COST_EFFICIENCY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        applicableTo: 'asm',
+        configLevel: 'database'
     },
     {
         parameter: 'afd-logical-block-size',
@@ -428,7 +511,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: 'EC2 Instance',
         recommendation:
             'Workload Factory recommends configuring the Oracle ASM Filter Driver (AFD) to use the logical block size of the underlying FSx for NetApp ONTAP. This ensures that AFD aligns I/O operations with the storage\u2019s block size, optimizing performance by minimizing latency and reducing unnecessary I/O overhead.',
-        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        applicableTo: 'asm',
+        configLevel: 'database'
     },
     {
         parameter: 'asmlib-logical-block-size',
@@ -442,7 +527,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: 'EC2 Instance',
         recommendation:
             'Workload Factory recommends configuring Oracle ASMLib to use the logical block size of the underlying FSx for NetApp ONTAP, by setting the appropriate option in the ASMLib configuration file. This ensures that ASMLib aligns I/O operations with the storage\u2019s block size, optimizing performance by minimizing latency and reducing unnecessary I/O overhead.',
-        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+        categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        applicableTo: 'asm',
+        configLevel: 'database'
     },
 
     // ── configuration / os_nfs (applicableTo: nfs) ──────────────────────────
@@ -459,7 +546,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends configuring the kernel parameters for the TCP slot table to 128, optimized specifically for Oracle workloads.',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        applicableTo: 'nfs'
+        applicableTo: 'nfs',
+        configLevel: 'database'
     },
     {
         parameter: 'nfs-mount-options-databasefiles',
@@ -478,7 +566,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        applicableTo: 'nfs'
+        applicableTo: 'nfs',
+        configLevel: 'database'
     },
     {
         parameter: 'nfs-mount-options-adrhome',
@@ -497,7 +586,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
         ],
-        applicableTo: 'nfs'
+        applicableTo: 'nfs',
+        configLevel: 'database'
     },
     {
         parameter: 'nfsv4-domain-name',
@@ -512,7 +602,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends matching NFSv4 domain names between the host (/etc/idmapd.conf or hostname -d) and NFS server (v4-id-domain in ONTAP).',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.SECURITY],
-        applicableTo: 'nfs'
+        applicableTo: 'nfs',
+        configLevel: 'database'
     },
     {
         parameter: 'nfs-caching-options',
@@ -527,7 +618,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends avoiding the use of the following mount options in standalone deployments to prevent disabling cache: "cio", "actimeo=0", "noac", and "forcedirectio".',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        applicableTo: 'nfs'
+        applicableTo: 'nfs',
+        configLevel: 'database'
     },
     {
         parameter: 'dnfs-enabled',
@@ -542,7 +634,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends enabling Direct NFS (dNFS) for your Oracle environment. Enabling dNFS can improve database performance and simplify NFS storage management by allowing Oracle to manage NFS I/O directly.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
-        applicableTo: 'nfs'
+        applicableTo: 'nfs',
+        configLevel: 'database'
     },
     {
         parameter: 'dnfs-consistent-ip-resolution',
@@ -557,7 +650,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends avoiding the use of Direct NFS (dNFS) with any type of round-robin name resolution, including DNS, DDNS, NIS, or any other method. This includes the DNS load balancing feature available in ONTAP. Ensuring consistent IP address resolution is crucial for maintaining database stability and preventing potential crashes or data corruption.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
-        applicableTo: 'nfs'
+        applicableTo: 'nfs',
+        configLevel: 'database'
     },
     {
         parameter: 'dnfs-configuration-file',
@@ -572,7 +666,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends verifying and optimizing the oranfstab file content to ensure proper Direct NFS (dNFS) usage. The oranfstab file is essential for configuring advanced dNFS features such as multipathing and specific NFS options. Proper configuration ensures efficient data access and management.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
-        applicableTo: 'nfs'
+        applicableTo: 'nfs',
+        configLevel: 'database'
     },
     {
         parameter: 'dnfs-no-shared-cache',
@@ -587,7 +682,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends configuring the nosharecache mount option for environments where Direct NFS (dNFS) is enabled, and a source volume is mounted more than once on a single server with nested NFS mounts. This configuration prevents cache sharing between mounts, ensuring data consistency and optimal performance.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
-        applicableTo: 'nfs'
+        applicableTo: 'nfs',
+        configLevel: 'database'
     },
 
     // ── layout ───────────────────────────────────────────────────────────────
@@ -607,7 +703,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         parameter: 'datafiles-placement',
@@ -625,7 +722,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         parameter: 'controlfiles-placement',
@@ -643,7 +741,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         parameter: 'redologs-placement',
@@ -661,7 +760,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         parameter: 'templogs-placement',
@@ -679,7 +779,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         parameter: 'oracle-binary-placement',
@@ -697,7 +798,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         parameter: 'data-dg-lun-layout',
@@ -714,7 +816,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP,
+        applicableTo: 'asm',
+        configLevel: 'database'
     },
     {
         parameter: 'redolog-dg-lun-layout',
@@ -731,7 +835,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP,
+        applicableTo: 'asm',
+        configLevel: 'database'
     },
     {
         parameter: 'fra-dg-lun-layout',
@@ -748,7 +854,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP,
+        applicableTo: 'asm',
+        configLevel: 'database'
     },
     {
         parameter: 'archivelog-dg-lun-layout',
@@ -765,7 +873,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DISK_GROUP,
+        applicableTo: 'asm',
+        configLevel: 'database'
     },
 
     // ── sizing ───────────────────────────────────────────────────────────────
@@ -780,7 +890,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Proper swap sizing ensures that the system can handle memory pressure gracefully, avoiding potential performance degradation or system crashes.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE
+        resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+        configLevel: 'database'
     },
     {
         parameter: 'headroom',
@@ -793,7 +904,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'To optimize storage performance, provision file system capacity as 1.2 times of total size of provisioned volume.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
+        resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
+        configLevel: 'database'
     },
 
     // ── resiliency ───────────────────────────────────────────────────────────
@@ -808,7 +920,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommended: AssessmentStatus.OPTIMIZED,
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         recommendation:
-            'Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.'
+            'Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.',
+        configLevel: 'database'
     },
     {
         id: 'crr',
@@ -820,7 +933,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         recommendation:
-            'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.'
+            'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.',
+        configLevel: 'database'
     },
     {
         id: 'backup-configuration',
@@ -832,7 +946,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         recommendation:
-            'Backup Configuration recommendation: Enable FSx Backup or AWS Backup for Oracle database volumes to support data retention and compliance. If using both, consider removing redundant backups manually.'
+            'Backup Configuration recommendation: Enable FSx Backup or AWS Backup for Oracle database volumes to support data retention and compliance. If using both, consider removing redundant backups manually.',
+        configLevel: 'database'
     },
 
     // ── compute ──────────────────────────────────────────────────────────────
@@ -846,7 +961,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
         recommendation:
-            'Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.'
+            'Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.',
+        configLevel: 'host'
     },
     {
         id: 'oracle-security-patch',
@@ -858,7 +974,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
         recommendation:
-            'Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.'
+            'Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.',
+        configLevel: 'database'
     },
 
     // ── cloning ──────────────────────────────────────────────────────────────
@@ -871,7 +988,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
         recommendation:
-            'Old clones can incur significant costs. Consider deleting these clones to optimize your storage expenses.'
+            'Old clones can incur significant costs. Consider deleting these clones to optimize your storage expenses.',
+        configLevel: 'database'
     }
 ];
 

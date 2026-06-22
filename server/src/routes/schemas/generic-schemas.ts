@@ -1,4 +1,9 @@
 import { CredentialsResponse, CredentialsListParams } from '../types/credentials.types';
+import { AccountIdParams } from '../types/generic.types';
+import {
+    BulkDismissConfigurationRequestBody,
+    BulkDismissConfigurationResponse
+} from '../types/mssql-continuous-optimisation.types';
 
 const CredentialsSchema = {
     tags: ['Generic'],
@@ -10,4 +15,12 @@ const CredentialsSchema = {
     }
 };
 
-export { CredentialsSchema };
+const BaseBulkDismissConfigurationSchema = {
+    params: AccountIdParams,
+    body: BulkDismissConfigurationRequestBody,
+    response: {
+        200: BulkDismissConfigurationResponse
+    }
+};
+
+export { CredentialsSchema, BaseBulkDismissConfigurationSchema };

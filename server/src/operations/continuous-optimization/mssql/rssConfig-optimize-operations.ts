@@ -2,8 +2,8 @@ import { isEmpty, isUndefined } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { listResources } from '../../../lib/database/db';
 import getLogger from '../../../utils/logger';
-import { Metadata, ResourceAssessmentData, RssConfigAssesment } from '../../../utils/common-types';
-import { handleOptimizeJobCreation, JobMetadata } from '../assessment-utils';
+import { Metadata, ResourceAssessmentData, RssConfigAssesment, JobMetadata } from '../../../utils/common-types';
+import { handleOptimizeJobCreation } from '../assessment-utils';
 import {
     AssessmentCategories,
     AssessmentTriggeredBy,

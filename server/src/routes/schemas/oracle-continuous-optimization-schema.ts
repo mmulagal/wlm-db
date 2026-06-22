@@ -22,6 +22,7 @@ import {
 } from '../types/oracle-continuous-optimization.types';
 import { resourceRequest } from './database-hosts-schemas';
 import { AccountIdParams, CredentialsIdParams, HttpErrorResponse, OptimizationResponse } from '../types/generic.types';
+import { BaseBulkDismissConfigurationSchema } from './generic-schemas';
 
 const DriftAssessmentDataCollection = {
     ...resourceRequest,
@@ -138,6 +139,13 @@ const DriftAssessmentPerAccount = {
     }
 };
 
+const BulkDismissOracleConfigurationSchema = {
+    ...BaseBulkDismissConfigurationSchema,
+    summary: 'Dismiss Assessment Configurations for Oracle database',
+    description: 'Dismiss Assessment Configurations for selected Oracle database.',
+    tags: [RouteTags.ORACLE_ASSESSMENT]
+};
+
 export {
     DriftAssessmentDataCollection,
     DriftAssessmentDataCollectionV1,
@@ -148,5 +156,6 @@ export {
     OracleOptimizeStorageConfigurationSchema,
     OracleOptimizeStorageLayoutSchema,
     OracleOptimizeSchema,
-    FetchOraclePatchScanSchema
+    FetchOraclePatchScanSchema,
+    BulkDismissOracleConfigurationSchema
 };

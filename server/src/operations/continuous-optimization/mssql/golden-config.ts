@@ -40,7 +40,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         id: 'autosize',
@@ -54,7 +55,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         id: 'autosize-mode',
@@ -68,7 +70,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         id: 'snapshot-copy-reserve',
@@ -82,7 +85,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         id: 'snapshot-autodelete',
@@ -96,7 +100,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         id: 'space-mgmt-try-first',
@@ -110,7 +115,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs If Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        configLevel: 'database'
     },
     {
         id: 'tiering-tco-optimization',
@@ -126,7 +132,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         components: [
             { parameter: 'tiering-policy', value: 'snapshot_only', source: 'volume' },
             { parameter: 'tiering-min-cooling-days', value: 7, source: 'volume' }
-        ]
+        ],
+        configLevel: 'database'
     },
 
     // ── configuration / lun ─────────────────────────────────────────────────
@@ -142,7 +149,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
         recommendation:
             'ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance',
-        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        configLevel: 'database'
     },
     {
         id: 'block-device-space-management',
@@ -163,7 +171,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             { parameter: 'space-reservation-enabled', value: true, source: 'lun' },
             { parameter: 'space-allocation-allocated', value: true, source: 'lun' },
             { parameter: 'fractional-reserve', value: 0, source: 'volume' }
-        ]
+        ],
+        configLevel: 'database'
     },
 
     // ── configuration / os ──────────────────────────────────────────────────
@@ -179,7 +188,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH
+        resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH,
+        configLevel: 'database'
     },
     {
         id: 'mpio-load-balance-policy',
@@ -193,7 +203,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
+        configLevel: 'database'
     },
     {
         id: 'mpio-iscsi-count',
@@ -207,7 +218,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH
+        resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH,
+        configLevel: 'database'
     },
     {
         id: 'ntfs-allocation-unit-size',
@@ -221,7 +233,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
+        configLevel: 'database'
     },
     {
         id: 'mpio-timeout',
@@ -235,7 +248,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Ensure the Multipath I/O Timeout setting on the host is configured to 60 seconds to maintain connectivity and stability during FSxN failovers. Properly configured Multipath I/O Timeout settings prevent disconnections from the disk, which can occur during FSX failovers. Insufficient timeout settings can lead to temporary disconnections, application errors, and potential data loss.',
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH
+        resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH,
+        configLevel: 'database'
     },
 
     // ── layout ───────────────────────────────────────────────────────────────
@@ -254,7 +268,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+        configLevel: 'database'
     },
     {
         id: 'log-files-location',
@@ -271,7 +286,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+        configLevel: 'database'
     },
     {
         id: 'tempdb-files-location',
@@ -288,7 +304,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE
+        resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
+        configLevel: 'database'
     },
 
     // ── sizing ───────────────────────────────────────────────────────────────
@@ -302,8 +319,9 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'Storage tier',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier.Using the capacity pool tier may result in slower performance and higher latency.',
-        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
+            'For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier.\nUsing the capacity pool tier may result in slower performance and higher latency.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
+        configLevel: 'database'
     },
     {
         id: 'headroom',
@@ -317,7 +335,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM
+        resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
+        configLevel: 'database'
     },
     {
         id: 'log-drive-size',
@@ -330,7 +349,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.WARNING,
         recommendation:
             'Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, \ndatabase unavailability, data corruption, and performance degradation caused by a full log drive.\nAn additional 20% buffer is required if the drive is hosting a primary replica of Always On Availability Group.',
-        categories: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
+        categories: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        configLevel: 'database'
     },
     {
         id: 'tempdb-drive-size',
@@ -343,7 +363,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.WARNING,
         recommendation:
             'Ensure accurate sizing and regular monitoring of the SQL Server TempDB to well-architect performance and maintain overall stability.\nProperly configured TempDB prevents performance issues and instability. Insufficient space or high contention can lead to query slowdowns, application timeouts, and system crashes.',
-        categories: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE]
+        categories: [AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
+        configLevel: 'database'
     },
 
     // ── compute ──────────────────────────────────────────────────────────────
@@ -359,7 +380,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'Workload Factory recommends aligning EC2 instance Maximum Transmission Unit (MTU) settings with your \nFSx for ONTAP file system to prevent network fragmentation and optimize SQL Server performance. \nFixing MTU misalignment ensures consistent MTU configuration across all nodes and network paths.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_INTERFACE
+        resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_INTERFACE,
+        configLevel: 'host'
     },
     {
         id: 'host-os-patch',
@@ -371,7 +393,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
         recommendation:
-            'Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.'
+            'Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.',
+        configLevel: 'host'
     },
     {
         id: 'rss-config',
@@ -383,7 +406,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.NETWORK_ADAPTER,
         recommendation:
-            'To enhance network performance and system efficiency for your SQL Server EC2 instance, we recommend optimizing your Receive Side Scaling (RSS) configuration. Proper RSS settings distribute network processing across multiple processors, reducing latency and improving application responsiveness. Adhering to best practices ensures efficient handling of network traffic, leading to better stability and reliability.'
+            'To enhance network performance and system efficiency for your SQL Server EC2 instance, we recommend optimizing your Receive Side Scaling (RSS) configuration. Proper RSS settings distribute network processing across multiple processors, reducing latency and improving application responsiveness. Adhering to best practices ensures efficient handling of network traffic, leading to better stability and reliability.',
+        configLevel: 'host'
     },
     {
         id: 'compute-rightsizing',
@@ -395,7 +419,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
         recommendation:
-            'To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, right-size your EC2 instance to match the workload requirements of your SQL Server database.'
+            'To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, right-size your EC2 instance to match the workload requirements of your SQL Server database.',
+        configLevel: 'host'
     },
 
     // ── resiliency ───────────────────────────────────────────────────────────
@@ -410,7 +435,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommended: AssessmentStatus.OPTIMIZED,
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         recommendation:
-            'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.\nUse local snapshots as an additional backup mechanism for quick restores or for testing.'
+            'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.\nUse local snapshots as an additional backup mechanism for quick restores or for testing.',
+        configLevel: 'database'
     },
     {
         id: 'backup-configuration',
@@ -422,7 +448,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         recommendation:
-            'Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. \nIf using both, consider removing redundant backups manually.'
+            'Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. \nIf using both, consider removing redundant backups manually.',
+        configLevel: 'host'
     },
     {
         id: 'crr',
@@ -434,7 +461,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         recommendation:
-            'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability.'
+            'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability.',
+        configLevel: 'database'
     },
 
     // ── resiliency / highAvailability ────────────────────────────────────────
@@ -451,7 +479,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
         recommendation:
             'All shared disks (iSCSI LUNs) must be accessible by both nodes in the FCI deployment model to allow failover.',
-        recommended: ''
+        recommended: '',
+        configLevel: 'database'
     },
     {
         id: 'drive-letter',
@@ -465,7 +494,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
         recommendation: 'Validate availability of the same drive letters on the secondary node.',
-        recommended: ''
+        recommended: '',
+        configLevel: 'database'
     },
     {
         id: 'cluster-quorum',
@@ -480,7 +510,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
         recommendation:
             'The quorum configuration should be tailored to a 2-node Windows Failover Cluster, using Node and Disk Majority with a Disk Witness to ensure high availability.',
-        recommended: ''
+        recommended: '',
+        configLevel: 'host'
     },
     {
         id: 'heartbeat-settings',
@@ -495,7 +526,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
         recommendation:
             'Set heartbeat thresholds to 40 heartbeats, specifically optimized for cloud deployments, to ensure high availability and prevent unnecessary failovers.',
-        recommended: ''
+        recommended: '',
+        configLevel: 'host'
     },
     {
         id: 'sql-server-service',
@@ -509,7 +541,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
         recommendation: 'SQL Server service must be configured for automatic failover and startup.',
-        recommended: ''
+        recommended: '',
+        configLevel: 'database'
     },
 
     // ── application ──────────────────────────────────────────────────────────
@@ -522,7 +555,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'License',
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-        recommendation: 'The SQL Server license assessment is at the host level. A license is considered'
+        recommendation: 'The SQL Server license assessment is at the host level. A license is considered',
+        configLevel: 'host'
     },
     {
         id: 'maxdop',
@@ -534,7 +568,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.SQL_INSTANCE,
         recommendation:
-            'For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16. Your current settings are not optimized.'
+            'For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16. Your current settings are not optimized.',
+        configLevel: 'database'
     },
     {
         id: 'mssql-patch',
@@ -546,7 +581,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.SQL_INSTANCE,
         recommendation:
-            'Critical (criticalPatchesCount) and important (importantPatchesCount) patches are missing. We recommend applying the latest patches to ensure your MSSQL instance is secure and up-to-date.'
+            'Critical (criticalPatchesCount) and important (importantPatchesCount) patches are missing. We recommend applying the latest patches to ensure your MSSQL instance is secure and up-to-date.',
+        configLevel: 'database'
     },
 
     // ── cloning ──────────────────────────────────────────────────────────────
@@ -560,7 +596,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
         recommendation:
-            'Old and divergent clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.'
+            'Old and divergent clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.',
+        configLevel: 'database'
     }
 ];
 

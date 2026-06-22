@@ -219,31 +219,37 @@ describe('Job operations', () => {
     });
 });
 
-describe('getJobSummaryByTime', async () => {
-    const mockStartTime = Date.now() - THIRTY_DAYS;
-    const mockEndTime = Date.now();
+describe('getJobSummaryByTime', () => {
+    const jobSummaryAccountId = 'job-summary-by-time-account';
+    let mockStartTime: number;
+    let mockEndTime: number;
 
-    await registerJobs('ACCOUNT_ID', DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
-        {
-            name: 'test-job-ops-1',
-            resourceName: 'test-resource',
-            startTime: Date.now() - THIRTY_DAYS,
-            endTime: Date.now() - THIRTY_DAYS,
-            status: JOBSTATUS.FAILED,
-            type: JOBTYPE.DEPLOYMENT
-        },
-        {
-            name: 'test-job-ops-2',
-            resourceName: 'test-resource',
-            startTime: Date.now(),
-            endTime: Date.now(),
-            status: JOBSTATUS.COMPLETED,
-            type: JOBTYPE.DEPLOYMENT
-        }
-    ]);
+    beforeEach(async () => {
+        mockStartTime = Date.now() - THIRTY_DAYS;
+        mockEndTime = Date.now();
+        await deleteJobsOfAccount(jobSummaryAccountId);
+        await registerJobs(jobSummaryAccountId, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, [
+            {
+                name: 'test-job-ops-1',
+                resourceName: 'test-resource',
+                startTime: mockStartTime,
+                endTime: mockStartTime,
+                status: JOBSTATUS.FAILED,
+                type: JOBTYPE.DEPLOYMENT
+            },
+            {
+                name: 'test-job-ops-2',
+                resourceName: 'test-resource',
+                startTime: mockEndTime,
+                endTime: mockEndTime,
+                status: JOBSTATUS.COMPLETED,
+                type: JOBTYPE.DEPLOYMENT
+            }
+        ]);
+    });
 
     it('should return job summary by time', async () => {
-        const result = await getJobSummaryByTime('ACCOUNT_ID', {
+        const result = await getJobSummaryByTime(jobSummaryAccountId, {
             credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
             region: DEFAULT_AWS_REGION,
             startTime: mockStartTime,
@@ -254,9 +260,9 @@ describe('getJobSummaryByTime', async () => {
     });
 
     it('should handle error and throw an error', async () => {
-        await deleteJobsOfAccount('ACCOUNT_ID');
+        await deleteJobsOfAccount(jobSummaryAccountId);
 
-        const result = await getJobSummaryByTime('ACCOUNT_ID', {
+        const result = await getJobSummaryByTime(jobSummaryAccountId, {
             credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
             region: DEFAULT_AWS_REGION,
             startTime: mockStartTime,
