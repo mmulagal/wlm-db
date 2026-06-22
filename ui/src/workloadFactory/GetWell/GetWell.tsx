@@ -204,14 +204,14 @@ const GetWell = () => {
 
     // Helper function to check if there are any dismissed configurations
     const hasDismissedConfigurations = useMemo(() => {
-        const result = checkHasDismissedConfigurations(cardData, driftAssessmentData);
+        const result = checkHasDismissedConfigurations(cardData);
         return result;
-    }, [cardData, driftAssessmentData]);
+    }, [cardData]);
 
     // Helper function to get total count based on dismissed configuration state
     const getTotalConfigCount = useMemo(
-        () => calculateTotalConfigCount(cardData, showDismissedConfigurations, driftAssessmentData),
-        [cardData, showDismissedConfigurations, driftAssessmentData]
+        () => calculateTotalConfigCount(cardData, showDismissedConfigurations),
+        [cardData, showDismissedConfigurations]
     );
 
     // Helper function to calculate postpone information for configurations
@@ -219,8 +219,8 @@ const GetWell = () => {
 
     // Helper function to check if all configurations are dismissed
     const allConfigurationsDismissed = useMemo(
-        () => checkAllConfigurationsDismissed(cardData, driftAssessmentData),
-        [cardData, driftAssessmentData]
+        () => checkAllConfigurationsDismissed(cardData),
+        [cardData]
     );
 
     // Automatically enable dismissed toggle when all configurations are dismissed

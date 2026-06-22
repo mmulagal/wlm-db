@@ -105,14 +105,11 @@ export const getDismissedConfigurations = (
     return instanceAssessments.dismissedConfigurations;
 };
 
-// TODO: Fix this function it as part of dismiss workflow mirgration. use id instead of configurationName.
 export const getDismissedConfig = (
     instanceAssessments: AssessmentResponseInterface | null | undefined,
-    configurationName: string
+    configId: string
 ): DismissedConfigurationItem | undefined =>
-    getDismissedConfigurations(instanceAssessments).find(
-        dismissed => dismissed.configurationName === configurationName
-    );
+    getDismissedConfigurations(instanceAssessments).find(dismissed => dismissed.id === configId);
 
 export const mapAssessmentSeverityToFilterLabel = (severity?: string): string => {
     if (severity?.toLowerCase() === 'critical') {

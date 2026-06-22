@@ -10,8 +10,7 @@ import {
     FINDINGS,
     GETWELL_STATUS,
     INVENTORY_STATUS,
-    STATUS_CONST,
-    WLF_TABS
+    STATUS_CONST
 } from '../../../utils/consts';
 import { categorizeStateInstances } from '../../DatabaseHomePage/DatabaseHomeUtils';
 import { resolveConfigDisplayName } from '../../WellArchitectedTab/assessmentFormatUtils';
@@ -365,16 +364,9 @@ export const callDashboardDismissApi = (
             if (!res.error) {
                 const { successList, failedList } = categorizeStateInstances(res?.data, type);
                 if (configEngineType === DBType.ORACLE) {
-                    updateConfigStateStatusOracle(successList, dispatch, action, res?.data);
+                    updateConfigStateStatusOracle(successList, dispatch, action);
                 } else {
-                    updateConfigStateStatus(
-                        successList,
-                        dispatch,
-                        action,
-                        res?.data,
-                        configEngineType,
-                        WLF_TABS.DASHBOARD
-                    );
+                    updateConfigStateStatus(successList, dispatch, action, configEngineType);
                 }
 
                 dispatch(

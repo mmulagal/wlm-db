@@ -99,14 +99,14 @@ const OracleWellArchitectDashboard = () => {
 
     // Helper function to check if there are any dismissed configurations
     const hasDismissedConfigurations = useMemo(() => {
-        const result = checkHasDismissedConfigurations(cardData, driftAssessmentData);
+        const result = checkHasDismissedConfigurations(cardData);
         return result;
-    }, [cardData, driftAssessmentData]);
+    }, [cardData]);
 
     // Helper function to check if all configurations are dismissed
     const allConfigurationsDismissed = useMemo(
-        () => checkAllOracleConfigurationsDismissed(cardData, driftAssessmentData),
-        [cardData, driftAssessmentData]
+        () => checkAllOracleConfigurationsDismissed(cardData),
+        [cardData]
     );
 
     // Group configurations by category for dynamic rendering

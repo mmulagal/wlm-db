@@ -3,8 +3,7 @@ import {
     ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
-    RESPONSE_STATUS,
-    WLF_TABS
+    RESPONSE_STATUS
 } from '../../../utils/consts';
 import { GENERAL } from '../../../utils/appConstants';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
@@ -363,9 +362,11 @@ export const handleDismissResponse = (
             regionId: selectedGwInstanceRegionId,
             state: updatedState,
             id: targetId,
-            name: cardData?.mapName
+            name: cardData?.mapName,
+            startTime: res?.data?.dismissedConfigurations?.[0]?.startTime,
+            endTime: res?.data?.dismissedConfigurations?.[0]?.endTime
         };
-        updateConfigStateStatus([perObj], dispatch, updatedState, res?.data, engineType, WLF_TABS.WELL_ARCHITECTED_TAB);
+        updateConfigStateStatus([perObj], dispatch, updatedState, engineType);
 
         // Check if we're reactivating and this is the last dismissed configuration
         if (action === CONFIG_STATE_ACTIONS.ACTIVE && showDismissedConfigurations && setShowDismissedConfigurations) {

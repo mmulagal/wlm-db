@@ -7,17 +7,17 @@ import styles from './DashboardInnerPage.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
-    ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
+    DBType,
     FROM_DIALOG,
     WLF_TABS
 } from '../../../utils/consts';
+import { getRecommendation } from '../../../utils/recommendations';
 import { useAppSelector } from '../../../store/storeHooks';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
 import {
-    cardDataDefault,
     isWadExcludedConfig,
     setOptimizeInnerpageSummary,
     updateConfigStateStatus
@@ -69,81 +69,16 @@ const DashboardDismissPage = () => {
         cardName: ''
     });
 
-    const getPayloadType = (type: string) => {
-        switch (type) {
-            case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
-                type = 'performance-tier';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
-                type = 'headroom';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
-                type = 'log-drive-size';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
-                type = 'tempdb-drive-size';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
-                type = 'data-files-location';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
-                type = 'log-files-location';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
-                type = 'tempdb-files-location';
-                break;
-            case GENERAL.COMPUTE_RIGHTSIZING:
-                type = 'compute-rightsizing';
-                break;
-            case GENERAL.RSS_CONFIGURATION:
-                type = 'rss-config';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT:
-                type = 'snapshot-policy';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-                type = 'backup-configuration';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.MAXDOP:
-                type = 'maxdop';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH:
-                type = 'mssql-patch';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
-                type = 'host-os-patch';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.LICENSE:
-                type = 'sql-license';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.CRR:
-                type = 'crr';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
-                type = 'snapcenter-snapshot';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT:
-                type = 'clone-management';
-                break;
-            case ASSESSMENT_CONFIG_NAMES.MTU:
-                type = 'mtu-alignment';
-                break;
-            default:
-                break;
-        }
-        return type;
-    };
-
-    const callDismissApi = (type: any, rowData?: any, action?: string) => {
+    const callDismissApi = (configId: any, rowData?: any, action?: string) => {
         const state = store.getState();
         const { inProgressStateData } = state.getWellOptimize;
-
-        const name = getPayloadType(type);
 
         const payload = {
             configurationsToDismiss: [
                 {
-                    configurationName: name,
+                    // TODO: verify field name with API team — server schema uses 'configurationName' today; update to 'id' once API migrates
+                    // id: configId,
+                    configurationName: configId,
                     configState: action,
                     databaseHosts: Object.values(
                         rowData.reduce(
@@ -205,19 +140,19 @@ const DashboardDismissPage = () => {
         dispatch(
             setInProgressStateData({
                 ...inProgressStateData,
-                [type]: [...(inProgressStateData[type] || []), ...hostinstances]
+                [configId]: [...(inProgressStateData[configId] || []), ...hostinstances]
             })
         );
 
         dismissMssqlAssessment({ payload })
             .then((res: any) => {
                 if (!res.error) {
-                    const { successList, failedList } = categorizeStateInstances(res?.data, type);
-                    updateConfigStateStatus(successList, dispatch, action, res?.data);
+                    const { successList } = categorizeStateInstances(res?.data, configId);
+                    updateConfigStateStatus(successList, dispatch, action);
                     dispatch(
                         setInProgressStateData({
                             ...inProgressStateData,
-                            [type]: (inProgressStateData[type] || []).filter(
+                            [configId]: (inProgressStateData[configId] || []).filter(
                                 (instance: string) => !hostinstances.includes(instance)
                             )
                         })
@@ -233,7 +168,7 @@ const DashboardDismissPage = () => {
                     dispatch(
                         setInProgressStateData({
                             ...inProgressStateData,
-                            [type]: (inProgressStateData[type] || []).filter(
+                            [configId]: (inProgressStateData[configId] || []).filter(
                                 (instance: string) => !hostinstances.includes(instance)
                             )
                         })
@@ -250,7 +185,7 @@ const DashboardDismissPage = () => {
                 dispatch(
                     setInProgressStateData({
                         ...inProgressStateData,
-                        [type]: (inProgressStateData[type] || []).filter(
+                        [configId]: (inProgressStateData[configId] || []).filter(
                             (instance: string) => !hostinstances.includes(instance)
                         )
                     })
@@ -280,17 +215,29 @@ const DashboardDismissPage = () => {
             return;
         }
 
-        // TODO: Change the Recommendation by taking it from new UI file.
         if (hasConfigStats(configData, selectedConfig)) {
+            const staticRec = getRecommendation(selectedConfig, DBType.MSSQL);
+            const apiRecommendation = findFlatConfigItem(allmssqlHostAssessmentData, selectedConfig)?.recommendation;
+
             setValueCardData((prev: any) => ({
                 ...selectedConfigSummary,
                 configurationState: selectedConfigSummary.configState,
                 cardHeight: prev.cardHeight || '136px',
                 tagHeight: prev.tagHeight || '233px',
-                data: {
-                    title: 'Recommendations',
-                    description: findFlatConfigItem(allmssqlHostAssessmentData, selectedConfig)?.recommendation ?? ''
-                },
+                data: staticRec
+                    ? {
+                          title: staticRec.title || 'Recommendations',
+                          description: staticRec.description,
+                          descriptionList: staticRec.descriptionList,
+                          descriptionRssConfig: staticRec.descriptionRssConfig,
+                          info: staticRec.info,
+                          valuesHeading: staticRec.valuesHeading,
+                          values: staticRec.values
+                      }
+                    : {
+                          title: 'Recommendations',
+                          description: apiRecommendation ?? ''
+                      },
                 tooltipText: selectedConfigSummary?.tooltipText,
                 cardName: selectedConfig
             }));
@@ -364,62 +311,9 @@ const DashboardDismissPage = () => {
         }
     };
 
-    const getConfigObj = (type: string, instanceData: any) => {
-        switch (type) {
-            case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER:
-                return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item?.configurationName === 'performance-tier'
-                );
-            case ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM:
-                return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item?.configurationName === 'headroom'
-                );
-            case ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE:
-                return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item?.configurationName === 'log-drive-size'
-                );
-            case ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE:
-                return instanceData?.assessments?.dismissedConfigurations?.storage?.sizing?.find(
-                    (item: any) => item?.configurationName === 'tempdb-drive-size'
-                );
-            case ASSESSMENT_CONFIG_NAMES.DATA_FILES_MDF:
-                return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                    (item: any) => item?.configurationName === 'data-files-location'
-                );
-            case ASSESSMENT_CONFIG_NAMES.LOG_FILES_LDF:
-                return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                    (item: any) => item?.configurationName === 'log-files-location'
-                );
-            case ASSESSMENT_CONFIG_NAMES.TEMPDB_PLACEMENT:
-                return instanceData?.assessments?.dismissedConfigurations?.storage?.layout?.find(
-                    (item: any) => item?.configurationName === 'tempdb-files-location'
-                );
-            case ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING:
-                return instanceData?.assessments?.dismissedConfigurations?.compute;
-            case 'MAXDOP':
-                return instanceData?.assessments?.dismissedConfigurations?.maxDOP;
-            case GENERAL.MICROSOFT_SQL_PATCH:
-                return instanceData?.assessments?.dismissedConfigurations?.mssqlPatch;
-            case GENERAL.LICENSE_SQL_SERVER:
-                return instanceData?.assessments?.dismissedConfigurations?.license;
-            case GENERAL.RSS_CONFIGURATION:
-                return instanceData?.assessments?.dismissedConfigurations?.rssConfig;
-            case GENERAL.OPERATING_SYSTEM_PATCH:
-                return instanceData?.assessments?.dismissedConfigurations?.hostOsPatch;
-            case GENERAL.SCHEDULED_LOCAL_SNAPSHOT:
-                return instanceData?.assessments?.dismissedConfigurations?.snapshotPolicy;
-            case ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-                return instanceData?.assessments?.dismissedConfigurations?.awsBackup;
-            case GENERAL.CLONE_MANAGEMENT:
-                return instanceData?.assessments?.dismissedConfigurations?.clone;
-            case ASSESSMENT_CONFIG_NAMES.CRR:
-                return instanceData?.assessments?.dismissedConfigurations?.crr;
-            case ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT:
-                return instanceData?.assessments?.dismissedConfigurations?.snapcenterSnapshot;
-            case ASSESSMENT_CONFIG_NAMES.MTU:
-                return instanceData?.assessments?.dismissedConfigurations?.mtuAlignment;
-            default:
-        }
+    const getConfigObj = (configId: string, instanceData: any) => {
+        const dismissed: any[] = instanceData?.assessments?.dismissedConfigurations ?? [];
+        return dismissed.find((d: any) => d.id === configId);
     };
 
     const getTableData = (type: string) => {

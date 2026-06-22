@@ -38,6 +38,7 @@ import {
     setOptimizeInnerpageSummary
 } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
+import { getRecommendation } from '../../../utils/recommendations';
 import { ReactComponent as Schedule } from '../../../assets/Schedule.svg';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import DialogContent from '../../GetWell/StorageCardComponent/DialogContent/DialogContent';
@@ -1275,15 +1276,28 @@ const DashboardInnerPage = () => {
         }
 
         if (hasConfigStats(assessmentConfigData, selectedConfig, configEngineType)) {
+            const staticRec = getRecommendation(selectedConfig, configEngineType);
+            const apiRecommendation = configItem?.recommendation;
+
             setValueCardData((prev: any) => ({
                 ...selectedConfigSummary,
                 configurationState: selectedConfigSummary.configState,
                 cardHeight: prev.cardHeight || '136px',
                 tagHeight: prev.tagHeight || '233px',
-                data: {
-                    title: 'Recommendations',
-                    description: configItem?.recommendation ?? ''
-                },
+                data: staticRec
+                    ? {
+                          title: staticRec.title || 'Recommendations',
+                          description: staticRec.description,
+                          descriptionList: staticRec.descriptionList,
+                          descriptionRssConfig: staticRec.descriptionRssConfig,
+                          info: staticRec.info,
+                          valuesHeading: staticRec.valuesHeading,
+                          values: staticRec.values
+                      }
+                    : {
+                          title: 'Recommendations',
+                          description: apiRecommendation ?? ''
+                      },
                 cardName: selectedConfig
             }));
         }

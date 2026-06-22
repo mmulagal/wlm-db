@@ -4625,9 +4625,7 @@ export const updateConfigStateStatus = (
     rowList: any,
     dispatch: any,
     action: any,
-    apiResponseData?: any,
-    engineType?: string,
-    activeTab?: string
+    engineType?: string
 ) => {
     let setAction = '';
     if (action === CONFIG_STATE_ACTIONS.DISMISS) {
@@ -4646,59 +4644,6 @@ export const updateConfigStateStatus = (
     let updatedAsessmentData = [...assessmentSource];
 
     rowList?.forEach((rowData: any) => {
-        // Special handling for MSSQL HA card-level operations
-        if (
-            activeTab === WLF_TABS.WELL_ARCHITECTED_TAB &&
-            rowData?.name === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY
-        ) {
-            const currentState = store.getState();
-
-            // Extract timestamp from API response if available
-            const endTime = apiResponseData?.dismissedConfigurations?.[0]?.endTime || null;
-            const startTime = apiResponseData?.dismissedConfigurations?.[0]?.startTime || null;
-
-            // Call the special card-level handling
-            const updatedData = updateConfigStatePerInstance(setAction, rowData.name, endTime, startTime, engineType);
-            if (updatedData) {
-                dispatch(setDriftAssessmentData(updatedData));
-                // Use the appropriate format function based on engine type
-                if (engineType === DBType.ORACLE) {
-                    formatOracleWellArchitectedData(dispatch, updatedData as AssessmentResponseInterface);
-                } else {
-                    formatGetWellData(dispatch, updatedData as AssessmentResponseInterface);
-                }
-                return; // Skip the normal bulk processing for this card-level operation
-            }
-        }
-
-        // Special handling for OS card-level operations
-        if (activeTab === WLF_TABS.WELL_ARCHITECTED_TAB && rowData?.name === ASSESSMENT_CONFIG_NAMES.OS) {
-            const currentState = store.getState();
-
-            // Extract timestamp from API response if available
-            const endTime = apiResponseData?.dismissedConfigurations?.[0]?.endTime || null;
-            const startTime = apiResponseData?.dismissedConfigurations?.[0]?.startTime || null;
-
-            // Call the special card-level handling
-            const updatedData = updateConfigStatePerInstance(
-                setAction,
-                ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM,
-                endTime,
-                startTime,
-                engineType
-            );
-            if (updatedData) {
-                dispatch(setDriftAssessmentData(updatedData));
-                // Use the appropriate format function based on engine type
-                if (engineType === DBType.ORACLE) {
-                    formatOracleWellArchitectedData(dispatch, updatedData as AssessmentResponseInterface);
-                } else {
-                    formatGetWellData(dispatch, updatedData as AssessmentResponseInterface);
-                }
-                return; // Skip the normal bulk processing for this card-level operation
-            }
-        }
-
         updatedAsessmentData = updatedAsessmentData?.map((hostData: any) => {
             if (
                 hostData?.databaseHostId === rowData?.hostId &&
@@ -4707,279 +4652,59 @@ export const updateConfigStateStatus = (
             ) {
                 const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
                     if (instance?.databaseInstanceId === rowData?.instanceId) {
-                        const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
-                        const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_LAYOUT_MAP;
-                        const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
-                        let newStorageConfigurationMap: any;
-                        if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
-                            newStorageConfigurationMap = { ...storageConfigurationMap }; // Create a copy to avoid mutating original
-                            delete newStorageConfigurationMap['snapshot-policy'];
-                        } else {
-                            newStorageConfigurationMap = { ...storageConfigurationMap };
-                        }
+                        // Step 1: Get the config id from the row being acted on
+                        const configId = rowData?.id as string | undefined;
 
-                        const otherConfigMap: any = CONFIG_NAME_TO_ID_MAPPING.NON_STORAGE_CONFIG_MAP;
-                        const haMssqlMap: any = [
-                            'shared-storage',
-                            'cluster-quorum',
-                            'heartbeat-settings',
-                            'sqlServer-service',
-                            'drive-letter'
-                        ];
-                        if (haMssqlMap.includes(rowData?.id)) {
-                            return {
-                                ...instance,
-                                assessments: {
-                                    ...instance?.assessments,
-                                    dismissedConfigurations: {
-                                        ...instance?.assessments?.dismissedConfigurations,
-                                        highAvailability: instance?.assessments?.dismissedConfigurations
-                                            ?.highAvailability
-                                            ? (() => {
-                                                  const existingHa =
-                                                      instance?.assessments?.dismissedConfigurations?.highAvailability;
-                                                  const itemIndex = existingHa.findIndex(
-                                                      (item: any) => item?.configurationName === rowData?.id
-                                                  );
+                        // Guard: skip the upsert when no id is supplied to avoid inserting
+                        // an undefined-keyed entry that would corrupt future lookups.
+                        if (!configId) return instance;
 
-                                                  if (itemIndex !== -1) {
-                                                      // Update the existing item
-                                                      return existingHa.map((item: any, index: number) =>
-                                                          index === itemIndex
-                                                              ? {
-                                                                    ...item,
-                                                                    configState: setAction,
-                                                                    endTime: rowData?.endTime,
-                                                                    startTime: rowData?.startTime
-                                                                }
-                                                              : item
-                                                      );
-                                                  }
-                                                  // Add a new item to the list
-                                                  return [
-                                                      ...existingHa,
-                                                      {
-                                                          configurationName: rowData?.id,
-                                                          configState: setAction,
-                                                          endTime: rowData?.endTime,
-                                                          startTime: rowData?.startTime
-                                                      }
-                                                  ];
-                                              })()
-                                            : [
-                                                  {
-                                                      configurationName: rowData?.id,
-                                                      configState: setAction,
-                                                      endTime: rowData?.endTime,
-                                                      startTime: rowData?.startTime
-                                                  }
-                                              ]
-                                    }
-                                }
-                            };
-                        }
-                        if (storageSizingMap[rowData?.name]) {
-                            return {
-                                ...instance,
-                                assessments: {
-                                    ...instance?.assessments,
-                                    dismissedConfigurations: {
-                                        ...instance?.assessments?.dismissedConfigurations,
-                                        storage: {
-                                            ...instance?.assessments?.dismissedConfigurations?.storage,
-                                            sizing: instance?.assessments?.dismissedConfigurations?.storage?.sizing
-                                                ? (() => {
-                                                      const existingSizing =
-                                                          instance?.assessments?.dismissedConfigurations?.storage
-                                                              ?.sizing;
-                                                      const itemIndex = existingSizing.findIndex(
-                                                          (item: any) =>
-                                                              item?.configurationName ===
-                                                              storageSizingMap[rowData?.name]
-                                                      );
+                        type DismissedEntry = {
+                            id: string;
+                            configState: string;
+                            startTime?: number;
+                            endTime?: number;
+                        };
 
-                                                      if (itemIndex !== -1) {
-                                                          // Update the existing item
-                                                          return existingSizing.map((item: any, index: number) =>
-                                                              index === itemIndex
-                                                                  ? {
-                                                                        ...item,
-                                                                        configState: setAction,
-                                                                        endTime: rowData?.endTime,
-                                                                        startTime: rowData?.startTime
-                                                                    }
-                                                                  : item
-                                                          );
-                                                      }
-                                                      // Add a new item to the list
-                                                      return [
-                                                          ...existingSizing,
-                                                          {
-                                                              configurationName: storageSizingMap[rowData?.name],
-                                                              configState: setAction,
-                                                              endTime: rowData?.endTime,
-                                                              startTime: rowData?.startTime
-                                                          }
-                                                      ];
-                                                  })()
-                                                : [
-                                                      {
-                                                          configurationName: storageSizingMap[rowData?.name],
-                                                          configState: setAction,
-                                                          endTime: rowData?.endTime,
-                                                          startTime: rowData?.startTime
-                                                      }
-                                                  ]
-                                        }
-                                    }
-                                }
-                            };
-                        }
-                        if (storageLayoutMap[rowData?.name]) {
-                            return {
-                                ...instance,
-                                assessments: {
-                                    ...instance?.assessments,
-                                    dismissedConfigurations: {
-                                        ...instance?.assessments?.dismissedConfigurations,
-                                        storage: {
-                                            ...instance?.assessments?.dismissedConfigurations?.storage,
-                                            layout: instance?.assessments?.dismissedConfigurations?.storage?.layout
-                                                ? (() => {
-                                                      const existingLayout =
-                                                          instance?.assessments?.dismissedConfigurations?.storage
-                                                              ?.layout;
-                                                      const itemIndex = existingLayout.findIndex(
-                                                          (item: any) =>
-                                                              item?.configurationName ===
-                                                              storageLayoutMap[rowData?.name]
-                                                      );
+                        // Step 2: Get the current flat dismissed array (or empty array if none yet)
+                        const existingDismissed: DismissedEntry[] =
+                            instance.assessments?.dismissedConfigurations ?? [];
 
-                                                      if (itemIndex !== -1) {
-                                                          // Update the existing item
-                                                          return existingLayout.map((item: any, index: number) =>
-                                                              index === itemIndex
-                                                                  ? {
-                                                                        ...item,
-                                                                        configState: setAction,
-                                                                        endTime: rowData?.endTime,
-                                                                        startTime: rowData?.startTime
-                                                                    }
-                                                                  : item
-                                                          );
-                                                      }
-                                                      // Add a new item to the list
-                                                      return [
-                                                          ...existingLayout,
-                                                          {
-                                                              configurationName: storageLayoutMap[rowData?.name],
-                                                              configState: setAction,
-                                                              endTime: rowData?.endTime,
-                                                              startTime: rowData?.startTime
-                                                          }
-                                                      ];
-                                                  })()
-                                                : [
-                                                      {
-                                                          configurationName: storageLayoutMap[rowData?.name],
-                                                          configState: setAction,
-                                                          endTime: rowData?.endTime,
-                                                          startTime: rowData?.startTime
-                                                      }
-                                                  ]
-                                        }
-                                    }
-                                }
-                            };
-                        }
-                        if (newStorageConfigurationMap[rowData?.id]) {
-                            const key = newStorageConfigurationMap[rowData?.id];
-                            return {
-                                ...instance,
-                                assessments: {
-                                    ...instance?.assessments,
-                                    dismissedConfigurations: {
-                                        ...instance?.assessments?.dismissedConfigurations,
-                                        storage: {
-                                            ...instance?.assessments?.dismissedConfigurations?.storage,
-                                            configuration: {
-                                                ...instance?.assessments?.dismissedConfigurations?.storage
-                                                    ?.configuration,
-                                                [key]: instance?.assessments?.dismissedConfigurations?.storage
-                                                    ?.configuration?.[key]
-                                                    ? (() => {
-                                                          const existingList =
-                                                              instance?.assessments?.dismissedConfigurations?.storage
-                                                                  ?.configuration?.[key];
-                                                          const existingItem = existingList.find(
-                                                              (item: any) => item?.configurationName === rowData?.id
-                                                          );
+                        // Step 3: Check if this config already has an entry in the array
+                        const existingEntryIndex = existingDismissed.findIndex(
+                            (dismissedItem) => dismissedItem.id === configId
+                        );
 
-                                                          if (existingItem) {
-                                                              // Update existing item
-                                                              return existingList.map((item: any) => {
-                                                                  if (item?.configurationName === rowData?.id) {
-                                                                      return {
-                                                                          ...item,
-                                                                          configState: setAction,
-                                                                          endTime: rowData?.endTime,
-                                                                          startTime: rowData?.startTime
-                                                                      };
-                                                                  }
-                                                                  return item;
-                                                              });
-                                                          }
-                                                          // If ID not found, add new entry to existing list
-                                                          return [
-                                                              ...existingList,
-                                                              {
-                                                                  configurationName: rowData?.id,
-                                                                  configState: setAction,
-                                                                  endTime: rowData?.endTime,
-                                                                  startTime: rowData?.startTime
-                                                              }
-                                                          ];
-                                                      })()
-                                                    : [
-                                                          {
-                                                              configurationName: rowData?.id,
-                                                              configState: setAction,
-                                                              endTime: rowData?.endTime,
-                                                              startTime: rowData?.startTime
-                                                          }
-                                                      ]
-                                            }
-                                        }
-                                    }
-                                }
-                            };
-                        }
-                        if (otherConfigMap[rowData?.name]) {
-                            const name = otherConfigMap[rowData?.name];
-                            return {
-                                ...instance,
-                                assessments: {
-                                    ...instance?.assessments,
-                                    dismissedConfigurations: {
-                                        ...instance?.assessments?.dismissedConfigurations,
-                                        [name]: instance?.assessments?.dismissedConfigurations?.[name]
-                                            ? {
-                                                  ...instance?.assessments?.dismissedConfigurations?.[name],
-                                                  configState: setAction,
-                                                  endTime: rowData?.endTime,
-                                                  startTime: rowData?.startTime
-                                              }
-                                            : {
-                                                  configurationName: rowData?.id,
-                                                  configState: setAction,
-                                                  endTime: rowData?.endTime,
-                                                  startTime: rowData?.startTime
-                                              }
-                                    }
-                                }
-                            };
-                        }
-                        return instance;
+                        // Step 4: Build the new/updated entry.
+                        // Timestamps are only spread when the caller provides them so that
+                        // merging with an existing entry never overwrites a stored endTime /
+                        // startTime with undefined — which would break postpone-expiry and
+                        // activation-timing UI that depends on these values.
+                        const updatedEntry: DismissedEntry = {
+                            id: configId,
+                            configState: setAction, // e.g. DISMISSED / POSTPONED / ACTIVE
+                            ...(rowData?.startTime !== undefined && { startTime: rowData.startTime }),
+                            ...(rowData?.endTime !== undefined && { endTime: rowData.endTime })
+                        };
+
+                        // Step 5: Upsert — update in place if found, otherwise append
+                        const updatedDismissed =
+                            existingEntryIndex >= 0
+                                ? existingDismissed.map((dismissedItem, index) =>
+                                      index === existingEntryIndex
+                                          ? { ...dismissedItem, ...updatedEntry } // update existing entry
+                                          : dismissedItem
+                                  )
+                                : [...existingDismissed, updatedEntry]; // insert new entry
+
+                        // Step 6: Return the updated instance with the new flat dismissed array
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance.assessments,
+                                dismissedConfigurations: updatedDismissed
+                            }
+                        };
                     }
                     return instance;
                 });
@@ -5069,7 +4794,7 @@ export const updateConfigStatePerInstance = (
 
     // For flat API, dismissedConfigurations is a flat array at root level
     if (isFlatApi) {
-        const existingDismissed = driftAssessmentData?.dismissedConfigurations || [];
+        const existingDismissed: any[] = (driftAssessmentData?.dismissedConfigurations as any[]) || [];
 
         // Find if this config already exists in dismissedConfigurations
         const existingIndex = existingDismissed.findIndex((item: any) => item?.id === configId);
@@ -5106,359 +4831,9 @@ export const updateConfigStatePerInstance = (
         };
     }
 
-    // Below is the original nested API handling code
-    const storageSizingMap: any = ['log-drive-size', 'performance-tier', 'headroom', 'tempdb-drive-size', 'swap-space'];
-    const storageLayoutMap: any = [
-        'data-files-location',
-        'log-files-location',
-        'tempdb-files-location',
-        // Oracle storage layout configurations
-        'oracle-binary-placement',
-        'datafiles-placement',
-        'controlfiles-placement',
-        'redologs-placement',
-        'templogs-placement',
-        'archive-placement',
-        'data-dg-lun-layout',
-        'redolog-dg-lun-layout',
-        'fra-dg-lun-layout',
-        'archivelog-dg-lun-layout'
-    ];
-    const haMssqlMap: any = [
-        'shared-storage',
-        'cluster-quorum',
-        'heartbeat-settings',
-        'sqlServer-service',
-        'drive-letter'
-    ];
-    const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
-    let newStorageConfigurationMap: any;
-    // Only delete snapshot-policy mapping for MSSQL - Oracle needs it for proper categorization
-    if (detectedEngineType === DBType.MSSQL) {
-        newStorageConfigurationMap = { ...storageConfigurationMap }; // Create a copy to avoid mutating original
-        delete newStorageConfigurationMap['snapshot-policy'];
-    } else if (detectedEngineType === DBType.ORACLE) {
-        newStorageConfigurationMap = { ...storageConfigurationMap };
-    } else {
-        newStorageConfigurationMap = { ...storageConfigurationMap };
-        delete newStorageConfigurationMap['snapshot-policy'];
-    }
-    const otherConfigMap: any = {
-        'compute-rightsizing': 'compute',
-        maxdop: 'maxDOP',
-        'clone-management': 'clone',
-        'rss-config': 'rssConfig',
-        'mtu-alignment': 'mtuAlignment',
-        'snapshot-policy': 'snapshotPolicy',
-        'backup-configuration': 'awsBackup',
-        'mssql-patch': 'mssqlPatch',
-        'host-os-patch': 'hostOsPatch',
-        'transparent-hugepages': 'transparentHugepages',
-        'tcp-advanced-options': 'tcpAdvancedOptions',
-        'filesystems-io-options': 'filesystemsIoOptions',
-        'multiblock-readcount': 'multiblockReadcount',
-        crr: 'crr',
-        'snapcenter-snapshot': 'snapcenterSnapshot',
-        'oracle-security-patch': 'oracleSecurityPatch',
-        'sql-license': 'license'
-    };
 
-    // Special handling for ONTAP card dismissal (dismiss all ONTAP configurations)
-    if (configId === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
-        const volumeConfigs = driftAssessmentData?.storage?.configuration?.volumes || [];
-        const lunConfigs = driftAssessmentData?.storage?.configuration?.luns || [];
-
-        const dismissedVolumeConfigs = volumeConfigs.map((config: any) => ({
-            configurationName: config.name,
-            configState: setAction,
-            endTime,
-            startTime
-        }));
-
-        const dismissedLunConfigs = lunConfigs.map((config: any) => ({
-            configurationName: config.name,
-            configState: setAction,
-            endTime,
-            startTime
-        }));
-
-        return {
-            ...driftAssessmentData,
-            dismissedConfigurations: {
-                ...driftAssessmentData?.dismissedConfigurations,
-                storage: {
-                    ...driftAssessmentData?.dismissedConfigurations?.storage,
-                    configuration: {
-                        ...driftAssessmentData?.dismissedConfigurations?.storage?.configuration,
-                        volumes: dismissedVolumeConfigs,
-                        luns: dismissedLunConfigs
-                    }
-                }
-            }
-        };
-    }
-
-    // Special handling for OS card dismissal (dismiss all OS configurations)
-    if (configId === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) {
-        const osConfigs = driftAssessmentData?.storage?.configuration?.os || [];
-
-        const dismissedOsConfigs = osConfigs.map((config: any) => ({
-            configurationName: config.name,
-            configState: setAction,
-            endTime,
-            startTime
-        }));
-
-        return {
-            ...driftAssessmentData,
-            dismissedConfigurations: {
-                ...driftAssessmentData?.dismissedConfigurations,
-                storage: {
-                    ...driftAssessmentData?.dismissedConfigurations?.storage,
-                    configuration: {
-                        ...driftAssessmentData?.dismissedConfigurations?.storage?.configuration,
-                        os: dismissedOsConfigs
-                    }
-                }
-            }
-        };
-    }
-
-    // Special handling for MSSQL High Availability card dismissal (dismiss all MSSQL HA configurations)
-    if (configId === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY || configId === 'high-availability') {
-        const mssqlHAConfigs =
-            driftAssessmentData?.highAvailability || (driftAssessmentData as any)?.['high-availability'] || [];
-
-        const dismissedMssqlHAConfigs = mssqlHAConfigs.map((config: any) => ({
-            configurationName: config.name,
-            configState: setAction,
-            endTime,
-            startTime
-        }));
-
-        return {
-            ...driftAssessmentData,
-            dismissedConfigurations: {
-                ...driftAssessmentData?.dismissedConfigurations,
-                highAvailability: dismissedMssqlHAConfigs
-            }
-        };
-    }
-
-    if (storageSizingMap.includes(configId)) {
-        return {
-            ...driftAssessmentData,
-            dismissedConfigurations: {
-                ...driftAssessmentData?.dismissedConfigurations,
-                storage: {
-                    ...driftAssessmentData?.dismissedConfigurations?.storage,
-                    sizing: driftAssessmentData?.dismissedConfigurations?.storage?.sizing
-                        ? (() => {
-                              const existingSizing = driftAssessmentData?.dismissedConfigurations?.storage?.sizing;
-                              const itemIndex = existingSizing.findIndex(
-                                  (item: any) => item?.configurationName === configId
-                              );
-
-                              if (itemIndex !== -1) {
-                                  // Update the existing item
-                                  return existingSizing.map((item: any, index: number) =>
-                                      index === itemIndex
-                                          ? {
-                                                ...item,
-                                                configState: setAction,
-                                                endTime,
-                                                startTime
-                                            }
-                                          : item
-                                  );
-                              }
-                              // Add a new item to the list
-                              return [
-                                  ...existingSizing,
-                                  {
-                                      configurationName: configId,
-                                      configState: setAction,
-                                      endTime,
-                                      startTime
-                                  }
-                              ];
-                          })()
-                        : [
-                              {
-                                  configurationName: configId,
-                                  configState: setAction,
-                                  endTime,
-                                  startTime
-                              }
-                          ]
-                }
-            }
-        };
-    }
-    if (haMssqlMap.includes(configId)) {
-        return {
-            ...driftAssessmentData,
-            dismissedConfigurations: {
-                ...driftAssessmentData?.dismissedConfigurations,
-                highAvailability: driftAssessmentData?.dismissedConfigurations?.highAvailability
-                    ? (() => {
-                          const existingHa = driftAssessmentData?.dismissedConfigurations?.highAvailability;
-                          const itemIndex = existingHa.findIndex((item: any) => item?.configurationName === configId);
-
-                          if (itemIndex !== -1) {
-                              // Update the existing item
-                              return existingHa.map((item: any, index: number) =>
-                                  index === itemIndex
-                                      ? {
-                                            ...item,
-                                            configState: setAction,
-                                            endTime,
-                                            startTime
-                                        }
-                                      : item
-                              );
-                          }
-                          // Add a new item to the list
-                          return [
-                              ...existingHa,
-                              {
-                                  configurationName: configId,
-                                  configState: setAction,
-                                  endTime,
-                                  startTime
-                              }
-                          ];
-                      })()
-                    : [
-                          {
-                              configurationName: configId,
-                              configState: setAction,
-                              endTime,
-                              startTime
-                          }
-                      ]
-            }
-        };
-    }
-    if (storageLayoutMap.includes(configId)) {
-        return {
-            ...driftAssessmentData,
-            dismissedConfigurations: {
-                ...driftAssessmentData?.dismissedConfigurations,
-                storage: {
-                    ...driftAssessmentData?.dismissedConfigurations?.storage,
-                    layout: driftAssessmentData?.dismissedConfigurations?.storage?.layout
-                        ? (() => {
-                              const existingLayout = driftAssessmentData?.dismissedConfigurations?.storage?.layout;
-                              const itemIndex = existingLayout.findIndex(
-                                  (item: any) => item?.configurationName === configId
-                              );
-
-                              if (itemIndex !== -1) {
-                                  // Update the existing item
-                                  return existingLayout.map((item: any, index: number) =>
-                                      index === itemIndex
-                                          ? {
-                                                ...item,
-                                                configState: setAction,
-                                                endTime,
-                                                startTime
-                                            }
-                                          : item
-                                  );
-                              }
-                              // Add a new item to the list
-                              return [
-                                  ...existingLayout,
-                                  {
-                                      configurationName: configId,
-                                      configState: setAction,
-                                      endTime,
-                                      startTime
-                                  }
-                              ];
-                          })()
-                        : [
-                              {
-                                  configurationName: configId,
-                                  configState: setAction,
-                                  endTime,
-                                  startTime
-                              }
-                          ]
-                }
-            }
-        };
-    }
-    if (newStorageConfigurationMap[configId]) {
-        const key = newStorageConfigurationMap[configId];
-
-        // Get existing dismissed configurations for this subcategory
-        const existingConfigs = driftAssessmentData?.dismissedConfigurations?.storage?.configuration?.[key] || [];
-
-        // Find if this configuration already exists in dismissed list
-        const existingIndex = existingConfigs.findIndex((item: any) => item?.configurationName === configId);
-
-        let updatedConfigs;
-        if (existingIndex !== -1) {
-            // Update existing configuration
-            updatedConfigs = existingConfigs.map((item: any, index: number) =>
-                index === existingIndex ? { ...item, configState: setAction, endTime, startTime } : item
-            );
-        } else {
-            // Add new configuration to the list
-            updatedConfigs = [
-                ...existingConfigs,
-                {
-                    configurationName: configId,
-                    configState: setAction,
-                    endTime,
-                    startTime
-                }
-            ];
-        }
-
-        const result = {
-            ...driftAssessmentData,
-            dismissedConfigurations: {
-                ...driftAssessmentData?.dismissedConfigurations,
-                storage: {
-                    ...driftAssessmentData?.dismissedConfigurations?.storage,
-                    configuration: {
-                        ...driftAssessmentData?.dismissedConfigurations?.storage?.configuration,
-                        [key]: updatedConfigs
-                    }
-                }
-            }
-        };
-
-        return result;
-    }
-    if (otherConfigMap[configId]) {
-        const key = otherConfigMap[configId];
-        return {
-            ...driftAssessmentData,
-            dismissedConfigurations: {
-                ...driftAssessmentData?.dismissedConfigurations,
-                [key]: driftAssessmentData?.dismissedConfigurations?.[key]
-                    ? {
-                          ...driftAssessmentData?.dismissedConfigurations?.[key],
-                          configState: setAction,
-                          endTime,
-                          startTime
-                      }
-                    : {
-                          configurationName: configId,
-                          configState: setAction,
-                          endTime,
-                          startTime
-                      }
-            }
-        };
-    }
     return driftAssessmentData;
 };
-
 export const checkIfDisableForOptimize = (
     inProgressHostData: any,
     name: string,

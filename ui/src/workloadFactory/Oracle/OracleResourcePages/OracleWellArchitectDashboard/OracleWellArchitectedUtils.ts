@@ -16,7 +16,6 @@ import {
 import { addAllOracleHostAssessmentData } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
     ASSESSMENT_CONFIG_NAMES,
-    CONFIG_NAME_TO_ID_MAPPING,
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
     DBType,
@@ -1749,8 +1748,7 @@ const getOracleBlockOneType = (category: string): string =>
 // Helper function to format flat assessment to card format
 const formatOracleFlatAssessmentToCard = (
     assessment: any,
-    optimizingData: Record<string, string>,
-    assessmentData: any
+    optimizingData: Record<string, string>
 ): any => {
     const configId = assessment.id;
     const displayName = assessment.name || getConfigurationDisplayName(configId);
@@ -1891,7 +1889,7 @@ const processOracleFlatAssessments = (data: any, optimizingData: Record<string, 
     data.assessments.forEach((assessment: any) => {
         const configKey = assessment.id;
         if (!configKey) return;
-        cardsData[configKey] = formatOracleFlatAssessmentToCard(assessment, optimizingData, data);
+        cardsData[configKey] = formatOracleFlatAssessmentToCard(assessment, optimizingData);
     });
 
     // Map dismissedConfigurations to cards (critical for dismiss/reactivate/activating states)
@@ -2824,95 +2822,8 @@ const getOracleCategoryForSubCategory = (subCategory: string) => {
     return entry ? entry.category : '';
 };
 
-// Helper function to update storage layout configuration
-const updateStorageLayoutConfig = (
-    existingLayout: any[],
-    configurationName: string,
-    setAction: string,
-    endTime: string,
-    startTime: string
-) => {
-    const itemIndex = existingLayout.findIndex((item: any) => item?.configurationName === configurationName);
 
-    if (itemIndex !== -1) {
-        // Update existing item
-        return existingLayout.map((item: any, index: number) =>
-            index === itemIndex ? { ...item, configState: setAction, endTime, startTime } : item
-        );
-    }
-
-    // Add new item
-    return [...existingLayout, { configurationName, configState: setAction, endTime, startTime }];
-};
-
-// Helper function to update storage sizing configuration
-const updateStorageSizingConfig = (
-    existingSizing: any[],
-    configurationName: string,
-    setAction: string,
-    endTime: string,
-    startTime: string
-) => {
-    const itemIndex = existingSizing.findIndex((item: any) => item?.configurationName === configurationName);
-
-    if (itemIndex !== -1) {
-        // Update existing item
-        return existingSizing.map((item: any, index: number) =>
-            index === itemIndex ? { ...item, configState: setAction, endTime, startTime } : item
-        );
-    }
-
-    // Add new item
-    return [...existingSizing, { configurationName, configState: setAction, endTime, startTime }];
-};
-
-// Helper function to create dismissed configurations structure for storage layout
-const createDismissedConfigStructure = (
-    instance: any,
-    configurationName: string,
-    setAction: string,
-    endTime: string,
-    startTime: string
-) => {
-    const existingStorage = instance?.assessments?.dismissedConfigurations?.storage;
-    const existingLayout = existingStorage?.layout;
-
-    const updatedLayout = existingLayout
-        ? updateStorageLayoutConfig(existingLayout, configurationName, setAction, endTime, startTime)
-        : [{ configurationName, configState: setAction, endTime, startTime }];
-
-    return {
-        ...instance?.assessments?.dismissedConfigurations,
-        storage: {
-            ...existingStorage,
-            layout: updatedLayout
-        }
-    };
-};
-
-// Helper function to create dismissed configurations structure for storage sizing
-const createDismissedSizingStructure = (
-    instance: any,
-    configurationName: string,
-    setAction: string,
-    endTime: string,
-    startTime: string
-) => {
-    const existingStorage = instance?.assessments?.dismissedConfigurations?.storage;
-    const existingSizing = existingStorage?.sizing || [];
-
-    const updatedSizing = updateStorageSizingConfig(existingSizing, configurationName, setAction, endTime, startTime);
-
-    return {
-        ...instance?.assessments?.dismissedConfigurations,
-        storage: {
-            ...existingStorage,
-            sizing: updatedSizing
-        }
-    };
-};
-
-export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, action: any, apiResponseData?: any) => {
+export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, action: any) => {
     let setAction = '';
     if (action === CONFIG_STATE_ACTIONS.DISMISS) {
         setAction = CONFIG_STATES.DISMISSED;
@@ -2935,137 +2846,29 @@ export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, actio
             ) {
                 const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
                     if (instance?.databaseInstanceId === rowData?.instanceId) {
-                        const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.ORACLE_STORAGE_LAYOUT_MAP;
-                        const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
-                        const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
-                        const otherConfigMap: any = CONFIG_NAME_TO_ID_MAPPING.NON_STORAGE_CONFIG_MAP;
-
-                        // Check if it's a storage layout configuration
-                        if (storageLayoutMap[rowData?.name]) {
-                            const configurationName = storageLayoutMap[rowData?.name];
-                            const dismissedConfigurations = createDismissedConfigStructure(
-                                instance,
-                                configurationName,
-                                setAction,
-                                rowData?.endTime,
-                                rowData?.startTime
-                            );
-
-                            return {
-                                ...instance,
-                                assessments: {
-                                    ...instance?.assessments,
-                                    dismissedConfigurations
-                                }
-                            };
-                        }
-                        if (storageSizingMap[rowData?.name]) {
-                            // Check if it's a storage sizing configuration
-                            const configurationName = storageSizingMap[rowData?.name];
-                            const dismissedConfigurations = createDismissedSizingStructure(
-                                instance,
-                                configurationName,
-                                setAction,
-                                rowData?.endTime,
-                                rowData?.startTime
-                            );
-
-                            return {
-                                ...instance,
-                                assessments: {
-                                    ...instance?.assessments,
-                                    dismissedConfigurations
-                                }
-                            };
-                        }
-                        if (storageConfigurationMap[rowData?.id]) {
-                            const key = storageConfigurationMap[rowData?.id];
-                            return {
-                                ...instance,
-                                assessments: {
-                                    ...instance?.assessments,
-                                    dismissedConfigurations: {
-                                        ...instance?.assessments?.dismissedConfigurations,
-                                        storage: {
-                                            ...instance?.assessments?.dismissedConfigurations?.storage,
-                                            configuration: {
-                                                ...instance?.assessments?.dismissedConfigurations?.storage
-                                                    ?.configuration,
-                                                [key]: instance?.assessments?.dismissedConfigurations?.storage
-                                                    ?.configuration?.[key]
-                                                    ? (() => {
-                                                          const existingList =
-                                                              instance?.assessments?.dismissedConfigurations?.storage
-                                                                  ?.configuration?.[key];
-                                                          const existingItem = existingList.find(
-                                                              (item: any) => item?.configurationName === rowData?.id
-                                                          );
-
-                                                          if (existingItem) {
-                                                              // Update existing item
-                                                              return existingList.map((item: any) => {
-                                                                  if (item?.configurationName === rowData?.id) {
-                                                                      return {
-                                                                          ...item,
-                                                                          configState: setAction,
-                                                                          endTime: rowData?.endTime,
-                                                                          startTime: rowData?.startTime
-                                                                      };
-                                                                  }
-                                                                  return item;
-                                                              });
-                                                          }
-                                                          // If ID not found, add new entry to existing list
-                                                          return [
-                                                              ...existingList,
-                                                              {
-                                                                  configurationName: rowData?.id,
-                                                                  configState: setAction,
-                                                                  endTime: rowData?.endTime,
-                                                                  startTime: rowData?.startTime
-                                                              }
-                                                          ];
-                                                      })()
-                                                    : [
-                                                          {
-                                                              configurationName: rowData?.id,
-                                                              configState: setAction,
-                                                              endTime: rowData?.endTime,
-                                                              startTime: rowData?.startTime
-                                                          }
-                                                      ]
-                                            }
-                                        }
-                                    }
-                                }
-                            };
-                        }
-                        if (otherConfigMap[rowData?.name]) {
-                            const name = otherConfigMap[rowData?.name];
-                            return {
-                                ...instance,
-                                assessments: {
-                                    ...instance?.assessments,
-                                    dismissedConfigurations: {
-                                        ...instance?.assessments?.dismissedConfigurations,
-                                        [name]: instance?.assessments?.dismissedConfigurations?.[name]
-                                            ? {
-                                                  ...instance?.assessments?.dismissedConfigurations?.[name],
-                                                  configState: setAction,
-                                                  endTime: rowData?.endTime,
-                                                  startTime: rowData?.startTime
-                                              }
-                                            : {
-                                                  configurationName: rowData?.id,
-                                                  configState: setAction,
-                                                  endTime: rowData?.endTime,
-                                                  startTime: rowData?.startTime
-                                              }
-                                    }
-                                }
-                            };
-                        }
-                        return instance;
+                        // Flat API: upsert into the flat dismissedConfigurations array by id
+                        const configId = rowData?.id;
+                        const existingDismissed: any[] = instance.assessments?.dismissedConfigurations ?? [];
+                        const idx = existingDismissed.findIndex((d: any) => d.id === configId);
+                        const entry = {
+                            id: configId,
+                            configState: setAction,
+                            endTime: rowData?.endTime,
+                            startTime: rowData?.startTime
+                        };
+                        const updatedDismissed =
+                            idx >= 0
+                                ? existingDismissed.map((d: any, i: number) =>
+                                      i === idx ? { ...d, ...entry } : d
+                                  )
+                                : [...existingDismissed, entry];
+                        return {
+                            ...instance,
+                            assessments: {
+                                ...instance.assessments,
+                                dismissedConfigurations: updatedDismissed
+                            }
+                        };
                     }
                     return instance;
                 });
@@ -3078,7 +2881,7 @@ export const updateConfigStateStatusOracle = (rowList: any, dispatch: any, actio
 };
 
 // Helper function to check if all Oracle configurations are dismissed (dismissed or postponed)
-export const checkAllOracleConfigurationsDismissed = (cardData: any, assessmentData?: any): boolean => {
+export const checkAllOracleConfigurationsDismissed = (cardData: any): boolean => {
     if (!cardData) {
         return false;
     }
@@ -3086,7 +2889,8 @@ export const checkAllOracleConfigurationsDismissed = (cardData: any, assessmentD
     let totalConfigs = 0;
     let dismissedConfigs = 0;
 
-    // Check standard configurations (using dismissedObj)
+    // All dismiss states are captured in cardData[key].dismissedObj (built from the flat API).
+    // Iterate every config key and count how many are dismissed or postponed.
     Object.keys(cardData).forEach((key: string) => {
         // Skip metadata keys
         if (WA_FLAG_SKIP.includes(key)) {
@@ -3124,92 +2928,6 @@ export const checkAllOracleConfigurationsDismissed = (cardData: any, assessmentD
             dismissedConfigs++;
         }
     });
-
-    // Check sub-configurations for ONTAP/OS cards
-    if (assessmentData?.dismissedConfigurations) {
-        const dismissedConfigurationsData = assessmentData.dismissedConfigurations;
-
-        // Check ONTAP sub-configurations (volumes and luns)
-        const ontapSubConfigs = [
-            ...(dismissedConfigurationsData.storage?.configuration?.volumes || []),
-            ...(dismissedConfigurationsData.storage?.configuration?.luns || [])
-        ];
-
-        ontapSubConfigs.forEach((config: any) => {
-            totalConfigs++;
-            if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
-                dismissedConfigs++;
-            }
-        });
-
-        // Check OS sub-configurations
-        const osSubConfigs = dismissedConfigurationsData.storage?.configuration?.os || [];
-        osSubConfigs.forEach((config: any) => {
-            totalConfigs++;
-            if (config.configState === CONFIG_STATES.DISMISSED || config.configState === CONFIG_STATES.POSTPONED) {
-                dismissedConfigs++;
-            }
-        });
-
-        // Check compute configurations (host OS patch)
-        const hostOsPatchConfig = dismissedConfigurationsData.hostOsPatch;
-        if (hostOsPatchConfig) {
-            totalConfigs++;
-            if (
-                hostOsPatchConfig.configState === CONFIG_STATES.DISMISSED ||
-                hostOsPatchConfig.configState === CONFIG_STATES.POSTPONED
-            ) {
-                dismissedConfigs++;
-            }
-        }
-        // Check compute configurations (transparent hugepages)
-        const transparentHugepagesConfig = dismissedConfigurationsData.transparentHugepages;
-        if (transparentHugepagesConfig) {
-            totalConfigs++;
-            if (
-                transparentHugepagesConfig.configState === CONFIG_STATES.DISMISSED ||
-                transparentHugepagesConfig.configState === CONFIG_STATES.POSTPONED
-            ) {
-                dismissedConfigs++;
-            }
-        }
-
-        // Check compute configurations (TCP advanced options)
-        const tcpAdvancedOptionsConfig = dismissedConfigurationsData.tcpAdvancedOptions;
-        if (tcpAdvancedOptionsConfig) {
-            totalConfigs++;
-            if (
-                tcpAdvancedOptionsConfig.configState === CONFIG_STATES.DISMISSED ||
-                tcpAdvancedOptionsConfig.configState === CONFIG_STATES.POSTPONED
-            ) {
-                dismissedConfigs++;
-            }
-        }
-
-        // Check compute configurations (filesystem I/O options)
-        const filesystemsIoOptionsConfig = dismissedConfigurationsData.filesystemsIoOptions;
-        if (filesystemsIoOptionsConfig) {
-            totalConfigs++;
-            if (
-                filesystemsIoOptionsConfig.configState === CONFIG_STATES.DISMISSED ||
-                filesystemsIoOptionsConfig.configState === CONFIG_STATES.POSTPONED
-            ) {
-                dismissedConfigs++;
-            }
-        }
-
-        // Check compute configurations (multiblock read count)
-        const multiblockReadcountConfig = dismissedConfigurationsData.multiblockReadcount;
-        if (multiblockReadcountConfig) {
-            totalConfigs++;
-            if (
-                multiblockReadcountConfig.configState === CONFIG_STATES.DISMISSED ||
-                multiblockReadcountConfig.configState === CONFIG_STATES.POSTPONED
-            ) {
-                dismissedConfigs++;
-            }
-        }
-    }
 
     // Return true only if there are configurations and ALL of them are dismissed
     return totalConfigs > 0 && dismissedConfigs === totalConfigs;

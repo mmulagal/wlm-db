@@ -1581,7 +1581,6 @@ export const formatAssessmentTableData = (data: any, dismissedData: any) => {
     const result: any = [];
     data?.map((item: any) => {
         if (!item?.error && !item?.errorMessage) {
-            const configTechnicalId = item?.id;
             const formattedItem = {
                 ...item,
                 name: item?.name,
@@ -1591,7 +1590,7 @@ export const formatAssessmentTableData = (data: any, dismissedData: any) => {
 
             // Check if there's a matching dismissed data entry
             const matchingDismissedItem = dismissedData?.find(
-                (dismissedItem: any) => dismissedItem?.configurationName === configTechnicalId
+                (dismissedItem: any) => dismissedItem?.id === item?.id
             );
 
             if (matchingDismissedItem) {
@@ -1623,7 +1622,6 @@ export const formatAssessmentTableData = (data: any, dismissedData: any) => {
         dismissedData?.map((item: any) => {
             const formattedItem = {
                 ...item,
-                name: item?.configurationName,
                 configState: item.configState,
                 dismissedObj: {
                     configState: item.configState,

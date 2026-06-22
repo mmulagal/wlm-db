@@ -51,7 +51,6 @@ export interface AssessmentMetadata {
 export interface DismissedConfigurationItem {
     name: string;
     id: string;
-    configurationName?: string; // TODO: remove it as part of dismiss workflow mirgration. use id instead of it.
     configState: string;
     startTime: number;
     endTime?: number;

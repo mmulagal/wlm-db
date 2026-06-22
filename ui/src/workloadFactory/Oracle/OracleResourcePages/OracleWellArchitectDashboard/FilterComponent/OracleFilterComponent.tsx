@@ -80,8 +80,8 @@ const OracleFilterComponent = ({
 
     // Helper function to get total count based on dismissed configuration state
     const getTotalConfigCount = useMemo(
-        () => calculateTotalConfigCount(cardData, showDismissedConfigurations, driftAssessmentData),
-        [cardData, showDismissedConfigurations, driftAssessmentData]
+        () => calculateTotalConfigCount(cardData, showDismissedConfigurations),
+        [cardData, showDismissedConfigurations]
     );
 
     // To apply filters on change of filters or card data

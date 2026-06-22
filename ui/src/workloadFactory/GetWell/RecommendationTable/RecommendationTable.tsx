@@ -546,7 +546,7 @@ const RecommendationTable = ({
 
     // Function to check if configuration is activating
     const isRowConfigurationActivating = (rowData: any) =>
-        isTableRowConfigurationActivating(rowData, fullCardData, driftAssessmentData);
+        isTableRowConfigurationActivating(rowData, fullCardData);
 
     const handleOntapDialog = (rowData: any) => {
         // Oracle configs in ORACLE_UNSUPPORTED_FIX_TYPES should show Close button (includes placement, ASM, NFS, patches, etc.)
@@ -674,8 +674,7 @@ const RecommendationTable = ({
         return isTableRowConfigurationInState(
             rowData,
             fullCardData,
-            [CONFIG_STATES.ACTIVATING, CONFIG_STATES.DISMISSED, CONFIG_STATES.POSTPONED],
-            driftAssessmentData
+            [CONFIG_STATES.ACTIVATING, CONFIG_STATES.DISMISSED, CONFIG_STATES.POSTPONED]
         );
     };
 
