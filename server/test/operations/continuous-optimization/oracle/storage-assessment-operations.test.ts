@@ -4,9 +4,13 @@ import {
     getBaseVolume,
     getSharedFileTypeLabels,
     getVolumeLayoutDrift,
-    getNfsOSConfigDrift
+    getNfsOSConfigDrift,
+    getVolumeConfigDrift
 } from '../../../../src/operations/continuous-optimization/oracle/storage-assessment-operations';
-import { StorageNfsAssessment } from '../../../../src/operations/continuous-optimization/oracle/common-types';
+import {
+    StorageAssessment,
+    StorageNfsAssessment
+} from '../../../../src/operations/continuous-optimization/oracle/common-types';
 import { OracleSysFileTypes, OracleVolumeRecord } from '../../../../src/operations/workloads/oracle/common-types';
 import { AssessmentStatus } from '../../../../src/utils/continous-optimization-consts';
 
@@ -713,6 +717,492 @@ describe('getNfsOSConfigDrift - SID-scoped mount filtering (TS-side filter on ho
             const drift = getNfsOSConfigDrift(ec2InstanceId, databaseInstanceName, 'Standalone', data);
             const nfsv4Entry = findEntry(drift, 'nfsv4-domain-name');
             expect(nfsv4Entry).toBeUndefined();
+        });
+    });
+});
+
+describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
+    type RawVolume = {
+        name: string;
+        uuid: string;
+        compressionType?: string;
+        compression?: string;
+        deduplication?: string;
+        compaction?: string;
+        tieringPolicy?: string;
+        tieringMinCoolingDays?: string;
+        snapshotPolicy?: string;
+        spaceGuarantee?: string;
+        autosize?: string;
+        autosizeMode?: string;
+        fractionalReserve?: string;
+        snapshotCopyReserve?: string;
+        snapshotAutodelete?: string;
+        snapshotDeleteOrder?: string;
+        spaceMgmtTryFirst?: string;
+    };
+
+    const optimalVolumeDefaults = {
+        spaceGuarantee: 'none',
+        autosize: 'on',
+        autosizeMode: 'grow',
+        fractionalReserve: '0',
+        snapshotPolicy: 'none',
+        snapshotCopyReserve: '0',
+        snapshotAutodelete: 'true',
+        snapshotDeleteOrder: 'oldest_first',
+        spaceMgmtTryFirst: 'volume_grow'
+    };
+
+    const dataVolumeOptimal: RawVolume = {
+        name: 'data_vol',
+        uuid: 'uuid-data',
+        compressionType: 'adaptive',
+        compression: 'adaptive',
+        deduplication: 'inline',
+        compaction: 'enabled',
+        tieringPolicy: 'none',
+        tieringMinCoolingDays: '',
+        ...optimalVolumeDefaults
+    };
+
+    const redoVolumeOptimal: RawVolume = {
+        name: 'redo_vol',
+        uuid: 'uuid-redo',
+        compressionType: 'none',
+        compression: 'none',
+        deduplication: 'none',
+        compaction: 'none',
+        tieringPolicy: 'none',
+        tieringMinCoolingDays: '',
+        ...optimalVolumeDefaults
+    };
+
+    const archiveVolumeOptimal: RawVolume = {
+        name: 'archive_vol',
+        uuid: 'uuid-archive',
+        compressionType: 'adaptive',
+        compression: 'adaptive',
+        deduplication: 'inline',
+        compaction: 'enabled',
+        tieringPolicy: 'auto',
+        tieringMinCoolingDays: '2',
+        ...optimalVolumeDefaults
+    };
+
+    const buildVolumeMap = () => ({
+        [OracleSysFileTypes.CONTROL_FILES]: [],
+        [OracleSysFileTypes.DATA_FILES]: [{ volumeId: 'uuid-data', volumeName: 'data_vol' } as OracleVolumeRecord],
+        [OracleSysFileTypes.REDO_LOGS]: [{ volumeId: 'uuid-redo', volumeName: 'redo_vol' } as OracleVolumeRecord],
+        [OracleSysFileTypes.ARCHIVE_LOGS]: [
+            { volumeId: 'uuid-archive', volumeName: 'archive_vol' } as OracleVolumeRecord
+        ],
+        [OracleSysFileTypes.TEMP_FILES]: [],
+        [OracleSysFileTypes.FRA]: []
+    });
+
+    const buildAssessment = (volumes: RawVolume[]): StorageAssessment =>
+        ({
+            fraEnabled: 'no',
+            rmanCompressionEnabled: 'no',
+            volumes: { error: '', data: volumes as unknown as Record<string, unknown>[], filesystemId: 'fs-test' }
+        } as unknown as StorageAssessment);
+
+    type CombinedDriftEntry = {
+        name?: string;
+        id?: string;
+        status?: string;
+        recommended?: string;
+        objectsInViolation?: string[];
+        totalObjectsAssessed?: number;
+        totalObjectsInViolation?: number;
+        configDetails?: Array<{
+            name: string;
+            recommended: string;
+            objectType: string;
+            recommendedByDataCategory?: Record<string, string>;
+            recommendedNote?: string;
+        }>;
+        violationDetails?: Array<{
+            objectName: string;
+            value?: string;
+            objectType?: string;
+            dataCategory?: string;
+            recommended?: string;
+            violatedConfigs?: Array<{ name: string; current: string }>;
+        }>;
+    };
+
+    // Combined entries are matched by `id` (flat schema's stable key); legacy entries by `id` too.
+    const findById = (drift: ReturnType<typeof getVolumeConfigDrift>, id: string): CombinedDriftEntry =>
+        drift.find(d => (d as CombinedDriftEntry).id === id) as unknown as CombinedDriftEntry;
+
+    const storageEfficienciesConfigDetails = [
+        {
+            name: 'compression',
+            recommended: '',
+            objectType: 'Volume',
+            recommendedByDataCategory: {
+                'log-files': 'none',
+                'non-log-files': 'adaptive',
+                mixed: 'varies'
+            }
+        },
+        {
+            name: 'deduplication',
+            recommended: '',
+            objectType: 'Volume',
+            recommendedByDataCategory: {
+                'log-files': 'none',
+                'non-log-files': 'inline',
+                mixed: 'varies'
+            },
+            recommendedNote: '`both` is also acceptable for non-log-files volumes'
+        },
+        {
+            name: 'compaction',
+            recommended: '',
+            objectType: 'Volume',
+            recommendedByDataCategory: {
+                'log-files': 'none',
+                'non-log-files': 'enabled',
+                mixed: 'varies'
+            }
+        }
+    ];
+
+    const tieringTcoConfigDetails = [
+        {
+            name: 'tiering-policy',
+            recommended: '',
+            objectType: 'Volume',
+            recommendedByDataCategory: {
+                'data-control-files': 'none',
+                'log-files': 'none',
+                'archive-log-files': 'auto',
+                mixed: 'varies'
+            }
+        },
+        {
+            name: 'tiering-min-cooling-days',
+            recommended: '',
+            objectType: 'Volume',
+            recommendedByDataCategory: {
+                'archive-log-files': '2'
+            },
+            recommendedNote:
+                '14 when FRA is enabled and RMAN compression is disabled; not assessed on non-archive volumes'
+        }
+    ];
+
+    describe('storage-efficiencies combined config', () => {
+        it('reports OPTIMIZED when every relevant volume passes every sub-parameter', () => {
+            const drift = getVolumeConfigDrift(
+                buildVolumeMap(),
+                buildAssessment([dataVolumeOptimal, redoVolumeOptimal, archiveVolumeOptimal]),
+                'iSCSI'
+            );
+
+            const entry = findById(drift, 'storage-efficiencies');
+            expect(entry).toBeDefined();
+            expect(entry.status).toBe(AssessmentStatus.OPTIMIZED);
+            expect(entry.recommended).toBe('');
+            expect(entry.totalObjectsInViolation).toBe(0);
+            expect(entry.totalObjectsAssessed).toBe(3);
+            expect(entry.configDetails).toEqual(storageEfficienciesConfigDetails);
+            expect(entry.violationDetails).toEqual([]);
+        });
+
+        it('flags one volume bad on two sub-parameters with both recorded under violatedConfigs', () => {
+            const badData: RawVolume = {
+                ...dataVolumeOptimal,
+                compressionType: 'none',
+                compression: 'none',
+                deduplication: 'none'
+            };
+
+            const drift = getVolumeConfigDrift(
+                buildVolumeMap(),
+                buildAssessment([badData, redoVolumeOptimal, archiveVolumeOptimal]),
+                'iSCSI'
+            );
+
+            const entry = findById(drift, 'storage-efficiencies');
+            expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(entry.totalObjectsInViolation).toBe(1);
+            expect(entry.objectsInViolation).toEqual(['data_vol']);
+            expect(entry.violationDetails).toHaveLength(1);
+
+            const detail = entry.violationDetails?.[0];
+            expect(detail?.objectName).toBe('data_vol');
+            expect(detail?.objectType).toBe('Volume');
+            expect(detail?.dataCategory).toBe('non-log-files');
+            expect(detail?.violatedConfigs).toEqual([
+                { name: 'compression', current: 'none' },
+                { name: 'deduplication', current: 'none' }
+            ]);
+        });
+
+        it('merges dataCategory to "mixed" when components on the same volume disagree', () => {
+            const sharedVolumeMap = {
+                [OracleSysFileTypes.CONTROL_FILES]: [],
+                [OracleSysFileTypes.DATA_FILES]: [
+                    { volumeId: 'uuid-shared', volumeName: 'shared_vol' } as OracleVolumeRecord
+                ],
+                [OracleSysFileTypes.REDO_LOGS]: [
+                    { volumeId: 'uuid-shared', volumeName: 'shared_vol' } as OracleVolumeRecord
+                ],
+                [OracleSysFileTypes.ARCHIVE_LOGS]: [],
+                [OracleSysFileTypes.TEMP_FILES]: [],
+                [OracleSysFileTypes.FRA]: []
+            };
+
+            const sharedVolume: RawVolume = {
+                name: 'shared_vol',
+                uuid: 'uuid-shared',
+                compressionType: 'adaptive',
+                compression: 'adaptive',
+                deduplication: 'inline',
+                compaction: 'enabled',
+                tieringPolicy: 'none',
+                tieringMinCoolingDays: '',
+                ...optimalVolumeDefaults
+            };
+
+            const drift = getVolumeConfigDrift(sharedVolumeMap, buildAssessment([sharedVolume]), 'iSCSI');
+            const entry = findById(drift, 'storage-efficiencies');
+            expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            const detail = entry.violationDetails?.[0];
+            expect(detail?.dataCategory).toBe('mixed');
+            expect(detail?.violatedConfigs?.map(v => v.name)).toEqual(['compression', 'deduplication', 'compaction']);
+        });
+    });
+
+    describe('tiering-tco-optimization combined config', () => {
+        it('flags only tiering-policy on a data-files volume (not cooling-days)', () => {
+            const badPolicyData: RawVolume = { ...dataVolumeOptimal, tieringPolicy: 'auto' };
+            const drift = getVolumeConfigDrift(
+                buildVolumeMap(),
+                buildAssessment([badPolicyData, redoVolumeOptimal, archiveVolumeOptimal]),
+                'iSCSI'
+            );
+
+            const entry = findById(drift, 'tiering-tco-optimization');
+            expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(entry.configDetails).toEqual(tieringTcoConfigDetails);
+            expect(entry.objectsInViolation).toEqual(['data_vol']);
+            const detail = entry.violationDetails?.find(d => d.objectName === 'data_vol');
+            expect(detail?.violatedConfigs).toEqual([{ name: 'tiering-policy', current: 'auto' }]);
+        });
+
+        it('flags only tiering-min-cooling-days on an archive volume when policy is correct', () => {
+            const badCoolingArchive: RawVolume = { ...archiveVolumeOptimal, tieringMinCoolingDays: '30' };
+            const drift = getVolumeConfigDrift(
+                buildVolumeMap(),
+                buildAssessment([dataVolumeOptimal, redoVolumeOptimal, badCoolingArchive]),
+                'iSCSI'
+            );
+
+            const entry = findById(drift, 'tiering-tco-optimization');
+            expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(entry.objectsInViolation).toEqual(['archive_vol']);
+            const detail = entry.violationDetails?.find(d => d.objectName === 'archive_vol');
+            expect(detail?.violatedConfigs).toEqual([{ name: 'tiering-min-cooling-days', current: '30' }]);
+        });
+
+        it('does not flag tiering-min-cooling-days on a data-files volume even when value differs', () => {
+            const badCoolingData: RawVolume = { ...dataVolumeOptimal, tieringMinCoolingDays: '30' };
+            const drift = getVolumeConfigDrift(
+                buildVolumeMap(),
+                buildAssessment([badCoolingData, redoVolumeOptimal, archiveVolumeOptimal]),
+                'iSCSI'
+            );
+
+            const entry = findById(drift, 'tiering-tco-optimization');
+            expect(entry.status).toBe(AssessmentStatus.OPTIMIZED);
+            expect(entry.objectsInViolation).toEqual([]);
+        });
+
+        it('flags tiering-min-cooling-days on an FRA volume with dataCategory archive-log-files', () => {
+            const fraVolumeMap = () => ({
+                ...buildVolumeMap(),
+                [OracleSysFileTypes.ARCHIVE_LOGS]: [],
+                [OracleSysFileTypes.FRA]: [{ volumeId: 'uuid-fra', volumeName: 'fra_vol' } as OracleVolumeRecord]
+            });
+            const fraVolume: RawVolume = {
+                ...archiveVolumeOptimal,
+                name: 'fra_vol',
+                uuid: 'uuid-fra'
+            };
+            const badCoolingFra: RawVolume = { ...fraVolume, tieringMinCoolingDays: '30' };
+            const drift = getVolumeConfigDrift(
+                fraVolumeMap(),
+                buildAssessment([dataVolumeOptimal, redoVolumeOptimal, badCoolingFra]),
+                'iSCSI'
+            );
+
+            const entry = findById(drift, 'tiering-tco-optimization');
+            expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(entry.objectsInViolation).toEqual(['fra_vol']);
+            const detail = entry.violationDetails?.find(d => d.objectName === 'fra_vol');
+            expect(detail?.violatedConfigs).toEqual([{ name: 'tiering-min-cooling-days', current: '30' }]);
+            expect(detail?.dataCategory).toBe('archive-log-files');
+        });
+
+        it('recommends 14 cooling days on FRA when fraEnabled yes and rmanCompressionEnabled no', () => {
+            const fraVolumeMap = () => ({
+                ...buildVolumeMap(),
+                [OracleSysFileTypes.ARCHIVE_LOGS]: [],
+                [OracleSysFileTypes.FRA]: [{ volumeId: 'uuid-fra', volumeName: 'fra_vol' } as OracleVolumeRecord]
+            });
+            const fraVolumeCompliant: RawVolume = {
+                ...archiveVolumeOptimal,
+                name: 'fra_vol',
+                uuid: 'uuid-fra',
+                tieringMinCoolingDays: '14'
+            };
+            const fraVolumeNonCompliant: RawVolume = {
+                ...fraVolumeCompliant,
+                tieringMinCoolingDays: '2'
+            };
+            const assessment = (volumes: RawVolume[]) =>
+                ({
+                    fraEnabled: 'yes',
+                    rmanCompressionEnabled: 'no',
+                    volumes: {
+                        error: '',
+                        data: volumes as unknown as Record<string, unknown>[],
+                        filesystemId: 'fs-test'
+                    }
+                } as unknown as StorageAssessment);
+
+            const compliantDrift = getVolumeConfigDrift(
+                fraVolumeMap(),
+                assessment([dataVolumeOptimal, redoVolumeOptimal, fraVolumeCompliant]),
+                'iSCSI'
+            );
+            expect(findById(compliantDrift, 'tiering-tco-optimization').status).toBe(AssessmentStatus.OPTIMIZED);
+
+            const nonCompliantDrift = getVolumeConfigDrift(
+                fraVolumeMap(),
+                assessment([dataVolumeOptimal, redoVolumeOptimal, fraVolumeNonCompliant]),
+                'iSCSI'
+            );
+            const entry = findById(nonCompliantDrift, 'tiering-tco-optimization');
+            expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            const detail = entry.violationDetails?.find(d => d.objectName === 'fra_vol');
+            expect(detail?.violatedConfigs).toEqual([{ name: 'tiering-min-cooling-days', current: '2' }]);
+        });
+
+        it('treats snapshot_only as compliant on volumes outside mapped file-type lists', () => {
+            const uncategorizedVol: RawVolume = {
+                name: 'other_vol',
+                uuid: 'uuid-other',
+                tieringPolicy: 'snapshot_only',
+                ...optimalVolumeDefaults
+            };
+
+            const drift = getVolumeConfigDrift(buildVolumeMap(), buildAssessment([uncategorizedVol]), 'iSCSI');
+
+            expect(findById(drift, 'tiering-tco-optimization').status).toBe(AssessmentStatus.OPTIMIZED);
+        });
+
+        it('aggregates violations across multiple object types and reports totalObjectsAssessed = max(universes)', () => {
+            const badPolicyData: RawVolume = { ...dataVolumeOptimal, tieringPolicy: 'auto' };
+            const badCoolingArchive: RawVolume = { ...archiveVolumeOptimal, tieringMinCoolingDays: '30' };
+            const drift = getVolumeConfigDrift(
+                buildVolumeMap(),
+                buildAssessment([badPolicyData, redoVolumeOptimal, badCoolingArchive]),
+                'iSCSI'
+            );
+
+            const entry = findById(drift, 'tiering-tco-optimization');
+            expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(entry.totalObjectsInViolation).toBe(2);
+            expect(entry.totalObjectsAssessed).toBe(3);
+            expect(new Set(entry.objectsInViolation)).toEqual(new Set(['data_vol', 'archive_vol']));
+        });
+    });
+
+    describe('snapshotAutodelete legacy config', () => {
+        it('should flag disabled autodelete when golden config expects enabled', () => {
+            const drift = getVolumeConfigDrift(
+                buildVolumeMap(),
+                buildAssessment([
+                    { ...dataVolumeOptimal, snapshotAutodelete: 'false' },
+                    redoVolumeOptimal,
+                    archiveVolumeOptimal
+                ]),
+                'iSCSI'
+            );
+
+            const entry = findById(drift, 'snapshot-autodelete');
+            expect(entry?.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            const detail = entry?.violationDetails?.find(d => d.objectName === 'data_vol');
+            expect(detail).toEqual({
+                objectName: 'data_vol',
+                value: 'disabled',
+                objectType: 'Volume',
+                recommended: 'enabled'
+            });
+        });
+
+        it('should flag wrong delete order when autodelete is enabled', () => {
+            const drift = getVolumeConfigDrift(
+                buildVolumeMap(),
+                buildAssessment([
+                    { ...dataVolumeOptimal, snapshotAutodelete: 'true', snapshotDeleteOrder: 'newest_first' },
+                    redoVolumeOptimal,
+                    archiveVolumeOptimal
+                ]),
+                'iSCSI'
+            );
+
+            const entry = findById(drift, 'snapshot-autodelete');
+            expect(entry?.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            const detail = entry?.violationDetails?.find(d => d.objectName === 'data_vol');
+            expect(detail).toEqual({
+                objectName: 'data_vol',
+                value: 'newest_first',
+                objectType: 'Volume',
+                recommended: 'oldest_first'
+            });
+        });
+    });
+
+    describe('snapshot policy rename', () => {
+        it('emits the entry under the new "Scheduled local snapshots" name and not the old slug', () => {
+            const drift = getVolumeConfigDrift(
+                buildVolumeMap(),
+                buildAssessment([dataVolumeOptimal, redoVolumeOptimal, archiveVolumeOptimal]),
+                'iSCSI'
+            );
+
+            const snapshotPolicyEntry = findById(drift, 'snapshot-policy') as CombinedDriftEntry | undefined;
+            expect(snapshotPolicyEntry).toBeDefined();
+            expect(snapshotPolicyEntry?.name).toBe('Scheduled local snapshots');
+        });
+    });
+
+    describe('fractional-reserve protocol behavior', () => {
+        it('should not assess standalone fractional-reserve for iSCSI', () => {
+            const drift = getVolumeConfigDrift(
+                buildVolumeMap(),
+                buildAssessment([dataVolumeOptimal, redoVolumeOptimal, archiveVolumeOptimal]),
+                'iSCSI'
+            );
+
+            expect(findById(drift, 'fractional-reserve')).toBeUndefined();
+        });
+
+        it('should not assess standalone fractional-reserve for NFS', () => {
+            const drift = getVolumeConfigDrift(
+                buildVolumeMap(),
+                buildAssessment([dataVolumeOptimal, redoVolumeOptimal, archiveVolumeOptimal]),
+                'NFS'
+            );
+
+            expect(findById(drift, 'fractional-reserve')).toBeUndefined();
         });
     });
 });

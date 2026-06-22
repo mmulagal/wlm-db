@@ -6,9 +6,15 @@ import { getJobs, registerJob } from '../database/job-operations';
 import { getServerNameWithHostname, getTimeDifferenceInMinutes } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
 import {
+    ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategoriesOracle,
     AssessmentStatus,
-    AwsWellArchitecturedPillars
+    AwsWellArchitecturedPillars,
+    COMBINED_OPTIMIZE_DESCRIPTORS,
+    CombinedOptimizeConfigName,
+    isCombinedOptimizeConfig,
+    mergeOptimizationTargets,
+    OptimizeStorageRequestParamsType
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import type {
@@ -32,13 +38,26 @@ import type {
     AssessmentItemType,
     AssessmentErrorItemType,
     AssessmentMetadataType,
+    ConfigDetailType,
     DismissedConfigurationType,
-    DismissedConfigurationsResponseType
+    DismissedConfigurationsResponseType,
+    GenericViolationResponseType,
+    ViolatedConfigType
 } from '../../routes/types/continuous-optimization.types';
 import { MSSQL_GOLDEN_CONFIG } from './mssql/golden-config';
 import ORACLE_GOLDEN_CONFIG from './oracle/golden-config';
 
 const logger = getLogger();
+
+interface GoldenConfigComponent {
+    parameter: string;
+    value: string | number | boolean;
+    // MSSQL combined entries set `source` to partition LUN vs Volume children at drift time.
+    // Oracle combined entries are volume-only and use `name`/`objectType` instead.
+    source?: 'lun' | 'volume';
+    objectType?: string;
+    name?: string;
+}
 
 interface GoldenConfigEntry {
     id: string;
@@ -55,6 +74,9 @@ interface GoldenConfigEntry {
     recommended?: string;
     status?: string;
     applicableTo?: 'iscsi' | 'nfs';
+    // Combined (aggregate) entries fan out into per-sub-parameter children at drift / optimize time.
+    // MSSQL combined entry uses `parameter`/`value`/`source`; Oracle entries also carry `name`/`objectType`.
+    components?: GoldenConfigComponent[];
 }
 
 interface UnOptimizedDiskGroups {
@@ -347,6 +369,10 @@ const GOLDEN_CONFIG_LOOKUP = {
     [DatabaseTypes.ORACLE]: new Map(ORACLE_GOLDEN_CONFIG.map(entry => [entry.id, entry]))
 };
 
+/**
+ * Merges golden-config display metadata (id, name, severity, recommendation, etc.) into a
+ * dismissed-configuration record that only stores `configurationName` in the database.
+ */
 function enrichWithGoldenConfig(
     entry: DismissedConfigurationType,
     databaseType: DatabaseTypes
@@ -368,6 +394,10 @@ function enrichWithGoldenConfig(
     };
 }
 
+/**
+ * Flattens the nested v2 `dismissedConfigurations` shape (storage buckets + single-item areas)
+ * into a uniform array enriched with golden-config metadata for API responses.
+ */
 function buildDismissedConfigurations(
     dismissed: DismissedConfigurationsResponseType | undefined,
     databaseType: DatabaseTypes
@@ -566,7 +596,267 @@ function mapAssessmentToV1(
     return response;
 }
 
+/** Minimal drift payload used when expanding combined optimize targets. */
+interface CombinedDriftEntry {
+    id?: string;
+    violationDetails?: GenericViolationResponseType[];
+}
+
+/** Type guard for combined-entry violation rows that carry per-sub-parameter `violatedConfigs`. */
+function isCombinedViolationDetail(value: unknown): value is GenericViolationResponseType {
+    if (!value || typeof value !== 'object') {
+        return false;
+    }
+    const row = value as Record<string, unknown>;
+    if (typeof row.objectName !== 'string' || row.objectName.length === 0) {
+        return false;
+    }
+    if (!Array.isArray(row.violatedConfigs) || row.violatedConfigs.length === 0) {
+        return false;
+    }
+    return row.violatedConfigs.every(
+        config =>
+            config &&
+            typeof config === 'object' &&
+            typeof (config as Record<string, unknown>).name === 'string' &&
+            ((config as Record<string, unknown>).name as string).length > 0
+    );
+}
+
+// Numeric golden-config comparisons treat null/undefined/'' as absent, not zero.
+function isMissingGoldenConfigValue(val: unknown): boolean {
+    return val === null || val === undefined || val === '';
+}
+
+/**
+ * Coerces an assessed value to a canonical string for golden-config drift comparison.
+ * Coercion follows the expected value's type (`template`): booleans accept true/'true',
+ * numbers are normalized via Number(), strings use String(val ?? '').
+ */
+function normalizeForGoldenConfigCompare(val: unknown, template: unknown): string {
+    if (typeof template === 'boolean') {
+        return String(val === true || val === 'true' || String(val).toLowerCase() === 'true');
+    }
+    if (typeof template === 'number') {
+        if (isMissingGoldenConfigValue(val)) {
+            return '';
+        }
+        const num = Number(val);
+        return Number.isNaN(num) ? String(val) : String(num);
+    }
+    return String(val ?? '');
+}
+
+/**
+ * Assembles a volume-only combined drift entry (e.g. tiering-tco-optimization) by evaluating
+ * each volume against all golden-config components via buildViolationRow.
+ */
+function buildVolumeCombinedEntry(
+    config: GoldenConfigEntry,
+    volumes: Array<Record<string, unknown>>
+): AssessmentItemType {
+    const components = config.components ?? [];
+    if (!components.length) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${config.id} golden config is missing components`);
+    }
+
+    const violationDetails: GenericViolationResponseType[] = [];
+    volumes.forEach(volume => {
+        const row = buildViolationRow(volume, ASSESSMENT_RESOURCE_TYPE.VOLUME, components);
+        if (row) {
+            violationDetails.push(row);
+        }
+    });
+
+    const objectsInViolation = violationDetails.map(row => row.objectName);
+    return {
+        ...config,
+        recommended: '',
+        status: objectsInViolation.length === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+        objectsInViolation,
+        totalObjectsAssessed: volumes.length,
+        totalObjectsInViolation: objectsInViolation.length,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        violationDetails,
+        configDetails: components.map(component => ({
+            name: component.name ?? component.parameter,
+            recommended: String(component.value),
+            objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        }))
+    } as AssessmentItemType;
+}
+
+/**
+ * Builds one combined-entry violation row for a volume or LUN.
+ * Compares each component sub-parameter with type-normalized golden-config values; skips unnamed objects.
+ */
+function buildViolationRow(
+    obj: Record<string, unknown>,
+    objectType: typeof ASSESSMENT_RESOURCE_TYPE.VOLUME | typeof ASSESSMENT_RESOURCE_TYPE.LUN,
+    components: ReadonlyArray<{ parameter: string; value: unknown }>
+): GenericViolationResponseType | undefined {
+    if (typeof obj.name !== 'string' || obj.name.length === 0) {
+        return undefined;
+    }
+    const violatedConfigs: ViolatedConfigType[] = components
+        .filter(
+            component =>
+                normalizeForGoldenConfigCompare(obj[component.parameter], component.value) !==
+                normalizeForGoldenConfigCompare(component.value, component.value)
+        )
+        .map(component => ({
+            name: component.parameter,
+            current: String(obj[component.parameter] ?? '')
+        }));
+    if (violatedConfigs.length === 0) {
+        return undefined;
+    }
+    return {
+        objectName: obj.name,
+        value: '',
+        objectType,
+        violatedConfigs
+    };
+}
+
+/**
+ * Assembles the `block-device-space-management` combined drift entry by evaluating every LUN and
+ * volume independently against their respective golden-config sub-parameters.
+ */
+function buildBlockDeviceSpaceManagementEntry(
+    config: GoldenConfigEntry,
+    luns: Array<Record<string, unknown>>,
+    volumes: Array<Record<string, unknown>>
+): AssessmentItemType {
+    const { components } = config;
+    if (!components?.length) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'block-device-space-management golden config is missing components'
+        );
+    }
+
+    const componentObjectType = (source: 'lun' | 'volume' | undefined) =>
+        source === 'lun' ? ASSESSMENT_RESOURCE_TYPE.LUN : ASSESSMENT_RESOURCE_TYPE.VOLUME;
+
+    const configDetails: ConfigDetailType[] = components.map(component => ({
+        name: component.name ?? component.parameter,
+        recommended: String(component.value),
+        objectType: componentObjectType(component.source)
+    }));
+    const lunComponents = components.filter(component => component.source === 'lun');
+    const volumeComponents = components.filter(component => component.source === 'volume');
+
+    const violationDetails: GenericViolationResponseType[] = [];
+
+    luns.forEach(lun => {
+        const row = buildViolationRow(lun, ASSESSMENT_RESOURCE_TYPE.LUN, lunComponents);
+        if (row) {
+            violationDetails.push(row);
+        }
+    });
+    volumes.forEach(volume => {
+        const row = buildViolationRow(volume, ASSESSMENT_RESOURCE_TYPE.VOLUME, volumeComponents);
+        if (row) {
+            violationDetails.push(row);
+        }
+    });
+
+    const objectsInViolation = violationDetails.map(row => row.objectName);
+    return {
+        ...config,
+        recommended: '',
+        status: objectsInViolation.length === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+        objectsInViolation,
+        totalObjectsAssessed: luns.length + volumes.length,
+        totalObjectsInViolation: objectsInViolation.length,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME_OR_LUN,
+        violationDetails,
+        configDetails
+    } as AssessmentItemType;
+}
+
+// Maps each violated object in a combined drift entry to the sub-parameters it violates,
+// filtered to `validSubParams` (the descriptor's `configKey` set).
+function buildViolatedSubParamsByObject(
+    combinedEntry: CombinedDriftEntry,
+    validSubParams: ReadonlySet<string>
+): Map<string, string[]> {
+    const violatedSubParamsByObject = new Map<string, string[]>();
+    combinedEntry.violationDetails?.forEach(violation => {
+        const { objectName, violatedConfigs } = violation;
+        if (!objectName || !violatedConfigs?.length) {
+            return;
+        }
+        const subParamNames = violatedConfigs
+            .map(({ name }) => name)
+            .filter((name): name is string => typeof name === 'string' && name.length > 0 && validSubParams.has(name));
+        if (subParamNames.length === 0) {
+            return;
+        }
+        violatedSubParamsByObject.set(objectName, subParamNames);
+    });
+    return violatedSubParamsByObject;
+}
+
+/**
+ * Replaces each combined target with synthetic per-sub-parameter targets that carry only objects
+ * flagged by `combinedDriftEntries[*].violatedConfigs[*]`. Non-combined targets pass through unchanged.
+ */
+function expandCombinedTargets(
+    optimizationTargets: OptimizeStorageRequestParamsType[],
+    combinedDriftEntries: ReadonlyArray<CombinedDriftEntry>
+): OptimizeStorageRequestParamsType[] {
+    if (!optimizationTargets.some(target => isCombinedOptimizeConfig(target.configurationName))) {
+        return optimizationTargets;
+    }
+
+    const expanded: OptimizeStorageRequestParamsType[] = [];
+    optimizationTargets.forEach(target => {
+        if (!isCombinedOptimizeConfig(target.configurationName)) {
+            expanded.push(target);
+            return;
+        }
+        const combinedName = target.configurationName as CombinedOptimizeConfigName;
+        const descriptor = COMBINED_OPTIMIZE_DESCRIPTORS[combinedName];
+        const validSubParams = new Set<string>(descriptor.components.map(component => component.configKey));
+
+        const combinedEntry = combinedDriftEntries.find(entry => entry.id === combinedName);
+        if (!combinedEntry?.violationDetails) {
+            return;
+        }
+
+        const violatedSubParamsByObject = buildViolatedSubParamsByObject(combinedEntry, validSubParams);
+
+        const perTargetSynthetics = new Map<string, Set<string>>();
+        target.objectsToOptimize.forEach(objectName => {
+            const violatedSubParams = violatedSubParamsByObject.get(objectName);
+            if (!violatedSubParams) {
+                return;
+            }
+            violatedSubParams.forEach(subParam => {
+                const bucket = perTargetSynthetics.get(subParam) ?? new Set<string>();
+                bucket.add(objectName);
+                perTargetSynthetics.set(subParam, bucket);
+            });
+        });
+        descriptor.components.forEach(({ configKey }) => {
+            const objects = perTargetSynthetics.get(configKey);
+            if (!objects?.size) {
+                return;
+            }
+            expanded.push({ configurationName: configKey, objectsToOptimize: [...objects] });
+        });
+    });
+
+    return mergeOptimizationTargets(expanded);
+}
+
 export {
+    buildBlockDeviceSpaceManagementEntry,
+    buildVolumeCombinedEntry,
+    expandCombinedTargets,
+    isCombinedViolationDetail,
     getMatchingAssessmentStatus,
     handleOptimizeJobCreation,
     hasNotOptimizedStatus,
@@ -583,4 +873,4 @@ export {
     JobMetadata
 };
 
-export type { GoldenConfigEntry, MapAssessmentToV1Config };
+export type { GoldenConfigEntry, GoldenConfigComponent, MapAssessmentToV1Config };

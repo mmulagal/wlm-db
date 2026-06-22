@@ -1,5 +1,102 @@
-import { buildDismissedConfigurations } from '../../../src/operations/continuous-optimization/assessment-utils';
+import {
+    buildBlockDeviceSpaceManagementEntry,
+    buildDismissedConfigurations,
+    buildVolumeCombinedEntry,
+    isCombinedViolationDetail
+} from '../../../src/operations/continuous-optimization/assessment-utils';
+import { MSSQL_GOLDEN_CONFIG } from '../../../src/operations/continuous-optimization/mssql/golden-config';
+import {
+    ASSESSMENT_RESOURCE_TYPE,
+    AssessmentStatus,
+    OptimizeStorageConfigs
+} from '../../../src/utils/continous-optimization-consts';
 import { DatabaseTypes } from '../../../src/utils/consts';
+
+// ---------------------------------------------------------------------------
+// buildVolumeCombinedEntry / buildBlockDeviceSpaceManagementEntry
+// ---------------------------------------------------------------------------
+describe('buildVolumeCombinedEntry', () => {
+    const tieringConfig = MSSQL_GOLDEN_CONFIG.find(c => c.id === OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION)!;
+
+    it('should skip volumes with missing or empty names', () => {
+        const entry = buildVolumeCombinedEntry(tieringConfig, [
+            { 'tiering-policy': 'auto', 'tiering-min-cooling-days': 30 },
+            { name: '', 'tiering-policy': 'auto', 'tiering-min-cooling-days': 30 }
+        ]);
+
+        expect(entry).toMatchObject({
+            status: AssessmentStatus.OPTIMIZED,
+            objectsInViolation: [],
+            violationDetails: [],
+            totalObjectsInViolation: 0
+        });
+    });
+
+    it('should return a violation row when a named volume violates a component', () => {
+        const entry = buildVolumeCombinedEntry(tieringConfig, [
+            { name: 'v1', 'tiering-policy': 'auto', 'tiering-min-cooling-days': 7 }
+        ]);
+
+        expect(entry.violationDetails).toEqual([
+            {
+                objectName: 'v1',
+                value: '',
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                violatedConfigs: [{ name: 'tiering-policy', current: 'auto' }]
+            }
+        ]);
+    });
+});
+
+describe('buildBlockDeviceSpaceManagementEntry', () => {
+    const blockDeviceConfig = MSSQL_GOLDEN_CONFIG.find(
+        c => c.id === OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT
+    )!;
+
+    it('should skip LUNs with missing or empty names', () => {
+        const entry = buildBlockDeviceSpaceManagementEntry(
+            blockDeviceConfig,
+            [
+                { 'space-reservation-enabled': false, 'space-allocation-allocated': false },
+                { name: '', 'space-reservation-enabled': false, 'space-allocation-allocated': false }
+            ],
+            [{ name: 'v1', 'fractional-reserve': 0 }]
+        );
+
+        expect(entry).toMatchObject({
+            status: AssessmentStatus.OPTIMIZED,
+            objectsInViolation: [],
+            violationDetails: [],
+            totalObjectsAssessed: 3,
+            totalObjectsInViolation: 0
+        });
+    });
+});
+
+describe('isCombinedViolationDetail', () => {
+    it('should reject rows missing objectName or violatedConfigs', () => {
+        expect(isCombinedViolationDetail({ objectName: 'v1', value: '' })).toBe(false);
+        expect(isCombinedViolationDetail({ objectName: '', violatedConfigs: [{ name: 'x', current: 'y' }] })).toBe(
+            false
+        );
+        expect(
+            isCombinedViolationDetail({
+                objectName: 'v1',
+                violatedConfigs: [{ name: '', current: 'y' }]
+            })
+        ).toBe(false);
+    });
+
+    it('should accept rows with non-empty objectName and violatedConfigs names', () => {
+        expect(
+            isCombinedViolationDetail({
+                objectName: 'v1',
+                value: '',
+                violatedConfigs: [{ name: 'thin-provision', current: 'false' }]
+            })
+        ).toBe(true);
+    });
+});
 
 // ---------------------------------------------------------------------------
 // buildDismissedConfigurations

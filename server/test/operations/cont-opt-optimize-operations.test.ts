@@ -58,7 +58,7 @@ beforeAll(async () => {
         credentialsId: CREDENTIALS_ID,
         region: DEFAULT_AWS_REGION,
         resourceId: RESOURCE_ID,
-        databaseInstanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
+        databaseInstanceId: 'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
         databaseInstanceName: 'MSSQLSERVER',
         isDefault: true,
         source: 'deployment',
@@ -74,7 +74,7 @@ beforeAll(async () => {
             account_id: ACCOUNT_ID,
             credentials_id: CREDENTIALS_ID,
             region: DEFAULT_AWS_REGION,
-            database_instance_id: 'f4b7c5d3-e1f6-4g2a-9b5d',
+            database_instance_id: 'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
             creation_time: new Date(),
             last_updated: new Date(),
             config_data: {
@@ -290,7 +290,7 @@ beforeAll(async () => {
             account_id: ACCOUNT_ID,
             credentials_id: CREDENTIALS_ID,
             region: DEFAULT_AWS_REGION,
-            database_instance_id: 'f4b7c5d3-e1f6-4g2a-9b5d',
+            database_instance_id: 'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
             creation_time: new Date(),
             last_updated: new Date(),
             config_data: {
@@ -315,7 +315,7 @@ describe('Continuous optimization optimize operations', () => {
             credentialsId: CREDENTIALS_ID,
             region: DEFAULT_AWS_REGION,
             databaseHostId: RESOURCE_ID,
-            databaseInstanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
+            databaseInstanceId: 'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
             optimizationTargets: [
                 {
                     configurationName: 'thin-provisioning',
@@ -329,13 +329,34 @@ describe('Continuous optimization optimize operations', () => {
         await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
     });
 
+    it('Optimize storage parameters using combined tiering target', async () => {
+        const response = await optimizeStorage({
+            accountId: ACCOUNT_ID,
+            credentialsId: CREDENTIALS_ID,
+            region: DEFAULT_AWS_REGION,
+            databaseHostId: RESOURCE_ID,
+            databaseInstanceId: 'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
+            optimizationTargets: [
+                {
+                    configurationName: 'tiering-tco-optimization',
+                    objectsToOptimize: ['wlmdb_sqldata_1721094267674', 'wlmdb_sqltemp_1721094267674']
+                }
+            ],
+            documentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+        });
+
+        expect(response.jobId).toBeDefined();
+        await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
+    });
+
     it('Optimize sizing parameters', async () => {
         const response = await optimizeSizing(
             ACCOUNT_ID,
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d',
+            'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
             [OPTIMIZE_SIZING_CONFIGS.HEADROOM, OPTIMIZE_SIZING_CONFIGS.LOG_DRIVE_SIZE]
         );
 
@@ -348,7 +369,7 @@ describe('Continuous optimization optimize operations', () => {
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d',
+            'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
             'm5.large'
         );
 
@@ -361,7 +382,7 @@ describe('Continuous optimization optimize operations', () => {
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d',
+            'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
             'test-jobid'
         );
 
@@ -370,7 +391,7 @@ describe('Continuous optimization optimize operations', () => {
 });
 describe('Continuous optimization optimizeOperatingSystemSettings', () => {
     const databaseHostId = RESOURCE_ID;
-    const databaseInstanceId = 'f4b7c5d3-e1f6-4g2a-9b5d';
+    const databaseInstanceId = 'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456';
 
     it('should optimize MPIO policy', async () => {
         const { optimizeOperatingSystemSettings } = await import('../../src/operations/cont-opt-optimize-operations');
@@ -540,7 +561,7 @@ describe('Continuous optimization optimizeOperatingSystemSettings', () => {
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
             RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d',
+            'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
             clone,
             configData,
             'test-server',
@@ -571,7 +592,7 @@ describe('Continuous optimization optimizeOperatingSystemSettings', () => {
                 CREDENTIALS_ID,
                 DEFAULT_AWS_REGION,
                 RESOURCE_ID,
-                'f4b7c5d3-e1f6-4g2a-9b5d',
+                'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
                 clone,
                 configDataNoMatch,
                 'test-server',

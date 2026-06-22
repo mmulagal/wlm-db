@@ -141,7 +141,11 @@ enum OptimizeStorageConfigs {
     REDO_LOG_LAYOUT = 'redolog-dg-lun-layout',
     DATA_LAYOUT = 'data-dg-lun-layout',
     NFS_ROOTONLY = 'nfs-rootonly',
-    EXPORT_POLICY = 'export-policy'
+    EXPORT_POLICY = 'export-policy',
+    // Combined (aggregate) configs — expanded into per-sub-parameter children at dispatch.
+    BLOCK_DEVICE_SPACE_MANAGEMENT = 'block-device-space-management',
+    STORAGE_EFFICIENCIES = 'storage-efficiencies',
+    TIERING_TCO_OPTIMIZATION = 'tiering-tco-optimization'
 }
 
 enum OptimizeStorageConfigsJobNames {
@@ -160,7 +164,10 @@ enum OptimizeStorageConfigsJobNames {
     DEDUPLICATION = 'deduplication',
     COMPACTION = 'compaction',
     NFS_ROOTONLY = 'nfs rootonly',
-    EXPORT_POLICY = 'binaries export policy'
+    EXPORT_POLICY = 'binaries export policy',
+    BLOCK_DEVICE_SPACE_MANAGEMENT = 'block device space management',
+    STORAGE_EFFICIENCIES = 'storage efficiencies',
+    TIERING_TCO_OPTIMIZATION = 'tiering TCO optimization'
 }
 
 enum OptimizeOperatingSystemParams {
@@ -326,6 +333,37 @@ const OptimizeStorageApiData = {
     })
 };
 
+// Combined config → per-sub-parameter children the optimize dispatcher fans out to.
+// `source` partitions LUN vs Volume children for MSSQL; Oracle uses `configKey` only.
+const COMBINED_OPTIMIZE_DESCRIPTORS = {
+    [OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT]: {
+        components: [
+            { configKey: OptimizeStorageConfigs.SPACE_RESERVATION, source: LUN },
+            { configKey: OptimizeStorageConfigs.SPACE_ALLOCATION, source: LUN },
+            { configKey: OptimizeStorageConfigs.FRACTIONAL_RESERVE, source: VOLUME }
+        ]
+    },
+    [OptimizeStorageConfigs.STORAGE_EFFICIENCIES]: {
+        components: [
+            { configKey: OptimizeStorageConfigs.COMPRESSION, source: VOLUME },
+            { configKey: OptimizeStorageConfigs.DEDUPLICATION, source: VOLUME },
+            { configKey: OptimizeStorageConfigs.COMPACTION, source: VOLUME }
+        ]
+    },
+    [OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION]: {
+        components: [
+            { configKey: OptimizeStorageConfigs.TIERING_POLICY, source: VOLUME },
+            { configKey: OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS, source: VOLUME }
+        ]
+    }
+} as const;
+
+type CombinedOptimizeConfigName = keyof typeof COMBINED_OPTIMIZE_DESCRIPTORS;
+
+function isCombinedOptimizeConfig(name: string): name is CombinedOptimizeConfigName {
+    return Object.prototype.hasOwnProperty.call(COMBINED_OPTIMIZE_DESCRIPTORS, name);
+}
+
 interface OptimizeStorageRequestParams {
     configurationName: string;
     objectsToOptimize: string[];
@@ -345,6 +383,23 @@ const OptimizeStorageRequestParams = Type.Object({
     objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
 });
 type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;
+
+/**
+ * Merges optimization targets by `configurationName`, de-duplicating `objectsToOptimize` within
+ * each bucket and preserving first-appearance order. Prevents duplicate PATCH dispatch.
+ */
+function mergeOptimizationTargets(targets: OptimizeStorageRequestParamsType[]): OptimizeStorageRequestParamsType[] {
+    const objectsByConfig = new Map<string, Set<string>>();
+    targets.forEach(({ configurationName, objectsToOptimize }) => {
+        const bucket = objectsByConfig.get(configurationName) ?? new Set<string>();
+        objectsToOptimize.forEach(object => bucket.add(object));
+        objectsByConfig.set(configurationName, bucket);
+    });
+    return [...objectsByConfig.entries()].map(([configurationName, objects]) => ({
+        configurationName,
+        objectsToOptimize: [...objects]
+    }));
+}
 
 interface OptimizeStorageAttributeParams {
     accountId: string;
@@ -387,6 +442,13 @@ const QUERY_PARAMS = {
     vserver: 'vserver'
 };
 
+// ONTAP LUN path format: '/vol/<volumeName>/<lunName>'. The capture group is the parent volume
+// (segment 2); case-sensitive 'vol' prefix is required. Qtree-hosted LUNs
+// ('/vol/<vol>/<qtree>/<lun>') match naturally since the volume is still segment 2. The
+// trailing '/.+' enforces a non-empty LUN name after the parent so malformed inputs like
+// '/vol/v1/' do not match.
+const LUN_PATH_PATTERN = /^\/vol\/([^/]+)\/.+/;
+
 const STORAGE_OPTIMIZE_JOB_PARAM = {
     volume: 'volumes',
     lun: 'LUN paths',
@@ -421,7 +483,10 @@ const ASSESSMENT_RESOURCE_TYPE = {
     SQL_INSTANCE: 'SQL instance',
     NETWORK_INTERFACE: 'Network Interface',
     DISK_GROUP: 'Disk Group',
-    STORAGE_MULTIPATH: 'Storage multipath'
+    STORAGE_MULTIPATH: 'Storage multipath',
+    // Combined LUN+Volume resource type used by aggregate configs like
+    // block-device-space-management whose offending objects span both sources.
+    VOLUME_OR_LUN: 'Volume/Lun'
 };
 
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
@@ -474,14 +539,16 @@ const MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'thin-provision',
         'autosize',
         'autosize-mode',
-        'fractional-reserve',
         'snapshot-copy-reserve',
         'snapshot-autodelete',
         'space-mgmt-try-first',
-        'tiering-policy',
-        'tiering-min-cooling-days'
+        'tiering-tco-optimization'
     ],
-    luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
+    // 'block-device-space-management' is the combined entry replacing the legacy
+    // 'fractional-reserve' (volume), 'space-reservation-enabled' (lun) and
+    // 'space-allocation-allocated' (lun) ids. Bucketed under luns so v1
+    // mapAssessmentToV1 places it in storage.configuration.luns[].
+    luns: ['os-type', 'block-device-space-management'],
     os: ['mpio-enabled', 'mpio-iscsi-count', 'mpio-load-balance-policy', 'ntfs-allocation-unit-size', 'mpio-timeout']
 };
 
@@ -542,19 +609,19 @@ const ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'thin-provision',
         'autosize',
         'autosize-mode',
-        'fractional-reserve',
         'snapshot-policy',
         'snapshot-copy-reserve',
         'snapshot-autodelete',
         'space-mgmt-try-first',
-        'tiering-policy',
-        'tiering-min-cooling-days',
-        'compression',
-        'deduplication',
-        'compaction',
+        // 'storage-efficiencies' replaces legacy 'compression', 'deduplication',
+        // 'compaction'. 'tiering-tco-optimization' replaces legacy 'tiering-policy',
+        // 'tiering-min-cooling-days'. v1 mapAssessmentToV1 routes both into
+        // storage.configuration.volumes[].
+        'storage-efficiencies',
+        'tiering-tco-optimization',
         ...ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP.volumes
     ],
-    luns: ['os-type', 'space-reservation-enabled', 'space-allocation-allocated'],
+    luns: ['os-type', 'block-device-space-management'],
     os: [
         ...ORACLE_ISCSI_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
         ...ORACLE_NFS_STORAGE_CONFIGURATION_ASSESSMENT_MAP.os,
@@ -686,6 +753,7 @@ export {
     VOLUME,
     LUN,
     QUERY_PARAMS,
+    LUN_PATH_PATTERN,
     REDIS_SCHEMA,
     OptimizeOperatingSystemParams,
     TEST_CONNECTION_COMMAND,
@@ -725,6 +793,10 @@ export {
     MSSQL_PATCH_SCAN_FIELDS,
     DEFAULT_FSX_MTU_VALUE,
     OptimizeStorageApiData,
+    COMBINED_OPTIMIZE_DESCRIPTORS,
+    CombinedOptimizeConfigName,
+    isCombinedOptimizeConfig,
+    mergeOptimizationTargets,
     ORACLE_STORAGE_LAYOUT_CONFIGS_MAP,
     ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS,
     OptimizeStorageAttributeParams,

@@ -47,13 +47,76 @@ const OracleAssessmentQueryStringPerAccount = Type.Intersect([
     })
 ]);
 
+/**
+ * Per-offender sub-parameter detail used by aggregate configs (e.g. block-device-space-management)
+ * that roll up multiple ONTAP attributes into one assessment entry. Each entry lists the
+ * sub-parameter name and the offending object's current (non-optimal) stringified value. The
+ * recommended target value is NOT duplicated here — it lives once in the entry-level
+ * configDetails[] catalogue, joined by `name`.
+ */
+const ViolatedConfig = Type.Object({
+    name: Type.String(),
+    current: Type.String()
+});
+type ViolatedConfigType = Static<typeof ViolatedConfig>;
+
+/** Oracle volume data categories used in recommendedByDataCategory (and violation dataCategory). */
+const DATA_CATEGORY_PROPERTIES = {
+    'log-files': Type.String(),
+    'non-log-files': Type.String(),
+    mixed: Type.String(),
+    'data-control-files': Type.String(),
+    'archive-log-files': Type.String()
+} as const;
+
+const RecommendedByDataCategory = Type.Partial(Type.Object(DATA_CATEGORY_PROPERTIES));
+type RecommendedByDataCategoryType = Static<typeof RecommendedByDataCategory>;
+
+/** Extra context on violationDetails items (MSSQL layout, Oracle export-policy). */
+const VIOLATION_ADDITIONAL_INFO_PROPERTIES = {
+    lunPath: Type.String(),
+    driveLetter: Type.String(),
+    vserverName: Type.String(),
+    exportPolicyName: Type.String(),
+    clients: Type.Array(Type.String())
+} as const;
+
+const ViolationAdditionalInfo = Type.Partial(Type.Object(VIOLATION_ADDITIONAL_INFO_PROPERTIES));
+type ViolationAdditionalInfoType = Static<typeof ViolationAdditionalInfo>;
+
+/**
+ * Catalogue entry used by aggregate configs. configDetails[] on the parent assessment item
+ * lists every sub-parameter the entry assessed, paired with its recommended target value and
+ * the resource type the sub-parameter belongs to. Always emitted by aggregate configs (even
+ * when status is OPTIMIZED) so consumers can render a self-describing
+ * "checked X settings, target values Y" view without needing the original golden config.
+ *
+ * Static sub-parameters (e.g. MSSQL block-device-space-management): `recommended` is the single
+ * target; optional fields are omitted.
+ *
+ * Variable sub-parameters (Oracle combined configs): `recommended` is empty; use
+ * `recommendedByDataCategory` and optionally `recommendedNote` for per-category guidance.
+ */
+const ConfigDetail = Type.Object({
+    name: Type.String(),
+    recommended: Type.String(),
+    objectType: Type.String(),
+    recommendedByDataCategory: Type.Optional(RecommendedByDataCategory),
+    recommendedNote: Type.Optional(Type.String())
+});
+type ConfigDetailType = Static<typeof ConfigDetail>;
+
 const GenericViolationResponse = Type.Object({
     objectName: Type.String(),
     value: Type.String(),
     objectType: Type.String(),
     recommended: Type.Optional(Type.String()),
     dataCategory: Type.Optional(Type.String()), // Applicable in volume assessment for Oracle
-    additionalInfo: Type.Optional(Type.Record(Type.String(), Type.Any()))
+    additionalInfo: Type.Optional(ViolationAdditionalInfo),
+    // Set only by aggregate configs (e.g. block-device-space-management). Lists every
+    // sub-parameter this offending object failed; current values only — see configDetails[]
+    // on the parent entry for the recommended target.
+    violatedConfigs: Type.Optional(Type.Array(ViolatedConfig))
 });
 
 type GenericViolationResponseType = Static<typeof GenericViolationResponse>;
@@ -89,7 +152,12 @@ const GenericParameterDriftResponse = Type.Object({
     current: Type.Optional(Type.String()),
     totalObjectsAssessed: Type.Optional(Type.Number()),
     totalObjectsInViolation: Type.Optional(Type.Number()),
-    resourceType: Type.Optional(Type.String())
+    resourceType: Type.Optional(Type.String()),
+    // Set only by aggregate configs (e.g. block-device-space-management, storage-efficiencies,
+    // tiering-tco-optimization). Catalogue of every sub-parameter the entry assessed, with
+    // each one's recommended target value and source resource type. Always emitted by
+    // aggregate configs, regardless of status. Flows to v1 via Type.Omit.
+    configDetails: Type.Optional(Type.Array(ConfigDetail))
 });
 
 const GenericAssessmentResponse = Type.Union([GenericParameterDriftResponse, ErrorResponse]);
@@ -229,7 +297,12 @@ const BaseAssessmentItem = Type.Intersect([
         oldCloneDetails: Type.Optional(
             Type.Array(CloneDetailItem, { description: 'Previous clone instances for drift comparison' })
         ),
-        cloneDriftMessage: Type.Optional(Type.String({ description: 'Message describing clone drift status' }))
+        cloneDriftMessage: Type.Optional(Type.String({ description: 'Message describing clone drift status' })),
+        // Set only by aggregate configs (e.g. block-device-space-management,
+        // storage-efficiencies, tiering-tco-optimization). Catalogue of every sub-parameter
+        // the entry assessed, paired with its recommended target value. Flows to v2
+        // assessments[] items.
+        configDetails: Type.Optional(Type.Array(ConfigDetail))
     })
 ]);
 
@@ -275,10 +348,18 @@ const AssessmentMetadata = Type.Object({
 type AssessmentMetadataType = Static<typeof AssessmentMetadata>;
 
 export {
+    RecommendedByDataCategory,
+    RecommendedByDataCategoryType,
+    ViolationAdditionalInfo,
+    ViolationAdditionalInfoType,
     OntapVolume,
     OntapVolumeType,
     GenericViolationResponse,
     GenericViolationResponseType,
+    ViolatedConfig,
+    ViolatedConfigType,
+    ConfigDetail,
+    ConfigDetailType,
     GenericAssessmentResponse,
     GenericAssessmentResponseType,
     GenericAssessmentResponseV1,

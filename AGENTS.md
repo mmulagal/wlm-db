@@ -1,6 +1,6 @@
 # WLM-DB AI Coding Agent Instructions
 
-Coding rules live in `.github/instructions/`. For Cursor, the `alwaysApply` rule in `.cursor/rules/` reads the applicable instruction files before coding, based on each file's `applyTo` metadata and the current edit scope. The **`error-agent`** queue runbook is **not** in that folder: it is `.github/copilot/error-agent.instructions.md`, referenced from `.github/copilot-instructions.md` for GitHub Copilot / cloud agents (local Cursor pre-read skips `.github/copilot/` unless you are working on Copilot-only / error-agent queue work). For git workflow conventions, see `.github/instructions/git-conventions.instructions.md`.
+Coding rules live in `.github/instructions/`. For Cursor, the `alwaysApply` rule in `.cursor/rules/` reads the applicable instruction files before coding, based on each file's `applyTo` metadata and the current edit scope. **Preserve existing control flow** on code-change tasks: see `.github/instructions/agent-change-scope.instructions.md` (applies to all paths via `applyTo: "**/*"`). The **`error-agent`** queue runbook is **not** in that folder: it is `.github/copilot/error-agent.instructions.md`, referenced from `.github/copilot-instructions.md` for GitHub Copilot / cloud agents (local Cursor pre-read skips `.github/copilot/` unless you are working on Copilot-only / error-agent queue work). For git workflow conventions, see `.github/instructions/git-conventions.instructions.md`.
 
 ---
 

@@ -28,7 +28,7 @@ describe('Golden Config Utils', () => {
         it('should map storage configuration parameters', () => {
             const map = generateMsSqlParameterCategoryMap();
 
-            const storageParams = ['thin-provision', 'autosize', 'autosize-mode', 'fractional-reserve'];
+            const storageParams = ['thin-provision', 'autosize', 'autosize-mode', 'block-device-space-management'];
             storageParams.forEach(param => {
                 const entry = map.get(param);
                 expect(entry).toBeDefined();

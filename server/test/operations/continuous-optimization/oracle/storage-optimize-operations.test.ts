@@ -1,8 +1,15 @@
+import { describe, expect, it } from 'vitest';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
-import { optimizeOracleStorageLayout } from '../../../../src/operations/continuous-optimization/oracle/storage-optimize-operations';
+import {
+    deriveOracleNonVolumeCombinedOutputs,
+    optimizeOracleStorageLayout
+} from '../../../../src/operations/continuous-optimization/oracle/storage-optimize-operations';
 import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/database-instance-config';
-import { AssessmentCategoriesOracle } from '../../../../src/utils/continous-optimization-consts';
+import {
+    AssessmentCategoriesOracle,
+    OptimizeStorageConfigs
+} from '../../../../src/utils/continous-optimization-consts';
 import ORACLE_GOLDEN_CONFIG from '../../../../src/operations/continuous-optimization/oracle/golden-config';
 import { getJobs } from '../../../../src/operations/database/job-operations';
 import waitForJobCompletion from '../../../utils/utils';
@@ -112,8 +119,10 @@ describe('optimizeOracleStorageLayout (integration style)', () => {
             credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
             region: DEFAULT_AWS_REGION,
             includeSubJobs: true
-        });
-        const parentJob = (jobItems || []).find((j: any) => j.id === parentJobIdOrErr);
+        } as Parameters<typeof getJobs>[1]);
+        const parentJob = ((jobItems as Array<{ id: string; type: string }>) || []).find(
+            j => j.id === parentJobIdOrErr
+        );
         expect(parentJob).toBeDefined();
         expect(parentJob?.type).toBe('OPTIMIZATION');
 
@@ -128,8 +137,165 @@ describe('optimizeOracleStorageLayout (integration style)', () => {
             credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
             region: DEFAULT_AWS_REGION,
             includeSubJobs: true
-        });
+        } as Parameters<typeof getJobs>[1]);
 
         expect(jobStatusAfterCompletion).toBeDefined();
+    });
+});
+
+describe('deriveOracleNonVolumeCombinedOutputs', () => {
+    it('should expand block-device-space-management using violatedConfigs from mixed LUN/volume drift rows', () => {
+        const { syntheticTargets, droppedCombined } = deriveOracleNonVolumeCombinedOutputs(
+            [
+                {
+                    configurationName: OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT,
+                    objectsToOptimize: ['/vol/v1/l1', '/vol/v2/l2', 'v2']
+                }
+            ],
+            [
+                {
+                    id: OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT,
+                    violationDetails: [
+                        {
+                            objectName: '/vol/v1/l1',
+                            value: '',
+                            violatedConfigs: [{ name: OptimizeStorageConfigs.SPACE_RESERVATION, current: 'false' }]
+                        },
+                        {
+                            objectName: '/vol/v2/l2',
+                            value: '',
+                            violatedConfigs: [{ name: OptimizeStorageConfigs.SPACE_ALLOCATION, current: 'false' }]
+                        },
+                        {
+                            objectName: 'v2',
+                            value: '',
+                            violatedConfigs: [{ name: OptimizeStorageConfigs.FRACTIONAL_RESERVE, current: '5' }]
+                        }
+                    ]
+                }
+            ]
+        );
+
+        expect(droppedCombined).toEqual([]);
+        expect(syntheticTargets).toHaveLength(3);
+        expect(syntheticTargets).toContainEqual({
+            configurationName: OptimizeStorageConfigs.SPACE_RESERVATION,
+            objectsToOptimize: ['/vol/v1/l1']
+        });
+        expect(syntheticTargets).toContainEqual({
+            configurationName: OptimizeStorageConfigs.SPACE_ALLOCATION,
+            objectsToOptimize: ['/vol/v2/l2']
+        });
+        expect(syntheticTargets).toContainEqual({
+            configurationName: OptimizeStorageConfigs.FRACTIONAL_RESERVE,
+            objectsToOptimize: ['v2']
+        });
+    });
+
+    it('should report droppedCombined when no drift entry matches requested non-volume combined configs', () => {
+        const { syntheticTargets, droppedCombined } = deriveOracleNonVolumeCombinedOutputs(
+            [
+                {
+                    configurationName: OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT,
+                    objectsToOptimize: ['/vol/v1/l1', 'v1']
+                }
+            ],
+            [
+                {
+                    id: OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION,
+                    violationDetails: []
+                }
+            ]
+        );
+
+        expect(syntheticTargets).toEqual([]);
+        expect(droppedCombined).toEqual([OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT]);
+    });
+
+    it('should report droppedCombined when the drift entry is error-shaped', () => {
+        const { syntheticTargets, droppedCombined } = deriveOracleNonVolumeCombinedOutputs(
+            [
+                {
+                    configurationName: OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT,
+                    objectsToOptimize: ['v1']
+                }
+            ],
+            [
+                {
+                    id: OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT,
+                    errorMessage: 'LUN assessment data unavailable'
+                }
+            ]
+        );
+
+        expect(syntheticTargets).toEqual([]);
+        expect(droppedCombined).toEqual([OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT]);
+    });
+
+    it('should expand available combined configs and report only missing ones in droppedCombined', () => {
+        const { syntheticTargets, droppedCombined } = deriveOracleNonVolumeCombinedOutputs(
+            [
+                {
+                    configurationName: OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT,
+                    objectsToOptimize: ['v1']
+                },
+                {
+                    configurationName: OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION,
+                    objectsToOptimize: ['v2']
+                }
+            ],
+            [
+                {
+                    id: OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION,
+                    violationDetails: [
+                        {
+                            objectName: 'v2',
+                            value: '',
+                            violatedConfigs: [{ name: OptimizeStorageConfigs.TIERING_POLICY, current: 'auto' }]
+                        }
+                    ]
+                }
+            ]
+        );
+
+        expect(droppedCombined).toEqual([OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT]);
+        expect(syntheticTargets).toEqual([
+            {
+                configurationName: OptimizeStorageConfigs.TIERING_POLICY,
+                objectsToOptimize: ['v2']
+            }
+        ]);
+    });
+
+    it('should filter malformed violationDetails rows and still expand valid rows', () => {
+        const { syntheticTargets, droppedCombined } = deriveOracleNonVolumeCombinedOutputs(
+            [
+                {
+                    configurationName: OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT,
+                    objectsToOptimize: ['v1']
+                }
+            ],
+            [
+                {
+                    id: OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT,
+                    violationDetails: [
+                        { objectName: 'v1', value: '' },
+                        {
+                            objectName: 'v1',
+                            value: '',
+                            violatedConfigs: [{ name: OptimizeStorageConfigs.FRACTIONAL_RESERVE, current: '5' }]
+                        }
+                    ]
+                }
+            ]
+        );
+
+        expect(droppedCombined).toEqual([]);
+        expect(syntheticTargets).toEqual([
+            {
+                configurationName: OptimizeStorageConfigs.FRACTIONAL_RESERVE,
+                objectsToOptimize: ['v1']
+            }
+        ]);
     });
 });

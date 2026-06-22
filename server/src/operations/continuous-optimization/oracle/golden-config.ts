@@ -63,27 +63,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
     {
-        parameter: 'fractionalReserve',
-        id: 'fractional-reserve',
-        name: 'Fractional reserve',
-        value: 0,
-        type: 'storage',
-        subType: 'configuration',
-        focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
-        recommendation:
-            'Workload Factory recommends disabling fractional reserve to eliminate unnecessary space reservation for overwrites thereby optimizing space utilization and cost-effectiveness for thin-provisioned FSx for ONTAP volumes. This configuration is essential when using thin provisioning with Oracle databases.',
-        categories: [
-            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
-    },
-    {
         parameter: 'snapshotPolicy',
         id: 'snapshot-policy',
-        name: 'Snapshot policy',
+        name: 'Scheduled local snapshots',
         value: 'none',
         type: 'storage',
         subType: 'configuration',
@@ -153,94 +135,45 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
     {
-        parameter: 'tieringPolicy',
-        id: 'tiering-policy',
-        name: 'Tiering policy',
-        value: 'snapshot_only',
+        id: 'storage-efficiencies',
+        name: 'Storage efficiencies',
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
+        severity: SEVERITY.WARNING,
         recommendation:
-            'Workload Factory recommends enabling tiering for database volumes on FSx for ONTAP when it makes sense. Tiering automatically moves less-used data, such as snapshots and archived logs, to lower-cost storage while keeping active data and redo logs on high-performance storage. This lowers storage costs, helps protect performance for critical workloads, and reduces manual management. You can set different tiering policies for Oracle data files, redo logs, and archive logs.',
+            'Workload Factory recommends implementing storage efficiencies (compression, compaction, and deduplication) in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
         categories: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        components: [
+            { parameter: 'compressionType', name: 'compression', value: '', objectType: 'Volume' },
+            { parameter: 'deduplication', name: 'deduplication', value: '', objectType: 'Volume' },
+            { parameter: 'compaction', name: 'compaction', value: 'enabled', objectType: 'Volume' }
+        ]
     },
     {
-        parameter: 'tieringMinCoolingDays',
-        id: 'tiering-min-cooling-days',
-        name: 'Tiering minimum cooling days',
-        value: '',
+        id: 'tiering-tco-optimization',
+        name: 'Tiering / TCO optimization',
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'Workload Factory recommends setting the appropriate minimum cooling days for a volume because it determines when data becomes eligible to move to cost-effective capacity tiers, optimizing storage costs while maintaining performance for frequently accessed data. Archive/FRA Volumes (tiering-minimum-cooling-days=2(for RMAN-compressed backups) tiering-minimum-cooling-days=14(for uncompressed backups)).',
+            'Workload Factory recommends enabling tiering for some Oracle database volumes on Amazon FSx for NetApp ONTAP where appropriate, to move cold data to lower-cost capacity storage and reduce overall storage costs, while keeping active database data on high-performance SSDs to preserve critical performance. Recommended policies are based on the data type in each volume, with tiering disabled (none) for data files and redo logs, and auto for archive logs. For archive/FRA volumes, it is also recommended to set an appropriate cooling period before data is tiered—typically 2 days for compressed backups and 14 days for uncompressed backups—to balance cost efficiency and performance.',
         categories: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
-    },
-    {
-        parameter: 'compressionType',
-        id: 'compression',
-        name: 'Compression',
-        value: '',
-        type: 'storage',
-        subType: 'configuration',
-        focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
-        recommendation:
-            'Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle\u2019s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
-        categories: [
-            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
-    },
-    {
-        parameter: 'deduplication',
-        id: 'deduplication',
-        name: 'Deduplication',
-        value: '',
-        type: 'storage',
-        subType: 'configuration',
-        focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
-        recommendation:
-            'Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle\u2019s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
-        categories: [
-            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
-    },
-    {
-        parameter: 'compaction',
-        id: 'compaction',
-        name: 'Compaction',
-        value: 'enabled',
-        type: 'storage',
-        subType: 'configuration',
-        focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
-        recommendation:
-            'Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle\u2019s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
-        categories: [
-            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        components: [
+            { parameter: 'tieringPolicy', name: 'tiering-policy', value: '', objectType: 'Volume' },
+            { parameter: 'tieringMinCoolingDays', name: 'tiering-min-cooling-days', value: '', objectType: 'Volume' }
+        ]
     },
 
     // ── configuration / volume_nfs (applicableTo: nfs) ──────────────────────
@@ -279,44 +212,28 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         applicableTo: 'nfs'
     },
 
-    // ── configuration / lun (applicableTo: iscsi) ──────────────────────────
+    // ── configuration / volume_or_lun (applicableTo: iscsi) ────────────────
     {
-        id: 'space-reservation-enabled',
-        name: 'Space reservation enabled',
-        parameter: 'spaceReservationEnabled',
-        value: true,
+        id: 'block-device-space-management',
+        name: 'Block device space management',
         type: 'storage',
         subType: 'configuration',
+        applicableTo: 'iscsi',
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME_OR_LUN,
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.CRITICAL,
-        resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
         recommendation:
-            'Workload Factory recommends enabling space reservation on LUNs used by Oracle databases to reserve enough space in the volume so that writes to those LUNs dont fail.',
+            'Workload Factory recommends configuring block device space settings for LUNs used by Oracle database instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin-provisioned volumes:\n- Space reservation: enabled - reserves enough space in the volume so writes to the LUN do not fail.\n- Space allocation: enabled - allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data.\n- Fractional reserve: disabled - avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.\nTogether, these settings help ensure predictable database behavior while minimizing wasted capacity.',
         categories: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
-        applicableTo: 'iscsi'
-    },
-    {
-        id: 'space-allocation-allocated',
-        name: 'Space allocation allocated',
-        parameter: 'spaceAllocationAllocated',
-        value: true,
-        type: 'storage',
-        subType: 'configuration',
-        focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
-        resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
-        recommendation:
-            'Workload Factory recommends enabling the space allocation feature on LUNs used by Oracle databases to ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.',
-        categories: [
-            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ],
-        applicableTo: 'iscsi'
+        components: [
+            { parameter: 'spaceReservationEnabled', name: 'space-reservation-enabled', value: true, source: 'lun' },
+            { parameter: 'spaceAllocationAllocated', name: 'space-allocation-allocated', value: true, source: 'lun' },
+            { parameter: 'fractionalReserve', name: 'fractional-reserve', value: 0, source: 'volume' }
+        ]
     },
 
     // ── configuration / os_iscsi (applicableTo: iscsi) ─────────────────────

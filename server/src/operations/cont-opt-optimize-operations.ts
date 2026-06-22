@@ -1,6 +1,6 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
-import { compact, isEmpty } from 'lodash-es';
+import { compact, isEmpty, uniq } from 'lodash-es';
 import { Volume } from '@aws-sdk/client-fsx';
 import throat from 'throat';
 import {
@@ -56,7 +56,10 @@ import {
     OptimizeOperatingSystemParams,
     OptimizeStorageConfigsJobNames,
     STORAGE_OPTIMIZE_JOB_PARAM,
-    OptimizeStorageRequestParamsType
+    OptimizeStorageRequestParamsType,
+    isCombinedOptimizeConfig,
+    mergeOptimizationTargets,
+    CombinedOptimizeConfigName
 } from '../utils/continous-optimization-consts';
 import getLogger from '../utils/logger';
 import { paginateListInstanceConfigData } from './database/instance-config-operations';
@@ -83,12 +86,15 @@ import {
     MPIO_TIMEOUT
 } from './workloads/mssql/mpio-remediation-scripts';
 import { describeInstance } from '../lib/aws/ec2';
-import { getLogVolumeDrift, getTempDbVolumeDrift } from './continuous-optimization/mssql/storage-assessment-operations';
 import {
     activeSqlNodeDetails,
+    buildBlockDeviceSpaceManagementEntry,
+    buildVolumeCombinedEntry,
+    expandCombinedTargets,
     handleOptimizeJobCreation,
     JobMetadata
 } from './continuous-optimization/assessment-utils';
+import { getLogVolumeDrift, getTempDbVolumeDrift } from './continuous-optimization/mssql/storage-assessment-operations';
 import { resetCache } from '../utils/cache';
 import {
     onDemandTriggerMssqlDriftAssessment,
@@ -101,8 +107,49 @@ import { getOracleStorageConfigRecommendationMap } from './continuous-optimizati
 import { optimizeStorageConfigParamsOracle } from './continuous-optimization/oracle/ssm-scripts/storage-optimize-scripts';
 import { headroomOptimization } from './continuous-optimization/headroom-assessment';
 import { oracleSpecialStorageConfigNames } from './continuous-optimization/oracle/consts';
+import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
+import { MSSQL_GOLDEN_CONFIG } from './continuous-optimization/mssql/golden-config';
+import { GenericViolationResponseType } from '../routes/types/continuous-optimization.types';
 
 const logger = getLogger();
+
+function buildMssqlCombinedDriftEntry(
+    combinedName: CombinedOptimizeConfigName,
+    storageData: StorageAssessment
+): { id: string; violationDetails?: GenericViolationResponseType[] } | 'dropped' | undefined {
+    const { volumes, luns, errors } = storageData;
+    if (combinedName === OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION) {
+        if (errors?.volumes || !volumes) {
+            return 'dropped';
+        }
+        const tieringTcoConfig = MSSQL_GOLDEN_CONFIG.find(
+            c => c.id === OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION
+        );
+        if (!tieringTcoConfig) {
+            return undefined;
+        }
+        const entry = buildVolumeCombinedEntry(tieringTcoConfig, volumes as Array<Record<string, unknown>>);
+        return { id: tieringTcoConfig.id, violationDetails: entry.violationDetails };
+    }
+    if (combinedName === OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT) {
+        if (errors?.luns || errors?.volumes || !luns || !volumes) {
+            return 'dropped';
+        }
+        const blockDeviceConfig = MSSQL_GOLDEN_CONFIG.find(
+            c => c.id === OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT
+        );
+        if (!blockDeviceConfig) {
+            return undefined;
+        }
+        const entry = buildBlockDeviceSpaceManagementEntry(
+            blockDeviceConfig,
+            luns as Array<Record<string, unknown>>,
+            volumes as Array<Record<string, unknown>>
+        );
+        return { id: blockDeviceConfig.id, violationDetails: entry.violationDetails };
+    }
+    return undefined;
+}
 
 interface OptimizeStorageAttributeParams {
     accountId: string;
@@ -343,23 +390,125 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams 
         instanceName,
         sqlAuthEnabled,
         svmName,
-        optimizationTargets,
         instanceMetadata,
         documentName,
         documentVersion
     } = params;
+    // Reassigned when combined (aggregate) targets are expanded into per-sub-parameter children.
+    let { optimizationTargets } = params;
+    // Snapshot of combined names (de-duped) used by the demo-flow metadata update so both the
+    // combined row and its synthetic children get marked optimized.
+    const originalCombinedConfigurationNames: string[] = uniq(
+        params.optimizationTargets
+            ?.filter(target => isCombinedOptimizeConfig(target.configurationName))
+            .map(target => target.configurationName) ?? []
+    );
     try {
-        let recommendationMap;
+        // MSSQL combined targets expand here. Oracle combined targets expand inside
+        // `getOracleStorageConfigRecommendationMap`, which returns both the rec-map and the synthetic targets.
+        if (
+            databaseType === RESOURCESTYPE.MSSQL &&
+            optimizationTargets?.some(target => isCombinedOptimizeConfig(target.configurationName))
+        ) {
+            const passThrough = optimizationTargets.filter(
+                target => !isCombinedOptimizeConfig(target.configurationName)
+            );
+            const combinedNames = uniq(
+                optimizationTargets
+                    .filter(target => isCombinedOptimizeConfig(target.configurationName))
+                    .map(target => target.configurationName)
+            );
+            let droppedCombined: string[] = [];
+            let expandedTargets = optimizationTargets;
+
+            const databaseInstanceConfigData = await listDatabaseInstanceConfigData({
+                accountId,
+                region,
+                credentialsId,
+                resourceId: databaseHostId,
+                databaseInstanceIds: [instanceId]
+            });
+            const storageRecord = databaseInstanceConfigData.find(
+                (config: { config_data_type: string }) => config.config_data_type === AssessmentCategories.STORAGE
+            );
+            if (!storageRecord || isEmpty(storageRecord.config_data)) {
+                logger.warn('MSSQL combined optimize target — no fresh storage assessment data available', {
+                    accountId,
+                    databaseInstanceId: instanceId
+                });
+                droppedCombined = combinedNames;
+                expandedTargets = passThrough;
+            } else {
+                const storageData = storageRecord.config_data as unknown as StorageAssessment;
+                const combinedDriftEntries: { id: string; violationDetails?: GenericViolationResponseType[] }[] = [];
+                droppedCombined = [];
+
+                combinedNames.forEach(combinedName => {
+                    const entry = buildMssqlCombinedDriftEntry(combinedName as CombinedOptimizeConfigName, storageData);
+                    if (entry === 'dropped') {
+                        droppedCombined.push(combinedName);
+                    } else if (entry) {
+                        combinedDriftEntries.push(entry);
+                    } else {
+                        droppedCombined.push(combinedName);
+                    }
+                });
+
+                if (droppedCombined.length > 0) {
+                    logger.warn('MSSQL combined optimize target — assessment data unavailable or incomplete', {
+                        accountId,
+                        databaseInstanceId: instanceId,
+                        dropped: droppedCombined
+                    });
+                }
+
+                expandedTargets = expandCombinedTargets(optimizationTargets, combinedDriftEntries);
+                droppedCombined = uniq(droppedCombined);
+            }
+
+            optimizationTargets = expandedTargets;
+
+            if (optimizationTargets.length === 0) {
+                if (droppedCombined.length > 0) {
+                    await updateJobDetails(accountId, parentJobId, {
+                        status: JOBSTATUS.FAILED,
+                        endTime: Date.now(),
+                        error: 'Cannot optimize: storage assessment data is unavailable or incomplete. Re-run the assessment and retry.'
+                    });
+                } else {
+                    logger.info('Nothing to optimize after combined-target expansion', {
+                        accountId,
+                        instanceId,
+                        databaseType
+                    });
+                    await updateJobDetails(accountId, parentJobId, {
+                        status: JOBSTATUS.WARNING,
+                        endTime: Date.now(),
+                        error: 'Nothing to optimize: all requested objects are already optimized.'
+                    });
+                }
+                return;
+            }
+        }
+
+        let recommendationMap:
+            | NonNullable<Awaited<ReturnType<typeof getOracleStorageConfigRecommendationMap>>>['recommendationMap']
+            | undefined;
         if (optimizationTargets && optimizationTargets.length > 0) {
             if (
                 databaseType === RESOURCESTYPE.ORACLE &&
-                optimizationTargets.some(target =>
-                    oracleSpecialStorageConfigNames.includes(
-                        target.configurationName as unknown as OptimizeStorageConfigs
-                    )
+                optimizationTargets.some(
+                    target =>
+                        oracleSpecialStorageConfigNames.includes(
+                            target.configurationName as unknown as OptimizeStorageConfigs
+                        ) || isCombinedOptimizeConfig(target.configurationName)
                 )
             ) {
-                recommendationMap = await getOracleStorageConfigRecommendationMap(
+                const {
+                    recommendationMap: oracleRecMap,
+                    syntheticTargets,
+                    droppedCombined: oracleDroppedCombined
+                } = (await getOracleStorageConfigRecommendationMap(
                     accountId,
                     credentialsId,
                     region,
@@ -372,7 +521,40 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams 
                     optimizationTargets,
                     serverNameWithHostName,
                     parentJobId
-                );
+                )) ?? { recommendationMap: undefined, syntheticTargets: [], droppedCombined: [] };
+                recommendationMap = oracleRecMap;
+                // Collapse synthetic children expanded from combined configs with any caller-supplied
+                // per-sub-parameter targets sharing the same `configurationName`, to avoid duplicate PATCHes.
+                optimizationTargets = mergeOptimizationTargets([
+                    ...optimizationTargets.filter(target => !isCombinedOptimizeConfig(target.configurationName)),
+                    ...syntheticTargets
+                ]);
+                if (optimizationTargets.length === 0) {
+                    if (oracleDroppedCombined.length > 0) {
+                        logger.warn('Oracle combined targets dropped — assessment data unavailable', {
+                            accountId,
+                            instanceId,
+                            dropped: oracleDroppedCombined
+                        });
+                        await updateJobDetails(accountId, parentJobId, {
+                            status: JOBSTATUS.FAILED,
+                            endTime: Date.now(),
+                            error: 'Cannot optimize: storage assessment data is unavailable or incomplete. Re-run the assessment and retry.'
+                        });
+                    } else {
+                        logger.info('Nothing to optimize after combined-target expansion', {
+                            accountId,
+                            instanceId,
+                            databaseType
+                        });
+                        await updateJobDetails(accountId, parentJobId, {
+                            status: JOBSTATUS.WARNING,
+                            endTime: Date.now(),
+                            error: 'Nothing to optimize: all requested objects are already optimized.'
+                        });
+                    }
+                    return;
+                }
             }
 
             await optimizeOntapStorage({
@@ -407,8 +589,12 @@ async function optimizeStorageAttributes(params: OptimizeStorageOperationParams 
         };
 
         if (IS_DEMO_FLOW) {
-            // update metadata in instances table to mark optimized configuration
-            const configurationNames: string[] = optimizationTargets.map(config => config.configurationName);
+            // Mark optimized configurations on the instance row, including both the post-expansion
+            // targets and the pre-expansion combined snapshot; de-duped to avoid repeated writes.
+            const configurationNames: string[] = uniq([
+                ...optimizationTargets.map(config => config.configurationName),
+                ...originalCombinedConfigurationNames
+            ]);
 
             await updateOptimizedConfigNameInInstanceTable(
                 accountId,
@@ -1056,8 +1242,10 @@ async function resizeLun(
             })
         );
 
-        const [{ error: optimiseStorageParamsCommandError } = {}, { error: rescanExtendLunSsmCommandError } = {}] =
-            parseMultipleCommandResponse(response);
+        const [
+            { error: optimiseStorageParamsCommandError } = {} as { error?: unknown },
+            { error: rescanExtendLunSsmCommandError } = {} as { error?: unknown }
+        ] = parseMultipleCommandResponse(response);
         const errorMessages = [];
 
         if (optimiseStorageParamsCommandError) {
@@ -1443,7 +1631,7 @@ async function optimizeSizing(
     const {
         config_data: configData,
         database_instances: { database_instance_name: instanceName = '' } = {},
-        resource: { resource_name: sqlServerName = '', assessment_data: resourceAssessmentData } = {}
+        resource: { resource_name: sqlServerName = '', assessment_data: resourceAssessmentData = undefined } = {}
     } = persistedConfigurationData || {};
     const storageAssessmentConfigData = configData as unknown as StorageAssessment;
     const { filesystemId = '' } = storageAssessmentConfigData || {};

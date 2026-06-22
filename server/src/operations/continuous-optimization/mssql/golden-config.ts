@@ -71,20 +71,6 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
     {
-        id: 'fractional-reserve',
-        name: 'Fractional reserve',
-        parameter: 'fractional-reserve',
-        value: 0,
-        type: 'storage',
-        subType: 'configuration',
-        focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
-        recommendation:
-            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
-        categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
-    },
-    {
         id: 'snapshot-copy-reserve',
         name: 'Snapshot copy reserve',
         parameter: 'snapshot-copy-reserve',
@@ -122,37 +108,25 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.WARNING,
         recommendation:
-            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs If Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
     },
     {
-        id: 'tiering-policy',
-        name: 'Tiering policy',
-        parameter: 'tiering-policy',
-        value: 'snapshot_only',
+        id: 'tiering-tco-optimization',
+        name: 'Tiering / TCO optimization',
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.',
-        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
-    },
-    {
-        id: 'tiering-min-cooling-days',
-        name: 'Tiering minimum cooling days',
-        parameter: 'tiering-min-cooling-days',
-        value: 7,
-        type: 'storage',
-        subType: 'configuration',
-        focusWidgetName: 'ONTAP',
-        severity: SEVERITY.WARNING,
-        recommendation:
-            'For optimal database performance and cost efficiency, Workload Factory recommends moving only snapshots to the capacity tier. This strategy ensures high performance while reducing costs. It is especially recommended to tier snapshots that are older than 7 days.',
-        categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+            'For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier. This approach preserves low-latency performance for SQL workloads while reducing storage costs. Workload Factory recommends tiering snapshot data after a 7-day cooling period.',
+        categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.COST_OPTIMIZATION],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        components: [
+            { parameter: 'tiering-policy', value: 'snapshot_only', source: 'volume' },
+            { parameter: 'tiering-min-cooling-days', value: 7, source: 'volume' }
+        ]
     },
 
     // ── configuration / lun ─────────────────────────────────────────────────
@@ -171,32 +145,25 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
     },
     {
-        id: 'space-reservation-enabled',
-        name: 'Space reservation enabled',
-        parameter: 'space-reservation-enabled',
-        value: true,
+        id: 'block-device-space-management',
+        name: 'Block device space management',
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.CRITICAL,
-        resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
         recommendation:
-            'When space reservation is enabled, ONTAP reserves enough space in the volume so that writes to those LUNs do not fail because of a lack of disk space.',
-        categories: [AwsWellArchitecturedPillars.RELIABILITY]
-    },
-    {
-        id: 'space-allocation-allocated',
-        name: 'Space allocation allocated',
-        parameter: 'space-allocation-allocated',
-        value: true,
-        type: 'storage',
-        subType: 'configuration',
-        focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
-        resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
-        recommendation:
-            'This option ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.',
-        categories: [AwsWellArchitecturedPillars.RELIABILITY]
+            'Workload Factory recommends configuring block device space settings for LUNs used by Microsoft SQL server instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin-provisioned volumes:\n- Space reservation: enabled - reserves enough space in the volume so writes to the LUN do not fail.\n- Space allocation: enabled - allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data.\n- Fractional reserve: disabled - avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.\nTogether, these settings help ensure predictable database behavior while minimizing wasted capacity.',
+        categories: [
+            AwsWellArchitecturedPillars.RELIABILITY,
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME_OR_LUN,
+        components: [
+            { parameter: 'space-reservation-enabled', value: true, source: 'lun' },
+            { parameter: 'space-allocation-allocated', value: true, source: 'lun' },
+            { parameter: 'fractional-reserve', value: 0, source: 'volume' }
+        ]
     },
 
     // ── configuration / os ──────────────────────────────────────────────────
@@ -316,7 +283,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'TempDB placement',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'Isolate TempDB I/O and avoid I/O contention from other databases by placing TempDB on its own dedicated drive.\nThis optimization improves overall SQL Server performance and stability.\nFailure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.',
+            'Isolate TempDB I/O and avoid I/O contention from other databases by placing TempDB on its own dedicated drive. This optimization improves overall SQL Server performance and stability.Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.',
         categories: [
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE
@@ -335,7 +302,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'Storage tier',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier.\nUsing the capacity pool tier may result in slower performance and higher latency.',
+            'For optimal storage performance, provision FSx for ONTAP volumes on the primary SSD tier.Using the capacity pool tier may result in slower performance and higher latency.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY]
     },
     {

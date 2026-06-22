@@ -6,7 +6,8 @@ import {
     AssessmentStatus,
     ASSESSMENT_RESOURCE_TYPE,
     VALID_MPIO_LB_POLICIES,
-    MIN_OPTIMIZED_HEADROOM_PERCENTAGE
+    MIN_OPTIMIZED_HEADROOM_PERCENTAGE,
+    OptimizeStorageConfigs
 } from '../../../utils/continous-optimization-consts';
 import getLogger from '../../../utils/logger';
 
@@ -38,7 +39,11 @@ import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from '../../workloads/mssql/storage-scripts';
 import { collectSnapshotCopyData } from './resilience-assessment-operation';
-import { checkForMissingOptimizePermissions } from '../assessment-utils';
+import {
+    checkForMissingOptimizePermissions,
+    buildBlockDeviceSpaceManagementEntry,
+    buildVolumeCombinedEntry
+} from '../assessment-utils';
 import { getHeadroomDrift } from '../headroom-assessment';
 
 const logger = getLogger();
@@ -72,7 +77,11 @@ interface DatabaseVolumeRecord {
 }
 
 const volumeConfigData = MSSQL_GOLDEN_CONFIG.filter(
-    e => e.type === 'storage' && e.subType === 'configuration' && e.resourceType === 'Volume'
+    e =>
+        e.type === 'storage' &&
+        e.subType === 'configuration' &&
+        e.resourceType === 'Volume' &&
+        e.id !== OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION
 );
 const lunConfigData = MSSQL_GOLDEN_CONFIG.filter(
     e => e.type === 'storage' && e.subType === 'configuration' && e.resourceType === 'Lun'
@@ -534,6 +543,18 @@ async function calculateStorageDrift(
                 violationDetails
             });
         });
+
+        const tieringTcoConfig = MSSQL_GOLDEN_CONFIG.find(
+            c => c.id === OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION
+        );
+        if (tieringTcoConfig) {
+            driftAssessmentData.push(
+                buildVolumeCombinedEntry(
+                    tieringTcoConfig,
+                    volumes as Array<Record<string, unknown>>
+                ) as MssqlAssessmentItemType
+            );
+        }
     }
     if (errors && errors.luns) {
         lunConfigData.forEach(config => {
@@ -577,7 +598,23 @@ async function calculateStorageDrift(
                 violationDetails
             });
         });
+
+        if (!errors?.volumes) {
+            const blockDeviceConfig = MSSQL_GOLDEN_CONFIG.find(
+                c => c.id === OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT
+            );
+            if (blockDeviceConfig) {
+                driftAssessmentData.push(
+                    buildBlockDeviceSpaceManagementEntry(
+                        blockDeviceConfig,
+                        luns as Array<Record<string, unknown>>,
+                        volumes as Array<Record<string, unknown>>
+                    ) as MssqlAssessmentItemType
+                );
+            }
+        }
     }
+
     if (errors && errors['mpio-policy']) {
         osConfigData.forEach(config => {
             driftAssessmentData.push({ ...config, errorMessage: errors['mpio-policy'] });

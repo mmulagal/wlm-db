@@ -848,8 +848,7 @@ async function initiateHostLevelAssessmentDataCollection(
             // If all the existing recommendation options match the recommended recommendation options, then the finding should be OPTIMIZED.
             let { finding, findingReasonCodes, recommendationOptions } = computeAssessment || {};
             const existingAssessmentData = hostLevelAssessmentData as ResourceAssessmentData;
-            const { compute: { recommendationOptions: existingRecommendationOptions } = {} } =
-                existingAssessmentData || {};
+            const existingRecommendationOptions = existingAssessmentData?.compute?.recommendationOptions;
             if (
                 existingRecommendationOptions &&
                 !isEmpty(existingRecommendationOptions) &&

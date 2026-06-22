@@ -6,6 +6,7 @@ import {
     AssessmentCategories,
     AssessmentCategoriesOracle,
     AssessmentTriggeredBy,
+    isCombinedOptimizeConfig,
     OptimizeOracleiSCSIStorageOperatingSystem,
     OptimizeOracleStorageSizing,
     OptimizeStorageConfigs,
@@ -25,13 +26,25 @@ import {
 } from './assessment-operations';
 import { DatabaseInstanceMetadata, DatabaseInstancesIncludingResource, Metadata } from '../../../utils/common-types';
 import { OracleGenericParameterDriftResponseType } from '../../../routes/types/oracle-continuous-optimization.types';
+import {
+    AssessmentItemType,
+    ConfigDetailType,
+    GenericViolationResponseType,
+    ViolatedConfigType
+} from '../../../routes/types/continuous-optimization.types';
 import { listDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { IS_DEMO_FLOW, sqlResponseParsing } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import { calculateStorageDrift, mapVolumeTypesToIdName } from './storage-assessment-operations';
 import { OracleMappedOntapVolumesResponse } from '../../workloads/oracle/common-types';
-import { activeSqlNodeDetails, handleOptimizeJobCreation, UnOptimizedDiskGroups } from '../assessment-utils';
+import {
+    activeSqlNodeDetails,
+    expandCombinedTargets,
+    handleOptimizeJobCreation,
+    isCombinedViolationDetail,
+    UnOptimizedDiskGroups
+} from '../assessment-utils';
 import { CUSTOM_SSM_EXECUTION_TIMEOUT, HttpErrorCodes, RESOURCESTYPE } from '../../../utils/consts';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
 import { getOracleDatabaseMappedVolumes } from '../../workloads/oracle/oracle-operations';
@@ -53,6 +66,25 @@ const STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS = ORACLE_GOLDEN_CONFIG.filter(
         entry.subType === 'layout' &&
         entry.resourceType === ASSESSMENT_RESOURCE_TYPE.DISK_GROUP
 ).map(entry => entry.id);
+
+// One recommended-value bucket (objects grouped by target ONTAP setting) plus optional NFS/export metadata.
+type OracleRecommendationMapEntry = {
+    recommended: { [recommendedValue: string]: string[] };
+    additionalInfo: Record<string, unknown>;
+};
+
+// Per-sub-parameter recommendation buckets keyed by OptimizeStorageConfigs (compression, tiering-policy, etc.).
+type OracleRecommendationMap = {
+    [key in OptimizeStorageConfigs]?: OracleRecommendationMapEntry;
+};
+
+// Returned by getOracleStorageConfigRecommendationMap alongside syntheticTargets and droppedCombined
+// so cont-opt-optimize-operations can expand combined optimize requests without re-assessing volumes.
+type OracleStorageRecommendationResult = {
+    recommendationMap: OracleRecommendationMap;
+    syntheticTargets: OptimizeStorageRequestParamsType[];
+    droppedCombined: string[];
+};
 
 interface OptimizeAsmConfigParams {
     accountId: string;
@@ -564,6 +596,50 @@ async function optimizeOracleStorageLayout(storageOptimizeParams: OptimizeStorag
     return parentJobId;
 }
 
+// Expands combined optimize targets into per-sub-parameter synthetics using violatedConfigs from
+// fresh drift (via expandCombinedTargets). Reports combined config names dropped when drift is
+// missing or error-shaped so the caller can fail fast instead of issuing partial PATCHes.
+function deriveOracleNonVolumeCombinedOutputs(
+    combinedTargets: OptimizeStorageRequestParamsType[],
+    storageDrift: Array<Record<string, unknown>>
+): { syntheticTargets: OptimizeStorageRequestParamsType[]; droppedCombined: string[] } {
+    if (combinedTargets.length === 0) {
+        return { syntheticTargets: [], droppedCombined: [] };
+    }
+
+    const driftById = new Map<string, Record<string, unknown>>();
+    storageDrift.forEach(item => {
+        if (typeof item.id === 'string') {
+            driftById.set(item.id, item);
+        }
+    });
+
+    const combinedDriftEntries = storageDrift
+        .filter((item): item is Record<string, unknown> & { id: string } => typeof item.id === 'string')
+        .filter(item => typeof item.errorMessage !== 'string' || item.errorMessage.length === 0)
+        .map(item => ({
+            id: item.id,
+            violationDetails: Array.isArray(item.violationDetails)
+                ? item.violationDetails.filter(isCombinedViolationDetail)
+                : []
+        }));
+
+    const droppedCombinedSet = new Set<string>();
+    combinedTargets.forEach(target => {
+        const rawItem = driftById.get(target.configurationName);
+        if (!rawItem || (typeof rawItem.errorMessage === 'string' && rawItem.errorMessage.length > 0)) {
+            droppedCombinedSet.add(target.configurationName);
+        }
+    });
+
+    const expandableTargets = combinedTargets.filter(target => !droppedCombinedSet.has(target.configurationName));
+
+    return {
+        syntheticTargets: expandCombinedTargets(expandableTargets, combinedDriftEntries),
+        droppedCombined: [...droppedCombinedSet]
+    };
+}
+
 async function getOracleStorageConfigRecommendationMap(
     accountId: string,
     credentialsId: string,
@@ -577,7 +653,7 @@ async function getOracleStorageConfigRecommendationMap(
     optimizationTargets: OptimizeStorageRequestParamsType[],
     serverNameWithHostName: string,
     parentJobId: string
-) {
+): Promise<OracleStorageRecommendationResult | undefined> {
     logger.info('Getting fresh recommendation', {
         accountId,
         credentialsId,
@@ -618,10 +694,23 @@ async function getOracleStorageConfigRecommendationMap(
             {} as Record<string, unknown>
         );
 
-        const mappedOntapVolumes = assessmentDataMap[AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES] as Record<
-            string,
-            OracleMappedOntapVolumesResponse
-        >;
+        const mappedOntapVolumes = assessmentDataMap[AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES] as
+            | Record<string, OracleMappedOntapVolumesResponse>
+            | undefined;
+        const storageAssessmentData = assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as
+            | StorageAssessment
+            | undefined;
+
+        const recommendationMap: OracleRecommendationMap = {};
+        const combinedTargets = optimizationTargets.filter(target =>
+            isCombinedOptimizeConfig(target.configurationName)
+        );
+        const requestedObjectsByCombinedId = new Map<string, Set<string>>();
+        combinedTargets.forEach(target => {
+            const requested = requestedObjectsByCombinedId.get(target.configurationName) ?? new Set<string>();
+            target.objectsToOptimize.forEach(objectName => requested.add(objectName));
+            requestedObjectsByCombinedId.set(target.configurationName, requested);
+        });
 
         const storageDrift = await calculateStorageDrift(
             accountId,
@@ -633,19 +722,9 @@ async function getOracleStorageConfigRecommendationMap(
             databaseInstanceName,
             deploymentType,
             fileSystemId,
-            mappedOntapVolumes,
-            assessmentDataMap[AssessmentCategoriesOracle.STORAGE] as StorageAssessment
+            mappedOntapVolumes as Record<string, OracleMappedOntapVolumesResponse>,
+            storageAssessmentData as StorageAssessment
         );
-
-        // recommendation map: config -> {recommendedValue -> [objectName]}
-        const recommendationMap: {
-            [key in OptimizeStorageConfigs]?: {
-                recommended: {
-                    [recommendedValue: string]: string[];
-                };
-                additionalInfo: Record<string, unknown>;
-            };
-        } = {};
 
         // calculateStorageDrift now returns a flat array; filter by type/subType.
         const volumes = storageDrift.filter(item => item.type === 'storage' && item.subType === 'configuration');
@@ -680,14 +759,64 @@ async function getOracleStorageConfigRecommendationMap(
                                         additionalInfo: additionalInfo ?? {}
                                     };
                                 }
-                                if (!recommendationMap[key].recommended[recommended]) {
-                                    recommendationMap[key].recommended[recommended] = [];
+                                if (!recommendationMap[key]!.recommended[recommended]) {
+                                    recommendationMap[key]!.recommended[recommended] = [];
                                 }
-                                recommendationMap[key].recommended[recommended].push(objectName as string);
+                                recommendationMap[key]!.recommended[recommended].push(objectName as string);
                             });
                     });
             });
-        return recommendationMap;
+
+        // Combined volume configs carry per-sub-parameter violations and configDetails on drift;
+        // bucket recommendations here from that payload (dataCategory → recommendedByDataCategory)
+        // instead of re-running volume classification evaluators at optimize time.
+        volumes
+            .filter(
+                (volume): volume is AssessmentItemType =>
+                    volume.id === 'storage-efficiencies' || volume.id === 'tiering-tco-optimization'
+            )
+            .forEach(entry => {
+                const configDetailByName = new Map<string, ConfigDetailType>(
+                    (entry.configDetails ?? []).map((detail: ConfigDetailType) => [detail.name, detail])
+                );
+                (entry.violationDetails ?? []).forEach((violation: GenericViolationResponseType) => {
+                    const dataCategory = violation.dataCategory ?? '';
+                    (violation.violatedConfigs ?? []).forEach(({ name }: ViolatedConfigType) => {
+                        const detail = configDetailByName.get(name);
+                        const recommendedByCategory = detail?.recommendedByDataCategory;
+                        const recommended =
+                            (recommendedByCategory && dataCategory in recommendedByCategory
+                                ? recommendedByCategory[dataCategory as keyof typeof recommendedByCategory]
+                                : undefined) ?? detail?.recommended;
+                        if (!recommended || !violation.objectName) {
+                            return;
+                        }
+                        const objectName = violation.objectName as string;
+                        if (!requestedObjectsByCombinedId.get(entry.id)?.has(objectName)) {
+                            return;
+                        }
+                        const key = name as OptimizeStorageConfigs;
+                        recommendationMap[key] ??= { recommended: {}, additionalInfo: {} };
+                        if (!recommendationMap[key]!.recommended[recommended]) {
+                            recommendationMap[key]!.recommended[recommended] = [];
+                        }
+                        const bucket = recommendationMap[key]!.recommended[recommended]!;
+                        if (!bucket.includes(objectName)) {
+                            bucket.push(objectName);
+                        }
+                    });
+                });
+            });
+
+        if (combinedTargets.length === 0) {
+            return { recommendationMap, syntheticTargets: [], droppedCombined: [] };
+        }
+
+        const { syntheticTargets, droppedCombined } = deriveOracleNonVolumeCombinedOutputs(
+            combinedTargets,
+            storageDrift
+        );
+        return { recommendationMap, syntheticTargets, droppedCombined };
     } catch (error) {
         logger.error('Failed to refresh assessment data', { error });
         jobStatus = JOBSTATUS.FAILED;
@@ -834,5 +963,8 @@ export {
     getOracleStorageConfigRecommendationMap,
     handleAfdDriftOptimization,
     handleAsmLibDriftOptimization,
-    oracleOptimizeStorageSizing
+    oracleOptimizeStorageSizing,
+    deriveOracleNonVolumeCombinedOutputs,
+    OracleRecommendationMap,
+    OracleRecommendationMapEntry
 };

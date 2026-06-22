@@ -21,11 +21,19 @@ import {
     supportedOracleOsVersions
 } from '../../workloads/oracle/consts';
 import ORACLE_GOLDEN_CONFIG from './golden-config';
-import { ORACLE_FILE_TYPE_LABEL_ORDER, ORACLE_FILE_TYPE_LABELS } from './consts';
+import {
+    ORACLE_FILE_TYPE_LABEL_ORDER,
+    ORACLE_FILE_TYPE_LABELS,
+    STORAGE_EFFICIENCIES_CONFIG_DETAILS,
+    TIERING_TCO_OPTIMIZATION_CONFIG_DETAILS,
+    COMBINED_VOLUME_CONFIG_IDS,
+    COMBINED_SUB_PARAMETER_TO_PROPERTY
+} from './consts';
 import {
     GenericViolationResponseType,
     AssessmentItemType,
-    AssessmentErrorItemType
+    AssessmentErrorItemType,
+    ViolatedConfigType
 } from '../../../routes/types/continuous-optimization.types';
 import {
     OracleMappedOntapVolumesResponse,
@@ -45,7 +53,12 @@ import { OS_ASSESSMENT } from './ssm-scripts/os-iscsi-assessment-scripts';
 import { NFS_OS_ASSESSMENT } from './ssm-scripts/os-nfs-assessment-scripts';
 import { ORACLE_STORAGE_SIZING_ASSESSMENT, VOLUME_LUN_CONFIGURATION } from './ssm-scripts/storage-assessment-scripts';
 import { getHeadroomDrift } from '../headroom-assessment';
-import { normalizeNfsVersion, isPdbGroupedVolumes, type GoldenConfigEntry } from '../assessment-utils';
+import {
+    buildBlockDeviceSpaceManagementEntry,
+    isPdbGroupedVolumes,
+    normalizeNfsVersion,
+    type GoldenConfigEntry
+} from '../assessment-utils';
 
 const logger = getLogger();
 
@@ -89,6 +102,7 @@ const volumeConfigData = ORACLE_GOLDEN_CONFIG.filter(
 );
 const volumeNfsConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'nfs' && e.resourceType === 'Volume');
 const lunConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'iscsi' && e.resourceType === 'Lun');
+const blockDeviceConfig = ORACLE_GOLDEN_CONFIG.find(e => e.id === 'block-device-space-management');
 const osIsciConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'iscsi' && e.resourceType !== 'Lun');
 const osNfsConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'nfs' && e.resourceType !== 'Volume');
 const sizingConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'sizing');
@@ -1279,6 +1293,163 @@ function getNfsVolumeConfigDrift(
     return nfsVolumeConfigDrift;
 }
 
+// Normalized per-volume outcome for shared parameter evaluation. `current === undefined` means
+// the volume is outside this parameter's assessment universe and should be skipped (e.g.
+// tieringMinCoolingDays on redo/control volumes in the combined path).
+type EvaluateOneVolumeParameterResult = {
+    isViolated: boolean;
+    current: string | undefined;
+    recommended: string;
+    dataCategory: string;
+};
+
+type EvaluateOneVolumeParameterContext = {
+    controlDataFileVolumeIds: string[];
+    redoLogsTempLogsVolumeIds: string[];
+    archiveLogVolumeIds: string[];
+    fraEnabled?: string;
+    rmanCompressionEnabled?: string;
+    tieringPolicyRecommendations: {
+        'data-control-files': string;
+        'log-files': string;
+        'archive-log-files': string;
+    };
+    compressionRecommendations: {
+        'log-files': string;
+        others: string;
+    };
+    deduplicationRecommendations: {
+        'log-files': string[];
+        others: string[];
+    };
+    compactionRecommendations: {
+        'log-files': string;
+        others: string;
+    };
+};
+
+// Shared volume-config switch for legacy golden-config rows and combined sub-parameters.
+// Kept at module scope (not inside getVolumeConfigDrift) so diffs on that function stay minimal.
+function evaluateOneVolumeParameter(
+    parameter: string,
+    volume: Record<string, unknown>,
+    fallbackRecommended: string,
+    context: EvaluateOneVolumeParameterContext
+): EvaluateOneVolumeParameterResult {
+    const {
+        controlDataFileVolumeIds,
+        redoLogsTempLogsVolumeIds,
+        archiveLogVolumeIds,
+        fraEnabled,
+        rmanCompressionEnabled,
+        tieringPolicyRecommendations,
+        compressionRecommendations,
+        deduplicationRecommendations,
+        compactionRecommendations
+    } = context;
+    const isIn = (list: string[], id: string) => list.includes(id);
+
+    const objectId = (volume.uuid as string) || '';
+    let value = (volume[parameter] ?? '').toString();
+    let recommended = fallbackRecommended;
+    let isViolated = false;
+    let dataCategory = '';
+
+    const volumeMembership = [controlDataFileVolumeIds, redoLogsTempLogsVolumeIds, archiveLogVolumeIds].filter(list =>
+        isIn(list, objectId)
+    ).length;
+
+    switch (parameter) {
+        case 'compaction':
+            value = value !== 'none' ? 'enabled' : value;
+            if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
+                recommended = compactionRecommendations['log-files'];
+                dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
+            } else {
+                recommended = compactionRecommendations.others;
+                dataCategory = 'non-log-files';
+            }
+            isViolated = value !== recommended;
+            break;
+
+        case 'tieringMinCoolingDays':
+            if (isIn(redoLogsTempLogsVolumeIds, objectId) || isIn(controlDataFileVolumeIds, objectId)) {
+                return { isViolated: false, current: undefined, recommended: '', dataCategory: '' };
+            }
+            if (isIn(archiveLogVolumeIds, objectId)) {
+                dataCategory = 'archive-log-files';
+            }
+            recommended =
+                isIn(archiveLogVolumeIds, objectId) && fraEnabled === 'yes' && rmanCompressionEnabled === 'no'
+                    ? '14'
+                    : '2';
+            isViolated = value !== recommended;
+            break;
+
+        case 'tieringPolicy':
+            if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
+                recommended = tieringPolicyRecommendations['log-files'];
+                dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
+            } else if (isIn(controlDataFileVolumeIds, objectId)) {
+                recommended = tieringPolicyRecommendations['data-control-files'];
+                dataCategory = volumeMembership >= 2 ? 'mixed' : 'data-control-files';
+            } else if (isIn(archiveLogVolumeIds, objectId)) {
+                recommended = tieringPolicyRecommendations['archive-log-files'];
+                dataCategory = 'archive-log-files';
+            } else {
+                recommended = 'snapshot_only';
+            }
+
+            isViolated = value !== recommended;
+            break;
+
+        case 'compressionType': {
+            const currentCompression = (volume.compression ?? '').toString();
+            if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
+                value = currentCompression === 'none' ? 'none' : value;
+                recommended = compressionRecommendations['log-files'];
+                dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
+            } else {
+                recommended = compressionRecommendations.others;
+                dataCategory = 'non-log-files';
+            }
+            isViolated = value !== recommended;
+            break;
+        }
+
+        case 'deduplication': {
+            let multirecommendations = deduplicationRecommendations['log-files'];
+            if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
+                dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
+                recommended = 'none';
+            } else {
+                multirecommendations = deduplicationRecommendations.others;
+                dataCategory = 'non-log-files';
+                recommended = 'inline';
+            }
+            isViolated = !multirecommendations.includes(value);
+            break;
+        }
+
+        case 'snapshotAutodelete':
+            recommended = value === 'true' ? 'oldest_first' : 'enabled';
+            value = value === 'true' ? (volume.snapshotDeleteOrder ?? '').toString() : 'disabled';
+            isViolated = value !== recommended;
+            break;
+
+        default:
+            isViolated = value !== recommended;
+            break;
+    }
+
+    return {
+        isViolated,
+        current: value,
+        recommended,
+        dataCategory
+    };
+}
+
 function getVolumeConfigDrift(
     volumeTypeMap: Record<OracleSysFileTypes, OracleVolumeRecord[]>,
     storageAssessmentData: StorageAssessment,
@@ -1351,126 +1522,147 @@ function getVolumeConfigDrift(
     ];
     const isIn = (list: string[], id: string) => list.includes(id);
 
-    const volumeConfigDrift: (AssessmentItemType | AssessmentErrorItemType)[] = volumeConfigData.map(config => {
-        const objectsInViolation: GenericViolationResponseType[] = [];
-        const objectsInViolationNames: string[] = [];
-        let totalObjectsAssessed = volumesData.length;
-        volumesData.forEach(volume => {
-            let value = (volume[config.parameter!] ?? '').toString();
-            const objectName = volume.name || '';
-            const objectId = volume.uuid || '';
-            let recommended = (config.value ?? '').toString();
-            let isViolated = false;
-            let dataCategory = '';
+    const volumeEvalContext: EvaluateOneVolumeParameterContext = {
+        controlDataFileVolumeIds,
+        redoLogsTempLogsVolumeIds,
+        archiveLogVolumeIds,
+        fraEnabled,
+        rmanCompressionEnabled,
+        tieringPolicyRecommendations,
+        compressionRecommendations,
+        deduplicationRecommendations,
+        compactionRecommendations
+    };
 
-            const volumeMembership = [controlDataFileVolumeIds, redoLogsTempLogsVolumeIds, archiveLogVolumeIds].filter(
-                list => isIn(list, objectId)
-            ).length;
+    const volumeConfigDrift: (AssessmentItemType | AssessmentErrorItemType)[] = volumeConfigData
+        .filter(
+            config => !COMBINED_VOLUME_CONFIG_IDS.includes(config.id as (typeof COMBINED_VOLUME_CONFIG_IDS)[number])
+        )
+        .map(config => {
+            const objectsInViolation: GenericViolationResponseType[] = [];
+            const objectsInViolationNames: string[] = [];
+            let totalObjectsAssessed = volumesData.length;
+            if (config.parameter === 'tieringMinCoolingDays') {
+                totalObjectsAssessed = archiveLogVolumeIds.length;
+            }
+            const fallbackRecommended = (config.value ?? '').toString();
+            volumesData.forEach(volume => {
+                const objectId = (volume.uuid as string) || '';
+                if (config.parameter === 'tieringMinCoolingDays' && !isIn(archiveLogVolumeIds, objectId)) {
+                    return;
+                }
+                const objectName = (volume.name as string) || '';
+                const { isViolated, current, recommended, dataCategory } = evaluateOneVolumeParameter(
+                    config.parameter!,
+                    volume,
+                    fallbackRecommended,
+                    volumeEvalContext
+                );
 
-            switch (config.parameter) {
-                case 'compaction':
-                    value = value !== 'none' ? 'enabled' : value;
-                    if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
-                        recommended = compactionRecommendations['log-files'];
-                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
-                    } else {
-                        recommended = compactionRecommendations.others;
-                        dataCategory = 'non-log-files';
-                    }
-                    isViolated = value !== recommended;
-                    break;
-
-                case 'tieringMinCoolingDays':
-                    totalObjectsAssessed = archiveLogVolumeIds.length;
-                    if (isIn(redoLogsTempLogsVolumeIds, objectId) || isIn(controlDataFileVolumeIds, objectId)) {
-                        return;
-                    }
-                    recommended =
-                        isIn(archiveLogVolumeIds, objectId) && fraEnabled === 'yes' && rmanCompressionEnabled === 'no'
-                            ? '14'
-                            : '2';
-                    isViolated = value !== recommended;
-                    break;
-
-                case 'tieringPolicy':
-                    if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
-                        recommended = tieringPolicyRecommendations['log-files'];
-                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
-                    } else if (isIn(controlDataFileVolumeIds, objectId)) {
-                        recommended = tieringPolicyRecommendations['data-control-files'];
-                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'data-control-files';
-                    } else if (isIn(archiveLogVolumeIds, objectId)) {
-                        recommended = tieringPolicyRecommendations['archive-log-files'];
-                        dataCategory = 'archive-log-files';
-                    }
-
-                    isViolated = value !== recommended;
-                    break;
-
-                case 'compressionType': {
-                    const currentCompression = (volume.compression ?? '').toString();
-                    const recommendations = compressionRecommendations;
-                    if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
-                        value = currentCompression === 'none' ? 'none' : value;
-                        recommended = recommendations['log-files'];
-                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
-                    } else {
-                        recommended = recommendations.others;
-                        dataCategory = 'non-log-files';
-                    }
-                    isViolated = value !== recommended;
-                    break;
+                if (current === undefined) {
+                    return;
                 }
 
-                case 'deduplication': {
-                    const recommendations = deduplicationRecommendations;
-                    let multirecommendations = recommendations['log-files'];
-                    if (isIn(redoLogsTempLogsVolumeIds, objectId)) {
-                        dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
-                        recommended = 'none';
-                    } else {
-                        multirecommendations = recommendations.others;
-                        dataCategory = 'non-log-files';
-                        recommended = 'inline';
-                    }
-                    isViolated = !multirecommendations.includes(value);
-                    break;
+                if (isViolated) {
+                    objectsInViolation.push({
+                        objectName,
+                        value: current?.toString() || '',
+                        objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                        recommended,
+                        ...(dataCategory ? { dataCategory } : {})
+                    });
+                    objectsInViolationNames.push(objectName);
                 }
+            });
 
-                case 'snapshotAutodelete':
-                    // Determine snapshot autodelete status and order
-                    recommended = value === 'true' ? 'oldest_first' : 'enabled';
-                    value = value === 'true' ? (volume.snapshotDeleteOrder ?? '').toString() : 'disabled';
-                    isViolated = value !== recommended;
-                    break;
-
-                default:
-                    isViolated = value !== recommended;
-                    break;
-            }
-
-            if (isViolated) {
-                objectsInViolation.push({
-                    objectName,
-                    value: value?.toString() || '',
-                    objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                    recommended,
-                    dataCategory
-                });
-                objectsInViolationNames.push(objectName);
-            }
+            return {
+                ...config,
+                recommended: fallbackRecommended,
+                status: objectsInViolation.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
+                objectsInViolation: [...new Set(objectsInViolationNames)],
+                totalObjectsAssessed,
+                totalObjectsInViolation: objectsInViolation.length,
+                violationDetails: objectsInViolation
+            };
         });
 
-        return {
-            ...config,
-            recommended: (config.value ?? '').toString(),
-            status: objectsInViolation.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED,
-            objectsInViolation: [...new Set(objectsInViolationNames)],
-            totalObjectsAssessed,
-            totalObjectsInViolation: objectsInViolation.length,
-            violationDetails: objectsInViolation
-        };
-    });
+    // Append combined golden-config entries after legacy per-parameter rows. Reuses evaluateOneVolumeParameter per
+    // sub-parameter, aggregates violatedConfigs into one drift row, and attaches configDetails so
+    // the optimize path can resolve recommendations from drift without re-evaluating volumes.
+    volumeConfigData
+        .filter(config => COMBINED_VOLUME_CONFIG_IDS.includes(config.id as (typeof COMBINED_VOLUME_CONFIG_IDS)[number]))
+        .forEach(combined => {
+            const detailMap =
+                combined.id === 'storage-efficiencies'
+                    ? STORAGE_EFFICIENCIES_CONFIG_DETAILS
+                    : TIERING_TCO_OPTIMIZATION_CONFIG_DETAILS;
+            const subNames = Object.keys(detailMap);
+            const violationDetails: GenericViolationResponseType[] = [];
+
+            volumesData.forEach(volume => {
+                const violatedConfigs: ViolatedConfigType[] = [];
+                let combinedCategory = '';
+                subNames.forEach(subName => {
+                    const parameter = COMBINED_SUB_PARAMETER_TO_PROPERTY[subName];
+                    const objectId = (volume.uuid as string) || '';
+                    if (parameter === 'tieringMinCoolingDays' && !isIn(archiveLogVolumeIds, objectId)) {
+                        return;
+                    }
+                    const { isViolated, current, dataCategory } = evaluateOneVolumeParameter(
+                        parameter,
+                        volume,
+                        '',
+                        volumeEvalContext
+                    );
+                    if (current === undefined || !isViolated) {
+                        return;
+                    }
+                    violatedConfigs.push({ name: subName, current });
+                    combinedCategory =
+                        combinedCategory && dataCategory && combinedCategory !== dataCategory
+                            ? 'mixed'
+                            : combinedCategory || dataCategory;
+                });
+                if (violatedConfigs.length > 0) {
+                    violationDetails.push({
+                        objectName: (volume.name as string) ?? '',
+                        value: '',
+                        objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                        ...(combinedCategory ? { dataCategory: combinedCategory } : {}),
+                        violatedConfigs
+                    });
+                }
+            });
+
+            const objectsInViolation = violationDetails.map(detail => detail.objectName);
+            const totalObjectsAssessed =
+                combined.id === 'tiering-tco-optimization'
+                    ? Math.max(volumesData.length, archiveLogVolumeIds.length)
+                    : volumesData.length;
+
+            volumeConfigDrift.push({
+                ...combined,
+                recommended: '',
+                status: objectsInViolation.length === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+                objectsInViolation,
+                totalObjectsAssessed,
+                totalObjectsInViolation: objectsInViolation.length,
+                configDetails: (combined.components ?? []).map(component => {
+                    const name = component.name ?? component.parameter!;
+                    const overrides = detailMap[name] ?? {};
+                    return {
+                        name,
+                        recommended: overrides.recommended ?? String(component.value ?? ''),
+                        objectType: component.objectType ?? ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                        ...(overrides.recommendedByDataCategory
+                            ? { recommendedByDataCategory: overrides.recommendedByDataCategory }
+                            : {}),
+                        ...(overrides.recommendedNote ? { recommendedNote: overrides.recommendedNote } : {})
+                    };
+                }),
+                violationDetails
+            });
+        });
 
     if (storageProtocol === 'NFS') {
         volumeConfigDrift.push(...getNfsVolumeConfigDrift(storageAssessmentData as StorageNfsAssessment));
@@ -2150,6 +2342,15 @@ async function calculateStorageDrift(
 
     if (protocol === STORAGE_PROTOCOLS.ISCSI) {
         items.push(...getLunConfigDrift(storageAssessmentData));
+        if (blockDeviceConfig && !storageAssessmentData?.luns?.error && !storageAssessmentData?.volumes?.error) {
+            items.push(
+                buildBlockDeviceSpaceManagementEntry(
+                    blockDeviceConfig,
+                    storageAssessmentData?.luns?.data ?? [],
+                    storageAssessmentData?.volumes?.data ?? []
+                )
+            );
+        }
         items.push(...getOSConfigDrift(ec2InstanceId, databaseInstanceName, storageAssessmentData));
     } else {
         items.push(

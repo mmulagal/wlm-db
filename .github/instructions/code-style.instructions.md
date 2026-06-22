@@ -79,6 +79,49 @@ for (const r of resources) {
 
 Don't introduce thin wrappers that merely delegate with hardcoded arguments. Call the underlying function directly unless the wrapper prevents duplication across 3+ callers or adds validation/error-handling.
 
+## No inline helpers for non-trivial logic
+
+Don't define nested arrow or `function` expressions inside another function when they
+
+- contain loops, `filter`/`map` chains, or parsing of structured strings (paths, URIs, JSON), or
+- mutate captured outer state across more than one branch, or
+- exceed ~5 lines of body.
+
+Lift such helpers to module scope (file-level `function` declaration or `const fn = ...` near other helpers) so they get an independent name, are testable in isolation, and are visible without scrolling into the caller. Tiny single-expression callbacks (`arr.map(x => x.id)`, `arr.filter(r => r.status === 'active')`) stay inline — this rule is about helpers, not callbacks.
+
+```typescript
+// Bad — nested helper parses a path, mutates an outer map, and runs a filter+forEach
+function buildIndex(items: Item[], lookup: Map<string, Parent>) {
+    const out = new Map<string, Pair>();
+    const collect = (item: Item) => {
+        const segments = item.path.split('/');
+        const parentName = segments[2];
+        const parent = lookup.get(parentName);
+        if (parent) {
+            out.set(item.id, { item, parent });
+        }
+    };
+    items.filter(i => i.path).forEach(collect);
+    return out;
+}
+
+// Good — helper lifted to module scope, caller body reads top-to-bottom
+function pairWithParent(item: Item, lookup: Map<string, Parent>): Pair | undefined {
+    const parentName = item.path.split('/')[2];
+    const parent = lookup.get(parentName);
+    return parent ? { item, parent } : undefined;
+}
+
+function buildIndex(items: Item[], lookup: Map<string, Parent>) {
+    const out = new Map<string, Pair>();
+    items.forEach(item => {
+        const pair = pairWithParent(item, lookup);
+        if (pair) out.set(item.id, pair);
+    });
+    return out;
+}
+```
+
 ---
 
 # Error Handling
@@ -145,6 +188,25 @@ try {
 ## HTTP errors
 
 Always use `createError(HttpErrorCodes.X, message)` from `http-errors`. Never `throw new Error()`.
+
+## Comments
+
+- Keep any single comment block (line or JSDoc) to **3-5 lines maximum**. Longer commentary belongs in a design doc or PR description, not the source.
+- Describe the **current implementation** — what the code does, the contract it upholds, the invariant it relies on. Do **not** describe the diff (no "previously", "now does", "replaces the old pass", "moved out of X"); the code at HEAD must read the same to someone joining today as to the author.
+- Skip narration comments that restate the code (`// Loop over targets`, `// Set the result`). Add a comment only when it captures non-obvious intent, a constraint, or a subtle decision the code itself cannot convey.
+- A JSDoc on a function should state purpose + return contract in 2-4 lines. Co-locate it directly above the function it documents — never separate them with another declaration.
+
+```typescript
+// Good — short, describes current behavior + invariant
+// Skip non-combined names: descriptor would be undefined and crash on .components.
+if (!isCombinedOptimizeConfig(target.configurationName)) return;
+
+// Bad — describes the diff / change history
+// We used to expand combined targets in the caller, but now we do it here in a single pass
+// because the previous approach fetched assessment data twice and that was slow. Eventually
+// the legacy pre-expansion call site at line 312 will be removed once Oracle is migrated.
+if (!isCombinedOptimizeConfig(target.configurationName)) return;
+```
 
 ---
 

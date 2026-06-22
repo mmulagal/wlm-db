@@ -17,8 +17,10 @@ const storageConfigDescriptions: { [key: string]: string } = {
     'space-mgmt-try-first': 'Space management',
     'tiering-min-cooling-days': 'Tiering minimum cooling days',
     'tiering-policy': 'Tiering policy',
+    'tiering-tco-optimization': 'Tiering / TCO optimization',
     'space-reservation-enabled': 'Space reservation',
     'space-allocation-allocated': 'Space allocation',
+    'block-device-space-management': 'Block device space management',
     'snapshot-policy': 'Snapshot policy'
 };
 

@@ -1,4 +1,5 @@
 import { OptimizeStorageConfigs } from '../../../utils/continous-optimization-consts';
+import { ConfigDetailType } from '../../../routes/types/continuous-optimization.types';
 import { OracleSysFileTypes } from '../../workloads/oracle/common-types';
 
 const NETAPP_HOST_UTILITIES_RELATIVE_PATH = `${process.cwd()}/resources/oracle/packages/NetApp_Linux_Host_Utilities_8.0.rpm`;
@@ -93,6 +94,103 @@ const ORACLE_FILE_TYPE_LABEL_ORDER: OracleSysFileTypes[] = [
     OracleSysFileTypes.TEMP_FILES
 ];
 
+/** Per-volume-type targets for combined storage-efficiency and tiering drift evaluation. */
+const TIERING_POLICY_RECOMMENDATIONS = {
+    'data-control-files': 'none',
+    'log-files': 'none',
+    'archive-log-files': 'auto'
+} as const;
+
+const COMPRESSION_RECOMMENDATIONS = {
+    'log-files': 'none',
+    others: 'adaptive'
+} as const;
+
+const DEDUPLICATION_RECOMMENDATIONS: { 'log-files': string[]; others: string[] } = {
+    'log-files': ['none'],
+    others: ['inline', 'both']
+};
+
+const COMPACTION_RECOMMENDATIONS = {
+    'log-files': 'none',
+    others: 'enabled'
+} as const;
+
+/**
+ * Maps combined sub-parameter display names to volume-record property keys for evaluateOne.
+ * Needed because golden-config components use UI names (`compression`) while assessment logic
+ * reads ONTAP fields (`compressionType`). Source: components[].parameter in golden-config.ts.
+ */
+const COMBINED_SUB_PARAMETER_TO_PROPERTY: Record<string, string> = {
+    compression: 'compressionType',
+    deduplication: 'deduplication',
+    compaction: 'compaction',
+    'tiering-policy': 'tieringPolicy',
+    'tiering-min-cooling-days': 'tieringMinCoolingDays'
+};
+
+// Per-sub-parameter recommended overrides for combined drift rows (storage-efficiencies,
+// tiering-tco-optimization). Populates configDetails.recommendedByDataCategory on assessment output.
+type CombinedConfigDetailOverrides = Pick<
+    ConfigDetailType,
+    'recommended' | 'recommendedByDataCategory' | 'recommendedNote'
+>;
+
+// Lookup table keyed by sub-parameter name for a given combined golden-config id.
+type CombinedVolumeConfigDetails = Record<string, CombinedConfigDetailOverrides>;
+
+// Per-sub-parameter compression/dedup/compaction targets for the storage-efficiencies combined entry.
+const STORAGE_EFFICIENCIES_CONFIG_DETAILS: CombinedVolumeConfigDetails = {
+    compression: {
+        recommended: '',
+        recommendedByDataCategory: {
+            'log-files': COMPRESSION_RECOMMENDATIONS['log-files'],
+            'non-log-files': COMPRESSION_RECOMMENDATIONS.others,
+            mixed: 'varies'
+        }
+    },
+    deduplication: {
+        recommended: '',
+        recommendedByDataCategory: {
+            'log-files': DEDUPLICATION_RECOMMENDATIONS['log-files'][0],
+            'non-log-files': DEDUPLICATION_RECOMMENDATIONS.others[0],
+            mixed: 'varies'
+        },
+        recommendedNote: '`both` is also acceptable for non-log-files volumes'
+    },
+    compaction: {
+        recommended: '',
+        recommendedByDataCategory: {
+            'log-files': COMPACTION_RECOMMENDATIONS['log-files'],
+            'non-log-files': COMPACTION_RECOMMENDATIONS.others,
+            mixed: 'varies'
+        }
+    }
+};
+
+// Per-sub-parameter tiering targets for the tiering-tco-optimization combined drift entry.
+const TIERING_TCO_OPTIMIZATION_CONFIG_DETAILS: CombinedVolumeConfigDetails = {
+    'tiering-policy': {
+        recommended: '',
+        recommendedByDataCategory: {
+            'data-control-files': TIERING_POLICY_RECOMMENDATIONS['data-control-files'],
+            'log-files': TIERING_POLICY_RECOMMENDATIONS['log-files'],
+            'archive-log-files': TIERING_POLICY_RECOMMENDATIONS['archive-log-files'],
+            mixed: 'varies'
+        }
+    },
+    'tiering-min-cooling-days': {
+        recommended: '',
+        recommendedByDataCategory: {
+            'archive-log-files': '2'
+        },
+        recommendedNote: '14 when FRA is enabled and RMAN compression is disabled; not assessed on non-archive volumes'
+    }
+};
+
+// Golden-config ids handled in the appended combined block of getVolumeConfigDrift (skipped by the legacy map loop).
+const COMBINED_VOLUME_CONFIG_IDS = ['storage-efficiencies', 'tiering-tco-optimization'] as const;
+
 export {
     NETAPP_HOST_UTILITIES_RELATIVE_PATH,
     OracleJobMetadata,
@@ -105,5 +203,13 @@ export {
     oracleSpecialStorageConfigNames,
     ORACLE_COMPUTE_DRIFT_RESPONSE_KEYS,
     ORACLE_FILE_TYPE_LABELS,
-    ORACLE_FILE_TYPE_LABEL_ORDER
+    ORACLE_FILE_TYPE_LABEL_ORDER,
+    TIERING_POLICY_RECOMMENDATIONS,
+    COMPRESSION_RECOMMENDATIONS,
+    DEDUPLICATION_RECOMMENDATIONS,
+    COMPACTION_RECOMMENDATIONS,
+    STORAGE_EFFICIENCIES_CONFIG_DETAILS,
+    TIERING_TCO_OPTIMIZATION_CONFIG_DETAILS,
+    COMBINED_VOLUME_CONFIG_IDS,
+    COMBINED_SUB_PARAMETER_TO_PROPERTY
 };

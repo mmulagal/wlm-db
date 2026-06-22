@@ -22,7 +22,8 @@ import {
     DismissedConfiguration,
     AssessmentMetadata,
     GenericParameterDriftResponseV1,
-    DismissedConfigurationsResponse
+    DismissedConfigurationsResponse,
+    ConfigDetail
 } from './continuous-optimization.types';
 
 const OracleGenericParameterDriftResponse = Type.Object({
@@ -42,7 +43,11 @@ const OracleGenericParameterDriftResponse = Type.Object({
     current: Type.Optional(Type.String()),
     totalObjectsAssessed: Type.Optional(Type.Number()),
     totalObjectsInViolation: Type.Optional(Type.Number()),
-    resourceType: Type.Optional(Type.String())
+    resourceType: Type.Optional(Type.String()),
+    // Set only by aggregate configs (storage-efficiencies, tiering-tco-optimization).
+    // Catalogue of every sub-parameter the entry assessed, with each one's recommended
+    // target value and source resource type. Flows to v1 via Type.Omit below.
+    configDetails: Type.Optional(Type.Array(ConfigDetail))
 });
 type OracleGenericParameterDriftResponseType = Static<typeof OracleGenericParameterDriftResponse>;
 
