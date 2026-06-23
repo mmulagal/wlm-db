@@ -48,7 +48,7 @@
         "primaryCtaTo": "/databases/inventory",
         "primaryCtaBluexpTo": "/fsxdb/inventory",
         "noCredentialCtaLabel": "Explore savings",
-        "noCredentialsDescription": "Add credentials to begin optimizing databases on FSx for ONTAP",
+        "noCredentialsDescription": "Discover and optimize your self-managed databases on FSx for ONTAP - Microsoft SQL Server, Oracle, and PostgreSQL.",
         "noCredentialCtaDropdownTo": [
             {
                 "label": "Microsoft SQL Server on EBS",
