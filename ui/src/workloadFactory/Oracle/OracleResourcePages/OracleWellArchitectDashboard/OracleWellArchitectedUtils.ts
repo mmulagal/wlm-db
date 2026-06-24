@@ -1854,6 +1854,8 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
         errorMessage: assessment.errorMessage,
         objectsInViolation: assessment.objectsInViolation || [],
         violationDetails: assessment.violationDetails || [],
+        // Per sub-config recommendations, used to build Current/Recommended columns for nested configs
+        configDetails: assessment.configDetails,
         totalObjectsAssessed: assessment.totalObjectsAssessed ?? 0,
         totalObjectsInViolation: assessment.totalObjectsInViolation ?? 0,
         status: optimizingData[configId] || '',

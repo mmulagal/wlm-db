@@ -96,43 +96,72 @@
             "focusWidgetName": "ONTAP"
         },
         {
-            "id": "fractional-reserve",
-            "name": "Fractional reserve",
+            "id": "block-device-space-management",
+            "name": "Block device space management",
             "type": "storage",
             "severity": "critical",
-            "recommendation": "Workload Factory recommends disabling fractional reserve to eliminate unnecessary space reservation for overwrites thereby optimizing space utilization and cost-effectiveness for thin-provisioned FSx for ONTAP volumes. This configuration is essential when using thin provisioning with Oracle databases.",
+            "recommendation": "Workload Factory recommends configuring block device space settings for LUNs used by Oracle database instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin-provisioned volumes:\n- Space reservation: enabled - reserves enough space in the volume so writes to the LUN do not fail.\n- Space allocation: enabled - allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data.\n- Fractional reserve: disabled - avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.\nTogether, these settings help ensure predictable database behavior while minimizing wasted capacity.",
             "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "status": "not-optimized",
-            "recommended": "0",
+            "recommended": "",
             "subType": "configuration",
-            "resourceType": "Volume",
+            "resourceType": "Volume/Lun",
             "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
-                    "value": "100",
+                    "value": "",
                     "objectType": "Volume",
-                    "recommended": "0",
-                    "dataCategory": ""
+                    "violatedConfigs": [
+                        {
+                            "name": "fractional-reserve",
+                            "current": "100"
+                        }
+                    ]
                 },
                 {
                     "objectName": "oraclearch2",
-                    "value": "100",
+                    "value": "",
                     "objectType": "Volume",
-                    "recommended": "0",
-                    "dataCategory": ""
+                    "violatedConfigs": [
+                        {
+                            "name": "fractional-reserve",
+                            "current": "100"
+                        }
+                    ]
                 },
                 {
                     "objectName": "oracledata2",
-                    "value": "100",
+                    "value": "",
                     "objectType": "Volume",
-                    "recommended": "0",
-                    "dataCategory": ""
+                    "violatedConfigs": [
+                        {
+                            "name": "fractional-reserve",
+                            "current": "100"
+                        }
+                    ]
                 }
             ],
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 3,
-            "focusWidgetName": "ONTAP"
+            "focusWidgetName": "ONTAP",
+            "configDetails": [
+                {
+                    "name": "space-reservation-enabled",
+                    "recommended": "true",
+                    "objectType": "Lun"
+                },
+                {
+                    "name": "space-allocation-allocated",
+                    "recommended": "true",
+                    "objectType": "Lun"
+                },
+                {
+                    "name": "fractional-reserve",
+                    "recommended": "0",
+                    "objectType": "Volume"
+                }
+            ]
         },
         {
             "id": "snapshot-policy",
@@ -269,142 +298,119 @@
             "focusWidgetName": "ONTAP"
         },
         {
-            "id": "tiering-policy",
-            "name": "Tiering policy",
+            "id": "tiering-tco-optimization",
+            "name": "Tiering / TCO optimization",
             "type": "storage",
             "severity": "critical",
-            "recommendation": "Workload Factory recommends enabling tiering for database volumes on FSx for ONTAP when it makes sense. Tiering automatically moves less-used data, such as snapshots and archived logs, to lower-cost storage while keeping active data and redo logs on high-performance storage. This lowers storage costs, helps protect performance for critical workloads, and reduces manual management. You can set different tiering policies for Oracle data files, redo logs, and archive logs.",
+            "recommendation": "Workload Factory recommends enabling tiering for some Oracle database volumes on Amazon FSx for NetApp ONTAP where appropriate, to move cold data to lower-cost capacity storage and reduce overall storage costs, while keeping active database data on high-performance SSDs to preserve critical performance. Recommended policies are based on the data type in each volume, with tiering disabled (none) for data files and redo logs, and auto for archive logs. For archive/FRA volumes, it is also recommended to set an appropriate cooling period before data is tiered—typically 2 days for compressed backups and 14 days for uncompressed backups—to balance cost efficiency and performance.",
             "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "status": "not-optimized",
-            "recommended": "snapshot_only",
+            "recommended": "",
             "subType": "configuration",
             "resourceType": "Volume",
             "objectsInViolation": ["oracledata2"],
             "violationDetails": [
                 {
                     "objectName": "oracledata2",
-                    "value": "all",
+                    "value": "",
                     "objectType": "Volume",
-                    "recommended": "none",
-                    "dataCategory": "data-control-files"
+                    "dataCategory": "data-control-files",
+                    "violatedConfigs": [
+                        {
+                            "name": "tiering-policy",
+                            "current": "all"
+                        }
+                    ]
                 }
             ],
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 1,
-            "focusWidgetName": "ONTAP"
+            "focusWidgetName": "ONTAP",
+            "configDetails": [
+                {
+                    "name": "tiering-policy",
+                    "recommended": "",
+                    "objectType": "Volume",
+                    "recommendedByDataCategory": {
+                        "log-files": "none",
+                        "mixed": "varies",
+                        "data-control-files": "none",
+                        "archive-log-files": "auto"
+                    }
+                },
+                {
+                    "name": "tiering-min-cooling-days",
+                    "recommended": "",
+                    "objectType": "Volume",
+                    "recommendedByDataCategory": {
+                        "archive-log-files": "2"
+                    },
+                    "recommendedNote": "14 when FRA is enabled and RMAN compression is disabled; not assessed on non-archive volumes"
+                }
+            ]
         },
         {
-            "id": "tiering-min-cooling-days",
-            "name": "Tiering minimum cooling days",
+            "id": "storage-efficiencies",
+            "name": "Storage efficiencies",
             "type": "storage",
-            "severity": "critical",
-            "recommendation": "Workload Factory recommends setting the appropriate minimum cooling days for a volume because it determines when data becomes eligible to move to cost-effective capacity tiers, optimizing storage costs while maintaining performance for frequently accessed data. Archive/FRA Volumes (tiering-minimum-cooling-days=2(for RMAN-compressed backups) tiering-minimum-cooling-days=14(for uncompressed backups)).",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
-            "status": "optimized",
-            "recommended": "",
-            "subType": "configuration",
-            "resourceType": "Volume",
-            "objectsInViolation": [],
-            "violationDetails": [],
-            "totalObjectsAssessed": 1,
-            "totalObjectsInViolation": 0,
-            "focusWidgetName": "ONTAP"
-        },
-        {
-            "id": "compression",
-            "name": "Compression",
-            "type": "storage",
-            "severity": "critical",
+            "severity": "warning",
             "recommendation": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle’s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.",
             "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "status": "not-optimized",
             "recommended": "",
             "subType": "configuration",
             "resourceType": "Volume",
-            "objectsInViolation": ["oracleredo2", "oraclearch2"],
+            "objectsInViolation": ["data_dnfs3"],
             "violationDetails": [
                 {
-                    "objectName": "oracleredo2",
-                    "value": "adaptive",
+                    "objectName": "data_dnfs3",
+                    "value": "",
                     "objectType": "Volume",
-                    "recommended": "none",
-                    "dataCategory": "log-files"
-                },
-                {
-                    "objectName": "oraclearch2",
-                    "value": "adaptive",
-                    "objectType": "Volume",
-                    "recommended": "none",
-                    "dataCategory": "mixed"
+                    "dataCategory": "non-log-files",
+                    "violatedConfigs": [
+                        {
+                            "name": "deduplication",
+                            "current": "background"
+                        }
+                    ]
                 }
             ],
-            "totalObjectsAssessed": 3,
-            "totalObjectsInViolation": 2,
-            "focusWidgetName": "ONTAP"
-        },
-        {
-            "id": "deduplication",
-            "name": "Deduplication",
-            "type": "storage",
-            "severity": "critical",
-            "recommendation": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle’s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
-            "status": "not-optimized",
-            "recommended": "",
-            "subType": "configuration",
-            "resourceType": "Volume",
-            "objectsInViolation": ["oracleredo2", "oraclearch2"],
-            "violationDetails": [
+            "totalObjectsAssessed": 4,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "ONTAP",
+            "configDetails": [
                 {
-                    "objectName": "oracleredo2",
-                    "value": "both",
+                    "name": "compression",
+                    "recommended": "",
                     "objectType": "Volume",
-                    "recommended": "none",
-                    "dataCategory": "log-files"
+                    "recommendedByDataCategory": {
+                        "log-files": "none",
+                        "non-log-files": "adaptive",
+                        "mixed": "varies"
+                    }
                 },
                 {
-                    "objectName": "oraclearch2",
-                    "value": "both",
+                    "name": "deduplication",
+                    "recommended": "",
                     "objectType": "Volume",
-                    "recommended": "none",
-                    "dataCategory": "mixed"
-                }
-            ],
-            "totalObjectsAssessed": 3,
-            "totalObjectsInViolation": 2,
-            "focusWidgetName": "ONTAP"
-        },
-        {
-            "id": "compaction",
-            "name": "Compaction",
-            "type": "storage",
-            "severity": "critical",
-            "recommendation": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle’s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
-            "status": "not-optimized",
-            "recommended": "enabled",
-            "subType": "configuration",
-            "resourceType": "Volume",
-            "objectsInViolation": ["oracleredo2", "oraclearch2"],
-            "violationDetails": [
-                {
-                    "objectName": "oracleredo2",
-                    "value": "enabled",
-                    "objectType": "Volume",
-                    "recommended": "none",
-                    "dataCategory": "log-files"
+                    "recommendedByDataCategory": {
+                        "log-files": "none",
+                        "non-log-files": "inline",
+                        "mixed": "varies"
+                    },
+                    "recommendedNote": "both is also acceptable for non-log-files volumes"
                 },
                 {
-                    "objectName": "oraclearch2",
-                    "value": "enabled",
+                    "name": "compaction",
+                    "recommended": "",
                     "objectType": "Volume",
-                    "recommended": "none",
-                    "dataCategory": "mixed"
+                    "recommendedByDataCategory": {
+                        "log-files": "none",
+                        "non-log-files": "enabled",
+                        "mixed": "varies"
+                    }
                 }
-            ],
-            "totalObjectsAssessed": 3,
-            "totalObjectsInViolation": 2,
-            "focusWidgetName": "ONTAP"
+            ]
         },
         {
             "id": "nfs-rootonly",

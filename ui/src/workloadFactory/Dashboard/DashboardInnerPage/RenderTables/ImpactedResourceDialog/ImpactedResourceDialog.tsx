@@ -28,6 +28,7 @@ import {
     normalizeImpactedResourceDialogData,
     resolveImpactedResourceConfigName
 } from '../../../../WellArchitectedTab/assessmentFormatUtils';
+import { buildSubConfigValues } from '../../../../../utils/getWellConfigRegistry';
 
 interface ViolationDetail {
     objectName?: string;
@@ -382,6 +383,27 @@ const mssqlSizingViolationsToDriveTable = (
     return ensureRows(columns, rows, na);
 };
 
+interface SubConfigDetail {
+    name?: string;
+    recommended?: string;
+    recommendedByDataCategory?: Record<string, string>;
+}
+
+/**
+ * Builds resource | current | recommended rows for combined sub-config configs
+ * (storage-efficiencies, tiering-tco-optimization, block-device-space-management),
+ * where each row's current/recommended is an aggregate of its violated sub-configs.
+ */
+const mapSubConfigViolations = (data: AssessmentData, columns: string[], na: string): ImpactedResourcesResult => {
+    const details: ViolationDetail[] = data?.violationDetails || [];
+    const configDetails = (data?.configItem?.configDetails as SubConfigDetail[] | undefined) ?? [];
+    const rows = details.map(detail => {
+        const { current, recommended } = buildSubConfigValues(detail, configDetails);
+        return [detail?.objectName || na, current || na, recommended || na];
+    });
+    return ensureRows(columns, rows, na);
+};
+
 /**
  * MSSQL config names arrive from two sources:
  * - DashboardConfigsTable sets internal names: 'performance-tier', 'log-drive-size', etc.
@@ -399,6 +421,29 @@ const getMssqlImpactedResources = (
     const sizing: SizingViolations = data?.sizingViolations || {};
 
     switch (configName) {
+        case ASSESSMENT_CONFIG_IDS.STORAGE_EFFICIENCIES:
+        case ASSESSMENT_CONFIG_IDS.TIERING_TCO_OPTIMIZATION:
+            return mapSubConfigViolations(
+                data,
+                [
+                    t('databases.well-architect.volume-name'),
+                    t('databases.well-architect.current'),
+                    t('databases.well-architect.recommended')
+                ],
+                na
+            );
+
+        case ASSESSMENT_CONFIG_IDS.BLOCK_DEVICE_SPACE_MANAGEMENT:
+            return mapSubConfigViolations(
+                data,
+                [
+                    t('databases.well-architect.object-name'),
+                    t('databases.well-architect.current'),
+                    t('databases.well-architect.recommended')
+                ],
+                na
+            );
+
         case ASSESSMENT_CONFIG_IDS.STORAGE_TIER:
         case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER: {
             const columns = [t('databases.well-architect.volume-name'), t('databases.well-architect.ssd-storage-tier')];
@@ -603,6 +648,13 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
     };
 
     switch (configName) {
+        case ASSESSMENT_CONFIG_IDS.STORAGE_EFFICIENCIES:
+        case ASSESSMENT_CONFIG_IDS.TIERING_TCO_OPTIMIZATION:
+            return mapSubConfigViolations(data, ['Volume name', 'Current', 'Recommended'], na);
+
+        case ASSESSMENT_CONFIG_IDS.BLOCK_DEVICE_SPACE_MANAGEMENT:
+            return mapSubConfigViolations(data, ['Object name', 'Current', 'Recommended'], na);
+
         case ASSESSMENT_CONFIG_NAMES.THIN_PROVISIONING:
         case ASSESSMENT_CONFIG_IDS.THIN_PROVISIONING:
         case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_AUTODELETE:

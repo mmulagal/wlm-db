@@ -18,7 +18,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import useResize from '../../../../common/hooks/useResize';
 import { getWadCellProps } from '../../GetWellUtils';
-import { ColumnConfig } from '../../../../utils/getWellConfigRegistry';
+import { ColumnConfig, buildSubConfigValues } from '../../../../utils/getWellConfigRegistry';
 
 interface DynamicInnerTableProps {
     configId: string;
@@ -54,10 +54,12 @@ const DynamicInnerTable = ({
 
         return violations.map((row: any) => ({
             ...row,
+            // Derive Current/Recommended columns for configs with nested sub-configs (e.g. storage-efficiencies)
+            ...(columnConfig.hasSubConfigs ? buildSubConfigValues(row, data?.configDetails) : {}),
             id: String(id++),
             cellProps: getWadCellProps(isWad, t)
         }));
-    }, [data, isWad, t]);
+    }, [data, isWad, t, columnConfig.hasSubConfigs]);
 
     // Build column definitions dynamically from registry
     const TableColDefs: ColumnProps[] = useMemo(() => {

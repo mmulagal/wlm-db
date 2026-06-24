@@ -78,6 +78,14 @@ export interface PerConfigInterface {
     totalObjectsAssessed?: number;
     totalObjectsInViolation?: number;
     violationDetails?: any;
+    // Per sub-config recommendations for nested configs (e.g. storage-efficiencies)
+    configDetails?: Array<{
+        name: string;
+        recommended?: string;
+        objectType?: string;
+        recommendedByDataCategory?: Record<string, string>;
+        recommendedNote?: string;
+    }>;
     ec2InstancesToPatch?: Array<{
         baselineId?: string;
         criticalNonCompliantCount?: number;

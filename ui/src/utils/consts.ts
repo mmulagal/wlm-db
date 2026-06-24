@@ -1191,6 +1191,7 @@ export const ASSESSMENT_CONFIG_IDS = {
     ASM_SETUP: 'asm-setup',
     AUTOSIZE: 'autosize',
     AUTOSIZE_MODE: 'autosize-mode',
+    BLOCK_DEVICE_SPACE_MANAGEMENT: 'block-device-space-management',
     CLONE_MANAGEMENT: 'clone-management',
     CLUSTER_QUORUM: 'cluster-quorum',
     COMPACTION: 'compaction',
@@ -1262,6 +1263,7 @@ export const ASSESSMENT_CONFIG_IDS = {
     SPACE_MANAGEMENT: 'space-mgmt-try-first',
     SPACE_RESERVATION: 'space-reservation-enabled',
     SQL_SERVER_SERVICE: 'sqlServer-service',
+    STORAGE_EFFICIENCIES: 'storage-efficiencies',
     STORAGE_TIER: 'performance-tier',
     SWAP_SPACE: 'swap-space',
     TCP_ADVANCED_OPTIONS: 'tcp-advanced-options',
@@ -1271,6 +1273,7 @@ export const ASSESSMENT_CONFIG_IDS = {
     THIN_PROVISIONING: 'thin-provision',
     TIERING_MINIMUM_COOLING_DAYS: 'tiering-min-cooling-days',
     TIERING_POLICY: 'tiering-policy',
+    TIERING_TCO_OPTIMIZATION: 'tiering-tco-optimization',
     TRANSPARENT_HUGEPAGES: 'transparent-hugepages'
 } as const;
 

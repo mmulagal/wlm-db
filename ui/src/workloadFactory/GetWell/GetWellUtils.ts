@@ -5655,6 +5655,8 @@ export const formatFlatAssessments = (
             categories: assessment.categories || [], // Categories from flat API
             errorMessage: assessment.errorMessage,
             violationDetails: assessment.violationDetails,
+            // Per sub-config recommendations, used to build Current/Recommended columns for nested configs
+            configDetails: assessment.configDetails,
             objectsInViolation: assessment.objectsInViolation,
             // Preserve optimizing state if present
             status: optimizingData?.[configKey] || ''

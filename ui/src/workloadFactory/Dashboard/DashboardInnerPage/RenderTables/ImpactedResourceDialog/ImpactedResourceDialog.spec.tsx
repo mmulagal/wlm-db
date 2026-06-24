@@ -7,7 +7,8 @@ vi.mock('react-i18next', () => ({
     useTranslation: () => ({ t: (k: string) => k })
 }));
 
-vi.mock('../../../../../utils/consts', () => ({
+vi.mock('../../../../../utils/consts', async importOriginal => ({
+    ...(await importOriginal<typeof import('../../../../../utils/consts')>()),
     SQL_DEPLOYMENT_MODE: {
         FAILOVER_CLUSTER_VALUE: 'fci',
         SINGLE_INSTANCE_VALUE: 'standalone',
@@ -201,6 +202,26 @@ describe('ImpactedResourceDialog', () => {
         render(<ImpactedResourceDialog data={data as any} />);
         expect(screen.getByText('databases.well-architect.database-name')).toBeTruthy();
         expect(screen.getByText('logdb1')).toBeTruthy();
+    });
+
+    it('renders aggregated current/recommended columns for storage-efficiencies sub-configs', () => {
+        const data = {
+            configurationName: 'storage-efficiencies',
+            violationDetails: [{ objectName: 'vol1', violatedConfigs: [{ name: 'deduplication', current: 'none' }] }],
+            configItem: {
+                configDetails: [
+                    { name: 'deduplication', recommended: 'enabled' },
+                    { name: 'compaction', recommended: 'enabled' }
+                ]
+            }
+        };
+        render(<ImpactedResourceDialog data={data as any} />);
+        expect(screen.getByText('databases.well-architect.volume-name')).toBeTruthy();
+        expect(screen.getByText('databases.well-architect.current')).toBeTruthy();
+        expect(screen.getByText('databases.well-architect.recommended')).toBeTruthy();
+        expect(screen.getByText('vol1')).toBeTruthy();
+        expect(screen.getByText('deduplication=none, compaction=enabled')).toBeTruthy();
+        expect(screen.getByText('deduplication=enabled, compaction=enabled')).toBeTruthy();
     });
 
     it('renders log-drive-size rows for ignoredDrives (shared drive) without n/a placeholder row', () => {

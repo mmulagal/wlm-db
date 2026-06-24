@@ -14,11 +14,7 @@
         "title": "Autosize mode recommendation",
         "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
     },
-    "fractional-reserve": {
-        "name": "Fractional Reserve",
-        "title": "Fractional reserve recommendation",
-        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
-    },
+
     "snapshot-copy-reserve": {
         "name": "Snapshot Copy Reserve",
         "title": "Snapshot copy reserve recommendation",
@@ -34,15 +30,10 @@
         "title": "Space management try first recommendation",
         "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
     },
-    "tiering-policy": {
-        "name": "Tiering Policy",
-        "title": "Tiering policy recommendation",
-        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
-    },
-    "tiering-min-cooling-days": {
-        "name": "Tiering Min Cooling Days",
-        "title": "Tiering minimum cooling days recommendation",
-        "description": "Workload Factory recommends setting the appropriate minimum cooling days for a volume because it determines when data becomes eligible to move to cost-effective capacity tiers, optimizing storage costs while maintaining performance for frequently accessed data."
+    "tiering-tco-optimization": {
+        "name": "Tiering / TCO optimization",
+        "title": "Tiering / TCO optimization recommendation",
+        "description": "For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier.\nThis approach preserves low-latency performance for SQL workloads while reducing storage costs.\nWorkload Factory recommends tiering snapshot data after a 7-day cooling period."
     },
     "mpio-enabled": {
         "name": "Mpio Enabled",
@@ -166,15 +157,10 @@
         "title": "OS type recommendation",
         "description": "ONTAP LUN os type value shall match the operating system partitioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance."
     },
-    "space-reservation-enabled": {
-        "name": "Space Reservation Enabled",
-        "title": "Space reservation recommendation",
-        "description": "Enable space reservation to ensure data integrity and prevent out-of-space conditions. Space reservation guarantees that the required space is available for write operations."
-    },
-    "space-allocation-allocated": {
-        "name": "Space Allocation Allocated",
-        "title": "Space allocation recommendation",
-        "description": "Enable space allocation to allow ONTAP to efficiently manage space and notify the host when a LUN runs out of space. Space allocation improves storage efficiency and prevents unexpected out-of-space errors."
+    "block-device-space-management": {
+        "name": "Block device space management",
+        "title": "Block device space management recommendation",
+        "description": "Workload Factory recommends configuring block device space settings for LUNs used by Microsoft SQL server instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin‑provisioned volumes:\n Space reservation: enabled — reserves enough space in the volume so writes to the LUN don’t fail. \n Space allocation: enabled — allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data. \n Fractional reserve: disabled — avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.Together, these settings help ensure predictable database behavior while minimizing wasted capacity."
     },
     "data-files-location": {
         "name": "Data Files Location",
@@ -195,5 +181,10 @@
         "name": "Clone Management",
         "title": "Clone management recommendation",
         "description": "Old and divergent database clones can incur significant costs. Workload Factory recommends regularly reviewing and deleting or refreshing these clones to optimize your storage expenses. Space-efficient clones on FSx for ONTAP can be used for development, testing, and analytics without consuming full storage capacity."
+    },
+    "storage-efficiencies": {
+        "name": "Storage Efficiencies",
+        "title": "Storage efficiencies recommendation",
+        "description": "Workload Factory recommends enabling storage efficiencies—deduplication, adaptive compression, and compaction—on volumes used by Microsoft SQL Server to reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance."
     }
 }

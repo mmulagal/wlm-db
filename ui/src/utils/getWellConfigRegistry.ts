@@ -112,15 +112,12 @@ export const MSSQL_INNER_PAGE_CONFIGS = new Set([
     'thin-provision',
     'autosize',
     'autosize-mode',
-    'fractional-reserve',
     'snapshot-copy-reserve',
     'snapshot-autodelete',
     'space-mgmt-try-first',
-    'tiering-policy',
-    'tiering-min-cooling-days',
+    'tiering-tco-optimization',
     'os-type',
-    'space-reservation-enabled',
-    'space-allocation-allocated',
+    'block-device-space-management',
     'mpio-load-balance-policy',
     'ntfs-allocation-unit-size',
     'rss-config',
@@ -129,6 +126,7 @@ export const MSSQL_INNER_PAGE_CONFIGS = new Set([
     'crr',
     'shared-storage',
     'clone-management',
+    'storage-efficiencies',
     // MSSQL file location configs (use nested expandable tables via NestedDynamicInnerTable)
     'data-files-location',
     'log-files-location',
@@ -160,14 +158,9 @@ export const ORACLE_INNER_PAGE_CONFIGS = new Set([
     'snapshot-copy-reserve',
     'snapshot-autodelete',
     'space-mgmt-try-first',
-    'tiering-policy',
-    'tiering-min-cooling-days',
-    'compression',
-    'deduplication',
-    'compaction',
+    'tiering-tco-optimization',
     'os-type',
-    'space-reservation-enabled',
-    'space-allocation-allocated',
+    'block-device-space-management',
     'nfs-rootonly',
     'export-policy',
     'nfs-mount-options-databasefiles',
@@ -176,7 +169,8 @@ export const ORACLE_INNER_PAGE_CONFIGS = new Set([
     'asm-external-redundancy',
     'crr',
     'snapcenter-snapshot',
-    'clone-management'
+    'clone-management',
+    'storage-efficiencies'
 ]);
 
 /**
@@ -368,6 +362,9 @@ export interface ColumnConfig {
     resourceTypeLabel?: string;
     tableTitle?: string;
     useNestedExpandable?: boolean; // For data/log/tempdb files that use expandable nested structure
+    // When true, each row's `current`/`recommended` columns are derived from the config's nested
+    // sub-configs (row.violatedConfigs + data.configDetails) via buildSubConfigValues().
+    hasSubConfigs?: boolean;
 }
 
 /**
@@ -886,11 +883,6 @@ export const CONFIG_COLUMN_MAP: Record<string, ColumnConfig> = {
         resourceTypeLabel: 'Volume',
         tableTitle: 'Impacted volumes'
     },
-    'fractional-reserve': {
-        columns: [{ key: 'objectName', label: 'Volume name', accessor: 'objectName' }],
-        resourceTypeLabel: 'Volume',
-        tableTitle: 'Impacted volumes'
-    },
     'snapshot-autodelete': {
         columns: [{ key: 'objectName', label: 'Volume name', accessor: 'objectName' }],
         resourceTypeLabel: 'Volume',
@@ -901,30 +893,25 @@ export const CONFIG_COLUMN_MAP: Record<string, ColumnConfig> = {
         resourceTypeLabel: 'Volume',
         tableTitle: 'Impacted volumes'
     },
-    'space-reservation-enabled': {
-        columns: [{ key: 'objectName', label: 'Volume name', accessor: 'objectName' }],
+    'storage-efficiencies': {
+        columns: [
+            { key: 'objectName', label: 'Volume name', accessor: 'objectName' },
+            { key: 'current', label: 'Current', accessor: 'current' },
+            { key: 'recommended', label: 'Recommended', accessor: 'recommended' }
+        ],
         resourceTypeLabel: 'Volume',
-        tableTitle: 'Impacted volumes'
+        tableTitle: 'Impacted volumes',
+        hasSubConfigs: true
     },
-    'space-allocation-allocated': {
-        columns: [{ key: 'objectName', label: 'Volume name', accessor: 'objectName' }],
-        resourceTypeLabel: 'Volume',
-        tableTitle: 'Impacted volumes'
-    },
-    compression: {
-        columns: [{ key: 'objectName', label: 'Volume name', accessor: 'objectName' }],
-        resourceTypeLabel: 'Volume',
-        tableTitle: 'Impacted volumes'
-    },
-    deduplication: {
-        columns: [{ key: 'objectName', label: 'Volume name', accessor: 'objectName' }],
-        resourceTypeLabel: 'Volume',
-        tableTitle: 'Impacted volumes'
-    },
-    compaction: {
-        columns: [{ key: 'objectName', label: 'Volume name', accessor: 'objectName' }],
-        resourceTypeLabel: 'Volume',
-        tableTitle: 'Impacted volumes'
+    'block-device-space-management': {
+        columns: [
+            { key: 'objectName', label: 'Object name', accessor: 'objectName' },
+            { key: 'current', label: 'Current', accessor: 'current' },
+            { key: 'recommended', label: 'Recommended', accessor: 'recommended' }
+        ],
+        resourceTypeLabel: 'Lun',
+        tableTitle: 'Impacted luns',
+        hasSubConfigs: true
     },
     'nfs-rootonly': {
         columns: [{ key: 'objectName', label: 'Volume name', accessor: 'objectName' }],
@@ -954,21 +941,15 @@ export const CONFIG_COLUMN_MAP: Record<string, ColumnConfig> = {
         resourceTypeLabel: 'Volume',
         tableTitle: 'Impacted volumes'
     },
-    'tiering-policy': {
+    'tiering-tco-optimization': {
         columns: [
             { key: 'objectName', label: 'Volume name', accessor: 'objectName' },
-            { key: 'value', label: 'Tiering policy', accessor: 'value' }
+            { key: 'current', label: 'Current', accessor: 'current' },
+            { key: 'recommended', label: 'Recommended', accessor: 'recommended' }
         ],
         resourceTypeLabel: 'Volume',
-        tableTitle: 'Impacted volumes'
-    },
-    'tiering-min-cooling-days': {
-        columns: [
-            { key: 'objectName', label: 'Volume name', accessor: 'objectName' },
-            { key: 'value', label: 'Tiering minimum cooling days', accessor: 'value' }
-        ],
-        resourceTypeLabel: 'Volume',
-        tableTitle: 'Impacted volumes'
+        tableTitle: 'Impacted volumes',
+        hasSubConfigs: true
     },
     'os-type': {
         columns: [
@@ -1131,6 +1112,38 @@ export const CONFIG_COLUMN_MAP: Record<string, ColumnConfig> = {
  * @returns Column configuration or undefined
  */
 export const getColumnConfig = (configId: string): ColumnConfig | undefined => CONFIG_COLUMN_MAP[configId];
+
+/**
+ * Builds the `current` and `recommended` display strings for a config whose findings are nested
+ * sub-configs (e.g. storage-efficiencies: compression/deduplication/compaction).
+ *
+ * - The full list of sub-configs comes from `configDetails`.
+ * - Recommended value per sub-config: `configDetails[].recommended`, falling back to
+ *   `recommendedByDataCategory[row.dataCategory]` when a single `recommended` is not provided.
+ * - Current value per sub-config: `row.violatedConfigs[].current` matched by name; if a sub-config
+ *   is not in violation (or has no current value) it is shown as its recommended value.
+ *
+ * @returns e.g. { current: 'compression=adaptive, deduplication=none, compaction=none', recommended: '...' }
+ */
+export const buildSubConfigValues = (
+    row: any,
+    configDetails: Array<any> = []
+): { current: string; recommended: string } => {
+    const currentByName = new Map<string, string>((row?.violatedConfigs || []).map((c: any) => [c.name, c.current]));
+    const dataCategory: string | undefined = row?.dataCategory;
+
+    const entries = configDetails.map((cfg: any) => {
+        const recommended =
+            cfg.recommended || (dataCategory ? cfg.recommendedByDataCategory?.[dataCategory] : undefined) || '';
+        const current = currentByName.get(cfg.name) || recommended;
+        return { name: cfg.name, current, recommended };
+    });
+
+    return {
+        current: entries.map(e => `${e.name}=${e.current}`).join(', '),
+        recommended: entries.map(e => `${e.name}=${e.recommended}`).join(', ')
+    };
+};
 
 /**
  * Gets card heights for a given config ID based on database type.
@@ -1318,38 +1331,21 @@ export const DIALOG_CONTENT_MAP: Record<string, DialogContentConfig> = {
         features: { showOntapConfigCodeBox: true },
         notes: { type: 'standard' }
     },
-    'mssql:tiering-policy': {
+    'mssql:tiering-tco-optimization': {
         sections: [
             {
                 heading: 'databases.well-architect.action-summary',
                 type: 'text',
-                content: 'databases.well-architect.autosize-action-summary'
+                content: 'databases.well-architect.mssql-tiering-tco-optimization-action-summary'
             },
             {
                 heading: 'databases.well-architect.what-will-happen',
                 type: 'text',
-                content: 'databases.well-architect.autosize-what-will-happen',
+                content: 'databases.well-architect.mssql-tiering-tco-optimization-what-will-happen',
                 hideWhenWad: true
             }
         ],
-        features: { showOntapConfigCodeBox: true },
-        notes: { type: 'standard' }
-    },
-    'mssql:tiering-min-cooling-days': {
-        sections: [
-            {
-                heading: 'databases.well-architect.action-summary',
-                type: 'text',
-                content: 'databases.well-architect.autosize-action-summary'
-            },
-            {
-                heading: 'databases.well-architect.what-will-happen',
-                type: 'text',
-                content: 'databases.well-architect.autosize-what-will-happen',
-                hideWhenWad: true
-            }
-        ],
-        features: { showOntapConfigCodeBox: true },
+        features: { showOntapConfigCodeBox: false },
         notes: { type: 'standard' }
     },
     'mssql:snapshot-copy-reserve': {
@@ -1393,21 +1389,21 @@ export const DIALOG_CONTENT_MAP: Record<string, DialogContentConfig> = {
         features: { showOntapConfigCodeBox: true },
         notes: { type: 'standard' }
     },
-    'mssql:compression': {
+    'mssql:storage-efficiencies': {
         sections: [
             {
                 heading: 'databases.well-architect.action-summary',
                 type: 'text',
-                content: 'databases.well-architect.autosize-action-summary'
+                content: 'databases.well-architect.mssql-storage-efficiencies-action-summary'
             },
             {
                 heading: 'databases.well-architect.what-will-happen',
                 type: 'text',
-                content: 'databases.well-architect.autosize-what-will-happen',
+                content: 'databases.well-architect.mssql-storage-efficiencies-what-will-happen',
                 hideWhenWad: true
             }
         ],
-        features: { showOntapConfigCodeBox: true },
+        features: { showOntapConfigCodeBox: false },
         notes: { type: 'standard' }
     },
     'mssql:deduplication': {
@@ -1493,6 +1489,23 @@ export const DIALOG_CONTENT_MAP: Record<string, DialogContentConfig> = {
             }
         ],
         features: { showOntapConfigCodeBox: true },
+        notes: { type: 'standard' }
+    },
+    'mssql:block-device-space-management': {
+        sections: [
+            {
+                heading: 'databases.well-architect.action-summary',
+                type: 'text',
+                content: 'databases.well-architect.mssql-block-device-space-management-action-summary'
+            },
+            {
+                heading: 'databases.well-architect.what-will-happen',
+                type: 'text',
+                content: 'databases.well-architect.mssql-block-device-space-management-what-will-happen',
+                hideWhenWad: true
+            }
+        ],
+        features: { showOntapConfigCodeBox: false },
         notes: { type: 'standard' }
     },
 
@@ -2122,38 +2135,21 @@ export const DIALOG_CONTENT_MAP: Record<string, DialogContentConfig> = {
         features: { showOntapConfigCodeBox: true, showLinkedConfigBanner: true },
         notes: { type: 'standard' }
     },
-    'oracle:tiering-policy': {
+    'oracle:tiering-tco-optimization': {
         sections: [
             {
                 heading: 'databases.well-architect.action-summary',
                 type: 'text',
-                content: 'databases.well-architect.oracle-tiering-policy-action-summary'
+                content: 'databases.well-architect.oracle-tiering-tco-optimization-action-summary'
             },
             {
                 heading: 'databases.well-architect.what-will-happen',
                 type: 'text',
-                content: 'databases.well-architect.oracle-tiering-policy-what-will-happen',
+                content: 'databases.well-architect.oracle-tiering-tco-optimization-what-will-happen',
                 hideWhenWad: true
             }
         ],
-        features: { showOntapConfigCodeBox: true, showLinkedConfigBanner: true },
-        notes: { type: 'standard' }
-    },
-    'oracle:tiering-min-cooling-days': {
-        sections: [
-            {
-                heading: 'databases.well-architect.action-summary',
-                type: 'text',
-                content: 'databases.well-architect.oracle-tiering-min-cooling-days-action-summary'
-            },
-            {
-                heading: 'databases.well-architect.what-will-happen',
-                type: 'text',
-                content: 'databases.well-architect.oracle-tiering-min-cooling-days-what-will-happen',
-                hideWhenWad: true
-            }
-        ],
-        features: { showOntapConfigCodeBox: true, showLinkedConfigBanner: true },
+        features: { showOntapConfigCodeBox: false, showLinkedConfigBanner: true },
         notes: { type: 'standard' }
     },
     'oracle:compaction': {
@@ -2190,21 +2186,21 @@ export const DIALOG_CONTENT_MAP: Record<string, DialogContentConfig> = {
         features: { showOntapConfigCodeBox: true, showLinkedConfigBanner: true },
         notes: { type: 'standard' }
     },
-    'oracle:compression': {
+    'oracle:storage-efficiencies': {
         sections: [
             {
                 heading: 'databases.well-architect.action-summary',
                 type: 'text',
-                content: 'databases.well-architect.oracle-compression-action-summary'
+                content: 'databases.well-architect.oracle-storage-efficiencies-action-summary'
             },
             {
                 heading: 'databases.well-architect.what-will-happen',
                 type: 'text',
-                content: 'databases.well-architect.oracle-compression-what-will-happen',
+                content: 'databases.well-architect.oracle-storage-efficiencies-what-will-happen',
                 hideWhenWad: true
             }
         ],
-        features: { showOntapConfigCodeBox: true, showLinkedConfigBanner: true },
+        features: { showOntapConfigCodeBox: false, showLinkedConfigBanner: true },
         notes: { type: 'standard' }
     },
     'oracle:os-type': {
@@ -2256,6 +2252,23 @@ export const DIALOG_CONTENT_MAP: Record<string, DialogContentConfig> = {
             }
         ],
         features: { showOntapConfigCodeBox: true, showLinkedConfigBanner: true },
+        notes: { type: 'standard' }
+    },
+    'oracle:block-device-space-management': {
+        sections: [
+            {
+                heading: 'databases.well-architect.action-summary',
+                type: 'text',
+                content: 'databases.well-architect.oracle-block-device-space-management-action-summary'
+            },
+            {
+                heading: 'databases.well-architect.what-will-happen',
+                type: 'text',
+                content: 'databases.well-architect.oracle-block-device-space-management-what-will-happen',
+                hideWhenWad: true
+            }
+        ],
+        features: { showOntapConfigCodeBox: false, showLinkedConfigBanner: true },
         notes: { type: 'standard' }
     },
     'oracle:nfs-rootonly': {

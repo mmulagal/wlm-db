@@ -171,15 +171,26 @@
             "focusWidgetName": "ONTAP"
         },
         {
-            "name": "Fractional Reserve",
-            "status": "not-optimized",
+            "id": "block-device-space-management",
+            "name": "Block device space management",
+            "type": "storage",
             "severity": "critical",
-            "recommended": "0",
-            "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
-            "resourceType": "Volume",
-            "totalObjectsAssessed": 17,
-            "totalObjectsInViolation": 6,
+            "recommendation": "Workload Factory recommends configuring block device space settings for LUNs used by Microsoft SQL server instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin-provisioned volumes:\n- Space reservation: enabled - reserves enough space in the volume so writes to the LUN do not fail.\n- Space allocation: enabled - allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data.\n- Fractional reserve: disabled - avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.\nTogether, these settings help ensure predictable database behavior while minimizing wasted capacity.",
+            "categories": ["Reliability", "Cost optimization", "Operational excellence"],
+            "status": "not-optimized",
+            "recommended": "",
+            "subType": "configuration",
+            "resourceType": "Volume/Lun",
             "objectsInViolation": [
+                "/vol/mantar/sql",
+                "/vol/wlmdb_sqllog_1735550019/sqllog",
+                "/vol/wlmdb_sqldata_1735550019/sqldata",
+                "/vol/wlmdb_sqldata_1735808882/sqldata",
+                "/vol/wlmdb_sqllog_1735808882/sqllog",
+                "/vol/wlmdb_sqldata_1735925934/sqldata",
+                "/vol/wlmdb_sqllog_1735925934/sqllog",
+                "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
+                "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog",
                 "mantar",
                 "wlmdb_sqldata_1735808882",
                 "wlmdb_sqllog_1735808882",
@@ -189,40 +200,227 @@
             ],
             "violationDetails": [
                 {
+                    "objectName": "/vol/mantar/sql",
+                    "value": "",
+                    "objectType": "Lun",
+                    "violatedConfigs": [
+                        {
+                            "name": "space-reservation-enabled",
+                            "current": "false"
+                        },
+                        {
+                            "name": "space-allocation-allocated",
+                            "current": "false"
+                        }
+                    ]
+                },
+                {
+                    "objectName": "/vol/wlmdb_sqllog_1735550019/sqllog",
+                    "value": "",
+                    "objectType": "Lun",
+                    "violatedConfigs": [
+                        {
+                            "name": "space-reservation-enabled",
+                            "current": "false"
+                        },
+                        {
+                            "name": "space-allocation-allocated",
+                            "current": "false"
+                        }
+                    ]
+                },
+                {
+                    "objectName": "/vol/wlmdb_sqldata_1735550019/sqldata",
+                    "value": "",
+                    "objectType": "Lun",
+                    "violatedConfigs": [
+                        {
+                            "name": "space-reservation-enabled",
+                            "current": "false"
+                        },
+                        {
+                            "name": "space-allocation-allocated",
+                            "current": "false"
+                        }
+                    ]
+                },
+                {
+                    "objectName": "/vol/wlmdb_sqldata_1735808882/sqldata",
+                    "value": "",
+                    "objectType": "Lun",
+                    "violatedConfigs": [
+                        {
+                            "name": "space-reservation-enabled",
+                            "current": "false"
+                        },
+                        {
+                            "name": "space-allocation-allocated",
+                            "current": "false"
+                        }
+                    ]
+                },
+                {
+                    "objectName": "/vol/wlmdb_sqllog_1735808882/sqllog",
+                    "value": "",
+                    "objectType": "Lun",
+                    "violatedConfigs": [
+                        {
+                            "name": "space-reservation-enabled",
+                            "current": "false"
+                        },
+                        {
+                            "name": "space-allocation-allocated",
+                            "current": "false"
+                        }
+                    ]
+                },
+                {
+                    "objectName": "/vol/wlmdb_sqldata_1735925934/sqldata",
+                    "value": "",
+                    "objectType": "Lun",
+                    "violatedConfigs": [
+                        {
+                            "name": "space-reservation-enabled",
+                            "current": "false"
+                        },
+                        {
+                            "name": "space-allocation-allocated",
+                            "current": "false"
+                        }
+                    ]
+                },
+                {
+                    "objectName": "/vol/wlmdb_sqllog_1735925934/sqllog",
+                    "value": "",
+                    "objectType": "Lun",
+                    "violatedConfigs": [
+                        {
+                            "name": "space-reservation-enabled",
+                            "current": "false"
+                        },
+                        {
+                            "name": "space-allocation-allocated",
+                            "current": "false"
+                        }
+                    ]
+                },
+                {
+                    "objectName": "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
+                    "value": "",
+                    "objectType": "Lun",
+                    "violatedConfigs": [
+                        {
+                            "name": "space-reservation-enabled",
+                            "current": "false"
+                        },
+                        {
+                            "name": "space-allocation-allocated",
+                            "current": "false"
+                        }
+                    ]
+                },
+                {
+                    "objectName": "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog",
+                    "value": "",
+                    "objectType": "Lun",
+                    "violatedConfigs": [
+                        {
+                            "name": "space-reservation-enabled",
+                            "current": "false"
+                        },
+                        {
+                            "name": "space-allocation-allocated",
+                            "current": "false"
+                        }
+                    ]
+                },
+                {
                     "objectName": "mantar",
-                    "value": "off",
-                    "objectType": "Volume"
+                    "value": "",
+                    "objectType": "Volume",
+                    "violatedConfigs": [
+                        {
+                            "name": "fractional-reserve",
+                            "current": "off"
+                        }
+                    ]
                 },
                 {
                     "objectName": "wlmdb_sqldata_1735808882",
-                    "value": "off",
-                    "objectType": "Volume"
+                    "value": "",
+                    "objectType": "Volume",
+                    "violatedConfigs": [
+                        {
+                            "name": "fractional-reserve",
+                            "current": "off"
+                        }
+                    ]
                 },
                 {
                     "objectName": "wlmdb_sqllog_1735808882",
-                    "value": "off",
-                    "objectType": "Volume"
+                    "value": "",
+                    "objectType": "Volume",
+                    "violatedConfigs": [
+                        {
+                            "name": "fractional-reserve",
+                            "current": "off"
+                        }
+                    ]
                 },
                 {
                     "objectName": "wlmdb_sqldata_1733414521",
-                    "value": "on",
-                    "objectType": "Volume"
+                    "value": "",
+                    "objectType": "Volume",
+                    "violatedConfigs": [
+                        {
+                            "name": "fractional-reserve",
+                            "current": "on"
+                        }
+                    ]
                 },
                 {
                     "objectName": "wlmdb_sqllog_1733414521",
-                    "value": "on",
-                    "objectType": "Volume"
+                    "value": "",
+                    "objectType": "Volume",
+                    "violatedConfigs": [
+                        {
+                            "name": "fractional-reserve",
+                            "current": "on"
+                        }
+                    ]
                 },
                 {
                     "objectName": "capacityvol",
-                    "value": "on",
-                    "objectType": "Volume"
+                    "value": "",
+                    "objectType": "Volume",
+                    "violatedConfigs": [
+                        {
+                            "name": "fractional-reserve",
+                            "current": "on"
+                        }
+                    ]
                 }
             ],
-            "id": "fractional-reserve",
-            "categories": ["Cost optimization", "Operational excellence"],
-            "type": "storage",
-            "focusWidgetName": "ONTAP"
+            "totalObjectsAssessed": 34,
+            "totalObjectsInViolation": 15,
+            "focusWidgetName": "ONTAP",
+            "configDetails": [
+                {
+                    "name": "space-reservation-enabled",
+                    "recommended": "true",
+                    "objectType": "Lun"
+                },
+                {
+                    "name": "space-allocation-allocated",
+                    "recommended": "true",
+                    "objectType": "Lun"
+                },
+                {
+                    "name": "fractional-reserve",
+                    "recommended": "0",
+                    "objectType": "Volume"
+                }
+            ]
         },
         {
             "name": "Snapshot Copy Reserve",
@@ -387,112 +585,132 @@
             "focusWidgetName": "ONTAP"
         },
         {
-            "name": "Tiering Policy",
-            "status": "not-optimized",
+            "id": "tiering-tco-optimization",
+            "name": "Tiering / TCO optimization",
+            "type": "storage",
             "severity": "critical",
-            "recommended": "snapshot_only",
-            "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.",
+            "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier. This approach preserves low-latency performance for SQL workloads while reducing storage costs. Workload Factory recommends tiering snapshot data after a 7-day cooling period.",
+            "categories": ["Performance efficiency", "Cost optimization"],
+            "status": "not-optimized",
+            "recommended": "",
+            "subType": "configuration",
             "resourceType": "Volume",
-            "totalObjectsAssessed": 9,
-            "totalObjectsInViolation": 6,
             "objectsInViolation": [
-                "mantar",
-                "wlmdb_sqldata_1735808882",
-                "wlmdb_sqllog_1735808882",
-                "wlmdb_sqldata_1733414521",
-                "wlmdb_sqllog_1733414521",
-                "capacityvol"
+                "wlmdb_sqldata_1728552629461",
+                "wlmdb_sqltemp_1728552629461",
+                "wlmdb_sqldata_1728574994"
             ],
             "violationDetails": [
                 {
-                    "objectName": "mantar",
-                    "value": "Auto",
-                    "objectType": "Volume"
+                    "objectName": "wlmdb_sqldata_1728552629461",
+                    "value": "",
+                    "objectType": "Volume",
+                    "violatedConfigs": [
+                        {
+                            "name": "tiering-policy",
+                            "current": "auto"
+                        },
+                        {
+                            "name": "tiering-min-cooling-days",
+                            "current": "17"
+                        }
+                    ]
                 },
                 {
-                    "objectName": "wlmdb_sqldata_1735808882",
-                    "value": "Auto",
-                    "objectType": "Volume"
+                    "objectName": "wlmdb_sqltemp_1728552629461",
+                    "value": "",
+                    "objectType": "Volume",
+                    "violatedConfigs": [
+                        {
+                            "name": "tiering-policy",
+                            "current": "auto"
+                        },
+                        {
+                            "name": "tiering-min-cooling-days",
+                            "current": "17"
+                        }
+                    ]
                 },
                 {
-                    "objectName": "wlmdb_sqllog_1735808882",
-                    "value": "Auto",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqldata_1733414521",
-                    "value": "Auto",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqllog_1733414521",
-                    "value": "Auto",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "capacityvol",
-                    "value": "Auto",
-                    "objectType": "Volume"
+                    "objectName": "wlmdb_sqldata_1728574994",
+                    "value": "",
+                    "objectType": "Volume",
+                    "violatedConfigs": [
+                        {
+                            "name": "tiering-policy",
+                            "current": "auto"
+                        },
+                        {
+                            "name": "tiering-min-cooling-days",
+                            "current": "17"
+                        }
+                    ]
                 }
             ],
-            "id": "tiering-policy",
-            "categories": ["Performance efficiency"],
-            "type": "storage",
-            "focusWidgetName": "ONTAP"
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 3,
+            "focusWidgetName": "ONTAP",
+            "configDetails": [
+                {
+                    "name": "tiering-policy",
+                    "recommended": "snapshot_only",
+                    "objectType": "Volume"
+                },
+                {
+                    "name": "tiering-min-cooling-days",
+                    "recommended": "7",
+                    "objectType": "Volume"
+                }
+            ]
         },
         {
-            "name": "Tiering Min Cooling Days",
+            "name": "Storage efficiencies",
             "status": "not-optimized",
             "severity": "warning",
-            "recommended": "7",
-            "recommendation": "",
+            "recommended": "",
+            "recommendation": "Workload Factory recommends enabling storage efficiencies—deduplication, adaptive compression, and compaction—on volumes used by Microsoft SQL Server to reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance.",
             "resourceType": "Volume",
-            "totalObjectsAssessed": 11,
-            "totalObjectsInViolation": 6,
-            "objectsInViolation": [
-                "mantar",
-                "wlmdb_sqldata_1735808882",
-                "wlmdb_sqllog_1735808882",
-                "wlmdb_sqldata_1733414521",
-                "wlmdb_sqllog_1733414521",
-                "capacityvol"
-            ],
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": ["wlmdb_sqldata_1735808882"],
             "violationDetails": [
                 {
-                    "objectName": "mantar",
-                    "value": "2",
-                    "objectType": "Volume"
-                },
-                {
                     "objectName": "wlmdb_sqldata_1735808882",
-                    "value": "2",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqllog_1735808882",
-                    "value": "20",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqldata_1733414521",
-                    "value": "20",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqllog_1733414521",
-                    "value": "20",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "capacityvol",
-                    "value": "20",
-                    "objectType": "Volume"
+                    "value": "",
+                    "objectType": "Volume",
+                    "violatedConfigs": [
+                        {
+                            "name": "deduplication",
+                            "current": "none"
+                        },
+                        {
+                            "name": "compaction",
+                            "current": "none"
+                        }
+                    ]
                 }
             ],
-            "id": "tiering-min-cooling-days",
-            "categories": ["Cost optimization"],
+            "id": "storage-efficiencies",
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage",
-            "focusWidgetName": "ONTAP"
+            "focusWidgetName": "ONTAP",
+            "configDetails": [
+                {
+                    "name": "compression",
+                    "recommended": "adaptive",
+                    "objectType": "Volume"
+                },
+                {
+                    "name": "deduplication",
+                    "recommended": "inline",
+                    "objectType": "Volume"
+                },
+                {
+                    "name": "compaction",
+                    "recommended": "enabled",
+                    "objectType": "Volume"
+                }
+            ]
         },
         {
             "name": "Os Type",
@@ -548,120 +766,6 @@
             ],
             "id": "os-type",
             "categories": ["Performance efficiency"],
-            "type": "storage",
-            "focusWidgetName": "ONTAP"
-        },
-        {
-            "name": "Space Reservation Enabled",
-            "status": "not-optimized",
-            "severity": "critical",
-            "recommended": "true",
-            "recommendation": "When space reservation is enabled, ONTAP reserves enough space in the volume so that writes to those LUNs do not fail because of a lack of disk space.",
-            "resourceType": "Lun",
-            "totalObjectsAssessed": 17,
-            "totalObjectsInViolation": 9,
-            "objectsInViolation": [
-                "/vol/mantar/sql",
-                "/vol/wlmdb_sqllog_1735550019/sqllog",
-                "/vol/wlmdb_sqldata_1735550019/sqldata",
-                "/vol/wlmdb_sqldata_1735808882/sqldata",
-                "/vol/wlmdb_sqllog_1735808882/sqllog",
-                "/vol/wlmdb_sqldata_1735925934/sqldata",
-                "/vol/wlmdb_sqllog_1735925934/sqllog",
-                "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
-                "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
-            ],
-            "violationDetails": [
-                {
-                    "objectName": "mantar",
-                    "value": "2",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqldata_1735808882",
-                    "value": "2",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqllog_1735808882",
-                    "value": "20",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqldata_1733414521",
-                    "value": "20",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqllog_1733414521",
-                    "value": "20",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "capacityvol",
-                    "value": "20",
-                    "objectType": "Volume"
-                }
-            ],
-            "id": "space-reservation-enabled",
-            "categories": ["Reliability"],
-            "type": "storage",
-            "focusWidgetName": "ONTAP"
-        },
-        {
-            "name": "Space Allocation Allocated",
-            "status": "not-optimized",
-            "severity": "critical",
-            "recommended": "true",
-            "recommendation": "This option ensure FSx ONTAP notifies the EC2 host when the volume is full and cannot accept writes. This setting also allows FSx for ONTAP to automatically reclaim space when SQL Server on the EC2 host deletes data. Failure to enable this option may result in write failures and inefficient space utilization.",
-            "resourceType": "Lun",
-            "totalObjectsAssessed": 15,
-            "totalObjectsInViolation": 9,
-            "objectsInViolation": [
-                "/vol/mantar/sql",
-                "/vol/wlmdb_sqllog_1735550019/sqllog",
-                "/vol/wlmdb_sqldata_1735550019/sqldata",
-                "/vol/wlmdb_sqldata_1735808882/sqldata",
-                "/vol/wlmdb_sqllog_1735808882/sqllog",
-                "/vol/wlmdb_sqldata_1735925934/sqldata",
-                "/vol/wlmdb_sqllog_1735925934/sqllog",
-                "/vol/wlmdb_sqldata_1735550019_clone_1735926926/sqldata",
-                "/vol/wlmdb_sqllog_1735550019_clone_1735926926/sqllog"
-            ],
-            "violationDetails": [
-                {
-                    "objectName": "mantar",
-                    "value": "2",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqldata_1735808882",
-                    "value": "2",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqllog_1735808882",
-                    "value": "20",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqldata_1733414521",
-                    "value": "20",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "wlmdb_sqllog_1733414521",
-                    "value": "20",
-                    "objectType": "Volume"
-                },
-                {
-                    "objectName": "capacityvol",
-                    "value": "20",
-                    "objectType": "Volume"
-                }
-            ],
-            "id": "space-allocation-allocated",
-            "categories": ["Reliability"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
