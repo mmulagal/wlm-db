@@ -54,6 +54,7 @@ import { getModelAvailability } from '../../lib/aws/bedrock';
 import { getCloudWatchLogs } from '../aws/cloud-watch-logs-operations';
 import { mapSeverityLevel, parseConcatenatedJSON } from '../../utils/logs-analyzer/logs-analyzer-utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
+import getAiLimiterConfig from '../../lib/cloud-manager/ai-limiter';
 import {
     LogsAnalysisPreRequisitesObjectType,
     LogsAnalyzerBodyType,
@@ -613,6 +614,14 @@ async function triggerLogsAnalysis(
         databaseInstanceId,
         scanParams
     });
+
+    const { aiAnalysisEnabled } = await getAiLimiterConfig(accountId);
+    if (!aiAnalysisEnabled) {
+        throw createError(
+            HttpErrorCodes.FORBIDDEN,
+            'Error analysis capability has been disabled by your administrator'
+        );
+    }
 
     if (scanParams.logsAnalyzerFromTimestamp && scanParams.logsAnalyzerFromTimestamp > Date.now()) {
         throw createError(HttpErrorCodes.BAD_REQUEST, 'Logs analysis start time cannot be in the future');

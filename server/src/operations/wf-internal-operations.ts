@@ -5,6 +5,7 @@ import { getCredentials } from './cloud-manager/credentials-operations';
 import { creadteDemoDBData, prepopulateOfflineAssessmentData } from '../utils/demo-utils/demoDefaultUtils';
 import { DatabaseTypes, MSSQL, GOV_ACCOUNT } from '../utils/consts';
 import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
+import getAiLimiterConfig from '../lib/cloud-manager/ai-limiter';
 import {
     onPremAOAGAUploadObject,
     onPremFCIUploadObject,
@@ -524,10 +525,11 @@ async function getLogsAnalysisStatus(
     return { severity: focusSeverity as FocusStatusResponse['severity'], totalItems, items };
 }
 
-function getAccountInfo(accountId: string) {
+async function getAccountInfo(accountId: string) {
     const isGovAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
-    logger.info('Get account info', { accountId, isGovAccount });
-    return { isGovAccount };
+    const { aiAnalysisEnabled } = await getAiLimiterConfig(accountId);
+    logger.info('Get account info', { accountId, isGovAccount, aiAnalysisEnabled });
+    return { isGovAccount, aiAnalysisEnabled };
 }
 
 export {

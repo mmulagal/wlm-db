@@ -73,7 +73,8 @@ const HomepageWidgetStatusResponse = Type.Object({
 });
 
 const AccountInfoResponse = Type.Object({
-    isGovAccount: Type.Boolean()
+    isGovAccount: Type.Boolean(),
+    aiAnalysisEnabled: Type.Boolean()
 });
 
 export {
