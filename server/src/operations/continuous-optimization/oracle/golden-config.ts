@@ -184,63 +184,6 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         ],
         configLevel: 'database'
     },
-    {
-        parameter: 'compressionType',
-        id: 'compression',
-        name: 'Compression',
-        value: '',
-        type: 'storage',
-        subType: 'configuration',
-        focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
-        recommendation:
-            'Workload Factory recommends implementing storage efficiencies\u2014compression, compaction, and deduplication\u2014in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle\u2019s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
-        categories: [
-            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-        configLevel: 'database'
-    },
-    {
-        parameter: 'deduplication',
-        id: 'deduplication',
-        name: 'Deduplication',
-        value: '',
-        type: 'storage',
-        subType: 'configuration',
-        focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
-        recommendation:
-            'Workload Factory recommends implementing storage efficiencies\u2014compression, compaction, and deduplication\u2014in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle\u2019s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
-        categories: [
-            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-        configLevel: 'database'
-    },
-    {
-        parameter: 'compaction',
-        id: 'compaction',
-        name: 'Compaction',
-        value: 'enabled',
-        type: 'storage',
-        subType: 'configuration',
-        focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
-        recommendation:
-            'Workload Factory recommends implementing storage efficiencies\u2014compression, compaction, and deduplication\u2014in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle\u2019s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
-        categories: [
-            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
-            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
-            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
-        ],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-        configLevel: 'database'
-    },
 
     // ── configuration / volume_nfs (applicableTo: nfs) ──────────────────────
     {

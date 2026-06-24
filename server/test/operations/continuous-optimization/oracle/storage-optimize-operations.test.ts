@@ -1,18 +1,27 @@
 import { describe, expect, it } from 'vitest';
+import { Value } from 'typebox/value';
+
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
+import waitForJobCompletion from '../../../utils/utils';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
+import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/database-instance-config';
+import {
+    OptimizeStorageConfigurationRequestBody,
+    OptimizeStorageLayoutRequestBody
+} from '../../../../src/routes/types/oracle-continuous-optimization.types';
+import {
+    AssessmentCategoriesOracle,
+    OptimizeStorageConfigs,
+    ORACLE_OPTIMIZE_STORAGE_CONFIGURATION_FIX_API_CONFIG_NAMES,
+    ORACLE_OPTIMIZE_STORAGE_LAYOUT_FIX_API_CONFIG_NAMES
+} from '../../../../src/utils/continous-optimization-consts';
+
+import ORACLE_GOLDEN_CONFIG from '../../../../src/operations/continuous-optimization/oracle/golden-config';
 import {
     deriveOracleNonVolumeCombinedOutputs,
     optimizeOracleStorageLayout
 } from '../../../../src/operations/continuous-optimization/oracle/storage-optimize-operations';
-import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/database-instance-config';
-import {
-    AssessmentCategoriesOracle,
-    OptimizeStorageConfigs
-} from '../../../../src/utils/continous-optimization-consts';
-import ORACLE_GOLDEN_CONFIG from '../../../../src/operations/continuous-optimization/oracle/golden-config';
 import { getJobs } from '../../../../src/operations/database/job-operations';
-import waitForJobCompletion from '../../../utils/utils';
 
 const dbInstanceSid = 'oradbopt';
 const node1InstanceId = 'i-optimizetest123456';
@@ -159,17 +168,17 @@ describe('deriveOracleNonVolumeCombinedOutputs', () => {
                         {
                             objectName: '/vol/v1/l1',
                             value: '',
-                            violatedConfigs: [{ name: OptimizeStorageConfigs.SPACE_RESERVATION, current: 'false' }]
+                            violatedConfigs: [{ id: OptimizeStorageConfigs.SPACE_RESERVATION, current: 'false' }]
                         },
                         {
                             objectName: '/vol/v2/l2',
                             value: '',
-                            violatedConfigs: [{ name: OptimizeStorageConfigs.SPACE_ALLOCATION, current: 'false' }]
+                            violatedConfigs: [{ id: OptimizeStorageConfigs.SPACE_ALLOCATION, current: 'false' }]
                         },
                         {
                             objectName: 'v2',
                             value: '',
-                            violatedConfigs: [{ name: OptimizeStorageConfigs.FRACTIONAL_RESERVE, current: '5' }]
+                            violatedConfigs: [{ id: OptimizeStorageConfigs.FRACTIONAL_RESERVE, current: '5' }]
                         }
                     ]
                 }
@@ -251,7 +260,7 @@ describe('deriveOracleNonVolumeCombinedOutputs', () => {
                         {
                             objectName: 'v2',
                             value: '',
-                            violatedConfigs: [{ name: OptimizeStorageConfigs.TIERING_POLICY, current: 'auto' }]
+                            violatedConfigs: [{ id: OptimizeStorageConfigs.TIERING_POLICY, current: 'auto' }]
                         }
                     ]
                 }
@@ -283,7 +292,7 @@ describe('deriveOracleNonVolumeCombinedOutputs', () => {
                         {
                             objectName: 'v1',
                             value: '',
-                            violatedConfigs: [{ name: OptimizeStorageConfigs.FRACTIONAL_RESERVE, current: '5' }]
+                            violatedConfigs: [{ id: OptimizeStorageConfigs.FRACTIONAL_RESERVE, current: '5' }]
                         }
                     ]
                 }
@@ -297,5 +306,20 @@ describe('deriveOracleNonVolumeCombinedOutputs', () => {
                 objectsToOptimize: ['v1']
             }
         ]);
+    });
+});
+
+describe('Oracle optimize storage request bodies', () => {
+    it('should accept configuration names only on the configuration route and layout names only on the layout route', () => {
+        const configurationName = ORACLE_OPTIMIZE_STORAGE_CONFIGURATION_FIX_API_CONFIG_NAMES[0];
+        const layoutName = ORACLE_OPTIMIZE_STORAGE_LAYOUT_FIX_API_CONFIG_NAMES[0];
+        const validAssessment = (name: string) => ({
+            assessments: [{ configurationName: name, objectsToOptimize: ['vol-1'] }]
+        });
+
+        expect(Value.Check(OptimizeStorageConfigurationRequestBody, validAssessment(configurationName))).toBe(true);
+        expect(Value.Check(OptimizeStorageLayoutRequestBody, validAssessment(layoutName))).toBe(true);
+        expect(Value.Check(OptimizeStorageConfigurationRequestBody, validAssessment(layoutName))).toBe(false);
+        expect(Value.Check(OptimizeStorageLayoutRequestBody, validAssessment(configurationName))).toBe(false);
     });
 });

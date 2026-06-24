@@ -15,7 +15,7 @@ import {
     CombinedOptimizeConfigName,
     isCombinedOptimizeConfig,
     mergeOptimizationTargets,
-    OptimizeStorageRequestParamsType
+    OptimizeStorageRequestParams
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
 import type {
@@ -682,8 +682,8 @@ function isCombinedViolationDetail(value: unknown): value is GenericViolationRes
         config =>
             config &&
             typeof config === 'object' &&
-            typeof (config as Record<string, unknown>).name === 'string' &&
-            ((config as Record<string, unknown>).name as string).length > 0
+            typeof (config as Record<string, unknown>).id === 'string' &&
+            ((config as Record<string, unknown>).id as string).length > 0
     );
 }
 
@@ -743,7 +743,7 @@ function buildVolumeCombinedEntry(
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         violationDetails,
         configDetails: components.map((component: GoldenConfigComponent) => ({
-            name: component.name ?? component.parameter,
+            id: component.name ?? component.parameter,
             recommended: String(component.value),
             objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
         }))
@@ -757,7 +757,7 @@ function buildVolumeCombinedEntry(
 function buildViolationRow(
     obj: Record<string, unknown>,
     objectType: typeof ASSESSMENT_RESOURCE_TYPE.VOLUME | typeof ASSESSMENT_RESOURCE_TYPE.LUN,
-    components: ReadonlyArray<{ parameter: string; value: unknown }>
+    components: ReadonlyArray<{ parameter: string; value: unknown; name?: string }>
 ): GenericViolationResponseType | undefined {
     if (typeof obj.name !== 'string' || obj.name.length === 0) {
         return undefined;
@@ -769,7 +769,7 @@ function buildViolationRow(
                 normalizeForGoldenConfigCompare(component.value, component.value)
         )
         .map(component => ({
-            name: component.parameter,
+            id: component.name ?? component.parameter,
             current: String(obj[component.parameter] ?? '')
         }));
     if (violatedConfigs.length === 0) {
@@ -804,7 +804,7 @@ function buildBlockDeviceSpaceManagementEntry(
         source === 'lun' ? ASSESSMENT_RESOURCE_TYPE.LUN : ASSESSMENT_RESOURCE_TYPE.VOLUME;
 
     const configDetails: ConfigDetailType[] = components.map((component: GoldenConfigComponent) => ({
-        name: component.name ?? component.parameter,
+        id: component.name ?? component.parameter,
         recommended: String(component.value),
         objectType: componentObjectType(component.source)
     }));
@@ -853,8 +853,8 @@ function buildViolatedSubParamsByObject(
             return;
         }
         const subParamNames = violatedConfigs
-            .map(({ name }) => name)
-            .filter((name): name is string => typeof name === 'string' && name.length > 0 && validSubParams.has(name));
+            .map(({ id }) => id)
+            .filter((id): id is string => typeof id === 'string' && id.length > 0 && validSubParams.has(id));
         if (subParamNames.length === 0) {
             return;
         }
@@ -868,14 +868,14 @@ function buildViolatedSubParamsByObject(
  * flagged by `combinedDriftEntries[*].violatedConfigs[*]`. Non-combined targets pass through unchanged.
  */
 function expandCombinedTargets(
-    optimizationTargets: OptimizeStorageRequestParamsType[],
+    optimizationTargets: OptimizeStorageRequestParams[],
     combinedDriftEntries: ReadonlyArray<CombinedDriftEntry>
-): OptimizeStorageRequestParamsType[] {
+): OptimizeStorageRequestParams[] {
     if (!optimizationTargets.some(target => isCombinedOptimizeConfig(target.configurationName))) {
         return optimizationTargets;
     }
 
-    const expanded: OptimizeStorageRequestParamsType[] = [];
+    const expanded: OptimizeStorageRequestParams[] = [];
     optimizationTargets.forEach(target => {
         if (!isCombinedOptimizeConfig(target.configurationName)) {
             expanded.push(target);

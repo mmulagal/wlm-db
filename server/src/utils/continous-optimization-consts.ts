@@ -1,5 +1,4 @@
 import config from 'config';
-import { Static, Type } from 'typebox';
 import { RESOURCESTYPE, WLMDB } from './consts';
 import { DatabaseInstanceMetadata } from './common-types';
 
@@ -282,9 +281,12 @@ const OptimizeStorageApiData = {
         body: { 'tiering-policy': tieringPolicy || 'snapshot-only', 'tiering-minimum-cooling-days': value || '7' },
         type: VOLUME
     }),
-    TIERING_POLICY: (value?: string) => ({
+    TIERING_POLICY: (value?: string, tieringMinCoolingDays?: string | null) => ({
         api: '/private/cli/volume',
-        body: { 'tiering-policy': value || 'snapshot-only' },
+        body: {
+            'tiering-policy': value || 'snapshot-only',
+            ...(tieringMinCoolingDays !== null && { 'tiering-minimum-cooling-days': tieringMinCoolingDays || '7' })
+        },
         type: VOLUME
     }),
 
@@ -378,17 +380,11 @@ interface OptimizeStorageParams {
     optimizationTargets: OptimizeStorageRequestParams[];
 }
 
-const OptimizeStorageRequestParams = Type.Object({
-    configurationName: Type.String({ enum: Object.values(OptimizeStorageConfigs) }),
-    objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
-});
-type OptimizeStorageRequestParamsType = Static<typeof OptimizeStorageRequestParams>;
-
 /**
  * Merges optimization targets by `configurationName`, de-duplicating `objectsToOptimize` within
  * each bucket and preserving first-appearance order. Prevents duplicate PATCH dispatch.
  */
-function mergeOptimizationTargets(targets: OptimizeStorageRequestParamsType[]): OptimizeStorageRequestParamsType[] {
+function mergeOptimizationTargets(targets: OptimizeStorageRequestParams[]): OptimizeStorageRequestParams[] {
     const objectsByConfig = new Map<string, Set<string>>();
     targets.forEach(({ configurationName, objectsToOptimize }) => {
         const bucket = objectsByConfig.get(configurationName) ?? new Set<string>();
@@ -408,8 +404,8 @@ interface OptimizeStorageAttributeParams {
     fsxId: string;
     activeNodeInstanceId: string;
     parentJobId: string;
-    optimizationTargets: OptimizeStorageRequestParamsType[];
-    optimizationConfigs: Record<string, any>;
+    optimizationTargets: OptimizeStorageRequestParams[];
+    optimizationConfigs: typeof OptimizeStorageConfigs;
     apiRequestData: typeof OptimizeStorageApiData;
     svmName: string;
     serverNameWithHostName: string;
@@ -431,7 +427,7 @@ interface OptimizeStorageOperationParams {
     instanceName: string;
     sqlAuthEnabled: boolean;
     svmName: string;
-    optimizationTargets: OptimizeStorageRequestParamsType[];
+    optimizationTargets: OptimizeStorageRequestParams[];
     instanceMetadata?: DatabaseInstanceMetadata;
     volumeTypeMap?: Map<string, string[]>;
 }
@@ -630,6 +626,18 @@ const ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
     ]
 };
 
+const MSSQL_OPTIMIZE_STORAGE_FIX_API_CONFIG_NAMES = [
+    ...MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP.volumes,
+    ...MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP.luns
+];
+
+const ORACLE_OPTIMIZE_STORAGE_CONFIGURATION_FIX_API_CONFIG_NAMES = [
+    ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.volumes,
+    ...ORACLE_STORAGE_CONFIGURATION_ASSESSMENT_MAP.luns
+];
+
+const ORACLE_OPTIMIZE_STORAGE_LAYOUT_FIX_API_CONFIG_NAMES = [...ORACLE_STORAGE_LAYOUT_CONFIGS_MAP.layout];
+
 const ASSESSMENT_CONFIGS = {
     compute: 'compute-rightsizing',
     transparentHugepages: 'transparent-hugepages',
@@ -745,8 +753,10 @@ export {
     ORACLE_ISCSI_SPECIFIC_LAYOUT_CONFIGS,
     OptimizeStorageAttributeParams,
     OptimizeStorageOperationParams,
-    OptimizeStorageRequestParamsType,
     OptimizeStorageRequestParams,
+    MSSQL_OPTIMIZE_STORAGE_FIX_API_CONFIG_NAMES,
+    ORACLE_OPTIMIZE_STORAGE_CONFIGURATION_FIX_API_CONFIG_NAMES,
+    ORACLE_OPTIMIZE_STORAGE_LAYOUT_FIX_API_CONFIG_NAMES,
     OptimizeOracleTypes,
     OptimizeOracleComputeHostOs,
     OptimizeOracleiSCSIStorageOperatingSystem,

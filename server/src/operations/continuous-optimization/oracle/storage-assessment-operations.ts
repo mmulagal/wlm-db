@@ -1617,7 +1617,7 @@ function getVolumeConfigDrift(
                     if (current === undefined || !isViolated) {
                         return;
                     }
-                    violatedConfigs.push({ name: subName, current });
+                    violatedConfigs.push({ id: subName, current });
                     combinedCategory =
                         combinedCategory && dataCategory && combinedCategory !== dataCategory
                             ? 'mixed'
@@ -1651,7 +1651,7 @@ function getVolumeConfigDrift(
                     const name = component.name ?? component.parameter!;
                     const overrides = detailMap[name] ?? {};
                     return {
-                        name,
+                        id: name,
                         recommended: overrides.recommended ?? String(component.value ?? ''),
                         objectType: component.objectType ?? ASSESSMENT_RESOURCE_TYPE.VOLUME,
                         ...(overrides.recommendedByDataCategory

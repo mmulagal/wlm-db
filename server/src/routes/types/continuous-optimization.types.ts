@@ -52,10 +52,10 @@ const OracleAssessmentQueryStringPerAccount = Type.Intersect([
  * that roll up multiple ONTAP attributes into one assessment entry. Each entry lists the
  * sub-parameter name and the offending object's current (non-optimal) stringified value. The
  * recommended target value is NOT duplicated here — it lives once in the entry-level
- * configDetails[] catalogue, joined by `name`.
+ * configDetails[] catalogue, joined by `id`.
  */
 const ViolatedConfig = Type.Object({
-    name: Type.String(),
+    id: Type.String(),
     current: Type.String()
 });
 type ViolatedConfigType = Static<typeof ViolatedConfig>;
@@ -98,7 +98,7 @@ type ViolationAdditionalInfoType = Static<typeof ViolationAdditionalInfo>;
  * `recommendedByDataCategory` and optionally `recommendedNote` for per-category guidance.
  */
 const ConfigDetail = Type.Object({
-    name: Type.String(),
+    id: Type.String(),
     recommended: Type.String(),
     objectType: Type.String(),
     recommendedByDataCategory: Type.Optional(RecommendedByDataCategory),

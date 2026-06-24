@@ -817,7 +817,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
         totalObjectsAssessed?: number;
         totalObjectsInViolation?: number;
         configDetails?: Array<{
-            name: string;
+            id: string;
             recommended: string;
             objectType: string;
             recommendedByDataCategory?: Record<string, string>;
@@ -829,7 +829,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             objectType?: string;
             dataCategory?: string;
             recommended?: string;
-            violatedConfigs?: Array<{ name: string; current: string }>;
+            violatedConfigs?: Array<{ id: string; current: string }>;
         }>;
     };
 
@@ -839,7 +839,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
 
     const storageEfficienciesConfigDetails = [
         {
-            name: 'compression',
+            id: 'compression',
             recommended: '',
             objectType: 'Volume',
             recommendedByDataCategory: {
@@ -849,7 +849,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             }
         },
         {
-            name: 'deduplication',
+            id: 'deduplication',
             recommended: '',
             objectType: 'Volume',
             recommendedByDataCategory: {
@@ -860,7 +860,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             recommendedNote: '`both` is also acceptable for non-log-files volumes'
         },
         {
-            name: 'compaction',
+            id: 'compaction',
             recommended: '',
             objectType: 'Volume',
             recommendedByDataCategory: {
@@ -873,7 +873,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
 
     const tieringTcoConfigDetails = [
         {
-            name: 'tiering-policy',
+            id: 'tiering-policy',
             recommended: '',
             objectType: 'Volume',
             recommendedByDataCategory: {
@@ -884,7 +884,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             }
         },
         {
-            name: 'tiering-min-cooling-days',
+            id: 'tiering-min-cooling-days',
             recommended: '',
             objectType: 'Volume',
             recommendedByDataCategory: {
@@ -938,8 +938,8 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             expect(detail?.objectType).toBe('Volume');
             expect(detail?.dataCategory).toBe('non-log-files');
             expect(detail?.violatedConfigs).toEqual([
-                { name: 'compression', current: 'none' },
-                { name: 'deduplication', current: 'none' }
+                { id: 'compression', current: 'none' },
+                { id: 'deduplication', current: 'none' }
             ]);
         });
 
@@ -974,7 +974,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             const detail = entry.violationDetails?.[0];
             expect(detail?.dataCategory).toBe('mixed');
-            expect(detail?.violatedConfigs?.map(v => v.name)).toEqual(['compression', 'deduplication', 'compaction']);
+            expect(detail?.violatedConfigs?.map(v => v.id)).toEqual(['compression', 'deduplication', 'compaction']);
         });
     });
 
@@ -992,7 +992,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             expect(entry.configDetails).toEqual(tieringTcoConfigDetails);
             expect(entry.objectsInViolation).toEqual(['data_vol']);
             const detail = entry.violationDetails?.find(d => d.objectName === 'data_vol');
-            expect(detail?.violatedConfigs).toEqual([{ name: 'tiering-policy', current: 'auto' }]);
+            expect(detail?.violatedConfigs).toEqual([{ id: 'tiering-policy', current: 'auto' }]);
         });
 
         it('flags only tiering-min-cooling-days on an archive volume when policy is correct', () => {
@@ -1007,7 +1007,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(entry.objectsInViolation).toEqual(['archive_vol']);
             const detail = entry.violationDetails?.find(d => d.objectName === 'archive_vol');
-            expect(detail?.violatedConfigs).toEqual([{ name: 'tiering-min-cooling-days', current: '30' }]);
+            expect(detail?.violatedConfigs).toEqual([{ id: 'tiering-min-cooling-days', current: '30' }]);
         });
 
         it('does not flag tiering-min-cooling-days on a data-files volume even when value differs', () => {
@@ -1045,7 +1045,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(entry.objectsInViolation).toEqual(['fra_vol']);
             const detail = entry.violationDetails?.find(d => d.objectName === 'fra_vol');
-            expect(detail?.violatedConfigs).toEqual([{ name: 'tiering-min-cooling-days', current: '30' }]);
+            expect(detail?.violatedConfigs).toEqual([{ id: 'tiering-min-cooling-days', current: '30' }]);
             expect(detail?.dataCategory).toBe('archive-log-files');
         });
 
@@ -1091,7 +1091,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             const entry = findById(nonCompliantDrift, 'tiering-tco-optimization');
             expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             const detail = entry.violationDetails?.find(d => d.objectName === 'fra_vol');
-            expect(detail?.violatedConfigs).toEqual([{ name: 'tiering-min-cooling-days', current: '2' }]);
+            expect(detail?.violatedConfigs).toEqual([{ id: 'tiering-min-cooling-days', current: '2' }]);
         });
 
         it('treats snapshot_only as compliant on volumes outside mapped file-type lists', () => {
@@ -1184,24 +1184,40 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
         });
     });
 
-    describe('fractional-reserve protocol behavior', () => {
-        it('should not assess standalone fractional-reserve for iSCSI', () => {
+    describe('legacy standalone drift entries', () => {
+        it('should not assess standalone legacy sub-parameter ids for iSCSI', () => {
             const drift = getVolumeConfigDrift(
                 buildVolumeMap(),
                 buildAssessment([dataVolumeOptimal, redoVolumeOptimal, archiveVolumeOptimal]),
                 'iSCSI'
             );
 
+            expect(findById(drift, 'storage-efficiencies')).toBeDefined();
+            expect(findById(drift, 'tiering-tco-optimization')).toBeDefined();
+            expect(findById(drift, 'compression')).toBeUndefined();
+            expect(findById(drift, 'deduplication')).toBeUndefined();
+            expect(findById(drift, 'compaction')).toBeUndefined();
+            expect(findById(drift, 'tiering-policy')).toBeUndefined();
+            expect(findById(drift, 'tiering-min-cooling-days')).toBeUndefined();
             expect(findById(drift, 'fractional-reserve')).toBeUndefined();
+            expect(findById(drift, 'space-reservation-enabled')).toBeUndefined();
+            expect(findById(drift, 'space-allocation-allocated')).toBeUndefined();
         });
 
-        it('should not assess standalone fractional-reserve for NFS', () => {
+        it('should not assess standalone legacy sub-parameter ids for NFS', () => {
             const drift = getVolumeConfigDrift(
                 buildVolumeMap(),
                 buildAssessment([dataVolumeOptimal, redoVolumeOptimal, archiveVolumeOptimal]),
                 'NFS'
             );
 
+            expect(findById(drift, 'storage-efficiencies')).toBeDefined();
+            expect(findById(drift, 'tiering-tco-optimization')).toBeDefined();
+            expect(findById(drift, 'compression')).toBeUndefined();
+            expect(findById(drift, 'deduplication')).toBeUndefined();
+            expect(findById(drift, 'compaction')).toBeUndefined();
+            expect(findById(drift, 'tiering-policy')).toBeUndefined();
+            expect(findById(drift, 'tiering-min-cooling-days')).toBeUndefined();
             expect(findById(drift, 'fractional-reserve')).toBeUndefined();
         });
     });

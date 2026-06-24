@@ -7,7 +7,8 @@ import {
     OptimizeOracleNFSStorageOperatingSystem,
     OptimizeOracleStorageSizing,
     OptimizeOracleTypes,
-    OptimizeStorageRequestParams
+    ORACLE_OPTIMIZE_STORAGE_CONFIGURATION_FIX_API_CONFIG_NAMES,
+    ORACLE_OPTIMIZE_STORAGE_LAYOUT_FIX_API_CONFIG_NAMES
 } from '../../utils/continous-optimization-consts';
 import { CLONE_ACTION, OTHER_CLONE } from '../../utils/consts';
 import {
@@ -363,9 +364,25 @@ const OptimizeRequestBody = Type.Object({
 
 type OptimizeRequestBodyType = Static<typeof OptimizeRequestBody>;
 
-const OptimizeStorageRequestBody = Type.Object({
-    assessments: Type.Optional(Type.Array(OptimizeStorageRequestParams))
+const OracleOptimizeStorageConfigurationRequestParams = Type.Object({
+    configurationName: Type.String({ enum: ORACLE_OPTIMIZE_STORAGE_CONFIGURATION_FIX_API_CONFIG_NAMES }),
+    objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
 });
+
+const OracleOptimizeStorageLayoutRequestParams = Type.Object({
+    configurationName: Type.String({ enum: ORACLE_OPTIMIZE_STORAGE_LAYOUT_FIX_API_CONFIG_NAMES }),
+    objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
+});
+
+const OptimizeStorageConfigurationRequestBody = Type.Object({
+    assessments: Type.Optional(Type.Array(OracleOptimizeStorageConfigurationRequestParams))
+});
+type OptimizeStorageConfigurationRequestBodyType = Static<typeof OptimizeStorageConfigurationRequestBody>;
+
+const OptimizeStorageLayoutRequestBody = Type.Object({
+    assessments: Type.Optional(Type.Array(OracleOptimizeStorageLayoutRequestParams))
+});
+type OptimizeStorageLayoutRequestBodyType = Static<typeof OptimizeStorageLayoutRequestBody>;
 
 export {
     OracleAssessmentItem,
@@ -402,7 +419,10 @@ export {
     OptimizeRequestBody,
     OptimizeRequestBodyType,
     HostsToOptimizeType,
-    OptimizeStorageRequestBody,
+    OptimizeStorageConfigurationRequestBody,
+    OptimizeStorageConfigurationRequestBodyType,
+    OptimizeStorageLayoutRequestBody,
+    OptimizeStorageLayoutRequestBodyType,
     BackupOptimizePerHostRequestBodyType,
     OracleCloneAction,
     OracleCloneActionType,

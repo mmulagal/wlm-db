@@ -11,8 +11,7 @@ import {
     OptimizeOracleStorageSizing,
     OptimizeStorageConfigs,
     OptimizeStorageParams,
-    OptimizeStorageRequestParams,
-    OptimizeStorageRequestParamsType
+    OptimizeStorageRequestParams
 } from '../../../utils/continous-optimization-consts';
 import ORACLE_GOLDEN_CONFIG from './golden-config';
 import { StorageAssessment } from './common-types';
@@ -82,7 +81,7 @@ type OracleRecommendationMap = {
 // so cont-opt-optimize-operations can expand combined optimize requests without re-assessing volumes.
 type OracleStorageRecommendationResult = {
     recommendationMap: OracleRecommendationMap;
-    syntheticTargets: OptimizeStorageRequestParamsType[];
+    syntheticTargets: OptimizeStorageRequestParams[];
     droppedCombined: string[];
 };
 
@@ -600,9 +599,9 @@ async function optimizeOracleStorageLayout(storageOptimizeParams: OptimizeStorag
 // fresh drift (via expandCombinedTargets). Reports combined config names dropped when drift is
 // missing or error-shaped so the caller can fail fast instead of issuing partial PATCHes.
 function deriveOracleNonVolumeCombinedOutputs(
-    combinedTargets: OptimizeStorageRequestParamsType[],
+    combinedTargets: OptimizeStorageRequestParams[],
     storageDrift: Array<Record<string, unknown>>
-): { syntheticTargets: OptimizeStorageRequestParamsType[]; droppedCombined: string[] } {
+): { syntheticTargets: OptimizeStorageRequestParams[]; droppedCombined: string[] } {
     if (combinedTargets.length === 0) {
         return { syntheticTargets: [], droppedCombined: [] };
     }
@@ -650,7 +649,7 @@ async function getOracleStorageConfigRecommendationMap(
     deploymentType: string,
     activeNodeInstanceId: string,
     fileSystemId: string,
-    optimizationTargets: OptimizeStorageRequestParamsType[],
+    optimizationTargets: OptimizeStorageRequestParams[],
     serverNameWithHostName: string,
     parentJobId: string
 ): Promise<OracleStorageRecommendationResult | undefined> {
@@ -776,13 +775,13 @@ async function getOracleStorageConfigRecommendationMap(
                     volume.id === 'storage-efficiencies' || volume.id === 'tiering-tco-optimization'
             )
             .forEach(entry => {
-                const configDetailByName = new Map<string, ConfigDetailType>(
-                    (entry.configDetails ?? []).map((detail: ConfigDetailType) => [detail.name, detail])
+                const configDetailById = new Map<string, ConfigDetailType>(
+                    (entry.configDetails ?? []).map((detail: ConfigDetailType) => [detail.id, detail])
                 );
                 (entry.violationDetails ?? []).forEach((violation: GenericViolationResponseType) => {
                     const dataCategory = violation.dataCategory ?? '';
-                    (violation.violatedConfigs ?? []).forEach(({ name }: ViolatedConfigType) => {
-                        const detail = configDetailByName.get(name);
+                    (violation.violatedConfigs ?? []).forEach(({ id }: ViolatedConfigType) => {
+                        const detail = configDetailById.get(id);
                         const recommendedByCategory = detail?.recommendedByDataCategory;
                         const recommended =
                             (recommendedByCategory && dataCategory in recommendedByCategory
@@ -795,7 +794,7 @@ async function getOracleStorageConfigRecommendationMap(
                         if (!requestedObjectsByCombinedId.get(entry.id)?.has(objectName)) {
                             return;
                         }
-                        const key = name as OptimizeStorageConfigs;
+                        const key = id as OptimizeStorageConfigs;
                         recommendationMap[key] ??= { recommended: {}, additionalInfo: {} };
                         if (!recommendationMap[key]!.recommended[recommended]) {
                             recommendationMap[key]!.recommended[recommended] = [];

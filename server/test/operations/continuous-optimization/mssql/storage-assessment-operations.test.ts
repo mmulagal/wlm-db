@@ -105,12 +105,20 @@ const minimalStorageAssessment = (overrides: StorageAssessmentFixture = {}): Sto
 const runStorageDrift = (storageAssessmentData: StorageAssessment) =>
     calculateStorageDrift('account-1', 'cred-1', 'us-east-1', 'host-1', 'instance-1', storageAssessmentData);
 
-describe('MSSQL golden config tiering entries', () => {
-    it('should expose tiering-tco-optimization and not legacy standalone tiering ids', () => {
+describe('MSSQL golden config combined storage entries', () => {
+    it('should expose combined configs and not legacy standalone sub-parameter ids', () => {
         const ids = MSSQL_GOLDEN_CONFIG.map(entry => entry.id);
         expect(ids).toContain('tiering-tco-optimization');
+        expect(ids).toContain('block-device-space-management');
+        expect(ids).toContain('storage-efficiencies');
         expect(ids).not.toContain('tiering-policy');
         expect(ids).not.toContain('tiering-min-cooling-days');
+        expect(ids).not.toContain('fractional-reserve');
+        expect(ids).not.toContain('space-reservation-enabled');
+        expect(ids).not.toContain('space-allocation-allocated');
+        expect(ids).not.toContain('compression');
+        expect(ids).not.toContain('deduplication');
+        expect(ids).not.toContain('compaction');
     });
 });
 
@@ -131,8 +139,8 @@ describe('calculateStorageDrift combined entries', () => {
             totalObjectsInViolation: 0,
             resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             configDetails: [
-                { name: 'tiering-policy', recommended: 'snapshot_only', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME },
-                { name: 'tiering-min-cooling-days', recommended: '7', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME }
+                { id: 'tiering-policy', recommended: 'snapshot_only', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME },
+                { id: 'tiering-min-cooling-days', recommended: '7', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME }
             ]
         });
     });
@@ -159,13 +167,13 @@ describe('calculateStorageDrift combined entries', () => {
                     objectName: 'v2',
                     value: '',
                     objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                    violatedConfigs: [{ name: 'tiering-policy', current: 'auto' }]
+                    violatedConfigs: [{ id: 'tiering-policy', current: 'auto' }]
                 },
                 {
                     objectName: 'v3',
                     value: '',
                     objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                    violatedConfigs: [{ name: 'tiering-min-cooling-days', current: '30' }]
+                    violatedConfigs: [{ id: 'tiering-min-cooling-days', current: '30' }]
                 }
             ]
         });
@@ -222,15 +230,15 @@ describe('calculateStorageDrift combined entries', () => {
                     value: '',
                     objectType: ASSESSMENT_RESOURCE_TYPE.LUN,
                     violatedConfigs: [
-                        { name: 'space-reservation-enabled', current: 'false' },
-                        { name: 'space-allocation-allocated', current: 'false' }
+                        { id: 'space-reservation-enabled', current: 'false' },
+                        { id: 'space-allocation-allocated', current: 'false' }
                     ]
                 },
                 {
                     objectName: 'v1',
                     value: '',
                     objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                    violatedConfigs: [{ name: 'fractional-reserve', current: '5' }]
+                    violatedConfigs: [{ id: 'fractional-reserve', current: '5' }]
                 }
             ])
         );
@@ -363,9 +371,9 @@ describe('calculateStorageDrift storage-efficiencies', () => {
             totalObjectsInViolation: 0,
             resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             configDetails: [
-                { name: 'compression', recommended: 'adaptive', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME },
-                { name: 'deduplication', recommended: 'inline', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME },
-                { name: 'compaction', recommended: 'enabled', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME }
+                { id: 'compression', recommended: 'adaptive', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME },
+                { id: 'deduplication', recommended: 'inline', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME },
+                { id: 'compaction', recommended: 'enabled', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME }
             ]
         });
     });
@@ -392,15 +400,15 @@ describe('calculateStorageDrift storage-efficiencies', () => {
                     objectName: 'v2',
                     value: '',
                     objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                    violatedConfigs: [{ name: 'compression', current: 'none' }]
+                    violatedConfigs: [{ id: 'compression', current: 'none' }]
                 },
                 {
                     objectName: 'v3',
                     value: '',
                     objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
                     violatedConfigs: [
-                        { name: 'deduplication', current: 'background' },
-                        { name: 'compaction', current: 'none' }
+                        { id: 'deduplication', current: 'background' },
+                        { id: 'compaction', current: 'none' }
                     ]
                 }
             ]
@@ -424,7 +432,7 @@ describe('calculateStorageDrift storage-efficiencies', () => {
             violationDetails: [
                 {
                     objectName: 'v2',
-                    violatedConfigs: [{ name: 'compaction', current: '' }]
+                    violatedConfigs: [{ id: 'compaction', current: '' }]
                 }
             ]
         });
@@ -473,7 +481,7 @@ describe('expandCombinedTargets', () => {
             objectName: row.name,
             value: '',
             objectType: row.type === 'lun' ? ASSESSMENT_RESOURCE_TYPE.LUN : ASSESSMENT_RESOURCE_TYPE.VOLUME,
-            violatedConfigs: row.violated.map(name => ({ name, current: 'false' }))
+            violatedConfigs: row.violated.map(id => ({ id, current: 'false' }))
         }))
     });
 
@@ -559,13 +567,13 @@ describe('expandCombinedTargets', () => {
                         objectName: 'v1',
                         value: '',
                         objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                        violatedConfigs: [{ name: 'tiering-policy', current: 'auto' }]
+                        violatedConfigs: [{ id: 'tiering-policy', current: 'auto' }]
                     },
                     {
                         objectName: 'v2',
                         value: '',
                         objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                        violatedConfigs: [{ name: 'tiering-min-cooling-days', current: '30' }]
+                        violatedConfigs: [{ id: 'tiering-min-cooling-days', current: '30' }]
                     }
                 ]
             }
@@ -598,15 +606,15 @@ describe('expandCombinedTargets', () => {
                         objectName: 'v1',
                         value: '',
                         objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                        violatedConfigs: [{ name: 'compression', current: 'none' }]
+                        violatedConfigs: [{ id: 'compression', current: 'none' }]
                     },
                     {
                         objectName: 'v2',
                         value: '',
                         objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
                         violatedConfigs: [
-                            { name: 'deduplication', current: 'background' },
-                            { name: 'compaction', current: 'none' }
+                            { id: 'deduplication', current: 'background' },
+                            { id: 'compaction', current: 'none' }
                         ]
                     }
                 ]

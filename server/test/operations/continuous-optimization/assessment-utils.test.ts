@@ -43,7 +43,7 @@ describe('buildVolumeCombinedEntry', () => {
                 objectName: 'v1',
                 value: '',
                 objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                violatedConfigs: [{ name: 'tiering-policy', current: 'auto' }]
+                violatedConfigs: [{ id: 'tiering-policy', current: 'auto' }]
             }
         ]);
     });
@@ -77,23 +77,21 @@ describe('buildBlockDeviceSpaceManagementEntry', () => {
 describe('isCombinedViolationDetail', () => {
     it('should reject rows missing objectName or violatedConfigs', () => {
         expect(isCombinedViolationDetail({ objectName: 'v1', value: '' })).toBe(false);
-        expect(isCombinedViolationDetail({ objectName: '', violatedConfigs: [{ name: 'x', current: 'y' }] })).toBe(
-            false
-        );
+        expect(isCombinedViolationDetail({ objectName: '', violatedConfigs: [{ id: 'x', current: 'y' }] })).toBe(false);
         expect(
             isCombinedViolationDetail({
                 objectName: 'v1',
-                violatedConfigs: [{ name: '', current: 'y' }]
+                violatedConfigs: [{ id: '', current: 'y' }]
             })
         ).toBe(false);
     });
 
-    it('should accept rows with non-empty objectName and violatedConfigs names', () => {
+    it('should accept rows with non-empty objectName and violatedConfigs ids', () => {
         expect(
             isCombinedViolationDetail({
                 objectName: 'v1',
                 value: '',
-                violatedConfigs: [{ name: 'thin-provision', current: 'false' }]
+                violatedConfigs: [{ id: 'thin-provision', current: 'false' }]
             })
         ).toBe(true);
     });

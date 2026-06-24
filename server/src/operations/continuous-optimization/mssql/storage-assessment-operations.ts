@@ -523,7 +523,7 @@ function buildStorageEfficienciesEntry(
         const violatedConfigs: ViolatedConfigType[] = storageEfficienciesComponents
             .filter(({ parameter }) => !isStorageEfficiencyEnabled(parameter, volume[parameter]))
             .map(({ parameter, name }) => ({
-                name: name ?? parameter,
+                id: name ?? parameter,
                 current: String(volume[parameter] ?? '')
             }));
         if (violatedConfigs.length === 0) {
@@ -548,7 +548,7 @@ function buildStorageEfficienciesEntry(
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         violationDetails,
         configDetails: storageEfficienciesComponents.map(({ name, value }) => ({
-            name,
+            id: name,
             recommended: String(value ?? ''),
             objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
         }))

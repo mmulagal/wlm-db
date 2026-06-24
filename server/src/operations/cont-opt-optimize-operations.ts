@@ -57,7 +57,7 @@ import {
     OptimizeOperatingSystemParams,
     OptimizeStorageConfigsJobNames,
     STORAGE_OPTIMIZE_JOB_PARAM,
-    OptimizeStorageRequestParamsType,
+    OptimizeStorageRequestParams,
     isCombinedOptimizeConfig,
     mergeOptimizationTargets,
     CombinedOptimizeConfigName
@@ -178,8 +178,8 @@ interface OptimizeStorageAttributeParams {
     fsxId: string;
     activeNodeInstanceId: string;
     parentJobId: string;
-    optimizationTargets: OptimizeStorageRequestParamsType[];
-    optimizationConfigs: Record<string, any>;
+    optimizationTargets: OptimizeStorageRequestParams[];
+    optimizationConfigs: typeof OptimizeStorageConfigs;
     apiRequestData: typeof OptimizeStorageApiData;
     svmName: string;
     serverNameWithHostName: string;
@@ -209,7 +209,7 @@ interface OptimizeStorageOperationParams {
     instanceName: string;
     sqlAuthEnabled: boolean;
     svmName: string;
-    optimizationTargets: OptimizeStorageRequestParamsType[];
+    optimizationTargets: OptimizeStorageRequestParams[];
     instanceMetadata?: DatabaseInstanceMetadata;
     volumeTypeMap?: Map<string, string[]>;
 }
@@ -854,6 +854,7 @@ async function callOntapApi(
 ) {
     let apiData;
     if (
+        resourceType === RESOURCESTYPE.ORACLE &&
         oracleSpecialStorageConfigNames.includes(
             OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs]
         )
@@ -863,6 +864,12 @@ async function callOntapApi(
             OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS
         ) {
             apiData = apiRequestData[configKey as unknown as keyof typeof apiRequestData](value, 'auto');
+        } else if (
+            OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs] ===
+            OptimizeStorageConfigs.TIERING_POLICY
+        ) {
+            // ponytail: null omits cooling days — Oracle handles it via the TIERING_MINIMUM_COOLING_DAYS synthetic job.
+            apiData = (apiRequestData.TIERING_POLICY as (typeof OptimizeStorageApiData)['TIERING_POLICY'])(value, null);
         } else {
             apiData = apiRequestData[configKey as keyof typeof apiRequestData](value);
         }

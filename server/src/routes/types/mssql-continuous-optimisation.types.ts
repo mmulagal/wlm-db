@@ -10,7 +10,7 @@ import {
     OptimizeHighAvailabilityParams,
     OptimizeMaxDopParams,
     OptimizeOperatingSystemParams,
-    OptimizeStorageRequestParams,
+    MSSQL_OPTIMIZE_STORAGE_FIX_API_CONFIG_NAMES,
     OptimizeStorageTierParams
 } from '../../utils/continous-optimization-consts';
 import {
@@ -494,8 +494,13 @@ const DriftAssessmentResponsePerAccountV1 = Type.Object({
 
 type DriftAssessmentResponsePerAccountV1Type = Static<typeof DriftAssessmentResponsePerAccountV1>;
 
+const MSSQLOptimizeStorageRequestParams = Type.Object({
+    configurationName: Type.String({ enum: MSSQL_OPTIMIZE_STORAGE_FIX_API_CONFIG_NAMES }),
+    objectsToOptimize: Type.Array(Type.String({ minLength: 1 }))
+});
+
 const OptimizeStorageRequestBody = Type.Object({
-    assessments: Type.Optional(Type.Array(OptimizeStorageRequestParams))
+    assessments: Type.Optional(Type.Array(MSSQLOptimizeStorageRequestParams))
 });
 
 type OptimizeStorageRequestBodyType = Static<typeof OptimizeStorageRequestBody>;
@@ -505,7 +510,7 @@ const BulkOptimizePerHostRequestBody = Type.Object({
     instances: Type.Array(
         Type.Object({
             id: Type.String({ minLength: 1 }),
-            configurations: Type.Array(OptimizeStorageRequestParams)
+            configurations: Type.Array(MSSQLOptimizeStorageRequestParams)
         })
     )
 });

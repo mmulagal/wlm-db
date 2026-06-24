@@ -14,7 +14,8 @@ import {
     DriftAssessmentResponsePerHost,
     HostOsPatchScanResponse,
     OptimizeRequestBody,
-    OptimizeStorageRequestBody,
+    OptimizeStorageConfigurationRequestBody,
+    OptimizeStorageLayoutRequestBody,
     OraclePatchScanField,
     OracleSecurityPatchScanResponse,
     OracleAssessmentResponse,
@@ -100,18 +101,20 @@ const OracleOptimizeStorageSchema = {
     description: 'Fix storage parameters as per the best practice for the selected Oracle database instance.',
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
-    body: OptimizeStorageRequestBody,
+    body: OptimizeStorageConfigurationRequestBody,
     response: OptimizationResponse
 };
 
 const OracleOptimizeStorageConfigurationSchema = {
     ...OracleOptimizeStorageSchema,
-    summary: 'Fix storage configuration for an Oracle database instance'
+    summary: 'Fix storage configuration for an Oracle database instance',
+    body: OptimizeStorageConfigurationRequestBody
 };
 
 const OracleOptimizeStorageLayoutSchema = {
     ...OracleOptimizeStorageSchema,
-    summary: 'Fix storage layout for an Oracle database instance'
+    summary: 'Fix storage layout for an Oracle database instance',
+    body: OptimizeStorageLayoutRequestBody
 };
 
 const DriftAssessmentPerHost = {
