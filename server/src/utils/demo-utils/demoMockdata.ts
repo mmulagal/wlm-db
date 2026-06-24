@@ -3804,6 +3804,9 @@ const ASSESMENT_CONFIG_DATA = {
     volumes: [
         {
             name: 'wlmdb_sqldata_1728552629461',
+            compressionType: 'none',
+            deduplication: 'none',
+            compaction: 'none',
             autosize: 'on',
             'autosize-mode': 'grow',
             'thin-provision': false,
@@ -3818,6 +3821,9 @@ const ASSESMENT_CONFIG_DATA = {
         },
         {
             name: 'wlmdb_sqltemp_1728552629461',
+            compressionType: 'none',
+            deduplication: 'none',
+            compaction: 'none',
             autosize: 'on',
             'autosize-mode': 'grow',
             'thin-provision': false,
@@ -3832,6 +3838,9 @@ const ASSESMENT_CONFIG_DATA = {
         },
         {
             name: 'wlmdb_sqldata_1728574994',
+            compressionType: 'none',
+            deduplication: 'none',
+            compaction: 'none',
             autosize: 'on',
             'autosize-mode': 'grow',
             'thin-provision': true,
@@ -5771,6 +5780,9 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
     volumes: [
         {
             name: 'wlmdb_sqldata_1750140716368',
+            compressionType: 'none',
+            deduplication: 'none',
+            compaction: 'none',
             uuid: 'af03a358-4b44-11f0-a105-fda4bda8e620',
             autosize: 'on',
             'autosize-mode': 'grow',
@@ -5785,6 +5797,9 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
         },
         {
             name: 'wlmdb_sqltemp_1750140716368',
+            compressionType: 'none',
+            deduplication: 'none',
+            compaction: 'none',
             uuid: 'b50523e3-4b44-11f0-a105-fda4bda8e620',
             autosize: 'on',
             'autosize-mode': 'grow',

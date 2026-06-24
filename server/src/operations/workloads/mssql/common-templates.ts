@@ -479,7 +479,7 @@ const volumeDetailsAssessmentTemplate = `
     if ($MappedVolumeUuids.Count -gt 0) {
         $APIEndpoint = '/storage/volumes'
         $APIQueryFilter = "uuid=" + ($MappedVolumeUuids -join '|')
-        $ApiQueryFields = "fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee"
+        $ApiQueryFields = "fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee,efficiency"
 
         try {
             $VolumeParams = @{
@@ -507,6 +507,9 @@ const volumeDetailsAssessmentTemplate = `
                     'snapshot-policy' = $perVolumeData.snapshot_policy.name
                     'tiering-policy' = $perVolumeData.tiering.policy
                     'tiering-min-cooling-days' = $perVolumeData.tiering.min_cooling_days
+                    'compressionType' = $perVolumeData.efficiency.compression_type
+                    'deduplication' = $perVolumeData.efficiency.dedupe
+                    'compaction' = $perVolumeData.efficiency.compaction
                 }
                 if($perVolumeData.autosize.mode -ne 'off') {
                     $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "on"

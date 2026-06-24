@@ -4,6 +4,7 @@ import {
     AwsWellArchitecturedPillars,
     DEFAULT_MPIO_TIMEOUT,
     MIN_OPTIMIZED_HEADROOM_PERCENTAGE,
+    OptimizeStorageConfigs,
     SEVERITY
 } from '../../../utils/continous-optimization-consts';
 import type { GoldenConfigEntry } from '../assessment-utils';
@@ -132,6 +133,43 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         components: [
             { parameter: 'tiering-policy', value: 'snapshot_only', source: 'volume' },
             { parameter: 'tiering-min-cooling-days', value: 7, source: 'volume' }
+        ],
+        configLevel: 'database'
+    },
+    {
+        id: 'storage-efficiencies',
+        name: 'Storage efficiencies',
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.WARNING,
+        recommendation:
+            'Workload Factory recommends enabling storage efficiencies—deduplication, adaptive compression, and compaction—on volumes used by Microsoft SQL Server to reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance.',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        components: [
+            {
+                parameter: 'compressionType',
+                name: OptimizeStorageConfigs.COMPRESSION,
+                value: 'adaptive',
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+            },
+            {
+                parameter: 'deduplication',
+                name: OptimizeStorageConfigs.DEDUPLICATION,
+                value: 'inline',
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+            },
+            {
+                parameter: 'compaction',
+                name: OptimizeStorageConfigs.COMPACTION,
+                value: 'enabled',
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+            }
         ],
         configLevel: 'database'
     },

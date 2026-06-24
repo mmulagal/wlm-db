@@ -94,7 +94,11 @@ import {
     expandCombinedTargets,
     handleOptimizeJobCreation
 } from './continuous-optimization/assessment-utils';
-import { getLogVolumeDrift, getTempDbVolumeDrift } from './continuous-optimization/mssql/storage-assessment-operations';
+import {
+    getLogVolumeDrift,
+    getTempDbVolumeDrift,
+    buildStorageEfficienciesEntry
+} from './continuous-optimization/mssql/storage-assessment-operations';
 import { resetCache } from '../utils/cache';
 import {
     onDemandTriggerMssqlDriftAssessment,
@@ -130,6 +134,22 @@ function buildMssqlCombinedDriftEntry(
         }
         const entry = buildVolumeCombinedEntry(tieringTcoConfig, volumes as Array<Record<string, unknown>>);
         return { id: tieringTcoConfig.id, violationDetails: entry.violationDetails };
+    }
+    if (combinedName === OptimizeStorageConfigs.STORAGE_EFFICIENCIES) {
+        if (errors?.volumes || !volumes) {
+            return 'dropped';
+        }
+        const storageEfficienciesConfig = MSSQL_GOLDEN_CONFIG.find(
+            c => c.id === OptimizeStorageConfigs.STORAGE_EFFICIENCIES
+        );
+        if (!storageEfficienciesConfig) {
+            return undefined;
+        }
+        const entry = buildStorageEfficienciesEntry(
+            storageEfficienciesConfig,
+            volumes as Array<Record<string, unknown>>
+        );
+        return { id: storageEfficienciesConfig.id, violationDetails: entry.violationDetails };
     }
     if (combinedName === OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT) {
         if (errors?.luns || errors?.volumes || !luns || !volumes) {

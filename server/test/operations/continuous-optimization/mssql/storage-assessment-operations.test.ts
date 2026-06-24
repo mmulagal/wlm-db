@@ -81,6 +81,13 @@ const optimizedTieringVolume = (volumeName: string): RawVolume => ({
     'tiering-min-cooling-days': 7
 });
 
+const optimizedEfficiencyVolume = (volumeName: string, deduplication = 'inline'): RawVolume => ({
+    name: volumeName,
+    compressionType: 'adaptive',
+    deduplication,
+    compaction: 'inline'
+});
+
 const minimalStorageAssessment = (overrides: StorageAssessmentFixture = {}): StorageAssessment => {
     const { errors: errorOverrides, ...rest } = overrides;
     return {
@@ -339,6 +346,125 @@ describe('calculateStorageDrift combined entries', () => {
     });
 });
 
+describe('calculateStorageDrift storage-efficiencies', () => {
+    it('should report storage-efficiencies OPTIMIZED when every volume has efficiencies enabled (inline or both)', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                volumes: [optimizedEfficiencyVolume('v1'), optimizedEfficiencyVolume('v2', 'both')]
+            })
+        );
+        const entry = drift.find(item => 'id' in item && item.id === OptimizeStorageConfigs.STORAGE_EFFICIENCIES);
+
+        expect(entry).toMatchObject({
+            status: AssessmentStatus.OPTIMIZED,
+            objectsInViolation: [],
+            violationDetails: [],
+            totalObjectsAssessed: 2,
+            totalObjectsInViolation: 0,
+            resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            configDetails: [
+                { name: 'compression', recommended: 'adaptive', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME },
+                { name: 'deduplication', recommended: 'inline', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME },
+                { name: 'compaction', recommended: 'enabled', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME }
+            ]
+        });
+    });
+
+    it('should flag only the failing sub-parameters per volume with their current values', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                volumes: [
+                    optimizedEfficiencyVolume('v1'),
+                    { name: 'v2', compressionType: 'none', deduplication: 'inline', compaction: 'inline' },
+                    { name: 'v3', compressionType: 'adaptive', deduplication: 'background', compaction: 'none' }
+                ]
+            })
+        );
+        const entry = drift.find(item => 'id' in item && item.id === OptimizeStorageConfigs.STORAGE_EFFICIENCIES);
+
+        expect(entry).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            totalObjectsAssessed: 3,
+            totalObjectsInViolation: 2,
+            objectsInViolation: ['v2', 'v3'],
+            violationDetails: [
+                {
+                    objectName: 'v2',
+                    value: '',
+                    objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                    violatedConfigs: [{ name: 'compression', current: 'none' }]
+                },
+                {
+                    objectName: 'v3',
+                    value: '',
+                    objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                    violatedConfigs: [
+                        { name: 'deduplication', current: 'background' },
+                        { name: 'compaction', current: 'none' }
+                    ]
+                }
+            ]
+        });
+    });
+
+    it('should flag a volume whose compaction data is missing as a violation', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                volumes: [
+                    optimizedEfficiencyVolume('v1'),
+                    { name: 'v2', compressionType: 'adaptive', deduplication: 'inline' }
+                ]
+            })
+        );
+        const entry = drift.find(item => 'id' in item && item.id === OptimizeStorageConfigs.STORAGE_EFFICIENCIES);
+
+        expect(entry).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            objectsInViolation: ['v2'],
+            violationDetails: [
+                {
+                    objectName: 'v2',
+                    violatedConfigs: [{ name: 'compaction', current: '' }]
+                }
+            ]
+        });
+    });
+
+    it('should report storage-efficiencies not available when no volume has any efficiency data collected', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                volumes: [{ name: 'v1' }, { name: 'v2' }]
+            })
+        );
+        const entry = drift.find(item => 'id' in item && item.id === OptimizeStorageConfigs.STORAGE_EFFICIENCIES);
+
+        expect(entry).toMatchObject({
+            id: OptimizeStorageConfigs.STORAGE_EFFICIENCIES,
+            errorMessage: expect.stringContaining('No storage efficiencies assessment data found')
+        });
+        expect(entry).not.toHaveProperty('status');
+    });
+
+    it('should skip unnamed volumes for storage-efficiencies even when sub-parameters violate', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                volumes: [
+                    { compressionType: 'none', deduplication: 'none', compaction: 'none' },
+                    { name: '', compressionType: 'none', deduplication: 'none', compaction: 'none' }
+                ]
+            })
+        );
+        const entry = drift.find(item => 'id' in item && item.id === OptimizeStorageConfigs.STORAGE_EFFICIENCIES);
+
+        expect(entry).toMatchObject({
+            status: AssessmentStatus.OPTIMIZED,
+            objectsInViolation: [],
+            violationDetails: [],
+            totalObjectsInViolation: 0
+        });
+    });
+});
+
 describe('expandCombinedTargets', () => {
     const driftEntry = (rows: Array<{ name: string; type: 'lun' | 'volume'; violated: string[] }>) => ({
         id: 'block-device-space-management',
@@ -451,6 +577,48 @@ describe('expandCombinedTargets', () => {
         expect(findSynthetic(result, 'tiering-policy')?.objectsToOptimize).toEqual(['v1']);
         expect(findSynthetic(result, 'tiering-min-cooling-days')?.objectsToOptimize).toEqual(['v2']);
         expect(findSynthetic(result, 'tiering-tco-optimization')).toBeUndefined();
+        result.forEach(target => {
+            expect(target.objectsToOptimize).not.toContain('v3');
+        });
+    });
+
+    it('should fan storage-efficiencies into compression, deduplication and compaction synthetics', () => {
+        const combined = [
+            {
+                configurationName: 'storage-efficiencies',
+                objectsToOptimize: ['v1', 'v2', 'v3']
+            }
+        ];
+        const drift = [
+            {
+                id: 'storage-efficiencies',
+                name: 'storage-efficiencies',
+                violationDetails: [
+                    {
+                        objectName: 'v1',
+                        value: '',
+                        objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                        violatedConfigs: [{ name: 'compression', current: 'none' }]
+                    },
+                    {
+                        objectName: 'v2',
+                        value: '',
+                        objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                        violatedConfigs: [
+                            { name: 'deduplication', current: 'background' },
+                            { name: 'compaction', current: 'none' }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const result = expandCombinedTargets(combined, drift);
+
+        expect(findSynthetic(result, 'compression')?.objectsToOptimize).toEqual(['v1']);
+        expect(findSynthetic(result, 'deduplication')?.objectsToOptimize).toEqual(['v2']);
+        expect(findSynthetic(result, 'compaction')?.objectsToOptimize).toEqual(['v2']);
+        expect(findSynthetic(result, 'storage-efficiencies')).toBeUndefined();
         result.forEach(target => {
             expect(target.objectsToOptimize).not.toContain('v3');
         });

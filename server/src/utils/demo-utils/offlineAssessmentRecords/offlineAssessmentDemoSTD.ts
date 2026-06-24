@@ -328,6 +328,9 @@ export const offlineAssessmentDemoSTD = {
                         {
                             name: 'wlmdb_sqldata_1770775096801',
                             uuid: 'b2f08f14-06f2-11f1-a170-7143fc0c8c33',
+                            compressionType: 'adaptive',
+                            deduplication: 'inline',
+                            compaction: 'enabled',
                             'thin-provision': true,
                             'space-guarantee': 'none',
                             'autosize-mode': 'grow',
@@ -342,6 +345,9 @@ export const offlineAssessmentDemoSTD = {
                         {
                             name: 'wlmdb_sqltemp_1770775096801',
                             uuid: 'b8fc4031-06f2-11f1-a170-7143fc0c8c33',
+                            compressionType: 'adaptive',
+                            deduplication: 'inline',
+                            compaction: 'enabled',
                             'thin-provision': true,
                             'space-guarantee': 'none',
                             'autosize-mode': 'grow',
@@ -356,6 +362,9 @@ export const offlineAssessmentDemoSTD = {
                         {
                             name: 'wlmdb_sqllog_1770775096801',
                             uuid: 'bf0d4032-06f2-11f1-a170-7143fc0c8c33',
+                            compressionType: 'adaptive',
+                            deduplication: 'inline',
+                            compaction: 'enabled',
                             'thin-provision': true,
                             'space-guarantee': 'none',
                             'autosize-mode': 'grow',

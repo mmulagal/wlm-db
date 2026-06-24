@@ -542,7 +542,8 @@ const MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'snapshot-copy-reserve',
         'snapshot-autodelete',
         'space-mgmt-try-first',
-        'tiering-tco-optimization'
+        'tiering-tco-optimization',
+        'storage-efficiencies'
     ],
     // 'block-device-space-management' is the combined entry replacing the legacy
     // 'fractional-reserve' (volume), 'space-reservation-enabled' (lun) and

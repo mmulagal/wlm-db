@@ -13,7 +13,9 @@ import getLogger from '../../../utils/logger';
 
 import {
     AssessmentErrorItemType,
-    GenericViolationResponseType
+    AssessmentItemType,
+    GenericViolationResponseType,
+    ViolatedConfigType
 } from '../../../routes/types/continuous-optimization.types';
 import type {
     MssqlAssessmentItemType,
@@ -42,7 +44,8 @@ import { collectSnapshotCopyData } from './resilience-assessment-operation';
 import {
     checkForMissingOptimizePermissions,
     buildBlockDeviceSpaceManagementEntry,
-    buildVolumeCombinedEntry
+    buildVolumeCombinedEntry,
+    type GoldenConfigEntry
 } from '../assessment-utils';
 import { getHeadroomDrift } from '../headroom-assessment';
 
@@ -480,6 +483,78 @@ function getTempDbVolumeDrift(
     };
 }
 
+function isStorageEfficiencyEnabled(parameter: string, value: unknown): boolean {
+    const normalized = String(value ?? '').toLowerCase();
+    switch (parameter) {
+        case 'compressionType':
+            return normalized === 'adaptive';
+        case 'deduplication':
+            return normalized === 'inline' || normalized === 'both';
+        case 'compaction':
+            return normalized === 'enabled' || normalized === 'inline';
+        default:
+            return true;
+    }
+}
+
+function buildStorageEfficienciesEntry(
+    config: GoldenConfigEntry,
+    volumes: Array<Record<string, unknown>>
+): AssessmentItemType {
+    const storageEfficienciesComponents = config.components ?? [];
+
+    const namedVolumes = volumes.filter(volume => typeof volume.name === 'string' && volume.name.length > 0);
+    const hasEfficiencyData = (volume: Record<string, unknown>) =>
+        storageEfficienciesComponents.some(({ parameter }) => String(volume[parameter] ?? '').trim() !== '');
+    if (namedVolumes.length > 0 && !namedVolumes.some(hasEfficiencyData)) {
+        return {
+            ...config,
+            errorMessage:
+                'No storage efficiencies assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.'
+        } as unknown as AssessmentItemType;
+    }
+
+    const violationDetails: GenericViolationResponseType[] = [];
+    volumes.forEach(volume => {
+        const { name: volumeName } = volume;
+        if (typeof volumeName !== 'string' || volumeName.length === 0) {
+            return;
+        }
+        const violatedConfigs: ViolatedConfigType[] = storageEfficienciesComponents
+            .filter(({ parameter }) => !isStorageEfficiencyEnabled(parameter, volume[parameter]))
+            .map(({ parameter, name }) => ({
+                name: name ?? parameter,
+                current: String(volume[parameter] ?? '')
+            }));
+        if (violatedConfigs.length === 0) {
+            return;
+        }
+        violationDetails.push({
+            objectName: volumeName,
+            value: '',
+            objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            violatedConfigs
+        });
+    });
+
+    const objectsInViolation = violationDetails.map(row => row.objectName);
+    return {
+        ...config,
+        recommended: '',
+        status: objectsInViolation.length === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+        objectsInViolation,
+        totalObjectsAssessed: volumes.length,
+        totalObjectsInViolation: objectsInViolation.length,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        violationDetails,
+        configDetails: storageEfficienciesComponents.map(({ name, value }) => ({
+            name,
+            recommended: String(value ?? ''),
+            objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+        }))
+    } as AssessmentItemType;
+}
+
 async function calculateStorageDrift(
     accountId: string,
     credentialsId: string,
@@ -509,6 +584,15 @@ async function calculateStorageDrift(
         });
     } else {
         volumeConfigData.forEach(config => {
+            if (config.id === OptimizeStorageConfigs.STORAGE_EFFICIENCIES) {
+                driftAssessmentData.push(
+                    buildStorageEfficienciesEntry(
+                        config,
+                        volumes as Array<Record<string, unknown>>
+                    ) as MssqlAssessmentItemType
+                );
+                return;
+            }
             let overallStatus = AssessmentStatus.OPTIMIZED;
             const objectsInViolation: string[] = [];
             const violationDetails: GenericViolationResponseType[] = [];
@@ -1099,4 +1183,10 @@ async function calculateStorageDrift(
     return driftAssessmentData;
 }
 
-export { calculateStorageDrift, getLogVolumeDrift, getTempDbVolumeDrift, initiateStorageAssessmentCollection };
+export {
+    calculateStorageDrift,
+    getLogVolumeDrift,
+    getTempDbVolumeDrift,
+    initiateStorageAssessmentCollection,
+    buildStorageEfficienciesEntry
+};
