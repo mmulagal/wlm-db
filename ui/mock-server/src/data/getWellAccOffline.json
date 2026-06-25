@@ -97,17 +97,17 @@
                         "focusWidgetName": "ONTAP",
                         "configDetails": [
                             {
-                                "name": "space-reservation-enabled",
+                                "id": "space-reservation-enabled",
                                 "recommended": "true",
                                 "objectType": "Lun"
                             },
                             {
-                                "name": "space-allocation-allocated",
+                                "id": "space-allocation-allocated",
                                 "recommended": "true",
                                 "objectType": "Lun"
                             },
                             {
-                                "name": "fractional-reserve",
+                                "id": "fractional-reserve",
                                 "recommended": "0",
                                 "objectType": "Volume"
                             }
@@ -199,11 +199,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -214,11 +214,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -229,11 +229,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -244,12 +244,12 @@
                         "focusWidgetName": "ONTAP",
                         "configDetails": [
                             {
-                                "name": "tiering-policy",
+                                "id": "tiering-policy",
                                 "recommended": "snapshot_only",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "tiering-min-cooling-days",
+                                "id": "tiering-min-cooling-days",
                                 "recommended": "7",
                                 "objectType": "Volume"
                             }
@@ -281,11 +281,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "deduplication",
+                                        "id": "deduplication",
                                         "current": "none"
                                     },
                                     {
-                                        "name": "compaction",
+                                        "id": "compaction",
                                         "current": "none"
                                     }
                                 ]
@@ -295,17 +295,17 @@
                         "totalObjectsInViolation": 1,
                         "configDetails": [
                             {
-                                "name": "compression",
+                                "id": "compression",
                                 "recommended": "adaptive",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "deduplication",
+                                "id": "deduplication",
                                 "recommended": "inline",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "compaction",
+                                "id": "compaction",
                                 "recommended": "enabled",
                                 "objectType": "Volume"
                             }
@@ -866,17 +866,17 @@
                         "focusWidgetName": "ONTAP",
                         "configDetails": [
                             {
-                                "name": "space-reservation-enabled",
+                                "id": "space-reservation-enabled",
                                 "recommended": "true",
                                 "objectType": "Lun"
                             },
                             {
-                                "name": "space-allocation-allocated",
+                                "id": "space-allocation-allocated",
                                 "recommended": "true",
                                 "objectType": "Lun"
                             },
                             {
-                                "name": "fractional-reserve",
+                                "id": "fractional-reserve",
                                 "recommended": "0",
                                 "objectType": "Volume"
                             }
@@ -968,11 +968,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -983,11 +983,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -998,11 +998,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -1013,12 +1013,12 @@
                         "focusWidgetName": "ONTAP",
                         "configDetails": [
                             {
-                                "name": "tiering-policy",
+                                "id": "tiering-policy",
                                 "recommended": "snapshot_only",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "tiering-min-cooling-days",
+                                "id": "tiering-min-cooling-days",
                                 "recommended": "7",
                                 "objectType": "Volume"
                             }
@@ -1050,11 +1050,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "deduplication",
+                                        "id": "deduplication",
                                         "current": "none"
                                     },
                                     {
-                                        "name": "compaction",
+                                        "id": "compaction",
                                         "current": "none"
                                     }
                                 ]
@@ -1064,17 +1064,17 @@
                         "totalObjectsInViolation": 1,
                         "configDetails": [
                             {
-                                "name": "compression",
+                                "id": "compression",
                                 "recommended": "adaptive",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "deduplication",
+                                "id": "deduplication",
                                 "recommended": "inline",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "compaction",
+                                "id": "compaction",
                                 "recommended": "enabled",
                                 "objectType": "Volume"
                             }
@@ -1651,17 +1651,17 @@
                         "focusWidgetName": "ONTAP",
                         "configDetails": [
                             {
-                                "name": "space-reservation-enabled",
+                                "id": "space-reservation-enabled",
                                 "recommended": "true",
                                 "objectType": "Lun"
                             },
                             {
-                                "name": "space-allocation-allocated",
+                                "id": "space-allocation-allocated",
                                 "recommended": "true",
                                 "objectType": "Lun"
                             },
                             {
-                                "name": "fractional-reserve",
+                                "id": "fractional-reserve",
                                 "recommended": "0",
                                 "objectType": "Volume"
                             }
@@ -1753,11 +1753,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -1768,11 +1768,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -1783,11 +1783,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -1798,12 +1798,12 @@
                         "focusWidgetName": "ONTAP",
                         "configDetails": [
                             {
-                                "name": "tiering-policy",
+                                "id": "tiering-policy",
                                 "recommended": "snapshot_only",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "tiering-min-cooling-days",
+                                "id": "tiering-min-cooling-days",
                                 "recommended": "7",
                                 "objectType": "Volume"
                             }
@@ -1835,11 +1835,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "deduplication",
+                                        "id": "deduplication",
                                         "current": "none"
                                     },
                                     {
-                                        "name": "compaction",
+                                        "id": "compaction",
                                         "current": "none"
                                     }
                                 ]
@@ -1849,17 +1849,17 @@
                         "totalObjectsInViolation": 1,
                         "configDetails": [
                             {
-                                "name": "compression",
+                                "id": "compression",
                                 "recommended": "adaptive",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "deduplication",
+                                "id": "deduplication",
                                 "recommended": "inline",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "compaction",
+                                "id": "compaction",
                                 "recommended": "enabled",
                                 "objectType": "Volume"
                             }
@@ -2425,17 +2425,17 @@
                         "focusWidgetName": "ONTAP",
                         "configDetails": [
                             {
-                                "name": "space-reservation-enabled",
+                                "id": "space-reservation-enabled",
                                 "recommended": "true",
                                 "objectType": "Lun"
                             },
                             {
-                                "name": "space-allocation-allocated",
+                                "id": "space-allocation-allocated",
                                 "recommended": "true",
                                 "objectType": "Lun"
                             },
                             {
-                                "name": "fractional-reserve",
+                                "id": "fractional-reserve",
                                 "recommended": "0",
                                 "objectType": "Volume"
                             }
@@ -2527,11 +2527,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -2542,11 +2542,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -2557,11 +2557,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -2572,12 +2572,12 @@
                         "focusWidgetName": "ONTAP",
                         "configDetails": [
                             {
-                                "name": "tiering-policy",
+                                "id": "tiering-policy",
                                 "recommended": "snapshot_only",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "tiering-min-cooling-days",
+                                "id": "tiering-min-cooling-days",
                                 "recommended": "7",
                                 "objectType": "Volume"
                             }
@@ -2609,11 +2609,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "deduplication",
+                                        "id": "deduplication",
                                         "current": "none"
                                     },
                                     {
-                                        "name": "compaction",
+                                        "id": "compaction",
                                         "current": "none"
                                     }
                                 ]
@@ -2623,17 +2623,17 @@
                         "totalObjectsInViolation": 1,
                         "configDetails": [
                             {
-                                "name": "compression",
+                                "id": "compression",
                                 "recommended": "adaptive",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "deduplication",
+                                "id": "deduplication",
                                 "recommended": "inline",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "compaction",
+                                "id": "compaction",
                                 "recommended": "enabled",
                                 "objectType": "Volume"
                             }
@@ -3130,17 +3130,17 @@
                         "focusWidgetName": "ONTAP",
                         "configDetails": [
                             {
-                                "name": "space-reservation-enabled",
+                                "id": "space-reservation-enabled",
                                 "recommended": "true",
                                 "objectType": "Lun"
                             },
                             {
-                                "name": "space-allocation-allocated",
+                                "id": "space-allocation-allocated",
                                 "recommended": "true",
                                 "objectType": "Lun"
                             },
                             {
-                                "name": "fractional-reserve",
+                                "id": "fractional-reserve",
                                 "recommended": "0",
                                 "objectType": "Volume"
                             }
@@ -3300,11 +3300,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -3315,11 +3315,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -3330,11 +3330,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "current": "auto"
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "current": "17"
                                     }
                                 ]
@@ -3345,12 +3345,12 @@
                         "focusWidgetName": "ONTAP",
                         "configDetails": [
                             {
-                                "name": "tiering-policy",
+                                "id": "tiering-policy",
                                 "recommended": "snapshot_only",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "tiering-min-cooling-days",
+                                "id": "tiering-min-cooling-days",
                                 "recommended": "7",
                                 "objectType": "Volume"
                             }
@@ -3382,11 +3382,11 @@
                                 "objectType": "Volume",
                                 "violatedConfigs": [
                                     {
-                                        "name": "deduplication",
+                                        "id": "deduplication",
                                         "current": "none"
                                     },
                                     {
-                                        "name": "compaction",
+                                        "id": "compaction",
                                         "current": "none"
                                     }
                                 ]
@@ -3396,17 +3396,17 @@
                         "totalObjectsInViolation": 1,
                         "configDetails": [
                             {
-                                "name": "compression",
+                                "id": "compression",
                                 "recommended": "adaptive",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "deduplication",
+                                "id": "deduplication",
                                 "recommended": "inline",
                                 "objectType": "Volume"
                             },
                             {
-                                "name": "compaction",
+                                "id": "compaction",
                                 "recommended": "enabled",
                                 "objectType": "Volume"
                             }

@@ -8,10 +8,10 @@
  * following the same approach as recommendations/recommendationsHelper.ts.
  */
 
+import { t } from 'i18next';
 import { ASSESSMENT_CONFIG_IDS, DBType, WELL_ARCHITECTED_STATUS } from '../consts';
 import mssqlRegistry from './mssqlConfigRegistry.json';
 import oracleRegistry from './oracleConfigRegistry.json';
-import { t } from 'i18next';
 
 // ============================================================================
 // Type Definitions (same shapes as old getWellConfigRegistry.ts)
@@ -165,7 +165,11 @@ export const getButtonText = (configId: string, dbType: string, status?: string)
     // Normalize status to lowercase and replace spaces with hyphens
     const normalizedStatus = status?.toLowerCase().replace(/\s+/g, '-');
 
-    if ((configId === ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM || configId === ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM_MSSQL) && normalizedStatus) {
+    if (
+        (configId === ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM ||
+            configId === ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM_MSSQL) &&
+        normalizedStatus
+    ) {
         if (normalizedStatus === WELL_ARCHITECTED_STATUS.OVER_PROVISIONED) return t('databases.general.view');
         if (normalizedStatus === WELL_ARCHITECTED_STATUS.UNDER_PROVISIONED) return t('databases.general.view-and-fix');
     }
@@ -245,14 +249,14 @@ export const buildSubConfigValues = (
     row: any,
     configDetails: Array<any> = []
 ): { current: string; recommended: string } => {
-    const currentByName = new Map<string, string>((row?.violatedConfigs || []).map((c: any) => [c.name, c.current]));
+    const currentByName = new Map<string, string>((row?.violatedConfigs || []).map((c: any) => [c.id, c.current]));
     const dataCategory: string | undefined = row?.dataCategory;
 
     const entries = configDetails.map((cfg: any) => {
         const recommended =
             cfg.recommended || (dataCategory ? cfg.recommendedByDataCategory?.[dataCategory] : undefined) || '';
-        const current = currentByName.get(cfg.name) || recommended;
-        return { name: cfg.name, current, recommended };
+        const current = currentByName.get(cfg.id) || recommended;
+        return { name: cfg.id, current, recommended };
     });
 
     return {

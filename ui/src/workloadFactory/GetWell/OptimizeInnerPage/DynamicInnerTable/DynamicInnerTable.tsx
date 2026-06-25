@@ -18,7 +18,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import useResize from '../../../../common/hooks/useResize';
 import { getWadCellProps } from '../../GetWellUtils';
-import { ColumnConfig } from '../../../../utils/configRegistry';
+import { buildSubConfigValues, ColumnConfig } from '../../../../utils/configRegistry';
 
 interface DynamicInnerTableProps {
     configId: string;
@@ -56,6 +56,7 @@ const DynamicInnerTable = ({
         if (data?.violationDetails?.length) {
             return data.violationDetails.map((row: any) => ({
                 ...row,
+                ...(columnConfig.hasSubConfigs ? buildSubConfigValues(row, data?.configDetails) : {}),
                 id: String(id++),
                 cellProps: getWadCellProps(isWad, t)
             }));

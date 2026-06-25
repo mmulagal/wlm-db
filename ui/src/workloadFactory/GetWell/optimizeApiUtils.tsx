@@ -12,6 +12,9 @@
  *  - buildOptimizeFailedMessage()       → failed notification JSX with View Job Monitoring link
  */
 
+import { Button } from '@netapp/design-system';
+import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
+import { TFunction } from 'i18next';
 import {
     useOptimizeStorageConfigMutation,
     useOptimizeOracleStorageConfigMutation,
@@ -28,9 +31,6 @@ import {
     useOptimizeCloneCleanupMutation,
     useOptimizeHAMssqlMutation
 } from '../../utils/apiService';
-import { Button } from '@netapp/design-system';
-import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
-import { TFunction } from 'i18next';
 import type { AppDispatch } from '../../store/store';
 import { OptimizeApiConfig } from '../../utils/configRegistry';
 import {
@@ -137,23 +137,20 @@ export const groupRowsToHosts = (
     extraHostFields?: (row: any) => Record<string, any>
 ): any[] =>
     Object.values(
-        rows.reduce(
-            (acc: Record<string, any>, row: any) => {
-                const key = uniqueHostRow(row.databaseHostId, row.credentialId, row.regionId);
-                if (!acc[key]) {
-                    acc[key] = {
-                        id: row.databaseHostId,
-                        credentialsId: row.credentialId,
-                        region: row.regionId,
-                        [instancesKey]: [],
-                        ...(extraHostFields ? extraHostFields(row) : {})
-                    };
-                }
-                acc[key][instancesKey].push(row.instanceId);
-                return acc;
-            },
-            {}
-        )
+        rows.reduce((acc: Record<string, any>, row: any) => {
+            const key = uniqueHostRow(row.databaseHostId, row.credentialId, row.regionId);
+            if (!acc[key]) {
+                acc[key] = {
+                    id: row.databaseHostId,
+                    credentialsId: row.credentialId,
+                    region: row.regionId,
+                    [instancesKey]: [],
+                    ...(extraHostFields ? extraHostFields(row) : {})
+                };
+            }
+            acc[key][instancesKey].push(row.instanceId);
+            return acc;
+        }, {})
     );
 
 // ─── Payload builder ──────────────────────────────────────────────────────────
@@ -229,8 +226,7 @@ export const buildOptimizeApiInput = (
                                 region: rowRegionId,
                                 credentialsId: rowCredId,
                                 fsxFileSystemId:
-                                    rowData?.data?.assessments?.metadata?.fileSystemId ??
-                                    rowData?.fsxFileSystemId,
+                                    rowData?.data?.assessments?.metadata?.fileSystemId ?? rowData?.fsxFileSystemId,
                                 databases: [rowInstanceId],
                                 backupRetentionDays: selectedAWSBackup?.numberOfDays,
                                 backupStartTime: backupStartTime(selectedAWSBackup)
@@ -254,8 +250,7 @@ export const buildOptimizeApiInput = (
                                 id: rowHostId,
                                 sqlServerInstances: [rowInstanceId],
                                 fsxFileSystemId:
-                                    rowData?.data?.assessments?.metadata?.fileSystemId ??
-                                    rowData?.fsxFileSystemId,
+                                    rowData?.data?.assessments?.metadata?.fileSystemId ?? rowData?.fsxFileSystemId,
                                 backupRetentionDays: selectedAWSBackup?.numberOfDays,
                                 backupStartTime: backupStartTime(selectedAWSBackup),
                                 credentialsId: rowCredId,
@@ -373,28 +368,20 @@ export const buildOptimizeApiInput = (
                         {
                             configurationName: 'compute',
                             databaseHosts: Object.values(
-                                (rowData as any[]).reduce(
-                                    (acc: Record<string, any>, row: any) => {
-                                        const key = uniqueHostRow(
-                                            row.databaseHostId,
-                                            row.credentialId,
-                                            row.regionId
-                                        );
-                                        if (!acc[key]) {
-                                            acc[key] = {
-                                                id: row.databaseHostId,
-                                                sqlServerInstances: [],
-                                                credentialsId: row.credentialId,
-                                                region: row.regionId,
-                                                instanceType:
-                                                    recommendedInstanceInBulk?.[row.hostName]?.value || ''
-                                            };
-                                        }
-                                        acc[key].sqlServerInstances.push(row.instanceId);
-                                        return acc;
-                                    },
-                                    {}
-                                )
+                                (rowData as any[]).reduce((acc: Record<string, any>, row: any) => {
+                                    const key = uniqueHostRow(row.databaseHostId, row.credentialId, row.regionId);
+                                    if (!acc[key]) {
+                                        acc[key] = {
+                                            id: row.databaseHostId,
+                                            sqlServerInstances: [],
+                                            credentialsId: row.credentialId,
+                                            region: row.regionId,
+                                            instanceType: recommendedInstanceInBulk?.[row.hostName]?.value || ''
+                                        };
+                                    }
+                                    acc[key].sqlServerInstances.push(row.instanceId);
+                                    return acc;
+                                }, {})
                             )
                         }
                     ]
@@ -430,28 +417,21 @@ export const buildOptimizeApiInput = (
                         {
                             configurationName: 'rss-config',
                             databaseHosts: Object.values(
-                                (rowData as any[]).reduce(
-                                    (acc: Record<string, any>, row: any) => {
-                                        const key = uniqueHostRow(
-                                            row.databaseHostId,
-                                            row.credentialId,
-                                            row.regionId
-                                        );
-                                        if (!acc[key]) {
-                                            acc[key] = {
-                                                id: row.databaseHostId,
-                                                sqlServerInstances: [],
-                                                networkAdapters: [],
-                                                credentialsId: row.credentialId,
-                                                region: row.regionId
-                                            };
-                                        }
-                                        acc[key].sqlServerInstances.push(row.instanceId);
-                                        acc[key].networkAdapters.push(...(row.networkAdapters || []));
-                                        return acc;
-                                    },
-                                    {}
-                                )
+                                (rowData as any[]).reduce((acc: Record<string, any>, row: any) => {
+                                    const key = uniqueHostRow(row.databaseHostId, row.credentialId, row.regionId);
+                                    if (!acc[key]) {
+                                        acc[key] = {
+                                            id: row.databaseHostId,
+                                            sqlServerInstances: [],
+                                            networkAdapters: [],
+                                            credentialsId: row.credentialId,
+                                            region: row.regionId
+                                        };
+                                    }
+                                    acc[key].sqlServerInstances.push(row.instanceId);
+                                    acc[key].networkAdapters.push(...(row.networkAdapters || []));
+                                    return acc;
+                                }, {})
                             )
                         }
                     ]
@@ -487,30 +467,23 @@ export const buildOptimizeApiInput = (
                         {
                             configurationName: 'mtu-alignment',
                             databaseHosts: Object.values(
-                                (rowData as any[]).reduce(
-                                    (acc: Record<string, any>, row: any) => {
-                                        const key = uniqueHostRow(
-                                            row.databaseHostId,
-                                            row.credentialId,
-                                            row.regionId
-                                        );
-                                        if (!acc[key]) {
-                                            acc[key] = {
-                                                id: row.databaseHostId,
-                                                sqlServerInstances: [],
-                                                credentialsId: row.credentialId,
-                                                region: row.regionId,
-                                                interfaceNames: []
-                                            };
-                                        }
-                                        acc[key].sqlServerInstances.push(row.instanceId);
-                                        if (row.objectsInViolation) {
-                                            acc[key].interfaceNames.push(...row.objectsInViolation);
-                                        }
-                                        return acc;
-                                    },
-                                    {}
-                                )
+                                (rowData as any[]).reduce((acc: Record<string, any>, row: any) => {
+                                    const key = uniqueHostRow(row.databaseHostId, row.credentialId, row.regionId);
+                                    if (!acc[key]) {
+                                        acc[key] = {
+                                            id: row.databaseHostId,
+                                            sqlServerInstances: [],
+                                            credentialsId: row.credentialId,
+                                            region: row.regionId,
+                                            interfaceNames: []
+                                        };
+                                    }
+                                    acc[key].sqlServerInstances.push(row.instanceId);
+                                    if (row.objectsInViolation) {
+                                        acc[key].interfaceNames.push(...row.objectsInViolation);
+                                    }
+                                    return acc;
+                                }, {})
                             )
                         }
                     ]
@@ -637,9 +610,7 @@ export const buildOptimizeFailedMessage = ({
             variant="text"
             onClick={() => {
                 dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                const path = isWorkloadFactory
-                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
-                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+                const path = isWorkloadFactory ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
                 postBlueXPMessage({
                     type: BlueXPListeners.navigate,
                     payload: { pathname: path, replace: true }

@@ -609,6 +609,7 @@
             "bulk-fix-disable-for-tcp-advanced-options": "Bulk fix is not supported for TCP advanced options.",
             "bulk-fix-disable-for-multiblock-readcount": "Bulk fix is not supported for Multiblock read count.",
             "bulk-fix-disable-for-asm": "Bulk fix is not supported for ASM configurations.",
+            "bulk-fix-not-supported": "Bulk fix is not supported for this configuration.",
             "coming-soon": "Coming soon",
             "fix-disabled": "Fix is not supported for this configuration.",
             "view-offline-instance-disabled": "Missing patches lists not available for offline instances.",

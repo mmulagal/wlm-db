@@ -152,7 +152,7 @@
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
-                                                "name": "fractional-reserve",
+                                                "id": "fractional-reserve",
                                                 "current": "100"
                                             }
                                         ]
@@ -163,7 +163,7 @@
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
-                                                "name": "fractional-reserve",
+                                                "id": "fractional-reserve",
                                                 "current": "100"
                                             }
                                         ]
@@ -174,7 +174,7 @@
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
-                                                "name": "fractional-reserve",
+                                                "id": "fractional-reserve",
                                                 "current": "100"
                                             }
                                         ]
@@ -185,17 +185,17 @@
                                 "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
-                                        "name": "space-reservation-enabled",
+                                        "id": "space-reservation-enabled",
                                         "recommended": "true",
                                         "objectType": "Lun"
                                     },
                                     {
-                                        "name": "space-allocation-allocated",
+                                        "id": "space-allocation-allocated",
                                         "recommended": "true",
                                         "objectType": "Lun"
                                     },
                                     {
-                                        "name": "fractional-reserve",
+                                        "id": "fractional-reserve",
                                         "recommended": "0",
                                         "objectType": "Volume"
                                     }
@@ -389,7 +389,7 @@
                                         "dataCategory": "data-control-files",
                                         "violatedConfigs": [
                                             {
-                                                "name": "tiering-policy",
+                                                "id": "tiering-policy",
                                                 "current": "all"
                                             }
                                         ]
@@ -400,7 +400,7 @@
                                 "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "recommended": "",
                                         "objectType": "Volume",
                                         "recommendedByDataCategory": {
@@ -411,7 +411,7 @@
                                         }
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "recommended": "",
                                         "objectType": "Volume",
                                         "recommendedByDataCategory": {
@@ -447,7 +447,7 @@
                                         "dataCategory": "non-log-files",
                                         "violatedConfigs": [
                                             {
-                                                "name": "deduplication",
+                                                "id": "deduplication",
                                                 "current": "background"
                                             }
                                         ]
@@ -458,7 +458,7 @@
                                 "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
-                                        "name": "compression",
+                                        "id": "compression",
                                         "recommended": "",
                                         "objectType": "Volume",
                                         "recommendedByDataCategory": {
@@ -468,7 +468,7 @@
                                         }
                                     },
                                     {
-                                        "name": "deduplication",
+                                        "id": "deduplication",
                                         "recommended": "",
                                         "objectType": "Volume",
                                         "recommendedByDataCategory": {
@@ -479,7 +479,7 @@
                                         "recommendedNote": "both is also acceptable for non-log-files volumes"
                                     },
                                     {
-                                        "name": "compaction",
+                                        "id": "compaction",
                                         "recommended": "",
                                         "objectType": "Volume",
                                         "recommendedByDataCategory": {
@@ -1714,7 +1714,7 @@
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
-                                                "name": "fractional-reserve",
+                                                "id": "fractional-reserve",
                                                 "current": "100"
                                             }
                                         ]
@@ -1725,7 +1725,7 @@
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
-                                                "name": "fractional-reserve",
+                                                "id": "fractional-reserve",
                                                 "current": "100"
                                             }
                                         ]
@@ -1736,7 +1736,7 @@
                                         "objectType": "Volume",
                                         "violatedConfigs": [
                                             {
-                                                "name": "fractional-reserve",
+                                                "id": "fractional-reserve",
                                                 "current": "100"
                                             }
                                         ]
@@ -1747,17 +1747,17 @@
                                 "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
-                                        "name": "space-reservation-enabled",
+                                        "id": "space-reservation-enabled",
                                         "recommended": "true",
                                         "objectType": "Lun"
                                     },
                                     {
-                                        "name": "space-allocation-allocated",
+                                        "id": "space-allocation-allocated",
                                         "recommended": "true",
                                         "objectType": "Lun"
                                     },
                                     {
-                                        "name": "fractional-reserve",
+                                        "id": "fractional-reserve",
                                         "recommended": "0",
                                         "objectType": "Volume"
                                     }
@@ -1951,7 +1951,7 @@
                                         "dataCategory": "data-control-files",
                                         "violatedConfigs": [
                                             {
-                                                "name": "tiering-policy",
+                                                "id": "tiering-policy",
                                                 "current": "all"
                                             }
                                         ]
@@ -1962,7 +1962,7 @@
                                 "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
-                                        "name": "tiering-policy",
+                                        "id": "tiering-policy",
                                         "recommended": "",
                                         "objectType": "Volume",
                                         "recommendedByDataCategory": {
@@ -1973,7 +1973,7 @@
                                         }
                                     },
                                     {
-                                        "name": "tiering-min-cooling-days",
+                                        "id": "tiering-min-cooling-days",
                                         "recommended": "",
                                         "objectType": "Volume",
                                         "recommendedByDataCategory": {
@@ -2009,7 +2009,7 @@
                                         "dataCategory": "non-log-files",
                                         "violatedConfigs": [
                                             {
-                                                "name": "deduplication",
+                                                "id": "deduplication",
                                                 "current": "background"
                                             }
                                         ]
@@ -2020,7 +2020,7 @@
                                 "focusWidgetName": "ONTAP",
                                 "configDetails": [
                                     {
-                                        "name": "compression",
+                                        "id": "compression",
                                         "recommended": "",
                                         "objectType": "Volume",
                                         "recommendedByDataCategory": {
@@ -2030,7 +2030,7 @@
                                         }
                                     },
                                     {
-                                        "name": "deduplication",
+                                        "id": "deduplication",
                                         "recommended": "",
                                         "objectType": "Volume",
                                         "recommendedByDataCategory": {
@@ -2041,7 +2041,7 @@
                                         "recommendedNote": "both is also acceptable for non-log-files volumes"
                                     },
                                     {
-                                        "name": "compaction",
+                                        "id": "compaction",
                                         "recommended": "",
                                         "objectType": "Volume",
                                         "recommendedByDataCategory": {

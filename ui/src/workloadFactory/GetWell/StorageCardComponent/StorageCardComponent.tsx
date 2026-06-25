@@ -1,11 +1,4 @@
-import {
-    DsButton,
-    DsFlashingDotsLoader,
-    DsPopover,
-    DsTypography,
-    Popover,
-    useDialog
-} from '@netapp/design-system';
+import { DsButton, DsFlashingDotsLoader, DsPopover, DsTypography, Popover, useDialog } from '@netapp/design-system';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -629,11 +622,7 @@ const StorageCardComponent = ({
             if (mutationFn) {
                 const credId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM;
                 const regionId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM;
-                const {
-                    selectedAWSBackup,
-                    selectedRecommendedInstance,
-                    selectedSnapshot
-                } = state.getWellOptimize;
+                const { selectedAWSBackup, selectedRecommendedInstance, selectedSnapshot } = state.getWellOptimize;
 
                 const apiData = buildOptimizeApiInput(apiConfig, {
                     configId: type,
@@ -852,9 +841,7 @@ const StorageCardComponent = ({
                 [type]: [...(inProgressHostData[type] || []), selectedResourceId]
             })
         );
-        dispatch(
-            buildOptimizeInfoNotification({ configName: cardData?.name || type, t, dispatch, isWorkloadFactory })
-        );
+        dispatch(buildOptimizeInfoNotification({ configName: cardData?.name || type, t, dispatch, isWorkloadFactory }));
 
         let apiCallObj = {};
         if (
@@ -1140,7 +1127,9 @@ const StorageCardComponent = ({
                             {sectionSixContent(cardData)}
                         </DsTypography>
                         <DsTypography variant="Regular_14" title={cardData?.block_six?.type} className={styles.label}>
-                            {cardData?.block_six?.count ? `${t('databases.well-architect.impacted')} ${cardData?.block_six?.type}` : cardData?.block_six?.type}
+                            {cardData?.block_six?.count
+                                ? `${t('databases.well-architect.impacted')} ${cardData?.block_six?.type}`
+                                : cardData?.block_six?.type}
                         </DsTypography>
                     </div>
                 )}

@@ -57,6 +57,7 @@ import {
     resolveConfigDisplayName
 } from '../../../WellArchitectedTab/assessmentFormatUtils';
 import { ORACLE_ISCSI_ONLY_CONFIG_IDS, resolveDashboardTableConfig } from './dashboardTableConfigOverrides';
+import { getOptimizeApiConfig } from '../../../../utils/configRegistry';
 
 interface DashboardConfigsTableProps {
     configType: string;
@@ -296,6 +297,8 @@ const DashboardConfigsTable = ({
 
     // Check if fix is not supported for this configuration type
     const isFixNotSupported = config.isFixSupported === false;
+    const supportsDashboardBulkFix =
+        getOptimizeApiConfig(config.configId, configEngineType)?.supportsDashboardBulk ?? true;
 
     // Determine if fix button should be enabled based on selected rows and configuration support
     const { isFixDisabled, fixDisableMsg } = bulkFixDisableCheck(
@@ -303,7 +306,8 @@ const DashboardConfigsTable = ({
         isFixNotSupported,
         selectedRowsForOptimize,
         t,
-        configEngineType
+        configEngineType,
+        supportsDashboardBulkFix
     );
 
     // Determine if dismiss/postpone buttons should be disabled (for optimized rows)

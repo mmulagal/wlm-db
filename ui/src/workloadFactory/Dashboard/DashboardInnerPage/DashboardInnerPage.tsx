@@ -754,12 +754,7 @@ const DashboardInnerPage = () => {
     };
 
     // Function to handle dismiss bulk and postpone bulk action
-    const handleBulkDismissPostpone = (
-        type: string,
-        rowData: any,
-        operationType: string,
-        bulkEngineType?: string
-    ) => {
+    const handleBulkDismissPostpone = (type: string, rowData: any, operationType: string, bulkEngineType?: string) => {
         const dismissApi = bulkEngineType === DBType.ORACLE ? dismissOracleAssessment : dismissMssqlAssessment;
         // Filter out WAD (offline assessment) rows for dismiss and postpone operations
         const filteredRowData =

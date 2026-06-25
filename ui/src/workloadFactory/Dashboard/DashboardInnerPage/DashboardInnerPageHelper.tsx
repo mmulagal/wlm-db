@@ -478,7 +478,8 @@ export const bulkFixDisableCheck = (
     isFixNotSupported: boolean,
     selectedRowsForOptimize: any,
     t: any,
-    configEngineType?: string
+    configEngineType?: string,
+    supportsDashboardBulkFix = true
 ) => {
     configType = resolveConfigDisplayName(configType);
     let isFixDisabled = false;
@@ -548,6 +549,9 @@ export const bulkFixDisableCheck = (
     ) {
         isFixDisabled = true;
         fixDisableMsg = t('databases.well-architect.bulk-fix-disable-for-asm');
+    } else if (!supportsDashboardBulkFix) {
+        isFixDisabled = true;
+        fixDisableMsg = t('databases.well-architect.bulk-fix-not-supported');
     } else if (isFixNotSupported) {
         isFixDisabled = true;
         fixDisableMsg = t('databases.well-architect.fix-disabled');

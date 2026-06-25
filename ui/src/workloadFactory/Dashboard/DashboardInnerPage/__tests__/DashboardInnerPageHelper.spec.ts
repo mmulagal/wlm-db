@@ -78,6 +78,7 @@ vi.mock(
 );
 
 vi.mock('../../../../utils/consts', () => ({
+    CONFIG_NAMES: {},
     ASSESSMENT_CONFIG_NAMES: {
         STORAGE_TIER: 'Storage tier',
         FILE_SYSTEM_HEADROOM: 'File system headroom',
@@ -497,6 +498,19 @@ describe('DashboardInnerPageHelper', () => {
         it('returns isFixDisabled=true for ARCHIVELOG_DG_LUN_LAYOUT', () => {
             const result = bulkFixDisableCheck('ASM archive log disk group LUNs', false, [], mockT);
             expect(result.isFixDisabled).toBe(true);
+        });
+
+        it('returns isFixDisabled=true when supportsDashboardBulkFix is false', () => {
+            const result = bulkFixDisableCheck(
+                'Thin provisioning',
+                false,
+                [{ assessmentStatus: 'Not optimized' }],
+                mockT,
+                undefined,
+                false
+            );
+            expect(result.isFixDisabled).toBe(true);
+            expect(result.fixDisableMsg).toBe('databases.well-architect.bulk-fix-not-supported');
         });
 
         it('returns isFixDisabled=true for TRANSPARENT_HUGEPAGES with correct disable message', () => {

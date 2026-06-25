@@ -123,6 +123,12 @@
         "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
         "columns": {
             "columns": [
                 {
@@ -226,53 +232,6 @@
             }
         }
     },
-    "compaction": {
-        "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "columns": null,
-        "optimizeApi": {
-            "mutation": "optimizeStorageConfig",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": {
-            "sections": [
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.autosize-action-summary"
-                },
-                {
-                    "heading": "databases.well-architect.what-will-happen",
-                    "type": "text",
-                    "content": "databases.well-architect.autosize-what-will-happen",
-                    "hideWhenWad": true
-                }
-            ],
-            "features": {
-                "showOntapConfigCodeBox": true
-            },
-            "notes": {
-                "type": "standard"
-            },
-            "wellArchitectedConfig": "Compaction = enabled"
-        }
-    },
-    "compression": {
-        "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "columns": null,
-        "optimizeApi": {
-            "mutation": "optimizeStorageConfig",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": null
-    },
     "compute-rightsizing": {
         "hasInnerPage": false,
         "viewOnly": false,
@@ -363,40 +322,6 @@
             "useNestedExpandable": true
         }
     },
-    "deduplication": {
-        "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "columns": null,
-        "optimizeApi": {
-            "mutation": "optimizeStorageConfig",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": {
-            "sections": [
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.autosize-action-summary"
-                },
-                {
-                    "heading": "databases.well-architect.what-will-happen",
-                    "type": "text",
-                    "content": "databases.well-architect.autosize-what-will-happen",
-                    "hideWhenWad": true
-                }
-            ],
-            "features": {
-                "showOntapConfigCodeBox": true
-            },
-            "notes": {
-                "type": "standard"
-            },
-            "wellArchitectedConfig": "[Data, Archive] Deduplication = Inline"
-        }
-    },
     "drive-letter": {
         "hasInnerPage": false,
         "viewOnly": false,
@@ -435,44 +360,6 @@
             "impactedLabel": "Impacted databases",
             "countSource": "impactedCount",
             "recommendationSource": "recommendationText"
-        }
-    },
-    "fractional-reserve": {
-        "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "cardHeights": {
-            "recommendationSection": "160px",
-            "tagSection": "256px"
-        },
-        "columns": null,
-        "optimizeApi": {
-            "mutation": "optimizeStorageConfig",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": {
-            "sections": [
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.autosize-action-summary"
-                },
-                {
-                    "heading": "databases.well-architect.what-will-happen",
-                    "type": "text",
-                    "content": "databases.well-architect.autosize-what-will-happen",
-                    "hideWhenWad": true
-                }
-            ],
-            "features": {
-                "showOntapConfigCodeBox": true
-            },
-            "notes": {
-                "type": "standard"
-            },
-            "wellArchitectedConfig": "Fractional reserve = 0%"
         }
     },
     "headroom": {
@@ -1559,48 +1446,6 @@
             "wellArchitectedConfig": "Snapshot policy = none"
         }
     },
-    "space-allocation-allocated": {
-        "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "cardHeights": {
-            "recommendationSection": "160px",
-            "tagSection": "256px"
-        },
-        "cardMetadata": {
-            "impactedLabel": "Impacted LUNs",
-            "countSource": "totalObjectsInViolation"
-        },
-        "columns": null,
-        "optimizeApi": {
-            "mutation": "optimizeStorageConfig",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": {
-            "sections": [
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.os-type-space-allocation-reservation-action-summary"
-                },
-                {
-                    "heading": "databases.well-architect.what-will-happen",
-                    "type": "text",
-                    "content": "databases.well-architect.os-type-space-allocation-reservation-what-will-happen",
-                    "hideWhenWad": true
-                }
-            ],
-            "features": {
-                "showOntapConfigCodeBox": true
-            },
-            "notes": {
-                "type": "standard"
-            },
-            "wellArchitectedConfig": "Space allocation enabled"
-        }
-    },
     "space-mgmt-try-first": {
         "hasInnerPage": true,
         "viewOnly": false,
@@ -1647,48 +1492,6 @@
                 "type": "standard"
             },
             "wellArchitectedConfig": "Space-mgmt-try-first = volume_grow"
-        }
-    },
-    "space-reservation-enabled": {
-        "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "cardHeights": {
-            "recommendationSection": "160px",
-            "tagSection": "256px"
-        },
-        "cardMetadata": {
-            "impactedLabel": "Impacted LUNs",
-            "countSource": "totalObjectsInViolation"
-        },
-        "columns": null,
-        "optimizeApi": {
-            "mutation": "optimizeStorageConfig",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": {
-            "sections": [
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.os-type-space-allocation-reservation-action-summary"
-                },
-                {
-                    "heading": "databases.well-architect.what-will-happen",
-                    "type": "text",
-                    "content": "databases.well-architect.os-type-space-allocation-reservation-what-will-happen",
-                    "hideWhenWad": true
-                }
-            ],
-            "features": {
-                "showOntapConfigCodeBox": true
-            },
-            "notes": {
-                "type": "standard"
-            },
-            "wellArchitectedConfig": "Space reservation enabled "
         }
     },
     "sql-server-service": {
@@ -1960,36 +1763,16 @@
             "wellArchitectedConfig": "Thin provisioning (-space-guarantee = none)"
         }
     },
-    "tiering-min-cooling-days": {
-        "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "columns": null,
-        "optimizeApi": {
-            "mutation": "optimizeStorageConfig",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": null
-    },
-    "tiering-policy": {
-        "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "columns": null,
-        "optimizeApi": {
-            "mutation": "optimizeStorageConfig",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": null
-    },
     "tiering-tco-optimization": {
         "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
         "columns": {
             "columns": [
                 {

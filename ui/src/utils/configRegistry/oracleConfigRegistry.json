@@ -352,6 +352,12 @@
         "viewOnly": false,
         "fixSupported": true,
         "linkedConfigGroup": "ontap",
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
         "columns": {
             "columns": [
                 {
@@ -645,41 +651,6 @@
             }
         }
     },
-    "deduplication": {
-        "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "linkedConfigGroup": "ontap",
-        "columns": null,
-        "optimizeApi": {
-            "mutation": "optimizeOracleStorageConfig",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": {
-            "sections": [
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-deduplication-action-summary"
-                },
-                {
-                    "heading": "databases.well-architect.what-will-happen",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-deduplication-what-will-happen",
-                    "hideWhenWad": true
-                }
-            ],
-            "features": {
-                "showOntapConfigCodeBox": true
-            },
-            "notes": {
-                "type": "standard"
-            },
-            "wellArchitectedConfig": ["[Log] Deduplication = disabled", "[Data, Archive] Deduplication = Inline"]
-        }
-    },
     "dnfs-configuration-file": {
         "hasInnerPage": true,
         "viewOnly": true,
@@ -958,45 +929,6 @@
             "notes": {
                 "type": "standard"
             }
-        }
-    },
-    "fractional-reserve": {
-        "hasInnerPage": true,
-        "viewOnly": false,
-        "fixSupported": true,
-        "linkedConfigGroup": "ontap",
-        "cardHeights": {
-            "recommendationSection": "160px",
-            "tagSection": "256px"
-        },
-        "columns": null,
-        "optimizeApi": {
-            "mutation": "optimizeOracleStorageConfig",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": {
-            "sections": [
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-fractional-reserve-action-summary"
-                },
-                {
-                    "heading": "databases.well-architect.what-will-happen",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-fractional-reserve-what-will-happen",
-                    "hideWhenWad": true
-                }
-            ],
-            "features": {
-                "showOntapConfigCodeBox": true
-            },
-            "notes": {
-                "type": "standard"
-            },
-            "wellArchitectedConfig": "Fractional reserve = 0%"
         }
     },
     "headroom": {
@@ -2199,49 +2131,6 @@
             "supportsDashboardBulk": false
         }
     },
-    "space-allocation-allocated": {
-        "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "linkedConfigGroup": "ontap",
-        "cardHeights": {
-            "recommendationSection": "160px",
-            "tagSection": "256px"
-        },
-        "cardMetadata": {
-            "impactedLabel": "Impacted LUNs",
-            "countSource": "totalObjectsInViolation"
-        },
-        "columns": null,
-        "optimizeApi": {
-            "mutation": "optimizeOracleStorageConfig",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": {
-            "sections": [
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-space-allocation-action-summary"
-                },
-                {
-                    "heading": "databases.well-architect.what-will-happen",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-space-allocation-what-will-happen",
-                    "hideWhenWad": true
-                }
-            ],
-            "features": {
-                "showOntapConfigCodeBox": true
-            },
-            "notes": {
-                "type": "standard"
-            },
-            "wellArchitectedConfig": "Space allocation enabled"
-        }
-    },
     "space-mgmt-try-first": {
         "hasInnerPage": true,
         "viewOnly": false,
@@ -2289,49 +2178,6 @@
                 "type": "standard"
             },
             "wellArchitectedConfig": "Space-mgmt-try-first = volume_grow"
-        }
-    },
-    "space-reservation-enabled": {
-        "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "linkedConfigGroup": "ontap",
-        "cardHeights": {
-            "recommendationSection": "160px",
-            "tagSection": "256px"
-        },
-        "cardMetadata": {
-            "impactedLabel": "Impacted LUNs",
-            "countSource": "totalObjectsInViolation"
-        },
-        "columns": null,
-        "optimizeApi": {
-            "mutation": "optimizeOracleStorageConfig",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": {
-            "sections": [
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-space-reservation-action-summary"
-                },
-                {
-                    "heading": "databases.well-architect.what-will-happen",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-space-reservation-what-will-happen",
-                    "hideWhenWad": true
-                }
-            ],
-            "features": {
-                "showOntapConfigCodeBox": true
-            },
-            "notes": {
-                "type": "standard"
-            },
-            "wellArchitectedConfig": "Space reservation enabled "
         }
     },
     "storage-efficiencies": {
@@ -2570,6 +2416,12 @@
         "viewOnly": false,
         "fixSupported": true,
         "linkedConfigGroup": "ontap",
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
         "columns": {
             "columns": [
                 {
