@@ -3,7 +3,11 @@ import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../lib/database/database-instance-config';
-import { AssessmentCategories, AssessmentStatus } from '../../utils/continous-optimization-consts';
+import {
+    ASSESSMENT_RESOURCE_TYPE,
+    AssessmentCategories,
+    AssessmentStatus
+} from '../../utils/continous-optimization-consts';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes } from '../../utils/consts';
 import { AWSBackupAssessment } from '../../utils/common-types';
 import type { AssessmentItemType, AssessmentErrorItemType } from '../../routes/types/continuous-optimization.types';
@@ -216,13 +220,33 @@ function getAwsBackupDriftData(
         ?.filter(volume => !volume.isAWSBackupEnabled)
         .map(volume => ({ ontapVolumeUuid: volume.uuid, ontapVolumeName: volume.name }));
 
+    const backupRecommended = 'aws-backup-enabled';
+    const backupObjectsInViolation = [{ ontapVolumeUuid: fileSystemId, ontapVolumeName: fileSystemId }];
+    const violationDetails =
+        (volumesWithoutBackup ?? []).length > 0
+            ? volumesWithoutBackup!.map(v => ({
+                  objectName: v.ontapVolumeName ?? '',
+                  objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                  value: 'Disabled',
+                  recommended: 'Enabled'
+              }))
+            : [
+                  {
+                      objectName: fileSystemId ?? '',
+                      objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                      value: 'Disabled',
+                      recommended: 'Enabled'
+                  }
+              ];
+
     return {
         ...goldenConfig,
         status: isAWSBackupEnabled ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
         totalObjectsInViolation: isAWSBackupEnabled ? 0 : volumesWithoutBackup?.length || 1,
-        recommended: 'aws-backup-enabled',
-        objectsInViolation: isAWSBackupEnabled ? [] : volumesWithoutBackup || [fileSystemId],
-        totalObjectsAssessed: volumeBackupDetails?.length || 1
+        recommended: backupRecommended,
+        objectsInViolation: backupObjectsInViolation,
+        totalObjectsAssessed: volumeBackupDetails?.length || 1,
+        violationDetails
     };
 }
 

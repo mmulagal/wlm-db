@@ -1831,6 +1831,7 @@ function handleGetOracleAssessmentForDemo(
                 if (snapcenterConfigsOptimized.includes(i.id)) {
                     i.status = AssessmentStatus.OPTIMIZED;
                     i.objectsInViolation = [];
+                    i.violationDetails = [];
                     i.totalObjectsInViolation = 0;
                 }
             } else if (

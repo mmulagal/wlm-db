@@ -51,7 +51,7 @@ const defaultAssessmentErrors: StorageAssessment['errors'] = {
 
 const { getHeadroomDriftMock } = vi.hoisted(() => ({
     getHeadroomDriftMock: vi.fn().mockResolvedValue({
-        status: 'OPTIMIZED',
+        status: 'optimized',
         headroomPercent: 20,
         missingPermissions: [],
         newFsxStorageCapacityGiB: 0

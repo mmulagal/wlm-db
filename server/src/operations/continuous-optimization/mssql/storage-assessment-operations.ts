@@ -705,21 +705,20 @@ async function calculateStorageDrift(
         });
     }
 
-    let assessmentDetails = [];
-
-    let objectsInViolation: GenericViolationResponseType[] = [];
-
     Object.entries(os).forEach(([key, value]) => {
         const goldenData = osConfigData.find(data => data.parameter === key);
         if (!isEmpty(goldenData)) {
+            let assessmentDetails: unknown[] = [];
+            let objectsInViolation: GenericViolationResponseType[] = [];
+
             if (key === 'ntfs-allocation-unit-size') {
                 assessmentDetails = Object.entries(os)
                     .filter(([type]) => type === 'ntfs-allocation-details')
                     .map(([, data]) => data)
                     .flat();
                 objectsInViolation = assessmentDetails
-                    .filter(ntfsDetail => ntfsDetail.BlockSize && ntfsDetail.BlockSize !== 65536)
-                    .map(ntfsDetail => ({
+                    .filter((ntfsDetail: any) => ntfsDetail.BlockSize && ntfsDetail.BlockSize !== 65536)
+                    .map((ntfsDetail: any) => ({
                         objectName: ntfsDetail.DriveLetter || ntfsDetail.Name || '',
                         value: ntfsDetail.BlockSize.toString(),
                         objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
@@ -730,8 +729,8 @@ async function calculateStorageDrift(
                     .map(([, data]) => data)
                     .flat();
                 objectsInViolation = assessmentDetails
-                    .filter(policyDetail => !VALID_MPIO_LB_POLICIES.includes(policyDetail.policy))
-                    .map(policyDetail => ({
+                    .filter((policyDetail: any) => !VALID_MPIO_LB_POLICIES.includes(policyDetail.policy))
+                    .map((policyDetail: any) => ({
                         objectName: policyDetail.accessPath || policyDetail.disk || '',
                         value: policyDetail.policy,
                         objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
@@ -743,10 +742,10 @@ async function calculateStorageDrift(
                     .flat();
                 objectsInViolation = assessmentDetails
                     .filter(
-                        timeoutDetail =>
+                        (timeoutDetail: any) =>
                             timeoutDetail['mpio-timeout'] && timeoutDetail['mpio-timeout'] !== goldenData.value
                     )
-                    .map(timeoutDetail => ({
+                    .map((timeoutDetail: any) => ({
                         objectName: timeoutDetail.accessPath || timeoutDetail.disk || '',
                         value: timeoutDetail.timeout,
                         objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
@@ -754,9 +753,24 @@ async function calculateStorageDrift(
                 value = Number(value);
             }
             const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+            const entryRecommended = (goldenData.value ?? '').toString();
+            // Boolean OS configs (mpio-enabled, mpio-iscsi-count) have no per-object detail loop above;
+            // emit a single synthetic entry so consumers always get violationDetails when NOT_OPTIMIZED.
+            if (objectsInViolation.length === 0 && status === AssessmentStatus.NOT_OPTIMIZED) {
+                const toEnabledDisabled = (v: unknown) => (v === true || v === 'true' ? 'Enabled' : 'Disabled');
+                const isBoolean = typeof goldenData.value === 'boolean';
+                objectsInViolation = [
+                    {
+                        objectName: key,
+                        objectType: 'configuration',
+                        value: isBoolean ? toEnabledDisabled(value) : String(value),
+                        recommended: isBoolean ? toEnabledDisabled(goldenData.value) : entryRecommended
+                    }
+                ];
+            }
             driftAssessmentData.push({
                 ...goldenData,
-                recommended: (goldenData.value ?? '').toString(),
+                recommended: entryRecommended,
                 status,
                 violationDetails: objectsInViolation,
                 totalObjectsAssessed: assessmentDetails.length,

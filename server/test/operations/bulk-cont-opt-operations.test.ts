@@ -8,7 +8,7 @@ import {
     OptimizeOperatingSystemParams,
     OptimizeStorageTierParams
 } from '../../src/utils/continous-optimization-consts';
-import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
+import { createResource, deleteResource, updateResource, upsertDatabaseInstance } from '../../src/lib/database/db';
 import { createDatabaseInstanceConfigData } from '../../src/lib/database/database-instance-config';
 import {
     bulkCloneOptimization,
@@ -263,6 +263,20 @@ beforeAll(async () => {
         }
     ];
     await createDatabaseInstanceConfigData(DatabaseInstanceConfigDataRecords);
+
+    await updateResource({
+        accountId: ACCOUNT_ID,
+        resourceId: RESOURCE_ID,
+        credentialsId: CREDENTIALS_ID,
+        updatedAssessmentData: {
+            compute: {
+                finding: 'OVER_PROVISIONED',
+                findingReasonCodes: [],
+                currentInstanceType: 'r5.2xlarge',
+                recommendationOptions: [{ instanceType: 'm5.large', platformDifferences: [] }]
+            }
+        }
+    });
 });
 
 afterAll(async () => {

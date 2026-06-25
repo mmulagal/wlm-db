@@ -11,7 +11,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'spaceGuarantee',
         id: 'thin-provision',
-        name: 'Thin provisioning',
+        name: 'Thin Provisioning',
         value: 'none',
         type: 'storage',
         subType: 'configuration',
@@ -49,7 +49,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'autosizeMode',
         id: 'autosize-mode',
-        name: 'Autosize mode',
+        name: 'Autosize Mode',
         value: 'grow',
         type: 'storage',
         subType: 'configuration',
@@ -68,7 +68,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'snapshotPolicy',
         id: 'snapshot-policy',
-        name: 'Scheduled local snapshots',
+        name: 'Scheduled Local Snapshots',
         value: 'none',
         type: 'storage',
         subType: 'configuration',
@@ -87,7 +87,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'snapshotCopyReserve',
         id: 'snapshot-copy-reserve',
-        name: 'Snapshot copy reserve',
+        name: 'Snapshot Copy Reserve',
         value: 0,
         type: 'storage',
         subType: 'configuration',
@@ -106,7 +106,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'snapshotAutodelete',
         id: 'snapshot-autodelete',
-        name: 'Snapshot autodelete',
+        name: 'Snapshot Autodelete',
         value: true,
         type: 'storage',
         subType: 'configuration',
@@ -125,7 +125,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'spaceMgmtTryFirst',
         id: 'space-mgmt-try-first',
-        name: 'Space management',
+        name: 'Space Management',
         value: 'volume_grow',
         type: 'storage',
         subType: 'configuration',
@@ -143,7 +143,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'storage-efficiencies',
-        name: 'Storage efficiencies',
+        name: 'Storage Efficiencies',
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',
@@ -157,15 +157,30 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         components: [
-            { parameter: 'compressionType', name: 'compression', value: '', objectType: 'Volume' },
-            { parameter: 'deduplication', name: 'deduplication', value: '', objectType: 'Volume' },
-            { parameter: 'compaction', name: 'compaction', value: 'enabled', objectType: 'Volume' }
+            {
+                parameter: 'compressionType',
+                name: 'compression',
+                value: '',
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+            },
+            {
+                parameter: 'deduplication',
+                name: 'deduplication',
+                value: '',
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+            },
+            {
+                parameter: 'compaction',
+                name: 'compaction',
+                value: 'enabled',
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+            }
         ],
         configLevel: 'database'
     },
     {
         id: 'tiering-tco-optimization',
-        name: 'Tiering / TCO optimization',
+        name: 'Tiering / TCO Optimization',
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',
@@ -179,8 +194,18 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         components: [
-            { parameter: 'tieringPolicy', name: 'tiering-policy', value: '', objectType: 'Volume' },
-            { parameter: 'tieringMinCoolingDays', name: 'tiering-min-cooling-days', value: '', objectType: 'Volume' }
+            {
+                parameter: 'tieringPolicy',
+                name: 'tiering-policy',
+                value: '',
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+            },
+            {
+                parameter: 'tieringMinCoolingDays',
+                name: 'tiering-min-cooling-days',
+                value: '',
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
+            }
         ],
         configLevel: 'database'
     },
@@ -189,7 +214,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'nfs-rootonly',
         id: 'nfs-rootonly',
-        name: 'NFS root only',
+        name: 'NFS Root Only',
         value: 'disabled',
         type: 'storage',
         subType: 'configuration',
@@ -205,7 +230,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'export-policy',
         id: 'export-policy',
-        name: 'Export policy',
+        name: 'Export Policy',
         value: 'superuser: sys, allow_suid: true',
         type: 'storage',
         subType: 'configuration',
@@ -226,7 +251,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── configuration / volume_or_lun (applicableTo: iscsi) ────────────────
     {
         id: 'block-device-space-management',
-        name: 'Block device space management',
+        name: 'Block Device Space Management',
         type: 'storage',
         subType: 'configuration',
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME_OR_LUN,
@@ -252,7 +277,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'multipath-io',
         id: 'multipath-io',
-        name: 'Multipath I/O',
+        name: 'Multipath I/O Status',
         recommended: 'enabled',
         type: 'storage',
         subType: 'configuration',
@@ -268,7 +293,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'host-utilities',
         id: 'host-utilities',
-        name: 'Host utilities',
+        name: 'Host Utilities',
         recommended: 'installed',
         type: 'storage',
         subType: 'configuration',
@@ -284,7 +309,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'multipath-io-sessions',
         id: 'multipath-io-sessions',
-        name: 'Multipath I/O sessions',
+        name: 'Multipath I/O Sessions',
         recommended: '4',
         type: 'storage',
         subType: 'configuration',
@@ -300,7 +325,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'transparent-hugepages',
         id: 'transparent-hugepages',
-        name: 'Transparent hugepages',
+        name: 'Transparent Hugepages',
         recommended: 'disabled',
         type: 'compute',
         subType: 'configuration',
@@ -316,7 +341,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'iscsi-replacement-timeout',
         id: 'iscsi-replacement-timeout',
-        name: 'iSCSI replacement timeout',
+        name: 'iSCSI Replacement Timeout',
         recommended: '5',
         type: 'storage',
         subType: 'configuration',
@@ -332,7 +357,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'multipath-friendly-names',
         id: 'multipath-friendly-names',
-        name: 'Multipath friendly names',
+        name: 'Multipath Friendly Names',
         recommended: 'enabled',
         type: 'storage',
         subType: 'configuration',
@@ -348,7 +373,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'tcp-advanced-options',
         id: 'tcp-advanced-options',
-        name: 'TCP advanced options',
+        name: 'TCP Advanced Options',
         recommended: 'enabled',
         type: 'compute',
         subType: 'configuration',
@@ -363,7 +388,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'filesystems-io-options',
         id: 'filesystems-io-options',
-        name: 'Filesystems I/O options',
+        name: 'Filesystems I/O Options',
         recommended: 'setall',
         type: 'compute',
         subType: 'configuration',
@@ -379,7 +404,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'multiblock-readcount',
         id: 'multiblock-readcount',
-        name: 'Multiblock read count',
+        name: 'Multiblock Read Count',
         recommended: 'disabled',
         type: 'compute',
         subType: 'configuration',
@@ -395,7 +420,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'multipath-configuration',
         id: 'multipath-configuration',
-        name: 'Multipath configuration',
+        name: 'Multipath Configuration',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -413,7 +438,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'asm-setup',
         id: 'asm-setup',
-        name: 'ASM setup',
+        name: 'ASM Setup',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -429,7 +454,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'asm-external-redundancy',
         id: 'asm-external-redundancy',
-        name: 'ASM external redundancy',
+        name: 'ASM External Redundancy',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -445,7 +470,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'afd-logical-block-size',
         id: 'afd-logical-block-size',
-        name: 'AFD logical block size',
+        name: 'AFD Logical Block Size',
         recommended: '1',
         type: 'storage',
         subType: 'configuration',
@@ -461,7 +486,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'asmlib-logical-block-size',
         id: 'asmlib-logical-block-size',
-        name: 'ASMLIB logical block size',
+        name: 'ASMLIB Logical Block Size',
         recommended: 'true',
         type: 'storage',
         subType: 'configuration',
@@ -479,7 +504,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'kernel-parameters',
         id: 'kernel-parameters',
-        name: 'Kernel parameters',
+        name: 'Kernel Parameters',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -495,7 +520,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'nfs-mount-options-databasefiles',
         id: 'nfs-mount-options-databasefiles',
-        name: 'NFS mount options (database files)',
+        name: 'NFS Mount Options (Database Files)',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -515,7 +540,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'nfs-mount-options-adrhome',
         id: 'nfs-mount-options-adrhome',
-        name: 'NFS mount options (ADR home)',
+        name: 'NFS Mount Options (ADR Home)',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -535,7 +560,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'nfsv4-domain-name',
         id: 'nfsv4-domain-name',
-        name: 'NFSv4 domain name',
+        name: 'NFSv4 Domain Name',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -551,7 +576,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'nfs-caching-options',
         id: 'nfs-caching-options',
-        name: 'NFS caching options',
+        name: 'NFS Caching Options',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -567,7 +592,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'dnfs-enabled',
         id: 'dnfs-enabled',
-        name: 'dNFS enabled',
+        name: 'dNFS Enabled',
         recommended: 'Enabled',
         type: 'storage',
         subType: 'configuration',
@@ -583,7 +608,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'dnfs-consistent-ip-resolution',
         id: 'dnfs-consistent-ip-resolution',
-        name: 'dNFS consistent IP resolution',
+        name: 'dNFS Consistent IP Resolution',
         recommended: 'No round-robin IP resolution',
         type: 'storage',
         subType: 'configuration',
@@ -599,7 +624,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'dnfs-configuration-file',
         id: 'dnfs-configuration-file',
-        name: 'dNFS configuration file',
+        name: 'dNFS Configuration File',
         recommended: 'Optimized oranfstab content',
         type: 'storage',
         subType: 'configuration',
@@ -615,7 +640,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'dnfs-no-shared-cache',
         id: 'dnfs-no-shared-cache',
-        name: 'dNFS no shared cache',
+        name: 'dNFS No Shared Cache',
         recommended: 'Enabled nosharecache mount option',
         type: 'storage',
         subType: 'configuration',
@@ -633,8 +658,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'archive-placement',
         id: 'archive-placement',
-        name: 'Archive placement',
-        recommended: 'separate-volume',
+        name: 'Archive Placement',
+        recommended: 'Separate volume',
         type: 'storage',
         subType: 'layout',
         focusWidgetName: 'Archive placement',
@@ -652,8 +677,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'datafiles-placement',
         id: 'datafiles-placement',
-        name: 'Data files placement',
-        recommended: 'separate-volume-or-shared-with-control-files',
+        name: 'Data Files Placement',
+        recommended: 'Separate volume or shared with control files',
         type: 'storage',
         subType: 'layout',
         focusWidgetName: 'Data files placement',
@@ -671,8 +696,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'controlfiles-placement',
         id: 'controlfiles-placement',
-        name: 'Control files placement',
-        recommended: 'separate-volume-or-shared-with-data-redo-temp',
+        name: 'Control Files Placement',
+        recommended: 'Separate volume or shared with data, redo, or temp files',
         type: 'storage',
         subType: 'layout',
         focusWidgetName: 'Control files placement',
@@ -690,8 +715,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'redologs-placement',
         id: 'redologs-placement',
-        name: 'Redo logs placement',
-        recommended: 'separate-volume-or-shared-with-temp-control-files',
+        name: 'Redo Logs Placement',
+        recommended: 'Separate volume or shared with temp or control files',
         type: 'storage',
         subType: 'layout',
         focusWidgetName: 'Redo logs placement',
@@ -709,8 +734,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'templogs-placement',
         id: 'templogs-placement',
-        name: 'Temp placement',
-        recommended: 'separate-volume-or-shared-with-redo-control-files',
+        name: 'Temp Placement',
+        recommended: 'Separate volume or shared with redo or control files',
         type: 'storage',
         subType: 'layout',
         focusWidgetName: 'Temp placement',
@@ -728,7 +753,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'oracle-binary-placement',
         id: 'oracle-binary-placement',
-        name: 'Oracle binary placement',
+        name: 'Oracle Binary Placement',
         recommended: 'separate-volume',
         type: 'storage',
         subType: 'layout',
@@ -747,7 +772,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'data-dg-lun-layout',
         id: 'data-dg-lun-layout',
-        name: 'ASM data disk group LUNs',
+        name: 'ASM Data Disk Group LUNs',
         recommended: 'associated-lun-count',
         type: 'storage',
         subType: 'layout',
@@ -766,7 +791,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'redolog-dg-lun-layout',
         id: 'redolog-dg-lun-layout',
-        name: 'ASM logs disk group LUNs',
+        name: 'ASM Logs Disk Group LUNs',
         recommended: 'associated-lun-count',
         type: 'storage',
         subType: 'layout',
@@ -785,7 +810,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'fra-dg-lun-layout',
         id: 'fra-dg-lun-layout',
-        name: 'ASM FRA disk group LUNs',
+        name: 'ASM FRA Disk Group LUNs',
         recommended: 'associated-lun-count',
         type: 'storage',
         subType: 'layout',
@@ -804,7 +829,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'archivelog-dg-lun-layout',
         id: 'archivelog-dg-lun-layout',
-        name: 'ASM archive log disk group LUNs',
+        name: 'ASM Archive Log Disk Group LUNs',
         recommended: 'associated-lun-count',
         type: 'storage',
         subType: 'layout',
@@ -825,7 +850,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'swap-space',
         id: 'swap-space',
-        name: 'Swap space',
+        name: 'Swap Space',
         type: 'storage',
         subType: 'sizing',
         focusWidgetName: 'Swap space',
@@ -839,7 +864,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'headroom',
         id: 'headroom',
-        name: 'File system headroom',
+        name: 'File System Headroom',
         type: 'storage',
         subType: 'sizing',
         focusWidgetName: 'File system headroom',
@@ -854,7 +879,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── resiliency ───────────────────────────────────────────────────────────
     {
         id: 'snapcenter-snapshot',
-        name: 'Application-consistent snapshots',
+        name: 'Application-Consistent Snapshots',
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         type: 'resiliency',
         subType: 'protection',
@@ -881,7 +906,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'backup-configuration',
-        name: 'Backup configuration',
+        name: 'Backup Configuration',
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         type: 'resiliency',
         subType: 'resiliency',
@@ -896,7 +921,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── compute ──────────────────────────────────────────────────────────────
     {
         id: 'host-os-patch',
-        name: 'Operating system patch',
+        name: 'Operating System Patch',
         categories: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
         type: 'compute',
         subType: 'compute',
@@ -909,10 +934,10 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'oracle-security-patch',
-        name: 'Oracle critical security patch',
+        name: 'Oracle Critical Patch Updates',
         categories: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-        type: 'compute',
-        subType: 'compute',
+        type: 'application',
+        subType: 'application',
         focusWidgetName: 'Oracle security patch',
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
@@ -924,7 +949,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── cloning ──────────────────────────────────────────────────────────────
     {
         id: 'clone-management',
-        name: 'Clone cleanup',
+        name: 'Clone Cleanup',
         type: 'cloning',
         subType: 'cloning',
         categories: [AwsWellArchitecturedPillars.COST_EFFICIENCY],

@@ -10,6 +10,7 @@ import type {
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import {
+    ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
     AssessmentStatus,
     OptimizeStorageConfigs
@@ -312,12 +313,30 @@ async function getSnapshotPolicyDriftData(
         }
 
         snapshotPolicyAssessmentData.totalObjectsAssessed = dataLogVolumeUuids.length;
+        const recommendationMap = new Map<string, { value: string; recommended: string }>();
         volumes.forEach(volume => {
             const volDetails = volume as Record<string, string>;
 
             const latestSnapshotTimestamp = new Date(
                 parseInt(volDetails?.[OptimizeStorageConfigs.MOST_RECENT_SNAPSHOT_TIMESTAMP] ?? 0, 10)
             );
+            if (isEmpty(volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY])) {
+                recommendationMap.set(volDetails?.uuid, {
+                    value: 'No snapshot policy configured',
+                    recommended: 'Enable a snapshot policy on the volume'
+                });
+            } else if (volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none') {
+                recommendationMap.set(volDetails?.uuid, {
+                    value: 'Snapshot policy set to none',
+                    recommended: 'Set snapshot policy to auto'
+                });
+            } else if (latestSnapshotTimestamp <= new Date(moment().subtract(2, 'days').format())) {
+                recommendationMap.set(volDetails?.uuid, {
+                    value: 'Latest snapshot is more than 2 days old',
+                    recommended: 'Enable a snapshot policy on the volume'
+                });
+            }
+
             if (
                 (isEmpty(volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY]) ||
                     volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none') &&
@@ -344,6 +363,16 @@ async function getSnapshotPolicyDriftData(
         }
         snapshotPolicyAssessmentData.totalObjectsInViolation =
             snapshotPolicyAssessmentData?.objectsInViolation?.length ?? 0;
+        snapshotPolicyAssessmentData.violationDetails = (
+            snapshotPolicyAssessmentData.objectsInViolation as OntapVolumeType[]
+        ).map(vol => ({
+            objectName: vol.ontapVolumeName ?? '',
+            objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            value: recommendationMap.get(vol.ontapVolumeUuid ?? '')?.value ?? 'No snapshot policy configured',
+            recommended:
+                recommendationMap.get(vol.ontapVolumeUuid ?? '')?.recommended ??
+                'Enable a snapshot policy on the volume'
+        }));
     } catch (error) {
         errorMessage = `Error getting snapshot policy drift data: ${error}`;
         return { ...goldenConfig, errorMessage };
@@ -589,18 +618,21 @@ async function getCrrDriftData(
 
         const allVolumesOptimized: boolean = filteredCrrDetails.every((detail: CrrDetails) => detail.isCRREnabled);
 
+        const mssqlCrrViolations = allVolumesOptimized ? [] : filteredCrrDetails.filter(detail => !detail.isCRREnabled);
         return {
             ...goldenConfig,
             status: allVolumesOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
             recommendation: isAoag ? CRR_RECOMMENDATION_AOAG : CRR_RECOMMENDATION_DEFAULT,
-            objectsInViolation: allVolumesOptimized
-                ? []
-                : filteredCrrDetails.filter(detail => !detail.isCRREnabled).map(detail => detail.volumeName),
+            objectsInViolation: mssqlCrrViolations.map(detail => detail.volumeName),
             totalObjectsAssessed: filteredCrrDetails.length,
-            totalObjectsInViolation: allVolumesOptimized
-                ? 0
-                : filteredCrrDetails.filter(detail => !detail.isCRREnabled).length,
-            recommended: 'crr-enabled'
+            totalObjectsInViolation: mssqlCrrViolations.length,
+            recommended: 'crr-enabled',
+            violationDetails: mssqlCrrViolations.map(detail => ({
+                objectName: detail.volumeName ?? '',
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                value: 'Disabled',
+                recommended: 'Enabled'
+            }))
         };
     } catch (error) {
         logger.error('Error fetching crr drift data:', error);
@@ -790,9 +822,10 @@ async function getDriveLetterAssessment(
                     .filter(letter => !standbyNodeDriveLetters.map(l => l.trim()).includes(letter))
             )
         ];
+        const standbyNodeInstanceId = isActiveNodePrimary ? node2InstanceId : node1InstanceId;
         return {
             status: isEmpty(missingDriveLetters) ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-            details: { missingDriveLetters, primaryNodeDriveLetters }
+            details: { missingDriveLetters, primaryNodeDriveLetters, standbyNodeInstanceId }
         };
     } catch (err) {
         logger.error('Exception running SSM for drive-letter:', err);
@@ -1305,31 +1338,47 @@ async function getHighAvailabilityDriftData(
                   }
                 : sharedStorage.error
                 ? { ...sharedStorageConfig, errorMessage: sharedStorage.error }
-                : {
-                      ...sharedStorageConfig,
-                      recommended: sharedStorageConfig.recommended ?? '',
-                      status: sharedStorage.status as AssessmentStatus,
-                      objectsInViolation:
-                          sharedStorage.lunDetails
-                              ?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED)
-                              .map(lun => lun.lunName) || [],
-                      totalObjectsInViolation:
-                          sharedStorage.lunDetails?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED).length ||
-                          0,
-                      totalObjectsAssessed: sharedStorage.lunDetails?.length || 0
-                  },
+                : (() => {
+                      const violatingLuns =
+                          sharedStorage.lunDetails?.filter(lun => lun.status !== AssessmentStatus.OPTIMIZED) || [];
+                      return {
+                          ...sharedStorageConfig,
+                          recommended: sharedStorageConfig.recommended ?? '',
+                          status: sharedStorage.status as AssessmentStatus,
+                          objectsInViolation: violatingLuns.map(lun => lun.lunName),
+                          totalObjectsInViolation: violatingLuns.length,
+                          totalObjectsAssessed: sharedStorage.lunDetails?.length || 0,
+                          violationDetails: violatingLuns.map(lun => ({
+                              objectName: lun.lunName,
+                              objectType: ASSESSMENT_RESOURCE_TYPE.LUN,
+                              value: 'Luns are not accessible',
+                              recommended: 'Luns are accessible'
+                          }))
+                      };
+                  })(),
             isEmpty(driveLetter)
                 ? { ...driveLetterConfig, errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('drive-letter') }
                 : driveLetter.error
                 ? { ...driveLetterConfig, errorMessage: driveLetter.error }
-                : {
-                      ...driveLetterConfig,
-                      recommended: driveLetterConfig.recommended ?? '',
-                      status: driveLetter.status as AssessmentStatus,
-                      objectsInViolation: [...new Set(driveLetter.details.missingDriveLetters || [])],
-                      totalObjectsInViolation: [...new Set(driveLetter.details.missingDriveLetters || [])].length || 0,
-                      totalObjectsAssessed: [...new Set(driveLetter.details.primaryNodeDriveLetters || [])].length || 0
-                  },
+                : (() => {
+                      const driveLetterEntryRecommended = driveLetterConfig.recommended ?? '';
+                      const missingLetters = [...new Set(driveLetter.details.missingDriveLetters || [])];
+                      return {
+                          ...driveLetterConfig,
+                          recommended: driveLetterEntryRecommended,
+                          status: driveLetter.status as AssessmentStatus,
+                          objectsInViolation: missingLetters,
+                          totalObjectsInViolation: missingLetters.length,
+                          totalObjectsAssessed:
+                              [...new Set(driveLetter.details.primaryNodeDriveLetters || [])].length || 0,
+                          violationDetails: missingLetters.map(letter => ({
+                              objectName: letter,
+                              objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
+                              value: `Missing on node ${driveLetter.details.standbyNodeInstanceId}`,
+                              recommended: `Present on node ${driveLetter.details.standbyNodeInstanceId}`
+                          }))
+                      };
+                  })(),
             isEmpty(clusterQuorum)
                 ? { ...clusterQuorumConfig, errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('cluster-quorum') }
                 : clusterQuorum.error
@@ -1345,7 +1394,8 @@ async function getHighAvailabilityDriftData(
                                     {
                                         objectName: 'isPhysicalDiskAndMajority',
                                         value: 'false',
-                                        objectType: 'configuration'
+                                        objectType: 'configuration',
+                                        recommended: 'true'
                                     }
                                 ]
                               : [],
@@ -1368,7 +1418,8 @@ async function getHighAvailabilityDriftData(
                                     .map(([key, value]) => ({
                                         objectName: key,
                                         value: value.current.toString(),
-                                        objectType: 'configuration'
+                                        objectType: 'configuration',
+                                        recommended: String(value.recommended)
                                     }))
                               : [],
                       totalObjectsAssessed: 1,
@@ -1378,17 +1429,27 @@ async function getHighAvailabilityDriftData(
                 ? { ...sqlServerServiceConfig, errorMessage: GENERIC_ASSESSMENT_ERROR_MESSAGE('sql-server-service') }
                 : sqlServerServices.error
                 ? { ...sqlServerServiceConfig, errorMessage: sqlServerServices.error }
-                : {
-                      ...sqlServerServiceConfig,
-                      recommended: sqlServerServiceConfig.recommended ?? '',
-                      status: sqlServerServices.status as AssessmentStatus,
-                      objectsInViolation:
+                : (() => {
+                      const sqlServiceEntryRecommended = sqlServerServiceConfig.recommended ?? '';
+                      const violatingNodes =
                           sqlServerServices.status !== AssessmentStatus.OPTIMIZED
-                              ? sqlServerServices.nodesInViolation
-                              : [],
-                      totalObjectsAssessed: sqlServerServices.totalNodes || 2,
-                      totalObjectsInViolation: sqlServerServices.nodesInViolation?.length
-                  }
+                              ? sqlServerServices.nodesInViolation ?? []
+                              : [];
+                      return {
+                          ...sqlServerServiceConfig,
+                          recommended: sqlServiceEntryRecommended,
+                          status: sqlServerServices.status as AssessmentStatus,
+                          objectsInViolation: violatingNodes,
+                          totalObjectsAssessed: sqlServerServices.totalNodes || 2,
+                          totalObjectsInViolation: violatingNodes.length,
+                          violationDetails: violatingNodes.map(node => ({
+                              objectName: node,
+                              objectType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+                              value: 'MSSQL Server service not running',
+                              recommended: 'MSSQL Server service should be running'
+                          }))
+                      };
+                  })()
         ];
 
         return haChecks;

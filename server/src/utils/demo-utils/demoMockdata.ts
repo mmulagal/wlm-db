@@ -5879,7 +5879,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         {
             name: 'datafiles-placement',
             status: 'optimized',
-            recommended: 'separate-volume-or-shared-with-control-files',
+            recommended: 'Separate volume or shared with control files',
             severity: 'warning',
             recommendation:
                 'Placing data files on a dedicated volume or shared with control files boosts performance by isolating their random I/O from redo or archive log writes, reducing contention. This separation allows you to benefit from customized snapshot configurations, tiering policies, and efficiency mechanisms to optimize performance and cost.',
@@ -5903,7 +5903,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         {
             name: 'redologs-placement',
             status: 'optimized',
-            recommended: 'separate-volume-or-shared-with-temp-control-files',
+            recommended: 'Separate volume or shared with temp or control files',
             severity: 'warning',
             recommendation:
                 'Placing redo logs, whether multiplexed or not, on a dedicated volume or shared with temp/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed redo log copy should reside on a separate volume for redundancy. Frequent changes make redo logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Redo logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storages slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency.',
@@ -5915,7 +5915,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         {
             name: 'templogs-placement',
             status: 'optimized',
-            recommended: 'separate-volume-or-shared-with-redo-control-files',
+            recommended: 'Separate volume or shared with redo or control files',
             severity: 'warning',
             recommendation:
                 'Placing temp logs on a dedicated volume or shared with redo/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed temp log copy should reside on a separate volume for redundancy. Frequent changes make temp logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Temp logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storages slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency.',

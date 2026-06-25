@@ -172,6 +172,7 @@ interface HighAvailabilityClusterDriveLetterDetails {
     status: string;
     missingDriveLetters: string[];
     primaryNodeDriveLetters: string[];
+    standbyNodeInstanceId?: string;
     error?: string;
 }
 

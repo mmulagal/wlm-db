@@ -3,7 +3,11 @@ import { isEmpty } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { WorkloadInstance } from '../../../utils/common-types';
 import { ASSESSMENT_SSM_EXECUTION_TIMEOUT } from '../../../utils/consts';
-import { AssessmentCategoriesOracle, AssessmentStatus } from '../../../utils/continous-optimization-consts';
+import {
+    ASSESSMENT_RESOURCE_TYPE,
+    AssessmentCategoriesOracle,
+    AssessmentStatus
+} from '../../../utils/continous-optimization-consts';
 import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
@@ -204,15 +208,22 @@ function calculateSnapCenterDrift(
     const unprotectedVolumes = volumesToAssess.filter(v => !isVolumeProtected(v));
     const isOptimized = volumesToAssess.length > 0 && unprotectedVolumes.length === 0;
 
+    const snapEntryRecommended = goldenConfig.recommended ?? '';
     return {
         ...goldenConfig,
-        recommended: goldenConfig.recommended ?? '',
+        recommended: snapEntryRecommended,
         status: isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
         totalObjectsAssessed: volumesToAssess.length,
         totalObjectsInViolation: unprotectedVolumes.length,
         objectsInViolation: unprotectedVolumes.map(v => ({
             ontapVolumeName: v.volumeName,
             ontapVolumeUuid: v.volumeId
+        })),
+        violationDetails: unprotectedVolumes.map(v => ({
+            objectName: v.volumeName ?? '',
+            objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            value: 'SnapCenter protection not configured',
+            recommended: 'SnapCenter protection enabled'
         }))
     };
 }

@@ -22,6 +22,7 @@ type LayoutAssessment = {
     objectsInViolation?: string[];
     totalObjectsAssessed?: number;
     totalObjectsInViolation?: number;
+    violationDetails?: Array<{ objectName: string; value: string; objectType: string; recommended?: string }>;
 };
 
 const vol = (volumeId: string, volumeName?: string, copiesCount?: number): OracleVolumeRecord => ({
@@ -407,6 +408,78 @@ describe('getVolumeLayoutDrift - current message', () => {
             expect(binary.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(binary.current).toBe('Oracle binaries currently shared with control files and data files');
         });
+    });
+});
+
+describe('getVolumeLayoutDrift - violationDetails', () => {
+    it('populates violationDetails entries for each violating volume in archive-placement', () => {
+        const map = buildVolumeTypeMap({
+            [OracleSysFileTypes.ARCHIVE_LOGS]: [vol('v-arch')],
+            [OracleSysFileTypes.DATA_FILES]: [vol('v-arch')]
+        });
+        const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+        const archive = findAssessment(drift, 'archive-placement');
+        expect(archive.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+        expect(archive.violationDetails).toHaveLength(1);
+        expect(archive.violationDetails?.[0]).toMatchObject({
+            objectName: 'v-arch',
+            objectType: 'Volume'
+        });
+        expect(archive.violationDetails?.[0].value).toBeTruthy();
+    });
+
+    it('emits empty violationDetails when archive-placement is OPTIMIZED', () => {
+        const map = buildVolumeTypeMap({
+            [OracleSysFileTypes.ARCHIVE_LOGS]: [vol('v-arch')],
+            [OracleSysFileTypes.DATA_FILES]: [vol('v-data')]
+        });
+        const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+        const archive = findAssessment(drift, 'archive-placement');
+        expect(archive.status).toBe(AssessmentStatus.OPTIMIZED);
+        expect(archive.violationDetails).toHaveLength(0);
+    });
+
+    it('populates violationDetails for datafiles-placement conflicts', () => {
+        const map = buildVolumeTypeMap({
+            [OracleSysFileTypes.DATA_FILES]: [vol('v-shared')],
+            [OracleSysFileTypes.ARCHIVE_LOGS]: [vol('v-shared')]
+        });
+        const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+        const data = findAssessment(drift, 'datafiles-placement');
+        expect(data.violationDetails).toHaveLength(1);
+        expect(data.violationDetails?.[0].objectName).toBe('v-shared');
+    });
+
+    it('populates violationDetails for controlfiles-placement sharing conflicts', () => {
+        const map = buildVolumeTypeMap({
+            [OracleSysFileTypes.CONTROL_FILES]: [vol('v-ctrl'), vol('v-shared')],
+            [OracleSysFileTypes.ARCHIVE_LOGS]: [vol('v-shared')]
+        });
+        const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+        const control = findAssessment(drift, 'controlfiles-placement');
+        expect(control.violationDetails).toHaveLength(1);
+        expect(control.violationDetails?.[0].objectName).toBe('v-shared');
+    });
+
+    it('emits empty violationDetails for controlfiles-placement when only multiplexing violation (no sharing conflicts)', () => {
+        const map = buildVolumeTypeMap({
+            [OracleSysFileTypes.CONTROL_FILES]: [vol('v-c1')]
+        });
+        const drift = getVolumeLayoutDrift(map, buildStorageAssessment());
+        const control = findAssessment(drift, 'controlfiles-placement');
+        expect(control.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+        expect(control.violationDetails).toHaveLength(0);
+    });
+
+    it('populates violationDetails for oracle-binary-placement conflicts', () => {
+        const map = buildVolumeTypeMap({
+            [OracleSysFileTypes.DATA_FILES]: [vol('v-data')]
+        });
+        const drift = getVolumeLayoutDrift(map, buildStorageAssessment([{ volumeId: 'v-data', volumeName: 'v-data' }]));
+        const binary = findAssessment(drift, 'oracle-binary-placement');
+        expect(binary.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+        expect(binary.violationDetails).toHaveLength(1);
+        expect(binary.violationDetails?.[0].objectName).toBe('v-data');
     });
 });
 
@@ -1180,7 +1253,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
 
             const snapshotPolicyEntry = findById(drift, 'snapshot-policy') as CombinedDriftEntry | undefined;
             expect(snapshotPolicyEntry).toBeDefined();
-            expect(snapshotPolicyEntry?.name).toBe('Scheduled local snapshots');
+            expect(snapshotPolicyEntry?.name).toBe('Scheduled Local Snapshots');
         });
     });
 

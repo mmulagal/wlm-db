@@ -1791,17 +1791,23 @@ function getVolumeLayoutDrift(
             status === AssessmentStatus.NOT_OPTIMIZED && archiveSharedLabels.length > 0
                 ? `Archive logs currently shared with ${formatTypeList(archiveSharedLabels)}`
                 : undefined;
+        const archiveEntryRecommended = archivePlacementConfig.recommended ?? '';
+        const archiveObjectsInViolation =
+            status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts.map(conflict => conflict.volumeName) : [];
         volumeLayoutDrift.push({
             ...archivePlacementConfig,
-            recommended: archivePlacementConfig.recommended ?? '',
+            recommended: archiveEntryRecommended,
             status,
             ...(archiveCurrent && { current: archiveCurrent }),
-            objectsInViolation:
-                status === AssessmentStatus.NOT_OPTIMIZED
-                    ? archiveLogConflicts.map(conflict => conflict.volumeName)
-                    : [],
+            objectsInViolation: archiveObjectsInViolation,
             totalObjectsAssessed: archiveFraLogVolumes.length,
-            totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? archiveLogConflicts.length : 0
+            totalObjectsInViolation: archiveObjectsInViolation.length,
+            violationDetails: archiveObjectsInViolation.map(volName => ({
+                objectName: volName,
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                value: archiveCurrent!,
+                recommended: archiveEntryRecommended
+            }))
         });
     }
 
@@ -1820,15 +1826,23 @@ function getVolumeLayoutDrift(
             status === AssessmentStatus.NOT_OPTIMIZED && dataSharedLabels.length > 0
                 ? `Data files currently shared with ${formatTypeList(dataSharedLabels)}`
                 : undefined;
+        const dataEntryRecommended = datafilesPlacementConfig.recommended ?? '';
+        const dataObjectsInViolation =
+            status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.map(conflict => conflict.volumeName) : [];
         volumeLayoutDrift.push({
             ...datafilesPlacementConfig,
-            recommended: datafilesPlacementConfig.recommended ?? '',
+            recommended: dataEntryRecommended,
             status,
             ...(dataCurrent && { current: dataCurrent }),
-            objectsInViolation:
-                status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.map(conflict => conflict.volumeName) : [],
+            objectsInViolation: dataObjectsInViolation,
             totalObjectsAssessed: dataFileVolumes.length,
-            totalObjectsInViolation: status === AssessmentStatus.NOT_OPTIMIZED ? dataFileConflicts.length : 0
+            totalObjectsInViolation: dataObjectsInViolation.length,
+            violationDetails: dataObjectsInViolation.map(volName => ({
+                objectName: volName,
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                value: dataCurrent!,
+                recommended: dataEntryRecommended
+            }))
         });
     }
 
@@ -1858,10 +1872,10 @@ function getVolumeLayoutDrift(
         status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
         const recommended =
             hasConflicts && insufficientMultiplexing
-                ? 'separate-volume-or-shared-with-data-redo-temp-with-two-multiplexed-volumes'
+                ? 'Separate volume or shared with data, redo, or temp files, with two multiplexed volumes'
                 : hasConflicts
-                ? 'separate-volume-or-shared-with-data-redo-temp'
-                : 'two-multiplexed-volumes';
+                ? 'Separate volume or shared with data, redo, or temp files'
+                : 'Two multiplexed volumes';
         const controlSharedLabels = hasConflicts
             ? getSharedFileTypeLabels(
                   controlFileConflicts.map(c => c.volumeId),
@@ -1892,14 +1906,21 @@ function getVolumeLayoutDrift(
         } else if (controlMultiplexingFragment) {
             controlCurrent = `Control files have ${controlMultiplexingFragment}`;
         }
+        const controlObjectsInViolation = hasConflicts ? controlFileConflicts.map(conflict => conflict.volumeName) : [];
         volumeLayoutDrift.push({
             ...controlfilesPlacementConfig,
             recommended,
             status,
             ...(controlCurrent && { current: controlCurrent }),
-            objectsInViolation: hasConflicts ? controlFileConflicts.map(conflict => conflict.volumeName) : [],
+            objectsInViolation: controlObjectsInViolation,
             totalObjectsAssessed: controlFileVolumes.length,
-            totalObjectsInViolation: hasConflicts ? controlFileConflicts.length : 0
+            totalObjectsInViolation: controlObjectsInViolation.length,
+            violationDetails: controlObjectsInViolation.map(volName => ({
+                objectName: volName,
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                value: controlCurrent!,
+                recommended
+            }))
         });
     }
 
@@ -1940,10 +1961,10 @@ function getVolumeLayoutDrift(
         status = hasConflicts || insufficientMultiplexing ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
         const recommended =
             hasConflicts && insufficientMultiplexing
-                ? 'separate-volume-or-shared-with-control-temp-with-multiplexed-copies-on-two-or-more-volumes'
+                ? 'Separate volume or shared with control or temp files, with multiplexed copies on two or more volumes'
                 : hasConflicts
-                ? 'separate-volume-or-shared-with-control-temp'
-                : 'multiplexed-copies-on-two-or-more-volumes';
+                ? 'Separate volume or shared with control or temp files'
+                : 'Multiplexed copies on two or more volumes';
 
         const redoSharedLabels = hasConflicts
             ? getSharedFileTypeLabels(
@@ -1971,22 +1992,25 @@ function getVolumeLayoutDrift(
             redoCurrent = `Redo logs have ${redoMultiplexingFragment}`;
         }
 
+        const redoObjectsInViolation = hasConflicts
+            ? redoFileConflicts.map(conflict => conflict.volumeName)
+            : insufficientMultiplexing
+            ? volumesWithMultipleCopies.map(v => v.volumeName)
+            : [];
         volumeLayoutDrift.push({
             ...redologsPlacementConfig,
             recommended,
             status,
             ...(redoCurrent && { current: redoCurrent }),
-            objectsInViolation: hasConflicts
-                ? redoFileConflicts.map(conflict => conflict.volumeName)
-                : insufficientMultiplexing
-                ? volumesWithMultipleCopies.map(v => v.volumeName)
-                : [],
+            objectsInViolation: redoObjectsInViolation,
             totalObjectsAssessed: redoLogVolumes.length,
-            totalObjectsInViolation: hasConflicts
-                ? redoFileConflicts.length
-                : insufficientMultiplexing
-                ? volumesWithMultipleCopies.length
-                : 0
+            totalObjectsInViolation: redoObjectsInViolation.length,
+            violationDetails: redoObjectsInViolation.map(volName => ({
+                objectName: volName,
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                value: redoCurrent!,
+                recommended
+            }))
         });
     }
 
@@ -2006,15 +2030,22 @@ function getVolumeLayoutDrift(
             status === AssessmentStatus.NOT_OPTIMIZED && tempSharedLabels.length > 0
                 ? `Temp files currently shared with ${formatTypeList(tempSharedLabels)}`
                 : undefined;
+        const tempEntryRecommended = templogsPlacementConfig.recommended ?? '';
+        const tempObjectsInViolation = tempFileConflicts.map(conflict => conflict.volumeName);
         volumeLayoutDrift.push({
             ...templogsPlacementConfig,
-            recommended: templogsPlacementConfig.recommended ?? '',
+            recommended: tempEntryRecommended,
             status,
             ...(tempCurrent && { current: tempCurrent }),
-            objectsInViolation:
-                tempFileConflicts.length > 0 ? tempFileConflicts.map(conflict => conflict.volumeName) : [],
+            objectsInViolation: tempObjectsInViolation,
             totalObjectsAssessed: tempFileVolumes.length,
-            totalObjectsInViolation: tempFileConflicts.length > 0 ? tempFileConflicts.length : 0
+            totalObjectsInViolation: tempObjectsInViolation.length,
+            violationDetails: tempObjectsInViolation.map(volName => ({
+                objectName: volName,
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                value: tempCurrent!,
+                recommended: tempEntryRecommended
+            }))
         });
     }
 
@@ -2035,14 +2066,21 @@ function getVolumeLayoutDrift(
             status === AssessmentStatus.NOT_OPTIMIZED && binarySharedLabels.length > 0
                 ? `Oracle binaries currently shared with ${formatTypeList(binarySharedLabels)}`
                 : undefined;
+        const binaryEntryRecommended = oracleBinaryPlacementConfig.recommended ?? '';
         volumeLayoutDrift.push({
             ...oracleBinaryPlacementConfig,
-            recommended: oracleBinaryPlacementConfig.recommended ?? '',
+            recommended: binaryEntryRecommended,
             status,
             ...(binaryCurrent && { current: binaryCurrent }),
-            objectsInViolation: binaryVolumeConflicts.length > 0 ? binaryVolumeConflicts : [],
+            objectsInViolation: binaryVolumeConflicts,
             totalObjectsAssessed: binaryVolumeIds.length,
-            totalObjectsInViolation: binaryVolumeConflicts.length > 0 ? binaryVolumeConflicts.length : 0
+            totalObjectsInViolation: binaryVolumeConflicts.length,
+            violationDetails: binaryVolumeConflicts.map(volId => ({
+                objectName: volId,
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                value: binaryCurrent!,
+                recommended: binaryEntryRecommended
+            }))
         });
     }
 
@@ -2161,16 +2199,28 @@ function getSwapSpaceDrift(
         : swapTotal < lowerBound || swapTotal > upperBound;
     const status = isViolation ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
 
+    const swapRecommended = isRangeRecommendation
+        ? `${recommendedSwapSpaceMin} - ${recommendedSwapSpaceMax} GB`
+        : `${recommendedSwapSpace} GB`;
+    const swapCurrent = `${swapTotal} GB`;
     return {
         ...swapSpaceConfig!,
         status,
-        recommended: isRangeRecommendation
-            ? `${recommendedSwapSpaceMin} - ${recommendedSwapSpaceMax} GB`
-            : `${recommendedSwapSpace} GB`,
-        current: `${swapTotal} GB`,
+        recommended: swapRecommended,
+        current: swapCurrent,
         objectsInViolation: isViolation ? [ec2InstanceId] : [],
         totalObjectsAssessed: 1,
-        totalObjectsInViolation: isViolation ? 1 : 0
+        totalObjectsInViolation: isViolation ? 1 : 0,
+        violationDetails: isViolation
+            ? [
+                  {
+                      objectName: ec2InstanceId,
+                      objectType: 'EC2 Instance',
+                      value: swapCurrent,
+                      recommended: swapRecommended
+                  }
+              ]
+            : []
     };
 }
 

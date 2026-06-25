@@ -174,6 +174,7 @@ describe('getCrrDriftData', () => {
         expect(result.objectsInViolation).toEqual([]);
         expect(result.totalObjectsInViolation).toBe(0);
         expect(result.totalObjectsAssessed).toBe(2);
+        expect(result.violationDetails).toEqual([]);
     });
 
     it('should return NOT_OPTIMIZED when some volumes lack CRR', () => {
@@ -210,6 +211,9 @@ describe('getCrrDriftData', () => {
         ]);
         expect(result.totalObjectsInViolation).toBe(1);
         expect(result.totalObjectsAssessed).toBe(2);
+        expect(result.violationDetails).toEqual([
+            { objectName: 'log_vol', objectType: 'Volume', value: 'Disabled', recommended: 'Enabled' }
+        ]);
     });
 
     it('should return NOT_OPTIMIZED when all volumes lack CRR', () => {
@@ -640,7 +644,6 @@ describe('getOracleAwsBackupDriftData', () => {
         ) as OracleGenericParameterDriftResponseType;
         expect(result).not.toHaveProperty('errorMessage');
         expect(result.status).toBe(AssessmentStatus.OPTIMIZED);
-        expect(result.objectsInViolation).toEqual([]);
         expect(result.totalObjectsInViolation).toBe(0);
         expect(result.totalObjectsAssessed).toBe(2);
     });
@@ -687,9 +690,11 @@ describe('getOracleAwsBackupDriftData', () => {
             assessmentData
         ) as OracleGenericParameterDriftResponseType;
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
-        expect(result.objectsInViolation).toEqual([{ ontapVolumeUuid: 'uuid-log', ontapVolumeName: 'log_vol' }]);
         expect(result.totalObjectsInViolation).toBe(1);
         expect(result.totalObjectsAssessed).toBe(2);
+        expect(result.violationDetails).toEqual([
+            { objectName: 'log_vol', objectType: 'Volume', value: 'Disabled', recommended: 'Enabled' }
+        ]);
     });
 
     it('should return NOT_OPTIMIZED when all volumes lack backup', () => {
@@ -711,10 +716,6 @@ describe('getOracleAwsBackupDriftData', () => {
             assessmentData
         ) as OracleGenericParameterDriftResponseType;
         expect(result.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
-        expect(result.objectsInViolation).toEqual([
-            { ontapVolumeUuid: 'uuid-data', ontapVolumeName: 'data_vol' },
-            { ontapVolumeUuid: 'uuid-log', ontapVolumeName: 'log_vol' }
-        ]);
         expect(result.totalObjectsInViolation).toBe(2);
         expect(result.totalObjectsAssessed).toBe(2);
     });

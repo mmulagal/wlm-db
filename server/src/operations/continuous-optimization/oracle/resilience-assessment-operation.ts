@@ -3,7 +3,11 @@ import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
-import { AssessmentCategoriesOracle, AssessmentStatus } from '../../../utils/continous-optimization-consts';
+import {
+    ASSESSMENT_RESOURCE_TYPE,
+    AssessmentCategoriesOracle,
+    AssessmentStatus
+} from '../../../utils/continous-optimization-consts';
 import { GENERIC_ASSESSMENT_ERROR_MESSAGE, HttpErrorCodes } from '../../../utils/consts';
 import { sqlResponseParsing } from '../../../utils/utils';
 import { CrrAssessment, CrrDetails, WorkloadInstance } from '../../../utils/common-types';
@@ -193,17 +197,24 @@ function getCrrDriftData(
         const volumesInViolation = crrDetails.filter(isVolumeInViolation);
         const allVolumesOptimized = volumesInViolation.length === 0;
 
+        const crrRecommended = 'crr-enabled';
         return {
             ...goldenConfig,
             status: allVolumesOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-            recommended: 'crr-enabled',
+            recommended: crrRecommended,
             objectsInViolation: volumesInViolation.map(detail => ({
                 ontapVolumeName: detail.volumeName,
                 ontapVolumeUuid: detail.volumeUuid,
                 fsxVolumeId: detail.fsxVolumeId
             })),
             totalObjectsAssessed: crrDetails.length,
-            totalObjectsInViolation: volumesInViolation.length
+            totalObjectsInViolation: volumesInViolation.length,
+            violationDetails: volumesInViolation.map(detail => ({
+                objectName: detail.volumeName ?? '',
+                objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                value: 'Disabled',
+                recommended: 'Enabled'
+            }))
         };
     } catch (error) {
         logger.error('Error fetching Oracle CRR drift data:', error);
