@@ -2,6 +2,7 @@ import config from 'config';
 import ms, { StringValue } from 'ms';
 import createError from 'http-errors';
 import throat from 'throat';
+import { inflateSync } from 'node:zlib';
 import {
     CommandInvocationStatus,
     ConnectionStatus,
@@ -13,7 +14,7 @@ import {
     SendCommandCommandInput
 } from '@aws-sdk/client-ssm';
 import { DescribeRegionsCommandInput, DescribeRegionsResult } from '@aws-sdk/client-ec2';
-import { isEmpty } from 'lodash-es';
+import { compact, isEmpty } from 'lodash-es';
 import {
     sendSSMCommand,
     getCommandInvocation,
@@ -24,12 +25,21 @@ import {
     describeInstanceInformation,
     describeParameters
 } from '../../lib/aws/ssm';
-import { compressSsmCommand, decompressSSMResponse, generateHash, IS_DEMO_FLOW, sleep } from '../../utils/utils';
+import {
+    compressSsmCommand,
+    decompressSSMResponse,
+    generateHash,
+    getRedisConnection,
+    IS_DEMO_FLOW,
+    isRedisConnected,
+    sleep
+} from '../../utils/utils';
 import {
     AWS_REGION_KEYS,
     AWS_REGIONS,
     RESTRICTED_FSX_REGIONS,
     SSM_COMMAND_CACHE_TYPE,
+    AWS_SSM_PARAMETER,
     CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
     SSM_COMMAND_RUNTIMES,
     GOV_REGIONS,
@@ -388,34 +398,33 @@ async function getGenericFSxOntapRegionsList(
         return getGovFSxOntapRegions(includeBedrockStatus);
     }
 
-    const fsxRegionsList: Array<FSxAvailableRegionType> = [];
-
     try {
-        let fsxRegionResponse = await getParametersByPath();
+        let fsxRegionResponse: Parameter[];
+        let bedrockSet: Set<string> | undefined;
 
-        let bedrockRegions: string[] = [];
         if (includeBedrockStatus) {
-            [fsxRegionResponse, bedrockRegions] = await Promise.all([
+            const [fsxParams, bedrockRegions] = await Promise.all([
                 getParametersByPath(),
                 getLogsAnalyzerBedrockRegionsList()
             ]);
+            fsxRegionResponse = fsxParams;
+            bedrockSet = new Set(bedrockRegions);
         } else {
             fsxRegionResponse = await getParametersByPath();
         }
-        fsxRegionResponse.forEach(({ Value: regionCode }) => {
+
+        const regions = fsxRegionResponse.reduce<FSxAvailableRegionType[]>((acc, { Value: regionCode }) => {
             if (regionCode && !RESTRICTED_FSX_REGIONS.includes(regionCode)) {
-                fsxRegionsList.push({
+                acc.push({
                     regionCode,
-                    regionName: AWS_REGIONS.has(regionCode) ? AWS_REGIONS.get(regionCode)! : '',
-                    bedrockAvailable:
-                        bedrockRegions.length > 0
-                            ? bedrockRegions.some(bedrockRegionCode => bedrockRegionCode === regionCode)
-                            : undefined
+                    regionName: AWS_REGIONS.get(regionCode) ?? '',
+                    bedrockAvailable: bedrockSet ? bedrockSet.has(regionCode) : undefined
                 });
             }
-        });
+            return acc;
+        }, []);
 
-        return { regions: fsxRegionsList };
+        return { regions };
     } catch (error: any) {
         logger.error('Get generic FSX ONTAP Region list has failed with error:', error);
         if (error?.$metadata?.httpStatusCode && error.message) {
@@ -423,6 +432,36 @@ async function getGenericFSxOntapRegionsList(
         }
         throw new Error(`Error fetching generic fsx region: ${error}`);
     }
+}
+
+const FSX_REGION_CODES_CACHE_KEY = 'fsx-ontap-region-codes';
+const FSX_SUPPORTED_REGIONS_REDIS_KEY = 'FSX:SUPPORTED:REGIONS:KEY';
+
+async function getCachedFsxRegionCodes(): Promise<string[]> {
+    // Try Redis first — fsx service writes compressed region data here
+    const redisClient = getRedisConnection();
+    if (isRedisConnected(redisClient)) {
+        try {
+            const compressed = await redisClient.get(FSX_SUPPORTED_REGIONS_REDIS_KEY);
+            if (compressed) {
+                const json = inflateSync(Buffer.from(compressed, 'base64')).toString();
+                const parsed: unknown[] = JSON.parse(json);
+                return compact(parsed.map(r => (r as { regionCode: string }).regionCode ?? ''));
+            }
+        } catch (err) {
+            logger.warn('Failed to read FSx regions from Redis, falling back to SSM', err);
+        }
+    }
+
+    // Fall back: LRU cache + SSM Parameter Store
+    const cached = readFromCacheByKey(AWS_SSM_PARAMETER, FSX_REGION_CODES_CACHE_KEY);
+    if (cached) {
+        return cached as string[];
+    }
+    const { regions } = await getGenericFSxOntapRegionsList();
+    const codes = regions.map(r => r.regionCode);
+    writeToCache(AWS_SSM_PARAMETER, FSX_REGION_CODES_CACHE_KEY, codes);
+    return codes;
 }
 
 async function getFSxOntapRegionsList(
@@ -707,6 +746,7 @@ async function getSSMParametersList(
 
 export {
     executeSSMDocument,
+    getCachedFsxRegionCodes,
     getGenericFSxOntapRegionsList,
     getFSxOntapRegionsList,
     getSSMConnectionStatus,

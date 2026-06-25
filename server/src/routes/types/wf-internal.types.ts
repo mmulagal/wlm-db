@@ -1,5 +1,4 @@
 import { Type } from '@fastify/type-provider-typebox';
-import { AWS_REGION_KEYS } from '../../utils/consts';
 
 const StatusParams = Type.Object({
     accountId: Type.String({ minLength: 1 })
@@ -30,9 +29,7 @@ const ListVolumesQueryParams = Type.Object({
 
 const HomepageStatusQueryParams = Type.Object({
     credentialsIds: Type.Optional(Type.String()),
-    regions: Type.Optional(
-        Type.String({ pattern: `^(${AWS_REGION_KEYS.join('|')})(\\s*,\\s*(${AWS_REGION_KEYS.join('|')}))*$` })
-    ),
+    regions: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number())
 });
 

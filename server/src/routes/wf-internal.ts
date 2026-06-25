@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify/types/instance';
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
-import { FastifyRequest } from 'fastify';
+import { FastifyReply, FastifyRequest } from 'fastify';
+import { getCachedFsxRegionCodes } from '../operations/aws/ssm-operations';
 import {
     GetAccountInfoSchema,
     GetDatabaseVolumesSchema,
@@ -19,6 +20,21 @@ import {
 } from '../operations/wf-internal-operations';
 import castRequest from './utils';
 
+async function validateRegions(request: FastifyRequest, reply: FastifyReply) {
+    const { regions } = request.query as { regions?: string };
+    if (!regions) {
+        return;
+    }
+    const validCodes = await getCachedFsxRegionCodes();
+    const invalid = regions
+        .split(',')
+        .map(r => r.trim())
+        .filter(r => r && !validCodes.includes(r));
+    if (invalid.length > 0) {
+        reply.code(400).send({ message: `Invalid region(s): ${invalid.join(', ')}` });
+    }
+}
+
 export default function systemRoutes(fastify: FastifyInstance) {
     const server = fastify.withTypeProvider<TypeBoxTypeProvider>();
     server
@@ -35,27 +51,39 @@ export default function systemRoutes(fastify: FastifyInstance) {
             } = castRequest(request);
             return getDatabaseVolumes(accountId, instancePagesize, nextToken, fsxId);
         })
-        .get('/v1/focus-wad-status', { schema: GetFocusWadStatusSchema }, async (request: FastifyRequest) => {
-            const {
-                params: { accountId },
-                query: { credentialsIds, regions, limit }
-            } = castRequest(request);
-            return getFocusWadStatus(accountId, credentialsIds, regions, limit);
-        })
-        .get('/v1/focus-event-status', { schema: GetFocusEventStatusSchema }, async (request: FastifyRequest) => {
-            const {
-                params: { accountId },
-                query: { credentialsIds, regions, limit }
-            } = castRequest(request);
-            return getLogsAnalysisStatus(accountId, credentialsIds, regions, limit);
-        })
-        .get('/v1/widget-status', { schema: GetWidgetStatusSchema }, async (request: FastifyRequest) => {
-            const {
-                params: { accountId },
-                query: { credentialsIds, regions }
-            } = castRequest(request);
-            return getWidgetStatus(accountId, credentialsIds, regions);
-        })
+        .get(
+            '/v1/focus-wad-status',
+            { schema: GetFocusWadStatusSchema, preHandler: validateRegions },
+            async (request: FastifyRequest) => {
+                const {
+                    params: { accountId },
+                    query: { credentialsIds, regions, limit }
+                } = castRequest(request);
+                return getFocusWadStatus(accountId, credentialsIds, regions, limit);
+            }
+        )
+        .get(
+            '/v1/focus-event-status',
+            { schema: GetFocusEventStatusSchema, preHandler: validateRegions },
+            async (request: FastifyRequest) => {
+                const {
+                    params: { accountId },
+                    query: { credentialsIds, regions, limit }
+                } = castRequest(request);
+                return getLogsAnalysisStatus(accountId, credentialsIds, regions, limit);
+            }
+        )
+        .get(
+            '/v1/widget-status',
+            { schema: GetWidgetStatusSchema, preHandler: validateRegions },
+            async (request: FastifyRequest) => {
+                const {
+                    params: { accountId },
+                    query: { credentialsIds, regions }
+                } = castRequest(request);
+                return getWidgetStatus(accountId, credentialsIds, regions);
+            }
+        )
         .get('/v1/account-info', { schema: GetAccountInfoSchema }, async (request: FastifyRequest) => {
             const {
                 params: { accountId }
