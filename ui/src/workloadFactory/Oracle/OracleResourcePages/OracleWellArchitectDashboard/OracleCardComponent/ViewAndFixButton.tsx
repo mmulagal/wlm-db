@@ -13,7 +13,7 @@ import {
 } from '../../../../../utils/consts';
 import { handleDialog } from '../../../../GetWell/StorageCardComponent/optimizeUtils';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../../../store/workloadFactory/inventoryV2Slice';
-import { hasInnerPage, getButtonText as getButtonTextFromRegistry } from '../../../../../utils/getWellConfigRegistry';
+import { hasInnerPage, getButtonText as getButtonTextFromRegistry } from '../../../../../utils/configRegistry';
 
 interface ViewAndFixButtonProps {
     cardData?: {

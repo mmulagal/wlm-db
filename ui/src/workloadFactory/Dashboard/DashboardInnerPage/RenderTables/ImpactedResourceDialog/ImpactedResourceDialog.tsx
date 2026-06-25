@@ -4,13 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ColumnProps, Table } from '@netapp/design-system/dist/components/Table';
 import styles from './ImpactedResourceDialog.module.scss';
 import commonStyles from '../../../../../utils/CommonStyles.module.scss';
-import {
-    ASSESSMENT_CONFIG_IDS,
-    ASSESSMENT_CONFIG_NAMES,
-    DBType,
-    PATCH_SCAN_FIELD,
-    WIZARD_TYPE
-} from '../../../../../utils/consts';
+import { ASSESSMENT_CONFIG_IDS, DBType, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../../utils/consts';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useGetMissingPatchAssessmentDataQuery } from '../../../../../utils/apiService';
 import { getTableLazyLoadingComponentProps } from '../../../../../common/Lib/Table/tableLazyLoadingProps';
@@ -24,18 +18,14 @@ import {
 } from '../../../../GetWell/OptimizeInnerPage/InnerTables/ExpandableTableHelper';
 import CopyToClipboardCommon from '../../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../../assets/ic_copy.svg';
-import {
-    normalizeImpactedResourceDialogData,
-    resolveImpactedResourceConfigName
-} from '../../../../WellArchitectedTab/assessmentFormatUtils';
-import { buildSubConfigValues } from '../../../../../utils/getWellConfigRegistry';
+import { normalizeImpactedResourceDialogData } from '../../../../WellArchitectedTab/assessmentFormatUtils';
+import { buildSubConfigValues, getColumnConfig } from '../../../../../utils/configRegistry';
 
 interface ViolationDetail {
     objectName?: string;
     value?: string | number;
     objectType?: string;
     recommended?: string;
-    recommendedValue?: string;
     nfsMount?: string;
     dataCategory?: string;
     additionalInfo?: {
@@ -258,8 +248,10 @@ const mapAssessmentViolations = (
 
     const hasRecommendedColumn = details.some(
         detail =>
-            (detail?.recommendedValue != null && detail.recommendedValue !== '') ||
-            (detail?.recommended != null && detail.recommended !== 'true' && detail.recommended !== 'false')
+            detail?.recommended != null &&
+            detail.recommended !== '' &&
+            detail.recommended !== 'true' &&
+            detail.recommended !== 'false'
     );
 
     if (hasRecommendedColumn) {
@@ -267,7 +259,7 @@ const mapAssessmentViolations = (
         const rows = details.map(detail => [
             detail?.objectName || na,
             detail?.value != null ? String(detail.value) : na,
-            detail?.recommended || detail?.recommendedValue || na
+            detail?.recommended || na
         ]);
         return ensureRows(columns, rows, na);
     }
@@ -328,11 +320,7 @@ const mapMtuInterfacesToTable = (
     t: (key: string) => string
 ): ImpactedResourcesResult => {
     const interfaces = data.ec2InterfacesToFix || [];
-    const columns = [
-        t('databases.well-architect.network-interface-name'),
-        ASSESSMENT_CONFIG_NAMES.MTU,
-        'Recommended value'
-    ];
+    const columns = [t('databases.well-architect.network-interface-name'), 'MTU', 'Recommended value'];
     if (interfaces.length > 0) {
         const rows = interfaces.map(item => [
             item?.name || na,
@@ -405,10 +393,58 @@ const mapSubConfigViolations = (data: AssessmentData, columns: string[], na: str
 };
 
 /**
- * MSSQL config names arrive from two sources:
- * - DashboardConfigsTable sets internal names: 'performance-tier', 'log-drive-size', etc.
- * - RecommendationTable passes display names matching ASSESSMENT_CONFIG_NAMES values.
- * Both formats are handled here.
+ * Generic fallback using column config from unified registry.
+ * Maps violationDetails to table rows based on column accessor configuration.
+ */
+const mapGenericConfigFromRegistry = (
+    configId: string,
+    data: AssessmentData,
+    na: string,
+    t: (key: string) => string
+): ImpactedResourcesResult | null => {
+    const columnConfig = getColumnConfig(configId);
+    if (!columnConfig) return null;
+
+    // Handle sub-configs (storage-efficiencies, etc.)
+    if (columnConfig.hasSubConfigs) {
+        const columns = columnConfig.columns.map(col => t(col.label) || col.label);
+        return mapSubConfigViolations(data, columns, na);
+    }
+
+    // Generic mapping for standard configs
+    const details: ViolationDetail[] = data?.violationDetails || [];
+    const columns = columnConfig.columns.map(col => t(col.label) || col.label);
+
+    const rows = details.map(detail =>
+        columnConfig.columns.map(col => {
+            const accessor = col.accessor || col.key;
+            const value = detail?.[accessor as keyof ViolationDetail];
+
+            // Special formatting based on column key
+            if (col.key === 'value' && typeof value === 'number') {
+                // Percentage formatting for performance-tier, snapshot-copy-reserve
+                if (configId === 'performance-tier' || configId === 'snapshot-copy-reserve') {
+                    return `${value}%`;
+                }
+            }
+
+            if (col.key === 'rss' && typeof value === 'boolean') {
+                return value ? 'Enabled' : 'Disabled';
+            }
+
+            if (col.key === 'divergence' && typeof value === 'number') {
+                return `${value}%`;
+            }
+
+            return value != null ? String(value) : na;
+        })
+    );
+
+    return ensureRows(columns, rows, na);
+};
+
+/**
+ * MSSQL flat API configs use internal IDs: 'performance-tier', 'log-drive-size', etc.
  */
 const getMssqlImpactedResources = (
     configName: string,
@@ -421,6 +457,7 @@ const getMssqlImpactedResources = (
     const sizing: SizingViolations = data?.sizingViolations || {};
 
     switch (configName) {
+        // === SUB-CONFIG CASES (storage-efficiencies, etc.) ===
         case ASSESSMENT_CONFIG_IDS.STORAGE_EFFICIENCIES:
         case ASSESSMENT_CONFIG_IDS.TIERING_TCO_OPTIMIZATION:
             return mapSubConfigViolations(
@@ -444,16 +481,7 @@ const getMssqlImpactedResources = (
                 na
             );
 
-        case ASSESSMENT_CONFIG_IDS.STORAGE_TIER:
-        case ASSESSMENT_CONFIG_NAMES.STORAGE_TIER: {
-            const columns = [t('databases.well-architect.volume-name'), t('databases.well-architect.ssd-storage-tier')];
-            const rows = details.map(detail => [
-                detail?.objectName || na,
-                detail?.value != null ? `${detail.value}%` : na
-            ]);
-            return ensureRows(columns, rows, na);
-        }
-
+        // === SPECIAL SIZING CASES ===
         case ASSESSMENT_CONFIG_IDS.LOG_DRIVE_SIZE:
             return mssqlSizingViolationsToDriveTable(
                 sizing,
@@ -472,6 +500,7 @@ const getMssqlImpactedResources = (
                 t
             );
 
+        // === FILE LOCATION CASES (complex grouping logic) ===
         case ASSESSMENT_CONFIG_IDS.DATA_FILES_MDF:
         case ASSESSMENT_CONFIG_IDS.LOG_FILES_LDF:
         case ASSESSMENT_CONFIG_IDS.TEMPDB_PLACEMENT: {
@@ -506,94 +535,9 @@ const getMssqlImpactedResources = (
             return ensureRows(columns, rows, na);
         }
 
-        case ASSESSMENT_CONFIG_IDS.SCHEDULED_LOCAL_SNAPSHOT:
-        case ASSESSMENT_CONFIG_IDS.SNAPCENTER_SNAPSHOT:
-        case ASSESSMENT_CONFIG_IDS.CRR:
-        case ASSESSMENT_CONFIG_IDS.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-            return mapObjectsToVolumeName(objects, na);
-
-        case ASSESSMENT_CONFIG_IDS.OS_TYPE:
-        case ASSESSMENT_CONFIG_NAMES.OS_TYPE: {
-            const columns = [t('databases.well-architect.lun-name'), t('databases.well-architect.os-type')];
-            const rows = details.map(detail => [detail?.objectName || na, String(detail?.value ?? na)]);
-            return ensureRows(columns, rows, na);
-        }
-
-        case ASSESSMENT_CONFIG_NAMES.AUTOSIZE_MODE:
-        case ASSESSMENT_CONFIG_IDS.AUTOSIZE_MODE: {
-            const columns = [t('databases.well-architect.volume-name'), ASSESSMENT_CONFIG_NAMES.AUTOSIZE_MODE];
-            const rows = details.map(detail => [detail?.objectName || na, String(detail?.value ?? na)]);
-            return ensureRows(columns, rows, na);
-        }
-
-        case ASSESSMENT_CONFIG_IDS.SNAPSHOT_COPY_RESERVE:
-        case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_COPY_RESERVE: {
-            const columns = [t('databases.well-architect.volume-name'), ASSESSMENT_CONFIG_NAMES.SNAPSHOT_COPY_RESERVE];
-            const rows = details.map(detail => [
-                detail?.objectName || na,
-                detail?.value != null ? `${detail.value}%` : na
-            ]);
-            return ensureRows(columns, rows, na);
-        }
-
-        case ASSESSMENT_CONFIG_IDS.TIERING_POLICY:
-        case ASSESSMENT_CONFIG_NAMES.TIERING_POLICY: {
-            const columns = [t('databases.well-architect.volume-name'), ASSESSMENT_CONFIG_NAMES.TIERING_POLICY];
-            const rows = details.map(detail => [detail?.objectName || na, String(detail?.value ?? na)]);
-            return ensureRows(columns, rows, na);
-        }
-
-        case ASSESSMENT_CONFIG_IDS.TIERING_MINIMUM_COOLING_DAYS:
-        case ASSESSMENT_CONFIG_NAMES.TIERING_MINIMUM_COOLING_DAYS: {
-            const columns = [
-                t('databases.well-architect.volume-name'),
-                ASSESSMENT_CONFIG_NAMES.TIERING_MINIMUM_COOLING_DAYS
-            ];
-            const rows = details.map(detail => [detail?.objectName || na, String(detail?.value ?? na)]);
-            return ensureRows(columns, rows, na);
-        }
-
-        case ASSESSMENT_CONFIG_IDS.SPACE_RESERVATION:
-        case ASSESSMENT_CONFIG_NAMES.SPACE_RESERVATION:
-        case ASSESSMENT_CONFIG_IDS.SPACE_ALLOCATION:
-        case ASSESSMENT_CONFIG_NAMES.SPACE_ALLOCATION:
-            return mapDetailsToSingleCol(details, objects, t('databases.well-architect.lun-name'), na);
-
-        case ASSESSMENT_CONFIG_IDS.NTFS_ALLOCATION_UNIT_SIZE:
-        case ASSESSMENT_CONFIG_NAMES.NTFS_ALLOCATION_UNIT_SIZE: {
-            const columns = [
-                t('databases.well-architect.drive-name'),
-                ASSESSMENT_CONFIG_NAMES.NTFS_ALLOCATION_UNIT_SIZE
-            ];
-            const rows = details.map(detail => [detail?.objectName || na, String(detail?.value ?? na)]);
-            return ensureRows(columns, rows, na);
-        }
-
-        case ASSESSMENT_CONFIG_IDS.MULTIPATH_IO_POLICY:
-        case ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_POLICY: {
-            const columns = [t('databases.well-architect.drive-name'), t('databases.well-architect.policy')];
-            const rows = details.map(detail => [detail?.objectName || na, String(detail?.value ?? na)]);
-            return ensureRows(columns, rows, na);
-        }
-
-        case ASSESSMENT_CONFIG_IDS.DRIVE_LETTER:
-        case ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER: {
-            const columns = [t('databases.well-architect.lun-name')];
-            const rows = details.map(detail => [detail?.objectName || na]);
-            return ensureRows(columns, rows, na);
-        }
-
-        case ASSESSMENT_CONFIG_IDS.SHARED_STORAGE:
-        case ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE: {
-            const columns = [t('databases.well-architect.lun-name')];
-            const rows = objects.map((item: ObjectInViolation) => [typeof item === 'string' ? item : na]);
-            return ensureRows(columns, rows, na);
-        }
-
+        // === PATCH CASES (special data structure) ===
         case ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH:
-        case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH:
-        case ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH:
-        case ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH: {
+        case ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH: {
             const columns = [
                 t('databases.well-architect.kb-id'),
                 t('databases.well-architect.name'),
@@ -614,40 +558,50 @@ const getMssqlImpactedResources = (
             return ensureRows(columns, rows, na);
         }
 
+        // === SPECIAL ADAPTER/INTERFACE CASES ===
         case ASSESSMENT_CONFIG_IDS.RSS_CONFIGURATION:
-        case ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION:
             return mapRssAdaptersToTable(data, na, t);
 
         case ASSESSMENT_CONFIG_IDS.MTU:
-        case ASSESSMENT_CONFIG_NAMES.MTU:
             return mapMtuInterfacesToTable(data, na, t);
 
-        default:
+        // === SIMPLE VOLUME NAME ONLY CASES ===
+        case ASSESSMENT_CONFIG_IDS.SCHEDULED_LOCAL_SNAPSHOT:
+        case ASSESSMENT_CONFIG_IDS.CRR:
+        case ASSESSMENT_CONFIG_IDS.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
+            return mapObjectsToVolumeName(objects, na);
+
+        // === GENERIC FALLBACK: Try registry-based mapping ===
+        default: {
+            const registryResult = mapGenericConfigFromRegistry(configName, data, na, t);
+            if (registryResult) {
+                return registryResult;
+            }
+            // Ultimate fallback for unmapped configs
             return { columns: [], rows: [] };
+        }
     }
 };
 
 /**
- * Oracle config names arrive from RecommendationTable as display names matching
- * ASSESSMENT_CONFIG_NAMES, except placement configs which use internal API names
- * (e.g. 'oracle-binary-placement' instead of 'Oracle binary placement').
+ * Oracle flat API configs use internal API IDs (e.g. 'oracle-binary-placement').
  */
 const getOracleImpactedResources = (configName: string, data: AssessmentData, na: string): ImpactedResourcesResult => {
     const details: ViolationDetail[] = data?.violationDetails || [];
     const objects: ObjectInViolation[] = data?.objectsInViolation || [];
-    const displayConfigName = resolveImpactedResourceConfigName(configName) || configName;
 
     const oracleVolumeConfigWithValue = (valueName: string): ImpactedResourcesResult => {
         const columns = ['Volume name', valueName, 'Recommended value'];
         const rows = details.map(detail => [
             detail?.objectName || na,
             String(detail?.value ?? na),
-            detail?.recommended || detail?.recommendedValue || na
+            detail?.recommended || na
         ]);
         return ensureRows(columns, rows, na);
     };
 
     switch (configName) {
+        // === SUB-CONFIG CASES (storage-efficiencies, etc.) ===
         case ASSESSMENT_CONFIG_IDS.STORAGE_EFFICIENCIES:
         case ASSESSMENT_CONFIG_IDS.TIERING_TCO_OPTIMIZATION:
             return mapSubConfigViolations(data, ['Volume name', 'Current', 'Recommended'], na);
@@ -655,42 +609,15 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
         case ASSESSMENT_CONFIG_IDS.BLOCK_DEVICE_SPACE_MANAGEMENT:
             return mapSubConfigViolations(data, ['Object name', 'Current', 'Recommended'], na);
 
-        case ASSESSMENT_CONFIG_NAMES.THIN_PROVISIONING:
+        // === ORACLE VOLUME CONFIGS (common pattern) ===
         case ASSESSMENT_CONFIG_IDS.THIN_PROVISIONING:
-        case ASSESSMENT_CONFIG_NAMES.SNAPSHOT_AUTODELETE:
         case ASSESSMENT_CONFIG_IDS.SNAPSHOT_AUTODELETE:
-        case ASSESSMENT_CONFIG_NAMES.SPACE_MANAGEMENT:
         case ASSESSMENT_CONFIG_IDS.SPACE_MANAGEMENT:
-        case ASSESSMENT_CONFIG_NAMES.COMPACTION:
         case ASSESSMENT_CONFIG_IDS.COMPACTION:
-            return oracleVolumeConfigWithValue(displayConfigName);
+            return oracleVolumeConfigWithValue(configName);
 
-        case ASSESSMENT_CONFIG_IDS.OS_TYPE:
-        case ASSESSMENT_CONFIG_NAMES.OS_TYPE: {
-            const columns = ['LUN name', 'OS type', 'Recommended value'];
-            const rows = details.map(detail => [
-                detail?.objectName || na,
-                String(detail?.value ?? na),
-                detail?.recommended || na
-            ]);
-            return ensureRows(columns, rows, na);
-        }
-
-        case ASSESSMENT_CONFIG_IDS.SPACE_RESERVATION:
-        case ASSESSMENT_CONFIG_NAMES.SPACE_RESERVATION:
-        case ASSESSMENT_CONFIG_IDS.SPACE_ALLOCATION:
-        case ASSESSMENT_CONFIG_NAMES.SPACE_ALLOCATION: {
-            const columns = ['LUN name', displayConfigName, 'Recommended value'];
-            const rows = details.map(detail => [
-                detail?.objectName || na,
-                String(detail?.value ?? na),
-                detail?.recommended || na
-            ]);
-            return ensureRows(columns, rows, na);
-        }
-
-        case ASSESSMENT_CONFIG_IDS.DNFS_CONFIGURATION_FILE:
-        case ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE: {
+        // === DNFS SPECIAL CASES (use nfsMount field) ===
+        case ASSESSMENT_CONFIG_IDS.DNFS_CONFIGURATION_FILE: {
             const columns = ['NFS mount', 'Current dNFS configuration', 'Recommended dNFS configuration'];
             const rows = details.map(detail => [
                 detail?.objectName || detail?.nfsMount || na,
@@ -701,9 +628,7 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
         }
 
         case ASSESSMENT_CONFIG_IDS.DNFS_NO_SHARED_CACHE:
-        case ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE:
-        case ASSESSMENT_CONFIG_IDS.NFS_MOUNT_OPTIONS_DATABASEFILES:
-        case ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES: {
+        case ASSESSMENT_CONFIG_IDS.NFS_MOUNT_OPTIONS_DATABASEFILES: {
             const columns = ['NFS mount', 'Current mount options', 'Recommended mount options'];
             const rows = details.map(detail => [
                 detail?.objectName || detail?.nfsMount || na,
@@ -713,8 +638,8 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
             return ensureRows(columns, rows, na);
         }
 
-        case ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH:
-        case ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH: {
+        // === PATCH CASES (special data structure) ===
+        case ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH: {
             const columns = ['Component', 'Package name', 'Update type', 'Severity'];
             const rows: string[][] = [];
             data?.missingPatchList?.forEach(instance => {
@@ -730,8 +655,7 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
             return ensureRows(columns, rows, na);
         }
 
-        case ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH:
-        case ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH: {
+        case ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH: {
             const columns = ['CVE ID', 'Component', 'Description', 'Published Date'];
             const rows: string[][] = [];
             data?.missingPatchList?.forEach(detail => {
@@ -746,7 +670,7 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
             return ensureRows(columns, rows, na);
         }
 
-        // placement configs use internal API names, not ASSESSMENT_CONFIG_NAMES display names
+        // === PLACEMENT CONFIGS ===
         case ASSESSMENT_CONFIG_IDS.CRR:
         case ASSESSMENT_CONFIG_IDS.SNAPCENTER_SNAPSHOT:
         case ASSESSMENT_CONFIG_IDS.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
@@ -766,20 +690,26 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
             ]);
             return ensureRows(columns, rows, na);
         }
+
+        // === INSTANCE-ONLY CONFIGS ===
         case ASSESSMENT_CONFIG_IDS.TRANSPARENT_HUGEPAGES:
-        case ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES:
         case ASSESSMENT_CONFIG_IDS.TCP_ADVANCED_OPTIONS:
-        case ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS:
         case ASSESSMENT_CONFIG_IDS.FILESYSTEMS_IO_OPTIONS:
-        case ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS:
-        case ASSESSMENT_CONFIG_IDS.MULTIPATH_READCOUNT:
-        case ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT: {
+        case ASSESSMENT_CONFIG_IDS.MULTIPATH_READCOUNT: {
             const columns = ['Instance ID'];
             const rows = objects.map((item: ObjectInViolation) => [typeof item === 'string' ? item : na]);
             return ensureRows(columns, rows, na);
         }
-        default:
+
+        // === GENERIC FALLBACK: Try registry-based mapping ===
+        default: {
+            const registryResult = mapGenericConfigFromRegistry(configName, data, na, (key: string) => key);
+            if (registryResult) {
+                return registryResult;
+            }
+            // Ultimate fallback for unmapped configs
             return { columns: [], rows: [] };
+        }
     }
 };
 
@@ -828,13 +758,7 @@ const resolveImpactedResources = (
         return result;
     }
 
-    return mapAssessmentViolations(
-        data,
-        resolveImpactedResourceConfigName(configName) || configName,
-        na,
-        t,
-        engineType
-    );
+    return mapAssessmentViolations(data, configName, na, t, engineType);
 };
 
 const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {

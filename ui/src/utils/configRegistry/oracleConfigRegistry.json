@@ -1,0 +1,2651 @@
+{
+    "afd-logical-block-size": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-afd-logical-block-size-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-asm-adf-optimization-step1",
+                        "databases.well-architect.oracle-asm-adf-optimization-step2",
+                        "databases.well-architect.oracle-asm-adf-optimization-step3",
+                        "databases.well-architect.oracle-asm-adf-optimization-step4",
+                        "databases.well-architect.oracle-asm-adf-optimization-step5",
+                        "databases.well-architect.oracle-asm-adf-optimization-step6"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-afd-logical-block-size-note"
+            }
+        }
+    },
+    "archive-placement": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": false,
+        "linkedConfigGroup": "layout",
+        "cardHeights": {
+            "recommendationSection": "228px",
+            "tagSection": "324px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "tableTitle": "Impacted Volume",
+            "resourceTypeLabel": "Volume"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.archive-placement-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.notes",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-storagelayout-note1"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "text",
+                    "content": "databases.well-architect.redologs-placement-optimization-step1"
+                },
+                {
+                    "heading": "databases.well-architect.archive-placement-step1",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.archive-placement-step1-options1",
+                        "databases.well-architect.archive-placement-step1-options2",
+                        "databases.well-architect.archive-placement-step1-options3",
+                        "databases.well-architect.archive-placement-step1-options4",
+                        "databases.well-architect.archive-placement-step1-options5",
+                        "databases.well-architect.archive-placement-step1-options6"
+                    ]
+                }
+            ],
+            "features": {
+                "showLinkedConfigBanner": true
+            }
+        }
+    },
+    "archivelog-dg-lun-layout": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "134px",
+            "tagSection": "230px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted disk groups",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageLayoutAsm",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        }
+    },
+    "asm-external-redundancy": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "180px",
+            "tagSection": "276px"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Disk group name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current redundancy",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "tableTitle": "ASM disk groups"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-asm-external-redundancy-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-asm-external-redundancy-optimization-step1",
+                        "databases.well-architect.oracle-asm-external-redundancy-optimization-step2",
+                        "databases.well-architect.oracle-asm-external-redundancy-optimization-step3",
+                        "databases.well-architect.oracle-asm-external-redundancy-optimization-step4",
+                        "databases.well-architect.oracle-asm-external-redundancy-optimization-step5",
+                        "databases.well-architect.oracle-asm-external-redundancy-optimization-step6",
+                        "databases.well-architect.oracle-asm-external-redundancy-optimization-step7",
+                        "databases.well-architect.oracle-asm-external-redundancy-optimization-step8"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-afd-logical-block-size-note"
+            }
+        }
+    },
+    "asm-setup": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-asm-setup-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-asm-setup-optimization-step1",
+                        "databases.well-architect.oracle-asm-setup-optimization-step2",
+                        "databases.well-architect.oracle-asm-setup-optimization-step3",
+                        "databases.well-architect.oracle-asm-setup-optimization-step4",
+                        "databases.well-architect.oracle-asm-setup-optimization-step5",
+                        "databases.well-architect.oracle-asm-setup-optimization-step6",
+                        "databases.well-architect.oracle-asm-setup-optimization-step7",
+                        "databases.well-architect.oracle-asm-setup-optimization-step8",
+                        "databases.well-architect.oracle-asm-setup-optimization-step9"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-asm-setup-note"
+            }
+        }
+    },
+    "asmlib-logical-block-size": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-asmlib-logical-block-size-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-asm-adf-optimization-step1",
+                        "databases.well-architect.oracle-asm-adf-optimization-step2",
+                        "databases.well-architect.oracle-asm-lib-optimization-step3",
+                        "databases.well-architect.oracle-asm-lib-optimization-step4",
+                        "databases.well-architect.oracle-asm-lib-optimization-step5",
+                        "databases.well-architect.oracle-asm-adf-optimization-step6"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-afd-logical-block-size-note"
+            }
+        }
+    },
+    "autosize": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-autosize-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-autosize-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Autosize on"
+        }
+    },
+    "autosize-mode": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Autosize-mode",
+                    "accessor": "value"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-autosize-mode-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-autosize-mode-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Autosize-mode = grow"
+        }
+    },
+    "backup-configuration": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "aws-backup",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [],
+            "features": {
+                "showCustomBackupUI": true
+            }
+        }
+    },
+    "block-device-space-management": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Object name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "current",
+                    "label": "Current",
+                    "accessor": "current"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Lun",
+            "tableTitle": "Impacted luns",
+            "hasSubConfigs": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-block-device-space-management-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-block-device-space-management-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": false
+            },
+            "notes": {
+                "type": "standard"
+            }
+        }
+    },
+    "clone-management": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted databases",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendation.description"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "clone",
+            "statusType": "os",
+            "supportsDashboardBulk": true
+        }
+    },
+    "controlfiles-placement": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "208px",
+            "tagSection": "304px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "tableTitle": "Impacted Volume",
+            "resourceTypeLabel": "Volume"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.controlfile-placement-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.notes",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-storagelayout-note1"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "text",
+                    "content": "databases.well-architect.data-control-file-optimization-step1"
+                },
+                {
+                    "heading": "databases.well-architect.controlfiles-optimization-step1",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.controlfiles-optimization-step1-options1",
+                        "databases.well-architect.controlfiles-optimization-step1-options2",
+                        "databases.well-architect.controlfiles-optimization-step1-options3",
+                        "databases.well-architect.controlfiles-optimization-step1-options4",
+                        "databases.well-architect.controlfiles-optimization-step1-options5"
+                    ]
+                }
+            ]
+        }
+    },
+    "crr": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "File system",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "status",
+                    "label": "Replication status",
+                    "accessor": "status"
+                }
+            ],
+            "tableTitle": "File systems"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-crr-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.oracle-crr-about-links",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-crr-about-links-description"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-crr-what-will-happen-step1",
+                        "databases.well-architect.oracle-crr-what-will-happen-step4",
+                        "databases.well-architect.oracle-crr-what-will-happen-step5",
+                        "databases.well-architect.oracle-crr-what-will-happen-step6",
+                        "databases.well-architect.oracle-crr-what-will-happen-step7",
+                        "databases.well-architect.oracle-crr-what-will-happen-step8"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "items": [
+                    "databases.well-architect.oracle-crr-notes-bullet1",
+                    "databases.well-architect.oracle-crr-notes-bullet2",
+                    "databases.well-architect.oracle-crr-notes-bullet3",
+                    "databases.well-architect.oracle-crr-select-continue"
+                ]
+            }
+        }
+    },
+    "data-dg-lun-layout": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "134px",
+            "tagSection": "230px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted disk groups",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Disk group name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Number of LUNs",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "tableTitle": "ASM data disk group LUNs"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageLayoutAsm",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-data-dg-lun-layout-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-data-dg-lun-layout-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "standard"
+            }
+        }
+    },
+    "datafiles-placement": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "linkedConfigGroup": "layout",
+        "cardHeights": {
+            "recommendationSection": "164px",
+            "tagSection": "260px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "tableTitle": "Impacted Volume",
+            "resourceTypeLabel": "Volume"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.datafile-placement-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.notes",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-storagelayout-note1"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "text",
+                    "content": "databases.well-architect.data-control-file-optimization-step1"
+                },
+                {
+                    "heading": "databases.well-architect.datafiles-optimization-step1",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.datafiles-optimization-step1-options1",
+                        "databases.well-architect.datafiles-optimization-step1-options2",
+                        "databases.well-architect.datafiles-optimization-step1-options3",
+                        "databases.well-architect.datafiles-optimization-step1-options4",
+                        "databases.well-architect.datafiles-optimization-step1-options5"
+                    ]
+                }
+            ],
+            "features": {
+                "showLinkedConfigBanner": true
+            }
+        }
+    },
+    "deduplication": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "columns": null,
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-deduplication-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-deduplication-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": ["[Log] Deduplication = disabled", "[Data, Archive] Deduplication = Inline"]
+        }
+    },
+    "dnfs-configuration-file": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "180px",
+            "tagSection": "276px"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Configuration file",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Status",
+                    "accessor": "value"
+                }
+            ],
+            "tableTitle": "dNFS configuration"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.dnfs-config-file-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.dnfs-config-file-optimization-step-1",
+                        "databases.well-architect.dnfs-config-file-optimization-step-2"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.dnfs-config-file-note"
+            }
+        }
+    },
+    "dnfs-consistent-ip-resolution": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "storage-operating-system",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        }
+    },
+    "dnfs-enabled": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false
+    },
+    "dnfs-enablement": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.dnfs-enablement-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.dnfs-enablement-optimization-step-1",
+                        "databases.well-architect.dnfs-enablement-optimization-step-2",
+                        "databases.well-architect.dnfs-enablement-optimization-step-3",
+                        "databases.well-architect.dnfs-enablement-optimization-step-4"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.dnfs-enablement-note"
+            }
+        }
+    },
+    "dnfs-no-shared-cache": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "180px",
+            "tagSection": "276px"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Parameter",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "tableTitle": "dNFS shared cache settings"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.dnfs-no-shared-cache-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.dnfs-no-shared-cache-optimization-step-1",
+                        "databases.well-architect.dnfs-no-shared-cache-optimization-step-2",
+                        "databases.well-architect.dnfs-no-shared-cache-optimization-step-3",
+                        "databases.well-architect.dnfs-no-shared-cache-optimization-step-4"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.dnfs-no-shared-cache-note"
+            }
+        }
+    },
+    "export-policy": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-export-policy-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-export-policy-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": ["superuser = sys", "allow-suid=true"]
+        }
+    },
+    "filesystems-io-options": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted databases",
+            "countSource": "totalObjectsInViolation"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-filesystem-io-options-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-filesystem-io-options-optimization-step1",
+                        "databases.well-architect.oracle-filesystem-io-options-optimization-step2",
+                        "databases.well-architect.oracle-filesystem-io-options-optimization-step3"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-multipath-io-note"
+            }
+        }
+    },
+    "fra-dg-lun-layout": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "134px",
+            "tagSection": "230px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted disk groups",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Disk group name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Number of LUNs",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "tableTitle": "ASM FRA disk group LUNs"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageLayoutAsm",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-fra-dg-lun-layout-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-fra-dg-lun-layout-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "standard"
+            }
+        }
+    },
+    "fractional-reserve": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "columns": null,
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-fractional-reserve-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-fractional-reserve-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Fractional reserve = 0%"
+        }
+    },
+    "headroom": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "statusDependentFix": true,
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "storage-sizing",
+            "statusType": "os",
+            "supportsDashboardBulk": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.file-system-headroom-with-permission"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.file-system-headroom-with-permission-content",
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "standard"
+            },
+            "conditionalOverrides": [
+                {
+                    "when": {
+                        "field": "status",
+                        "equals": "over-provisioned"
+                    },
+                    "sections": [
+                        {
+                            "heading": "databases.well-architect.action-summary",
+                            "type": "text",
+                            "content": "databases.well-architect.oracle-filesystem-headroom-action-summary"
+                        },
+                        {
+                            "heading": "databases.well-architect.oracle-filesystem-headroom-action-summary-heading",
+                            "type": "bullets",
+                            "items": [
+                                "databases.well-architect.oracle-filesystem-headroom-action-summary-bullet1",
+                                "databases.well-architect.oracle-filesystem-headroom-action-summary-bullet2",
+                                "databases.well-architect.oracle-filesystem-headroom-action-summary-bullet3"
+                            ]
+                        },
+                        {
+                            "heading": "databases.well-architect.what-will-happen",
+                            "type": "text",
+                            "content": "databases.well-architect.oracle-filesystem-headroom-what-will-happen",
+                            "hideWhenWad": true
+                        },
+                        {
+                            "heading": "databases.well-architect.optimization-steps",
+                            "type": "text",
+                            "content": "databases.well-architect.oracle-filesystem-headroom-optimization-steps"
+                        },
+                        {
+                            "heading": "",
+                            "type": "numberedSteps",
+                            "items": [
+                                "databases.well-architect.oracle-filesystem-headroom-optimization-step1",
+                                "databases.well-architect.oracle-filesystem-headroom-optimization-step2",
+                                "databases.well-architect.oracle-filesystem-headroom-optimization-step3",
+                                "databases.well-architect.oracle-filesystem-headroom-optimization-step4",
+                                "databases.well-architect.oracle-filesystem-headroom-optimization-step5",
+                                "databases.well-architect.oracle-filesystem-headroom-optimization-step6",
+                                "databases.well-architect.oracle-filesystem-headroom-optimization-step7"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "when": {
+                        "field": "hasMissingPermissions",
+                        "equals": "true"
+                    },
+                    "sections": [
+                        {
+                            "heading": "databases.well-architect.action-summary",
+                            "type": "text",
+                            "content": "databases.well-architect.oracle-file-system-headroom-missing-permissions-action-summary"
+                        },
+                        {
+                            "heading": "databases.well-architect.action-required",
+                            "type": "text",
+                            "content": "databases.well-architect.oracle-file-system-headroom-missing-permissions-action-required",
+                            "style": {
+                                "width": "712px"
+                            }
+                        },
+                        {
+                            "heading": "databases.well-architect.oracle-file-system-headroom-option1",
+                            "type": "permissions",
+                            "content": "databases.well-architect.oracle-file-system-headroom-option1-description",
+                            "style": {
+                                "width": "712px"
+                            }
+                        },
+                        {
+                            "heading": "databases.well-architect.oracle-file-system-headroom-option2",
+                            "type": "numberedSteps",
+                            "items": [
+                                "databases.well-architect.oracle-file-system-headroom-option2-step1",
+                                "databases.well-architect.oracle-file-system-headroom-option2-step2",
+                                "databases.well-architect.oracle-file-system-headroom-option2-step3",
+                                "databases.well-architect.oracle-file-system-headroom-option2-step4"
+                            ],
+                            "style": {
+                                "width": "712px"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "host-os-patch": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-os-patch-action-summary"
+                }
+            ],
+            "features": {
+                "showPatchTable": true,
+                "patchField": "HOST_OS_PATCH"
+            }
+        }
+    },
+    "host-utilities": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "170px",
+            "tagSection": "266px"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "storage-operating-system",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-host-utility-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-host-utility-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Install host utilities"
+        }
+    },
+    "iscsi-replacement-timeout": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "170px",
+            "tagSection": "266px"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "storage-operating-system",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-iscsi-replacement-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-iscsi-replacement-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "node.session.timeo.replacement_timeout = 5 in /etc/iscsi/iscsid.conf"
+        }
+    },
+    "kernel-parameters": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "170px",
+            "tagSection": "266px"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "storage-operating-system",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-kernel-parameters-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-kernel-parameters-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": ["sunrpc.tcp_max_slot_table_entries = 128", "sunrpc.tcp_slot_table_entries = 128"]
+        }
+    },
+    "log-dg-lun-layout": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "134px",
+            "tagSection": "230px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted disk groups",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Disk group name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Number of LUNs",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "tableTitle": "ASM logs disk group LUNs"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageLayoutAsm",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-log-dg-lun-layout-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-log-dg-lun-layout-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "standard"
+            }
+        }
+    },
+    "multiblock-readcount": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "compute-host-os",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-multiblock-readcount-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-multiblock-readcount-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "db_file_multiblock_read_count unset in init.ora"
+        }
+    },
+    "multipath-configuration": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "200px",
+            "tagSection": "296px"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "storage-operating-system",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-multipath-config-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-multipath-config-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": [
+                "user_friendly_names: yes",
+                "find_multipaths: yes",
+                "polling_interval: 5",
+                "path_grouping_policy: group_by_prio",
+                "path_selector: service-time 0",
+                "prio: ontap",
+                "features: 3 queue_if_no_path pg_init_retries 50",
+                "hardware_handler: 0",
+                "failback: immediate",
+                "rr_weight: uniform",
+                "no_path_retry: queue",
+                "fast_io_fail_tmo: 5",
+                "dev_loss_tmo: infinity",
+                "detect_prio: yes",
+                "flush_on_last_del: yes",
+                "retain_attached_hw_handler: yes",
+                "path_checker: tur",
+                "max_sectors_kb: 4096"
+            ]
+        }
+    },
+    "multipath-friendly-names": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "170px",
+            "tagSection": "266px"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "storage-operating-system",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-multipath-friendly-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-multipath-friendly-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "user_friendly_names = yes in /etc/multipath.conf"
+        }
+    },
+    "multipath-io": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "190px",
+            "tagSection": "286px"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "storage-operating-system",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-multipath-io-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-multipath-io-optimization-step1",
+                        "databases.well-architect.oracle-multipath-io-optimization-step2",
+                        "databases.well-architect.oracle-multipath-io-optimization-step3",
+                        "databases.well-architect.oracle-multipath-io-optimization-step4",
+                        "databases.well-architect.oracle-multipath-io-optimization-step5"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-multipath-io-note"
+            }
+        }
+    },
+    "multipath-io-sessions": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "170px",
+            "tagSection": "266px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "totalObjectsInViolation"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "storage-operating-system",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-multipath-io-sessions-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-multipath-io-sessions-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "4 active iSCSI sessions per host"
+        }
+    },
+    "multipath-readcount": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted databases",
+            "countSource": "totalObjectsInViolation"
+        }
+    },
+    "nfs-caching-options": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "170px",
+            "tagSection": "266px"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-nfs-caching-options-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-nfs-caching-optimization-step-1",
+                        "databases.well-architect.oracle-nfs-caching-optimization-step-2",
+                        "databases.well-architect.oracle-nfs-caching-optimization-step-3",
+                        "databases.well-architect.oracle-nfs-caching-optimization-step-4"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-nfs-caching-options-note"
+            }
+        }
+    },
+    "nfs-mount-options-adrhome": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "170px",
+            "tagSection": "266px"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-nfs-mount-options-adrhome-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-nfs-mount-options-adrhome-step1",
+                        "databases.well-architect.oracle-nfs-mount-options-adrhome-step2",
+                        "databases.well-architect.oracle-nfs-mount-options-adrhome-step3",
+                        "databases.well-architect.oracle-nfs-mount-options-adrhome-step4"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-nfs-mount-options-adrhome-note"
+            }
+        }
+    },
+    "nfs-mount-options-databasefiles": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "170px",
+            "tagSection": "266px"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Mount point",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current options",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "tableTitle": "NFS mount options"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-nfs-mount-options-dbfiles-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-nfs-mount-options-dbfiles-step1",
+                        "databases.well-architect.oracle-nfs-mount-options-dbfiles-step2",
+                        "databases.well-architect.oracle-nfs-mount-options-dbfiles-step3",
+                        "databases.well-architect.oracle-nfs-mount-options-dbfiles-step4"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-nfs-mount-options-dbfiles-note"
+            }
+        }
+    },
+    "nfs-rootonly": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-nfs-rootonly-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-nfs-rootonly-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-nfs-root-only-note"
+            },
+            "wellArchitectedConfig": "nfs-rootonly = disabled"
+        }
+    },
+    "nfsv4-domain-name": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "170px",
+            "tagSection": "266px"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "storage-operating-system",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-nfsv4-domain-name-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.user-action-required",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-nfsv4-domain-name-user-action-required"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-nfsv4-domain-name-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-nfsv4-domain-name-note"
+            }
+        }
+    },
+    "oracle-binary-placement": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "164px",
+            "tagSection": "260px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "tableTitle": "Impacted Volume",
+            "resourceTypeLabel": "Volume"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-binary-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.notes",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-storagelayout-note1"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-binary-optimization-step1",
+                        "databases.well-architect.oracle-binary-optimization-step2",
+                        "databases.well-architect.oracle-binary-optimization-step3",
+                        "databases.well-architect.oracle-binary-optimization-step4",
+                        "databases.well-architect.oracle-binary-optimization-step5",
+                        "databases.well-architect.oracle-binary-optimization-step6",
+                        "databases.well-architect.oracle-binary-optimization-step7",
+                        "databases.well-architect.oracle-binary-optimization-step8",
+                        "databases.well-architect.oracle-binary-optimization-step9"
+                    ]
+                }
+            ]
+        }
+    },
+    "oracle-security-patch": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-critical-patch-action-summary"
+                }
+            ],
+            "features": {
+                "showPatchTable": true,
+                "patchField": "ORACLE_SECURITY_PATCH"
+            }
+        }
+    },
+    "os-type": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": false,
+        "linkedConfigGroup": "ontap",
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted LUNs",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "OS type",
+                    "accessor": "value"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-os-type-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-os-type-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "OS type = linux"
+        }
+    },
+    "redolog-dg-lun-layout": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageLayoutAsm",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        }
+    },
+    "redologs-placement": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "linkedConfigGroup": "layout",
+        "cardHeights": {
+            "recommendationSection": "228px",
+            "tagSection": "324px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "tableTitle": "Impacted Volume",
+            "resourceTypeLabel": "Volume"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.redologs-placement-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.notes",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-storagelayout-note1"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "text",
+                    "content": "databases.well-architect.redologs-placement-optimization-step1"
+                },
+                {
+                    "heading": "databases.well-architect.redo-logs-placement-step1",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.redo-logs-placement-step1-options1",
+                        "databases.well-architect.redo-logs-placement-step1-options2",
+                        "databases.well-architect.redo-logs-placement-step1-options3"
+                    ]
+                }
+            ],
+            "features": {
+                "showLinkedConfigBanner": true
+            }
+        }
+    },
+    "selinux": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "190px",
+            "tagSection": "286px"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "storage-operating-system",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-selinux-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-selinux-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "SELINUX=disabled"
+        }
+    },
+    "snapcenter-snapshot": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Snapshot status",
+                    "accessor": "value"
+                }
+            ],
+            "tableTitle": "Impacted volumes"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-snapcenter-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-snapcenter-step1",
+                        "databases.well-architect.oracle-snapcenter-step2",
+                        "databases.well-architect.oracle-snapcenter-step3",
+                        "databases.well-architect.oracle-snapcenter-step4",
+                        "databases.well-architect.oracle-snapcenter-step5",
+                        "databases.well-architect.oracle-snapcenter-step6"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-snapcenter-notes"
+            }
+        }
+    },
+    "snapshot-autodelete": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-snapshot-autodelete-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-snapshot-autodelete-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Snapshot autodelete (Volume/oldest first)"
+        }
+    },
+    "snapshot-copy-reserve": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Snapshot copy reserve",
+                    "accessor": "value"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-snapshot-copy-reserve-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-snapshot-copy-reserve-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Snapshot copy reserve = 0%"
+        }
+    },
+    "snapshot-policy": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-snapshot-policy-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-snapshot-policy-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Snapshot policy = none"
+        }
+    },
+    "snapshot-policy-vol": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "objectType",
+                    "label": "Object type",
+                    "accessor": "objectType",
+                    "width": "200px"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        }
+    },
+    "space-allocation-allocated": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted LUNs",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": null,
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-space-allocation-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-space-allocation-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Space allocation enabled"
+        }
+    },
+    "space-mgmt-try-first": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-space-mgmt-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-space-mgmt-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Space-mgmt-try-first = volume_grow"
+        }
+    },
+    "space-reservation-enabled": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted LUNs",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": null,
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-space-reservation-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-space-reservation-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Space reservation enabled "
+        }
+    },
+    "storage-efficiencies": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "current",
+                    "label": "Current",
+                    "accessor": "current"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes",
+            "hasSubConfigs": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-storage-efficiencies-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-storage-efficiencies-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": false
+            },
+            "notes": {
+                "type": "standard"
+            }
+        }
+    },
+    "swap-space": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-swap-space-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.oracle-swap-space-action-summary-heading",
+                    "type": "bullets",
+                    "items": [
+                        "databases.well-architect.oracle-swap-space-action-summary-bullet1",
+                        "databases.well-architect.oracle-swap-space-action-summary-bullet2",
+                        "databases.well-architect.oracle-swap-space-action-summary-bullet3"
+                    ]
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-swap-space-optimization-step1",
+                        "databases.well-architect.oracle-swap-space-optimization-step2",
+                        "databases.well-architect.oracle-swap-space-optimization-step3",
+                        "databases.well-architect.oracle-swap-space-optimization-step4",
+                        "databases.well-architect.oracle-swap-space-optimization-step5"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-swap-space-note"
+            }
+        }
+    },
+    "tcp-advanced-options": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "compute-host-os",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-tcp-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-tcp-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": [
+                "net.ipv4.tcp_timestamps = 1",
+                "net.ipv4.tcp_sack = 1",
+                "net.ipv4.tcp_window_scaling = 1"
+            ]
+        }
+    },
+    "templogs-placement": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "208px",
+            "tagSection": "304px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "tableTitle": "Impacted Volume",
+            "resourceTypeLabel": "Volume"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.temp-placement-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.notes",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-storagelayout-note1"
+                },
+                {
+                    "heading": "databases.well-architect.temp-placement-step1",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.temp-placement-step1-options1",
+                        "databases.well-architect.temp-placement-step1-options2",
+                        "databases.well-architect.temp-placement-step1-options3",
+                        "databases.well-architect.temp-placement-step1-options4",
+                        "databases.well-architect.temp-placement-step1-options5",
+                        "databases.well-architect.temp-placement-step1-options6"
+                    ]
+                }
+            ]
+        }
+    },
+    "thin-provision": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-thin-provisioning-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-thin-provisioning-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Thin provisioning (-space-guarantee = none)"
+        }
+    },
+    "tiering-tco-optimization": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "linkedConfigGroup": "ontap",
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "current",
+                    "label": "Current",
+                    "accessor": "current"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes",
+            "hasSubConfigs": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-tiering-tco-optimization-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-tiering-tco-optimization-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": false
+            },
+            "notes": {
+                "type": "standard"
+            }
+        }
+    },
+    "transparent-hugepages": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeOracleOperatingSystem",
+            "payloadScope": "bulk",
+            "oracleOsType": "compute-host-os",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-transparent-hugepages-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-transparent-hugepages-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Transparent Hugepages disabled (enabled=never, defrag=never)"
+        }
+    }
+}

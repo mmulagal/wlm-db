@@ -1603,6 +1603,13 @@ export const getWellApi = createApi({
                 body: payload
             })
         }),
+        optimizeOperatingSystemForBulk: builder.mutation({
+            query: ({ payload }) => ({
+                url: 'v1/mssql/database-hosts/optimize/storage-operating-system',
+                method: 'POST',
+                body: payload
+            })
+        }),
         getSnapshotPolicies: builder.query({
             query: ({ credentialId, region, databaseHostId, instanceId }) => ({
                 url: `v1/mssql/credentials/${credentialId}/regions/${region}/database-hosts/${databaseHostId}/database-instances/${instanceId}/snapshot-policies`
@@ -1897,6 +1904,7 @@ export const {
     useOptimizeComputeConfigForBulkMutation,
     useOptimizeMTUConfigForBulkMutation,
     useOptimizeMaxdopConfigForBulkMutation,
+    useOptimizeOperatingSystemForBulkMutation,
     useLazyGetSnapshotPoliciesQuery,
     useLazyGetOfflineMssqlAssessmentDataQuery,
     useLazyGetOfflineOracleAssessmentDataQuery,

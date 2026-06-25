@@ -30,6 +30,8 @@ import { GENERAL } from '../../utils/appConstants';
 import {
     AOAG_NOT_SUPPORTED_CONFIGS,
     ASSESSMENT_CONFIG_NAMES,
+    ASSESSMENT_CONFIG_IDS,
+    BLOCK_SIX_LABELS,
     CONFIG_NAME_TO_ID_MAPPING,
     CONFIG_NAMES,
     CONFIG_STATES,
@@ -42,7 +44,10 @@ import {
     GETWELL_STATUS,
     GETWELL_VALUES,
     INVENTORY_STATUS,
+    isConfigIdMatch,
+    isConfigIdInList,
     JOB_MONITORING_STATUS,
+    MSSQL_STORAGE_COUNT_CONFIG_IDS,
     OPTIMIZE_POLLING_INTERVAL,
     SQL_DEPLOYMENT_MODE,
     STATUS_CONST,
@@ -3248,7 +3253,7 @@ export const getCardsData = (
         ...cardsData,
         deploymentType: data?.deploymentType || '',
         baseDeploymentType: data?.baseDeploymentType || '',
-        isWad: data?.isWad || false
+        isWad: data?.isWad || data?.metadata?.isWad || false
     };
 
     // Skip License (Application) card for AOAG deployments - not supported for AOAG
@@ -3859,7 +3864,8 @@ const updateAssessmentWithCompletedJobs = (
     jobId: string,
     rowData: any,
     bulkRowData: any,
-    engineType: string | undefined
+    engineType: string | undefined,
+    isOptimizeInnerPage?: boolean
 ) => {
     const state = store.getState();
     const { allmssqlHostAssessmentData, allOracleHostAssessmentData } = state.inventoryV2;
@@ -3913,8 +3919,28 @@ const updateAssessmentWithCompletedJobs = (
             inProgressHostData
         );
 
-        updateOptimizationStatus(rowData, dispatch, engineType);
-        formatAssessmentData(engineType, dispatch);
+        if (isOptimizeInnerPage) {
+            updateOptimizationStatus(rowData, dispatch, engineType);
+            updateFlatAssessmentStatus(rowData, dispatch, engineType);
+            formatAssessmentData(engineType, dispatch);
+        } else {
+            const currentCardData = store.getState().getWellOptimize.cardData;
+            if (currentCardData && rowData?.id && currentCardData[rowData.id]) {
+                dispatch(
+                    setCardData({
+                        ...currentCardData,
+                        [rowData.id]: {
+                            ...currentCardData[rowData.id],
+                            block_two: {
+                                ...currentCardData[rowData.id].block_two,
+                                value: GETWELL_STATUS.OPTIMIZED
+                            }
+                        }
+                    })
+                );
+            }
+        }
+
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -3932,7 +3958,8 @@ const updateAssessmentWithWarningJobs = (
     rowData: any,
     bulkRowData: any,
     subjobs: any,
-    engineType?: string | undefined
+    engineType?: string | undefined,
+    isOptimizeInnerPage?: boolean
 ) => {
     const state = store.getState();
     const { allmssqlHostAssessmentData, allOracleHostAssessmentData } = state.inventoryV2;
@@ -3996,8 +4023,29 @@ const updateAssessmentWithWarningJobs = (
             jobToInstanceMap,
             inProgressHostData
         );
-        updateOptimizationStatus(rowData, dispatch, engineType);
-        formatAssessmentData(engineType, dispatch);
+
+        if (isOptimizeInnerPage) {
+            updateOptimizationStatus(rowData, dispatch, engineType);
+            updateFlatAssessmentStatus(rowData, dispatch, engineType);
+            formatAssessmentData(engineType, dispatch);
+        } else {
+            const currentCardData = store.getState().getWellOptimize.cardData;
+            if (currentCardData && rowData?.id && currentCardData[rowData.id]) {
+                dispatch(
+                    setCardData({
+                        ...currentCardData,
+                        [rowData.id]: {
+                            ...currentCardData[rowData.id],
+                            block_two: {
+                                ...currentCardData[rowData.id].block_two,
+                                value: GETWELL_STATUS.OPTIMIZED
+                            }
+                        }
+                    })
+                );
+            }
+        }
+
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -4015,7 +4063,8 @@ const updateAssessmentWithFailedJobs = (
     rowData: any,
     bulkRowData: any,
     failedMsgData: any,
-    engineType?: string
+    engineType?: string,
+    isOptimizeInnerPage?: boolean
 ) => {
     const state = store.getState();
     const {
@@ -4059,7 +4108,11 @@ const updateAssessmentWithFailedJobs = (
             jobToInstanceMap,
             inProgressHostData
         );
-        formatAssessmentData(engineType, dispatch);
+
+        if (isOptimizeInnerPage) {
+            formatAssessmentData(engineType, dispatch);
+        }
+
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.ERROR,
@@ -4282,7 +4335,8 @@ export const handleOptimizeStorageJob = (
                             jobId,
                             rowData,
                             bulkRowData,
-                            engineType
+                            engineType,
+                            isOptimizeInnerPage
                         );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
@@ -4298,7 +4352,8 @@ export const handleOptimizeStorageJob = (
                             rowData,
                             bulkRowData,
                             subjobs,
-                            engineType
+                            engineType,
+                            isOptimizeInnerPage
                         );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
@@ -4314,7 +4369,8 @@ export const handleOptimizeStorageJob = (
                             rowData,
                             bulkRowData,
                             failedMsgData,
-                            engineType
+                            engineType,
+                            isOptimizeInnerPage
                         );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
@@ -4618,6 +4674,51 @@ export const updateOptimizationStatus = (rowData: any, dispatch: any, engineType
         dispatch(addAllOracleHostAssessmentData(updatedAsessmentData));
     } else {
         dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
+    }
+};
+
+/**
+ * Patches the flat `assessments[]` array (new account-level API format) used by the Dashboard.
+ * `updateOptimizationStatus` only patches the nested `storage/compute/…` structure (old format
+ * used by the GetWell tab), so Dashboard rows never reflected the fix. This function handles
+ * the flat format so both views stay in sync after a single-instance fix.
+ */
+export const updateFlatAssessmentStatus = (rowData: any, dispatch: any, engineType?: string) => {
+    const state = store.getState();
+    const assessmentData =
+        engineType === DBType.ORACLE
+            ? state.inventoryV2.allOracleHostAssessmentData
+            : state.inventoryV2.allmssqlHostAssessmentData;
+
+    const updatedData = assessmentData?.map((hostData: any) => {
+        if (
+            hostData?.databaseHostId !== rowData?.hostId ||
+            hostData?.credentialId !== rowData?.credentialId ||
+            hostData?.regionId !== rowData?.regionId
+        ) {
+            return hostData;
+        }
+        const updatedInstances = hostData?.instancesAssessment?.map((instance: any) => {
+            if (instance?.databaseInstanceId !== rowData?.instanceId) return instance;
+            const flatAssessments: any[] | undefined = instance?.assessments?.assessments;
+            if (!Array.isArray(flatAssessments)) return instance;
+            return {
+                ...instance,
+                assessments: {
+                    ...instance.assessments,
+                    assessments: flatAssessments.map((item: any) =>
+                        item?.id === rowData?.id ? { ...item, status: 'optimized' } : item
+                    )
+                }
+            };
+        });
+        return { ...hostData, instancesAssessment: updatedInstances };
+    });
+
+    if (engineType === DBType.ORACLE) {
+        dispatch(addAllOracleHostAssessmentData(updatedData));
+    } else {
+        dispatch(addAllMssqlHostAssessmentData(updatedData));
     }
 };
 
@@ -5544,6 +5645,44 @@ const getBlockOneType = (configId: string, category: string): string =>
     // Map category to display name using constants
     WELL_ARCHITECTED_CATEGORY_LABELS[category as keyof typeof WELL_ARCHITECTED_CATEGORY_LABELS] ||
     (category ? category.charAt(0).toUpperCase() + category.slice(1) : '');
+
+/**
+ * Determines the display type for block_six based on configuration and category for MSSQL
+ * @returns 'count' | 'value' | 'patch' | 'smallfont'
+ * - 'count': Shows "X out of Y" format with large numbers (for storage tier, drive sizing)
+ * - 'value': Shows the actual value in large font (percentages, GB, etc.)
+ * - 'patch': Shows value with tooltip (Missing patches) - no count, no smallFont, HAS patch object
+ * - 'smallfont': Shows value in small font (Semibold_14) for resiliency, network, placement, etc.
+ */
+const getMssqlBlockSixDisplayType = (configId: string, category: string): 'count' | 'value' | 'patch' | 'smallfont' => {
+    // Storage sizing configs that show percentage or GB values in large font
+    if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM)) {
+        return 'value';
+    }
+
+    // Storage tier and drive sizing configs show large count (NO smallFont)
+    if (isConfigIdInList(configId, MSSQL_STORAGE_COUNT_CONFIG_IDS)) {
+        return 'count';
+    }
+
+    // Patch configs show value with tooltip (no count, no smallFont, needs patch objects)
+    if (
+        isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH) ||
+        isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH)
+    ) {
+        return 'patch';
+    }
+
+    // Compute rightsizing shows count (large numbers)
+    if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING)) {
+        return 'count';
+    }
+
+    // All other configs use large count format (default for MSSQL)
+    // This includes: thin provisioning, autosize, snapshot reserve, space management, placement, network, resiliency, license, maxdop, HA, clone, etc.
+    return 'count';
+};
+
 /**
  * Format flat assessment response into cardData structure
  * This replaces getCardsData() for the new flat API response
@@ -5588,6 +5727,78 @@ export const formatFlatAssessments = (
         // Get the correct block_one type based on configuration
         const blockOneType = getBlockOneType(configKey, category);
 
+        // Determine block_six display type and formatting
+        const displayType = getMssqlBlockSixDisplayType(configKey, category);
+        let blockSixValue = '';
+        let blockSixCount;
+        let blockSixSmallFont = false;
+
+        if (displayType === 'count') {
+            // Show "X out of Y" format with count object (triggers large number display)
+            const violation = assessment.totalObjectsInViolation ?? 0;
+            const assessed = assessment.totalObjectsAssessed ?? 0;
+            blockSixValue = `${violation} out of ${assessed}`;
+            blockSixCount = { totalObjectsInViolation: violation, totalObjectsAssessed: assessed };
+        } else if (displayType === 'value') {
+            // Show percentage or GB value in large font (no count object, no smallFont)
+            blockSixValue = assessment.current ?? '';
+        } else if (displayType === 'patch') {
+            // Show patch count - no count object, no smallFont (renders as Semibold_14 with tooltip)
+            blockSixValue = String(assessment.totalObjectsInViolation ?? 0);
+        } else if (displayType === 'smallfont') {
+            // Show value in small font for resiliency, network, placement, etc.
+            const violation = assessment.totalObjectsInViolation ?? 0;
+            const assessed = assessment.totalObjectsAssessed ?? 0;
+            blockSixValue = `${violation} out of ${assessed}`;
+            blockSixSmallFont = true;
+        }
+
+        // Handle special patch objects for tooltip display (MSSQL)
+        let osPatchMissingPatches;
+        let sqlPatchMissingPatches;
+
+        if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH)) {
+            if (assessment.ec2InstancesToPatch) {
+                // Calculate total violations by summing up all instances
+                let criticalViolations = 0;
+                let securityViolations = 0;
+                let otherViolations = 0;
+
+                assessment.ec2InstancesToPatch.forEach((instance: any) => {
+                    criticalViolations += instance?.criticalNonCompliantCount || 0;
+                    securityViolations += instance?.securityNonCompliantCount || 0;
+                    otherViolations += instance?.otherNonCompliantCount || 0;
+                });
+
+                osPatchMissingPatches = {
+                    critical: criticalViolations,
+                    security: securityViolations,
+                    other: otherViolations
+                };
+            }
+        } else if (
+            isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH) &&
+            assessment.missingPatchesCount !== undefined
+        ) {
+            sqlPatchMissingPatches = {
+                critical: assessment.missingPatchesCount
+            };
+        }
+
+        // Get correct block_six.type label based on config
+        let blockSixType = '';
+        if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH)) {
+            blockSixType = BLOCK_SIX_LABELS.FINDING_REASONS;
+        } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH)) {
+            blockSixType = BLOCK_SIX_LABELS.MISSING_PATCHES;
+        } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM)) {
+            blockSixType = BLOCK_SIX_LABELS.FILE_SYSTEM_HEADROOM;
+        } else if (assessment.resourceType) {
+            blockSixType = `${assessment.resourceType}s`;
+        } else {
+            blockSixType = BLOCK_SIX_LABELS.IMPACTED_RESOURCES;
+        }
+
         // Create card structure matching existing format
         cardsData[configKey] = {
             id: configKey,
@@ -5612,15 +5823,13 @@ export const formatFlatAssessments = (
             },
             block_five: {
                 type: 'Resource type',
-                value: assessment.resourceType || '',
-                count: {
-                    totalObjectsInViolation: assessment.totalObjectsInViolation || 0,
-                    totalObjectsAssessed: assessment.totalObjectsAssessed || 0
-                }
+                value: assessment.resourceType || ''
             },
             block_six: {
-                type: 'Impacted resources',
-                value: assessment.objectsInViolation?.length ? `${assessment.objectsInViolation.length}` : '0'
+                type: blockSixType,
+                value: blockSixValue,
+                count: blockSixCount,
+                smallFont: blockSixSmallFont
             },
             recommendation: (() => {
                 // Use static recommendations from UI files instead of API response
@@ -5653,13 +5862,17 @@ export const formatFlatAssessments = (
             })(),
             recommendationOptions: assessment.recommendationOptions,
             categories: assessment.categories || [], // Categories from flat API
+            tags: assessment.categories || [], // Map categories to tags for rendering
             errorMessage: assessment.errorMessage,
             violationDetails: assessment.violationDetails,
             // Per sub-config recommendations, used to build Current/Recommended columns for nested configs
             configDetails: assessment.configDetails,
             objectsInViolation: assessment.objectsInViolation,
             // Preserve optimizing state if present
-            status: optimizingData?.[configKey] || ''
+            status: optimizingData?.[configKey] || '',
+            // Add patch objects for tooltip display
+            ...(osPatchMissingPatches !== undefined && { osPatchMissingPatches }),
+            ...(sqlPatchMissingPatches !== undefined && { sqlPatchMissingPatches })
         };
 
         // Only add dismissedObj if the card is actually dismissed/postponed/activating
@@ -5703,7 +5916,8 @@ const getDismissedState = (
     return {
         configState: mappedState,
         startTime: (dismissed as any).startTime,
-        endTime: (dismissed as any).endTime
+        endTime: (dismissed as any).endTime,
+        configurationName: assessment.name
     };
 };
 

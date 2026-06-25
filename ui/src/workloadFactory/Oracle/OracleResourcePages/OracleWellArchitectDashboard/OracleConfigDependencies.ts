@@ -1,4 +1,5 @@
 import { ASSESSMENT_CONFIG_NAMES, CONFIG_NAME_TO_ID_MAPPING } from '../../../../utils/consts';
+import { getConfigIdsByLinkedGroup } from '../../../../utils/configRegistry';
 import { AssessmentResponseInterface } from '../../../../utils/types/getWellTypes';
 
 /** Recommended value that indicates the layout config should be excluded from dependency warnings */
@@ -14,6 +15,9 @@ export const ORACLE_LAYOUT_CONFIGS: string[] = [
     ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT
 ];
 
+/** Oracle Storage Layout parent configurations (kebab-case IDs, derived from unified registry) */
+const ORACLE_LAYOUT_CONFIG_IDS: string[] = getConfigIdsByLinkedGroup('layout');
+
 export const ORACLE_ONTAP_CONFIGS: string[] = [
     ASSESSMENT_CONFIG_NAMES.TIERING_POLICY,
     ASSESSMENT_CONFIG_NAMES.TIERING_MINIMUM_COOLING_DAYS,
@@ -22,11 +26,16 @@ export const ORACLE_ONTAP_CONFIGS: string[] = [
     ASSESSMENT_CONFIG_NAMES.COMPACTION
 ];
 
-/** Returns true if the given config name is a storage layout parent config */
-export const isLayoutConfig = (configName: string): boolean => ORACLE_LAYOUT_CONFIGS.includes(configName);
+/** Oracle ONTAP sub-config IDs (kebab-case, derived from unified registry) */
+const ORACLE_ONTAP_CONFIG_IDS: string[] = getConfigIdsByLinkedGroup('ontap');
 
-/** Returns true if the given config name is an ONTAP sub-config */
-export const isOntapConfig = (configName: string): boolean => ORACLE_ONTAP_CONFIGS.includes(configName);
+/** Returns true if the given config name or ID is a storage layout parent config */
+export const isLayoutConfig = (configName: string): boolean =>
+    ORACLE_LAYOUT_CONFIGS.includes(configName) || ORACLE_LAYOUT_CONFIG_IDS.includes(configName);
+
+/** Returns true if the given config name or ID is an ONTAP sub-config */
+export const isOntapConfig = (configName: string): boolean =>
+    ORACLE_ONTAP_CONFIGS.includes(configName) || ORACLE_ONTAP_CONFIG_IDS.includes(configName);
 
 /** Returns true if the config is any linked config (layout or ONTAP) */
 export const isLinkedConfig = (configName: string): boolean => isLayoutConfig(configName) || isOntapConfig(configName);

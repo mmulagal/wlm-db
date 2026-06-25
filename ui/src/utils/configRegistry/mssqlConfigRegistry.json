@@ -1,0 +1,2037 @@
+{
+    "autosize": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Autosize on"
+        }
+    },
+    "autosize-mode": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Autosize-mode",
+                    "accessor": "value"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Autosize-mode = grow"
+        }
+    },
+    "backup-configuration": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeAwsBackup",
+            "payloadScope": "bulk",
+            "apiConfigName": "aws-backup",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.backup-configuration-action-summary"
+                }
+            ],
+            "features": {
+                "showBackupScheduler": true
+            },
+            "notes": {
+                "type": "standard"
+            }
+        }
+    },
+    "block-device-space-management": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Object name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "current",
+                    "label": "Current",
+                    "accessor": "current"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Lun",
+            "tableTitle": "Impacted luns",
+            "hasSubConfigs": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-block-device-space-management-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-block-device-space-management-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": false
+            },
+            "notes": {
+                "type": "standard"
+            }
+        }
+    },
+    "clone-management": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "120px",
+            "tagSection": "216px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted databases",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendation.description"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeCloneCleanup",
+            "payloadScope": "bulk",
+            "statusType": "os",
+            "supportsDashboardBulk": true
+        }
+    },
+    "cluster-quorum": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted clusters",
+            "countSource": "totalObjectsInViolation"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeHAMssql",
+            "payloadScope": "bulk",
+            "haUrlSegment": "cluster-quorum",
+            "statusType": "ha",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.failover-cluster-action-summary"
+                },
+                {
+                    "heading": "",
+                    "type": "text",
+                    "content": "databases.well-architect.cluster-quorum-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.cluster-quorum-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "clusterQuorum"
+            }
+        }
+    },
+    "compaction": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "columns": null,
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Compaction = enabled"
+        }
+    },
+    "compression": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "columns": null,
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": null
+    },
+    "compute-rightsizing": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeComputeConfigForBulk",
+            "payloadScope": "bulk",
+            "apiConfigName": "compute",
+            "statusType": "os",
+            "supportsDashboardBulk": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.compute-rightsizing-action-summary"
+                }
+            ],
+            "features": {
+                "showInstanceSelector": true
+            },
+            "notes": {
+                "type": "failover"
+            }
+        }
+    },
+    "crr": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "File system",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "status",
+                    "label": "Replication status",
+                    "accessor": "status"
+                }
+            ],
+            "tableTitle": "File systems"
+        }
+    },
+    "data-files-location": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "208px",
+            "tagSection": "304px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted databases",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendation.description"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "databaseName",
+                    "label": "Database name",
+                    "accessor": "databaseName",
+                    "width": "18%"
+                },
+                {
+                    "key": "driveDisplay",
+                    "label": "Drive name",
+                    "accessor": "driveDisplay",
+                    "width": "12%"
+                },
+                {
+                    "key": "lunPathDisplay",
+                    "label": "LUN path",
+                    "accessor": "lunPathDisplay",
+                    "width": "45%"
+                }
+            ],
+            "tableTitle": "Impacted databases",
+            "useNestedExpandable": true
+        }
+    },
+    "deduplication": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "columns": null,
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "[Data, Archive] Deduplication = Inline"
+        }
+    },
+    "drive-letter": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": false,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.failover-cluster-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.drive-letter-action-summary1"
+                },
+                {
+                    "heading": "",
+                    "type": "text",
+                    "content": "databases.well-architect.drive-letter-action-summary2"
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "driveLetter"
+            }
+        }
+    },
+    "file-system-headroom": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted databases",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        }
+    },
+    "fractional-reserve": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "columns": null,
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Fractional reserve = 0%"
+        }
+    },
+    "headroom": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "statusDependentFix": true,
+        "optimizeApi": {
+            "mutation": "optimizeStorageSizingForBulk",
+            "payloadScope": "bulk",
+            "statusType": "os",
+            "supportsDashboardBulk": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.file-system-headroom-with-permission"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.file-system-headroom-with-permission-content",
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "standard"
+            },
+            "conditionalOverrides": [
+                {
+                    "when": {
+                        "field": "status",
+                        "equals": "over-provisioned"
+                    },
+                    "sections": [
+                        {
+                            "heading": "databases.well-architect.action-summary",
+                            "type": "text",
+                            "content": "databases.well-architect.mssql-headroom-over-provisioned-action-summary"
+                        },
+                        {
+                            "heading": "databases.well-architect.mssql-headroom-over-provisioned-percentages",
+                            "type": "bullets",
+                            "items": [
+                                "databases.well-architect.mssql-headroom-over-provisioned-under",
+                                "databases.well-architect.mssql-headroom-over-provisioned-optimized",
+                                "databases.well-architect.mssql-headroom-over-provisioned-over"
+                            ],
+                            "style": {
+                                "width": "712px"
+                            }
+                        },
+                        {
+                            "heading": "databases.well-architect.what-will-happen",
+                            "type": "text",
+                            "content": "databases.well-architect.mssql-headroom-over-provisioned-what-will-happen",
+                            "hideWhenWad": true
+                        },
+                        {
+                            "heading": "databases.well-architect.optimization-steps",
+                            "type": "numberedSteps",
+                            "items": [
+                                "databases.well-architect.mssql-headroom-over-provisioned-step1",
+                                "databases.well-architect.mssql-headroom-over-provisioned-step2",
+                                "databases.well-architect.mssql-headroom-over-provisioned-step3",
+                                "databases.well-architect.mssql-headroom-over-provisioned-step4",
+                                "databases.well-architect.mssql-headroom-over-provisioned-step5",
+                                "databases.well-architect.mssql-headroom-over-provisioned-step6",
+                                "databases.well-architect.mssql-headroom-over-provisioned-step7"
+                            ],
+                            "style": {
+                                "width": "712px"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "when": {
+                        "field": "hasMissingPermissions",
+                        "equals": "true"
+                    },
+                    "sections": [
+                        {
+                            "heading": "databases.well-architect.action-summary",
+                            "type": "text",
+                            "content": "databases.well-architect.file-system-headroom-action-summary"
+                        },
+                        {
+                            "heading": "databases.well-architect.action-required",
+                            "type": "text",
+                            "content": "databases.well-architect.file-system-headroom-choose-option1",
+                            "style": {
+                                "width": "712px"
+                            }
+                        },
+                        {
+                            "heading": "databases.well-architect.file-system-headroom-option1-content",
+                            "type": "permissions",
+                            "content": "databases.well-architect.drive-size-and-headroom-action-content1",
+                            "style": {
+                                "width": "712px"
+                            }
+                        },
+                        {
+                            "heading": "databases.well-architect.file-system-headroom-option2",
+                            "type": "numberedSteps",
+                            "items": [
+                                "databases.well-architect.file-system-headroom-option2-content2",
+                                "databases.well-architect.file-system-headroom-option2-content3",
+                                "databases.well-architect.file-system-headroom-option2-content4",
+                                "databases.well-architect.file-system-headroom-option2-content5"
+                            ],
+                            "style": {
+                                "width": "712px"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "heartbeat-settings": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted heartbeat settings",
+            "countSource": "totalObjectsInViolation"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeHAMssql",
+            "payloadScope": "bulk",
+            "haUrlSegment": "heartbeat",
+            "statusType": "ha",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.failover-cluster-action-summary"
+                },
+                {
+                    "heading": "",
+                    "type": "text",
+                    "content": "databases.well-architect.heartbeat-setting-action-summary1"
+                },
+                {
+                    "heading": "",
+                    "type": "text",
+                    "content": "databases.well-architect.heartbeat-setting-action-summary2"
+                },
+                {
+                    "heading": "",
+                    "type": "text",
+                    "content": "databases.well-architect.heartbeat-setting-action-summary3"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "bullets",
+                    "items": [
+                        "databases.well-architect.heartbeat-setting-what-will-happen-content1",
+                        "databases.well-architect.heartbeat-setting-what-will-happen-content2",
+                        "databases.well-architect.heartbeat-setting-what-will-happen-content3",
+                        "databases.well-architect.heartbeat-setting-what-will-happen-content4",
+                        "databases.well-architect.heartbeat-setting-what-will-happen-content5",
+                        "databases.well-architect.heartbeat-setting-what-will-happen-content6"
+                    ],
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "failover"
+            }
+        }
+    },
+    "host-os-patch": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.os-patch-action-summary"
+                }
+            ],
+            "features": {
+                "showPatchTable": true,
+                "patchField": "OS_PATCH"
+            }
+        }
+    },
+    "log-drive-size": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "statusDependentFix": true,
+        "cardHeights": {
+            "recommendationSection": "228px",
+            "tagSection": "324px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted drives",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Drive",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current size",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended size",
+                    "accessor": "recommended"
+                },
+                {
+                    "key": "status",
+                    "label": "Status",
+                    "accessor": "status"
+                }
+            ],
+            "tableTitle": "Impacted drives"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeStorageSizingForBulk",
+            "payloadScope": "bulk",
+            "statusType": "os",
+            "supportsDashboardBulk": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.log-drive-size-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "bullets",
+                    "items": ["databases.well-architect.log-drive-size-what-will-happen"],
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "standard"
+            },
+            "conditionalOverrides": [
+                {
+                    "when": {
+                        "field": "hasMissingPermissions",
+                        "equals": "true"
+                    },
+                    "sections": [
+                        {
+                            "heading": "databases.well-architect.action-summary",
+                            "type": "text",
+                            "content": "databases.well-architect.drive-size-and-headroom-action-content1"
+                        },
+                        {
+                            "heading": "databases.well-architect.action-required",
+                            "type": "permissions",
+                            "content": "databases.well-architect.drive-size-and-headroom-action-content1",
+                            "style": {
+                                "width": "712px"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "log-files-location": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "208px",
+            "tagSection": "304px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted databases",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendation.description"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "databaseName",
+                    "label": "Database name",
+                    "accessor": "databaseName",
+                    "width": "18%"
+                },
+                {
+                    "key": "driveDisplay",
+                    "label": "Drive name",
+                    "accessor": "driveDisplay",
+                    "width": "12%"
+                },
+                {
+                    "key": "lunPathDisplay",
+                    "label": "LUN path",
+                    "accessor": "lunPathDisplay",
+                    "width": "45%"
+                }
+            ],
+            "tableTitle": "Impacted databases",
+            "useNestedExpandable": true
+        }
+    },
+    "maxdop": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeMaxdopConfigForBulk",
+            "payloadScope": "bulk",
+            "apiConfigName": "max-dop",
+            "statusType": "os",
+            "supportsDashboardBulk": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.maxdop-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.maxdop-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "standard"
+            }
+        }
+    },
+    "mpio-enabled": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeOperatingSystemForBulk",
+            "payloadScope": "credential-scoped",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.mpio-status-policy-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.mpio-status-policy-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "os"
+            },
+            "wellArchitectedConfig": "Multipath I/O Status = Enabled"
+        }
+    },
+    "mpio-iscsi-count": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeOperatingSystemForBulk",
+            "payloadScope": "credential-scoped",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.mpio-session-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.mpio-session-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Multipath I/O Sessions = 5"
+        }
+    },
+    "mpio-load-balance-policy": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted drives",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOperatingSystemForBulk",
+            "payloadScope": "credential-scoped",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.mpio-status-policy-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.mpio-status-policy-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "os"
+            },
+            "wellArchitectedConfig": "Multipath I/O Policy = Round Robin"
+        }
+    },
+    "mpio-timeout": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeOperatingSystemForBulk",
+            "payloadScope": "credential-scoped",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.mpio-timeout-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.mpio-timeout-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.note1"
+            },
+            "wellArchitectedConfig": "Multipath I/O Timeout = 60 seconds"
+        }
+    },
+    "mssql-patch": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-patch-action-summary"
+                }
+            ],
+            "features": {
+                "showPatchTable": true,
+                "patchField": "MSSQL_PATCH"
+            }
+        }
+    },
+    "mtu-alignment": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "208px",
+            "tagSection": "304px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted network interfaces",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Network adapter name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "MTU size",
+                    "accessor": "value"
+                },
+                {
+                    "key": "expected",
+                    "label": "Expected MTU",
+                    "accessor": "expected"
+                }
+            ],
+            "tableTitle": "Impacted adapters"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeMTUConfigForBulk",
+            "payloadScope": "bulk",
+            "apiConfigName": "mtu-alignment",
+            "statusType": "os",
+            "supportsDashboardBulk": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.mtu-alignment-action-summary-heading",
+                    "type": "text",
+                    "content": "databases.well-architect.mtu-alignment-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.mtu-alignment-what-will-happen-heading",
+                    "type": "text",
+                    "content": "databases.well-architect.mtu-alignment-what-will-happen1",
+                    "style": {
+                        "width": "712px"
+                    }
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "items": [
+                    "databases.well-architect.mtu-alignment-note1",
+                    "databases.well-architect.mtu-alignment-note2"
+                ]
+            }
+        }
+    },
+    "ntfs-allocation-unit-size": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": false,
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Drive",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Allocation unit size",
+                    "accessor": "value"
+                }
+            ],
+            "tableTitle": "Impacted drives"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOperatingSystemForBulk",
+            "payloadScope": "credential-scoped",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.ntfs-allocation-action-summary1"
+                },
+                {
+                    "heading": "databases.well-architect.downtime-warning",
+                    "type": "text",
+                    "content": "databases.well-architect.ntfs-allocation-downtime-warning-content"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "bullets",
+                    "items": [
+                        "databases.well-architect.ntfs-allocation-optimization-steps1",
+                        "databases.well-architect.ntfs-allocation-optimization-steps2",
+                        "databases.well-architect.ntfs-allocation-optimization-steps3",
+                        "databases.well-architect.ntfs-allocation-optimization-steps4",
+                        "databases.well-architect.ntfs-allocation-optimization-steps5"
+                    ],
+                    "style": {
+                        "width": "712px"
+                    }
+                }
+            ]
+        }
+    },
+    "os-type": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted LUNs",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "OS type",
+                    "accessor": "value"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOperatingSystemForBulk",
+            "payloadScope": "credential-scoped",
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.os-type-space-allocation-reservation-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.os-type-space-allocation-reservation-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "OS type = windows_2008 "
+        }
+    },
+    "performance-tier": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "140px",
+            "tagSection": "236px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "SSD storage tier",
+                    "accessor": "value"
+                },
+                {
+                    "key": "objectType",
+                    "label": "Object type",
+                    "accessor": "objectType",
+                    "width": "200px"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeStorageTierForBulk",
+            "payloadScope": "bulk",
+            "apiConfigName": "storage-tier",
+            "statusType": "os",
+            "supportsDashboardBulk": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.storage-tier-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "bullets",
+                    "items": [
+                        "databases.well-architect.storage-tier-what-will-happen-content1",
+                        "databases.well-architect.storage-tier-what-will-happen-content2",
+                        "databases.well-architect.storage-tier-what-will-happen-content3"
+                    ],
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "standard"
+            }
+        }
+    },
+    "rss-config": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "450px",
+            "tagSection": "546px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted network adapters",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendation.descriptionRssConfig"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Network adapter name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "rss",
+                    "label": "RSS",
+                    "accessor": "rss"
+                },
+                {
+                    "key": "queues",
+                    "label": "Number of receive queues",
+                    "accessor": "queues"
+                },
+                {
+                    "key": "profile",
+                    "label": "RSS profile",
+                    "accessor": "profile"
+                },
+                {
+                    "key": "baseProcessor",
+                    "label": "Base processor number",
+                    "accessor": "baseProcessor"
+                }
+            ],
+            "tableTitle": "Impacted adapters"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeComputeConfigForBulk",
+            "payloadScope": "bulk",
+            "apiConfigName": "rss-config",
+            "statusType": "os",
+            "supportsDashboardBulk": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.rss-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "bullets",
+                    "items": [
+                        "databases.well-architect.rss-what-will-happen-content1",
+                        "databases.well-architect.rss-what-will-happen-content2",
+                        "databases.well-architect.rss-what-will-happen-content3",
+                        "databases.well-architect.rss-what-will-happen-content4",
+                        "databases.well-architect.rss-what-will-happen-content5"
+                    ],
+                    "hideWhenWad": true,
+                    "style": {
+                        "width": "712px"
+                    }
+                }
+            ],
+            "notes": {
+                "type": "failover"
+            }
+        }
+    },
+    "scheduled-fsx-backup": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "dialogContent": {
+            "sections": [],
+            "features": {
+                "showCustomBackupUI": true
+            }
+        }
+    },
+    "shared-storage": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted LUNs",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "objectType",
+                    "label": "Object type",
+                    "accessor": "objectType"
+                }
+            ],
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeHAMssql",
+            "payloadScope": "bulk",
+            "haUrlSegment": "shared-storage",
+            "statusType": "ha",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.failover-cluster-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.shared-storage-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.shared-storage-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "failover"
+            }
+        }
+    },
+    "snapshot-autodelete": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Snapshot autodelete (Volume/oldest first)"
+        }
+    },
+    "snapshot-copy-reserve": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Snapshot copy reserve",
+                    "accessor": "value"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "custom",
+                "items": [
+                    "databases.well-architect.failover-cluster-note1",
+                    "databases.well-architect.snapshot-copy-reserve-aoag-note",
+                    "databases.well-architect.failover-cluster-note2"
+                ]
+            },
+            "wellArchitectedConfig": "Snapshot copy reserve = 0%"
+        }
+    },
+    "snapshot-local": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.snapshot-local-action-summary"
+                }
+            ],
+            "features": {
+                "showPatchTable": true,
+                "patchField": "SNAPSHOT_LOCAL"
+            }
+        }
+    },
+    "snapshot-policy": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "140px",
+            "tagSection": "236px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeResiliency",
+            "payloadScope": "credential-scoped",
+            "usesConfigNameArray": true,
+            "statusType": "os",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Snapshot policy = none"
+        }
+    },
+    "space-allocation-allocated": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted LUNs",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": null,
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.os-type-space-allocation-reservation-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.os-type-space-allocation-reservation-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Space allocation enabled"
+        }
+    },
+    "space-mgmt-try-first": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Space-mgmt-try-first = volume_grow"
+        }
+    },
+    "space-reservation-enabled": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted LUNs",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": null,
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.os-type-space-allocation-reservation-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.os-type-space-allocation-reservation-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Space reservation enabled "
+        }
+    },
+    "sql-server-service": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted SQL instances",
+            "countSource": "totalObjectsInViolation"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeHAMssql",
+            "payloadScope": "bulk",
+            "haUrlSegment": "sqlserver-service",
+            "statusType": "ha",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.sql-server-configuration-action-summary1"
+                },
+                {
+                    "heading": "",
+                    "type": "text",
+                    "content": "databases.well-architect.sql-server-configuration-action-summary2"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.sql-server-configuration-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "clusterQuorum"
+            }
+        }
+    },
+    "storage-efficiencies": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "current",
+                    "label": "Current",
+                    "accessor": "current"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes",
+            "hasSubConfigs": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-storage-efficiencies-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-storage-efficiencies-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": false
+            },
+            "notes": {
+                "type": "standard"
+            }
+        }
+    },
+    "tempdb-drive-size": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "statusDependentFix": true,
+        "cardHeights": {
+            "recommendationSection": "228px",
+            "tagSection": "324px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted drives",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Drive",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current size",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended size",
+                    "accessor": "recommended"
+                },
+                {
+                    "key": "status",
+                    "label": "Status",
+                    "accessor": "status"
+                }
+            ],
+            "tableTitle": "Impacted drives"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeStorageSizingForBulk",
+            "payloadScope": "bulk",
+            "statusType": "os",
+            "supportsDashboardBulk": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.tempdb-drive-size-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "bullets",
+                    "items": ["databases.well-architect.tempdb-drive-size-what-will-happen"],
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "standard"
+            },
+            "conditionalOverrides": [
+                {
+                    "when": {
+                        "field": "hasMissingPermissions",
+                        "equals": "true"
+                    },
+                    "sections": [
+                        {
+                            "heading": "databases.well-architect.action-summary",
+                            "type": "text",
+                            "content": "databases.well-architect.drive-size-and-headroom-action-content1"
+                        },
+                        {
+                            "heading": "databases.well-architect.action-required",
+                            "type": "permissions",
+                            "content": "databases.well-architect.drive-size-and-headroom-action-content1",
+                            "style": {
+                                "width": "712px"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "tempdb-files-location": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardHeights": {
+            "recommendationSection": "208px",
+            "tagSection": "304px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted databases",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendation.description"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "databaseName",
+                    "label": "Database name",
+                    "accessor": "databaseName",
+                    "width": "18%"
+                },
+                {
+                    "key": "driveDisplay",
+                    "label": "Drive name",
+                    "accessor": "driveDisplay",
+                    "width": "12%"
+                },
+                {
+                    "key": "lunPathDisplay",
+                    "label": "LUN path",
+                    "accessor": "lunPathDisplay",
+                    "width": "45%"
+                }
+            ],
+            "tableTitle": "Impacted databases",
+            "useNestedExpandable": true
+        }
+    },
+    "thin-provision": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "160px",
+            "tagSection": "256px"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.autosize-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": true
+            },
+            "notes": {
+                "type": "standard"
+            },
+            "wellArchitectedConfig": "Thin provisioning (-space-guarantee = none)"
+        }
+    },
+    "tiering-min-cooling-days": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "columns": null,
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": null
+    },
+    "tiering-policy": {
+        "hasInnerPage": false,
+        "viewOnly": false,
+        "fixSupported": true,
+        "columns": null,
+        "optimizeApi": {
+            "mutation": "optimizeStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
+        "dialogContent": null
+    },
+    "tiering-tco-optimization": {
+        "hasInnerPage": true,
+        "viewOnly": false,
+        "fixSupported": true,
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "current",
+                    "label": "Current",
+                    "accessor": "current"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Volume",
+            "tableTitle": "Impacted volumes",
+            "hasSubConfigs": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-tiering-tco-optimization-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-tiering-tco-optimization-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "features": {
+                "showOntapConfigCodeBox": false
+            },
+            "notes": {
+                "type": "standard"
+            }
+        }
+    }
+}

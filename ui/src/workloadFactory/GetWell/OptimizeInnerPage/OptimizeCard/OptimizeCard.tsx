@@ -6,7 +6,7 @@ import styles from './OptimizeCard.module.scss';
 import { GENERAL } from '../../../../utils/appConstants';
 import { WLF_TABS } from '../../../../utils/consts';
 import RecommendationText from '../../RecommendationText/RecommendationText';
-import { getCardMetadata } from '../../../../utils/getWellConfigRegistry';
+import { getCardMetadata } from '../../../../utils/configRegistry';
 
 /**
  * Helper to extract nested value from object using dot notation path.

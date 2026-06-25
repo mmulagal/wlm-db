@@ -16,7 +16,7 @@ const LinkedConfigBanner = ({ linkedConfigNames, configName }: LinkedConfigBanne
     if (!linkedConfigNames || linkedConfigNames.length === 0) return null;
 
     const isLayout = isLayoutConfig(configName);
-    const configNameLower = configName.toLowerCase();
+    const configNameLower = configName.replace(/-/g, ' ').toLowerCase();
     const linkedNames =
         linkedConfigNames.length > 1
             ? `${linkedConfigNames.slice(0, -1).join(', ')}, and ${linkedConfigNames[linkedConfigNames.length - 1]}`

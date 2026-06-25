@@ -1211,6 +1211,7 @@ export const ASSESSMENT_CONFIG_IDS = {
     EXPORT_POLICY: 'export-policy',
     FILESYSTEMS_IO_OPTIONS: 'filesystems-io-options',
     FILE_SYSTEM_HEADROOM: 'headroom',
+    FILE_SYSTEM_HEADROOM_MSSQL: 'file-system-headroom',
     FRACTIONAL_RESERVE: 'fractional-reserve',
     FRA_DG_LUN_LAYOUT: 'fra-dg-lun-layout',
     HA: 'ha',
@@ -2040,6 +2041,83 @@ export const PATCH_SCAN_FIELD = {
     HOST_OS_PATCH: ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH,
     ORACLE_SECURITY_PATCH: ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH
 } as const;
+
+/**
+ * Block six labels for Well-Architected Dashboard cards
+ */
+export const BLOCK_SIX_LABELS = {
+    FINDING_REASONS: 'Finding reasons',
+    MISSING_PATCHES: 'Missing patches',
+    FILE_SYSTEM_HEADROOM: 'File system headroom',
+    IMPACTED_RESOURCES: 'Impacted resources'
+} as const;
+
+/**
+ * Oracle placement configuration IDs (show large "X out of Y" format)
+ */
+export const ORACLE_PLACEMENT_CONFIG_IDS = [
+    ASSESSMENT_CONFIG_IDS.REDO_LOGS_PLACEMENT,
+    ASSESSMENT_CONFIG_IDS.TEMP_LOGS_PLACEMENT,
+    ASSESSMENT_CONFIG_IDS.ARCHIVE_PLACEMENT,
+    ASSESSMENT_CONFIG_IDS.DATAFILES_PLACEMENT,
+    ASSESSMENT_CONFIG_IDS.CONTROLFILES_PLACEMENT,
+    ASSESSMENT_CONFIG_IDS.ORACLE_BINARY_PLACEMENT,
+    ASSESSMENT_CONFIG_IDS.DATA_DG_LUN_LAYOUT,
+    ASSESSMENT_CONFIG_IDS.LOG_DG_LUN_LAYOUT,
+    ASSESSMENT_CONFIG_IDS.FRA_DG_LUN_LAYOUT,
+    ASSESSMENT_CONFIG_IDS.ARCHIVELOG_DG_LUN_LAYOUT
+] as const;
+
+/**
+ * Oracle storage sizing configs that show percentage or GB values in large font
+ */
+export const ORACLE_STORAGE_SIZING_CONFIG_IDS = [
+    ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM,
+    ASSESSMENT_CONFIG_IDS.SWAP_SPACE
+] as const;
+
+/**
+ * Oracle compute configs that show impacted resources with large "X out of Y" count
+ */
+export const ORACLE_COMPUTE_COUNT_CONFIG_IDS = [
+    ASSESSMENT_CONFIG_IDS.TRANSPARENT_HUGEPAGES,
+    ASSESSMENT_CONFIG_IDS.TCP_ADVANCED_OPTIONS,
+    ASSESSMENT_CONFIG_IDS.FILESYSTEMS_IO_OPTIONS,
+    ASSESSMENT_CONFIG_IDS.MULTIPATH_READCOUNT
+] as const;
+
+/**
+ * MSSQL storage tier and drive sizing configs that show large "X out of Y" count
+ */
+export const MSSQL_STORAGE_COUNT_CONFIG_IDS = [
+    ASSESSMENT_CONFIG_IDS.STORAGE_TIER,
+    ASSESSMENT_CONFIG_IDS.LOG_DRIVE_SIZE,
+    ASSESSMENT_CONFIG_IDS.TEMPDB_DRIVE_SIZE
+] as const;
+
+/**
+ * Helper function to check if a config ID matches the target config.
+ * Handles both dashed and underscored variants (e.g., 'host-os-patch' and 'host_os_patch')
+ */
+export const isConfigIdMatch = (configId: string, targetConfigId: string): boolean => {
+    if (!configId || !targetConfigId) return false;
+    const normalizedConfigId = configId.toLowerCase();
+    const normalizedTarget = targetConfigId.toLowerCase();
+    return (
+        normalizedConfigId === normalizedTarget ||
+        normalizedConfigId === normalizedTarget.replace(/-/g, '_') ||
+        normalizedConfigId.replace(/-/g, '_') === normalizedTarget.replace(/-/g, '_')
+    );
+};
+
+/**
+ * Helper function to check if a config ID is in a list of config IDs
+ * Handles both dashed and underscored variants
+ */
+export const isConfigIdInList = (configId: string, configIdList: readonly string[]): boolean => {
+    if (!configId || !configIdList?.length) return false;
+    return configIdList.some(targetId => isConfigIdMatch(configId, targetId));
+};
 
 export const SSM_ARN_REGEX = /^arn:aws(-us-gov)?:ssm:[^:]+:\d{12}:parameter\/netapp\/wlmdb\/.+$/;
 export const isValidSsmArn = (arn: string) => SSM_ARN_REGEX.test(arn);

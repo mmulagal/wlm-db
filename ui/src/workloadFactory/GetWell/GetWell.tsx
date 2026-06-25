@@ -95,7 +95,8 @@ const GetWell = () => {
         gwTimestamp,
         gwAdhocError,
         optimizationBreakDown,
-        driftAssessmentData
+        driftAssessmentData,
+        isWad: isWadFromStore
     } = useAppSelector(state => state.getWellOptimize);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
@@ -517,7 +518,8 @@ const GetWell = () => {
                     gwTimestamp={gwTimestamp || ''}
                     gwAdhocError={gwAdhocError || ''}
                     optimizePageLoading={loading || false}
-                    isWad={cardData?.isWad || false}
+                    isWad={isWadFromStore || cardData?.isWad || false}
+                    dbType={DBType.MSSQL}
                 />
                 {showChartArea && (
                     <>
@@ -527,7 +529,7 @@ const GetWell = () => {
                                 optimizationBreakDown={optimizationBreakDown}
                                 isAssessmentAvailable={isAssessmentAvailable}
                                 allConfigurationsDismissed={allConfigurationsDismissed}
-                                isWad={cardData?.isWad || false}
+                                isWad={isWadFromStore || cardData?.isWad || false}
                             />
                             <OptimizationBreakdown allConfigurationsDismissed={allConfigurationsDismissed} />
                         </div>
@@ -571,16 +573,27 @@ const GetWell = () => {
                                                 </DsTypography>
                                             </div>
                                             <div>
-                                                {!hasDismissedConfigurations ? (
+                                                {isWadFromStore ? (
                                                     <DsPopover
                                                         trigger="hover"
-                                                        title={
-                                                            cardData?.isWad
-                                                                ? t('databases.wad.tab-disabled-message')
-                                                                : t(
-                                                                      'databases.well-architect.dismiss.no-dismissed-configurations'
-                                                                  )
-                                                        }
+                                                        title={t('databases.wad.tab-disabled-message')}
+                                                        monitorPosition="all"
+                                                        placement="bottom"
+                                                    >
+                                                        <DsToggleSwitch
+                                                            id="dismissed-configuration-toggle"
+                                                            data-testid="dismissed-configuration-toggle"
+                                                            onClick={() => {}}
+                                                            title="Dismissed configuration"
+                                                            isDisabled
+                                                        />
+                                                    </DsPopover>
+                                                ) : !hasDismissedConfigurations ? (
+                                                    <DsPopover
+                                                        trigger="hover"
+                                                        title={t(
+                                                            'databases.well-architect.dismiss.no-dismissed-configurations'
+                                                        )}
                                                         monitorPosition="all"
                                                         placement="bottom"
                                                     >

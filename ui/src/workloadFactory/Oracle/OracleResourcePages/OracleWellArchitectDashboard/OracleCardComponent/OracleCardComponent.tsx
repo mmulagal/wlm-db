@@ -435,7 +435,7 @@ const OracleCardComponent = ({
                                     <SectionSix cardData={cardData} loading={loading} disableText={disableText} />
                                 </div>
                                 <DsTypography variant="Regular_14" className={styles.descriptionText}>
-                                    {cardData?.block_six?.type}
+                                {cardData?.block_six?.count ? `${t('databases.well-architect.impacted')} ${cardData?.block_six?.type}` : cardData?.block_six?.type}
                                 </DsTypography>
                             </div>
                         </div>

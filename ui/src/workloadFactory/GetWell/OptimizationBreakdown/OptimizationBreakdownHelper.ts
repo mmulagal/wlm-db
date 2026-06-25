@@ -148,12 +148,13 @@ export const groupConfigurationsByCategory = (
             // Direct lookup by ID
             const card = cardsData?.[configId];
 
-            if (card && card.mapName) {
-                const displayName = card.mapName;
+            if (card) {
+                // For flat API, use card.name; for nested API, use card.mapName
+                const displayName = card.name || card.mapName;
                 const { category } = card;
 
-                // Only process if category exists
-                if (category) {
+                // Only process if category and displayName exist
+                if (category && displayName) {
                     if (!configsByCategory[category]) {
                         configsByCategory[category] = [];
                     }

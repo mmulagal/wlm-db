@@ -1,15 +1,7 @@
 import i18next from 'i18next';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
-import {
-    ASSESSMENT_CONFIG_NAMES,
-    DBType,
-    FROM_DIALOG,
-    GETWELL_STATUS,
-    MSSQL_UNSUPPORTED_FIX_TYPES,
-    ORACLE_UNSUPPORTED_FIX_TYPES,
-    OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES,
-    UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES
-} from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, DBType, FROM_DIALOG, GETWELL_STATUS } from '../../../utils/consts';
+import { hasFixSupport } from '../../../utils/configRegistry';
 import DialogContent from './DialogContent/DialogContent';
 import store from '../../../store/store';
 import { setDialogErrorWithTooltip } from '../../../store/workloadFactory/dialogComponentSlice';
@@ -44,7 +36,7 @@ export const handleDialog = (
     isWad = false
 ) => {
     // Get display name from cardData (flat API provides 'name' field)
-    const displayName = cardData?.name || '';
+    const displayName = cardData?.name || type || '';
 
     // Oracle FILE_SYSTEM_HEADROOM with permissions and under provisioned status - show enabled Continue button
     if (
@@ -81,25 +73,7 @@ export const handleDialog = (
                 customClass="innerPage"
             />
         );
-    } else if (
-        isWad ||
-        MSSQL_UNSUPPORTED_FIX_TYPES.has(type) ||
-        MSSQL_UNSUPPORTED_FIX_TYPES.has(displayName) ||
-        ORACLE_UNSUPPORTED_FIX_TYPES.has(type) ||
-        ORACLE_UNSUPPORTED_FIX_TYPES.has(displayName) ||
-        (OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES.has(type) &&
-            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) ||
-        (OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES.has(displayName) &&
-            cardData?.block_two?.value === GETWELL_STATUS.OVER_PROVISIONED) ||
-        (UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES.has(type) &&
-            cardData?.block_two?.value === GETWELL_STATUS.UNDER_PROVISIONED &&
-            cardData?.missingPermissions &&
-            cardData?.missingPermissions.length > 0) ||
-        (UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES.has(displayName) &&
-            cardData?.block_two?.value === GETWELL_STATUS.UNDER_PROVISIONED &&
-            cardData?.missingPermissions &&
-            cardData?.missingPermissions.length > 0)
-    ) {
+    } else if (isWad || !hasFixSupport(type, engineType, cardData?.block_two?.value, cardData?.missingPermissions)) {
         setDialog(
             <DialogComponent
                 header={displayName}
@@ -170,16 +144,9 @@ export const handleConfigDialog = (
     const configId = rowData?.data?.id;
     const displayName = rowData?.data?.name;
 
-    // Check if this is an ASM configuration that should only have a Close button
-    // Note: UNSUPPORTED_FIX_TYPES sets use display names, so we check both displayName and configId for compatibility
-    const isOracleWithUnsupportedFix =
-        rowData?.engineType === DBType.ORACLE &&
-        (ORACLE_UNSUPPORTED_FIX_TYPES.has(displayName) || ORACLE_UNSUPPORTED_FIX_TYPES.has(configId));
-    const isMssqlWithUnsupportedFix =
-        rowData?.engineType === DBType.MSSQL &&
-        (MSSQL_UNSUPPORTED_FIX_TYPES.has(displayName) || MSSQL_UNSUPPORTED_FIX_TYPES.has(configId));
-
-    const isCloseButton = isWad || isOracleWithUnsupportedFix || isMssqlWithUnsupportedFix;
+    const isCloseButton =
+        isWad ||
+        !hasFixSupport(configId, rowData?.engineType, rowData?.data?.status, rowData?.data?.missingPermissions);
     if (isCloseButton) {
         setDialog(
             <DialogComponent

@@ -2,7 +2,12 @@ import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { Popover } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import styles from './OracleCardComponent.module.scss';
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES } from '../../../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    ASSESSMENT_CONFIG_IDS,
+    CONFIG_STATES,
+    isConfigIdMatch
+} from '../../../../../utils/consts';
 import { ReactComponent as TooltipIcon } from '../../../../../assets/tooltipGrey.svg';
 
 const SectionSix = ({ cardData, loading, disableText }: any) => {
@@ -45,7 +50,8 @@ const SectionSix = ({ cardData, loading, disableText }: any) => {
 
     if (
         cardData?.osPatchMissingPatches &&
-        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH
+        (cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
+            isConfigIdMatch(cardData?.configurationId, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH))
     ) {
         const listObj = [
             { key: 'Critical ', value: cardData?.osPatchMissingPatches?.critical },
@@ -76,7 +82,8 @@ const SectionSix = ({ cardData, loading, disableText }: any) => {
 
     if (
         cardData?.oracleSecurityPatchMissingPatches &&
-        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH
+        (cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH ||
+            isConfigIdMatch(cardData?.configurationId, ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH))
     ) {
         const listObj = [{ key: 'Critical ', value: cardData?.oracleSecurityPatchMissingPatches?.critical }];
         return (

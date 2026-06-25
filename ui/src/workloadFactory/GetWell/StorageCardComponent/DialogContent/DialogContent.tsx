@@ -12,12 +12,11 @@ import styles from './DialogContent.module.scss';
 import {
     DBType,
     GETWELL_STATUS,
-    MSSQL_UNSUPPORTED_FIX_TYPES,
-    ORACLE_UNSUPPORTED_FIX_TYPES,
     OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES,
     UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES,
     ASSESSMENT_CONFIG_NAMES
 } from '../../../../utils/consts';
+import { hasFixSupport } from '../../../../utils/configRegistry';
 import DynamicDialogContent from './DynamicDialogContent';
 import { ReactComponent as InfoIcon } from '../../../../assets/info.svg';
 
@@ -70,8 +69,6 @@ const shouldShowUnsupportedFixBanner = (
         UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES.has(type) &&
         status === GETWELL_STATUS.UNDER_PROVISIONED &&
         !!missingPermissions?.length;
-    const unsupportedFixSet = isOracle ? ORACLE_UNSUPPORTED_FIX_TYPES : MSSQL_UNSUPPORTED_FIX_TYPES;
-
     const configNameLower = type.toLowerCase();
 
     const rules: [boolean, BannerConfig][] = [
@@ -91,7 +88,7 @@ const shouldShowUnsupportedFixBanner = (
                 params: { configName: configNameLower }
             }
         ],
-        [unsupportedFixSet.has(type), { key: 'databases.well-architect.fix-disabled' }]
+        [!hasFixSupport(type, engineType, status, missingPermissions), { key: 'databases.well-architect.fix-disabled' }]
     ];
     return rules.find(([condition]) => condition)?.[1] ?? '';
 };

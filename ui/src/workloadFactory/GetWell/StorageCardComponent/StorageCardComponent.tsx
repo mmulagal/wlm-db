@@ -1,5 +1,4 @@
 import {
-    Button,
     DsButton,
     DsFlashingDotsLoader,
     DsPopover,
@@ -7,7 +6,6 @@ import {
     Popover,
     useDialog
 } from '@netapp/design-system';
-import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
@@ -22,12 +20,12 @@ import { GENERAL } from '../../../utils/appConstants';
 
 import {
     ASSESSMENT_CONFIG_NAMES,
+    ASSESSMENT_CONFIG_IDS,
     CONFIG_STATES,
     DBType,
-    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
-    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     GETWELL_STATUS,
     GETWELL_VALUES,
+    isConfigIdMatch,
     GW_CONFIG_OPTIMIZE_NA,
     WELL_ARCHITECT_FINDINGS,
     WLF_TABS
@@ -40,19 +38,20 @@ import {
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
-import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     useDismissMssqlAssessmentMutation,
     useLazyGetSubTaskListQuery,
-    useOptimizeAwsBackupMutation,
     useOptimizeComputeConfigMutation,
-    useOptimizeMTUConfigForBulkMutation,
-    useOptimizeMaxdopConfigForBulkMutation,
-    useOptimizeStorageConfigMutation,
     useOptimizeStorageSizingMutation,
     useOptimizeStorageTierMutation
 } from '../../../utils/apiService';
+import {
+    useOptimizeMutations,
+    buildOptimizeApiInput,
+    buildOptimizeInfoNotification,
+    buildOptimizeFailedMessage
+} from '../optimizeApiUtils';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
 import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
@@ -73,8 +72,9 @@ import {
 import {
     hasInnerPage,
     getButtonText as getButtonTextFromRegistry,
-    getColumnConfig
-} from '../../../utils/getWellConfigRegistry';
+    getColumnConfig,
+    getOptimizeApiConfig
+} from '../../../utils/configRegistry';
 
 const StorageCardComponent = ({
     cardData,
@@ -90,6 +90,7 @@ const StorageCardComponent = ({
     const [showDismissButton, setShowDismissButton] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const { isWad: isWadFromStore } = useAppSelector(state => state.getWellOptimize);
 
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const {
@@ -137,12 +138,10 @@ const StorageCardComponent = ({
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
-    const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
+    const registryMutationMap = useOptimizeMutations();
+    // Legacy single-instance mutations — only used by the fallback path below
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
-    const [optimizeMTUConfigForBulk] = useOptimizeMTUConfigForBulkMutation();
-    const [optimizeMaxdopConfigForBulk] = useOptimizeMaxdopConfigForBulkMutation();
     const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
-    const [optimizeAwsBackup] = useOptimizeAwsBackupMutation();
     const [optimizeStorageTier] = useOptimizeStorageTierMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
@@ -544,7 +543,11 @@ const StorageCardComponent = ({
                 </div>
             );
         }
-        if (cardData?.osPatchMissingPatches && cardData?.block_one?.value === GENERAL.OPERATING_SYSTEM_PATCH) {
+        if (
+            cardData?.osPatchMissingPatches &&
+            (cardData?.block_one?.value === GENERAL.OPERATING_SYSTEM_PATCH ||
+                isConfigIdMatch(cardData?.configurationId, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH))
+        ) {
             const listObj = [
                 { key: 'Critical ', value: cardData?.osPatchMissingPatches?.critical },
                 { key: 'Security ', value: cardData?.osPatchMissingPatches?.security },
@@ -570,7 +573,11 @@ const StorageCardComponent = ({
                 </div>
             );
         }
-        if (cardData?.sqlPatchMissingPatches && cardData?.block_one?.value === GENERAL.MICROSOFT_SQL_PATCH) {
+        if (
+            cardData?.sqlPatchMissingPatches &&
+            (cardData?.block_one?.value === GENERAL.MICROSOFT_SQL_PATCH ||
+                isConfigIdMatch(cardData?.configurationId, ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH))
+        ) {
             const listObj = [
                 { key: 'Critical ', value: cardData?.sqlPatchMissingPatches?.critical },
                 { key: 'Important ', value: cardData?.sqlPatchMissingPatches?.important }
@@ -614,6 +621,104 @@ const StorageCardComponent = ({
         let payload: null | object = {};
         let apiCall = null;
         const state = store.getState();
+
+        // Registry-based routing
+        const apiConfig = getOptimizeApiConfig(type, engineType);
+        if (apiConfig) {
+            const mutationFn = registryMutationMap[apiConfig.mutation];
+            if (mutationFn) {
+                const credId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM;
+                const regionId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM;
+                const {
+                    selectedAWSBackup,
+                    selectedRecommendedInstance,
+                    selectedSnapshot
+                } = state.getWellOptimize;
+
+                const apiData = buildOptimizeApiInput(apiConfig, {
+                    configId: type,
+                    engineType,
+                    credentialId: credId,
+                    regionId,
+                    databaseHostId: selectedResourceId,
+                    instanceId: selectedDatabaseInstance,
+                    selectedAWSBackup,
+                    selectedRecommendedInstance,
+                    selectedSnapshot
+                });
+
+                if (apiData) {
+                    dispatch(setOptimizingInstanceData(true));
+                    dispatch(setOptimizingData({ ...optimizingData, [cardData?.id]: 'optimizing' }));
+                    dispatch(
+                        setInProgressOptimizationData({
+                            ...inProgressOptimizationData,
+                            [type]: [
+                                ...(inProgressOptimizationData[type] || []),
+                                `${selectedResourceId}_${selectedDatabaseInstance}`
+                            ]
+                        })
+                    );
+                    dispatch(
+                        setInProgressHostData({
+                            ...inProgressHostData,
+                            [type]: [...(inProgressHostData[type] || []), selectedResourceId]
+                        })
+                    );
+                    dispatch(
+                        buildOptimizeInfoNotification({
+                            configName: cardData?.name || type,
+                            t,
+                            dispatch,
+                            isWorkloadFactory
+                        })
+                    );
+
+                    mutationFn(apiData as Record<string, unknown>).then((res: any) => {
+                        const failedMsgData = buildOptimizeFailedMessage({
+                            configName: cardData?.name || type,
+                            t,
+                            dispatch,
+                            isWorkloadFactory,
+                            className: styles.notification
+                        });
+                        if (!res.error) {
+                            dispatch(
+                                setJobToInstanceMap({
+                                    ...state.getWellOptimize.jobToInstanceMap,
+                                    [res?.data?.jobId]: {
+                                        hostId: selectedResourceId,
+                                        instanceId: selectedDatabaseInstance
+                                    }
+                                })
+                            );
+                        }
+                        handleOptimizeStorageJob(
+                            res,
+                            {
+                                id: cardData?.id,
+                                name: type,
+                                hostId: selectedResourceId,
+                                instanceId: selectedDatabaseInstance,
+                                credentialId: selectedGwInstanceCredId,
+                                regionId: selectedGwInstanceRegionId
+                            },
+                            failedMsgData,
+                            getJobDetailApi,
+                            dispatch,
+                            type,
+                            undefined,
+                            undefined,
+                            false,
+                            engineType
+                        );
+                    });
+                    return;
+                }
+            }
+        }
+
+        // Legacy routing for configs not yet in the registry
         if (type === GENERAL.COMPUTE_RIGHTSIZING) {
             apiCall = optimizeComputeConfig;
             const { selectedRecommendedInstance } = state.getWellOptimize;
@@ -633,7 +738,7 @@ const StorageCardComponent = ({
             apiCall = optimizeStorageTier;
             payload = null;
         } else if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
-            apiCall = optimizeMaxdopConfigForBulk;
+            apiCall = registryMutationMap.optimizeMaxdopConfigForBulk;
             payload = {
                 hostsToOptimize: [
                     {
@@ -650,7 +755,7 @@ const StorageCardComponent = ({
                 ]
             };
         } else if (type === ASSESSMENT_CONFIG_NAMES.MTU) {
-            apiCall = optimizeMTUConfigForBulk;
+            apiCall = registryMutationMap.optimizeMTUConfigForBulk;
             payload = {
                 hostsToOptimize: [
                     {
@@ -668,8 +773,7 @@ const StorageCardComponent = ({
                 ]
             };
         } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
-            apiCall = optimizeAwsBackup;
-            const state = store.getState();
+            apiCall = registryMutationMap.optimizeAwsBackup;
             const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
             payload = {
                 hostsToOptimize: [
@@ -689,9 +793,32 @@ const StorageCardComponent = ({
                     }
                 ]
             };
+        } else if (
+            type === 'mpio-enabled' ||
+            type === 'mpio-iscsi-count' ||
+            type === 'mpio-timeout' ||
+            type === 'os-type' ||
+            type === 'ntfs-allocation-unit-size'
+        ) {
+            // MSSQL OS configs use bulk storage-operating-system endpoint with hostsToOptimize format
+            apiCall = registryMutationMap.optimizeOperatingSystemForBulk;
+            payload = {
+                hostsToOptimize: [
+                    {
+                        configurationName: type,
+                        databaseHosts: [
+                            {
+                                id: selectedResourceId,
+                                sqlServerInstances: [selectedDatabaseInstance],
+                                credentialsId: selectedGwInstanceCredId,
+                                region: selectedGwInstanceRegionId
+                            }
+                        ]
+                    }
+                ]
+            };
         } else {
-            // ToDo - More type will come like optimize for sizing and layout here
-            apiCall = optimizeStorageConfig;
+            apiCall = registryMutationMap.optimizeStorageConfig;
             payload = {
                 assessments: [
                     {
@@ -725,44 +852,26 @@ const StorageCardComponent = ({
                 [type]: [...(inProgressHostData[type] || []), selectedResourceId]
             })
         );
-        formatGetWellData(dispatch);
         dispatch(
-            addNotification({
-                notificationType: NOTIFICATION_TYPES.INFO,
-                message: (
-                    <div>
-                        {`Fixing process initiated for ${type}. This process can take upto 2 minutes. Track progress in `}
-                        <Button
-                            Component="button"
-                            variant="text"
-                            onClick={() => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                const path = isWorkloadFactory
-                                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
-                                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
-
-                                postBlueXPMessage({
-                                    type: BlueXPListeners.navigate,
-                                    payload: { pathname: path, replace: true }
-                                });
-                                dispatch(clearNotifications());
-                            }}
-                        >
-                            {GENERAL.JOB_MONITORING}.
-                        </Button>
-                    </div>
-                )
-            })
+            buildOptimizeInfoNotification({ configName: cardData?.name || type, t, dispatch, isWorkloadFactory })
         );
 
         let apiCallObj = {};
-        if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP || type === ASSESSMENT_CONFIG_NAMES.MTU) {
+        if (
+            type === ASSESSMENT_CONFIG_NAMES.MAXDOP ||
+            type === ASSESSMENT_CONFIG_NAMES.MTU ||
+            type === 'mpio-enabled' ||
+            type === 'mpio-iscsi-count' ||
+            type === 'mpio-timeout' ||
+            type === 'os-type' ||
+            type === 'ntfs-allocation-unit-size'
+        ) {
+            // Bulk operations - only pass payload
             apiCallObj = {
-                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
                 payload
             };
         } else {
+            // Single-instance operations - pass IDs + payload
             apiCallObj = {
                 credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
                 regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
@@ -773,29 +882,13 @@ const StorageCardComponent = ({
         }
 
         apiCall(apiCallObj).then((res: any) => {
-            const failedMsgData = (
-                <div className={styles.notification}>
-                    {type} failed to optimize.
-                    <Button
-                        Component="button"
-                        variant="text"
-                        onClick={() => {
-                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                            const path = isWorkloadFactory
-                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
-                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
-
-                            postBlueXPMessage({
-                                type: BlueXPListeners.navigate,
-                                payload: { pathname: path, replace: true }
-                            });
-                            dispatch(clearNotifications());
-                        }}
-                    >
-                        {GENERAL.VIEW_JOB_MONITORING}.
-                    </Button>
-                </div>
-            );
+            const failedMsgData = buildOptimizeFailedMessage({
+                configName: cardData?.name || type,
+                t,
+                dispatch,
+                isWorkloadFactory,
+                className: styles.notification
+            });
             if (!res.error) {
                 dispatch(
                     setJobToInstanceMap({
@@ -817,7 +910,11 @@ const StorageCardComponent = ({
                 failedMsgData,
                 getJobDetailApi,
                 dispatch,
-                type
+                type,
+                undefined, // operation (undefined for dialog, not bulk)
+                undefined, // bulkRowData (not used for dialog)
+                false, // isOptimizeInnerPage (dialogs are NOT inner page)
+                engineType // Pass engineType so handlers know MSSQL vs Oracle
             );
         });
     };
@@ -833,7 +930,8 @@ const StorageCardComponent = ({
     };
 
     // Check if this is a WAD (offline assessment) instance
-    const isWad = fullCardData?.isWad || false;
+    // Use Redux store flag which is set when navigating to WAD assessment
+    const isWad = isWadFromStore || fullCardData?.isWad || false;
 
     // Get the config ID from API (flat structure) or fallback to legacy type prop
     const configId = cardData?.id || type;
@@ -1042,7 +1140,7 @@ const StorageCardComponent = ({
                             {sectionSixContent(cardData)}
                         </DsTypography>
                         <DsTypography variant="Regular_14" title={cardData?.block_six?.type} className={styles.label}>
-                            {cardData?.block_six?.type}
+                            {cardData?.block_six?.count ? `${t('databases.well-architect.impacted')} ${cardData?.block_six?.type}` : cardData?.block_six?.type}
                         </DsTypography>
                     </div>
                 )}

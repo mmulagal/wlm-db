@@ -24,7 +24,7 @@ import {
     useAutoExpandFirstRow,
     renderExpandableChevron
 } from '../InnerTables/ExpandableTableHelper';
-import { ColumnConfig, hasFixSupport } from '../../../../utils/getWellConfigRegistry';
+import { ColumnConfig, getOptimizeApiConfig } from '../../../../utils/configRegistry';
 
 interface NestedDynamicInnerTableProps {
     configId: string;
@@ -53,8 +53,8 @@ const NestedDynamicInnerTable = ({
     // Build parent-only table data (children rendered via ExpandedRow)
     const tableData = useMemo(() => buildParentTableData(groupedData, t, na), [groupedData, t, na]);
 
-    // Check if this config supports fix (most nested tables don't)
-    const canFix = hasFixSupport(configId, engineType);
+    // Check if this config supports fix (inner page row-level, not dashboard bulk)
+    const canFix = !!getOptimizeApiConfig(configId, engineType);
 
     // Build column definitions dynamically from registry config
     const TableColDefs: ColumnProps[] = useMemo(() => {

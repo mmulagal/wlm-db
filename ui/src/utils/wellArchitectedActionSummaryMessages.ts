@@ -1,7 +1,9 @@
 import { ASSESSMENT_CONFIG_NAMES, DATABASE_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from './consts';
 import { GENERAL, GETWELL_DIALOG_CONTENT } from './appConstants';
 import enTranslations from '../../public/resources/i18n/en.json';
-import { engineTypeText, ontapConfigTextSet } from './dialogContentUtils';
+import { engineTypeText } from './dialogContentUtils';
+// This has been moved to mssqlConfigRegistry and oracle
+// ontapConfigTextSet
 
 const wellArchitectMessages = enTranslations.databases['well-architect'];
 

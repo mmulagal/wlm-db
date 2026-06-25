@@ -15,7 +15,7 @@ import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
-import { DBType, PATCH_SCAN_FIELD, WIZARD_TYPE, CONFIG_NAMES } from '../../../../utils/consts';
+import { DBType, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setRecommendedInstanceInBulk,
@@ -28,13 +28,9 @@ import {
 } from '../../../../store/workloadFactory/dialogComponentSlice';
 import { generateOptionType } from '../../../../utils/utilityFunctions';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
-import { ontapConfigTextSet } from '../../../../utils/dialogContentUtils';
 import { useGetMissingPatchAssessmentDataQuery } from '../../../../utils/apiService';
 import { getTableLazyLoadingComponentProps } from '../../../../common/Lib/Table/tableLazyLoadingProps';
-import {
-    isOntapConfig,
-    getFilteredLinkedConfigNames
-} from '../../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleConfigDependencies';
+import { getLinkedConfigNames } from '../../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleConfigDependencies';
 import LinkedConfigBanner from '../../../../common/LinkedConfigBanner/LinkedConfigBanner';
 import {
     createSection,
@@ -47,7 +43,7 @@ import {
     createDriveLetterNotesSection
 } from './DialogContentHelper';
 import ScheduledAWSBackupDialog from './ScheduledAWSBackupDialog';
-import { getDialogContentConfig, DialogSectionDef, DialogContentConfig } from '../../../../utils/getWellConfigRegistry';
+import { getDialogContentConfig, DialogSectionDef, DialogContentConfig } from '../../../../utils/configRegistry';
 
 interface RecommendationOption {
     instanceType?: string;
@@ -141,11 +137,11 @@ const DynamicDialogContent = ({
         return dialogConfig;
     }, [dialogConfig, status, missingPermissions]);
 
-    // Linked config banner state (Oracle ONTAP)
+    // Linked config banner state (Oracle layout configs only)
     const linkedConfigNames = useMemo(() => {
         if (!resolvedConfig?.features?.showLinkedConfigBanner) return [];
-        return isOntapConfig(configId) ? getFilteredLinkedConfigNames(configId, driftAssessmentData) : [];
-    }, [configId, driftAssessmentData, resolvedConfig]);
+        return getLinkedConfigNames(configId);
+    }, [configId, resolvedConfig]);
 
     const showDependencyWarning = linkedConfigNames.length > 0;
     const [acknowledged, setAcknowledged] = useState(false);
@@ -416,12 +412,10 @@ const DynamicDialogContent = ({
 
             {/* ONTAP Config Code Box */}
             {resolvedConfig.features?.showOntapConfigCodeBox &&
-                objectsInViolation &&
+                resolvedConfig.wellArchitectedConfig &&
                 createSection(
                     t('databases.well-architect.well-architected-configuration'),
-                    createCodeBox(
-                        ontapConfigTextSet((CONFIG_NAMES as any)[configId] || configId, engineType, objectsInViolation)
-                    ),
+                    createCodeBox(resolvedConfig.wellArchitectedConfig),
                     { width: '712px' }
                 )}
 

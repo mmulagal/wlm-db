@@ -5,11 +5,10 @@
  * Fully data-driven: columns from CONFIG_COLUMN_MAP, recommendation from JSON, data from API.
  */
 
-import { Button, DsTypography, useDialog } from '@netapp/design-system';
+import { DsTypography, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import styles from './OptimizeInnerPage.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -19,16 +18,12 @@ import {
     setOptimizingData,
     setInProgressOptimizationData,
     setInProgressHostData,
-    setJobToInstanceMap
+    setJobToInstanceMap,
+    setGwRefreshPage,
+    setIsInnerPageOptimize,
+    setCloneDashboardData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import {
-    DBType,
-    WLF_TABS,
-    ASSESSMENT_CONFIG_NAMES,
-    ACTION_TYPE,
-    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
-    FORM_TO_WLF_NAVIGATE_BLUEXP_JM
-} from '../../../utils/consts';
+import { DBType, WLF_TABS, ACTION_TYPE } from '../../../utils/consts';
 import OptimizeCard from './OptimizeCard/OptimizeCard';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
@@ -37,25 +32,30 @@ import {
     formatAssessmentData,
     handleOptimizeStorageJob
 } from '../GetWellUtils';
-import { getColumnConfig, hasFixSupport } from '../../../utils/getWellConfigRegistry';
+import {
+    getColumnConfig,
+    isViewOnlyConfig,
+    getOptimizeApiConfig,
+    OptimizeApiConfig,
+    getConfigEntry
+} from '../../../utils/configRegistry';
+import {
+    useOptimizeMutations,
+    buildOptimizeApiInput,
+    buildOptimizeInfoNotification,
+    buildOptimizeFailedMessage
+} from '../optimizeApiUtils';
 import DynamicInnerTable from './DynamicInnerTable/DynamicInnerTable';
 import NestedDynamicInnerTable from './DynamicInnerTable/NestedDynamicInnerTable';
+import CloneTabs from './CloneTabs';
 import TagComponent from '../../Dashboard/DashboardInnerPage/TagComponent/TagComponent';
 import LinkedConfigBanner from '../../../common/LinkedConfigBanner/LinkedConfigBanner';
 import {
     isLinkedConfig,
     getLinkedConfigNames
 } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleConfigDependencies';
-import { handleConfigDialog, checkLinkedConfigAcknowledge } from '../StorageCardComponent/optimizeUtils';
-import {
-    useOptimizeOperatingSystemMutation,
-    useOptimizeOracleOperatingSystemMutation,
-    useOptimizeStorageConfigMutation,
-    useOptimizeOracleStorageConfigMutation,
-    useOptimizeHAMssqlMutation,
-    useLazyGetSubTaskListQuery
-} from '../../../utils/apiService';
-import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
+import { handleConfigDialog } from '../StorageCardComponent/optimizeUtils';
+import { useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import store from '../../../store/store';
 
 const DynamicOptimizeInnerPage = () => {
@@ -63,12 +63,7 @@ const DynamicOptimizeInnerPage = () => {
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
 
-    // API hooks for optimize operations
-    const [optimizeOs] = useOptimizeOperatingSystemMutation();
-    const [optimizeOracleOs] = useOptimizeOracleOperatingSystemMutation();
-    const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
-    const [optimizeOracleStorageConfig] = useOptimizeOracleStorageConfigMutation();
-    const [optimizeHAMssql] = useOptimizeHAMssqlMutation();
+    const mutationMap = useOptimizeMutations();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     // Redux state
@@ -82,7 +77,8 @@ const DynamicOptimizeInnerPage = () => {
         selectedGwInstanceRegionId,
         optimizingData,
         inProgressOptimizationData,
-        inProgressHostData
+        inProgressHostData,
+        isInnerPageOptimize
     } = useAppSelector(state => state.getWellOptimize);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
@@ -92,8 +88,44 @@ const DynamicOptimizeInnerPage = () => {
     const engineType = selectedOptimizeConfig?.engineType || DBType.MSSQL;
     const isWad = configData?.isWad || false;
 
-    // Flat API always provides the display name in the 'name' attribute
-    const displayName = configData?.name || '';
+    // Flat API provides display name in the 'name' field of the response
+    const displayName = configData?.name || configId || '';
+
+    // Populate cloneDashboardData for CloneTabs when navigating from Well-Architected page
+    useEffect(() => {
+        if (configId === 'clone-management' && configData?.cloneDetails) {
+            const cloneViolations = configData.cloneDetails.map((item: any) => ({
+                ...item,
+                resourceId: item.databaseHostId,
+                instanceId: item.databaseInstanceName,
+                regionId: item.regionId || selectedGwInstanceRegionId,
+                credentialId: item.credentialId || selectedGwInstanceCredId
+            }));
+            dispatch(
+                setCloneDashboardData({
+                    type: configData?.name || 'Clone cleanup',
+                    objectsInViolation: cloneViolations,
+                    severity: configData?.severity,
+                    tags: configData?.tags || configData?.categories,
+                    recommendation: configData?.recommendation
+                })
+            );
+        }
+    }, [configId, configData, dispatch, selectedGwInstanceRegionId, selectedGwInstanceCredId]);
+
+    // When job completes (isInnerPageOptimize=true), navigate back and trigger assessment refresh
+    useEffect(() => {
+        if (isInnerPageOptimize) {
+            dispatch(setIsInnerPageOptimize(false));
+            dispatch(setGwRefreshPage(true));
+            dispatch(setLandingFromInnerPage(true));
+            if (engineType === DBType.ORACLE) {
+                dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+            } else {
+                dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
+            }
+        }
+    }, [isInnerPageOptimize, dispatch, engineType]);
 
     // Get column configuration from registry
     const columnConfig = useMemo(() => {
@@ -101,141 +133,57 @@ const DynamicOptimizeInnerPage = () => {
         return getColumnConfig(configId);
     }, [configId]);
 
-    // Determine if optimization is supported
+    // Determine if optimization is supported for inner page row-level fixes
+    // Check if optimizeApi exists (not the fixSupported flag which is for dashboard bulk)
     const canOptimize = useMemo(() => {
         if (!configId) return false;
-        return hasFixSupport(configId, engineType, configData?.status?.toLowerCase(), configData?.missingPermissions);
-    }, [configId, engineType, configData]);
+        return !!getOptimizeApiConfig(configId, engineType);
+    }, [configId, engineType]);
 
-    // Linked config banner (Oracle)
+    // View-only configs show a "View" button that opens dialog with "Fix not supported" banner
+    const isViewOnly = useMemo(() => {
+        if (!configId) return false;
+        return isViewOnlyConfig(configId, engineType);
+    }, [configId, engineType]);
+
+    // Linked config banner (Oracle) - only show for layout placement configs
     const linkedConfigNames = useMemo(() => {
-        if (configId && engineType === DBType.ORACLE && isLinkedConfig(configId)) {
+        if (!configId || engineType !== DBType.ORACLE) return [];
+        const configEntry = getConfigEntry(configId, engineType);
+        if (configEntry?.dialogContent?.features?.showLinkedConfigBanner && isLinkedConfig(configId)) {
             return getLinkedConfigNames(configId);
         }
         return [];
     }, [configId, engineType]);
 
-    // Build Oracle OS payload helper
-    const getOracleOsPayload = useCallback(
-        (configurationName: string) => ({
-            type: 'storage-operating-system',
-            hostsToOptimize: [
-                {
-                    configurationName,
-                    databaseHosts: [
-                        {
-                            id: selectedResourceId,
-                            region: selectedGwInstanceRegionId,
-                            credentialsId: selectedGwInstanceCredId,
-                            databases: [selectedDatabaseInstance]
-                        }
-                    ]
-                }
-            ]
-        }),
-        [selectedResourceId, selectedGwInstanceRegionId, selectedGwInstanceCredId, selectedDatabaseInstance]
-    );
-
-    // Build HA payload helper
-    const getHaPayload = useCallback(
-        (configName: string) => ({
-            hostsToOptimize: [
-                {
-                    id: selectedResourceId,
-                    region: selectedGwInstanceRegionId,
-                    credentialsId: selectedGwInstanceCredId,
-                    databaseInstances: [selectedDatabaseInstance]
-                }
-            ],
-            configurationName: configName
-        }),
-        [selectedResourceId, selectedGwInstanceRegionId, selectedGwInstanceCredId, selectedDatabaseInstance]
-    );
-
-    // Main API call handler for Continue button
+    // Main API call handler for Continue button — registry-driven
     const callOptimizeApi = useCallback(
-        (rowData: any) => {
+        (rowData: Record<string, unknown>) => {
             if (!configId) return;
 
-            const technicalId = rowData?.id || configId;
-            const configType = rowData?.type; // 'volume', 'lun', or undefined
+            // Use row-specific ID if available (e.g., for ASM layouts), otherwise use configId
+            const technicalId = (rowData?.id as string) || configId;
 
-            let apiCall: any = null;
-            let apiInput = {};
-            let statusType = '';
+            const apiConfig = getOptimizeApiConfig(configId, engineType);
+            const { mutation, statusType } = apiConfig as OptimizeApiConfig;
+            const apiCall = mutationMap[mutation];
 
-            // Determine config category and route to appropriate API
-            // ONTAP storage configs (volume/lun) - both MSSQL and Oracle
-            if (configType === 'volume' || configType === 'lun') {
-                statusType = ASSESSMENT_CONFIG_NAMES.ONTAP;
-                apiCall = engineType === DBType.ORACLE ? optimizeOracleStorageConfig : optimizeStorageConfig;
-                apiInput = {
-                    credentialId: selectedGwInstanceCredId,
-                    regionId: selectedGwInstanceRegionId,
-                    databaseHostId: selectedResourceId,
-                    instanceId: selectedDatabaseInstance,
-                    payload: {
-                        assessments: [
-                            {
-                                configurationName: technicalId,
-                                objectsToOptimize: rowData?.objectsInViolation || []
-                            }
-                        ]
-                    }
-                };
-            }
-            // Oracle OS configurations - use bulk OS API with technical ID
-            else if (engineType === DBType.ORACLE) {
-                statusType = ASSESSMENT_CONFIG_NAMES.OS;
-                apiCall = optimizeOracleOs;
-                apiInput = {
-                    payload: getOracleOsPayload(technicalId)
-                };
-            }
-            // MSSQL HA configurations - use HA-specific API
-            else if (
-                technicalId === 'shared-storage' ||
-                technicalId === 'cluster-quorum' ||
-                technicalId === 'heartbeat-settings' ||
-                technicalId === 'sqlserver-service'
-            ) {
-                statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
-                apiCall = optimizeHAMssql;
-                const configNameMap: Record<string, string> = {
-                    'heartbeat-settings': 'heartbeat',
-                    'sqlserver-service': 'sqlserver-service'
-                };
-                apiInput = {
-                    configName: configNameMap[technicalId] || technicalId,
-                    payload: getHaPayload(technicalId)
-                };
-            }
-            // MSSQL OS configurations - default for all other MSSQL configs
-            else {
-                statusType = ASSESSMENT_CONFIG_NAMES.OS;
-                apiCall = optimizeOs;
-                apiInput = {
-                    credentialId: selectedGwInstanceCredId,
-                    regionId: selectedGwInstanceRegionId,
-                    databaseHostId: selectedResourceId,
-                    instanceId: selectedDatabaseInstance,
-                    payload: {
-                        configurationName: technicalId
-                    }
-                };
-            }
-
-            if (!apiCall) {
-                console.error('No API call configured for config:', technicalId);
-                return;
-            }
+            const apiInput = buildOptimizeApiInput(apiConfig as OptimizeApiConfig, {
+                configId: technicalId,
+                engineType,
+                credentialId: selectedGwInstanceCredId,
+                regionId: selectedGwInstanceRegionId,
+                databaseHostId: selectedResourceId,
+                instanceId: selectedDatabaseInstance,
+                rowData
+            });
 
             // Set optimizing state
             dispatch(setOptimizingInstanceData(true));
             dispatch(
                 setOptimizingData({
                     ...optimizingData,
-                    [rowData?.id]: 'optimizing'
+                    [technicalId]: 'optimizing'
                 })
             );
             dispatch(
@@ -256,98 +204,61 @@ const DynamicOptimizeInnerPage = () => {
 
             formatAssessmentData(engineType, dispatch);
 
-            // Show notification with Job Monitoring link
             dispatch(
-                addNotification({
-                    notificationType: NOTIFICATION_TYPES.INFO,
-                    message: (
-                        <div>
-                            {`Fixing process initiated for ${
-                                rowData?.name || displayName
-                            }. This process can take upto 2 minutes. Track progress in `}
-                            <Button
-                                Component="button"
-                                variant="text"
-                                onClick={() => {
-                                    dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                    const path = isWorkloadFactory
-                                        ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
-                                        : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
-
-                                    postBlueXPMessage({
-                                        type: BlueXPListeners.navigate,
-                                        payload: { pathname: path, replace: true }
-                                    });
-                                    dispatch(clearNotifications());
-                                }}
-                            >
-                                {t('databases.general.job-monitoring')}.
-                            </Button>
-                        </div>
-                    )
+                buildOptimizeInfoNotification({
+                    configName: (rowData?.name as string) || displayName,
+                    t,
+                    dispatch,
+                    isWorkloadFactory
                 })
             );
 
             // Call the API
-            apiCall(apiInput).then((res: any) => {
-                const failedMsgData = (
-                    <div>
-                        {rowData?.name || displayName} failed to optimize.
-                        <Button
-                            Component="button"
-                            variant="text"
-                            onClick={() => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                const path = isWorkloadFactory
-                                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
-                                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+            (apiCall(apiInput as Record<string, unknown>) as Promise<Record<string, unknown>>).then(
+                (res: Record<string, unknown>) => {
+                    const failedMsgData = buildOptimizeFailedMessage({
+                        configName: (rowData?.name as string) || displayName,
+                        t,
+                        dispatch,
+                        isWorkloadFactory
+                    });
 
-                                postBlueXPMessage({
-                                    type: BlueXPListeners.navigate,
-                                    payload: { pathname: path, replace: true }
-                                });
-                                dispatch(clearNotifications());
-                            }}
-                        >
-                            {t('databases.general.view-job-monitoring')}.
-                        </Button>
-                    </div>
-                );
+                    if (!res.error) {
+                        const state = store.getState();
+                        const data = res?.data as Record<string, unknown> | undefined;
+                        dispatch(
+                            setJobToInstanceMap({
+                                ...state.getWellOptimize.jobToInstanceMap,
+                                [data?.jobId as string]: {
+                                    hostId: selectedResourceId,
+                                    instanceId: selectedDatabaseInstance
+                                }
+                            })
+                        );
+                    }
 
-                // Store job-to-instance mapping if successful
-                if (!res.error) {
-                    const state = store.getState();
-                    dispatch(
-                        setJobToInstanceMap({
-                            ...state.getWellOptimize.jobToInstanceMap,
-                            [res?.data?.jobId]: { hostId: selectedResourceId, instanceId: selectedDatabaseInstance }
-                        })
+                    handleOptimizeStorageJob(
+                        res,
+                        {
+                            ...rowData,
+                            hostId: selectedResourceId,
+                            instanceId: selectedDatabaseInstance,
+                            credentialId: selectedGwInstanceCredId,
+                            regionId: selectedGwInstanceRegionId
+                        },
+                        failedMsgData,
+                        getJobDetailApi,
+                        dispatch,
+                        statusType,
+                        ACTION_TYPE.SINGLE,
+                        {},
+                        true,
+                        engineType
                     );
+
+                    closeDialog();
                 }
-
-                // Monitor the job and refresh assessment when complete
-                handleOptimizeStorageJob(
-                    res,
-                    {
-                        ...rowData,
-                        hostId: selectedResourceId,
-                        instanceId: selectedDatabaseInstance,
-                        credentialId: selectedGwInstanceCredId,
-                        regionId: selectedGwInstanceRegionId
-                    },
-                    failedMsgData,
-                    getJobDetailApi,
-                    dispatch,
-                    statusType,
-                    ACTION_TYPE.SINGLE,
-                    {},
-                    false,
-                    engineType
-                );
-
-                // Close the dialog
-                closeDialog();
-            });
+            );
         },
         [
             configId,
@@ -363,13 +274,7 @@ const DynamicOptimizeInnerPage = () => {
             dispatch,
             t,
             isWorkloadFactory,
-            getOracleOsPayload,
-            getHaPayload,
-            optimizeOs,
-            optimizeOracleOs,
-            optimizeStorageConfig,
-            optimizeOracleStorageConfig,
-            optimizeHAMssql,
+            mutationMap,
             getJobDetailApi,
             closeDialog
         ]
@@ -409,7 +314,7 @@ const DynamicOptimizeInnerPage = () => {
 
     // Handle single row fix - opens dialog for individual row
     const handleRowFix = useCallback(
-        (rowData: any) => {
+        (rowData: Record<string, unknown>) => {
             if (!configId) return;
 
             handleConfigDialog(
@@ -479,7 +384,7 @@ const DynamicOptimizeInnerPage = () => {
                     </div>
 
                     <div className={styles.tagSection}>
-                        <TagComponent categories={configData?.categories} />
+                        <TagComponent categories={configData?.categories || configData?.tags} />
                     </div>
                 </div>
 
@@ -487,8 +392,11 @@ const DynamicOptimizeInnerPage = () => {
                     <LinkedConfigBanner linkedConfigNames={linkedConfigNames} configName={configId} />
                 )}
 
+                {/* Clone management uses its own dedicated component */}
+                {configId === 'clone-management' && <CloneTabs fromPage="innerPage" engineType={engineType} />}
+
                 {/* Dynamic Table - Route to nested or flat table based on config */}
-                {columnConfig && (
+                {configId !== 'clone-management' && columnConfig && (
                     <div className={styles.tableSection}>
                         {columnConfig.useNestedExpandable ? (
                             <NestedDynamicInnerTable
@@ -506,6 +414,7 @@ const DynamicOptimizeInnerPage = () => {
                                 engineType={engineType}
                                 isWad={isWad}
                                 canOptimize={canOptimize}
+                                isViewOnly={isViewOnly}
                                 handleBulkAction={handleBulkAction}
                                 handleRowFix={handleRowFix}
                             />

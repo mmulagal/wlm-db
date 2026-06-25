@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { buildSubConfigValues } from './getWellConfigRegistry';
+import { buildSubConfigValues } from './configRegistry';
 
 describe('buildSubConfigValues', () => {
     // MSSQL storage-efficiencies: single `recommended` per sub-config, current from violatedConfigs

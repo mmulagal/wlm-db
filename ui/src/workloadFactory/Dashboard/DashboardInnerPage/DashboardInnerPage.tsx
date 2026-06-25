@@ -1,6 +1,5 @@
 import { useDispatch } from 'react-redux';
-import { DsTypography, useDialog, DsButton, Button, Popover, TooltipInfo } from '@netapp/design-system';
-import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
+import { DsTypography, useDialog, DsButton, Popover, TooltipInfo } from '@netapp/design-system';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DsFlashingDotsLoader } from '@tlveng/wlm-ds';
@@ -15,12 +14,10 @@ import store from '../../../store/store';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     ACTION_TYPE,
-    ASSESSMENT_CONFIG_NAMES,
+    ASSESSMENT_CONFIG_IDS,
     CONFIG_STATE_ACTIONS,
     CONFIG_STATES,
     DBType,
-    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
-    FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FROM_DIALOG,
     GETWELL_STATUS,
     INVENTORY_STATUS,
@@ -34,7 +31,6 @@ import {
     checkIfDisableForOptimize,
     formatGetWellData,
     handleOptimizeStorageJob,
-    nameToIdConfigMapping,
     setOptimizeInnerpageSummary
 } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
@@ -45,42 +41,31 @@ import DialogContent from '../../GetWell/StorageCardComponent/DialogContent/Dial
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import {
     useLazyGetSubTaskListQuery,
-    useOptimizeComputeConfigMutation,
-    useOptimizeStorageConfigMutation,
-    useOptimizeStorageSizingMutation,
-    useOptimizeStorageTierMutation,
-    useOptimizeStorageSizingForBulkMutation,
-    useOptimizeStorageTierForBulkMutation,
-    useOptimizeComputeConfigForBulkMutation,
-    useOptimizeMTUConfigForBulkMutation,
-    useOptimizeMaxdopConfigForBulkMutation,
-    useOptimizeResiliencyMutation,
-    useOptimizeAwsBackupMutation,
     useDismissMssqlAssessmentMutation,
-    useDismissOracleAssessmentMutation,
-    useOptimizeOracleStorageLayoutAsmMutation,
-    useOptimizeOracleOperatingSystemMutation
+    useDismissOracleAssessmentMutation
 } from '../../../utils/apiService';
+import {
+    useOptimizeMutations,
+    buildOptimizeApiInput,
+    buildOptimizeInfoNotification,
+    buildOptimizeFailedMessage
+} from '../../GetWell/optimizeApiUtils';
 import {
     setCloneDashboardData,
     setGwPageLoadInstanceData,
     setInProgressHostData,
     setInProgressOptimizationData,
+    setIsInnerPageOptimize,
     setJobToInstanceMap,
     setJobToInstanceMapForBulk,
     setLandingFrom,
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
-import {
-    findFlatConfigItem,
-    hasConfigStats,
-    resolveConfigDisplayName
-} from '../../WellArchitectedTab/assessmentFormatUtils';
+import { findFlatConfigItem, hasConfigStats } from '../../WellArchitectedTab/assessmentFormatUtils';
+import { getOptimizeApiConfig, hasFixSupport } from '../../../utils/configRegistry';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
-import { backupStartTime } from '../../../utils/utilityFunctions';
 import {
     calculatePostponeInfo,
     callDashboardDismissApi,
@@ -88,11 +73,7 @@ import {
     getAssessmentStatusConsistency
 } from './DashboardInnerPageHelper';
 import DashboardConfigsTable from './RenderTables/DashboardConfigsTable';
-import SeparatorComponent from '../../../common/SeparatorComponent/SeparatorComponent';
-import {
-    formatOracleWellArchitectedData,
-    oracleCardData
-} from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+import { formatOracleWellArchitectedData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 import { engineTypeBasedResourceStr } from '../../WellArchitectedTab/WellArchitectedTabUtils';
 
 const DashboardInnerPage = () => {
@@ -100,9 +81,13 @@ const DashboardInnerPage = () => {
     const dispatch = useDispatch();
     const { selectedConfig, selectedConfigSummary } = useAppSelector(state => state.databaseHome);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
-    const { inProgressOptimizationData, inProgressHostData, cloneIsOptimizedRows, configEngineType } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const {
+        inProgressOptimizationData,
+        inProgressHostData,
+        cloneIsOptimizedRows,
+        configEngineType,
+        isInnerPageOptimize
+    } = useAppSelector(state => state.getWellOptimize);
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
     const { allmssqlHostAssessmentData, allOracleHostAssessmentData } = useAppSelector(state => state.inventoryV2);
     const { setDialog, closeDialog } = useDialog();
@@ -128,6 +113,16 @@ const DashboardInnerPage = () => {
 
     const recommendationRef = useRef<HTMLDivElement | null>(null);
     const VALUE_CARD_FIXED_HEIGHT = 96;
+
+    // After a single-fix job completes, handleOptimizeStorageJob sets isInnerPageOptimize=true.
+    // Clear the flag. The table and value-card counts update automatically because
+    // updateFlatAssessmentStatus already patched the flat assessments[] array in inventoryV2
+    // which DashboardConfigsTable reads via useMemo.
+    useEffect(() => {
+        if (isInnerPageOptimize) {
+            dispatch(setIsInnerPageOptimize(false));
+        }
+    }, [isInnerPageOptimize, dispatch]);
 
     useEffect(() => {
         const recEl = recommendationRef.current;
@@ -187,56 +182,37 @@ const DashboardInnerPage = () => {
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
-    const [optimizeStorageConfig] = useOptimizeStorageConfigMutation();
-    const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
-    const [optimizeStorageSizing] = useOptimizeStorageSizingMutation();
-    const [optimizeStorageTier] = useOptimizeStorageTierMutation();
-    const [optimizeResiliency] = useOptimizeResiliencyMutation();
-    const [optimizeAwsBackup] = useOptimizeAwsBackupMutation();
-    const [optimizeStorageSizingForBulk] = useOptimizeStorageSizingForBulkMutation();
-    const [optimizeStorageTierForBulk] = useOptimizeStorageTierForBulkMutation();
-    const [optimizeComputeConfigForBulk] = useOptimizeComputeConfigForBulkMutation();
-    const [optimizeMaxdopConfigForBulk] = useOptimizeMaxdopConfigForBulkMutation();
-    const [optimizeMTUConfigForBulk] = useOptimizeMTUConfigForBulkMutation();
+    const mutationMap = useOptimizeMutations();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
     const [dismissMssqlAssessment] = useDismissMssqlAssessmentMutation();
     const [dismissOracleAssessment] = useDismissOracleAssessmentMutation();
-    const [optimizeOracleStorageLayoutAsm] = useOptimizeOracleStorageLayoutAsmMutation();
-    const [optimizeOracleOs] = useOptimizeOracleOperatingSystemMutation();
 
-    const storageLayoutAsmPayload = (configName: string, rowData: any) => ({
-        assessments: [
-            {
-                configurationName: configName,
-                objectsToOptimize: rowData?.objectsInViolation || []
-            }
-        ]
-    });
+    // Builds the flat row list passed to handleOptimizeStorageJob for bulk operations.
+    const getBulkInstanceList = (jobData: any[], configId: string) => {
+        const instanceList: any = [];
+        (jobData || []).forEach((hostOptimizeConfig: any) => {
+            const databaseHosts = hostOptimizeConfig.databaseHosts || [];
+            databaseHosts.forEach((host: any) => {
+                const instances = host.sqlServerInstances || host.databases || [];
+                instances.forEach((instanceId: string) => {
+                    instanceList.push({
+                        id: configId,
+                        name: configDisplayName,
+                        hostId: host.id,
+                        instanceId,
+                        credentialId: host?.credentialsId,
+                        regionId: host?.region
+                    });
+                });
+            });
+        });
+        return instanceList;
+    };
 
-    const computeHostOsPayload = (configurationName: string, rowData: any) => ({
-        type: 'compute-host-os',
-        hostsToOptimize: [
-            {
-                configurationName,
-                databaseHosts: [
-                    {
-                        id: rowData?.databaseHostId,
-                        credentialsId: rowData?.credentialId,
-                        region: rowData?.regionId,
-                        databases: [rowData?.instanceId]
-                    }
-                ]
-            }
-        ]
-    });
-
-    const callOptimizeApi = (type: any, fullRowData?: any, operation?: string) => {
-        type = resolveConfigDisplayName(type);
-        // Filter rows to only include those with "Not optimized" status if fullRowData is an array
+    const callOptimizeApi = (configId: string, fullRowData?: any, operation?: string) => {
         const rowData = Array.isArray(fullRowData) ? filterNotOptimizedRows(fullRowData) : fullRowData;
+        const isBulk = operation === ACTION_TYPE.BULK;
 
-        let payload: null | object | any = {};
-        let apiCall = null;
         const state = store.getState();
         const {
             selectedDatabaseInstance,
@@ -244,738 +220,101 @@ const DashboardInnerPage = () => {
             landingFrom,
             recommendedInstanceInBulk,
             selectedGwInstanceCredId,
-            selectedGwInstanceRegionId
+            selectedGwInstanceRegionId,
+            selectedSnapshot,
+            selectedAWSBackup,
+            selectedRecommendedInstance
         } = state.getWellOptimize;
-        if (configEngineType === DBType.ORACLE) {
-            if (type === ASSESSMENT_CONFIG_NAMES.DATA_DG_LUN_LAYOUT) {
-                apiCall = optimizeOracleStorageLayoutAsm;
-                payload = storageLayoutAsmPayload('data-dg-lun-layout', rowData);
-            } else if (type === ASSESSMENT_CONFIG_NAMES.LOG_DG_LUN_LAYOUT) {
-                apiCall = optimizeOracleStorageLayoutAsm;
-                payload = storageLayoutAsmPayload('redolog-dg-lun-layout', rowData);
-            } else if (type === ASSESSMENT_CONFIG_NAMES.FRA_DG_LUN_LAYOUT) {
-                apiCall = optimizeOracleStorageLayoutAsm;
-                payload = storageLayoutAsmPayload('fra-dg-lun-layout', rowData);
-            } else if (type === ASSESSMENT_CONFIG_NAMES.ARCHIVELOG_DG_LUN_LAYOUT) {
-                apiCall = optimizeOracleStorageLayoutAsm;
-                payload = storageLayoutAsmPayload('archivelog-dg-lun-layout', rowData);
-            } else if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
-                apiCall = optimizeOracleOs;
-                if (operation === ACTION_TYPE.BULK) {
-                    payload = {
-                        type: 'storage-sizing',
-                        hostsToOptimize: [
-                            {
-                                configurationName: 'headroom',
-                                databaseHosts: Object.values(
-                                    rowData.reduce(
-                                        (
-                                            acc: Record<
-                                                string,
-                                                {
-                                                    id: string;
-                                                    credentialsId: string;
-                                                    region: string;
-                                                    databases: string[];
-                                                }
-                                            >,
-                                            {
-                                                databaseHostId,
-                                                instanceId,
-                                                credentialId,
-                                                regionId
-                                            }: {
-                                                databaseHostId: string;
-                                                instanceId: string;
-                                                credentialId: string;
-                                                regionId: string;
-                                            }
-                                        ) => {
-                                            const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
-                                            if (!acc[uniqueRow]) {
-                                                acc[uniqueRow] = {
-                                                    id: databaseHostId,
-                                                    credentialsId: credentialId,
-                                                    region: regionId,
-                                                    databases: []
-                                                };
-                                            }
-                                            acc[uniqueRow].databases.push(instanceId);
-                                            return acc;
-                                        },
-                                        {}
-                                    )
-                                )
-                            }
-                        ]
-                    };
-                } else {
-                    payload = {
-                        type: 'storage-sizing',
-                        hostsToOptimize: [
-                            {
-                                configurationName: 'headroom',
-                                databaseHosts: [
-                                    {
-                                        id: rowData?.databaseHostId,
-                                        credentialsId: rowData?.credentialId,
-                                        region: rowData?.regionId,
-                                        databases: [rowData?.instanceId]
-                                    }
-                                ]
-                            }
-                        ]
-                    };
-                }
-            } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
-                apiCall = optimizeOracleOs;
-                const { selectedAWSBackup } = state.getWellOptimize;
 
-                payload = {
-                    type: 'aws-backup',
-                    hostsToOptimize: [
-                        {
-                            configurationName: 'aws-backup',
-                            databaseHosts: [
-                                {
-                                    id: rowData?.databaseHostId,
-                                    region: rowData?.regionId,
-                                    credentialsId: rowData?.credentialId,
-                                    fsxFileSystemId: rowData?.data?.assessments?.metadata?.fileSystemId,
-                                    databases: [rowData?.instanceId],
-                                    backupRetentionDays: selectedAWSBackup?.numberOfDays,
-                                    backupStartTime: backupStartTime(selectedAWSBackup)
-                                }
-                            ]
-                        }
-                    ]
-                };
-            } else if (type === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES) {
-                apiCall = optimizeOracleOs;
-                payload = computeHostOsPayload('transparent-hugepages', rowData);
-            } else if (type === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS) {
-                apiCall = optimizeOracleOs;
-                payload = computeHostOsPayload('tcp-advanced-options', rowData);
-            } else if (type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT) {
-                apiCall = optimizeOracleOs;
-                payload = computeHostOsPayload('multiblock-readcount', rowData);
-            } else {
-                // ToDo - More type will come like optimize for sizing and layout here
-                apiCall = optimizeStorageConfig;
-                if (operation === ACTION_TYPE.BULK) {
-                    payload = {
-                        databaseHosts: []
-                    };
-                } else {
-                    payload = {
-                        assessments: [
-                            {
-                                configurationName: type,
-                                objectsToOptimize: []
-                            }
-                        ]
-                    };
-                }
-            }
-        } else if (type === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) {
-            if (operation === ACTION_TYPE.BULK) {
-                apiCall = optimizeComputeConfigForBulk;
+        const apiConfig = getOptimizeApiConfig(configId, configEngineType);
+        if (!apiConfig) return;
 
-                payload = {
-                    hostsToOptimize: [
-                        {
-                            configurationName: 'compute',
-                            databaseHosts: Object.values(
-                                rowData.reduce(
-                                    (
-                                        acc: Record<
-                                            string,
-                                            {
-                                                id: string;
-                                                sqlServerInstances: string[];
-                                                instanceType: string;
-                                                credentialsId: string;
-                                                region: string;
-                                            }
-                                        >,
-                                        {
-                                            databaseHostId,
-                                            instanceId,
-                                            hostName,
-                                            credentialId,
-                                            regionId
-                                        }: {
-                                            databaseHostId: string;
-                                            instanceId: string;
-                                            hostName: string;
-                                            credentialId: string;
-                                            regionId: string;
-                                        }
-                                    ) => {
-                                        const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
-                                        if (!acc[uniqueRow]) {
-                                            acc[uniqueRow] = {
-                                                id: databaseHostId,
-                                                sqlServerInstances: [],
-                                                credentialsId: credentialId,
-                                                region: regionId,
-                                                instanceType: recommendedInstanceInBulk?.[hostName]?.value || ''
-                                            };
-                                        }
-                                        acc[uniqueRow].sqlServerInstances.push(instanceId);
-                                        return acc;
-                                    },
-                                    {}
-                                )
-                            )
-                        }
-                    ]
-                };
-            } else {
-                apiCall = optimizeComputeConfig;
-                const { selectedRecommendedInstance } = state.getWellOptimize;
-                payload = {
-                    instanceType: selectedRecommendedInstance?.value
-                };
-            }
-        } else if (type === ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION) {
-            if (operation === ACTION_TYPE.BULK) {
-                apiCall = optimizeComputeConfigForBulk;
+        const apiCall = mutationMap[apiConfig.mutation];
+        const credId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM;
+        const regionId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM;
 
-                payload = {
-                    hostsToOptimize: [
-                        {
-                            configurationName: 'rss-config',
-                            databaseHosts: Object.values(
-                                // @ts-ignore
-                                rowData.reduce(
-                                    (
-                                        acc: Record<
-                                            string,
-                                            {
-                                                id: string;
-                                                sqlServerInstances: string[];
-                                                credentialsId: string;
-                                                region: string;
-                                                networkAdapters: string[];
-                                            }
-                                        >,
-                                        {
-                                            databaseHostId,
-                                            instanceId,
-                                            credentialId,
-                                            regionId,
-                                            networkAdapters
-                                        }: {
-                                            databaseHostId: string;
-                                            instanceId: string;
-                                            credentialId: string;
-                                            regionId: string;
-                                            networkAdapters: any;
-                                        }
-                                    ) => {
-                                        const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
-                                        if (!acc[uniqueRow]) {
-                                            acc[uniqueRow] = {
-                                                id: databaseHostId,
-                                                sqlServerInstances: [],
-                                                networkAdapters: [],
-                                                credentialsId: credentialId,
-                                                region: regionId
-                                            };
-                                        }
-                                        acc[uniqueRow].sqlServerInstances.push(instanceId);
-                                        acc[uniqueRow].networkAdapters.push(...networkAdapters);
-                                        return acc;
-                                    },
-                                    {}
-                                )
-                            )
-                        }
-                    ]
-                };
-            } else {
-                apiCall = optimizeComputeConfigForBulk;
-                payload = {
-                    hostsToOptimize: [
-                        {
-                            configurationName: 'rss-config',
-                            databaseHosts: [
-                                {
-                                    id: rowData?.databaseHostId,
-                                    sqlServerInstances: [rowData?.instanceId],
-                                    networkAdapters: rowData?.networkAdapters,
-                                    credentialsId: rowData?.credentialId,
-                                    region: rowData?.regionId
-                                }
-                            ]
-                        }
-                    ]
-                };
-            }
-        } else if (
-            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
-            type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
-            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE
-        ) {
-            if (operation === ACTION_TYPE.BULK) {
-                apiCall = optimizeStorageSizingForBulk;
+        const apiData = buildOptimizeApiInput(apiConfig, {
+            configId,
+            engineType: configEngineType,
+            credentialId: credId,
+            regionId,
+            databaseHostId: selectedResourceId,
+            instanceId: selectedDatabaseInstance,
+            rowData,
+            operation,
+            selectedSnapshot,
+            selectedAWSBackup,
+            selectedRecommendedInstance,
+            recommendedInstanceInBulk
+        });
+        if (!apiData) return;
 
-                payload = {
-                    hostsToOptimize: [
-                        {
-                            configurationName:
-                                type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
-                                    ? 'log-drive-size'
-                                    : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-                                    ? 'headroom'
-                                    : 'tempdb-drive-size',
-                            databaseHosts: Object.values(
-                                rowData.reduce(
-                                    (
-                                        acc: Record<
-                                            string,
-                                            {
-                                                id: string;
-                                                credentialsId: string;
-                                                region: string;
-                                                sqlServerInstances: string[];
-                                            }
-                                        >,
-                                        {
-                                            databaseHostId,
-                                            instanceId,
-                                            credentialId,
-                                            regionId
-                                        }: {
-                                            databaseHostId: string;
-                                            instanceId: string;
-                                            credentialId: string;
-                                            regionId: string;
-                                        }
-                                    ) => {
-                                        const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
-                                        if (!acc[uniqueRow]) {
-                                            acc[uniqueRow] = {
-                                                id: databaseHostId,
-                                                credentialsId: credentialId,
-                                                region: regionId,
-                                                sqlServerInstances: []
-                                            };
-                                        }
-                                        acc[uniqueRow].sqlServerInstances.push(instanceId);
-                                        return acc;
-                                    },
-                                    {}
-                                )
-                            )
-                        }
-                    ]
-                };
-            } else {
-                apiCall = optimizeStorageSizing;
-                payload = {
-                    configurationName:
-                        type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE
-                            ? 'log-drive-size'
-                            : type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM
-                            ? 'headroom'
-                            : 'tempdb-drive-size'
-                };
-            }
-        } else if (type === ASSESSMENT_CONFIG_NAMES.STORAGE_TIER) {
-            if (operation === ACTION_TYPE.BULK) {
-                apiCall = optimizeStorageTierForBulk;
+        const { payload } = apiData;
 
-                payload = {
-                    hostsToOptimize: [
-                        {
-                            configurationName: 'storage-tier',
-                            databaseHosts: Object.values(
-                                rowData.reduce(
-                                    (
-                                        acc: Record<
-                                            string,
-                                            {
-                                                id: string;
-                                                credentialsId: string;
-                                                region: string;
-                                                sqlServerInstances: string[];
-                                            }
-                                        >,
-                                        {
-                                            databaseHostId,
-                                            instanceId,
-                                            credentialId,
-                                            regionId
-                                        }: {
-                                            databaseHostId: string;
-                                            instanceId: string;
-                                            credentialId: string;
-                                            regionId: string;
-                                        }
-                                    ) => {
-                                        const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
-                                        if (!acc[uniqueRow]) {
-                                            acc[uniqueRow] = {
-                                                id: databaseHostId,
-                                                credentialsId: credentialId,
-                                                region: regionId,
-                                                sqlServerInstances: []
-                                            };
-                                        }
-                                        acc[uniqueRow].sqlServerInstances.push(instanceId);
-                                        return acc;
-                                    },
-                                    {}
-                                )
-                            )
-                        }
-                    ]
-                };
-            } else {
-                apiCall = optimizeStorageTier;
-                payload = {
-                    configurationName: 'storage-tier'
-                };
-            }
-        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
-            apiCall = optimizeResiliency;
-            const state = store.getState();
-            const { selectedSnapshot } = state.getWellOptimize;
-
-            payload = {
-                configurationName: ['snapshot-policy'],
-                params: [
-                    {
-                        snapshotPolicy: {
-                            uuid: selectedSnapshot?.data?.uuid,
-                            name: selectedSnapshot?.data?.name
-                        },
-                        volumes: rowData?.objectsInViolation
-                    }
-                ]
-            };
-        } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
-            apiCall = optimizeAwsBackup;
-            const state = store.getState();
-            const { selectedAWSBackup } = state.getWellOptimize;
-
-            payload = {
-                hostsToOptimize: [
-                    {
-                        configurationName: ['aws-backup'],
-                        databaseHosts: [
-                            {
-                                id: rowData?.databaseHostId,
-                                sqlServerInstances: [rowData?.instanceId],
-                                fsxFileSystemId: rowData?.data?.assessments?.metadata?.fileSystemId,
-                                backupRetentionDays: selectedAWSBackup?.numberOfDays,
-                                backupStartTime: backupStartTime(selectedAWSBackup),
-                                credentialsId: rowData?.credentialId,
-                                region: rowData?.regionId
-                            }
-                        ]
-                    }
-                ]
-            };
-        } else if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
-            apiCall = optimizeMaxdopConfigForBulk;
-            if (operation === ACTION_TYPE.BULK) {
-                payload = {
-                    hostsToOptimize: [
-                        {
-                            configurationName: 'max-dop',
-                            databaseHosts: Object.values(
-                                rowData.reduce(
-                                    (
-                                        acc: Record<
-                                            string,
-                                            {
-                                                id: string;
-                                                credentialsId: string;
-                                                region: string;
-                                                sqlServerInstances: string[];
-                                            }
-                                        >,
-                                        {
-                                            databaseHostId,
-                                            instanceId,
-                                            credentialId,
-                                            regionId
-                                        }: {
-                                            databaseHostId: string;
-                                            instanceId: string;
-                                            credentialId: string;
-                                            regionId: string;
-                                        }
-                                    ) => {
-                                        const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
-                                        if (!acc[uniqueRow]) {
-                                            acc[uniqueRow] = {
-                                                id: databaseHostId,
-                                                sqlServerInstances: [],
-                                                credentialsId: credentialId,
-                                                region: regionId
-                                            };
-                                        }
-                                        acc[uniqueRow].sqlServerInstances.push(instanceId);
-                                        return acc;
-                                    },
-                                    {}
-                                )
-                            )
-                        }
-                    ]
-                };
-            } else {
-                payload = {
-                    hostsToOptimize: [
-                        {
-                            configurationName: 'max-dop',
-                            databaseHosts: [
-                                {
-                                    id: rowData?.databaseHostId,
-                                    sqlServerInstances: [rowData?.instanceId]
-                                }
-                            ]
-                        }
-                    ]
-                };
-            }
-        } else if (type === ASSESSMENT_CONFIG_NAMES.MTU) {
-            apiCall = optimizeMTUConfigForBulk;
-            if (operation === ACTION_TYPE.BULK) {
-                payload = {
-                    hostsToOptimize: [
-                        {
-                            configurationName: 'mtu-alignment',
-                            databaseHosts: Object.values(
-                                rowData.reduce(
-                                    (
-                                        acc: Record<
-                                            string,
-                                            {
-                                                id: string;
-                                                credentialsId: string;
-                                                region: string;
-                                                sqlServerInstances: string[];
-                                                interfaceNames: string[];
-                                            }
-                                        >,
-                                        {
-                                            databaseHostId,
-                                            instanceId,
-                                            credentialId,
-                                            regionId,
-                                            objectsInViolation
-                                        }: {
-                                            databaseHostId: string;
-                                            instanceId: string;
-                                            credentialId: string;
-                                            regionId: string;
-                                            objectsInViolation: string[];
-                                        }
-                                    ) => {
-                                        const uniqueRow = uniqueHostRow(databaseHostId, credentialId, regionId);
-                                        if (!acc[uniqueRow]) {
-                                            acc[uniqueRow] = {
-                                                id: databaseHostId,
-                                                sqlServerInstances: [],
-                                                credentialsId: credentialId,
-                                                region: regionId,
-                                                interfaceNames: []
-                                            };
-                                        }
-                                        acc[uniqueRow].sqlServerInstances.push(instanceId);
-                                        if (objectsInViolation) {
-                                            acc[uniqueRow].interfaceNames.push(...objectsInViolation);
-                                        }
-                                        return acc;
-                                    },
-                                    {}
-                                )
-                            )
-                        }
-                    ]
-                };
-            } else {
-                payload = {
-                    hostsToOptimize: [
-                        {
-                            configurationName: 'mtu-alignment',
-                            databaseHosts: [
-                                {
-                                    id: rowData?.databaseHostId,
-                                    sqlServerInstances: [rowData?.instanceId],
-                                    credentialsId: rowData?.credentialId,
-                                    region: rowData?.regionId,
-                                    interfaceNames: rowData?.objectsInViolation || []
-                                }
-                            ]
-                        }
-                    ]
-                };
-            }
-        } else {
-            // ToDo - More type will come like optimize for sizing and layout here
-            apiCall = optimizeStorageConfig;
-            if (operation === ACTION_TYPE.BULK) {
-                payload = {
-                    databaseHosts: []
-                };
-            } else {
-                payload = {
-                    assessments: [
-                        {
-                            configurationName: type,
-                            objectsToOptimize: []
-                        }
-                    ]
-                };
-            }
-        }
-
-        // call optimize api
+        // ── Pre-call Redux state ──────────────────────────────────────────────
         dispatch(setOptimizingInstanceData(true));
-        dispatch(
-            setOptimizingData({
-                ...optimizingData,
-                [nameToIdConfigMapping(type)]: 'optimizing'
-            })
-        );
-        if (operation === ACTION_TYPE.BULK) {
+        dispatch(setOptimizingData({ ...optimizingData, [configId]: 'optimizing' }));
+
+        if (isBulk && payload?.hostsToOptimize) {
             const hostIds = payload.hostsToOptimize[0].databaseHosts.map((host: any) => host.id);
             dispatch(
                 setInProgressHostData({
                     ...inProgressHostData,
-                    [type]: [...(inProgressHostData[type] || []), ...hostIds]
+                    [configId]: [...(inProgressHostData[configId] || []), ...hostIds]
                 })
             );
-            const hostinstances = payload.hostsToOptimize.flatMap((host: any) =>
-                host.databaseHosts.flatMap((databaseHost: any) => {
-                    const instances = databaseHost.sqlServerInstances || databaseHost.databases;
-                    return instances.map((instance: any) => `${databaseHost.id}_${instance}`);
+            const hostInstances = payload.hostsToOptimize.flatMap((h: any) =>
+                h.databaseHosts.flatMap((dh: any) => {
+                    const instances = dh.sqlServerInstances || dh.databases;
+                    return instances.map((inst: any) => `${dh.id}_${inst}`);
                 })
             );
             dispatch(
                 setInProgressOptimizationData({
                     ...inProgressOptimizationData,
-                    [type]: [...(inProgressOptimizationData[type] || []), ...hostinstances]
+                    [configId]: [...(inProgressOptimizationData[configId] || []), ...hostInstances]
                 })
             );
         } else {
             dispatch(
                 setInProgressHostData({
                     ...inProgressHostData,
-                    [type]: [...(inProgressHostData[type] || []), selectedResourceId]
+                    [configId]: [...(inProgressHostData[configId] || []), selectedResourceId]
                 })
             );
             dispatch(
                 setInProgressOptimizationData({
                     ...inProgressOptimizationData,
-                    [type]: [
-                        ...(inProgressOptimizationData[type] || []),
+                    [configId]: [
+                        ...(inProgressOptimizationData[configId] || []),
                         `${selectedResourceId}_${selectedDatabaseInstance}`
                     ]
                 })
             );
         }
+
         if (configEngineType === DBType.ORACLE) {
             formatOracleWellArchitectedData(dispatch, rowData?.assessments);
         } else {
             formatGetWellData(dispatch, rowData?.assessments);
         }
 
-        dispatch(
-            addNotification({
-                notificationType: NOTIFICATION_TYPES.INFO,
-                message: (
-                    <div>
-                        {`${t('databases.well-architect.fixing-process-initiated-for')} ${type}. ${t(
-                            'databases.well-architect.process-can-take-min'
-                        )} `}
-                        <Button
-                            Component="button"
-                            variant="text"
-                            onClick={() => {
-                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                                const path = isWorkloadFactory
-                                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
-                                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+        dispatch(buildOptimizeInfoNotification({ configName: configDisplayName, t, dispatch, isWorkloadFactory }));
 
-                                postBlueXPMessage({
-                                    type: BlueXPListeners.navigate,
-                                    payload: { pathname: path, replace: true }
-                                });
-
-                                dispatch(clearNotifications());
-                            }}
-                        >
-                            {t('databases.general.job-monitoring')}.
-                        </Button>
-                    </div>
-                )
-            })
-        );
-
-        let apiData = {};
-        if (operation === ACTION_TYPE.BULK) {
-            apiData = {
-                payload
-            };
-        } else if (type === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
-            apiData = {
-                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-                payload
-            };
-        } else if (type === ASSESSMENT_CONFIG_NAMES.MTU) {
-            apiData = {
-                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-                payload
-            };
-        } else {
-            apiData = {
-                credentialId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM,
-                regionId: landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM,
-                databaseHostId: selectedResourceId,
-                instanceId: selectedDatabaseInstance,
-                payload
-            };
-        }
-
-        apiCall(apiData).then((res: any) => {
-            const failedMsgData = (
-                <div className={styles.notification}>
-                    {type} failed to optimize.
-                    <Button
-                        Component="button"
-                        variant="text"
-                        onClick={() => {
-                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                            const path = isWorkloadFactory
-                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
-                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
-
-                            postBlueXPMessage({
-                                type: BlueXPListeners.navigate,
-                                payload: { pathname: path, replace: true }
-                            });
-                            dispatch(clearNotifications());
-                        }}
-                    >
-                        {t('databases.general.view-job-monitoring')}.
-                    </Button>
-                </div>
-            );
+        apiCall(apiData as Record<string, unknown>).then((res: any) => {
+            const failedMsgData = buildOptimizeFailedMessage({
+                configName: configDisplayName,
+                t,
+                dispatch,
+                isWorkloadFactory,
+                className: styles.notification
+            });
             if (!res.error) {
-                if (operation === ACTION_TYPE.BULK) {
+                if (isBulk) {
                     dispatch(
                         setJobToInstanceMapForBulk({
                             ...state.getWellOptimize.jobToInstanceMap,
-                            [res?.data?.jobId]: payload?.hostsToOptimize[0]
+                            [res?.data?.jobId]: payload?.hostsToOptimize?.[0]
                         })
                     );
                 } else {
@@ -987,66 +326,46 @@ const DashboardInnerPage = () => {
                     );
                 }
             }
-            if (operation === ACTION_TYPE.BULK) {
+            if (isBulk) {
                 handleOptimizeStorageJob(
                     res,
                     {},
                     failedMsgData,
                     getJobDetailApi,
                     dispatch,
-                    type,
+                    configId,
                     operation,
-                    getBulkInstanceList(payload?.hostsToOptimize, type),
+                    getBulkInstanceList(payload?.hostsToOptimize, configId),
                     false,
                     configEngineType
                 );
             } else {
+                // Use IDs directly from the table row (sourced from allMssqlHostAssessmentData /
+                // allOracleHostAssessmentData) so that updateOptimizationStatus /
+                // updateFlatAssessmentStatus can locate the correct host+instance entry.
+                // selectedResourceId comes from inventoryTableData and may differ from
+                // databaseHostId used as the primary key in the assessment store.
                 handleOptimizeStorageJob(
                     res,
                     {
-                        id: nameToIdConfigMapping(type),
-                        name: type,
-                        hostId: selectedResourceId,
-                        instanceId: selectedDatabaseInstance,
-                        credentialId: selectedGwInstanceCredId,
-                        regionId: selectedGwInstanceRegionId
+                        id: configId,
+                        name: configDisplayName,
+                        hostId: rowData?.databaseHostId ?? selectedResourceId,
+                        instanceId: rowData?.instanceId ?? selectedDatabaseInstance,
+                        credentialId: rowData?.credentialId ?? selectedGwInstanceCredId,
+                        regionId: rowData?.regionId ?? selectedGwInstanceRegionId
                     },
                     failedMsgData,
                     getJobDetailApi,
                     dispatch,
-                    type,
+                    configId,
                     operation,
                     null,
-                    false,
+                    true,
                     configEngineType
                 );
             }
         });
-    };
-
-    const getBulkInstanceList = (jobData: any[], name: string) => {
-        const instanceList: any = [];
-
-        jobData.forEach((hostOptimizeConfig: any) => {
-            const databaseHosts = hostOptimizeConfig.databaseHosts || [];
-            const configType = hostOptimizeConfig.type;
-
-            databaseHosts.forEach((host: any) => {
-                const instances = host.sqlServerInstances || host.databases;
-                instances.forEach((instanceId: string) => {
-                    instanceList.push({
-                        id: configType,
-                        name,
-                        hostId: host.id,
-                        instanceId,
-                        credentialId: host?.credentialsId,
-                        regionId: host?.region
-                    });
-                });
-            });
-        });
-
-        return instanceList;
     };
 
     const optimizeAction = (rowData: any) => {
@@ -1071,13 +390,13 @@ const DashboardInnerPage = () => {
         );
     };
 
-    const handleSingleDismissPostpone = (rowData: any, type: string, operation: string, configEngineType?: string) => {
-        const dismissApi = configEngineType === DBType.ORACLE ? dismissOracleAssessment : dismissMssqlAssessment;
+    const handleSingleDismissPostpone = (rowData: any, type: string, operation: string, rowEngineType?: string) => {
+        const dismissApi = rowEngineType === DBType.ORACLE ? dismissOracleAssessment : dismissMssqlAssessment;
         if (operation === CONFIG_STATE_ACTIONS.DISMISS) {
             setDialog(
                 <DialogComponent
                     header={engineTypeBasedResourceStr(
-                        configEngineType,
+                        rowEngineType,
                         t('databases.dismiss.dismiss-instance'),
                         t('databases.dismiss.dismiss-database')
                     )}
@@ -1085,7 +404,7 @@ const DashboardInnerPage = () => {
                         <div className={styles.dismissDialog}>
                             <DsTypography variant="Regular_14">
                                 {engineTypeBasedResourceStr(
-                                    configEngineType,
+                                    rowEngineType,
                                     t('databases.dismiss.dialog-text-1'),
                                     t('databases.dismiss.dialog-text-database-1')
                                 )}{' '}
@@ -1097,7 +416,7 @@ const DashboardInnerPage = () => {
                     primaryButton={t('databases.dismiss.dismiss')}
                     secondaryButton={t('databases.dismiss.cancel')}
                     callback={() => {
-                        callDashboardDismissApi(type, [rowData], operation, dismissApi, dispatch, t, configEngineType);
+                        callDashboardDismissApi(type, [rowData], operation, dismissApi, dispatch, t, rowEngineType);
                     }}
                     closeCallback={() => {
                         closeDialog();
@@ -1109,7 +428,7 @@ const DashboardInnerPage = () => {
             setDialog(
                 <DialogComponent
                     header={engineTypeBasedResourceStr(
-                        configEngineType,
+                        rowEngineType,
                         t('databases.dismiss.postpone-days'),
                         t('databases.dismiss.postpone-days-database')
                     )}
@@ -1117,7 +436,7 @@ const DashboardInnerPage = () => {
                         <div className={styles.dismissDialog}>
                             <DsTypography variant="Regular_14">
                                 {engineTypeBasedResourceStr(
-                                    configEngineType,
+                                    rowEngineType,
                                     t('databases.dismiss.postpone-line-1'),
                                     t('databases.dismiss.postpone-line-database-1')
                                 )}{' '}
@@ -1129,7 +448,7 @@ const DashboardInnerPage = () => {
                     primaryButton={t('databases.dismiss.dismiss')}
                     secondaryButton={t('databases.dismiss.cancel')}
                     callback={() => {
-                        callDashboardDismissApi(type, [rowData], operation, dismissApi, dispatch, t, configEngineType);
+                        callDashboardDismissApi(type, [rowData], operation, dismissApi, dispatch, t, rowEngineType);
                     }}
                     closeCallback={() => {
                         closeDialog();
@@ -1138,13 +457,12 @@ const DashboardInnerPage = () => {
             );
         }
         if (operation === CONFIG_STATE_ACTIONS.ACTIVE) {
-            callDashboardDismissApi(type, [rowData], operation, dismissApi, dispatch, t, configEngineType);
+            callDashboardDismissApi(type, [rowData], operation, dismissApi, dispatch, t, rowEngineType);
         }
     };
 
-    const handleDialog = (type: string, rowData: any, operation?: string) => {
-        type = resolveConfigDisplayName(type);
-        if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+    const handleDialog = (configId: string, rowData: any, operation?: string) => {
+        if (configId === ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT) {
             let cloneViolationsList: any = [];
             if (rowData?.objectsInViolation) {
                 // get violations clone details for single selected instance. From dashboard single instance.
@@ -1166,7 +484,7 @@ const DashboardInnerPage = () => {
                         })) || [];
                 dispatch(
                     setCloneDashboardData({
-                        type: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                        type: ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT,
                         objectsInViolation: cloneViolationsList,
                         severity: rowData?.severity,
                         tags: rowData?.tags,
@@ -1179,7 +497,7 @@ const DashboardInnerPage = () => {
                 const filteredRowData = rowData.filter(
                     (row: any) => row?.assessmentStatus !== GETWELL_STATUS.OPTIMIZED
                 );
-                filteredRowData?.map((item: any) => {
+                filteredRowData?.forEach((item: any) => {
                     cloneViolationsList = [
                         ...cloneViolationsList,
                         ...(item?.cloneDetails
@@ -1201,7 +519,7 @@ const DashboardInnerPage = () => {
                 });
                 dispatch(
                     setCloneDashboardData({
-                        type: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                        type: ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT,
                         objectsInViolation: cloneViolationsList,
                         severity: rowData?.[0]?.severity,
                         tags: rowData?.[0]?.tags,
@@ -1220,10 +538,10 @@ const DashboardInnerPage = () => {
 
             setDialog(
                 <DialogComponent
-                    header={`${type}`}
+                    header={configDisplayName}
                     content={
                         <DialogContent
-                            type={type}
+                            type={configId}
                             recommendationOptions={rowData?.recommendationOptions}
                             missingPermissions={rowData?.missingPermissions}
                             recommendedSizeInGib={rowData?.recommendedSizeInGib}
@@ -1238,26 +556,16 @@ const DashboardInnerPage = () => {
                     primaryButton={t('databases.general.continue')}
                     secondaryButton={t('databases.general.cancel')}
                     callback={() => {
-                        callOptimizeApi(type, rowData, operation);
+                        callOptimizeApi(configId, rowData, operation);
                     }}
                     closeCallback={() => {
                         closeDialog();
                     }}
-                    customClass={type !== ASSESSMENT_CONFIG_NAMES.MAXDOP ? 'innerPage' : ''}
+                    customClass={configId !== ASSESSMENT_CONFIG_IDS.MAXDOP ? 'innerPage' : ''}
                     primaryButtonDisabled={allRowsAreWad}
                     primaryButtonTooltip={allRowsAreWad ? t('databases.wad.tab-disabled-message') : ''}
                     hidePrimaryButton={
-                        (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
-                            type === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
-                            type === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
-                            type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
-                            type === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
-                            type === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
-                            type === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
-                            type === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
-                            type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT) &&
-                        rowData?.missingPermissions &&
-                        rowData?.missingPermissions.length > 0
+                        !hasFixSupport(configId, configEngineType, rowData?.status, rowData?.missingPermissions)
                     }
                 />
             );
@@ -1306,8 +614,8 @@ const DashboardInnerPage = () => {
     const lastColDetails = (
         name: string,
         data?: any,
-        inProgressOptimizationData?: any,
-        inProgressHostData?: any,
+        colInProgressOptimizationData?: any,
+        colInProgressHostData?: any,
         showDismissed?: boolean,
         isFixEnabled?: boolean
     ) => ({
@@ -1383,7 +691,7 @@ const DashboardInnerPage = () => {
                 errorMessage = t('databases.well-architect.fix-disabled');
             } else {
                 ({ isDisabled, errorMessage } = checkIfDisableForOptimize(
-                    inProgressHostData,
+                    colInProgressHostData,
                     name,
                     rowData,
                     t,
@@ -1392,45 +700,52 @@ const DashboardInnerPage = () => {
                 ));
             }
 
-            const isInProgress = inProgressOptimizationData?.[name]?.includes(rowData?.id);
-            return (
-                <div className={styles.buttonContainer}>
-                    {isInProgress ? (
-                        <div className={styles['optimize-in-progress']}>
-                            <DsFlashingDotsLoader />
-                            <DsTypography variant="Regular_14">{t('databases.well-architect.fixing')}</DsTypography>
-                        </div>
-                    ) : isDisabled && errorMessage ? (
-                        <Popover
-                            popoverClass={CommonStyles.popover}
-                            isAppendedToBody
-                            children={<DsTypography variant="Regular_14">{errorMessage}</DsTypography>}
-                            trigger="hover"
-                            delayHide={200}
-                            interactive
-                            container={
-                                <DsButton variant="secondary" isDisabled>
-                                    {t('databases.well-architect.fix')}
-                                </DsButton>
-                            }
-                        />
-                    ) : (
-                        <DsButton
-                            isThin
-                            variant="secondary"
-                            isDisabled={
-                                isDisabled || rowData?.assessmentStatus === GETWELL_STATUS.OPTIMIZED || !isFixEnabled
-                            }
-                            onClick={() => {
-                                optimizeAction(rowData);
-                                handleDialog(name, rowData, 'single');
-                            }}
-                        >
-                            {t('databases.well-architect.fix')}
-                        </DsButton>
-                    )}
-                </div>
-            );
+            const isInProgress = colInProgressOptimizationData?.[name]?.includes(rowData?.id);
+
+            let buttonContent;
+            if (isInProgress) {
+                buttonContent = (
+                    <div className={styles['optimize-in-progress']}>
+                        <DsFlashingDotsLoader />
+                        <DsTypography variant="Regular_14">{t('databases.well-architect.fixing')}</DsTypography>
+                    </div>
+                );
+            } else if (isDisabled && errorMessage) {
+                buttonContent = (
+                    <Popover
+                        popoverClass={CommonStyles.popover}
+                        isAppendedToBody
+                        trigger="hover"
+                        delayHide={200}
+                        interactive
+                        container={
+                            <DsButton variant="secondary" isDisabled>
+                                {t('databases.well-architect.fix')}
+                            </DsButton>
+                        }
+                    >
+                        <DsTypography variant="Regular_14">{errorMessage}</DsTypography>
+                    </Popover>
+                );
+            } else {
+                buttonContent = (
+                    <DsButton
+                        isThin
+                        variant="secondary"
+                        isDisabled={
+                            isDisabled || rowData?.assessmentStatus === GETWELL_STATUS.OPTIMIZED || !isFixEnabled
+                        }
+                        onClick={() => {
+                            optimizeAction(rowData);
+                            handleDialog(name, rowData, 'single');
+                        }}
+                    >
+                        {t('databases.well-architect.fix')}
+                    </DsButton>
+                );
+            }
+
+            return <div className={styles.buttonContainer}>{buttonContent}</div>;
         }
     });
 
@@ -1443,9 +758,9 @@ const DashboardInnerPage = () => {
         type: string,
         rowData: any,
         operationType: string,
-        configEngineType?: string
+        bulkEngineType?: string
     ) => {
-        const dismissApi = configEngineType === DBType.ORACLE ? dismissOracleAssessment : dismissMssqlAssessment;
+        const dismissApi = bulkEngineType === DBType.ORACLE ? dismissOracleAssessment : dismissMssqlAssessment;
         // Filter out WAD (offline assessment) rows for dismiss and postpone operations
         const filteredRowData =
             operationType === CONFIG_STATE_ACTIONS.DISMISS || operationType === CONFIG_STATE_ACTIONS.POSTPONED
@@ -1461,7 +776,7 @@ const DashboardInnerPage = () => {
             setDialog(
                 <DialogComponent
                     header={engineTypeBasedResourceStr(
-                        configEngineType,
+                        bulkEngineType,
                         t('databases.dismiss.dismiss-instance'),
                         t('databases.dismiss.dismiss-database')
                     )}
@@ -1470,7 +785,7 @@ const DashboardInnerPage = () => {
                             <DsTypography variant="Regular_14">
                                 {t('databases.dismiss.dialog-bulk-text-1')} {filteredRowData?.length}{' '}
                                 {engineTypeBasedResourceStr(
-                                    configEngineType,
+                                    bulkEngineType,
                                     t('databases.dismiss.selected-instances'),
                                     t('databases.dismiss.selected-databases')
                                 )}
@@ -1488,7 +803,7 @@ const DashboardInnerPage = () => {
                             dismissApi,
                             dispatch,
                             t,
-                            configEngineType
+                            bulkEngineType
                         );
                     }}
                     closeCallback={() => {
@@ -1501,7 +816,7 @@ const DashboardInnerPage = () => {
             setDialog(
                 <DialogComponent
                     header={engineTypeBasedResourceStr(
-                        configEngineType,
+                        bulkEngineType,
                         t('databases.dismiss.postpone-days'),
                         t('databases.dismiss.postpone-days-database')
                     )}
@@ -1510,7 +825,7 @@ const DashboardInnerPage = () => {
                             <DsTypography variant="Regular_14">
                                 {t('databases.dismiss.postpone-bulk-line-1')} {filteredRowData?.length}{' '}
                                 {engineTypeBasedResourceStr(
-                                    configEngineType,
+                                    bulkEngineType,
                                     t('databases.dismiss.selected-instances'),
                                     t('databases.dismiss.selected-databases')
                                 )}
@@ -1528,7 +843,7 @@ const DashboardInnerPage = () => {
                             dismissApi,
                             dispatch,
                             t,
-                            configEngineType
+                            bulkEngineType
                         );
                     }}
                     closeCallback={() => {
@@ -1538,7 +853,7 @@ const DashboardInnerPage = () => {
             );
         }
         if (operationType === CONFIG_STATE_ACTIONS.ACTIVE) {
-            callDashboardDismissApi(type, rowData, operationType, dismissApi, dispatch, t, configEngineType);
+            callDashboardDismissApi(type, rowData, operationType, dismissApi, dispatch, t, bulkEngineType);
         }
     };
 
@@ -1605,7 +920,6 @@ const DashboardInnerPage = () => {
                     <div className={styles.rightSection} style={{ width: '32%' }}>
                         <TagComponent
                             tagHeight={valueCardData.tagHeight}
-                            engineType={configEngineType}
                             severity={valueCardData?.severity}
                             categories={configCategories}
                         />

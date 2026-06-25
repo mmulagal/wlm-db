@@ -16,6 +16,8 @@ import {
 import { addAllOracleHostAssessmentData } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
     ASSESSMENT_CONFIG_NAMES,
+    ASSESSMENT_CONFIG_IDS,
+    BLOCK_SIX_LABELS,
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
     DBType,
@@ -23,8 +25,13 @@ import {
     GETWELL_CONFIG,
     GETWELL_STATUS,
     GETWELL_VALUES,
+    isConfigIdMatch,
+    isConfigIdInList,
+    ORACLE_COMPUTE_COUNT_CONFIG_IDS,
     ORACLE_ISCSI_ONLY_CARD_IDS,
     ORACLE_ISCSI_ONLY_CARD_KEYS,
+    ORACLE_PLACEMENT_CONFIG_IDS,
+    ORACLE_STORAGE_SIZING_CONFIG_IDS,
     WA_FLAG_SKIP,
     WELL_ARCHITECTED_CATEGORIES,
     WELL_ARCHITECTED_CATEGORY_LABELS,
@@ -245,8 +252,7 @@ const cardConfigurations: Record<string, CardConfig> = {
         resourceType: 'Volume',
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
         description:
-            "Placing redo logs, whether multiplexed or not, on a dedicated volume or shared with temp/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed redo log copy should reside on a separate volume for redundancy. Frequent changes make redo logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Redo logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storage's slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency.",
-        smallFont: true
+            "Placing redo logs, whether multiplexed or not, on a dedicated volume or shared with temp/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed redo log copy should reside on a separate volume for redundancy. Frequent changes make redo logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Redo logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storage's slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency."
     },
     templogs_placement: {
         id: 'templogs-placement',
@@ -256,8 +262,7 @@ const cardConfigurations: Record<string, CardConfig> = {
         resourceType: 'Volume',
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
         description:
-            "Placing temp files on a dedicated volume or with redo/control files isolates their high-write I/O from data files, improving performance. Temp tablespaces change frequently but don't require restoration, so it's best to avoid placing them on snapshotted volumes, such as data volumes, to prevent bloated snapshots. Temp files must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates can degrade database performance.",
-        smallFont: true
+            "Placing temp files on a dedicated volume or with redo/control files isolates their high-write I/O from data files, improving performance. Temp tablespaces change frequently but don't require restoration, so it's best to avoid placing them on snapshotted volumes, such as data volumes, to prevent bloated snapshots. Temp files must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates can degrade database performance."
     },
     archive_placement: {
         id: 'archive-placement',
@@ -267,8 +272,7 @@ const cardConfigurations: Record<string, CardConfig> = {
         resourceType: 'Volume',
         tags: ['Performance efficiency', 'Operational excellence', 'Cost optimization'],
         description:
-            'Placing archive logs on a dedicated volume ensures efficient backup and recovery processes and helps reduce storage cost.\nBy separating archive logs, you can apply specific storage configurations, such as compression and tiering policies, to optimize cost and performance.\nThis separation also facilitates efficient snapshot and backup strategies, ensuring that archive logs are readily available for recovery without impacting the performance of redo logs, data files, or control files.',
-        smallFont: true
+            'Placing archive logs on a dedicated volume ensures efficient backup and recovery processes and helps reduce storage cost.\nBy separating archive logs, you can apply specific storage configurations, such as compression and tiering policies, to optimize cost and performance.\nThis separation also facilitates efficient snapshot and backup strategies, ensuring that archive logs are readily available for recovery without impacting the performance of redo logs, data files, or control files.'
     },
     datafiles_placement: {
         id: 'datafiles-placement',
@@ -838,36 +842,75 @@ export const oracleCardData: any = {
 // Helper functions for card formatting
 const formatValue = (value: string): string => GETWELL_VALUES?.[value] || value;
 
-const isPlacementConfig = (itemName: string): boolean =>
-    [
-        'redologs_placement',
-        'templogs_placement',
-        'archive_placement',
-        'datafiles_placement',
-        'controlfiles_placement',
-        'oracle_binary_placement',
-        'data_dg_lun_layout',
-        'log_dg_lun_layout',
-        'fra_dg_lun_layout',
-        'archivelog_dg_lun_layout'
-    ].includes(itemName);
+const isPlacementConfig = (itemName: string): boolean => isConfigIdInList(itemName, ORACLE_PLACEMENT_CONFIG_IDS);
+
+/**
+ * Determines the display type for block_six based on configuration and category
+ * @returns 'count' | 'value' | 'patch' | 'smallfont'
+ * - 'count': Shows "X out of Y" format with large numbers (for placement/compute configs showing violations)
+ * - 'value': Shows the actual value in large font (percentages, GB, etc.)
+ * - 'patch': Shows value with tooltip (Missing patches) - no count, no smallFont, HAS patch object
+ * - 'smallfont': Shows value in small font (Semibold_14) for resiliency, network, etc.
+ */
+const getBlockSixDisplayType = (itemName: string, categoryVal: string): 'count' | 'value' | 'patch' | 'smallfont' => {
+    // Placement configs use count format (large "X out of Y")
+    if (isPlacementConfig(itemName)) {
+        return 'count';
+    }
+
+    // Storage sizing configs that show percentage or GB values in large font
+    if (isConfigIdInList(itemName, ORACLE_STORAGE_SIZING_CONFIG_IDS)) {
+        return 'value';
+    }
+
+    // Compute configs that show impacted resources with count (large "X out of Y")
+    if (isConfigIdInList(itemName, ORACLE_COMPUTE_COUNT_CONFIG_IDS)) {
+        return 'count';
+    }
+
+    // Patch configs show value with tooltip (no count, no smallFont, needs patch objects)
+    if (
+        isConfigIdMatch(itemName, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH) ||
+        isConfigIdMatch(itemName, ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH)
+    ) {
+        return 'patch';
+    }
+
+    // All other configs use large count format (default for Oracle)
+    // This includes: resiliency configs, clone, network, license, etc.
+    return 'count';
+};
 
 const calculateBlockValues = (item: PerConfigInterface, itemName: string, categoryVal: string) => {
     const blockThreeValue = categoryVal === 'storage' ? formatValue(item?.current || '') : '';
 
     let blockSixValue = '';
     let blockSixCountObject = null;
+    let blockSixSmallFont = false;
 
-    if (isPlacementConfig(itemName)) {
+    const displayType = getBlockSixDisplayType(itemName, categoryVal);
+
+    if (displayType === 'count') {
+        // Show "X out of Y" format with count object (large numbers)
         const violation = item?.totalObjectsInViolation || 0;
         const assessed = item?.totalObjectsAssessed || 0;
         blockSixValue = `${violation} out of ${assessed}`;
         blockSixCountObject = { totalObjectsInViolation: violation, totalObjectsAssessed: assessed };
-    } else if (categoryVal === 'storage') {
+    } else if (displayType === 'value') {
+        // Show percentage or GB value in large font
         blockSixValue = formatValue(item?.current || '');
+    } else if (displayType === 'patch') {
+        // Show patch count - no count object, no smallFont (renders as Semibold_14 with tooltip)
+        blockSixValue = String(item?.totalObjectsInViolation || 0);
+    } else if (displayType === 'smallfont') {
+        // Show value in small font (Semibold_14) for resiliency, network, etc.
+        const violation = item?.totalObjectsInViolation || 0;
+        const assessed = item?.totalObjectsAssessed || 0;
+        blockSixValue = `${violation} out of ${assessed}`;
+        blockSixSmallFont = true;
     }
 
-    return { blockThreeValue, blockSixValue, blockSixCountObject };
+    return { blockThreeValue, blockSixValue, blockSixCountObject, blockSixSmallFont };
 };
 
 const formatCardItem = (
@@ -883,7 +926,11 @@ const formatCardItem = (
     const severity = item?.severity || '';
     const categoryVal = 'storage';
 
-    const { blockThreeValue, blockSixValue, blockSixCountObject } = calculateBlockValues(item, itemName, categoryVal);
+    const { blockThreeValue, blockSixValue, blockSixCountObject, blockSixSmallFont } = calculateBlockValues(
+        item,
+        itemName,
+        categoryVal
+    );
 
     return {
         ...oracleCardData?.[itemName],
@@ -902,10 +949,11 @@ const formatCardItem = (
             ...oracleCardData?.[itemName]?.block_six,
             value: blockSixValue,
             count: blockSixCountObject,
-            list: item?.objectsInViolation || null
+            list: item?.objectsInViolation || null,
+            smallFont: blockSixSmallFont
         },
         errorMessage: item?.errorMessage,
-        tags: item?.tags,
+        tags: item?.categories || item?.tags || [],
         id: item?.name,
         category: categoryVal,
         missingPermissions: item?.missingPermissions,
@@ -913,7 +961,10 @@ const formatCardItem = (
         sizingViolations: item?.sizingViolations,
         violationDetails: item?.violationDetails,
         objectsInViolation: item?.objectsInViolation,
-        recommendationText: item?.recommendation,
+        recommendationText: (() => {
+            const staticRec = getRecommendation(originalName, DBType.ORACLE);
+            return staticRec?.description || item?.recommendation;
+        })(),
         dismissedObj: mapDismissedValues(data?.dismissedConfigurations?.storage, item?.name),
         recommendedValue: item?.recommended
     };
@@ -966,7 +1017,7 @@ export const formatOracleHostOsPatchConfig = (
             ...oracleCardData.host_os_patch?.block_six,
             value: String(totalViolations)
         },
-        tags: hostOsPatchItem?.tags,
+        tags: hostOsPatchItem?.categories || hostOsPatchItem?.tags || [],
         id: hostOsPatchItem?.name || 'host-os-patch',
         category: 'compute',
         errorMessage: hostOsPatchItem?.errorMessage,
@@ -1002,7 +1053,7 @@ export const formatOracleTransparentHugepagesConfig = (
                 totalObjectsInViolation: item?.totalObjectsInViolation
             }
         },
-        tags: item?.tags,
+        tags: item?.categories || item?.tags || [],
         id: item?.name || 'transparent-hugepages',
         category: 'compute',
         errorMessage: item?.errorMessage,
@@ -1033,7 +1084,7 @@ export const formatOracleTcpAdvancedOptionsConfig = (
                 totalObjectsInViolation: item?.totalObjectsInViolation
             }
         },
-        tags: item?.tags,
+        tags: item?.categories || item?.tags || [],
         id: item?.name || 'tcp-advanced-options',
         category: 'compute',
         errorMessage: item?.errorMessage,
@@ -1064,7 +1115,7 @@ export const formatOracleFilesystemsIoOptionsConfig = (
                 totalObjectsInViolation: item?.totalObjectsInViolation
             }
         },
-        tags: item?.tags,
+        tags: item?.categories || item?.tags || [],
         id: item?.name || 'filesystems-io-options',
         category: 'compute',
         errorMessage: item?.errorMessage,
@@ -1095,7 +1146,7 @@ export const formatOracleMultiblockReadcountConfig = (
                 totalObjectsInViolation: item?.totalObjectsInViolation
             }
         },
-        tags: item?.tags,
+        tags: item?.categories || item?.tags || [],
         id: item?.name || 'multiblock-readcount',
         category: 'compute',
         errorMessage: item?.errorMessage,
@@ -1139,7 +1190,7 @@ export const formatOracleSnapCenterConfig = (
                 totalObjectsInViolation: snapcenterItem?.totalObjectsInViolation
             }
         },
-        tags: snapcenterItem?.tags,
+        tags: snapcenterItem?.categories || snapcenterItem?.tags || [],
         id: snapcenterItem?.name || 'snapcenter-snapshot',
         mapName: ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
         category: 'resiliency',
@@ -1184,7 +1235,7 @@ export const formatOracleCRRConfig = (
                 totalObjectsInViolation: crrItem?.totalObjectsInViolation
             }
         },
-        tags: crrItem?.tags,
+        tags: crrItem?.categories || crrItem?.tags || [],
         id: crrItem?.name || 'crr',
         category: 'resiliency',
         errorMessage: crrItem?.errorMessage,
@@ -1226,7 +1277,7 @@ export const formatOracleAWSBackupConfig = (
                 totalObjectsInViolation: awsBackupItem?.totalObjectsInViolation
             }
         },
-        tags: awsBackupItem?.tags,
+        tags: awsBackupItem?.categories || awsBackupItem?.tags || [],
         id: awsBackupItem?.name || 'backup-configuration',
         mapName: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
         category: 'resiliency',
@@ -1273,7 +1324,7 @@ export const formatOracleCloneConfig = (
                 totalObjectsInViolation: cloneItem?.totalObjectsInViolation
             }
         },
-        tags: cloneItem?.tags,
+        tags: cloneItem?.categories || cloneItem?.tags || [],
         id: cloneItem?.name || 'clone-management',
         mapName: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
         category: 'cloning',
@@ -1323,7 +1374,7 @@ export const formatOracleSecurityPatchConfig = (
         oracleSecurityPatchMissingPatches: {
             critical: totalMissingPatches
         },
-        tags: securityPatchItem?.tags,
+        tags: securityPatchItem?.categories || securityPatchItem?.tags || [],
         id: securityPatchItem?.name || 'oracle-security-patch',
         category: 'application',
         errorMessage: securityPatchItem?.errorMessage,
@@ -1775,6 +1826,78 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
     // Get category from type
     const category = assessment.type || WELL_ARCHITECTED_CATEGORIES.STORAGE;
 
+    // Determine block_six display type and formatting
+    const displayType = getBlockSixDisplayType(configId, category);
+    let blockSixValue = '';
+    let blockSixCount;
+    let blockSixSmallFont = false;
+
+    if (displayType === 'count') {
+        // Show "X out of Y" format with count object (triggers large number display)
+        const violation = assessment.totalObjectsInViolation ?? 0;
+        const assessed = assessment.totalObjectsAssessed ?? 0;
+        blockSixValue = `${violation} out of ${assessed}`;
+        blockSixCount = { totalObjectsInViolation: violation, totalObjectsAssessed: assessed };
+    } else if (displayType === 'value') {
+        // Show percentage or GB value in large font (no count object, no smallFont)
+        blockSixValue = assessment.current ?? '';
+    } else if (displayType === 'patch') {
+        // Show patch count - no count object, no smallFont (renders as Semibold_14 with tooltip)
+        blockSixValue = String(assessment.totalObjectsInViolation ?? 0);
+    } else if (displayType === 'smallfont') {
+        // Show value in small font for resiliency, network, license, etc.
+        const violation = assessment.totalObjectsInViolation ?? 0;
+        const assessed = assessment.totalObjectsAssessed ?? 0;
+        blockSixValue = `${violation} out of ${assessed}`;
+        blockSixSmallFont = true;
+    }
+
+    // Handle special patch objects for tooltip display
+    let osPatchMissingPatches;
+    let oracleSecurityPatchMissingPatches;
+
+    if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH)) {
+        if (assessment.ec2InstancesToPatch) {
+            // Calculate total violations by summing up all instances
+            let criticalViolations = 0;
+            let securityViolations = 0;
+            let otherViolations = 0;
+
+            assessment.ec2InstancesToPatch.forEach((instance: any) => {
+                criticalViolations += instance?.criticalNonCompliantCount || 0;
+                securityViolations += instance?.securityNonCompliantCount || 0;
+                otherViolations += instance?.otherNonCompliantCount || 0;
+            });
+
+            osPatchMissingPatches = {
+                critical: criticalViolations,
+                security: securityViolations,
+                other: otherViolations
+            };
+        }
+    } else if (
+        isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH) &&
+        assessment.missingPatchesCount !== undefined
+    ) {
+        oracleSecurityPatchMissingPatches = {
+            critical: assessment.missingPatchesCount
+        };
+    }
+
+    // Get correct block_six.type label based on config
+    let blockSixType = '';
+    if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH)) {
+        blockSixType = BLOCK_SIX_LABELS.FINDING_REASONS;
+    } else if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH)) {
+        blockSixType = BLOCK_SIX_LABELS.MISSING_PATCHES;
+    } else if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM)) {
+        blockSixType = BLOCK_SIX_LABELS.FILE_SYSTEM_HEADROOM;
+    } else if (assessment.resourceType) {
+        blockSixType = `${assessment.resourceType}s`;
+    } else {
+        blockSixType = displayName;
+    }
+
     const card = {
         id: configId,
         configurationId: configId, // Store for dismiss flow and tooltip matching
@@ -1800,26 +1923,13 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
         },
         block_five: {
             type: 'Resource type',
-            value: assessment.resourceType || '',
-            count: {
-                totalObjectsInViolation: assessment.totalObjectsInViolation ?? 0,
-                totalObjectsAssessed: assessment.totalObjectsAssessed ?? 0
-            }
+            value: assessment.resourceType || ''
         },
         block_six: {
-            type: displayName,
-            value:
-                assessment.totalObjectsInViolation || assessment.totalObjectsAssessed
-                    ? `${assessment.totalObjectsInViolation ?? 0} out of ${assessment.totalObjectsAssessed ?? 0}`
-                    : '',
-            count:
-                assessment.totalObjectsAssessed !== undefined
-                    ? {
-                          totalObjectsInViolation: assessment.totalObjectsInViolation ?? 0,
-                          totalObjectsAssessed: assessment.totalObjectsAssessed ?? 0
-                      }
-                    : undefined,
-            smallFont: true
+            type: blockSixType,
+            value: blockSixValue,
+            count: blockSixCount,
+            smallFont: blockSixSmallFont
         },
         recommendation: (() => {
             // Use static recommendations from UI files instead of API response
@@ -1851,6 +1961,7 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
             return staticRecommendation?.description || assessment.recommendation;
         })(),
         categories: assessment.categories || [], // Categories from flat API
+        tags: assessment.categories || [], // Map categories to tags for rendering
         errorMessage: assessment.errorMessage,
         objectsInViolation: assessment.objectsInViolation || [],
         violationDetails: assessment.violationDetails || [],
@@ -1865,7 +1976,10 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
         ...(assessment.oldCloneDatabaseNames && { oldCloneDatabaseNames: assessment.oldCloneDatabaseNames }),
         ...(assessment.cloneDriftMessage && { cloneDriftMessage: assessment.cloneDriftMessage }),
         ...(assessment.missingPatchesCount !== undefined && { missingPatchesCount: assessment.missingPatchesCount }),
-        ...(assessment.recommendedSizeInGib && { recommendedSizeInGib: assessment.recommendedSizeInGib })
+        ...(assessment.recommendedSizeInGib && { recommendedSizeInGib: assessment.recommendedSizeInGib }),
+        // Add patch objects for tooltip display
+        ...(osPatchMissingPatches !== undefined && { osPatchMissingPatches }),
+        ...(oracleSecurityPatchMissingPatches !== undefined && { oracleSecurityPatchMissingPatches })
     };
 
     return card;
@@ -1906,10 +2020,19 @@ const processOracleFlatAssessments = (data: any, optimizingData: Record<string, 
 
             if (matchingCardKey && cardsData[matchingCardKey]) {
                 // Add dismissedObj to the card
+                // Prioritize card's displayName since it's the human-readable name
+                const configName =
+                    cardsData[matchingCardKey].displayName ||
+                    cardsData[matchingCardKey].name ||
+                    dismissedConfig.name ||
+                    dismissedConfig.configurationName ||
+                    matchingCardKey;
+
                 cardsData[matchingCardKey].dismissedObj = {
                     configState: dismissedConfig.configState,
                     startTime: dismissedConfig.startTime,
-                    endTime: dismissedConfig.endTime
+                    endTime: dismissedConfig.endTime,
+                    configurationName: configName
                 };
             }
         });
@@ -2127,17 +2250,8 @@ export const formatOracleOptimizationBreakDown = (
             if (isDismissed || isPostponed) {
                 storageCount.dismissedOrPostponed++;
                 storageCount.hasDismissedOrPostponed = true;
-                // Use actual ID, not display name
-                if (cardItem?.id === 'ontap_configuration' || cardItem?.id === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
-                    storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS);
-                } else if (
-                    cardItem?.id === 'os_configuration' ||
-                    cardItem?.id === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
-                ) {
-                    storageCount.dismissedIds.push(ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM);
-                } else {
-                    storageCount.dismissedIds.push(cardItem?.id);
-                }
+                // Use registry key consistently
+                storageCount.dismissedIds.push(cardItem?.id);
             } else if (isOptimized) {
                 storageCount.optimized++;
                 if (isOptimizedViaDismissal) {
@@ -2973,7 +3087,7 @@ export const callOptimizeOracleApi = ({
         ]
     });
 
-    if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
+    if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM || type === 'headroom') {
         apiCall = optimizeOracleOs;
         payload = {
             type: 'storage-sizing',
@@ -2991,7 +3105,7 @@ export const callOptimizeOracleApi = ({
                 }
             ]
         };
-    } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+    } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS || type === 'backup-configuration') {
         const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
         apiCall = optimizeOracleOs;
         payload = {
@@ -3013,13 +3127,13 @@ export const callOptimizeOracleApi = ({
                 }
             ]
         };
-    } else if (type === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES) {
+    } else if (type === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES || type === 'transparent-hugepages') {
         apiCall = optimizeOracleOs;
         payload = computeHostOsPayload('transparent-hugepages');
-    } else if (type === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS) {
+    } else if (type === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS || type === 'tcp-advanced-options') {
         apiCall = optimizeOracleOs;
         payload = computeHostOsPayload('tcp-advanced-options');
-    } else if (type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT) {
+    } else if (type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT || type === 'multiblock-readcount') {
         apiCall = optimizeOracleOs;
         payload = computeHostOsPayload('multiblock-readcount');
     }
@@ -3051,18 +3165,21 @@ export const callOptimizeOracleApi = ({
     fixingProcessNotification(type, dispatch, isWorkloadFactory, t);
 
     let apiCallObj = {};
-    if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
+    if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM || type === 'headroom') {
         apiCallObj = {
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance,
             payload
         };
-    } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
+    } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS || type === 'backup-configuration') {
         apiCallObj = { payload };
     } else if (
         type === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
+        type === 'transparent-hugepages' ||
         type === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
-        type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT
+        type === 'tcp-advanced-options' ||
+        type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
+        type === 'multiblock-readcount'
     ) {
         apiCallObj = { payload };
     }

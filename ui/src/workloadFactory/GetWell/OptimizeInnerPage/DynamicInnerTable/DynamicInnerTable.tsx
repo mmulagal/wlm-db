@@ -18,7 +18,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import useResize from '../../../../common/hooks/useResize';
 import { getWadCellProps } from '../../GetWellUtils';
-import { ColumnConfig, buildSubConfigValues } from '../../../../utils/getWellConfigRegistry';
+import { ColumnConfig } from '../../../../utils/configRegistry';
 
 interface DynamicInnerTableProps {
     configId: string;
@@ -27,6 +27,7 @@ interface DynamicInnerTableProps {
     engineType: string;
     isWad?: boolean;
     canOptimize?: boolean;
+    isViewOnly?: boolean;
     handleBulkAction: () => void;
     handleRowFix?: (rowData: any) => void;
 }
@@ -38,6 +39,7 @@ const DynamicInnerTable = ({
     engineType,
     isWad = false,
     canOptimize = true,
+    isViewOnly = false,
     handleBulkAction,
     handleRowFix
 }: DynamicInnerTableProps) => {
@@ -50,16 +52,26 @@ const DynamicInnerTable = ({
     // Transform API data to table rows
     const tableData = useMemo(() => {
         let id = 0;
-        const violations = data?.violationDetails || [];
 
-        return violations.map((row: any) => ({
-            ...row,
-            // Derive Current/Recommended columns for configs with nested sub-configs (e.g. storage-efficiencies)
-            ...(columnConfig.hasSubConfigs ? buildSubConfigValues(row, data?.configDetails) : {}),
-            id: String(id++),
-            cellProps: getWadCellProps(isWad, t)
-        }));
-    }, [data, isWad, t, columnConfig.hasSubConfigs]);
+        if (data?.violationDetails?.length) {
+            return data.violationDetails.map((row: any) => ({
+                ...row,
+                id: String(id++),
+                cellProps: getWadCellProps(isWad, t)
+            }));
+        }
+
+        // Fallback: Oracle layout configs return objectsInViolation as flat string array
+        if (data?.objectsInViolation?.length) {
+            return data.objectsInViolation.map((name: string) => ({
+                objectName: name,
+                id: String(id++),
+                cellProps: getWadCellProps(isWad, t)
+            }));
+        }
+
+        return [];
+    }, [data, isWad, t]);
 
     // Build column definitions dynamically from registry
     const TableColDefs: ColumnProps[] = useMemo(() => {
@@ -94,9 +106,14 @@ const DynamicInnerTable = ({
             }
         }));
 
-        // Add Fix button column if optimization is supported
-        if (canOptimize && handleRowFix) {
-            const fixButtonColumn = {
+        // Add action button column: "Fix" for fixable configs, "View" for view-only configs
+        const showFixButton = canOptimize && handleRowFix;
+        const showViewButton = !canOptimize && isViewOnly && handleRowFix;
+
+        if ((showFixButton || showViewButton) && handleRowFix) {
+            const buttonLabel = showViewButton ? t('databases.well-architect.view') : t('databases.well-architect.fix');
+
+            const actionColumn = {
                 Header: '',
                 accessor: 'action',
                 id: String(dataColumns.length + 1),
@@ -105,8 +122,11 @@ const DynamicInnerTable = ({
                 isSticky: true,
                 width: '230px',
                 renderCell: (cellData: any, rowData: any) => {
-                    // Show disabled button with popover if bulk selection is active
-                    if (selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0) {
+                    if (
+                        showFixButton &&
+                        selectedRowsForOptimizeInnerPage &&
+                        selectedRowsForOptimizeInnerPage.length > 0
+                    ) {
                         return (
                             <div className={styles.buttonContainer}>
                                 <div />
@@ -122,7 +142,7 @@ const DynamicInnerTable = ({
                                     interactive
                                     container={
                                         <DsButton variant="secondary" isDisabled isThin>
-                                            {t('databases.well-architect.fix')}
+                                            {buttonLabel}
                                         </DsButton>
                                     }
                                 />
@@ -130,22 +150,30 @@ const DynamicInnerTable = ({
                         );
                     }
 
-                    // Show active Fix button
                     return (
                         <div className={styles.buttonContainer}>
                             <div />
                             <DsButton isThin variant="secondary" onClick={() => handleRowFix(rowData)}>
-                                {t('databases.well-architect.fix')}
+                                {buttonLabel}
                             </DsButton>
                         </div>
                     );
                 }
             } as unknown as ColumnProps;
-            dataColumns.push(fixButtonColumn);
+            dataColumns.push(actionColumn);
         }
 
         return dataColumns;
-    }, [columnConfig, configId, canOptimize, handleRowFix, selectedRowsForOptimizeInnerPage, windowSize.width, t]);
+    }, [
+        columnConfig,
+        configId,
+        canOptimize,
+        isViewOnly,
+        handleRowFix,
+        selectedRowsForOptimizeInnerPage,
+        windowSize.width,
+        t
+    ]);
 
     // Table props
     const tableProps = useTable({
