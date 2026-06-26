@@ -26,7 +26,7 @@ import {
     validateWithSchema
 } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
-import { AWS_REGIONS, HttpErrorCodes, RESOURCESTYPE, STORAGE_PROTOCOLS } from '../../../utils/consts';
+import { AWS_REGIONS, DatabaseTypes, HttpErrorCodes, RESOURCESTYPE, STORAGE_PROTOCOLS } from '../../../utils/consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { CloneAssessment, DatabaseInstance } from '../../../utils/common-types';
@@ -40,7 +40,7 @@ import calculateOneTimeWADCloneDrift from '../clone-assessment-utils';
 import { calculateComputeHostOsDrift } from './compute-assessment-operations';
 import { calculateSnapCenterDrift, SnapcenterAssessmentData } from './snapcenter-assessment-operations';
 import { getOntapVolumeIdsByFileType, ORACLE_V1_MAP_CONFIG } from './assessment-operations';
-import { mapAssessmentToV1 } from '../assessment-utils';
+import { mapAssessmentToV1, resolveAssessmentTypes, GOLDEN_CONFIG_LOOKUP } from '../assessment-utils';
 import { ISCIOSAssessment, NFSOSAssessment, StorageAssessment } from './common-types';
 import { AssessmentStatus, MIN_OPTIMIZED_HEADROOM_PERCENTAGE } from '../../../utils/continous-optimization-consts';
 import ORACLE_GOLDEN_CONFIG from './golden-config';
@@ -50,6 +50,7 @@ import {
     OracleAssessmentResponseType,
     OracleDriftAssessmentResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
+import { ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE } from '../one-time-assessment-consts';
 
 const logger = getLogger();
 
@@ -602,6 +603,23 @@ async function fetchOracleOfflineAssessment(
             assessments.push(item);
         }
     });
+
+    const { configIds: eligibleConfigIds } = resolveAssessmentTypes(
+        DatabaseTypes.ORACLE,
+        undefined,
+        { storageProtocol: protocol, isAsmManaged: isASMManaged ?? undefined },
+        new Set()
+    );
+    const oracleLookup = GOLDEN_CONFIG_LOOKUP[DatabaseTypes.ORACLE];
+    const assessedIds = new Set(assessments.map(a => a.id));
+    eligibleConfigIds
+        .filter(id => !assessedIds.has(id))
+        .forEach(id => {
+            const entry = oracleLookup.get(id);
+            if (entry) {
+                assessments.push({ ...entry, errorMessage: ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE });
+            }
+        });
 
     const assessmentResponse = {
         assessments,

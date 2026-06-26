@@ -24,7 +24,13 @@ import {
     validateWithSchema
 } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
-import { AWS_REGIONS, HttpErrorCodes, MSSQL_DATABASE_TYPES, MSSQL_SYSTEM_DATABASES } from '../../../utils/consts';
+import {
+    AWS_REGIONS,
+    DatabaseTypes,
+    HttpErrorCodes,
+    MSSQL_DATABASE_TYPES,
+    MSSQL_SYSTEM_DATABASES
+} from '../../../utils/consts';
 import { AssessmentStatus, MIN_OPTIMIZED_HEADROOM_PERCENTAGE } from '../../../utils/continous-optimization-consts';
 import {
     StorageAssessment,
@@ -50,8 +56,9 @@ import {
     MssqlAssessmentResponseV1Type
 } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { MSSQL_V1_MAP_CONFIG } from './assessment-operations';
-import { mapAssessmentToV1 } from '../assessment-utils';
+import { mapAssessmentToV1, resolveAssessmentTypes, GOLDEN_CONFIG_LOOKUP } from '../assessment-utils';
 import { OfflineAssessmentListResponseType } from '../../../routes/types/offline-assessment.types';
+import { ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE } from '../one-time-assessment-consts';
 
 const logger = getLogger();
 
@@ -280,6 +287,7 @@ function calculateOneTimeWADHeadroomDrift(
         status,
         current: `${headroomPercent}%`,
         recommendedSizeInGib,
+        objectsInViolation: [],
         totalObjectsAssessed: 1,
         totalObjectsInViolation: status !== AssessmentStatus.OPTIMIZED ? 1 : 0
     };
@@ -728,6 +736,23 @@ async function fetchMssqlOfflineAssessment(
             assessments.push(item);
         }
     });
+
+    const { configIds: eligibleConfigIds } = resolveAssessmentTypes(
+        DatabaseTypes.MS_SQL_SERVER,
+        undefined,
+        { deploymentType },
+        new Set()
+    );
+    const mssqlLookup = GOLDEN_CONFIG_LOOKUP[DatabaseTypes.MS_SQL_SERVER];
+    const assessedIds = new Set(assessments.map(a => a.id));
+    eligibleConfigIds
+        .filter(id => !assessedIds.has(id))
+        .forEach(id => {
+            const entry = mssqlLookup.get(id);
+            if (entry) {
+                assessments.push({ ...entry, errorMessage: ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE });
+            }
+        });
 
     const assessmentResponse = {
         assessments,

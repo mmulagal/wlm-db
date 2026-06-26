@@ -250,16 +250,14 @@ function filterExpiredDismissConfigs(
     instanceConfigs: DismissConfig[] | undefined,
     hostConfigs: DismissConfig[] | undefined,
     databaseInstanceId?: string
-): { dismissedIds: Set<string>; dismissedConfigs: DismissConfig[] } {
+): DismissConfig[] {
     const {
         resolved: instanceResolved,
-        dismissedIds: instanceDismissedIds,
         dismissedConfigs: instanceDismissedConfigs,
         changed: instanceChanged
     } = resolveConfigs(instanceConfigs ?? []);
     const {
         resolved: hostResolved,
-        dismissedIds: hostDismissedIds,
         dismissedConfigs: hostDismissedConfigs,
         changed: hostChanged
     } = resolveConfigs(hostConfigs ?? []);
@@ -284,10 +282,7 @@ function filterExpiredDismissConfigs(
         logger.error('Failed to update dismiss configurations', { accountId, databaseHostId, error });
     });
 
-    return {
-        dismissedIds: new Set([...instanceDismissedIds, ...hostDismissedIds]),
-        dismissedConfigs: [...instanceDismissedConfigs, ...hostDismissedConfigs]
-    };
+    return [...instanceDismissedConfigs, ...hostDismissedConfigs];
 }
 
 export { updateDismissConfigurations, filterExpiredDismissConfigs };

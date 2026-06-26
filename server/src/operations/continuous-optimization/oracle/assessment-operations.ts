@@ -600,14 +600,16 @@ async function triggerOracleAssessment(
             ? (instanceConfigurations as unknown as DismissConfig[])
             : [];
         const hostDismissedConfigs = Array.isArray(hostConfigurations) ? (hostConfigurations as DismissConfig[]) : [];
-        const { dismissedIds } = filterExpiredDismissConfigs(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            instanceDismissedConfigs,
-            hostDismissedConfigs,
-            databaseInstanceId
+        const dismissedIds = new Set(
+            filterExpiredDismissConfigs(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceDismissedConfigs,
+                hostDismissedConfigs,
+                databaseInstanceId
+            ).map(c => c.id)
         );
 
         fields = resolveAssessmentTypes(
@@ -618,7 +620,7 @@ async function triggerOracleAssessment(
                 isDataGuardDeployed: managedInstance.database_deployment_type === DATABASE_DEPLOYMENT_TYPE.DG
             },
             dismissedIds
-        );
+        ).categories;
 
         const instanceRecord: WorkloadInstance = {
             id: databaseInstanceId,
@@ -942,7 +944,7 @@ async function fetchOracleDriftAssessment(
     storageProtocol = storageProtocol || (mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.protocol : '');
     const isASMManaged = mappedOntapVolumes ? mappedOntapVolumes[fileSystemId]?.isASMManaged : false;
 
-    const { dismissedIds, dismissedConfigs } = filterExpiredDismissConfigs(
+    const dismissedConfigs = filterExpiredDismissConfigs(
         accountId,
         credentialsId,
         region,
@@ -951,8 +953,9 @@ async function fetchOracleDriftAssessment(
         hostDismissedConfigs,
         databaseInstanceId
     );
+    const dismissedIds = new Set(dismissedConfigs.map(c => c.id));
 
-    const assessmentTypes = resolveAssessmentTypes(
+    const { categories: assessmentTypes } = resolveAssessmentTypes(
         DatabaseTypes.ORACLE,
         fields,
         {

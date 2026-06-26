@@ -60,11 +60,12 @@ function calculateRssConfigDrift(
             ...goldenConfig,
             status: rssConfigFinding as AssessmentStatus,
             recommended: AssessmentStatus.OPTIMIZED,
+            objectsInViolation: rssAdapters?.map(a => a.adapterName) ?? [],
             rssAdapters,
             recommendedAdapterSettings,
             tcpOffloadState,
-            totalObjectsInViolation,
-            totalObjectsAssessed
+            totalObjectsInViolation: totalObjectsInViolation ?? 0,
+            totalObjectsAssessed: totalObjectsAssessed ?? 0
         };
     } catch (error: any) {
         const errorMessage = `Error while calculating rss config drift. ${error.message}`;

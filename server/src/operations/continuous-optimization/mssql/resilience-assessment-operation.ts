@@ -289,6 +289,7 @@ async function getSnapshotPolicyDriftData(
         recommended: goldenConfig.recommended ?? '',
         status: AssessmentStatus.NOT_OPTIMIZED,
         objectsInViolation: [],
+        totalObjectsAssessed: 0,
         totalObjectsInViolation: 0
     };
     try {

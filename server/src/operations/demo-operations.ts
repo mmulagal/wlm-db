@@ -1595,11 +1595,11 @@ function handleGetMssqlAssessmentForDemo(
                 i.totalObjectsInViolation = 0;
                 i.current = '4';
             }
-        } else if (i.category === 'storage' && i.subCategory === 'configuration' && !('errorMessage' in i)) {
+        } else if (i.type === 'storage' && i.subType === 'configuration' && !('errorMessage' in i)) {
             if (storageConfigsOptimized.includes(i.id) || osConfigsOptimized.includes(i.id)) {
                 optimizeDriftConfig(i as ParameterDriftResponseType);
             }
-        } else if (i.category === 'storage' && i.subCategory === 'sizing' && !('errorMessage' in i)) {
+        } else if (i.type === 'storage' && i.subType === 'sizing' && !('errorMessage' in i)) {
             if (sizingConfigsOptimized.includes(i.id)) {
                 i.status = AssessmentStatus.OPTIMIZED;
                 i.objectsInViolation = [];
@@ -1835,15 +1835,15 @@ function handleGetOracleAssessmentForDemo(
                     i.totalObjectsInViolation = 0;
                 }
             } else if (
-                i.category === 'compute' &&
-                i.subCategory === 'configuration' &&
+                i.type === 'compute' &&
+                i.subType === 'configuration' &&
                 ORACLE_COMPUTE_HOST_OS_DEMO_CONFIG_NAMES.has(i.id) &&
                 oracleComputeHostOsDemoOptimizedConfigs.has(i.id) &&
                 !('errorMessage' in i)
             ) {
                 // Oracle compute host-OS items (transparent-hugepages, tcp-advanced-options, etc.)
                 optimizeDriftConfig(i as ParameterDriftResponseType);
-            } else if (i.category === 'storage' && i.subCategory === 'configuration' && !('errorMessage' in i)) {
+            } else if (i.type === 'storage' && i.subType === 'configuration' && !('errorMessage' in i)) {
                 const isOracleComputeHostOsConfig = ORACLE_COMPUTE_HOST_OS_DEMO_CONFIG_NAMES.has(i.id);
                 const isOptimized = isOracleComputeHostOsConfig
                     ? oracleComputeHostOsDemoOptimizedConfigs.has(i.id)
@@ -1851,13 +1851,13 @@ function handleGetOracleAssessmentForDemo(
                 if (isOptimized) {
                     optimizeDriftConfig(i as ParameterDriftResponseType);
                 }
-            } else if (i.category === 'storage' && i.subCategory === 'sizing' && !('errorMessage' in i)) {
+            } else if (i.type === 'storage' && i.subType === 'sizing' && !('errorMessage' in i)) {
                 if (sizingConfigsOptimized.includes(i.id)) {
                     i.status = AssessmentStatus.OPTIMIZED;
                     i.objectsInViolation = [];
                     i.totalObjectsInViolation = 0;
                 }
-            } else if (i.category === 'storage' && i.subCategory === 'layout' && !('errorMessage' in i)) {
+            } else if (i.type === 'storage' && i.subType === 'layout' && !('errorMessage' in i)) {
                 if (!hasIscsiItems && STORAGE_LAYOUT_OPTIMIZE_CONFIG_KEYS.includes(i.id)) {
                     // Non-iSCSI: these layout items should be filtered out entirely
                     return null as unknown as AssessmentItemType;

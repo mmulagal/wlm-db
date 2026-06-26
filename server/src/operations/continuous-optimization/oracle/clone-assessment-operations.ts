@@ -276,23 +276,17 @@ function calculateOracleCloneDrift(
     try {
         const { cloneDetails, status, oldClones, oldCloneDetails, oldCloneDatabaseNames } = cloneAssessmentData;
 
-        const recommendationMessage =
-            status === AssessmentStatus.NOT_OPTIMIZED
-                ? goldenConfig.recommendation
-                : 'All clones are up-to-date. No old FlexClone volumes detected.';
-
         return {
             ...goldenConfig,
             status: status as AssessmentStatus,
             recommended: AssessmentStatus.OPTIMIZED,
-            recommendation: recommendationMessage,
             cloneDetails: cloneDetails?.map(detail => ({
                 ...detail,
                 tag: detail.tag ?? undefined
             })),
             totalObjectsAssessed: cloneDetails?.length ?? 0,
-            totalObjectsInViolation: oldClones,
-            objectsInViolation: oldCloneDatabaseNames,
+            totalObjectsInViolation: oldClones ?? oldCloneDatabaseNames?.length ?? 0,
+            objectsInViolation: oldCloneDatabaseNames ?? [],
             oldCloneDetails: oldCloneDetails?.map(detail => ({
                 ...detail,
                 tag: detail.tag ?? undefined

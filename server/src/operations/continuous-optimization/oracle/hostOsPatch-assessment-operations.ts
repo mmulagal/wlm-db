@@ -132,7 +132,9 @@ function calculateHostOsPatchDrift(
             ...goldenConfig,
             status: findingValue,
             recommended: AssessmentStatus.OPTIMIZED,
-            objectsInViolation: ec2InstancesToPatch?.map(({ ec2InstanceId }) => ec2InstanceId),
+            objectsInViolation: ec2InstancesToPatch?.map(({ ec2InstanceId }) => ec2InstanceId) ?? [],
+            totalObjectsAssessed: hostOsPatchAssessment?.length ?? 0,
+            totalObjectsInViolation: ec2InstancesToPatch?.length ?? 0,
             ec2InstancesToPatch: mappedEc2InstancesToPatch
         };
     } catch (error) {

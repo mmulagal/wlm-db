@@ -283,13 +283,13 @@ const BaseAssessmentItem = Type.Intersect([
     Type.Object({
         status: Type.Enum(AssessmentStatus),
         recommended: Type.String(),
-        objectsInViolation: Type.Optional(Type.Array(Type.Union([Type.String(), OntapVolume]))),
+        objectsInViolation: Type.Array(Type.Union([Type.String(), OntapVolume])),
         violationDetails: Type.Optional(Type.Array(GenericViolationResponse)),
         missingPermissions: Type.Optional(Type.Array(Type.String())),
         recommendedSizeInGib: Type.Optional(Type.Number()),
         current: Type.Optional(Type.String()),
-        totalObjectsAssessed: Type.Optional(Type.Number()),
-        totalObjectsInViolation: Type.Optional(Type.Number()),
+        totalObjectsAssessed: Type.Number(),
+        totalObjectsInViolation: Type.Number(),
         focusWidgetName: Type.Optional(Type.String()),
         cloneDetails: Type.Optional(
             Type.Array(CloneDetailItem, { description: 'Current clone instances and their details' })

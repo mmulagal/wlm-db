@@ -772,8 +772,9 @@ async function calculateStorageDrift(
                 ...goldenData,
                 recommended: entryRecommended,
                 status,
+                objectsInViolation: objectsInViolation.map(v => v.objectName),
                 violationDetails: objectsInViolation,
-                totalObjectsAssessed: assessmentDetails.length,
+                totalObjectsAssessed: assessmentDetails.length || 1,
                 totalObjectsInViolation: objectsInViolation.length
             });
         }
@@ -1151,6 +1152,26 @@ async function calculateStorageDrift(
                         ? undefined
                         : { overProvisionedDrives, underProvisionedDrives, ignoredDrives };
                 const tierViolations = key === 'performance-tier' ? storageTierViolations : undefined;
+                const sizingObjectsInViolation: string[] =
+                    key === 'performance-tier'
+                        ? storageTierViolations.map(v => v.objectName)
+                        : key === 'log-drive-size'
+                        ? [
+                              ...(sizingViolations?.overProvisionedDrives ?? []),
+                              ...(sizingViolations?.underProvisionedDrives ?? []),
+                              ...(sizingViolations?.ignoredDrives ?? [])
+                          ]
+                              .map(d => d.logAccessPath ?? d.ontapVolumeName ?? '')
+                              .filter(Boolean)
+                        : key === 'tempdb-drive-size'
+                        ? [
+                              ...(sizingViolations?.overProvisionedDrives ?? []),
+                              ...(sizingViolations?.underProvisionedDrives ?? []),
+                              ...(sizingViolations?.ignoredDrives ?? [])
+                          ]
+                              .map(d => d.tempdbAccessPath ?? d.ontapVolumeName ?? '')
+                              .filter(Boolean)
+                        : [];
                 driftAssessmentData.push({
                     ...goldenData,
                     recommended: (goldenData.value ?? '').toString(),
@@ -1158,6 +1179,7 @@ async function calculateStorageDrift(
                     sizingViolations,
                     missingPermissions,
                     current: currentSizeRange,
+                    objectsInViolation: sizingObjectsInViolation,
                     totalObjectsAssessed,
                     totalObjectsInViolation,
                     violationDetails: tierViolations,
@@ -1185,7 +1207,10 @@ async function calculateStorageDrift(
             status,
             missingPermissions,
             recommendedSizeInGib: newFsxStorageCapacityGiB ? Math.ceil(newFsxStorageCapacityGiB) : 0,
-            current: `${headroomPercent}%`
+            current: `${headroomPercent}%`,
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: status === AssessmentStatus.OPTIMIZED ? 0 : 1,
+            objectsInViolation: status === AssessmentStatus.OPTIMIZED ? [] : [filesystemId].filter(Boolean)
         });
     } catch (error: any) {
         logger.error(

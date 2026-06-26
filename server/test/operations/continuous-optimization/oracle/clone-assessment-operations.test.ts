@@ -71,7 +71,6 @@ describe('calculateOracleCloneDrift', () => {
         expect(drift.totalObjectsAssessed).toBe(1);
         expect(drift.totalObjectsInViolation).toBe(0);
         expect(drift.objectsInViolation).toEqual([]);
-        expect(drift.recommendation).toBe('All clones are up-to-date. No old FlexClone volumes detected.');
     });
 
     it('returns not-optimized drift when old clones exist', () => {

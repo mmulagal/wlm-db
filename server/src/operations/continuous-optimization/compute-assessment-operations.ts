@@ -148,6 +148,9 @@ function calculateComputeDrift(
             recommended: AssessmentStatus.OPTIMIZED,
             recommendation,
             objectsInViolation,
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation:
+                findingValue !== AssessmentStatus.OPTIMIZED && findingValue !== AssessmentStatus.ANALYZING ? 1 : 0,
             recommendationOptions
         };
     } catch (error: any) {

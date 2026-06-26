@@ -97,7 +97,9 @@ function calculateMSSQLPatchDrift(
             missingPatchesInEc2Instances: patchAssessment,
             severity,
             recommendation,
-            objectsInViolation
+            objectsInViolation,
+            totalObjectsAssessed: patchAssessment?.length ?? 0,
+            totalObjectsInViolation: objectsInViolation.length
         };
     } catch (error: any) {
         const errorMessage = `Error while calculating MSSQL patch drift. ${error.message}`;

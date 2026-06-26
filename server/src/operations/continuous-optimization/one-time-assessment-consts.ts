@@ -537,4 +537,7 @@ Script Version: 1.0.0
 **Copyright (c) 2026 NetApp, Inc. All rights reserved.**
 `;
 
-export { MSSQL_ONE_TIME_ASSESSMENT_README, ORACLE_ONE_TIME_ASSESSMENT_README };
+const ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE =
+    'The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.';
+
+export { MSSQL_ONE_TIME_ASSESSMENT_README, ORACLE_ONE_TIME_ASSESSMENT_README, ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE };

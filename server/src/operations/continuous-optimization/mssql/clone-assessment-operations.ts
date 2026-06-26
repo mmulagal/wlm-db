@@ -66,9 +66,9 @@ function calculateCloneDrift(
                 ...detail,
                 tag: detail.tag ?? undefined
             })),
-            totalObjectsAssessed: cloneDetails?.length,
-            totalObjectsInViolation: oldClones,
-            objectsInViolation: oldCloneDatabaseNames,
+            totalObjectsAssessed: cloneDetails?.length ?? 0,
+            totalObjectsInViolation: oldClones ?? oldCloneDatabaseNames?.length ?? 0,
+            objectsInViolation: oldCloneDatabaseNames ?? [],
             oldCloneDetails: oldCloneDetails?.map(detail => ({
                 ...detail,
                 tag: detail.tag ?? undefined

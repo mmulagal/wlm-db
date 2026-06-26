@@ -586,7 +586,7 @@ function resolveAssessmentTypes(
         isDataGuardDeployed?: boolean;
     },
     dismissedIds: Set<string>
-): string[] {
+): { categories: string[]; configIds: string[] } {
     const parsed = Array.isArray(fields) ? fields : fields?.toLowerCase().replace(/\s+/g, '').split(',');
     const requested =
         parsed ??
@@ -598,66 +598,74 @@ function resolveAssessmentTypes(
     const { deploymentType, storageProtocol, isAsmManaged } = context;
     const isIscsi = (storageProtocol ?? STORAGE_PROTOCOLS.ISCSI) === STORAGE_PROTOCOLS.ISCSI;
 
-    return requested.filter(category => {
-        switch (category) {
-            case AssessmentCategories.LICENSE:
-                if (deploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
-                    return false;
+    const resolved = requested
+        .map(category => {
+            switch (category) {
+                case AssessmentCategories.LICENSE: {
+                    if (deploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT) {
+                        return { category, entries: [], keep: false };
+                    }
+                    const entries = goldenConfig.filter(e => e.id === 'sql-license');
+                    return {
+                        category,
+                        entries,
+                        keep: shouldKeepGoldenConfigEntries(entries, isIscsi, isAsmManaged, dismissedIds)
+                    };
                 }
-                return shouldKeepGoldenConfigEntries(
-                    goldenConfig.filter(e => e.id === 'sql-license'),
-                    isIscsi,
-                    isAsmManaged,
-                    dismissedIds
-                );
-
-            case AssessmentCategories.HIGH_AVAILABILITY:
-                if (deploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
-                    return false;
+                case AssessmentCategories.HIGH_AVAILABILITY: {
+                    if (deploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT) {
+                        return { category, entries: [], keep: false };
+                    }
+                    const entries = goldenConfig.filter(e => e.subType === 'highAvailability');
+                    return {
+                        category,
+                        entries,
+                        keep: shouldKeepGoldenConfigEntries(entries, isIscsi, isAsmManaged, dismissedIds)
+                    };
                 }
-                return shouldKeepGoldenConfigEntries(
-                    goldenConfig.filter(e => e.subType === 'highAvailability'),
-                    isIscsi,
-                    isAsmManaged,
-                    dismissedIds
-                );
-
-            case AssessmentCategories.AWS_BACKUP:
-                return shouldKeepGoldenConfigEntries(
-                    goldenConfig.filter(e => e.id === 'backup-configuration'),
-                    isIscsi,
-                    isAsmManaged,
-                    dismissedIds
-                );
-
-            case AssessmentCategories.CLONE:
-                return shouldKeepGoldenConfigEntries(
-                    goldenConfig.filter(e => e.id === 'clone-management'),
-                    isIscsi,
-                    isAsmManaged,
-                    dismissedIds
-                );
-
-            case AssessmentCategories.STORAGE:
-                return shouldKeepGoldenConfigEntries(
-                    goldenConfig.filter(e => e.type === 'storage'),
-                    isIscsi,
-                    isAsmManaged,
-                    dismissedIds
-                );
-
-            case AssessmentCategories.COMPUTE: {
-                return goldenConfig.filter(e => e.id === 'compute-rightsizing');
+                case AssessmentCategories.AWS_BACKUP: {
+                    const entries = goldenConfig.filter(e => e.id === 'backup-configuration');
+                    return {
+                        category,
+                        entries,
+                        keep: shouldKeepGoldenConfigEntries(entries, isIscsi, isAsmManaged, dismissedIds)
+                    };
+                }
+                case AssessmentCategories.CLONE: {
+                    const entries = goldenConfig.filter(e => e.id === 'clone-management');
+                    return {
+                        category,
+                        entries,
+                        keep: shouldKeepGoldenConfigEntries(entries, isIscsi, isAsmManaged, dismissedIds)
+                    };
+                }
+                case AssessmentCategories.STORAGE: {
+                    const entries = goldenConfig.filter(e => e.type === 'storage');
+                    return {
+                        category,
+                        entries,
+                        keep: shouldKeepGoldenConfigEntries(entries, isIscsi, isAsmManaged, dismissedIds)
+                    };
+                }
+                case AssessmentCategories.COMPUTE: {
+                    return { category, entries: goldenConfig.filter(e => e.id === 'compute-rightsizing'), keep: true };
+                }
+                default: {
+                    const entries = goldenConfig.filter(e => e.id === category);
+                    return {
+                        category,
+                        entries,
+                        keep: shouldKeepGoldenConfigEntries(entries, isIscsi, isAsmManaged, dismissedIds)
+                    };
+                }
             }
-            default:
-                return shouldKeepGoldenConfigEntries(
-                    goldenConfig.filter(e => e.id === category),
-                    isIscsi,
-                    isAsmManaged,
-                    dismissedIds
-                );
-        }
-    });
+        })
+        .filter(({ keep }) => keep);
+
+    return {
+        categories: resolved.map(({ category }) => category),
+        configIds: [...new Set(resolved.flatMap(({ entries }) => entries.map(e => e.id)))]
+    };
 }
 
 /** Minimal drift payload used when expanding combined optimize targets. */

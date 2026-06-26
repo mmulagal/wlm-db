@@ -593,7 +593,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'License',
         severity: SEVERITY.WARNING,
         resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-        recommendation: 'The SQL Server license assessment is at the host level. A license is considered',
+        recommendation:
+            'The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized.',
         configLevel: 'host'
     },
     {

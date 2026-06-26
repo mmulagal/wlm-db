@@ -45,11 +45,15 @@ function calculateLicenseDrift(
         const { licenseFinding, sqlServerInstances } = license;
         const matchingLicenseAssessmentStatus = getMatchingAssessmentStatus(licenseFinding);
 
+        const isViolation = matchingLicenseAssessmentStatus !== AssessmentStatus.OPTIMIZED;
         return {
             ...goldenConfig,
             status: matchingLicenseAssessmentStatus,
             recommended: AssessmentStatus.OPTIMIZED,
-            sqlServerInstances
+            sqlServerInstances,
+            totalObjectsAssessed: sqlServerInstances?.length ?? 1,
+            totalObjectsInViolation: isViolation ? sqlServerInstances?.length ?? 0 : 0,
+            objectsInViolation: isViolation ? sqlServerInstances?.map(i => i.sqlServerInstance ?? '') ?? [] : []
         };
     } catch (error: any) {
         const errorMessage = `Error while calculating license drift. ${error.message}`;

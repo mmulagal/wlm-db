@@ -200,7 +200,13 @@ function calculateOracleSecurityPatchDrift(
         return { ...goldenConfig, errorMessage };
     }
 
-    return { ...goldenConfig, ...assessmentData };
+    return {
+        ...goldenConfig,
+        ...assessmentData,
+        objectsInViolation: assessmentData.objectsInViolation ?? [],
+        totalObjectsAssessed: assessmentData.totalObjectsAssessed ?? 0,
+        totalObjectsInViolation: assessmentData.totalObjectsInViolation ?? 0
+    };
 }
 
 async function initiateOracleSecurityPatchAssessmentCollection(

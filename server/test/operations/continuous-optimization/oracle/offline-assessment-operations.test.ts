@@ -218,40 +218,4 @@ describe('fetchOracleOfflineAssessment', () => {
         expect(snapcenter.status).toBe('not-optimized');
         expect(snapcenter.totalObjectsInViolation).toBe(1);
     });
-
-    it('should short-circuit snapcenter drift when DataGuard primary', async () => {
-        const dgPrimaryInstanceId = 'ORADGPRIM';
-        await upsertDatabaseInstance(ACCOUNT_ID, createInstance(dgPrimaryInstanceId, 'iSCSI'));
-        await bulkUpsertOfflineAssessments([
-            {
-                accountId: ACCOUNT_ID,
-                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
-                region: DEFAULT_AWS_REGION,
-                resourceId,
-                databaseInstanceId: dgPrimaryInstanceId,
-                databaseType: DATABASE_TYPE.oracle,
-                rawdata: {
-                    ...rawdataFor(),
-                    snapcenter: {
-                        isDataguardPrimary: true,
-                        volumes: [],
-                        standaloneCheck: { pluginServiceRunning: false, sidFoundInLogs: false },
-                        errorMessage: ''
-                    }
-                },
-                mappedOntapVolumes: mappedVolumesFor('iSCSI'),
-                metadata: metadataFor(dgPrimaryInstanceId)
-            }
-        ]);
-
-        const response = await fetchOracleOfflineAssessment(
-            ACCOUNT_ID,
-            resourceId,
-            dgPrimaryInstanceId,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION
-        );
-
-        expect(response.assessments.find(a => a.type === 'resiliency')).toBeUndefined();
-    });
 });

@@ -23,7 +23,8 @@ function calculateMaxDOPDrift(
     region: string,
     databaseHostId: string,
     databaseInstanceId: string,
-    maxdopAssessmentData: MaxDOPAssesment
+    maxdopAssessmentData: MaxDOPAssesment,
+    instanceName?: string
 ): MssqlAssessmentItemType | AssessmentErrorItemType {
     logger.info('Calculating Max DOP drift', { accountId, credentialsId, region, databaseHostId, databaseInstanceId });
     const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'maxdop');
@@ -37,11 +38,16 @@ function calculateMaxDOPDrift(
         }
 
         const { current, recommendedMaxDOP, status } = maxdopAssessmentData as MaxDOPAssesment;
+        const assessmentStatus = status as AssessmentStatus;
+        const isViolation = assessmentStatus !== AssessmentStatus.OPTIMIZED;
         return {
             ...goldenConfig,
-            status: status as AssessmentStatus,
+            status: assessmentStatus,
             recommended: recommendedMaxDOP,
-            current: current?.toString()
+            current: current?.toString(),
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: isViolation ? 1 : 0,
+            objectsInViolation: isViolation ? [instanceName ?? databaseInstanceId] : []
         };
     } catch (error: any) {
         const errorMessage = `Error while calculating max DOP drift. ${error.message}`;

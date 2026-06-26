@@ -282,13 +282,15 @@ describe('MSSQL Assessment Dismiss Operations', () => {
                 { id: 'thin-provision', configState: 'POSTPONED', startTime: now - 1000, endTime: now - 100 }
             ];
 
-            const { dismissedIds } = filterExpiredDismissConfigs(
-                ACCOUNT_ID,
-                DEFAULT_AWS_CREDENTIALS_ID,
-                DEFAULT_AWS_REGION,
-                testResourceId,
-                configs,
-                []
+            const dismissedIds = new Set(
+                filterExpiredDismissConfigs(
+                    ACCOUNT_ID,
+                    DEFAULT_AWS_CREDENTIALS_ID,
+                    DEFAULT_AWS_REGION,
+                    testResourceId,
+                    configs,
+                    []
+                ).map(c => c.id)
             );
 
             expect(dismissedIds.has('crr')).toBe(true);

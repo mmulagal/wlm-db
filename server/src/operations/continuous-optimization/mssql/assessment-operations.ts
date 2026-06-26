@@ -270,7 +270,7 @@ async function fetchMssqlDriftAssessment(
         ? (instanceConfigurations as DismissConfig[])
         : [];
     const hostDismissedConfigs = Array.isArray(hostConfigurations) ? (hostConfigurations as DismissConfig[]) : [];
-    const { dismissedIds, dismissedConfigs } = filterExpiredDismissConfigs(
+    const dismissedConfigs = filterExpiredDismissConfigs(
         accountId,
         credentialsId,
         region,
@@ -279,9 +279,10 @@ async function fetchMssqlDriftAssessment(
         hostDismissedConfigs,
         databaseInstanceId
     );
+    const dismissedIds = new Set(dismissedConfigs.map(c => c.id));
 
     const isAoagDeployment = databaseDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT;
-    const assessmentTypes = resolveAssessmentTypes(
+    const { categories: assessmentTypes } = resolveAssessmentTypes(
         DatabaseTypes.MS_SQL_SERVER,
         fields,
         { deploymentType: databaseDeploymentType },
@@ -361,7 +362,8 @@ async function fetchMssqlDriftAssessment(
                   region,
                   databaseHostId,
                   databaseInstanceId,
-                  assessmentDataMap[AssessmentCategories.MAXDOP] as MaxDOPAssesment
+                  assessmentDataMap[AssessmentCategories.MAXDOP] as MaxDOPAssesment,
+                  databaseInstanceName
               )
             : undefined,
         assessmentFlags.clone
@@ -400,7 +402,6 @@ async function fetchMssqlDriftAssessment(
         : undefined;
     const isStandaloneAoag = baseDeploymentType === SqlServerDeploymentModel.SQL_STANDALONE_SHORT;
 
-    // Append all assessments together (storage, instance-level, host-level, resilience).
     const assessments: (AssessmentItemType | AssessmentErrorItemType)[] = [];
 
     [storageAssessmentResponse, hostLevelData, resilienceAssessmentResponse].forEach(item => {
@@ -599,7 +600,7 @@ async function fetchMssqlDriftAssessmentPerHost(
         logger.info(message);
         throw createError(HttpErrorCodes.NOT_FOUND, message);
     }
-    const hostApplicableAssessmentCategories = resolveAssessmentTypes(
+    const { categories: hostApplicableAssessmentCategories } = resolveAssessmentTypes(
         DatabaseTypes.MS_SQL_SERVER,
         fields,
         { deploymentType: '', storageProtocol: '', isAsmManaged: false, isDataGuardDeployed: false },
@@ -1283,14 +1284,16 @@ async function triggerMssqlAssessment(
             : [];
         const hostDismissedConfigs = Array.isArray(hostConfigurations) ? (hostConfigurations as DismissConfig[]) : [];
 
-        const { dismissedIds } = filterExpiredDismissConfigs(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            instanceDismissedConfigs,
-            hostDismissedConfigs,
-            databaseInstanceId
+        const dismissedIds = new Set(
+            filterExpiredDismissConfigs(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceDismissedConfigs,
+                hostDismissedConfigs,
+                databaseInstanceId
+            ).map(c => c.id)
         );
 
         const {
@@ -1301,7 +1304,12 @@ async function triggerMssqlAssessment(
             database_deployment_type: deploymentType
         } = newDatabaseInstanceDetails;
 
-        fields = resolveAssessmentTypes(DatabaseTypes.MS_SQL_SERVER, fields, { deploymentType }, dismissedIds);
+        fields = resolveAssessmentTypes(
+            DatabaseTypes.MS_SQL_SERVER,
+            fields,
+            { deploymentType },
+            dismissedIds
+        ).categories;
 
         const instanceRecord: WorkloadInstance = {
             id: databaseInstanceId,
