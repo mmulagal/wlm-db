@@ -51,11 +51,13 @@ const OracleWellArchitectDashboard = () => {
         optimizePageLoading: loading,
         gwTimestamp,
         driftAssessmentData,
-        selectedDatabaseStorageType
+        selectedDatabaseStorageType,
+        isWad: isWadFromStore
     } = useAppSelector(state => state.getWellOptimize);
 
     // Check if this is a WAD (offline assessment) instance
-    const isWad = cardData?.isWad || false;
+    // Use Redux store flag which is set when navigating to WAD assessment
+    const isWad = isWadFromStore || cardData?.isWad || false;
 
     const [showChartArea, setShowChartArea] = useState(true);
 

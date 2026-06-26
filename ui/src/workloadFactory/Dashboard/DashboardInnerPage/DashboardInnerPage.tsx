@@ -27,9 +27,8 @@ import { useAppSelector } from '../../../store/storeHooks';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
 import {
-    cardDataDefault,
     checkIfDisableForOptimize,
-    formatGetWellData,
+    formatGetWellDataFlat,
     handleOptimizeStorageJob,
     setOptimizeInnerpageSummary
 } from '../../GetWell/GetWellUtils';
@@ -296,7 +295,8 @@ const DashboardInnerPage = () => {
         if (configEngineType === DBType.ORACLE) {
             formatOracleWellArchitectedData(dispatch, rowData?.assessments);
         } else {
-            formatGetWellData(dispatch, rowData?.assessments);
+            // All APIs return flat structure now
+            formatGetWellDataFlat(dispatch, rowData?.assessments, false, false, false, t);
         }
 
         dispatch(buildOptimizeInfoNotification({ configName: configDisplayName, t, dispatch, isWorkloadFactory }));
@@ -488,7 +488,7 @@ const DashboardInnerPage = () => {
                         objectsInViolation: cloneViolationsList,
                         severity: rowData?.severity,
                         tags: rowData?.tags,
-                        recommendation: cardDataDefault?.clone_management?.recommendation
+                        recommendation: rowData?.recommendation // Flat API provides recommendation directly
                     })
                 );
             } else {
@@ -523,7 +523,8 @@ const DashboardInnerPage = () => {
                         objectsInViolation: cloneViolationsList,
                         severity: rowData?.[0]?.severity,
                         tags: rowData?.[0]?.tags,
-                        recommendation: cardDataDefault?.clone_management?.recommendation
+                        // @TODO: check this recommendation
+                        recommendation: rowData?.[0]?.recommendation // Flat API provides recommendation directly
                     })
                 );
             }

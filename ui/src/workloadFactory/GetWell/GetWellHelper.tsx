@@ -4,7 +4,6 @@ import { TFunction } from 'i18next';
 import { CONFIG_STATES, GETWELL_CONFIG, WA_FLAG_SKIP } from '../../utils/consts';
 import { ReactComponent as Postpone } from '../../assets/Schedule.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
-import { isConfigSkippedForAoag, isMssqlHaDeployment, isWadExcludedConfig } from './GetWellUtils';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
 
 // Helper component for postpone information
@@ -102,11 +101,6 @@ export const checkHasDismissedConfigurations = (cardData: any): boolean => {
     const hasStandardDismissed = Object.keys(cardData).some((key: string) => {
         if (WA_FLAG_SKIP.includes(key)) return false;
 
-        // Skip WAD excluded configurations
-        if (isWadExcludedConfig(cardData[key]?.mapName, isWad)) {
-            return false;
-        }
-
         const configState = cardData[key]?.dismissedObj?.configState;
         const isDismissed = configState === CONFIG_STATES.DISMISSED || configState === CONFIG_STATES.POSTPONED;
 
@@ -127,18 +121,7 @@ export const calculateTotalConfigCount = (cardData: any, showDismissedConfigurat
     Object.keys(cardData).forEach((key: string) => {
         if (WA_FLAG_SKIP.includes(key)) return;
 
-        // Skip MSSQL High Availability for non-HA instances (only show for FCI and AOAG)
-        const isMSSQLHighAvailability = key === GETWELL_CONFIG.mssqlhighavailability;
-        if (isMSSQLHighAvailability && !isMssqlHaDeployment(cardData?.deploymentType)) {
-            return;
-        }
-
         if (key === 'isStorageLayoutFra' || key === 'isASMManaged' || key === 'storageProtocol') {
-            return;
-        }
-
-        // Skip WAD excluded configurations from count
-        if (isWadExcludedConfig(cardData[key]?.mapName, isWad)) {
             return;
         }
 
@@ -240,22 +223,6 @@ export const checkAllConfigurationsDismissed = (cardData: any): boolean => {
     // Check standard configurations (using dismissedObj)
     Object.keys(cardData).forEach((key: string) => {
         if (WA_FLAG_SKIP.includes(key)) return;
-
-        // Skip MSSQL High Availability for non-HA instances (only show for FCI and AOAG)
-        const isMSSQLHighAvailability = key === GETWELL_CONFIG.mssqlhighavailability;
-        if (isMSSQLHighAvailability && !isMssqlHaDeployment(cardData?.deploymentType)) {
-            return;
-        }
-
-        // Skip configurations not supported for AOAG deployments (compare by mapName)
-        if (isConfigSkippedForAoag(cardData[key]?.mapName, cardData?.deploymentType)) {
-            return;
-        }
-
-        // Skip WAD excluded configurations
-        if (isWadExcludedConfig(cardData[key]?.mapName, isWad)) {
-            return;
-        }
 
         totalConfigs++;
         const configState = cardData[key]?.dismissedObj?.configState;

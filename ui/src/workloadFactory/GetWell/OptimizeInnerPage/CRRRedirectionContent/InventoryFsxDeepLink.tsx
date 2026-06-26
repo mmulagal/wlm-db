@@ -35,11 +35,8 @@ import {
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
 import { resetEiData } from '../../../../store/workloadFactory/agenticAISlice';
 import store from '../../../../store/store';
-import {
-    formatOracleWellArchitectedData,
-    oracleCardData
-} from '../../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
-import { generateDynamicOracleStorageMockData, updateAccountLevelAssessmentData } from '../../GetWellUtils';
+import { formatOracleWellArchitectedData } from '../../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+import { updateAccountLevelAssessmentData } from '../../GetWellUtils';
 
 const INVENTORY_CRR_TARGET = 'crr';
 const COMING_FROM_REPLICATE_WIZARD = 'replicateWizard';
@@ -53,18 +50,42 @@ const safeDecode = (value: string | undefined) => {
     }
 };
 
+// @TODO: Check if this fallback is proper and required
 const buildOracleCrrFallbackCard = () => ({
-    ...oracleCardData.crr,
-    block_two: { ...oracleCardData.crr.block_two, value: GETWELL_STATUS.NOT_OPTIMIZED },
-    block_four: { ...oracleCardData.crr.block_four, value: GETWELL_STATUS.WARNING },
-    block_five: { ...oracleCardData.crr.block_five, value: 'Volume' },
+    id: 'crr',
+    category: 'resiliency',
+    mapName: ASSESSMENT_CONFIG_NAMES.CRR,
+    block_one: {
+        value: ASSESSMENT_CONFIG_NAMES.CRR,
+        type: 'Resiliency'
+    },
+    block_two: {
+        type: 'Status',
+        value: GETWELL_STATUS.NOT_OPTIMIZED
+    },
+    block_four: {
+        type: 'Severity',
+        value: GETWELL_STATUS.WARNING
+    },
+    block_five: {
+        type: 'Resource type',
+        value: 'Volume'
+    },
     block_six: {
-        ...oracleCardData.crr.block_six,
+        type: 'Impacted volumes',
         value: '0 out of 0',
-        count: { totalObjectsAssessed: 0, totalObjectsInViolation: 0 }
+        count: { totalObjectsAssessed: 0, totalObjectsInViolation: 0 },
+        smallFont: true
     },
     objectsInViolation: [],
-    recommendationText: oracleCardData.crr.recommendation?.description
+    recommendation: {
+        title: 'Cross-Region Replication (CRR) recommendation',
+        description:
+            'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.'
+    },
+    recommendationText:
+        'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.',
+    tags: ['Reliability']
 });
 
 const InventoryFsxDeepLink = () => {
@@ -221,10 +242,6 @@ const InventoryFsxDeepLink = () => {
                 if (cancelled) return;
 
                 if (result && !result?.error && result?.data) {
-                    if (!result.data.storage) {
-                        const dynamicMockData = generateDynamicOracleStorageMockData(result.data);
-                        result.data = { ...result.data, ...dynamicMockData };
-                    }
                     dispatch(setDriftAssessmentData(result.data));
                     formatOracleWellArchitectedData(dispatch, result.data, false, true);
                     updateAccountLevelAssessmentData(

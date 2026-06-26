@@ -9,14 +9,7 @@ import styles from './OptimizationBreakdown.module.scss';
 import OptimizeComponent from '../OptimizeComponent/OptimizeComponent';
 import { useAppSelector } from '../../../store/storeHooks';
 import { GENERAL } from '../../../utils/appConstants';
-import { getCategoryData } from '../GetWellUtils';
-import {
-    getTechnicalKeyToDisplayNameMapping,
-    getOracleTechnicalKeyToDisplayNameMapping,
-    groupConfigurationsByCategory,
-    generateDisplayText
-} from './OptimizationBreakdownHelper';
-import { getDynamicOracleCategoryData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+import { groupConfigurationsByCategory, generateDisplayText } from './OptimizationBreakdownHelper';
 import { DBType } from '../../../utils/consts';
 
 const OptimizationBreakdown = ({
@@ -40,109 +33,35 @@ const OptimizationBreakdown = ({
             engineType
         );
 
-        // Check if using flat API
-        const isFlatApi = Array.isArray(driftAssessmentData?.dismissedConfigurations);
+        // Show categories and configurations dynamically
+        const { flatApiCategories = [], configurations = [] } = result;
 
-        if (isFlatApi) {
-            // FLAT API: Show categories and configurations dynamically
-            const { flatApiCategories = [], configurations = [] } = result;
-
-            // If no data to show, return null
-            if (flatApiCategories.length === 0 && configurations.length === 0) {
-                return null;
-            }
-
-            return (
-                <div>
-                    {flatApiCategories.length > 0 && (
-                        <>
-                            <DsTypography variant="Semibold_14" className={styles.dismissTooltipHeader}>
-                                {t('databases.well-architect.category')}
-                            </DsTypography>
-                            <DsTypography variant="Regular_14" className={styles.tooltipConfigText}>
-                                {flatApiCategories.join(' | ')}
-                            </DsTypography>
-                        </>
-                    )}
-
-                    {configurations.length > 0 && (
-                        <>
-                            {flatApiCategories.length > 0 && <div className={styles.tooltipDivider} />}
-                            <DsTypography variant="Semibold_14" className={styles.dismissTooltipHeader}>
-                                {t('databases.well-architect.configuration')}
-                            </DsTypography>
-                            <DsTypography variant="Regular_14" className={styles.tooltipConfigText}>
-                                {configurations.join(' | ')}
-                            </DsTypography>
-                        </>
-                    )}
-                </div>
-            );
+        // If no data to show, return null
+        if (flatApiCategories.length === 0 && configurations.length === 0) {
+            return null;
         }
-
-        // NESTED API: Logic with categories and configurations
-        const { fullyDismissedCategories, individualConfigs, parentConfigurations } = result;
-
-        const categoryData =
-            engineType === DBType.ORACLE ? getDynamicOracleCategoryData(driftAssessmentData) : getCategoryData();
-        const technicalKeyToDisplayName =
-            engineType === DBType.ORACLE
-                ? getOracleTechnicalKeyToDisplayNameMapping()
-                : getTechnicalKeyToDisplayNameMapping();
-
-        const configurationSources = [
-            ...fullyDismissedCategories
-                .map(category => {
-                    const configsInCategory = Object.keys(categoryData).filter(
-                        configKey => categoryData[configKey as keyof typeof categoryData].category === category
-                    );
-                    return configsInCategory.map(configKey => technicalKeyToDisplayName[configKey] || configKey);
-                })
-                .flat(),
-            ...Object.entries(individualConfigs)
-                .map(([, configs]) => configs)
-                .flat(),
-            ...parentConfigurations.filter(parentConfig => {
-                const technicalKey = Object.keys(categoryData).find(
-                    key => technicalKeyToDisplayName[key] === parentConfig
-                );
-                if (!technicalKey) return true;
-
-                const configData = categoryData[technicalKey as keyof typeof categoryData];
-                if (!configData) return true;
-
-                if (fullyDismissedCategories.includes(configData.category)) return false;
-
-                const individualConfigsForCategory = individualConfigs[configData.category];
-                if (individualConfigsForCategory?.includes(parentConfig)) return false;
-
-                return true;
-            })
-        ];
-
-        const allConfigurations = [...new Set(configurationSources)];
 
         return (
             <div>
-                {fullyDismissedCategories.length > 0 && (
+                {flatApiCategories.length > 0 && (
                     <>
                         <DsTypography variant="Semibold_14" className={styles.dismissTooltipHeader}>
                             {t('databases.well-architect.category')}
                         </DsTypography>
                         <DsTypography variant="Regular_14" className={styles.tooltipConfigText}>
-                            {fullyDismissedCategories.join(' | ')}
+                            {flatApiCategories.join(' | ')}
                         </DsTypography>
                     </>
                 )}
 
-                {allConfigurations.length > 0 && (
+                {configurations.length > 0 && (
                     <>
-                        {fullyDismissedCategories.length > 0 && <div className={styles.tooltipDivider} />}
+                        {flatApiCategories.length > 0 && <div className={styles.tooltipDivider} />}
                         <DsTypography variant="Semibold_14" className={styles.dismissTooltipHeader}>
                             {t('databases.well-architect.configuration')}
                         </DsTypography>
                         <DsTypography variant="Regular_14" className={styles.tooltipConfigText}>
-                            {allConfigurations.join(' | ')}
+                            {configurations.join(' | ')}
                         </DsTypography>
                     </>
                 )}

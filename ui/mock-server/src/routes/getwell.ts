@@ -1,17 +1,12 @@
 import { BASE_URL, delay, generateResponse } from '../utils/appUtils';
-import GetWellJson from '../data/getWell.json';
 import GetWellFlatJson from '../data/getWellFlat.json';
 import GetWellOracleFlatJson from '../data/getWellOracleFlat.json';
-import GetWellOfflineJson from '../data/getWellOffline.json';
 import GetWellOfflineFlatJson from '../data/getWellOfflineFlat.json';
-import OracleAssessmentOfflineJson from '../data/offlineOracleAssessment.json';
 import OracleAssessmentOfflineFlatJson from '../data/offlineOracleAssessmentFlat.json';
-import GetWellHostJson from '../data/getWellHost.json';
 import SnapshotPolicies from '../data/snapshotPolicies.json';
 import GetWellAccJson from '../data/getWellAcc.json';
 import GetWellAccOfflineJson from '../data/getWellAccOffline.json';
 import GetWellAccOfflineOracleJson from '../data/offlineOracleAssessmentAcc.json';
-import OracleAssessmentJson from '../data/oracleAssessment.json';
 import OracleAssessmentAccJson from '../data/oracleAssessmentAcc.json';
 import MissingPatchJson from '../data/missingPatch.json';
 
@@ -52,33 +47,6 @@ router.post(
 );
 
 router.get(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/assessment`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 200, GetWellHostJson);
-        }, 20);
-    }
-);
-
-router.get(
-    `${BASE_URL}/v1/mssql/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/offline-assessment`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 200, GetWellOfflineJson);
-        }, 20);
-    }
-);
-
-router.get(
-    `${BASE_URL}/v1/oracle/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/offline-assessment`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 200, OracleAssessmentOfflineJson);
-        }, 20);
-    }
-);
-
-router.get(
     `${BASE_URL}/v2/mssql/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/offline-assessment`,
     async (req: {}, res: any) => {
         setTimeout(() => {
@@ -105,28 +73,10 @@ router.get(
 );
 
 router.get(
-    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 200, GetWellJson);
-        }, 2000);
-    }
-);
-
-router.get(
     `${BASE_URL}/v2/mssql/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, GetWellFlatJson);
-        }, 2000);
-    }
-);
-
-router.get(
-    `${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/assessment`,
-    async (req: {}, res: any) => {
-        setTimeout(() => {
-            generateResponse(res, 200, OracleAssessmentJson);
         }, 2000);
     }
 );

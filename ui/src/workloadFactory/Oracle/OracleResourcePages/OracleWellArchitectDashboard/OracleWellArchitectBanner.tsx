@@ -20,13 +20,19 @@ const OracleWellArchitectBanner = () => {
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
     const { selectedResourceId, selectedDatabaseInstance, selectedResourceCredId, selectedResourceRegionId } =
         useAppSelector(state => state.workloadFactoryResource);
-    const { isInnerPageOptimize, gwTimestamp, gwAdhocError, optimizePageLoading, cardData } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const {
+        isInnerPageOptimize,
+        gwTimestamp,
+        gwAdhocError,
+        optimizePageLoading,
+        cardData,
+        isWad: isWadFromStore
+    } = useAppSelector(state => state.getWellOptimize);
     const [triggerAssessmentInProgress, setTriggerAssessmentInProgress] = useState(false);
 
     // Check if this is a WAD (offline assessment) instance
-    const isWad = cardData?.isWad || false;
+    // Use Redux store flag which is set when navigating to WAD assessment
+    const isWad = isWadFromStore || cardData?.isWad || false;
 
     const [triggerAssessmentApi] = useTriggerOracleInstanceAssessmentMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();

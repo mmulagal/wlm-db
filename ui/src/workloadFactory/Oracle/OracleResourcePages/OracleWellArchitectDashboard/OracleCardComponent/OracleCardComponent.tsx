@@ -27,13 +27,10 @@ import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../.
 import { setSelectedHeaderTab } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { DismissDialog } from '../../../../GetWell/StorageCardComponent/DismissDialog/DismissDialog';
 import {
-    getSubConfigurationData,
     handleSingleAction as handleSingleActionHelper,
     addSuccessNotification as addSuccessNotificationHelper,
     handleDismissResponse as handleDismissResponseHelper,
-    handleDismissError as handleDismissErrorHelper,
-    areSubConfigurationsNotActive,
-    areAllSubConfigurationsActivating as areAllSubConfigurationsActivatingHelper
+    handleDismissError as handleDismissErrorHelper
 } from '../../../../GetWell/StorageCardComponent/StorageCardComponentHelper';
 import { GENERAL } from '../../../../../utils/appConstants';
 
@@ -113,11 +110,13 @@ const OracleCardComponent = ({
         selectedGwInstanceCredId,
         selectedGwInstanceRegionId,
         cardData: cardDataFromStore,
-        driftAssessmentData
+        driftAssessmentData,
+        isWad: isWadFromStore
     } = useAppSelector(state => state.getWellOptimize);
 
     // Check if this is a WAD (offline assessment) instance
-    const isWad = cardDataFromStore?.isWad || false;
+    // Use Redux store flag which is set when navigating to WAD assessment
+    const isWad = isWadFromStore || cardDataFromStore?.isWad || false;
 
     const [dismissOracleAssessment] = useDismissOracleAssessmentMutation();
     const [optimizeOracleOs] = useOptimizeOracleOperatingSystemMutation();
@@ -147,16 +146,6 @@ const OracleCardComponent = ({
         ) {
             return true;
         }
-
-        // For ONTAP and OS cards: apply dismissed style if all sub-configs are activating
-        if (
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
-        ) {
-            return showDismissedConfigurations || isAllSubConfigActivating;
-        }
-
-        // For other normal cards: keep the existing logic
         return showDismissedConfigurations || cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING;
     };
 
@@ -166,85 +155,19 @@ const OracleCardComponent = ({
         if (cardData?.isWadExcluded) {
             return true;
         }
-
-        // For ONTAP, OS, and HA cards: apply dismissed style if all sub-configs are activating
-        if (
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
-        ) {
-            return isAllSubConfigActivating;
-        }
-
-        // For other normal cards
         return cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING;
     };
 
-    // Function to render section two content with N/A conditions for ONTAP and OS cards
-    const sectionTwoContent = (cardData: any) => {
-        // Apply these conditions only for ONTAP and OS cards
-        if (
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
-        ) {
-            // For ONTAP and OS cards: show N/A if sub-configurations are not active and in Dismissed view
-            if (showDismissedConfigurations && areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
-                return (
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {t('databases.general.not-available-table-columns')}
-                    </DsTypography>
-                );
-            }
-
-            // Only show N/A when all the subConfiguration are in activating state
-            if (
-                !showDismissedConfigurations &&
-                areAllSubConfigurationsActivatingHelper(cardData, driftAssessmentData)
-            ) {
-                return (
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {t('databases.general.not-available-table-columns')}
-                    </DsTypography>
-                );
-            }
-        }
-
+    // Function to render section two content
+    const sectionTwoContent = (cardData: any) => (
         // Normal case - show StatusSection
-        return <StatusSection cardData={cardData} loading={loading} disableText={disableText} />;
-    };
-
-    // Function to render section five content with N/A conditions for ONTAP and OS cards
-    const sectionFiveContent = (cardData: any) => {
-        // Apply these conditions only for ONTAP and OS cards
-        if (
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
-        ) {
-            // For ONTAP and OS cards: show N/A if sub-configurations are not active and in Dismissed view
-            if (showDismissedConfigurations && areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
-                return (
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {t('databases.general.not-available-table-columns')}
-                    </DsTypography>
-                );
-            }
-
-            // Only show N/A when all the subConfiguration are in activating state
-            if (
-                !showDismissedConfigurations &&
-                areAllSubConfigurationsActivatingHelper(cardData, driftAssessmentData)
-            ) {
-                return (
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {t('databases.general.not-available-table-columns')}
-                    </DsTypography>
-                );
-            }
-        }
-
+        <StatusSection cardData={cardData} loading={loading} disableText={disableText} />
+    );
+    // Function to render section five content
+    const sectionFiveContent = (cardData: any) => (
         // Normal case - show SectionFive
-        return <SectionFive cardData={cardData} loading={loading} disableText={disableText} />;
-    };
-
+        <SectionFive cardData={cardData} loading={loading} disableText={disableText} />
+    );
     // This is the function that will be called when the optimize button is clicked from oracle cards
     const callOracleOptimizeApi = (type: any) =>
         callOptimizeOracleApi({
@@ -303,12 +226,10 @@ const OracleCardComponent = ({
     };
 
     const handleDismissButtonClick = () => {
-        const { storageTier } = getSubConfigurationData(cardData);
-
         setDialog(
             <DismissDialog
                 type="single"
-                storageTier={storageTier}
+                storageTier={cardData?.block_one?.value}
                 callback={(selectedAction: string) => {
                     handleSingleAction(selectedAction);
                 }}
@@ -427,57 +348,31 @@ const OracleCardComponent = ({
                         </DsTypography>
                     </div>
                 </div>
-                {cardData?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS &&
-                    cardData?.block_one?.value !== ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM && (
-                        <div className={styles.itemContainer}>
-                            <div className={styles.item}>
-                                <div className={styles.summaryValue}>
-                                    <SectionSix cardData={cardData} loading={loading} disableText={disableText} />
-                                </div>
-                                <DsTypography variant="Regular_14" className={styles.descriptionText}>
-                                    {cardData?.block_six?.count
-                                        ? `${t('databases.well-architect.impacted')} ${cardData?.block_six?.type}`
-                                        : cardData?.block_six?.type}
-                                </DsTypography>
-                            </div>
+                <div className={styles.itemContainer}>
+                    <div className={styles.item}>
+                        <div className={styles.summaryValue}>
+                            <SectionSix cardData={cardData} loading={loading} disableText={disableText} />
                         </div>
-                    )}
-
-                {/* Empty Column for ONTAP and Operating System so that dismiss button is aligned at last column */}
-                {(cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-                    cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) && (
-                    <div className={`${styles.column} ${styles.emptyColumn}`} />
-                )}
-
-                {/* Buttons - Handling for ONTAP and Operating system cards */}
-                {(cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-                    cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) &&
-                !showDismissedConfigurations &&
-                !areAllSubConfigurationsActivatingHelper(cardData, driftAssessmentData) &&
-                cardData?.block_two?.value ? (
-                    <div className={`${styles.column} ${styles.lastColumnAlignment}`}>
-                        {/* Dismiss Button - Show for ONTAP and Operating system in last grid column */}
-                        {renderDismissButton()}
+                        <DsTypography variant="Regular_14" className={styles.descriptionText}>
+                            {cardData?.block_six?.count
+                                ? `${t('databases.well-architect.impacted')} ${cardData?.block_six?.type}`
+                                : cardData?.block_six?.type}
+                        </DsTypography>
                     </div>
-                ) : null}
-                {/* Buttons for regular cards */}
-                {!showDismissedConfigurations &&
-                    !(
-                        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-                        cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
-                    ) && (
-                        <div className={styles.buttonGroup}>
-                            {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
-                            {loading || dismissDisableButton() ? '' : renderDismissButton()}
-                            {/* View and Fix Action Button */}
-                            <ViewAndFixButton
-                                cardData={cardData}
-                                loading={loading ?? undefined}
-                                callOptimizeApi={callOracleOptimizeApi}
-                                isWad={isWad}
-                            />
-                        </div>
-                    )}
+                </div>
+                {!showDismissedConfigurations && (
+                    <div className={styles.buttonGroup}>
+                        {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
+                        {loading || dismissDisableButton() ? '' : renderDismissButton()}
+                        {/* View and Fix Action Button */}
+                        <ViewAndFixButton
+                            cardData={cardData}
+                            loading={loading ?? undefined}
+                            callOptimizeApi={callOracleOptimizeApi}
+                            isWad={isWad}
+                        />
+                    </div>
+                )}
                 {/* Reactivate button for dismissed configurations */}
                 {showDismissedConfigurations && (
                     <div className={styles.buttonSection} id={`${cardData?.id}-reactivate`}>

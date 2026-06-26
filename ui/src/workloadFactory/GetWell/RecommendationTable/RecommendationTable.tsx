@@ -44,14 +44,10 @@ import {
 } from '../StorageCardComponent/StorageCardComponentHelper';
 
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
-import {
-    formatGetWellData,
-    handleOptimizeStorageJob,
-    filterIndividualOntapOsConfigurations,
-    filterIndividualMssqlHighAvailabilityConfigurations,
-    formatAssessmentData
-} from '../GetWellUtils';
+import { formatGetWellDataFlat, handleOptimizeStorageJob } from '../GetWellUtils';
 import { formatOracleWellArchitectedData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+import oracleConfigRegistry from '../../../utils/configRegistry/oracleConfigRegistry.json';
+import mssqlConfigRegistry from '../../../utils/configRegistry/mssqlConfigRegistry.json';
 import {
     ACTION_TYPE,
     ASSESSMENT_CONFIG_NAMES,
@@ -389,7 +385,6 @@ const RecommendationTable = ({
                 [statusType]: [...(inProgressHostData[statusType] || []), selectedResourceId]
             })
         );
-        formatAssessmentData(engineType, dispatch);
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.INFO,
@@ -471,77 +466,24 @@ const RecommendationTable = ({
             );
         });
     };
-    const innerPageOracleCheck = (name: string) => {
-        if (
-            engineType === DBType.ORACLE &&
-            (name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
-                name === ASSESSMENT_CONFIG_NAMES.HOST_UTILITIES ||
-                name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_CONFIGURATION ||
-                name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
-                name === ASSESSMENT_CONFIG_NAMES.SELINUX ||
-                name === ASSESSMENT_CONFIG_NAMES.ISCSI_REPLACEMENT_TIMEOUT ||
-                name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_FRIENDLY_NAMES ||
-                name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
-                name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
-                name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
-                name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS ||
-                name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
-                name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
-                name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
-                name === ASSESSMENT_CONFIG_NAMES.KERNEL_PARAMETERS ||
-                name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
-                name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
-                name === ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME ||
-                name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
-                name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
-                name === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH ||
-                name === ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION ||
-                name === ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT)
-        ) {
-            return false;
-        }
-        return true;
+    // Get config metadata from registry (replaces hardcoded innerPageOracleCheck, innerPageCheck, innerPageText)
+    const getConfigMetadata = (configName: string) => {
+        const registry = engineType === DBType.ORACLE ? oracleConfigRegistry : mssqlConfigRegistry;
+        return registry[configName as keyof typeof registry] || { hasInnerPage: true, viewOnly: false };
     };
 
-    const innerPageCheck = (name: string) => {
-        if (
-            (engineType === DBType.MSSQL &&
-                (name === 'Multipath I/O Sessions' ||
-                    name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_STATUS ||
-                    name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_TIMEOUT ||
-                    name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
-                    name === ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM ||
-                    name === ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS ||
-                    name === ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE)) ||
-            from === WLF_TABS.DASHBOARD
-        ) {
+    const canNavigateToInnerPage = (name: string) => {
+        // Dashboard view never navigates to inner page
+        if (from === WLF_TABS.DASHBOARD) {
             return false;
         }
-        return true;
+        const metadata = getConfigMetadata(name);
+        return metadata.hasInnerPage === true;
     };
 
-    const innerPageText = (name: string) => {
-        if (
-            name === ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER ||
-            name === ASSESSMENT_CONFIG_NAMES.ASM_SETUP ||
-            name === ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY ||
-            name === ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE ||
-            name === ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE ||
-            name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES ||
-            name === ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME ||
-            name === ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS ||
-            name === ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS ||
-            name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO ||
-            name === ASSESSMENT_CONFIG_NAMES.SWAP_SPACE ||
-            name === ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE ||
-            name === ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT ||
-            name === ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE ||
-            (engineType === DBType.ORACLE && name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) ||
-            (engineType === DBType.ORACLE && name === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH)
-        ) {
-            return t('databases.well-architect.view');
-        }
-        return t('databases.well-architect.view-and-fix');
+    const getInnerPageButtonText = (name: string) => {
+        const metadata = getConfigMetadata(name);
+        return metadata.viewOnly ? t('databases.well-architect.view') : t('databases.well-architect.view-and-fix');
     };
 
     // Function to check if configuration is activating
@@ -628,8 +570,7 @@ const RecommendationTable = ({
                 selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED ||
                 selectedHeaderTab === WLF_TABS.OPTIMIZE_FROM_WELL_ARCHITECTED_TAB ||
                 selectedHeaderTab === WLF_TABS.ORACLE_WELL_ARCHITECTED_FROM_WELL_ARCHITECTED_TAB) &&
-            innerPageOracleCheck(rowData?.name) &&
-            innerPageCheck(rowData?.name)
+            canNavigateToInnerPage(rowData?.name)
         ) {
             handleNavigateToOptimizePage(rowData);
         } else {
@@ -717,7 +658,13 @@ const RecommendationTable = ({
         if (!rowData) return;
 
         // Use the appropriate format function based on engine type
-        const formatFunction = engineType === DBType.ORACLE ? formatOracleWellArchitectedData : formatGetWellData;
+        // Wrap formatGetWellDataFlat to match the expected signature (dispatch, data, showDismissedView)
+        const formatFunction =
+            engineType === DBType.ORACLE
+                ? formatOracleWellArchitectedData
+                : (dispatch: any, data?: any, showDismissedView?: boolean) => {
+                      formatGetWellDataFlat(dispatch, data, showDismissedView || false, false, false, t);
+                  };
 
         handleDismissResponseHelper(
             res,
@@ -749,8 +696,7 @@ const RecommendationTable = ({
         setDialog(
             <DismissDialog
                 type="single"
-                isSubConfiguration
-                subConfigurationName={rowData?.name}
+                storageTier={rowData?.name}
                 callback={(selectedAction: string) => {
                     handleSingleAction(selectedAction, rowData);
                 }}
@@ -1312,7 +1258,7 @@ const RecommendationTable = ({
                                         >
                                             <div>
                                                 <DsButton variant="secondary" isDisabled>
-                                                    {innerPageText(rowData?.name)}
+                                                    {getInnerPageButtonText(rowData?.name)}
                                                 </DsButton>
                                             </div>
                                         </TooltipComponent>
@@ -1325,7 +1271,7 @@ const RecommendationTable = ({
                                         >
                                             <div>
                                                 <DsButton variant="secondary" isDisabled>
-                                                    {innerPageText(rowData?.name)}
+                                                    {getInnerPageButtonText(rowData?.name)}
                                                 </DsButton>
                                             </div>
                                         </TooltipComponent>
@@ -1339,7 +1285,7 @@ const RecommendationTable = ({
                                                 }}
                                                 isDisabled={rowData?.status !== GETWELL_STATUS.NOT_OPTIMIZED}
                                             >
-                                                {innerPageText(rowData?.name)}
+                                                {getInnerPageButtonText(rowData?.name)}
                                             </DsButton>
                                         </div>
                                     ))}
@@ -1374,48 +1320,18 @@ const RecommendationTable = ({
         if (!tableData) return [];
 
         // First apply ONTAP/OS/MSSQL HA subcategory filtering if applicable
-        let filtered = tableData;
+        const filtered = tableData;
         let isOntapOrOsTable = false;
-        let isMssqlHighAvailabilityTable = false;
+        const isMssqlHighAvailabilityTable = false;
 
         if (showDismissedConfigurations !== undefined) {
             // Apply ONTAP/OS subcategory filtering for ONTAP and OS configurations
             isOntapOrOsTable = tableData.some(
                 (row: any) => row?.type === 'volume' || row?.type === 'lun' || row?.type === 'os'
             );
-
-            // Apply MSSQL High Availability subcategory filtering
-            isMssqlHighAvailabilityTable = tableData.some((row: any) => row?.type === 'mssqlHighAvailability');
-
-            if (isOntapOrOsTable) {
-                // Use driftAssessmentData if available, otherwise fallback to fullCardData
-                const assessmentData = driftAssessmentData || fullCardData;
-                // Use individual configuration filtering
-                filtered = filterIndividualOntapOsConfigurations(
-                    tableData,
-                    assessmentData,
-                    showDismissedConfigurations
-                );
-                // For ONTAP/OS tables, return the filtered result without additional filtering
-                // since individual configuration filtering has already been applied
-                return filtered;
-            }
-            if (isMssqlHighAvailabilityTable) {
-                // Use driftAssessmentData if available, otherwise fallback to fullCardData
-                const assessmentData = driftAssessmentData || fullCardData;
-                // Use individual configuration filtering for MSSQL HA
-                filtered = filterIndividualMssqlHighAvailabilityConfigurations(
-                    tableData,
-                    assessmentData,
-                    showDismissedConfigurations
-                );
-                // For MSSQL HA tables, return the filtered result without additional filtering
-                // since individual configuration filtering has already been applied
-                return filtered;
-            }
         }
 
-        // Apply standard dismissed configuration filtering for non-ONTAP/OS/MSSQL HA tables
+        // Apply standard dismissed configuration filtering for all tables (flat API)
         return filtered.filter((row: any) => {
             const isDismissed =
                 row?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||

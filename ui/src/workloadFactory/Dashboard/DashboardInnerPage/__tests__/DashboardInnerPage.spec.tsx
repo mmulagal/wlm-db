@@ -84,10 +84,6 @@ vi.mock('../RenderTables/DashboardConfigsTable', () => ({
     default: ({ configType }: any) => <div data-testid="dashboard-configs-table">{configType}</div>
 }));
 
-vi.mock('../RenderTables/DashboardConfigsMultiTable', () => ({
-    default: ({ configType }: any) => <div data-testid="dashboard-multi-table">{configType}</div>
-}));
-
 vi.mock('../../../../common/Dialog/DialogComponent', () => ({
     default: (props: any) => <div data-testid="dialog-component">{props.header}</div>
 }));
@@ -151,7 +147,7 @@ vi.mock('../../../DatabaseHomePage/DatabaseHomeUtils', () => ({
 vi.mock('../../../GetWell/GetWellUtils', () => ({
     cardDataDefault: {},
     checkIfDisableForOptimize: vi.fn(() => ({ isDisabled: false, errorMessage: '' })),
-    formatGetWellData: vi.fn(),
+    formatGetWellDataFlat: vi.fn(),
     handleOptimizeStorageJob: vi.fn(),
     nameToIdConfigMapping: vi.fn((type: string) => type),
     setOptimizeInnerpageSummary: vi.fn()
@@ -327,23 +323,6 @@ describe('DashboardInnerPage', () => {
         expect(screen.getByTestId('dashboard-configs-table')).toBeTruthy();
     });
 
-    it('renders DashboardMultiTableConfig for ONTAP Caps', () => {
-        render(
-            <Provider
-                store={makeStore({
-                    databaseHome: {
-                        selectedConfig: 'ONTAP',
-                        selectedConfigSummary: { configState: 'ACTIVE' },
-                        selectedRowsForOptimize: []
-                    }
-                })}
-            >
-                <DashboardInnerPage />
-            </Provider>
-        );
-        expect(screen.getByTestId('dashboard-multi-table')).toBeTruthy();
-    });
-
     it('renders CRR config name correctly', () => {
         render(
             <Provider
@@ -398,28 +377,6 @@ describe('DashboardInnerPage', () => {
             );
             expect(screen.getByTestId('dashboard-configs-table')).toBeTruthy();
             expect(screen.getAllByText(config).length).toBeGreaterThan(0);
-        });
-    });
-
-    // ── renderTable switch cases for DashboardMultiTableConfig ──
-    const multiTableConfigs = ['Operating system', 'Microsoft SQL Server High Availability'];
-
-    multiTableConfigs.forEach(config => {
-        it(`renders DashboardMultiTableConfig for ${config}`, () => {
-            render(
-                <Provider
-                    store={makeStore({
-                        databaseHome: {
-                            selectedConfig: config,
-                            selectedConfigSummary: { configState: 'ACTIVE' },
-                            selectedRowsForOptimize: []
-                        }
-                    })}
-                >
-                    <DashboardInnerPage />
-                </Provider>
-            );
-            expect(screen.getByTestId('dashboard-multi-table')).toBeTruthy();
         });
     });
 

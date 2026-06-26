@@ -8,7 +8,6 @@ import { ReactComponent as Union } from '../../../../../assets/Union.svg';
 import { ReactComponent as Close } from '../../../../../assets/ic_close_blue.svg';
 import styles from './OracleFilterComponent.module.scss';
 import { useAppSelector } from '../../../../../store/storeHooks';
-import { GENERAL } from '../../../../../utils/appConstants';
 import {
     setOracleDefaultFilterOptions,
     setOracleOptimizeFilterTags
@@ -66,7 +65,6 @@ const OracleFilterComponent = ({
         const dismissedIds = state.getWellOptimize.optimizationBreakDown?.total?.dismissedIds || [];
 
         // Filter dismissedIds to only include those NOT in STORAGE_CONFIG_MAP
-        // Anything not in STORAGE_CONFIG_MAP is either storage layout, ONTAP, or OS configuration
         const storageConfigKeys = Object.keys(CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP || {});
 
         const nonStorageConfigDismissedIds = dismissedIds.filter(

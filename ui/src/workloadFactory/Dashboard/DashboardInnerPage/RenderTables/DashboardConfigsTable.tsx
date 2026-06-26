@@ -28,8 +28,7 @@ import {
 } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
-    disableOptimizeCheckBoxForOptimizeCase,
-    isConfigSkippedForAoag
+    disableOptimizeCheckBoxForOptimizeCase
 } from '../../../GetWell/GetWellUtils';
 import { initialDashboardInnerPageOptimizeColState } from '../../../../utils/manageColumnUtils';
 import { useTable } from '../../../../common/Lib/Table/useTable';
@@ -132,14 +131,6 @@ const DashboardConfigsTable = ({
                 const customData = config.dataMapping(configObj, instanceData);
 
                 if (!filterDatabaseRowsForNonAsm(config.configName, instanceAssessments)) {
-                    return;
-                }
-
-                if (isConfigSkippedForAoag(resolveConfigDisplayName(configType), instanceAssessments?.deploymentType)) {
-                    return;
-                }
-
-                if (isWadExcludedAssessmentConfigId(config.configId, hostData?.isWad, configEngineType)) {
                     return;
                 }
 

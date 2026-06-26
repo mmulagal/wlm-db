@@ -11,13 +11,7 @@ import {
     setGwSelectedRowFsxId
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import { useGetMssqlAssessmentDataMutation, useLazyGetOfflineMssqlAssessmentDataQuery } from '../../utils/apiService';
-import {
-    formatGetWellData,
-    formatGetWellDataFlat,
-    resetGwValuesOnRefresh,
-    storageMockData,
-    updateAccountLevelAssessmentData
-} from './GetWellUtils';
+import { formatGetWellDataFlat, resetGwValuesOnRefresh, updateAccountLevelAssessmentData } from './GetWellUtils';
 import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
@@ -66,25 +60,11 @@ const GetWellApi = () => {
                 regionId: selectedGwInstanceRegionId || null
             });
             if (result && !result?.error && result?.data) {
-                // Offline assessments now return flat structure (with assessments array)
-                const isFlatStructure = result.data.assessments && Array.isArray(result.data.assessments);
+                const assessmentData = result.data;
 
-                let assessmentData = result.data;
-
-                if (isFlatStructure) {
-                    // New flat structure - use formatGetWellDataFlat
-                    dispatch(setDriftAssessmentData(assessmentData));
-                    formatGetWellDataFlat(dispatch, assessmentData, false, isRefresh, false, t);
-                    dispatch(setGwSelectedRowFsxId(assessmentData.metadata?.fileSystemId));
-                } else {
-                    // Old nested structure (backward compatibility)
-                    if (!assessmentData.storage) {
-                        assessmentData = { ...assessmentData, ...storageMockData };
-                    }
-                    dispatch(setDriftAssessmentData(assessmentData));
-                    formatGetWellData(dispatch, assessmentData, false, isRefresh);
-                    dispatch(setGwSelectedRowFsxId(assessmentData?.fileSystemId));
-                }
+                dispatch(setDriftAssessmentData(assessmentData));
+                formatGetWellDataFlat(dispatch, assessmentData, false, isRefresh, false, t);
+                dispatch(setGwSelectedRowFsxId(assessmentData.metadata?.fileSystemId));
 
                 updateAccountLevelAssessmentData(dispatch, assessmentData, {
                     databaseHostId: selectedResourceId,
@@ -117,23 +97,9 @@ const GetWellApi = () => {
                 instanceId: selectedDatabaseInstance
             });
             if (result && !result?.error && result?.data) {
-                // Check if response is flat structure (has assessments array)
-                const isFlatStructure = result.data.assessments && Array.isArray(result.data.assessments);
-
-                if (isFlatStructure) {
-                    // New flat structure
-                    dispatch(setDriftAssessmentData(result.data));
-                    formatGetWellDataFlat(dispatch, result.data, false, isRefresh, false, t);
-                    dispatch(setGwSelectedRowFsxId(result.data.metadata?.fileSystemId));
-                } else {
-                    // Old nested structure (backward compatibility)
-                    if (!result.data.storage) {
-                        result.data = { ...result.data, ...storageMockData };
-                    }
-                    dispatch(setDriftAssessmentData(result.data));
-                    formatGetWellData(dispatch, result.data, false, isRefresh);
-                    dispatch(setGwSelectedRowFsxId(result?.data?.fileSystemId));
-                }
+                dispatch(setDriftAssessmentData(result.data));
+                formatGetWellDataFlat(dispatch, result.data, false, isRefresh, false, t);
+                dispatch(setGwSelectedRowFsxId(result.data.metadata?.fileSystemId));
 
                 updateAccountLevelAssessmentData(dispatch, result.data, {
                     databaseHostId: selectedResourceId,

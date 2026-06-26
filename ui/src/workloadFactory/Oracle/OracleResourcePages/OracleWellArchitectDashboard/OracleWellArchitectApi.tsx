@@ -6,7 +6,7 @@ import {
     useGetOracleAssessmentDataMutation,
     useLazyGetOfflineOracleAssessmentDataQuery
 } from '../../../../utils/apiService';
-import { formatOracleWellArchitectedData, oracleCardData } from './OracleWellArchitectedUtils';
+import { formatOracleWellArchitectedData } from './OracleWellArchitectedUtils';
 import {
     setCardData,
     setDriftAssessmentData,
@@ -17,7 +17,7 @@ import {
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { setRefreshOracleWellArchitect, setOracleRefreshTimes } from '../../../../store/workloadFactory/oracleSlice';
 import { getCurrentDateTime } from '../../../../utils/utilityFunctions';
-import { generateDynamicOracleStorageMockData, updateAccountLevelAssessmentData } from '../../../GetWell/GetWellUtils';
+import { updateAccountLevelAssessmentData } from '../../../GetWell/GetWellUtils';
 
 const useOracleWellArchitectApi = () => {
     const dispatch = useDispatch();
@@ -53,16 +53,10 @@ const useOracleWellArchitectApi = () => {
             });
 
             if (result && !result?.error && result?.data) {
-                let assessmentData = {
+                const assessmentData = {
                     ...result.data,
                     isWad: true
                 };
-                const isFlatApi = Array.isArray(assessmentData.assessments) && assessmentData.assessments.length > 0;
-                // Only add mock storage for nested (old) API structure — flat API doesn't use storage object
-                if (!isFlatApi && !assessmentData.storage) {
-                    const dynamicMockData = generateDynamicOracleStorageMockData(assessmentData);
-                    assessmentData = { ...assessmentData, ...dynamicMockData };
-                }
                 dispatch(setDriftAssessmentData(assessmentData));
                 formatOracleWellArchitectedData(dispatch, assessmentData, false, true);
                 updateAccountLevelAssessmentData(
@@ -105,12 +99,6 @@ const useOracleWellArchitectApi = () => {
             });
 
             if (result && !result?.error && result?.data) {
-                const isFlatApi = Array.isArray(result.data.assessments) && result.data.assessments.length > 0;
-                // Only add mock storage for nested (old) API structure — flat API doesn't use storage object
-                if (!isFlatApi && !result.data.storage) {
-                    const dynamicMockData = generateDynamicOracleStorageMockData(result.data);
-                    result.data = { ...result.data, ...dynamicMockData };
-                }
                 dispatch(setDriftAssessmentData(result.data));
                 formatOracleWellArchitectedData(dispatch, result.data, false, true);
                 updateAccountLevelAssessmentData(

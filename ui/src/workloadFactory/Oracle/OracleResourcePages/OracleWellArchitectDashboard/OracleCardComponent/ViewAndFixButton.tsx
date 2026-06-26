@@ -106,23 +106,18 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }:
     };
 
     return (
-        <>
-            {configId !== ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS &&
-                configId !== ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM && (
-                    <div className={styles.lastButton}>
-                        <DsPopover trigger="hover" title={viewButtonDisable().reason} placement="left">
-                            <DsButton
-                                variant="secondary"
-                                isThin
-                                isDisabled={viewButtonDisable().isDisable}
-                                onClick={() => handleDifferentNavigation()}
-                            >
-                                {viewButtonText()}
-                            </DsButton>
-                        </DsPopover>
-                    </div>
-                )}
-        </>
+        <div className={styles.lastButton}>
+            <DsPopover trigger="hover" title={viewButtonDisable().reason} placement="left">
+                <DsButton
+                    variant="secondary"
+                    isThin
+                    isDisabled={viewButtonDisable().isDisable}
+                    onClick={() => handleDifferentNavigation()}
+                >
+                    {viewButtonText()}
+                </DsButton>
+            </DsPopover>
+        </div>
     );
 };
 

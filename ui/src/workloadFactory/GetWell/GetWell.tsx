@@ -35,7 +35,6 @@ import {
     applyFilter,
     resetGwValuesOnRefresh,
     generateDynamicFilterOptions,
-    formatGetWellData,
     formatGetWellDataFlat,
     isAoagDeployment as checkIsAoagDeployment,
     groupConfigurationsByCategory,
@@ -245,23 +244,8 @@ const GetWell = () => {
     // Update table data when dismissed view state changes
     useEffect(() => {
         if (driftAssessmentData) {
-            // Detect if data is flat structure by checking if assessments property exists
-            const isFlatStructure =
-                'assessments' in driftAssessmentData && Array.isArray((driftAssessmentData as any).assessments);
-
-            if (isFlatStructure) {
-                // Pass skipDriftDataDispatch=true to prevent infinite loop
-                formatGetWellDataFlat(
-                    dispatch,
-                    driftAssessmentData as any,
-                    showDismissedConfigurations,
-                    false,
-                    true,
-                    t
-                );
-            } else {
-                formatGetWellData(dispatch, driftAssessmentData, showDismissedConfigurations);
-            }
+            // Pass skipDriftDataDispatch=true to prevent infinite loop
+            formatGetWellDataFlat(dispatch, driftAssessmentData as any, showDismissedConfigurations, false, true, t);
         }
     }, [showDismissedConfigurations, driftAssessmentData]);
 
@@ -422,91 +406,6 @@ const GetWell = () => {
                 </>
             )}
             <div className={styles.getWell} id="export-optimize-pdf">
-                {/* {!optimizePrintState && (
-                    <div className={commonStyles.commonBreadCrumb} style={{ left: '0%', paddingLeft: '40px' }}>
-                        <BreadCrumbs
-                            items={[
-                                {
-                                    title: breadCrumbSelectedFrom === WLF_TABS.INVENTORY ? 'Inventory' : 'Dashboard',
-                                    onClick: () => {
-                                        if (breadCrumbSelectedFrom === WLF_TABS.INVENTORY) {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
-                                        } else {
-                                            dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD));
-                                        }
-                                        dispatch(resetGwData({}));
-                                    }
-                                },
-                                {
-                                    title:
-                                        `${selectedHostname}/${selectedDatabaseInstanceName}` ||
-                                        'Host name/instance name'
-                                }
-                            ]}
-                        />
-                    </div>
-                )} */}
-                {/* <div className={styles.header}>
-                    <div className={styles['header-top-section']}>
-                        <DsTypography
-                            data-testid={`wlm-db-optimize-instance`}
-                            className={styles.optimizeHeader}
-                            variant="Semibold_16"
-                        >
-                            Well-architected dashboard
-                        </DsTypography>
-
-                        {!optimizePrintState &&
-                            (loading || triggerAssessmentInProgress ? (
-                                <div
-                                    className={styles.refreshIconDisable}
-                                    style={{ marginRight: '0px' }}
-                                    id={'assessment-refresh'}
-                                >
-                                    <RefreshIcon />
-                                </div>
-                            ) : (
-                                <Popover
-                                    popoverClass={styles['copy-popover']}
-                                    children={`Last update: ${gwRefreshTimestamp || GENERAL.NOT_AVAILABLE}`}
-                                    trigger="hover"
-                                    container={
-                                        <div
-                                            className={styles.refreshIcon}
-                                            onClick={refreshGetWellPage}
-                                            id={'assessment-refresh'}
-                                        >
-                                            <RefreshIcon />
-                                        </div>
-                                    }
-                                />
-                            ))}
-                    </div>
-                    {!optimizePrintState && (
-                        <DsTypography
-                            data-testid={`wlm-db-${selectedDatabaseInstanceName.toLowerCase().replace(/ /g, '-')}`}
-                            variant="Regular_14"
-                        >
-                            {selectedDatabaseInstanceName || 'instance name'}
-                        </DsTypography>
-                    )}
-                    {optimizePrintState && (
-                        <div className={styles.reportSubHeading}>
-                            <DsTypography className={styles.title} variant="Semibold_16">
-                                Host name {selectedHostname}
-                            </DsTypography>
-                            <div className={styles.separator} />
-                            <DsTypography className={styles.title} variant="Semibold_16">
-                                instance name {selectedDatabaseInstanceName}
-                            </DsTypography>
-                            <div className={styles.separator} />
-                            <DsTypography className={styles.title} variant="Semibold_16">
-                                Report date {generateDate()}
-                            </DsTypography>
-                        </div>
-                    )}
-                </div> */}
-
                 {/* Partial data warning here - based on condition */}
 
                 {cardData?.compute_rightsizing?.errorMessage?.includes('not authorized') && <PartialDataContainer />}

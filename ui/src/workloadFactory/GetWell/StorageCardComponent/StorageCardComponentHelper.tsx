@@ -3,134 +3,8 @@ import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, CONFIG_STATE_ACTIONS, RESPONSE_
 import { GENERAL } from '../../../utils/appConstants';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import { setDriftAssessmentData } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import {
-    formatGetWellData,
-    formatGetWellDataFlat,
-    updateConfigStatePerInstance,
-    updateConfigStateStatus
-} from '../GetWellUtils';
+import { formatGetWellDataFlat, updateConfigStatePerInstance, updateConfigStateStatus } from '../GetWellUtils';
 import { FlatAssessmentResponse } from '../../../utils/types/getWellTypes';
-
-// Helper function to check if sub-configurations are not in active state for ONTAP, OS, and HA cards
-export const areSubConfigurationsNotActive = (cardData: any, driftAssessmentData: any) => {
-    if (!driftAssessmentData?.dismissedConfigurations) {
-        return false;
-    }
-
-    if (cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS) {
-        // For ONTAP, check if any sub-configurations are in DISMISSED, POSTPONED, or ACTIVATING state
-        const storageConfig = driftAssessmentData.dismissedConfigurations.storage?.configuration;
-        const volumes = storageConfig?.volumes || [];
-        const luns = storageConfig?.luns || [];
-        const allOntapConfigs = [...volumes, ...luns];
-
-        return allOntapConfigs.some(
-            (config: any) =>
-                config.configState === CONFIG_STATES.DISMISSED ||
-                config.configState === CONFIG_STATES.POSTPONED ||
-                config.configState === CONFIG_STATES.ACTIVATING
-        );
-    }
-
-    if (cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) {
-        // For OS, check if any sub-configurations are in DISMISSED, POSTPONED, or ACTIVATING state
-        const osConfigs = driftAssessmentData.dismissedConfigurations.storage?.configuration?.os || [];
-
-        return osConfigs.some(
-            (config: any) =>
-                config.configState === CONFIG_STATES.DISMISSED ||
-                config.configState === CONFIG_STATES.POSTPONED ||
-                config.configState === CONFIG_STATES.ACTIVATING
-        );
-    }
-
-    if (cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) {
-        // For HA, check if any sub-configurations are in DISMISSED, POSTPONED, or ACTIVATING state
-        const haConfigs = driftAssessmentData.dismissedConfigurations.highAvailability || [];
-
-        return haConfigs.some(
-            (config: any) =>
-                config.configState === CONFIG_STATES.DISMISSED ||
-                config.configState === CONFIG_STATES.POSTPONED ||
-                config.configState === CONFIG_STATES.ACTIVATING
-        );
-    }
-
-    return false;
-};
-
-// Helper function to check if all sub-configurations are in ACTIVATING state for ONTAP, OS, and HA cards
-export const areAllSubConfigurationsActivating = (cardData: any, driftAssessmentData: any) => {
-    if (!driftAssessmentData?.dismissedConfigurations) {
-        return false;
-    }
-
-    if (cardData?.mapName === ASSESSMENT_CONFIG_NAMES.ONTAP) {
-        // For ONTAP, check if all sub-configurations are in ACTIVATING state
-        const storageConfig = driftAssessmentData.dismissedConfigurations.storage?.configuration;
-        const volumes = storageConfig?.volumes || [];
-        const luns = storageConfig?.luns || [];
-        const allOntapConfigs = [...volumes, ...luns];
-
-        if (allOntapConfigs.length === 0) {
-            return false;
-        }
-
-        return allOntapConfigs.every((config: any) => config.configState === CONFIG_STATES.ACTIVATING);
-    }
-
-    if (cardData?.mapName === ASSESSMENT_CONFIG_NAMES.OS) {
-        // For OS, check if all sub-configurations are in ACTIVATING state
-        const osConfigs = driftAssessmentData.dismissedConfigurations.storage?.configuration?.os || [];
-
-        if (osConfigs.length === 0) {
-            return false;
-        }
-
-        return osConfigs.every((config: any) => config.configState === CONFIG_STATES.ACTIVATING);
-    }
-
-    if (cardData?.mapName === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) {
-        // For HA, check if all sub-configurations are in ACTIVATING state
-        const haConfigs = driftAssessmentData.dismissedConfigurations.highAvailability || [];
-
-        if (haConfigs.length === 0) {
-            return false;
-        }
-
-        return haConfigs.every((config: any) => config.configState === CONFIG_STATES.ACTIVATING);
-    }
-
-    return false;
-};
-
-export const getSubConfigurationData = (cardData: any) => {
-    // Check if this is ONTAP or OS configuration with sub-tables
-    const configName = cardData?.block_one?.value;
-
-    if (configName === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS || configName === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM) {
-        const count = cardData?.block_five?.count?.totalObjectsAssessed;
-        return {
-            isSubConfiguration: false,
-            subConfigurationCount: count,
-            storageTier: configName
-        };
-    }
-    if (configName === ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY) {
-        const count = cardData?.block_six?.count?.totalObjectsAssessed;
-        return {
-            isSubConfiguration: false,
-            subConfigurationCount: count,
-            storageTier: configName
-        };
-    }
-
-    return {
-        isSubConfiguration: false,
-        subConfigurationCount: 0,
-        storageTier: configName
-    };
-};
 
 export const getConfigurationName = (cardData: any) => {
     // For flat API, use configurationId if available (e.g., storage_tier, compute_rightsizing)
@@ -331,22 +205,15 @@ export const handleDismissResponse = (
         if (formatDataFunction) {
             formatDataFunction(dispatch, newData, showDismissedConfigurations);
         } else {
-            // Detect if data is flat structure by checking if assessments property exists
-            const isFlatStructure = 'assessments' in newData && Array.isArray(newData.assessments);
-
-            if (isFlatStructure) {
-                formatGetWellDataFlat(
-                    dispatch,
-                    newData as FlatAssessmentResponse,
-                    showDismissedConfigurations,
-                    false,
-                    false,
-                    t
-                );
-            } else {
-                // @ts-ignore
-                formatGetWellData(dispatch, newData, showDismissedConfigurations);
-            }
+            // All APIs return flat structure now
+            formatGetWellDataFlat(
+                dispatch,
+                newData as FlatAssessmentResponse,
+                showDismissedConfigurations,
+                false,
+                false,
+                t
+            );
         }
 
         // Below code is to reset dashboard level assessment value also
@@ -374,15 +241,7 @@ export const handleDismissResponse = (
                 setShowDismissedConfigurations(false);
             }
         }
-        let notificationCardname = '';
-        if (
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.ONTAP_CAPS ||
-            cardData?.block_one?.value === ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM
-        ) {
-            notificationCardname = cardData?.block_one?.value;
-        } else {
-            notificationCardname = cardData?.mapName || cardData?.name;
-        }
+        const notificationCardname = cardData?.mapName || cardData?.name;
 
         addSuccessNotification(action, notificationCardname, dispatch, t, isBulkAction);
     } else {

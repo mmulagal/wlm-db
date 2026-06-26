@@ -11,7 +11,7 @@ import { getRecommendation } from '../../../utils/recommendations';
 import { useAppSelector } from '../../../store/storeHooks';
 import ValueCard from './ValueCard/ValueCard';
 import TagComponent from './TagComponent/TagComponent';
-import { isWadExcludedConfig, setOptimizeInnerpageSummary, updateConfigStateStatus } from '../../GetWell/GetWellUtils';
+import { setOptimizeInnerpageSummary, updateConfigStateStatus } from '../../GetWell/GetWellUtils';
 import RecommendationText from '../../GetWell/RecommendationText/RecommendationText';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
@@ -329,10 +329,7 @@ const DashboardDismissPage = () => {
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
                 if (!instanceData?.error) {
-                    // Skip WAD-excluded configurations for WAD (offline assessment) instances
-                    if (isWadExcludedConfig(type, hostData?.isWad)) {
-                        return;
-                    }
+                    // Backend now filters WAD-excluded configs - removed frontend check
 
                     const configObj: any = getConfigObj(type, instanceData);
 

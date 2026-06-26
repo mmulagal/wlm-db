@@ -29,7 +29,6 @@ import { useAppSelector } from '../../../store/storeHooks';
 import {
     instanceBreadCrumbSelectedFrom,
     selectHeaderTabFromBreadCrumb,
-    formatAssessmentData,
     handleOptimizeStorageJob
 } from '../GetWellUtils';
 import {
@@ -201,8 +200,6 @@ const DynamicOptimizeInnerPage = () => {
                     [statusType]: [...(inProgressHostData[statusType] || []), selectedResourceId]
                 })
             );
-
-            formatAssessmentData(engineType, dispatch);
 
             dispatch(
                 buildOptimizeInfoNotification({

@@ -30,7 +30,7 @@ import {
     setOptimizingData,
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import { formatGetWellData, handleOptimizeStorageJob } from '../GetWellUtils';
+import { formatGetWellDataFlat, handleOptimizeStorageJob } from '../GetWellUtils';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     useDismissMssqlAssessmentMutation,
@@ -54,13 +54,10 @@ import { handleDialog } from './optimizeUtils';
 import { backupStartTime } from '../../../utils/utilityFunctions';
 import { DismissDialog } from './DismissDialog/DismissDialog';
 import {
-    getSubConfigurationData,
     handleSingleAction as handleSingleActionHelper,
     addSuccessNotification as addSuccessNotificationHelper,
     handleDismissResponse as handleDismissResponseHelper,
-    handleDismissError as handleDismissErrorHelper,
-    areSubConfigurationsNotActive,
-    areAllSubConfigurationsActivating as areAllSubConfigurationsActivatingHelper
+    handleDismissError as handleDismissErrorHelper
 } from './StorageCardComponentHelper';
 import {
     hasInnerPage,
@@ -152,28 +149,28 @@ const StorageCardComponent = ({
     const { setDialog, closeDialog } = useDialog();
 
     const disableOptimizeButton = useMemo(() => {
-        if (cardData?.id === 'headroom') {
+        if (cardData?.id === ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM) {
             return (
                 cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
                 cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED &&
                 cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
-        if (cardData?.id === 'compute-rightsizing') {
+        if (cardData?.id === ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING) {
             return (
                 cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
                 cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED &&
                 cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
-        if (cardData?.id === 'tempdb-drive-size') {
+        if (cardData?.id === ASSESSMENT_CONFIG_IDS.TEMPDB_DRIVE_SIZE) {
             return (
                 cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
                 cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED &&
                 cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
-        if (cardData?.id === 'log-drive-size') {
+        if (cardData?.id === ASSESSMENT_CONFIG_IDS.LOG_DRIVE_SIZE) {
             return (
                 cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
                 cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED &&
@@ -185,7 +182,7 @@ const StorageCardComponent = ({
 
     const disableOptimizeButtonTooltip = useMemo(() => {
         if (
-            cardData?.id === 'headroom' &&
+            cardData?.id === ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM &&
             cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED &&
             !cardData?.sizingViolations?.underProvisionedDrives?.length &&
             cardData?.sizingViolations?.ignoredDrives?.length
@@ -265,23 +262,6 @@ const StorageCardComponent = ({
         }
         if (cardData?.dismissedObj?.configState && cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVE) {
             // Condition to show n/a if state is not active
-            return (
-                <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                    {t('databases.general.not-available-table-columns')}
-                </DsTypography>
-            );
-        }
-        // For ONTAP and OS cards: show N/A if sub-configurations are not active and in Dismissed view
-        if (showDismissedConfigurations && areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
-            return (
-                <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                    {t('databases.general.not-available-table-columns')}
-                </DsTypography>
-            );
-        }
-
-        // Only show N/A when all the subConfiguration are in activating state
-        if (!showDismissedConfigurations && areAllSubConfigurationsActivatingHelper(cardData, driftAssessmentData)) {
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
                     {t('databases.general.not-available-table-columns')}
@@ -389,23 +369,6 @@ const StorageCardComponent = ({
                 </DsTypography>
             );
         }
-        // For ONTAP and OS cards: show N/A if sub-configurations are not active
-        if (showDismissedConfigurations && areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
-            return (
-                <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                    {t('databases.general.not-available-table-columns')}
-                </DsTypography>
-            );
-        }
-
-        // Only show N/A when all the subConfiguration are in activating state
-        if (!showDismissedConfigurations && areAllSubConfigurationsActivatingHelper(cardData, driftAssessmentData)) {
-            return (
-                <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                    {t('databases.general.not-available-table-columns')}
-                </DsTypography>
-            );
-        }
         if (cardData?.block_five?.count) {
             return (
                 <DsTypography
@@ -455,23 +418,6 @@ const StorageCardComponent = ({
         }
         if (cardData?.dismissedObj?.configState && cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVE) {
             // Condition to show n/a if state is not active
-            return (
-                <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                    {t('databases.general.not-available-table-columns')}
-                </DsTypography>
-            );
-        }
-        // For HA cards: show N/A if sub-configurations are not active
-        if (showDismissedConfigurations && areSubConfigurationsNotActive(cardData, driftAssessmentData)) {
-            return (
-                <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                    {t('databases.general.not-available-table-columns')}
-                </DsTypography>
-            );
-        }
-
-        // Only show N/A when all the subConfiguration are in activating state
-        if (!showDismissedConfigurations && areAllSubConfigurationsActivatingHelper(cardData, driftAssessmentData)) {
             return (
                 <DsTypography variant="Semibold_14" isDisabled={disableText}>
                     {t('databases.general.not-available-table-columns')}
@@ -975,6 +921,11 @@ const StorageCardComponent = ({
     };
 
     const handleDismissResponse = (res: any, action: string) => {
+        // Wrap formatGetWellDataFlat to match the expected signature (dispatch, data, showDismissedView)
+        const formatFunction = (dispatch: any, data?: any, showDismissedView?: boolean) => {
+            formatGetWellDataFlat(dispatch, data, showDismissedView || false, false, false, t);
+        };
+
         handleDismissResponseHelper(
             res,
             action,
@@ -990,7 +941,7 @@ const StorageCardComponent = ({
             true, // true for bulk action to show configuration text in notification
             addSuccessNotification,
             t,
-            formatGetWellData,
+            formatFunction,
             DBType.MSSQL
         );
     };
@@ -1000,12 +951,10 @@ const StorageCardComponent = ({
     };
 
     const handleDismissButtonClick = () => {
-        const { storageTier } = getSubConfigurationData(cardData);
-
         setDialog(
             <DismissDialog
                 type="single"
-                storageTier={storageTier}
+                storageTier={cardData?.block_one?.value}
                 callback={(selectedAction: string) => {
                     const configName = cardData?.block_one?.value;
                     handleSingleAction(selectedAction);

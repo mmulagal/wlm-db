@@ -1,5 +1,5 @@
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import { cardDataDefault } from '../../workloadFactory/GetWell/GetWellUtils';
+// cardDataDefault removed - using empty object for flat API
 import { GetWellSliceInterface } from '../../utils/types/getWellTypes';
 import { GENERAL } from '../../utils/appConstants';
 import { DBType, WELL_ARCHITECTED_TABS } from '../../utils/consts';
@@ -17,7 +17,7 @@ const initialState: GetWellSliceInterface = {
     selectedDatabaseStorageType: '',
     selectedDatabaseAoagStorageType: '',
     selectedRowFsxId: '',
-    cardData: cardDataDefault,
+    cardData: {},
     optimizationBreakDown: null,
     gwRefreshPage: false,
     gwRefreshTimestamp: '',
@@ -155,7 +155,7 @@ const getWellOptimizeSlice = createSlice({
             state.selectedDatabaseStorageType = '';
             state.selectedDatabaseAoagStorageType = '';
             state.selectedRowFsxId = '';
-            state.cardData = cardDataDefault;
+            state.cardData = {};
             state.optimizationBreakDown = null;
             state.optimizingData = null;
             state.optimizingInstanceData = false;
