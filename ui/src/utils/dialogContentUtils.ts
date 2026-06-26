@@ -13,4 +13,4 @@ const engineTypeText = (databaseType: string): string => {
     }
 };
 
-export { engineTypeText };
+export default engineTypeText;

@@ -1024,7 +1024,7 @@ export const GETWELL_CONFIG: any = {
     'drive-letter': 'Drive Letter',
     'heartbeat-settings': 'Heartbeat Settings',
     'cluster-quorum': 'Cluster Quorum',
-    'sqlServer-service': 'SQL Server Service',
+    'sql-server-service': 'SQL Server Service',
     clone: 'clone_management',
     'clone-management': 'clone_management',
     'redologs-placement': 'redologs_placement',
@@ -1263,7 +1263,7 @@ export const ASSESSMENT_CONFIG_IDS = {
     SPACE_ALLOCATION: 'space-allocation-allocated',
     SPACE_MANAGEMENT: 'space-mgmt-try-first',
     SPACE_RESERVATION: 'space-reservation-enabled',
-    SQL_SERVER_SERVICE: 'sqlServer-service',
+    SQL_SERVER_SERVICE: 'sql-server-service',
     STORAGE_EFFICIENCIES: 'storage-efficiencies',
     STORAGE_TIER: 'performance-tier',
     SWAP_SPACE: 'swap-space',
@@ -1462,7 +1462,7 @@ export const CONFIG_NAMES = {
     'drive-letter': ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER,
     'heartbeat-settings': ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS,
     'cluster-quorum': ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM,
-    'sqlServer-service': ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE,
+    'sql-server-service': ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE,
 
     // Storage configuration - LUNs (MSSQL)
     'mpio-iscsi-count': ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_SESSIONS,
@@ -1805,7 +1805,7 @@ export const CONFIG_NAME_TO_ID_MAPPING = {
         [ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE]: 'shared-storage',
         [ASSESSMENT_CONFIG_NAMES.CLUSTER_QUORUM]: 'cluster-quorum',
         [ASSESSMENT_CONFIG_NAMES.HEARTBEAT_SETTINGS]: 'heartbeat-settings',
-        [ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE]: 'sqlServer-service',
+        [ASSESSMENT_CONFIG_NAMES.SQL_SERVER_SERVICE]: 'sql-server-service',
         [ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER]: 'drive-letter'
     },
     STORAGE_SIZING_MAP: {

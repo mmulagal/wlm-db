@@ -147,8 +147,8 @@
         "title": "Heartbeat settings recommendation",
         "description": "Workload Factory recommends configuring appropriate heartbeat settings for SQL Server high availability clusters. Proper heartbeat configuration prevents unnecessary failovers while ensuring timely detection of actual failures."
     },
-    "sqlServer-service": {
-        "name": "SqlServer Service",
+    "sql-server-service": {
+        "name": "SQL Server Service",
         "title": "SQL Server service recommendation",
         "description": "Workload Factory recommends ensuring SQL Server services are properly configured for high availability scenarios. This includes appropriate service account permissions, startup types, and dependencies to ensure reliable operation."
     },
