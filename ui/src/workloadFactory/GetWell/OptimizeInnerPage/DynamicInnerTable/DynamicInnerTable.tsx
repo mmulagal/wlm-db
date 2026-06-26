@@ -112,7 +112,7 @@ const DynamicInnerTable = ({
         const showViewButton = !canOptimize && isViewOnly && handleRowFix;
 
         if ((showFixButton || showViewButton) && handleRowFix) {
-            const buttonLabel = showViewButton ? t('databases.well-architect.view') : t('databases.well-architect.fix');
+            const buttonLabel = t('databases.well-architect.fix');
 
             const actionColumn = {
                 Header: '',

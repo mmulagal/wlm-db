@@ -186,5 +186,10 @@
         "name": "Storage Efficiencies",
         "title": "Storage efficiencies recommendation",
         "description": "Workload Factory recommends enabling storage efficiencies—deduplication, adaptive compression, and compaction—on volumes used by Microsoft SQL Server to reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance."
+    },
+    "snapcenter-snapshot": {
+        "name": "SnapCenter snapshot",
+        "title": "SnapCenter snapshot recommendation",
+        "description": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads."
     }
 }

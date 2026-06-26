@@ -779,17 +779,11 @@
                                 "focusWidgetName": "ONTAP",
                                 "status": "not-optimized",
                                 "objectsInViolation": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    }
+                                    "wlmdb_sqllog_1731987160"
                                 ],
                                 "violationDetails": [
                                     {
-                                        "objectName": {
-                                            "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                            "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                        },
+                                        "objectName": "wlmdb_sqllog_1731987160",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
@@ -1787,6 +1781,47 @@
                                 "totalObjectsInViolation": 1
                             },
                             {
+                                "id": "snapcenter-snapshot",
+                                "name": "Application-consistent snapshots",
+                                "type": "resiliency",
+                                "severity": "warning",
+                                "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+                                "categories": [
+                                    "Reliability"
+                                ],
+                                "status": "not-optimized",
+                                "recommended": "optimized",
+                                "subType": "protection",
+                                "resourceType": "Volume",
+                                "objectsInViolation": [
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                    },
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                    }
+                                ],
+                                "violationDetails": [
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731988070",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    }
+                                ],
+                                "totalObjectsAssessed": 2,
+                                "totalObjectsInViolation": 2,
+                                "focusWidgetName": "Application-consistent snapshots"
+                            },
+                            {
                                 "id": "backup-configuration",
                                 "name": "Backup configuration",
                                 "type": "resiliency",
@@ -2376,6 +2411,47 @@
                                 ],
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            {
+                                "id": "snapcenter-snapshot",
+                                "name": "Application-consistent snapshots",
+                                "type": "resiliency",
+                                "severity": "warning",
+                                "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+                                "categories": [
+                                    "Reliability"
+                                ],
+                                "status": "not-optimized",
+                                "recommended": "optimized",
+                                "subType": "protection",
+                                "resourceType": "Volume",
+                                "objectsInViolation": [
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                    },
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                    }
+                                ],
+                                "violationDetails": [
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731988070",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    }
+                                ],
+                                "totalObjectsAssessed": 2,
+                                "totalObjectsInViolation": 2,
+                                "focusWidgetName": "Application-consistent snapshots"
                             },
                             {
                                 "id": "backup-configuration",
@@ -3440,17 +3516,11 @@
                                 "focusWidgetName": "ONTAP",
                                 "status": "not-optimized",
                                 "objectsInViolation": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    }
+                                    "wlmdb_sqllog_1731987160"
                                 ],
                                 "violationDetails": [
                                     {
-                                        "objectName": {
-                                            "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                            "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                        },
+                                        "objectName": "wlmdb_sqllog_1731987160",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
@@ -4333,6 +4403,47 @@
                                 ],
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            {
+                                "id": "snapcenter-snapshot",
+                                "name": "Application-consistent snapshots",
+                                "type": "resiliency",
+                                "severity": "warning",
+                                "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+                                "categories": [
+                                    "Reliability"
+                                ],
+                                "status": "not-optimized",
+                                "recommended": "optimized",
+                                "subType": "protection",
+                                "resourceType": "Volume",
+                                "objectsInViolation": [
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                    },
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                    }
+                                ],
+                                "violationDetails": [
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731988070",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    }
+                                ],
+                                "totalObjectsAssessed": 2,
+                                "totalObjectsInViolation": 2,
+                                "focusWidgetName": "Application-consistent snapshots"
                             },
                             {
                                 "id": "backup-configuration",
@@ -5408,17 +5519,11 @@
                                 "focusWidgetName": "ONTAP",
                                 "status": "not-optimized",
                                 "objectsInViolation": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    }
+                                    "wlmdb_sqllog_1731987160"
                                 ],
                                 "violationDetails": [
                                     {
-                                        "objectName": {
-                                            "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                            "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                        },
+                                        "objectName": "wlmdb_sqllog_1731987160",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
@@ -6301,6 +6406,47 @@
                                 ],
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            {
+                                "id": "snapcenter-snapshot",
+                                "name": "Application-consistent snapshots",
+                                "type": "resiliency",
+                                "severity": "warning",
+                                "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+                                "categories": [
+                                    "Reliability"
+                                ],
+                                "status": "not-optimized",
+                                "recommended": "optimized",
+                                "subType": "protection",
+                                "resourceType": "Volume",
+                                "objectsInViolation": [
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                    },
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                    }
+                                ],
+                                "violationDetails": [
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731988070",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    }
+                                ],
+                                "totalObjectsAssessed": 2,
+                                "totalObjectsInViolation": 2,
+                                "focusWidgetName": "Application-consistent snapshots"
                             },
                             {
                                 "id": "backup-configuration",
@@ -7365,17 +7511,11 @@
                                 "focusWidgetName": "ONTAP",
                                 "status": "not-optimized",
                                 "objectsInViolation": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    }
+                                    "wlmdb_sqllog_1731987160"
                                 ],
                                 "violationDetails": [
                                     {
-                                        "objectName": {
-                                            "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                            "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                        },
+                                        "objectName": "wlmdb_sqllog_1731987160",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
@@ -8258,6 +8398,47 @@
                                 ],
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            {
+                                "id": "snapcenter-snapshot",
+                                "name": "Application-consistent snapshots",
+                                "type": "resiliency",
+                                "severity": "warning",
+                                "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+                                "categories": [
+                                    "Reliability"
+                                ],
+                                "status": "not-optimized",
+                                "recommended": "optimized",
+                                "subType": "protection",
+                                "resourceType": "Volume",
+                                "objectsInViolation": [
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                    },
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                    }
+                                ],
+                                "violationDetails": [
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731988070",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    }
+                                ],
+                                "totalObjectsAssessed": 2,
+                                "totalObjectsInViolation": 2,
+                                "focusWidgetName": "Application-consistent snapshots"
                             },
                             {
                                 "id": "backup-configuration",
@@ -9322,17 +9503,11 @@
                                 "focusWidgetName": "ONTAP",
                                 "status": "not-optimized",
                                 "objectsInViolation": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    }
+                                    "wlmdb_sqllog_1731987160"
                                 ],
                                 "violationDetails": [
                                     {
-                                        "objectName": {
-                                            "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                            "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                        },
+                                        "objectName": "wlmdb_sqllog_1731987160",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
@@ -10215,6 +10390,47 @@
                                 ],
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            {
+                                "id": "snapcenter-snapshot",
+                                "name": "Application-consistent snapshots",
+                                "type": "resiliency",
+                                "severity": "warning",
+                                "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+                                "categories": [
+                                    "Reliability"
+                                ],
+                                "status": "not-optimized",
+                                "recommended": "optimized",
+                                "subType": "protection",
+                                "resourceType": "Volume",
+                                "objectsInViolation": [
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                    },
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                    }
+                                ],
+                                "violationDetails": [
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731988070",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    }
+                                ],
+                                "totalObjectsAssessed": 2,
+                                "totalObjectsInViolation": 2,
+                                "focusWidgetName": "Application-consistent snapshots"
                             },
                             {
                                 "id": "backup-configuration",
@@ -11123,17 +11339,11 @@
                                 "focusWidgetName": "ONTAP",
                                 "status": "not-optimized",
                                 "objectsInViolation": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    }
+                                    "wlmdb_sqllog_1731987160"
                                 ],
                                 "violationDetails": [
                                     {
-                                        "objectName": {
-                                            "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                            "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                        },
+                                        "objectName": "wlmdb_sqllog_1731987160",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
@@ -12016,6 +12226,47 @@
                                 ],
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            {
+                                "id": "snapcenter-snapshot",
+                                "name": "Application-consistent snapshots",
+                                "type": "resiliency",
+                                "severity": "warning",
+                                "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+                                "categories": [
+                                    "Reliability"
+                                ],
+                                "status": "not-optimized",
+                                "recommended": "optimized",
+                                "subType": "protection",
+                                "resourceType": "Volume",
+                                "objectsInViolation": [
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                    },
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                    }
+                                ],
+                                "violationDetails": [
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731988070",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    }
+                                ],
+                                "totalObjectsAssessed": 2,
+                                "totalObjectsInViolation": 2,
+                                "focusWidgetName": "Application-consistent snapshots"
                             },
                             {
                                 "id": "backup-configuration",
@@ -12978,17 +13229,11 @@
                                 "focusWidgetName": "ONTAP",
                                 "status": "not-optimized",
                                 "objectsInViolation": [
-                                    {
-                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                    }
+                                    "wlmdb_sqllog_1731987160"
                                 ],
                                 "violationDetails": [
                                     {
-                                        "objectName": {
-                                            "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                                            "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                                        },
+                                        "objectName": "wlmdb_sqllog_1731987160",
                                         "value": "",
                                         "objectType": "Volume",
                                         "violatedConfigs": [
@@ -14021,6 +14266,47 @@
                                 ],
                                 "totalObjectsAssessed": 4,
                                 "totalObjectsInViolation": 1
+                            },
+                            {
+                                "id": "snapcenter-snapshot",
+                                "name": "Application-consistent snapshots",
+                                "type": "resiliency",
+                                "severity": "warning",
+                                "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+                                "categories": [
+                                    "Reliability"
+                                ],
+                                "status": "not-optimized",
+                                "recommended": "optimized",
+                                "subType": "protection",
+                                "resourceType": "Volume",
+                                "objectsInViolation": [
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                                        "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                                    },
+                                    {
+                                        "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                                        "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                                    }
+                                ],
+                                "violationDetails": [
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731987160",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    },
+                                    {
+                                        "objectName": "wlmdb_sqllog_1731988070",
+                                        "value": "SnapCenter protection not configured",
+                                        "objectType": "Volume",
+                                        "recommended": "SnapCenter protection enabled"
+                                    }
+                                ],
+                                "totalObjectsAssessed": 2,
+                                "totalObjectsInViolation": 2,
+                                "focusWidgetName": "Application-consistent snapshots"
                             },
                             {
                                 "id": "backup-configuration",

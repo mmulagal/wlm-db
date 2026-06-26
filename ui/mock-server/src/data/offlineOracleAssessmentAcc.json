@@ -1567,6 +1567,47 @@
                             "oracle_redo_vol_002_clone"
                         ],
                         "cloneDriftMessage": "2 out of 3 clones are old and divergent"
+                    },
+                    {
+                        "id": "snapcenter-snapshot",
+                        "name": "Application-consistent snapshots",
+                        "type": "resiliency",
+                        "severity": "warning",
+                        "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+                        "categories": [
+                            "Reliability"
+                        ],
+                        "status": "not-optimized",
+                        "recommended": "optimized",
+                        "subType": "protection",
+                        "resourceType": "Volume",
+                        "objectsInViolation": [
+                            {
+                                "ontapVolumeName": "oracledata2",
+                                "ontapVolumeUuid": "db1ed9f2-eee7-11ef-8fbb-837e18df6f7a"
+                            },
+                            {
+                                "ontapVolumeName": "oraclearch2",
+                                "ontapVolumeUuid": "cc802ccc-eee7-11ef-8fbb-837e18df6f7a"
+                            }
+                        ],
+                        "violationDetails": [
+                            {
+                                "objectName": "oracledata2",
+                                "value": "SnapCenter protection not configured",
+                                "objectType": "Volume",
+                                "recommended": "SnapCenter protection enabled"
+                            },
+                            {
+                                "objectName": "oraclearch2",
+                                "value": "SnapCenter protection not configured",
+                                "objectType": "Volume",
+                                "recommended": "SnapCenter protection enabled"
+                            }
+                        ],
+                        "totalObjectsAssessed": 2,
+                        "totalObjectsInViolation": 2,
+                        "focusWidgetName": "Application-consistent snapshots"
                     }
                 ],
                 "dismissedConfigurations": [],
@@ -3152,6 +3193,47 @@
                             "oracle_data_vol_003_clone"
                         ],
                         "cloneDriftMessage": "1 out of 2 clones are old and divergent"
+                    },
+                    {
+                        "id": "snapcenter-snapshot",
+                        "name": "Application-consistent snapshots",
+                        "type": "resiliency",
+                        "severity": "warning",
+                        "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+                        "categories": [
+                            "Reliability"
+                        ],
+                        "status": "not-optimized",
+                        "recommended": "optimized",
+                        "subType": "protection",
+                        "resourceType": "Volume",
+                        "objectsInViolation": [
+                            {
+                                "ontapVolumeName": "oracledata2",
+                                "ontapVolumeUuid": "db1ed9f2-eee7-11ef-8fbb-837e18df6f7a"
+                            },
+                            {
+                                "ontapVolumeName": "oraclearch2",
+                                "ontapVolumeUuid": "cc802ccc-eee7-11ef-8fbb-837e18df6f7a"
+                            }
+                        ],
+                        "violationDetails": [
+                            {
+                                "objectName": "oracledata2",
+                                "value": "SnapCenter protection not configured",
+                                "objectType": "Volume",
+                                "recommended": "SnapCenter protection enabled"
+                            },
+                            {
+                                "objectName": "oraclearch2",
+                                "value": "SnapCenter protection not configured",
+                                "objectType": "Volume",
+                                "recommended": "SnapCenter protection enabled"
+                            }
+                        ],
+                        "totalObjectsAssessed": 2,
+                        "totalObjectsInViolation": 2,
+                        "focusWidgetName": "Application-consistent snapshots"
                     }
                 ],
                 "dismissedConfigurations": [],
@@ -4649,6 +4731,47 @@
                         "oldCloneDetails": [],
                         "oldCloneDatabaseNames": [],
                         "cloneDriftMessage": "All clones are up to date"
+                    },
+                    {
+                        "id": "snapcenter-snapshot",
+                        "name": "Application-consistent snapshots",
+                        "type": "resiliency",
+                        "severity": "warning",
+                        "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+                        "categories": [
+                            "Reliability"
+                        ],
+                        "status": "not-optimized",
+                        "recommended": "optimized",
+                        "subType": "protection",
+                        "resourceType": "Volume",
+                        "objectsInViolation": [
+                            {
+                                "ontapVolumeName": "oracledata2",
+                                "ontapVolumeUuid": "db1ed9f2-eee7-11ef-8fbb-837e18df6f7a"
+                            },
+                            {
+                                "ontapVolumeName": "oraclearch2",
+                                "ontapVolumeUuid": "cc802ccc-eee7-11ef-8fbb-837e18df6f7a"
+                            }
+                        ],
+                        "violationDetails": [
+                            {
+                                "objectName": "oracledata2",
+                                "value": "SnapCenter protection not configured",
+                                "objectType": "Volume",
+                                "recommended": "SnapCenter protection enabled"
+                            },
+                            {
+                                "objectName": "oraclearch2",
+                                "value": "SnapCenter protection not configured",
+                                "objectType": "Volume",
+                                "recommended": "SnapCenter protection enabled"
+                            }
+                        ],
+                        "totalObjectsAssessed": 2,
+                        "totalObjectsInViolation": 2,
+                        "focusWidgetName": "Application-consistent snapshots"
                     }
                 ],
                 "dismissedConfigurations": [],
@@ -6166,6 +6289,47 @@
                         "oldCloneDetails": [],
                         "oldCloneDatabaseNames": [],
                         "cloneDriftMessage": ""
+                    },
+                    {
+                        "id": "snapcenter-snapshot",
+                        "name": "Application-consistent snapshots",
+                        "type": "resiliency",
+                        "severity": "warning",
+                        "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+                        "categories": [
+                            "Reliability"
+                        ],
+                        "status": "not-optimized",
+                        "recommended": "optimized",
+                        "subType": "protection",
+                        "resourceType": "Volume",
+                        "objectsInViolation": [
+                            {
+                                "ontapVolumeName": "oracledata2",
+                                "ontapVolumeUuid": "db1ed9f2-eee7-11ef-8fbb-837e18df6f7a"
+                            },
+                            {
+                                "ontapVolumeName": "oraclearch2",
+                                "ontapVolumeUuid": "cc802ccc-eee7-11ef-8fbb-837e18df6f7a"
+                            }
+                        ],
+                        "violationDetails": [
+                            {
+                                "objectName": "oracledata2",
+                                "value": "SnapCenter protection not configured",
+                                "objectType": "Volume",
+                                "recommended": "SnapCenter protection enabled"
+                            },
+                            {
+                                "objectName": "oraclearch2",
+                                "value": "SnapCenter protection not configured",
+                                "objectType": "Volume",
+                                "recommended": "SnapCenter protection enabled"
+                            }
+                        ],
+                        "totalObjectsAssessed": 2,
+                        "totalObjectsInViolation": 2,
+                        "focusWidgetName": "Application-consistent snapshots"
                     }
                 ],
                 "dismissedConfigurations": [],

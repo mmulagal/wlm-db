@@ -66,7 +66,10 @@
                 }
             ],
             "id": "autosize",
-            "categories": ["Cost optimization", "Operational excellence"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -120,7 +123,10 @@
                 }
             ],
             "id": "autosize-mode",
-            "categories": ["Cost optimization", "Operational excellence"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -130,7 +136,11 @@
             "type": "storage",
             "severity": "critical",
             "recommendation": "Workload Factory recommends configuring block device space settings for LUNs used by Microsoft SQL server instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin-provisioned volumes:\n- Space reservation: enabled - reserves enough space in the volume so writes to the LUN do not fail.\n- Space allocation: enabled - allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data.\n- Fractional reserve: disabled - avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.\nTogether, these settings help ensure predictable database behavior while minimizing wasted capacity.",
-            "categories": ["Reliability", "Cost optimization", "Operational excellence"],
+            "categories": [
+                "Reliability",
+                "Cost optimization",
+                "Operational excellence"
+            ],
             "status": "not-optimized",
             "recommended": "",
             "subType": "configuration",
@@ -282,7 +292,10 @@
                 }
             ],
             "id": "snapshot-copy-reserve",
-            "categories": ["Cost optimization", "Operational excellence"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -336,7 +349,10 @@
                 }
             ],
             "id": "snapshot-autodelete",
-            "categories": ["Cost optimization", "Operational excellence"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -390,7 +406,10 @@
                 }
             ],
             "id": "space-mgmt-try-first",
-            "categories": ["Cost optimization", "Operational excellence"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -400,7 +419,10 @@
             "type": "storage",
             "severity": "critical",
             "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier. This approach preserves low-latency performance for SQL workloads while reducing storage costs. Workload Factory recommends tiering snapshot data after a 7-day cooling period.",
-            "categories": ["Performance efficiency", "Cost optimization"],
+            "categories": [
+                "Performance efficiency",
+                "Cost optimization"
+            ],
             "status": "not-optimized",
             "recommended": "",
             "subType": "configuration",
@@ -482,7 +504,9 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["wlmdb_sqldata_1735808882"],
+            "objectsInViolation": [
+                "wlmdb_sqldata_1735808882"
+            ],
             "violationDetails": [
                 {
                     "objectName": "wlmdb_sqldata_1735808882",
@@ -501,7 +525,11 @@
                 }
             ],
             "id": "storage-efficiencies",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP",
             "configDetails": [
@@ -531,7 +559,9 @@
             "resourceType": "EC2 Instance",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["disk1"],
+            "objectsInViolation": [
+                "disk1"
+            ],
             "violationDetails": [
                 {
                     "objectName": "disk1",
@@ -540,7 +570,10 @@
                 }
             ],
             "id": "mpio-enabled",
-            "categories": ["Performance efficiency", "Reliability"],
+            "categories": [
+                "Performance efficiency",
+                "Reliability"
+            ],
             "type": "storage",
             "focusWidgetName": "OS"
         },
@@ -553,7 +586,9 @@
             "resourceType": "EC2 Instance",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 6,
-            "objectsInViolation": ["disk1"],
+            "objectsInViolation": [
+                "disk1"
+            ],
             "violationDetails": [
                 {
                     "objectName": "disk1",
@@ -562,7 +597,10 @@
                 }
             ],
             "id": "mpio-iscsi-count",
-            "categories": ["Performance efficiency", "Reliability"],
+            "categories": [
+                "Performance efficiency",
+                "Reliability"
+            ],
             "type": "storage",
             "focusWidgetName": "OS"
         },
@@ -578,7 +616,9 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "mpio-timeout",
-            "categories": ["Reliability"],
+            "categories": [
+                "Reliability"
+            ],
             "type": "storage",
             "focusWidgetName": "OS"
         },
@@ -591,7 +631,9 @@
             "resourceType": "EC2 Instance",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 6,
-            "objectsInViolation": ["disk1"],
+            "objectsInViolation": [
+                "disk1"
+            ],
             "violationDetails": [
                 {
                     "objectName": "D:",
@@ -600,7 +642,9 @@
                 }
             ],
             "id": "ntfs-allocation-unit-size",
-            "categories": ["Performance efficiency"],
+            "categories": [
+                "Performance efficiency"
+            ],
             "type": "storage",
             "focusWidgetName": "OS"
         },
@@ -613,7 +657,9 @@
             "resourceType": "EC2 Instance",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["disk1"],
+            "objectsInViolation": [
+                "disk1"
+            ],
             "violationDetails": [
                 {
                     "objectName": "Disk 4",
@@ -622,7 +668,10 @@
                 }
             ],
             "id": "mpio-load-balance-policy",
-            "categories": ["Performance efficiency", "Reliability"],
+            "categories": [
+                "Performance efficiency",
+                "Reliability"
+            ],
             "type": "storage",
             "focusWidgetName": "OS"
         },
@@ -644,7 +693,10 @@
             ],
             "violationDetails": [],
             "id": "compute-rightsizing",
-            "categories": ["Cost optimization", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Performance efficiency"
+            ],
             "type": "compute",
             "recommendationOptions": [
                 {
@@ -694,7 +746,9 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "rss-config",
-            "categories": ["Cost optimization"],
+            "categories": [
+                "Cost optimization"
+            ],
             "type": "compute",
             "rssAdapters": [
                 {
@@ -728,7 +782,9 @@
             "resourceType": "Network Interface",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["Ethernet 3"],
+            "objectsInViolation": [
+                "Ethernet 3"
+            ],
             "violationDetails": [
                 {
                     "objectName": "Ethernet 3",
@@ -738,7 +794,10 @@
                 }
             ],
             "id": "mtu-alignment",
-            "categories": ["Performance efficiency", "Reliability"],
+            "categories": [
+                "Performance efficiency",
+                "Reliability"
+            ],
             "type": "compute"
         },
         {
@@ -750,10 +809,15 @@
             "resourceType": "Instance",
             "totalObjectsAssessed": 0,
             "totalObjectsInViolation": 0,
-            "objectsInViolation": ["i-07e76a4b916548dc0"],
+            "objectsInViolation": [
+                "i-07e76a4b916548dc0"
+            ],
             "violationDetails": [],
             "id": "host-os-patch",
-            "categories": ["Security", "Reliability"],
+            "categories": [
+                "Security",
+                "Reliability"
+            ],
             "type": "compute"
         },
         {
@@ -768,7 +832,9 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "sql-license",
-            "categories": ["Cost optimization"],
+            "categories": [
+                "Cost optimization"
+            ],
             "type": "application"
         },
         {
@@ -780,10 +846,16 @@
             "resourceType": "Instance",
             "totalObjectsAssessed": 0,
             "totalObjectsInViolation": 0,
-            "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
+            "objectsInViolation": [
+                "i-p9o5n2m4l8k6j7h",
+                "i-p9o5n2m4l8k6byol"
+            ],
             "violationDetails": [],
             "id": "mssql-patch",
-            "categories": ["Security", "Reliability"],
+            "categories": [
+                "Security",
+                "Reliability"
+            ],
             "type": "application"
         },
         {
@@ -799,7 +871,9 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "maxdop",
-            "categories": ["Performance efficiency"],
+            "categories": [
+                "Performance efficiency"
+            ],
             "type": "application"
         },
         {
@@ -821,7 +895,9 @@
             ],
             "violationDetails": [],
             "id": "snapshot-policy",
-            "categories": ["Reliability"],
+            "categories": [
+                "Reliability"
+            ],
             "type": "resiliency"
         },
         {
@@ -832,11 +908,57 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 4,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
+            "objectsInViolation": [
+                "i-p9o5n2m4l8k6j7h",
+                "i-p9o5n2m4l8k6byol"
+            ],
             "violationDetails": [],
             "id": "crr",
-            "categories": ["Reliability"],
+            "categories": [
+                "Reliability"
+            ],
             "type": "resiliency"
+        },
+        {
+            "id": "snapcenter-snapshot",
+            "name": "Application-consistent snapshots",
+            "type": "resiliency",
+            "severity": "warning",
+            "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+            "categories": [
+                "Reliability"
+            ],
+            "status": "not-optimized",
+            "recommended": "optimized",
+            "subType": "protection",
+            "resourceType": "Volume",
+            "objectsInViolation": [
+                {
+                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
+                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
+                },
+                {
+                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
+                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
+                }
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "wlmdb_sqllog_1731987160",
+                    "value": "SnapCenter protection not configured",
+                    "objectType": "Volume",
+                    "recommended": "SnapCenter protection enabled"
+                },
+                {
+                    "objectName": "wlmdb_sqllog_1731988070",
+                    "value": "SnapCenter protection not configured",
+                    "objectType": "Volume",
+                    "recommended": "SnapCenter protection enabled"
+                }
+            ],
+            "totalObjectsAssessed": 2,
+            "totalObjectsInViolation": 2,
+            "focusWidgetName": "Application-consistent snapshots"
         },
         {
             "name": "Shared Storage",
@@ -847,10 +969,14 @@
             "resourceType": "Lun",
             "totalObjectsAssessed": 2,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["/vol/wlmdb_sqltemp_1753061371059/tempdb"],
+            "objectsInViolation": [
+                "/vol/wlmdb_sqltemp_1753061371059/tempdb"
+            ],
             "violationDetails": [],
             "id": "shared-storage",
-            "categories": ["Reliability"],
+            "categories": [
+                "Reliability"
+            ],
             "type": "resiliency"
         },
         {
@@ -862,10 +988,22 @@
             "resourceType": "Lun",
             "totalObjectsAssessed": 9,
             "totalObjectsInViolation": 9,
-            "objectsInViolation": ["S:", "D:", "M:", "H:", "L:", "E:", "N:", "I:", "T:"],
+            "objectsInViolation": [
+                "S:",
+                "D:",
+                "M:",
+                "H:",
+                "L:",
+                "E:",
+                "N:",
+                "I:",
+                "T:"
+            ],
             "violationDetails": [],
             "id": "drive-letter",
-            "categories": ["Reliability"],
+            "categories": [
+                "Reliability"
+            ],
             "type": "resiliency"
         },
         {
@@ -877,10 +1015,15 @@
             "resourceType": "EC2 instance",
             "totalObjectsAssessed": 2,
             "totalObjectsInViolation": 2,
-            "objectsInViolation": ["i-0a1f31a39bd2d9362", "i-0b2g42b40ce3e0473"],
+            "objectsInViolation": [
+                "i-0a1f31a39bd2d9362",
+                "i-0b2g42b40ce3e0473"
+            ],
             "violationDetails": [],
             "id": "cluster-quorum",
-            "categories": ["Reliability"],
+            "categories": [
+                "Reliability"
+            ],
             "type": "resiliency"
         },
         {
@@ -892,10 +1035,15 @@
             "resourceType": "EC2 instance",
             "totalObjectsAssessed": 2,
             "totalObjectsInViolation": 2,
-            "objectsInViolation": ["i-0a1f31a39bd2d9362", "i-0b2g42b40ce3e0473"],
+            "objectsInViolation": [
+                "i-0a1f31a39bd2d9362",
+                "i-0b2g42b40ce3e0473"
+            ],
             "violationDetails": [],
             "id": "heartbeat-settings",
-            "categories": ["Reliability"],
+            "categories": [
+                "Reliability"
+            ],
             "type": "resiliency"
         },
         {
@@ -907,10 +1055,14 @@
             "resourceType": "EC2 instance",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["i-0a1f31a39bd2d9362"],
+            "objectsInViolation": [
+                "i-0a1f31a39bd2d9362"
+            ],
             "violationDetails": [],
             "id": "sqlServer-service",
-            "categories": ["Reliability"],
+            "categories": [
+                "Reliability"
+            ],
             "type": "resiliency"
         },
         {
@@ -922,10 +1074,15 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 2,
             "totalObjectsInViolation": 2,
-            "objectsInViolation": ["sandbox_1744017481447", "sandbox_17440174814471"],
+            "objectsInViolation": [
+                "sandbox_1744017481447",
+                "sandbox_17440174814471"
+            ],
             "violationDetails": [],
             "id": "clone-management",
-            "categories": ["Cost efficiency"],
+            "categories": [
+                "Cost efficiency"
+            ],
             "type": "cloning",
             "cloneDetails": [
                 {
@@ -1047,7 +1204,10 @@
                     ]
                 }
             ],
-            "oldCloneDatabaseNames": ["sandbox_1744017481447", "sandbox_17440174814471"],
+            "oldCloneDatabaseNames": [
+                "sandbox_1744017481447",
+                "sandbox_17440174814471"
+            ],
             "cloneDriftMessage": "2 out of 2 clones are old and divergent"
         }
     ],
@@ -1056,7 +1216,10 @@
             "id": "mpio-enabled",
             "name": "Mpio Enabled",
             "type": "storage",
-            "categories": ["Performance efficiency", "Reliability"],
+            "categories": [
+                "Performance efficiency",
+                "Reliability"
+            ],
             "configState": "DISMISSED",
             "startTime": 1749216000000
         }

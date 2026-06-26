@@ -1816,5 +1816,78 @@
                 "type": "standard"
             }
         }
+    },
+    "snapcenter-snapshot": {
+        "hasInnerPage": true,
+        "viewOnly": true,
+        "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Volume name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Snapshot status",
+                    "accessor": "value"
+                }
+            ],
+            "tableTitle": "Impacted volumes"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-snapcenter-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "text"
+                },
+                {
+                    "heading": "databases.well-architect.mssql-snapcenter-option1",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.mssql-snapcenter-option1-step1",
+                        "databases.well-architect.mssql-snapcenter-option1-step2",
+                        "databases.well-architect.mssql-snapcenter-option1-step3",
+                        "databases.well-architect.mssql-snapcenter-option1-step4",
+                        "databases.well-architect.mssql-snapcenter-option1-step5"
+                    ]
+                },
+                {
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-snapcenter-option1-note"
+                },
+                {
+                    "heading": "databases.well-architect.mssql-snapcenter-option2",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-snapcenter-option2-intro"
+                },
+                {
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.mssql-snapcenter-option2-step1",
+                        "databases.well-architect.mssql-snapcenter-option2-step2",
+                        "databases.well-architect.mssql-snapcenter-option2-step3",
+                        "databases.well-architect.mssql-snapcenter-option2-step4",
+                        "databases.well-architect.mssql-snapcenter-option2-step5",
+                        "databases.well-architect.mssql-snapcenter-option2-step6"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.mssql-snapcenter-notes"
+            }
+        }
     }
 }

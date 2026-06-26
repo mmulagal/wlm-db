@@ -19,7 +19,11 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "thin-provision",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -32,7 +36,11 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 3,
-            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -57,7 +65,11 @@
                 }
             ],
             "id": "autosize",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -70,7 +82,11 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 3,
-            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -95,7 +111,11 @@
                 }
             ],
             "id": "autosize-mode",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -105,12 +125,20 @@
             "type": "storage",
             "severity": "critical",
             "recommendation": "Workload Factory recommends configuring block device space settings for LUNs used by Oracle database instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin-provisioned volumes:\n- Space reservation: enabled - reserves enough space in the volume so writes to the LUN do not fail.\n- Space allocation: enabled - allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data.\n- Fractional reserve: disabled - avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.\nTogether, these settings help ensure predictable database behavior while minimizing wasted capacity.",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "status": "not-optimized",
             "recommended": "",
             "subType": "configuration",
             "resourceType": "Volume/Lun",
-            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -176,7 +204,11 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 3,
-            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -201,7 +233,11 @@
                 }
             ],
             "id": "snapshot-policy",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -214,7 +250,11 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 3,
-            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -239,7 +279,11 @@
                 }
             ],
             "id": "snapshot-copy-reserve",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -252,7 +296,11 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 3,
-            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
+            "objectsInViolation": [
+                "oracleredo2",
+                "oraclearch2",
+                "oracledata2"
+            ],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -277,7 +325,11 @@
                 }
             ],
             "id": "snapshot-autodelete",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -293,7 +345,11 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "space-mgmt-try-first",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -303,12 +359,18 @@
             "type": "storage",
             "severity": "critical",
             "recommendation": "Workload Factory recommends enabling tiering for some Oracle database volumes on Amazon FSx for NetApp ONTAP where appropriate, to move cold data to lower-cost capacity storage and reduce overall storage costs, while keeping active database data on high-performance SSDs to preserve critical performance. Recommended policies are based on the data type in each volume, with tiering disabled (none) for data files and redo logs, and auto for archive logs. For archive/FRA volumes, it is also recommended to set an appropriate cooling period before data is tiered—typically 2 days for compressed backups and 14 days for uncompressed backups—to balance cost efficiency and performance.",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "status": "not-optimized",
             "recommended": "",
             "subType": "configuration",
             "resourceType": "Volume",
-            "objectsInViolation": ["oracledata2"],
+            "objectsInViolation": [
+                "oracledata2"
+            ],
             "violationDetails": [
                 {
                     "objectName": "oracledata2",
@@ -358,7 +420,9 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 4,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["data_dnfs3"],
+            "objectsInViolation": [
+                "data_dnfs3"
+            ],
             "violationDetails": [
                 {
                     "objectName": "data_dnfs3",
@@ -374,7 +438,11 @@
                 }
             ],
             "id": "storage-efficiencies",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP",
             "configDetails": [
@@ -420,7 +488,9 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 4,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["oracledata2"],
+            "objectsInViolation": [
+                "oracledata2"
+            ],
             "violationDetails": [
                 {
                     "objectName": "oracledata2",
@@ -430,7 +500,10 @@
                 }
             ],
             "id": "nfs-rootonly",
-            "categories": ["Reliability", "Performance efficiency"],
+            "categories": [
+                "Reliability",
+                "Performance efficiency"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -443,7 +516,9 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 4,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["oracledata2"],
+            "objectsInViolation": [
+                "oracledata2"
+            ],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -454,7 +529,11 @@
                 }
             ],
             "id": "export-policy",
-            "categories": ["Reliability", "Performance efficiency", "Operational excellence"],
+            "categories": [
+                "Reliability",
+                "Performance efficiency",
+                "Operational excellence"
+            ],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -467,10 +546,14 @@
             "resourceType": "EC2 Instance",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["i-08b88d1026a035b68"],
+            "objectsInViolation": [
+                "i-08b88d1026a035b68"
+            ],
             "violationDetails": [],
             "id": "swap-space",
-            "categories": ["Performance efficiency"],
+            "categories": [
+                "Performance efficiency"
+            ],
             "type": "storage",
             "current": "8 GB"
         },
@@ -483,10 +566,14 @@
             "resourceType": "File system (FSx for ONTAP)",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["fs-0d5efc3057c4f12cb"],
+            "objectsInViolation": [
+                "fs-0d5efc3057c4f12cb"
+            ],
             "violationDetails": [],
             "id": "headroom",
-            "categories": ["Performance efficiency"],
+            "categories": [
+                "Performance efficiency"
+            ],
             "type": "storage",
             "current": "15%",
             "missingPermissions": []
@@ -500,7 +587,9 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["DATADG"],
+            "objectsInViolation": [
+                "DATADG"
+            ],
             "violationDetails": [
                 {
                     "objectName": "DATADG",
@@ -511,7 +600,10 @@
                 }
             ],
             "id": "data-dg-lun-layout",
-            "categories": ["Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage"
         },
         {
@@ -523,7 +615,9 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["DATARG"],
+            "objectsInViolation": [
+                "DATARG"
+            ],
             "violationDetails": [
                 {
                     "objectName": "DATARG",
@@ -534,7 +628,10 @@
                 }
             ],
             "id": "redolog-dg-lun-layout",
-            "categories": ["Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage"
         },
         {
@@ -546,7 +643,9 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["DATARG"],
+            "objectsInViolation": [
+                "DATARG"
+            ],
             "violationDetails": [
                 {
                     "objectName": "DATARG",
@@ -557,7 +656,10 @@
                 }
             ],
             "id": "fra-dg-lun-layout",
-            "categories": ["Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage"
         },
         {
@@ -569,7 +671,9 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["DATARG"],
+            "objectsInViolation": [
+                "DATARG"
+            ],
             "violationDetails": [
                 {
                     "objectName": "DATARG",
@@ -580,7 +684,10 @@
                 }
             ],
             "id": "archivelog-dg-lun-layout",
-            "categories": ["Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage"
         },
         {
@@ -592,10 +699,16 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["pdb21cnas1"],
+            "objectsInViolation": [
+                "pdb21cnas1"
+            ],
             "violationDetails": [],
             "id": "archive-placement",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage"
         },
         {
@@ -607,10 +720,16 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["pdb21cnas1"],
+            "objectsInViolation": [
+                "pdb21cnas1"
+            ],
             "violationDetails": [],
             "id": "datafiles-placement",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage"
         },
         {
@@ -622,10 +741,16 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["pdb21cnas1"],
+            "objectsInViolation": [
+                "pdb21cnas1"
+            ],
             "violationDetails": [],
             "id": "controlfiles-placement",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage"
         },
         {
@@ -637,10 +762,16 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["pdb21cnas1"],
+            "objectsInViolation": [
+                "pdb21cnas1"
+            ],
             "violationDetails": [],
             "id": "redologs-placement",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage"
         },
         {
@@ -652,10 +783,16 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["pdb21cnas1"],
+            "objectsInViolation": [
+                "pdb21cnas1"
+            ],
             "violationDetails": [],
             "id": "templogs-placement",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage"
         },
         {
@@ -667,11 +804,58 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": ["pdb21cnas1"],
+            "objectsInViolation": [
+                "pdb21cnas1"
+            ],
             "violationDetails": [],
             "id": "oracle-binary-placement",
-            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
+            "categories": [
+                "Cost optimization",
+                "Operational excellence",
+                "Performance efficiency"
+            ],
             "type": "storage"
+        },
+        {
+            "id": "snapcenter-snapshot",
+            "name": "Application-consistent snapshots",
+            "type": "resiliency",
+            "severity": "warning",
+            "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
+            "categories": [
+                "Reliability"
+            ],
+            "status": "not-optimized",
+            "recommended": "optimized",
+            "subType": "protection",
+            "resourceType": "Volume",
+            "objectsInViolation": [
+                {
+                    "ontapVolumeName": "oracledata2",
+                    "ontapVolumeUuid": "db1ed9f2-eee7-11ef-8fbb-837e18df6f7a"
+                },
+                {
+                    "ontapVolumeName": "oraclearch2",
+                    "ontapVolumeUuid": "cc802ccc-eee7-11ef-8fbb-837e18df6f7a"
+                }
+            ],
+            "violationDetails": [
+                {
+                    "objectName": "oracledata2",
+                    "value": "SnapCenter protection not configured",
+                    "objectType": "Volume",
+                    "recommended": "SnapCenter protection enabled"
+                },
+                {
+                    "objectName": "oraclearch2",
+                    "value": "SnapCenter protection not configured",
+                    "objectType": "Volume",
+                    "recommended": "SnapCenter protection enabled"
+                }
+            ],
+            "totalObjectsAssessed": 2,
+            "totalObjectsInViolation": 2,
+            "focusWidgetName": "Application-consistent snapshots"
         }
     ],
     "dismissedConfigurations": []
