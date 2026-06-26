@@ -603,7 +603,8 @@ const AWS_REGIONS = new Map<string, string>([
     ['us-west-1', 'US West (N. California)'],
     ['us-west-2', 'US West (Oregon)'],
     ['ca-west-1', 'Canada (Calgary)'],
-    ['ap-southeast-5', 'Asia Pacific (Malaysia)']
+    ['ap-southeast-5', 'Asia Pacific (Malaysia)'],
+    ['ap-southeast-6', 'Asia Pacific (New Zealand)']
 ]);
 const AWS_REGION_KEYS = Array.from(AWS_REGIONS.keys());
 

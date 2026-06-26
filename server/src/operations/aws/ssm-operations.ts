@@ -443,9 +443,13 @@ async function getCachedFsxRegionCodes(): Promise<string[]> {
     if (isRedisConnected(redisClient)) {
         try {
             const compressed = await redisClient.get(FSX_SUPPORTED_REGIONS_REDIS_KEY);
+            // TODO: The below loggers will be cleaned up once we have a proper solution.
+            logger.info('Getting FSx regions from Redis', { compressed });
             if (compressed) {
                 const json = inflateSync(Buffer.from(compressed, 'base64')).toString();
+                logger.info('Inflated FSx regions from Redis', { json });
                 const parsed: unknown[] = JSON.parse(json);
+                logger.info('Parsed FSx regions from Redis', { parsed });
                 return compact(parsed.map(r => (r as { regionCode: string }).regionCode ?? ''));
             }
         } catch (err) {
