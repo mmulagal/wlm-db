@@ -9,7 +9,7 @@
     },
     "assessments": [
         {
-            "name": "Thin Provision",
+            "name": "Thin provisioning",
             "status": "not-optimized",
             "severity": "critical",
             "recommended": "true",
@@ -58,10 +58,7 @@
                 }
             ],
             "id": "thin-provision",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence"
-            ],
+            "categories": ["Cost optimization", "Operational excellence"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -115,15 +112,12 @@
                 }
             ],
             "id": "autosize",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence"
-            ],
+            "categories": ["Cost optimization", "Operational excellence"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
         {
-            "name": "Autosize Mode",
+            "name": "Autosize-mode",
             "status": "not-optimized",
             "severity": "critical",
             "recommended": "grow",
@@ -172,10 +166,7 @@
                 }
             ],
             "id": "autosize-mode",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence"
-            ],
+            "categories": ["Cost optimization", "Operational excellence"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -185,11 +176,7 @@
             "type": "storage",
             "severity": "critical",
             "recommendation": "Workload Factory recommends configuring block device space settings for LUNs used by Microsoft SQL server instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin-provisioned volumes:\n- Space reservation: enabled - reserves enough space in the volume so writes to the LUN do not fail.\n- Space allocation: enabled - allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data.\n- Fractional reserve: disabled - avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.\nTogether, these settings help ensure predictable database behavior while minimizing wasted capacity.",
-            "categories": [
-                "Reliability",
-                "Cost optimization",
-                "Operational excellence"
-            ],
+            "categories": ["Reliability", "Cost optimization", "Operational excellence"],
             "status": "not-optimized",
             "recommended": "",
             "subType": "configuration",
@@ -485,15 +472,12 @@
                 }
             ],
             "id": "snapshot-copy-reserve",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence"
-            ],
+            "categories": ["Cost optimization", "Operational excellence"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
         {
-            "name": "Snapshot Autodelete",
+            "name": "Snapshot autodelete",
             "status": "not-optimized",
             "severity": "warning",
             "recommended": "true",
@@ -542,15 +526,12 @@
                 }
             ],
             "id": "snapshot-autodelete",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence"
-            ],
+            "categories": ["Cost optimization", "Operational excellence"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
         {
-            "name": "Space Mgmt Try First",
+            "name": "Space Management",
             "status": "not-optimized",
             "severity": "warning",
             "recommended": "volume_grow",
@@ -599,10 +580,7 @@
                 }
             ],
             "id": "space-mgmt-try-first",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence"
-            ],
+            "categories": ["Cost optimization", "Operational excellence"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -612,10 +590,7 @@
             "type": "storage",
             "severity": "critical",
             "recommendation": "For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier. This approach preserves low-latency performance for SQL workloads while reducing storage costs. Workload Factory recommends tiering snapshot data after a 7-day cooling period.",
-            "categories": [
-                "Performance efficiency",
-                "Cost optimization"
-            ],
+            "categories": ["Performance efficiency", "Cost optimization"],
             "status": "not-optimized",
             "recommended": "",
             "subType": "configuration",
@@ -697,9 +672,7 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "wlmdb_sqldata_1735808882"
-            ],
+            "objectsInViolation": ["wlmdb_sqldata_1735808882"],
             "violationDetails": [
                 {
                     "objectName": "wlmdb_sqldata_1735808882",
@@ -718,11 +691,7 @@
                 }
             ],
             "id": "storage-efficiencies",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage",
             "focusWidgetName": "ONTAP",
             "configDetails": [
@@ -744,7 +713,7 @@
             ]
         },
         {
-            "name": "Os Type",
+            "name": "OS type",
             "status": "not-optimized",
             "severity": "critical",
             "recommended": "windows_2008",
@@ -796,14 +765,12 @@
                 }
             ],
             "id": "os-type",
-            "categories": [
-                "Performance efficiency"
-            ],
+            "categories": ["Performance efficiency"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
         {
-            "name": "Mpio Enabled",
+            "name": "Multipath I/O Status",
             "status": "not-optimized",
             "severity": "critical",
             "recommended": "true",
@@ -811,9 +778,7 @@
             "resourceType": "EC2 Instance",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "disk1"
-            ],
+            "objectsInViolation": ["disk1"],
             "violationDetails": [
                 {
                     "objectName": "disk1",
@@ -822,15 +787,12 @@
                 }
             ],
             "id": "mpio-enabled",
-            "categories": [
-                "Performance efficiency",
-                "Reliability"
-            ],
+            "categories": ["Performance efficiency", "Reliability"],
             "type": "storage",
             "focusWidgetName": "OS"
         },
         {
-            "name": "Mpio Iscsi Count",
+            "name": "Multipath I/O Sessions",
             "status": "not-optimized",
             "severity": "critical",
             "recommended": "5",
@@ -838,9 +800,7 @@
             "resourceType": "EC2 Instance",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 6,
-            "objectsInViolation": [
-                "disk1"
-            ],
+            "objectsInViolation": ["disk1"],
             "violationDetails": [
                 {
                     "objectName": "disk1",
@@ -849,15 +809,12 @@
                 }
             ],
             "id": "mpio-iscsi-count",
-            "categories": [
-                "Performance efficiency",
-                "Reliability"
-            ],
+            "categories": ["Performance efficiency", "Reliability"],
             "type": "storage",
             "focusWidgetName": "OS"
         },
         {
-            "name": "Mpio Timeout",
+            "name": "Multipath I/O Timeout",
             "status": "not-optimized",
             "severity": "warning",
             "recommended": "60",
@@ -868,24 +825,20 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "mpio-timeout",
-            "categories": [
-                "Reliability"
-            ],
+            "categories": ["Reliability"],
             "type": "storage",
             "focusWidgetName": "OS"
         },
         {
-            "name": "Ntfs Allocation Unit Size",
+            "name": "NTFS Allocation Unit Size",
             "status": "not-optimized",
             "severity": "critical",
             "recommended": "65536",
             "recommendation": "Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.",
             "resourceType": "EC2 Instance",
             "totalObjectsAssessed": 1,
-            "totalObjectsInViolation": 6,
-            "objectsInViolation": [
-                "disk1"
-            ],
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": ["disk1"],
             "violationDetails": [
                 {
                     "objectName": "D:",
@@ -894,14 +847,12 @@
                 }
             ],
             "id": "ntfs-allocation-unit-size",
-            "categories": [
-                "Performance efficiency"
-            ],
+            "categories": ["Performance efficiency"],
             "type": "storage",
             "focusWidgetName": "OS"
         },
         {
-            "name": "Mpio Load Balance Policy",
+            "name": "Multipath I/O Policy",
             "status": "not-optimized",
             "severity": "critical",
             "recommended": "RR",
@@ -909,9 +860,7 @@
             "resourceType": "EC2 Instance",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "disk1"
-            ],
+            "objectsInViolation": ["disk1"],
             "violationDetails": [
                 {
                     "objectName": "Disk 4",
@@ -920,15 +869,12 @@
                 }
             ],
             "id": "mpio-load-balance-policy",
-            "categories": [
-                "Performance efficiency",
-                "Reliability"
-            ],
+            "categories": ["Performance efficiency", "Reliability"],
             "type": "storage",
             "focusWidgetName": "OS"
         },
         {
-            "name": "Performance Tier",
+            "name": "Storage tier",
             "status": "not-optimized",
             "severity": "critical",
             "recommended": "100%",
@@ -960,9 +906,7 @@
                 }
             ],
             "id": "performance-tier",
-            "categories": [
-                "Performance efficiency"
-            ],
+            "categories": ["Performance efficiency"],
             "type": "storage",
             "current": "100%",
             "sizingViolations": {
@@ -972,7 +916,7 @@
             }
         },
         {
-            "name": "Log Drive Size",
+            "name": "Log drive size",
             "status": "not-optimized",
             "severity": "warning",
             "recommended": "20-30%",
@@ -983,9 +927,7 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "log-drive-size",
-            "categories": [
-                "Operational excellence"
-            ],
+            "categories": ["Operational excellence"],
             "type": "storage",
             "current": "5%",
             "missingPermissions": [],
@@ -1002,9 +944,7 @@
                             "testing3",
                             "master3"
                         ],
-                        "dataAccessPath": [
-                            "I:\\MSSQL"
-                        ],
+                        "dataAccessPath": ["I:\\MSSQL"],
                         "dataDriveTotalSizeMB": 1072200,
                         "logAccessPath": "H:\\MSSQL",
                         "logDriveTotalSizeMB": 107,
@@ -1019,12 +959,8 @@
                 ],
                 "underProvisionedDrives": [
                     {
-                        "databases": [
-                            "Nachos"
-                        ],
-                        "dataAccessPath": [
-                            "F:\\MSSQL"
-                        ],
+                        "databases": ["Nachos"],
+                        "dataAccessPath": ["F:\\MSSQL"],
                         "dataDriveTotalSizeMB": 429420,
                         "logAccessPath": "G:\\MSSQL",
                         "logDriveTotalSizeMB": 97,
@@ -1037,12 +973,8 @@
                         "sizePercentToDataDrive": 30
                     },
                     {
-                        "databases": [
-                            "Primordial"
-                        ],
-                        "dataAccessPath": [
-                            "D:\\MSSQL"
-                        ],
+                        "databases": ["Primordial"],
+                        "dataAccessPath": ["D:\\MSSQL"],
                         "dataDriveTotalSizeMB": 1072200,
                         "logAccessPath": "E:\\MSSQL",
                         "logDriveTotalSizeMB": 107,
@@ -1057,12 +989,8 @@
                 ],
                 "ignoredDrives": [
                     {
-                        "databases": [
-                            "msdb"
-                        ],
-                        "dataAccessPath": [
-                            "S:\\mssql"
-                        ],
+                        "databases": ["msdb"],
+                        "dataAccessPath": ["S:\\mssql"],
                         "dataDriveTotalSizeMB": 3071820,
                         "logAccessPath": "S:\\mssql",
                         "logDriveTotalSizeMB": 307,
@@ -1072,7 +1000,7 @@
             }
         },
         {
-            "name": "Tempdb Drive Size",
+            "name": "TempDB drive size",
             "status": "not-optimized",
             "severity": "warning",
             "recommended": "10%",
@@ -1083,9 +1011,7 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "tempdb-drive-size",
-            "categories": [
-                "Operational excellence"
-            ],
+            "categories": ["Operational excellence"],
             "type": "storage",
             "current": "1%",
             "missingPermissions": [],
@@ -1093,9 +1019,7 @@
                 "overProvisionedDrives": [],
                 "underProvisionedDrives": [
                     {
-                        "databases": [
-                            "tempDB"
-                        ],
+                        "databases": ["tempDB"],
                         "dataDriveTotalSizeMB": 9731000,
                         "svmName": "wlmdb_sqlsvm_1731915150431",
                         "ontapVolumeName": "wlmdb_sqltemp_1731915150431",
@@ -1112,7 +1036,7 @@
             }
         },
         {
-            "name": "Headroom",
+            "name": "File System Headroom",
             "status": "not-optimized",
             "severity": "critical",
             "recommended": "36-100%",
@@ -1123,25 +1047,21 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "headroom",
-            "categories": [
-                "Performance efficiency"
-            ],
+            "categories": ["Performance efficiency"],
             "type": "storage",
             "current": "36%",
             "missingPermissions": []
         },
         {
-            "name": "Tempdb Files Location",
+            "name": "TempDB placement",
             "status": "not-optimized",
             "severity": "critical",
             "recommended": "separate-drive",
             "recommendation": "Isolate TempDB I/O from other databases by placing TempDB on its own dedicated drive to avoid I/O contention. This optimization improves overall SQL Server performance and stability. Failure to do so can result in significant I/O bottlenecks, slower query performance, and potential system instability.",
             "resourceType": "Database",
-            "totalObjectsAssessed": 2,
+            "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "tempdb"
-            ],
+            "objectsInViolation": ["tempdb"],
             "violationDetails": [
                 {
                     "objectName": "placement",
@@ -1151,27 +1071,15 @@
                         "lunPath": "/vol/wlmdb_sqltempdb_1750140716368/sqltempdb",
                         "driveLetter": "T:"
                     }
-                },
-                {
-                    "objectName": "placement",
-                    "value": "tempdb",
-                    "objectType": "Database",
-                    "additionalInfo": {
-                        "lunPath": "/vol/wlmdb_sqltempdb_1750140716368/sqltempdb1",
-                        "driveLetter": "U:"
-                    }
                 }
             ],
             "id": "tempdb-files-location",
-            "categories": [
-                "Performance efficiency",
-                "Operational excellence"
-            ],
+            "categories": ["Performance efficiency", "Operational excellence"],
             "type": "storage",
             "current": "separate drive"
         },
         {
-            "name": "Log Files Location",
+            "name": "Log files (.ldf)",
             "status": "not-optimized",
             "severity": "critical",
             "recommended": "separate-drive",
@@ -1179,9 +1087,7 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 2,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "msdb"
-            ],
+            "objectsInViolation": ["msdb"],
             "violationDetails": [
                 {
                     "objectName": "placement",
@@ -1203,15 +1109,12 @@
                 }
             ],
             "id": "log-files-location",
-            "categories": [
-                "Performance efficiency",
-                "Operational excellence"
-            ],
+            "categories": ["Performance efficiency", "Operational excellence"],
             "type": "storage",
             "current": "shared drive"
         },
         {
-            "name": "Data Files Location",
+            "name": "Data files (.mdf)",
             "status": "not-optimized",
             "severity": "critical",
             "recommended": "separate-drive",
@@ -1219,9 +1122,7 @@
             "resourceType": "Database",
             "totalObjectsAssessed": 2,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "RetailBanking"
-            ],
+            "objectsInViolation": ["RetailBanking"],
             "violationDetails": [
                 {
                     "objectName": "placement",
@@ -1243,15 +1144,12 @@
                 }
             ],
             "id": "data-files-location",
-            "categories": [
-                "Performance efficiency",
-                "Operational excellence"
-            ],
+            "categories": ["Performance efficiency", "Operational excellence"],
             "type": "storage",
             "current": "shared drive"
         },
         {
-            "name": "Rss Config",
+            "name": "Network adapter settings",
             "status": "optimized",
             "severity": "warning",
             "recommended": "optimized",
@@ -1262,16 +1160,14 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "rss-config",
-            "categories": [
-                "Cost optimization"
-            ],
+            "categories": ["Cost optimization"],
             "type": "compute",
             "rssAdapters": [],
             "tcpOffloadState": "Disabled",
             "recommendedAdapterSettings": {}
         },
         {
-            "name": "Maxdop",
+            "name": "MAXDOP",
             "status": "not-optimized",
             "severity": "warning",
             "recommended": "2",
@@ -1282,11 +1178,53 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "maxdop",
-            "categories": [
-                "Performance efficiency"
-            ],
+            "categories": ["Performance efficiency"],
             "type": "application",
             "current": "4"
+        },
+        {
+            "name": "Shared storage",
+            "status": "not-optimized",
+            "severity": "critical",
+            "recommended": "",
+            "recommendation": "All shared disks (iSCSI LUNs) must be accessible by both nodes in the FCI deployment model to allow failover.",
+            "resourceType": "Lun",
+            "totalObjectsAssessed": 2,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": ["/vol/wlmdb_sqltemp_1753061371059/tempdb"],
+            "violationDetails": [
+                {
+                    "objectType": "LUN",
+                    "objectName": "lun-quorum",
+                    "value": "Not accessible",
+                    "recommended": "Accessible"
+                }
+            ],
+            "id": "shared-storage",
+            "categories": ["Reliability"],
+            "type": "resiliency"
+        },
+        {
+            "name": "Drive Letter",
+            "status": "not-optimized",
+            "severity": "critical",
+            "recommended": "Validate availability of same drive letters on standby node",
+            "recommendation": "Validate availability of the same drive letters on the secondary node.",
+            "resourceType": "Drive",
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": ["S:"],
+            "violationDetails": [
+                {
+                    "objectType": "Drive",
+                    "objectName": "E:",
+                    "value": "Missing from zxc node",
+                    "recommended": "Present"
+                }
+            ],
+            "id": "drive-letter",
+            "categories": ["Reliability"],
+            "type": "resiliency"
         },
         {
             "name": "Cluster Quorum",
@@ -1300,9 +1238,7 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "cluster-quorum",
-            "categories": [
-                "Reliability"
-            ],
+            "categories": ["Reliability"],
             "type": "resiliency"
         },
         {
@@ -1314,9 +1250,7 @@
             "resourceType": "EC2 instance",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "SQLNODE1-56065"
-            ],
+            "objectsInViolation": ["SQLNODE1-56065"],
             "violationDetails": [
                 {
                     "objectName": "CrossSiteThreshold",
@@ -1335,13 +1269,11 @@
                 }
             ],
             "id": "heartbeat-settings",
-            "categories": [
-                "Reliability"
-            ],
+            "categories": ["Reliability"],
             "type": "resiliency"
         },
         {
-            "name": "SqlServer Service",
+            "name": "Sql Server Service",
             "status": "optimized",
             "severity": "critical",
             "recommended": "",
@@ -1352,10 +1284,145 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "sqlServer-service",
-            "categories": [
-                "Reliability"
-            ],
+            "categories": ["Reliability"],
             "type": "resiliency"
+        },
+        {
+            "name": "Clone cleanup",
+            "status": "not-optimized",
+            "severity": "warning",
+            "recommended": "optimized",
+            "recommendation": "Old and divergent clones can incur significant costs. Consider deleting or refreshing these clones to optimize your storage expenses.",
+            "resourceType": "Database",
+            "totalObjectsAssessed": 2,
+            "totalObjectsInViolation": 2,
+            "objectsInViolation": ["sandbox_1744017481447", "sandbox_17440174814471"],
+            "violationDetails": [],
+            "id": "clone-management",
+            "categories": ["Cost efficiency"],
+            "type": "cloning",
+            "cloneDetails": [
+                {
+                    "databaseHostName": "27JanStandalone",
+                    "databaseHostId": "b9371421ff9b1680",
+                    "databaseInstanceName": "MSSQLSERVER",
+                    "sourceDatabaseHostName": "27JanStandalone",
+                    "sourceDatabaseInstanceName": "MSSQLSERVER",
+                    "sourceDatabaseName": "test1",
+                    "cloneDatabaseName": "sandbox_1744017481447",
+                    "cloneAge": 90,
+                    "clonedBy": "netapp_wf",
+                    "clonedVolumeDetails": [
+                        {
+                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
+                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
+                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
+                            "cloneDatabaseName": "sandbox_1744017481447",
+                            "cloneVolumeType": "data"
+                        },
+                        {
+                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
+                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
+                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
+                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
+                            "cloneDatabaseName": "sandbox_1744017481447",
+                            "cloneVolumeType": "log"
+                        }
+                    ]
+                },
+                {
+                    "databaseHostName": "27JanStandalone1",
+                    "databaseHostId": "b9371421ff9b16801",
+                    "databaseInstanceName": "MSSQLSERVER1",
+                    "sourceDatabaseHostName": "27JanStandalone1",
+                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                    "sourceDatabaseName": "test11",
+                    "cloneDatabaseName": "sandbox_17440174814471",
+                    "cloneAge": 75,
+                    "clonedBy": "other",
+                    "clonedVolumeDetails": [
+                        {
+                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                            "cloneDatabaseName": "sandbox_17440174814471",
+                            "cloneVolumeType": "data"
+                        },
+                        {
+                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
+                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                            "cloneDatabaseName": "sandbox_17440174814471",
+                            "cloneVolumeType": "log"
+                        }
+                    ]
+                }
+            ],
+            "oldCloneDetails": [
+                {
+                    "databaseHostName": "27JanStandalone",
+                    "databaseHostId": "b9371421ff9b1680",
+                    "databaseInstanceName": "MSSQLSERVER",
+                    "sourceDatabaseHostName": "27JanStandalone",
+                    "sourceDatabaseInstanceName": "MSSQLSERVER",
+                    "sourceDatabaseName": "test1",
+                    "cloneDatabaseName": "sandbox_1744017481447",
+                    "cloneAge": 90,
+                    "clonedBy": "netapp_wf",
+                    "clonedVolumeDetails": [
+                        {
+                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d",
+                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_1744017547",
+                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                            "sourceVolumeName": "wlmdb_sqldata_1744017353",
+                            "cloneDatabaseName": "sandbox_1744017481447",
+                            "cloneVolumeType": "data"
+                        },
+                        {
+                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d",
+                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_1744017547",
+                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
+                            "sourceVolumeName": "wlmdb_sqllog_1744017353",
+                            "cloneDatabaseName": "sandbox_1744017481447",
+                            "cloneVolumeType": "log"
+                        }
+                    ]
+                }
+            ],
+            "divergentCloneDetails": [
+                {
+                    "databaseHostName": "27JanStandalone1",
+                    "databaseHostId": "b9371421ff9b16801",
+                    "databaseInstanceName": "MSSQLSERVER1",
+                    "sourceDatabaseHostName": "27JanStandalone1",
+                    "sourceDatabaseInstanceName": "MSSQLSERVER1",
+                    "sourceDatabaseName": "test11",
+                    "cloneDatabaseName": "sandbox_17440174814471",
+                    "cloneAge": 75,
+                    "clonedBy": "other",
+                    "clonedVolumeDetails": [
+                        {
+                            "cloneVolumeUuid": "5f271622-1391-11f0-a43a-5d026864752d1",
+                            "cloneVolumeName": "wlmdb_sqldata_1744017353_clone_17440175471",
+                            "cloneVolumeCreateTime": "2025-04-07T09:19:13+00:00",
+                            "sourceVolumeName": "wlmdb_sqldata_17440173531",
+                            "cloneDatabaseName": "sandbox_17440174814471",
+                            "cloneVolumeType": "data"
+                        },
+                        {
+                            "cloneVolumeUuid": "61ae0ac4-1391-11f0-a43a-5d026864752d1",
+                            "cloneVolumeName": "wlmdb_sqllog_1744017353_clone_17440175471",
+                            "cloneVolumeCreateTime": "2025-04-07T09:19:18+00:00",
+                            "sourceVolumeName": "wlmdb_sqllog_17440173531",
+                            "cloneDatabaseName": "sandbox_17440174814471",
+                            "cloneVolumeType": "log"
+                        }
+                    ]
+                }
+            ]
         },
         {
             "id": "snapcenter-snapshot",
@@ -1363,9 +1430,7 @@
             "type": "resiliency",
             "severity": "warning",
             "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
-            "categories": [
-                "Reliability"
-            ],
+            "categories": ["Reliability"],
             "status": "not-optimized",
             "recommended": "optimized",
             "subType": "protection",
