@@ -1555,7 +1555,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total EBS snapshot cost',
                       value: `$${viewCalculation.ebsSnapshotCalculation.gp3.totalEbsSnapshotCost}`,
-                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.gp3.totalSnapshotCost}) × Number of volumes (${viewCalculation.ebsSnapshotCalculation.gp3.numberOfVolumes})`
+                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.gp3.totalSnapshotCost}) for ${viewCalculation.ebsSnapshotCalculation.gp3.numberOfVolumes} Volumes`
                   }
               ]
             : [],
@@ -1605,7 +1605,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total EBS snapshot cost',
                       value: `$${viewCalculation.ebsSnapshotCalculation.io2.totalEbsSnapshotCost}`,
-                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.io2.totalSnapshotCost}) × Number of volumes (${viewCalculation.ebsSnapshotCalculation.io2.numberOfVolumes})`
+                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.io2.totalSnapshotCost}) for ${viewCalculation.ebsSnapshotCalculation.io2.numberOfVolumes} Volumes`
                   }
               ]
             : [],
@@ -1655,7 +1655,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total EBS snapshot cost',
                       value: `$${viewCalculation.ebsSnapshotCalculation.io1.totalEbsSnapshotCost}`,
-                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.io1.totalSnapshotCost}) × Number of volumes (${viewCalculation.ebsSnapshotCalculation.io1.numberOfVolumes})`
+                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.io1.totalSnapshotCost}) for ${viewCalculation.ebsSnapshotCalculation.io1.numberOfVolumes} Volumes`
                   }
               ]
             : [],
@@ -1705,7 +1705,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total EBS snapshot cost',
                       value: `$${viewCalculation.ebsSnapshotCalculation.gp2.totalEbsSnapshotCost}`,
-                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.gp2.totalSnapshotCost}) × Number of volumes (${viewCalculation.ebsSnapshotCalculation.gp2.numberOfVolumes})`
+                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.gp2.totalSnapshotCost}) for ${viewCalculation.ebsSnapshotCalculation.gp2.numberOfVolumes} Volumes`
                   }
               ]
             : [],
@@ -1755,7 +1755,7 @@ export const viewCalculationForEBS = (viewCalculation: any, selectedDeploymentMo
                   {
                       label: 'Total EBS snapshot cost',
                       value: `$${viewCalculation.ebsSnapshotCalculation.st1.totalEbsSnapshotCost}`,
-                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.st1.totalSnapshotCost}) × Number of volumes (${viewCalculation.ebsSnapshotCalculation.st1.numberOfVolumes})`
+                      text: `Total snapshot cost ($${viewCalculation.ebsSnapshotCalculation.st1.totalSnapshotCost}) for ${viewCalculation.ebsSnapshotCalculation.st1.numberOfVolumes} Volumes`
                   }
               ]
             : [],
