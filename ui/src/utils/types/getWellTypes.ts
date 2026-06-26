@@ -80,7 +80,8 @@ export interface PerConfigInterface {
     violationDetails?: any;
     // Per sub-config recommendations for nested configs (e.g. storage-efficiencies)
     configDetails?: Array<{
-        name: string;
+        id?: string;
+        name?: string;
         recommended?: string;
         objectType?: string;
         recommendedByDataCategory?: Record<string, string>;

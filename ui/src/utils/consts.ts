@@ -1688,6 +1688,15 @@ export const WELL_ARCHITECTED_CATEGORIES = {
     CLONING: 'cloning' as WellArchitectedCategory
 };
 
+/** Display order for Well-Architected configuration categories (UI sections and Excel export). */
+export const WELL_ARCHITECTED_CATEGORY_ORDER: WellArchitectedCategory[] = [
+    WELL_ARCHITECTED_CATEGORIES.STORAGE,
+    WELL_ARCHITECTED_CATEGORIES.COMPUTE,
+    WELL_ARCHITECTED_CATEGORIES.APPLICATION,
+    WELL_ARCHITECTED_CATEGORIES.RESILIENCY,
+    WELL_ARCHITECTED_CATEGORIES.CLONING
+];
+
 // Well-Architected category display names
 export const WELL_ARCHITECTED_CATEGORY_LABELS: Record<WellArchitectedCategory, string> = {
     storage: 'Storage',

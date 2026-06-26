@@ -27,7 +27,13 @@ import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
 
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_STATES, DBType, WLF_TABS } from '../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    CONFIG_STATES,
+    DBType,
+    WLF_TABS,
+    WELL_ARCHITECTED_CATEGORY_ORDER
+} from '../../utils/consts';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
 import {
@@ -969,7 +975,7 @@ const GetWell = () => {
                             {/* Dynamic configuration sections - Renders ALL configurations from API grouped by category */}
                             {!loading && Object.keys(filteredCardData).length > 0 && (
                                 <>
-                                    {['storage', 'compute', 'application', 'resiliency', 'cloning'].map(category => {
+                                    {WELL_ARCHITECTED_CATEGORY_ORDER.map(category => {
                                         const configs = groupedConfigurations[category] || [];
 
                                         if (configs.length === 0) {

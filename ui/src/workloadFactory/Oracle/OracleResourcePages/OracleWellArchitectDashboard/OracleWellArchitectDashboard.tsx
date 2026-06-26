@@ -24,7 +24,7 @@ import {
     checkAllOracleConfigurationsDismissed,
     groupOracleConfigurationsByCategory
 } from './OracleWellArchitectedUtils';
-import { DBType } from '../../../../utils/consts';
+import { DBType, WELL_ARCHITECTED_CATEGORY_ORDER } from '../../../../utils/consts';
 import {
     setOracleOptimizeFilterTags,
     setOracleDefaultFilterOptions
@@ -381,7 +381,7 @@ const OracleWellArchitectDashboard = () => {
                         {/* Dynamic configuration sections - Renders ALL configurations from API grouped by category */}
                         {!loading && Object.keys(filteredCardData).length > 0 && (
                             <>
-                                {['storage', 'compute', 'application', 'resiliency', 'cloning'].map(category => {
+                                {WELL_ARCHITECTED_CATEGORY_ORDER.map(category => {
                                     const configs = groupedConfigurations[category] || [];
 
                                     if (configs.length === 0) {

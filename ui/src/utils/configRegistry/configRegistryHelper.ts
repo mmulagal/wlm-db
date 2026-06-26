@@ -245,19 +245,29 @@ export const getColumnConfig = (configId: string): ColumnConfig | undefined => {
  * Builds `current` and `recommended` display strings for configs with nested sub-configs
  * (e.g. storage-efficiencies: compression/deduplication/compaction).
  */
+
+const getSubConfigKey = (entry: { id?: string; name?: string }): string => entry.id ?? entry.name ?? '';
+
 export const buildSubConfigValues = (
     row: any,
     configDetails: Array<any> = []
 ): { current: string; recommended: string } => {
-    const currentByName = new Map<string, string>((row?.violatedConfigs || []).map((c: any) => [c.id, c.current]));
+    const currentByName = new Map<string, string>(
+        (row?.violatedConfigs || [])
+            .map((c: any) => [getSubConfigKey(c), c.current] as [string, unknown])
+            .filter(([key]: [string, unknown]) => key !== '')
+    );
     const dataCategory: string | undefined = row?.dataCategory;
 
-    const entries = configDetails.map((cfg: any) => {
-        const recommended =
-            cfg.recommended || (dataCategory ? cfg.recommendedByDataCategory?.[dataCategory] : undefined) || '';
-        const current = currentByName.get(cfg.id) || recommended;
-        return { name: cfg.id, current, recommended };
-    });
+    const entries = configDetails
+        .map((cfg: any) => {
+            const subConfigKey = getSubConfigKey(cfg);
+            const recommended =
+                cfg.recommended || (dataCategory ? cfg.recommendedByDataCategory?.[dataCategory] : undefined) || '';
+            const current = currentByName.get(subConfigKey) || recommended;
+            return { name: subConfigKey, current, recommended };
+        })
+        .filter(entry => entry.name !== '');
 
     return {
         current: entries.map(e => `${e.name}=${e.current}`).join(', '),

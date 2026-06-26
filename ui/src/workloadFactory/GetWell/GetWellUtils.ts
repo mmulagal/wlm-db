@@ -50,6 +50,7 @@ import {
     WA_FLAG_SKIP,
     WELL_ARCHITECTED_CATEGORIES,
     WELL_ARCHITECTED_CATEGORY_LABELS,
+    WELL_ARCHITECTED_CATEGORY_ORDER,
     WLF_TABS
 } from '../../utils/consts';
 import { groupByType, mapDismissedValues } from '../../utils/resourceUtils';
@@ -2564,6 +2565,31 @@ export const groupConfigurationsByCategory = (cardData: any): Record<string, any
     });
 
     return grouped;
+};
+
+/**
+ * Order assessment IDs by Well-Architected category, matching UI section order.
+ * Within each category, order follows cardsData insertion order.
+ */
+export const getOrderedAssessmentIdsByCategory = (
+    assessmentIds: string[],
+    cardData: Record<string, { category?: string }> | null | undefined
+): string[] => {
+    const idSet = new Set(assessmentIds);
+    const ordered: string[] = [];
+    const grouped = groupConfigurationsByCategory(cardData);
+
+    WELL_ARCHITECTED_CATEGORY_ORDER.forEach(category => {
+        (grouped[category] || []).forEach(({ key }) => {
+            if (idSet.has(key)) {
+                ordered.push(key);
+                idSet.delete(key);
+            }
+        });
+    });
+
+    idSet.forEach(id => ordered.push(id));
+    return ordered;
 };
 
 /**
