@@ -267,7 +267,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'Operating system',
-        severity: SEVERITY.CRITICAL,
+        severity: SEVERITY.WARNING,
         recommendation:
             'Set NTFS allocation unit size to 64K to better utilize disk space, reduce fragmentation, and improve file read/write performance. Failure to configure this properly may lead to inefficient disk usage and degraded performance.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],

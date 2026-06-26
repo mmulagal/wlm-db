@@ -991,7 +991,11 @@ async function getFSXPreferredSubnetAndAZ(
             throw new Error(`Availability Zone not found for fsx ${fileSystemId} in subnet ${preferredSubnetId}.`);
         }
 
-        return { subnetId: preferredSubnetId, availabilityZone };
+        return {
+            subnetId: preferredSubnetId,
+            availabilityZone,
+            isMultiAzDeployment: filesystems?.[0]?.OntapConfiguration?.DeploymentType?.includes('MULTI_AZ')
+        };
     } catch (error: any) {
         logger.error('Error fetching FSX preferred subnet and AZ:', error);
         throw createError(
@@ -1018,13 +1022,18 @@ async function getMZFsxnNodePreference(
         fsxFileSystemId
     });
     try {
-        const [{ subnetId: fsxPreferredSubnetId, availabilityZone: fsxPreferredAZ }, nodeInstanceDetails] =
-            await Promise.all([
-                getFSXPreferredSubnetAndAZ(credentialsId, region, fsxFileSystemId, accountId),
-                describeInstance(credentialsId, region, {
-                    Filters: [{ Name: 'instance-id', Values: [node1InstanceId, node2InstanceId] }]
-                })
-            ]);
+        const [{ availabilityZone: fsxPreferredAZ, isMultiAzDeployment }, nodeInstanceDetails] = await Promise.all([
+            getFSXPreferredSubnetAndAZ(credentialsId, region, fsxFileSystemId, accountId),
+            describeInstance(credentialsId, region, {
+                Filters: [{ Name: 'instance-id', Values: [node1InstanceId, node2InstanceId] }]
+            })
+        ]);
+
+        if (!isMultiAzDeployment) {
+            throw new Error(
+                `FSx file system ${fsxFileSystemId} is not a multi-AZ deployment. The check is not applicable.`
+            );
+        }
 
         // Determine preferred node based on FSx preferred subnet and AZ
         let preferredNodeId: string = '';
@@ -1033,19 +1042,13 @@ async function getMZFsxnNodePreference(
         const node1InstanceDetails = nodeInstanceDetails?.Reservations?.[0]?.Instances?.[0];
         const node2InstanceDetails = nodeInstanceDetails?.Reservations?.[1]?.Instances?.[0];
 
-        if (
-            node1InstanceDetails?.SubnetId === fsxPreferredSubnetId &&
-            node1InstanceDetails.Placement?.AvailabilityZone === fsxPreferredAZ
-        ) {
-            preferredNodeId = node1InstanceDetails.InstanceId!;
-            standbyNodeId = node2InstanceDetails!.InstanceId!;
+        if (node1InstanceDetails?.Placement?.AvailabilityZone === fsxPreferredAZ) {
+            preferredNodeId = node1InstanceId;
+            standbyNodeId = node2InstanceId;
         }
-        if (
-            node2InstanceDetails?.SubnetId === fsxPreferredSubnetId &&
-            node2InstanceDetails.Placement?.AvailabilityZone === fsxPreferredAZ
-        ) {
-            preferredNodeId = node2InstanceDetails.InstanceId!;
-            standbyNodeId = node1InstanceDetails!.InstanceId!;
+        if (node2InstanceDetails?.Placement?.AvailabilityZone === fsxPreferredAZ) {
+            preferredNodeId = node2InstanceId;
+            standbyNodeId = node1InstanceId;
         }
 
         if (!preferredNodeId || !standbyNodeId) {
