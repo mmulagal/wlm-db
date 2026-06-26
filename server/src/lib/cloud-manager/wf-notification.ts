@@ -1,7 +1,8 @@
 import createError from 'http-errors';
-import { WORKLOAD_FACTORY_ENDPOINT, HEADERS } from '../../utils/consts';
-import { gotInstanceForInternalRequest } from '../../utils/got';
+import { WORKLOAD_FACTORY_ENDPOINT, HEADERS, WF_SVC_TOKEN_TYPE, WLMDB } from '../../utils/consts';
+import { gotInstanceForInternalRequest, isHTTPError } from '../../utils/got';
 import getLogger from '../../utils/logger';
+import { deleteFromCache } from '../../utils/cache';
 import { getWfServiceToken } from './auth';
 
 const logger = getLogger();
@@ -56,7 +57,7 @@ async function sendWFNotification(accountId: string, requestBody: WFNotification
     logger.info('Sending workload factory notification:', { accountId, requestBody });
     try {
         const { token } = await getWfServiceToken();
-        return gotInstanceForInternalRequest.post(
+        return await gotInstanceForInternalRequest.post(
             `${WORKLOAD_FACTORY_ENDPOINT}/accounts/${accountId}/notification/v1/send`,
             {
                 headers: {
@@ -67,6 +68,28 @@ async function sendWFNotification(accountId: string, requestBody: WFNotification
             }
         );
     } catch (err) {
+        if (err instanceof Error && isHTTPError(err) && err.response.statusCode === 401) {
+            logger.warn('WF notification send failed with 401, clearing cached token and retrying', { accountId });
+            deleteFromCache(WF_SVC_TOKEN_TYPE, WLMDB);
+            try {
+                const { token: freshToken } = await getWfServiceToken();
+                return await gotInstanceForInternalRequest.post(
+                    `${WORKLOAD_FACTORY_ENDPOINT}/accounts/${accountId}/notification/v1/send`,
+                    {
+                        headers: {
+                            [HEADERS.AUTHORIZATION]: freshToken
+                        },
+                        json: requestBody,
+                        resolveBodyOnly: false
+                    }
+                );
+            } catch (retryErr) {
+                throw createError(
+                    500,
+                    `Error occurred while sending Workload factory notification after token refresh, ${retryErr}`
+                );
+            }
+        }
         throw createError(500, `Error occurred while sending Workload factory notification, ${err}`);
     }
 }
