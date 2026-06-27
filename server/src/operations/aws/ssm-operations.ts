@@ -438,19 +438,15 @@ const FSX_REGION_CODES_CACHE_KEY = 'fsx-ontap-region-codes';
 const FSX_SUPPORTED_REGIONS_REDIS_KEY = 'FSX:SUPPORTED:REGIONS:KEY';
 
 async function getCachedFsxRegionCodes(): Promise<string[]> {
-    // Try Redis first — fsx service writes compressed region data here
+    // Try Redis first — fsx service writes compressed region data here. We only read, not write to Redis.
     const redisClient = getRedisConnection();
     if (isRedisConnected(redisClient)) {
         try {
             const compressed = await redisClient.get(FSX_SUPPORTED_REGIONS_REDIS_KEY);
-            // TODO: The below loggers will be cleaned up once we have a proper solution.
-            logger.info('Getting FSx regions from Redis', { compressed });
             if (compressed) {
                 const json = inflateSync(Buffer.from(compressed, 'base64')).toString();
-                logger.info('Inflated FSx regions from Redis', { json });
-                const parsed: unknown[] = JSON.parse(json);
-                logger.info('Parsed FSx regions from Redis', { parsed });
-                return compact(parsed.map(r => (r as { regionCode: string }).regionCode ?? ''));
+                const { regions }: { regions: { name: string }[] } = JSON.parse(json);
+                return compact(regions.map(r => r.name ?? ''));
             }
         } catch (err) {
             logger.warn('Failed to read FSx regions from Redis, falling back to SSM', err);
