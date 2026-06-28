@@ -502,6 +502,20 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             'Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability.',
         configLevel: 'database'
     },
+    {
+        id: 'snapcenter-snapshot',
+        name: 'Application-Consistent Snapshots',
+        categories: [AwsWellArchitecturedPillars.RELIABILITY],
+        type: 'resiliency',
+        subType: 'protection',
+        focusWidgetName: 'Application-Consistent Snapshots',
+        severity: SEVERITY.WARNING,
+        recommended: AssessmentStatus.OPTIMIZED,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        recommendation:
+            'Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.',
+        configLevel: 'database'
+    },
 
     // ── resiliency / highAvailability ────────────────────────────────────────
     {

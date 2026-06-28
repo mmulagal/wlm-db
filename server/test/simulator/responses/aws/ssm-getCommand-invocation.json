@@ -4967,5 +4967,37 @@
             "protectionLevel": "MAXIMUM PERFORMANCE",
             "openMode": "READ ONLY WITH APPLY"
         }
+    },
+    "mssqlSnapcenterAssessmentOutput": {
+        "volumes": [
+            {
+                "svmId": "",
+                "svmName": "",
+                "volumeId": "60c64053-33f3-11f1-ad2f-fdbb88ac511e",
+                "volumeName": "aoag_luns_20260330_1",
+                "hasSnapcenterSnapshot": false,
+                "foundInSnapcenterLogs": false
+            },
+            {
+                "svmId": "",
+                "svmName": "",
+                "volumeId": "798b4da4-2c05-11f1-943b-4d445548d9df",
+                "volumeName": "aoag_luns_20260330",
+                "hasSnapcenterSnapshot": false,
+                "foundInSnapcenterLogs": false
+            },
+            {
+                "svmId": "",
+                "svmName": "",
+                "volumeId": "df9aa5e6-33fd-11f1-ad2f-fdbb88ac511e",
+                "volumeName": "aoag_luns_20260330_2",
+                "hasSnapcenterSnapshot": false,
+                "foundInSnapcenterLogs": false
+            }
+        ],
+        "standaloneCheck": {
+            "pluginServiceRunning": false
+        },
+        "errorMessage": ""
     }
 }

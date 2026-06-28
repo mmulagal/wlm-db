@@ -3465,6 +3465,31 @@ const MAPPED_ONTAP_VOLUMES_DATA = {
     }
 };
 
+const MSSQL_SNAPCENTER_ASSESSMENT_DATA = {
+    volumes: [
+        {
+            svmId: '',
+            svmName: '',
+            volumeId: '73c4863d-dc72-11ef-b430-bb0ad6a3b8df',
+            volumeName: 'wlmdb_sqllog_1737955806953',
+            hasSnapcenterSnapshot: false,
+            foundInSnapcenterLogs: false
+        },
+        {
+            svmId: '',
+            svmName: '',
+            volumeId: '73df15ec-dc72-11ef-b430-bb0ad6a3b8df',
+            volumeName: 'wlmdb_sqldata_1737955806953',
+            hasSnapcenterSnapshot: false,
+            foundInSnapcenterLogs: false
+        }
+    ],
+    standaloneCheck: {
+        pluginServiceRunning: false
+    },
+    errorMessage: ''
+};
+
 const PDB_DETAILS = {
     name: 'pdb1',
     size: 2500000000,
@@ -6635,6 +6660,11 @@ async function createAssessmentData(
                 ? MSSQL_ASSESSMENT_CLONE_CONFIG_DATA
                 : ASSESSMENT_CLONE_CONFIG_DATA
     };
+    const instanceSnapcenterConfigDataRecord = {
+        ...baseConfig,
+        config_data_type: AssessmentCategories.SNAPCENTER_SNAPSHOT,
+        config_data: MSSQL_SNAPCENTER_ASSESSMENT_DATA
+    };
     const haConfigData =
         sqlDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
             ? AOAG_STANDALONE_HIGH_AVAILABILITY_CONFIG_DATA
@@ -6653,7 +6683,8 @@ async function createAssessmentData(
         instanceAWSBackupConfigDataRecord,
         instanceMaxdopConfigDataRecord,
         instanceCloneConfigDataRecord,
-        instanceConfigMappedOntapDataRecord
+        instanceConfigMappedOntapDataRecord,
+        instanceSnapcenterConfigDataRecord
     ];
 
     const newConfigDataRecords =
@@ -7070,6 +7101,7 @@ export {
     MSSQL_ASSESSMENT_CLONE_CONFIG_DATA,
     MSSQL_ASSESMENT_CONFIG_DATA,
     MAPPED_ONTAP_VOLUMES_DATA,
+    MSSQL_SNAPCENTER_ASSESSMENT_DATA,
     MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
     ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA,
     AOAG_STANDALONE_HIGH_AVAILABILITY_CONFIG_DATA,

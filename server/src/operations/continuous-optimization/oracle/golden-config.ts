@@ -883,7 +883,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         type: 'resiliency',
         subType: 'protection',
-        focusWidgetName: 'Application-consistent snapshots',
+        focusWidgetName: 'Application-Consistent Snapshots',
         severity: SEVERITY.WARNING,
         recommended: AssessmentStatus.OPTIMIZED,
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,

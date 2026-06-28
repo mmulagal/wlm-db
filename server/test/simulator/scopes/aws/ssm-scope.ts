@@ -896,6 +896,8 @@ ssmMock
         return crrAssessmentDataRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.getCRRAssessmentDataCommand)
+    .on(SendCommandCommand, params => params.Comment === 'SnapCenter snapshot assessment for MSSQL instance')
+    .resolves(getSampleCommandResponse('mssqlSnapcenterAssessment'))
     .on(SendCommandCommand, params => {
         return pgsqlProtectionRegex.test(params.Parameters.commands?.[0]);
     })
@@ -1376,6 +1378,15 @@ ssmMock
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-crrAssessmentCommand'
     })
     .resolves(getCommandInvocationResponse.getCRRAssessmentCommandResponse)
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-mssqlSnapcenterAssessment'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'mssqlSnapcenterAssessment',
+            JSON.stringify(getCommandInvocationResponse.mssqlSnapcenterAssessmentOutput)
+        )
+    )
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-listSnapshotPolicies'
     })

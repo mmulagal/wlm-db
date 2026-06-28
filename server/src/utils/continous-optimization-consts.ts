@@ -17,6 +17,7 @@ enum AssessmentCategories {
     CRR = 'crr',
     HIGH_AVAILABILITY = 'high-availability',
     MTU_ALIGNMENT = 'mtu-alignment',
+    SNAPCENTER_SNAPSHOT = 'snapcenter-snapshot',
     ORACLE_SECURITY_PATCH = 'oracle-security-patch'
 }
 

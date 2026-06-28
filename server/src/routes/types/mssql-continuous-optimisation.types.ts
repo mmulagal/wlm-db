@@ -434,6 +434,7 @@ const MssqlAssessmentResponseV1 = Type.Object({
     storage: Type.Optional(Type.Union([StorageParameterDriftResponseV1, ErrorResponse])),
     compute: Type.Optional(Type.Union([ComputeDriftResponseV1, ErrorResponse])),
     snapshotPolicy: Type.Optional(GenericAssessmentResponseV1),
+    snapcenterSnapshot: Type.Optional(GenericAssessmentResponseV1),
     crr: Type.Optional(GenericAssessmentResponseV1),
     awsBackup: Type.Optional(GenericAssessmentResponseV1),
     highAvailability: Type.Optional(Type.Array(Type.Union([ParameterDriftResponseV1, ErrorResponse]))),

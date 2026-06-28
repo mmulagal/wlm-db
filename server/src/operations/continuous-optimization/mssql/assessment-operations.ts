@@ -71,6 +71,11 @@ import {
     initiateInstanceLevelHighAvailabilityAssessment,
     initiateHostLevelHighAvailabilityAssessment
 } from './resilience-assessment-operation';
+import {
+    calculateSnapCenterDrift,
+    initiateSnapCenterAssessmentCollection,
+    type MssqlSnapcenterAssessmentData
+} from './snapcenter-assessment-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getInstanceDetails } from '../../database-hosts-operations';
 import {
@@ -304,6 +309,7 @@ async function fetchMssqlDriftAssessment(
             AssessmentCategories.CRR,
             AssessmentCategories.HIGH_AVAILABILITY
         ].some(category => assessmentTypes.includes(category)),
+        snapcenterSnapshot: assessmentTypes.includes(AssessmentCategories.SNAPCENTER_SNAPSHOT),
         clone: assessmentTypes.includes(AssessmentCategories.CLONE)
     };
 
@@ -354,7 +360,7 @@ async function fetchMssqlDriftAssessment(
             : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([])
     ]);
 
-    const [maxDOPResponse, cloneResponse, hostLevelData] = [
+    const [maxDOPResponse, cloneResponse, snapcenterDriftData, hostLevelData] = [
         assessmentFlags.maxDOP
             ? calculateMaxDOPDrift(
                   accountId,
@@ -374,6 +380,13 @@ async function fetchMssqlDriftAssessment(
                   databaseHostId,
                   databaseInstanceId,
                   assessmentDataMap[AssessmentCategories.CLONE] as CloneAssessment
+              )
+            : undefined,
+        assessmentFlags.snapcenterSnapshot
+            ? calculateSnapCenterDrift(
+                  assessmentDataMap[AssessmentCategories.SNAPCENTER_SNAPSHOT] as
+                      | MssqlSnapcenterAssessmentData
+                      | undefined
               )
             : undefined,
         assessmentFlags.compute ||
@@ -409,7 +422,7 @@ async function fetchMssqlDriftAssessment(
             assessments.push(...item);
         }
     });
-    [maxDOPResponse, cloneResponse].forEach(item => {
+    [maxDOPResponse, cloneResponse, snapcenterDriftData].forEach(item => {
         if (!isEmpty(item)) {
             assessments.push(item);
         }
@@ -470,6 +483,7 @@ const SINGLE_ASSESSMENT_KEY_BY_ID: Record<string, string> = {
     maxdop: 'maxDOP',
     'mssql-patch': 'mssqlPatch',
     'snapshot-policy': 'snapshotPolicy',
+    'snapcenter-snapshot': 'snapcenterSnapshot',
     'backup-configuration': 'awsBackup',
     crr: 'crr',
     'clone-management': 'clone'
@@ -486,6 +500,7 @@ const DISMISS_SINGLE_KEY_BY_NAME: Record<string, string> = {
     crr: 'crr',
     'clone-management': 'clone',
     'snapshot-policy': 'snapshotPolicy',
+    'snapcenter-snapshot': 'snapcenterSnapshot',
     'backup-configuration': 'awsBackup',
     'mtu-alignment': 'mtuAlignment'
 };
@@ -645,6 +660,7 @@ async function fetchMssqlDriftAssessmentPerHost(
                         AssessmentCategories.STORAGE,
                         AssessmentCategories.MAXDOP,
                         AssessmentCategories.SNAPSHOT_POLICY,
+                        AssessmentCategories.SNAPCENTER_SNAPSHOT,
                         AssessmentCategories.AWS_BACKUP,
                         AssessmentCategories.CRR,
                         AssessmentCategories.CLONE,
@@ -1218,6 +1234,15 @@ async function initiateInstanceLevelAssessmentDataCollection(
                 databaseHostId,
                 databaseInstanceRecord,
                 instanceLevelAssessmentJobId
+            ),
+        [AssessmentCategories.SNAPCENTER_SNAPSHOT]: async () =>
+            initiateSnapCenterAssessmentCollection(
+                accountId,
+                credentialsId,
+                region,
+                databaseHostId,
+                instanceLevelAssessmentJobId,
+                databaseInstanceRecord
             )
     };
 
@@ -1333,7 +1358,8 @@ async function triggerMssqlAssessment(
                 AssessmentCategories.AWS_BACKUP,
                 AssessmentCategories.CLONE,
                 AssessmentCategories.MAXDOP,
-                AssessmentCategories.HIGH_AVAILABILITY
+                AssessmentCategories.HIGH_AVAILABILITY,
+                AssessmentCategories.SNAPCENTER_SNAPSHOT
             ].includes(field.toLowerCase() as AssessmentCategories)
         );
 
