@@ -2281,6 +2281,19 @@
         "marketing": {
             "run-assessment": "Run Assessment",
             "deploy-database": "Deploy Database"
+        },
+        "welcome-modal": {
+            "title": "Welcome to Workload Factory",
+            "subtitle": "Plan, provision, and operate well-architected workloads on Amazon FSx for NetApp ONTAP.",
+            "plan-title": "Plan",
+            "plan-description-1": "Compare Amazon Elastic Block Store, Elastic File System, and FSx for Windows File Server storage costs to Amazon FSx for NetApp ONTAP.",
+            "plan-description-2": "Use migration advisors to apply best practices before you migrate the data from virtual resources to FSx for ONTAP.",
+            "provision-title": "Provision",
+            "provision-description-1": "Simplify and speed up configuration and deployment of your workload infrastructure resources with easy-to-use setup guides.",
+            "provision-description-2": "Generate automated Infrastructure-as-Code scripts to integrate your existing automation tools based on Terraform and AWS CloudFormation.",
+            "operate-title": "Operate",
+            "operate-description-1": "Manage your resources using built-in automation and monitoring to improve performance, security, reliability, and cost.",
+            "operate-description-2": "Use the well-architected analysis and agentic AI tools to get best-practice recommendations and fix configuration issues automatically."
         }
     }
 }
