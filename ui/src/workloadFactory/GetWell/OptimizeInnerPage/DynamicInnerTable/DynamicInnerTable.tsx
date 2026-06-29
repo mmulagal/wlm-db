@@ -16,10 +16,9 @@ import { checkBoxHandle, getSelectedFromSelectionState } from '../../../../utils
 import { setSelectedRowsForOptimizeInnerPage } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
-import useResize from '../../../../common/hooks/useResize';
 import { getWadCellProps } from '../../GetWellUtils';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
-import { buildSubConfigValues, ColumnConfig } from '../../../../utils/configRegistry';
+import { buildSubConfigValues, ColumnConfig, pluralizeResourceType } from '../../../../utils/configRegistry';
 import { ASSESSMENT_CONFIG_IDS, GETWELL_STATUS, RSS_COLUMN_KEYS } from '../../../../utils/consts';
 
 interface DynamicInnerTableProps {
@@ -49,10 +48,18 @@ const DynamicInnerTable = ({
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector((state: any) => state.databaseHome);
     const { inProgressOptimizationData } = useAppSelector((state: any) => state.getWellOptimize);
-    const windowSize = useResize();
 
     // Transform API data to table rows
+    // Returns empty array when:
+    // 1. data.errorMessage exists (assessment hasn't run or failed)
+    // 2. violationDetails/objectsInViolation are empty (no violations found)
+    // 3. Custom dataMapping sources return no data
     const tableData = useMemo(() => {
+        // Early return if errorMessage exists - show empty table with no data state
+        if (data?.errorMessage) {
+            return [];
+        }
+
         let id = 0;
         const addRowMeta = (row: any) => {
             const baseProps = { ...row, id: String(id++), cellProps: getWadCellProps(isWad, t) };
@@ -125,10 +132,20 @@ const DynamicInnerTable = ({
         }
 
         // Fallback: objectsInViolation
+        // Handle both string[] and object[] cases (e.g., {ontapVolumeName, ontapVolumeUuid})
         if (data?.objectsInViolation?.length) {
-            return data.objectsInViolation.map((name: string) => addRowMeta({ objectName: name }));
+            return data.objectsInViolation.map((item: any) => {
+                // If item is a string, use it as objectName
+                if (typeof item === 'string') {
+                    return addRowMeta({ objectName: item });
+                }
+                // If item is an object, extract ontapVolumeName
+                const objectName = item.ontapVolumeName || JSON.stringify(item);
+                return addRowMeta({ ...item, objectName });
+            });
         }
 
+        // Return empty array - table will show "no data" state
         return [];
     }, [data, isWad, t, columnConfig, configId]);
 
@@ -141,7 +158,7 @@ const DynamicInnerTable = ({
             isSortable: false,
             filterOptions: 'auto' as const,
             isSticky: index === 0, // First column is sticky
-            width: col.width || (windowSize.width >= 1920 ? 'auto' : '481px'),
+            width: col.width || 'auto',
             renderCell: (cellData: any, rowData: any) => {
                 // snapshot-copy-reserve shows percentage
                 if (col.key === 'value' && configId === ASSESSMENT_CONFIG_IDS.SNAPSHOT_COPY_RESERVE) {
@@ -163,7 +180,8 @@ const DynamicInnerTable = ({
                 }
 
                 // RSS status columns (Network Adapter Settings)
-                if (configId === ASSESSMENT_CONFIG_IDS.RSS_CONFIGURATION) {
+                // First column (adapter name) shows plain text, other columns show Optimized/Not Optimized with tooltip
+                if (configId === ASSESSMENT_CONFIG_IDS.RSS_CONFIGURATION && index > 0) {
                     const recommended = rowData?.recommendedAdapterSettings;
                     let isOptimized = false;
                     let tooltipValue = cellData;
@@ -201,6 +219,11 @@ const DynamicInnerTable = ({
                             <DsTypography variant="Regular_13">{statusText}</DsTypography>
                         </div>
                     );
+                }
+
+                // Handle objects (convert to string) - prevents React "invalid object type" errors
+                if (cellData && typeof cellData === 'object' && !Array.isArray(cellData)) {
+                    return cellData.ontapVolumeName || JSON.stringify(cellData);
                 }
 
                 return cellData || t('databases.general.unavailable');
@@ -288,16 +311,7 @@ const DynamicInnerTable = ({
         }
 
         return dataColumns;
-    }, [
-        columnConfig,
-        configId,
-        canOptimize,
-        isViewOnly,
-        handleRowFix,
-        selectedRowsForOptimizeInnerPage,
-        windowSize.width,
-        t
-    ]);
+    }, [columnConfig, configId, canOptimize, isViewOnly, handleRowFix, selectedRowsForOptimizeInnerPage, t]);
 
     // Table props
     const tableProps = useTable({
@@ -326,7 +340,7 @@ const DynamicInnerTable = ({
 
     // Determine table titles
     const resourceTypeLabel = columnConfig.resourceTypeLabel || 'Item';
-    const tableTitle = columnConfig.tableTitle || `Impacted ${resourceTypeLabel.toLowerCase()}s`;
+    const tableTitle = columnConfig.tableTitle || pluralizeResourceType(resourceTypeLabel);
 
     return (
         <div className={styles['inner-table']}>

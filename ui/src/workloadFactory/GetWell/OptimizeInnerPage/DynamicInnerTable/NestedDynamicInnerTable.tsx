@@ -24,7 +24,7 @@ import {
     useAutoExpandFirstRow,
     renderExpandableChevron
 } from '../InnerTables/ExpandableTableHelper';
-import { ColumnConfig, getOptimizeApiConfig } from '../../../../utils/configRegistry';
+import { ColumnConfig, getOptimizeApiConfig, pluralizeResourceType } from '../../../../utils/configRegistry';
 
 interface NestedDynamicInnerTableProps {
     configId: string;
@@ -48,7 +48,16 @@ const NestedDynamicInnerTable = ({
     const hasViolationDetails = data?.violationDetails?.some((d: any) => d.additionalInfo);
 
     // Group violation details by database name
-    const groupedData = useMemo(() => groupViolationDetails(data, isWad, t, getWadCellProps), [data, isWad, t]);
+    // Returns empty array when:
+    // 1. data.errorMessage exists (assessment hasn't run or failed)
+    // 2. violationDetails are empty (no violations found)
+    const groupedData = useMemo(() => {
+        // Early return if errorMessage exists - show empty table with no data state
+        if (data?.errorMessage) {
+            return [];
+        }
+        return groupViolationDetails(data, isWad, t, getWadCellProps);
+    }, [data, isWad, t]);
 
     // Build parent-only table data (children rendered via ExpandedRow)
     const tableData = useMemo(() => buildParentTableData(groupedData, t, na), [groupedData, t, na]);
@@ -79,6 +88,12 @@ const NestedDynamicInnerTable = ({
                             </span>
                         );
                     }
+
+                    // Handle objects (convert to string) - prevents React "invalid object type" errors
+                    if (cellData && typeof cellData === 'object' && !Array.isArray(cellData)) {
+                        return cellData.ontapVolumeName || JSON.stringify(cellData);
+                    }
+
                     return cellData || na;
                 }
             });
@@ -159,7 +174,8 @@ const NestedDynamicInnerTable = ({
     useAutoExpandFirstRow(hasViolationDetails, tableData, tableProps.updateRowState);
 
     const databaseCount = groupedData.length;
-    const tableTitle = columnConfig.tableTitle || 'Impacted databases';
+    const resourceTypeLabel = columnConfig.resourceTypeLabel || 'Database';
+    const tableTitle = columnConfig.tableTitle || pluralizeResourceType(resourceTypeLabel);
 
     return (
         <div className={styles['inner-table']}>
@@ -167,7 +183,7 @@ const NestedDynamicInnerTable = ({
                 // @ts-expect-error - tableProps type
                 tableProps={tableProps}
                 pluralTitle={`${tableTitle} (${databaseCount})`}
-                singularTitle={`${tableTitle.replace(/s$/, '')} (${databaseCount})`}
+                singularTitle={`${resourceTypeLabel} (${databaseCount})`}
                 hideCount
             />
 

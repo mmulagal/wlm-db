@@ -11,7 +11,8 @@ export {
     buildSubConfigValues,
     getOptimizeApiConfig,
     getDialogContentConfig,
-    getConfigIdsByLinkedGroup
+    getConfigIdsByLinkedGroup,
+    pluralizeResourceType
 } from './configRegistryHelper';
 
 export type {

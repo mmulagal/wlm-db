@@ -1,8 +1,7 @@
 .tagComponent {
     padding: 24px 40px;
     background-color: var(--content-background);
-    box-shadow: 2px 2px 6px 0px #e0e0e0;
-
+    box-shadow: 2px 2px 6px 0px var(--border-drop-shadow, var(--border));
     .topSection {
         display: flex;
         gap: 8px;

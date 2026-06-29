@@ -21,8 +21,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted volumes"
+            "resourceTypeLabel": "Volume"
         },
         "optimizeApi": {
             "mutation": "optimizeStorageConfig",
@@ -75,8 +74,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted volumes"
+            "resourceTypeLabel": "Volume"
         },
         "optimizeApi": {
             "mutation": "optimizeStorageConfig",
@@ -153,9 +151,9 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Lun",
-            "tableTitle": "Impacted LUNs/volumes",
-            "hasSubConfigs": true
+            "resourceTypeLabel": "LUN",
+            "hasSubConfigs": true,
+            "tableTitle": "Impacted LUNs/volumes"
         },
         "dialogContent": {
             "sections": [
@@ -225,8 +223,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Impacted cluster",
-            "tableTitle": "Impacted clusters"
+            "resourceTypeLabel": "Cluster"
         },
         "optimizeApi": {
             "mutation": "optimizeHAMssql",
@@ -313,7 +310,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "tableTitle": "Impacted volumes"
+            "resourceTypeLabel": "Volume"
         },
         "dialogContent": {
             "sections": [
@@ -390,8 +387,8 @@
                     "width": "30%"
                 }
             ],
-            "tableTitle": "Impacted databases",
-            "useNestedExpandable": true
+            "useNestedExpandable": true,
+            "resourceTypeLabel": "Database"
         }
     },
     "drive-letter": {
@@ -420,8 +417,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Impacted drive",
-            "tableTitle": "Impacted drives"
+            "resourceTypeLabel": "Drive"
         },
         "dialogContent": {
             "sections": [
@@ -701,7 +697,10 @@
                         "path": "sizingViolations.underProvisionedDrives",
                         "status": "databases.well-architect.under-provisioned"
                     },
-                    { "path": "sizingViolations.ignoredDrives", "status": "databases.well-architect.shared-drive" }
+                    {
+                        "path": "sizingViolations.ignoredDrives",
+                        "status": "databases.well-architect.shared-drive"
+                    }
                 ]
             },
             "columns": [
@@ -736,7 +735,7 @@
                     "accessor": "status"
                 }
             ],
-            "tableTitle": "Impacted drives"
+            "resourceTypeLabel": "Drive"
         },
         "optimizeApi": {
             "mutation": "optimizeStorageSizingForBulk",
@@ -826,8 +825,8 @@
                     "width": "30%"
                 }
             ],
-            "tableTitle": "Impacted databases",
-            "useNestedExpandable": true
+            "useNestedExpandable": true,
+            "resourceTypeLabel": "Database"
         }
     },
     "maxdop": {
@@ -886,8 +885,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Drive",
-            "tableTitle": "Impacted drives"
+            "resourceTypeLabel": "Drive"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -944,8 +942,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Drive",
-            "tableTitle": "Impacted drives"
+            "resourceTypeLabel": "Drive"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1002,8 +999,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted drives"
+            "resourceTypeLabel": "Volume"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1060,8 +1056,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Drive",
-            "tableTitle": "Impacted drives"
+            "resourceTypeLabel": "Drive"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1189,8 +1184,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "tableTitle": "Impacted adapters",
-            "resourceTypeLabel": "Impacted adapters"
+            "resourceTypeLabel": "Adapter"
         },
         "optimizeApi": {
             "mutation": "optimizeMTUConfigForBulk",
@@ -1247,8 +1241,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Impacted Drive",
-            "tableTitle": "Impacted drives"
+            "resourceTypeLabel": "Drive"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1315,8 +1308,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted LUNs"
+            "resourceTypeLabel": "Volume"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1378,8 +1370,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted volumes"
+            "resourceTypeLabel": "Volume"
         },
         "optimizeApi": {
             "mutation": "optimizeStorageTierForBulk",
@@ -1426,7 +1417,11 @@
         },
         "columns": {
             "dataMapping": {
-                "sources": [{ "path": "rssAdapters" }]
+                "sources": [
+                    {
+                        "path": "rssAdapters"
+                    }
+                ]
             },
             "columns": [
                 {
@@ -1465,6 +1460,7 @@
                     "type": "rss-status"
                 }
             ],
+            "resourceTypeLabel": "Adapter",
             "tableTitle": "Impacted network adapters"
         },
         "optimizeApi": {
@@ -1523,7 +1519,11 @@
         },
         "columns": {
             "dataMapping": {
-                "sources": [{ "path": "violationDetails" }]
+                "sources": [
+                    {
+                        "path": "violationDetails"
+                    }
+                ]
             },
             "columns": [
                 {
@@ -1542,8 +1542,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "tableTitle": "Impacted LUNs",
-            "resourceTypeLabel": "Impacted LUNs"
+            "resourceTypeLabel": "LUN"
         },
         "optimizeApi": {
             "mutation": "optimizeHAMssql",
@@ -1598,8 +1597,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted volumes"
+            "resourceTypeLabel": "Volume"
         },
         "optimizeApi": {
             "mutation": "optimizeStorageConfig",
@@ -1656,8 +1654,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted volumes"
+            "resourceTypeLabel": "Volume"
         },
         "optimizeApi": {
             "mutation": "optimizeStorageConfig",
@@ -1742,8 +1739,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted volumes"
+            "resourceTypeLabel": "Volume"
         },
         "optimizeApi": {
             "mutation": "optimizeResiliency",
@@ -1801,8 +1797,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted volumes"
+            "resourceTypeLabel": "Volume"
         },
         "optimizeApi": {
             "mutation": "optimizeStorageConfig",
@@ -1865,8 +1860,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Node",
-            "tableTitle": "Impacted nodes"
+            "resourceTypeLabel": "Node"
         },
         "optimizeApi": {
             "mutation": "optimizeHAMssql",
@@ -1932,7 +1926,6 @@
                 }
             ],
             "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted volumes",
             "hasSubConfigs": true
         },
         "dialogContent": {
@@ -1982,7 +1975,10 @@
                         "path": "sizingViolations.underProvisionedDrives",
                         "status": "databases.well-architect.under-provisioned"
                     },
-                    { "path": "sizingViolations.ignoredDrives", "status": "databases.well-architect.shared-drive" }
+                    {
+                        "path": "sizingViolations.ignoredDrives",
+                        "status": "databases.well-architect.shared-drive"
+                    }
                 ]
             },
             "columns": [
@@ -2017,7 +2013,7 @@
                     "accessor": "status"
                 }
             ],
-            "tableTitle": "Impacted drives"
+            "resourceTypeLabel": "Drive"
         },
         "optimizeApi": {
             "mutation": "optimizeStorageSizingForBulk",
@@ -2107,8 +2103,8 @@
                     "width": "30%"
                 }
             ],
-            "tableTitle": "Impacted databases",
-            "useNestedExpandable": true
+            "useNestedExpandable": true,
+            "resourceTypeLabel": "Database"
         }
     },
     "thin-provision": {
@@ -2137,8 +2133,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted volumes"
+            "resourceTypeLabel": "Volume"
         },
         "optimizeApi": {
             "mutation": "optimizeStorageConfig",
@@ -2198,7 +2193,6 @@
                 }
             ],
             "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted volumes",
             "hasSubConfigs": true
         },
         "dialogContent": {
@@ -2250,7 +2244,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "tableTitle": "Impacted volumes"
+            "resourceTypeLabel": "Volume"
         },
         "dialogContent": {
             "sections": [
