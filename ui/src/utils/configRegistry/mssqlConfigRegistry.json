@@ -9,6 +9,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "current",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -58,6 +68,11 @@
                     "key": "value",
                     "label": "Autosize-mode",
                     "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -185,12 +200,33 @@
         }
     },
     "cluster-quorum": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
             "impactedLabel": "Impacted clusters",
             "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Cluster name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Impacted cluster",
+            "tableTitle": "Impacted clusters"
         },
         "optimizeApi": {
             "mutation": "optimizeHAMssql",
@@ -265,6 +301,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "tableTitle": "Impacted volumes"
@@ -326,16 +372,22 @@
                     "width": "18%"
                 },
                 {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended",
+                    "width": "17%"
+                },
+                {
                     "key": "driveDisplay",
                     "label": "Drive name",
                     "accessor": "driveDisplay",
-                    "width": "12%"
+                    "width": "10%"
                 },
                 {
                     "key": "lunPathDisplay",
                     "label": "LUN path",
                     "accessor": "lunPathDisplay",
-                    "width": "45%"
+                    "width": "30%"
                 }
             ],
             "tableTitle": "Impacted databases",
@@ -343,9 +395,34 @@
         }
     },
     "drive-letter": {
-        "hasInnerPage": false,
-        "viewOnly": false,
+        "hasInnerPage": true,
+        "viewOnly": true,
         "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted drives",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Drive name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Impacted drive",
+            "tableTitle": "Impacted drives"
+        },
         "dialogContent": {
             "sections": [
                 {
@@ -634,6 +711,16 @@
                     "accessor": "logAccessPath"
                 },
                 {
+                    "key": "sizePercentToDataDrive",
+                    "label": "Log drive size percentage",
+                    "accessor": "sizePercentToDataDrive"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                },
+                {
                     "key": "lunPath",
                     "label": "LUN path",
                     "accessor": "lunPath"
@@ -647,11 +734,6 @@
                     "key": "status",
                     "label": "Status",
                     "accessor": "status"
-                },
-                {
-                    "key": "sizePercentToDataDrive",
-                    "label": "Log drive size percentage",
-                    "accessor": "sizePercentToDataDrive"
                 }
             ],
             "tableTitle": "Impacted drives"
@@ -726,16 +808,22 @@
                     "width": "18%"
                 },
                 {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended",
+                    "width": "17%"
+                },
+                {
                     "key": "driveDisplay",
                     "label": "Drive name",
                     "accessor": "driveDisplay",
-                    "width": "12%"
+                    "width": "10%"
                 },
                 {
                     "key": "lunPathDisplay",
                     "label": "LUN path",
                     "accessor": "lunPathDisplay",
-                    "width": "45%"
+                    "width": "30%"
                 }
             ],
             "tableTitle": "Impacted databases",
@@ -773,9 +861,34 @@
         }
     },
     "mpio-enabled": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted drives",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Drive name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Drive",
+            "tableTitle": "Impacted drives"
+        },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
             "payloadScope": "credential-scoped",
@@ -806,9 +919,34 @@
         }
     },
     "mpio-iscsi-count": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted drives",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Drive name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Drive",
+            "tableTitle": "Impacted drives"
+        },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
             "payloadScope": "credential-scoped",
@@ -857,6 +995,11 @@
                     "key": "value",
                     "label": "Policy",
                     "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -892,9 +1035,34 @@
         }
     },
     "mpio-timeout": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted drives",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Drive name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Drive",
+            "tableTitle": "Impacted drives"
+        },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
             "payloadScope": "credential-scoped",
@@ -1014,6 +1182,11 @@
                     "key": "value",
                     "label": "MTU size",
                     "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "tableTitle": "Impacted adapters",
@@ -1067,8 +1240,14 @@
                     "key": "value",
                     "label": "NTFS allocation unit size",
                     "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
+            "resourceTypeLabel": "Impacted Drive",
             "tableTitle": "Impacted drives"
         },
         "optimizeApi": {
@@ -1129,6 +1308,11 @@
                     "key": "value",
                     "label": "OS type",
                     "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -1187,6 +1371,11 @@
                     "key": "value",
                     "label": "SSD storage tier",
                     "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -1334,13 +1523,23 @@
         },
         "columns": {
             "dataMapping": {
-                "sources": [{ "path": "objectsInViolation" }]
+                "sources": [{ "path": "violationDetails" }]
             },
             "columns": [
                 {
                     "key": "objectName",
                     "label": "LUN name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "tableTitle": "Impacted LUNs",
@@ -1387,6 +1586,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -1440,6 +1649,11 @@
                     "key": "value",
                     "label": "Snapshot copy reserve",
                     "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -1516,6 +1730,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -1565,6 +1789,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -1606,12 +1840,33 @@
         "optimizeNotAvailable": true
     },
     "sql-server-service": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
             "impactedLabel": "Impacted SQL instances",
             "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Node name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Node",
+            "tableTitle": "Impacted nodes"
         },
         "optimizeApi": {
             "mutation": "optimizeHAMssql",
@@ -1737,6 +1992,16 @@
                     "accessor": "tempdbAccessPath"
                 },
                 {
+                    "key": "sizePercentToDataDrive",
+                    "label": "TempDB drive size percentage",
+                    "accessor": "sizePercentToDataDrive"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                },
+                {
                     "key": "lunPath",
                     "label": "LUN path",
                     "accessor": "lunPath"
@@ -1750,11 +2015,6 @@
                     "key": "status",
                     "label": "Status",
                     "accessor": "status"
-                },
-                {
-                    "key": "sizePercentToDataDrive",
-                    "label": "TempDB drive size percentage",
-                    "accessor": "sizePercentToDataDrive"
                 }
             ],
             "tableTitle": "Impacted drives"
@@ -1829,16 +2089,22 @@
                     "width": "18%"
                 },
                 {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended",
+                    "width": "17%"
+                },
+                {
                     "key": "driveDisplay",
                     "label": "Drive name",
                     "accessor": "driveDisplay",
-                    "width": "12%"
+                    "width": "10%"
                 },
                 {
                     "key": "lunPathDisplay",
                     "label": "LUN path",
                     "accessor": "lunPathDisplay",
-                    "width": "45%"
+                    "width": "30%"
                 }
             ],
             "tableTitle": "Impacted databases",
@@ -1859,6 +2125,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "current",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -1967,6 +2243,11 @@
                     "key": "value",
                     "label": "Snapshot status",
                     "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "tableTitle": "Impacted volumes"

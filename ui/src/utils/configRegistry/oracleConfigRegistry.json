@@ -49,6 +49,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "tableTitle": "Impacted Volume",
@@ -305,6 +315,11 @@
                     "key": "value",
                     "label": "Autosize-mode",
                     "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -448,6 +463,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "tableTitle": "Impacted Volume",
@@ -499,6 +524,16 @@
                     "key": "objectName",
                     "label": "File system",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "tableTitle": "Impacted volumes"
@@ -617,6 +652,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "tableTitle": "Impacted Volume",
@@ -1352,6 +1397,34 @@
         "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted parameters",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Parameter name",
+                    "accessor": "objectName",
+                    "width": "35%"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value",
+                    "width": "25%"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended",
+                    "width": "25%"
+                }
+            ],
+            "resourceTypeLabel": "Impacted parameter",
+            "tableTitle": "Impacted parameters"
+        },
         "optimizeApi": {
             "mutation": "optimizeOracleOperatingSystem",
             "payloadScope": "bulk",
@@ -1804,10 +1877,20 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "tableTitle": "Impacted Volume",
-            "resourceTypeLabel": "Volume"
+            "resourceTypeLabel": "Impacted Volume"
         },
         "dialogContent": {
             "sections": [
@@ -1996,6 +2079,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "tableTitle": "Impacted Volume",
@@ -2091,6 +2184,11 @@
                     "key": "value",
                     "label": "Snapshot status",
                     "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "tableTitle": "Impacted volumes"
@@ -2251,6 +2349,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -2328,6 +2436,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -2456,7 +2574,7 @@
         }
     },
     "tcp-advanced-options": {
-        "hasInnerPage": true,
+        "hasInnerPage": false,
         "viewOnly": false,
         "fixSupported": true,
         "optimizeApi": {
@@ -2512,10 +2630,20 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
-            "tableTitle": "Impacted Volume",
-            "resourceTypeLabel": "Volume"
+            "tableTitle": "Impacted volumes",
+            "resourceTypeLabel": "Impacted Volume"
         },
         "dialogContent": {
             "sections": [
@@ -2559,6 +2687,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "current",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -2652,6 +2790,34 @@
         "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted parameters",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Parameter name",
+                    "accessor": "objectName",
+                    "width": "35%"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value",
+                    "width": "25%"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended",
+                    "width": "25%"
+                }
+            ],
+            "resourceTypeLabel": "Impacted Parameter",
+            "tableTitle": "Impacted parameters"
+        },
         "optimizeApi": {
             "mutation": "optimizeOracleOperatingSystem",
             "payloadScope": "bulk",

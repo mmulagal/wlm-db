@@ -12,7 +12,7 @@
         width: 900px;
         height: 611px;
         background-color: var(--content-background);
-        box-shadow: 4px 4px 12px 0 #6F6F6F;        
+        box-shadow: 4px 4px 12px 0 #6f6f6f;
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -41,12 +41,12 @@
             padding: 36px 40px 0;
             flex-shrink: 0;
 
-            .title {               
+            .title {
                 display: block;
                 text-align: center;
             }
 
-            .subtitle {                
+            .subtitle {
                 display: block;
                 text-align: center;
                 margin-top: -4px;

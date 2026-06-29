@@ -96,7 +96,8 @@ const DynamicInnerTable = ({
                     addRowMeta({
                         // Handle both object items and primitive (string) items
                         ...(typeof item === 'object' ? item : { objectName: item }),
-                        recommended: data?.recommended,
+                        // Only inject top-level recommended if the row doesn't have one
+                        ...((typeof item !== 'object' || !item.recommended) && { recommended: data?.recommended }),
                         ...(status && { status: t(status) }),
                         // For RSS config, include top-level settings
                         ...(configId === ASSESSMENT_CONFIG_IDS.RSS_CONFIGURATION && {
@@ -110,9 +111,14 @@ const DynamicInnerTable = ({
 
         // Default: violationDetails
         if (data?.violationDetails?.length) {
+            // Top-level recommended value is the same for all rows in many configs
+            const topRecommended = data?.recommended;
+
             return data.violationDetails.map((row: any) =>
                 addRowMeta({
                     ...row,
+                    // Inject top-level recommended if the row itself doesn't have one
+                    recommended: row.recommended ?? topRecommended,
                     ...(columnConfig.hasSubConfigs ? buildSubConfigValues(row, data?.configDetails) : {})
                 })
             );

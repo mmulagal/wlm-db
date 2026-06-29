@@ -78,12 +78,13 @@ export interface GroupedViolationData {
     drive: string[];
     lunPath: string[];
     id: string;
+    recommended?: string;
     cellProps?: Record<string, unknown>;
 }
 
 // Group violation details by database name
 export const groupViolationDetails = (
-    data: { violationDetails?: ViolationDetailWithAdditionalInfo[]; objectsInViolation?: any[] },
+    data: { violationDetails?: ViolationDetailWithAdditionalInfo[]; objectsInViolation?: any[]; recommended?: string },
     isWad: boolean,
     t: TFunction,
     getWadCellPropsFn: (
@@ -94,6 +95,9 @@ export const groupViolationDetails = (
 ): GroupedViolationData[] => {
     let idCounter = 0;
     const details = data?.violationDetails || [];
+    // Extract top-level recommended value
+    const topRecommended = data?.recommended;
+
     if (details.length > 0 && details.some((d: ViolationDetailWithAdditionalInfo) => d.additionalInfo)) {
         const grouped = new Map<string, { drives: string[]; lunPaths: string[] }>();
         details.forEach(detail => {
@@ -113,6 +117,7 @@ export const groupViolationDetails = (
                 drive: drives,
                 lunPath: lunPaths,
                 id: String(currentId),
+                recommended: topRecommended,
                 cellProps: getWadCellPropsFn(isWad, t, { isDisabled: true })
             };
         });
@@ -125,6 +130,7 @@ export const groupViolationDetails = (
             drive: [],
             lunPath: [],
             id: String(currentId),
+            recommended: topRecommended,
             cellProps: getWadCellPropsFn(isWad, t, { ...row.cellProps, isDisabled: true })
         };
     });
@@ -140,6 +146,7 @@ export interface ExpandableTableRow {
     isSubRow: boolean;
     drive?: string[];
     lunPath?: string[];
+    recommended?: string;
     cellProps?: Record<string, unknown>;
 }
 
@@ -176,6 +183,7 @@ export const buildExpandableTableData = (
                     isMulti: false,
                     isExpanded: false,
                     isSubRow: true,
+                    recommended: item.recommended,
                     cellProps: {
                         ...item.cellProps,
                         className: subRowClassName || ''
