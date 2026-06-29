@@ -95,6 +95,7 @@ describe('calculateSnapCenterDrift (MSSQL)', () => {
         expect(drift.totalObjectsAssessed).toBe(2);
         expect(drift.totalObjectsInViolation).toBe(0);
         expect(drift.objectsInViolation).toEqual([]);
+        expect(drift.violationDetails).toEqual([]);
     });
 
     it('should return not-optimized with volume violations when snapshots are missing', () => {
@@ -125,6 +126,14 @@ describe('calculateSnapCenterDrift (MSSQL)', () => {
         expect(drift.totalObjectsAssessed).toBe(2);
         expect(drift.totalObjectsInViolation).toBe(1);
         expect(drift.objectsInViolation).toEqual([{ ontapVolumeName: 'data-vol-1', ontapVolumeUuid: 'vol-1' }]);
+        expect(drift.violationDetails).toEqual([
+            {
+                objectName: 'data-vol-1',
+                objectType: 'Volume',
+                value: 'SnapCenter protection not configured',
+                recommended: 'SnapCenter protection enabled'
+            }
+        ]);
     });
 
     it('should use plugin and log evidence as protection fallback', () => {
@@ -158,6 +167,14 @@ describe('calculateSnapCenterDrift (MSSQL)', () => {
         expect(drift.totalObjectsAssessed).toBe(2);
         expect(drift.totalObjectsInViolation).toBe(1);
         expect(drift.objectsInViolation).toEqual([{ ontapVolumeName: 'data-vol-1', ontapVolumeUuid: 'vol-1' }]);
+        expect(drift.violationDetails).toEqual([
+            {
+                objectName: 'data-vol-1',
+                objectType: 'Volume',
+                value: 'SnapCenter protection not configured',
+                recommended: 'SnapCenter protection enabled'
+            }
+        ]);
     });
 
     it('should return generic error when assessment data is missing', () => {
@@ -213,6 +230,20 @@ describe('calculateSnapCenterDrift (MSSQL)', () => {
         expect(drift.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
         expect(drift.totalObjectsAssessed).toBe(UNOPTIMIZED_SNAPCENTER_ASSESSMENT_STUB.volumes.length);
         expect(drift.totalObjectsInViolation).toBe(2);
+        expect(drift.violationDetails).toEqual([
+            {
+                objectName: 'wlmdb_sqllog_1737955806953',
+                objectType: 'Volume',
+                value: 'SnapCenter protection not configured',
+                recommended: 'SnapCenter protection enabled'
+            },
+            {
+                objectName: 'wlmdb_sqldata_1737955806953',
+                objectType: 'Volume',
+                value: 'SnapCenter protection not configured',
+                recommended: 'SnapCenter protection enabled'
+            }
+        ]);
     });
 });
 

@@ -4,7 +4,11 @@ import { isEmpty } from 'lodash-es';
 import getLogger from '../../../utils/logger';
 import { WorkloadInstance } from '../../../utils/common-types';
 import { ASSESSMENT_SSM_EXECUTION_TIMEOUT, GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
-import { AssessmentCategories, AssessmentStatus } from '../../../utils/continous-optimization-consts';
+import {
+    AssessmentCategories,
+    AssessmentStatus,
+    ASSESSMENT_RESOURCE_TYPE
+} from '../../../utils/continous-optimization-consts';
 import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
@@ -176,6 +180,12 @@ function calculateSnapCenterDrift(
         objectsInViolation: unprotectedVolumes.map(v => ({
             ontapVolumeName: v.volumeName,
             ontapVolumeUuid: v.volumeId
+        })),
+        violationDetails: unprotectedVolumes.map(v => ({
+            objectName: v.volumeName ?? '',
+            objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            value: 'SnapCenter protection not configured',
+            recommended: 'SnapCenter protection enabled'
         }))
     };
 }
