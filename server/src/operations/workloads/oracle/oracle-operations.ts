@@ -1303,7 +1303,9 @@ async function getOracleStorageInfoFromOntap(activeNodeInstanceId: string, insta
 
         const mappedByInstances = instanceDetails.map(instance => {
             const mappedVolumesPerInstance = mappedVolumesByFsxId
-                .flatMap(mv => mv?.combinedOntapVolumes?.filter(cv => cv.instance === instance.database_instance_id))
+                .flatMap(
+                    mv => mv?.combinedOntapVolumes?.filter(cv => cv.instance === instance.database_instance_id) ?? []
+                )
                 .map(v => v.id);
             return { name: instance.database_instance_id, fsxId: instance.fsxn_ids, volumes: mappedVolumesPerInstance };
         });
