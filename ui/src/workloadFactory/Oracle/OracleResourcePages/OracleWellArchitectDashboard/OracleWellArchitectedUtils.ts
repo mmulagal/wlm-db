@@ -15,18 +15,17 @@ import {
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { addAllOracleHostAssessmentData } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
-    ASSESSMENT_CONFIG_NAMES,
     ASSESSMENT_CONFIG_IDS,
     BLOCK_SIX_LABELS,
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
     DBType,
     FSXN_STORAGE_PROTOCOLS,
-    GETWELL_CONFIG,
     GETWELL_STATUS,
     GETWELL_VALUES,
     isConfigIdMatch,
     isConfigIdInList,
+    OPTIMIZE_PAYLOAD_TYPES,
     ORACLE_COMPUTE_COUNT_CONFIG_IDS,
     ORACLE_ISCSI_ONLY_CARD_IDS,
     ORACLE_ISCSI_ONLY_CARD_KEYS,
@@ -48,6 +47,7 @@ import {
 } from '../../../../utils/utilityFunctions';
 import { handleOptimizeStorageJob } from '../../../GetWell/GetWellUtils';
 import { createFailedOptimizationMessage, fixingProcessNotification } from './OracleCardComponent/OracleCardComponent';
+import { getOptimizeApiConfig } from '../../../../utils/configRegistry';
 
 // Factory function for creating base block structure
 // Helper functions for card formatting
@@ -233,7 +233,6 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
         name: displayName, // Display name from flat API
         displayName,
         category,
-        configurationName: displayName,
         block_one: {
             value: displayName,
             type: getOracleBlockOneType(category)
@@ -1077,7 +1076,7 @@ export const checkAllOracleConfigurationsDismissed = (cardData: any): boolean =>
 
 // Helper function to call Oracle optimize API
 export const callOptimizeOracleApi = ({
-    type,
+    configId,
     cardData,
     optimizeOracleOs,
     getJobDetailApi,
@@ -1085,7 +1084,7 @@ export const callOptimizeOracleApi = ({
     isWorkloadFactory,
     t
 }: {
-    type: any;
+    configId: any;
     cardData: any;
     optimizeOracleOs: any;
     getJobDetailApi: any;
@@ -1106,72 +1105,75 @@ export const callOptimizeOracleApi = ({
         inProgressHostData
     } = state.getWellOptimize;
 
-    const computeHostOsPayload = (configurationName: string) => ({
-        type: 'compute-host-os',
-        hostsToOptimize: [
-            {
-                configurationName,
-                databaseHosts: [
+    // Try to get API config from registry first (registry-driven approach)
+    const apiConfig = getOptimizeApiConfig(configId, DBType.ORACLE);
+
+    if (apiConfig && apiConfig.mutation === 'optimizeOracleOperatingSystem') {
+        apiCall = optimizeOracleOs;
+        const { oracleOsType } = apiConfig;
+
+        // Build payload based on oracleOsType from registry
+        // Only special-case truly unique payloads; use default structure for everything else
+        if (oracleOsType === OPTIMIZE_PAYLOAD_TYPES.STORAGE_SIZING) {
+            // Special case: FILE_SYSTEM_HEADROOM uses hardcoded 'headroom' configurationName
+            payload = {
+                type: OPTIMIZE_PAYLOAD_TYPES.STORAGE_SIZING,
+                hostsToOptimize: [
                     {
-                        id: selectedResourceId,
-                        databases: [selectedDatabaseInstance],
-                        credentialsId: selectedGwInstanceCredId,
-                        region: selectedGwInstanceRegionId
+                        configurationName: ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM,
+                        databaseHosts: [
+                            {
+                                id: selectedResourceId,
+                                databases: [selectedDatabaseInstance],
+                                credentialsId: selectedGwInstanceCredId,
+                                region: selectedGwInstanceRegionId
+                            }
+                        ]
                     }
                 ]
-            }
-        ]
-    });
-
-    if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM || type === 'headroom') {
-        apiCall = optimizeOracleOs;
-        payload = {
-            type: 'storage-sizing',
-            hostsToOptimize: [
-                {
-                    configurationName: 'headroom',
-                    databaseHosts: [
-                        {
-                            id: selectedResourceId,
-                            databases: [selectedDatabaseInstance],
-                            credentialsId: selectedGwInstanceCredId,
-                            region: selectedGwInstanceRegionId
-                        }
-                    ]
-                }
-            ]
-        };
-    } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS || type === 'backup-configuration') {
-        const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
-        apiCall = optimizeOracleOs;
-        payload = {
-            type: 'aws-backup',
-            hostsToOptimize: [
-                {
-                    configurationName: 'aws-backup',
-                    databaseHosts: [
-                        {
-                            id: selectedResourceId,
-                            region: selectedGwInstanceRegionId,
-                            credentialsId: selectedGwInstanceCredId,
-                            databases: [selectedDatabaseInstance],
-                            fsxFileSystemId: selectedRowFsxId,
-                            backupRetentionDays: selectedAWSBackup?.numberOfDays,
-                            backupStartTime: backupStartTime(selectedAWSBackup)
-                        }
-                    ]
-                }
-            ]
-        };
-    } else if (type === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES || type === 'transparent-hugepages') {
-        apiCall = optimizeOracleOs;
-        payload = computeHostOsPayload('transparent-hugepages');
-    } else if (type === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS || type === 'tcp-advanced-options') {
-        apiCall = optimizeOracleOs;
-        payload = computeHostOsPayload('tcp-advanced-options');
-    } else if (type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT || type === 'multiblock-readcount') {
-        apiCall = optimizeOracleOs;
-        payload = computeHostOsPayload('multiblock-readcount');
+            };
+        } else if (oracleOsType === OPTIMIZE_PAYLOAD_TYPES.AWS_BACKUP) {
+            // Special case: AWS backup needs additional Redux state (fsxFileSystemId, backupRetentionDays, backupStartTime)
+            const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
+            payload = {
+                type: OPTIMIZE_PAYLOAD_TYPES.AWS_BACKUP,
+                hostsToOptimize: [
+                    {
+                        configurationName: OPTIMIZE_PAYLOAD_TYPES.AWS_BACKUP,
+                        databaseHosts: [
+                            {
+                                id: selectedResourceId,
+                                region: selectedGwInstanceRegionId,
+                                credentialsId: selectedGwInstanceCredId,
+                                databases: [selectedDatabaseInstance],
+                                fsxFileSystemId: selectedRowFsxId,
+                                backupRetentionDays: selectedAWSBackup?.numberOfDays,
+                                backupStartTime: backupStartTime(selectedAWSBackup)
+                            }
+                        ]
+                    }
+                ]
+            };
+        } else {
+            // Default payload structure - works for compute-host-os, storage-operating-system, and any future standard types
+            // No need to add new if-else blocks when new oracleOsType values are added to the registry
+            payload = {
+                type: oracleOsType,
+                hostsToOptimize: [
+                    {
+                        configurationName: configId,
+                        databaseHosts: [
+                            {
+                                id: selectedResourceId,
+                                databases: [selectedDatabaseInstance],
+                                credentialsId: selectedGwInstanceCredId,
+                                region: selectedGwInstanceRegionId
+                            }
+                        ]
+                    }
+                ]
+            };
+        }
     }
 
     // call optimize api
@@ -1182,46 +1184,59 @@ export const callOptimizeOracleApi = ({
             [cardData?.id]: 'optimizing'
         })
     );
+
+    // Update cardData to show "Optimizing" status immediately
+    const currentCardData = store.getState().getWellOptimize.cardData;
+    if (currentCardData && cardData?.id && currentCardData[cardData.id]) {
+        dispatch(
+            setCardData({
+                ...currentCardData,
+                [cardData.id]: {
+                    ...currentCardData[cardData.id],
+                    block_two: {
+                        ...currentCardData[cardData.id].block_two,
+                        value: GETWELL_STATUS.OPTIMIZING
+                    }
+                }
+            })
+        );
+    }
+
     dispatch(
         setInProgressOptimizationData({
             ...inProgressOptimizationData,
-            [type]: [...(inProgressOptimizationData[type] || []), `${selectedResourceId}_${selectedDatabaseInstance}`]
+            [configId]: [
+                ...(inProgressOptimizationData[configId] || []),
+                `${selectedResourceId}_${selectedDatabaseInstance}`
+            ]
         })
     );
     dispatch(
         setInProgressHostData({
             ...inProgressHostData,
-            [type]: [...(inProgressHostData[type] || []), selectedResourceId]
+            [configId]: [...(inProgressHostData[configId] || []), selectedResourceId]
         })
     );
 
-    formatOracleWellArchitectedData(dispatch, undefined, false, false);
-
     // Use the centralized notification function
-    fixingProcessNotification(type, dispatch, isWorkloadFactory, t);
+    fixingProcessNotification(configId, dispatch, isWorkloadFactory, t);
 
+    // Build API call object based on payload type
     let apiCallObj = {};
-    if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM || type === 'headroom') {
+    if (apiConfig?.oracleOsType === OPTIMIZE_PAYLOAD_TYPES.STORAGE_SIZING) {
+        // FILE_SYSTEM_HEADROOM needs extra fields
         apiCallObj = {
             databaseHostId: selectedResourceId,
             instanceId: selectedDatabaseInstance,
             payload
         };
-    } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS || type === 'backup-configuration') {
-        apiCallObj = { payload };
-    } else if (
-        type === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES ||
-        type === 'transparent-hugepages' ||
-        type === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS ||
-        type === 'tcp-advanced-options' ||
-        type === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT ||
-        type === 'multiblock-readcount'
-    ) {
+    } else {
+        // All other configs just need payload
         apiCallObj = { payload };
     }
 
     apiCall(apiCallObj).then((res: any) => {
-        const failedMsgData = createFailedOptimizationMessage(type, dispatch, isWorkloadFactory, t);
+        const failedMsgData = createFailedOptimizationMessage(configId, dispatch, isWorkloadFactory, t);
 
         if (!res.error) {
             dispatch(
@@ -1236,7 +1251,7 @@ export const callOptimizeOracleApi = ({
             res,
             {
                 id: cardData?.id,
-                name: type,
+                name: configId,
                 hostId: selectedResourceId,
                 instanceId: selectedDatabaseInstance,
                 credentialId: selectedGwInstanceCredId,
@@ -1245,7 +1260,7 @@ export const callOptimizeOracleApi = ({
             failedMsgData,
             getJobDetailApi,
             dispatch,
-            type,
+            configId,
             '',
             {},
             false,

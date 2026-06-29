@@ -1283,7 +1283,7 @@
             "totalObjectsInViolation": 0,
             "objectsInViolation": [],
             "violationDetails": [],
-            "id": "sqlServer-service",
+            "id": "sql-server-service",
             "categories": ["Reliability"],
             "type": "resiliency"
         },

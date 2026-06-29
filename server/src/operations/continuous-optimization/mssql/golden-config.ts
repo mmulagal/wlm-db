@@ -31,7 +31,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── configuration / volume ──────────────────────────────────────────────
     {
         id: 'thin-provision',
-        name: 'Thin Provisioning',
+        name: 'Thin provisioning',
         parameter: 'thin-provision',
         value: true,
         type: 'storage',
@@ -61,7 +61,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'autosize-mode',
-        name: 'Autosize Mode',
+        name: 'Autosize-mode',
         parameter: 'autosize-mode',
         value: 'grow',
         type: 'storage',
@@ -76,7 +76,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'snapshot-copy-reserve',
-        name: 'Snapshot Copy Reserve',
+        name: 'Snapshot copy reserve',
         parameter: 'snapshot-copy-reserve',
         value: 0,
         type: 'storage',
@@ -91,7 +91,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'snapshot-autodelete',
-        name: 'Snapshot Autodelete',
+        name: 'Snapshot autodelete',
         parameter: 'snapshot-autodelete',
         value: true,
         type: 'storage',
@@ -106,7 +106,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'space-mgmt-try-first',
-        name: 'Space Management',
+        name: 'Space management',
         parameter: 'space-mgmt-try-first',
         value: 'volume_grow',
         type: 'storage',
@@ -177,7 +177,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── configuration / lun ─────────────────────────────────────────────────
     {
         id: 'os-type',
-        name: 'OS Type',
+        name: 'OS type',
         parameter: 'os-type',
         value: 'windows_2008',
         type: 'storage',
@@ -246,7 +246,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'mpio-iscsi-count',
-        name: 'Multipath I/O iSCSI Sessions',
+        name: 'Multipath I/O Sessions',
         parameter: 'mpio-iscsi-count',
         value: '5',
         type: 'storage',
@@ -261,7 +261,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'ntfs-allocation-unit-size',
-        name: 'NTFS Allocation Unit Size',
+        name: 'NTFS allocation unit size',
         parameter: 'ntfs-allocation-unit-size',
         value: 65536,
         type: 'storage',
@@ -293,7 +293,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── layout ───────────────────────────────────────────────────────────────
     {
         id: 'data-files-location',
-        name: 'Data Files (.mdf)',
+        name: 'Data files (.mdf) placement',
         parameter: 'default-data-files-location',
         value: 'separate-drive',
         type: 'storage',
@@ -311,7 +311,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'log-files-location',
-        name: 'Log Files (.ldf)',
+        name: 'Log files (.ldf) placement',
         parameter: 'default-log-files-location',
         value: 'separate-drive',
         type: 'storage',
@@ -349,7 +349,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── sizing ───────────────────────────────────────────────────────────────
     {
         id: 'performance-tier',
-        name: 'Storage Tier',
+        name: 'Storage tier',
         parameter: 'performance-tier',
         value: '100%',
         type: 'storage',
@@ -363,7 +363,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'headroom',
-        name: 'File System Headroom',
+        name: 'File system headroom',
         parameter: 'headroom',
         value: `${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.MSSQL}%`,
         type: 'storage',
@@ -378,7 +378,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'log-drive-size',
-        name: 'Log Drive Size',
+        name: 'Log drive size',
         parameter: 'log-drive-size',
         value: '25%',
         type: 'storage',
@@ -392,7 +392,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'tempdb-drive-size',
-        name: 'TempDB Drive Size',
+        name: 'TempDB drive size',
         parameter: 'tempdb-drive-size',
         value: '10%',
         type: 'storage',
@@ -436,7 +436,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'rss-config',
-        name: 'Network Adapter Settings',
+        name: 'Network adapter settings',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
         type: 'compute',
         subType: 'compute',
@@ -464,7 +464,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── resiliency ───────────────────────────────────────────────────────────
     {
         id: 'snapshot-policy',
-        name: 'Snapshot Policy',
+        name: 'Snapshot policy',
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         type: 'resiliency',
         subType: 'resiliency',
@@ -520,7 +520,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── resiliency / highAvailability ────────────────────────────────────────
     {
         id: 'shared-storage',
-        name: 'Shared Storage',
+        name: 'Shared storage',
         parameter: 'shared-storage',
         value: true,
         type: 'resiliency',
@@ -536,7 +536,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'drive-letter',
-        name: 'Drive Letter',
+        name: 'Drive letter',
         parameter: 'drive-letter-consistency',
         value: true,
         type: 'resiliency',
@@ -551,7 +551,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'cluster-quorum',
-        name: 'Cluster Quorum',
+        name: 'Cluster quorum',
         parameter: 'cluster-quorum-configuration',
         value: 'majority',
         type: 'resiliency',
@@ -567,7 +567,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'heartbeat-settings',
-        name: 'Heartbeat Settings',
+        name: 'Heartbeat settings',
         parameter: 'cluster-heartbeat-interval',
         value: 1000,
         type: 'resiliency',
@@ -583,7 +583,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'sql-server-service',
-        name: 'SQL Server Service',
+        name: 'SQL server service',
         parameter: 'sql-server-service-recovery',
         value: 'automatic',
         type: 'resiliency',
@@ -626,7 +626,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'mssql-patch',
-        name: 'Microsoft SQL Server Patch',
+        name: 'Microsoft SQL server patch',
         categories: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
         type: 'application',
         subType: 'application',
@@ -641,7 +641,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── cloning ──────────────────────────────────────────────────────────────
     {
         id: 'clone-management',
-        name: 'Clone Cleanup',
+        name: 'Clone cleanup',
         categories: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
         type: 'cloning',
         subType: 'cloning',

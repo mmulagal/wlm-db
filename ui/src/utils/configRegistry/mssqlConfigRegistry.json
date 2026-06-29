@@ -104,18 +104,9 @@
             "supportsDashboardBulk": false
         },
         "dialogContent": {
-            "sections": [
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.backup-configuration-action-summary"
-                }
-            ],
+            "sections": [],
             "features": {
-                "showBackupScheduler": true
-            },
-            "notes": {
-                "type": "standard"
+                "showCustomBackupUI": true
             }
         }
     },
@@ -148,7 +139,7 @@
                 }
             ],
             "resourceTypeLabel": "Lun",
-            "tableTitle": "Impacted luns",
+            "tableTitle": "Impacted LUNs/volumes",
             "hasSubConfigs": true
         },
         "dialogContent": {
@@ -262,7 +253,7 @@
     "crr": {
         "hasInnerPage": true,
         "viewOnly": true,
-        "fixSupported": true,
+        "fixSupported": false,
         "cardMetadata": {
             "impactedLabel": "Impacted volumes",
             "countSource": "impactedCount",
@@ -272,16 +263,45 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "File system",
+                    "label": "Volume name",
                     "accessor": "objectName"
-                },
-                {
-                    "key": "status",
-                    "label": "Replication status",
-                    "accessor": "status"
                 }
             ],
-            "tableTitle": "File systems"
+            "tableTitle": "Impacted volumes"
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-crr-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.mssql-crr-about-links",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-crr-about-links-description"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.mssql-crr-what-will-happen-step1",
+                        "databases.well-architect.mssql-crr-what-will-happen-step4",
+                        "databases.well-architect.mssql-crr-what-will-happen-step5",
+                        "databases.well-architect.mssql-crr-what-will-happen-step6",
+                        "databases.well-architect.mssql-crr-what-will-happen-step7",
+                        "databases.well-architect.mssql-crr-what-will-happen-step8"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "bullets",
+                "items": [
+                    "databases.well-architect.oracle-crr-notes-bullet1",
+                    "databases.well-architect.oracle-crr-notes-bullet2",
+                    "databases.well-architect.oracle-crr-notes-bullet3"
+                ]
+            }
         }
     },
     "data-files-location": {
@@ -548,12 +568,34 @@
                 {
                     "heading": "databases.well-architect.action-summary",
                     "type": "text",
-                    "content": "databases.well-architect.os-patch-action-summary"
+                    "content": "databases.well-architect.mssql-os-patch-action-summary"
                 }
             ],
             "features": {
                 "showPatchTable": true,
-                "patchField": "OS_PATCH"
+                "patchField": "HOST_OS_PATCH",
+                "patchColumns": [
+                    {
+                        "header": "databases.well-architect.kb",
+                        "accessor": "kbId",
+                        "width": "137px"
+                    },
+                    {
+                        "header": "databases.well-architect.name",
+                        "accessor": "title",
+                        "width": "262px"
+                    },
+                    {
+                        "header": "databases.well-architect.classification",
+                        "accessor": "classification",
+                        "width": "164px"
+                    },
+                    {
+                        "header": "databases.well-architect.severity",
+                        "accessor": "severity",
+                        "width": "144px"
+                    }
+                ]
             }
         }
     },
@@ -572,26 +614,44 @@
             "recommendationSource": "recommendationText"
         },
         "columns": {
+            "dataMapping": {
+                "sources": [
+                    {
+                        "path": "sizingViolations.overProvisionedDrives",
+                        "status": "databases.well-architect.over-provisioned"
+                    },
+                    {
+                        "path": "sizingViolations.underProvisionedDrives",
+                        "status": "databases.well-architect.under-provisioned"
+                    },
+                    { "path": "sizingViolations.ignoredDrives", "status": "databases.well-architect.shared-drive" }
+                ]
+            },
             "columns": [
                 {
-                    "key": "objectName",
-                    "label": "Drive",
-                    "accessor": "objectName"
+                    "key": "logAccessPath",
+                    "label": "Drive name",
+                    "accessor": "logAccessPath"
                 },
                 {
-                    "key": "value",
-                    "label": "Current size",
-                    "accessor": "value"
+                    "key": "lunPath",
+                    "label": "LUN path",
+                    "accessor": "lunPath"
                 },
                 {
-                    "key": "recommended",
-                    "label": "Recommended size",
-                    "accessor": "recommended"
+                    "key": "databases",
+                    "label": "Databases",
+                    "accessor": "databases"
                 },
                 {
                     "key": "status",
                     "label": "Status",
                     "accessor": "status"
+                },
+                {
+                    "key": "sizePercentToDataDrive",
+                    "label": "Log drive size percentage",
+                    "accessor": "sizePercentToDataDrive"
                 }
             ],
             "tableTitle": "Impacted drives"
@@ -790,17 +850,17 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Volume name",
+                    "label": "Drive name",
                     "accessor": "objectName"
                 },
                 {
                     "key": "value",
-                    "label": "Current value",
+                    "label": "Policy",
                     "accessor": "value"
                 }
             ],
             "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted volumes"
+            "tableTitle": "Impacted drives"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -879,7 +939,54 @@
             ],
             "features": {
                 "showPatchTable": true,
-                "patchField": "MSSQL_PATCH"
+                "patchField": "MSSQL_PATCH",
+                "patchColumns": [
+                    {
+                        "header": "databases.well-architect.kb",
+                        "accessor": "kbId",
+                        "width": "137px"
+                    },
+                    {
+                        "header": "databases.well-architect.name",
+                        "accessor": "title",
+                        "width": "262px"
+                    },
+                    {
+                        "header": "databases.well-architect.classification",
+                        "accessor": "classification",
+                        "width": "164px"
+                    },
+                    {
+                        "header": "databases.well-architect.severity",
+                        "accessor": "severity",
+                        "width": "144px"
+                    }
+                ]
+            },
+            "postPatchSections": [
+                {
+                    "heading": "databases.well-architect.mssql-patch-action-required",
+                    "type": "bullets",
+                    "items": ["databases.well-architect.mssql-patch-line1"]
+                },
+                {
+                    "type": "numberedList",
+                    "items": [
+                        "databases.well-architect.mssql-patch-content1",
+                        "databases.well-architect.mssql-patch-content2",
+                        "databases.well-architect.mssql-patch-content3",
+                        "databases.well-architect.mssql-patch-content4",
+                        "databases.well-architect.mssql-patch-content5",
+                        "databases.well-architect.mssql-patch-content6"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "items": [
+                    "databases.well-architect.mssql-patch-note1",
+                    "databases.well-architect.mssql-patch-note-aoag"
+                ]
             }
         }
     },
@@ -893,7 +1000,7 @@
         },
         "cardMetadata": {
             "impactedLabel": "Impacted network interfaces",
-            "countSource": "impactedCount",
+            "countSource": "totalObjectsInViolation",
             "recommendationSource": "recommendationText"
         },
         "columns": {
@@ -907,14 +1014,10 @@
                     "key": "value",
                     "label": "MTU size",
                     "accessor": "value"
-                },
-                {
-                    "key": "expected",
-                    "label": "Expected MTU",
-                    "accessor": "expected"
                 }
             ],
-            "tableTitle": "Impacted adapters"
+            "tableTitle": "Impacted adapters",
+            "resourceTypeLabel": "Impacted adapters"
         },
         "optimizeApi": {
             "mutation": "optimizeMTUConfigForBulk",
@@ -933,7 +1036,7 @@
                 {
                     "heading": "databases.well-architect.mtu-alignment-what-will-happen-heading",
                     "type": "text",
-                    "content": "databases.well-architect.mtu-alignment-what-will-happen1",
+                    "content": "databases.well-architect.mtu-alignment-what-will-happen-combined",
                     "style": {
                         "width": "712px"
                     }
@@ -942,8 +1045,9 @@
             "notes": {
                 "type": "custom",
                 "items": [
-                    "databases.well-architect.mtu-alignment-note1",
-                    "databases.well-architect.mtu-alignment-note2"
+                    "databases.well-architect.mtu-alignment-note1-combined",
+                    "databases.well-architect.mtu-alignment-note2",
+                    "databases.well-architect.mtu-alignment-note3"
                 ]
             }
         }
@@ -961,7 +1065,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Allocation unit size",
+                    "label": "NTFS allocation unit size",
                     "accessor": "value"
                 }
             ],
@@ -1018,7 +1122,7 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Volume name",
+                    "label": "LUN name",
                     "accessor": "objectName"
                 },
                 {
@@ -1028,7 +1132,7 @@
                 }
             ],
             "resourceTypeLabel": "Volume",
-            "tableTitle": "Impacted volumes"
+            "tableTitle": "Impacted LUNs"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1083,12 +1187,6 @@
                     "key": "value",
                     "label": "SSD storage tier",
                     "accessor": "value"
-                },
-                {
-                    "key": "objectType",
-                    "label": "Object type",
-                    "accessor": "objectType",
-                    "width": "200px"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -1134,38 +1232,51 @@
         },
         "cardMetadata": {
             "impactedLabel": "Impacted network adapters",
-            "countSource": "impactedCount",
+            "countSource": "totalObjectsInViolation",
             "recommendationSource": "recommendation.descriptionRssConfig"
         },
         "columns": {
+            "dataMapping": {
+                "sources": [{ "path": "rssAdapters" }]
+            },
             "columns": [
                 {
-                    "key": "objectName",
+                    "key": "adapterName",
                     "label": "Network adapter name",
-                    "accessor": "objectName"
+                    "accessor": "adapterName"
                 },
                 {
-                    "key": "rss",
-                    "label": "RSS",
-                    "accessor": "rss"
+                    "key": "tcpOffloading",
+                    "label": "TCP offloading",
+                    "accessor": "tcpOffloadState",
+                    "type": "rss-status"
                 },
                 {
-                    "key": "queues",
-                    "label": "Number of receive queues",
-                    "accessor": "queues"
+                    "key": "numberOfReceiveQueues",
+                    "label": "Receive queues",
+                    "accessor": "numberOfReceiveQueues",
+                    "type": "rss-status"
                 },
                 {
-                    "key": "profile",
+                    "key": "rssProfile",
                     "label": "RSS profile",
-                    "accessor": "profile"
+                    "accessor": "rssProfile",
+                    "type": "rss-status"
                 },
                 {
-                    "key": "baseProcessor",
-                    "label": "Base processor number",
-                    "accessor": "baseProcessor"
+                    "key": "rssEnabled",
+                    "label": "RSS status",
+                    "accessor": "rssEnabled",
+                    "type": "rss-status"
+                },
+                {
+                    "key": "baseProcessorNumber",
+                    "label": "Base processor",
+                    "accessor": "baseProcessorNumber",
+                    "type": "rss-status"
                 }
             ],
-            "tableTitle": "Impacted adapters"
+            "tableTitle": "Impacted network adapters"
         },
         "optimizeApi": {
             "mutation": "optimizeComputeConfigForBulk",
@@ -1222,24 +1333,18 @@
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "dataMapping": {
+                "sources": [{ "path": "objectsInViolation" }]
+            },
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Volume name",
+                    "label": "LUN name",
                     "accessor": "objectName"
-                },
-                {
-                    "key": "value",
-                    "label": "Current value",
-                    "accessor": "value"
-                },
-                {
-                    "key": "objectType",
-                    "label": "Object type",
-                    "accessor": "objectType"
                 }
             ],
-            "tableTitle": "Impacted volumes"
+            "tableTitle": "Impacted LUNs",
+            "resourceTypeLabel": "Impacted LUNs"
         },
         "optimizeApi": {
             "mutation": "optimizeHAMssql",
@@ -1256,7 +1361,7 @@
                     "content": "databases.well-architect.failover-cluster-action-summary"
                 },
                 {
-                    "heading": "databases.well-architect.action-summary",
+                    "heading": "",
                     "type": "text",
                     "content": "databases.well-architect.shared-storage-action-summary"
                 },
@@ -1494,6 +1599,12 @@
             "wellArchitectedConfig": "Space-mgmt-try-first = volume_grow"
         }
     },
+    "sql-license": {
+        "hasInnerPage": false,
+        "viewOnly": true,
+        "fixSupported": false,
+        "optimizeNotAvailable": true
+    },
     "sql-server-service": {
         "hasInnerPage": false,
         "viewOnly": false,
@@ -1531,6 +1642,7 @@
             "features": {
                 "showOntapConfigCodeBox": true
             },
+            "wellArchitectedConfig": "SQL Server (MSSQLSERVER) service startup type: automatic",
             "notes": {
                 "type": "clusterQuorum"
             }
@@ -1605,26 +1717,44 @@
             "recommendationSource": "recommendationText"
         },
         "columns": {
+            "dataMapping": {
+                "sources": [
+                    {
+                        "path": "sizingViolations.overProvisionedDrives",
+                        "status": "databases.well-architect.over-provisioned"
+                    },
+                    {
+                        "path": "sizingViolations.underProvisionedDrives",
+                        "status": "databases.well-architect.under-provisioned"
+                    },
+                    { "path": "sizingViolations.ignoredDrives", "status": "databases.well-architect.shared-drive" }
+                ]
+            },
             "columns": [
                 {
-                    "key": "objectName",
-                    "label": "Drive",
-                    "accessor": "objectName"
+                    "key": "tempdbAccessPath",
+                    "label": "Drive name",
+                    "accessor": "tempdbAccessPath"
                 },
                 {
-                    "key": "value",
-                    "label": "Current size",
-                    "accessor": "value"
+                    "key": "lunPath",
+                    "label": "LUN path",
+                    "accessor": "lunPath"
                 },
                 {
-                    "key": "recommended",
-                    "label": "Recommended size",
-                    "accessor": "recommended"
+                    "key": "databases",
+                    "label": "Databases",
+                    "accessor": "databases"
                 },
                 {
                     "key": "status",
                     "label": "Status",
                     "accessor": "status"
+                },
+                {
+                    "key": "sizePercentToDataDrive",
+                    "label": "TempDB drive size percentage",
+                    "accessor": "sizePercentToDataDrive"
                 }
             ],
             "tableTitle": "Impacted drives"

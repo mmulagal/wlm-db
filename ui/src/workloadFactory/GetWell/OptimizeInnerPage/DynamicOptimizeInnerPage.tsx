@@ -23,7 +23,7 @@ import {
     setIsInnerPageOptimize,
     setCloneDashboardData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import { DBType, WLF_TABS, ACTION_TYPE } from '../../../utils/consts';
+import { DBType, WLF_TABS, ACTION_TYPE, ASSESSMENT_CONFIG_IDS } from '../../../utils/consts';
 import OptimizeCard from './OptimizeCard/OptimizeCard';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
@@ -67,6 +67,7 @@ const DynamicOptimizeInnerPage = () => {
 
     // Redux state
     const { selectedOptimizeConfig, breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
+    const { selectedRowsForOptimizeInnerPage } = useAppSelector(state => state.databaseHome);
     const {
         selectedDatabaseInstance,
         selectedHostname,
@@ -92,7 +93,7 @@ const DynamicOptimizeInnerPage = () => {
 
     // Populate cloneDashboardData for CloneTabs when navigating from Well-Architected page
     useEffect(() => {
-        if (configId === 'clone-management' && configData?.cloneDetails) {
+        if (configId === ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT && configData?.cloneDetails) {
             const cloneViolations = configData.cloneDetails.map((item: any) => ({
                 ...item,
                 resourceId: item.databaseHostId,
@@ -129,8 +130,8 @@ const DynamicOptimizeInnerPage = () => {
     // Get column configuration from registry
     const columnConfig = useMemo(() => {
         if (!configId) return undefined;
-        return getColumnConfig(configId);
-    }, [configId]);
+        return getColumnConfig(configId, engineType);
+    }, [configId, engineType]);
 
     // Determine if optimization is supported for inner page row-level fixes
     // Check if optimizeApi exists (not the fixSupported flag which is for dashboard bulk)
@@ -157,7 +158,7 @@ const DynamicOptimizeInnerPage = () => {
 
     // Main API call handler for Continue button — registry-driven
     const callOptimizeApi = useCallback(
-        (rowData: Record<string, unknown>) => {
+        (rowData: Record<string, unknown>, operation?: string, singleRowData?: Record<string, unknown>) => {
             if (!configId) return;
 
             // Use row-specific ID if available (e.g., for ASM layouts), otherwise use configId
@@ -167,6 +168,12 @@ const DynamicOptimizeInnerPage = () => {
             const { mutation, statusType } = apiConfig as OptimizeApiConfig;
             const apiCall = mutationMap[mutation];
 
+            // For single row fixes, use singleRowData; otherwise use full rowData
+            const effectiveRowData =
+                operation === ACTION_TYPE.SINGLE && singleRowData
+                    ? { ...rowData, objectsInViolation: [singleRowData.objectName] }
+                    : rowData;
+
             const apiInput = buildOptimizeApiInput(apiConfig as OptimizeApiConfig, {
                 configId: technicalId,
                 engineType,
@@ -174,7 +181,8 @@ const DynamicOptimizeInnerPage = () => {
                 regionId: selectedGwInstanceRegionId,
                 databaseHostId: selectedResourceId,
                 instanceId: selectedDatabaseInstance,
-                rowData
+                rowData: effectiveRowData,
+                operation
             });
 
             // Set optimizing state
@@ -291,6 +299,9 @@ const DynamicOptimizeInnerPage = () => {
     const handleBulkAction = useCallback(() => {
         if (!configId) return;
 
+        // Extract objectName from each selected row
+        const selectedObjectNames = selectedRowsForOptimizeInnerPage.map((row: any) => row.objectName).filter(Boolean);
+
         handleConfigDialog(
             setDialog,
             callOptimizeApi,
@@ -300,14 +311,27 @@ const DynamicOptimizeInnerPage = () => {
                 data: {
                     ...configData,
                     name: displayName, // Ensure name is always present
-                    id: configId
+                    id: configId,
+                    // Override objectsInViolation with only selected objects
+                    objectsInViolation:
+                        selectedObjectNames.length > 0 ? selectedObjectNames : configData?.objectsInViolation
                 }
             },
             'bulk',
             null,
             isWad
         );
-    }, [configId, configData, displayName, engineType, isWad, setDialog, closeDialog, callOptimizeApi]);
+    }, [
+        configId,
+        configData,
+        displayName,
+        engineType,
+        isWad,
+        selectedRowsForOptimizeInnerPage,
+        setDialog,
+        closeDialog,
+        callOptimizeApi
+    ]);
 
     // Handle single row fix - opens dialog for individual row
     const handleRowFix = useCallback(

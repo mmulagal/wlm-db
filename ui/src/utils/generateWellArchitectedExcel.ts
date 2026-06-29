@@ -714,8 +714,8 @@ function buildSizingViolationsDriveTable(
     return rows;
 }
 
-function buildTableB(assessment: FlatAssessmentItem, configId: string): DetailSheetRow[] {
-    const columnConfig = getColumnConfig(configId);
+function buildTableB(assessment: FlatAssessmentItem, configId: string, databaseType: string): DetailSheetRow[] {
+    const columnConfig = getColumnConfig(configId, databaseType);
     const hasSubConfigs = columnConfig?.hasSubConfigs || Boolean(assessment.configDetails?.length);
     const configDetails = assessment.configDetails || [];
 
@@ -978,7 +978,7 @@ function buildDetailSheetRows(
         details.push(...specialRows);
         return details;
     }
-    details.push(...buildTableB(assessment, configId));
+    details.push(...buildTableB(assessment, configId, databaseType));
     return details;
 }
 

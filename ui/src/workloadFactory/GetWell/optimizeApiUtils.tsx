@@ -38,6 +38,7 @@ import {
     DBType,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    OPTIMIZE_PAYLOAD_TYPES,
     WLF_TABS
 } from '../../utils/consts';
 import { backupStartTime } from '../../utils/utilityFunctions';
@@ -213,13 +214,13 @@ export const buildOptimizeApiInput = (
     }
 
     // ── Oracle AWS backup ─────────────────────────────────────────────────────
-    if (apiConfig.oracleOsType === 'aws-backup' && isOracle) {
+    if (apiConfig.oracleOsType === OPTIMIZE_PAYLOAD_TYPES.AWS_BACKUP && isOracle) {
         return {
             payload: {
-                type: 'aws-backup',
+                type: OPTIMIZE_PAYLOAD_TYPES.AWS_BACKUP,
                 hostsToOptimize: [
                     {
-                        configurationName: 'aws-backup',
+                        configurationName: OPTIMIZE_PAYLOAD_TYPES.AWS_BACKUP,
                         databaseHosts: [
                             {
                                 id: rowHostId,
@@ -244,7 +245,7 @@ export const buildOptimizeApiInput = (
             payload: {
                 hostsToOptimize: [
                     {
-                        configurationName: ['aws-backup'],
+                        configurationName: [OPTIMIZE_PAYLOAD_TYPES.AWS_BACKUP],
                         databaseHosts: [
                             {
                                 id: rowHostId,
@@ -329,7 +330,7 @@ export const buildOptimizeApiInput = (
             payload: {
                 assessments: [
                     {
-                        configurationName: rowData?.configurationName ?? configName,
+                        configurationName: rowData?.id ?? configName,
                         objectsToOptimize: rowData?.objectsInViolation || []
                     }
                 ]

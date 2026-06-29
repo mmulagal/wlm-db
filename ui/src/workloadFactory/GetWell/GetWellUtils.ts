@@ -2217,18 +2217,19 @@ const getMssqlBlockSixDisplayType = (configId: string, category: string): 'count
     // Patch configs show value with tooltip (no count, no smallFont, needs patch objects)
     if (
         isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH) ||
-        isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH)
+        isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH) ||
+        isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING)
     ) {
         return 'patch';
     }
 
-    // Compute rightsizing shows count (large numbers)
-    if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING)) {
-        return 'count';
+    // MaxDOP shows current value in large font (e.g., "4")
+    if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.MAXDOP)) {
+        return 'value';
     }
 
     // All other configs use large count format (default for MSSQL)
-    // This includes: thin provisioning, autosize, snapshot reserve, space management, placement, network, resiliency, license, maxdop, HA, clone, etc.
+    // This includes: thin provisioning, autosize, snapshot reserve, space management, placement, network, resiliency, license, HA, clone, etc.
     return 'count';
 };
 
@@ -2305,6 +2306,7 @@ export const formatFlatAssessments = (
         // Handle special patch objects for tooltip display (MSSQL)
         let osPatchMissingPatches;
         let sqlPatchMissingPatches;
+        let computeRightsizingViolations;
 
         if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH)) {
             if (assessment.ec2InstancesToPatch) {
@@ -2324,14 +2326,37 @@ export const formatFlatAssessments = (
                     security: securityViolations,
                     other: otherViolations
                 };
+
+                // Update blockSixValue to show total patch count, not EC2 instance count
+                const totalPatches = criticalViolations + securityViolations + otherViolations;
+                blockSixValue = String(totalPatches);
             }
-        } else if (
-            isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH) &&
-            assessment.missingPatchesCount !== undefined
-        ) {
-            sqlPatchMissingPatches = {
-                critical: assessment.missingPatchesCount
-            };
+        } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH)) {
+            if (assessment.missingPatchesInEc2Instances) {
+                // Calculate total violations by summing up all instances (like OS patch)
+                let criticalViolations = 0;
+                let importantViolations = 0;
+
+                assessment.missingPatchesInEc2Instances.forEach((instance: any) => {
+                    criticalViolations += instance.criticalMissingPatchesCount || 0;
+                    importantViolations += instance.importantMissingPatchesCount || 0;
+                });
+
+                const totalPatchCount = criticalViolations + importantViolations;
+                blockSixValue = String(totalPatchCount);
+
+                sqlPatchMissingPatches = {
+                    critical: criticalViolations,
+                    important: importantViolations,
+                    total: totalPatchCount
+                };
+            }
+        } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING)) {
+            // For compute rightsizing, store violations array (like osPatchMissingPatches pattern)
+            if (assessment.objectsInViolation && Array.isArray(assessment.objectsInViolation)) {
+                computeRightsizingViolations = assessment.objectsInViolation;
+                blockSixValue = String(assessment.objectsInViolation.length);
+            }
         }
 
         // Get correct block_six.type label based on config
@@ -2340,8 +2365,12 @@ export const formatFlatAssessments = (
             blockSixType = BLOCK_SIX_LABELS.FINDING_REASONS;
         } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH)) {
             blockSixType = BLOCK_SIX_LABELS.MISSING_PATCHES;
+        } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING)) {
+            blockSixType = BLOCK_SIX_LABELS.FINDING_REASONS;
         } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM)) {
             blockSixType = BLOCK_SIX_LABELS.FILE_SYSTEM_HEADROOM;
+        } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.MAXDOP)) {
+            blockSixType = BLOCK_SIX_LABELS.MAXDOP;
         } else if (assessment.resourceType) {
             blockSixType = `${assessment.resourceType}s`;
         } else {
@@ -2417,11 +2446,20 @@ export const formatFlatAssessments = (
             // Per sub-config recommendations, used to build Current/Recommended columns for nested configs
             configDetails: assessment.configDetails,
             objectsInViolation: assessment.objectsInViolation,
+            sizingViolations: (assessment as any).sizingViolations,
+            rssAdapters: (assessment as any).rssAdapters,
+            recommendedAdapterSettings: (assessment as any).recommendedAdapterSettings,
+            tcpOffloadState: (assessment as any).tcpOffloadState,
+            recommended: assessment.recommended,
+            // Clone management fields
+            cloneDetails: (assessment as any).cloneDetails,
+            oldCloneDetails: (assessment as any).oldCloneDetails,
             // Preserve optimizing state if present
             status: optimizingData?.[configKey] || '',
             // Add patch objects for tooltip display
             ...(osPatchMissingPatches !== undefined && { osPatchMissingPatches }),
-            ...(sqlPatchMissingPatches !== undefined && { sqlPatchMissingPatches })
+            ...(sqlPatchMissingPatches !== undefined && { sqlPatchMissingPatches }),
+            ...(computeRightsizingViolations !== undefined && { computeRightsizingViolations })
         };
 
         // Only add dismissedObj if the card is actually dismissed/postponed/activating

@@ -15,24 +15,24 @@ import SectionSix from './SectionSix';
 import SectionFive from './SectionFive';
 import ViewAndFixButton from './ViewAndFixButton';
 import {
-    ASSESSMENT_CONFIG_NAMES,
     CONFIG_STATES,
     DBType,
     WLF_TABS,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
-    FORM_TO_WLF_NAVIGATE_BLUEXP_JM
+    FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
+    GETWELL_STATUS
 } from '../../../../../utils/consts';
 import { formatOracleWellArchitectedData, callOptimizeOracleApi } from '../OracleWellArchitectedUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { DismissDialog } from '../../../../GetWell/StorageCardComponent/DismissDialog/DismissDialog';
+import TooltipComponent from '../../../../../common/TooltipComponent/TooltipComponent';
 import {
     handleSingleAction as handleSingleActionHelper,
     addSuccessNotification as addSuccessNotificationHelper,
     handleDismissResponse as handleDismissResponseHelper,
     handleDismissError as handleDismissErrorHelper
 } from '../../../../GetWell/StorageCardComponent/StorageCardComponentHelper';
-import { GENERAL } from '../../../../../utils/appConstants';
 
 export const fixingProcessNotification = (type: string, dispatch: any, isWorkloadFactory: boolean, t: any) => {
     dispatch(
@@ -111,7 +111,8 @@ const OracleCardComponent = ({
         selectedGwInstanceRegionId,
         cardData: cardDataFromStore,
         driftAssessmentData,
-        isWad: isWadFromStore
+        isWad: isWadFromStore,
+        optimizingInstanceData
     } = useAppSelector(state => state.getWellOptimize);
 
     // Check if this is a WAD (offline assessment) instance
@@ -140,7 +141,7 @@ const OracleCardComponent = ({
         // If the configuration data is not available, show the disabled/dismissed style
         if (
             cardData?.isWadExcluded ||
-            cardData?.block_two?.value === GENERAL.UNAVAILABLE ||
+            cardData?.block_two?.value === GETWELL_STATUS.NOT_APPLICABLE ||
             cardData?.errorMessage ||
             !cardData?.block_four?.value
         ) {
@@ -355,24 +356,48 @@ const OracleCardComponent = ({
                         </div>
                         <DsTypography variant="Regular_14" className={styles.descriptionText}>
                             {cardData?.block_six?.count
-                                ? `${t('databases.well-architect.impacted')} ${cardData?.block_six?.type}`
+                                ? `${t(
+                                      'databases.well-architect.impacted'
+                                  )} ${cardData?.block_six?.type?.toLowerCase()}`
                                 : cardData?.block_six?.type}
                         </DsTypography>
                     </div>
                 </div>
-                {!showDismissedConfigurations && (
-                    <div className={styles.buttonGroup}>
-                        {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
-                        {loading || dismissDisableButton() ? '' : renderDismissButton()}
-                        {/* View and Fix Action Button */}
-                        <ViewAndFixButton
-                            cardData={cardData}
-                            loading={loading ?? undefined}
-                            callOptimizeApi={callOracleOptimizeApi}
-                            isWad={isWad}
-                        />
-                    </div>
-                )}
+                {!showDismissedConfigurations &&
+                    (optimizingInstanceData &&
+                    cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED &&
+                    cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZING ? (
+                        <div className={styles.buttonGroup}>
+                            {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
+                            {loading || dismissDisableButton() ? '' : renderDismissButton()}
+                            <div className={styles.buttonSection}>
+                                <TooltipComponent
+                                    title={t('databases.well-architected-tab.fix-after-operation-ends')}
+                                    placement="bottom"
+                                    width="310px"
+                                    height="50px"
+                                >
+                                    <DsButton variant="secondary" isDisabled>
+                                        {cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED
+                                            ? t('databases.oracle-inner-page.view-and-fix')
+                                            : t('databases.oracle-inner-page.view')}
+                                    </DsButton>
+                                </TooltipComponent>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className={styles.buttonGroup}>
+                            {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
+                            {loading || dismissDisableButton() ? '' : renderDismissButton()}
+                            {/* View and Fix Action Button */}
+                            <ViewAndFixButton
+                                cardData={cardData}
+                                loading={loading ?? undefined}
+                                callOptimizeApi={callOracleOptimizeApi}
+                                isWad={isWad}
+                            />
+                        </div>
+                    ))}
                 {/* Reactivate button for dismissed configurations */}
                 {showDismissedConfigurations && (
                     <div className={styles.buttonSection} id={`${cardData?.id}-reactivate`}>

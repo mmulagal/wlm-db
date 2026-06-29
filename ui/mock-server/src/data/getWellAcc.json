@@ -2004,7 +2004,7 @@
                                 "totalObjectsInViolation": 0
                             },
                             {
-                                "id": "sqlServer-service",
+                                "id": "sql-server-service",
                                 "name": "SQL Server service",
                                 "type": "resiliency",
                                 "severity": "critical",
@@ -2642,7 +2642,7 @@
                                 "totalObjectsInViolation": 1
                             },
                             {
-                                "id": "sqlServer-service",
+                                "id": "sql-server-service",
                                 "name": "SQL Server service",
                                 "type": "resiliency",
                                 "severity": "critical",
@@ -4564,7 +4564,7 @@
                                 "totalObjectsInViolation": 1
                             },
                             {
-                                "id": "sqlServer-service",
+                                "id": "sql-server-service",
                                 "name": "SQL Server service",
                                 "type": "resiliency",
                                 "severity": "critical",
@@ -6497,7 +6497,7 @@
                                 "totalObjectsInViolation": 1
                             },
                             {
-                                "id": "sqlServer-service",
+                                "id": "sql-server-service",
                                 "name": "SQL Server service",
                                 "type": "resiliency",
                                 "severity": "critical",
@@ -8419,7 +8419,7 @@
                                 "totalObjectsInViolation": 0
                             },
                             {
-                                "id": "sqlServer-service",
+                                "id": "sql-server-service",
                                 "name": "SQL Server service",
                                 "type": "resiliency",
                                 "severity": "critical",

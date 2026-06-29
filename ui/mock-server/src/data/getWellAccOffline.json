@@ -1068,7 +1068,7 @@
                         "totalObjectsInViolation": 0,
                         "objectsInViolation": [],
                         "violationDetails": [],
-                        "id": "sqlServer-service",
+                        "id": "sql-server-service",
                         "categories": ["Reliability"],
                         "type": "resiliency"
                     },
@@ -2139,7 +2139,7 @@
                         "totalObjectsInViolation": 1
                     },
                     {
-                        "id": "sqlServer-service",
+                        "id": "sql-server-service",
                         "name": "SQL Server service",
                         "type": "resiliency",
                         "severity": "critical",
@@ -3221,7 +3221,7 @@
                         "totalObjectsInViolation": 1
                     },
                     {
-                        "id": "sqlServer-service",
+                        "id": "sql-server-service",
                         "name": "SQL Server service",
                         "type": "resiliency",
                         "severity": "critical",
@@ -4288,7 +4288,7 @@
                         "totalObjectsInViolation": 0,
                         "objectsInViolation": [],
                         "violationDetails": [],
-                        "id": "sqlServer-service",
+                        "id": "sql-server-service",
                         "categories": ["Reliability"],
                         "type": "resiliency"
                     },
@@ -5429,7 +5429,7 @@
                         "totalObjectsInViolation": 0,
                         "objectsInViolation": [],
                         "violationDetails": [],
-                        "id": "sqlServer-service",
+                        "id": "sql-server-service",
                         "categories": ["Reliability"],
                         "type": "resiliency"
                     },

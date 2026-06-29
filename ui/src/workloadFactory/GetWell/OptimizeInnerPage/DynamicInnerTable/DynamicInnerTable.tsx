@@ -18,7 +18,9 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import useResize from '../../../../common/hooks/useResize';
 import { getWadCellProps } from '../../GetWellUtils';
+import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { buildSubConfigValues, ColumnConfig } from '../../../../utils/configRegistry';
+import { ASSESSMENT_CONFIG_IDS, GETWELL_STATUS, RSS_COLUMN_KEYS } from '../../../../utils/consts';
 
 interface DynamicInnerTableProps {
     configId: string;
@@ -52,27 +54,77 @@ const DynamicInnerTable = ({
     // Transform API data to table rows
     const tableData = useMemo(() => {
         let id = 0;
+        const addRowMeta = (row: any) => {
+            const baseProps = { ...row, id: String(id++), cellProps: getWadCellProps(isWad, t) };
 
-        if (data?.violationDetails?.length) {
-            return data.violationDetails.map((row: any) => ({
-                ...row,
-                ...(columnConfig.hasSubConfigs ? buildSubConfigValues(row, data?.configDetails) : {}),
-                id: String(id++),
-                cellProps: getWadCellProps(isWad, t)
-            }));
+            // For log-drive-size and tempdb-drive-size: disable checkboxes for over-provisioned and shared/ignored drives
+            if (
+                (configId === ASSESSMENT_CONFIG_IDS.LOG_DRIVE_SIZE ||
+                    configId === ASSESSMENT_CONFIG_IDS.TEMPDB_DRIVE_SIZE) &&
+                row.status
+            ) {
+                const translatedOverProvisioned = t('databases.well-architect.over-provisioned');
+                const translatedSharedDrive = t('databases.well-architect.shared-drive');
+
+                const isOverProvisioned = row.status === translatedOverProvisioned;
+                const isSharedDrive = row.status === translatedSharedDrive;
+
+                if (isOverProvisioned || isSharedDrive) {
+                    baseProps.cellProps = {
+                        ...baseProps.cellProps,
+                        isDisabled: true,
+                        selectionProps: {
+                            title: isOverProvisioned
+                                ? configId === ASSESSMENT_CONFIG_IDS.LOG_DRIVE_SIZE
+                                    ? t('databases.well-architect.log-drive-over-provisioned-error')
+                                    : t('databases.well-architect.tempdb-drive-over-provisioned-error')
+                                : t('databases.well-architect.not-optimized-shared-drive')
+                        }
+                    };
+                }
+            }
+
+            return baseProps;
+        };
+
+        // Handle custom data mapping (read from alternate paths)
+        if (columnConfig.dataMapping?.sources) {
+            return columnConfig.dataMapping.sources.flatMap(({ path, status }) => {
+                const sourceData = path.split('.').reduce((obj: any, key) => obj?.[key], data);
+                if (!Array.isArray(sourceData)) return [];
+                return sourceData.map((item: any) =>
+                    addRowMeta({
+                        // Handle both object items and primitive (string) items
+                        ...(typeof item === 'object' ? item : { objectName: item }),
+                        recommended: data?.recommended,
+                        ...(status && { status: t(status) }),
+                        // For RSS config, include top-level settings
+                        ...(configId === ASSESSMENT_CONFIG_IDS.RSS_CONFIGURATION && {
+                            tcpOffloadState: data?.tcpOffloadState,
+                            recommendedAdapterSettings: data?.recommendedAdapterSettings
+                        })
+                    })
+                );
+            });
         }
 
-        // Fallback: Oracle layout configs return objectsInViolation as flat string array
+        // Default: violationDetails
+        if (data?.violationDetails?.length) {
+            return data.violationDetails.map((row: any) =>
+                addRowMeta({
+                    ...row,
+                    ...(columnConfig.hasSubConfigs ? buildSubConfigValues(row, data?.configDetails) : {})
+                })
+            );
+        }
+
+        // Fallback: objectsInViolation
         if (data?.objectsInViolation?.length) {
-            return data.objectsInViolation.map((name: string) => ({
-                objectName: name,
-                id: String(id++),
-                cellProps: getWadCellProps(isWad, t)
-            }));
+            return data.objectsInViolation.map((name: string) => addRowMeta({ objectName: name }));
         }
 
         return [];
-    }, [data, isWad, t]);
+    }, [data, isWad, t, columnConfig, configId]);
 
     // Build column definitions dynamically from registry
     const TableColDefs: ColumnProps[] = useMemo(() => {
@@ -84,23 +136,65 @@ const DynamicInnerTable = ({
             filterOptions: 'auto' as const,
             isSticky: index === 0, // First column is sticky
             width: col.width || (windowSize.width >= 1920 ? 'auto' : '481px'),
-            renderCell: (cellData: any) => {
-                // Handle special formatting based on column key
-                if (col.key === 'value' && configId === 'performance-tier') {
-                    return cellData ? `${cellData}%` : t('databases.general.unavailable');
-                }
-
+            renderCell: (cellData: any, rowData: any) => {
                 // snapshot-copy-reserve shows percentage
-                if (col.key === 'value' && configId === 'snapshot-copy-reserve') {
-                    return cellData ? `${cellData}%` : t('databases.general.unavailable');
+                if (col.key === 'value' && configId === ASSESSMENT_CONFIG_IDS.SNAPSHOT_COPY_RESERVE) {
+                    return cellData != null ? `${cellData}%` : t('databases.general.unavailable');
                 }
 
                 if (col.key === 'rss' && typeof cellData === 'boolean') {
                     return cellData ? 'Enabled' : 'Disabled';
                 }
 
-                if (col.key === 'divergence' && typeof cellData === 'number') {
+                // Percentage values (divergence, drive size percentage)
+                if ((col.key === 'divergence' || col.key === 'sizePercentToDataDrive') && cellData != null) {
                     return `${cellData}%`;
+                }
+
+                // Databases array - join with comma
+                if (col.key === 'databases' && Array.isArray(cellData)) {
+                    return cellData.join(', ') || t('databases.general.unavailable');
+                }
+
+                // RSS status columns (Network Adapter Settings)
+                if (configId === ASSESSMENT_CONFIG_IDS.RSS_CONFIGURATION) {
+                    const recommended = rowData?.recommendedAdapterSettings;
+                    let isOptimized = false;
+                    let tooltipValue = cellData;
+
+                    // Determine if optimized based on column key
+                    switch (col.key) {
+                        case RSS_COLUMN_KEYS.TCP_OFFLOADING:
+                            isOptimized = rowData?.tcpOffloadState === 'Disabled';
+                            tooltipValue = rowData?.tcpOffloadState || cellData;
+                            break;
+                        case RSS_COLUMN_KEYS.NUMBER_OF_RECEIVE_QUEUES:
+                            isOptimized = cellData === recommended?.recommendedReceiveQueues;
+                            break;
+                        case RSS_COLUMN_KEYS.RSS_PROFILE:
+                            isOptimized = cellData === recommended?.recommendedRssProfile;
+                            break;
+                        case RSS_COLUMN_KEYS.RSS_ENABLED:
+                            isOptimized = cellData === true;
+                            tooltipValue = cellData ? 'Enabled' : 'Disabled';
+                            break;
+                        case RSS_COLUMN_KEYS.BASE_PROCESSOR_NUMBER:
+                            isOptimized = cellData === recommended?.recommendedBaseProcessorNumber;
+                            break;
+                    }
+
+                    const statusText = isOptimized ? GETWELL_STATUS.OPTIMIZED : GETWELL_STATUS.NOT_OPTIMIZED;
+                    return (
+                        <div className={styles.rssCell}>
+                            <Popover
+                                popoverClass=""
+                                children={String(tooltipValue)}
+                                trigger="hover"
+                                container={<TooltipIcon />}
+                            />
+                            <DsTypography variant="Regular_13">{statusText}</DsTypography>
+                        </div>
+                    );
                 }
 
                 return cellData || t('databases.general.unavailable');
@@ -123,6 +217,10 @@ const DynamicInnerTable = ({
                 isSticky: true,
                 width: '230px',
                 renderCell: (cellData: any, rowData: any) => {
+                    // Check if row is disabled (for log/tempdb drive sizing with over-provisioned or shared drives)
+                    const isRowDisabled = rowData?.cellProps?.isDisabled;
+                    const disabledTooltip = rowData?.cellProps?.selectionProps?.title;
+
                     if (
                         showFixButton &&
                         selectedRowsForOptimizeInnerPage &&
@@ -141,6 +239,25 @@ const DynamicInnerTable = ({
                                     trigger="hover"
                                     delayHide={200}
                                     interactive
+                                    container={
+                                        <DsButton variant="secondary" isDisabled isThin>
+                                            {buttonLabel}
+                                        </DsButton>
+                                    }
+                                />
+                            </div>
+                        );
+                    }
+
+                    // If row is disabled (over-provisioned or shared drive), show disabled button with tooltip
+                    if (showFixButton && isRowDisabled && disabledTooltip) {
+                        return (
+                            <div className={styles.buttonContainer}>
+                                <div />
+                                <Popover
+                                    isAppendedToBody
+                                    children={<DsTypography variant="Regular_14">{disabledTooltip}</DsTypography>}
+                                    trigger="hover"
                                     container={
                                         <DsButton variant="secondary" isDisabled isThin>
                                             {buttonLabel}

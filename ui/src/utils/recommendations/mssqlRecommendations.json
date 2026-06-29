@@ -130,7 +130,7 @@
     "shared-storage": {
         "name": "Shared Storage",
         "title": "Shared storage recommendation",
-        "description": "For SQL Server Failover Cluster Instances (FCI) and Always On Availability Groups (AOAG), Workload Factory recommends using shared storage on FSx for ONTAP to enable high availability and seamless failover capabilities. Shared storage ensures that all nodes in the cluster can access the same data."
+        "description": "All shared disks (iSCSI LUNs) must be accessible by both nodes in the FCI deployment model to allow failover."
     },
     "drive-letter": {
         "name": "Drive Letter",
@@ -165,12 +165,12 @@
     "data-files-location": {
         "name": "Data Files Location",
         "title": "Data files (.mdf) placement recommendation",
-        "description": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity, independent backup schedules, and improved restore functionality. We recommend separating data and log LUN paths into different volumes for smaller databases. This separation is required when there is more than one large database (> 500 GiB)."
+        "description": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity, independent backup schedules, and improved restore functionality.\nWe recommend separating data and log LUN paths into different volumes for smaller databases.\nThis separation is required when there is more than one large database (> 500 GiB)."
     },
     "log-files-location": {
         "name": "Log Files Location",
         "title": "Log files (.ldf) placement recommendation",
-        "description": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity, independent backup schedules, and improved restore functionality. We recommend separating data and log LUN paths into different volumes for smaller databases. This separation is required when there is more than one large database (> 500 GiB)."
+        "description": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity, independent backup schedules, and improved restore functionality.\nWe recommend separating data and log LUN paths into different volumes for smaller databases.\nThis separation is required when there is more than one large database (> 500 GiB)."
     },
     "tempdb-files-location": {
         "name": "TempDB Files Location",
@@ -180,7 +180,7 @@
     "clone-management": {
         "name": "Clone Management",
         "title": "Clone management recommendation",
-        "description": "Old and divergent database clones can incur significant costs. Workload Factory recommends regularly reviewing and deleting or refreshing these clones to optimize your storage expenses. Space-efficient clones on FSx for ONTAP can be used for development, testing, and analytics without consuming full storage capacity."
+        "description": "Old clones can incur significant costs.\nConsider deleting or refreshing these clones to optimize your storage expenses."
     },
     "storage-efficiencies": {
         "name": "Storage Efficiencies",
@@ -191,5 +191,15 @@
         "name": "SnapCenter snapshot",
         "title": "SnapCenter snapshot recommendation",
         "description": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads."
+    },
+    "log-drive-size": {
+        "name": "Log Drive Size",
+        "title": "Log drive size recommendation",
+        "description": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.\nAn additional 20% buffer is required if the drive is hosting a primary replica of Always On Availability Group.\n\nLog drive size (relative to data drive size):\nUnder-provisioned: <20% | Optimized: 20-30% | Over-provisioned: >30%"
+    },
+    "tempdb-drive-size": {
+        "name": "TempDB Drive Size",
+        "title": "TempDB drive size recommendation",
+        "description": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to well-architect performance and maintain overall stability.\n\nTempDB drive size (relative to data drive size):\nUnder-provisioned: <10% | Optimized: 10-15% | Over-provisioned: >15%"
     }
 }

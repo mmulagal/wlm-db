@@ -9,7 +9,7 @@
  */
 
 import { t } from 'i18next';
-import { ASSESSMENT_CONFIG_IDS, DBType, WELL_ARCHITECTED_STATUS } from '../consts';
+import { ASSESSMENT_CONFIG_IDS, DBType, OPTIMIZE_PAYLOAD_TYPES, WELL_ARCHITECTED_STATUS } from '../consts';
 import mssqlRegistry from './mssqlConfigRegistry.json';
 import oracleRegistry from './oracleConfigRegistry.json';
 
@@ -39,6 +39,12 @@ export interface ColumnConfig {
     tableTitle?: string;
     useNestedExpandable?: boolean;
     hasSubConfigs?: boolean;
+    dataMapping?: {
+        sources: Array<{
+            path: string;
+            status?: string;
+        }>;
+    };
 }
 
 export type OptimizeApiMutation =
@@ -64,16 +70,25 @@ export interface OptimizeApiConfig {
     payloadScope: PayloadScope;
     apiConfigName?: string;
     haUrlSegment?: string;
-    oracleOsType?: 'storage-operating-system' | 'compute-host-os' | 'storage-sizing' | 'aws-backup' | 'clone';
+    oracleOsType?: (typeof OPTIMIZE_PAYLOAD_TYPES)[keyof typeof OPTIMIZE_PAYLOAD_TYPES];
     usesConfigNameArray?: boolean;
     statusType: string;
     supportsDashboardBulk: boolean;
 }
 
-export type DialogSectionType = 'text' | 'bullets' | 'numberedSteps' | 'codeBox' | 'permissions' | 'table' | 'select';
+export type DialogSectionType =
+    | 'text'
+    | 'bullets'
+    | 'numberedSteps'
+    | 'numberedStepsWithCode'
+    | 'numberedList'
+    | 'codeBox'
+    | 'permissions'
+    | 'table'
+    | 'select';
 
 export interface DialogSectionDef {
-    heading: string;
+    heading?: string;
     type: DialogSectionType;
     content?: string;
     items?: string[];
@@ -91,8 +106,14 @@ export interface DialogContentConfig {
         showInstanceSelector?: boolean;
         showCustomBackupUI?: boolean;
         patchField?: string;
+        patchColumns?: Array<{
+            header: string;
+            accessor: string;
+            width: string;
+        }>;
     };
     wellArchitectedConfig?: string | string[];
+    postPatchSections?: DialogSectionDef[];
     notes?: {
         type: 'standard' | 'os' | 'failover' | 'clusterQuorum' | 'driveLetter' | 'custom';
         content?: string;
@@ -109,6 +130,7 @@ export interface ConfigEntry {
     hasInnerPage: boolean;
     viewOnly: boolean;
     fixSupported: boolean;
+    optimizeNotAvailable?: boolean;
     cardHeights?: CardHeights;
     cardMetadata?: CardMetadata;
     columns?: ColumnConfig;
@@ -182,6 +204,10 @@ export const getButtonText = (configId: string, dbType: string, status?: string)
 export const isViewOnlyConfig = (configId: string, dbType: string): boolean =>
     getRegistry(dbType)[configId]?.viewOnly ?? false;
 
+/** True when optimization is not available for this config (button shows N/A with tooltip). */
+export const isOptimizeNotAvailable = (configId: string, dbType: string): boolean =>
+    getRegistry(dbType)[configId]?.optimizeNotAvailable ?? false;
+
 /**
  * Whether automatic fix is supported for a config.
  * Preserves runtime special-case logic for headroom, log-drive-size, tempdb-drive-size.
@@ -234,8 +260,11 @@ export const getCardMetadata = (configId: string): CardMetadata => {
 };
 
 /** Column config for inner page tables. Undefined for dialog-only configs. */
-export const getColumnConfig = (configId: string): ColumnConfig | undefined => {
-    // Columns are engine-agnostic in the old registry; try both
+export const getColumnConfig = (configId: string, dbType?: string): ColumnConfig | undefined => {
+    if (dbType) {
+        return getRegistry(dbType)[configId]?.columns;
+    }
+    // Fallback for backward compatibility: try both registries
     const mssqlEntry = (mssqlRegistry as unknown as RegistryMap)[configId];
     const oracleEntry = (oracleRegistry as unknown as RegistryMap)[configId];
     return mssqlEntry?.columns || oracleEntry?.columns;

@@ -245,6 +245,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Autosize",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -441,7 +451,7 @@
                 }
             ],
             "tableTitle": "Impacted Volume",
-            "resourceTypeLabel": "Volume"
+            "resourceTypeLabel": "Impacted volume"
         },
         "dialogContent": {
             "sections": [
@@ -489,14 +499,9 @@
                     "key": "objectName",
                     "label": "File system",
                     "accessor": "objectName"
-                },
-                {
-                    "key": "status",
-                    "label": "Replication status",
-                    "accessor": "status"
                 }
             ],
-            "tableTitle": "File systems"
+            "tableTitle": "Impacted volumes"
         },
         "dialogContent": {
             "sections": [
@@ -670,9 +675,15 @@
                     "key": "value",
                     "label": "Status",
                     "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
-            "tableTitle": "dNFS configuration"
+            "resourceTypeLabel": "EC2 instance",
+            "tableTitle": "Impacted NFS mounts"
         },
         "dialogContent": {
             "sections": [
@@ -698,20 +709,36 @@
     },
     "dnfs-consistent-ip-resolution": {
         "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "optimizeApi": {
-            "mutation": "optimizeOracleOperatingSystem",
-            "payloadScope": "bulk",
-            "oracleOsType": "storage-operating-system",
-            "statusType": "os",
-            "supportsDashboardBulk": false
-        }
+        "viewOnly": true,
+        "fixSupported": false
     },
     "dnfs-enabled": {
         "hasInnerPage": false,
         "viewOnly": true,
-        "fixSupported": false
+        "fixSupported": false,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.dnfs-enablement-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.dnfs-enablement-optimization-step-1",
+                        "databases.well-architect.dnfs-enablement-optimization-step-2",
+                        "databases.well-architect.dnfs-enablement-optimization-step-3",
+                        "databases.well-architect.dnfs-enablement-optimization-step-4"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.dnfs-enablement-note"
+            }
+        }
     },
     "dnfs-enablement": {
         "hasInnerPage": false,
@@ -808,6 +835,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Export policy",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -1066,7 +1103,76 @@
             ],
             "features": {
                 "showPatchTable": true,
-                "patchField": "HOST_OS_PATCH"
+                "patchField": "HOST_OS_PATCH",
+                "patchColumns": [
+                    {
+                        "header": "databases.well-architect.oracle-critical-patch-component",
+                        "accessor": "component",
+                        "width": "150px"
+                    },
+                    {
+                        "header": "databases.well-architect.package-name",
+                        "accessor": "packageName",
+                        "width": "200px"
+                    },
+                    {
+                        "header": "databases.well-architect.update-type",
+                        "accessor": "updateType",
+                        "width": "150px"
+                    },
+                    {
+                        "header": "databases.well-architect.severity",
+                        "accessor": "severity",
+                        "width": "120px"
+                    }
+                ]
+            },
+            "postPatchSections": [
+                {
+                    "heading": "databases.well-architect.oracle-os-patch-action-required",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-os-patch-line1"
+                },
+                {
+                    "heading": "databases.well-architect.oracle-os-patch-option1",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-os-patch-option1-content1",
+                        "databases.well-architect.oracle-os-patch-option1-content2",
+                        "databases.well-architect.oracle-os-patch-option1-content3",
+                        "databases.well-architect.oracle-os-patch-option1-content4",
+                        "databases.well-architect.oracle-os-patch-option1-content5"
+                    ]
+                },
+                {
+                    "heading": "databases.well-architect.oracle-os-patch-option2",
+                    "type": "text",
+                    "content": ""
+                },
+                {
+                    "heading": "databases.well-architect.oracle-os-patch-option2-for-rhel",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-os-patch-option2-for-rhel-content1",
+                        "databases.well-architect.oracle-os-patch-option2-for-rhel-content2",
+                        "databases.well-architect.oracle-os-patch-option2-for-rhel-content3",
+                        "databases.well-architect.oracle-os-patch-option2-for-rhel-content4"
+                    ]
+                },
+                {
+                    "heading": "databases.well-architect.oracle-os-patch-option2-for-sles",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.oracle-os-patch-option2-for-sles-content1",
+                        "databases.well-architect.oracle-os-patch-option2-for-sles-content2",
+                        "databases.well-architect.oracle-os-patch-option2-for-sles-content3",
+                        "databases.well-architect.oracle-os-patch-option2-for-sles-content4"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.oracle-os-patch-note"
             }
         }
     },
@@ -1593,6 +1699,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "NFS rootonly",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -1632,6 +1748,7 @@
         "hasInnerPage": false,
         "viewOnly": false,
         "fixSupported": true,
+        "optimizeNotAvailable": true,
         "cardHeights": {
             "recommendationSection": "170px",
             "tagSection": "266px"
@@ -1736,7 +1853,57 @@
             ],
             "features": {
                 "showPatchTable": true,
-                "patchField": "ORACLE_SECURITY_PATCH"
+                "patchField": "ORACLE_SECURITY_PATCH",
+                "patchColumns": [
+                    {
+                        "header": "databases.well-architect.oracle-critical-patch-cve-id",
+                        "accessor": "cveId",
+                        "width": "120px"
+                    },
+                    {
+                        "header": "databases.well-architect.oracle-critical-patch-component",
+                        "accessor": "component",
+                        "width": "140px"
+                    },
+                    {
+                        "header": "databases.well-architect.oracle-critical-patch-description",
+                        "accessor": "description",
+                        "width": "320px"
+                    },
+                    {
+                        "header": "databases.well-architect.oracle-critical-patch-published-date",
+                        "accessor": "releaseDate",
+                        "width": "130px"
+                    }
+                ]
+            },
+            "postPatchSections": [
+                {
+                    "heading": "databases.well-architect.oracle-critical-patch-action-required",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-critical-patch-line1"
+                },
+                {
+                    "type": "numberedStepsWithCode",
+                    "items": [
+                        "databases.well-architect.oracle-critical-patch-steps-1",
+                        "databases.well-architect.oracle-critical-patch-steps-2",
+                        "databases.well-architect.oracle-critical-patch-steps-3",
+                        "databases.well-architect.oracle-critical-patch-steps-4",
+                        "databases.well-architect.oracle-critical-patch-steps-5",
+                        "databases.well-architect.oracle-critical-patch-steps-6",
+                        "databases.well-architect.oracle-critical-patch-steps-7",
+                        "databases.well-architect.oracle-critical-patch-steps-8",
+                        "databases.well-architect.oracle-critical-patch-steps-9"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "items": [
+                    "databases.well-architect.oracle-critical-patch-note1",
+                    "databases.well-architect.oracle-critical-patch-note2"
+                ]
             }
         }
     },
@@ -1965,6 +2132,16 @@
                     "key": "objectName",
                     "label": "Volume name",
                     "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Snapshot autodelete",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -2019,6 +2196,11 @@
                     "key": "value",
                     "label": "Snapshot copy reserve",
                     "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "Volume",
@@ -2195,7 +2377,7 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Volume name",
+                    "label": "Volume names",
                     "accessor": "objectName"
                 },
                 {

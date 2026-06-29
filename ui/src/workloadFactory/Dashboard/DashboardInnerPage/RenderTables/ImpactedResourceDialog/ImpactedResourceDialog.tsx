@@ -400,9 +400,10 @@ const mapGenericConfigFromRegistry = (
     configId: string,
     data: AssessmentData,
     na: string,
-    t: (key: string) => string
+    t: (key: string) => string,
+    engineType?: string
 ): ImpactedResourcesResult | null => {
-    const columnConfig = getColumnConfig(configId);
+    const columnConfig = getColumnConfig(configId, engineType);
     if (!columnConfig) return null;
 
     // Handle sub-configs (storage-efficiencies, etc.)
@@ -573,7 +574,7 @@ const getMssqlImpactedResources = (
 
         // === GENERIC FALLBACK: Try registry-based mapping ===
         default: {
-            const registryResult = mapGenericConfigFromRegistry(configName, data, na, t);
+            const registryResult = mapGenericConfigFromRegistry(configName, data, na, t, DBType.MSSQL);
             if (registryResult) {
                 return registryResult;
             }
@@ -703,7 +704,13 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
 
         // === GENERIC FALLBACK: Try registry-based mapping ===
         default: {
-            const registryResult = mapGenericConfigFromRegistry(configName, data, na, (key: string) => key);
+            const registryResult = mapGenericConfigFromRegistry(
+                configName,
+                data,
+                na,
+                (key: string) => key,
+                DBType.ORACLE
+            );
             if (registryResult) {
                 return registryResult;
             }

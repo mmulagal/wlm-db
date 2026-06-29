@@ -40,10 +40,17 @@ import {
     createOSNotesSection,
     createFailoverClusterNotesSection,
     createClusterQuorumSQLNotesSection,
-    createDriveLetterNotesSection
+    createDriveLetterNotesSection,
+    createNumberedActionSteps,
+    createCodeBoxWithCopy
 } from './DialogContentHelper';
 import ScheduledAWSBackupDialog from './ScheduledAWSBackupDialog';
-import { getDialogContentConfig, DialogSectionDef, DialogContentConfig } from '../../../../utils/configRegistry';
+import {
+    getDialogContentConfig,
+    DialogSectionDef,
+    DialogContentConfig,
+    hasFixSupport
+} from '../../../../utils/configRegistry';
 
 interface RecommendationOption {
     instanceType?: string;
@@ -143,7 +150,9 @@ const DynamicDialogContent = ({
         return getLinkedConfigNames(configId);
     }, [configId, resolvedConfig]);
 
-    const showDependencyWarning = linkedConfigNames.length > 0;
+    // Only show checkbox when fix is supported AND there are linked configs
+    const canFixConfiguration = hasFixSupport(configId, engineType, status, missingPermissions);
+    const showDependencyWarning = linkedConfigNames.length > 0 && canFixConfiguration;
     const [acknowledged, setAcknowledged] = useState(false);
 
     useEffect(() => {
@@ -195,39 +204,22 @@ const DynamicDialogContent = ({
         return list.map((item: any, index: number) => ({ ...item, id: String(index) }));
     }, [missingPatchResponse, showPatchTable]);
 
-    const patchColDefs: ColumnProps[] = useMemo(
-        () => [
-            {
-                Header: t('databases.well-architect.cve-id'),
-                accessor: 'cveIds',
-                id: '1',
+    const patchColDefs: ColumnProps[] = useMemo(() => {
+        // Get columns from registry if available
+        const patchColumns = resolvedConfig?.features?.patchColumns;
+
+        if (patchColumns && patchColumns.length > 0) {
+            return patchColumns.map((col: { header: string; accessor: string; width: string }, index: number) => ({
+                Header: t(col.header),
+                accessor: col.accessor,
+                id: String(index + 1),
                 isSortable: true,
-                width: '137px'
-            },
-            {
-                Header: t('databases.well-architect.package-name'),
-                accessor: 'title',
-                id: '2',
-                isSortable: true,
-                width: '262px'
-            },
-            {
-                Header: t('databases.well-architect.update-type'),
-                accessor: 'classification',
-                id: '3',
-                isSortable: true,
-                width: '164px'
-            },
-            {
-                Header: t('databases.well-architect.severity'),
-                accessor: 'severity',
-                id: '4',
-                isSortable: true,
-                width: '144px'
-            }
-        ],
-        [t]
-    );
+                width: col.width
+            }));
+        }
+
+        return [];
+    }, [t, resolvedConfig]);
 
     const patchTableProps = useTable({
         manageColumnsProps: {},
@@ -280,6 +272,15 @@ const DynamicDialogContent = ({
                 const items = (section.items || []).map(key => t(key, translationParams));
                 return createSection(heading, createContentWithBullets(items), section.style);
             }
+            case 'numberedList': {
+                const steps = (section.items || []).map(key => t(key, translationParams));
+                return (
+                    <div key={index} className={styles['first-section']}>
+                        {heading && <DsTypography variant="Semibold_14">{heading}</DsTypography>}
+                        {createNumberedActionSteps(steps)}
+                    </div>
+                );
+            }
             case 'numberedSteps': {
                 const steps = (section.items || []).map(key => t(key, translationParams));
                 return (
@@ -292,6 +293,60 @@ const DynamicDialogContent = ({
                                     <DsTypography variant="Regular_14">{step}</DsTypography>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                );
+            }
+            case 'numberedStepsWithCode': {
+                const steps = (section.items || []).map((key: string) => t(key, translationParams));
+                return (
+                    <div key={index} className={styles['first-section']}>
+                        {heading && <DsTypography variant="Semibold_14">{heading}</DsTypography>}
+                        <div className={styles.content}>
+                            {steps.map((step: string, i: number) => {
+                                // Simple check: if step contains a command starting with $, split it out
+                                const commandRegex = /(\$\S+[^\s]*(?:\s+[^\s]+)*)/;
+                                const match = step.match(commandRegex);
+
+                                if (match) {
+                                    const parts = step.split(commandRegex);
+                                    return (
+                                        <div key={i} className={styles.row}>
+                                            <DsTypography variant="Semibold_14">{i + 1}|</DsTypography>
+                                            <div style={{ flex: 1 }}>
+                                                {parts.map((part: string, partIdx: number) => {
+                                                    if (part && part.startsWith('$')) {
+                                                        return (
+                                                            <div key={partIdx} style={{ margin: '8px 0' }}>
+                                                                {createCodeBoxWithCopy(
+                                                                    part.trim(),
+                                                                    t('databases.well-architect.copied')
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    }
+                                                    if (part && part.trim()) {
+                                                        return (
+                                                            <DsTypography key={partIdx} variant="Regular_14">
+                                                                {part.trim()}
+                                                            </DsTypography>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                // No command found, render as normal text
+                                return (
+                                    <div key={i} className={styles.row}>
+                                        <DsTypography variant="Semibold_14">{i + 1}|</DsTypography>
+                                        <DsTypography variant="Regular_14">{step}</DsTypography>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 );
@@ -438,6 +493,11 @@ const DynamicDialogContent = ({
                     </div>
                 </div>
             )}
+
+            {/* Post-Patch Sections (Action Required, etc.) */}
+            {resolvedConfig.postPatchSections?.map((section: any, index: number) => (
+                <div key={index}>{renderSection(section, index)}</div>
+            ))}
 
             {/* Instance Selector (Compute Rightsizing) */}
             {resolvedConfig.features?.showInstanceSelector && (

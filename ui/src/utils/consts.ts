@@ -937,7 +937,7 @@ export const GETWELL_STATUS = {
     OVER_PROVISIONED: 'Over-provisioned',
     OPTIMIZING: 'Optimizing',
     FIXING: 'Fixing',
-    NOT_APPLICABLE: GENERAL.UNAVAILABLE,
+    NOT_APPLICABLE: 'Unavailable',
     ANALYZING: 'Analyzing',
     CRITICAL: 'Critical',
     WARNING: 'Warning',
@@ -956,7 +956,7 @@ export const WELL_ARCHITECTED_TABS = {
 export const GETWELL_VALUES: any = {
     optimized: 'Optimized',
     optimizing: 'Optimizing',
-    'not-applicable': GENERAL.UNAVAILABLE,
+    'not-applicable': 'Unavailable',
     'not-optimized': 'Not optimized',
     analyzing: 'Analyzing',
     'under-provisioned': 'Under-provisioned',
@@ -1073,6 +1073,14 @@ export const GW_TOOLTIP_KEYS_MAPPING: any = {
     tcpOffloading: 'TCP Offloading Features'
 };
 
+export const RSS_COLUMN_KEYS = {
+    TCP_OFFLOADING: 'tcpOffloading',
+    NUMBER_OF_RECEIVE_QUEUES: 'numberOfReceiveQueues',
+    RSS_PROFILE: 'rssProfile',
+    RSS_ENABLED: 'rssEnabled',
+    BASE_PROCESSOR_NUMBER: 'baseProcessorNumber'
+};
+
 export const NETWORK_PERFORMANCE_OPTIONS: any = {
     'Up to 10 Gbps': 'upTo10',
     'Above 10 Gbps': 'above10'
@@ -1089,6 +1097,8 @@ export const ASSESSMENT_CONFIG_OTHER = {
 };
 
 export const ASSESSMENT_CONFIG_NAMES = {
+    TIERING_TCO_OPTIMIZATION: 'Tiering / TCO optimization',
+    STORAGE_EFFICIENCIES: 'Storage efficiencies',
     STORAGE_TIER: 'Storage tier',
     FILE_SYSTEM_HEADROOM: 'File system headroom',
     LOG_DRIVE_SIZE: 'Log drive size',
@@ -1491,12 +1501,6 @@ export const CONFIG_NAMES = {
     'sql-license': ASSESSMENT_CONFIG_NAMES.LICENSE,
     'mtu-alignment': ASSESSMENT_CONFIG_NAMES.MTU
 };
-
-export const GW_CONFIG_OPTIMIZE_NA = [
-    GENERAL.LICENSE_SQL_SERVER,
-    ASSESSMENT_CONFIG_NAMES.NFSV4_DOMAIN_NAME,
-    ASSESSMENT_CONFIG_NAMES.DNFS_CONSISTENT_IP_RESOLUTION
-];
 
 /**
  * Set of MSSQL configuration names that cannot be automatically fixed.
@@ -2058,7 +2062,8 @@ export const BLOCK_SIX_LABELS = {
     FINDING_REASONS: 'Finding reasons',
     MISSING_PATCHES: 'Missing patches',
     FILE_SYSTEM_HEADROOM: 'File system headroom',
-    IMPACTED_RESOURCES: 'Impacted resources'
+    IMPACTED_RESOURCES: 'Impacted resources',
+    MAXDOP: 'MAXDOP'
 } as const;
 
 /**
@@ -2127,6 +2132,17 @@ export const isConfigIdInList = (configId: string, configIdList: readonly string
     if (!configId || !configIdList?.length) return false;
     return configIdList.some(targetId => isConfigIdMatch(configId, targetId));
 };
+
+/**
+ * Optimize API payload types used for both MSSQL and Oracle
+ */
+export const OPTIMIZE_PAYLOAD_TYPES = {
+    STORAGE_SIZING: 'storage-sizing',
+    AWS_BACKUP: 'aws-backup',
+    STORAGE_OPERATING_SYSTEM: 'storage-operating-system',
+    COMPUTE_HOST_OS: 'compute-host-os',
+    CLONE: 'clone'
+} as const;
 
 export const SSM_ARN_REGEX = /^arn:aws(-us-gov)?:ssm:[^:]+:\d{12}:parameter\/netapp\/wlmdb\/.+$/;
 export const isValidSsmArn = (arn: string) => SSM_ARN_REGEX.test(arn);

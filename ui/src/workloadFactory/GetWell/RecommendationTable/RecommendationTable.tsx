@@ -48,6 +48,7 @@ import { formatGetWellDataFlat, handleOptimizeStorageJob } from '../GetWellUtils
 import { formatOracleWellArchitectedData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 import oracleConfigRegistry from '../../../utils/configRegistry/oracleConfigRegistry.json';
 import mssqlConfigRegistry from '../../../utils/configRegistry/mssqlConfigRegistry.json';
+import { isOptimizeNotAvailable } from '../../../utils/configRegistry';
 import {
     ACTION_TYPE,
     ASSESSMENT_CONFIG_NAMES,
@@ -57,12 +58,12 @@ import {
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     GETWELL_STATUS,
-    GW_CONFIG_OPTIMIZE_NA,
     MSSQL_IMPACTED_DRIVE_CONFIGS,
     ONLINE_INSTANCE_STATUSES,
     ORACLE_IMPACTED_DRIVE_CONFIGS,
     WLF_TABS,
     MSSQL_UNSUPPORTED_FIX_TYPES,
+    OPTIMIZE_PAYLOAD_TYPES,
     ORACLE_UNSUPPORTED_FIX_TYPES,
     OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES,
     UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES
@@ -195,7 +196,7 @@ const RecommendationTable = ({
     });
 
     const getOracleOsPayload = (configurationName: string) => ({
-        type: 'storage-operating-system',
+        type: OPTIMIZE_PAYLOAD_TYPES.STORAGE_OPERATING_SYSTEM,
         hostsToOptimize: [
             {
                 configurationName,
@@ -330,7 +331,7 @@ const RecommendationTable = ({
             statusType = ASSESSMENT_CONFIG_NAMES.MSSQL_HIGH_AVAILABILITY;
             apiCall = optimizeHAMssql;
             payload = getHaPayload('sql-server-service');
-            apiInput = { configName: 'sql-server-service', payload };
+            apiInput = { configName: 'sqlserver-service', payload };
         } else if (rowData?.type === 'volume' || rowData?.type === 'lun') {
             statusType = ASSESSMENT_CONFIG_NAMES.ONTAP;
             apiCall = optimizeStorageConfig;
@@ -1232,7 +1233,7 @@ const RecommendationTable = ({
                                             translation={t}
                                             showFullContent={false}
                                         />
-                                    ) : GW_CONFIG_OPTIMIZE_NA.includes(rowData?.name) &&
+                                    ) : isOptimizeNotAvailable(rowData?.id ?? '', engineType) &&
                                       rowData?.status !== GETWELL_STATUS.OPTIMIZED ? (
                                         <Popover
                                             popoverClass={styles['copy-popover']}

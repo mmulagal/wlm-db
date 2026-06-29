@@ -19,11 +19,12 @@ import {
     GETWELL_STATUS,
     GETWELL_VALUES,
     isConfigIdMatch,
-    GW_CONFIG_OPTIMIZE_NA,
+    OPTIMIZE_PAYLOAD_TYPES,
     WELL_ARCHITECT_FINDINGS,
     WLF_TABS
 } from '../../../utils/consts';
 import {
+    setCardData,
     setInProgressHostData,
     setInProgressOptimizationData,
     setJobToInstanceMap,
@@ -45,9 +46,9 @@ import {
     buildOptimizeInfoNotification,
     buildOptimizeFailedMessage
 } from '../optimizeApiUtils';
+import { addNotification, NOTIFICATION_TYPES } from '../../../store/notificationSlice';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import { ReactComponent as TooltipIcon } from '../../../assets/tooltipGrey.svg';
-import { ReactComponent as DisabledTooltipIcon } from '../../../assets/tooltipDisabled.svg';
 import store from '../../../store/store';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { handleDialog } from './optimizeUtils';
@@ -63,7 +64,8 @@ import {
     hasInnerPage,
     getButtonText as getButtonTextFromRegistry,
     getColumnConfig,
-    getOptimizeApiConfig
+    getOptimizeApiConfig,
+    isOptimizeNotAvailable
 } from '../../../utils/configRegistry';
 
 const StorageCardComponent = ({
@@ -280,7 +282,7 @@ const StorageCardComponent = ({
                     whiteSpace:
                         cardData?.errorMessage ||
                         (cardData?.block_two?.value === GETWELL_STATUS.ANALYZING &&
-                            cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING)
+                            isConfigIdMatch(cardData?.id, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING))
                             ? 'unset'
                             : 'nowrap'
                 }}
@@ -329,7 +331,7 @@ const StorageCardComponent = ({
                             </span>
                         )}
                         {cardData?.block_two?.value === GETWELL_STATUS.ANALYZING &&
-                            cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING && (
+                            isConfigIdMatch(cardData?.id, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING) && (
                                 <span className={styles.tooltip}>
                                     <Popover
                                         popoverClass=""
@@ -440,17 +442,17 @@ const StorageCardComponent = ({
                 </div>
             );
         }
-        if (cardData?.block_six?.list) {
-            const listObj: any = [];
-            cardData?.block_six?.list?.map((item: any) => {
-                const parts = item.split(' ');
-                const value = parts.pop() || ''; // Take the last element as value
-                const key = parts.join(' '); // Join the rest as key
-                listObj.push({ key, value });
-            });
+        if (
+            cardData?.computeRightsizingViolations &&
+            isConfigIdMatch(cardData?.id, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING)
+        ) {
+            const listObj = cardData.computeRightsizingViolations.map((item: string) => ({
+                key: item,
+                value: ''
+            }));
             return (
                 <div className={styles.tooltipContainer}>
-                    {cardData?.block_six?.list?.length > 0 && (
+                    {cardData?.block_six?.value > 0 && (
                         <div className={styles.tooltip}>
                             <Popover
                                 popoverClass=""
@@ -462,18 +464,16 @@ const StorageCardComponent = ({
                             />
                         </div>
                     )}
-                    {cardData?.block_six?.list?.length === 0 && (
-                        <div>
-                            <DisabledTooltipIcon />
-                        </div>
-                    )}
                     <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {`${cardData?.block_six?.list?.length} values`}
+                        {cardData?.block_six?.value ?? t('databases.general.not-available-table-columns')}
                     </DsTypography>
                 </div>
             );
         }
-        if (cardData?.isMissingPermissions && cardData?.block_one?.value === GENERAL.COMPUTE_RIGHTSIZING) {
+        if (
+            cardData?.isMissingPermissions &&
+            isConfigIdMatch(cardData?.id, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING)
+        ) {
             return (
                 <div className={styles.warningMsg}>
                     <DsTypography variant="Semibold_14" isDisabled={disableText}>
@@ -484,8 +484,7 @@ const StorageCardComponent = ({
         }
         if (
             cardData?.osPatchMissingPatches &&
-            (cardData?.block_one?.value === GENERAL.OPERATING_SYSTEM_PATCH ||
-                isConfigIdMatch(cardData?.configurationId, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH))
+            isConfigIdMatch(cardData?.id, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH)
         ) {
             const listObj = [
                 { key: 'Critical ', value: cardData?.osPatchMissingPatches?.critical },
@@ -514,8 +513,7 @@ const StorageCardComponent = ({
         }
         if (
             cardData?.sqlPatchMissingPatches &&
-            (cardData?.block_one?.value === GENERAL.MICROSOFT_SQL_PATCH ||
-                isConfigIdMatch(cardData?.configurationId, ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH))
+            isConfigIdMatch(cardData?.id, ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH)
         ) {
             const listObj = [
                 { key: 'Critical ', value: cardData?.sqlPatchMissingPatches?.critical },
@@ -585,6 +583,24 @@ const StorageCardComponent = ({
                 if (apiData) {
                     dispatch(setOptimizingInstanceData(true));
                     dispatch(setOptimizingData({ ...optimizingData, [cardData?.id]: 'optimizing' }));
+
+                    // Update cardData to show "Optimizing" status immediately
+                    const currentCardData = store.getState().getWellOptimize.cardData;
+                    if (currentCardData && cardData?.id && currentCardData[cardData.id]) {
+                        dispatch(
+                            setCardData({
+                                ...currentCardData,
+                                [cardData.id]: {
+                                    ...currentCardData[cardData.id],
+                                    block_two: {
+                                        ...currentCardData[cardData.id].block_two,
+                                        value: GETWELL_STATUS.OPTIMIZING
+                                    }
+                                }
+                            })
+                        );
+                    }
+
                     dispatch(
                         setInProgressOptimizationData({
                             ...inProgressOptimizationData,
@@ -713,7 +729,7 @@ const StorageCardComponent = ({
             payload = {
                 hostsToOptimize: [
                     {
-                        configurationName: ['aws-backup'],
+                        configurationName: [OPTIMIZE_PAYLOAD_TYPES.AWS_BACKUP],
                         databaseHosts: [
                             {
                                 id: selectedResourceId,
@@ -772,6 +788,24 @@ const StorageCardComponent = ({
                 [cardData?.id]: 'optimizing'
             })
         );
+
+        // Update cardData to show "Optimizing" status immediately
+        const legacyCardData = store.getState().getWellOptimize.cardData;
+        if (legacyCardData && cardData?.id && legacyCardData[cardData.id]) {
+            dispatch(
+                setCardData({
+                    ...legacyCardData,
+                    [cardData.id]: {
+                        ...legacyCardData[cardData.id],
+                        block_two: {
+                            ...legacyCardData[cardData.id].block_two,
+                            value: GETWELL_STATUS.OPTIMIZING
+                        }
+                    }
+                })
+            );
+        }
+
         dispatch(
             setInProgressOptimizationData({
                 ...inProgressOptimizationData,
@@ -853,7 +887,7 @@ const StorageCardComponent = ({
     };
 
     const handleNavigateToOptimizePage = (configId: string) => {
-        const hasColumnConfig = getColumnConfig(configId);
+        const hasColumnConfig = getColumnConfig(configId, engineType);
         const tab = hasColumnConfig ? WLF_TABS.DYNAMIC_OPTIMIZE_INNER_PAGE : WLF_TABS.OPTIMIZE_INNER_PAGE;
         dispatch(setSelectedHeaderTab(tab));
 
@@ -1077,7 +1111,9 @@ const StorageCardComponent = ({
                         </DsTypography>
                         <DsTypography variant="Regular_14" title={cardData?.block_six?.type} className={styles.label}>
                             {cardData?.block_six?.count
-                                ? `${t('databases.well-architect.impacted')} ${cardData?.block_six?.type}`
+                                ? `${t(
+                                      'databases.well-architect.impacted'
+                                  )} ${cardData?.block_six?.type?.toLowerCase()}`
                                 : cardData?.block_six?.type}
                         </DsTypography>
                     </div>
@@ -1086,7 +1122,7 @@ const StorageCardComponent = ({
                 {/* Buttons for regular cards */}
                 {!showDismissedConfigurations &&
                     !optimizePrintState &&
-                    (GW_CONFIG_OPTIMIZE_NA.includes(cardData?.block_one?.value ?? '') &&
+                    (isOptimizeNotAvailable(cardData?.id ?? '', engineType) &&
                     cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
                         <div className={styles.buttonGroup}>
                             {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
@@ -1124,7 +1160,7 @@ const StorageCardComponent = ({
                                 }
                             >
                                 <TooltipComponent
-                                    title={GENERAL.OPTIMIZATION_IN_PROGRESS}
+                                    title={t('databases.well-architected-tab.fix-after-operation-ends')}
                                     placement="bottom"
                                     width="310px"
                                     height="50px"

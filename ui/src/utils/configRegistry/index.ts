@@ -3,6 +3,7 @@ export {
     hasInnerPage,
     getButtonText,
     isViewOnlyConfig,
+    isOptimizeNotAvailable,
     hasFixSupport,
     getCardHeights,
     getCardMetadata,

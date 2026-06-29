@@ -11,7 +11,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'spaceGuarantee',
         id: 'thin-provision',
-        name: 'Thin Provisioning',
+        name: 'Thin provisioning',
         value: 'none',
         type: 'storage',
         subType: 'configuration',
@@ -49,7 +49,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'autosizeMode',
         id: 'autosize-mode',
-        name: 'Autosize Mode',
+        name: 'Autosize-mode',
         value: 'grow',
         type: 'storage',
         subType: 'configuration',
@@ -68,7 +68,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'snapshotPolicy',
         id: 'snapshot-policy',
-        name: 'Scheduled Local Snapshots',
+        name: 'Scheduled local snapshots',
         value: 'none',
         type: 'storage',
         subType: 'configuration',
@@ -87,7 +87,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'snapshotCopyReserve',
         id: 'snapshot-copy-reserve',
-        name: 'Snapshot Copy Reserve',
+        name: 'Snapshot copy reserve',
         value: 0,
         type: 'storage',
         subType: 'configuration',
@@ -106,7 +106,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'snapshotAutodelete',
         id: 'snapshot-autodelete',
-        name: 'Snapshot Autodelete',
+        name: 'Snapshot autodelete',
         value: true,
         type: 'storage',
         subType: 'configuration',
@@ -125,7 +125,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'spaceMgmtTryFirst',
         id: 'space-mgmt-try-first',
-        name: 'Space Management',
+        name: 'Space management',
         value: 'volume_grow',
         type: 'storage',
         subType: 'configuration',
@@ -143,7 +143,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'storage-efficiencies',
-        name: 'Storage Efficiencies',
+        name: 'Storage efficiencies',
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',
@@ -214,7 +214,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'nfs-rootonly',
         id: 'nfs-rootonly',
-        name: 'NFS Root Only',
+        name: 'NFS rootonly',
         value: 'disabled',
         type: 'storage',
         subType: 'configuration',
@@ -230,7 +230,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'export-policy',
         id: 'export-policy',
-        name: 'Export Policy',
+        name: 'Binaries export policy',
         value: 'superuser: sys, allow_suid: true',
         type: 'storage',
         subType: 'configuration',
@@ -504,7 +504,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'kernel-parameters',
         id: 'kernel-parameters',
-        name: 'Kernel Parameters',
+        name: 'TCP slot table',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -520,7 +520,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'nfs-mount-options-databasefiles',
         id: 'nfs-mount-options-databasefiles',
-        name: 'NFS Mount Options (Database Files)',
+        name: 'NFS mount options - database files',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -540,7 +540,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'nfs-mount-options-adrhome',
         id: 'nfs-mount-options-adrhome',
-        name: 'NFS Mount Options (ADR Home)',
+        name: 'NFS mount options - ADR home',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -560,7 +560,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'nfsv4-domain-name',
         id: 'nfsv4-domain-name',
-        name: 'NFSv4 Domain Name',
+        name: 'NFSv4 domain name',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -576,7 +576,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'nfs-caching-options',
         id: 'nfs-caching-options',
-        name: 'NFS Caching Options',
+        name: 'NFS caching options',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -592,7 +592,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'dnfs-enabled',
         id: 'dnfs-enabled',
-        name: 'dNFS Enabled',
+        name: 'dNFS enabled',
         recommended: 'Enabled',
         type: 'storage',
         subType: 'configuration',
@@ -608,7 +608,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'dnfs-consistent-ip-resolution',
         id: 'dnfs-consistent-ip-resolution',
-        name: 'dNFS Consistent IP Resolution',
+        name: 'dNFS consistent IP resolution',
         recommended: 'No round-robin IP resolution',
         type: 'storage',
         subType: 'configuration',
@@ -624,7 +624,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'dnfs-configuration-file',
         id: 'dnfs-configuration-file',
-        name: 'dNFS Configuration File',
+        name: 'dNFS configuration file',
         recommended: 'Optimized oranfstab content',
         type: 'storage',
         subType: 'configuration',
@@ -640,7 +640,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'dnfs-no-shared-cache',
         id: 'dnfs-no-shared-cache',
-        name: 'dNFS No Shared Cache',
+        name: 'dNFS no shared cache',
         recommended: 'Enabled nosharecache mount option',
         type: 'storage',
         subType: 'configuration',
@@ -658,7 +658,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'archive-placement',
         id: 'archive-placement',
-        name: 'Archive Placement',
+        name: 'Archive placement',
         recommended: 'Separate volume',
         type: 'storage',
         subType: 'layout',
@@ -677,7 +677,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'datafiles-placement',
         id: 'datafiles-placement',
-        name: 'Data Files Placement',
+        name: 'Data files placement',
         recommended: 'Separate volume or shared with control files',
         type: 'storage',
         subType: 'layout',
@@ -696,7 +696,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'controlfiles-placement',
         id: 'controlfiles-placement',
-        name: 'Control Files Placement',
+        name: 'Control files placement',
         recommended: 'Separate volume or shared with data, redo, or temp files',
         type: 'storage',
         subType: 'layout',
@@ -715,7 +715,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'redologs-placement',
         id: 'redologs-placement',
-        name: 'Redo Logs Placement',
+        name: 'Redo logs placement',
         recommended: 'Separate volume or shared with temp or control files',
         type: 'storage',
         subType: 'layout',
@@ -734,7 +734,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'templogs-placement',
         id: 'templogs-placement',
-        name: 'Temp Placement',
+        name: 'Temp placement',
         recommended: 'Separate volume or shared with redo or control files',
         type: 'storage',
         subType: 'layout',
@@ -753,7 +753,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'oracle-binary-placement',
         id: 'oracle-binary-placement',
-        name: 'Oracle Binary Placement',
+        name: 'Oracle binary placement',
         recommended: 'separate-volume',
         type: 'storage',
         subType: 'layout',
@@ -850,7 +850,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'swap-space',
         id: 'swap-space',
-        name: 'Swap Space',
+        name: 'Swap space',
         type: 'storage',
         subType: 'sizing',
         focusWidgetName: 'Swap space',
@@ -864,7 +864,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'headroom',
         id: 'headroom',
-        name: 'File System Headroom',
+        name: 'File system headroom',
         type: 'storage',
         subType: 'sizing',
         focusWidgetName: 'File system headroom',
@@ -879,7 +879,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── resiliency ───────────────────────────────────────────────────────────
     {
         id: 'snapcenter-snapshot',
-        name: 'Application-Consistent Snapshots',
+        name: 'Application-consistent snapshots',
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         type: 'resiliency',
         subType: 'protection',
@@ -906,7 +906,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'backup-configuration',
-        name: 'Backup Configuration',
+        name: 'Backup configuration',
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         type: 'resiliency',
         subType: 'resiliency',
@@ -921,7 +921,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── compute ──────────────────────────────────────────────────────────────
     {
         id: 'host-os-patch',
-        name: 'Operating System Patch',
+        name: 'Operating system patch',
         categories: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
         type: 'compute',
         subType: 'compute',
@@ -934,7 +934,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'oracle-security-patch',
-        name: 'Oracle Critical Patch Updates',
+        name: 'Oracle critical patch updates',
         categories: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
         type: 'application',
         subType: 'application',
@@ -949,7 +949,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── cloning ──────────────────────────────────────────────────────────────
     {
         id: 'clone-management',
-        name: 'Clone Cleanup',
+        name: 'Clone cleanup',
         type: 'cloning',
         subType: 'cloning',
         categories: [AwsWellArchitecturedPillars.COST_EFFICIENCY],
