@@ -2324,7 +2324,7 @@ import shutil
 import time
 import stat
 import textwrap
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 from urllib.request import urlopen, Request, urlretrieve
 from urllib.error import HTTPError
 from pathlib import Path
@@ -2437,6 +2437,101 @@ def ontapRestApiRequest(fileSystemId, region, method, url, body=None):
             conn.close()
         except:
             pass
+`;
+
+// Generic ONTAP cluster-job poller. Reusable for any async ONTAP mutation that
+// returns a job UUID (efficiency PATCH, snapshot delete, clone split, etc.).
+// Defaults: 900s deadline with 10s poll interval (set in d6a3fa930 to cover
+// long-running efficiency promotes — callers can override via the kwargs).
+// Requires: ontapRestApiScript (provides ontapRestApiRequest) + pythonImports
+// (time) + pythonLogger (`log`).
+const ontapJobPollerScript = `
+def waitForOntapJob(fsxId, region, jobUuid, timeout=900, interval=10):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        resp, err = ontapRestApiRequest(fsxId, region, "GET", f"cluster/jobs/{jobUuid}")
+        if err:
+            log(f"Job poll failed for {jobUuid}: {err}")
+            return False, err
+        state = (resp or {}).get("state")
+        if state == "success":
+            return True, resp
+        if state == "failure":
+            return False, resp
+        time.sleep(interval)
+    return False, {"error": f"Timed out waiting for job {jobUuid}"}
+`;
+
+// Python helpers for ONTAP efficiency failures on "deprioritized" volumes (code 6881332):
+// promote the volume (advanced/private CLI), then retry the efficiency PATCH once.
+// Depends on waitForOntapJob from ontapJobPollerScript — callers must embed
+// ${ontapJobPollerScript} (or another helper that provides it) before this block.
+// Requires: ontapRestApiScript, ontapJobPollerScript, imports (json, parse_qs), and pythonLogger (log).
+const ontapEfficiencyRecoveryScript = `
+DEPRIORITIZED_EFFICIENCY_SIGNATURE = "Cannot perform efficiency operations on deprioritized volume"
+DEPRIORITIZED_EFFICIENCY_CODE = "6881332"
+
+
+def isDeprioritizedEfficiencyError(error):
+    """True if the error envelope carries ONTAP's deprioritized-volume signature
+    anywhere in its serialized form. Substring-matching on the serialized payload
+    handles every shape ONTAP returns the same failure in (sync HTTP 5xx, async
+    job-failure envelope, embedded \`error\` in a 2xx body, string inners, bulk
+    \`errors[]\` arrays, future schema variants) without having to walk each
+    path. Safe because both anchors are highly specific: a 7-digit globally
+    unique ONTAP error code and a fixed English phrase from the storage-
+    efficiency layer — neither realistically collides with unrelated payloads."""
+    if error is None:
+        return False
+    try:
+        payload = error if isinstance(error, str) else json.dumps(error, default=str)
+    except Exception:
+        payload = str(error)
+    return DEPRIORITIZED_EFFICIENCY_CODE in payload or DEPRIORITIZED_EFFICIENCY_SIGNATURE in payload
+
+
+def promoteEfficiencyAndVerify(fsxId, region, svm, vol):
+    # No pre-flight existence lookup: the promote POST below addresses the volume
+    # by svm/name and ONTAP returns its own "volume not found" error (caught by
+    # the promoteErr branch and the embedded-error-in-2xx branch).
+    log(f"Promoting efficiency on svm={svm} name={vol} via private CLI (advanced)")
+    promoteResp, promoteErr = ontapRestApiRequest(
+        fsxId, region, "POST", "private/cli/volume/efficiency/promote?privilege_level=advanced",
+        body={"vserver": svm, "volume": vol}
+    )
+    if promoteErr:
+        log(f"Promote call failed: {promoteErr}")
+        return False
+    log(f"Promote response: {json.dumps(promoteResp)}")
+
+    # Some ONTAP versions return HTTP 200 with an embedded 'error' field for private
+    # CLI commands; surface that as a recovery failure so we don't retry blindly.
+    if isinstance(promoteResp, dict) and isinstance(promoteResp.get("error"), dict):
+        log(f"Promote returned embedded error in 2xx body: {promoteResp.get('error')}")
+        return False
+
+    job = (promoteResp or {}).get("job")
+    if not job:
+        jobsArr = (promoteResp or {}).get("jobs") or []
+        job = jobsArr[0] if jobsArr else None
+    jobUuid = job.get("uuid") if isinstance(job, dict) else None
+    if jobUuid:
+        ok, jobInfo = waitForOntapJob(fsxId, region, jobUuid)
+        log(f"Promote job {jobUuid} terminated: ok={ok} info={jobInfo}")
+        if not ok:
+            return False
+    else:
+        log(f"Promote response had no job uuid; assuming synchronous completion: {promoteResp}")
+
+    # Name-based verify avoids a UUID lookup; logs post-promote efficiency state.
+    verifyResp, verifyErr = ontapRestApiRequest(
+        fsxId, region, "GET", f"storage/volumes?svm={svm}&name={vol}&fields=efficiency"
+    )
+    if verifyErr:
+        log(f"Post-promote efficiency verification failed: {verifyErr}")
+        return False
+    log(f"Post-promote efficiency state for svm={svm} name={vol}: {json.dumps(verifyResp)}")
+    return True
 `;
 
 const pythonLogger = (logFileName: string) => `
@@ -2555,6 +2650,8 @@ export {
     pythonImports,
     pythonLogger,
     ontapRestApiScript,
+    ontapJobPollerScript,
+    ontapEfficiencyRecoveryScript,
     logFileCheck,
     getOracleHomePath,
     oracleStorageInfoFromOntap,

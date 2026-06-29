@@ -6,6 +6,8 @@ import { OptimizeStorageParams } from '../../../../utils/common-types';
 import {
     getFsxCredentials,
     ontapRestApiScript,
+    ontapJobPollerScript,
+    ontapEfficiencyRecoveryScript,
     logFileCheck,
     pythonScriptInit
 } from '../../../workloads/oracle/oracle-ssm-script-utils';
@@ -33,6 +35,8 @@ def detect_asm_tool():
 const oracleStorageConfigurationPythonTemplate = (params: OptimizeStorageParams) => `
 ${getFsxCredentials}
 ${ontapRestApiScript}
+${ontapJobPollerScript}
+${ontapEfficiencyRecoveryScript}
 
 # Optimize Oracle storage configuration using ONTAP REST API
 fsxId = '${params.fsxId}'
@@ -47,9 +51,52 @@ if query:
     url = f"{apiPath}?{query}"
 
 log(f"Sending {method} request to: {url} with body: {body}")
-if method in ["GET"]:
-    body = None
-response, error = ontapRestApiRequest(fsxId, region, method, url, body)
+sendBody = None if method in ["GET"] else body
+response, error = ontapRestApiRequest(fsxId, region, method, url, sendBody)
+
+# Storage-efficiency PATCH on /storage/volumes is async: wait for the dispatched
+# job so a later failure (e.g. deprioritized-volume code 6881332) is visible to
+# the recovery check below. Scoped to PATCH on /storage/volumes only.
+def waitForFinalJob(resp):
+    if not (method == 'PATCH' and apiPath.startswith('storage/volumes')) or not isinstance(resp, dict):
+        return None
+    jobsArr = resp.get("jobs")
+    finalJob = jobsArr[0] if isinstance(jobsArr, list) and jobsArr else resp.get("job")
+    jobUuid = finalJob.get("uuid") if isinstance(finalJob, dict) else None
+    if not jobUuid:
+        return None
+    log(f"Waiting for terminal state of ONTAP job {jobUuid}")
+    ok, jobInfo = waitForOntapJob(fsxId, region, jobUuid)
+    log(f"Final job {jobUuid} terminated: ok={ok} info={jobInfo}")
+    return None if ok else {"error": {"status": "ONTAP job failed", "job_uuid": jobUuid, "job": jobInfo}}
+
+error = error or waitForFinalJob(response)
+
+# Deprioritized volume: efficiency PATCH may fail with 6881332 ("...deprioritized volume").
+# Fix: run (advanced) "volume efficiency promote" on the target SVM/volume, then retry PATCH once.
+# Detect both immediate HTTP failures and async job failures returning 6881332.
+# Note: promote volume uses /private/cli/volume/efficiency with vserver+volume keys (not svm+name).
+if error and isDeprioritizedEfficiencyError(error):
+    log(f"Detected deprioritized-volume efficiency error; attempting recovery: {error}")
+    parsedQuery = parse_qs(query) if query else {}
+    svm = (parsedQuery.get('svm') or parsedQuery.get('svm.name') or parsedQuery.get('vserver') or [''])[0]
+    rawNames = (parsedQuery.get('name') or parsedQuery.get('volume') or [''])[0]
+    volNames = [n for n in rawNames.split('|') if n] if rawNames else []
+    if not svm or not volNames:
+        log(f"Cannot recover: unable to derive svm/name from query={query}")
+    else:
+        promotedAll = True
+        for v in volNames:
+            if not promoteEfficiencyAndVerify(fsxId, region, svm, v):
+                promotedAll = False
+                break
+        if promotedAll:
+            log("Promote succeeded; retrying the original request.")
+            response, error = ontapRestApiRequest(fsxId, region, method, url, sendBody)
+            error = error or waitForFinalJob(response)
+        else:
+            log("Promote/verify failed; not retrying original request.")
+
 if error:
     log(f"Error occurred: {error}")
     print(json.dumps(error))
