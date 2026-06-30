@@ -4,6 +4,7 @@ import CommonStyles from '../../../../utils/CommonStyles.module.scss';
 import { ASSESSMENT_CONFIG_IDS, ONLINE_INSTANCE_STATUSES, SQL_SERVER_EDITION_LABELS } from '../../../../utils/consts';
 import { GwSqlServerInstanceInterface, RSSConfigAdapterInterface } from '../../../../utils/types/getWellTypes';
 import { createDashboardTableConfig, resolveConfigTypeId } from '../../../WellArchitectedTab/assessmentFormatUtils';
+import { getConfigEntry } from '../../../../utils/configRegistry/configRegistryHelper';
 import { isFixTableImpactedViewSupported } from './ImpactedResourceDialog/impactedResourceViewConfig';
 
 interface ConfigTableRowData {
@@ -17,22 +18,6 @@ interface ConfigTableRowData {
 
 type HandleImpactedResourceDialog = (rowData: ConfigTableRowData) => void;
 
-const FIX_UNSUPPORTED_CONFIG_IDS = new Set<string>([
-    ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH,
-    ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH,
-    ASSESSMENT_CONFIG_IDS.LICENSE,
-    ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH,
-    ASSESSMENT_CONFIG_IDS.ORACLE_BINARY_PLACEMENT,
-    ASSESSMENT_CONFIG_IDS.DATAFILES_PLACEMENT,
-    ASSESSMENT_CONFIG_IDS.CONTROLFILES_PLACEMENT,
-    ASSESSMENT_CONFIG_IDS.REDO_LOGS_PLACEMENT,
-    ASSESSMENT_CONFIG_IDS.TEMP_LOGS_PLACEMENT,
-    ASSESSMENT_CONFIG_IDS.ARCHIVE_PLACEMENT,
-    ASSESSMENT_CONFIG_IDS.TRANSPARENT_HUGEPAGES,
-    ASSESSMENT_CONFIG_IDS.TCP_ADVANCED_OPTIONS,
-    ASSESSMENT_CONFIG_IDS.FILESYSTEMS_IO_OPTIONS,
-    ASSESSMENT_CONFIG_IDS.MULTIPATH_READCOUNT
-]);
 
 export const ORACLE_ISCSI_ONLY_CONFIG_IDS = new Set<string>([
     ASSESSMENT_CONFIG_IDS.TRANSPARENT_HUGEPAGES,
@@ -429,7 +414,7 @@ const createDashboardTableConfigOverrides = (
         }),
         customColumns: [
             {
-                Header: 'databases.well-architect.dashboard-table-headers.current-value',
+                Header: 'databases.well-architect.dashboard-table-headers.file-system-headroom',
                 accessor: 'current',
                 id: '4',
                 width: '200px',
@@ -478,7 +463,7 @@ const createDashboardTableConfigOverrides = (
 export const resolveDashboardTableConfig = (configType: string, engineType: string) => {
     const configId = resolveConfigTypeId(configType);
     const base = createDashboardTableConfig(configId);
-    if (FIX_UNSUPPORTED_CONFIG_IDS.has(configId)) {
+    if (getConfigEntry(configId, engineType)?.fixSupported === false) {
         base.isFixSupported = false;
     }
     const override = createDashboardTableConfigOverrides(engineType)[configId];

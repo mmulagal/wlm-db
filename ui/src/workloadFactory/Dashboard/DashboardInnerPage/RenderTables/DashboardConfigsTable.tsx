@@ -308,9 +308,10 @@ const DashboardConfigsTable = ({
     const { setDialog } = useDialog();
 
     const handleImpactedResourceDialog: HandleImpactedResourceDialog = rowData => {
+        const viewColumnHeader = config?.customColumns?.[0]?.Header as string | undefined;
         setDialog(
             <DialogComponent
-                header={t('databases.well-architect.impacted-resources')}
+                header={viewColumnHeader ? t(viewColumnHeader) : t('databases.well-architect.impacted-resources')}
                 content={<ImpactedResourceDialog data={rowData} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
