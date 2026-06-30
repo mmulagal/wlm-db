@@ -18,6 +18,7 @@
     "bucket": {
         "artifacts": "production.artifacts.REGION.workloads.netapp.com",
         "signedTemplates": "production.templates.workloads.netapp.com",
+        "wadManager": "production.wad.manager.service.tlveng.netapp.com",
         "region": "us-east-1"
     },
     "ec2": {

@@ -42,7 +42,9 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
     {
         id: 'autosize',
@@ -134,7 +136,9 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             { parameter: 'tiering-policy', value: 'snapshot_only', source: 'volume' },
             { parameter: 'tiering-min-cooling-days', value: 7, source: 'volume' }
         ],
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
     {
         id: 'storage-efficiencies',
@@ -188,7 +192,9 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         recommendation:
             'ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
     {
         id: 'block-device-space-management',
@@ -210,7 +216,9 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             { parameter: 'space-allocation-allocated', value: true, source: 'lun' },
             { parameter: 'fractional-reserve', value: 0, source: 'volume' }
         ],
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
 
     // ── configuration / os ──────────────────────────────────────────────────
@@ -464,7 +472,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── resiliency ───────────────────────────────────────────────────────────
     {
         id: 'snapshot-policy',
-        name: 'Snapshot policy',
+        name: 'Scheduled local snapshot',
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         type: 'resiliency',
         subType: 'resiliency',
@@ -474,7 +482,9 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         recommendation:
             'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.\nUse local snapshots as an additional backup mechanism for quick restores or for testing.',
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
     {
         id: 'backup-configuration',

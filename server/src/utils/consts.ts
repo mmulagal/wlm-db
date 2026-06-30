@@ -637,6 +637,7 @@ const WINDOWS = 'windows';
 const ARTIFACT_BUCKET_NAME = process.env.ARTIFACT_BUCKET_NAME || config.get<string>('bucket.artifacts');
 const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.get<string>('bucket.signedTemplates');
 const TEMPLATE_BUCKET_REGION = process.env.WLMDB_BUCKET_REGION || config.get<string>('bucket.region');
+const WAD_MANAGER_BUCKET_NAME = process.env.WAD_MANAGER_CONFIG_BUCKET || config.get<string>('bucket.wadManager');
 const CF_DEPLOY_ROLE_NAME = 'CfDeployRoleName';
 const VALIDATION_AMI = 'ValidationAmi';
 const VALIDATION_INSTANCE_TYPE = 'ValidationNodeInstanceType';
@@ -2209,6 +2210,7 @@ export {
     ARTIFACT_BUCKET_NAME,
     SIGNED_TEMPLATES_BUCKET_NAME,
     TEMPLATE_BUCKET_REGION,
+    WAD_MANAGER_BUCKET_NAME,
     SSM_PARAMETERS_BASE_PATH,
     COMPLETE,
     CUSTOM_SSM_EXECUTION_TIMEOUT,

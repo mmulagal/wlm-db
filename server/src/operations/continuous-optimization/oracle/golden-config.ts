@@ -25,7 +25,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
     {
         parameter: 'autosize',
@@ -82,7 +84,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
     {
         parameter: 'snapshotCopyReserve',
@@ -176,7 +180,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
                 objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
             }
         ],
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
     {
         id: 'tiering-tco-optimization',
@@ -207,7 +213,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
                 objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
             }
         ],
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
 
     // ── configuration / volume_nfs (applicableTo: nfs) ──────────────────────
@@ -270,7 +278,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             { parameter: 'spaceAllocationAllocated', name: 'space-allocation-allocated', value: true, source: 'lun' },
             { parameter: 'fractionalReserve', name: 'fractional-reserve', value: 0, source: 'volume' }
         ],
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
 
     // ── configuration / os_iscsi (applicableTo: iscsi) ─────────────────────
@@ -889,7 +899,9 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         recommendation:
             'Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.',
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
     {
         id: 'crr',

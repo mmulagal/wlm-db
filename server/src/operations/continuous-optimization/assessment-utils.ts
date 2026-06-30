@@ -79,6 +79,12 @@ interface GoldenConfigEntry {
     // Combined (aggregate) entries fan out into per-sub-parameter children at drift / optimize time.
     // MSSQL combined entry uses `parameter`/`value`/`source`; Oracle entries also carry `name`/`objectType`.
     components?: GoldenConfigComponent[];
+    globalWadApplicable?: boolean;
+    metadata?: {
+        linkRequired?: boolean;
+        schedulingSupported?: boolean;
+        bulkFixSupported?: boolean;
+    };
 }
 
 interface UnOptimizedDiskGroups {

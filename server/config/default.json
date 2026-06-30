@@ -63,6 +63,7 @@
     "bucket": {
         "artifacts": "staging-artifacts-REGION-workloads-netapp-com",
         "signedTemplates": "staging-templates-workloads-netapp-com",
+        "wadManager": "staging.wad.manager.service.tlveng.netapp.com",
         "region": "us-east-1"
     },
     "ec2": {
