@@ -170,9 +170,9 @@ const OracleCardComponent = ({
         <SectionFive cardData={cardData} loading={loading} disableText={disableText} />
     );
     // This is the function that will be called when the optimize button is clicked from oracle cards
-    const callOracleOptimizeApi = (type: any) =>
+    const callOracleOptimizeApi = (configId: string) =>
         callOptimizeOracleApi({
-            type,
+            configId,
             cardData,
             optimizeOracleOs,
             getJobDetailApi,

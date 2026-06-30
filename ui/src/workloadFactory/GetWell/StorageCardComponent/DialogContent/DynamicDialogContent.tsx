@@ -15,7 +15,7 @@ import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
-import { DBType, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_IDS, DBType, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setRecommendedInstanceInBulk,
@@ -51,6 +51,7 @@ import {
     DialogContentConfig,
     hasFixSupport
 } from '../../../../utils/configRegistry';
+import { ViolationObject } from '../../../../utils/types/getWellTypes';
 
 interface RecommendationOption {
     instanceType?: string;
@@ -74,7 +75,7 @@ interface DynamicDialogContentProps {
     assessmentStatus?: boolean;
     status?: string;
     missingPermissions?: string[];
-    objectsInViolation?: string[];
+    objectsInViolation?: Array<string | ViolationObject>;
     recommendationOptions?: RecommendationOption[];
     bulkRecommendationOptions?: BulkRecommendationOption[];
     operation?: string;
@@ -196,13 +197,20 @@ const DynamicDialogContent = ({
         if (!showPatchTable || !missingPatchResponse) return [];
         const instances = (missingPatchResponse as any)?.ec2InstancesToPatch ?? [];
         const list = instances.flatMap((inst: any) =>
-            (inst?.missingPatchDetails ?? []).map((patch: any) => ({
-                ...patch,
-                instanceName: inst?.ec2InstanceName
-            }))
+            (inst?.missingPatchDetails ?? []).map((patch: any) => {
+                const mappedPatch: any = { ...patch, instanceName: inst?.ec2InstanceName };
+
+                if (configId === ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH && engineType === DBType.ORACLE) {
+                    mappedPatch.component = patch.classification;
+                    mappedPatch.packageName = patch.title;
+                    mappedPatch.updateType = patch.state;
+                }
+
+                return mappedPatch;
+            })
         );
         return list.map((item: any, index: number) => ({ ...item, id: String(index) }));
-    }, [missingPatchResponse, showPatchTable]);
+    }, [missingPatchResponse, showPatchTable, configId, engineType]);
 
     const patchColDefs: ColumnProps[] = useMemo(() => {
         // Get columns from registry if available
@@ -320,7 +328,7 @@ const DynamicDialogContent = ({
                                                             <div key={partIdx} style={{ margin: '8px 0' }}>
                                                                 {createCodeBoxWithCopy(
                                                                     part.trim(),
-                                                                    t('databases.well-architect.copied')
+                                                                    t('databases.general.copied-to-clipboard')
                                                                 )}
                                                             </div>
                                                         );
@@ -467,12 +475,32 @@ const DynamicDialogContent = ({
 
             {/* ONTAP Config Code Box */}
             {resolvedConfig.features?.showOntapConfigCodeBox &&
-                resolvedConfig.wellArchitectedConfig &&
-                createSection(
-                    t('databases.well-architect.well-architected-configuration'),
-                    createCodeBox(resolvedConfig.wellArchitectedConfig),
-                    { width: '712px' }
-                )}
+                (() => {
+                    let codeBoxContent;
+
+                    // Only drive-letter config uses objectsInViolation (dynamic drive names)
+                    // All other configs use static wellArchitectedConfig from registry
+                    if (configId === ASSESSMENT_CONFIG_IDS.DRIVE_LETTER && objectsInViolation?.length) {
+                        codeBoxContent = objectsInViolation.map((item) => {
+                            if (typeof item === 'string') {
+                                return item;
+                            }
+                            // Extract ontapVolumeName from object, fallback to JSON string
+                            return item.ontapVolumeName || JSON.stringify(item);
+                        });
+                    } else {
+                        codeBoxContent = resolvedConfig.wellArchitectedConfig;
+                    }
+
+                    if (codeBoxContent) {
+                        return createSection(
+                            t('databases.well-architect.well-architected-configuration'),
+                            createCodeBox(codeBoxContent),
+                            { width: '712px' }
+                        );
+                    }
+                    return null;
+                })()}
 
             {/* Custom Backup UI */}
             {resolvedConfig.features?.showCustomBackupUI && (

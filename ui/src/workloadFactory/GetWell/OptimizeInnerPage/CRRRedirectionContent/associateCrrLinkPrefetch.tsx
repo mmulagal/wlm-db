@@ -25,7 +25,7 @@ import store from '../../../../store/store';
 import { FROM_DIALOG } from '../../../../utils/consts';
 
 export type AssociateCrrLinkPrefetchResult = {
-    runAssociateLinkPrefetch: (rowData: any, dialogHeader: ReactNode) => Promise<void>;
+    runAssociateLinkPrefetch: (rowData: any, dialogHeader: ReactNode, isWad?: boolean) => Promise<void>;
 };
 
 /** Pass `setDialog` / `closeDialog` from the parent’s `useDialog()` so the dialog context is not subscribed twice. */
@@ -42,7 +42,7 @@ export function useAssociateCrrLinkPrefetch(
     const [associateSelectedLinkApi] = useAssociateSelectedLinkMutation();
 
     const runAssociateLinkPrefetch = useCallback(
-        async (rowData: any, dialogHeader: ReactNode) => {
+        async (rowData: any, dialogHeader: ReactNode, isWad: boolean = false) => {
             dispatch(setCrrPrefetchLoading(true));
             try {
                 const stateBefore = store.getState();
@@ -74,26 +74,26 @@ export function useAssociateCrrLinkPrefetch(
                     const workloadFactory = state.auth.isWorkloadFactory;
 
                     if (selectedLinkOption === 'createNewLink') {
+                        const pathname = `../../${
+                            workloadFactory ? 'administration' : 'fsxadministration'
+                        }/links/create?awsAccount=${fsxDetails?.awsAccountId}&from=${
+                            workloadFactory ? '/databases' : '/fsxdb'
+                        }/inventory/${credId}/${fsxDetails?.region}/${
+                            fsxDetails?.id
+                        }/resource/${selectedResourceId}/instance/${selectedDatabaseInstance}/host/${selectedHostname}/db/${selectedDatabaseInstanceName}/volumeName/${
+                            rowData?.volumeName
+                        }/target/crr/comingFrom/createNewLink/overview&region=${fsxDetails?.region}&securityGroupId=${
+                            fsxDetails?.securityGroups[0]?.id
+                        }&securityGroupName=${fsxDetails?.securityGroups[0]?.name}&subnetCidr=${
+                            fsxDetails?.subnets[0]?.cidrBlock
+                        }&subnetId=${fsxDetails?.subnets[0]?.id}&vpcCidr=${fsxDetails?.vpcInfo?.vpcCidr}&vpcId=${
+                            fsxDetails?.subnets[0]?.vpcId
+                        }&vpcName=${fsxDetails?.vpcInfo?.vpcName}`;
+
                         postBlueXPMessage({
                             type: BlueXPListeners.navigate,
                             payload: {
-                                pathname: `../../${
-                                    workloadFactory ? 'administration' : 'fsxadministration'
-                                }/links/create?awsAccount=${fsxDetails?.awsAccountId}&from=${
-                                    workloadFactory ? '/databases' : '/fsxdb'
-                                }/inventory/${credId}/${fsxDetails?.region}/${
-                                    fsxDetails?.id
-                                }/resource/${selectedResourceId}/instance/${selectedDatabaseInstance}/host/${selectedHostname}/db/${selectedDatabaseInstanceName}/volumeName/${
-                                    rowData?.volumeName
-                                }/target/crr/comingFrom/createNewLink/overview&region=${
-                                    fsxDetails?.region
-                                }&securityGroupId=${fsxDetails?.securityGroups[0]?.id}&securityGroupName=${
-                                    fsxDetails?.securityGroups[0]?.name
-                                }&subnetCidr=${fsxDetails?.subnets[0]?.cidrBlock}&subnetId=${
-                                    fsxDetails?.subnets[0]?.id
-                                }&vpcCidr=${fsxDetails?.vpcInfo?.vpcCidr}&vpcId=${
-                                    fsxDetails?.subnets[0]?.vpcId
-                                }&vpcName=${fsxDetails?.vpcInfo?.vpcName}`,
+                                pathname,
                                 replace: true
                             }
                         });
@@ -139,22 +139,39 @@ export function useAssociateCrrLinkPrefetch(
                 };
 
                 const openCRRDataDialog = () => {
-                    setDialog(
-                        <DialogComponent
-                            header={dialogHeader}
-                            content={<CRRDataDiaolgContent />}
-                            primaryButton={t('databases.general.continue')}
-                            secondaryButton={t('databases.general.cancel')}
-                            callback={() => {
-                                handleNavigation();
-                            }}
-                            closeCallback={() => {
-                                closeDialog();
-                            }}
-                            customClass={styles.crrDataDialog}
-                            dialogFrom={FROM_DIALOG.CRR_REDIRECTION}
-                        />
-                    );
+                    if (isWad) {
+                        setDialog(
+                            <DialogComponent
+                                header={dialogHeader}
+                                content={<CRRDataDiaolgContent isWad={isWad} />}
+                                primaryButton={t('databases.general.close')}
+                                callback={() => {
+                                    closeDialog();
+                                }}
+                                closeCallback={() => {
+                                    closeDialog();
+                                }}
+                                customClass="oneTimeWADDialog"
+                            />
+                        );
+                    } else {
+                        setDialog(
+                            <DialogComponent
+                                header={dialogHeader}
+                                content={<CRRDataDiaolgContent isWad={isWad} />}
+                                primaryButton={t('databases.general.continue')}
+                                secondaryButton={t('databases.general.cancel')}
+                                callback={() => {
+                                    handleNavigation();
+                                }}
+                                closeCallback={() => {
+                                    closeDialog();
+                                }}
+                                customClass={styles.crrDataDialog}
+                                dialogFrom={FROM_DIALOG.CRR_REDIRECTION}
+                            />
+                        );
+                    }
                 };
 
                 if (associatedLinksResponse?.data) {

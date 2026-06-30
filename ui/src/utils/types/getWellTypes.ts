@@ -4,6 +4,18 @@ export interface InnerPageDetailsInterface {
     isInstanceStorageAsmManaged?: boolean;
 }
 
+/**
+ * Object shape for objectsInViolation items that contain volume metadata
+ * (as opposed to plain strings)
+ */
+export interface ViolationObject {
+    ontapVolumeName?: string;
+    ontapVolumeUuid?: string;
+    fsxVolumeId?: string;
+    objectName?: string;
+    databaseName?: string;
+}
+
 interface CountBreakDown {
     total?: number;
     optimized?: number;
@@ -69,7 +81,7 @@ export interface PerConfigInterface {
     subType?: string;
     categories?: string[];
     focusWidgetName?: string;
-    objectsInViolation?: string[] | null;
+    objectsInViolation?: Array<string | ViolationObject> | null;
     recommendationOptions?: any;
     errorMessage?: string;
     missingPermissions?: string[];

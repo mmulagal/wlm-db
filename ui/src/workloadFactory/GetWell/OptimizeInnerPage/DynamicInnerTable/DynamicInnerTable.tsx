@@ -31,6 +31,8 @@ interface DynamicInnerTableProps {
     isViewOnly?: boolean;
     handleBulkAction: () => void;
     handleRowFix?: (rowData: any) => void;
+    crrPrefetchLoading?: boolean;
+    optimizingInstanceData?: boolean;
 }
 
 const DynamicInnerTable = ({
@@ -42,7 +44,9 @@ const DynamicInnerTable = ({
     canOptimize = true,
     isViewOnly = false,
     handleBulkAction,
-    handleRowFix
+    handleRowFix,
+    crrPrefetchLoading = false,
+    optimizingInstanceData = false
 }: DynamicInnerTableProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
@@ -297,10 +301,23 @@ const DynamicInnerTable = ({
                         );
                     }
 
+                    // Show loading state when:
+                    // 1. CRR prefetch is loading (fetching FSx details and links before opening dialog)
+                    // 2. OR optimization is in progress (Continue clicked in any optimize dialog)
+                    const isCrrPrefetchLoading = crrPrefetchLoading && configId === ASSESSMENT_CONFIG_IDS.CRR;
+                    const isOptimizing = optimizingInstanceData;
+                    const isAnyLoading = isCrrPrefetchLoading || isOptimizing;
+
                     return (
                         <div className={styles.buttonContainer}>
                             <div />
-                            <DsButton isThin variant="secondary" onClick={() => handleRowFix(rowData)}>
+                            <DsButton
+                                isThin
+                                variant="secondary"
+                                onClick={() => handleRowFix(rowData)}
+                                isLoading={isAnyLoading}
+                                isDisabled={isAnyLoading}
+                            >
                                 {buttonLabel}
                             </DsButton>
                         </div>
@@ -311,7 +328,17 @@ const DynamicInnerTable = ({
         }
 
         return dataColumns;
-    }, [columnConfig, configId, canOptimize, isViewOnly, handleRowFix, selectedRowsForOptimizeInnerPage, t]);
+    }, [
+        columnConfig,
+        configId,
+        canOptimize,
+        isViewOnly,
+        handleRowFix,
+        selectedRowsForOptimizeInnerPage,
+        t,
+        crrPrefetchLoading,
+        optimizingInstanceData
+    ]);
 
     // Table props
     const tableProps = useTable({
@@ -350,7 +377,7 @@ const DynamicInnerTable = ({
                 pluralTitle={tableTitle}
                 singularTitle={resourceTypeLabel}
             />
-            {canOptimize && selectedRowsForOptimizeInnerPage.length > 0 && (
+            {canOptimize && selectedRowsForOptimizeInnerPage.length > 0 && !optimizingInstanceData && (
                 <BulkActionContainer action={t('databases.well-architect.fix')} onClick={handleBulkAction} />
             )}
             <Table

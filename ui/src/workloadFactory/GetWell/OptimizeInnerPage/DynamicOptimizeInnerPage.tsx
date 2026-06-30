@@ -56,11 +56,13 @@ import {
 import { handleConfigDialog } from '../StorageCardComponent/optimizeUtils';
 import { useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import store from '../../../store/store';
+import { useAssociateCrrLinkPrefetch } from './CRRRedirectionContent/associateCrrLinkPrefetch';
 
 const DynamicOptimizeInnerPage = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
+    const { runAssociateLinkPrefetch } = useAssociateCrrLinkPrefetch(setDialog, closeDialog);
 
     const mutationMap = useOptimizeMutations();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
@@ -78,15 +80,19 @@ const DynamicOptimizeInnerPage = () => {
         optimizingData,
         inProgressOptimizationData,
         inProgressHostData,
-        isInnerPageOptimize
+        isInnerPageOptimize,
+        optimizingInstanceData,
+        isWad: isWadFromStore
     } = useAppSelector(state => state.getWellOptimize);
+    const { crrPrefetchLoading } = useAppSelector(state => state.crrRedirection);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     // Extract config data from selected config
     const configId = selectedOptimizeConfig?.type;
     const configData = selectedOptimizeConfig?.data || {};
     const engineType = selectedOptimizeConfig?.engineType || DBType.MSSQL;
-    const isWad = configData?.isWad || false;
+    // Check isWad from config data (API response) OR from Redux store (set on WAD navigation)
+    const isWad = configData?.isWad || isWadFromStore || false;
 
     // Flat API provides display name in the 'name' field of the response
     const displayName = configData?.name || configId || '';
@@ -338,6 +344,19 @@ const DynamicOptimizeInnerPage = () => {
         (rowData: Record<string, unknown>) => {
             if (!configId) return;
 
+            // Special handling for Oracle CRR - open CRR link dialog instead of standard optimize dialog
+            if (engineType === DBType.ORACLE && configId === ASSESSMENT_CONFIG_IDS.CRR) {
+                // Map row data to expected format for CRR flow
+                // Row data has ontapVolumeName (from objectsInViolation) but CRR flow expects volumeName
+                const crrRowData = {
+                    ...rowData,
+                    volumeName: rowData.ontapVolumeName || rowData.objectName,
+                    volumeId: rowData.ontapVolumeUuid || rowData.fsxVolumeId || ''
+                };
+                runAssociateLinkPrefetch(crrRowData, displayName, isWad);
+                return;
+            }
+
             handleConfigDialog(
                 setDialog,
                 callOptimizeApi,
@@ -355,7 +374,17 @@ const DynamicOptimizeInnerPage = () => {
                 isWad
             );
         },
-        [configId, configData, displayName, engineType, isWad, setDialog, closeDialog, callOptimizeApi]
+        [
+            configId,
+            configData,
+            displayName,
+            engineType,
+            isWad,
+            setDialog,
+            closeDialog,
+            callOptimizeApi,
+            runAssociateLinkPrefetch
+        ]
     );
 
     // If no config is selected, go back
@@ -438,6 +467,8 @@ const DynamicOptimizeInnerPage = () => {
                                 isViewOnly={isViewOnly}
                                 handleBulkAction={handleBulkAction}
                                 handleRowFix={handleRowFix}
+                                crrPrefetchLoading={crrPrefetchLoading}
+                                optimizingInstanceData={optimizingInstanceData}
                             />
                         )}
                     </div>

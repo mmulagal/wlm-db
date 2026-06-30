@@ -12,8 +12,9 @@ import {
 } from '../../../../store/workloadFactory/crrRedirectionSlice';
 import { useGetExistingLinksMutation } from '../../../../utils/apiService';
 import styles from './CRRRedirectionContent.module.scss';
+import { ReactComponent as InfoIcon } from '../../../../assets/info.svg';
 
-const CRRDataDialogContent = ({}) => {
+const CRRDataDialogContent = ({ isWad = false }) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { selectedLinkOption, fsxDetails, existingLinks, existingLinksLoading, selectedExistingLink, showLinkError } =
@@ -68,6 +69,12 @@ const CRRDataDialogContent = ({}) => {
 
     return (
         <div className={styles.crrDataDialogContent}>
+            {isWad && (
+                <div className={styles.wadBanner}>
+                    <InfoIcon />
+                    <DsTypography variant="Regular_14">{t('databases.wad.tab-disabled-message-oracle')}</DsTypography>
+                </div>
+            )}
             <DsTypography variant="Regular_14">{t('databases.well-architect.crr-dialog-text')}</DsTypography>
 
             <div className={styles.networkInfoBox}>
