@@ -77,8 +77,13 @@ const DashboardConfigsTable = ({
     const dispatch = useDispatch();
     const [showDismissed, setShowDismissed] = useState(false);
 
-    const { allmssqlHostAssessmentData, allOracleHostAssessmentData, inventoryTableData, getDatabaseHosts } =
-        useAppSelector(state => state.inventoryV2);
+    const {
+        allmssqlHostAssessmentData,
+        allOracleHostAssessmentData,
+        inventoryTableData,
+        getDatabaseHosts,
+        getOracleDatabaseHosts
+    } = useAppSelector(state => state.inventoryV2);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { selectedRowsForOptimize } = useAppSelector(state => state.databaseHome);
     const { inProgressOptimizationData, inProgressHostData, inProgressStateData, configEngineType } = useAppSelector(
@@ -165,16 +170,17 @@ const DashboardConfigsTable = ({
 
         assessmentData = sortOptimizeDashboardInnerTable(assessmentData);
 
-        return mapHostStatusToAssessmentData(
-            inventoryTableData,
-            assessmentData,
-            getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
-        );
+        const hostLoading =
+            configEngineType === DBType.ORACLE
+                ? getOracleDatabaseHosts?.fullHostDataLoading || getOracleDatabaseHosts?.databaseHostsLoading
+                : getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading;
+        return mapHostStatusToAssessmentData(inventoryTableData, assessmentData, hostLoading);
     }, [
         allmssqlHostAssessmentData,
         allOracleHostAssessmentData,
         inventoryTableData,
         getDatabaseHosts,
+        getOracleDatabaseHosts,
         headerSelectedMultiCredIdsList,
         headerSelectedMultiRegionIdsList,
         config,

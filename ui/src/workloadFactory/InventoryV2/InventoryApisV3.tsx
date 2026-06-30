@@ -1587,7 +1587,7 @@ const InventoryApisV3 = () => {
                 ) {
                     if (result && !result?.error) {
                         assessmentData = [
-                            // ...assessmentData,
+                            ...assessmentData,
                             ...(Array.isArray(result?.data?.assessmentsPerAccount)
                                 ? result.data.assessmentsPerAccount.map((assessment: any) => ({
                                       ...assessment,
@@ -1642,7 +1642,7 @@ const InventoryApisV3 = () => {
                 ) {
                     if (result && !result?.error) {
                         assessmentOracleData = [
-                            // ...assessmentOracleData,
+                            ...assessmentOracleData,
                             ...(Array.isArray(result?.data?.assessmentsPerAccount)
                                 ? result.data.assessmentsPerAccount.map((assessment: any) => ({
                                       ...assessment,
@@ -2770,16 +2770,21 @@ const InventoryApisV3 = () => {
 
     useEffect(() => {
         if (!refreshBlocked) {
-            // Below is required for multi cred and region - as it was creating duplicate so fixed now but will change for multi cred
-            dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentDataS, ...allmssqlHostAssessmentData]));
-            // dispatch(addAllMssqlHostAssessmentData([...allmssqlHostAssessmentData]));
+            // Replace only this cred+region's non-WAD entries; preserve other creds/regions and all WAD data.
+            const otherMssql = allmssqlHostAssessmentDataS.filter(
+                (h: any) => !(h.credentialId === credId && h.regionId === regionId && !h.isWad)
+            );
+            dispatch(addAllMssqlHostAssessmentData([...otherMssql, ...allmssqlHostAssessmentData]));
         }
     }, [allmssqlHostAssessmentData]);
 
     useEffect(() => {
         if (!refreshBlocked) {
-            // Below is required for multi cred and region - as it was creating duplicate so fixed now but will change for multi cred
-            dispatch(addAllOracleHostAssessmentData([...allOracleHostAssessmentDataS, ...allOracleHostAssessmentData]));
+            // Replace only this cred+region's non-WAD entries; preserve other creds/regions and all WAD data.
+            const otherOracle = allOracleHostAssessmentDataS.filter(
+                (h: any) => !(h.credentialId === credId && h.regionId === regionId && !h.isWad)
+            );
+            dispatch(addAllOracleHostAssessmentData([...otherOracle, ...allOracleHostAssessmentData]));
         }
     }, [allOracleHostAssessmentData]);
 

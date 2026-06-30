@@ -663,7 +663,9 @@ export const shouldSkipDatabaseHost = (
     headerSelectedMultiRegionIdsList: string[],
     uniqueResourceList: string[]
 ): boolean => {
-    const uniqueKey = `${databaseHost?.databaseHostId}_${databaseHost?.regionId}`;
+    // Include isWad so a WAD offline entry and a continuous registered entry for the
+    // same host are never treated as duplicates and one deduped away.
+    const uniqueKey = `${databaseHost?.databaseHostId}_${databaseHost?.regionId}_${!!databaseHost?.isWad}`;
     if (uniqueResourceList.includes(uniqueKey)) {
         return true;
     }
@@ -1422,7 +1424,7 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, orac
     let id = 1;
 
     const state = store.getState();
-    const { inventoryTableData, getDatabaseHosts } = state.inventoryV2;
+    const { inventoryTableData, getDatabaseHosts, getOracleDatabaseHosts } = state.inventoryV2;
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
     const uniqueResourceList: Array<string> = [];
 
@@ -1501,11 +1503,12 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, orac
             }
         });
     });
-    tableData = mapHostStatusToAssessmentData(
-        inventoryTableData,
-        tableData,
-        getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
-    );
+    const isLoading =
+        getDatabaseHosts?.fullHostDataLoading ||
+        getDatabaseHosts?.databaseHostsLoading ||
+        getOracleDatabaseHosts?.fullHostDataLoading ||
+        getOracleDatabaseHosts?.databaseHostsLoading;
+    tableData = mapHostStatusToAssessmentData(inventoryTableData, tableData, isLoading);
     return disableOfflineRows(tableData);
 };
 

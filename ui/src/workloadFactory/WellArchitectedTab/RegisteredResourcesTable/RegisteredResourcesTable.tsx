@@ -25,13 +25,16 @@ const RegisteredResourcesTable = () => {
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, showNA } = useAppSelector(
         state => state.headers
     );
-    const { inventoryTableData, getDatabaseHosts } = useAppSelector(state => state.inventoryV2);
+    const { inventoryTableData, getDatabaseHosts, getOracleDatabaseHosts } = useAppSelector(
+        state => state.inventoryV2
+    );
 
     const assessmentResourceData: any = useMemo(
         () => getAllAssessmentResources(allmssqlHostAssessmentData, allOracleHostAssessmentData),
         [
             inventoryTableData,
             getDatabaseHosts,
+            getOracleDatabaseHosts,
             allmssqlHostAssessmentData,
             allOracleHostAssessmentData,
             headerSelectedMultiCredIdsList,

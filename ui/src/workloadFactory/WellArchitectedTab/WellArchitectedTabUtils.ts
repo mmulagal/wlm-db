@@ -57,7 +57,7 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
     let tableData: any = [];
     let id = 1;
     const state = store.getState();
-    const { inventoryTableData, getDatabaseHosts } = state.inventoryV2;
+    const { inventoryTableData, getDatabaseHosts, getOracleDatabaseHosts } = state.inventoryV2;
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
     const uniqueResourceList: Array<string> = [];
 
@@ -143,11 +143,12 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
         });
     });
 
-    tableData = mapHostStatusToAssessmentData(
-        inventoryTableData,
-        tableData,
-        getDatabaseHosts?.fullHostDataLoading || getDatabaseHosts?.databaseHostsLoading
-    );
+    const isLoading =
+        getDatabaseHosts?.fullHostDataLoading ||
+        getDatabaseHosts?.databaseHostsLoading ||
+        getOracleDatabaseHosts?.fullHostDataLoading ||
+        getOracleDatabaseHosts?.databaseHostsLoading;
+    tableData = mapHostStatusToAssessmentData(inventoryTableData, tableData, isLoading);
     return sortAnalyzedResourceData(tableData);
 };
 
