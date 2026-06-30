@@ -138,12 +138,12 @@ const DynamicDialogContent = ({
                 return {
                     ...dialogConfig,
                     sections: override.sections,
-                    notes: override.notes || dialogConfig.notes
+                    notes: override.notes !== undefined ? override.notes : dialogConfig.notes
                 };
             }
         }
         return dialogConfig;
-    }, [dialogConfig, status, missingPermissions]);
+    }, [dialogConfig, status, missingPermissions, configId]);
 
     // Linked config banner state (Oracle layout configs only)
     const linkedConfigNames = useMemo(() => {
@@ -481,7 +481,7 @@ const DynamicDialogContent = ({
                     // Only drive-letter config uses objectsInViolation (dynamic drive names)
                     // All other configs use static wellArchitectedConfig from registry
                     if (configId === ASSESSMENT_CONFIG_IDS.DRIVE_LETTER && objectsInViolation?.length) {
-                        codeBoxContent = objectsInViolation.map((item) => {
+                        codeBoxContent = objectsInViolation.map(item => {
                             if (typeof item === 'string') {
                                 return item;
                             }

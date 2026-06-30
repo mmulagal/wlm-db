@@ -305,6 +305,7 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
         ...(assessment.cloneDriftMessage && { cloneDriftMessage: assessment.cloneDriftMessage }),
         ...(assessment.missingPatchesCount !== undefined && { missingPatchesCount: assessment.missingPatchesCount }),
         ...(assessment.recommendedSizeInGib && { recommendedSizeInGib: assessment.recommendedSizeInGib }),
+        ...(assessment.missingPermissions && { missingPermissions: assessment.missingPermissions }),
         // Add patch objects for tooltip display
         ...(osPatchMissingPatches !== undefined && { osPatchMissingPatches }),
         ...(oracleSecurityPatchMissingPatches !== undefined && { oracleSecurityPatchMissingPatches })

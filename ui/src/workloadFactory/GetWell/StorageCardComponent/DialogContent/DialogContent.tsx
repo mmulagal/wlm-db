@@ -14,7 +14,7 @@ import {
     GETWELL_STATUS,
     OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES,
     UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES,
-    ASSESSMENT_CONFIG_NAMES
+    ASSESSMENT_CONFIG_IDS
 } from '../../../../utils/consts';
 import { hasFixSupport } from '../../../../utils/configRegistry';
 import DynamicDialogContent from './DynamicDialogContent';
@@ -78,7 +78,7 @@ const shouldShowUnsupportedFixBanner = (
             { key: 'databases.well-architect.over-provisioned-fix-disabled', params: { configName: configNameLower } }
         ],
         [
-            isUnderProvisionedWithMissingPerms && type === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE,
+            isUnderProvisionedWithMissingPerms && type === ASSESSMENT_CONFIG_IDS.TEMPDB_DRIVE_SIZE,
             { key: 'databases.well-architect.tempdb-drive-under-provisioned-missing-permissions-error' }
         ],
         [

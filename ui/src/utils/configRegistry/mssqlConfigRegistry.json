@@ -163,6 +163,20 @@
                     "content": "databases.well-architect.mssql-block-device-space-management-action-summary"
                 },
                 {
+                    "heading": "",
+                    "type": "bullets",
+                    "items": [
+                        "databases.well-architect.mssql-block-device-space-reservation",
+                        "databases.well-architect.mssql-block-device-space-allocation",
+                        "databases.well-architect.mssql-block-device-fractional-reserve"
+                    ]
+                },
+                {
+                    "heading": "",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-block-device-space-management-summary"
+                },
+                {
                     "heading": "databases.well-architect.what-will-happen",
                     "type": "text",
                     "content": "databases.well-architect.mssql-block-device-space-management-what-will-happen",
@@ -471,12 +485,12 @@
                 {
                     "heading": "databases.well-architect.action-summary",
                     "type": "text",
-                    "content": "databases.well-architect.file-system-headroom-with-permission"
+                    "content": "databases.well-architect.file-system-headroom-without-permission"
                 },
                 {
                     "heading": "databases.well-architect.what-will-happen",
                     "type": "text",
-                    "content": "databases.well-architect.file-system-headroom-with-permission-content",
+                    "content": "databases.well-architect.file-system-headroom-what-will-happen",
                     "hideWhenWad": true
                 }
             ],
@@ -529,7 +543,8 @@
                                 "width": "712px"
                             }
                         }
-                    ]
+                    ],
+                    "notes": null
                 },
                 {
                     "when": {
@@ -540,20 +555,20 @@
                         {
                             "heading": "databases.well-architect.action-summary",
                             "type": "text",
-                            "content": "databases.well-architect.file-system-headroom-action-summary"
+                            "content": "databases.well-architect.file-system-headroom-with-missing-permission-action-summary"
                         },
                         {
                             "heading": "databases.well-architect.action-required",
                             "type": "text",
-                            "content": "databases.well-architect.file-system-headroom-choose-option1",
+                            "content": "databases.well-architect.file-system-headroom-choose-option",
                             "style": {
                                 "width": "712px"
                             }
                         },
                         {
-                            "heading": "databases.well-architect.file-system-headroom-option1-content",
+                            "heading": "databases.well-architect.file-system-headroom-option1",
                             "type": "permissions",
-                            "content": "databases.well-architect.drive-size-and-headroom-action-content1",
+                            "content": "databases.well-architect.file-system-headroom-option1-description",
                             "style": {
                                 "width": "712px"
                             }
@@ -562,16 +577,17 @@
                             "heading": "databases.well-architect.file-system-headroom-option2",
                             "type": "numberedSteps",
                             "items": [
-                                "databases.well-architect.file-system-headroom-option2-content2",
-                                "databases.well-architect.file-system-headroom-option2-content3",
-                                "databases.well-architect.file-system-headroom-option2-content4",
-                                "databases.well-architect.file-system-headroom-option2-content5"
+                                "databases.well-architect.file-system-headroom-option2-step1",
+                                "databases.well-architect.file-system-headroom-option2-step2",
+                                "databases.well-architect.file-system-headroom-option2-step3",
+                                "databases.well-architect.file-system-headroom-option2-step4"
                             ],
                             "style": {
                                 "width": "712px"
                             }
                         }
-                    ]
+                    ],
+                    "notes": null
                 }
             ]
         }
@@ -1321,22 +1337,32 @@
                 {
                     "heading": "databases.well-architect.action-summary",
                     "type": "text",
-                    "content": "databases.well-architect.os-type-space-allocation-reservation-action-summary"
+                    "content": "databases.well-architect.mssql-os-type-action-summary"
                 },
                 {
-                    "heading": "databases.well-architect.what-will-happen",
-                    "type": "text",
-                    "content": "databases.well-architect.os-type-space-allocation-reservation-what-will-happen",
-                    "hideWhenWad": true
+                    "heading": "databases.well-architect.optimization-steps",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.mssql-os-type-optimization-step1",
+                        "databases.well-architect.mssql-os-type-optimization-step2",
+                        "databases.well-architect.mssql-os-type-optimization-step3",
+                        "databases.well-architect.mssql-os-type-optimization-step4",
+                        "databases.well-architect.mssql-os-type-optimization-step5"
+                    ]
                 }
             ],
             "features": {
-                "showOntapConfigCodeBox": true
+                "showOntapConfigCodeBox": false
             },
             "notes": {
-                "type": "standard"
-            },
-            "wellArchitectedConfig": "OS type = windows_2008 "
+                "type": "custom",
+                "items": [
+                    "databases.well-architect.mssql-os-type-note1",
+                    "databases.well-architect.mssql-os-type-note2",
+                    "databases.well-architect.mssql-os-type-note3",
+                    "databases.well-architect.mssql-os-type-note4"
+                ]
+            }
         }
     },
     "performance-tier": {
@@ -1753,22 +1779,21 @@
                 {
                     "heading": "databases.well-architect.action-summary",
                     "type": "text",
-                    "content": "databases.well-architect.autosize-action-summary"
+                    "content": "databases.well-architect.mssql-snapshot-policy-action-summary"
                 },
                 {
                     "heading": "databases.well-architect.what-will-happen",
                     "type": "text",
-                    "content": "databases.well-architect.autosize-what-will-happen",
+                    "content": "databases.well-architect.mssql-snapshot-policy-what-will-happen",
                     "hideWhenWad": true
                 }
             ],
             "features": {
-                "showOntapConfigCodeBox": true
+                "showOntapConfigCodeBox": false
             },
             "notes": {
                 "type": "standard"
-            },
-            "wellArchitectedConfig": "Snapshot policy = none"
+            }
         }
     },
     "space-mgmt-try-first": {
@@ -2146,22 +2171,21 @@
                 {
                     "heading": "databases.well-architect.action-summary",
                     "type": "text",
-                    "content": "databases.well-architect.autosize-action-summary"
+                    "content": "databases.well-architect.mssql-thin-provisioning-action-summary"
                 },
                 {
                     "heading": "databases.well-architect.what-will-happen",
                     "type": "text",
-                    "content": "databases.well-architect.autosize-what-will-happen",
+                    "content": "databases.well-architect.mssql-thin-provisioning-what-will-happen",
                     "hideWhenWad": true
                 }
             ],
             "features": {
-                "showOntapConfigCodeBox": true
+                "showOntapConfigCodeBox": false
             },
             "notes": {
                 "type": "standard"
-            },
-            "wellArchitectedConfig": "Thin provisioning (-space-guarantee = none)"
+            }
         }
     },
     "tiering-tco-optimization": {

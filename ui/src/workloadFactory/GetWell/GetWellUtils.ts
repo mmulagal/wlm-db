@@ -445,7 +445,10 @@ export const generateDynamicFilterOptions = (cardData: any, deploymentType?: str
     return {
         categories: Array.from(availableCategories).map(category => ({
             id: category as string,
-            label: category as string,
+            label:
+                WELL_ARCHITECTED_CATEGORY_LABELS[
+                    (category as string)?.toLowerCase() as keyof typeof WELL_ARCHITECTED_CATEGORY_LABELS
+                ] || (category as string),
             value: category as string
         })),
         subCategories: [], // Flat API doesn't use subcategories
@@ -1851,14 +1854,6 @@ export const checkIfDisableForOptimize = (
         isDisabled = true;
         errorMessage = translation('databases.well-architect.tempdb-drive-over-provisioned-error');
     } else if (
-        name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM &&
-        (rowData?.assessmentStatus?.toLowerCase() === GETWELL_STATUS.OVER_PROVISIONED.toLowerCase() ||
-            (rowData?.sizingViolations?.overProvisionedDrives?.length &&
-                !rowData?.sizingViolations?.underProvisionedDrives?.length))
-    ) {
-        isDisabled = true;
-        errorMessage = translation('databases.well-architect.file-system-headroom-over-provisioned-error');
-    } else if (
         (name === ASSESSMENT_CONFIG_NAMES.LOG_DRIVE_SIZE ||
             name === ASSESSMENT_CONFIG_NAMES.TEMPDB_DRIVE_SIZE ||
             name === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) &&
@@ -2459,7 +2454,9 @@ export const formatFlatAssessments = (
             // Add patch objects for tooltip display
             ...(osPatchMissingPatches !== undefined && { osPatchMissingPatches }),
             ...(sqlPatchMissingPatches !== undefined && { sqlPatchMissingPatches }),
-            ...(computeRightsizingViolations !== undefined && { computeRightsizingViolations })
+            ...(computeRightsizingViolations !== undefined && { computeRightsizingViolations }),
+            // Add missing permissions for dialog handling
+            missingPermissions: assessment.missingPermissions || []
         };
 
         // Only add dismissedObj if the card is actually dismissed/postponed/activating

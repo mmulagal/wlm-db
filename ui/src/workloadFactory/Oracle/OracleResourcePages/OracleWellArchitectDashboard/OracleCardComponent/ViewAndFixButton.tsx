@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import styles from './OracleCardComponent.module.scss';
 import {
     ACTION_CTA,
-    ASSESSMENT_CONFIG_NAMES,
+    ASSESSMENT_CONFIG_IDS,
     CONFIG_STATES,
     DBType,
     GETWELL_STATUS,
@@ -44,7 +44,8 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }:
 
     // Get config ID from flat API format (cardData.id) or fallback to legacy format (block_one.value)
     const configId = cardData?.id || cardData?.block_one?.value || '';
-    const status = cardData?.status || cardData?.block_two?.value;
+    // Use block_two.value (transformed status with capital letters) or fallback to cardData.status for optimization states
+    const status = cardData?.block_two?.value || cardData?.status;
 
     const handleDifferentNavigation = () => {
         // Use registry-based routing: check if this config has an inner page
@@ -89,16 +90,20 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }:
             return { isDisable: true, reason: '' };
         }
 
-        if (isWad && type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+        if (isWad && type === ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT) {
             return {
                 isDisable: true,
                 reason: t('databases.wad.tab-disabled-message-oracle')
             };
         }
 
-        if (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM) {
-            // Enable for File system headroom when status is under-provisioned or over-provisioned
-            const enabledStatuses = [GETWELL_STATUS.UNDER_PROVISIONED, GETWELL_STATUS.OVER_PROVISIONED];
+        if (type === ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM) {
+            // Enable for File system headroom when status is under-provisioned, not-optimized, or over-provisioned
+            const enabledStatuses = [
+                GETWELL_STATUS.UNDER_PROVISIONED,
+                GETWELL_STATUS.NOT_OPTIMIZED,
+                GETWELL_STATUS.OVER_PROVISIONED
+            ];
             return { isDisable: loading || !status || !enabledStatuses.includes(status), reason: '' };
         }
 

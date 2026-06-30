@@ -18,7 +18,6 @@ interface ConfigTableRowData {
 
 type HandleImpactedResourceDialog = (rowData: ConfigTableRowData) => void;
 
-
 export const ORACLE_ISCSI_ONLY_CONFIG_IDS = new Set<string>([
     ASSESSMENT_CONFIG_IDS.TRANSPARENT_HUGEPAGES,
     ASSESSMENT_CONFIG_IDS.TCP_ADVANCED_OPTIONS,

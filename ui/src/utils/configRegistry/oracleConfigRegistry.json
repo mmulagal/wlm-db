@@ -1027,12 +1027,12 @@
                 {
                     "heading": "databases.well-architect.action-summary",
                     "type": "text",
-                    "content": "databases.well-architect.file-system-headroom-with-permission"
+                    "content": "databases.well-architect.oracle-file-system-headroom-without-permission-action-summary"
                 },
                 {
                     "heading": "databases.well-architect.what-will-happen",
                     "type": "text",
-                    "content": "databases.well-architect.file-system-headroom-with-permission-content",
+                    "content": "databases.well-architect.oracle-file-system-headroom-without-permission-what-will-happen",
                     "hideWhenWad": true
                 }
             ],
@@ -1084,7 +1084,8 @@
                                 "databases.well-architect.oracle-filesystem-headroom-optimization-step7"
                             ]
                         }
-                    ]
+                    ],
+                    "notes": null
                 },
                 {
                     "when": {
@@ -1126,7 +1127,8 @@
                                 "width": "712px"
                             }
                         }
-                    ]
+                    ],
+                    "notes": null
                 }
             ]
         }

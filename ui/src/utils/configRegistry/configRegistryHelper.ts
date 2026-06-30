@@ -639,24 +639,33 @@ export const hasFixSupport = (
     // Normalize status to lowercase and replace spaces with hyphens
     const normalizedStatus = status?.toLowerCase().replace(/\s+/g, '-');
 
-    if (configId === 'headroom' || configId === 'file-system-headroom') {
-        // Over-provisioned headroom cannot be fixed
-        if (normalizedStatus === 'over-provisioned') return false;
-        // Under-provisioned headroom with missing permissions cannot be fixed
-        if (normalizedStatus === 'under-provisioned' && missingPermissions && missingPermissions.length > 0)
-            return false;
-        // For Oracle, headroom is fixable
-        // For MSSQL, check registry entry
-        if (dbType === DBType.ORACLE) return true;
-    }
+    // Storage capacity configs (headroom, log-drive-size, tempdb-drive-size) have special fix rules
+    // These configs can be over-provisioned or under-provisioned and have conditional fix support
+    const storageCapacityConfigs: string[] = [
+        ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM,
+        ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM_MSSQL,
+        ASSESSMENT_CONFIG_IDS.LOG_DRIVE_SIZE,
+        ASSESSMENT_CONFIG_IDS.TEMPDB_DRIVE_SIZE
+    ];
 
-    if (
-        (configId === 'log-drive-size' || configId === 'tempdb-drive-size') &&
-        normalizedStatus === 'under-provisioned' &&
-        missingPermissions &&
-        missingPermissions.length > 0
-    ) {
-        return false;
+    if (storageCapacityConfigs.includes(configId)) {
+        // Over-provisioned storage capacity configs cannot be fixed
+        if (normalizedStatus === WELL_ARCHITECTED_STATUS.OVER_PROVISIONED) return false;
+        // Under-provisioned with missing permissions cannot be fixed
+        if (
+            normalizedStatus === WELL_ARCHITECTED_STATUS.UNDER_PROVISIONED &&
+            missingPermissions &&
+            missingPermissions.length > 0
+        )
+            return false;
+        // For Oracle headroom, it's fixable (if not over-provisioned or missing permissions)
+        // For MSSQL, check registry entry
+        if (
+            dbType === DBType.ORACLE &&
+            (configId === ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM ||
+                configId === ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM_MSSQL)
+        )
+            return true;
     }
 
     const entry = getRegistry(dbType)[configId];
