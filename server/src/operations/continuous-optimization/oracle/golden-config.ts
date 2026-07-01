@@ -186,7 +186,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'tiering-tco-optimization',
-        name: 'Tiering / TCO Optimization',
+        name: 'Tiering / TCO optimization',
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',
@@ -259,7 +259,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── configuration / volume_or_lun (applicableTo: iscsi) ────────────────
     {
         id: 'block-device-space-management',
-        name: 'Block Device Space Management',
+        name: 'Block device space management',
         type: 'storage',
         subType: 'configuration',
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME_OR_LUN,
@@ -287,7 +287,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'multipath-io',
         id: 'multipath-io',
-        name: 'Multipath I/O Status',
+        name: 'Multipath I/O status',
         recommended: 'enabled',
         type: 'storage',
         subType: 'configuration',
@@ -303,7 +303,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'host-utilities',
         id: 'host-utilities',
-        name: 'Host Utilities',
+        name: 'Host utilities',
         recommended: 'installed',
         type: 'storage',
         subType: 'configuration',
@@ -319,7 +319,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'multipath-io-sessions',
         id: 'multipath-io-sessions',
-        name: 'Multipath I/O Sessions',
+        name: 'Multipath I/O sessions',
         recommended: '4',
         type: 'storage',
         subType: 'configuration',
@@ -335,7 +335,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'transparent-hugepages',
         id: 'transparent-hugepages',
-        name: 'Transparent Hugepages',
+        name: 'Transparent hugepages',
         recommended: 'disabled',
         type: 'compute',
         subType: 'configuration',
@@ -351,7 +351,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'iscsi-replacement-timeout',
         id: 'iscsi-replacement-timeout',
-        name: 'iSCSI Replacement Timeout',
+        name: 'iSCSI replacement timeout',
         recommended: '5',
         type: 'storage',
         subType: 'configuration',
@@ -367,7 +367,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'multipath-friendly-names',
         id: 'multipath-friendly-names',
-        name: 'Multipath Friendly Names',
+        name: 'Multipath friendly names',
         recommended: 'enabled',
         type: 'storage',
         subType: 'configuration',
@@ -383,7 +383,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'tcp-advanced-options',
         id: 'tcp-advanced-options',
-        name: 'TCP Advanced Options',
+        name: 'TCP advanced options',
         recommended: 'enabled',
         type: 'compute',
         subType: 'configuration',
@@ -398,7 +398,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'filesystems-io-options',
         id: 'filesystems-io-options',
-        name: 'Filesystems I/O Options',
+        name: 'Filesystems I/O options',
         recommended: 'setall',
         type: 'compute',
         subType: 'configuration',
@@ -414,7 +414,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'multiblock-readcount',
         id: 'multiblock-readcount',
-        name: 'Multiblock Read Count',
+        name: 'Multiblock read count',
         recommended: 'disabled',
         type: 'compute',
         subType: 'configuration',
@@ -430,7 +430,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'multipath-configuration',
         id: 'multipath-configuration',
-        name: 'Multipath Configuration',
+        name: 'Multipath configuration',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -448,7 +448,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'asm-setup',
         id: 'asm-setup',
-        name: 'ASM Setup',
+        name: 'ASM setup',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -464,7 +464,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'asm-external-redundancy',
         id: 'asm-external-redundancy',
-        name: 'ASM External Redundancy',
+        name: 'ASM external redundancy',
         recommended: '',
         type: 'storage',
         subType: 'configuration',
@@ -480,7 +480,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'afd-logical-block-size',
         id: 'afd-logical-block-size',
-        name: 'AFD Logical Block Size',
+        name: 'AFD logical block size',
         recommended: '1',
         type: 'storage',
         subType: 'configuration',
@@ -496,7 +496,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'asmlib-logical-block-size',
         id: 'asmlib-logical-block-size',
-        name: 'ASMLIB Logical Block Size',
+        name: 'ASMLIB logical block size',
         recommended: 'true',
         type: 'storage',
         subType: 'configuration',
@@ -782,7 +782,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'data-dg-lun-layout',
         id: 'data-dg-lun-layout',
-        name: 'ASM Data Disk Group LUNs',
+        name: 'ASM data disk group LUNs',
         recommended: 'associated-lun-count',
         type: 'storage',
         subType: 'layout',
@@ -801,7 +801,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'redolog-dg-lun-layout',
         id: 'redolog-dg-lun-layout',
-        name: 'ASM Logs Disk Group LUNs',
+        name: 'ASM logs disk group LUNs',
         recommended: 'associated-lun-count',
         type: 'storage',
         subType: 'layout',
@@ -820,7 +820,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'fra-dg-lun-layout',
         id: 'fra-dg-lun-layout',
-        name: 'ASM FRA Disk Group LUNs',
+        name: 'ASM FRA disk group LUNs',
         recommended: 'associated-lun-count',
         type: 'storage',
         subType: 'layout',
@@ -839,7 +839,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'archivelog-dg-lun-layout',
         id: 'archivelog-dg-lun-layout',
-        name: 'ASM Archive Log Disk Group LUNs',
+        name: 'ASM archive log disk group LUNs',
         recommended: 'associated-lun-count',
         type: 'storage',
         subType: 'layout',
@@ -905,7 +905,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'crr',
-        name: 'Cross-Region Replication (CRR)',
+        name: 'Cross-region replication (CRR)',
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         type: 'resiliency',
         subType: 'resiliency',

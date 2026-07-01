@@ -1744,8 +1744,8 @@ const highAvailabilityAssessmentTemplate = `
         # ----------------------------------------
         Write-Information "Checking SQL Server service configuration..."
         try {
-            $serviceName = if ($serverInstanceName -and $serverInstanceName.ToUpper() -ne "MSSQLSERVER") { 
-                "MSSQL\`$$serverInstanceName" 
+            $serviceName = if ($extractedInstanceName -and $extractedInstanceName.ToUpper() -ne "MSSQLSERVER") { 
+                "MSSQL\`$$extractedInstanceName" 
             } else { 
                 "MSSQLSERVER" 
             }
