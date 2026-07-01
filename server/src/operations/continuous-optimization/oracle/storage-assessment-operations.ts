@@ -1410,6 +1410,7 @@ function evaluateOneVolumeParameter(
                 recommended = compressionRecommendations['log-files'];
                 dataCategory = volumeMembership >= 2 ? 'mixed' : 'log-files';
             } else {
+                value = currentCompression === 'none' ? 'none' : value;
                 recommended = compressionRecommendations.others;
                 dataCategory = 'non-log-files';
             }

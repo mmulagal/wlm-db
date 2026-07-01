@@ -398,6 +398,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                 'snapshot-policy' = $perVolumeData.snapshot_policy.name
                 'tiering-policy' = $perVolumeData.tiering.policy
                 'tiering-min-cooling-days' = $perVolumeData.tiering.min_cooling_days
+                'compression' = $perVolumeData.efficiency.compression
                 'compressionType' = $perVolumeData.efficiency.compression_type
                 'deduplication' = $perVolumeData.efficiency.dedupe
                 'compaction' = $perVolumeData.efficiency.compaction

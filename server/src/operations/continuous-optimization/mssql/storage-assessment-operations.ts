@@ -483,17 +483,32 @@ function getTempDbVolumeDrift(
     };
 }
 
-function isStorageEfficiencyEnabled(parameter: string, value: unknown): boolean {
+function evaluateStorageEfficiencyParameter(
+    parameter: string,
+    volume: Record<string, unknown>
+): { optimized: boolean; current: string } {
+    const value = volume[parameter];
     const normalized = String(value ?? '').toLowerCase();
     switch (parameter) {
-        case 'compressionType':
-            return normalized === 'adaptive';
+        case 'compressionType': {
+            const currentCompression = (volume.compression ?? '').toString();
+            return {
+                optimized: currentCompression !== 'none' && normalized === 'adaptive',
+                current: currentCompression === 'none' ? 'none' : String(value ?? '')
+            };
+        }
         case 'deduplication':
-            return normalized === 'inline' || normalized === 'both';
+            return {
+                optimized: normalized === 'inline' || normalized === 'both',
+                current: String(value ?? '')
+            };
         case 'compaction':
-            return normalized === 'enabled' || normalized === 'inline';
+            return {
+                optimized: normalized === 'enabled' || normalized === 'inline',
+                current: String(value ?? '')
+            };
         default:
-            return true;
+            return { optimized: true, current: String(value ?? '') };
     }
 }
 
@@ -520,12 +535,10 @@ function buildStorageEfficienciesEntry(
         if (typeof volumeName !== 'string' || volumeName.length === 0) {
             return;
         }
-        const violatedConfigs: ViolatedConfigType[] = storageEfficienciesComponents
-            .filter(({ parameter }) => !isStorageEfficiencyEnabled(parameter, volume[parameter]))
-            .map(({ parameter, name }) => ({
-                id: name ?? parameter,
-                current: String(volume[parameter] ?? '')
-            }));
+        const violatedConfigs: ViolatedConfigType[] = storageEfficienciesComponents.flatMap(({ parameter, name }) => {
+            const { optimized, current } = evaluateStorageEfficiencyParameter(parameter, volume);
+            return optimized ? [] : [{ id: name ?? parameter, current }];
+        });
         if (violatedConfigs.length === 0) {
             return;
         }

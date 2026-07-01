@@ -384,7 +384,12 @@ describe('calculateStorageDrift storage-efficiencies', () => {
                 volumes: [
                     optimizedEfficiencyVolume('v1'),
                     { name: 'v2', compressionType: 'none', deduplication: 'inline', compaction: 'inline' },
-                    { name: 'v3', compressionType: 'adaptive', deduplication: 'background', compaction: 'none' }
+                    {
+                        name: 'v3',
+                        compressionType: 'adaptive',
+                        deduplication: 'background',
+                        compaction: 'none'
+                    }
                 ]
             })
         );
@@ -410,6 +415,29 @@ describe('calculateStorageDrift storage-efficiencies', () => {
                         { id: 'deduplication', current: 'background' },
                         { id: 'compaction', current: 'none' }
                     ]
+                }
+            ]
+        });
+    });
+
+    it('should flag compression when enabled but compressionType is not adaptive', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                volumes: [
+                    optimizedEfficiencyVolume('v1'),
+                    { name: 'v2', compressionType: 'secondary', deduplication: 'inline', compaction: 'inline' }
+                ]
+            })
+        );
+        const entry = drift.find(item => 'id' in item && item.id === OptimizeStorageConfigs.STORAGE_EFFICIENCIES);
+
+        expect(entry).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            objectsInViolation: ['v2'],
+            violationDetails: [
+                {
+                    objectName: 'v2',
+                    violatedConfigs: [{ id: 'compression', current: 'secondary' }]
                 }
             ]
         });
