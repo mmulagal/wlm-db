@@ -1,5 +1,7 @@
-import { afterAll, beforeAll } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { STORAGE_TYPE } from '@prisma/client';
+import * as ssmOps from '../../../src/operations/aws/ssm-operations';
+import * as utils from '../../../src/utils/utils';
 import mssqlResponse from '../../simulator/responses/workload/mssql-operations-response.json';
 import {
     ACCOUNT_ID,
@@ -8,6 +10,12 @@ import {
     STANDBY_INSTANCE_ID,
     DEFAULT_AWS_REGION
 } from '../../utils/consts';
+import {
+    DATABASE_METRIC_TYPE,
+    DEFAULT_INSTANCE_NAME,
+    DEFAULT_MSSQL_INSTANCE_NAME,
+    SqlServerDeploymentModel
+} from '../../../src/utils/consts';
 import {
     getDatabasesCount,
     getDataBasesSummary,
@@ -26,11 +34,11 @@ import {
     getMssqlInstanceGuid,
     getAllInstanceDetails,
     getActiveSqlNodeAndInstanceDetails,
+    getActiveSqlInstanceName,
     getPerformanceMetrics
 } from '../../../src/operations/workloads/mssql/mssql-operations';
 import { MappedOnTapVolumeResponse } from '../../../src/utils/common-types';
 import { createResource, deleteResource, listResources } from '../../../src/lib/database/db';
-import { DATABASE_METRIC_TYPE, DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../src/utils/consts';
 
 beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
@@ -55,6 +63,11 @@ afterAll(async () => {
     await deleteResource(ACCOUNT_ID, '36E53042-04E8-40C9-AE69-26E56CB0D216');
     await deleteResource(ACCOUNT_ID, 'fs-f6082f35c1db');
 });
+
+afterEach(() => {
+    vi.restoreAllMocks();
+});
+
 describe('MSSQL Resource methods', () => {
     it('Get memory utilization', async () => {
         const resp = await getResourceUtilisation('36E53042-04E8-40C9-AE69-26E56CB0D216', DATABASE_METRIC_TYPE.MEMORY);
@@ -279,5 +292,29 @@ describe('MSSQL Resource methods', () => {
             DEFAULT_INSTANCE_NAME
         );
         expect(resp?.matchingInstance).toMatchObject(mssqlResponse.mssqlServerInstanceDetails);
+    });
+
+    it('should select FCI cluster-owned named instance when default is stopped and multiple named instances are running', async () => {
+        const fciNamedInstance = 'MyInstance';
+        const ssmOutput = [
+            JSON.stringify([
+                { instanceName: 'MSSQLSERVER', instanceState: 'Stopped' },
+                { instanceName: `MSSQL$${fciNamedInstance}`, instanceState: 'Running' },
+                { instanceName: 'MSSQL$OtherInstance', instanceState: 'Running' }
+            ]),
+            JSON.stringify({ fqdn: 'fci-host.example.com' }),
+            JSON.stringify({ ipAddress: '10.0.0.1' }),
+            JSON.stringify({ clusterName: 'TEST-WSFC', fciActiveInstances: [fciNamedInstance] })
+        ].join(',');
+
+        vi.spyOn(ssmOps, 'callSsmExecution').mockResolvedValueOnce(ssmOutput);
+        vi.spyOn(utils, 'getDatabaseInstanceName').mockImplementation(instanceName => instanceName);
+
+        const resp = await getActiveSqlInstanceName(CREDENTIALS_ID, DEFAULT_AWS_REGION, {
+            nodeIds: [ACTIVE_INSTANCE_ID],
+            sqlDeploymentType: SqlServerDeploymentModel.SQL_FCI_SHORT
+        });
+
+        expect(resp?.instanceName).toBe(fciNamedInstance);
     });
 });

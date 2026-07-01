@@ -61,7 +61,7 @@ import {
     sqlQueryExecutionWithAuth,
     GET_FQDN,
     GET_NODE_IP_ADDRESS,
-    GET_CLUSTER_NAME
+    GET_CLUSTER_NAME_AND_FCI_INSTANCES
 } from '../../../../src/operations/workloads/mssql/ssm-script-utils';
 import {
     SERVER_DETAILS,
@@ -354,7 +354,7 @@ const instanceDetails = {
 };
 
 const instanceDetailsWithFqdnAndIp = {
-    commands: [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS, GET_CLUSTER_NAME]
+    commands: [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS, GET_CLUSTER_NAME_AND_FCI_INSTANCES]
 };
 
 const cloneVolumeCommand = {
@@ -1599,7 +1599,8 @@ ssmMock
             })},${JSON.stringify({
                 ipAddress: '168.154.0.0'
             })},${JSON.stringify({
-                clusterName: 'WLMWSFC-51927'
+                clusterName: 'WLMWSFC-51927',
+                fciActiveInstances: ['MSSQLSERVER']
             })}`
         )
     )

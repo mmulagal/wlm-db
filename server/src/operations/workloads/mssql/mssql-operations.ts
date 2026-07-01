@@ -64,7 +64,7 @@ import {
     VolumeSpaceRecord
 } from '../../../utils/common-types';
 import {
-    GET_CLUSTER_NAME,
+    GET_CLUSTER_NAME_AND_FCI_INSTANCES,
     GET_FQDN,
     GET_NODE_IP_ADDRESS,
     getMappedOntapVolumesScript,
@@ -839,14 +839,41 @@ async function getServerIOLatency(resourceId: string, activeNodeInstanceId: stri
     }
 }
 
+function pickClusterOwnedRunningInstance(
+    runningInstances: InstanceDetails[],
+    fciActiveInstances: string[]
+): InstanceDetails | undefined {
+    const byName = new Map<string, InstanceDetails>();
+    let defaultInstance: InstanceDetails | undefined;
+    for (const inst of runningInstances) {
+        if (inst.isDefault === true && !defaultInstance) {
+            defaultInstance = inst;
+        }
+        const key = inst.instanceName.toUpperCase();
+        if (!byName.has(key)) {
+            byName.set(key, inst);
+        }
+    }
+    for (const fciName of fciActiveInstances) {
+        const normalizedFci = fciName.toUpperCase();
+        const match = normalizedFci === 'MSSQLSERVER' ? defaultInstance : byName.get(normalizedFci);
+        if (match) {
+            return match;
+        }
+    }
+    return undefined;
+}
+
 async function getActiveSqlInstanceName(
     credentialsId: string,
     region: string,
     { nodeIds, sqlDeploymentType }: { nodeIds: string[]; sqlDeploymentType: SqlServerDeploymentModel }
 ) {
-    logger.info('Fetch active MSSQL instance Name', { credentialsId, region });
+    logger.info('Fetch active MSSQL instance Name', { credentialsId, region, sqlDeploymentType });
 
-    const commands = [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS, GET_CLUSTER_NAME];
+    const isFci = sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT;
+
+    const commands = [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS, GET_CLUSTER_NAME_AND_FCI_INSTANCES];
     try {
         for await (const nodeId of nodeIds) {
             const response = await callSsmExecution({
@@ -858,7 +885,16 @@ async function getActiveSqlInstanceName(
             });
             if (response) {
                 const parsedResponse = parseMultipleCommandResponse(response);
-                const [parsedInstancesDetails, { fqdn }, { ipAddress }, { clusterName }] = parsedResponse;
+                const [parsedInstancesDetails, fqdnPayload, ipPayload, clusterPayload] = parsedResponse;
+                const { fqdn } = (fqdnPayload ?? {}) as { fqdn?: string };
+                const { ipAddress } = (ipPayload ?? {}) as { ipAddress?: string };
+                const { clusterName, fciActiveInstances: rawFciActiveInstances } = (clusterPayload ?? {}) as {
+                    clusterName?: string;
+                    fciActiveInstances?: unknown;
+                };
+                const fciActiveInstances = Array.isArray(rawFciActiveInstances)
+                    ? rawFciActiveInstances.filter((name): name is string => typeof name === 'string')
+                    : [];
                 const instancesDetails = Array.isArray(parsedInstancesDetails)
                     ? parsedInstancesDetails
                     : [parsedInstancesDetails];
@@ -881,12 +917,15 @@ async function getActiveSqlInstanceName(
                         (instance): instance is InstanceDetails => instance.instanceState === SQL_SERVICE_STATE.RUNNING
                     );
 
-                    // DBS-6183: under FCI, only accept the fallback when it is unambiguous.
-                    // With 2+ running instances on this FCI node we cannot distinguish the FCI's
-                    // active instance from an unrelated standalone, so leave selectedInstance
-                    // undefined and let getActiveSqlNode try the other node.
-                    const isFci = sqlDeploymentType === SqlServerDeploymentModel.SQL_FCI_SHORT;
-                    if (runningInstances.length > 0 && (!isFci || runningInstances.length === 1)) {
+                    // First cluster-owned match is enough for host-level active-node resolution;
+                    // instance-specific work uses getActiveSqlNodeAndInstanceDetails.
+                    if (isFci && fciActiveInstances.length) {
+                        const fciMatch = pickClusterOwnedRunningInstance(runningInstances, fciActiveInstances);
+                        if (fciMatch) {
+                            selectedInstance = fciMatch.instanceName;
+                            isDefaultInstance = fciMatch.isDefault === true;
+                        }
+                    } else if (runningInstances.length > 0 && (!isFci || runningInstances.length === 1)) {
                         selectedInstance = runningInstances[0].instanceName;
                         isDefaultInstance = runningInstances[0].isDefault === true;
                     }

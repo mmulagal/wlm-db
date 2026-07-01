@@ -2715,14 +2715,30 @@ const GET_FQDN = `
     @{ fqdn = $fqdn } | ConvertTo-Json -Compress
 `;
 
-const GET_CLUSTER_NAME = `
+const GET_CLUSTER_NAME_AND_FCI_INSTANCES = `
+    $clusterName = $null
+    $fciActiveInstances = @()
     Try {
         $clusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
+        $localNode = Get-ClusterNode -Name $env:COMPUTERNAME -ErrorAction SilentlyContinue
+        if (-not $localNode) {
+            $localNode = Get-ClusterNode -Name (hostname) -ErrorAction SilentlyContinue
+        }
+        if ($localNode) {
+            Get-ClusterGroup -ErrorAction SilentlyContinue | Where-Object {
+                $_.OwnerNode.Id -eq $localNode.Id
+            } | ForEach-Object {
+                if ($_.Name -match '^SQL Server(?: \\((.+)\\))?$') {
+                    $fciActiveInstances += if ($Matches[1]) { $Matches[1] } else { 'MSSQLSERVER' }
+                }
+            }
+        }
     }
     Catch {
         $clusterName = $null
+        $fciActiveInstances = @()
     }
-    @{ clusterName = $clusterName } | ConvertTo-Json -Compress
+    @{ clusterName = $clusterName; fciActiveInstances = @($fciActiveInstances) } | ConvertTo-Json -Compress
 `;
 
 export {
@@ -2748,7 +2764,7 @@ export {
     trendGraphCreateScriptForMssql,
     GET_NODE_IP_ADDRESS,
     GET_FQDN,
-    GET_CLUSTER_NAME,
+    GET_CLUSTER_NAME_AND_FCI_INSTANCES,
     buildAoagQuery,
     getAoagDetailsScript,
     GET_FCI_OWNER_MAPPING_FUNCTION

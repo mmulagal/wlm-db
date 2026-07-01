@@ -286,5 +286,6 @@ describe('Database host operations', () => {
             false
         );
         expect(resp).toBeDefined();
+        expect(resp.databaseHostStatus).toEqual('ONLINE');
     });
 });
