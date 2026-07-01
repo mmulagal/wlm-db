@@ -400,9 +400,11 @@ const MssqlAssessmentItem = Type.Intersect([
 ]);
 type MssqlAssessmentItemType = Static<typeof MssqlAssessmentItem>;
 
+const MssqlAssessmentItemsResponseSchema = Type.Array(Type.Union([MssqlAssessmentItem, AssessmentErrorItem]));
+
 /** MSSQL-specific assessment response that preserves all MSSQL-specific assessment fields. */
 const MssqlAssessmentResponse = Type.Object({
-    assessments: Type.Array(Type.Union([MssqlAssessmentItem, AssessmentErrorItem])),
+    assessments: MssqlAssessmentItemsResponseSchema,
     dismissedConfigurations: Type.Array(DismissedConfiguration),
     metadata: AssessmentMetadata
 });
@@ -893,6 +895,7 @@ export {
     BulkOptimizeBackupPerHostRequestBodyType,
     MssqlPatchScanField,
     MssqlPatchScanFieldType,
+    MssqlAssessmentItemsResponseSchema,
     MssqlAssessmentResponseV1,
     MssqlAssessmentResponseV1Type
 };

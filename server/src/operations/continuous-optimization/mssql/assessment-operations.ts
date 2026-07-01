@@ -92,7 +92,8 @@ import {
     MssqlAssessmentResponse,
     MssqlAssessmentResponseType,
     MssqlAssessmentResponseV1Type,
-    MssqlAssessmentResponseV1
+    MssqlAssessmentResponseV1,
+    MssqlAssessmentItemsResponseSchema
 } from '../../../routes/types/mssql-continuous-optimisation.types';
 import {
     type AssessmentItemType,
@@ -636,7 +637,7 @@ async function fetchMssqlDriftAssessmentPerHost(
         );
     }
 
-    const { isValid, errors: validationErrors } = validateWithSchema(MssqlAssessmentResponse, hostLevelData);
+    const { isValid, errors: validationErrors } = validateWithSchema(MssqlAssessmentItemsResponseSchema, hostLevelData);
     if (!isValid) {
         logger.error('Host level assessment validation failed for :', { databaseHostId, validationErrors });
         hostLevelData = [];
