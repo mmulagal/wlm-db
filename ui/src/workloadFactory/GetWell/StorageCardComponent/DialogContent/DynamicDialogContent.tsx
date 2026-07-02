@@ -517,7 +517,14 @@ const DynamicDialogContent = ({
                 <div className={styles['first-section']}>
                     <div className={styles['heading-with-loader']}>
                         <DsTypography variant="Semibold_14">
-                            {t('databases.well-architect.oracle-os-patch-missing-patches')}
+                            {configId === ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH && engineType === DBType.MSSQL
+                                ? t('databases.well-architect.mssql-os-patch-missing-patches')
+                                : configId === ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH &&
+                                  engineType === DBType.ORACLE
+                                ? t('databases.well-architect.oracle-os-patch-missing-patches')
+                                : configId === ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH
+                                ? t('databases.well-architect.oracle-critical-patch-security-patches')
+                                : t('databases.well-architect.oracle-os-patch-missing-patches')}
                         </DsTypography>
                     </div>
                     <div className={styles.table}>

@@ -685,6 +685,40 @@
                         "width": "144px"
                     }
                 ]
+            },
+            "postPatchSections": [
+                {
+                    "heading": "databases.well-architect.mssql-os-patch-action-required",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-os-patch-line1"
+                },
+                {
+                    "heading": "databases.well-architect.mssql-os-patch-option1",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.mssql-os-patch-option1-content1",
+                        "databases.well-architect.mssql-os-patch-option1-content2",
+                        "databases.well-architect.mssql-os-patch-option1-content3",
+                        "databases.well-architect.mssql-os-patch-option1-content4",
+                        "databases.well-architect.mssql-os-patch-option1-content5"
+                    ]
+                },
+                {
+                    "heading": "databases.well-architect.mssql-os-patch-option2",
+                    "type": "numberedSteps",
+                    "items": [
+                        "databases.well-architect.mssql-os-patch-option2-content1",
+                        "databases.well-architect.mssql-os-patch-option2-content2",
+                        "databases.well-architect.mssql-os-patch-option2-content3",
+                        "databases.well-architect.mssql-os-patch-option2-content4",
+                        "databases.well-architect.mssql-os-patch-option2-content5",
+                        "databases.well-architect.mssql-os-patch-option2-content6"
+                    ]
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.mssql-os-patch-note2"
             }
         }
     },

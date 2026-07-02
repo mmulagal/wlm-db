@@ -2462,6 +2462,12 @@
         "viewOnly": false,
         "fixSupported": true,
         "linkedConfigGroup": "ontap",
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
+        },
         "cardMetadata": {
             "impactedLabel": "Impacted volumes",
             "countSource": "impactedCount",

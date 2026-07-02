@@ -2357,7 +2357,7 @@ export const formatFlatAssessments = (
         // Get correct block_six.type label based on config
         let blockSixType = '';
         if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH)) {
-            blockSixType = BLOCK_SIX_LABELS.FINDING_REASONS;
+            blockSixType = BLOCK_SIX_LABELS.MISSING_PATCHES;
         } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH)) {
             blockSixType = BLOCK_SIX_LABELS.MISSING_PATCHES;
         } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING)) {
@@ -2466,6 +2466,106 @@ export const formatFlatAssessments = (
         }
     });
 
+    // Handle configs that exist in dismissedConfigurations but not in assessments
+    // This happens when configs are dismissed from different categories and not re-assessed
+    if (data.dismissedConfigurations && Array.isArray(data.dismissedConfigurations)) {
+        data.dismissedConfigurations.forEach((dismissedConfig: any) => {
+            const configId = dismissedConfig.id;
+
+            // Check if card already exists
+            if (!cardsData[configId]) {
+                // Create synthetic card from dismissedConfigurations data
+                const displayName = dismissedConfig.name || configId;
+                const category = dismissedConfig.type || '';
+                const severity = dismissedConfig.severity
+                    ? dismissedConfig.severity.charAt(0).toUpperCase() + dismissedConfig.severity.slice(1)
+                    : '';
+                const blockOneType = getBlockOneType(configId, category);
+
+                // Create the card with available data from dismissedConfigurations
+                cardsData[configId] = {
+                    id: configId,
+                    configurationId: configId,
+                    name: displayName,
+                    category,
+                    block_one: {
+                        value: displayName,
+                        type: blockOneType
+                    },
+                    block_two: {
+                        type: 'Status',
+                        value: GETWELL_STATUS.NOT_OPTIMIZED
+                    },
+                    block_three: {
+                        type: 'Current',
+                        value: ''
+                    },
+                    block_four: {
+                        type: 'Severity',
+                        value: severity
+                    },
+                    block_five: {
+                        type: 'Resource type',
+                        value: dismissedConfig.subType || dismissedConfig.type || ''
+                    },
+                    block_six: {
+                        type: BLOCK_SIX_LABELS.IMPACTED_RESOURCES,
+                        value: '0 out of 0',
+                        count: { totalObjectsInViolation: 0, totalObjectsAssessed: 0 },
+                        smallFont: false
+                    },
+                    recommendation: (() => {
+                        const staticRecommendation = getRecommendation(configId, DBType.MSSQL);
+
+                        if (staticRecommendation) {
+                            return {
+                                title: staticRecommendation.title || `${displayName} recommendation`,
+                                description: staticRecommendation.description,
+                                descriptionList: staticRecommendation.descriptionList,
+                                descriptionRssConfig: staticRecommendation.descriptionRssConfig,
+                                info: staticRecommendation.info,
+                                valuesHeading: staticRecommendation.valuesHeading,
+                                values: staticRecommendation.values
+                            };
+                        }
+
+                        return dismissedConfig.recommendation
+                            ? {
+                                  title: `${displayName} recommendation`,
+                                  description: dismissedConfig.recommendation
+                              }
+                            : undefined;
+                    })(),
+                    recommendationText: (() => {
+                        const staticRecommendation = getRecommendation(configId, DBType.MSSQL);
+                        return staticRecommendation?.description || dismissedConfig.recommendation;
+                    })(),
+                    categories: dismissedConfig.categories || [],
+                    tags: dismissedConfig.categories || [],
+                    objectsInViolation: [],
+                    violationDetails: [],
+                    status: '',
+                    missingPermissions: []
+                };
+
+                // Add dismissedObj to the synthetic card
+                const configName = displayName || dismissedConfig.configurationName || configId;
+                cardsData[configId].dismissedObj = {
+                    configState: dismissedConfig.configState,
+                    startTime: dismissedConfig.startTime,
+                    endTime: dismissedConfig.endTime,
+                    configurationName: configName
+                };
+            } else {
+                // Card exists, just ensure dismissedObj is added if not already present
+                const dismissState = getDismissedState(dismissedConfig, [dismissedConfig]);
+                if (dismissState.configState && dismissState.configState !== CONFIG_STATES.ACTIVE) {
+                    cardsData[configId].dismissedObj = dismissState;
+                }
+            }
+        });
+    }
+
     return { cardsData };
 };
 
@@ -2541,10 +2641,15 @@ export const formatGetWellDataFlat = (
 
     // Set timestamps
     // Format and dispatch the assessment timestamp
+    // ponytail: if lastAssessmentTimestamp is 0/null/undefined, pass '0' to show "No analysis performed" in UI
+    const timestampValue = data.metadata?.lastAssessmentTimestamp;
     const formattedTimestamp =
-        data.metadata?.lastAssessmentTimestamp && !isNaN(Number(data.metadata?.lastAssessmentTimestamp))
-            ? formatDateWithTime(data.metadata?.lastAssessmentTimestamp)
-            : getCurrentDateTime();
+        timestampValue !== undefined &&
+        timestampValue !== null &&
+        !isNaN(Number(timestampValue)) &&
+        Number(timestampValue) !== 0
+            ? formatDateWithTime(timestampValue)
+            : '0';
 
     dispatch(setGwTimestamp(formattedTimestamp));
 

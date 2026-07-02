@@ -248,7 +248,6 @@ const DynamicInnerTable = ({
                 accessor: 'action',
                 id: String(dataColumns.length + 1),
                 isSortable: false,
-                filterOptions: 'auto' as const,
                 isSticky: true,
                 width: '230px',
                 renderCell: (cellData: any, rowData: any) => {

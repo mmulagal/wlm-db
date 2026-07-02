@@ -203,6 +203,10 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
                 security: securityViolations,
                 other: otherViolations
             };
+
+            // Update blockSixValue to show total patch count, not EC2 instance count
+            const totalPatches = criticalViolations + securityViolations + otherViolations;
+            blockSixValue = String(totalPatches);
         }
     } else if (
         isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH) &&
@@ -211,12 +215,15 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
         oracleSecurityPatchMissingPatches = {
             critical: assessment.missingPatchesCount
         };
+
+        // Update blockSixValue to show total patch count
+        blockSixValue = String(assessment.missingPatchesCount);
     }
 
     // Get correct block_six.type label based on config
     let blockSixType = '';
     if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH)) {
-        blockSixType = BLOCK_SIX_LABELS.FINDING_REASONS;
+        blockSixType = BLOCK_SIX_LABELS.MISSING_PATCHES;
     } else if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH)) {
         blockSixType = BLOCK_SIX_LABELS.MISSING_PATCHES;
     } else if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM)) {
@@ -339,12 +346,33 @@ const processOracleFlatAssessments = (data: any, optimizingData: Record<string, 
             // First try direct match with id (card key)
             let matchingCardKey = Object.keys(cardsData).find(key => key === configId);
 
-            // If not found, try matching by the card's name field (fallback for legacy data)
+            // If not found, try matching by the card's name field
             if (!matchingCardKey) {
                 matchingCardKey = Object.keys(cardsData).find(key => {
                     const card = cardsData[key];
                     return card?.name === configId || card?.block_one?.value === configId;
                 });
+            }
+
+            // If no matching card exists, create one from dismissedConfigurations data
+            // This handles configs dismissed from different categories that may not be re-assessed
+            if (!matchingCardKey) {
+                const syntheticAssessment = {
+                    id: dismissedConfig.id,
+                    name: dismissedConfig.name,
+                    type: dismissedConfig.type,
+                    severity: dismissedConfig.severity,
+                    recommendation: dismissedConfig.recommendation,
+                    categories: dismissedConfig.categories || [],
+                    status: WELL_ARCHITECTED_STATUS.NOT_OPTIMIZED,
+                    current: '',
+                    resourceType: dismissedConfig.subType || dismissedConfig.type || '',
+                    objectsInViolation: [],
+                    totalObjectsAssessed: 0,
+                    totalObjectsInViolation: 0
+                };
+                cardsData[configId] = formatOracleFlatAssessmentToCard(syntheticAssessment, optimizingData);
+                matchingCardKey = configId;
             }
 
             if (matchingCardKey && cardsData[matchingCardKey]) {
@@ -760,7 +788,9 @@ export const formatOracleWellArchitectedData = (
     const timestamp = assessmentData?.metadata?.lastAssessmentTimestamp;
 
     // Batch dispatch all data to store
-    const formattedTimestamp = timestamp ? formatTimestamp(timestamp) : getCurrentDateTime();
+    // ponytail: if lastAssessmentTimestamp is 0/null/undefined, pass '0' to show "No analysis performed" in UI
+    const formattedTimestamp =
+        timestamp !== undefined && timestamp !== null && Number(timestamp) !== 0 ? formatTimestamp(timestamp) : '0';
     const dispatchActions = [
         () => dispatch(setCardData(cardsData)),
         () => dispatch(setOptimizationBreakDown(optBreakDown)),

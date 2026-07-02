@@ -204,8 +204,6 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     const navType = useNavigationType();
 
-    
-
     useEffect(() => {
         multiDataStatusRef.current = multiDataStatus;
     }, [multiDataStatus]);
