@@ -15,7 +15,7 @@ import { calculateStorageDrift } from './storage-assessment-operations';
 import { calculateRssConfigDrift } from './rssConfig-assessment-operations';
 import { calculateMaxDOPDrift } from './maxdop-assessment-operations';
 import calculateOneTimeWADCloneDrift from '../clone-assessment-utils';
-import { getHighAvailabilityDriftData, getSnapshotPolicyDriftData } from './resilience-assessment-operation';
+import { getHighAvailabilityDriftData } from './resilience-assessment-operation';
 import {
     generateSqlResourceId,
     calculateRecommendedMaxDOP,
@@ -41,7 +41,6 @@ import {
     RssConfigAssesment,
     DatabaseInstance,
     CloneAssessment,
-    MappedOnTapVolumeResponse,
     VolumeRecord,
     VolumeDBMapEntry,
     LunRecord
@@ -616,16 +615,6 @@ async function fetchMssqlOfflineAssessment(
     } = metadata;
     const { instanceLevelAssessment, rssConfig, headroom, hostLevelHighAvailability, clone } = rawdata;
     const { maxDop, highAvailability } = (instanceLevelAssessment as MSSQLInstanceLevelAssessment) || {};
-    const mappedOntapVolumes = (record.mapped_ontap_volumes as MSSQLOfflineMappedVolumes | null) ?? {};
-    const mappedVolumesForResilience = (isEmpty(mappedOntapVolumes)
-        ? {}
-        : {
-              [databaseInstanceName]: {
-                  volumeRecords: mappedOntapVolumes.volumes?.records ?? [],
-                  volumeDBMap: mappedOntapVolumes.volumeDBMap ?? [],
-                  lunRecords: mappedOntapVolumes.luns ?? []
-              } as MappedOnTapVolumeResponse
-          }) as unknown as MappedOnTapVolumeResponse[];
 
     let maxDopData: MaxDOPAssesment | undefined;
     if (maxDop) {
@@ -712,26 +701,13 @@ async function fetchMssqlOfflineAssessment(
               )
             : undefined;
 
-    const snapshotPolicyResponse =
-        !isEmpty(instanceLevelAssessment) && !isEmpty(storageWithEndpoint)
-            ? await getSnapshotPolicyDriftData(
-                  accountId,
-                  credentialsId ?? '',
-                  region ?? '',
-                  resourceId,
-                  databaseInstanceId,
-                  mappedVolumesForResilience,
-                  instanceLevelAssessment as unknown as StorageAssessment
-              )
-            : undefined;
-
     const assessments: (AssessmentItemType | AssessmentErrorItemType)[] = [];
     [storageWithEndpoint, highAvailabilityResponse].forEach(item => {
         if (!isEmpty(item) && item.length > 0) {
             assessments.push(...item);
         }
     });
-    [headroomItem, rssConfigResponse, maxDOPResponse, cloneDriftResponse, snapshotPolicyResponse].forEach(item => {
+    [headroomItem, rssConfigResponse, maxDOPResponse, cloneDriftResponse].forEach(item => {
         if (!isEmpty(item)) {
             assessments.push(item);
         }

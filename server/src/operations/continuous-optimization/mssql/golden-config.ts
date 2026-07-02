@@ -107,6 +107,28 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         configLevel: 'database'
     },
     {
+        id: 'snapshot-policy',
+        name: 'Snapshot policy',
+        parameter: 'snapshot-policy',
+        value: 'none',
+        categories: [
+            AwsWellArchitecturedPillars.COST_OPTIMIZATION,
+            AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
+            AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
+        ],
+        type: 'storage',
+        subType: 'configuration',
+        focusWidgetName: 'ONTAP',
+        severity: SEVERITY.WARNING,
+        recommended: 'none',
+        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+        recommendation:
+            'Workload Factory recommends disabling snapshots for FSx for ONTAP volumes for MS SQL Server instances to save space and lower costs. MS SQL Server snapshots should be managed externally via tools like SnapCenter, which creates application-consistent snapshots, preventing corruption during restoration.',
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
+    },
+    {
         id: 'space-mgmt-try-first',
         name: 'Space management',
         parameter: 'space-mgmt-try-first',
@@ -123,7 +145,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'tiering-tco-optimization',
-        name: 'Tiering / TCO Optimization',
+        name: 'Cold data tiering',
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',
@@ -198,7 +220,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'block-device-space-management',
-        name: 'Block Device Space Management',
+        name: 'Block device space management',
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',
@@ -224,7 +246,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── configuration / os ──────────────────────────────────────────────────
     {
         id: 'mpio-enabled',
-        name: 'Multipath I/O Status',
+        name: 'Multipath I/O status',
         parameter: 'mpio-enabled',
         value: true,
         type: 'storage',
@@ -239,7 +261,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'mpio-load-balance-policy',
-        name: 'Multipath I/O Policy',
+        name: 'Multipath I/O policy',
         parameter: 'mpio-load-balance-policy',
         value: 'RR',
         type: 'storage',
@@ -254,7 +276,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'mpio-iscsi-count',
-        name: 'Multipath I/O Sessions',
+        name: 'Multipath I/O sessions',
         parameter: 'mpio-iscsi-count',
         value: '5',
         type: 'storage',
@@ -284,7 +306,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'mpio-timeout',
-        name: 'Multipath I/O Timeout',
+        name: 'Multipath I/O timeout',
         parameter: 'mpio-timeout',
         value: DEFAULT_MPIO_TIMEOUT,
         type: 'storage',
@@ -337,7 +359,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'tempdb-files-location',
-        name: 'TempDB Placement',
+        name: 'TempDB placement',
         parameter: 'tempdb-files-location',
         value: 'separate-drive',
         type: 'storage',
@@ -416,7 +438,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     // ── compute ──────────────────────────────────────────────────────────────
     {
         id: 'mtu-alignment',
-        name: 'MTU Alignment',
+        name: 'MTU alignment',
         status: AssessmentStatus.OPTIMIZED,
         recommended: AssessmentStatus.OPTIMIZED,
         type: 'compute',
@@ -431,7 +453,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'host-os-patch',
-        name: 'Operating System Patch',
+        name: 'Operating system patch',
         categories: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
         type: 'compute',
         subType: 'compute',
@@ -457,7 +479,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'compute-rightsizing',
-        name: 'Compute Rightsizing',
+        name: 'Compute rightsizing',
         type: 'compute',
         subType: 'compute',
         focusWidgetName: 'Compute rightsizing',
@@ -471,24 +493,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
 
     // ── resiliency ───────────────────────────────────────────────────────────
     {
-        id: 'snapshot-policy',
-        name: 'Scheduled local snapshot',
-        categories: [AwsWellArchitecturedPillars.RELIABILITY],
-        type: 'resiliency',
-        subType: 'resiliency',
-        focusWidgetName: 'Scheduled local snapshot',
-        severity: SEVERITY.WARNING,
-        recommended: AssessmentStatus.OPTIMIZED,
-        resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-        recommendation:
-            'Local snapshots allows you to create instantaneous capacity efficient point-in-time images of your data volumes.\nUse local snapshots as an additional backup mechanism for quick restores or for testing.',
-        configLevel: 'database',
-        globalWadApplicable: true,
-        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
-    },
-    {
         id: 'backup-configuration',
-        name: 'Backup Configuration',
+        name: 'Backup configuration',
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         type: 'resiliency',
         subType: 'resiliency',
@@ -501,7 +507,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'crr',
-        name: 'Cross-Region Replication (CRR)',
+        name: 'Cross-region replication (CRR)',
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         type: 'resiliency',
         subType: 'resiliency',
@@ -514,7 +520,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'snapcenter-snapshot',
-        name: 'Application-Consistent Snapshots',
+        name: 'Application-consistent snapshots',
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         type: 'resiliency',
         subType: 'protection',

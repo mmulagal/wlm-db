@@ -110,7 +110,7 @@ afterAll(async () => {
 });
 
 describe('Snapshot policy assessment', () => {
-    it('should return volumes without snapshot policy', () => {
+    it('should return volumes without snapshot policy (none or empty)', () => {
         const testVolumes = [
             {
                 name: 'wlmdb_sqldata_1728552629461',
@@ -118,7 +118,7 @@ describe('Snapshot policy assessment', () => {
             },
             {
                 name: 'wlmdb_sqltemp_1728552629461',
-                'snapshot-policy': 'daily'
+                'snapshot-policy': 'none'
             },
             {
                 name: 'wlmdb_sqldata_1728574994',
@@ -126,7 +126,7 @@ describe('Snapshot policy assessment', () => {
             }
         ];
         const result = getVolumesWithoutSnapshotPolicy(testVolumes as Array<Record<string, string>>);
-        expect(result).toEqual(['wlmdb_sqldata_1728552629461']);
+        expect(result).toEqual(['wlmdb_sqldata_1728552629461', 'wlmdb_sqltemp_1728552629461']);
     });
 
     it('should collect volume snapshot copies data', async () => {
@@ -162,7 +162,7 @@ describe('Snapshot policy assessment', () => {
 });
 
 describe('Resilience drift assessment', () => {
-    it('should return resilience drift assessment', async () => {
+    it('should return resilience drift assessment without snapshot-policy (moved to storage/configuration)', async () => {
         const res = await getResilienceDriftAssessment(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,
@@ -170,16 +170,11 @@ describe('Resilience drift assessment', () => {
             RESOURCE_ID,
             RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d',
-            [
-                AssessmentCategories.SNAPSHOT_POLICY,
-                AssessmentCategories.CRR,
-                AssessmentCategories.AWS_BACKUP,
-                AssessmentCategories.HIGH_AVAILABILITY
-            ]
+            [AssessmentCategories.CRR, AssessmentCategories.AWS_BACKUP, AssessmentCategories.HIGH_AVAILABILITY]
         );
         const snapshotPolicy = res.find(item => item.id === AssessmentCategories.SNAPSHOT_POLICY);
-        expect(snapshotPolicy).toBeDefined();
-        expect(isEmpty(snapshotPolicy)).toBeFalsy();
+        expect(snapshotPolicy).toBeUndefined();
+        expect(isEmpty(res)).toBeFalsy();
     });
 });
 describe('High Availability Assessment', () => {

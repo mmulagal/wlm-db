@@ -230,7 +230,7 @@ const mockResourceAssessmentData = {
             ]
         },
         license: {
-            licenseFinding: 'OPTIMIZED',
+            licenseFinding: 'NOT_OPTIMIZED',
             sqlServerInstances: [
                 {
                     sqlServerInstance: 'PROD-MarketingCampaigns',

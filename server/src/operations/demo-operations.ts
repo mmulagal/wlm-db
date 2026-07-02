@@ -1186,7 +1186,9 @@ async function createDeploymentMockDataInDBForOracle(
     fsxFileSystemId: string | undefined,
     awsAccountId: string,
     serverName: string,
-    resourceId?: string
+    resourceId?: string,
+    storageProtocol: string = STORAGE_PROTOCOLS.NFS,
+    seedInstanceId: string = 'oracle-dev'
 ) {
     logger.info('create resource mock data in database', {
         accountId,
@@ -1210,8 +1212,8 @@ async function createDeploymentMockDataInDBForOracle(
         sqlDeploymentMode = 'ha';
     }
 
-    const instanceId = 'i-5520fe41798c75632';
-    const databaseInstanceId = 'oracle-dev';
+    const instanceId = storageProtocol === STORAGE_PROTOCOLS.ISCSI ? 'i-5520fe41798c75633' : 'i-5520fe41798c75632';
+    const databaseInstanceId = seedInstanceId;
 
     resourceId = resourceId || randomUUID();
     const fsxId = `fs-${randomize('0', 8)}`;
@@ -1221,7 +1223,7 @@ async function createDeploymentMockDataInDBForOracle(
         node1InstanceId: instanceId,
         creationDate: new Date().getTime().toString(),
         fsxSvmId: 'svm-0491dd89a76b7ca3d',
-        storageProtocol: STORAGE_PROTOCOLS.NFS,
+        storageProtocol,
         fsxDataVolumeName: 'wlmdb-data-12345'
     };
 
@@ -1251,7 +1253,7 @@ async function createDeploymentMockDataInDBForOracle(
         source: RESOURCE_SOURCE.DISCOVER,
         sqlDeploymentType: sqlDeploymentMode,
         fsxSvmId: { [fsxId]: `svm-${randomize('A0', 17)}` },
-        storageProtocol: STORAGE_PROTOCOLS.NFS,
+        storageProtocol,
         databaseType: DatabaseTypes.ORACLE,
         storageType: STORAGE_TYPE.FSXN
     };

@@ -3746,7 +3746,7 @@ const ASSESMENT_CONFIG_DATA = {
                 }
             ]
         },
-        'tempdb-files-location': 'separate-drive',
+        'tempdb-files-location': 'shared-drive',
         'default-log-files-location': 'shared-drive',
         'default-data-files-location': 'shared-drive'
     },
@@ -3832,8 +3832,8 @@ const ASSESMENT_CONFIG_DATA = {
             compressionType: 'none',
             deduplication: 'none',
             compaction: 'none',
-            autosize: 'on',
-            'autosize-mode': 'grow',
+            autosize: 'off',
+            'autosize-mode': 'off',
             'thin-provision': false,
             'tiering-policy': 'auto',
             'space-guarantee': 'volume',
@@ -3842,6 +3842,7 @@ const ASSESMENT_CONFIG_DATA = {
             'snapshot-copy-reserve': 15,
             'snapshot-policy': 'daily_weekretention',
             'tiering-min-cooling-days': 17,
+            'space-mgmt-try-first': 'snapshot_delete',
             uuid: 'c4585626-a581-11ef-8dba-75539f3dc73f'
         },
         {
@@ -3849,8 +3850,8 @@ const ASSESMENT_CONFIG_DATA = {
             compressionType: 'none',
             deduplication: 'none',
             compaction: 'none',
-            autosize: 'on',
-            'autosize-mode': 'grow',
+            autosize: 'off',
+            'autosize-mode': 'off',
             'thin-provision': false,
             'tiering-policy': 'auto',
             'space-guarantee': 'volume',
@@ -3859,6 +3860,7 @@ const ASSESMENT_CONFIG_DATA = {
             'snapshot-copy-reserve': 15,
             'snapshot-policy': 'daily_weekretention',
             'tiering-min-cooling-days': 17,
+            'space-mgmt-try-first': 'snapshot_delete',
             uuid: 'c4585626-a581-11ef-8dba-75539f3dc73f'
         },
         {
@@ -3866,16 +3868,17 @@ const ASSESMENT_CONFIG_DATA = {
             compressionType: 'none',
             deduplication: 'none',
             compaction: 'none',
-            autosize: 'on',
-            'autosize-mode': 'grow',
-            'thin-provision': true,
+            autosize: 'off',
+            'autosize-mode': 'off',
+            'thin-provision': false,
             'tiering-policy': 'auto',
             'space-guarantee': 'volume',
             'fractional-reserve': 0,
             'snapshot-autodelete': false,
             'snapshot-copy-reserve': 15,
-            'snapshot-policy': 'none',
+            'snapshot-policy': 'daily_weekretention',
             'tiering-min-cooling-days': 17,
+            'space-mgmt-try-first': 'snapshot_delete',
             uuid: 'c4585626-a581-11ef-8dba-75539f3dc73f'
         }
     ],
@@ -3884,7 +3887,7 @@ const ASSESMENT_CONFIG_DATA = {
     databaseInstanceName: 'MSSQLSERVER'
 };
 
-const ASSESSMENT_CRR_CONFIG_DATA = {
+const MSSQL_ASSESSMENT_CRR_CONFIG_DATA = {
     errors: '',
     crrDetails: [
         {
@@ -3923,9 +3926,38 @@ const ASSESSMENT_CRR_CONFIG_DATA = {
     ]
 };
 
-const ASSESSMENT_AWS_BACKUP_DATA = {
+const ASSESSMENT_CRR_CONFIG_DATA = {
+    errors: '',
+    crrDetails: [
+        {
+            volumeName: 'wlmdb_sqldata_1728552629461',
+            isCRREnabled: false,
+            sourceSvmUuid: '6aec6a14-b23f-11ef-a881-1fbfd81226d0',
+            isSnapMirrored: false
+        },
+        {
+            volumeName: 'wlmdb_sqltemp_1728552629461',
+            isCRREnabled: false,
+            sourceSvmUuid: '6aec6a14-b23f-11ef-a881-1fbfd81226d0',
+            isSnapMirrored: false
+        },
+        {
+            volumeName: 'wlmdb_sqldata_1728574994',
+            isCRREnabled: false,
+            sourceSvmUuid: '6aec6a14-b23f-11ef-a881-1fbfd81226d0',
+            isSnapMirrored: false
+        }
+    ]
+};
+
+const MSSQL_ASSESSMENT_AWS_BACKUP_DATA = {
     filesystemId: 'fs-07a22f282fd4f5a20',
     isAWSBackupEnabled: true
+};
+
+const ASSESSMENT_AWS_BACKUP_DATA = {
+    filesystemId: 'fs-07a22f282fd4f5a20',
+    isAWSBackupEnabled: false
 };
 
 const ASSESSMENT_MAXDOP_CONFIG_DATA = { status: 'not-optimized', current: '2', recommendedMaxDOP: '4' };
@@ -5813,7 +5845,7 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
             'autosize-mode': 'grow',
             'thin-provision': true,
             'tiering-policy': 'snapshot_only',
-            'snapshot-policy': 'daily_weekretention',
+            'snapshot-policy': 'none',
             'space-guarantee': 'none',
             'fractional-reserve': 0,
             'snapshot-autodelete': true,
@@ -5830,7 +5862,7 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
             'autosize-mode': 'grow',
             'thin-provision': true,
             'tiering-policy': 'snapshot_only',
-            'snapshot-policy': 'daily_weekretention',
+            'snapshot-policy': 'none',
             'space-guarantee': 'none',
             'fractional-reserve': 0,
             'snapshot-autodelete': true,
@@ -5903,15 +5935,23 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         },
         {
             name: 'datafiles-placement',
-            status: 'optimized',
+            status: 'not-optimized',
             recommended: 'Separate volume or shared with control files',
             severity: 'warning',
             recommendation:
                 'Placing data files on a dedicated volume or shared with control files boosts performance by isolating their random I/O from redo or archive log writes, reducing contention. This separation allows you to benefit from customized snapshot configurations, tiering policies, and efficiency mechanisms to optimize performance and cost.',
             tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
-            objectsInViolation: [],
+            objectsInViolation: ['oracledata2'],
+            violationDetails: [
+                {
+                    objectName: 'oracledata2',
+                    value: 'Shared with redo logs',
+                    objectType: 'Volume',
+                    recommended: 'Separate volume or shared with control files only'
+                }
+            ],
             totalObjectsAssessed: 1,
-            totalObjectsInViolation: 0
+            totalObjectsInViolation: 1
         },
         {
             name: 'controlfiles-placement',
@@ -5939,27 +5979,43 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         },
         {
             name: 'templogs-placement',
-            status: 'optimized',
+            status: 'not-optimized',
             recommended: 'Separate volume or shared with redo or control files',
             severity: 'warning',
             recommendation:
                 'Placing temp logs on a dedicated volume or shared with redo/control files isolates their high-write I/O from data file transactions, improving performance. Each multiplexed temp log copy should reside on a separate volume for redundancy. Frequent changes make temp logs unsuitable for snapshotted volumes, like data volumes, as they inflate snapshot sizes. Temp logs must not be placed on volumes tiered to object storage, such as archive volumes, as their frequent updates are incompatible with object storages slower access patterns. This separation enables customized efficiency mechanisms and tiering configurations for optimal database performance and cost efficiency.',
             tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
-            objectsInViolation: [],
+            objectsInViolation: ['oracleredo2'],
+            violationDetails: [
+                {
+                    objectName: 'oracleredo2',
+                    value: 'Shared with data files',
+                    objectType: 'Volume',
+                    recommended: 'Separate volume or shared with redo or control files'
+                }
+            ],
             totalObjectsAssessed: 1,
-            totalObjectsInViolation: 0
+            totalObjectsInViolation: 1
         },
         {
             name: 'oracle-binary-placement',
-            status: 'optimized',
+            status: 'not-optimized',
             recommended: 'separate-volume',
             severity: 'warning',
             recommendation:
                 'Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files. This separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly.',
             tags: ['Cost optimization', 'Operational excellence', 'Performance efficiency'],
-            objectsInViolation: [],
+            objectsInViolation: ['orahome'],
+            violationDetails: [
+                {
+                    objectName: 'orahome',
+                    value: 'Shared with database files',
+                    objectType: 'Volume',
+                    recommended: 'Separate dedicated volume'
+                }
+            ],
             totalObjectsAssessed: 1,
-            totalObjectsInViolation: 0
+            totalObjectsInViolation: 1
         },
         {
             name: 'data-dg-lun-layout',
@@ -6033,22 +6089,22 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                 junctionPath: '/oracleredo2',
                 svmName: 'wlmdb_sqlsvm_1735809893269',
                 autosize: 'off',
-                compaction: 'inline',
+                compaction: 'none',
                 compression: 'inline',
                 autosizeMode: 'off',
                 deduplication: 'both',
-                thinProvision: true,
-                tieringPolicy: 'none',
+                thinProvision: false,
+                tieringPolicy: 'all',
                 efficiencyType: 'efficient',
                 snapshotPolicy: 'default',
-                spaceGuarantee: 'none',
-                compressionType: 'adaptive',
+                spaceGuarantee: 'volume',
+                compressionType: 'none',
                 fractionalReserve: 100,
-                snapshotAutodelete: true,
+                snapshotAutodelete: false,
                 snapshotDeleteOrder: 'newest_first',
                 snapshotCopyReserve: 5,
                 tieringMinCoolingDays: 4,
-                spaceMgmtTryFirst: 'volume_grow'
+                spaceMgmtTryFirst: 'snapshot_delete'
             },
             {
                 name: 'oraclearch2',
@@ -6056,22 +6112,22 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                 junctionPath: '/oraclearch2',
                 svmName: 'wlmdb_sqlsvm_1735809893269',
                 autosize: 'off',
-                compaction: 'inline',
+                compaction: 'none',
                 compression: 'inline',
                 autosizeMode: 'off',
                 deduplication: 'both',
-                thinProvision: true,
+                thinProvision: false,
                 tieringPolicy: 'none',
                 efficiencyType: 'efficient',
                 snapshotPolicy: 'default',
-                spaceGuarantee: 'none',
-                compressionType: 'adaptive',
+                spaceGuarantee: 'volume',
+                compressionType: 'none',
                 fractionalReserve: 100,
-                snapshotAutodelete: true,
+                snapshotAutodelete: false,
                 snapshotDeleteOrder: 'newest_first',
                 snapshotCopyReserve: 5,
                 tieringMinCoolingDays: 4,
-                spaceMgmtTryFirst: 'volume_grow'
+                spaceMgmtTryFirst: 'snapshot_delete'
             },
             {
                 name: 'oracledata2',
@@ -6079,22 +6135,22 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                 junctionPath: '/oracledata2',
                 svmName: 'wlmdb_sqlsvm_1735809893269',
                 autosize: 'off',
-                compaction: 'inline',
+                compaction: 'none',
                 compression: 'inline',
                 autosizeMode: 'off',
                 deduplication: 'both',
-                thinProvision: true,
+                thinProvision: false,
                 tieringPolicy: 'all',
                 efficiencyType: 'efficient',
                 snapshotPolicy: 'default',
-                spaceGuarantee: 'none',
-                compressionType: 'adaptive',
+                spaceGuarantee: 'volume',
+                compressionType: 'none',
                 fractionalReserve: 100,
-                snapshotAutodelete: true,
+                snapshotAutodelete: false,
                 snapshotDeleteOrder: 'newest_first',
                 snapshotCopyReserve: 5,
                 tieringMinCoolingDays: 4,
-                spaceMgmtTryFirst: 'volume_grow'
+                spaceMgmtTryFirst: 'snapshot_delete'
             }
         ],
         error: '',
@@ -6146,10 +6202,10 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         },
         'multipath-io': {
             error: null,
-            'multipath-io-is-active': true,
-            'multipath-io-status': 'active',
-            'multipath-io-is-enabled': true,
-            'multipath-io-enabled-status': 'enabled'
+            'multipath-io-is-active': false,
+            'multipath-io-status': 'inactive',
+            'multipath-io-is-enabled': false,
+            'multipath-io-enabled-status': 'disabled'
         },
         'host-utilities': {
             error: 'sanlun command not found',
@@ -6352,8 +6408,11 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
             'asm-external-redundancy': {
                 error: '',
                 assessment: {
-                    violations: [],
-                    result: 'true',
+                    violations: [
+                        { diskGroupName: 'DATA', currentRedundancy: 'NORMAL', recommendedRedundancy: 'EXTERNAL' },
+                        { diskGroupName: 'FRA', currentRedundancy: 'HIGH', recommendedRedundancy: 'EXTERNAL' }
+                    ],
+                    result: 'false',
                     totalObjects: 2
                 }
             },
@@ -6395,7 +6454,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
         },
         'dnfs-ip-resolution': {
             dns_resolution: {
-                fsxnfsv3: ['172.31.255.252'],
+                'fsx-nfs.ap-southeast-1.compute.internal': ['172.31.255.252', '172.31.255.253'],
                 fsxnfsv4: ['172.31.255.231'],
                 '172.31.255.231': ['172.31.255.231']
             },
@@ -6428,7 +6487,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
     nfsRootonly: [
         {
             svmName: 'wlmdb_sqlsvm_1735809893269',
-            nfsRootonly: 'disabled'
+            nfsRootonly: 'enabled'
         }
     ],
     sizing: {
@@ -6535,8 +6594,12 @@ const ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {
         ]
     },
     driveLetter: {
-        status: 'optimized',
-        details: { missingDriveLetters: [], primaryNodeDriveLetters: ['S:', 'S:', 'T:'] }
+        status: 'not-optimized',
+        details: {
+            missingDriveLetters: ['T:'],
+            primaryNodeDriveLetters: ['S:', 'S:', 'T:'],
+            secondaryNodeDriveLetters: ['S:', 'S:']
+        }
     },
     sqlServerServices: {
         status: 'not-optimized',
@@ -6637,12 +6700,18 @@ async function createAssessmentData(
     const instanceCRRConfigDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategories.CRR,
-        config_data: ASSESSMENT_CRR_CONFIG_DATA
+        config_data:
+            databaseInstanceName === DEFAULT_INSTANCE_NAME
+                ? MSSQL_ASSESSMENT_CRR_CONFIG_DATA
+                : ASSESSMENT_CRR_CONFIG_DATA
     };
     const instanceAWSBackupConfigDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategories.AWS_BACKUP,
-        config_data: ASSESSMENT_AWS_BACKUP_DATA
+        config_data:
+            databaseInstanceName === DEFAULT_INSTANCE_NAME
+                ? MSSQL_ASSESSMENT_AWS_BACKUP_DATA
+                : ASSESSMENT_AWS_BACKUP_DATA
     };
     const instanceMaxdopConfigDataRecord = {
         ...baseConfig,
@@ -7094,7 +7163,9 @@ export {
     demoFsxId,
     ASSESMENT_CONFIG_DATA,
     ASSESSMENT_CRR_CONFIG_DATA,
+    MSSQL_ASSESSMENT_CRR_CONFIG_DATA,
     ASSESSMENT_AWS_BACKUP_DATA,
+    MSSQL_ASSESSMENT_AWS_BACKUP_DATA,
     ASSESSMENT_MAXDOP_CONFIG_DATA,
     ASSESSMENT_CLONE_CONFIG_DATA,
     MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA,

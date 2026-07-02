@@ -70,7 +70,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     {
         parameter: 'snapshotPolicy',
         id: 'snapshot-policy',
-        name: 'Scheduled local snapshots',
+        name: 'Snapshot policy',
         value: 'none',
         type: 'storage',
         subType: 'configuration',
@@ -186,7 +186,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
     },
     {
         id: 'tiering-tco-optimization',
-        name: 'Tiering / TCO optimization',
+        name: 'Cold data tiering',
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',

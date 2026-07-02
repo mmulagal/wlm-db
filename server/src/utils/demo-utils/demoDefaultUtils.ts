@@ -104,7 +104,7 @@ function generateDemoResources() {
             resourceId: randomUUID(),
             hostName: 'ip-171-30-40-16.ap-southeast-1.compute.internal',
             protocol: STORAGE_PROTOCOLS.NFS,
-            sqlInstances: [{ sqlInstanceId: randomUUID(), sqlInstanceName: 'oracle-orahost' }],
+            sqlInstances: [],
             databaseType: DatabaseTypes.ORACLE,
             deploymentType: 'Standalone'
         },
@@ -189,7 +189,8 @@ async function createDemoResources(
             deploymentType,
             fsxFilSystemId,
             awsAccountId,
-            serverName || `oracledatabase${randomize('a', 4)}`
+            serverName || `oracledatabase${randomize('a', 4)}`,
+            resourceId
         );
     }
 }

@@ -205,7 +205,6 @@ enum OPTIMIZE_SIZING_CONFIGS {
 }
 
 enum OPTIMIZE_RESILIENCY_CONFIGS {
-    SNAPSHOT_POLICY = 'snapshot-policy',
     AWS_BACKUP = 'aws-backup',
     HIGH_AVAILABILITY = 'high-availability'
 }
@@ -538,6 +537,7 @@ const MSSQL_STORAGE_CONFIGURATION_ASSESSMENT_MAP = {
         'autosize-mode',
         'snapshot-copy-reserve',
         'snapshot-autodelete',
+        'snapshot-policy',
         'space-mgmt-try-first',
         'tiering-tco-optimization',
         'storage-efficiencies'

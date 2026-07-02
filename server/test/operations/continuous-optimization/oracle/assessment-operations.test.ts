@@ -198,10 +198,10 @@ describe('Oracle assessment operations', () => {
         ) as OracleGenericParameterDriftResponseType;
         expect(multipathIo).toBeDefined();
 
-        expect(multipathIo.status).toBe('optimized');
+        expect(multipathIo.status).toBe('not-optimized');
         expect(multipathIo.recommended).toBe('enabled');
         expect(multipathIo.severity).toBe('critical');
-        expect(multipathIo.totalObjectsInViolation).toBe(0);
+        expect(multipathIo.totalObjectsInViolation).toBe(1);
 
         const hostUtilities = osAssessment.find(
             item => item.id === 'host-utilities'
@@ -404,7 +404,7 @@ describe('Oracle assessment operations', () => {
         expect(nfsRootonlyAssessment).toBeDefined();
         expect(nfsRootonlyAssessment.id).toBe('nfs-rootonly');
         expect(nfsRootonlyAssessment.recommended).toBe('disabled');
-        expect(nfsRootonlyAssessment.status).toBe('optimized');
+        expect(nfsRootonlyAssessment.status).toBe('not-optimized');
         expect(nfsRootonlyAssessment.severity).toBe('critical');
         expect((nfsRootonlyAssessment as Record<string, unknown>).resourceType).toBe('Volume');
 
@@ -488,11 +488,11 @@ describe('Oracle assessment operations', () => {
 
         expect(headroomAssessment).toBeDefined();
         expect(headroomAssessment.id).toBe('headroom');
-        expect(headroomAssessment.status).toBe('optimized');
-        expect(headroomAssessment.current).toBe('47%');
+        expect(headroomAssessment.status).toBe('under-provisioned');
+        expect(headroomAssessment.current).toBe('10%');
         expect(headroomAssessment.severity).toBe('critical');
         expect(headroomAssessment.totalObjectsAssessed).toBe(1);
-        expect(headroomAssessment.totalObjectsInViolation).toBe(0);
+        expect(headroomAssessment.totalObjectsInViolation).toBe(1);
         expect(headroomAssessment.resourceType).toBe('File system (FSx for ONTAP)');
     });
     it('should return job id from on-demand assessment trigger', async () => {

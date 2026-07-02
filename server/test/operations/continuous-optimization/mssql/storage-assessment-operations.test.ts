@@ -660,3 +660,41 @@ describe('expandCombinedTargets', () => {
         });
     });
 });
+
+describe('snapshot-policy assessment (storage/configuration)', () => {
+    it('should be OPTIMIZED when all volumes have snapshot-policy set to none', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                volumes: [
+                    { name: 'vol1', 'snapshot-policy': 'none' },
+                    { name: 'vol2', 'snapshot-policy': 'none' }
+                ]
+            })
+        );
+        const entry = drift.find(item => 'id' in item && item.id === 'snapshot-policy');
+        expect(entry).toMatchObject({
+            status: AssessmentStatus.OPTIMIZED,
+            objectsInViolation: [],
+            totalObjectsAssessed: 2,
+            totalObjectsInViolation: 0
+        });
+    });
+
+    it('should be NOT_OPTIMIZED when a volume has a non-none snapshot-policy', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                volumes: [
+                    { name: 'vol1', 'snapshot-policy': 'daily_weekretention' },
+                    { name: 'vol2', 'snapshot-policy': 'none' }
+                ]
+            })
+        );
+        const entry = drift.find(item => 'id' in item && item.id === 'snapshot-policy');
+        expect(entry).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            objectsInViolation: ['vol1'],
+            totalObjectsAssessed: 2,
+            totalObjectsInViolation: 1
+        });
+    });
+});

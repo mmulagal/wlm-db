@@ -38,9 +38,8 @@ import {
     RESOURCESTYPE
 } from '../../../utils/consts';
 import { callSsmExecution } from '../../aws/ssm-operations';
-import { registerJob, updateJobDetails } from '../../database/job-operations';
+import { registerJob } from '../../database/job-operations';
 import { STORAGE_CONFIGURATION_ASSESSMENT } from '../../workloads/mssql/storage-scripts';
-import { collectSnapshotCopyData } from './resilience-assessment-operation';
 import {
     checkForMissingOptimizePermissions,
     buildBlockDeviceSpaceManagementEntry,
@@ -115,9 +114,7 @@ async function initiateStorageAssessmentCollection(
         fsxId: instanceRecord?.fsxFileSystem
     });
 
-    let jobStatus: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage = '';
-    let snapshotPolicyAssessmentJobId = '';
 
     const { resourceName, name: databaseInstanceName } = instanceRecord;
     const resourceWithInstanceName = `${resourceName}\\${databaseInstanceName}`;
@@ -144,10 +141,6 @@ async function initiateStorageAssessmentCollection(
 
         const parsedResponse = response ? sqlResponseParsing(response) : {};
         const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
-        if (!IS_DEMO_FLOW) {
-            // add snapshot copy details to volumes
-            parsedResponse.volumes = await collectSnapshotCopyData(accountId, credentialsId, instanceRecord, volumes);
-        }
         await createDatabaseInstanceConfigData([
             {
                 account_id: accountId,
@@ -203,22 +196,6 @@ async function initiateStorageAssessmentCollection(
                 parentJobId
             });
         }
-
-        if (
-            jobTriggers.valueOf() === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.BOTH.valueOf() ||
-            jobTriggers === STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES.RESILIENCY.valueOf()
-        ) {
-            ({ id: snapshotPolicyAssessmentJobId } = await registerJob(accountId, credentialsId, region, {
-                name: 'Snapshot policy assessment ',
-                description: 'Snapshot policy assessment ',
-                resourceName: resourceWithInstanceName,
-                startTime: Date.now(),
-                endTime: Date.now(),
-                status: configJobStatus,
-                type: JOBTYPE.ASSESSMENT,
-                parentJobId
-            }));
-        }
     } catch (error) {
         logger.error('Error while initiating storage assessment collection', {
             accountId,
@@ -230,15 +207,6 @@ async function initiateStorageAssessmentCollection(
             error
         });
         errorMessage = `Error while initiating storage assessment collection. ${error}`;
-        jobStatus = JOBSTATUS.FAILED;
-    } finally {
-        if (snapshotPolicyAssessmentJobId) {
-            await updateJobDetails(accountId, snapshotPolicyAssessmentJobId, {
-                endTime: Date.now(),
-                status: jobStatus,
-                error: errorMessage
-            });
-        }
     }
 }
 
@@ -836,7 +804,7 @@ async function calculateStorageDrift(
                 ...goldenData,
                 recommended: (goldenData.value ?? '').toString(),
                 status,
-                current: status === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
+                current: status === AssessmentStatus.OPTIMIZED ? 'Separate drive' : 'Shared with data files',
                 objectsInViolation: status === AssessmentStatus.OPTIMIZED ? [] : ['tempdb'],
                 totalObjectsAssessed: 1,
                 totalObjectsInViolation: status === AssessmentStatus.OPTIMIZED ? 0 : 1,
@@ -1232,7 +1200,24 @@ async function calculateStorageDrift(
         );
     }
 
-    return driftAssessmentData;
+    return sortStorageAssessments(driftAssessmentData);
+}
+
+const STORAGE_ASSESSMENT_ORDER = [
+    ...sizingConfigData,
+    ...layoutConfigData,
+    ...volumeConfigData,
+    ...lunConfigData,
+    ...osConfigData
+];
+const storageAssessmentOrderIndex = new Map(STORAGE_ASSESSMENT_ORDER.map((config, index) => [config.id, index]));
+
+function sortStorageAssessments<T extends { id?: string }>(items: T[]): T[] {
+    return [...items].sort((a, b) => {
+        const aIdx = storageAssessmentOrderIndex.get(a.id ?? '') ?? Number.MAX_SAFE_INTEGER;
+        const bIdx = storageAssessmentOrderIndex.get(b.id ?? '') ?? Number.MAX_SAFE_INTEGER;
+        return aIdx - bIdx;
+    });
 }
 
 export {

@@ -1,12 +1,7 @@
 import createError from 'http-errors';
-import moment from 'moment';
 import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
-import type {
-    AssessmentItemType,
-    AssessmentErrorItemType,
-    OntapVolumeType
-} from '../../../routes/types/continuous-optimization.types';
+import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import getLogger from '../../../utils/logger';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import {
@@ -21,7 +16,6 @@ import { IS_DEMO_FLOW, parseMultipleCommandResponse, sqlResponseParsing } from '
 import {
     DatabaseInstance,
     DatabaseInstanceMetadata,
-    StorageAssessment,
     WorkloadInstance,
     MappedOnTapVolumeResponse,
     AWSBackupAssessment,
@@ -133,38 +127,6 @@ async function collectVolumeSnapshotCopiesData(
     }
 }
 
-async function collectSnapshotCopyData(
-    accountId: string,
-    credentialsId: string,
-    instanceRecord: WorkloadInstance,
-    volumes: Array<{ Key?: string; Value?: string }> = []
-) {
-    logger.info('Collecting snapshot copy data for volumes:', instanceRecord?.name, volumes);
-    const violatedVols = getVolumesWithoutSnapshotPolicy(volumes);
-    try {
-        if (violatedVols.length) {
-            const res = await collectVolumeSnapshotCopiesData(
-                credentialsId,
-                accountId,
-                instanceRecord,
-                volumes,
-                violatedVols
-            );
-            volumes.forEach((volDetail: Record<string, string>) => {
-                const snapshotTimestamp = new Date(res?.[volDetail?.uuid]?.create_time).getTime().toString();
-                volDetail[OptimizeStorageConfigs.MOST_RECENT_SNAPSHOT_TIMESTAMP] = snapshotTimestamp ?? null;
-            });
-        }
-        return volumes;
-    } catch (error) {
-        // this is data collection for additional checks, don't throw error from here
-        logger.error(
-            'Error checking for volume snapshot objects details, using snapshot policy data for assessment',
-            error
-        );
-    }
-}
-
 async function getResilienceDriftAssessment(
     accountId: string,
     credentialsId: string,
@@ -183,8 +145,7 @@ async function getResilienceDriftAssessment(
         resourceName,
         fieldsValues
     });
-    const shouldTriggerSnapshotPolicyAssessment =
-        isEmpty(fieldsValues) || fieldsValues.includes(AssessmentCategories.SNAPSHOT_POLICY);
+
     const shouldTriggerCrrAssessment = isEmpty(fieldsValues) || fieldsValues.includes(AssessmentCategories.CRR);
     const shouldTriggerAwsBackupAssessment =
         isEmpty(fieldsValues) || fieldsValues.includes(AssessmentCategories.AWS_BACKUP);
@@ -200,24 +161,13 @@ async function getResilienceDriftAssessment(
     }, {} as Record<string, any>);
 
     const mappedVolumesData = configDataMap[AssessmentCategories.MAPPED_ONTAP_VOLUMES];
-    const storageAssessmentData = configDataMap[AssessmentCategories.STORAGE];
+
     const awsbackupAssessmentData = configDataMap[AssessmentCategories.AWS_BACKUP];
     const crrAssessmentData = configDataMap[AssessmentCategories.CRR];
     const highAvailabilityAssessmentData = configDataMap[AssessmentCategories.HIGH_AVAILABILITY];
 
     try {
-        const [snapshotPolicy, crrData, awsBackup, haChecks] = await Promise.all([
-            shouldTriggerSnapshotPolicyAssessment
-                ? getSnapshotPolicyDriftData(
-                      accountId,
-                      credentialsId,
-                      region,
-                      databaseHostId,
-                      databaseInstanceId,
-                      mappedVolumesData,
-                      storageAssessmentData as unknown as StorageAssessment
-                  )
-                : Promise.resolve(undefined),
+        const [crrData, awsBackup, haChecks] = await Promise.all([
             shouldTriggerCrrAssessment
                 ? getCrrDriftData(
                       accountId,
@@ -257,128 +207,13 @@ async function getResilienceDriftAssessment(
 
         const haChecksArray = Array.isArray(haChecks) ? haChecks : haChecks ? [haChecks] : [];
 
-        return [snapshotPolicy, crrData, awsBackup, ...haChecksArray].filter(
+        return [crrData, awsBackup, ...haChecksArray].filter(
             (item): item is AssessmentItemType | AssessmentErrorItemType => !isEmpty(item)
         );
     } catch (error) {
         logger.error('Error getting resilience drift assessment', JSON.stringify(error));
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, JSON.stringify(error));
     }
-}
-
-async function getSnapshotPolicyDriftData(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    databaseHostId: string,
-    databaseInstanceId: string,
-    mappedVolumesData: MappedOnTapVolumeResponse[],
-    storageAssessmentData: StorageAssessment
-): Promise<AssessmentItemType | AssessmentErrorItemType> {
-    logger.info('Calculate snapshot policy drift data for:', {
-        accountId,
-        credentialsId,
-        region,
-        databaseInstanceId,
-        databaseHostId
-    });
-    let errorMessage;
-    const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'snapshot-policy');
-    const snapshotPolicyAssessmentData: AssessmentItemType = {
-        ...goldenConfig,
-        recommended: goldenConfig.recommended ?? '',
-        status: AssessmentStatus.NOT_OPTIMIZED,
-        objectsInViolation: [],
-        totalObjectsAssessed: 0,
-        totalObjectsInViolation: 0
-    };
-    try {
-        if (isEmpty(storageAssessmentData)) {
-            errorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.SNAPSHOT_POLICY);
-            return { ...goldenConfig, errorMessage };
-        }
-
-        const { volumes, errors } = storageAssessmentData as unknown as StorageAssessment;
-
-        if (errors?.volumes) {
-            return { ...goldenConfig, errorMessage: errors.volumes };
-        }
-
-        // Check if mapped volumes data is available and filter out only data and log volumes
-        let dataLogVolumeUuids: string[] = [];
-        if (!isEmpty(mappedVolumesData)) {
-            const { dataLogVolumeMap } = filterDataLogVolumes(
-                mappedVolumesData as unknown as MappedOnTapVolumeResponse
-            );
-            dataLogVolumeUuids = Array.from(dataLogVolumeMap.keys());
-        }
-
-        snapshotPolicyAssessmentData.totalObjectsAssessed = dataLogVolumeUuids.length;
-        const recommendationMap = new Map<string, { value: string; recommended: string }>();
-        volumes.forEach(volume => {
-            const volDetails = volume as Record<string, string>;
-
-            const latestSnapshotTimestamp = new Date(
-                parseInt(volDetails?.[OptimizeStorageConfigs.MOST_RECENT_SNAPSHOT_TIMESTAMP] ?? 0, 10)
-            );
-            if (isEmpty(volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY])) {
-                recommendationMap.set(volDetails?.uuid, {
-                    value: 'No snapshot policy configured',
-                    recommended: 'Enable a snapshot policy on the volume'
-                });
-            } else if (volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none') {
-                recommendationMap.set(volDetails?.uuid, {
-                    value: 'Snapshot policy set to none',
-                    recommended: 'Set snapshot policy to auto'
-                });
-            } else if (latestSnapshotTimestamp <= new Date(moment().subtract(2, 'days').format())) {
-                recommendationMap.set(volDetails?.uuid, {
-                    value: 'Latest snapshot is more than 2 days old',
-                    recommended: 'Enable a snapshot policy on the volume'
-                });
-            }
-
-            if (
-                (isEmpty(volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY]) ||
-                    volDetails?.[OptimizeStorageConfigs.SNAPSHOT_POLICY] === 'none') &&
-                latestSnapshotTimestamp <= new Date(moment().subtract(2, 'days').format())
-            ) {
-                const vol: OntapVolumeType = { ontapVolumeName: volDetails?.name, ontapVolumeUuid: volDetails?.uuid };
-                if (isEmpty(dataLogVolumeUuids) || dataLogVolumeUuids.includes(volDetails?.uuid)) {
-                    snapshotPolicyAssessmentData?.objectsInViolation?.push(vol);
-                }
-            }
-        });
-        if (IS_DEMO_FLOW) {
-            snapshotPolicyAssessmentData.totalObjectsAssessed = volumes.length;
-            const instanceDetail = await getInstanceInfo(accountId, credentialsId, databaseHostId, databaseInstanceId);
-            const { configsOptimized } =
-                ((instanceDetail as unknown as DatabaseInstance)?.metadata as DatabaseInstanceMetadata) ?? {};
-            if (configsOptimized?.STORAGE?.includes(OptimizeStorageConfigs.SNAPSHOT_POLICY)) {
-                snapshotPolicyAssessmentData.objectsInViolation = [];
-            }
-        }
-
-        if (isEmpty(snapshotPolicyAssessmentData.objectsInViolation)) {
-            snapshotPolicyAssessmentData.status = AssessmentStatus.OPTIMIZED;
-        }
-        snapshotPolicyAssessmentData.totalObjectsInViolation =
-            snapshotPolicyAssessmentData?.objectsInViolation?.length ?? 0;
-        snapshotPolicyAssessmentData.violationDetails = (
-            snapshotPolicyAssessmentData.objectsInViolation as OntapVolumeType[]
-        ).map(vol => ({
-            objectName: vol.ontapVolumeName ?? '',
-            objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-            value: recommendationMap.get(vol.ontapVolumeUuid ?? '')?.value ?? 'No snapshot policy configured',
-            recommended:
-                recommendationMap.get(vol.ontapVolumeUuid ?? '')?.recommended ??
-                'Enable a snapshot policy on the volume'
-        }));
-    } catch (error) {
-        errorMessage = `Error getting snapshot policy drift data: ${error}`;
-        return { ...goldenConfig, errorMessage };
-    }
-    return snapshotPolicyAssessmentData;
 }
 
 async function initiateAWSBackupAssessment(
@@ -1466,13 +1301,11 @@ async function getHighAvailabilityDriftData(
 export {
     getResilienceDriftAssessment,
     initiateCrossRegionResiliencyAssessment,
-    collectSnapshotCopyData,
     collectVolumeSnapshotCopiesData,
     getVolumesWithoutSnapshotPolicy,
     initiateAWSBackupAssessment,
     initiateInstanceLevelHighAvailabilityAssessment,
     getHighAvailabilityDriftData,
-    getSnapshotPolicyDriftData,
     initiateHostLevelHighAvailabilityAssessment,
     getSqlServiceStartupAssessment
 };

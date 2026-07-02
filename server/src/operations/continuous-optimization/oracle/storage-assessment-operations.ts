@@ -2389,6 +2389,24 @@ async function calculateStorageDrift(
 
     const items: (AssessmentItemType | AssessmentErrorItemType)[] = [];
 
+    items.push(
+        ...(await getStorageSizingDrift(
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            databaseInstanceName,
+            storageAssessmentData,
+            fsxFileSystemId,
+            skipHeadroom
+        ))
+    );
+
+    items.push(...getVolumeLayoutDrift(volumeTypeMap, storageAssessmentData));
+    if (protocol === STORAGE_PROTOCOLS.ISCSI && isASMManaged) {
+        items.push(...getLunLayoutDrift(volumeTypeMap, storageAssessmentData));
+    }
+
     items.push(...getVolumeConfigDrift(volumeTypeMap, storageAssessmentData, protocol!));
 
     if (protocol === STORAGE_PROTOCOLS.ISCSI) {
@@ -2413,25 +2431,6 @@ async function calculateStorageDrift(
             )
         );
     }
-
-    items.push(...getVolumeLayoutDrift(volumeTypeMap, storageAssessmentData));
-
-    if (protocol === STORAGE_PROTOCOLS.ISCSI && isASMManaged) {
-        items.push(...getLunLayoutDrift(volumeTypeMap, storageAssessmentData));
-    }
-
-    items.push(
-        ...(await getStorageSizingDrift(
-            accountId,
-            credentialsId,
-            region,
-            ec2InstanceId,
-            databaseInstanceName,
-            storageAssessmentData,
-            fsxFileSystemId,
-            skipHeadroom
-        ))
-    );
 
     return items;
 }

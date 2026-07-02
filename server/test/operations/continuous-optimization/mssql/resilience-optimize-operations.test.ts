@@ -3,16 +3,12 @@ import { createResource, upsertDatabaseInstance } from '../../../../src/lib/data
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
 import {
     getAvailableSnapshotPolicyList,
-    handleResiliecyOptimize,
     handleSharedStorageOptimize,
     optimizeHighAvailabilityConfiguration,
     optimizeSqlServerService
 } from '../../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations';
 import { RESOURCE_ID } from '../../../../src/utils/consts';
-import {
-    OPTIMIZE_RESILIENCY_CONFIGS,
-    OptimizeHighAvailabilityParams
-} from '../../../../src/utils/continous-optimization-consts';
+import { OptimizeHighAvailabilityParams } from '../../../../src/utils/continous-optimization-consts';
 import { registerJob } from '../../../../src/operations/database/job-operations';
 
 beforeAll(async () => {
@@ -60,27 +56,6 @@ describe('List snapshot policies om svm and cluster level', () => {
         expect(res.snapshotPolicies?.[0].uuid).toBeDefined();
         expect(res.snapshotPolicies?.[0].name).toBeDefined();
         expect(res.snapshotPolicies?.[0].schedules).toBeDefined();
-    });
-});
-
-describe('Should set snapshot policy on volume level', () => {
-    it('should set snapshot policy on volume level', async () => {
-        const { jobId } = await handleResiliecyOptimize(
-            ACCOUNT_ID,
-            DEFAULT_AWS_CREDENTIALS_ID,
-            DEFAULT_AWS_REGION,
-            RESOURCE_ID,
-            'f4b7c5d3-e1f6-4g2a-9b5d',
-            {
-                configurationName: [OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY],
-                params: [
-                    {
-                        snapshotPolicy: { uuid: 'vol-1234567890abcdef0', name: 'snap-1234567890abcdef0' }
-                    }
-                ]
-            }
-        );
-        expect(jobId).toBeDefined();
     });
 });
 

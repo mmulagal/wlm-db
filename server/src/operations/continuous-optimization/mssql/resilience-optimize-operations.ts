@@ -1,48 +1,34 @@
 import createError from 'http-errors';
-import { isEmpty, isNil } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import throat from 'throat';
 import getLogger from '../../../utils/logger';
-import { OntapVolumeType } from '../../../routes/types/continuous-optimization.types';
 import {
     AvailableSnapshotPoliciesResponseType,
-    BulkOptimizeSnapshotPolicyRequestBody,
     OptimizeResiliencyBodyType,
     SnapshotPolicyDetailsType,
-    SnapshotPolicyType,
     SnapshotScheduleType,
-    BulkOptimizeSnapshotPolicyParamsType,
     BulkOptimizeHASharedStorageRequestBodyType
 } from '../../../routes/types/mssql-continuous-optimisation.types';
 import {
     DatabaseInstanceMetadata,
     Metadata,
     WorkloadInstance,
-    MappedOnTapVolumeResponse,
     IgroupMissingInitiators,
     DatabaseInstance,
     JobMetadata
 } from '../../../utils/common-types';
-import {
-    AuditStatus,
-    CUSTOM_SSM_EXECUTION_TIMEOUT,
-    HttpErrorCodes,
-    RESOURCESTYPE,
-    SqlServerDeploymentModel,
-    SSM_COMMAND_CACHE_TYPE
-} from '../../../utils/consts';
+import { AuditStatus, HttpErrorCodes, RESOURCESTYPE, SqlServerDeploymentModel } from '../../../utils/consts';
 import {
     IS_DEMO_FLOW,
     getResourceNameFromTags,
     getServerNameWithHostname,
-    retryWithDelay,
     sqlResponseParsing
 } from '../../../utils/utils';
 import { GET_CLUSTER_SNAPSHOT_POLICIES } from '../../workloads/mssql/assessment-scripts';
-import { SET_VOLUME_SNAPSHOT_POLICY } from '../../workloads/mssql/optimization-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { describeFSxStorageVirtualMachines } from '../../../lib/aws/fsx';
-import { getMappedOntapVolumes, getMZFsxnNodePreference } from '../../aws/fsx-operations';
+import { getMZFsxnNodePreference } from '../../aws/fsx-operations';
 import { activeSqlNodeDetails, handleOptimizeJobCreation } from '../assessment-utils';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
@@ -50,12 +36,9 @@ import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
 import {
     AssessmentCategories,
     AssessmentTriggeredBy,
-    OPTIMIZE_RESILIENCY_CONFIGS,
-    OptimizeHighAvailabilityParams,
-    OptimizeStorageConfigs
+    OptimizeHighAvailabilityParams
 } from '../../../utils/continous-optimization-consts';
 import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations';
-import { resetCache } from '../../../utils/cache';
 import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
 
 import {
@@ -74,21 +57,6 @@ import { moveClusterGroupOwnership } from '../compute-optimize-operations';
 import { describeInstance } from '../../../lib/aws/ec2';
 
 const logger = getLogger();
-
-async function getMappedVolumeDetails(credentialsId: string, region: string, instanceRecord: WorkloadInstance) {
-    return (
-        ((await getMappedOntapVolumes(
-            credentialsId,
-            region,
-            instanceRecord.fsxFileSystem,
-            false,
-            instanceRecord.activeNodeInstanceid,
-            [instanceRecord.name],
-            instanceRecord.sqlAuthEnabled,
-            true
-        )) as MappedOnTapVolumeResponse[]) || [{ volumeRecords: [], volumeDBMap: {} }]
-    );
-}
 
 async function getActiveNodeInfo(
     accountId: string,
@@ -236,143 +204,6 @@ async function getAvailableSnapshotPolicyList(
     return response;
 }
 
-async function setSnapshotPolicyForVolumes(
-    instanceRecord: WorkloadInstance,
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    snapshotPolicy: SnapshotPolicyType,
-    parentJobId?: string,
-    instanceMetadata?: DatabaseInstanceMetadata,
-    volumesToOptimize?: OntapVolumeType[]
-) {
-    logger.info('Setting snapshot policy for volumes of instace: ', { instance: instanceRecord?.name, snapshotPolicy });
-    let jobStatus: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
-    let jobError = '';
-    let subJobId = null;
-    try {
-        const jobMetadata: JobMetadata = {
-            hostsToOptimize: [
-                {
-                    optimizationType: 'resiliency',
-                    resourceId: instanceRecord.resourceName,
-                    sqlServerInstances: [instanceRecord.activeNodeInstanceid]
-                }
-            ]
-        };
-        const subJobDetails = `Fix snapshot policy for ${instanceRecord.resourceName}`;
-        subJobId = await handleOptimizeJobCreation(
-            accountId,
-            credentialsId,
-            region,
-            instanceRecord.resourceName,
-            JOBTYPE.WELL_ARCHITECTED,
-            subJobDetails,
-            subJobDetails,
-            parentJobId,
-            jobMetadata
-        );
-        let volumeUuids = [];
-        const instanceVolumeMapping = await getMappedVolumeDetails(credentialsId, region, instanceRecord);
-        const mappedVolumeUUIDs = (
-            Object.values(instanceVolumeMapping)
-                ?.map(i => i?.volumeRecords)
-                .flat() || []
-        )?.map(volume => volume.uuid as string);
-        const missingVolumes: string[] = [];
-        if (volumesToOptimize && !isEmpty(volumesToOptimize)) {
-            volumeUuids = volumesToOptimize.map(volume => volume.ontapVolumeUuid as string);
-            volumeUuids = volumeUuids.filter(volumeUuid => {
-                if (!mappedVolumeUUIDs.includes(volumeUuid)) {
-                    missingVolumes.push(volumeUuid);
-                    return false;
-                }
-                return true;
-            });
-        } else {
-            volumeUuids = mappedVolumeUUIDs;
-        }
-
-        if (!isEmpty(volumeUuids)) {
-            const params: BulkOptimizeSnapshotPolicyParamsType = {
-                fsxId: instanceRecord.fsxFileSystem,
-                region,
-                volUuids: JSON.stringify(volumeUuids),
-                apiBody: JSON.stringify({ snapshot_policy: snapshotPolicy })
-            };
-
-            const command = [SET_VOLUME_SNAPSHOT_POLICY(params)];
-            const ssmComment = 'Set snapshot policy for volumes';
-
-            const response = await retryWithDelay(
-                callSsmExecution.bind(null, {
-                    credentialsId,
-                    region,
-                    commands: command,
-                    ec2InstanceId: instanceRecord.activeNodeInstanceid,
-                    comment: ssmComment,
-                    accountId,
-                    executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
-                })
-            );
-            const { response: ssmResponse, error: ssmError } = sqlResponseParsing(response);
-            if (!isEmpty(ssmError)) {
-                logger.error('Error executing SSM command to set snapshot for volumes', ssmError, volumeUuids);
-                jobError = `Failed to set snapshot policy for volumes: ${ssmError}`;
-                jobStatus = JOBSTATUS.FAILED;
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, ssmError);
-            }
-            if (!IS_DEMO_FLOW && ssmResponse.length !== volumeUuids.length) {
-                logger.error('Error setting snapshot policy for volumes. ONTAP job IDs:', ssmResponse, volumeUuids);
-                jobError = `Failed to set snapshot policy for some volumes: ONTAP job IDs:', ${ssmResponse}`;
-                jobStatus = JOBSTATUS.WARNING;
-                throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Error setting snapshot policy for volumes');
-            }
-            jobStatus = JOBSTATUS.COMPLETED;
-        }
-        if (IS_DEMO_FLOW) {
-            await updateOptimizedConfigNameInInstanceTable(
-                accountId,
-                instanceRecord.id,
-                [OptimizeStorageConfigs.SNAPSHOT_POLICY],
-                'STORAGE',
-                instanceMetadata || ({} as DatabaseInstanceMetadata)
-            );
-            jobStatus = JOBSTATUS.COMPLETED;
-        }
-        if (!IS_DEMO_FLOW && missingVolumes.length > 0) {
-            jobError = `Volumes UUIDs: ${missingVolumes.join(', ')} are not found for database instance: ${
-                instanceRecord.resourceName
-            }`;
-            jobStatus = JOBSTATUS.WARNING;
-        }
-    } catch (error) {
-        const errMsg = JSON.stringify(error);
-        logger.error('Error setting snapshot policy for volumes', errMsg);
-        jobStatus = JOBSTATUS.FAILED;
-        jobError = errMsg;
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errMsg);
-    } finally {
-        // TODO: Handle job errors for parent and each sub job separately to prevent job status from being overwritten
-        if (!isNil(parentJobId)) {
-            await updateJobDetails(accountId, parentJobId, {
-                status: jobStatus,
-                endTime: Date.now(),
-                error: jobError
-            });
-        }
-        if (!isNil(subJobId)) {
-            await updateJobDetails(accountId, subJobId, {
-                status: jobStatus,
-                endTime: Date.now(),
-                error: jobError
-            });
-        }
-        const auditStatus = jobStatus === JOBSTATUS.COMPLETED ? AuditStatus.SUCCESS : AuditStatus.FAILED;
-        updateLongRunningAuditGroup(auditStatus, jobError);
-    }
-}
-
 async function handleResiliecyOptimize(
     accountId: string,
     credentialsId: string,
@@ -389,11 +220,8 @@ async function handleResiliecyOptimize(
         databaseHostId,
         request
     });
-    const shouldOptimizeSnapshotPolicy = !!request.configurationName.filter(
-        configurationName => configurationName === OPTIMIZE_RESILIENCY_CONFIGS.SNAPSHOT_POLICY
-    ).length;
-    const params = request.params!;
-    const { instanceRecord, instanceMetadata } = await getActiveNodeInfo(
+
+    const { instanceRecord } = await getActiveNodeInfo(
         accountId,
         credentialsId,
         region,
@@ -422,36 +250,7 @@ async function handleResiliecyOptimize(
         undefined,
         jobMetadata
     );
-    if (shouldOptimizeSnapshotPolicy) {
-        const [{ snapshotPolicy, volumes }] = params.filter(
-            param => typeof param === typeof BulkOptimizeSnapshotPolicyRequestBody
-        );
 
-        setSnapshotPolicyForVolumes(
-            instanceRecord,
-            accountId,
-            credentialsId,
-            region,
-            snapshotPolicy,
-            jobId,
-            (instanceMetadata ?? {}) as DatabaseInstanceMetadata,
-            volumes
-        );
-
-        // clearning all the ssm command cache so that we will get the fresh data in assessment
-        resetCache(SSM_COMMAND_CACHE_TYPE);
-        // trigger assesment to update the assessment config data
-        onDemandTriggerMssqlDriftAssessment(
-            accountId,
-            credentialsId,
-            region,
-            databaseHostId,
-            databaseInstanceId,
-            AssessmentTriggeredBy.SYSTEM,
-            AssessmentCategories.SNAPSHOT_POLICY,
-            jobId
-        );
-    }
     return { jobId };
 }
 

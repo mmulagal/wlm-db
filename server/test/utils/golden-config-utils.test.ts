@@ -238,8 +238,8 @@ describe('Golden Config Utils', () => {
             // but MSSQL takes precedence in the combined map
             const snapshotPolicyEntry = combinedMap.get('snapshot-policy');
             expect(snapshotPolicyEntry).toBeDefined();
-            expect(snapshotPolicyEntry?.type).toBe('resiliency');
-            expect(snapshotPolicyEntry?.subType).toBe('resiliency');
+            expect(snapshotPolicyEntry?.type).toBe('storage');
+            expect(snapshotPolicyEntry?.subType).toBe('configuration');
         });
 
         it('should verify snapshot-policy comes from Oracle map with correct type', () => {
@@ -255,7 +255,8 @@ describe('Golden Config Utils', () => {
                 expect(oracleSnapshotPolicyHyphenated?.type).toBe('storage');
                 expect(oracleSnapshotPolicyHyphenated?.subType).toBe('configuration');
                 // Combined map has MSSQL's version (resiliency) since MSSQL takes precedence
-                expect(combinedSnapshotPolicy?.type).toBe('resiliency');
+                expect(combinedSnapshotPolicy?.type).toBe('storage');
+                expect(combinedSnapshotPolicy?.subType).toBe('configuration');
             }
         });
     });

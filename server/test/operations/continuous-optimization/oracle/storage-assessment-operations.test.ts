@@ -1253,7 +1253,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
 
             const snapshotPolicyEntry = findById(drift, 'snapshot-policy') as CombinedDriftEntry | undefined;
             expect(snapshotPolicyEntry).toBeDefined();
-            expect(snapshotPolicyEntry?.name).toBe('Scheduled local snapshots');
+            expect(snapshotPolicyEntry?.name).toBe('Snapshot policy');
         });
     });
 
