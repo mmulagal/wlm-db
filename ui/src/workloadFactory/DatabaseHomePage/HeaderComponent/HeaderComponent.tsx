@@ -124,7 +124,6 @@ import DashboardOverview from '../../Dashboard/DashboardOverview/DashboardOvervi
 import WellArchitectedTab from '../../WellArchitectedTab/WellArchitectedTab';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import WADButton from './WADButton/WADButton';
-import WelcomeModal from '../../../common/WelcomeModal/WelcomeModal';
 
 type Tab = {
     tab: string;
@@ -135,7 +134,6 @@ const HeaderComponent = ({ tab }: Tab) => {
     const dispatch = useDispatch();
     const [statusChk, setStatusChk] = useState(false);
     const [pendingQueriesCounter, setPendingQueriesCounter] = useState(0);
-    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
     const { fetchOnPremData } = useOnPremData();
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -206,21 +204,7 @@ const HeaderComponent = ({ tab }: Tab) => {
 
     const navType = useNavigationType();
 
-    const WELCOME_MODAL_KEY = `occm.isWelcomeModalShown.${userMetadata?.sub}`;
-
-    useEffect(() => {
-        if (userMetadata?.sub && !isWorkloadFactory) {
-            const alreadyShown = localStorage.getItem(WELCOME_MODAL_KEY) === 'true';
-            setShowWelcomeModal(!alreadyShown);
-        }
-    }, [userMetadata?.sub, isWorkloadFactory]);
-
-    const handleWelcomeModalClose = () => {
-        if (userMetadata?.sub) {
-            localStorage.setItem(WELCOME_MODAL_KEY, 'true');
-        }
-        setShowWelcomeModal(false);
-    };
+    
 
     useEffect(() => {
         multiDataStatusRef.current = multiDataStatus;
@@ -1350,7 +1334,6 @@ const HeaderComponent = ({ tab }: Tab) => {
             <RegisterWizard />
         ) : (
             <div className={styles.headerComponent}>
-                {showWelcomeModal && <WelcomeModal onClose={handleWelcomeModalClose} />}
                 {!statusChk &&
                 (tabInfo === WLF_TABS.EXPLORE_SAVINGS_EBS || tabInfo === WLF_TABS.EXPLORE_SAVINGS_FsxW) ? (
                     <div className={styles.exploreSavingHeader}>
