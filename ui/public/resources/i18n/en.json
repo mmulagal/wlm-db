@@ -1410,6 +1410,8 @@
             "dnfs-enablement-optimization-step-3": "Restart the Oracle database to apply the changes.",
             "dnfs-enablement-optimization-step-4": " Verify that dNFS is active and functioning as expected.",
             "dnfs-enablement-note": "It is crucial that you schedule this task during a maintenance window to minimize disruptions to your operations. This process could involve data loss and downtime. To prepare,  perform necessary backups and notify all affected users to avoid any unintended downtime or data loss.",
+            "dnfs-consistent-ip-resolution-action-summary": "Workload Factory recommends avoiding the use of Direct NFS (dNFS) with any type of round-robin name resolution, including DNS, DDNS, NIS, or any other method. This includes the DNS load balancing feature available in ONTAP. Ensuring consistent IP address resolution is crucial for maintaining database stability and preventing potential crashes or data corruption.",
+            "dnfs-consistent-ip-resolution-note": "Fix is not supported for this configuration.",
             "configuration-name": "Configuration name",
             "configuration": "Configuration",
             "sub-configuration": "Sub-configuration",

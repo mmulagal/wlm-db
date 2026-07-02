@@ -17,15 +17,23 @@ import {
     shouldSkipDatabaseHost
 } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { checkBoxHandle, formatDateWithTime, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
-import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
+import {
+    setSelectedRowsForOptimize,
+    setSelectedConfig,
+    setSelectedConfigSummary
+} from '../../../../store/workloadFactory/databaseHomeSlice';
 import {
     CONFIG_STATE_ACTIONS,
     CONFIG_STATES,
     DBType,
     FSXN_STORAGE_PROTOCOLS,
     GETWELL_STATUS,
-    GETWELL_VALUES
+    GETWELL_VALUES,
+    WLF_TABS,
+    ASSESSMENT_CONFIG_IDS
 } from '../../../../utils/consts';
+import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { setCloneDashboardData } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
@@ -52,11 +60,14 @@ import {
     getDismissedConfig,
     getLastAssessmentTimestamp,
     hasAssessmentTimestamp,
-    isWadExcludedAssessmentConfigId,
-    resolveConfigDisplayName
+    isWadExcludedAssessmentConfigId
 } from '../../../WellArchitectedTab/assessmentFormatUtils';
-import { ORACLE_ISCSI_ONLY_CONFIG_IDS, resolveDashboardTableConfig } from './dashboardTableConfigOverrides';
-import { getOptimizeApiConfig } from '../../../../utils/configRegistry';
+import {
+    ORACLE_ISCSI_ONLY_CONFIG_IDS,
+    resolveDashboardTableConfig,
+    HandleImpactedResourceDialog
+} from './dashboardTableConfigOverrides';
+import { getOptimizeApiConfig, hasInnerPage } from '../../../../utils/configRegistry';
 
 interface DashboardConfigsTableProps {
     configType: string;
@@ -314,6 +325,58 @@ const DashboardConfigsTable = ({
     const { setDialog } = useDialog();
 
     const handleImpactedResourceDialog: HandleImpactedResourceDialog = rowData => {
+        const configId = rowData?.configurationName || rowData?.name || '';
+
+        // Check if this config has an inner page - if so, navigate to it instead of opening dialog
+        if (configId && hasInnerPage(configId, configEngineType)) {
+            // For configs with inner pages (e.g., clone-management), navigate to the inner page
+            dispatch(setSelectedConfig(configId));
+            dispatch(
+                setSelectedConfigSummary({
+                    data: rowData,
+                    tags: rowData?.tags || rowData?.categories
+                })
+            );
+            dispatch(
+                setSelectedOptimizeConfig({
+                    type: configId,
+                    data: rowData,
+                    engineType: configEngineType
+                })
+            );
+
+            // Special handling for clone-management to set clone data for OptimizeCard
+            if (configId === ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT) {
+                const cloneViolationsList =
+                    rowData?.cloneDetails?.map((obj: any) => ({
+                        ...obj,
+                        isOptimized: false,
+                        uniqueKey: `${rowData?.databaseHostId}_${rowData?.instanceId}_${obj?.cloneDatabaseName}`,
+                        credentialId: rowData?.credentialId,
+                        regionId: rowData?.regionId,
+                        resourceId: rowData?.databaseHostId,
+                        hostName: rowData?.hostName,
+                        instanceId: rowData?.instanceId,
+                        serverInstanceName: rowData?.serverInstanceName
+                    })) || [];
+
+                dispatch(
+                    setCloneDashboardData({
+                        type: ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT,
+                        name: rowData?.name || configId,
+                        objectsInViolation: cloneViolationsList,
+                        severity: rowData?.severity,
+                        tags: rowData?.tags || rowData?.categories,
+                        recommendation: rowData?.recommendation
+                    })
+                );
+            }
+
+            dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_OPTIMIZE_INNER_PAGE));
+            return;
+        }
+
+        // All other configs open the impacted resource dialog
         const viewColumnHeader = config?.customColumns?.[0]?.Header as string | undefined;
         setDialog(
             <DialogComponent

@@ -177,13 +177,26 @@ const NestedDynamicInnerTable = ({
     const resourceTypeLabel = columnConfig.resourceTypeLabel || 'Database';
     const tableTitle = columnConfig.tableTitle || pluralizeResourceType(resourceTypeLabel);
 
+    // If tableTitle starts with "Impacted", create singular form using the resourceTypeLabel
+    // e.g., tableTitle: "Impacted databases", resourceTypeLabel: "Database" -> "Impacted database"
+    const createSingularImpactedLabel = (resourceType: string): string => {
+        const lower = resourceType.toLowerCase();
+        if (lower === 'lun') return 'Impacted LUN';
+        if (lower === 'ec2 instance') return 'Impacted EC2 instance';
+        return `Impacted ${resourceType.charAt(0).toLowerCase() + resourceType.slice(1)}`;
+    };
+
+    const singularTitle = tableTitle.startsWith('Impacted ')
+        ? createSingularImpactedLabel(resourceTypeLabel)
+        : resourceTypeLabel;
+
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
                 // @ts-expect-error - tableProps type
                 tableProps={tableProps}
                 pluralTitle={`${tableTitle} (${databaseCount})`}
-                singularTitle={`${resourceTypeLabel} (${databaseCount})`}
+                singularTitle={`${singularTitle} (${databaseCount})`}
                 hideCount
             />
 

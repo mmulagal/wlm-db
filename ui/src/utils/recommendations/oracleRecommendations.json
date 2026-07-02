@@ -125,7 +125,7 @@
     "clone-management": {
         "name": "Clone management",
         "title": "Clone management recommendation",
-        "description": "Old clones can incur significant costs. Consider deleting these clones to optimize your storage expenses."
+        "description": "Old clones can incur significant costs. \nConsider deleting these clones to optimize your storage expenses."
     },
     "snapcenter-snapshot": {
         "name": "SnapCenter snapshot",

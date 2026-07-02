@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../../store/storeHooks';
 import styles from './OptimizeCard.module.scss';
-import { GENERAL } from '../../../../utils/appConstants';
 import { WLF_TABS } from '../../../../utils/consts';
 import RecommendationText from '../../RecommendationText/RecommendationText';
-import { getCardMetadata } from '../../../../utils/configRegistry';
+import { getCardMetadata, getColumnConfig } from '../../../../utils/configRegistry';
+import { getRecommendation } from '../../../../utils/recommendations';
 
 /**
  * Helper to extract nested value from object using dot notation path.
@@ -20,7 +20,7 @@ const getNestedValue = (obj: any, path: string): any => {
 const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
     const { t } = useTranslation();
     const selectedOptimizeConfig = useAppSelector(state => state.inventoryV2.selectedOptimizeConfig);
-    const { cloneDashboardData } = useAppSelector(state => state.getWellOptimize);
+    const { cloneDashboardData, configEngineType } = useAppSelector(state => state.getWellOptimize);
     const [setCardData, setSetCardData] = useState<any>({});
 
     useEffect(() => {
@@ -44,24 +44,38 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
                 ...cloneDashboardData,
                 impactedCount: cloneDashboardData?.objectsInViolation?.filter((item: any) => !item.isOptimized).length
             };
-            const data = getCardData(cloneDashboardData?.type, dataObj);
+            const data = getCardData(cloneDashboardData?.type, dataObj, true);
             setSetCardData(data);
         }
-    }, [cloneDashboardData]);
+    }, [cloneDashboardData, configEngineType]);
 
-    const getCardData = (config: string, data: any) => {
+    const getCardData = (config: string, data: any, useStaticRecommendation = false) => {
         // Get card metadata from registry
-        const metadata = getCardMetadata(config);
+        const metadata = getCardMetadata(config, configEngineType);
 
-        // Determine the count value based on metadata
+        // Get column config to check for custom dataMapping sources
+        const columnConfig = getColumnConfig(config, configEngineType);
+
+        // Determine count: check custom dataMapping first (e.g., rssAdapters), then standard fields
         const countValue =
             metadata.countSource === 'impactedCount'
                 ? data.impactedCount
+                : columnConfig?.dataMapping?.sources
+                ? columnConfig.dataMapping.sources.reduce((total, { path }) => {
+                      const sourceData = path.split('.').reduce((obj: any, key) => obj?.[key], data);
+                      return total + (Array.isArray(sourceData) ? sourceData.length : 0);
+                  }, 0)
                 : data.totalObjectsInViolation || data?.violationDetails?.length;
+
+        // Get static recommendation if requested (for dashboard page)
+        const staticRec = useStaticRecommendation ? getRecommendation(config, configEngineType) : null;
 
         // Get recommendation text from configured source or fallback to recommendation field
         let recommendationTextValue;
-        if (metadata.recommendationSource) {
+        if (staticRec) {
+            // Use static recommendation from JSON files
+            recommendationTextValue = staticRec.description;
+        } else if (metadata.recommendationSource) {
             recommendationTextValue = getNestedValue(data, metadata.recommendationSource);
         } else {
             // Fallback: try recommendationText first, then recommendation
@@ -69,7 +83,7 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
         }
 
         // Handle recommendation data structure
-        const recommendation = data?.recommendation;
+        const recommendation = staticRec || data?.recommendation;
         const isRecommendationObject = typeof recommendation === 'object' && recommendation !== null;
 
         // Special handling for log-drive-size and tempdb-drive-size which have additional fields
@@ -99,7 +113,7 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
             data: isRecommendationObject
                 ? recommendation
                 : {
-                      title: `${data?.name || config} recommendation`,
+                      title: staticRec?.title || `${data?.name || config} recommendation`,
                       description: typeof recommendation === 'string' ? recommendation : recommendationTextValue
                   }
         };

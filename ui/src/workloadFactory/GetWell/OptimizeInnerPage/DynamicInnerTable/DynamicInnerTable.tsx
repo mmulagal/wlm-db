@@ -19,7 +19,7 @@ import BulkActionContainer from '../../../../common/BulkAction/BulkActionContain
 import { getWadCellProps } from '../../GetWellUtils';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { buildSubConfigValues, ColumnConfig, pluralizeResourceType } from '../../../../utils/configRegistry';
-import { ASSESSMENT_CONFIG_IDS, GETWELL_STATUS, RSS_COLUMN_KEYS } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_IDS, DBType, GETWELL_STATUS, RSS_COLUMN_KEYS } from '../../../../utils/consts';
 
 interface DynamicInnerTableProps {
     configId: string;
@@ -237,8 +237,10 @@ const DynamicInnerTable = ({
         // Add action button column: "Fix" for fixable configs, "View" for view-only configs
         const showFixButton = canOptimize && handleRowFix;
         const showViewButton = !canOptimize && isViewOnly && handleRowFix;
+        // CRR for MSSQL: show disabled Fix button (not View)
+        const isCrrMssql = configId === ASSESSMENT_CONFIG_IDS.CRR && engineType === DBType.MSSQL;
 
-        if ((showFixButton || showViewButton) && handleRowFix) {
+        if ((showFixButton || showViewButton || isCrrMssql) && handleRowFix) {
             const buttonLabel = t('databases.well-architect.fix');
 
             const actionColumn = {
@@ -253,6 +255,29 @@ const DynamicInnerTable = ({
                     // Check if row is disabled (for log/tempdb drive sizing with over-provisioned or shared drives)
                     const isRowDisabled = rowData?.cellProps?.isDisabled;
                     const disabledTooltip = rowData?.cellProps?.selectionProps?.title;
+
+                    // CRR MSSQL: always show disabled Fix button with tooltip
+                    if (isCrrMssql) {
+                        return (
+                            <div className={styles.buttonContainer}>
+                                <div />
+                                <Popover
+                                    isAppendedToBody
+                                    children={
+                                        <DsTypography variant="Regular_14">
+                                            {t('databases.well-architect.fix-disabled')}
+                                        </DsTypography>
+                                    }
+                                    trigger="hover"
+                                    container={
+                                        <DsButton variant="secondary" isDisabled isThin>
+                                            {buttonLabel}
+                                        </DsButton>
+                                    }
+                                />
+                            </div>
+                        );
+                    }
 
                     if (
                         showFixButton &&
@@ -331,6 +356,7 @@ const DynamicInnerTable = ({
     }, [
         columnConfig,
         configId,
+        engineType,
         canOptimize,
         isViewOnly,
         handleRowFix,
@@ -369,13 +395,29 @@ const DynamicInnerTable = ({
     const resourceTypeLabel = columnConfig.resourceTypeLabel || 'Item';
     const tableTitle = columnConfig.tableTitle || pluralizeResourceType(resourceTypeLabel);
 
+    // If tableTitle starts with "Impacted", create singular form using the resourceTypeLabel
+    // e.g., tableTitle: "Impacted volumes", resourceTypeLabel: "Volume" -> "Impacted volume"
+    // Special casing: preserve acronyms like LUN, EC2
+    const createSingularImpactedLabel = (resourceType: string): string => {
+        const lower = resourceType.toLowerCase();
+        // Preserve special casing for acronyms and special terms
+        if (lower === 'lun') return 'Impacted LUN';
+        if (lower === 'ec2 instance') return 'Impacted EC2 instance';
+        // For regular words, lowercase the first letter (Volume -> volume, Parameter -> parameter)
+        return `Impacted ${resourceType.charAt(0).toLowerCase() + resourceType.slice(1)}`;
+    };
+
+    const singularTitle = tableTitle.startsWith('Impacted ')
+        ? createSingularImpactedLabel(resourceTypeLabel)
+        : resourceTypeLabel;
+
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
                 // @ts-ignore
                 tableProps={tableProps}
                 pluralTitle={tableTitle}
-                singularTitle={resourceTypeLabel}
+                singularTitle={singularTitle}
             />
             {canOptimize && selectedRowsForOptimizeInnerPage.length > 0 && !optimizingInstanceData && (
                 <BulkActionContainer action={t('databases.well-architect.fix')} onClick={handleBulkAction} />

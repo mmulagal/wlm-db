@@ -4,7 +4,7 @@ import { DsTypography } from '@netapp/design-system';
 import { useMemo } from 'react';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
-import { ASSESSMENT_CONFIG_NAMES, DBType, WLF_TABS } from '../../../utils/consts';
+import { ASSESSMENT_CONFIG_IDS, DBType, WLF_TABS } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { useAppSelector } from '../../../store/storeHooks';
 import CloneTabs from '../../GetWell/OptimizeInnerPage/CloneTabs';
@@ -41,14 +41,14 @@ const DashboardOptimizeInnerPage = () => {
                                 }
                             },
                             {
-                                title: `${t('databases.well-architect.fix-configuration')} (${selectedConfig})`,
+                                title: `${t('databases.well-architect.fix-configuration')} (${configItem?.name})`,
                                 dataTestId: 'wlm-db-optimize-configuration',
                                 onClick: () => {
                                     dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_INNER_PAGE));
                                 }
                             },
                             {
-                                title: `${selectedConfig}`,
+                                title: `${configItem?.name}`,
                                 dataTestId: 'wlm-db-optimize-configuration-clone'
                             }
                         ]}
@@ -57,10 +57,10 @@ const DashboardOptimizeInnerPage = () => {
 
                 <div className={styles.headingSection}>
                     <DsTypography
-                        data-testid={`wlm-db-${selectedConfig.toLowerCase().replace(/ /g, '-')}`}
+                        data-testid={`wlm-db-${configItem?.name?.toLowerCase().replace(/ /g, '-')}`}
                         variant="Semibold_20"
                     >
-                        {selectedConfig}
+                        {configItem?.name}
                     </DsTypography>
                 </div>
 
@@ -75,7 +75,7 @@ const DashboardOptimizeInnerPage = () => {
                     </div>
                 </div>
 
-                {selectedConfig === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT && (
+                {selectedConfig === ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT && (
                     <CloneTabs fromPage={WLF_TABS.DASHBOARD} engineType={configEngineType} />
                 )}
             </div>

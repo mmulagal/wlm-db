@@ -375,6 +375,8 @@ export interface DialogContentConfig {
         showOntapConfigCodeBox?: boolean;
         /** Show banner for linked configuration groups (layout/ontap) */
         showLinkedConfigBanner?: boolean;
+        /** Show banner for linked configuration groups in dialog only (overrides showLinkedConfigBanner for dialog) */
+        showLinkedConfigBannerInDialog?: boolean;
         /** Show patch installation table (for OS patch findings) */
         showPatchTable?: boolean;
         /** Show instance selector dropdown */
@@ -679,11 +681,28 @@ export const getCardHeights = (configId: string, dbType: string): CardHeights =>
 };
 
 /** Card metadata (impacted label, count source, recommendation source). */
-export const getCardMetadata = (configId: string): CardMetadata => {
-    // Card metadata is engine-agnostic in the old registry; try both
+export const getCardMetadata = (configId: string, dbType?: string): CardMetadata => {
+    // Try to get card metadata from the appropriate registry
     const mssqlEntry = (mssqlRegistry as unknown as RegistryMap)[configId];
     const oracleEntry = (oracleRegistry as unknown as RegistryMap)[configId];
-    return mssqlEntry?.cardMetadata || oracleEntry?.cardMetadata || DEFAULT_CARD_METADATA;
+    const cardMetadata = mssqlEntry?.cardMetadata || oracleEntry?.cardMetadata;
+
+    // If cardMetadata exists, return it
+    if (cardMetadata) {
+        return cardMetadata;
+    }
+
+    // Fallback: try to derive impactedLabel from columns.resourceTypeLabel if available
+    const columnConfig = getColumnConfig(configId, dbType);
+    if (columnConfig?.resourceTypeLabel) {
+        return {
+            impactedLabel: pluralizeResourceType(columnConfig.resourceTypeLabel),
+            countSource: 'totalObjectsInViolation'
+        };
+    }
+
+    // Ultimate fallback: default metadata
+    return DEFAULT_CARD_METADATA;
 };
 
 /** Column config for inner page tables. Undefined for dialog-only configs. */

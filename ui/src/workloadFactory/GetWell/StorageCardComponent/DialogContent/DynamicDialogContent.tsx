@@ -146,9 +146,14 @@ const DynamicDialogContent = ({
     }, [dialogConfig, status, missingPermissions, configId]);
 
     // Linked config banner state (Oracle layout configs only)
+    // Check showLinkedConfigBannerInDialog if present, otherwise fall back to showLinkedConfigBanner
     const linkedConfigNames = useMemo(() => {
-        if (!resolvedConfig?.features?.showLinkedConfigBanner) return [];
-        return getLinkedConfigNames(configId);
+        const showInDialog = resolvedConfig?.features?.showLinkedConfigBannerInDialog;
+        if (showInDialog === false) return [];
+        if (showInDialog === true || resolvedConfig?.features?.showLinkedConfigBanner) {
+            return getLinkedConfigNames(configId);
+        }
+        return [];
     }, [configId, resolvedConfig]);
 
     // Only show checkbox when fix is supported AND there are linked configs

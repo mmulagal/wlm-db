@@ -105,7 +105,7 @@
         }
     },
     "archivelog-dg-lun-layout": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
         "cardHeights": {
@@ -117,11 +117,50 @@
             "countSource": "impactedCount",
             "recommendationSource": "recommendationText"
         },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Disk group name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Number of LUNs",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Disk group",
+            "tableTitle": "ASM archive log disk group LUNs"
+        },
         "optimizeApi": {
             "mutation": "optimizeOracleStorageLayoutAsm",
             "payloadScope": "credential-scoped",
             "statusType": "ontap",
             "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-fra-dg-lun-layout-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-fra-dg-lun-layout-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "standard"
+            }
         }
     },
     "asm-external-redundancy": {
@@ -439,6 +478,24 @@
             "oracleOsType": "clone",
             "statusType": "os",
             "supportsDashboardBulk": true
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.clone-refresh-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.clone-refresh-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "standard"
+            }
         }
     },
     "controlfiles-placement": {
@@ -705,6 +762,10 @@
             "recommendationSection": "180px",
             "tagSection": "276px"
         },
+        "cardMetadata": {
+            "impactedLabel": "Impacted EC2 instances",
+            "countSource": "totalObjectsInViolation"
+        },
         "columns": {
             "columns": [
                 {
@@ -751,7 +812,20 @@
     "dnfs-consistent-ip-resolution": {
         "hasInnerPage": false,
         "viewOnly": true,
-        "fixSupported": false
+        "fixSupported": false,
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.dnfs-consistent-ip-resolution-action-summary"
+                }
+            ],
+            "notes": {
+                "type": "custom",
+                "content": "databases.well-architect.dnfs-consistent-ip-resolution-note"
+            }
+        }
     },
     "dnfs-enabled": {
         "hasInnerPage": false,
@@ -817,6 +891,10 @@
             "recommendationSection": "180px",
             "tagSection": "276px"
         },
+        "cardMetadata": {
+            "impactedLabel": "Impacted EC2 instances",
+            "countSource": "totalObjectsInViolation"
+        },
         "columns": {
             "columns": [
                 {
@@ -836,7 +914,7 @@
                 }
             ],
             "resourceTypeLabel": "Parameter",
-            "tableTitle": "dNFS shared cache settings"
+            "tableTitle": "Impacted NFS mounts"
         },
         "dialogContent": {
             "sections": [
@@ -1413,7 +1491,7 @@
                     "key": "value",
                     "label": "Current value",
                     "accessor": "value",
-                    "width": "25%"
+                    "width": "30%"
                 },
                 {
                     "key": "recommended",
@@ -1712,6 +1790,10 @@
             "recommendationSection": "170px",
             "tagSection": "266px"
         },
+        "cardMetadata": {
+            "impactedLabel": "Impacted EC2 instances",
+            "countSource": "totalObjectsInViolation"
+        },
         "columns": {
             "columns": [
                 {
@@ -1731,7 +1813,7 @@
                 }
             ],
             "resourceTypeLabel": "Mount point",
-            "tableTitle": "NFS mount options"
+            "tableTitle": "Impacted NFS mounts"
         },
         "dialogContent": {
             "sections": [
@@ -2046,14 +2128,62 @@
         }
     },
     "redolog-dg-lun-layout": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardHeights": {
+            "recommendationSection": "134px",
+            "tagSection": "230px"
+        },
+        "cardMetadata": {
+            "impactedLabel": "Impacted disk groups",
+            "countSource": "impactedCount",
+            "recommendationSource": "recommendationText"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Disk group name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Number of LUNs",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Disk group",
+            "tableTitle": "ASM logs disk group LUNs"
+        },
         "optimizeApi": {
             "mutation": "optimizeOracleStorageLayoutAsm",
             "payloadScope": "credential-scoped",
             "statusType": "ontap",
             "supportsDashboardBulk": false
+        },
+        "dialogContent": {
+            "sections": [
+                {
+                    "heading": "databases.well-architect.action-summary",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-log-dg-lun-layout-action-summary"
+                },
+                {
+                    "heading": "databases.well-architect.what-will-happen",
+                    "type": "text",
+                    "content": "databases.well-architect.oracle-log-dg-lun-layout-what-will-happen",
+                    "hideWhenWad": true
+                }
+            ],
+            "notes": {
+                "type": "standard"
+            }
         }
     },
     "redologs-placement": {
@@ -2518,7 +2648,9 @@
                 }
             ],
             "features": {
-                "showOntapConfigCodeBox": false
+                "showOntapConfigCodeBox": false,
+                "showLinkedConfigBanner": true,
+                "showLinkedConfigBannerInDialog": true
             },
             "notes": {
                 "type": "standard"
@@ -2766,7 +2898,9 @@
                 }
             ],
             "features": {
-                "showOntapConfigCodeBox": false
+                "showOntapConfigCodeBox": false,
+                "showLinkedConfigBanner": true,
+                "showLinkedConfigBannerInDialog": false
             },
             "notes": {
                 "type": "standard"
@@ -2793,7 +2927,7 @@
                     "key": "value",
                     "label": "Current value",
                     "accessor": "value",
-                    "width": "25%"
+                    "width": "30%"
                 },
                 {
                     "key": "recommended",

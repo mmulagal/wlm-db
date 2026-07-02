@@ -1200,7 +1200,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Adapter"
+            "resourceTypeLabel": "Network interface"
         },
         "optimizeApi": {
             "mutation": "optimizeMTUConfigForBulk",
@@ -1324,7 +1324,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Volume"
+            "resourceTypeLabel": "LUN"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",

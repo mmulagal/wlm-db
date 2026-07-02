@@ -16,7 +16,7 @@ interface ConfigTableRowData {
     [key: string]: unknown;
 }
 
-type HandleImpactedResourceDialog = (rowData: ConfigTableRowData) => void;
+export type HandleImpactedResourceDialog = (rowData: ConfigTableRowData) => void;
 
 export const ORACLE_ISCSI_ONLY_CONFIG_IDS = new Set<string>([
     ASSESSMENT_CONFIG_IDS.TRANSPARENT_HUGEPAGES,
@@ -452,6 +452,7 @@ const createDashboardTableConfigOverrides = (
             cloneDetails: item?.cloneDetails,
             tags: item?.tags ?? item?.categories,
             severity: item?.severity,
+            recommendation: item?.recommendation,
             configurationName: ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT,
             configItem: item
         }),
