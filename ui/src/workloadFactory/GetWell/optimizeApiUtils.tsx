@@ -330,7 +330,7 @@ export const buildOptimizeApiInput = (
             payload: {
                 assessments: [
                     {
-                        configurationName: rowData?.id ?? configName,
+                        configurationName: configId,
                         objectsToOptimize: rowData?.objectsInViolation || []
                     }
                 ]

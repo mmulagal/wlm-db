@@ -1802,10 +1802,9 @@
             "resourceTypeLabel": "Volume"
         },
         "optimizeApi": {
-            "mutation": "optimizeResiliency",
+            "mutation": "optimizeStorageConfig",
             "payloadScope": "credential-scoped",
-            "usesConfigNameArray": true,
-            "statusType": "os",
+            "statusType": "ontap",
             "supportsDashboardBulk": false
         },
         "dialogContent": {
