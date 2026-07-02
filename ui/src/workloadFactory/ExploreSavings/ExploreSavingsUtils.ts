@@ -695,10 +695,25 @@ export const formatViewCalcRecommendedData = (data: ViewCalculationsInterface, s
                         : [recommendeRow?.[0], recommendeRow?.[0]]
             };
         } else {
-            result = {
-                ...data,
-                recommendedInstance: data?.recommendedComputeCalculation?.machineDetails
-            };
+            // Use recommendationOptions if available, otherwise fall back to machineDetails
+            const recommendationOptions = data?.recommendedComputeCalculation?.recommendationOptions;
+            const machineDetails = data?.recommendedComputeCalculation?.machineDetails;
+
+            if (recommendationOptions && recommendationOptions.length > 0) {
+                result = {
+                    ...data,
+                    recommendedInstance:
+                        selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+                            ? [recommendationOptions[0]]
+                            : [recommendationOptions[0], recommendationOptions[0]]
+                };
+            } else {
+                // Fall back to machineDetails
+                result = {
+                    ...data,
+                    recommendedInstance: machineDetails
+                };
+            }
         }
     } else {
         result = data;
@@ -774,12 +789,33 @@ export const formatViewCalcData = (
                 ? selectedRowsForExploreSavingsOracleEbsBulk?.find((h: any) => h.name === hostName)
                 : savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_ONPREM
                 ? selectedRowsForExploreSavingsOracleOnPremBulk?.find((h: any) => h.resourceName === hostName)
+                : savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
+                ? selectedRowsForExploreSavingsEBSBulk?.find((h: any) => h.name === hostName)
                 : {};
+
+        // For MSSQL AUTO_EBS bulk path, apply the user's dropdown selection (recommendedTargetInstance).
+        // When no explicit selection exists, fall back to recommendationOptions[0] (the dropdown default)
+        // to stay consistent with what the EBS page cost breakdown shows.
+        const { recommendedTargetInstance } = store.getState().exploreSavings;
+        const recommendationOptions = recommendedCompute?.recommendationOptions;
+        const effectiveRecommendationOption =
+            savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS
+                ? recommendationOptions?.find((opt: any) => opt.instanceType === recommendedTargetInstance) ||
+                  recommendationOptions?.[0]
+                : null;
+
+        let fsxMachineDetailsToUse = recommendedCompute?.machineDetails;
+        if (effectiveRecommendationOption) {
+            const isSingleInstance = hostDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+            fsxMachineDetailsToUse = isSingleInstance
+                ? [effectiveRecommendationOption]
+                : [effectiveRecommendationOption, effectiveRecommendationOption];
+        }
 
         const fsxMachineData = formatViewCalcInstance(
             hostDeploymentType,
             bulkHost || {},
-            recommendedCompute?.machineDetails,
+            fsxMachineDetailsToUse,
             recommendedLicense
         );
 
@@ -1004,10 +1040,27 @@ export const formatViewCalcData = (
         if (isBulkCalculation) {
             // For bulk calculations, sum costs from all hosts
             const recommendedComputeArray: any = viewCalculationsResponse?.recommendedComputeCalculation;
+            const { recommendedTargetInstance } = state.exploreSavings;
             recommendedComputeArray?.forEach((compute: any) => {
-                compute?.machineDetails?.forEach((instance: any) => {
-                    cost += Number(instance?.instanceMonthlyPrice || 0);
-                });
+                if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+                    const effectiveRecommendationOption =
+                        compute?.recommendationOptions?.find(
+                            (opt: any) => opt.instanceType === recommendedTargetInstance
+                        ) || compute?.recommendationOptions?.[0];
+                    if (effectiveRecommendationOption) {
+                        const isSingle =
+                            compute?.deploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+                        cost += Number(effectiveRecommendationOption?.instanceMonthlyPrice || 0) * (isSingle ? 1 : 2);
+                    } else {
+                        compute?.machineDetails?.forEach((instance: any) => {
+                            cost += Number(instance?.instanceMonthlyPrice || 0);
+                        });
+                    }
+                } else {
+                    compute?.machineDetails?.forEach((instance: any) => {
+                        cost += Number(instance?.instanceMonthlyPrice || 0);
+                    });
+                }
             });
         } else if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.instanceMonthlyPrice || 0);
@@ -1024,10 +1077,27 @@ export const formatViewCalcData = (
         if (isBulkCalculation) {
             // For bulk calculations, sum costs from all hosts
             const recommendedComputeArray: any = viewCalculationsResponse?.recommendedComputeCalculation;
+            const { recommendedTargetInstance } = state.exploreSavings;
             recommendedComputeArray?.forEach((compute: any) => {
-                compute?.machineDetails?.forEach((instance: any) => {
-                    cost += Number(instance?.instanceMonthlyPrice || 0);
-                });
+                if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+                    const effectiveRecommendationOption =
+                        compute?.recommendationOptions?.find(
+                            (opt: any) => opt.instanceType === recommendedTargetInstance
+                        ) || compute?.recommendationOptions?.[0];
+                    if (effectiveRecommendationOption) {
+                        const isSingle =
+                            compute?.deploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+                        cost += Number(effectiveRecommendationOption?.instanceMonthlyPrice || 0) * (isSingle ? 1 : 2);
+                    } else {
+                        compute?.machineDetails?.forEach((instance: any) => {
+                            cost += Number(instance?.instanceMonthlyPrice || 0);
+                        });
+                    }
+                } else {
+                    compute?.machineDetails?.forEach((instance: any) => {
+                        cost += Number(instance?.instanceMonthlyPrice || 0);
+                    });
+                }
             });
         } else if (selectedDeploymentModel?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
             cost += Number(viewCalculationsResponse?.recommendedInstance?.[0]?.instanceMonthlyPrice || 0);
@@ -1713,8 +1783,18 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
                     (perRow: any) => perRow?.instanceType === recommendedTargetInstance
                 );
 
+                // Update compute array to have the selected instanceType
+                const updatedComputeArray = computeArray.map((computeObj: any) => ({
+                    ...computeObj,
+                    recommended: {
+                        ...computeObj.recommended,
+                        instanceType: recommendedTargetInstance
+                    }
+                }));
+
                 result = {
                     ...data,
+                    compute: updatedComputeArray as any,
                     recommendedInstance: {
                         ...firstComputeRecommendeRow?.[0],
                         licenseMonthlyPrice: totalRecommendedLicensePrice,
@@ -1727,23 +1807,40 @@ export const formatStorageSavingsRecommendedData = (data: StorageSavingsInterfac
                 };
             } else {
                 // Fallback for AUTO_EBS when no recommended instance is selected
-                let totalExistingComputePrice = 0;
-                let totalExistingLicensePrice = 0;
+                // Use recommendationOptions for correct pricing
+                let totalRecommendedComputePrice = 0;
+                let totalRecommendedLicensePrice = 0;
 
                 computeArray.forEach((computeObj: any) => {
-                    totalExistingComputePrice += Number(computeObj?.existing?.computeMonthlyPrice || 0);
+                    const isAOAG = deploymentModelValue.toLowerCase() !== SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+                    const multiplier = isAOAG ? 2 : 1;
+
+                    const recommendationOptions = computeObj?.recommended?.recommendationOptions;
+                    // Use recommendationOptions[0] if available, otherwise fall back to recommended compute price
+                    const computePrice =
+                        recommendationOptions?.length > 0
+                            ? Number(recommendationOptions[0]?.computeMonthlyPrice || 0)
+                            : Number(computeObj?.recommended?.computeMonthlyPrice || 0);
+                    totalRecommendedComputePrice += computePrice * multiplier;
                 });
 
                 licenseArray.forEach((licenseObj: any) => {
-                    totalExistingLicensePrice += Number(licenseObj?.recommended?.licenseMonthlyPrice || 0);
+                    totalRecommendedLicensePrice += Number(licenseObj?.recommended?.licenseMonthlyPrice || 0);
                 });
+
+                // Get instance data from recommendationOptions if available, otherwise from machineDetails
+                const firstComputeRecommendationOptions = computeArray[0]?.recommended?.recommendationOptions;
+                const baseInstanceData =
+                    firstComputeRecommendationOptions?.length > 0
+                        ? firstComputeRecommendationOptions[0]
+                        : computeArray[0]?.recommended?.machineDetails?.[0] || {};
 
                 result = {
                     ...data,
                     recommendedInstance: {
-                        ...computeArray[0]?.recommended?.machineDetails?.[0],
-                        licenseMonthlyPrice: totalExistingLicensePrice,
-                        computeMonthlyPrice: totalExistingComputePrice
+                        ...baseInstanceData,
+                        licenseMonthlyPrice: totalRecommendedLicensePrice,
+                        computeMonthlyPrice: totalRecommendedComputePrice
                     },
                     totalSummary: {
                         ...data?.totalSummary,
