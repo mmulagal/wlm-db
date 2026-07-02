@@ -267,13 +267,14 @@ export const buildOptimizeApiInput = (
     // ── Oracle bulk (storage-operating-system, compute-host-os, storage-sizing, clone, headroom) ──
     if (isOracle && apiConfig.payloadScope === 'bulk') {
         if (isBulk) {
+            const rows = Array.isArray(rowData) ? rowData : [];
             return {
                 payload: {
                     type: apiConfig.oracleOsType,
                     hostsToOptimize: [
                         {
                             configurationName: configName,
-                            databaseHosts: groupRowsToHosts(rowData, 'databases')
+                            databaseHosts: groupRowsToHosts(rows, 'databases')
                         }
                     ]
                 }
@@ -363,13 +364,14 @@ export const buildOptimizeApiInput = (
     // ── Compute rightsizing ───────────────────────────────────────────────────
     if (apiConfig.mutation === 'optimizeComputeConfigForBulk' && configName === 'compute') {
         if (isBulk) {
+            const rows = Array.isArray(rowData) ? rowData : [];
             return {
                 payload: {
                     hostsToOptimize: [
                         {
                             configurationName: 'compute',
                             databaseHosts: Object.values(
-                                (rowData as any[]).reduce((acc: Record<string, any>, row: any) => {
+                                rows.reduce((acc: Record<string, any>, row: any) => {
                                     const key = uniqueHostRow(row.databaseHostId, row.credentialId, row.regionId);
                                     if (!acc[key]) {
                                         acc[key] = {
@@ -412,13 +414,14 @@ export const buildOptimizeApiInput = (
     // ── RSS config ────────────────────────────────────────────────────────────
     if (configName === 'rss-config') {
         if (isBulk) {
+            const rows = Array.isArray(rowData) ? rowData : [];
             return {
                 payload: {
                     hostsToOptimize: [
                         {
                             configurationName: 'rss-config',
                             databaseHosts: Object.values(
-                                (rowData as any[]).reduce((acc: Record<string, any>, row: any) => {
+                                rows.reduce((acc: Record<string, any>, row: any) => {
                                     const key = uniqueHostRow(row.databaseHostId, row.credentialId, row.regionId);
                                     if (!acc[key]) {
                                         acc[key] = {
@@ -462,13 +465,14 @@ export const buildOptimizeApiInput = (
     // ── MTU alignment ─────────────────────────────────────────────────────────
     if (configName === 'mtu-alignment') {
         if (isBulk) {
+            const rows = Array.isArray(rowData) ? rowData : [];
             return {
                 payload: {
                     hostsToOptimize: [
                         {
                             configurationName: 'mtu-alignment',
                             databaseHosts: Object.values(
-                                (rowData as any[]).reduce((acc: Record<string, any>, row: any) => {
+                                rows.reduce((acc: Record<string, any>, row: any) => {
                                     const key = uniqueHostRow(row.databaseHostId, row.credentialId, row.regionId);
                                     if (!acc[key]) {
                                         acc[key] = {
@@ -513,12 +517,13 @@ export const buildOptimizeApiInput = (
 
     // ── Standard MSSQL bulk ───────────────────────────────────────────────────
     if (isBulk) {
+        const rows = Array.isArray(rowData) ? rowData : [];
         return {
             payload: {
                 hostsToOptimize: [
                     {
                         configurationName: configName,
-                        databaseHosts: groupRowsToHosts(rowData, 'sqlServerInstances')
+                        databaseHosts: groupRowsToHosts(rows, 'sqlServerInstances')
                     }
                 ]
             }

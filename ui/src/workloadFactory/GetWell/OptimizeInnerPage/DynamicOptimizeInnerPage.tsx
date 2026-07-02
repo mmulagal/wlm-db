@@ -14,16 +14,22 @@ import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     setLandingFromInnerPage,
-    setOptimizingInstanceData,
     setOptimizingData,
     setInProgressOptimizationData,
     setInProgressHostData,
     setJobToInstanceMap,
-    setGwRefreshPage,
     setIsInnerPageOptimize,
-    setCloneDashboardData
+    setCloneDashboardData,
+    setCardData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
-import { DBType, WLF_TABS, ACTION_TYPE, ASSESSMENT_CONFIG_IDS } from '../../../utils/consts';
+import {
+    DBType,
+    WLF_TABS,
+    ACTION_TYPE,
+    ASSESSMENT_CONFIG_IDS,
+    GETWELL_STATUS,
+    WELL_ARCHITECTED_STATUS
+} from '../../../utils/consts';
 import OptimizeCard from './OptimizeCard/OptimizeCard';
 import { useAppSelector } from '../../../store/storeHooks';
 import {
@@ -119,17 +125,18 @@ const DynamicOptimizeInnerPage = () => {
         }
     }, [configId, configData, dispatch, selectedGwInstanceRegionId, selectedGwInstanceCredId]);
 
-    // When job completes (isInnerPageOptimize=true), navigate back and trigger assessment refresh
+    // When job is initiated from inner page, navigate back immediately (don't refresh yet)
     useEffect(() => {
         if (isInnerPageOptimize) {
             dispatch(setIsInnerPageOptimize(false));
-            dispatch(setGwRefreshPage(true));
             dispatch(setLandingFromInnerPage(true));
             if (engineType === DBType.ORACLE) {
                 dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
             } else {
                 dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
             }
+            // Don't trigger refresh here - status is already set to Optimizing
+            // Refresh will happen when job completes via setGwRefreshPage in handleOptimizeStorageJob
         }
     }, [isInnerPageOptimize, dispatch, engineType]);
 
@@ -192,13 +199,30 @@ const DynamicOptimizeInnerPage = () => {
             });
 
             // Set optimizing state
-            dispatch(setOptimizingInstanceData(true));
             dispatch(
                 setOptimizingData({
                     ...optimizingData,
-                    [technicalId]: 'optimizing'
+                    [technicalId]: WELL_ARCHITECTED_STATUS.OPTIMIZING
                 })
             );
+
+            // Update cardData to show "Optimizing" status immediately
+            const currentCardData = store.getState().getWellOptimize.cardData;
+            if (currentCardData && technicalId && currentCardData[technicalId]) {
+                dispatch(
+                    setCardData({
+                        ...currentCardData,
+                        [technicalId]: {
+                            ...currentCardData[technicalId],
+                            block_two: {
+                                ...currentCardData[technicalId].block_two,
+                                value: GETWELL_STATUS.OPTIMIZING
+                            }
+                        }
+                    })
+                );
+            }
+
             dispatch(
                 setInProgressOptimizationData({
                     ...inProgressOptimizationData,

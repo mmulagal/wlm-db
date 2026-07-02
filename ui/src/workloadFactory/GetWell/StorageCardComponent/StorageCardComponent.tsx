@@ -21,7 +21,8 @@ import {
     isConfigIdMatch,
     OPTIMIZE_PAYLOAD_TYPES,
     WELL_ARCHITECT_FINDINGS,
-    WLF_TABS
+    WLF_TABS,
+    WELL_ARCHITECTED_STATUS
 } from '../../../utils/consts';
 import {
     setCardData,
@@ -89,7 +90,6 @@ const StorageCardComponent = ({
         isAssessmentAvailable,
         selectedResourceId,
         selectedDatabaseInstance,
-        optimizingInstanceData,
         selectedGwInstanceCredId,
         selectedGwInstanceRegionId,
         cardData: cardDataFromStore,
@@ -130,6 +130,13 @@ const StorageCardComponent = ({
 
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { inProgressOptimizationData, inProgressHostData } = useAppSelector(state => state.getWellOptimize);
+
+    // Check if ANY configuration is currently being optimized
+    const isAnyConfigOptimizing = useMemo(
+        () => Object.values(optimizingData || {}).some(status => status === WELL_ARCHITECTED_STATUS.OPTIMIZING),
+        [optimizingData]
+    );
+
     const registryMutationMap = useOptimizeMutations();
     // Legacy single-instance mutations — only used by the fallback path below
     const [optimizeComputeConfig] = useOptimizeComputeConfigMutation();
@@ -245,6 +252,21 @@ const StorageCardComponent = ({
                 </div>
             );
         }
+
+        // Check if this config is currently being optimized - override cardData status
+        if (cardData?.id && optimizingData[cardData.id] === WELL_ARCHITECTED_STATUS.OPTIMIZING) {
+            return (
+                <DsTypography variant="Semibold_14" className={styles.titleText} style={{ whiteSpace: 'nowrap' }}>
+                    <span className={styles.svgSection} style={{ top: '8px' }}>
+                        {setImage(GETWELL_STATUS.OPTIMIZING)}
+                    </span>
+                    <span className={styles.valueSection} title={GETWELL_STATUS.OPTIMIZING}>
+                        {GETWELL_STATUS.OPTIMIZING}
+                    </span>
+                </DsTypography>
+            );
+        }
+
         // WAD excluded configurations show Unavailable with tooltip
         if (cardData?.isWadExcluded) {
             return (
@@ -581,8 +603,9 @@ const StorageCardComponent = ({
                 });
 
                 if (apiData) {
-                    dispatch(setOptimizingInstanceData(true));
-                    dispatch(setOptimizingData({ ...optimizingData, [cardData?.id]: 'optimizing' }));
+                    dispatch(
+                        setOptimizingData({ ...optimizingData, [cardData?.id]: WELL_ARCHITECTED_STATUS.OPTIMIZING })
+                    );
 
                     // Update cardData to show "Optimizing" status immediately
                     const currentCardData = store.getState().getWellOptimize.cardData;
@@ -781,11 +804,10 @@ const StorageCardComponent = ({
         }
 
         // call optimize api
-        dispatch(setOptimizingInstanceData(true));
         dispatch(
             setOptimizingData({
                 ...optimizingData,
-                [cardData?.id]: 'optimizing'
+                [cardData?.id]: WELL_ARCHITECTED_STATUS.OPTIMIZING
             })
         );
 
@@ -1126,7 +1148,7 @@ const StorageCardComponent = ({
                     cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
                         <div className={styles.buttonGroup}>
                             {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
-                            {loading || dismissDisableButton() ? '' : renderDismissButton()}
+                            {loading || dismissDisableButton() || isAnyConfigOptimizing ? '' : renderDismissButton()}
                             <div
                                 className={
                                     isDarkTheme
@@ -1146,12 +1168,12 @@ const StorageCardComponent = ({
                                 </TooltipComponent>
                             </div>
                         </div>
-                    ) : optimizingInstanceData &&
-                      cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED &&
-                      cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZING ? (
+                    ) : ((cardData?.id && optimizingData[cardData.id] === WELL_ARCHITECTED_STATUS.OPTIMIZING) ||
+                          cardData?.block_two?.value === GETWELL_STATUS.OPTIMIZING) &&
+                      cardData?.block_two?.value !== GETWELL_STATUS.OPTIMIZED ? (
                         <div className={styles.buttonGroup}>
                             {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
-                            {loading || dismissDisableButton() ? '' : renderDismissButton()}
+                            {loading || dismissDisableButton() || isAnyConfigOptimizing ? '' : renderDismissButton()}
                             <div
                                 className={
                                     isDarkTheme
@@ -1174,7 +1196,7 @@ const StorageCardComponent = ({
                     ) : disableOptimizeButtonTooltip ? (
                         <div className={styles.buttonGroup}>
                             {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
-                            {loading || dismissDisableButton() ? '' : renderDismissButton()}
+                            {loading || dismissDisableButton() || isAnyConfigOptimizing ? '' : renderDismissButton()}
                             <Popover
                                 popoverClass={CommonStyles.popover}
                                 isAppendedToBody
@@ -1200,11 +1222,11 @@ const StorageCardComponent = ({
                     ) : (
                         <div className={styles.buttonGroup}>
                             {/* Dismiss Button - Only show when showDismissButton is true and not in dismissed mode */}
-                            {loading || dismissDisableButton() ? '' : renderDismissButton()}
+                            {loading || dismissDisableButton() || isAnyConfigOptimizing ? '' : renderDismissButton()}
                             {/* View and Fix Action Button - disabled with Popover for WAD when it would call handleDialog */}
                             <div
                                 className={
-                                    isDarkTheme && (loading || disableOptimizeButton)
+                                    isDarkTheme && (loading || disableOptimizeButton || isAnyConfigOptimizing)
                                         ? `${styles.buttonSection} ${styles.buttonSectionDarkMode}`
                                         : styles.buttonSection
                                 }
@@ -1213,7 +1235,12 @@ const StorageCardComponent = ({
                                 <DsButton
                                     variant="secondary"
                                     onClick={() => handleDifferentNavigation()}
-                                    isDisabled={loading || disableOptimizeButton || dismissDisableButton()}
+                                    isDisabled={
+                                        loading ||
+                                        disableOptimizeButton ||
+                                        dismissDisableButton() ||
+                                        isAnyConfigOptimizing
+                                    }
                                 >
                                     {setButtonText()}
                                 </DsButton>

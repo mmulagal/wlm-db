@@ -17,9 +17,9 @@ import {
     setOptimizationBreakDown,
     setOptimizingData,
     setOptimizingInstanceData,
-    setGwDatabaseStorageType,
-    setGwDatabaseAoagStorageType
+    setGwRefreshPage
 } from '../../store/workloadFactory/getWellOptimizeSlice';
+import { setRefreshOracleWellArchitect } from '../../store/workloadFactory/oracleSlice';
 import {
     addAllMssqlHostAssessmentData,
     addAllOracleHostAssessmentData,
@@ -51,7 +51,8 @@ import {
     WELL_ARCHITECTED_CATEGORIES,
     WELL_ARCHITECTED_CATEGORY_LABELS,
     WELL_ARCHITECTED_CATEGORY_ORDER,
-    WLF_TABS
+    WLF_TABS,
+    WELL_ARCHITECTED_STATUS
 } from '../../utils/consts';
 import { groupByType, mapDismissedValues } from '../../utils/resourceUtils';
 import { AssessmentResponseInterface } from '../../utils/types/getWellTypes';
@@ -778,7 +779,7 @@ const updateAssessmentWithCompletedJobs = (
         dispatch(
             setOptimizingData({
                 ...optimizingData,
-                [rowData?.id]: 'optimized'
+                [rowData?.id]: WELL_ARCHITECTED_STATUS.OPTIMIZED
             })
         );
         updateProgressForSingle(
@@ -886,7 +887,7 @@ const updateAssessmentWithWarningJobs = (
         dispatch(
             setOptimizingData({
                 ...optimizingData,
-                [rowData?.id]: 'optimized'
+                [rowData?.id]: WELL_ARCHITECTED_STATUS.OPTIMIZED
             })
         );
         updateProgressForSingle(
@@ -982,6 +983,29 @@ const updateAssessmentWithFailedJobs = (
         );
 
         if (isOptimizeInnerPage) {
+            // Trigger assessment refresh even on failure to show updated status
+            if (engineType === DBType.ORACLE) {
+                dispatch(setRefreshOracleWellArchitect(true));
+            } else {
+                dispatch(setGwRefreshPage(true));
+            }
+        } else {
+            // Clear cardData.block_two status to prevent stuck "Optimizing" display after failure
+            const currentCardData = store.getState().getWellOptimize.cardData;
+            if (currentCardData && rowData?.id && currentCardData[rowData.id]) {
+                dispatch(
+                    setCardData({
+                        ...currentCardData,
+                        [rowData.id]: {
+                            ...currentCardData[rowData.id],
+                            block_two: {
+                                ...currentCardData[rowData.id].block_two,
+                                value: ''
+                            }
+                        }
+                    })
+                );
+            }
         }
 
         dispatch(
@@ -1049,6 +1073,23 @@ export const handleOptimizeResourceJob = (
                             );
                         }, 0);
 
+                        // Clear optimizingData for Clone Management
+                        const currentOptimizingData = store.getState().getWellOptimize.optimizingData || {};
+                        if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+                            dispatch(
+                                setOptimizingData({
+                                    ...currentOptimizingData,
+                                    [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: ''
+                                })
+                            );
+                            // Trigger assessment refresh based on engine type
+                            if (engineType === DBType.ORACLE) {
+                                dispatch(setRefreshOracleWellArchitect(true));
+                            } else {
+                                dispatch(setGwRefreshPage(true));
+                            }
+                        }
+
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
                     } else if (status === JOB_MONITORING_STATUS.WARNING) {
@@ -1096,6 +1137,23 @@ export const handleOptimizeResourceJob = (
                             );
                         }, 0);
 
+                        // Clear optimizingData for Clone Management
+                        const currentOptimizingDataWarning = store.getState().getWellOptimize.optimizingData || {};
+                        if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+                            dispatch(
+                                setOptimizingData({
+                                    ...currentOptimizingDataWarning,
+                                    [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: ''
+                                })
+                            );
+                            // Trigger assessment refresh based on engine type
+                            if (engineType === DBType.ORACLE) {
+                                dispatch(setRefreshOracleWellArchitect(true));
+                            } else {
+                                dispatch(setGwRefreshPage(true));
+                            }
+                        }
+
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
@@ -1122,6 +1180,23 @@ export const handleOptimizeResourceJob = (
                                 })
                             );
                         }, 0);
+
+                        // Clear optimizingData for Clone Management
+                        const currentOptimizingDataFailed = store.getState().getWellOptimize.optimizingData || {};
+                        if (type === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
+                            dispatch(
+                                setOptimizingData({
+                                    ...currentOptimizingDataFailed,
+                                    [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: ''
+                                })
+                            );
+                            // Trigger assessment refresh based on engine type
+                            if (engineType === DBType.ORACLE) {
+                                dispatch(setRefreshOracleWellArchitect(true));
+                            } else {
+                                dispatch(setGwRefreshPage(true));
+                            }
+                        }
 
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
@@ -1202,6 +1277,11 @@ export const handleOptimizeStorageJob = (
 
     setTimeout(() => {
         if (res?.data) {
+            // Navigate back to well arch page immediately when called from inner page
+            if (isOptimizeInnerPage) {
+                dispatch(setIsInnerPageOptimize(true));
+            }
+
             const jobInterval = setInterval(() => {
                 getJobDetailApi({
                     id: res?.data?.jobId
@@ -1222,8 +1302,13 @@ export const handleOptimizeStorageJob = (
                         );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
+                        // Trigger assessment refresh when job completes
                         if (isOptimizeInnerPage) {
-                            dispatch(setIsInnerPageOptimize(true));
+                            if (engineType === DBType.ORACLE) {
+                                dispatch(setRefreshOracleWellArchitect(true));
+                            } else {
+                                dispatch(setGwRefreshPage(true));
+                            }
                         }
                     } else if (status === JOB_MONITORING_STATUS.WARNING) {
                         updateAssessmentWithWarningJobs(
@@ -1239,8 +1324,13 @@ export const handleOptimizeStorageJob = (
                         );
                         dispatch(setOptimizingInstanceData(false));
                         clearInterval(jobInterval);
+                        // Trigger assessment refresh when job completes with warnings
                         if (isOptimizeInnerPage) {
-                            dispatch(setIsInnerPageOptimize(true));
+                            if (engineType === DBType.ORACLE) {
+                                dispatch(setRefreshOracleWellArchitect(true));
+                            } else {
+                                dispatch(setGwRefreshPage(true));
+                            }
                         }
                     } else if (status === JOB_MONITORING_STATUS.FAILED) {
                         updateAssessmentWithFailedJobs(

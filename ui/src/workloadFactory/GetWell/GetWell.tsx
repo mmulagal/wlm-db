@@ -273,10 +273,11 @@ const GetWell = () => {
 
     useEffect(() => {
         if (isInnerPageOptimize) {
-            refreshGetWellPage();
+            // Don't refresh immediately - just reset the flag
+            // The actual refresh will happen when job completes via setGwRefreshPage
             dispatch(setIsInnerPageOptimize(false));
         }
-    }, [isInnerPageOptimize, dispatch, refreshGetWellPage]);
+    }, [isInnerPageOptimize]);
 
     // Generate dynamic filter options based on actual card data
     const dynamicFilterOptions = useMemo(() => {

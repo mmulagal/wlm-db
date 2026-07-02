@@ -11,8 +11,8 @@ import {
     setInProgressResourceOptimizeData,
     setJobToInstanceMapForBulk,
     setOptimizingData,
-    setOptimizingInstanceData,
-    setSelectedCloneTab
+    setSelectedCloneTab,
+    setCardData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import CloneInsideWF from './InnerTables/CloneInsideWF';
 import CloneOutsideWF from './InnerTables/CloneOutsideWF';
@@ -26,15 +26,18 @@ import {
     useOptimizeOracleOperatingSystemMutation
 } from '../../../utils/apiService';
 import {
+    ASSESSMENT_CONFIG_IDS,
     ASSESSMENT_CONFIG_NAMES,
     DBType,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
-    WLF_TABS
+    WLF_TABS,
+    GETWELL_STATUS,
+    WELL_ARCHITECTED_STATUS
 } from '../../../utils/consts';
 import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../store/notificationSlice';
-import { handleOptimizeResourceJob, nameToIdConfigMapping } from '../GetWellUtils';
+import { handleOptimizeResourceJob } from '../GetWellUtils';
 import store from '../../../store/store';
 import { cloneAgeRange } from '../../../utils/utilityFunctions';
 
@@ -223,14 +226,29 @@ const CloneTabs = ({ fromPage = '', engineType = DBType.MSSQL }: any) => {
             ? buildOracleClonePayload(actionType, rowData)
             : buildMssqlClonePayload(actionType, rowData);
 
-        dispatch(setOptimizingInstanceData(true));
-
         dispatch(
             setOptimizingData({
                 ...optimizingData,
-                [nameToIdConfigMapping(ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT)]: 'optimizing'
+                [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: WELL_ARCHITECTED_STATUS.OPTIMIZING
             })
         );
+
+        // Update cardData to show "Optimizing" status immediately
+        const currentCardData = store.getState().getWellOptimize.cardData;
+        if (currentCardData && currentCardData[ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]) {
+            dispatch(
+                setCardData({
+                    ...currentCardData,
+                    [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: {
+                        ...currentCardData[ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT],
+                        block_two: {
+                            ...currentCardData[ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT].block_two,
+                            value: GETWELL_STATUS.OPTIMIZING
+                        }
+                    }
+                })
+            );
+        }
 
         const hostIds = payload?.hostsToOptimize?.[0]?.databaseHosts.map((host: any) => host?.id);
         dispatch(

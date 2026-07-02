@@ -105,6 +105,10 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage, engineType =
                 const isBulkModeActive =
                     selectedRowsForOptimizeInnerPage && selectedRowsForOptimizeInnerPage.length > 0;
 
+                // Check if ANY clone is being optimized
+                const isAnyCloneOptimizing =
+                    inProgressResourceOptimizeData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0;
+
                 if (isBulkModeActive) {
                     return (
                         <div className={styles.buttonContainer}>
@@ -126,7 +130,7 @@ const CloneOutsideWF = ({ data, handleBulkActionForClone, fromPage, engineType =
                     );
                 }
 
-                if (isInProgress) {
+                if (isInProgress || isAnyCloneOptimizing) {
                     return (
                         <div className={styles.buttonContainer}>
                             <div />

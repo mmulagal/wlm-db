@@ -31,8 +31,8 @@
         "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
     },
     "tiering-tco-optimization": {
-        "name": "Tiering / TCO optimization",
-        "title": "Tiering / TCO optimization recommendation",
+        "name": "Cold data tiering",
+        "title": "Cold data tiering recommendation",
         "description": "For optimal database performance and cost efficiency, Workload Factory recommends using the snapshot-only tiering policy, which moves only snapshot data to the capacity tier while keeping active data on the SSD tier.\nThis approach preserves low-latency performance for SQL workloads while reducing storage costs.\nWorkload Factory recommends tiering snapshot data after a 7-day cooling period."
     },
     "mpio-enabled": {
@@ -118,8 +118,8 @@
         }
     },
     "snapshot-policy": {
-        "name": "Snapshot Policy",
-        "title": "Scheduled local snapshot recommendation",
+        "name": "Snapshot policy",
+        "title": "Snapshot policy recommendation",
         "description": "Local snapshots allow you to create instantaneous capacity efficient point-in-time images of your SQL Server data volumes. Use local snapshots as an additional backup mechanism for quick restores or for testing. Enabling snapshot policies ensures regular backup protection for your database volumes."
     },
     "crr": {

@@ -66,7 +66,8 @@ import {
     OPTIMIZE_PAYLOAD_TYPES,
     ORACLE_UNSUPPORTED_FIX_TYPES,
     OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES,
-    UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES
+    UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES,
+    WELL_ARCHITECTED_STATUS
 } from '../../../utils/consts';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
@@ -75,7 +76,7 @@ import {
     setInProgressOptimizationData,
     setJobToInstanceMap,
     setOptimizingData,
-    setOptimizingInstanceData
+    setCardData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 import store from '../../../store/store';
@@ -364,13 +365,30 @@ const RecommendationTable = ({
         }
 
         // call optimize api
-        dispatch(setOptimizingInstanceData(true));
         dispatch(
             setOptimizingData({
                 ...optimizingData,
-                [rowData?.id]: 'optimizing'
+                [rowData?.id]: WELL_ARCHITECTED_STATUS.OPTIMIZING
             })
         );
+
+        // Update cardData to show "Optimizing" status immediately
+        const currentCardData = store.getState().getWellOptimize.cardData;
+        if (currentCardData && rowData?.id && currentCardData[rowData.id]) {
+            dispatch(
+                setCardData({
+                    ...currentCardData,
+                    [rowData.id]: {
+                        ...currentCardData[rowData.id],
+                        block_two: {
+                            ...currentCardData[rowData.id].block_two,
+                            value: GETWELL_STATUS.OPTIMIZING
+                        }
+                    }
+                })
+            );
+        }
+
         dispatch(
             setInProgressOptimizationData({
                 ...inProgressOptimizationData,

@@ -107,7 +107,11 @@ const CloneInsideWF = ({ data, handleBulkActionForClone, fromPage }: any) => {
 
                 const isBulkModeActive = selectedRowsForOptimizeInnerPage.length > 0;
 
-                if (isBulkModeActive || isInProgress) {
+                // Check if ANY clone is being optimized
+                const isAnyCloneOptimizing =
+                    inProgressResourceOptimizeData?.[ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT]?.length > 0;
+
+                if (isBulkModeActive || isInProgress || isAnyCloneOptimizing) {
                     const tooltipMessage = isBulkModeActive
                         ? t('databases.well-architect.bulk-action-enabled-on-selected')
                         : t('databases.well-architect.fixing');

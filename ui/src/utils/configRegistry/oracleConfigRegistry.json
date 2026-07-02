@@ -565,7 +565,7 @@
     "crr": {
         "hasInnerPage": true,
         "viewOnly": true,
-        "fixSupported": true,
+        "fixSupported": false,
         "cardMetadata": {
             "impactedLabel": "Impacted volumes",
             "countSource": "impactedCount",
@@ -590,6 +590,12 @@
                 }
             ],
             "resourceTypeLabel": "Volume"
+        },
+        "optimizeApi": {
+            "mutation": "optimizeOracleStorageConfig",
+            "payloadScope": "credential-scoped",
+            "statusType": "ontap",
+            "supportsDashboardBulk": false
         },
         "dialogContent": {
             "sections": [
