@@ -1291,9 +1291,12 @@ const processInstanceForGroupedConfigs = (
 
     getAssessmentItems(instanceAssessment).forEach(item => {
         const configId = item.id;
-        if (!configId || (isWad && excludedIds.has(configId))) {
+        if (!configId) {
             return;
         }
+        // WAD-excluded configs are still present in the flat assessment with n/a status.
+        // Count them in the total but never as optimized so they appear as "not optimized".
+        const isWadExcluded = isWad && excludedIds.has(configId);
 
         ensureConfigStatsBucket(statsMap, configId);
         statsMap[configId].total += 1;
@@ -1301,7 +1304,7 @@ const processInstanceForGroupedConfigs = (
         const dismissState = getDismissedConfig(instanceAssessment, configId)?.configState;
         setConfigState(configStateMap, configId, dismissState ?? '');
 
-        if (isOptimizedDashInner(item.status, dismissState)) {
+        if (!isWadExcluded && isOptimizedDashInner(item.status, dismissState)) {
             statsMap[configId].optimized += 1;
         }
         if (isDismissed(dismissState)) {
