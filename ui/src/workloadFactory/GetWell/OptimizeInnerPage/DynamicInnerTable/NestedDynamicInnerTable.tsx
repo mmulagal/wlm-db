@@ -25,6 +25,7 @@ import {
     renderExpandableChevron
 } from '../InnerTables/ExpandableTableHelper';
 import { ColumnConfig, getOptimizeApiConfig, pluralizeResourceType } from '../../../../utils/configRegistry';
+import { normalizeResourceTypeCasing } from '../../../../utils/resourceUtils';
 
 interface NestedDynamicInnerTableProps {
     configId: string;
@@ -179,12 +180,9 @@ const NestedDynamicInnerTable = ({
 
     // If tableTitle starts with "Impacted", create singular form using the resourceTypeLabel
     // e.g., tableTitle: "Impacted databases", resourceTypeLabel: "Database" -> "Impacted database"
-    const createSingularImpactedLabel = (resourceType: string): string => {
-        const lower = resourceType.toLowerCase();
-        if (lower === 'lun') return 'Impacted LUN';
-        if (lower === 'ec2 instance') return 'Impacted EC2 instance';
-        return `Impacted ${resourceType.charAt(0).toLowerCase() + resourceType.slice(1)}`;
-    };
+    // normalizeResourceTypeCasing restores acronyms (EC2, LUN) after lowercasing the first letter
+    const createSingularImpactedLabel = (resourceType: string): string =>
+        `Impacted ${normalizeResourceTypeCasing(resourceType.charAt(0).toLowerCase() + resourceType.slice(1))}`;
 
     const singularTitle = tableTitle.startsWith('Impacted ')
         ? createSingularImpactedLabel(resourceTypeLabel)

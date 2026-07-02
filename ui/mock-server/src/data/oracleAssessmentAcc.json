@@ -569,6 +569,7 @@
                                 "status": "optimized",
                                 "recommended": "linux",
                                 "subType": "configuration",
+                                "resourceType": "Lun",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [],
                                 "violationDetails": [],
@@ -588,6 +589,7 @@
                                 "status": "optimized",
                                 "recommended": "enabled",
                                 "subType": "configuration",
+                                "resourceType": "EC2 Instance",
                                 "focusWidgetName": "Multipath Io",
                                 "objectsInViolation": [],
                                 "violationDetails": [],
@@ -607,6 +609,7 @@
                                 "status": "optimized",
                                 "recommended": "installed",
                                 "subType": "configuration",
+                                "resourceType": "EC2 Instance",
                                 "focusWidgetName": "Host Utilities",
                                 "objectsInViolation": [
                                     "i-08b88d1026a035b68"
@@ -665,6 +668,7 @@
                                 "status": "optimized",
                                 "recommended": "5",
                                 "subType": "configuration",
+                                "resourceType": "EC2 Instance",
                                 "focusWidgetName": "Iscsi Replacement Timeout",
                                 "objectsInViolation": [
                                     "i-08b88d1026a035b68"
@@ -693,6 +697,7 @@
                                 "status": "optimized",
                                 "recommended": "enabled",
                                 "subType": "configuration",
+                                "resourceType": "EC2 Instance",
                                 "focusWidgetName": "Multipath Friendly Names",
                                 "objectsInViolation": [],
                                 "violationDetails": [],
@@ -711,7 +716,7 @@
                                 "status": "optimized",
                                 "recommended": "disabled",
                                 "subType": "configuration",
-                                "resourceType": "Volume",
+                                "resourceType": "EC2 Instance",
                                 "focusWidgetName": "Multipath Io Sessions",
                                 "objectsInViolation": [
                                     "volume1"
@@ -740,7 +745,7 @@
                                 "status": "optimized",
                                 "recommended": "disabled",
                                 "subType": "configuration",
-                                "resourceType": "EC2 instance",
+                                "resourceType": "EC2 Instance",
                                 "focusWidgetName": "Multipath Configuration",
                                 "objectsInViolation": [
                                     "i-08b88d1026a035b68"
@@ -927,7 +932,7 @@
                                 "status": "optimized",
                                 "recommended": "",
                                 "subType": "configuration",
-                                "resourceType": "Disk Group",
+                                "resourceType": "ASM Disk Group",
                                 "focusWidgetName": "Asm External Redundancy",
                                 "objectsInViolation": [
                                     "DATADG"
@@ -1148,6 +1153,7 @@
                                 "status": "not-optimized",
                                 "recommended": "associated-lun-count",
                                 "subType": "layout",
+                                "resourceType": "Disk Group",
                                 "focusWidgetName": "Data Dg Lun Layout",
                                 "objectsInViolation": [
                                     "DATADG"
@@ -1177,6 +1183,7 @@
                                 "status": "not-optimized",
                                 "recommended": "associated-lun-count",
                                 "subType": "layout",
+                                "resourceType": "Disk Group",
                                 "focusWidgetName": "Redolog Dg Lun Layout",
                                 "objectsInViolation": [
                                     "DATARG"
@@ -1206,6 +1213,7 @@
                                 "status": "not-optimized",
                                 "recommended": "associated-lun-count",
                                 "subType": "layout",
+                                "resourceType": "Disk Group",
                                 "focusWidgetName": "Fra Dg Lun Layout",
                                 "objectsInViolation": [
                                     "DATARG"
@@ -1235,6 +1243,7 @@
                                 "status": "not-optimized",
                                 "recommended": "associated-lun-count",
                                 "subType": "layout",
+                                "resourceType": "Disk Group",
                                 "focusWidgetName": "Archivelog Dg Lun Layout",
                                 "objectsInViolation": [
                                     "DATARG"
@@ -1265,6 +1274,7 @@
                                 "status": "optimized",
                                 "recommended": "separate-volume",
                                 "subType": "layout",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "Archive Placement",
                                 "objectsInViolation": [
                                     "pdb21cnas1"
@@ -1286,6 +1296,7 @@
                                 "status": "optimized",
                                 "recommended": "separate-volume-or-shared-with-control-files",
                                 "subType": "layout",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "Datafiles Placement",
                                 "objectsInViolation": [
                                     "pdb21cnas1"
@@ -1307,6 +1318,7 @@
                                 "status": "optimized",
                                 "recommended": "separate-volume-or-shared-with-data-redo-temp",
                                 "subType": "layout",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "Controlfiles Placement",
                                 "objectsInViolation": [
                                     "pdb21cnas1"
@@ -1328,6 +1340,7 @@
                                 "status": "optimized",
                                 "recommended": "separate-volume-or-shared-with-temp-control-files",
                                 "subType": "layout",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "Redologs Placement",
                                 "objectsInViolation": [
                                     "pdb21cnas1"
@@ -1349,6 +1362,7 @@
                                 "status": "optimized",
                                 "recommended": "separate-volume-or-shared-with-redo-control-files",
                                 "subType": "layout",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "Templogs Placement",
                                 "objectsInViolation": [
                                     "pdb21cnas1"
@@ -1370,6 +1384,7 @@
                                 "status": "optimized",
                                 "recommended": "separate-volume",
                                 "subType": "layout",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "Oracle Binary Placement",
                                 "objectsInViolation": [
                                     "pdb21cnas1"
@@ -1389,7 +1404,7 @@
                                 "status": "not-optimized",
                                 "recommended": "3 - 4 GB",
                                 "subType": "sizing",
-                                "resourceType": "EC2 Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Swap Space",
                                 "objectsInViolation": [
                                     "i-08b88d1026a035b68"
@@ -1434,7 +1449,7 @@
                                 "status": "optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "EC2 Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Operating system patch",
                                 "objectsInViolation": [
                                     "i-0f73ec408b54d3824"
@@ -2172,6 +2187,7 @@
                                 "status": "not-optimized",
                                 "recommended": "linux",
                                 "subType": "configuration",
+                                "resourceType": "Lun",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [],
                                 "violationDetails": [],
@@ -2191,6 +2207,7 @@
                                 "status": "optimized",
                                 "recommended": "enabled",
                                 "subType": "configuration",
+                                "resourceType": "EC2 Instance",
                                 "focusWidgetName": "Multipath Io",
                                 "objectsInViolation": [],
                                 "violationDetails": [],
@@ -2210,6 +2227,7 @@
                                 "status": "not-optimized",
                                 "recommended": "installed",
                                 "subType": "configuration",
+                                "resourceType": "EC2 Instance",
                                 "focusWidgetName": "Host Utilities",
                                 "objectsInViolation": [
                                     "i-08b88d1026a035b68"
@@ -2268,6 +2286,7 @@
                                 "status": "not-optimized",
                                 "recommended": "5",
                                 "subType": "configuration",
+                                "resourceType": "EC2 Instance",
                                 "focusWidgetName": "Iscsi Replacement Timeout",
                                 "objectsInViolation": [
                                     "i-08b88d1026a035b68"
@@ -2296,6 +2315,7 @@
                                 "status": "optimized",
                                 "recommended": "enabled",
                                 "subType": "configuration",
+                                "resourceType": "EC2 Instance",
                                 "focusWidgetName": "Multipath Friendly Names",
                                 "objectsInViolation": [],
                                 "violationDetails": [],
@@ -2314,7 +2334,7 @@
                                 "status": "not-optimized",
                                 "recommended": "disabled",
                                 "subType": "configuration",
-                                "resourceType": "Volume",
+                                "resourceType": "EC2 Instance",
                                 "focusWidgetName": "Multipath Io Sessions",
                                 "objectsInViolation": [
                                     "volume1"
@@ -2343,7 +2363,7 @@
                                 "status": "not-optimized",
                                 "recommended": "disabled",
                                 "subType": "configuration",
-                                "resourceType": "EC2 instance",
+                                "resourceType": "EC2 Instance",
                                 "focusWidgetName": "Multipath Configuration",
                                 "objectsInViolation": [
                                     "i-08b88d1026a035b68"
@@ -2530,7 +2550,7 @@
                                 "status": "not-optimized",
                                 "recommended": "",
                                 "subType": "configuration",
-                                "resourceType": "Disk Group",
+                                "resourceType": "ASM Disk Group",
                                 "focusWidgetName": "Asm External Redundancy",
                                 "objectsInViolation": [
                                     "DATADG"
@@ -2751,6 +2771,7 @@
                                 "status": "not-optimized",
                                 "recommended": "associated-lun-count",
                                 "subType": "layout",
+                                "resourceType": "Disk Group",
                                 "focusWidgetName": "Data Dg Lun Layout",
                                 "objectsInViolation": [
                                     "DATADG"
@@ -2780,6 +2801,7 @@
                                 "status": "not-optimized",
                                 "recommended": "associated-lun-count",
                                 "subType": "layout",
+                                "resourceType": "Disk Group",
                                 "focusWidgetName": "Redolog Dg Lun Layout",
                                 "objectsInViolation": [
                                     "DATARG"
@@ -2809,6 +2831,7 @@
                                 "status": "not-optimized",
                                 "recommended": "associated-lun-count",
                                 "subType": "layout",
+                                "resourceType": "Disk Group",
                                 "focusWidgetName": "Fra Dg Lun Layout",
                                 "objectsInViolation": [
                                     "DATARG"
@@ -2838,6 +2861,7 @@
                                 "status": "not-optimized",
                                 "recommended": "associated-lun-count",
                                 "subType": "layout",
+                                "resourceType": "Disk Group",
                                 "focusWidgetName": "Archivelog Dg Lun Layout",
                                 "objectsInViolation": [
                                     "DATARG"
@@ -2868,6 +2892,7 @@
                                 "status": "not-optimized",
                                 "recommended": "separate-volume",
                                 "subType": "layout",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "Archive Placement",
                                 "objectsInViolation": [
                                     "pdb21cnas1"
@@ -2889,6 +2914,7 @@
                                 "status": "not-optimized",
                                 "recommended": "separate-volume-or-shared-with-control-files",
                                 "subType": "layout",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "Datafiles Placement",
                                 "objectsInViolation": [
                                     "pdb21cnas1"
@@ -2910,6 +2936,7 @@
                                 "status": "not-optimized",
                                 "recommended": "separate-volume-or-shared-with-data-redo-temp",
                                 "subType": "layout",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "Controlfiles Placement",
                                 "objectsInViolation": [
                                     "pdb21cnas1"
@@ -2931,6 +2958,7 @@
                                 "status": "not-optimized",
                                 "recommended": "separate-volume-or-shared-with-temp-control-files",
                                 "subType": "layout",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "Redologs Placement",
                                 "objectsInViolation": [
                                     "pdb21cnas1"
@@ -2952,6 +2980,7 @@
                                 "status": "not-optimized",
                                 "recommended": "separate-volume-or-shared-with-redo-control-files",
                                 "subType": "layout",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "Templogs Placement",
                                 "objectsInViolation": [
                                     "pdb21cnas1"
@@ -2973,6 +3002,7 @@
                                 "status": "not-optimized",
                                 "recommended": "separate-volume",
                                 "subType": "layout",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "Oracle Binary Placement",
                                 "objectsInViolation": [
                                     "pdb21cnas1"
@@ -2992,7 +3022,7 @@
                                 "status": "not-optimized",
                                 "recommended": "3 - 4 GB",
                                 "subType": "sizing",
-                                "resourceType": "EC2 Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Swap Space",
                                 "objectsInViolation": [
                                     "i-08b88d1026a035b68"
@@ -3037,7 +3067,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "EC2 Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Operating system patch",
                                 "objectsInViolation": [
                                     "i-0f73ec408b54d3824"

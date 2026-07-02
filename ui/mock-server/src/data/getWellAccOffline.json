@@ -695,6 +695,7 @@
                         "status": "not-optimized",
                         "recommended": "separate-data-log-lun-per-database",
                         "subType": "layout",
+                        "resourceType": "Database",
                         "focusWidgetName": "Data files (.mdf)",
                         "objectsInViolation": ["RetailBanking"],
                         "violationDetails": [

@@ -23,6 +23,7 @@ import {
     GETWELL_STATUS
 } from '../../../../../utils/consts';
 import { formatOracleWellArchitectedData, callOptimizeOracleApi } from '../OracleWellArchitectedUtils';
+import { normalizeResourceTypeCasing } from '../../../../../utils/resourceUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../../../../store/workloadFactory/inventoryV2Slice';
 import { DismissDialog } from '../../../../GetWell/StorageCardComponent/DismissDialog/DismissDialog';
@@ -356,9 +357,9 @@ const OracleCardComponent = ({
                         </div>
                         <DsTypography variant="Regular_14" className={styles.descriptionText}>
                             {cardData?.block_six?.count
-                                ? `${t(
-                                      'databases.well-architect.impacted'
-                                  )} ${cardData?.block_six?.type?.toLowerCase()}`
+                                ? `${t('databases.well-architect.impacted')} ${normalizeResourceTypeCasing(
+                                      cardData?.block_six?.type?.toLowerCase() || ''
+                                  )}`
                                 : cardData?.block_six?.type}
                         </DsTypography>
                     </div>

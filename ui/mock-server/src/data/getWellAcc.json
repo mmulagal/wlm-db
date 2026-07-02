@@ -20,6 +20,7 @@
                                 "status": "optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -86,6 +87,7 @@
                                 "status": "optimized",
                                 "recommended": "on",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -152,6 +154,7 @@
                                 "status": "optimized",
                                 "recommended": "grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -470,6 +473,7 @@
                                 "status": "optimized",
                                 "recommended": "0",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -536,6 +540,7 @@
                                 "status": "optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -602,6 +607,7 @@
                                 "status": "optimized",
                                 "recommended": "volume_grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -797,6 +803,7 @@
                                 "status": "optimized",
                                 "recommended": "windows_2008",
                                 "subType": "configuration",
+                                "resourceType": "Lun",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "/vol/mantar/sql",
@@ -866,6 +873,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -890,6 +898,7 @@
                                 "status": "not-optimized",
                                 "recommended": "5",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -914,6 +923,7 @@
                                 "status": "not-optimized",
                                 "recommended": "60",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "violationDetails": [
                                     {
@@ -945,6 +955,7 @@
                                 "status": "not-optimized",
                                 "recommended": "65536",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -969,6 +980,7 @@
                                 "status": "not-optimized",
                                 "recommended": "RR",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -1403,7 +1415,7 @@
                                 "status": "optimized",
                                 "recommended": "36-100%",
                                 "subType": "sizing",
-                                "resourceType": "Filesystem",
+                                "resourceType": "File system (FSx for ONTAP)",
                                 "focusWidgetName": "File system headroom",
                                 "current": "36%",
                                 "missingPermissions": []
@@ -1418,7 +1430,7 @@
                                 "status": "optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Compute rightsizing",
                                 "objectsInViolation": [
                                     "CPU over-provisioned",
@@ -1542,7 +1554,7 @@
                                 "status": "optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "License",
                                 "sqlServerInstances": [
                                     {
@@ -1575,7 +1587,7 @@
                                 "status": "optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Operating system patch",
                                 "objectsInViolation": ["i-07e76a4b916548dc0"],
                                 "ec2InstancesToPatch": [
@@ -1601,7 +1613,7 @@
                                 "status": "optimized",
                                 "recommended": 4,
                                 "subType": "application",
-                                "resourceType": "SQL Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "MAXDOP",
                                 "current": 3
                             },
@@ -1615,7 +1627,7 @@
                                 "status": "optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "Microsoft SQL Server patch",
                                 "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                                 "missingPatchesInEc2Instances": [
@@ -1941,7 +1953,7 @@
                                 "status": "not-optimized",
                                 "recommended": "Validate availability of same drive letters on standby node",
                                 "subType": "highAvailability",
-                                "resourceType": "Lun",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Microsoft SQL Server High Availability",
                                 "objectsInViolation": ["S:"],
                                 "violationDetails": [
@@ -2056,7 +2068,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Compute rightsizing",
                                 "objectsInViolation": [
                                     "CPU over-provisioned",
@@ -2180,7 +2192,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "License",
                                 "sqlServerInstances": [
                                     {
@@ -2213,7 +2225,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Operating system patch",
                                 "objectsInViolation": ["i-07e76a4b916548dc0"],
                                 "ec2InstancesToPatch": [
@@ -2239,7 +2251,7 @@
                                 "status": "not-optimized",
                                 "recommended": 4,
                                 "subType": "application",
-                                "resourceType": "SQL Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "MAXDOP",
                                 "current": 3
                             },
@@ -2253,7 +2265,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "Microsoft SQL Server patch",
                                 "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                                 "missingPatchesInEc2Instances": [
@@ -2579,7 +2591,7 @@
                                 "status": "not-optimized",
                                 "recommended": "Validate availability of same drive letters on standby node",
                                 "subType": "highAvailability",
-                                "resourceType": "Lun",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Microsoft SQL Server High Availability",
                                 "objectsInViolation": ["S:"],
                                 "violationDetails": [
@@ -2694,6 +2706,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -2760,6 +2773,7 @@
                                 "status": "not-optimized",
                                 "recommended": "on",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -2826,6 +2840,7 @@
                                 "status": "not-optimized",
                                 "recommended": "grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -3144,6 +3159,7 @@
                                 "status": "not-optimized",
                                 "recommended": "0",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -3210,6 +3226,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -3276,6 +3293,7 @@
                                 "status": "not-optimized",
                                 "recommended": "volume_grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -3471,6 +3489,7 @@
                                 "status": "not-optimized",
                                 "recommended": "windows_2008",
                                 "subType": "configuration",
+                                "resourceType": "Lun",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "/vol/mantar/sql",
@@ -3540,6 +3559,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -3564,6 +3584,7 @@
                                 "status": "optimized",
                                 "recommended": "5",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -3588,6 +3609,7 @@
                                 "status": "optimized",
                                 "recommended": "60",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "violationDetails": [
                                     {
@@ -3619,6 +3641,7 @@
                                 "status": "not-optimized",
                                 "recommended": "65536",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -3643,6 +3666,7 @@
                                 "status": "not-optimized",
                                 "recommended": "RR",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -3963,7 +3987,7 @@
                                 "status": "under-provisioned",
                                 "recommended": "36-100%",
                                 "subType": "sizing",
-                                "resourceType": "Filesystem",
+                                "resourceType": "File system (FSx for ONTAP)",
                                 "focusWidgetName": "File system headroom",
                                 "current": "36%",
                                 "missingPermissions": []
@@ -3978,7 +4002,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Compute rightsizing",
                                 "objectsInViolation": [
                                     "CPU over-provisioned",
@@ -4102,7 +4126,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "License",
                                 "sqlServerInstances": [
                                     {
@@ -4135,7 +4159,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Operating system patch",
                                 "objectsInViolation": ["i-07e76a4b916548dc0"],
                                 "ec2InstancesToPatch": [
@@ -4161,7 +4185,7 @@
                                 "status": "not-optimized",
                                 "recommended": 4,
                                 "subType": "application",
-                                "resourceType": "SQL Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "MAXDOP",
                                 "current": 3
                             },
@@ -4175,7 +4199,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "Microsoft SQL Server patch",
                                 "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                                 "missingPatchesInEc2Instances": [
@@ -4501,7 +4525,7 @@
                                 "status": "not-optimized",
                                 "recommended": "Validate availability of same drive letters on standby node",
                                 "subType": "highAvailability",
-                                "resourceType": "Lun",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Microsoft SQL Server High Availability",
                                 "objectsInViolation": ["S:"],
                                 "violationDetails": [
@@ -4627,6 +4651,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -4693,6 +4718,7 @@
                                 "status": "not-optimized",
                                 "recommended": "on",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -4759,6 +4785,7 @@
                                 "status": "not-optimized",
                                 "recommended": "grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -5077,6 +5104,7 @@
                                 "status": "not-optimized",
                                 "recommended": "0",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -5143,6 +5171,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -5209,6 +5238,7 @@
                                 "status": "not-optimized",
                                 "recommended": "volume_grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -5404,6 +5434,7 @@
                                 "status": "not-optimized",
                                 "recommended": "windows_2008",
                                 "subType": "configuration",
+                                "resourceType": "Lun",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "/vol/mantar/sql",
@@ -5473,6 +5504,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -5497,6 +5529,7 @@
                                 "status": "not-optimized",
                                 "recommended": "5",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -5521,6 +5554,7 @@
                                 "status": "not-optimized",
                                 "recommended": "60",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "violationDetails": [
                                     {
@@ -5552,6 +5586,7 @@
                                 "status": "not-optimized",
                                 "recommended": "65536",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -5576,6 +5611,7 @@
                                 "status": "not-optimized",
                                 "recommended": "RR",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -5896,7 +5932,7 @@
                                 "status": "under-provisioned",
                                 "recommended": "36-100%",
                                 "subType": "sizing",
-                                "resourceType": "Filesystem",
+                                "resourceType": "File system (FSx for ONTAP)",
                                 "focusWidgetName": "File system headroom",
                                 "current": "36%",
                                 "missingPermissions": []
@@ -5911,7 +5947,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Compute rightsizing",
                                 "objectsInViolation": [
                                     "CPU over-provisioned",
@@ -6035,7 +6071,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "License",
                                 "sqlServerInstances": [
                                     {
@@ -6068,7 +6104,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Operating system patch",
                                 "objectsInViolation": ["i-07e76a4b916548dc0"],
                                 "ec2InstancesToPatch": [
@@ -6094,7 +6130,7 @@
                                 "status": "not-optimized",
                                 "recommended": 4,
                                 "subType": "application",
-                                "resourceType": "SQL Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "MAXDOP",
                                 "current": 3
                             },
@@ -6108,7 +6144,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "Microsoft SQL Server patch",
                                 "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                                 "missingPatchesInEc2Instances": [
@@ -6434,7 +6470,7 @@
                                 "status": "not-optimized",
                                 "recommended": "Validate availability of same drive letters on standby node",
                                 "subType": "highAvailability",
-                                "resourceType": "Lun",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Microsoft SQL Server High Availability",
                                 "objectsInViolation": ["S:"],
                                 "violationDetails": [
@@ -6549,6 +6585,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -6615,6 +6652,7 @@
                                 "status": "not-optimized",
                                 "recommended": "on",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -6681,6 +6719,7 @@
                                 "status": "not-optimized",
                                 "recommended": "grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -6999,6 +7038,7 @@
                                 "status": "not-optimized",
                                 "recommended": "0",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -7065,6 +7105,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -7131,6 +7172,7 @@
                                 "status": "not-optimized",
                                 "recommended": "volume_grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -7326,6 +7368,7 @@
                                 "status": "not-optimized",
                                 "recommended": "windows_2008",
                                 "subType": "configuration",
+                                "resourceType": "Lun",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "/vol/mantar/sql",
@@ -7395,6 +7438,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -7419,6 +7463,7 @@
                                 "status": "not-optimized",
                                 "recommended": "5",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -7443,6 +7488,7 @@
                                 "status": "not-optimized",
                                 "recommended": "60",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "violationDetails": [
                                     {
@@ -7474,6 +7520,7 @@
                                 "status": "not-optimized",
                                 "recommended": "65536",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -7498,6 +7545,7 @@
                                 "status": "not-optimized",
                                 "recommended": "RR",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -7818,7 +7866,7 @@
                                 "status": "under-provisioned",
                                 "recommended": "36-100%",
                                 "subType": "sizing",
-                                "resourceType": "Filesystem",
+                                "resourceType": "File system (FSx for ONTAP)",
                                 "focusWidgetName": "File system headroom",
                                 "current": "36%",
                                 "missingPermissions": []
@@ -7833,7 +7881,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Compute rightsizing",
                                 "objectsInViolation": [
                                     "CPU over-provisioned",
@@ -7957,7 +8005,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "License",
                                 "sqlServerInstances": [
                                     {
@@ -7990,7 +8038,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Operating system patch",
                                 "objectsInViolation": ["i-07e76a4b916548dc0"],
                                 "ec2InstancesToPatch": [
@@ -8016,7 +8064,7 @@
                                 "status": "not-optimized",
                                 "recommended": 4,
                                 "subType": "application",
-                                "resourceType": "SQL Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "MAXDOP",
                                 "current": 3
                             },
@@ -8030,7 +8078,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "Microsoft SQL Server patch",
                                 "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                                 "missingPatchesInEc2Instances": [
@@ -8356,7 +8404,7 @@
                                 "status": "not-optimized",
                                 "recommended": "Validate availability of same drive letters on standby node",
                                 "subType": "highAvailability",
-                                "resourceType": "Lun",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Microsoft SQL Server High Availability",
                                 "objectsInViolation": ["S:"],
                                 "violationDetails": [
@@ -8471,6 +8519,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -8537,6 +8586,7 @@
                                 "status": "not-optimized",
                                 "recommended": "on",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -8603,6 +8653,7 @@
                                 "status": "not-optimized",
                                 "recommended": "grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -8921,6 +8972,7 @@
                                 "status": "not-optimized",
                                 "recommended": "0",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -8987,6 +9039,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -9053,6 +9106,7 @@
                                 "status": "not-optimized",
                                 "recommended": "volume_grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -9248,6 +9302,7 @@
                                 "status": "not-optimized",
                                 "recommended": "windows_2008",
                                 "subType": "configuration",
+                                "resourceType": "Lun",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "/vol/mantar/sql",
@@ -9317,6 +9372,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -9341,6 +9397,7 @@
                                 "status": "not-optimized",
                                 "recommended": "5",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -9365,6 +9422,7 @@
                                 "status": "optimized",
                                 "recommended": "60",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "violationDetails": [
                                     {
@@ -9396,6 +9454,7 @@
                                 "status": "not-optimized",
                                 "recommended": "65536",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -9420,6 +9479,7 @@
                                 "status": "not-optimized",
                                 "recommended": "RR",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -9740,7 +9800,7 @@
                                 "status": "under-provisioned",
                                 "recommended": "36-100%",
                                 "subType": "sizing",
-                                "resourceType": "Filesystem",
+                                "resourceType": "File system (FSx for ONTAP)",
                                 "focusWidgetName": "File system headroom",
                                 "current": "36%",
                                 "missingPermissions": []
@@ -9755,7 +9815,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Compute rightsizing",
                                 "objectsInViolation": [
                                     "CPU over-provisioned",
@@ -9879,7 +9939,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "License",
                                 "sqlServerInstances": [
                                     {
@@ -9912,7 +9972,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Operating system patch",
                                 "objectsInViolation": ["i-07e76a4b916548dc0"],
                                 "ec2InstancesToPatch": [
@@ -9938,7 +9998,7 @@
                                 "status": "not-optimized",
                                 "recommended": 4,
                                 "subType": "application",
-                                "resourceType": "SQL Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "MAXDOP",
                                 "current": 3
                             },
@@ -9952,7 +10012,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "Microsoft SQL Server patch",
                                 "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                                 "missingPatchesInEc2Instances": [
@@ -10222,6 +10282,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -10288,6 +10349,7 @@
                                 "status": "not-optimized",
                                 "recommended": "on",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -10354,6 +10416,7 @@
                                 "status": "not-optimized",
                                 "recommended": "grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -10672,6 +10735,7 @@
                                 "status": "not-optimized",
                                 "recommended": "0",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -10738,6 +10802,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -10804,6 +10869,7 @@
                                 "status": "not-optimized",
                                 "recommended": "volume_grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -10999,6 +11065,7 @@
                                 "status": "not-optimized",
                                 "recommended": "windows_2008",
                                 "subType": "configuration",
+                                "resourceType": "Lun",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "/vol/mantar/sql",
@@ -11068,6 +11135,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -11092,6 +11160,7 @@
                                 "status": "not-optimized",
                                 "recommended": "5",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -11116,6 +11185,7 @@
                                 "status": "not-optimized",
                                 "recommended": "60",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "violationDetails": [
                                     {
@@ -11147,6 +11217,7 @@
                                 "status": "not-optimized",
                                 "recommended": "65536",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -11171,6 +11242,7 @@
                                 "status": "not-optimized",
                                 "recommended": "RR",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -11491,7 +11563,7 @@
                                 "status": "under-provisioned",
                                 "recommended": "36-100%",
                                 "subType": "sizing",
-                                "resourceType": "Filesystem",
+                                "resourceType": "File system (FSx for ONTAP)",
                                 "focusWidgetName": "File system headroom",
                                 "current": "36%",
                                 "missingPermissions": []
@@ -11506,7 +11578,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Compute rightsizing",
                                 "objectsInViolation": [
                                     "CPU over-provisioned",
@@ -11630,7 +11702,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "License",
                                 "sqlServerInstances": [
                                     {
@@ -11663,7 +11735,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Operating system patch",
                                 "objectsInViolation": ["i-07e76a4b916548dc0"],
                                 "ec2InstancesToPatch": [
@@ -11689,7 +11761,7 @@
                                 "status": "not-optimized",
                                 "recommended": 4,
                                 "subType": "application",
-                                "resourceType": "SQL Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "MAXDOP",
                                 "current": 3
                             },
@@ -11703,7 +11775,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "Microsoft SQL Server patch",
                                 "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                                 "missingPatchesInEc2Instances": [
@@ -12024,6 +12096,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -12090,6 +12163,7 @@
                                 "status": "not-optimized",
                                 "recommended": "on",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -12156,6 +12230,7 @@
                                 "status": "not-optimized",
                                 "recommended": "grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -12474,6 +12549,7 @@
                                 "status": "not-optimized",
                                 "recommended": "0",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -12540,6 +12616,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -12606,6 +12683,7 @@
                                 "status": "not-optimized",
                                 "recommended": "volume_grow",
                                 "subType": "configuration",
+                                "resourceType": "Volume",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "mantar",
@@ -12801,6 +12879,7 @@
                                 "status": "not-optimized",
                                 "recommended": "windows_2008",
                                 "subType": "configuration",
+                                "resourceType": "Lun",
                                 "focusWidgetName": "ONTAP",
                                 "objectsInViolation": [
                                     "/vol/mantar/sql",
@@ -12870,6 +12949,7 @@
                                 "status": "not-optimized",
                                 "recommended": "true",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -12894,6 +12974,7 @@
                                 "status": "not-optimized",
                                 "recommended": "5",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -12918,6 +12999,7 @@
                                 "status": "not-optimized",
                                 "recommended": "60",
                                 "subType": "configuration",
+                                "resourceType": "Storage multipath",
                                 "focusWidgetName": "Operating system",
                                 "violationDetails": [
                                     {
@@ -12949,6 +13031,7 @@
                                 "status": "not-optimized",
                                 "recommended": "65536",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -12973,6 +13056,7 @@
                                 "status": "not-optimized",
                                 "recommended": "RR",
                                 "subType": "configuration",
+                                "resourceType": "Drive",
                                 "focusWidgetName": "Operating system",
                                 "objectsInViolation": ["disk1"],
                                 "violationDetails": [
@@ -13436,7 +13520,7 @@
                                 "status": "under-provisioned",
                                 "recommended": "36-100%",
                                 "subType": "sizing",
-                                "resourceType": "Filesystem",
+                                "resourceType": "File system (FSx for ONTAP)",
                                 "focusWidgetName": "File system headroom",
                                 "current": "36%",
                                 "missingPermissions": []
@@ -13451,7 +13535,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Compute rightsizing",
                                 "objectsInViolation": [
                                     "CPU over-provisioned",
@@ -13575,7 +13659,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "License",
                                 "sqlServerInstances": [
                                     {
@@ -13608,7 +13692,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "compute",
-                                "resourceType": "Instance",
+                                "resourceType": "EC2 instance",
                                 "focusWidgetName": "Operating system patch",
                                 "objectsInViolation": ["i-07e76a4b916548dc0"],
                                 "ec2InstancesToPatch": [
@@ -13634,7 +13718,7 @@
                                 "status": "not-optimized",
                                 "recommended": 4,
                                 "subType": "application",
-                                "resourceType": "SQL Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "MAXDOP",
                                 "current": 3
                             },
@@ -13648,7 +13732,7 @@
                                 "status": "not-optimized",
                                 "recommended": "optimized",
                                 "subType": "application",
-                                "resourceType": "Instance",
+                                "resourceType": "SQL instance",
                                 "focusWidgetName": "Microsoft SQL Server patch",
                                 "objectsInViolation": ["i-p9o5n2m4l8k6j7h", "i-p9o5n2m4l8k6byol"],
                                 "missingPatchesInEc2Instances": [

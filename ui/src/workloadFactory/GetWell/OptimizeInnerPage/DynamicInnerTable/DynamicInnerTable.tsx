@@ -20,6 +20,7 @@ import { getWadCellProps } from '../../GetWellUtils';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
 import { buildSubConfigValues, ColumnConfig, pluralizeResourceType } from '../../../../utils/configRegistry';
 import { ASSESSMENT_CONFIG_IDS, DBType, GETWELL_STATUS, RSS_COLUMN_KEYS } from '../../../../utils/consts';
+import { normalizeResourceTypeCasing } from '../../../../utils/resourceUtils';
 
 interface DynamicInnerTableProps {
     configId: string;
@@ -396,15 +397,9 @@ const DynamicInnerTable = ({
 
     // If tableTitle starts with "Impacted", create singular form using the resourceTypeLabel
     // e.g., tableTitle: "Impacted volumes", resourceTypeLabel: "Volume" -> "Impacted volume"
-    // Special casing: preserve acronyms like LUN, EC2
-    const createSingularImpactedLabel = (resourceType: string): string => {
-        const lower = resourceType.toLowerCase();
-        // Preserve special casing for acronyms and special terms
-        if (lower === 'lun') return 'Impacted LUN';
-        if (lower === 'ec2 instance') return 'Impacted EC2 instance';
-        // For regular words, lowercase the first letter (Volume -> volume, Parameter -> parameter)
-        return `Impacted ${resourceType.charAt(0).toLowerCase() + resourceType.slice(1)}`;
-    };
+    // normalizeResourceTypeCasing restores acronyms (EC2, LUN) after lowercasing the first letter
+    const createSingularImpactedLabel = (resourceType: string): string =>
+        `Impacted ${normalizeResourceTypeCasing(resourceType.charAt(0).toLowerCase() + resourceType.slice(1))}`;
 
     const singularTitle = tableTitle.startsWith('Impacted ')
         ? createSingularImpactedLabel(resourceTypeLabel)

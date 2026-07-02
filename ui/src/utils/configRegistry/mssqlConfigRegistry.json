@@ -151,7 +151,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "LUN",
+            "resourceTypeLabel": "LUNs/volume",
             "hasSubConfigs": true,
             "tableTitle": "Impacted LUNs/volumes"
         },
@@ -216,14 +216,14 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted clusters",
+            "impactedLabel": "Impacted EC2 instances",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Cluster name",
+                    "label": "EC2 instance name",
                     "accessor": "objectName"
                 },
                 {
@@ -237,7 +237,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Cluster"
+            "resourceTypeLabel": "EC2 instance"
         },
         "optimizeApi": {
             "mutation": "optimizeHAMssql",
@@ -914,14 +914,14 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted drives",
+            "impactedLabel": "Impacted storage multipaths",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Drive name",
+                    "label": "Multipath configuration",
                     "accessor": "objectName"
                 },
                 {
@@ -935,7 +935,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Drive"
+            "resourceTypeLabel": "Storage multipath"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -971,14 +971,14 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted drives",
+            "impactedLabel": "Impacted storage multipaths",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Drive name",
+                    "label": "Multipath configuration",
                     "accessor": "objectName"
                 },
                 {
@@ -992,7 +992,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Drive"
+            "resourceTypeLabel": "Storage multipath"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1049,7 +1049,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Volume"
+            "resourceTypeLabel": "Drive"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1085,14 +1085,14 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted drives",
+            "impactedLabel": "Impacted storage multipaths",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Drive name",
+                    "label": "Multipath configuration",
                     "accessor": "objectName"
                 },
                 {
@@ -1106,7 +1106,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Drive"
+            "resourceTypeLabel": "Storage multipath"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1520,7 +1520,7 @@
                     "type": "rss-status"
                 }
             ],
-            "resourceTypeLabel": "Adapter",
+            "resourceTypeLabel": "Network adapter",
             "tableTitle": "Impacted network adapters"
         },
         "optimizeApi": {
@@ -1897,7 +1897,7 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted SQL instances",
+            "impactedLabel": "Impacted EC2 instances",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
@@ -1918,7 +1918,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Node"
+            "resourceTypeLabel": "EC2 instance"
         },
         "optimizeApi": {
             "mutation": "optimizeHAMssql",

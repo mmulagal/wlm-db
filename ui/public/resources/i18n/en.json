@@ -571,6 +571,7 @@
             "postpone-bulk-line-1": "Are you sure you want to postpone for 30 days the"
         },
         "well-architect": {
+            "not-supported": "Not supported",
             "crr-dialog-text": "A link allows Workload Factory to directly access the FSx for ONTAP file system and perform advanced management operations. You can either create a new link or associate an existing link with the file system.",
             "create-new-link-text": "Selecting 'Continue' redirects you to the Create link page.",
             "link-name": "Link name",

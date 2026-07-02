@@ -10,6 +10,7 @@
 
 import { t } from 'i18next';
 import { ASSESSMENT_CONFIG_IDS, DBType, OPTIMIZE_PAYLOAD_TYPES, WELL_ARCHITECTED_STATUS } from '../consts';
+import { normalizeResourceTypeCasing } from '../resourceUtils';
 import mssqlRegistry from './mssqlConfigRegistry.json';
 import oracleRegistry from './oracleConfigRegistry.json';
 
@@ -20,32 +21,28 @@ import oracleRegistry from './oracleConfigRegistry.json';
 /**
  * Simple pluralization helper for resource type labels.
  * Handles common English pluralization rules for database resource types.
- * Preserves original casing where appropriate.
+ * Acronyms (EC2, LUN) are re-capitalized via normalizeResourceTypeCasing since
+ * this always works off the lowercased singular (e.g. "LUNs/volume" → "LUNs/volumes").
  *
- * @param singular - Singular form of the word (e.g., "Volume", "Database", "LUN")
+ * @param singular - Singular form of the word (e.g., "Volume", "Database", "LUN", "LUNs/volume")
  * @returns Plural form with "Impacted" prefix (e.g., "Impacted volumes", "Impacted LUNs")
  */
 export function pluralizeResourceType(singular: string): string {
     const lower = singular.toLowerCase();
     let plural: string;
 
-    // Special cases (preserve specific casing)
-    if (lower === 'lun') {
-        plural = 'LUNs';
-    } else if (lower === 'ec2 instance') {
-        plural = 'EC2 instances';
-    } else if (lower.endsWith('s') || lower.endsWith('x') || lower.endsWith('ch') || lower.endsWith('sh')) {
+    if (lower.endsWith('s') || lower.endsWith('x') || lower.endsWith('ch') || lower.endsWith('sh')) {
         // Words ending in s, x, ch, sh → add 'es'
         plural = `${lower}es`;
     } else if (lower.endsWith('y') && !/[aeiou]y$/.test(lower)) {
         // Words ending in consonant + y → replace y with 'ies'
         plural = `${lower.slice(0, -1)}ies`;
     } else {
-        // Default: add 's' (keep lowercase for consistency)
+        // Default: add 's'
         plural = `${lower}s`;
     }
 
-    return `Impacted ${plural}`;
+    return `Impacted ${normalizeResourceTypeCasing(plural)}`;
 }
 
 // ============================================================================

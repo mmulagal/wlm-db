@@ -845,7 +845,7 @@
             "status": "not-optimized",
             "recommended": "SETALL",
             "subType": "configuration",
-            "resourceType": "Database",
+            "resourceType": "EC2 Instance",
             "objectsInViolation": ["oracle-dev"],
             "violationDetails": [
                 {
@@ -947,7 +947,7 @@
             "status": "not-optimized",
             "recommended": "128",
             "subType": "configuration",
-            "resourceType": "Database",
+            "resourceType": "EC2 Instance",
             "objectsInViolation": ["oracle-dev"],
             "violationDetails": [
                 {

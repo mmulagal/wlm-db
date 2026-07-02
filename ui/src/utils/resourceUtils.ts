@@ -32,6 +32,18 @@ export const toSentenceCase = (str: string): string => {
     return trimmed.charAt(0).toUpperCase() + trimmed.slice(1).toLowerCase();
 };
 
+/**
+ * Fixes casing of known acronyms (EC2, LUN) within a resource type string,
+ * regardless of the casing returned by the API (e.g. "ec2 instance" -> "EC2 instance",
+ * "Volume/Lun" -> "Volume/LUN").
+ * @param resourceType - Raw resource type string (e.g. "ec2 instance")
+ * @returns Resource type string with acronyms capitalized
+ */
+export const normalizeResourceTypeCasing = (resourceType: string): string => {
+    if (!resourceType || typeof resourceType !== 'string') return resourceType;
+    return resourceType.replace(/\bec2\b/gi, 'EC2').replace(/\blun(s)?\b/gi, (_match, plural) => `LUN${plural || ''}`);
+};
+
 export const getUniqueEntries = (arrays: any) => {
     const combinedArray = [].concat(...arrays);
     const seen = new Set();

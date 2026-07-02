@@ -10,6 +10,7 @@ import styles from './StorageCardComponent.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 
 import { GENERAL } from '../../../utils/appConstants';
+import { normalizeResourceTypeCasing } from '../../../utils/resourceUtils';
 
 import {
     ASSESSMENT_CONFIG_NAMES,
@@ -1133,9 +1134,9 @@ const StorageCardComponent = ({
                         </DsTypography>
                         <DsTypography variant="Regular_14" title={cardData?.block_six?.type} className={styles.label}>
                             {cardData?.block_six?.count
-                                ? `${t(
-                                      'databases.well-architect.impacted'
-                                  )} ${cardData?.block_six?.type?.toLowerCase()}`
+                                ? `${t('databases.well-architect.impacted')} ${normalizeResourceTypeCasing(
+                                      cardData?.block_six?.type?.toLowerCase() || ''
+                                  )}`
                                 : cardData?.block_six?.type}
                         </DsTypography>
                     </div>
@@ -1157,7 +1158,7 @@ const StorageCardComponent = ({
                                 }
                             >
                                 <TooltipComponent
-                                    title={GENERAL.OPTIMIZATION_NOT_SUPPORTED}
+                                    title={t('databases.well-architect.not-supported')}
                                     placement="bottom"
                                     width="120px"
                                     height="30px"
