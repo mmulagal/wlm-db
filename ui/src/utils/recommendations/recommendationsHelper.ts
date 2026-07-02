@@ -40,7 +40,7 @@ type RecommendationsMap = Record<string, RecommendationData>;
 
 /**
  * Get full recommendation object for a specific configuration
- * @param configurationId - The configuration ID (e.g., 'storage_tier', 'compute_rightsizing')
+ * @param configurationId - The configuration ID (e.g., 'thin-provision', 'compute-rightsizing')
  * @param dbType - Database type (DBType.MSSQL or DBType.ORACLE)
  * @returns Full recommendation object with title, description or descriptionList, info, valuesHeading, and values
  */
@@ -48,21 +48,19 @@ export const getRecommendation = (
     configurationId: string,
     dbType: string = DBType.MSSQL
 ): RecommendationData | undefined => {
+    if (!configurationId) return undefined;
+
     const recommendations: RecommendationsMap =
         dbType === DBType.ORACLE
             ? (oracleRecommendations as RecommendationsMap)
             : (mssqlRecommendations as RecommendationsMap);
 
-    // Normalize the configuration ID (handle both snake_case and kebab-case)
-    const normalizedId = configurationId.replace(/-/g, '_');
-    const alternateId = configurationId.replace(/_/g, '-');
-
-    return recommendations[configurationId] || recommendations[normalizedId] || recommendations[alternateId];
+    return recommendations[configurationId];
 };
 
 /**
  * Get recommendation text/description only for a specific configuration
- * @param configurationId - The configuration ID (e.g., 'storage_tier', 'compute_rightsizing')
+ * @param configurationId - The configuration ID (e.g., 'storage-tier', 'compute-rightsizing')
  * @param dbType - Database type (DBType.MSSQL or DBType.ORACLE)
  * @returns Recommendation text or undefined if not found
  * @note For structured recommendations with descriptionList, this returns the first description
