@@ -39,7 +39,8 @@ import {
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
     OPTIMIZE_PAYLOAD_TYPES,
-    WLF_TABS
+    WLF_TABS,
+    ASSESSMENT_CONFIG_IDS
 } from '../../utils/consts';
 import { backupStartTime } from '../../utils/utilityFunctions';
 import { uniqueHostRow } from '../InventoryV2/InventoryUtilsV2';
@@ -341,20 +342,33 @@ export const buildOptimizeApiInput = (
 
     // ── HA MSSQL ──────────────────────────────────────────────────────────────
     if (apiConfig.mutation === 'optimizeHAMssql') {
+        const databaseHost: Record<string, any> = {
+            id: databaseHostId,
+            credentialsId: credentialId,
+            region: regionId
+        };
+
+        // shared-storage requires special structure with object in sqlServerInstances
+        if (configId === ASSESSMENT_CONFIG_IDS.SHARED_STORAGE) {
+            databaseHost.sqlServerInstances = [
+                {
+                    databaseInstanceId: instanceId,
+                    ontapLunPaths: rowData?.objectsInViolation || []
+                }
+            ];
+        } else {
+            // Other HA configs use simple string array for sqlServerInstances
+            databaseHost.sqlServerInstances = [instanceId];
+        }
+
         return {
             configName: apiConfig.haUrlSegment,
             payload: {
                 hostsToOptimize: [
                     {
-                        configurationName: configId,
-                        databaseHosts: [
-                            {
-                                id: databaseHostId,
-                                sqlServerInstances: [instanceId],
-                                credentialsId: credentialId,
-                                region: regionId
-                            }
-                        ]
+                        configurationName:
+                            configId === ASSESSMENT_CONFIG_IDS.SQL_SERVER_SERVICE ? 'sqlServer-service' : configId,
+                        databaseHosts: [databaseHost]
                     }
                 ]
             }
