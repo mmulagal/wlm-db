@@ -291,7 +291,7 @@ const createDashboardTableConfigOverrides = (
     },
     [ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH]: {
         dataMapping: (item: any) => ({
-            current: `${countHostOsMissingPatches(item?.ec2InstancesToPatch)}`,
+            current: `${item?.missingPatchesCount ?? 0}`,
             totalObjectsAssessed: item?.totalObjectsAssessed,
             totalObjectsInViolation: item?.totalObjectsInViolation,
             violationDetails: item?.violationDetails || [],
