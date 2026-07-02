@@ -1,7 +1,7 @@
 import { TooltipInfo } from '@netapp/design-system';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { TFunction } from 'i18next';
-import { CONFIG_STATES, GETWELL_CONFIG, WA_FLAG_SKIP } from '../../utils/consts';
+import { CONFIG_STATES, WA_FLAG_SKIP } from '../../utils/consts';
 import { ReactComponent as Postpone } from '../../assets/Schedule.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
 import CommonStyles from '../../utils/CommonStyles.module.scss';
@@ -120,10 +120,6 @@ export const calculateTotalConfigCount = (cardData: any, showDismissedConfigurat
     let count = 0;
     Object.keys(cardData).forEach((key: string) => {
         if (WA_FLAG_SKIP.includes(key)) return;
-
-        if (key === 'isStorageLayoutFra' || key === 'isASMManaged' || key === 'storageProtocol') {
-            return;
-        }
 
         const configState = cardData[key]?.dismissedObj?.configState;
 

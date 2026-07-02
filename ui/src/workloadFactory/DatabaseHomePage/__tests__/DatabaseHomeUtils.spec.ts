@@ -8,7 +8,6 @@ import {
     hasPostponedOrDismissed,
     checkConfigState,
     setConfigState,
-    filterDatabaseRowsForNonAsm,
     getTotalManagedAggrCost,
     getManagedHostCountFromInventory,
     getManagedHostCount,
@@ -253,55 +252,6 @@ describe('setConfigState', () => {
         const configState: any = {};
         const result = setConfigState(configState, 'rss', 'POSTPONED');
         expect(result).toBe(configState);
-    });
-});
-
-describe('filterDatabaseRowsForNonAsm', () => {
-    it('returns true for non-ASM config names', () => {
-        expect(filterDatabaseRowsForNonAsm('compute', {})).toBe(true);
-    });
-
-    it('returns false for data-dg-lun-layout when not ASM managed', () => {
-        expect(filterDatabaseRowsForNonAsm('data-dg-lun-layout', { isASMManaged: false })).toBe(false);
-    });
-
-    it('returns false for data-dg-lun-layout when not iSCSI protocol', () => {
-        expect(filterDatabaseRowsForNonAsm('data-dg-lun-layout', { isASMManaged: true, storageProtocol: 'NFS' })).toBe(
-            false
-        );
-    });
-
-    it('returns true for data-dg-lun-layout when ASM managed and iSCSI', () => {
-        expect(
-            filterDatabaseRowsForNonAsm('data-dg-lun-layout', { isASMManaged: true, storageProtocol: 'iSCSI' })
-        ).toBe(true);
-    });
-
-    it('returns false for fra-dg-lun-layout when not in storage layout', () => {
-        const data = {
-            isASMManaged: true,
-            storageProtocol: 'iSCSI',
-            storage: { layout: [{ name: 'data-dg-lun-layout' }] }
-        };
-        expect(filterDatabaseRowsForNonAsm('fra-dg-lun-layout', data)).toBe(false);
-    });
-
-    it('returns true for fra-dg-lun-layout when present in storage layout', () => {
-        const data = {
-            isASMManaged: true,
-            storageProtocol: 'iSCSI',
-            storage: { layout: [{ name: 'fra-dg-lun-layout' }] }
-        };
-        expect(filterDatabaseRowsForNonAsm('fra-dg-lun-layout', data)).toBe(true);
-    });
-
-    it('returns false for archivelog-dg-lun-layout when not in storage layout', () => {
-        const data = {
-            isASMManaged: true,
-            storageProtocol: 'iSCSI',
-            storage: { layout: [{ name: 'data-dg-lun-layout' }] }
-        };
-        expect(filterDatabaseRowsForNonAsm('archivelog-dg-lun-layout', data)).toBe(false);
     });
 });
 
@@ -1347,7 +1297,6 @@ const makeMssqlHost = (hostId: string, assessment: any, credentialId = 'cred1', 
 
 const makeOracleAssessment = (overrides: any = {}) => ({
     lastAssessmentTimestamp: '2024-01-01T00:00:00Z',
-    isASMManaged: false,
     storageProtocol: 'NFS',
     hostOsPatch: { status: 'OPTIMIZED', severity: 'critical' },
     storage: {
@@ -1371,7 +1320,6 @@ const makeOracleAssessment = (overrides: any = {}) => ({
 
 const makeAsmOracleAssessment = (overrides: any = {}) => ({
     ...makeOracleAssessment(),
-    isASMManaged: true,
     storageProtocol: 'iSCSI',
     storage: {
         ...makeOracleAssessment().storage,
@@ -1749,10 +1697,9 @@ describe('getAssessmentGroupedByConfigurations', () => {
         expect(result.oracleOperatingSystemPatch.optimized).toBe(1);
     });
 
-    it('sets isAsmEnable=true and increments dataDgLunLayout.total for iSCSI ASM', () => {
+    it('increments dataDgLunLayout.total when ASM LUN configs are in assessment', () => {
         const host = makeOracleHost('oh1', makeAsmOracleAssessment());
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.isAsmEnable).toBe(true);
         expect(result.dataDgLunLayout.total).toBe(1);
         expect(result.logDgLunLayout.total).toBe(1);
     });
@@ -1769,12 +1716,6 @@ describe('getAssessmentGroupedByConfigurations', () => {
         const result = getAssessmentGroupedByConfigurations([], [host]);
         expect(result.isArchiveEnable).toBe(true);
         expect(result.archiveLogDgLunLayout.total).toBe(1);
-    });
-
-    it('does NOT set isAsmEnable for non-iSCSI even if isASMManaged', () => {
-        const host = makeOracleHost('oh1', makeAsmOracleAssessment({ storageProtocol: 'NFS', isASMManaged: true }));
-        const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.isAsmEnable).toBe(false);
     });
 
     it('processes both MSSQL and Oracle hosts correctly', () => {

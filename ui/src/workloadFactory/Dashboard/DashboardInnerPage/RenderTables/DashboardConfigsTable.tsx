@@ -11,21 +11,10 @@ import { ReactComponent as NotActive } from '../../../../assets/ic_not_active.sv
 import { ReactComponent as Optimized } from '../../../../assets/optimized.svg';
 import { ReactComponent as UnderProvisioned } from '../../../../assets/under-provisioned.svg';
 import { ReactComponent as InProgress } from '../../../../assets/In Progress.svg';
-import {
-    filterDatabaseRowsForNonAsm,
-    mapHostStatusToAssessmentData,
-    shouldSkipDatabaseHost
-} from '../../../DatabaseHomePage/DatabaseHomeUtils';
+import { mapHostStatusToAssessmentData, shouldSkipDatabaseHost } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { checkBoxHandle, formatDateWithTime, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
-import {
-    CONFIG_STATE_ACTIONS,
-    CONFIG_STATES,
-    DBType,
-    FSXN_STORAGE_PROTOCOLS,
-    GETWELL_STATUS,
-    GETWELL_VALUES
-} from '../../../../utils/consts';
+import { CONFIG_STATE_ACTIONS, CONFIG_STATES, DBType, GETWELL_STATUS, GETWELL_VALUES } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
@@ -51,14 +40,9 @@ import {
     getAssessmentById,
     getDismissedConfig,
     getLastAssessmentTimestamp,
-    hasAssessmentTimestamp,
-    isWadExcludedAssessmentConfigId
+    hasAssessmentTimestamp
 } from '../../../WellArchitectedTab/assessmentFormatUtils';
-import {
-    ORACLE_ISCSI_ONLY_CONFIG_IDS,
-    resolveDashboardTableConfig,
-    HandleImpactedResourceDialog
-} from './dashboardTableConfigOverrides';
+import { resolveDashboardTableConfig, HandleImpactedResourceDialog } from './dashboardTableConfigOverrides';
 import { getOptimizeApiConfig } from '../../../../utils/configRegistry';
 
 interface DashboardConfigsTableProps {
@@ -137,17 +121,6 @@ const DashboardConfigsTable = ({
                     regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
                 const customData = config.dataMapping(configObj, instanceData);
-
-                if (!filterDatabaseRowsForNonAsm(config.configName, instanceAssessments)) {
-                    return;
-                }
-
-                if (
-                    ORACLE_ISCSI_ONLY_CONFIG_IDS.has(configType) &&
-                    instanceAssessments?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI
-                ) {
-                    return;
-                }
 
                 assessmentData.push({
                     credentialId: hostData?.credentialId,

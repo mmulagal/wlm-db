@@ -20,15 +20,12 @@ import {
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
     DBType,
-    FSXN_STORAGE_PROTOCOLS,
     GETWELL_STATUS,
     GETWELL_VALUES,
     isConfigIdMatch,
     isConfigIdInList,
     OPTIMIZE_PAYLOAD_TYPES,
     ORACLE_COMPUTE_COUNT_CONFIG_IDS,
-    ORACLE_ISCSI_ONLY_CARD_IDS,
-    ORACLE_ISCSI_ONLY_CARD_KEYS,
     ORACLE_PLACEMENT_CONFIG_IDS,
     ORACLE_STORAGE_SIZING_CONFIG_IDS,
     WA_FLAG_SKIP,
@@ -396,7 +393,6 @@ const processOracleFlatAssessments = (data: any, optimizingData: Record<string, 
     }
 
     // Add metadata
-    cardsData.isASMManaged = data.metadata?.isASMManaged || false;
     cardsData.storageProtocol = data.metadata?.storageProtocol || '';
     cardsData.isWad = data.metadata?.isWad || false;
     cardsData.deploymentType = data.metadata?.deploymentType || '';
@@ -512,24 +508,6 @@ export const formatOracleOptimizationBreakDown = (
         }
 
         if (cardItem?.category === 'storage') {
-            if (
-                (!cardsData?.isASMManaged || cardsData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI) &&
-                (cardItem?.id === 'data-dg-lun-layout' ||
-                    cardItem?.id === 'redolog-dg-lun-layout' ||
-                    cardItem?.id === 'fra-dg-lun-layout' ||
-                    cardItem?.id === 'archivelog-dg-lun-layout')
-            ) {
-                return;
-            }
-
-            if (!cardsData?.isStorageLayoutFra && cardItem?.id === 'fra-dg-lun-layout') {
-                return;
-            }
-
-            if (cardsData?.isStorageLayoutFra && cardItem?.id === 'archivelog-dg-lun-layout') {
-                return;
-            }
-
             const { isDismissed, isPostponed, isOptimizedViaDismissal, isOptimized, isCritical, isWarning } =
                 processStorageCardItem(cardItem);
 
@@ -551,13 +529,6 @@ export const formatOracleOptimizationBreakDown = (
         }
 
         if (cardItem?.category === 'compute') {
-            // Skip the iSCSI-only compute cards when protocol is not iSCSI
-            if (ORACLE_ISCSI_ONLY_CARD_IDS.has(cardItem?.id)) {
-                if (cardsData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI) {
-                    return;
-                }
-            }
-
             // If the card has no assessment data, count it as not optimized
             if (!cardItem?.block_two?.value) {
                 computeCount.notOptimized++;
@@ -1074,25 +1045,6 @@ export const checkAllOracleConfigurationsDismissed = (cardData: any): boolean =>
 
         // Only count configurations that have actual assessment data (block_two.value exists)
         if (!config?.block_two?.value) return;
-
-        // Apply Oracle-specific logic for ASM configurations
-        if (key === 'data_dg_lun_layout' || key === 'log_dg_lun_layout') {
-            if (!cardData.isASMManaged || cardData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI) return;
-        }
-        if (key === 'archivelog_dg_lun_layout' || key === 'fra_dg_lun_layout') {
-            if (!cardData.isASMManaged || cardData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI) return;
-            // Additional logic for FRA-specific configs
-            if (key === 'archivelog_dg_lun_layout' && cardData.isStorageLayoutFra) {
-                return; // Skip archivelog if FRA is enabled
-            }
-            if (key === 'fra_dg_lun_layout' && !cardData.isStorageLayoutFra) {
-                return; // Skip FRA if it's not enabled
-            }
-        }
-        // Skip the iSCSI-only compute cards when protocol is not iSCSI
-        if ((ORACLE_ISCSI_ONLY_CARD_KEYS as readonly string[]).includes(key)) {
-            if (cardData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI) return;
-        }
 
         totalConfigs++;
         const configState = config?.dismissedObj?.configState;

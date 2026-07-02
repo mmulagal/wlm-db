@@ -206,7 +206,6 @@ vi.mock('../../../../../utils/utilityFunctions', () => ({
 }));
 
 vi.mock('../../../../DatabaseHomePage/DatabaseHomeUtils', () => ({
-    filterDatabaseRowsForNonAsm: vi.fn(() => true),
     mapHostStatusToAssessmentData: vi.fn((_, data) => data),
     shouldSkipDatabaseHost: vi.fn(() => false)
 }));

@@ -54,9 +54,7 @@ export interface AssessmentMetadata {
     deploymentType?: string;
     databaseHostName?: string;
     storageProtocol?: string;
-    isASMManaged?: boolean;
     baseDeploymentType?: string;
-    isStorageLayoutFra?: boolean;
     isWad?: boolean;
 }
 

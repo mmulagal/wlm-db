@@ -193,8 +193,7 @@ export const handleDismissResponse = (
                 updatedState,
                 targetId,
                 res?.data?.dismissedConfigurations?.[0]?.endTime,
-                res?.data?.dismissedConfigurations?.[0]?.startTime,
-                engineType
+                res?.data?.dismissedConfigurations?.[0]?.startTime
             ) || {};
 
         // Set drift assessment data (used by both MSSQL and Oracle)

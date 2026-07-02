@@ -1412,65 +1412,6 @@
             "wellArchitectedConfig": ["sunrpc.tcp_max_slot_table_entries = 128", "sunrpc.tcp_slot_table_entries = 128"]
         }
     },
-    "log-dg-lun-layout": {
-        "hasInnerPage": true,
-        "viewOnly": false,
-        "fixSupported": true,
-        "cardHeights": {
-            "recommendationSection": "134px",
-            "tagSection": "230px"
-        },
-        "cardMetadata": {
-            "impactedLabel": "Impacted disk groups",
-            "countSource": "impactedCount",
-            "recommendationSource": "recommendationText"
-        },
-        "columns": {
-            "columns": [
-                {
-                    "key": "objectName",
-                    "label": "Disk group name",
-                    "accessor": "objectName"
-                },
-                {
-                    "key": "value",
-                    "label": "Number of LUNs",
-                    "accessor": "value"
-                },
-                {
-                    "key": "recommended",
-                    "label": "Recommended",
-                    "accessor": "recommended"
-                }
-            ],
-            "resourceTypeLabel": "Disk group",
-            "tableTitle": "ASM logs disk group LUNs"
-        },
-        "optimizeApi": {
-            "mutation": "optimizeOracleStorageLayoutAsm",
-            "payloadScope": "credential-scoped",
-            "statusType": "ontap",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": {
-            "sections": [
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-log-dg-lun-layout-action-summary"
-                },
-                {
-                    "heading": "databases.well-architect.what-will-happen",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-log-dg-lun-layout-what-will-happen",
-                    "hideWhenWad": true
-                }
-            ],
-            "notes": {
-                "type": "standard"
-            }
-        }
-    },
     "multiblock-readcount": {
         "hasInnerPage": true,
         "viewOnly": false,

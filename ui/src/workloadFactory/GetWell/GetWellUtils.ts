@@ -1741,30 +1741,9 @@ export const updateAccountLevelAssessmentData = (
     }
 };
 
-export const updateConfigStatePerInstance = (
-    setAction: any,
-    configId: string,
-    endTime: any,
-    startTime: any,
-    engineType?: string
-) => {
+export const updateConfigStatePerInstance = (setAction: any, configId: string, endTime: any, startTime: any) => {
     const state = store.getState();
     const { driftAssessmentData } = state.getWellOptimize;
-
-    // Auto-detect engine type if not provided by checking for Oracle-specific fields
-    let detectedEngineType = engineType;
-    if (!detectedEngineType) {
-        // Check for Oracle-specific fields in driftAssessmentData
-        if (
-            driftAssessmentData?.metadata?.isASMManaged !== undefined ||
-            driftAssessmentData?.metadata?.isStorageLayoutFra !== undefined
-        ) {
-            detectedEngineType = DBType.ORACLE;
-        } else {
-            // Default to MSSQL if no Oracle-specific fields found
-            detectedEngineType = DBType.MSSQL;
-        }
-    }
 
     // dismissedConfigurations is a flat array at root level
     const existingDismissed: any[] = (driftAssessmentData?.dismissedConfigurations as any[]) || [];

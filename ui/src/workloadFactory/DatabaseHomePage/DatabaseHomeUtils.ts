@@ -8,7 +8,6 @@ import {
     DBType,
     ERROR_ANALYZER_STATUS,
     FINDINGS,
-    FSXN_STORAGE_PROTOCOLS,
     GETWELL_STATUS,
     GETWELL_VALUES,
     INVENTORY_STATUS,
@@ -35,7 +34,6 @@ import {
     getOracleCardsData
 } from '../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 import {
-    getAssessmentById,
     getAssessmentItems,
     getDismissedConfig,
     hasAssessmentTimestamp
@@ -1142,34 +1140,6 @@ export const setConfigState = (configState: any, configName: string, state: stri
         configState[configName] = [...configState[configName], CONFIG_STATES.ACTIVE];
     }
     return configState;
-};
-
-// Helper function to filter Oracle ASM-related configurations
-export const filterDatabaseRowsForNonAsm = (configName: any, instanceAssessmentData: any): boolean => {
-    // For asm oracle configs we need to exclude rows that are not ASM
-    if (
-        (configName === 'data-dg-lun-layout' ||
-            configName === 'redolog-dg-lun-layout' ||
-            configName === 'fra-dg-lun-layout' ||
-            configName === 'archivelog-dg-lun-layout') &&
-        (!instanceAssessmentData?.isASMManaged ||
-            instanceAssessmentData?.storageProtocol !== FSXN_STORAGE_PROTOCOLS.ISCSI)
-    ) {
-        return false;
-    }
-
-    if (configName === 'fra-dg-lun-layout' && !getAssessmentById(instanceAssessmentData, 'fra-dg-lun-layout')) {
-        return false;
-    }
-
-    if (
-        configName === 'archivelog-dg-lun-layout' &&
-        !getAssessmentById(instanceAssessmentData, 'archivelog-dg-lun-layout')
-    ) {
-        return false;
-    }
-
-    return true;
 };
 
 export const getConfigStateList = (

@@ -18,13 +18,6 @@ interface ConfigTableRowData {
 
 export type HandleImpactedResourceDialog = (rowData: ConfigTableRowData) => void;
 
-export const ORACLE_ISCSI_ONLY_CONFIG_IDS = new Set<string>([
-    ASSESSMENT_CONFIG_IDS.TRANSPARENT_HUGEPAGES,
-    ASSESSMENT_CONFIG_IDS.TCP_ADVANCED_OPTIONS,
-    ASSESSMENT_CONFIG_IDS.FILESYSTEMS_IO_OPTIONS,
-    ASSESSMENT_CONFIG_IDS.MULTIPATH_READCOUNT
-]);
-
 const countHostOsMissingPatches = (ec2InstancesToPatch: any[] | undefined): number => {
     let totalPatches = 0;
     ec2InstancesToPatch?.forEach((instance: any) => {
