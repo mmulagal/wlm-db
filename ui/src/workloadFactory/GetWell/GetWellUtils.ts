@@ -31,7 +31,6 @@ import {
     ASSESSMENT_CONFIG_NAMES,
     ASSESSMENT_CONFIG_IDS,
     BLOCK_SIX_LABELS,
-    CONFIG_NAME_TO_ID_MAPPING,
     CONFIG_STATES,
     CONFIG_STATES_UI,
     CONFIG_STATE_ACTIONS,
@@ -760,7 +759,7 @@ const updateAssessmentWithCompletedJobs = (
             inProgressHostData
         );
         bulkRowData?.map((row: any) => {
-            updateOptimizationStatus(row, dispatch, engineType);
+            updateFlatAssessmentStatus(row, dispatch, engineType);
         });
         setTimeout(() => {
             // Refresh assessment data from store after optimization completes
@@ -792,7 +791,6 @@ const updateAssessmentWithCompletedJobs = (
         );
 
         if (isOptimizeInnerPage) {
-            updateOptimizationStatus(rowData, dispatch, engineType);
             updateFlatAssessmentStatus(rowData, dispatch, engineType);
         } else {
             const currentCardData = store.getState().getWellOptimize.cardData;
@@ -867,7 +865,7 @@ const updateAssessmentWithWarningJobs = (
             });
             if (isSuccess?.length) {
                 successJobCount++;
-                updateOptimizationStatus(row, dispatch, engineType);
+                updateFlatAssessmentStatus(row, dispatch, engineType);
             }
         });
         setTimeout(() => {
@@ -900,7 +898,6 @@ const updateAssessmentWithWarningJobs = (
         );
 
         if (isOptimizeInnerPage) {
-            updateOptimizationStatus(rowData, dispatch, engineType);
             updateFlatAssessmentStatus(rowData, dispatch, engineType);
         } else {
             const currentCardData = store.getState().getWellOptimize.cardData;
@@ -1057,7 +1054,7 @@ export const handleOptimizeResourceJob = (
                             inProgressResourceOptimizeData
                         );
                         bulkRowData?.map((row: any) => {
-                            updateOptimizationStatus(row, dispatch, engineType);
+                            updateFlatAssessmentStatus(row, dispatch, engineType);
                         });
                         setTimeout(() => {
                             // Refresh assessment data from store after optimization completes
@@ -1120,7 +1117,7 @@ export const handleOptimizeResourceJob = (
                             });
                             if (isSuccess?.length) {
                                 successJobCount++;
-                                updateOptimizationStatus(row, dispatch, engineType);
+                                updateFlatAssessmentStatus(row, dispatch, engineType);
                             }
                         });
                         setTimeout(() => {
@@ -1416,242 +1413,24 @@ export const handleOptimizeStorageJob = (
     }, 10);
 };
 
-export const updateOptimizationStatus = (rowData: any, dispatch: any, engineType?: string) => {
-    const state = store.getState();
-    let assessmentData = null;
-    if (engineType === DBType.ORACLE) {
-        assessmentData = state.inventoryV2.allOracleHostAssessmentData;
-    } else {
-        assessmentData = state.inventoryV2.allmssqlHostAssessmentData;
-    }
-    const updatedAsessmentData = assessmentData?.map((hostData: any) => {
-        if (
-            hostData?.databaseHostId === rowData?.hostId &&
-            hostData?.credentialId === rowData?.credentialId &&
-            hostData?.regionId === rowData?.regionId
-        ) {
-            const updatedInstancesAssessment = hostData?.instancesAssessment?.map((instance: any) => {
-                if (instance?.databaseInstanceId === rowData?.instanceId) {
-                    const storageSizingMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_SIZING_MAP;
-                    const storageLayoutMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_LAYOUT_MAP;
-                    const storageConfigurationMap: any = CONFIG_NAME_TO_ID_MAPPING.STORAGE_CONFIG_MAP;
-                    let newStorageConfigurationMap: any;
-                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT) {
-                        newStorageConfigurationMap = { ...storageConfigurationMap }; // Create a copy to avoid mutating original
-                        delete newStorageConfigurationMap['snapshot-policy'];
-                    } else {
-                        newStorageConfigurationMap = { ...storageConfigurationMap };
-                    }
-                    const haMssqlMap: any = CONFIG_NAME_TO_ID_MAPPING.HA_MSSQL;
-                    if (storageSizingMap[rowData?.name]) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                storage: {
-                                    ...instance?.assessments?.storage,
-                                    sizing: instance?.assessments?.storage?.sizing.map((item: any) => {
-                                        if (item?.name === storageSizingMap[rowData?.name]) {
-                                            return {
-                                                ...item,
-                                                status: 'optimized'
-                                            };
-                                        }
-                                        return item;
-                                    })
-                                }
-                            }
-                        };
-                    }
-                    if (storageLayoutMap[rowData?.name]) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                storage: {
-                                    ...instance?.assessments?.storage,
-                                    layout: instance?.assessments?.storage?.layout.map((item: any) => {
-                                        if (item?.name === storageLayoutMap[rowData?.name]) {
-                                            return {
-                                                ...item,
-                                                status: 'optimized'
-                                            };
-                                        }
-                                        return item;
-                                    })
-                                }
-                            }
-                        };
-                    }
-                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.RSS_CONFIGURATION) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                rssConfig: { ...instance.assessments.rssConfig, status: 'optimized' }
-                            }
-                        };
-                    }
-                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                compute: { ...instance.assessments.compute, status: 'optimized' }
-                            }
-                        };
-                    }
-                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.MAXDOP) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                maxDOP: { ...instance.assessments.maxDOP, status: 'optimized' }
-                            }
-                        };
-                    }
-                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.MTU) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                mtuAlignment: { ...instance.assessments.mtuAlignment, status: 'optimized' }
-                            }
-                        };
-                    }
-                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                awsBackup: { ...instance.assessments.awsBackup, status: 'optimized' }
-                            }
-                        };
-                    }
-                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                transparentHugepages: {
-                                    ...instance.assessments.transparentHugepages,
-                                    status: 'optimized'
-                                }
-                            }
-                        };
-                    }
-                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                tcpAdvancedOptions: { ...instance.assessments.tcpAdvancedOptions, status: 'optimized' }
-                            }
-                        };
-                    }
-                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                multiblockReadcount: {
-                                    ...instance.assessments.multiblockReadcount,
-                                    status: 'optimized'
-                                }
-                            }
-                        };
-                    }
-                    if (newStorageConfigurationMap[rowData?.id]) {
-                        const key = newStorageConfigurationMap[rowData?.id];
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                storage: {
-                                    ...instance?.assessments?.storage,
-                                    configuration: {
-                                        ...instance?.assessments?.storage?.configuration,
-                                        [key]: instance?.assessments?.storage?.configuration[key]?.map((item: any) => {
-                                            if (item.name === rowData?.id) {
-                                                return { ...item, status: 'optimized' };
-                                            }
-                                            return item;
-                                        })
-                                    }
-                                }
-                            }
-                        };
-                    }
-                    if (rowData?.name === ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT) {
-                        const state = store.getState();
-                        const { cloneDashboardData } = state.getWellOptimize;
+/**
+ * Clone management only becomes "optimized" once every clone object flagged in violation for
+ * that instance has been resolved; a single fixed database doesn't mean the instance is clean.
+ */
+const isCloneManagementRow = (rowData: any): boolean =>
+    rowData?.id === ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT || rowData?.id === 'clone';
 
-                        let isInstanceOptimized = true;
-                        cloneDashboardData?.objectsInViolation?.map((row: any) => {
-                            if (
-                                row?.resourceId === rowData?.hostId &&
-                                row?.instanceId === rowData?.instanceId &&
-                                !row?.isOptimized
-                            ) {
-                                isInstanceOptimized = false;
-                            }
-                        });
-                        if (isInstanceOptimized) {
-                            // If all clone databases are optimized for a instance
-                            return {
-                                ...instance,
-                                assessments: {
-                                    ...instance?.assessments,
-                                    clone: { ...instance.assessments.clone, status: 'optimized' }
-                                }
-                            };
-                        }
-                        // If not all clone databases are optimized for a instance
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                clone: { ...instance.assessments.clone, status: 'not-optimized' }
-                            }
-                        };
-                    }
-                    if (haMssqlMap[rowData?.name]) {
-                        return {
-                            ...instance,
-                            assessments: {
-                                ...instance?.assessments,
-                                highAvailability: instance?.assessments?.highAvailability?.map((item: any) => {
-                                    if (item?.name === haMssqlMap[rowData?.name]) {
-                                        return {
-                                            ...item,
-                                            status: 'optimized'
-                                        };
-                                    }
-                                    return item;
-                                })
-                            }
-                        };
-                    }
-                    return instance;
-                }
-                return instance;
-            });
-            return { ...hostData, instancesAssessment: updatedInstancesAssessment };
-        }
-        return hostData;
-    });
-    if (engineType === DBType.ORACLE) {
-        dispatch(addAllOracleHostAssessmentData(updatedAsessmentData));
-    } else {
-        dispatch(addAllMssqlHostAssessmentData(updatedAsessmentData));
-    }
+const resolveCloneManagementStatus = (rowData: any): string => {
+    const { cloneDashboardData } = store.getState().getWellOptimize;
+    const hasUnresolvedViolation = cloneDashboardData?.objectsInViolation?.some(
+        (row: any) => row?.resourceId === rowData?.hostId && row?.instanceId === rowData?.instanceId && !row?.isOptimized
+    );
+    return hasUnresolvedViolation ? WELL_ARCHITECTED_STATUS.NOT_OPTIMIZED : WELL_ARCHITECTED_STATUS.OPTIMIZED;
 };
 
 /**
- * Patches the flat `assessments[]` array (new account-level API format) used by the Dashboard.
- * `updateOptimizationStatus` only patches the nested `storage/compute/…` structure (old format
- * used by the GetWell tab), so Dashboard rows never reflected the fix. This function handles
- * the flat format so both views stay in sync after a single-instance fix.
+ * Patches the flat `assessments[]` array (account-level API format) used by both the Dashboard
+ * and the GetWell tab after a fix completes, so both views stay in sync.
  */
 export const updateFlatAssessmentStatus = (rowData: any, dispatch: any, engineType?: string) => {
     const state = store.getState();
@@ -1659,6 +1438,12 @@ export const updateFlatAssessmentStatus = (rowData: any, dispatch: any, engineTy
         engineType === DBType.ORACLE
             ? state.inventoryV2.allOracleHostAssessmentData
             : state.inventoryV2.allmssqlHostAssessmentData;
+
+    const isClone = isCloneManagementRow(rowData);
+    const newStatus = isClone ? resolveCloneManagementStatus(rowData) : WELL_ARCHITECTED_STATUS.OPTIMIZED;
+    // CloneTabs builds its rows with id: 'clone' (the API payload's configurationName), not the
+    // 'clone-management' id used in the flat assessments[] array, so match on the canonical id instead.
+    const matchId = isClone ? ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT : rowData?.id;
 
     const updatedData = assessmentData?.map((hostData: any) => {
         if (
@@ -1677,7 +1462,7 @@ export const updateFlatAssessmentStatus = (rowData: any, dispatch: any, engineTy
                 assessments: {
                     ...instance.assessments,
                     assessments: flatAssessments.map((item: any) =>
-                        item?.id === rowData?.id ? { ...item, status: 'optimized' } : item
+                        item?.id === matchId ? { ...item, status: newStatus } : item
                     )
                 }
             };

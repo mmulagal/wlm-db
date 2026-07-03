@@ -15,7 +15,6 @@ import {
     getManagedAggrStorageSavings,
     getManageAggrCost,
     getPotentialSavingsValues,
-    getManagedInstanceOptimizationSummary,
     getErrorInvestigationSummary,
     getAssessmentGroupedByCategory,
     getAssessmentGroupedByConfigurations,
@@ -801,79 +800,6 @@ describe('mapHostStatusToAssessmentData', () => {
         ];
         const result = mapHostStatusToAssessmentData({}, assessmentData, true);
         expect(result[0].loadingStatus).toBe(true);
-    });
-});
-
-// ─── getManagedInstanceOptimizationSummary ───────────────────────────────────
-describe('getManagedInstanceOptimizationSummary', () => {
-    it('returns zero counts for empty assessment data', () => {
-        const result = getManagedInstanceOptimizationSummary([]);
-        expect(result.totalInstances).toBe(0);
-        expect(result.optimizedInstances).toBe(0);
-    });
-
-    it('returns zero counts when no matching cred/region', () => {
-        const data = [
-            {
-                credentialId: 'other-cred',
-                regionId: 'eu-west-1',
-                databaseHostId: 'host1',
-                instancesAssessment: [{ assessments: { lastAssessmentTimestamp: '2024-01-01' } }]
-            }
-        ];
-        const result = getManagedInstanceOptimizationSummary(data);
-        expect(result.totalInstances).toBe(0);
-    });
-
-    it('counts instances for matching cred/region', () => {
-        const data = [
-            {
-                credentialId: 'cred1',
-                regionId: 'us-east-1',
-                databaseHostId: 'host1',
-                instancesAssessment: [
-                    {
-                        assessments: {
-                            lastAssessmentTimestamp: '2024-01-01',
-                            compute: { status: 'OPTIMIZED' },
-                            rssConfig: { status: 'OPTIMIZED' },
-                            hostOsPatch: { status: 'OPTIMIZED' },
-                            mtuAlignment: { status: 'OPTIMIZED' },
-                            license: { status: 'OPTIMIZED' },
-                            mssqlPatch: { status: 'OPTIMIZED' },
-                            maxDOP: { status: 'OPTIMIZED' },
-                            clone: { status: 'OPTIMIZED' },
-                            storage: {
-                                layout: [],
-                                sizing: [
-                                    { name: 'headroom', status: 'OPTIMIZED' },
-                                    { name: 'tempdb-drive-size', status: 'OPTIMIZED' },
-                                    { name: 'log-drive-size', status: 'OPTIMIZED' },
-                                    { name: 'performance-tier', status: 'OPTIMIZED' }
-                                ],
-                                configuration: {}
-                            },
-                            dismissedConfigurations: {}
-                        }
-                    }
-                ]
-            }
-        ];
-        const result = getManagedInstanceOptimizationSummary(data);
-        expect(result.totalInstances).toBe(1);
-    });
-
-    it('skips instances with errors', () => {
-        const data = [
-            {
-                credentialId: 'cred1',
-                regionId: 'us-east-1',
-                databaseHostId: 'host1',
-                instancesAssessment: [{ error: true, assessments: {} }]
-            }
-        ];
-        const result = getManagedInstanceOptimizationSummary(data);
-        expect(result.totalInstances).toBe(0);
     });
 });
 
@@ -1764,77 +1690,6 @@ describe('getAssessmentGroupedByConfigurations', () => {
         expect(result.isFraEnable).toBe(false);
         expect(result.isArchiveEnable).toBe(false);
         expect(result.isHaMssqlEnable).toBe(false);
-    });
-});
-
-// ─── Enhanced getManagedInstanceOptimizationSummary ───────────────────────────
-describe('getManagedInstanceOptimizationSummary (extended)', () => {
-    beforeEach(() => {
-        mockGetState.mockReturnValue({
-            headers: {
-                headerSelectedMultiCredIdsList: ['cred1'],
-                headerSelectedMultiRegionIdsList: ['us-east-1']
-            },
-            inventoryV2: { inventoryTableData: {} }
-        });
-    });
-
-    it('counts optimized instances when fully optimized', () => {
-        const data = [makeMssqlHost('h1', makeOptimizedMssqlAssessment())];
-        const result = getManagedInstanceOptimizationSummary(data);
-        expect(result.totalInstances).toBe(1);
-        expect(result.optimizedInstances).toBe(1);
-        expect(result.notOptimizedInstances).toBe(0);
-    });
-
-    it('counts not-optimized instances when compute is NOT_OPTIMIZED', () => {
-        const assess = makeOptimizedMssqlAssessment({
-            compute: { status: 'NOT_OPTIMIZED', severity: 'warning' }
-        });
-        const data = [makeMssqlHost('h1', assess)];
-        const result = getManagedInstanceOptimizationSummary(data);
-        expect(result.optimizedInstances).toBe(0);
-        expect(result.notOptimizedInstances).toBe(1);
-    });
-
-    it('detects dismissed config and sets hasDismissedOrPostponed=true', () => {
-        const assess = makeOptimizedMssqlAssessment({
-            compute: { status: 'NOT_OPTIMIZED', severity: 'warning' },
-            dismissedConfigurations: { compute: { configState: 'DISMISSED' } }
-        });
-        const data = [makeMssqlHost('h1', assess)];
-        const result = getManagedInstanceOptimizationSummary(data);
-        expect(result.hasDismissedOrPostponed).toBe(true);
-    });
-
-    it('calculates optimizedPercent correctly', () => {
-        const optimizedHost = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
-        const notOptimizedAssess = makeOptimizedMssqlAssessment({
-            compute: { status: 'NOT_OPTIMIZED', severity: 'warning' }
-        });
-        const notOptimizedHost = makeMssqlHost('h2', notOptimizedAssess);
-        const result = getManagedInstanceOptimizationSummary([optimizedHost, notOptimizedHost]);
-        expect(result.totalInstances).toBe(2);
-        expect(result.optimizedPercent).toBe(50);
-    });
-
-    it('returns NaN optimizedPercent for zero totalInstances', () => {
-        const result = getManagedInstanceOptimizationSummary([]);
-        // Math.round(0/0) = NaN
-        expect(isNaN(result.optimizedPercent)).toBe(true);
-    });
-
-    it('considers AOAG deployments as optimized for license (always true)', () => {
-        vi.mocked(mockIsAoagDeployment).mockReturnValueOnce(true);
-        const assess = makeOptimizedMssqlAssessment({
-            deploymentType: 'AOAG',
-            license: { status: 'NOT_OPTIMIZED', severity: 'warning' }
-        });
-        const data = [makeMssqlHost('h1', assess)];
-        const result = getManagedInstanceOptimizationSummary(data);
-        // license is always considered optimized for AOAG, so instance should still be optimized
-        expect(result.optimizedInstances).toBe(1);
-        vi.mocked(mockIsAoagDeployment).mockReturnValue(false);
     });
 });
 

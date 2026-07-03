@@ -341,8 +341,8 @@ const DashboardInnerPage = () => {
                 );
             } else {
                 // Use IDs directly from the table row (sourced from allMssqlHostAssessmentData /
-                // allOracleHostAssessmentData) so that updateOptimizationStatus /
-                // updateFlatAssessmentStatus can locate the correct host+instance entry.
+                // allOracleHostAssessmentData) so that updateFlatAssessmentStatus can locate
+                // the correct host+instance entry.
                 // selectedResourceId comes from inventoryTableData and may differ from
                 // databaseHostId used as the primary key in the assessment store.
                 handleOptimizeStorageJob(

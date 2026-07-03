@@ -1,9 +1,5 @@
-import { ASSESSMENT_CONFIG_NAMES, CONFIG_NAME_TO_ID_MAPPING } from '../../../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES } from '../../../../utils/consts';
 import { getConfigIdsByLinkedGroup } from '../../../../utils/configRegistry';
-import { AssessmentResponseInterface } from '../../../../utils/types/getWellTypes';
-
-/** Recommended value that indicates the layout config should be excluded from dependency warnings */
-const EXCLUDED_RECOMMENDED = 'multiplexed-copies-on-two-or-more-volumes';
 
 /**
  * Oracle Storage Layout parent configurations.
@@ -49,29 +45,4 @@ export const getLinkedConfigNames = (configName: string): string[] => {
         return ORACLE_LAYOUT_CONFIGS;
     }
     return [];
-};
-
-/** Returns layout config names that have 'not-optimized' status for a given ONTAP sub-config */
-export const getFilteredLinkedConfigNames = (
-    configName: string,
-    driftAssessmentData: AssessmentResponseInterface | null
-): string[] => {
-    if (!isOntapConfig(configName)) {
-        return getLinkedConfigNames(configName);
-    }
-
-    const layoutData = driftAssessmentData?.storage?.layout || [];
-    const oracleLayoutMap = CONFIG_NAME_TO_ID_MAPPING.ORACLE_STORAGE_LAYOUT_MAP as Record<string, string>;
-
-    return ORACLE_LAYOUT_CONFIGS.filter(layoutConfig => {
-        const layoutId = oracleLayoutMap[layoutConfig];
-        const assessmentItem = layoutData.find((item: any) => item.name === layoutId);
-
-        if (!assessmentItem?.status) return false;
-
-        if (layoutConfig === ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT) {
-            return assessmentItem.status === 'not-optimized' && assessmentItem.recommended !== EXCLUDED_RECOMMENDED;
-        }
-        return assessmentItem.status === 'not-optimized';
-    });
 };
