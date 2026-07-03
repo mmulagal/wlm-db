@@ -79,6 +79,10 @@ export interface OptimizePayloadContext {
     selectedAWSBackup?: any;
     selectedRecommendedInstance?: any;
     recommendedInstanceInBulk?: Record<string, any>;
+    /** FSx file system ID from Redux state (for aws-backup) */
+    selectedRowFsxId?: string;
+    /** Drift assessment data from Redux state */
+    driftAssessmentData?: any;
 }
 
 // ─── Shared mutation hook ─────────────────────────────────────────────────────
@@ -182,7 +186,9 @@ export const buildOptimizeApiInput = (
         selectedSnapshot,
         selectedAWSBackup,
         selectedRecommendedInstance,
-        recommendedInstanceInBulk
+        recommendedInstanceInBulk,
+        selectedRowFsxId,
+        driftAssessmentData
     } = ctx;
 
     const configName = apiConfig.apiConfigName ?? configId;
@@ -216,6 +222,10 @@ export const buildOptimizeApiInput = (
 
     // ── Oracle AWS backup ─────────────────────────────────────────────────────
     if (apiConfig.oracleOsType === OPTIMIZE_PAYLOAD_TYPES.AWS_BACKUP && isOracle) {
+        const fileSystemId =
+            rowData?.data?.assessments?.metadata?.fileSystemId ??
+            selectedRowFsxId ??
+            driftAssessmentData?.metadata?.fileSystemId;
         return {
             payload: {
                 type: OPTIMIZE_PAYLOAD_TYPES.AWS_BACKUP,
@@ -227,8 +237,7 @@ export const buildOptimizeApiInput = (
                                 id: rowHostId,
                                 region: rowRegionId,
                                 credentialsId: rowCredId,
-                                fsxFileSystemId:
-                                    rowData?.data?.assessments?.metadata?.fileSystemId ?? rowData?.fsxFileSystemId,
+                                fsxFileSystemId: fileSystemId,
                                 databases: [rowInstanceId],
                                 backupRetentionDays: selectedAWSBackup?.numberOfDays,
                                 backupStartTime: backupStartTime(selectedAWSBackup)
@@ -242,6 +251,10 @@ export const buildOptimizeApiInput = (
 
     // ── MSSQL AWS backup ──────────────────────────────────────────────────────
     if (apiConfig.mutation === 'optimizeAwsBackup') {
+        const fileSystemId =
+            rowData?.data?.assessments?.metadata?.fileSystemId ??
+            selectedRowFsxId ??
+            driftAssessmentData?.metadata?.fileSystemId;
         return {
             payload: {
                 hostsToOptimize: [
@@ -251,8 +264,7 @@ export const buildOptimizeApiInput = (
                             {
                                 id: rowHostId,
                                 sqlServerInstances: [rowInstanceId],
-                                fsxFileSystemId:
-                                    rowData?.data?.assessments?.metadata?.fileSystemId ?? rowData?.fsxFileSystemId,
+                                fsxFileSystemId: fileSystemId,
                                 backupRetentionDays: selectedAWSBackup?.numberOfDays,
                                 backupStartTime: backupStartTime(selectedAWSBackup),
                                 credentialsId: rowCredId,

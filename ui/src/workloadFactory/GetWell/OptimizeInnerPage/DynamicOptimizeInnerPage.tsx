@@ -88,7 +88,9 @@ const DynamicOptimizeInnerPage = () => {
         inProgressHostData,
         isInnerPageOptimize,
         optimizingInstanceData,
-        isWad: isWadFromStore
+        isWad: isWadFromStore,
+        selectedRowFsxId,
+        driftAssessmentData
     } = useAppSelector(state => state.getWellOptimize);
     const { crrPrefetchLoading } = useAppSelector(state => state.crrRedirection);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -195,7 +197,9 @@ const DynamicOptimizeInnerPage = () => {
                 databaseHostId: selectedResourceId,
                 instanceId: selectedDatabaseInstance,
                 rowData: effectiveRowData,
-                operation
+                operation,
+                selectedRowFsxId,
+                driftAssessmentData
             });
 
             // Set optimizing state

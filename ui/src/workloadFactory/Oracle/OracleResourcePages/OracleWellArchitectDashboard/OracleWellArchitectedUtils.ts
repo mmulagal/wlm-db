@@ -1117,7 +1117,8 @@ export const callOptimizeOracleApi = ({
             };
         } else if (oracleOsType === OPTIMIZE_PAYLOAD_TYPES.AWS_BACKUP) {
             // Special case: AWS backup needs additional Redux state (fsxFileSystemId, backupRetentionDays, backupStartTime)
-            const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
+            const { selectedAWSBackup, selectedRowFsxId, driftAssessmentData } = state.getWellOptimize;
+            const fileSystemId = selectedRowFsxId || driftAssessmentData?.metadata?.fileSystemId;
             payload = {
                 type: OPTIMIZE_PAYLOAD_TYPES.AWS_BACKUP,
                 hostsToOptimize: [
@@ -1129,7 +1130,7 @@ export const callOptimizeOracleApi = ({
                                 region: selectedGwInstanceRegionId,
                                 credentialsId: selectedGwInstanceCredId,
                                 databases: [selectedDatabaseInstance],
-                                fsxFileSystemId: selectedRowFsxId,
+                                fsxFileSystemId: fileSystemId,
                                 backupRetentionDays: selectedAWSBackup?.numberOfDays,
                                 backupStartTime: backupStartTime(selectedAWSBackup)
                             }

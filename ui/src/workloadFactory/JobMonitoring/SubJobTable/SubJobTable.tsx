@@ -40,6 +40,7 @@ import {
     setSelectedWellArchitectTab
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { setSelectedOracleInnerPageTab } from '../../../store/workloadFactory/oracleSlice';
+import { setSelectedResourcePageHostData } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import useResize from '../../../common/hooks/useResize';
 
 const SubJobTable = ({ jobId, statusType }: any) => {
@@ -99,6 +100,17 @@ const SubJobTable = ({ jobId, statusType }: any) => {
         }
 
         dispatch(setLandingFrom(WLF_TABS.JOB_MONITORING));
+
+        // Update both slices to ensure correct instance is loaded
+        const instanceData = {
+            resourceId,
+            databaseInstanceId,
+            databaseInstanceName,
+            credentialId: rowData?.credentialsId,
+            regionId: rowData?.region?.code
+        };
+
+        dispatch(setSelectedResourcePageHostData(instanceData));
 
         dispatch(
             setGwPageLoadInstanceData({

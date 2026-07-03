@@ -163,6 +163,13 @@ vi.mock('../../../store/workloadFactory/oracleSlice', () => ({
     setSelectedOracleInnerPageTab: vi.fn(payload => ({ type: 'oracle/setSelectedOracleInnerPageTab', payload }))
 }));
 
+vi.mock('../../../store/workloadFactory/workloadFactoryResourceSlice', () => ({
+    setSelectedResourcePageHostData: vi.fn(payload => ({
+        type: 'workloadFactoryResource/setSelectedResourcePageHostData',
+        payload
+    }))
+}));
+
 // Mock useResize hook
 const mockWindowSize = { width: 1920, height: 1080 };
 vi.mock('../../../common/hooks/useResize', () => ({

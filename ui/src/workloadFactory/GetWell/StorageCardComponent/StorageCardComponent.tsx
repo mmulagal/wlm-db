@@ -591,7 +591,13 @@ const StorageCardComponent = ({
             if (mutationFn) {
                 const credId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceCredId : credIdFromJM;
                 const regionId = landingFrom === WLF_TABS.INVENTORY ? selectedGwInstanceRegionId : regionFromJM;
-                const { selectedAWSBackup, selectedRecommendedInstance, selectedSnapshot } = state.getWellOptimize;
+                const {
+                    selectedAWSBackup,
+                    selectedRecommendedInstance,
+                    selectedSnapshot,
+                    selectedRowFsxId,
+                    driftAssessmentData
+                } = state.getWellOptimize;
 
                 const apiData = buildOptimizeApiInput(apiConfig, {
                     configId: type,
@@ -602,7 +608,9 @@ const StorageCardComponent = ({
                     instanceId: selectedDatabaseInstance,
                     selectedAWSBackup,
                     selectedRecommendedInstance,
-                    selectedSnapshot
+                    selectedSnapshot,
+                    selectedRowFsxId,
+                    driftAssessmentData
                 });
 
                 if (apiData) {
@@ -751,7 +759,8 @@ const StorageCardComponent = ({
             };
         } else if (type === ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS) {
             apiCall = registryMutationMap.optimizeAwsBackup;
-            const { selectedAWSBackup, selectedRowFsxId } = state.getWellOptimize;
+            const { selectedAWSBackup, selectedRowFsxId, driftAssessmentData } = state.getWellOptimize;
+            const fileSystemId = selectedRowFsxId || driftAssessmentData?.metadata?.fileSystemId;
             payload = {
                 hostsToOptimize: [
                     {
@@ -760,7 +769,7 @@ const StorageCardComponent = ({
                             {
                                 id: selectedResourceId,
                                 sqlServerInstances: [selectedDatabaseInstance],
-                                fsxFileSystemId: selectedRowFsxId,
+                                fsxFileSystemId: fileSystemId,
                                 backupRetentionDays: selectedAWSBackup?.numberOfDays,
                                 backupStartTime: backupStartTime(selectedAWSBackup),
                                 credentialsId: selectedGwInstanceCredId,
