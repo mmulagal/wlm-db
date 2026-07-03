@@ -224,6 +224,24 @@ describe('ImpactedResourceDialog', () => {
         expect(screen.getByText('deduplication=enabled, compaction=enabled')).toBeTruthy();
     });
 
+    it('falls back to top-level recommended when violationDetails rows omit it (MSSQL autosize)', () => {
+        const data = {
+            configurationName: 'autosize',
+            recommended: 'true',
+            violationDetails: [
+                { objectName: 'vol1', value: '', objectType: 'Volume' },
+                { objectName: 'vol2', value: '', objectType: 'Volume' }
+            ],
+            configItem: { recommended: 'true' }
+        };
+        render(<ImpactedResourceDialog data={data as any} />);
+        expect(screen.getByText('vol1')).toBeTruthy();
+        expect(screen.getByText('vol2')).toBeTruthy();
+        expect(screen.getAllByText('true')).toHaveLength(2);
+        // Blank `value` (current value) should render as "not available", not an empty cell
+        expect(screen.getAllByText('databases.general.not-available')).toHaveLength(2);
+    });
+
     it('renders log-drive-size rows for ignoredDrives (shared drive) without n/a placeholder row', () => {
         const data = {
             configurationName: 'log-drive-size',

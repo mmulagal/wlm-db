@@ -93,6 +93,8 @@ interface Ec2InterfaceToFix {
 interface AssessmentData {
     violationDetails?: ViolationDetail[];
     objectsInViolation?: ObjectInViolation[];
+    /** Top-level fallback recommended value shared across rows when a row doesn't carry its own */
+    recommended?: string;
     sizingViolations?: SizingViolations;
     configurationName?: string;
     configObj?: { configurationName?: string };
@@ -415,11 +417,16 @@ const mapGenericConfigFromRegistry = (
     // Generic mapping for standard configs
     const details: ViolationDetail[] = data?.violationDetails || [];
     const columns = columnConfig.columns.map(col => t(col.label) || col.label);
+    // Top-level `recommended` is shared by all rows when a row doesn't carry its own (mirrors DynamicInnerTable)
+    const topRecommended = data?.recommended;
 
     const rows = details.map(detail =>
         columnConfig.columns.map(col => {
             const accessor = col.accessor || col.key;
-            const value = detail?.[accessor as keyof ViolationDetail];
+            const value =
+                accessor === 'recommended'
+                    ? detail?.recommended || topRecommended
+                    : detail?.[accessor as keyof ViolationDetail];
 
             // Special formatting based on column key
             if (col.key === 'value' && typeof value === 'number') {
@@ -437,7 +444,7 @@ const mapGenericConfigFromRegistry = (
                 return `${value}%`;
             }
 
-            return value != null ? String(value) : na;
+            return value != null && value !== '' ? String(value) : na;
         })
     );
 
@@ -773,7 +780,7 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
     const { configEngineType } = useAppSelector(state => state.getWellOptimize);
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
-    const na = t('databases.general.not-available');
+    const na = t('databases.general.unavailable');
     const normalizedData = normalizeImpactedResourceDialogData(data);
     // TODO: Fix this function it as part of dismiss workflow mirgration. use id or name instead of configurationName.
     const rawConfigName =

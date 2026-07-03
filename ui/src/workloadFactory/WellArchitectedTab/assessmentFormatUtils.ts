@@ -256,6 +256,7 @@ type ImpactedResourceDialogData = {
     configurationName?: string;
     configObj?: { configurationName?: string };
     name?: string;
+    recommended?: string;
     [key: string]: unknown;
 };
 
@@ -283,6 +284,7 @@ export const normalizeImpactedResourceDialogData = <T extends ImpactedResourceDi
         sizingViolations?: Record<string, unknown>;
         cloneDetails?: unknown[];
         ec2InterfacesToFix?: unknown[];
+        recommended?: string;
     };
 
     return {
@@ -294,6 +296,9 @@ export const normalizeImpactedResourceDialogData = <T extends ImpactedResourceDi
         ec2InterfacesToFix: data.ec2InterfacesToFix ?? extendedItem.ec2InterfacesToFix,
         rssAdapters: data.rssAdapters ?? extendedItem.rssAdapters,
         recommendedAdapterSettings: data.recommendedAdapterSettings ?? extendedItem.recommendedAdapterSettings,
-        tcpOffloadState: data.tcpOffloadState ?? extendedItem.tcpOffloadState
+        tcpOffloadState: data.tcpOffloadState ?? extendedItem.tcpOffloadState,
+        // Top-level fallback: some configs (e.g. autosize, thin-provision) only carry `recommended`
+        // once at the config-item level rather than repeating it per violationDetails row.
+        recommended: (data.recommended as string | undefined) ?? extendedItem.recommended
     };
 };
