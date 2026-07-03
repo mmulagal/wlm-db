@@ -2326,10 +2326,6 @@
                     ]
                 },
                 {
-                    "type": "text",
-                    "content": "databases.well-architect.mssql-snapcenter-option1-note"
-                },
-                {
                     "heading": "databases.well-architect.mssql-snapcenter-option2",
                     "type": "text",
                     "content": "databases.well-architect.mssql-snapcenter-option2-intro"
@@ -2345,11 +2341,7 @@
                         "databases.well-architect.mssql-snapcenter-option2-step6"
                     ]
                 }
-            ],
-            "notes": {
-                "type": "custom",
-                "content": "databases.well-architect.mssql-snapcenter-notes"
-            }
+            ]
         }
     }
 }
