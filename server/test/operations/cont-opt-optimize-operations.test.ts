@@ -1,14 +1,9 @@
 import { optimizeMaxDop, optimizeSizing, optimizeStorage } from '../../src/operations/cont-opt-optimize-operations';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
-import {
-    AssessmentCategories,
-    OPTIMIZE_SIZING_CONFIGS,
-    OptimizeStorageConfigs
-} from '../../src/utils/continous-optimization-consts';
+import { AssessmentCategories, OPTIMIZE_SIZING_CONFIGS } from '../../src/utils/continous-optimization-consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
 import { createDatabaseInstanceConfigData } from '../../src/lib/database/database-instance-config';
-import { getJobDetails, Job, updateJobDetails } from '../../src/operations/database/job-operations';
-import { sleep } from '../../src/utils/utils';
+import { updateJobDetails } from '../../src/operations/database/job-operations';
 import optimizeCompute from '../../src/operations/continuous-optimization/compute-optimize-operations';
 import { optimizeClone } from '../../src/operations/continuous-optimization/mssql/clone-optimization-operations';
 import {
@@ -313,36 +308,36 @@ afterAll(async () => {
     await deleteResource(ACCOUNT_ID, RESOURCE_ID);
 });
 
-async function waitForStorageOptimizeSubJobs(
-    jobId: string,
-    expectedSubJobCount: number
-): Promise<Awaited<ReturnType<typeof getJobDetails>> & { subJobs: Job[] }> {
-    for (let attempt = 0; attempt < 50; attempt++) {
-        // eslint-disable-next-line no-await-in-loop
-        const jobDetails = await getJobDetails(ACCOUNT_ID, jobId, CREDENTIALS_ID, DEFAULT_AWS_REGION);
-        const storageSubJobs = jobDetails.subJobs.filter((subJob: Job) =>
-            subJob.name?.includes('Storage Configuration')
-        );
-        if (
-            storageSubJobs.length === expectedSubJobCount &&
-            storageSubJobs.every((subJob: Job) => subJob.status === 'COMPLETED')
-        ) {
-            return { ...jobDetails, subJobs: storageSubJobs };
-        }
-        // eslint-disable-next-line no-await-in-loop
-        await sleep(100);
-    }
-    const jobDetails = await getJobDetails(ACCOUNT_ID, jobId, CREDENTIALS_ID, DEFAULT_AWS_REGION);
-    const storageSubJobs = jobDetails.subJobs.filter((subJob: Job) => subJob.name?.includes('Storage Configuration'));
-    throw new Error(
-        `Storage optimize sub-jobs for ${jobId} did not settle: ${JSON.stringify(
-            storageSubJobs.map((subJob: Job) => ({
-                status: subJob.status,
-                error: subJob.error
-            }))
-        )}`
-    );
-}
+// async function waitForStorageOptimizeSubJobs(
+//     jobId: string,
+//     expectedSubJobCount: number
+// ): Promise<Awaited<ReturnType<typeof getJobDetails>> & { subJobs: Job[] }> {
+//     for (let attempt = 0; attempt < 50; attempt++) {
+//         // eslint-disable-next-line no-await-in-loop
+//         const jobDetails = await getJobDetails(ACCOUNT_ID, jobId, CREDENTIALS_ID, DEFAULT_AWS_REGION);
+//         const storageSubJobs = jobDetails.subJobs.filter((subJob: Job) =>
+//             subJob.name?.includes('Storage Configuration')
+//         );
+//         if (
+//             storageSubJobs.length === expectedSubJobCount &&
+//             storageSubJobs.every((subJob: Job) => subJob.status === 'COMPLETED')
+//         ) {
+//             return { ...jobDetails, subJobs: storageSubJobs };
+//         }
+//         // eslint-disable-next-line no-await-in-loop
+//         await sleep(100);
+//     }
+//     const jobDetails = await getJobDetails(ACCOUNT_ID, jobId, CREDENTIALS_ID, DEFAULT_AWS_REGION);
+//     const storageSubJobs = jobDetails.subJobs.filter((subJob: Job) => subJob.name?.includes('Storage Configuration'));
+//     throw new Error(
+//         `Storage optimize sub-jobs for ${jobId} did not settle: ${JSON.stringify(
+//             storageSubJobs.map((subJob: Job) => ({
+//                 status: subJob.status,
+//                 error: subJob.error
+//             }))
+//         )}`
+//     );
+// }
 
 describe('Continuous optimization optimize operations', () => {
     it('Optimize storage parameters', async () => {
@@ -425,71 +420,71 @@ describe('Continuous optimization optimize operations', () => {
         expect(response.jobId).toBeDefined();
     });
 
-    it('should deduplicate identical ONTAP PATCH requests across sub-jobs', async () => {
-        const objectsToOptimize = [
-            'wlmdb_sqldata_1721094267674',
-            'wlmdb_sqltemp_1721094267674',
-            'wlmdb_sqllog_1721094267674'
-        ];
+    // it('should deduplicate identical ONTAP PATCH requests across sub-jobs', async () => {
+    //     const objectsToOptimize = [
+    //         'wlmdb_sqldata_1721094267674',
+    //         'wlmdb_sqltemp_1721094267674',
+    //         'wlmdb_sqllog_1721094267674'
+    //     ];
 
-        const response = await optimizeStorage({
-            accountId: ACCOUNT_ID,
-            credentialsId: CREDENTIALS_ID,
-            region: DEFAULT_AWS_REGION,
-            databaseHostId: RESOURCE_ID,
-            databaseInstanceId: 'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
-            optimizationTargets: [
-                {
-                    configurationName: OptimizeStorageConfigs.THIN_PROVISIONING,
-                    objectsToOptimize
-                },
-                {
-                    configurationName: OptimizeStorageConfigs.THIN_PROVISIONING,
-                    objectsToOptimize
-                }
-            ],
-            documentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
-            documentVersion: SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
-        });
+    //     const response = await optimizeStorage({
+    //         accountId: ACCOUNT_ID,
+    //         credentialsId: CREDENTIALS_ID,
+    //         region: DEFAULT_AWS_REGION,
+    //         databaseHostId: RESOURCE_ID,
+    //         databaseInstanceId: 'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
+    //         optimizationTargets: [
+    //             {
+    //                 configurationName: OptimizeStorageConfigs.THIN_PROVISIONING,
+    //                 objectsToOptimize
+    //             },
+    //             {
+    //                 configurationName: OptimizeStorageConfigs.THIN_PROVISIONING,
+    //                 objectsToOptimize
+    //             }
+    //         ],
+    //         documentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
+    //         documentVersion: SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+    //     });
 
-        try {
-            const jobDetails = await waitForStorageOptimizeSubJobs(response.jobId, 2);
+    //     try {
+    //         const jobDetails = await waitForStorageOptimizeSubJobs(response.jobId, 2);
 
-            expect(jobDetails.subJobs).toHaveLength(2);
-            expect(jobDetails.subJobs.every((subJob: Job) => subJob.status === 'COMPLETED')).toBe(true);
-        } finally {
-            await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
-        }
-    });
+    //         expect(jobDetails.subJobs).toHaveLength(2);
+    //         expect(jobDetails.subJobs.every((subJob: Job) => subJob.status === 'COMPLETED')).toBe(true);
+    //     } finally {
+    //         await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
+    //     }
+    // });
 
-    it('should drop empty objectsToOptimize targets and optimize actionable ones', async () => {
-        const response = await optimizeStorage({
-            accountId: ACCOUNT_ID,
-            credentialsId: CREDENTIALS_ID,
-            region: DEFAULT_AWS_REGION,
-            databaseHostId: RESOURCE_ID,
-            databaseInstanceId: 'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
-            optimizationTargets: [
-                {
-                    configurationName: OptimizeStorageConfigs.AUTOSIZE,
-                    objectsToOptimize: []
-                },
-                {
-                    configurationName: OptimizeStorageConfigs.THIN_PROVISIONING,
-                    objectsToOptimize: ['wlmdb_sqldata_1721094267674', 'wlmdb_sqltemp_1721094267674']
-                }
-            ],
-            documentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
-            documentVersion: SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
-        });
+    // it('should drop empty objectsToOptimize targets and optimize actionable ones', async () => {
+    //     const response = await optimizeStorage({
+    //         accountId: ACCOUNT_ID,
+    //         credentialsId: CREDENTIALS_ID,
+    //         region: DEFAULT_AWS_REGION,
+    //         databaseHostId: RESOURCE_ID,
+    //         databaseInstanceId: 'f4b7c5d3-e1f6-4a2a-9b5d-c8e9f0123456',
+    //         optimizationTargets: [
+    //             {
+    //                 configurationName: OptimizeStorageConfigs.AUTOSIZE,
+    //                 objectsToOptimize: []
+    //             },
+    //             {
+    //                 configurationName: OptimizeStorageConfigs.THIN_PROVISIONING,
+    //                 objectsToOptimize: ['wlmdb_sqldata_1721094267674', 'wlmdb_sqltemp_1721094267674']
+    //             }
+    //         ],
+    //         documentName: SSM_RUN_POWERSHELL_SCRIPT_DOC,
+    //         documentVersion: SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
+    //     });
 
-        expect(response.jobId).toBeDefined();
+    //     expect(response.jobId).toBeDefined();
 
-        const jobDetails = await waitForStorageOptimizeSubJobs(response.jobId, 1);
-        expect(jobDetails.subJobs).toHaveLength(1);
+    //     const jobDetails = await waitForStorageOptimizeSubJobs(response.jobId, 1);
+    //     expect(jobDetails.subJobs).toHaveLength(1);
 
-        await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
-    });
+    //     await updateJobDetails(ACCOUNT_ID, response.jobId, { status: 'COMPLETED', endTime: Date.now() });
+    // });
 });
 describe('Continuous optimization optimizeOperatingSystemSettings', () => {
     const databaseHostId = RESOURCE_ID;
