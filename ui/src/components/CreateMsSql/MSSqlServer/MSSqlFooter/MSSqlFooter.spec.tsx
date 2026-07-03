@@ -14,6 +14,12 @@ const { mockDispatch, mockNavigate, mockDeploySqlTemplate, mockPostBlueXPMessage
     mockPostBlueXPMessage: vi.fn()
 }));
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key: string) => key
+    })
+}));
+
 vi.mock('react-redux', async () => {
     const actual = await vi.importActual('react-redux');
     return {
@@ -243,6 +249,35 @@ describe('MSSqlFooter', () => {
         expect(mockDispatch).toHaveBeenCalledWith(
             expect.objectContaining({ type: expect.stringContaining('setPermissionWarning') })
         );
+    });
+
+    it('handles full permission flow for GovCloud without job monitoring link', async () => {
+        const mockHandleCreate = handleCreateSQLServer as any;
+        mockHandleCreate.mockReturnValue({ payload: 'test-payload' });
+        mockDeploySqlTemplate.mockResolvedValue({
+            data: {
+                cloudFormationStackId: 'stack-123',
+                cloudFormationUrl: 'https://console.aws.amazon.com'
+            }
+        });
+
+        const store = makeStore({ auth: { isWorkloadFactory: true, isGovAccount: true } });
+        render(
+            <Provider store={store}>
+                <BrowserRouter>
+                    <MSSqlFooter />
+                </BrowserRouter>
+            </Provider>
+        );
+
+        const createButton = screen.getByTestId('wizard-deploy-btn');
+        fireEvent.click(createButton);
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+        expect(mockDispatch).toHaveBeenCalledWith(
+            expect.objectContaining({ type: expect.stringContaining('addNotification') })
+        );
+        expect(screen.queryByText('Job monitoring')).toBeNull();
     });
 
     it('handles full permission flow', async () => {

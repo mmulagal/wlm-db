@@ -1,6 +1,7 @@
 import { Button, postBlueXPMessage, BlueXPListeners } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { addNotification, clearNotifications, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import {
     WLF_TABS,
@@ -27,11 +28,12 @@ const MSSqlFooter = () => {
     const state = useAppSelector(state => state);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const selectedCredId = state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId;
     const selectedRegionCode = state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode;
     const { databaseHostEntryPoint } = useAppSelector(state => state.msSqlAction);
-    const { isWorkloadFactory } = useAppSelector(state => state.auth);
+    const { isWorkloadFactory, isGovAccount } = useAppSelector(state => state.auth);
 
     const [deploySqlTemplate] = useDeploySqlTemplateMutation();
 
@@ -83,7 +85,9 @@ const MSSqlFooter = () => {
         }
         let message;
 
-        message = (
+        message = isGovAccount ? (
+            t('databases.register-flow.govcloud-deploy-triggered-mssql')
+        ) : (
             <>
                 {GENERAL.CREATE_INFO_MESSAGE_WLM[0]}
                 <Button

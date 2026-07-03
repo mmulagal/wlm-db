@@ -2,6 +2,7 @@ import { Button, postBlueXPMessage, BlueXPListeners } from '@netapp/design-syste
 // import { useProtectBackupMutation } from '../../../utils/apiService';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../store/storeHooks';
 import { navigateToCanvas } from '../../../utils/appConfig';
 import { useDeployPgsqlTemplateMutation } from '../../../utils/apiService';
@@ -27,10 +28,11 @@ import { setMultiDataStatus } from '../../../store/workloadFactory/headersSlice'
 function PostgressFooter() {
     const state = useAppSelector(state => state);
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const { databaseHostEntryPoint } = useAppSelector(state => state.msSqlAction);
     const selectedCredId = useAppSelector(state => state.mssqlForm.awsAccount.selectedCredential?.data?.credentialsId);
     const selectedRegionCode = useAppSelector(state => state.mssqlForm.regionAndVpc.selectedRegion?.data?.regionCode);
-    const { isWorkloadFactory } = useAppSelector(state => state.auth);
+    const { isWorkloadFactory, isGovAccount } = useAppSelector(state => state.auth);
     // const [protectBackup] = useProtectBackupMutation();
     const navigate = useNavigate();
 
@@ -83,7 +85,9 @@ function PostgressFooter() {
         }
         let message;
 
-        message = (
+        message = isGovAccount ? (
+            t('databases.register-flow.govcloud-deploy-triggered-pgsql')
+        ) : (
             <>
                 {GENERAL.CREATE_PGSQL_INFO_MESSAGE_WLM[0]}
                 <Button

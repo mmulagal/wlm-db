@@ -375,6 +375,8 @@
             "govcloud-deploy-ssm-db-desc": "In GovCloud, provide the ARN of an SSM SecureString parameter containing JSON with \"username\" and \"password\" fields for the SQL service account.",
             "govcloud-deploy-ssm-ad-desc": "In GovCloud, provide the ARN of an SSM SecureString parameter containing JSON with \"username\" and \"password\" fields for Active Directory credentials.",
             "govcloud-deploy-ssm-fsx-desc": "In GovCloud, provide the ARN of an SSM SecureString parameter containing JSON with \"username\" and \"password\" fields for FSx for ONTAP credentials.",
+            "govcloud-deploy-triggered-mssql": "Microsoft SQL Server and FSxN for ONTAP deployment has been triggered. Estimated time: Up to 2 hours.",
+            "govcloud-deploy-triggered-pgsql": "PostgreSQL and FSxN for ONTAP deployment has been triggered. Estimated time: Up to 2 hours.",
             "ssm-parameter-tooltip-fsx": "This endpoint must be accessible from the selected instance and contain the credentials for the FSx for ONTAP resources.",
             "ssm-parameter-tooltip-db": "This endpoint must be accessible from the selected instance and contain the credentials for the database service account.",
             "ssm-parameter-tooltip-ad": "This endpoint must be accessible from the selected instance and contain the credentials for the Active Directory domain.",
