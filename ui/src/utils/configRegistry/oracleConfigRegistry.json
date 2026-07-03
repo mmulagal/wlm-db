@@ -438,7 +438,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "LUNs/volumes",
+            "resourceTypeLabel": "LUNs/volume",
             "hasSubConfigs": true
         },
         "dialogContent": {
@@ -776,22 +776,22 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Configuration file",
+                    "label": "NFS mount",
                     "accessor": "objectName"
                 },
                 {
                     "key": "value",
-                    "label": "Status",
+                    "label": "Current dNFS configuration",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended value",
+                    "label": "Recommended dNFS configuration",
                     "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "EC2 instance",
-            "tableTitle": "Impacted EC2 instances"
+            "tableTitle": "Impacted NFS mounts"
         },
         "dialogContent": {
             "sections": [
@@ -905,17 +905,17 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Parameter",
+                    "label": "NFS mount",
                     "accessor": "objectName"
                 },
                 {
                     "key": "value",
-                    "label": "Current value",
+                    "label": "Current mount options",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended mount options",
                     "accessor": "recommended"
                 }
             ],
@@ -1009,7 +1009,7 @@
         "viewOnly": true,
         "fixSupported": false,
         "cardMetadata": {
-            "impactedLabel": "Impacted databases",
+            "impactedLabel": "Impacted EC2 instances",
             "countSource": "totalObjectsInViolation"
         },
         "dialogContent": {

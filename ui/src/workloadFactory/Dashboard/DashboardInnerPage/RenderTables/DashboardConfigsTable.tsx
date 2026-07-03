@@ -43,6 +43,7 @@ import {
     hasAssessmentTimestamp
 } from '../../../WellArchitectedTab/assessmentFormatUtils';
 import { resolveDashboardTableConfig, HandleImpactedResourceDialog } from './dashboardTableConfigOverrides';
+import { formatImpactedColumnHeader } from './ImpactedResourceDialog/impactedResourceHeaderUtils';
 import { getOptimizeApiConfig } from '../../../../utils/configRegistry';
 
 interface DashboardConfigsTableProps {
@@ -290,11 +291,13 @@ const DashboardConfigsTable = ({
     const { setDialog } = useDialog();
 
     const handleImpactedResourceDialog: HandleImpactedResourceDialog = rowData => {
-        // View button always opens the impacted resource dialog
-        const viewColumnHeader = config?.customColumns?.[0]?.Header as string | undefined;
+        const impactedCol = config.customColumns[0];
+        const colHeader = impactedCol.Header as string;
+        const headerIsI18nKey =
+            impactedCol.headerIsI18nKey ?? (typeof colHeader === 'string' && colHeader.startsWith('databases.'));
         setDialog(
             <DialogComponent
-                header={viewColumnHeader ? t(viewColumnHeader) : t('databases.well-architect.impacted-resources')}
+                header={formatImpactedColumnHeader({ header: colHeader, headerIsI18nKey }, t)}
                 content={<ImpactedResourceDialog data={rowData} />}
                 primaryButton={GENERAL.CLOSE}
                 callback={() => {}}
@@ -433,7 +436,7 @@ const DashboardConfigsTable = ({
         // Custom columns specific to each config type
         ...config.customColumns.map((col: any) => ({
             ...col,
-            Header: t(col.Header),
+            Header: col.headerIsI18nKey === false ? col.Header : t(col.Header),
             filterOptions: 'auto',
             renderCell: col.renderCell
                 ? (cellData: any, rowData: any) => {

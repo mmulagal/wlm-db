@@ -139,7 +139,8 @@ export const ORACLE_IMPACTED_RESOURCE_DIALOG_CONFIG_NAMES = new Set<string>([
 /** Fix table showed count only for these before flat migration (no View button). */
 export const FIX_TABLE_EXCLUDED_IMPACTED_VIEW_CONFIG_IDS = new Set<string>([
     ASSESSMENT_CONFIG_IDS.RSS_CONFIGURATION,
-    ASSESSMENT_CONFIG_IDS.MTU
+    ASSESSMENT_CONFIG_IDS.MTU,
+    ASSESSMENT_CONFIG_IDS.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
 ]);
 
 export const getImpactedResourceConfigCandidates = (configName?: string): string[] => {

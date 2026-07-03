@@ -6,6 +6,7 @@ import { GwSqlServerInstanceInterface, RSSConfigAdapterInterface } from '../../.
 import { createDashboardTableConfig, resolveConfigTypeId } from '../../../WellArchitectedTab/assessmentFormatUtils';
 import { getConfigEntry } from '../../../../utils/configRegistry/configRegistryHelper';
 import { isFixTableImpactedViewSupported } from './ImpactedResourceDialog/impactedResourceViewConfig';
+import { resolveImpactedColumnHeader } from './ImpactedResourceDialog/impactedResourceHeaderUtils';
 
 interface ConfigTableRowData {
     totalObjectsAssessed?: number;
@@ -125,13 +126,15 @@ const createCountWithViewColumn = (
     headerKey: string,
     configId: string,
     engineType: string,
-    configNameOverride?: string
+    configNameOverride?: string,
+    headerIsI18nKey = headerKey.startsWith('databases.')
 ) => {
     const showView = isFixTableImpactedViewSupported(configId, engineType);
     const dialogConfigName = configNameOverride ?? configId;
 
     return {
         Header: headerKey,
+        headerIsI18nKey,
         accessor: 'totalObjectsInViolation',
         id: '4',
         width: '220px',
@@ -161,84 +164,14 @@ const createCountWithViewColumn = (
     };
 };
 
-const createImpactedNetworkAdaptersColumn = (configId: string, engineType: string) =>
-    createCountWithViewColumn(
-        'databases.well-architect.dashboard-table-headers.impacted-network-adapters',
-        configId,
-        engineType
-    );
-
-const CONFIG_IMPACTED_COLUMN_HEADERS: Record<string, string> = {
-    // Storage layout (MSSQL)
-    [ASSESSMENT_CONFIG_IDS.LOG_DRIVE_SIZE]: 'databases.well-architect.dashboard-table-headers.impacted-drives',
-    [ASSESSMENT_CONFIG_IDS.TEMPDB_DRIVE_SIZE]: 'databases.well-architect.dashboard-table-headers.impacted-drives',
-    [ASSESSMENT_CONFIG_IDS.DATA_FILES_MDF]: 'databases.well-architect.dashboard-table-headers.impacted-databases',
-    [ASSESSMENT_CONFIG_IDS.LOG_FILES_LDF]: 'databases.well-architect.dashboard-table-headers.impacted-databases',
-    [ASSESSMENT_CONFIG_IDS.TEMPDB_PLACEMENT]: 'databases.well-architect.dashboard-table-headers.impacted-databases',
-    [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: 'databases.well-architect.dashboard-table-headers.impacted-databases',
-    // MSSQL OS-level (formerly nested under Operating system group)
-    [ASSESSMENT_CONFIG_IDS.MULTIPATH_IO_STATUS]: 'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.MPIO_ISCSI_COUNT]: 'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.MULTIPATH_IO_POLICY]: 'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.MULTIPATH_IO_TIMEOUT]: 'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.NTFS_ALLOCATION_UNIT_SIZE]:
-        'databases.well-architect.dashboard-table-headers.impacted-resources',
-    // MSSQL HA (formerly nested under High Availability group)
-    [ASSESSMENT_CONFIG_IDS.SHARED_STORAGE]: 'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.CLUSTER_QUORUM]: 'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.DRIVE_LETTER]: 'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.HEARTBEAT_SETTINGS]: 'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.SQL_SERVER_SERVICE]: 'databases.well-architect.dashboard-table-headers.impacted-resources',
-    // Oracle EC2-level (formerly nested under storage.configuration.os[])
-    [ASSESSMENT_CONFIG_IDS.MULTIPATH_CONFIGURATION]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.KERNEL_PARAMETERS]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.NFS_MOUNT_OPTIONS_DATABASEFILES]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.NFS_MOUNT_OPTIONS_ADRHOME]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.NFS_CACHING_OPTIONS]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.NFSV4_DOMAIN_NAME]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.ASM_SETUP]: 'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.AFD_LOGICAL_BLOCK_SIZE]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.ASMLIB_LOGICAL_BLOCK_SIZE]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.DNFS_CONSISTENT_IP_RESOLUTION]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.DNFS_ENABLEMENT]: 'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.DNFS_CONFIGURATION_FILE]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.DNFS_NO_SHARED_CACHE]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    // Oracle OS-level with no specific resourceType
-    [ASSESSMENT_CONFIG_IDS.MULTIPATH_IO]: 'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.HOST_UTILITIES]: 'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.SELINUX]: 'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.ISCSI_REPLACEMENT_TIMEOUT]:
-        'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.MULTIPATH_FRIENDLY_NAMES]:
-        'databases.well-architect.dashboard-table-headers.impacted-resources',
-    [ASSESSMENT_CONFIG_IDS.ASM_EXTERNAL_REDUNDANCY]:
-        'databases.well-architect.dashboard-table-headers.impacted-resources',
-    // Oracle EC2 instances (future configs)
-    [ASSESSMENT_CONFIG_IDS.TRANSPARENT_HUGEPAGES]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.TCP_ADVANCED_OPTIONS]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.FILESYSTEMS_IO_OPTIONS]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances',
-    [ASSESSMENT_CONFIG_IDS.MULTIPATH_READCOUNT]:
-        'databases.well-architect.dashboard-table-headers.impacted-ec2-instances'
+const createImpactedNetworkAdaptersColumn = (configId: string, engineType: string) => {
+    const { header, headerIsI18nKey } = resolveImpactedColumnHeader(configId, engineType);
+    return createCountWithViewColumn(header, configId, engineType, undefined, headerIsI18nKey);
 };
 
 const createDefaultImpactedColumn = (configId: string, engineType: string) => {
-    const headerKey =
-        CONFIG_IMPACTED_COLUMN_HEADERS[configId] || 'databases.well-architect.dashboard-table-headers.impacted-volumes';
-    return createCountWithViewColumn(headerKey, configId, engineType);
+    const { header, headerIsI18nKey } = resolveImpactedColumnHeader(configId, engineType);
+    return createCountWithViewColumn(header, configId, engineType, undefined, headerIsI18nKey);
 };
 
 const createMissingPatchesColumn = (configId: string, engineType: string) => ({
@@ -366,13 +299,10 @@ const createDashboardTableConfigOverrides = (
             configurationName: ASSESSMENT_CONFIG_IDS.MTU,
             configItem: item
         }),
-        customColumns: [
-            createCountWithViewColumn(
-                'databases.well-architect.dashboard-table-headers.network-interface',
-                ASSESSMENT_CONFIG_IDS.MTU,
-                engineType
-            )
-        ]
+        customColumns: (() => {
+            const { header, headerIsI18nKey } = resolveImpactedColumnHeader(ASSESSMENT_CONFIG_IDS.MTU, engineType);
+            return [createCountWithViewColumn(header, ASSESSMENT_CONFIG_IDS.MTU, engineType, undefined, headerIsI18nKey)];
+        })()
     },
     [ASSESSMENT_CONFIG_IDS.MAXDOP]: {
         dataMapping: (item: any) => ({
