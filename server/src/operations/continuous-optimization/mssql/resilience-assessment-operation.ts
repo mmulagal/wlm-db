@@ -1130,6 +1130,8 @@ async function getHighAvailabilityDriftData(
         const { highAvailability: { clusterQuorum, heartbeat } = {} } = resourceAssessmentData;
 
         const { sharedStorage, driveLetter, sqlServerServices } = highAvailabilityAssessmentData;
+        const sqlServiceStartupMode =
+            resourceAssessmentData?.aoagDetails?.baseDeploymentType === 'FCI' ? 'Manual' : 'Automatic';
 
         logger.debug(
             `Assessment data found for: sharedStorage=${!!sharedStorage}, driveLetter=${!!driveLetter}, clusterQuorum=${!!clusterQuorum}, heartbeat=${!!heartbeat}, sqlServerServices=${!!sqlServerServices}`
@@ -1281,8 +1283,8 @@ async function getHighAvailabilityDriftData(
                           violationDetails: violatingNodes.map(node => ({
                               objectName: node,
                               objectType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-                              value: 'MSSQL Server service not running',
-                              recommended: 'MSSQL Server service should be running'
+                              value: `MSSQL Server service is running with Startup Mode as not ${sqlServiceStartupMode}`,
+                              recommended: `MSSQL Server service should be running with Startup Mode as ${sqlServiceStartupMode}`
                           }))
                       };
                   })()

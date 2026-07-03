@@ -155,6 +155,7 @@ enum OptimizeStorageConfigsJobNames {
     FRACTIONAL_RESERVE = 'fractional reserve',
     SNAPSHOT_COPY_RESERVE = 'snapshot copy reserve',
     SNAPSHOT_AUTO_DELETE = 'snapshot autodelete',
+    SNAPSHOT_POLICY = 'snapshot policy',
     SPACE_MANAGEMENT = 'space management',
     TIERING_MINIMUM_COOLING_DAYS = 'tiering minimum cooling days',
     TIERING_POLICY = 'tiering policy',

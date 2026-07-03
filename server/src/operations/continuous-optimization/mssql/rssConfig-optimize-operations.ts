@@ -108,7 +108,8 @@ async function handleOptimizeRssOptimization(
         accountId,
         resourceId: databaseHostId,
         credentialIds: credentialsId,
-        region
+        region,
+        selectKeys: ['metadata', 'resource_name', 'assessment_data']
     });
     if (isUndefined(resourceName) || isEmpty(metadata)) {
         const errMsg = `Resource not found for database host ${accountId}, ${databaseHostId}, ${credentialsId}, ${region}`;
@@ -347,7 +348,7 @@ async function handleOptimizeRssOptimization(
                     ? networkAdapters
                     : optimizedAdapters?.concat(networkAdapters);
                 resourceMeta.isRssConfigOptimized = optimizedAdapters;
-                updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
+                await updateResourceMetaData(accountId, credentialsId, databaseHostId, resourceMeta);
             }
 
             jobDescription = `Validating SSM connectivity to the instance: ${activeNodeInstanceId}`;

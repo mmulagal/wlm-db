@@ -49,7 +49,6 @@ import {
 import { getHeadroomDrift } from '../headroom-assessment';
 
 const logger = getLogger();
-
 interface DatabaseRecord {
     name: string;
     sizeInMb: number;
@@ -77,7 +76,6 @@ interface DatabaseVolumeRecord {
     logSizeInMb?: number;
     databaseDetails?: Array<DatabaseRecord>;
 }
-
 const volumeConfigData = MSSQL_GOLDEN_CONFIG.filter(
     e =>
         e.type === 'storage' &&
@@ -98,7 +96,6 @@ const osConfigData = MSSQL_GOLDEN_CONFIG.filter(
 );
 const layoutConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'layout');
 const sizingConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'sizing');
-
 async function initiateStorageAssessmentCollection(
     accountId: string,
     credentialsId: string,
@@ -128,10 +125,8 @@ async function initiateStorageAssessmentCollection(
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
-
         const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord)];
         const ssmComment = 'Get Storage Configuration Assessment for MSSQL Database Instance';
-
         const response = await callSsmExecution({
             credentialsId,
             region,
@@ -157,7 +152,6 @@ async function initiateStorageAssessmentCollection(
                 config_data: parsedResponse
             }
         ]);
-
         const configJobStatus = IS_DEMO_FLOW
             ? JOBSTATUS.COMPLETED
             : isEmpty(volumes) && isEmpty(luns) && isEmpty(os)
@@ -804,11 +798,27 @@ async function calculateStorageDrift(
                           }
                       ]
                     : [];
+            let tempdbCurrentLabel = 'Separate drive';
+            if (status === AssessmentStatus.NOT_OPTIMIZED && tempDbRecord) {
+                const dataRecord = (userDatabaseLayoutAssessment.data || [])[0] as DatabaseVolumeRecord | undefined;
+                const logRecord = (userDatabaseLayoutAssessment.log || [])[0] as DatabaseVolumeRecord | undefined;
+                const sharingWith: string[] = [];
+                if (dataRecord?.driveLetter === tempDbRecord.driveLetter) {
+                    sharingWith.push('data files');
+                }
+                if (logRecord?.driveLetter === tempDbRecord.driveLetter) {
+                    sharingWith.push('log files');
+                }
+                tempdbCurrentLabel =
+                    sharingWith.length > 0
+                        ? `Shared with ${sharingWith.join(' and ')}`
+                        : 'Shared with data or log files';
+            }
             driftAssessmentData.push({
                 ...goldenData,
                 recommended: (goldenData.value ?? '').toString(),
                 status,
-                current: status === AssessmentStatus.OPTIMIZED ? 'Separate drive' : 'Shared with data files',
+                current: tempdbCurrentLabel,
                 objectsInViolation: status === AssessmentStatus.OPTIMIZED ? [] : ['tempdb'],
                 totalObjectsAssessed: 1,
                 totalObjectsInViolation: status === AssessmentStatus.OPTIMIZED ? 0 : 1,
@@ -818,7 +828,8 @@ async function calculateStorageDrift(
 
         let dataFilesLayoutStatus = AssessmentStatus.OPTIMIZED;
         let logFilesLayoutStatus = AssessmentStatus.OPTIMIZED;
-        let recommended = 'separate drive';
+        let currentDataFilesLabel = 'Separate drive';
+        let currentLogFilesLabel = 'Separate drive';
         let recommendationString =
             'Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality';
         let severity = 'critical';
@@ -875,17 +886,19 @@ async function calculateStorageDrift(
         const databasesSharingLogLuns = Object.values(groupByLogLun).filter(count => count > 1);
 
         if (!isEmpty(databasesOnSameDataLogLun)) {
-            recommended = 'separate-data-log-lun-per-database';
             dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
             logFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+            currentDataFilesLabel = 'Shared LUN with log files';
+            currentLogFilesLabel = 'Shared LUN with data files';
             severity = 'critical';
             recommendationString =
                 'Separate system databases from user databases to different drives/luns and different volumes';
             databasesInViolation = databasesOnSameDataLogLun.map(data => data.name);
         } else if (!isEmpty(databasesOnSameDataLogVolume)) {
-            recommended = 'separate-data-log-volume-per-database';
             dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
             logFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+            currentDataFilesLabel = 'Shared volume with log files';
+            currentLogFilesLabel = 'Shared volume with data files';
             severity = 'warning';
             recommendationString =
                 'Separate system databases from user databases to different drives/luns and different volumes';
@@ -897,9 +910,10 @@ async function calculateStorageDrift(
                 !isEmpty(databasesSharingDataLuns) ||
                 !isEmpty(databasesSharingLogLuns)
             ) {
-                recommended = 'separate-data-log-lun-volume-for-large-database';
                 dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
                 logFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+                currentDataFilesLabel = 'Large databases sharing data LUN or volume';
+                currentLogFilesLabel = 'Large databases sharing log LUN or volume';
                 severity = 'critical';
                 recommendationString =
                     'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
@@ -908,10 +922,11 @@ async function calculateStorageDrift(
         } else if (!isEmpty(databasesSharingDataLuns) || !isEmpty(databasesSharingLogLuns)) {
             if (!isEmpty(databasesSharingDataLuns)) {
                 dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+                currentDataFilesLabel = 'Large databases sharing data LUN';
             } else {
                 logFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+                currentLogFilesLabel = 'Large databases sharing log LUN';
             }
-            recommended = 'separate-data-log-lun-for-large-database';
             severity = 'critical';
             recommendationString =
                 'Place large database size (say 500GB or more) on a separate volume for faster recovery. This volume should also be backed up by separate jobs.';
@@ -919,10 +934,11 @@ async function calculateStorageDrift(
         } else if (!isEmpty(databasesSharingDataVolumes) || !isEmpty(databasesSharingLogVolumes)) {
             if (!isEmpty(databasesSharingDataVolumes)) {
                 dataFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+                currentDataFilesLabel = 'Large databases sharing data volume';
             } else {
                 logFilesLayoutStatus = AssessmentStatus.NOT_OPTIMIZED;
+                currentLogFilesLabel = 'Large databases sharing log volume';
             }
-            recommended = 'separate-data-log-volume-for-large-database';
             severity = 'warning';
             recommendationString =
                 'Consolidate small-to-medium size databases that are less critical or have fewer I/O requirements to a single volume';
@@ -969,11 +985,11 @@ async function calculateStorageDrift(
         driftAssessmentData.push(
             {
                 ...dataFilesGoldenData!,
-                recommended,
+                recommended: recommendationString,
                 status: dataFilesLayoutStatus,
                 severity,
                 recommendation: recommendationString,
-                current: dataFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
+                current: currentDataFilesLabel,
                 objectsInViolation: databasesInViolation,
                 totalObjectsAssessed: dataLogVolumeDetails.length,
                 totalObjectsInViolation: databasesInViolation.length,
@@ -981,11 +997,11 @@ async function calculateStorageDrift(
             },
             {
                 ...logFilesGoldenData!,
-                recommended,
+                recommended: recommendationString,
                 status: logFilesLayoutStatus,
                 severity,
                 recommendation: recommendationString,
-                current: logFilesLayoutStatus === AssessmentStatus.OPTIMIZED ? 'separate drive' : 'shared drive',
+                current: currentLogFilesLabel,
                 objectsInViolation: databasesInViolation,
                 totalObjectsAssessed: dataLogVolumeDetails.length,
                 totalObjectsInViolation: databasesInViolation.length,

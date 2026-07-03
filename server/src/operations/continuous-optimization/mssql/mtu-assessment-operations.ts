@@ -173,7 +173,7 @@ function calculateMTUAlignmentDrift(
                 const currentMTU = sqlInterface.mtu;
                 if (currentMTU !== fsxMtuValue) {
                     objectsInViolation.push(sqlInterface.name.toString());
-
+                    const { name } = sqlInterface;
                     const interfaceToFix = {
                         ec2InstanceId: metadata?.node1InstanceId,
                         name: sqlInterface.name,
@@ -183,8 +183,8 @@ function calculateMTUAlignmentDrift(
                     };
                     ec2InterfacesToFix.push(interfaceToFix);
                     violationDetails.push({
-                        objectName: interfaceToFix.name,
-                        value: `${sqlInterface.interfaceIndex}`,
+                        objectName: name,
+                        value: `${currentMTU}`,
                         objectType: ASSESSMENT_RESOURCE_TYPE.NETWORK_INTERFACE,
                         recommended: `${fsxMtuValue}`
                     });
