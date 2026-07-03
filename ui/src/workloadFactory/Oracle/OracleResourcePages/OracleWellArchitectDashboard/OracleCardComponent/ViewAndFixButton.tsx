@@ -13,7 +13,12 @@ import {
 } from '../../../../../utils/consts';
 import { handleDialog } from '../../../../GetWell/StorageCardComponent/optimizeUtils';
 import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../../../store/workloadFactory/inventoryV2Slice';
-import { hasInnerPage, getButtonText as getButtonTextFromRegistry } from '../../../../../utils/configRegistry';
+import {
+    hasInnerPage,
+    getButtonText as getButtonTextFromRegistry,
+    isOptimizeNotAvailable
+} from '../../../../../utils/configRegistry';
+import TooltipComponent from '../../../../../common/TooltipComponent/TooltipComponent';
 
 interface ViewAndFixButtonProps {
     cardData?: {
@@ -109,6 +114,24 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }:
 
         return { isDisable: loading || status !== GETWELL_STATUS.NOT_OPTIMIZED, reason: '' };
     };
+
+    // Check if optimize is not available for this config
+    if (isOptimizeNotAvailable(configId, DBType.ORACLE) && status !== GETWELL_STATUS.OPTIMIZED) {
+        return (
+            <div className={styles.lastButton}>
+                <TooltipComponent
+                    title={t('databases.well-architect.not-supported')}
+                    placement="bottom"
+                    width="120px"
+                    height="30px"
+                >
+                    <DsButton variant="secondary" isThin isDisabled>
+                        {viewButtonText()}
+                    </DsButton>
+                </TooltipComponent>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.lastButton}>

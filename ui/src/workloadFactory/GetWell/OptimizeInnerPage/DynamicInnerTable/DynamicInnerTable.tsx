@@ -240,8 +240,10 @@ const DynamicInnerTable = ({
         const showViewButton = !canOptimize && isViewOnly && handleRowFix;
         // CRR for MSSQL: show disabled Fix button (not View)
         const isCrrMssql = configId === ASSESSMENT_CONFIG_IDS.CRR && engineType === DBType.MSSQL;
+        // CRR for Oracle: show enabled Fix button (special case for inner page)
+        const isCrrOracle = configId === ASSESSMENT_CONFIG_IDS.CRR && engineType === DBType.ORACLE;
 
-        if ((showFixButton || showViewButton || isCrrMssql) && handleRowFix) {
+        if ((showFixButton || showViewButton || isCrrMssql || isCrrOracle) && handleRowFix) {
             const buttonLabel = t('databases.well-architect.fix');
 
             const actionColumn = {
@@ -275,6 +277,27 @@ const DynamicInnerTable = ({
                                         </DsButton>
                                     }
                                 />
+                            </div>
+                        );
+                    }
+
+                    // CRR Oracle: always show enabled Continue button (no bulk selection or other disabling logic)
+                    if (isCrrOracle) {
+                        const isCrrPrefetchLoading = crrPrefetchLoading;
+                        const isOptimizing = optimizingInstanceData;
+                        const isAnyLoading = isCrrPrefetchLoading || isOptimizing;
+
+                        return (
+                            <div className={styles.buttonContainer}>
+                                <div />
+                                <DsButton
+                                    isThin
+                                    variant="secondary"
+                                    onClick={() => handleRowFix(rowData)}
+                                    isDisabled={isAnyLoading}
+                                >
+                                    {buttonLabel}
+                                </DsButton>
                             </div>
                         );
                     }
@@ -326,7 +349,7 @@ const DynamicInnerTable = ({
                         );
                     }
 
-                    // Show loading state when:
+                    // Disable button when:
                     // 1. CRR prefetch is loading (fetching FSx details and links before opening dialog)
                     // 2. OR optimization is in progress (Continue clicked in any optimize dialog)
                     const isCrrPrefetchLoading = crrPrefetchLoading && configId === ASSESSMENT_CONFIG_IDS.CRR;
@@ -340,7 +363,6 @@ const DynamicInnerTable = ({
                                 isThin
                                 variant="secondary"
                                 onClick={() => handleRowFix(rowData)}
-                                isLoading={isAnyLoading}
                                 isDisabled={isAnyLoading}
                             >
                                 {buttonLabel}

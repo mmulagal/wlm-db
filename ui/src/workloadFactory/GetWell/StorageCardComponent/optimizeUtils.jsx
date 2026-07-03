@@ -137,16 +137,19 @@ export const handleConfigDialog = (
     rowData,
     operation,
     singleRowData,
-    isWad = false
+    isWad = false,
+    forceEnableInnerPage = false
 ) => {
     // Get config ID and display name from flat API
     // Flat API always provides: id (config ID like 'thin-provision') and name (display name like 'Thin Provision')
     const configId = rowData?.data?.id;
     const displayName = rowData?.data?.name;
 
+    // For Oracle CRR in inner page, force enable Continue button even though fixSupported is false
     const isCloseButton =
         isWad ||
-        !hasFixSupport(configId, rowData?.engineType, rowData?.data?.status, rowData?.data?.missingPermissions);
+        (!forceEnableInnerPage &&
+            !hasFixSupport(configId, rowData?.engineType, rowData?.data?.status, rowData?.data?.missingPermissions));
     if (isCloseButton) {
         setDialog(
             <DialogComponent
@@ -183,10 +186,12 @@ export const handleConfigDialog = (
                         objectsInViolation={rowData?.data?.objectsInViolation}
                         status={rowData?.data?.status}
                         missingPermissions={rowData?.data?.missingPermissions}
+                        skipFixNotSupportedBanner={forceEnableInnerPage}
                     />
                 }
                 primaryButton={i18next.t('databases.general.continue')}
                 secondaryButton={i18next.t('databases.general.cancel')}
+                dialogFrom={FROM_DIALOG.OPTIMIZE}
                 callback={() => {
                     if (checkLinkedConfigAcknowledge()) {
                         return;

@@ -422,16 +422,53 @@ const DynamicOptimizeInnerPage = () => {
         (rowData: Record<string, unknown>) => {
             if (!configId) return;
 
-            // Special handling for Oracle CRR - open CRR link dialog instead of standard optimize dialog
+            // Special handling for Oracle CRR - show explanation dialog first, then Associate Link dialog
             if (engineType === DBType.ORACLE && configId === ASSESSMENT_CONFIG_IDS.CRR) {
-                // Map row data to expected format for CRR flow
-                // Row data has ontapVolumeName (from objectsInViolation) but CRR flow expects volumeName
-                const crrRowData = {
-                    ...rowData,
-                    volumeName: rowData.ontapVolumeName || rowData.objectName,
-                    volumeId: rowData.ontapVolumeUuid || rowData.fsxVolumeId || ''
+                // Pre-compute translated strings to avoid context issues
+                const associateLinkText = t('databases.well-architect.associate-link');
+                const stepText = t('databases.inventory.step-1-out-of');
+
+                // Create a custom callback that will show the Associate Link dialog after prefetch
+                const showAssociateLinkDialog = () => {
+                    // Map row data to expected format for CRR flow
+                    const crrRowData = {
+                        ...rowData,
+                        volumeName: rowData.ontapVolumeName || rowData.objectName,
+                        volumeId: rowData.ontapVolumeUuid || rowData.fsxVolumeId || ''
+                    };
+
+                    // Create header with "Associate Link" and "Step 1 out of 2"
+                    const associateLinkHeader = (
+                        <div className={styles.dialogHeaderRow}>
+                            <DsTypography variant="Regular_14">{associateLinkText}</DsTypography>
+                            <DsTypography variant="Regular_14">{stepText}</DsTypography>
+                        </div>
+                    );
+
+                    // Call prefetch which will set loading state
+                    // The first dialog will stay open with loading button until prefetch completes
+                    // When prefetch completes, it will call setDialog which replaces the first dialog with the second
+                    runAssociateLinkPrefetch(crrRowData, associateLinkHeader, isWad);
                 };
-                runAssociateLinkPrefetch(crrRowData, displayName, isWad);
+
+                // First dialog: Show CRR explanation dialog with Continue button enabled
+                handleConfigDialog(
+                    setDialog,
+                    showAssociateLinkDialog, // This will be called on Continue
+                    closeDialog,
+                    {
+                        engineType,
+                        data: {
+                            ...configData,
+                            name: displayName,
+                            id: configId
+                        }
+                    },
+                    'single',
+                    rowData,
+                    isWad,
+                    true // forceEnableInnerPage - enables Continue button for Oracle CRR
+                );
                 return;
             }
 
@@ -461,7 +498,8 @@ const DynamicOptimizeInnerPage = () => {
             setDialog,
             closeDialog,
             callOptimizeApi,
-            runAssociateLinkPrefetch
+            runAssociateLinkPrefetch,
+            t
         ]
     );
 

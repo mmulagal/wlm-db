@@ -125,6 +125,11 @@
                     "accessor": "objectName"
                 },
                 {
+                    "key": "dataCategory",
+                    "label": "Type",
+                    "accessor": "dataCategory"
+                },
+                {
                     "key": "value",
                     "label": "Number of LUNs",
                     "accessor": "value"
@@ -136,7 +141,7 @@
                 }
             ],
             "resourceTypeLabel": "Disk group",
-            "tableTitle": "ASM archive log disk group LUNs"
+            "tableTitle": "Impacted disk groups"
         },
         "optimizeApi": {
             "mutation": "optimizeOracleStorageLayoutAsm",
@@ -607,13 +612,16 @@
                 {
                     "heading": "databases.well-architect.oracle-crr-about-links",
                     "type": "text",
-                    "content": "databases.well-architect.oracle-crr-about-links-description"
+                    "content": "databases.well-architect.oracle-crr-about-links-description",
+                    "learnMoreLink": "https://docs.netapp.com/us-en/workload-fsx-ontap/links-overview.html"
                 },
                 {
                     "heading": "databases.well-architect.what-will-happen",
                     "type": "numberedSteps",
                     "items": [
                         "databases.well-architect.oracle-crr-what-will-happen-step1",
+                        "databases.well-architect.oracle-crr-what-will-happen-step2",
+                        "databases.well-architect.oracle-crr-what-will-happen-step3",
                         "databases.well-architect.oracle-crr-what-will-happen-step4",
                         "databases.well-architect.oracle-crr-what-will-happen-step5",
                         "databases.well-architect.oracle-crr-what-will-happen-step6",
@@ -654,6 +662,11 @@
                     "accessor": "objectName"
                 },
                 {
+                    "key": "dataCategory",
+                    "label": "Type",
+                    "accessor": "dataCategory"
+                },
+                {
                     "key": "value",
                     "label": "Number of LUNs",
                     "accessor": "value"
@@ -665,7 +678,7 @@
                 }
             ],
             "resourceTypeLabel": "Disk group",
-            "tableTitle": "ASM data disk group LUNs"
+            "tableTitle": "Impacted disk groups"
         },
         "optimizeApi": {
             "mutation": "optimizeOracleStorageLayoutAsm",
@@ -1056,6 +1069,11 @@
                     "accessor": "objectName"
                 },
                 {
+                    "key": "dataCategory",
+                    "label": "Type",
+                    "accessor": "dataCategory"
+                },
+                {
                     "key": "value",
                     "label": "Number of LUNs",
                     "accessor": "value"
@@ -1067,7 +1085,7 @@
                 }
             ],
             "resourceTypeLabel": "Disk group",
-            "tableTitle": "ASM FRA disk group LUNs"
+            "tableTitle": "Impacted disk groups"
         },
         "optimizeApi": {
             "mutation": "optimizeOracleStorageLayoutAsm",
@@ -1847,44 +1865,9 @@
     },
     "nfsv4-domain-name": {
         "hasInnerPage": false,
-        "viewOnly": false,
-        "fixSupported": true,
-        "optimizeNotAvailable": true,
-        "cardHeights": {
-            "recommendationSection": "170px",
-            "tagSection": "266px"
-        },
-        "optimizeApi": {
-            "mutation": "optimizeOracleOperatingSystem",
-            "payloadScope": "bulk",
-            "oracleOsType": "storage-operating-system",
-            "statusType": "os",
-            "supportsDashboardBulk": false
-        },
-        "dialogContent": {
-            "sections": [
-                {
-                    "heading": "databases.well-architect.action-summary",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-nfsv4-domain-name-action-summary"
-                },
-                {
-                    "heading": "databases.well-architect.user-action-required",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-nfsv4-domain-name-user-action-required"
-                },
-                {
-                    "heading": "databases.well-architect.what-will-happen",
-                    "type": "text",
-                    "content": "databases.well-architect.oracle-nfsv4-domain-name-what-will-happen",
-                    "hideWhenWad": true
-                }
-            ],
-            "notes": {
-                "type": "custom",
-                "content": "databases.well-architect.oracle-nfsv4-domain-name-note"
-            }
-        }
+        "viewOnly": true,
+        "fixSupported": false,
+        "optimizeNotAvailable": true
     },
     "oracle-binary-placement": {
         "hasInnerPage": true,
@@ -2095,6 +2078,11 @@
                     "accessor": "objectName"
                 },
                 {
+                    "key": "dataCategory",
+                    "label": "Type",
+                    "accessor": "dataCategory"
+                },
+                {
                     "key": "value",
                     "label": "Number of LUNs",
                     "accessor": "value"
@@ -2106,7 +2094,7 @@
                 }
             ],
             "resourceTypeLabel": "Disk group",
-            "tableTitle": "ASM logs disk group LUNs"
+            "tableTitle": "Impacted disk groups"
         },
         "optimizeApi": {
             "mutation": "optimizeOracleStorageLayoutAsm",

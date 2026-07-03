@@ -184,6 +184,19 @@
                     }
                 }
             }
+
+            a {
+                color: var(--color-link, #0067c5) !important;
+                text-decoration: none;
+                
+                &:hover {
+                    text-decoration: underline;
+                }
+
+                .externalIcon {
+                    margin-left: 4px;
+                }
+            }
         }
 
         .command-list-code {

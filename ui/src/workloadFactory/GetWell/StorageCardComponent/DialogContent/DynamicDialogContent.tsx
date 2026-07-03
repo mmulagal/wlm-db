@@ -298,6 +298,22 @@ const DynamicDialogContent = ({
                 ) {
                     content = `${content} to ${recommendedSizeInGib} GiB.`;
                 }
+
+                // Check if there's a Learn more link
+                if (section.learnMoreLink) {
+                    return (
+                        <div key={index} className={styles['first-section']}>
+                            {heading && <DsTypography variant="Semibold_14">{heading}</DsTypography>}
+                            <DsTypography variant="Regular_14" style={section.style}>
+                                {content}{' '}
+                                <a href={section.learnMoreLink} target="_blank" rel="noopener noreferrer">
+                                    Learn more <span className={styles.externalIcon}>↗</span>
+                                </a>
+                            </DsTypography>
+                        </div>
+                    );
+                }
+
                 return createSection(heading, content, section.style);
             }
             case 'bullets': {

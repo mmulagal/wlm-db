@@ -181,5 +181,25 @@
         "name": "Oracle binary placement",
         "title": "Oracle binary placement recommendation",
         "description": "Placing Oracle binaries on a dedicated volume ensures optimal performance and stability by reducing I/O contention with other files. This separation simplifies software updates and minimizes the risk of accidental modifications or corruption, ensuring the database runs smoothly."
+    },
+    "dnfs-consistent-ip-resolution": {
+        "name": "dNFS consistent IP resolution",
+        "title": "dNFS consistent IP resolution recommendation",
+        "description": "Workload Factory recommends avoiding the use of Direct NFS (dNFS) with any type of round-robin name resolution, including DNS, DDNS, NIS, or any other method. This includes the DNS load balancing feature available in ONTAP. Ensuring consistent IP address resolution is crucial for maintaining database stability and preventing potential crashes or data corruption."
+    },
+    "dnfs-enabled": {
+        "name": "dNFS enablement",
+        "title": "dNFS enablement recommendation",
+        "description": "Workload Factory recommends enabling Direct NFS (dNFS) in your Oracle environment to optimize NFS storage performance and reliability."
+    },
+    "dnfs-configuration-file": {
+        "name": "dNFS configuration file",
+        "title": "dNFS configuration file recommendation",
+        "description": "Workload Factory recommends verifying and optimizing the oranfstab file content to ensure proper Direct NFS (dNFS) usage. The oranfstab file is essential for configuring advanced dNFS features such as multipathing and specific NFS options. Proper configuration ensures efficient data access and management."
+    },
+    "dnfs-no-shared-cache": {
+        "name": "dNFS no shared cache",
+        "title": "dNFS no shared cache recommendation",
+        "description": "Workload Factory recommends configuring the nosharecache mount option for environments where Direct NFS (dNFS) is enabled, and a source volume is mounted more than once on a single server with nested NFS mounts. This configuration prevents cache sharing between mounts, ensuring data consistency and optimal performance."
     }
 }

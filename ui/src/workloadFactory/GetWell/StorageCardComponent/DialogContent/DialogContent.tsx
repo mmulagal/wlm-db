@@ -50,6 +50,7 @@ type DialogType = {
     assessmentStatus?: boolean;
     status?: string;
     isWad?: boolean;
+    skipFixNotSupportedBanner?: boolean;
 };
 
 type BannerConfig = { key: string; params?: Record<string, string> };
@@ -104,17 +105,14 @@ const DialogContent = ({
     engineType = DBType.MSSQL,
     assessmentStatus = false,
     status,
-    isWad = false
+    isWad = false,
+    skipFixNotSupportedBanner = false
 }: DialogType) => {
     const { t } = useTranslation();
 
-    const showUnsupportedFixBanner = shouldShowUnsupportedFixBanner(
-        type,
-        engineType,
-        isWad,
-        status,
-        missingPermissions
-    );
+    const showUnsupportedFixBanner =
+        !skipFixNotSupportedBanner &&
+        shouldShowUnsupportedFixBanner(type, engineType, isWad, status, missingPermissions);
 
     return (
         <div className={styles.dialogContent}>

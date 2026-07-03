@@ -11,7 +11,7 @@ import { ReactNode, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DsTypography } from '@tlveng/wlm-ds';
 import { useAppSelector } from '../../store/storeHooks';
-import { ASSESSMENT_CONFIG_NAMES, FROM_DIALOG, isValidSsmArn } from '../../utils/consts';
+import { ASSESSMENT_CONFIG_NAMES, ASSESSMENT_CONFIG_IDS, FROM_DIALOG, isValidSsmArn } from '../../utils/consts';
 import styles from './DialogComponent.module.scss';
 // eslint-disable-next-line import/no-cycle
 import { isValidSqlUsername, checkCustomTimeframeExceedsCurrentTime } from '../../utils/utilityFunctions';
@@ -153,7 +153,7 @@ const DialogComponent = ({
         (dialogFrom === FROM_DIALOG.SINGLE_AGENT && actionsDisabled) ||
         (dialogFrom === FROM_DIALOG.CRR_REDIRECTION && associateLinkLoading) ||
         (dialogFrom === FROM_DIALOG.OPTIMIZE &&
-            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CRR &&
+            selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_IDS.CRR &&
             crrPrefetchLoading))();
 
     // Load and save config dialog will be closed once data is available. So closeDialog is taken care in LoadConfiguration.ts file.
@@ -171,7 +171,7 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.WINDOWS_AUTH &&
             dialogFrom !== FROM_DIALOG.MANAGE_WIZARD &&
             dialogFrom !== FROM_DIALOG.CRR_REDIRECTION &&
-            !(dialogFrom === FROM_DIALOG.OPTIMIZE && selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_NAMES.CRR)
+            !(dialogFrom === FROM_DIALOG.OPTIMIZE && selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_IDS.CRR)
         ) {
             closeDialog();
         }
