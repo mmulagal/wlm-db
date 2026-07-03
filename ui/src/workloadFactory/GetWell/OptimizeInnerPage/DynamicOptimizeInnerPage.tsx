@@ -183,10 +183,57 @@ const DynamicOptimizeInnerPage = () => {
             const { mutation, statusType } = apiConfig as OptimizeApiConfig;
             const apiCall = mutationMap[mutation];
 
+            // For bulk operations, enrich selectedRowsForOptimizeInnerPage with host/instance context
             // For single row fixes, use singleRowData; otherwise use full rowData
             const effectiveRowData =
-                operation === ACTION_TYPE.SINGLE && singleRowData
-                    ? { ...rowData, objectsInViolation: [singleRowData.objectName] }
+                operation === ACTION_TYPE.BULK
+                    ? (() => {
+                          const apiConfig = getOptimizeApiConfig(configId, engineType);
+
+                          // For credential-scoped configs (thin-provision, compression, etc.),
+                          // collect all objectNames into a single objectsInViolation array
+                          if (apiConfig?.payloadScope === 'credential-scoped') {
+                              const allObjects = selectedRowsForOptimizeInnerPage
+                                  .map((row: any) => row.objectName)
+                                  .filter(Boolean);
+                              return {
+                                  ...rowData,
+                                  objectsInViolation: allObjects
+                              };
+                          }
+
+                          // For standard bulk configs (MTU, RSS, etc.), enrich each row with host/instance metadata
+                          return selectedRowsForOptimizeInnerPage.map((row: any) => {
+                              const enrichedRow: any = {
+                                  ...row,
+                                  databaseHostId: selectedResourceId,
+                                  credentialId: selectedGwInstanceCredId,
+                                  regionId: selectedGwInstanceRegionId,
+                                  instanceId: selectedDatabaseInstance
+                              };
+
+                              // For RSS config, wrap adapter name string into networkAdapters array
+                              if (configId === ASSESSMENT_CONFIG_IDS.RSS_CONFIGURATION && row.adapterName) {
+                                  enrichedRow.networkAdapters = [row.adapterName];
+                              }
+                              // For other configs (MTU, etc.), wrap objectName into objectsInViolation array
+                              else if (row.objectName) {
+                                  enrichedRow.objectsInViolation = [row.objectName];
+                              }
+                              // Fallback: use existing objectsInViolation if present
+                              else if (!enrichedRow.objectsInViolation) {
+                                  enrichedRow.objectsInViolation = row.objectsInViolation || [];
+                              }
+
+                              return enrichedRow;
+                          });
+                      })()
+                    : operation === ACTION_TYPE.SINGLE && singleRowData
+                    ? configId === ASSESSMENT_CONFIG_IDS.RSS_CONFIGURATION && singleRowData.adapterName
+                        ? { ...rowData, networkAdapters: [singleRowData.adapterName as string] }
+                        : singleRowData.objectName
+                        ? { ...rowData, objectsInViolation: [singleRowData.objectName] }
+                        : rowData // Fallback: if no objectName/adapterName, pass rowData as-is
                     : rowData;
 
             const apiInput = buildOptimizeApiInput(apiConfig as OptimizeApiConfig, {
@@ -315,7 +362,10 @@ const DynamicOptimizeInnerPage = () => {
             isWorkloadFactory,
             mutationMap,
             getJobDetailApi,
-            closeDialog
+            closeDialog,
+            selectedRowsForOptimizeInnerPage,
+            selectedRowFsxId,
+            driftAssessmentData
         ]
     );
 

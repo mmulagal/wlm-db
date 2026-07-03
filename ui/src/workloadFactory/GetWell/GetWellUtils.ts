@@ -1187,6 +1187,24 @@ export const handleOptimizeResourceJob = (
                                     [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: ''
                                 })
                             );
+
+                            // Clear cardData status to prevent stuck "Optimizing" display after failure
+                            const currentCardData = store.getState().getWellOptimize.cardData;
+                            if (currentCardData && currentCardData[ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]) {
+                                dispatch(
+                                    setCardData({
+                                        ...currentCardData,
+                                        [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: {
+                                            ...currentCardData[ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT],
+                                            block_two: {
+                                                ...currentCardData[ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT].block_two,
+                                                value: ''
+                                            }
+                                        }
+                                    })
+                                );
+                            }
+
                             // Trigger assessment refresh based on engine type
                             if (engineType === DBType.ORACLE) {
                                 dispatch(setRefreshOracleWellArchitect(true));

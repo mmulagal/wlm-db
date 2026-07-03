@@ -227,7 +227,7 @@ const DynamicDialogContent = ({
                 accessor: col.accessor,
                 id: String(index + 1),
                 isSortable: true,
-                width: col.width
+                width: index === 1 ? 'auto' : col.width
             }));
         }
 

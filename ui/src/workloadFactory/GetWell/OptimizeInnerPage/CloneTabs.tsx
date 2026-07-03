@@ -315,49 +315,110 @@ const CloneTabs = ({ fromPage = '', engineType = DBType.MSSQL }: any) => {
 
         const optimizeApiFn = isOracle ? oracleCloneCleanupOptimizeApi : cloneCleanupOptimizeApi;
 
-        optimizeApiFn({ payload }).then((res: any) => {
-            const failedMsgData = (
-                <div className={styles.notification}>
-                    {ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT} failed to optimize.
-                    <Button
-                        Component="button"
-                        variant="text"
-                        onClick={() => {
-                            dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
-                            const path = isWorkloadFactory
-                                ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
-                                : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
+        optimizeApiFn({ payload })
+            .then((res: any) => {
+                const failedMsgData = (
+                    <div className={styles.notification}>
+                        {ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT} failed to optimize.
+                        <Button
+                            Component="button"
+                            variant="text"
+                            onClick={() => {
+                                dispatch(setSelectedHeaderTab(WLF_TABS.JOB_MONITORING));
+                                const path = isWorkloadFactory
+                                    ? FORM_TO_WLF_NAVIGATE_JOB_MONITORING
+                                    : FORM_TO_WLF_NAVIGATE_BLUEXP_JM;
 
-                            postBlueXPMessage({
-                                type: BlueXPListeners.navigate,
-                                payload: { pathname: path, replace: true }
-                            });
-                            dispatch(clearNotifications());
-                        }}
-                    >
-                        {GENERAL.VIEW_JOB_MONITORING}.
-                    </Button>
-                </div>
-            );
-            if (!res.error) {
-                const state = store.getState();
+                                postBlueXPMessage({
+                                    type: BlueXPListeners.navigate,
+                                    payload: { pathname: path, replace: true }
+                                });
+                                dispatch(clearNotifications());
+                            }}
+                        >
+                            {GENERAL.VIEW_JOB_MONITORING}.
+                        </Button>
+                    </div>
+                );
+                if (!res.error) {
+                    const state = store.getState();
+                    dispatch(
+                        setJobToInstanceMapForBulk({
+                            ...state.getWellOptimize.jobToInstanceMap,
+                            [res?.data?.jobId]: payload?.hostsToOptimize?.[0]
+                        })
+                    );
+                } else {
+                    // Immediate API error - reset status
+                    const currentOptimizingData = store.getState().getWellOptimize.optimizingData || {};
+                    dispatch(
+                        setOptimizingData({
+                            ...currentOptimizingData,
+                            [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: ''
+                        })
+                    );
+
+                    // Clear cardData status to prevent stuck "Optimizing" display
+                    const currentCardData = store.getState().getWellOptimize.cardData;
+                    if (currentCardData && currentCardData[ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]) {
+                        dispatch(
+                            setCardData({
+                                ...currentCardData,
+                                [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: {
+                                    ...currentCardData[ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT],
+                                    block_two: {
+                                        ...currentCardData[ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT].block_two,
+                                        value: ''
+                                    }
+                                }
+                            })
+                        );
+                    }
+                }
+                handleOptimizeResourceJob(
+                    res,
+                    failedMsgData,
+                    getJobDetailApi,
+                    dispatch,
+                    ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
+                    getBulkInstanceList(payload?.hostsToOptimize, ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT),
+                    engineType
+                );
+            })
+            .catch(() => {
+                // Promise rejection - reset status
+                const currentOptimizingData = store.getState().getWellOptimize.optimizingData || {};
                 dispatch(
-                    setJobToInstanceMapForBulk({
-                        ...state.getWellOptimize.jobToInstanceMap,
-                        [res?.data?.jobId]: payload?.hostsToOptimize?.[0]
+                    setOptimizingData({
+                        ...currentOptimizingData,
+                        [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: ''
                     })
                 );
-            }
-            handleOptimizeResourceJob(
-                res,
-                failedMsgData,
-                getJobDetailApi,
-                dispatch,
-                ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
-                getBulkInstanceList(payload?.hostsToOptimize, ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT),
-                engineType
-            );
-        });
+
+                // Clear cardData status
+                const currentCardData = store.getState().getWellOptimize.cardData;
+                if (currentCardData && currentCardData[ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]) {
+                    dispatch(
+                        setCardData({
+                            ...currentCardData,
+                            [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: {
+                                ...currentCardData[ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT],
+                                block_two: {
+                                    ...currentCardData[ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT].block_two,
+                                    value: ''
+                                }
+                            }
+                        })
+                    );
+                }
+
+                dispatch(
+                    addNotification({
+                        notificationType: NOTIFICATION_TYPES.ERROR,
+                        message: `${ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT} failed to optimize.`
+                    })
+                );
+            });
     };
 
     // Function to change clone tabs

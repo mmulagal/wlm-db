@@ -354,6 +354,51 @@ export const buildOptimizeApiInput = (
 
     // ── HA MSSQL ──────────────────────────────────────────────────────────────
     if (apiConfig.mutation === 'optimizeHAMssql') {
+        // shared-storage bulk support
+        if (configId === ASSESSMENT_CONFIG_IDS.SHARED_STORAGE && isBulk) {
+            const rows = Array.isArray(rowData) ? rowData : [];
+            return {
+                configName: apiConfig.haUrlSegment,
+                payload: {
+                    hostsToOptimize: [
+                        {
+                            configurationName: configId,
+                            databaseHosts: Object.values(
+                                rows.reduce((acc: Record<string, any>, row: any) => {
+                                    const key = uniqueHostRow(row.databaseHostId, row.credentialId, row.regionId);
+                                    if (!acc[key]) {
+                                        acc[key] = {
+                                            id: row.databaseHostId,
+                                            credentialsId: row.credentialId,
+                                            region: row.regionId,
+                                            sqlServerInstances: []
+                                        };
+                                    }
+                                    // Find or create instance entry
+                                    let instanceEntry = acc[key].sqlServerInstances.find(
+                                        (inst: any) => inst.databaseInstanceId === row.instanceId
+                                    );
+                                    if (!instanceEntry) {
+                                        instanceEntry = {
+                                            databaseInstanceId: row.instanceId,
+                                            ontapLunPaths: []
+                                        };
+                                        acc[key].sqlServerInstances.push(instanceEntry);
+                                    }
+                                    // Add LUN paths from this row
+                                    if (row.objectsInViolation) {
+                                        instanceEntry.ontapLunPaths.push(...row.objectsInViolation);
+                                    }
+                                    return acc;
+                                }, {})
+                            )
+                        }
+                    ]
+                }
+            };
+        }
+
+        // Single row or other HA configs
         const databaseHost: Record<string, any> = {
             id: databaseHostId,
             credentialsId: credentialId,
