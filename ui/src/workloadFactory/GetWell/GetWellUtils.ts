@@ -2417,11 +2417,23 @@ export const formatFlatAssessments = (
             }
         } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING)) {
             // For compute rightsizing, store violations array (like osPatchMissingPatches pattern)
-            if (assessment.objectsInViolation && Array.isArray(assessment.objectsInViolation)) {
+            // Only set violations if there's no error message (no permission issues)
+            if (
+                assessment.objectsInViolation &&
+                Array.isArray(assessment.objectsInViolation) &&
+                !assessment.errorMessage
+            ) {
                 computeRightsizingViolations = assessment.objectsInViolation;
                 blockSixValue = String(assessment.objectsInViolation.length);
             }
         }
+
+        // Check if compute rightsizing has missing permissions
+        const isMissingPermissions =
+            isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING) &&
+            assessment.errorMessage &&
+            (assessment.errorMessage.includes('not authorized') ||
+                assessment.errorMessage.includes('not enabled for the account'));
 
         // Get correct block_six.type label based on config
         let blockSixType = '';
@@ -2525,7 +2537,9 @@ export const formatFlatAssessments = (
             ...(sqlPatchMissingPatches !== undefined && { sqlPatchMissingPatches }),
             ...(computeRightsizingViolations !== undefined && { computeRightsizingViolations }),
             // Add missing permissions for dialog handling
-            missingPermissions: assessment.missingPermissions || []
+            missingPermissions: assessment.missingPermissions || [],
+            // Add isMissingPermissions flag for compute rightsizing
+            ...(isMissingPermissions && { isMissingPermissions: true })
         };
 
         // Only add dismissedObj if the card is actually dismissed/postponed/activating

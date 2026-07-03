@@ -450,6 +450,20 @@ const StorageCardComponent = ({
             );
         }
 
+        // Check for missing permissions FIRST - before any other content rendering
+        if (
+            cardData?.isMissingPermissions &&
+            isConfigIdMatch(cardData?.id, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING)
+        ) {
+            return (
+                <div className={styles.warningMsg}>
+                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
+                        {t('databases.general.not-available-table-columns')}
+                    </DsTypography>
+                </div>
+            );
+        }
+
         if (cardData?.block_six?.count) {
             return (
                 <div className={styles.warningMsg}>
@@ -489,18 +503,6 @@ const StorageCardComponent = ({
                     )}
                     <DsTypography variant="Semibold_14" isDisabled={disableText}>
                         {cardData?.block_six?.value ?? t('databases.general.not-available-table-columns')}
-                    </DsTypography>
-                </div>
-            );
-        }
-        if (
-            cardData?.isMissingPermissions &&
-            isConfigIdMatch(cardData?.id, ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING)
-        ) {
-            return (
-                <div className={styles.warningMsg}>
-                    <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                        {t('databases.general.not-available-table-columns')}
                     </DsTypography>
                 </div>
             );

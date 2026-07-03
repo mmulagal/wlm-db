@@ -348,16 +348,40 @@ const GetWell = () => {
                     }}
                     onClick={() => setClickedAccordionId(accordionId)}
                     title={
-                        <div className={styles.tagPlacement}>
-                            {config?.tags?.map((perTag: string, tagIndex: number) => (
-                                <div
-                                    className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
-                                    key={tagIndex}
+                        config?.isMissingPermissions && config?.errorMessage ? (
+                            <div className={styles.missingPermissionText}>
+                                <Error />
+                                <DsTypography variant="Semibold_14" style={{ marginLeft: '8px' }}>
+                                    Error:
+                                </DsTypography>
+                                &nbsp;
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.well-architect.actions.compute-rightsizing-unavailable')} missing
+                                    permissions.
+                                </DsTypography>
+                                &nbsp;
+                                <DsButton
+                                    type="text"
+                                    onClick={e => {
+                                        e.stopPropagation();
+                                        handleLearnHowClick();
+                                    }}
                                 >
-                                    <Tag text={perTag} />
-                                </div>
-                            ))}
-                        </div>
+                                    {t('databases.well-architect.actions.learn-compute-rightsizing')}
+                                </DsButton>
+                            </div>
+                        ) : (
+                            <div className={styles.tagPlacement}>
+                                {config?.tags?.map((perTag: string, tagIndex: number) => (
+                                    <div
+                                        className={`${showDismissedConfigurations ? styles.dismissed : ''}`}
+                                        key={tagIndex}
+                                    >
+                                        <Tag text={perTag} />
+                                    </div>
+                                ))}
+                            </div>
+                        )
                     }
                     headerActions={[
                         <div className={styles.headerAction}>
@@ -415,7 +439,7 @@ const GetWell = () => {
             <div className={styles.getWell} id="export-optimize-pdf">
                 {/* Partial data warning here - based on condition */}
 
-                {cardData?.compute_rightsizing?.errorMessage?.includes('not authorized') && <PartialDataContainer />}
+                {cardData?.compute_rightsizing?.isMissingPermissions && <PartialDataContainer />}
 
                 {/* Assessment Section here */}
                 <AssessmentContainer
