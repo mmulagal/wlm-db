@@ -1043,12 +1043,12 @@ async function getMZFsxnNodePreference(
         const node2InstanceDetails = nodeInstanceDetails?.Reservations?.[1]?.Instances?.[0];
 
         if (node1InstanceDetails?.Placement?.AvailabilityZone === fsxPreferredAZ) {
-            preferredNodeId = node1InstanceId;
-            standbyNodeId = node2InstanceId;
+            preferredNodeId = node1InstanceDetails.InstanceId ?? '';
+            standbyNodeId = node2InstanceDetails?.InstanceId ?? '';
         }
         if (node2InstanceDetails?.Placement?.AvailabilityZone === fsxPreferredAZ) {
-            preferredNodeId = node2InstanceId;
-            standbyNodeId = node1InstanceId;
+            preferredNodeId = node2InstanceDetails.InstanceId ?? '';
+            standbyNodeId = node1InstanceDetails?.InstanceId ?? '';
         }
 
         if (!preferredNodeId || !standbyNodeId) {
