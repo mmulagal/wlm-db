@@ -15,7 +15,14 @@ import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import styles from './DialogContent.module.scss';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
-import { ASSESSMENT_CONFIG_IDS, DBType, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_IDS,
+    ASSESSMENT_CONFIG_NAMES,
+    DBType,
+    PATCH_SCAN_FIELD,
+    WELL_ARCHITECTED_STATUS,
+    WIZARD_TYPE
+} from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     setRecommendedInstanceInBulk,
@@ -146,15 +153,27 @@ const DynamicDialogContent = ({
     }, [dialogConfig, status, missingPermissions, configId]);
 
     // Linked config banner state (Oracle layout configs only)
-    // Check showLinkedConfigBannerInDialog if present, otherwise fall back to showLinkedConfigBanner
+    // Check showLinkedConfigBannerInDialog if present, otherwise fall back to showLinkedConfigBanner.
+    // Only layout configs that are still not-optimized appear in the banner; if all three are
+    // optimized the banner is hidden entirely. Redo logs placement has an extra exclusion: if
+    // its recommended is "Multiplexed copies on two or more volumes" the violation is about
+    // multiplexing only, so it is also hidden.
     const linkedConfigNames = useMemo(() => {
         const showInDialog = resolvedConfig?.features?.showLinkedConfigBannerInDialog;
         if (showInDialog === false) return [];
         if (showInDialog === true || resolvedConfig?.features?.showLinkedConfigBanner) {
-            return getLinkedConfigNames(configId);
+            const EXCLUDED_RECOMMENDED = 'Multiplexed copies on two or more volumes';
+            return getLinkedConfigNames(configId).filter(layoutConfig => {
+                const assessmentItem = driftAssessmentData?.assessments?.find(a => a.name === layoutConfig);
+                if (!assessmentItem || assessmentItem.status !== WELL_ARCHITECTED_STATUS.NOT_OPTIMIZED) return false;
+                if (layoutConfig === ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT) {
+                    return assessmentItem.recommended !== EXCLUDED_RECOMMENDED;
+                }
+                return true;
+            });
         }
         return [];
-    }, [configId, resolvedConfig]);
+    }, [configId, resolvedConfig, driftAssessmentData]);
 
     // Only show checkbox when fix is supported AND there are linked configs
     const canFixConfiguration = hasFixSupport(configId, engineType, status, missingPermissions);

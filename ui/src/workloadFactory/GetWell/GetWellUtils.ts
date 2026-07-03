@@ -1441,7 +1441,8 @@ const isCloneManagementRow = (rowData: any): boolean =>
 const resolveCloneManagementStatus = (rowData: any): string => {
     const { cloneDashboardData } = store.getState().getWellOptimize;
     const hasUnresolvedViolation = cloneDashboardData?.objectsInViolation?.some(
-        (row: any) => row?.resourceId === rowData?.hostId && row?.instanceId === rowData?.instanceId && !row?.isOptimized
+        (row: any) =>
+            row?.resourceId === rowData?.hostId && row?.instanceId === rowData?.instanceId && !row?.isOptimized
     );
     return hasUnresolvedViolation ? WELL_ARCHITECTED_STATUS.NOT_OPTIMIZED : WELL_ARCHITECTED_STATUS.OPTIMIZED;
 };

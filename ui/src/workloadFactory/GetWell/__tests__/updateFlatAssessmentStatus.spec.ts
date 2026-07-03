@@ -110,7 +110,7 @@ describe('updateFlatAssessmentStatus', () => {
         updateFlatAssessmentStatus(baseRow, dispatch, DBType.MSSQL);
 
         expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'addAllMssqlHostAssessmentData' }));
-        const payload = dispatch.mock.calls[0][0].payload;
+        const { payload } = dispatch.mock.calls[0][0];
         const updatedItem = payload[0].instancesAssessment[0].assessments.assessments[0];
         expect(updatedItem.status).toBe('optimized');
     });
@@ -122,7 +122,10 @@ describe('updateFlatAssessmentStatus', () => {
             credentialId: 'cred1',
             regionId: 'us-east-1',
             instancesAssessment: [
-                { databaseInstanceId: 'inst2', assessments: { assessments: [{ id: 'maxdop', status: 'not-optimized' }] } }
+                {
+                    databaseInstanceId: 'inst2',
+                    assessments: { assessments: [{ id: 'maxdop', status: 'not-optimized' }] }
+                }
             ]
         };
         mockGetState.mockReturnValue({
@@ -134,7 +137,7 @@ describe('updateFlatAssessmentStatus', () => {
 
         updateFlatAssessmentStatus(baseRow, dispatch, DBType.MSSQL);
 
-        const payload = dispatch.mock.calls[0][0].payload;
+        const { payload } = dispatch.mock.calls[0][0];
         expect(payload[0].instancesAssessment[0].assessments.assessments[0].status).toBe('optimized');
         expect(payload[1].instancesAssessment[0].assessments.assessments[0].status).toBe('not-optimized');
     });
@@ -164,7 +167,7 @@ describe('updateFlatAssessmentStatus', () => {
             const latest = mockGetState().inventoryV2.allmssqlHostAssessmentData;
             mockGetState.mockReturnValue({ inventoryV2: { allmssqlHostAssessmentData: latest }, getWellOptimize: {} });
             updateFlatAssessmentStatus(row, dispatch, DBType.MSSQL);
-            const payload = dispatch.mock.calls[dispatch.mock.calls.length - 1][0].payload;
+            const { payload } = dispatch.mock.calls[dispatch.mock.calls.length - 1][0];
             mockGetState.mockReturnValue({ inventoryV2: { allmssqlHostAssessmentData: payload }, getWellOptimize: {} });
         });
 
@@ -177,7 +180,9 @@ describe('updateFlatAssessmentStatus', () => {
         const dispatch = vi.fn();
         const cloneRow = { ...baseRow, id: 'clone-management', name: 'Clone cleanup' };
         mockGetState.mockReturnValue({
-            inventoryV2: { allmssqlHostAssessmentData: makeHostData([{ id: 'clone-management', status: 'not-optimized' }]) },
+            inventoryV2: {
+                allmssqlHostAssessmentData: makeHostData([{ id: 'clone-management', status: 'not-optimized' }])
+            },
             getWellOptimize: {
                 cloneDashboardData: {
                     objectsInViolation: [{ resourceId: 'host1', instanceId: 'inst1', isOptimized: true }]
@@ -187,7 +192,7 @@ describe('updateFlatAssessmentStatus', () => {
 
         updateFlatAssessmentStatus(cloneRow, dispatch, DBType.MSSQL);
 
-        const payload = dispatch.mock.calls[0][0].payload;
+        const { payload } = dispatch.mock.calls[0][0];
         expect(payload[0].instancesAssessment[0].assessments.assessments[0].status).toBe('optimized');
     });
 
@@ -195,7 +200,9 @@ describe('updateFlatAssessmentStatus', () => {
         const dispatch = vi.fn();
         const cloneRow = { ...baseRow, id: 'clone-management', name: 'Clone cleanup' };
         mockGetState.mockReturnValue({
-            inventoryV2: { allmssqlHostAssessmentData: makeHostData([{ id: 'clone-management', status: 'not-optimized' }]) },
+            inventoryV2: {
+                allmssqlHostAssessmentData: makeHostData([{ id: 'clone-management', status: 'not-optimized' }])
+            },
             getWellOptimize: {
                 cloneDashboardData: {
                     objectsInViolation: [{ resourceId: 'host1', instanceId: 'inst1', isOptimized: false }]
@@ -205,7 +212,7 @@ describe('updateFlatAssessmentStatus', () => {
 
         updateFlatAssessmentStatus(cloneRow, dispatch, DBType.MSSQL);
 
-        const payload = dispatch.mock.calls[0][0].payload;
+        const { payload } = dispatch.mock.calls[0][0];
         expect(payload[0].instancesAssessment[0].assessments.assessments[0].status).toBe('not-optimized');
     });
 
@@ -216,7 +223,9 @@ describe('updateFlatAssessmentStatus', () => {
         const dispatch = vi.fn();
         const cloneRow = { ...baseRow, id: 'clone', name: 'Clone cleanup' };
         mockGetState.mockReturnValue({
-            inventoryV2: { allmssqlHostAssessmentData: makeHostData([{ id: 'clone-management', status: 'not-optimized' }]) },
+            inventoryV2: {
+                allmssqlHostAssessmentData: makeHostData([{ id: 'clone-management', status: 'not-optimized' }])
+            },
             getWellOptimize: {
                 cloneDashboardData: {
                     objectsInViolation: [{ resourceId: 'host1', instanceId: 'inst1', isOptimized: true }]
@@ -226,7 +235,7 @@ describe('updateFlatAssessmentStatus', () => {
 
         updateFlatAssessmentStatus(cloneRow, dispatch, DBType.MSSQL);
 
-        const payload = dispatch.mock.calls[0][0].payload;
+        const { payload } = dispatch.mock.calls[0][0];
         expect(payload[0].instancesAssessment[0].assessments.assessments[0].status).toBe('optimized');
     });
 
@@ -239,10 +248,8 @@ describe('updateFlatAssessmentStatus', () => {
 
         updateFlatAssessmentStatus({ ...baseRow, id: 'headroom' }, dispatch, DBType.ORACLE);
 
-        expect(dispatch).toHaveBeenCalledWith(
-            expect.objectContaining({ type: 'addAllOracleHostAssessmentData' })
-        );
-        const payload = dispatch.mock.calls[0][0].payload;
+        expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'addAllOracleHostAssessmentData' }));
+        const { payload } = dispatch.mock.calls[0][0];
         expect(payload[0].instancesAssessment[0].assessments.assessments[0].status).toBe('optimized');
     });
 });

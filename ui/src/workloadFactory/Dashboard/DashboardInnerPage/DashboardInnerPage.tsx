@@ -71,6 +71,7 @@ import {
     filterNotOptimizedRows,
     getAssessmentStatusConsistency
 } from './DashboardInnerPageHelper';
+import { checkLinkedConfigAcknowledge } from '../../GetWell/StorageCardComponent/optimizeUtils';
 import DashboardConfigsTable from './RenderTables/DashboardConfigsTable';
 import { formatOracleWellArchitectedData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 import { engineTypeBasedResourceStr } from '../../WellArchitectedTab/WellArchitectedTabUtils';
@@ -557,6 +558,9 @@ const DashboardInnerPage = () => {
                     primaryButton={t('databases.general.continue')}
                     secondaryButton={t('databases.general.cancel')}
                     callback={() => {
+                        if (configEngineType === DBType.ORACLE && checkLinkedConfigAcknowledge()) {
+                            return;
+                        }
                         callOptimizeApi(configId, rowData, operation);
                     }}
                     closeCallback={() => {

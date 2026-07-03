@@ -2853,7 +2853,7 @@
             "features": {
                 "showOntapConfigCodeBox": false,
                 "showLinkedConfigBanner": true,
-                "showLinkedConfigBannerInDialog": false
+                "showLinkedConfigBannerInDialog": true
             },
             "notes": {
                 "type": "standard"
