@@ -27,7 +27,8 @@ import {
     STORAGE_EFFICIENCIES_CONFIG_DETAILS,
     TIERING_TCO_OPTIMIZATION_CONFIG_DETAILS,
     COMBINED_VOLUME_CONFIG_IDS,
-    COMBINED_SUB_PARAMETER_TO_PROPERTY
+    COMBINED_SUB_PARAMETER_TO_PROPERTY,
+    getArchiveLogTieringMinCoolingDaysRecommendation
 } from './consts';
 import {
     GenericViolationResponseType,
@@ -1379,10 +1380,11 @@ function evaluateOneVolumeParameter(
             if (isIn(archiveLogVolumeIds, objectId)) {
                 dataCategory = 'archive-log-files';
             }
-            recommended =
-                isIn(archiveLogVolumeIds, objectId) && fraEnabled === 'yes' && rmanCompressionEnabled === 'no'
-                    ? '14'
-                    : '2';
+            recommended = getArchiveLogTieringMinCoolingDaysRecommendation(
+                isIn(archiveLogVolumeIds, objectId),
+                fraEnabled,
+                rmanCompressionEnabled
+            );
             isViolated = value !== recommended;
             break;
 
@@ -1609,7 +1611,7 @@ function getVolumeConfigDrift(
                     if (parameter === 'tieringMinCoolingDays' && !isIn(archiveLogVolumeIds, objectId)) {
                         return;
                     }
-                    const { isViolated, current, dataCategory } = evaluateOneVolumeParameter(
+                    const { isViolated, current, recommended, dataCategory } = evaluateOneVolumeParameter(
                         parameter,
                         volume,
                         '',
@@ -1618,7 +1620,7 @@ function getVolumeConfigDrift(
                     if (current === undefined || !isViolated) {
                         return;
                     }
-                    violatedConfigs.push({ id: subName, current });
+                    violatedConfigs.push({ id: subName, current, recommended: recommended ?? undefined });
                     combinedCategory =
                         combinedCategory && dataCategory && combinedCategory !== dataCategory
                             ? 'mixed'
@@ -1651,13 +1653,24 @@ function getVolumeConfigDrift(
                 configDetails: (combined.components ?? []).map(component => {
                     const name = component.name ?? component.parameter!;
                     const overrides = detailMap[name] ?? {};
+                    const recommendedByDataCategory =
+                        combined.id === 'tiering-tco-optimization' &&
+                        name === 'tiering-min-cooling-days' &&
+                        overrides.recommendedByDataCategory
+                            ? {
+                                  ...overrides.recommendedByDataCategory,
+                                  'archive-log-files': getArchiveLogTieringMinCoolingDaysRecommendation(
+                                      true,
+                                      fraEnabled,
+                                      rmanCompressionEnabled
+                                  )
+                              }
+                            : overrides.recommendedByDataCategory;
                     return {
                         id: name,
                         recommended: overrides.recommended ?? String(component.value ?? ''),
                         objectType: component.objectType ?? ASSESSMENT_RESOURCE_TYPE.VOLUME,
-                        ...(overrides.recommendedByDataCategory
-                            ? { recommendedByDataCategory: overrides.recommendedByDataCategory }
-                            : {}),
+                        ...(recommendedByDataCategory ? { recommendedByDataCategory } : {}),
                         ...(overrides.recommendedNote ? { recommendedNote: overrides.recommendedNote } : {})
                     };
                 }),

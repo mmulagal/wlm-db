@@ -918,7 +918,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             recommendedByDataCategory: {
                 'log-files': 'none',
                 'non-log-files': 'adaptive',
-                mixed: 'varies'
+                mixed: 'none'
             }
         },
         {
@@ -928,7 +928,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             recommendedByDataCategory: {
                 'log-files': 'none',
                 'non-log-files': 'inline',
-                mixed: 'varies'
+                mixed: 'none'
             },
             recommendedNote: '`both` is also acceptable for non-log-files volumes'
         },
@@ -939,7 +939,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             recommendedByDataCategory: {
                 'log-files': 'none',
                 'non-log-files': 'enabled',
-                mixed: 'varies'
+                mixed: 'none'
             }
         }
     ];
@@ -953,7 +953,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
                 'data-control-files': 'none',
                 'log-files': 'none',
                 'archive-log-files': 'auto',
-                mixed: 'varies'
+                mixed: 'none'
             }
         },
         {
@@ -1011,8 +1011,8 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             expect(detail?.objectType).toBe('Volume');
             expect(detail?.dataCategory).toBe('non-log-files');
             expect(detail?.violatedConfigs).toEqual([
-                { id: 'compression', current: 'none' },
-                { id: 'deduplication', current: 'none' }
+                { id: 'compression', current: 'none', recommended: 'adaptive' },
+                { id: 'deduplication', current: 'none', recommended: 'inline' }
             ]);
         });
 
@@ -1065,7 +1065,7 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             expect(entry.configDetails).toEqual(tieringTcoConfigDetails);
             expect(entry.objectsInViolation).toEqual(['data_vol']);
             const detail = entry.violationDetails?.find(d => d.objectName === 'data_vol');
-            expect(detail?.violatedConfigs).toEqual([{ id: 'tiering-policy', current: 'auto' }]);
+            expect(detail?.violatedConfigs).toEqual([{ id: 'tiering-policy', current: 'auto', recommended: 'none' }]);
         });
 
         it('flags only tiering-min-cooling-days on an archive volume when policy is correct', () => {
@@ -1080,7 +1080,9 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(entry.objectsInViolation).toEqual(['archive_vol']);
             const detail = entry.violationDetails?.find(d => d.objectName === 'archive_vol');
-            expect(detail?.violatedConfigs).toEqual([{ id: 'tiering-min-cooling-days', current: '30' }]);
+            expect(detail?.violatedConfigs).toEqual([
+                { id: 'tiering-min-cooling-days', current: '30', recommended: '2' }
+            ]);
         });
 
         it('does not flag tiering-min-cooling-days on a data-files volume even when value differs', () => {
@@ -1118,7 +1120,9 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(entry.objectsInViolation).toEqual(['fra_vol']);
             const detail = entry.violationDetails?.find(d => d.objectName === 'fra_vol');
-            expect(detail?.violatedConfigs).toEqual([{ id: 'tiering-min-cooling-days', current: '30' }]);
+            expect(detail?.violatedConfigs).toEqual([
+                { id: 'tiering-min-cooling-days', current: '30', recommended: '2' }
+            ]);
             expect(detail?.dataCategory).toBe('archive-log-files');
         });
 
@@ -1164,7 +1168,9 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             const entry = findById(nonCompliantDrift, 'tiering-tco-optimization');
             expect(entry.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             const detail = entry.violationDetails?.find(d => d.objectName === 'fra_vol');
-            expect(detail?.violatedConfigs).toEqual([{ id: 'tiering-min-cooling-days', current: '2' }]);
+            expect(detail?.violatedConfigs).toEqual([
+                { id: 'tiering-min-cooling-days', current: '2', recommended: '14' }
+            ]);
         });
 
         it('treats snapshot_only as compliant on volumes outside mapped file-type lists', () => {

@@ -780,30 +780,35 @@ async function getOracleStorageConfigRecommendationMap(
                 );
                 (entry.violationDetails ?? []).forEach((violation: GenericViolationResponseType) => {
                     const dataCategory = violation.dataCategory ?? '';
-                    (violation.violatedConfigs ?? []).forEach(({ id }: ViolatedConfigType) => {
-                        const detail = configDetailById.get(id);
-                        const recommendedByCategory = detail?.recommendedByDataCategory;
-                        const recommended =
-                            (recommendedByCategory && dataCategory in recommendedByCategory
-                                ? recommendedByCategory[dataCategory as keyof typeof recommendedByCategory]
-                                : undefined) ?? detail?.recommended;
-                        if (!recommended || !violation.objectName) {
-                            return;
+                    (violation.violatedConfigs ?? []).forEach(
+                        ({ id, recommended: subRecommended }: ViolatedConfigType) => {
+                            const detail = configDetailById.get(id);
+                            const recommendedByCategory = detail?.recommendedByDataCategory;
+                            const recommended =
+                                subRecommended ??
+                                (recommendedByCategory &&
+                                Object.prototype.hasOwnProperty.call(recommendedByCategory, dataCategory)
+                                    ? recommendedByCategory[dataCategory as keyof typeof recommendedByCategory]
+                                    : undefined) ??
+                                detail?.recommended;
+                            if (!recommended || recommended === 'varies' || !violation.objectName) {
+                                return;
+                            }
+                            const objectName = violation.objectName as string;
+                            if (!requestedObjectsByCombinedId.get(entry.id)?.has(objectName)) {
+                                return;
+                            }
+                            const key = id as OptimizeStorageConfigs;
+                            recommendationMap[key] ??= { recommended: {}, additionalInfo: {} };
+                            if (!recommendationMap[key]!.recommended[recommended]) {
+                                recommendationMap[key]!.recommended[recommended] = [];
+                            }
+                            const bucket = recommendationMap[key]!.recommended[recommended]!;
+                            if (!bucket.includes(objectName)) {
+                                bucket.push(objectName);
+                            }
                         }
-                        const objectName = violation.objectName as string;
-                        if (!requestedObjectsByCombinedId.get(entry.id)?.has(objectName)) {
-                            return;
-                        }
-                        const key = id as OptimizeStorageConfigs;
-                        recommendationMap[key] ??= { recommended: {}, additionalInfo: {} };
-                        if (!recommendationMap[key]!.recommended[recommended]) {
-                            recommendationMap[key]!.recommended[recommended] = [];
-                        }
-                        const bucket = recommendationMap[key]!.recommended[recommended]!;
-                        if (!bucket.includes(objectName)) {
-                            bucket.push(objectName);
-                        }
-                    });
+                    );
                 });
             });
 

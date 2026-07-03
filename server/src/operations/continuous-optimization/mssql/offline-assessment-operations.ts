@@ -591,15 +591,6 @@ async function fetchMssqlOfflineAssessment(
             `WAD assessment not found for resource ${resourceId} and instance ${databaseInstanceId}`
         );
     }
-    const { assessment_results: assessmentResultsWithMetadata = {} } = record;
-    const { assessments: assessmentResults } = assessmentResultsWithMetadata as MssqlAssessmentResponseType;
-    if (!isEmpty(assessmentResults)) {
-        const { isValid } = validateWithSchema(MssqlAssessmentResponse, assessmentResultsWithMetadata);
-        if (isValid) {
-            return assessmentResultsWithMetadata as MssqlAssessmentResponseType;
-        }
-    }
-
     const rawdata = (record.rawdata as MSSQLOfflineAssessmentRawData) || {};
     const metadata = (record.metadata as unknown as MSSQLOfflineAssessmentMetadataType) || {};
     const {
@@ -800,8 +791,7 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                     database_instance_id: databaseInstanceId,
                     metadata,
                     credentials_id: itemCredentialsId,
-                    region: itemRegion,
-                    assessment_results: assessmentResultsWithMetadata
+                    region: itemRegion
                 } = item;
                 const {
                     databaseInstanceName,
@@ -838,27 +828,16 @@ async function fetchMssqlOfflineAssessmentPerAccount(
                     clusterNodes
                 };
 
-                let forceRunAssessment = true;
-                const { assessments: assessmentsResults } =
-                    assessmentResultsWithMetadata as MssqlAssessmentResponseType;
-                if (!isEmpty(assessmentsResults)) {
-                    const { isValid } = validateWithSchema(MssqlAssessmentResponse, assessmentResultsWithMetadata);
-                    if (isValid) {
-                        forceRunAssessment = false;
-                    }
-                }
                 try {
-                    const assessments = !forceRunAssessment
-                        ? (assessmentResultsWithMetadata as MssqlAssessmentResponseType)
-                        : await fetchMssqlOfflineAssessment(
-                              accountId,
-                              resourceId,
-                              databaseInstanceId,
-                              recordCredentialsId ?? undefined,
-                              recordRegion ?? undefined,
-                              undefined,
-                              item
-                          );
+                    const assessments = await fetchMssqlOfflineAssessment(
+                        accountId,
+                        resourceId,
+                        databaseInstanceId,
+                        recordCredentialsId ?? undefined,
+                        recordRegion ?? undefined,
+                        undefined,
+                        item
+                    );
                     return { ...response, assessments };
                 } catch (error: any) {
                     logger.error(`Error fetching MSSQL assessment for ${resourceId}/${databaseInstanceId}:`, error);

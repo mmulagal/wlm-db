@@ -47,16 +47,10 @@ const OracleAssessmentQueryStringPerAccount = Type.Intersect([
     })
 ]);
 
-/**
- * Per-offender sub-parameter detail used by aggregate configs (e.g. block-device-space-management)
- * that roll up multiple ONTAP attributes into one assessment entry. Each entry lists the
- * sub-parameter name and the offending object's current (non-optimal) stringified value. The
- * recommended target value is NOT duplicated here — it lives once in the entry-level
- * configDetails[] catalogue, joined by `id`.
- */
 const ViolatedConfig = Type.Object({
     id: Type.String(),
-    current: Type.String()
+    current: Type.String(),
+    recommended: Type.Optional(Type.String())
 });
 type ViolatedConfigType = Static<typeof ViolatedConfig>;
 
@@ -86,16 +80,8 @@ type ViolationAdditionalInfoType = Static<typeof ViolationAdditionalInfo>;
 
 /**
  * Catalogue entry used by aggregate configs. configDetails[] on the parent assessment item
- * lists every sub-parameter the entry assessed, paired with its recommended target value and
- * the resource type the sub-parameter belongs to. Always emitted by aggregate configs (even
- * when status is OPTIMIZED) so consumers can render a self-describing
- * "checked X settings, target values Y" view without needing the original golden config.
- *
- * Static sub-parameters (e.g. MSSQL block-device-space-management): `recommended` is the single
- * target; optional fields are omitted.
- *
- * Variable sub-parameters (Oracle combined configs): `recommended` is empty; use
- * `recommendedByDataCategory` and optionally `recommendedNote` for per-category guidance.
+ * lists every sub-parameter assessed, its recommended target, and its resource type.
+ * Static sub-params set `recommended`; variable ones (Oracle) use `recommendedByDataCategory`/`recommendedNote` instead.
  */
 const ConfigDetail = Type.Object({
     id: Type.String(),

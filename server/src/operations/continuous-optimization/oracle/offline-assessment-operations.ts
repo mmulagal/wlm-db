@@ -491,15 +491,6 @@ async function fetchOracleOfflineAssessment(
         );
     }
 
-    const { assessment_results: assessmentResultsWithMetadata = {} } = record;
-    const { assessments: assessmentResults } = assessmentResultsWithMetadata as OracleAssessmentResponseType;
-    if (!isEmpty(assessmentResults)) {
-        const { isValid } = validateWithSchema(OracleAssessmentResponse, assessmentResultsWithMetadata);
-        if (isValid) {
-            return assessmentResultsWithMetadata as OracleAssessmentResponseType;
-        }
-    }
-
     const rawdata = (record.rawdata as OracleStoredRawData) || {};
     const metadata = (record.metadata as unknown as OracleOfflineAssessmentMetadataType) || {};
     const mappedOntapVolumesData = (record.mapped_ontap_volumes as OracleMappedOntapVolumesResponse) || {};
@@ -692,8 +683,7 @@ async function fetchOracleOfflineAssessmentPerAccount(
                     metadata,
                     rawdata: itemRawdata,
                     credentials_id: itemCredentialsId,
-                    region: itemRegion,
-                    assessment_results: assessmentResultsWithMetadata
+                    region: itemRegion
                 } = item;
                 const {
                     databaseInstanceName,
@@ -731,26 +721,15 @@ async function fetchOracleOfflineAssessmentPerAccount(
                 };
 
                 try {
-                    let forceRunAssessment = true;
-                    const { assessments: assessmentResults } =
-                        assessmentResultsWithMetadata as OracleAssessmentResponseType;
-                    if (!isEmpty(assessmentResults)) {
-                        const { isValid } = validateWithSchema(OracleAssessmentResponse, assessmentResultsWithMetadata);
-                        if (isValid) {
-                            forceRunAssessment = false;
-                        }
-                    }
-                    const assessments = !forceRunAssessment
-                        ? (assessmentResultsWithMetadata as OracleAssessmentResponseType)
-                        : await fetchOracleOfflineAssessment(
-                              accountId,
-                              resourceId,
-                              databaseInstanceId,
-                              recordCredentialsId ?? undefined,
-                              recordRegion ?? undefined,
-                              undefined,
-                              item
-                          );
+                    const assessments = await fetchOracleOfflineAssessment(
+                        accountId,
+                        resourceId,
+                        databaseInstanceId,
+                        recordCredentialsId ?? undefined,
+                        recordRegion ?? undefined,
+                        undefined,
+                        item
+                    );
                     return { ...response, assessments };
                 } catch (error: unknown) {
                     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch assessment';

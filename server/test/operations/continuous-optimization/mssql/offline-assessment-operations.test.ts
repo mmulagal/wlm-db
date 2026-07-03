@@ -402,8 +402,8 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(result.metadata.storageEndpoint).toBe('fs-fetch-test');
         });
 
-        it('should persist computed assessment_results to DB when record has empty assessment_results (lazy backfill)', async () => {
-            // Insert a record with no assessment_results (simulates records uploaded before this feature)
+        it('should persist computed assessment_results to DB when record has empty assessment_results (recalc on GET)', async () => {
+            // Insert a record with no assessment_results (simulates records uploaded before persist-on-read)
             const resourceId = 'fetch-test-lazy-backfill';
             const instanceId = 'lazy-backfill-instance';
             await bulkUpsertOfflineAssessments([
@@ -448,6 +448,102 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(updated?.assessment_results).toBeDefined();
             expect(Object.keys(updated?.assessment_results as object).length).toBeGreaterThan(0);
         }, 5000);
+
+        it('should recalculate from rawdata and not return stale legacy standalone assessment ids', async () => {
+            const resourceId = 'fetch-test-stale-cache';
+            const instanceId = 'stale-cache-instance';
+            const staleLegacyAssessmentItem = (id: string, name: string) => ({
+                id,
+                name,
+                status: AssessmentStatus.NOT_OPTIMIZED,
+                recommended: '0',
+                severity: 'Critical',
+                recommendation: 'Legacy cached finding',
+                categories: ['Cost Optimization'],
+                objectsInViolation: ['data_vol'],
+                totalObjectsAssessed: 1,
+                totalObjectsInViolation: 1
+            });
+            await bulkUpsertOfflineAssessments([
+                {
+                    accountId: ACCOUNT_ID,
+                    resourceId,
+                    databaseInstanceId: instanceId,
+                    databaseType: DATABASE_TYPE.mssql,
+                    rawdata: {
+                        instanceLevelAssessment: {
+                            volumes: [
+                                {
+                                    name: 'data_vol',
+                                    uuid: 'uuid-data',
+                                    'thin-provision': true,
+                                    'space-guarantee': 'none',
+                                    'autosize-mode': 'grow',
+                                    'snapshot-policy': 'none',
+                                    'fractional-reserve': 0,
+                                    'tiering-policy': 'snapshot_only',
+                                    'tiering-min-cooling-days': 2,
+                                    compression: 'inline',
+                                    deduplication: 'inline',
+                                    compaction: 'enabled'
+                                }
+                            ],
+                            luns: [
+                                {
+                                    name: '/vol/data_vol/lun1',
+                                    'space-reservation-enabled': true,
+                                    'space-allocation-allocated': true,
+                                    'os-type': 'windows_2008'
+                                }
+                            ],
+                            os: {},
+                            layout: {},
+                            sizing: {},
+                            errors: {
+                                volumes: '',
+                                luns: '',
+                                'volumes-footprint': '',
+                                layout: '',
+                                sizing: '',
+                                'mpio-policy': '',
+                                'iscsi-sessions': '',
+                                'ntfs-allocation': '',
+                                'tempdb-files-location': '',
+                                'default-log-files-location': '',
+                                'default-data-files-location': '',
+                                'data-tempdb-drive-details': ''
+                            },
+                            filesystemId: 'fs-stale-cache'
+                        },
+                        rssConfig: {},
+                        hostLevelHighAvailability: {}
+                    },
+                    metadata: {
+                        hostname: 'stale-cache-host',
+                        storageEndpoint: 'fs-stale-cache',
+                        assessmentTimestamp: new Date().toISOString(),
+                        deploymentType: 'Standalone',
+                        databaseInstanceName: 'MSSQLSERVER'
+                    },
+                    assessmentResults: {
+                        assessments: [
+                            staleLegacyAssessmentItem('fractional-reserve', 'Fractional reserve'),
+                            staleLegacyAssessmentItem('space-reservation-enabled', 'Space reservation enabled'),
+                            staleLegacyAssessmentItem('compression', 'Compression')
+                        ],
+                        dismissedConfigurations: [],
+                        metadata: { storageEndpoint: 'fs-stale-cache' }
+                    }
+                }
+            ]);
+
+            const result = await fetchMssqlOfflineAssessment(ACCOUNT_ID, resourceId, instanceId);
+            const ids = result.assessments.map(assessment => assessment.id);
+            expect(ids).toContain('block-device-space-management');
+            expect(ids).not.toContain('fractional-reserve');
+            expect(ids).not.toContain('space-reservation-enabled');
+            expect(ids).not.toContain('compression');
+        });
 
         it('should throw error for non-existent assessment', async () => {
             await expect(

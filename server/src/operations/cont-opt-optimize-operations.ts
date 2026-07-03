@@ -681,6 +681,8 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams & SSM
             ? `Fix MSSQL Storage Configuration for ${serverNameWithHostName}`
             : `Fix Oracle Storage Configuration for ${serverNameWithHostName}`;
 
+    const issuedOntapRequests = new Map<string, Awaited<ReturnType<typeof callOntapApi>>>();
+
     await Promise.all(
         optimizationTargets.map(
             throat(1, async data => {
@@ -771,6 +773,26 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams & SSM
                                     );
                                 }
 
+                                const requestKey = configKey
+                                    ? buildOntapRequestKey(
+                                          apiRequestData,
+                                          configKey,
+                                          resourceType,
+                                          value,
+                                          svmName,
+                                          volumesLunsToOptimize
+                                      )
+                                    : undefined;
+                                // Different subjobs (e.g. compression/deduplication/compaction) can resolve to the
+                                // same ONTAP call; skip the duplicate PATCH instead of misreading it as a failure.
+                                if (requestKey && issuedOntapRequests.has(requestKey)) {
+                                    logger.info(
+                                        `Skipping duplicate ONTAP request already applied for ${jobDescription}`,
+                                        { requestKey, volumesLunsToOptimize }
+                                    );
+                                    return issuedOntapRequests.get(requestKey)!;
+                                }
+
                                 const result = await callOntapApi(
                                     apiRequestData,
                                     configKey!,
@@ -784,6 +806,9 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams & SSM
                                     jobDescription,
                                     value
                                 );
+                                if (requestKey && result.parsedResp?.num_records === volumesLunsToOptimize.length) {
+                                    issuedOntapRequests.set(requestKey, result);
+                                }
                                 return result;
                             })
                         )
@@ -839,6 +864,70 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams & SSM
     );
 }
 
+function buildOntapApiData(
+    apiRequestData: typeof OptimizeStorageApiData,
+    configKey: string,
+    resourceType: RESOURCESTYPE,
+    value?: string
+) {
+    if (
+        resourceType === RESOURCESTYPE.ORACLE &&
+        oracleSpecialStorageConfigNames.includes(
+            OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs]
+        )
+    ) {
+        if (
+            OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs] ===
+            OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS
+        ) {
+            return apiRequestData[configKey as unknown as keyof typeof apiRequestData](value, 'auto');
+        }
+        if (
+            OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs] ===
+            OptimizeStorageConfigs.TIERING_POLICY
+        ) {
+            return (apiRequestData.TIERING_POLICY as (typeof OptimizeStorageApiData)['TIERING_POLICY'])(value, null);
+        }
+        return apiRequestData[configKey as keyof typeof apiRequestData](value);
+    }
+    const api = apiRequestData[configKey as keyof typeof apiRequestData];
+    if (!api) {
+        logger.error(`Storage-Optimization type ${configKey} is not supported yet`);
+        throw new Error(`API configuration not found for key: ${configKey}`);
+    }
+    return api();
+}
+
+/**
+ * Identifies the literal ONTAP PATCH a subjob is about to issue (endpoint + body + target volumes),
+ * so callers can detect when two different sub-parameters (e.g. Oracle compression and deduplication
+ * both resolving to `none` for the same volumes) would send the exact same request.
+ */
+function buildOntapRequestKey(
+    apiRequestData: typeof OptimizeStorageApiData,
+    configKey: string,
+    resourceType: RESOURCESTYPE,
+    value: string | undefined,
+    svmName: string,
+    objectsToOptimize: string[]
+): string | undefined {
+    try {
+        const apiData = buildOntapApiData(apiRequestData, configKey, resourceType, value);
+        return JSON.stringify({
+            api: apiData.api,
+            body: apiData.body,
+            svmName,
+            objects: [...objectsToOptimize].sort()
+        });
+    } catch (err) {
+        logger.debug(`Skipping ONTAP request dedup for ${configKey}: unable to build request key`, {
+            configKey,
+            error: err
+        });
+        return undefined;
+    }
+}
+
 async function callOntapApi(
     apiRequestData: typeof OptimizeStorageApiData,
     configKey: string,
@@ -852,35 +941,7 @@ async function callOntapApi(
     jobDescription: string,
     value?: string
 ) {
-    let apiData;
-    if (
-        resourceType === RESOURCESTYPE.ORACLE &&
-        oracleSpecialStorageConfigNames.includes(
-            OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs]
-        )
-    ) {
-        if (
-            OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs] ===
-            OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS
-        ) {
-            apiData = apiRequestData[configKey as unknown as keyof typeof apiRequestData](value, 'auto');
-        } else if (
-            OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs] ===
-            OptimizeStorageConfigs.TIERING_POLICY
-        ) {
-            // ponytail: null omits cooling days — Oracle handles it via the TIERING_MINIMUM_COOLING_DAYS synthetic job.
-            apiData = (apiRequestData.TIERING_POLICY as (typeof OptimizeStorageApiData)['TIERING_POLICY'])(value, null);
-        } else {
-            apiData = apiRequestData[configKey as keyof typeof apiRequestData](value);
-        }
-    } else {
-        const api = apiRequestData[configKey as keyof typeof apiRequestData];
-        if (!api) {
-            logger.error(`Storage-Optimization type ${configKey} is not supported yet`);
-            throw new Error(`API configuration not found for key: ${configKey}`);
-        }
-        apiData = api();
-    }
+    const apiData = buildOntapApiData(apiRequestData, configKey, resourceType, value);
 
     if (!Array.isArray(objectsToOptimize) || objectsToOptimize.some(obj => !obj)) {
         throw new Error('objectsToOptimize must be an array with non-empty string elements.');
@@ -980,9 +1041,20 @@ async function optimizeStorage(params: OptimizeStorageParams & SSMDocument, bulk
         )}`
     );
 
-    if (optimizationTargets && optimizationTargets.length === 0) {
+    const actionableTargets = (optimizationTargets ?? []).filter(
+        t => Array.isArray(t.objectsToOptimize) && t.objectsToOptimize.length > 0
+    );
+    if (actionableTargets.length === 0) {
         logger.info(`Optimization body is empty ${databaseInstanceId} in ${region}`);
         throw createError(HttpErrorCodes.BAD_REQUEST, 'Optimization body is empty');
+    }
+    const droppedConfigs = (optimizationTargets ?? [])
+        .filter(t => !Array.isArray(t.objectsToOptimize) || t.objectsToOptimize.length === 0)
+        .map(t => t.configurationName);
+    if (droppedConfigs.length > 0) {
+        logger.info(
+            `Skipping empty objectsToOptimize for ${databaseInstanceId} in ${region}: ${droppedConfigs.join(', ')}`
+        );
     }
 
     const {
@@ -1037,7 +1109,7 @@ async function optimizeStorage(params: OptimizeStorageParams & SSMDocument, bulk
             instanceName,
             sqlAuthEnabled: sqlAuthEnabled || false,
             svmName,
-            optimizationTargets,
+            optimizationTargets: actionableTargets,
             awsAccountId,
             instanceMetadata,
             documentName,

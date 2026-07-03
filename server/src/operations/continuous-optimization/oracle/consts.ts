@@ -146,7 +146,7 @@ const STORAGE_EFFICIENCIES_CONFIG_DETAILS: CombinedVolumeConfigDetails = {
         recommendedByDataCategory: {
             'log-files': COMPRESSION_RECOMMENDATIONS['log-files'],
             'non-log-files': COMPRESSION_RECOMMENDATIONS.others,
-            mixed: 'varies'
+            mixed: COMPRESSION_RECOMMENDATIONS['log-files']
         }
     },
     deduplication: {
@@ -154,7 +154,7 @@ const STORAGE_EFFICIENCIES_CONFIG_DETAILS: CombinedVolumeConfigDetails = {
         recommendedByDataCategory: {
             'log-files': DEDUPLICATION_RECOMMENDATIONS['log-files'][0],
             'non-log-files': DEDUPLICATION_RECOMMENDATIONS.others[0],
-            mixed: 'varies'
+            mixed: DEDUPLICATION_RECOMMENDATIONS['log-files'][0]
         },
         recommendedNote: '`both` is also acceptable for non-log-files volumes'
     },
@@ -163,7 +163,7 @@ const STORAGE_EFFICIENCIES_CONFIG_DETAILS: CombinedVolumeConfigDetails = {
         recommendedByDataCategory: {
             'log-files': COMPACTION_RECOMMENDATIONS['log-files'],
             'non-log-files': COMPACTION_RECOMMENDATIONS.others,
-            mixed: 'varies'
+            mixed: COMPACTION_RECOMMENDATIONS['log-files']
         }
     }
 };
@@ -176,7 +176,7 @@ const TIERING_TCO_OPTIMIZATION_CONFIG_DETAILS: CombinedVolumeConfigDetails = {
             'data-control-files': TIERING_POLICY_RECOMMENDATIONS['data-control-files'],
             'log-files': TIERING_POLICY_RECOMMENDATIONS['log-files'],
             'archive-log-files': TIERING_POLICY_RECOMMENDATIONS['archive-log-files'],
-            mixed: 'varies'
+            mixed: TIERING_POLICY_RECOMMENDATIONS['log-files']
         }
     },
     'tiering-min-cooling-days': {
@@ -190,6 +190,12 @@ const TIERING_TCO_OPTIMIZATION_CONFIG_DETAILS: CombinedVolumeConfigDetails = {
 
 // Golden-config ids handled in the appended combined block of getVolumeConfigDrift (skipped by the legacy map loop).
 const COMBINED_VOLUME_CONFIG_IDS = ['storage-efficiencies', 'tiering-tco-optimization'] as const;
+
+const getArchiveLogTieringMinCoolingDaysRecommendation = (
+    isArchiveLogVolume: boolean,
+    fraEnabled?: string,
+    rmanCompressionEnabled?: string
+) => (isArchiveLogVolume && fraEnabled === 'yes' && rmanCompressionEnabled === 'no' ? '14' : '2');
 
 export {
     NETAPP_HOST_UTILITIES_RELATIVE_PATH,
@@ -211,5 +217,6 @@ export {
     STORAGE_EFFICIENCIES_CONFIG_DETAILS,
     TIERING_TCO_OPTIMIZATION_CONFIG_DETAILS,
     COMBINED_VOLUME_CONFIG_IDS,
-    COMBINED_SUB_PARAMETER_TO_PROPERTY
+    COMBINED_SUB_PARAMETER_TO_PROPERTY,
+    getArchiveLogTieringMinCoolingDaysRecommendation
 };

@@ -90,7 +90,11 @@ const lunConfigData = MSSQL_GOLDEN_CONFIG.filter(
 );
 const osConfigData = MSSQL_GOLDEN_CONFIG.filter(
     e =>
-        e.type === 'storage' && e.subType === 'configuration' && e.resourceType !== 'Volume' && e.resourceType !== 'Lun'
+        e.type === 'storage' &&
+        e.subType === 'configuration' &&
+        e.resourceType !== 'Volume' &&
+        e.resourceType !== 'Lun' &&
+        e.id !== OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT
 );
 const layoutConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'layout');
 const sizingConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'sizing');

@@ -7,6 +7,7 @@ import { createResource, deleteResource, upsertDatabaseInstance } from '../../..
 import { bulkUpsertOfflineAssessments } from '../../../../src/lib/database/offline-assessment';
 import { fetchOracleOfflineAssessment } from '../../../../src/operations/continuous-optimization/oracle/offline-assessment-operations';
 import { OracleGenericParameterDriftResponseType } from '../../../../src/routes/types/oracle-continuous-optimization.types';
+import { AssessmentStatus, AwsWellArchitecturedPillars } from '../../../../src/utils/continous-optimization-consts';
 
 const resourceId = 'offline-oracle-resource';
 const fsxId = 'fs-offline-oracle-1';
@@ -39,6 +40,72 @@ const rawdataFor = () => ({
     },
     instanceLevelAssessment: {}
 });
+
+const storageRawdataFor = () => ({
+    ...rawdataFor(),
+    instanceLevelAssessment: {
+        fraEnabled: 'no',
+        rmanCompressionEnabled: 'no',
+        luns: {
+            error: '',
+            data: [
+                {
+                    name: '/vol/data_vol/lun1',
+                    spaceReservationEnabled: true,
+                    spaceAllocationAllocated: true
+                }
+            ]
+        },
+        volumes: {
+            error: '',
+            data: [
+                {
+                    name: 'data_vol',
+                    uuid: 'uuid-data',
+                    compressionType: 'adaptive',
+                    compression: 'adaptive',
+                    deduplication: 'inline',
+                    compaction: 'enabled',
+                    tieringPolicy: 'none',
+                    tieringMinCoolingDays: '',
+                    fractionalReserve: '0',
+                    spaceGuarantee: 'none',
+                    autosize: 'on',
+                    autosizeMode: 'grow',
+                    snapshotPolicy: 'none',
+                    snapshotCopyReserve: '0',
+                    snapshotAutodelete: 'true',
+                    snapshotDeleteOrder: 'oldest_first',
+                    spaceMgmtTryFirst: 'volume_grow'
+                }
+            ],
+            filesystemId: fsxId
+        }
+    }
+});
+
+const staleLegacyAssessmentItem = (id: string, name: string) => ({
+    id,
+    name,
+    status: AssessmentStatus.NOT_OPTIMIZED,
+    recommended: '0',
+    severity: 'Critical',
+    recommendation: 'Legacy cached finding',
+    categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION],
+    objectsInViolation: ['data_vol'],
+    totalObjectsAssessed: 1,
+    totalObjectsInViolation: 1
+});
+
+const staleLegacyAssessmentResults = {
+    assessments: [
+        staleLegacyAssessmentItem('fractional-reserve', 'Fractional reserve'),
+        staleLegacyAssessmentItem('space-reservation-enabled', 'Space reservation enabled'),
+        staleLegacyAssessmentItem('compression', 'Compression')
+    ],
+    dismissedConfigurations: [],
+    metadata: { storageProtocol: 'iSCSI', fileSystemId: fsxId }
+};
 
 const mappedVolumesFor = (protocol: 'iSCSI' | 'NFS') => ({
     fileSystemId: fsxId,
@@ -217,5 +284,38 @@ describe('fetchOracleOfflineAssessment', () => {
         expect(snapcenter.name).toBeDefined();
         expect(snapcenter.status).toBe('not-optimized');
         expect(snapcenter.totalObjectsInViolation).toBe(1);
+    });
+
+    it('should recalculate from rawdata and not return stale legacy standalone assessment ids', async () => {
+        const staleInstanceId = 'ORASTALE';
+        await upsertDatabaseInstance(ACCOUNT_ID, createInstance(staleInstanceId, 'iSCSI'));
+        await bulkUpsertOfflineAssessments([
+            {
+                accountId: ACCOUNT_ID,
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                resourceId,
+                databaseInstanceId: staleInstanceId,
+                databaseType: DATABASE_TYPE.oracle,
+                rawdata: storageRawdataFor(),
+                mappedOntapVolumes: mappedVolumesFor('iSCSI'),
+                metadata: metadataFor(staleInstanceId),
+                assessmentResults: staleLegacyAssessmentResults
+            }
+        ]);
+
+        const response = await fetchOracleOfflineAssessment(
+            ACCOUNT_ID,
+            resourceId,
+            staleInstanceId,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION
+        );
+
+        const ids = response.assessments.map(assessment => assessment.id);
+        expect(ids).toContain('block-device-space-management');
+        expect(ids).not.toContain('fractional-reserve');
+        expect(ids).not.toContain('space-reservation-enabled');
+        expect(ids).not.toContain('compression');
     });
 });
