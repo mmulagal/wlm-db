@@ -18,6 +18,8 @@ const BASE_ASSESSMENT_DATA: MssqlSnapcenterAssessmentData = {
     errorMessage: ''
 };
 
+const EMPTY_RELEVANT_VOLUME_IDS = { dataVolumeIds: [] as string[], tempdbVolumeIds: [] as string[] };
+
 /** Demo-aligned volume IDs/names with protected snapshots — for drift tests only, not demo seed data. */
 const OPTIMIZED_SNAPCENTER_ASSESSMENT_STUB: MssqlSnapcenterAssessmentData = {
     volumes: [
@@ -67,27 +69,30 @@ function assertSuccessfulDrift(
 
 describe('calculateSnapCenterDrift (MSSQL)', () => {
     it('should return optimized when all mapped volumes have SnapCenter snapshots', () => {
-        const drift = calculateSnapCenterDrift({
-            ...BASE_ASSESSMENT_DATA,
-            volumes: [
-                {
-                    svmId: 'svm-1',
-                    svmName: 'svm-a',
-                    volumeId: 'vol-1',
-                    volumeName: 'data-vol-1',
-                    hasSnapcenterSnapshot: true,
-                    foundInSnapcenterLogs: false
-                },
-                {
-                    svmId: 'svm-1',
-                    svmName: 'svm-a',
-                    volumeId: 'vol-2',
-                    volumeName: 'log-vol-1',
-                    hasSnapcenterSnapshot: true,
-                    foundInSnapcenterLogs: false
-                }
-            ]
-        });
+        const drift = calculateSnapCenterDrift(
+            {
+                ...BASE_ASSESSMENT_DATA,
+                volumes: [
+                    {
+                        svmId: 'svm-1',
+                        svmName: 'svm-a',
+                        volumeId: 'vol-1',
+                        volumeName: 'data-vol-1',
+                        hasSnapcenterSnapshot: true,
+                        foundInSnapcenterLogs: false
+                    },
+                    {
+                        svmId: 'svm-1',
+                        svmName: 'svm-a',
+                        volumeId: 'vol-2',
+                        volumeName: 'log-vol-1',
+                        hasSnapcenterSnapshot: true,
+                        foundInSnapcenterLogs: false
+                    }
+                ]
+            },
+            { dataVolumeIds: ['vol-1', 'vol-2'], tempdbVolumeIds: [] }
+        );
 
         assertSuccessfulDrift(drift);
         expect(drift.status).toBe(AssessmentStatus.OPTIMIZED);
@@ -99,27 +104,30 @@ describe('calculateSnapCenterDrift (MSSQL)', () => {
     });
 
     it('should return not-optimized with volume violations when snapshots are missing', () => {
-        const drift = calculateSnapCenterDrift({
-            ...BASE_ASSESSMENT_DATA,
-            volumes: [
-                {
-                    svmId: 'svm-1',
-                    svmName: 'svm-a',
-                    volumeId: 'vol-1',
-                    volumeName: 'data-vol-1',
-                    hasSnapcenterSnapshot: false,
-                    foundInSnapcenterLogs: false
-                },
-                {
-                    svmId: 'svm-1',
-                    svmName: 'svm-a',
-                    volumeId: 'vol-2',
-                    volumeName: 'log-vol-1',
-                    hasSnapcenterSnapshot: true,
-                    foundInSnapcenterLogs: false
-                }
-            ]
-        });
+        const drift = calculateSnapCenterDrift(
+            {
+                ...BASE_ASSESSMENT_DATA,
+                volumes: [
+                    {
+                        svmId: 'svm-1',
+                        svmName: 'svm-a',
+                        volumeId: 'vol-1',
+                        volumeName: 'data-vol-1',
+                        hasSnapcenterSnapshot: false,
+                        foundInSnapcenterLogs: false
+                    },
+                    {
+                        svmId: 'svm-1',
+                        svmName: 'svm-a',
+                        volumeId: 'vol-2',
+                        volumeName: 'log-vol-1',
+                        hasSnapcenterSnapshot: true,
+                        foundInSnapcenterLogs: false
+                    }
+                ]
+            },
+            { dataVolumeIds: ['vol-1'], tempdbVolumeIds: [] }
+        );
 
         assertSuccessfulDrift(drift);
         expect(drift.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
@@ -137,30 +145,33 @@ describe('calculateSnapCenterDrift (MSSQL)', () => {
     });
 
     it('should use plugin and log evidence as protection fallback', () => {
-        const drift = calculateSnapCenterDrift({
-            ...BASE_ASSESSMENT_DATA,
-            standaloneCheck: {
-                pluginServiceRunning: true
-            },
-            volumes: [
-                {
-                    svmId: 'svm-1',
-                    svmName: 'svm-a',
-                    volumeId: 'vol-1',
-                    volumeName: 'data-vol-1',
-                    hasSnapcenterSnapshot: false,
-                    foundInSnapcenterLogs: false
+        const drift = calculateSnapCenterDrift(
+            {
+                ...BASE_ASSESSMENT_DATA,
+                standaloneCheck: {
+                    pluginServiceRunning: true
                 },
-                {
-                    svmId: 'svm-1',
-                    svmName: 'svm-a',
-                    volumeId: 'vol-2',
-                    volumeName: 'log-vol-1',
-                    hasSnapcenterSnapshot: false,
-                    foundInSnapcenterLogs: true
-                }
-            ]
-        });
+                volumes: [
+                    {
+                        svmId: 'svm-1',
+                        svmName: 'svm-a',
+                        volumeId: 'vol-1',
+                        volumeName: 'data-vol-1',
+                        hasSnapcenterSnapshot: false,
+                        foundInSnapcenterLogs: false
+                    },
+                    {
+                        svmId: 'svm-1',
+                        svmName: 'svm-a',
+                        volumeId: 'vol-2',
+                        volumeName: 'log-vol-1',
+                        hasSnapcenterSnapshot: false,
+                        foundInSnapcenterLogs: true
+                    }
+                ]
+            },
+            { dataVolumeIds: ['vol-1'], tempdbVolumeIds: [] }
+        );
 
         assertSuccessfulDrift(drift);
         expect(drift.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
@@ -180,24 +191,27 @@ describe('calculateSnapCenterDrift (MSSQL)', () => {
     it('should return generic error when assessment data is missing', () => {
         const expectedErrorMessage = GENERIC_ASSESSMENT_ERROR_MESSAGE(AssessmentCategories.SNAPCENTER_SNAPSHOT);
 
-        const undefinedDrift = calculateSnapCenterDrift(undefined);
+        const undefinedDrift = calculateSnapCenterDrift(undefined, EMPTY_RELEVANT_VOLUME_IDS);
         expect(undefinedDrift).toBeDefined();
         expect(undefinedDrift && 'errorMessage' in undefinedDrift).toBe(true);
         expect(undefinedDrift && 'errorMessage' in undefinedDrift && undefinedDrift.errorMessage).toBe(
             expectedErrorMessage
         );
 
-        const emptyDrift = calculateSnapCenterDrift({} as MssqlSnapcenterAssessmentData);
+        const emptyDrift = calculateSnapCenterDrift({} as MssqlSnapcenterAssessmentData, EMPTY_RELEVANT_VOLUME_IDS);
         expect(emptyDrift).toBeDefined();
         expect(emptyDrift && 'errorMessage' in emptyDrift).toBe(true);
         expect(emptyDrift && 'errorMessage' in emptyDrift && emptyDrift.errorMessage).toBe(expectedErrorMessage);
     });
 
     it('should return error item when assessment data contains errorMessage', () => {
-        const drift = calculateSnapCenterDrift({
-            ...BASE_ASSESSMENT_DATA,
-            errorMessage: 'SSM execution failed'
-        });
+        const drift = calculateSnapCenterDrift(
+            {
+                ...BASE_ASSESSMENT_DATA,
+                errorMessage: 'SSM execution failed'
+            },
+            EMPTY_RELEVANT_VOLUME_IDS
+        );
 
         expect(drift).toBeDefined();
         expect(drift && 'errorMessage' in drift).toBe(true);
@@ -205,7 +219,7 @@ describe('calculateSnapCenterDrift (MSSQL)', () => {
     });
 
     it('should return not-optimized when volumes array is empty', () => {
-        const drift = calculateSnapCenterDrift({ ...BASE_ASSESSMENT_DATA, volumes: [] });
+        const drift = calculateSnapCenterDrift({ ...BASE_ASSESSMENT_DATA, volumes: [] }, EMPTY_RELEVANT_VOLUME_IDS);
 
         assertSuccessfulDrift(drift);
         expect(drift.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
@@ -214,7 +228,10 @@ describe('calculateSnapCenterDrift (MSSQL)', () => {
     });
 
     it('should return optimized when all volumes in assessment payload are protected', () => {
-        const drift = calculateSnapCenterDrift(OPTIMIZED_SNAPCENTER_ASSESSMENT_STUB);
+        const drift = calculateSnapCenterDrift(OPTIMIZED_SNAPCENTER_ASSESSMENT_STUB, {
+            dataVolumeIds: OPTIMIZED_SNAPCENTER_ASSESSMENT_STUB.volumes.map(v => v.volumeId),
+            tempdbVolumeIds: []
+        });
 
         assertSuccessfulDrift(drift);
         expect(drift.id).toBe('snapcenter-snapshot');
@@ -223,8 +240,114 @@ describe('calculateSnapCenterDrift (MSSQL)', () => {
         expect(drift.totalObjectsInViolation).toBe(0);
     });
 
+    it('should exclude tempdb volumes from assessment even when unprotected', () => {
+        const drift = calculateSnapCenterDrift(
+            {
+                ...BASE_ASSESSMENT_DATA,
+                volumes: [
+                    {
+                        svmId: 'svm-1',
+                        svmName: 'svm-a',
+                        volumeId: 'vol-data',
+                        volumeName: 'data-vol-1',
+                        hasSnapcenterSnapshot: true,
+                        foundInSnapcenterLogs: false
+                    },
+                    {
+                        svmId: 'svm-1',
+                        svmName: 'svm-a',
+                        volumeId: 'vol-tempdb',
+                        volumeName: 'tempdb-vol-1',
+                        hasSnapcenterSnapshot: false,
+                        foundInSnapcenterLogs: false
+                    }
+                ]
+            },
+            { dataVolumeIds: ['vol-data'], tempdbVolumeIds: ['vol-tempdb'] }
+        );
+
+        assertSuccessfulDrift(drift);
+        expect(drift.status).toBe(AssessmentStatus.OPTIMIZED);
+        expect(drift.totalObjectsAssessed).toBe(1);
+        expect(drift.totalObjectsInViolation).toBe(0);
+        expect(drift.objectsInViolation).toEqual([]);
+    });
+
+    it('should report no violations when data volumes are protected even if a log volume is not', () => {
+        const drift = calculateSnapCenterDrift(
+            {
+                ...BASE_ASSESSMENT_DATA,
+                volumes: [
+                    {
+                        svmId: 'svm-1',
+                        svmName: 'svm-a',
+                        volumeId: 'vol-data',
+                        volumeName: 'data-vol-1',
+                        hasSnapcenterSnapshot: true,
+                        foundInSnapcenterLogs: false
+                    },
+                    {
+                        svmId: 'svm-1',
+                        svmName: 'svm-a',
+                        volumeId: 'vol-log',
+                        volumeName: 'log-vol-1',
+                        hasSnapcenterSnapshot: false,
+                        foundInSnapcenterLogs: false
+                    }
+                ]
+            },
+            { dataVolumeIds: ['vol-data'], tempdbVolumeIds: [] }
+        );
+
+        assertSuccessfulDrift(drift);
+        expect(drift.status).toBe(AssessmentStatus.OPTIMIZED);
+        expect(drift.totalObjectsAssessed).toBe(2);
+        expect(drift.totalObjectsInViolation).toBe(0);
+        expect(drift.objectsInViolation).toEqual([]);
+        expect(drift.violationDetails).toEqual([]);
+    });
+
+    it('should report violations when a data volume is unprotected', () => {
+        const drift = calculateSnapCenterDrift(
+            {
+                ...BASE_ASSESSMENT_DATA,
+                volumes: [
+                    {
+                        svmId: 'svm-1',
+                        svmName: 'svm-a',
+                        volumeId: 'vol-data',
+                        volumeName: 'data-vol-1',
+                        hasSnapcenterSnapshot: false,
+                        foundInSnapcenterLogs: false
+                    },
+                    {
+                        svmId: 'svm-1',
+                        svmName: 'svm-a',
+                        volumeId: 'vol-log',
+                        volumeName: 'log-vol-1',
+                        hasSnapcenterSnapshot: false,
+                        foundInSnapcenterLogs: false
+                    }
+                ]
+            },
+            { dataVolumeIds: ['vol-data'], tempdbVolumeIds: [] }
+        );
+
+        assertSuccessfulDrift(drift);
+        expect(drift.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+        expect(drift.totalObjectsAssessed).toBe(2);
+        expect(drift.totalObjectsInViolation).toBe(2);
+        expect(drift.objectsInViolation).toEqual([
+            { ontapVolumeName: 'data-vol-1', ontapVolumeUuid: 'vol-data' },
+            { ontapVolumeName: 'log-vol-1', ontapVolumeUuid: 'vol-log' }
+        ]);
+    });
+
     it('should return not-optimized for demo-shaped unprotected volume payload', () => {
-        const drift = calculateSnapCenterDrift(UNOPTIMIZED_SNAPCENTER_ASSESSMENT_STUB);
+        const drift = calculateSnapCenterDrift(UNOPTIMIZED_SNAPCENTER_ASSESSMENT_STUB, {
+            dataVolumeIds: UNOPTIMIZED_SNAPCENTER_ASSESSMENT_STUB.volumes.map(v => v.volumeId),
+            tempdbVolumeIds: []
+        });
 
         assertSuccessfulDrift(drift);
         expect(drift.status).toBe(AssessmentStatus.NOT_OPTIMIZED);

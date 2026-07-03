@@ -37,6 +37,11 @@ interface MssqlSnapcenterAssessmentData {
     errorMessage: string;
 }
 
+interface MssqlSnapCenterRelevantVolumeIds {
+    dataVolumeIds: string[];
+    tempdbVolumeIds: string[];
+}
+
 const logger = getLogger();
 
 async function initiateSnapCenterAssessmentCollection(
@@ -147,7 +152,8 @@ async function initiateSnapCenterAssessmentCollection(
 }
 
 function calculateSnapCenterDrift(
-    assessmentData?: MssqlSnapcenterAssessmentData
+    assessmentData: MssqlSnapcenterAssessmentData | undefined,
+    relevantVolumeIds: MssqlSnapCenterRelevantVolumeIds
 ): AssessmentItemType | AssessmentErrorItemType | undefined {
     const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'snapcenter-snapshot');
 
@@ -163,25 +169,36 @@ function calculateSnapCenterDrift(
         return { ...goldenConfig, errorMessage };
     }
 
+    const { dataVolumeIds, tempdbVolumeIds } = relevantVolumeIds;
+    const tempdbVolumeIdSet = new Set(tempdbVolumeIds);
+    // tempdb is transient and doesn't need application-consistent protection.
+    const assessableVolumes = volumes.filter(v => !tempdbVolumeIdSet.has(v.volumeId));
+
     const { pluginServiceRunning = false } = standaloneCheck || {};
 
     const isVolumeProtected = (v: MssqlSnapcenterVolumeResult) =>
         v.hasSnapcenterSnapshot || (pluginServiceRunning && v.foundInSnapcenterLogs);
 
-    const unprotectedVolumes = volumes.filter(v => !isVolumeProtected(v));
-    const isOptimized = volumes.length > 0 && unprotectedVolumes.length === 0;
+    const unprotectedVolumes = assessableVolumes.filter(v => !isVolumeProtected(v));
+
+    const dataVolumeIdSet = new Set(dataVolumeIds);
+    // Only report a violation when a data volume is unprotected; a log-only violation is not actionable on its own.
+    const hasDataVolumeInViolation = unprotectedVolumes.some(v => dataVolumeIdSet.has(v.volumeId));
+    const violatingVolumes = hasDataVolumeInViolation ? unprotectedVolumes : [];
+
+    const isOptimized = assessableVolumes.length > 0 && violatingVolumes.length === 0;
 
     return {
         ...goldenConfig,
         recommended: goldenConfig.recommended ?? '',
         status: isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-        totalObjectsAssessed: volumes.length,
-        totalObjectsInViolation: unprotectedVolumes.length,
-        objectsInViolation: unprotectedVolumes.map(v => ({
+        totalObjectsAssessed: assessableVolumes.length,
+        totalObjectsInViolation: violatingVolumes.length,
+        objectsInViolation: violatingVolumes.map(v => ({
             ontapVolumeName: v.volumeName,
             ontapVolumeUuid: v.volumeId
         })),
-        violationDetails: unprotectedVolumes.map(v => ({
+        violationDetails: violatingVolumes.map(v => ({
             objectName: v.volumeName ?? '',
             objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             value: 'SnapCenter protection not configured',
@@ -190,4 +207,9 @@ function calculateSnapCenterDrift(
     };
 }
 
-export { initiateSnapCenterAssessmentCollection, calculateSnapCenterDrift, type MssqlSnapcenterAssessmentData };
+export {
+    initiateSnapCenterAssessmentCollection,
+    calculateSnapCenterDrift,
+    type MssqlSnapcenterAssessmentData,
+    type MssqlSnapCenterRelevantVolumeIds
+};

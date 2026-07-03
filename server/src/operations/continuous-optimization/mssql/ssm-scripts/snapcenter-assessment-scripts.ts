@@ -29,9 +29,11 @@ function Test-SnapCenterPluginRunning {
 
 function Get-SnapCenterLogPaths {
     # Scan SMCore logs from the last 48 hours (same window as Oracle)
-    $logPath = 'C:\\Program Files\\NetApp\\SnapCenter\\SMCore\\log'
-    if (Test-Path -LiteralPath $logPath) { return @($logPath) }
-    return @()
+    $candidatePaths = @(
+        'C:\\Program Files\\NetApp\\SnapCenter\\SMCore\\log',
+        'C:\\Program Files\\NetApp\\SMCore\\log'
+    )
+    return @($candidatePaths | Where-Object { Test-Path -LiteralPath $_ })
 }
 
 function Test-SnapCenterLogsForVolumes {

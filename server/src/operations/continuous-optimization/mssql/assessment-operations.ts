@@ -74,7 +74,8 @@ import {
 import {
     calculateSnapCenterDrift,
     initiateSnapCenterAssessmentCollection,
-    type MssqlSnapcenterAssessmentData
+    type MssqlSnapcenterAssessmentData,
+    type MssqlSnapCenterRelevantVolumeIds
 } from './snapcenter-assessment-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
 import { getInstanceDetails } from '../../database-hosts-operations';
@@ -237,6 +238,26 @@ function hostLevelDriftData(
     ];
 }
 
+function getSnapCenterRelevantVolumeIds(
+    instanceVolumeMapping?: MappedOnTapVolumeResponse[]
+): MssqlSnapCenterRelevantVolumeIds {
+    const volumeDBMap = Object.values(instanceVolumeMapping || []).flatMap(entry => entry?.volumeDBMap || []);
+
+    const tempdbVolumeIds = [
+        ...new Set(volumeDBMap.filter(v => v.databaseName === 'tempdb').map(v => v.ontapVolumeuuid))
+    ];
+    const tempdbVolumeIdSet = new Set(tempdbVolumeIds);
+    const dataVolumeIds = [
+        ...new Set(
+            volumeDBMap
+                .filter(v => !tempdbVolumeIdSet.has(v.ontapVolumeuuid) && !isEmpty(v.dataLunUuids))
+                .map(v => v.ontapVolumeuuid)
+        )
+    ];
+
+    return { dataVolumeIds, tempdbVolumeIds };
+}
+
 async function fetchMssqlDriftAssessment(
     accountId: string,
     credentialsId: string,
@@ -387,7 +408,12 @@ async function fetchMssqlDriftAssessment(
             ? calculateSnapCenterDrift(
                   assessmentDataMap[AssessmentCategories.SNAPCENTER_SNAPSHOT] as
                       | MssqlSnapcenterAssessmentData
-                      | undefined
+                      | undefined,
+                  getSnapCenterRelevantVolumeIds(
+                      assessmentDataMap[AssessmentCategories.MAPPED_ONTAP_VOLUMES] as
+                          | MappedOnTapVolumeResponse[]
+                          | undefined
+                  )
               )
             : undefined,
         assessmentFlags.compute ||
