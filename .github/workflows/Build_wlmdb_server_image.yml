@@ -122,7 +122,7 @@ jobs:
     - name: Invoke workflow in another repo with inputs
       uses: benc-uk/workflow-dispatch@v1
       with:
-          workflow: Upgrade_K8S_Service-Helm4.yml
+          workflow: New-Upgrade_K8S_Service-Helm4.yml
           repo: TLVDevOps/eks-cluster-automation
           inputs: '{"service_name": "wlmdb", "image_version": "${{ steps.gen-tag.outputs.TAG }}"}'
     # Required when using the `repo` option. Either a PAT or a token generated from the GitHub app or CLI
