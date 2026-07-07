@@ -1,5 +1,7 @@
 export {
     getConfigEntry,
+    getCategoryPriority,
+    sortConfigsByPriority,
     hasInnerPage,
     getButtonText,
     isViewOnlyConfig,

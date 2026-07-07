@@ -18,7 +18,8 @@ import {
     WellArchitectedCategory,
     ASSESSMENT_CONFIG_CATALOG_KEYS,
     ASSESSMENT_GROUPED_CONFIG_KEYS,
-    WIZARD_TYPE
+    WIZARD_TYPE,
+    WELL_ARCHITECTED_CATEGORIES
 } from '../../utils/consts';
 import {
     formatFractionalNumber,
@@ -38,6 +39,7 @@ import {
     getDismissedConfig,
     hasAssessmentTimestamp
 } from '../WellArchitectedTab/assessmentFormatUtils';
+import { getCategoryPriority } from '../../utils/configRegistry';
 
 type CategoryCounters = {
     [Category in WellArchitectedCategory]: { optimized: number; total: number };
@@ -1181,6 +1183,62 @@ const processInstanceForGroupedConfigs = (
     });
 };
 
+/**
+ * Sort configuration IDs by category-specific priorities for consistent ordering.
+ * Configurations are grouped by category (storage, compute, application, resiliency, cloning)
+ * and sorted within each category by their respective priority field.
+ *
+ * @param configIds - Array of configuration IDs to sort
+ * @param dbType - Database type (MSSQL or Oracle)
+ * @param catalog - Catalog object containing category information from backend (config.type field)
+ */
+const sortConfigIdsByPriority = (configIds: string[], dbType: string, catalog: Record<string, any>): string[] => {
+    if (!configIds || configIds.length === 0) {
+        return [];
+    }
+
+    // Group configs by category (from backend data)
+    const grouped: Record<string, string[]> = {
+        [WELL_ARCHITECTED_CATEGORIES.STORAGE]: [],
+        [WELL_ARCHITECTED_CATEGORIES.COMPUTE]: [],
+        [WELL_ARCHITECTED_CATEGORIES.APPLICATION]: [],
+        [WELL_ARCHITECTED_CATEGORIES.RESILIENCY]: [],
+        [WELL_ARCHITECTED_CATEGORIES.CLONING]: [],
+        unknown: []
+    };
+
+    configIds.forEach(configId => {
+        // Get category from backend catalog data (type field)
+        const catalogEntry = catalog[configId];
+        const category = catalogEntry?.type?.toLowerCase() || 'unknown';
+
+        if (grouped[category]) {
+            grouped[category].push(configId);
+        } else {
+            grouped.unknown.push(configId);
+        }
+    });
+
+    // Sort within each category by category-specific priority from config registry
+    Object.keys(grouped).forEach(category => {
+        grouped[category].sort((a, b) => {
+            const priorityA = getCategoryPriority(a, category, dbType);
+            const priorityB = getCategoryPriority(b, category, dbType);
+            return priorityA - priorityB;
+        });
+    });
+
+    // Concatenate in category order: storage, compute, application, resiliency, cloning, unknown
+    return [
+        ...grouped[WELL_ARCHITECTED_CATEGORIES.STORAGE],
+        ...grouped[WELL_ARCHITECTED_CATEGORIES.COMPUTE],
+        ...grouped[WELL_ARCHITECTED_CATEGORIES.APPLICATION],
+        ...grouped[WELL_ARCHITECTED_CATEGORIES.RESILIENCY],
+        ...grouped[WELL_ARCHITECTED_CATEGORIES.CLONING],
+        ...grouped.unknown
+    ];
+};
+
 const buildAssessmentGroupedByConfigurations = (assessmentData: any, oracleAssessmentData?: any) => {
     const state = store.getState();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
@@ -1244,6 +1302,19 @@ const buildAssessmentGroupedByConfigurations = (assessmentData: any, oracleAsses
             }
         });
     });
+
+    // Sort config IDs by category-specific priorities for consistent ordering
+    // Pass the combined catalog which contains category information from backend (type field)
+    result.mssqlConfigIds = sortConfigIdsByPriority(
+        result.mssqlConfigIds,
+        DBType.MSSQL,
+        result[ASSESSMENT_CONFIG_CATALOG_KEYS.COMBINED]
+    );
+    result.oracleConfigIds = sortConfigIdsByPriority(
+        result.oracleConfigIds,
+        DBType.ORACLE,
+        result[ASSESSMENT_CONFIG_CATALOG_KEYS.COMBINED]
+    );
 
     return result;
 };

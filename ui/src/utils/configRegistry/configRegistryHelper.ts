@@ -9,7 +9,13 @@
  */
 
 import { t } from 'i18next';
-import { ASSESSMENT_CONFIG_IDS, DBType, OPTIMIZE_PAYLOAD_TYPES, WELL_ARCHITECTED_STATUS } from '../consts';
+import {
+    ASSESSMENT_CONFIG_IDS,
+    DBType,
+    OPTIMIZE_PAYLOAD_TYPES,
+    WELL_ARCHITECTED_CATEGORIES,
+    WELL_ARCHITECTED_STATUS
+} from '../consts';
 import { normalizeResourceTypeCasing } from '../resourceUtils';
 import mssqlRegistry from './mssqlConfigRegistry.json';
 import oracleRegistry from './oracleConfigRegistry.json';
@@ -458,6 +464,51 @@ export interface DialogContentConfig {
  */
 export interface ConfigEntry {
     /**
+     * Priority for Storage category configurations.
+     * Lower numbers appear first. Configurations without this field default to 999 (appear last).
+     *
+     * @example 1 - First storage config
+     * @default 999 (appears last in Storage category)
+     */
+    storagePriority?: number;
+
+    /**
+     * Priority for Compute category configurations.
+     * Lower numbers appear first. Configurations without this field default to 999 (appear last).
+     *
+     * @example 1 - First compute config
+     * @default 999 (appears last in Compute category)
+     */
+    computePriority?: number;
+
+    /**
+     * Priority for Application category configurations.
+     * Lower numbers appear first. Configurations without this field default to 999 (appear last).
+     *
+     * @example 1 - First application config
+     * @default 999 (appears last in Application category)
+     */
+    applicationPriority?: number;
+
+    /**
+     * Priority for Resiliency category configurations.
+     * Lower numbers appear first. Configurations without this field default to 999 (appear last).
+     *
+     * @example 1 - First resiliency config
+     * @default 999 (appears last in Resiliency category)
+     */
+    resiliencyPriority?: number;
+
+    /**
+     * Priority for Cloning category configurations.
+     * Lower numbers appear first. Configurations without this field default to 999 (appear last).
+     *
+     * @example 1 - First cloning config
+     * @default 999 (appears last in Cloning category)
+     */
+    cloningPriority?: number;
+
+    /**
      * Whether this finding has a dedicated inner page with detailed table view.
      * When true, clicking the card opens OptimizeInnerPage with impacted resources table.
      * When false, the card is view-only and opens a simple dialog with details.
@@ -573,6 +624,50 @@ const getRegistry = (dbType: string): RegistryMap => registries[dbType] || (mssq
 /** Retrieve the full config entry for a given configId and engine type. */
 export const getConfigEntry = (configId: string, dbType: string): ConfigEntry | undefined =>
     getRegistry(dbType)[configId];
+
+/**
+ * Get the category-specific priority value for a configuration.
+ * Returns the appropriate priority field based on the category.
+ *
+ * @param configId - Configuration ID
+ * @param category - Well-Architected category (storage, compute, application, resiliency, cloning)
+ * @param dbType - Database type (MSSQL or Oracle)
+ * @returns Priority value (lower numbers appear first), defaults to 999 if not found
+ */
+export const getCategoryPriority = (configId: string, category: string, dbType: string): number => {
+    const configEntry = getConfigEntry(configId, dbType);
+
+    switch (category) {
+        case WELL_ARCHITECTED_CATEGORIES.STORAGE:
+            return configEntry?.storagePriority ?? 999;
+        case WELL_ARCHITECTED_CATEGORIES.COMPUTE:
+            return configEntry?.computePriority ?? 999;
+        case WELL_ARCHITECTED_CATEGORIES.APPLICATION:
+            return configEntry?.applicationPriority ?? 999;
+        case WELL_ARCHITECTED_CATEGORIES.RESILIENCY:
+            return configEntry?.resiliencyPriority ?? 999;
+        case WELL_ARCHITECTED_CATEGORIES.CLONING:
+            return configEntry?.cloningPriority ?? 999;
+        default:
+            return 999;
+    }
+};
+
+/**
+ * Sort configurations within a category by their category-specific priority.
+ * Used to maintain consistent ordering across all Well-Architected views.
+ *
+ * @param configs - Array of config objects with 'key' property (configId)
+ * @param category - Well-Architected category
+ * @param dbType - Database type (MSSQL or Oracle)
+ * @returns Sorted array (lowest priority first)
+ */
+export const sortConfigsByPriority = <T extends { key: string }>(configs: T[], category: string, dbType: string): T[] =>
+    configs.sort((a, b) => {
+        const priorityA = getCategoryPriority(a.key, category, dbType);
+        const priorityB = getCategoryPriority(b.key, category, dbType);
+        return priorityA - priorityB;
+    });
 
 // ============================================================================
 // Defaults

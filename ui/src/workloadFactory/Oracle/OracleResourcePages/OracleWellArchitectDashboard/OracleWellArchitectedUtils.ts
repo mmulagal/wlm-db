@@ -44,7 +44,7 @@ import {
 } from '../../../../utils/utilityFunctions';
 import { handleOptimizeStorageJob } from '../../../GetWell/GetWellUtils';
 import { createFailedOptimizationMessage, fixingProcessNotification } from './OracleCardComponent/OracleCardComponent';
-import { getOptimizeApiConfig } from '../../../../utils/configRegistry';
+import { getOptimizeApiConfig, sortConfigsByPriority } from '../../../../utils/configRegistry';
 
 // Factory function for creating base block structure
 // Helper functions for card formatting
@@ -78,6 +78,11 @@ export const groupOracleConfigurationsByCategory = (cardData: any): Record<strin
                 });
             }
         }
+    });
+
+    // Sort configurations within each category by category-specific priority
+    Object.keys(grouped).forEach(category => {
+        sortConfigsByPriority(grouped[category], category, DBType.ORACLE);
     });
 
     return grouped;

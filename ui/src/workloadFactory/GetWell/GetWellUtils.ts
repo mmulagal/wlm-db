@@ -69,7 +69,7 @@ import {
     hasConfigStats,
     resolveConfigDisplayName
 } from '../WellArchitectedTab/assessmentFormatUtils';
-import { formatOracleWellArchitectedData } from '../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
+import { sortConfigsByPriority } from '../../utils/configRegistry';
 
 /**
  * Checks if the deployment type is AOAG.
@@ -2589,6 +2589,11 @@ export const groupConfigurationsByCategory = (cardData: any): Record<string, any
                 });
             }
         }
+    });
+
+    // Sort configurations within each category by category-specific priority
+    Object.keys(grouped).forEach(category => {
+        sortConfigsByPriority(grouped[category], category, DBType.MSSQL);
     });
 
     return grouped;

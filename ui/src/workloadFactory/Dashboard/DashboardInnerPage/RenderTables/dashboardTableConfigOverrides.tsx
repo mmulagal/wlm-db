@@ -301,7 +301,9 @@ const createDashboardTableConfigOverrides = (
         }),
         customColumns: (() => {
             const { header, headerIsI18nKey } = resolveImpactedColumnHeader(ASSESSMENT_CONFIG_IDS.MTU, engineType);
-            return [createCountWithViewColumn(header, ASSESSMENT_CONFIG_IDS.MTU, engineType, undefined, headerIsI18nKey)];
+            return [
+                createCountWithViewColumn(header, ASSESSMENT_CONFIG_IDS.MTU, engineType, undefined, headerIsI18nKey)
+            ];
         })()
     },
     [ASSESSMENT_CONFIG_IDS.MAXDOP]: {
