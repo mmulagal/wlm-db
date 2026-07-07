@@ -14,7 +14,6 @@ env:
   REGION: us-east-1 
   STANDBYREGION: us-west-2
   MODE: development 
-  SHORT_SHA: development-$(echo ${{ github.sha }} | cut -c1-7)  # Set the full commit SHA as an environment variable
   IMAGE_NAME: wlmdb
   GIT_HASH_SHORT: ${{ github.sha }} | cut -c1-7
  
@@ -23,10 +22,18 @@ jobs:
   build-and-push-region-1:
     runs-on: wlmdb-runner
     steps:
-    - name: Echo SHORT_SHA
-      run: echo ${{env.SHORT_SHA}}
-    - name: Echo GIT_HASH_SHORT
-      run: echo ${{env.GIT_HASH_SHORT}}      
+    - name: Generate hash
+      id: gen-hash
+      run: echo "HASH=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+    - name: Generate tag
+      id: gen-tag
+      run: echo "TAG=${MODE}-${GITHUB_SHA::7}-${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
+    - name: Print image tag
+      run: |
+          echo "Image Tag: ${{ steps.gen-tag.outputs.TAG }}"
+          echo "Commit SHA: ${GITHUB_SHA}"
+          echo "Short SHA: ${GITHUB_SHA::7}"
+          echo "Run Number: ${GITHUB_RUN_NUMBER}"    
     - name: Generate GitHub App Token
       id: generate-token
       uses: tibdex/github-app-token@v2
@@ -68,13 +75,6 @@ jobs:
       working-directory: ./server
     - run: npm run build
       working-directory: ./server
-
-    - name: Generate hash
-      id: gen-hash
-      run: echo "HASH=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
-    - name: Generate tag
-      id: gen-tag
-      run: echo "TAG=${{env.MODE}}-$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
     - uses: kciter/aws-ecr-action@v5
       with:
         path: ./server
@@ -107,10 +107,10 @@ jobs:
     - name: Docker Tag new Region 
       id: docker_tag
       run: |
-          docker tag ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{env.SHORT_SHA}} ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{env.SHORT_SHA}}
+          docker tag ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ steps.gen-tag.outputs.TAG }} ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ steps.gen-tag.outputs.TAG }}
           docker tag ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.REGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ env.MODE }} ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ env.MODE }}
           docker push ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ env.MODE }}
-          docker push ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{env.SHORT_SHA}}
+          docker push ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.STANDBYREGION }}.amazonaws.com/${{ env.IMAGE_NAME }}:${{ steps.gen-tag.outputs.TAG }}
 
     - uses: actions/create-github-app-token@v1
       id: app-token
