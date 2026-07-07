@@ -719,10 +719,22 @@ async function getSqlServiceStartupAssessment(
                 ? [ec2InstanceId]
                 : [];
 
+            const isOptimized = isEmpty(nodesInViolation);
+            const nodeDetails = [
+                {
+                    nodeId: ec2InstanceId,
+                    current: isOptimized
+                        ? 'SQL Server service is configured with Automatic startup.'
+                        : 'SQL Server service startup type is not set to Automatic.',
+                    recommended: 'SQL Server service startup type must be set to Automatic.'
+                }
+            ];
+
             return {
-                status: isEmpty(nodesInViolation) ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+                status: isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
                 nodesInViolation,
                 totalNodes: 1,
+                nodeDetails,
                 details: services
             };
         }
@@ -786,22 +798,51 @@ async function getSqlServiceStartupAssessment(
             Array.isArray(parsedNonPreferred) ? parsedNonPreferred : parsedNonPreferred ? [parsedNonPreferred] : []
         ).map(svc => ({ ...svc, instanceId: standbyNodeId }));
 
+        const preferredStartupViolation = servicesPreferred.some(svc => svc.StartType?.toLowerCase() !== 'manual');
+        const standbyStartupViolation = servicesNonPreferred.some(svc => svc.StartType?.toLowerCase() !== 'manual');
+        const failoverViolation = activeNodeInstanceid !== preferredNodeId;
+
         const nodesInViolation = [
-            ...(servicesPreferred.some((svc: any) => svc.StartType?.toLowerCase() !== 'manual')
-                ? [preferredNodeId]
-                : []),
-            ...(servicesNonPreferred.some((svc: any) => svc.StartType?.toLowerCase() !== 'manual')
-                ? [standbyNodeId]
-                : []),
-            ...(activeNodeInstanceid !== preferredNodeId ? [activeNodeInstanceid] : [])
+            ...(preferredStartupViolation ? [preferredNodeId] : []),
+            ...(standbyStartupViolation ? [standbyNodeId] : []),
+            ...(failoverViolation ? [activeNodeInstanceid] : [])
         ].filter(Boolean);
 
+        const isOptimized = isEmpty(nodesInViolation);
+        const nodeDetails = (
+            [
+                [preferredNodeId, preferredStartupViolation],
+                [standbyNodeId, standbyStartupViolation]
+            ] as [string, boolean][]
+        ).map(([nodeId, isViolation]) => {
+            const isFailedOverNode = failoverViolation && nodeId === activeNodeInstanceid;
+            return {
+                nodeId,
+                current: [
+                    isViolation
+                        ? 'SQL Server service startup type is not set to Manual.'
+                        : 'SQL Server service is configured with Manual startup.',
+                    isFailedOverNode &&
+                        `Cluster is currently active on this standby node instead of the preferred node (${preferredNodeId}).`
+                ]
+                    .filter((s): s is string => Boolean(s))
+                    .join(' '),
+                recommended: [
+                    'SQL Server service startup type must be set to Manual.',
+                    isFailedOverNode && `Fail back the cluster to the preferred node (${preferredNodeId}).`
+                ]
+                    .filter((s): s is string => Boolean(s))
+                    .join(' ')
+            };
+        });
+
         return {
-            status: isEmpty(nodesInViolation) ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+            status: isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
             preferredNodeId,
             standbyNodeId,
             nodesInViolation: [...new Set(nodesInViolation)],
             totalNodes: 2,
+            nodeDetails,
             details: [...servicesPreferred, ...servicesNonPreferred]
         };
     } catch (err) {
@@ -1130,8 +1171,6 @@ async function getHighAvailabilityDriftData(
         const { highAvailability: { clusterQuorum, heartbeat } = {} } = resourceAssessmentData;
 
         const { sharedStorage, driveLetter, sqlServerServices } = highAvailabilityAssessmentData;
-        const sqlServiceStartupMode =
-            resourceAssessmentData?.aoagDetails?.baseDeploymentType === 'FCI' ? 'Manual' : 'Automatic';
 
         logger.debug(
             `Assessment data found for: sharedStorage=${!!sharedStorage}, driveLetter=${!!driveLetter}, clusterQuorum=${!!clusterQuorum}, heartbeat=${!!heartbeat}, sqlServerServices=${!!sqlServerServices}`
@@ -1268,23 +1307,23 @@ async function getHighAvailabilityDriftData(
                 : sqlServerServices.error
                 ? { ...sqlServerServiceConfig, errorMessage: sqlServerServices.error }
                 : (() => {
-                      const sqlServiceEntryRecommended = sqlServerServiceConfig.recommended ?? '';
                       const violatingNodes =
                           sqlServerServices.status !== AssessmentStatus.OPTIMIZED
                               ? sqlServerServices.nodesInViolation ?? []
                               : [];
+                      const nodeDetails = sqlServerServices.nodeDetails ?? [];
                       return {
                           ...sqlServerServiceConfig,
-                          recommended: sqlServiceEntryRecommended,
+                          recommended: sqlServerServiceConfig.recommended ?? '',
                           status: sqlServerServices.status as AssessmentStatus,
                           objectsInViolation: violatingNodes,
                           totalObjectsAssessed: sqlServerServices.totalNodes || 2,
                           totalObjectsInViolation: violatingNodes.length,
-                          violationDetails: violatingNodes.map(node => ({
-                              objectName: node,
+                          violationDetails: nodeDetails.map(({ nodeId, current, recommended }) => ({
+                              objectName: nodeId,
                               objectType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
-                              value: `MSSQL Server service is running with Startup Mode as not ${sqlServiceStartupMode}`,
-                              recommended: `MSSQL Server service should be running with Startup Mode as ${sqlServiceStartupMode}`
+                              value: current,
+                              recommended
                           }))
                       };
                   })()

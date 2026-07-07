@@ -190,6 +190,7 @@ interface HighAvailabilityAssessment {
         nodesInViolation?: string[];
         totalNodes?: number;
         details: HighAvailabilitySqlServerServiceDetail[];
+        nodeDetails?: { nodeId: string; current: string; recommended: string }[];
         error?: string;
     };
 }
