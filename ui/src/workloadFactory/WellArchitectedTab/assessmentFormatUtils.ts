@@ -1,8 +1,6 @@
 import {
     DBType,
     GETWELL_STATUS,
-    WAD_EXCLUDED_FLAT_CONFIG_IDS_MSSQL,
-    WAD_EXCLUDED_FLAT_CONFIG_IDS_ORACLE,
     CONFIG_NAMES
 } from '../../utils/consts';
 import {
@@ -90,11 +88,6 @@ export const findFlatConfigItem = (
     return matchingInst ? getAssessmentById(matchingInst.assessments, configId) : undefined;
 };
 
-export const getAssessmentItemsByType = (
-    instanceAssessments: AssessmentResponseInterface | null | undefined,
-    type: string
-): PerConfigInterface[] => getAssessmentItems(instanceAssessments, { type });
-
 export const getDismissedConfigurations = (
     instanceAssessments?: AssessmentResponseInterface | null
 ): DismissedConfigurationItem[] => {
@@ -119,16 +112,6 @@ export const mapAssessmentSeverityToFilterLabel = (severity?: string): string =>
         return GETWELL_STATUS.WARNING;
     }
     return severity ?? '';
-};
-
-export const isWadExcludedAssessmentConfigId = (configId: string, isWad: boolean, dbType?: string): boolean => {
-    if (!isWad) {
-        return false;
-    }
-
-    const excludedIds =
-        dbType === DBType.ORACLE ? WAD_EXCLUDED_FLAT_CONFIG_IDS_ORACLE : WAD_EXCLUDED_FLAT_CONFIG_IDS_MSSQL;
-    return excludedIds.has(configId);
 };
 
 export type DashboardTableConfig = {

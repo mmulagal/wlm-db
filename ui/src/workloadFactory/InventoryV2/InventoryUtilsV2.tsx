@@ -3815,7 +3815,7 @@ export const getProtectionText = (data: any) => {
 /**
  * Determines the optimization status for WAD (offline assessment) data.
  * Calculates the number of optimization issues from the assessment cards data.
- * WAD excluded configurations (defined in WAD_EXCLUDED_CONFIGS_MSSQL) are not counted.
+ * WAD excluded configurations (defined in WAD_EXCLUDED_FLAT_CONFIG_IDS_MSSQL) are not counted.
  *
  * @param wadAssessmentData - The WAD assessment data object containing lastAssessmentTimestamp and other assessment info
  * @returns A string indicating the optimization status:

@@ -975,14 +975,6 @@ export const GETWELL_VALUES: any = {
     'shared drive': 'Shared drive'
 };
 
-export const GW_TOOLTIP_KEYS_MAPPING: any = {
-    rssProfile: 'RSS profile',
-    rssStatus: 'RSS status',
-    baseProcessorNumber: 'Base processor number',
-    receiveQueues: 'Receive Queues',
-    tcpOffloading: 'TCP Offloading Features'
-};
-
 export const RSS_COLUMN_KEYS = {
     TCP_OFFLOADING: 'tcpOffloading',
     NUMBER_OF_RECEIVE_QUEUES: 'numberOfReceiveQueues',
@@ -1082,7 +1074,6 @@ export const ASSESSMENT_CONFIG_NAMES = {
     DNFS_NO_SHARED_CACHE: 'dNFS no shared cache',
     SWAP_SPACE: 'Swap space',
     HIGH_AVAILABILITY: 'highAvailability',
-    // Additional constants for wellArchitectedActionSummaryMessages
     THIN_PROVISIONING: 'Thin provisioning',
     AUTOSIZE: 'Autosize',
     AUTOSIZE_MODE: 'Autosize-mode',
@@ -1197,81 +1188,6 @@ export const ASSESSMENT_CONFIG_IDS = {
     TIERING_TCO_OPTIMIZATION: 'tiering-tco-optimization',
     TRANSPARENT_HUGEPAGES: 'transparent-hugepages'
 } as const;
-
-export type AssessmentConfigId = (typeof ASSESSMENT_CONFIG_IDS)[keyof typeof ASSESSMENT_CONFIG_IDS];
-
-// Configurations not supported for AOAG (Always On Availability Group) MSSQL deployments
-// Uses ASSESSMENT_CONFIG_NAMES values (mapName) for comparison
-export const AOAG_NOT_SUPPORTED_CONFIGS = [ASSESSMENT_CONFIG_NAMES.LICENSE];
-
-// MSSQL config names that trigger the impacted drive dialog
-export const MSSQL_IMPACTED_DRIVE_CONFIGS: string[] = [
-    ASSESSMENT_CONFIG_NAMES.SHARED_STORAGE,
-    ASSESSMENT_CONFIG_NAMES.NTFS_ALLOCATION_UNIT_SIZE,
-    ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO_POLICY,
-    ASSESSMENT_CONFIG_NAMES.OS_TYPE,
-    ASSESSMENT_CONFIG_NAMES.SPACE_RESERVATION,
-    ASSESSMENT_CONFIG_NAMES.SPACE_ALLOCATION,
-    ASSESSMENT_CONFIG_NAMES.THIN_PROVISIONING,
-    ASSESSMENT_CONFIG_NAMES.AUTOSIZE,
-    ASSESSMENT_CONFIG_NAMES.AUTOSIZE_MODE,
-    ASSESSMENT_CONFIG_NAMES.FRACTIONAL_RESERVE,
-    ASSESSMENT_CONFIG_NAMES.SNAPSHOT_COPY_RESERVE,
-    ASSESSMENT_CONFIG_NAMES.SNAPSHOT_AUTODELETE,
-    ASSESSMENT_CONFIG_NAMES.SPACE_MANAGEMENT,
-    ASSESSMENT_CONFIG_NAMES.TIERING_POLICY,
-    ASSESSMENT_CONFIG_NAMES.TIERING_MINIMUM_COOLING_DAYS,
-    ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER
-];
-
-// Oracle config names that trigger the impacted drive dialog
-export const ORACLE_IMPACTED_DRIVE_CONFIGS: string[] = [
-    ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE,
-    ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE,
-    ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES,
-    ASSESSMENT_CONFIG_NAMES.THIN_PROVISIONING,
-    ASSESSMENT_CONFIG_NAMES.AUTOSIZE,
-    ASSESSMENT_CONFIG_NAMES.AUTOSIZE_MODE,
-    ASSESSMENT_CONFIG_NAMES.FRACTIONAL_RESERVE,
-    ASSESSMENT_CONFIG_NAMES.SNAPSHOT_POLICY,
-    ASSESSMENT_CONFIG_NAMES.SNAPSHOT_COPY_RESERVE,
-    ASSESSMENT_CONFIG_NAMES.SNAPSHOT_AUTODELETE,
-    ASSESSMENT_CONFIG_NAMES.SPACE_MANAGEMENT,
-    ASSESSMENT_CONFIG_NAMES.TIERING_POLICY,
-    ASSESSMENT_CONFIG_NAMES.TIERING_MINIMUM_COOLING_DAYS,
-    ASSESSMENT_CONFIG_NAMES.COMPRESSION,
-    ASSESSMENT_CONFIG_NAMES.DEDUPLICATION,
-    ASSESSMENT_CONFIG_NAMES.COMPACTION,
-    ASSESSMENT_CONFIG_NAMES.NFS_ROOTONLY,
-    ASSESSMENT_CONFIG_NAMES.EXPORT_POLICY,
-    ASSESSMENT_CONFIG_NAMES.OS_TYPE,
-    ASSESSMENT_CONFIG_NAMES.SPACE_RESERVATION,
-    ASSESSMENT_CONFIG_NAMES.SPACE_ALLOCATION
-];
-
-// Oracle iSCSI-only compute card keys (cards that should only render when storage protocol is iSCSI)
-export const ORACLE_ISCSI_ONLY_CARD_KEYS = [
-    'transparent_hugepages',
-    'tcp_advanced_options',
-    'filesystems_io_options',
-    'multiblock_readcount'
-] as const;
-
-// Hyphen-format card IDs for iSCSI-only Oracle compute cards (used when comparing cardItem.id)
-export const ORACLE_ISCSI_ONLY_CARD_IDS = new Set([
-    'transparent-hugepages',
-    'tcp-advanced-options',
-    'filesystems-io-options',
-    'multiblock-readcount'
-]);
-
-// API-level camelCase keys for iSCSI-only Oracle compute configs (used when comparing configKey)
-export const ORACLE_ISCSI_ONLY_API_KEYS = new Set([
-    'oracleTransparentHugepages',
-    'oracleTcpAdvancedOptions',
-    'oracleFilesystemsIoOptions',
-    'oracleMultipathReadcount'
-]);
 
 // TODO: confirm with API why it has Special configurations with _ instead of -.
 // Configuration names mapping for unified display names for the export pdf
@@ -1413,58 +1329,6 @@ export const CONFIG_NAMES = {
 };
 
 /**
- * Set of MSSQL configuration names that cannot be automatically fixed.
- * These configs will show a Close button only (no Continue/Cancel) with a warning banner.
- */
-export const MSSQL_UNSUPPORTED_FIX_TYPES = new Set([
-    ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-    ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
-    ASSESSMENT_CONFIG_NAMES.DRIVE_LETTER,
-    ASSESSMENT_CONFIG_NAMES.OS_TYPE,
-    ASSESSMENT_CONFIG_NAMES.NTFS_ALLOCATION_UNIT_SIZE
-]);
-
-/**
- * Set of Oracle configuration names that cannot be automatically fixed.
- * These configs will show a Close button only (no Continue/Cancel) with a warning banner.
- */
-export const ORACLE_UNSUPPORTED_FIX_TYPES = new Set([
-    ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-    ASSESSMENT_CONFIG_NAMES.SWAP_SPACE,
-    ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH,
-    ASSESSMENT_CONFIG_NAMES.REDO_LOGS_PLACEMENT,
-    ASSESSMENT_CONFIG_NAMES.TEMP_LOGS_PLACEMENT,
-    ASSESSMENT_CONFIG_NAMES.ARCHIVE_PLACEMENT,
-    ASSESSMENT_CONFIG_NAMES.DATAFILES_PLACEMENT,
-    ASSESSMENT_CONFIG_NAMES.CONTROLFILES_PLACEMENT,
-    ASSESSMENT_CONFIG_NAMES.ORACLE_BINARY_PLACEMENT,
-    ASSESSMENT_CONFIG_NAMES.MULTIPATH_IO,
-    ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS,
-    ASSESSMENT_CONFIG_NAMES.ASM_SETUP,
-    ASSESSMENT_CONFIG_NAMES.ASM_EXTERNAL_REDUNDANCY,
-    ASSESSMENT_CONFIG_NAMES.AFD_LOGICAL_BLOCK_SIZE,
-    ASSESSMENT_CONFIG_NAMES.ASMLIB_LOGICAL_BLOCK_SIZE,
-    ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_DATABASEFILES,
-    ASSESSMENT_CONFIG_NAMES.NFS_MOUNT_OPTIONS_ADRHOME,
-    ASSESSMENT_CONFIG_NAMES.NFS_CACHING_OPTIONS,
-    ASSESSMENT_CONFIG_NAMES.DNFS_ENABLEMENT,
-    ASSESSMENT_CONFIG_NAMES.DNFS_CONFIGURATION_FILE,
-    ASSESSMENT_CONFIG_NAMES.DNFS_NO_SHARED_CACHE,
-    ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT
-]);
-
-/**
- * Oracle compute config types that are only applicable for iSCSI storage protocol instances.
- * Used to filter out these cards for non-iSCSI instances.
- */
-export const ORACLE_ISCSI_ONLY_CONFIG_TYPES = new Set([
-    ASSESSMENT_CONFIG_NAMES.TRANSPARENT_HUGEPAGES,
-    ASSESSMENT_CONFIG_NAMES.TCP_ADVANCED_OPTIONS,
-    ASSESSMENT_CONFIG_NAMES.FILESYSTEMS_IO_OPTIONS,
-    ASSESSMENT_CONFIG_NAMES.MULTIPATH_READCOUNT
-]);
-
-/**
  * Config types that always show the unsupported-fix banner when status is OVER_PROVISIONED.
  */
 export const OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES: Set<string> = new Set([
@@ -1492,89 +1356,7 @@ export const UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES: Set<string> = new Set([
  */
 export const WAD_SORT_STATUS = 'WAD';
 
-/**
- * List of MSSQL configuration names that are excluded for WAD (offline assessment) instances.
- * These configurations require online connectivity and are not available for WAD instances.
- * If a config is removed from this list, it will be shown normally for isWad=true cases.
- */
-export const WAD_EXCLUDED_CONFIGS_MSSQL = [
-    ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
-    ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-    ASSESSMENT_CONFIG_NAMES.MTU,
-    ASSESSMENT_CONFIG_NAMES.LICENSE,
-    ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
-    ASSESSMENT_CONFIG_NAMES.CRR,
-    ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
-];
-
-/**
- * List of Oracle configuration names that are excluded for WAD (offline assessment) instances.
- * These configurations require online connectivity and are not available for WAD instances.
- * If a config is removed from this list, it will be shown normally for isWad=true cases.
- */
-export const WAD_EXCLUDED_CONFIGS_ORACLE = [
-    ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-    ASSESSMENT_CONFIG_NAMES.CRR,
-    ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
-    ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH
-];
-
-/**
- * Mapping of internal config keys to ASSESSMENT_CONFIG_NAMES display names.
- * Used for generic WAD exclusion checks based on config key.
- */
-export const CONFIG_KEY_TO_DISPLAY_NAME: Record<string, string> = {
-    // MSSQL config keys
-    computeRightsizing: ASSESSMENT_CONFIG_NAMES.COMPUTE_RIGHTSIZING,
-    operatingSystemPatch: ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-    mtuConfiguration: ASSESSMENT_CONFIG_NAMES.MTU,
-    applicationSqlServer: ASSESSMENT_CONFIG_NAMES.LICENSE,
-    mssqlPatch: ASSESSMENT_CONFIG_NAMES.MICROSOFT_SQL_SERVER_PATCH,
-    scheduledLocalSnapshot: ASSESSMENT_CONFIG_NAMES.SCHEDULED_LOCAL_SNAPSHOT,
-    crr: ASSESSMENT_CONFIG_NAMES.CRR,
-    scheduledawsBackup: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
-    clone: ASSESSMENT_CONFIG_NAMES.CLONE_MANAGEMENT,
-    // Oracle config keys
-    oracleOperatingSystemPatch: ASSESSMENT_CONFIG_NAMES.OPERATING_SYSTEM_PATCH,
-    oracleCrr: ASSESSMENT_CONFIG_NAMES.CRR,
-    oracleSnapcenterSnapshot: ASSESSMENT_CONFIG_NAMES.SNAPCENTER_SNAPSHOT,
-    oracleAwsBackup: ASSESSMENT_CONFIG_NAMES.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
-    oracleSecurityPatch: ASSESSMENT_CONFIG_NAMES.ORACLE_SECURITY_PATCH
-};
-
-/**
- * Checks if a config key is WAD-excluded for the given database type.
- * @param configKey - Internal config key (e.g., 'computeRightsizing', 'oracleCrr')
- * @param dbType - Database type (DBType.MSSQL or DBType.ORACLE)
- * @returns true if the config is WAD-excluded
- */
-export const isConfigKeyWadExcluded = (configKey: string, dbType?: string): boolean => {
-    const displayName = CONFIG_KEY_TO_DISPLAY_NAME[configKey];
-    if (!displayName) return false;
-
-    if (dbType === DBType.ORACLE) {
-        return WAD_EXCLUDED_CONFIGS_ORACLE.includes(displayName);
-    }
-    return WAD_EXCLUDED_CONFIGS_MSSQL.includes(displayName);
-};
-
-/**
- * WAD-excluded API assessment field names, keyed by the raw field names in assessment data.
- * Keep in sync with WAD_EXCLUDED_CONFIGS_MSSQL / WAD_EXCLUDED_CONFIGS_ORACLE above.
- */
-export const WAD_EXCLUDED_API_FIELDS_MSSQL = new Set([
-    'compute',
-    'hostOsPatch',
-    'mtuAlignment',
-    'license',
-    'mssqlPatch',
-    'crr',
-    'awsBackup'
-]);
-
-export const WAD_EXCLUDED_API_FIELDS_ORACLE = new Set(['hostOsPatch', 'crr', 'oracleSecurityPatch', 'awsBackup']);
-
-/** Flat assessment config ids excluded from WAD (offline) instance scoring — keep in sync with WAD_EXCLUDED_API_FIELDS_* */
+/** Flat assessment config ids excluded from WAD (offline) instance scoring. */
 // TODO: Remove once backend handles WAD exclusions server-side.
 export const WAD_EXCLUDED_FLAT_CONFIG_IDS_MSSQL = new Set<string>([
     ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING,
@@ -1593,10 +1375,7 @@ export const WAD_EXCLUDED_FLAT_CONFIG_IDS_ORACLE = new Set<string>([
     ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH
 ]);
 
-/**
- * Maps API assessment field names to their Well-Architected category.
- * Used for counting configurations by category in dashboard summaries.
- */
+/** Well-Architected configuration category discriminator (from config catalog `type`). */
 export type WellArchitectedCategory = 'storage' | 'compute' | 'application' | 'resiliency' | 'cloning';
 
 // Well-Architected category constants
@@ -1635,34 +1414,6 @@ export const WELL_ARCHITECTED_STATUS = {
     OPTIMIZING: 'optimizing',
     NOT_APPLICABLE: 'not-applicable',
     ANALYZING: 'analyzing'
-};
-
-export const MSSQL_API_FIELD_TO_CATEGORY: Record<string, WellArchitectedCategory> = {
-    compute: 'compute',
-    hostOsPatch: 'compute',
-    mtuAlignment: 'compute',
-    rssConfig: 'compute',
-    license: 'application',
-    mssqlPatch: 'application',
-    maxDOP: 'application',
-    clone: 'cloning',
-    snapshotPolicy: 'resiliency',
-    crr: 'resiliency',
-    awsBackup: 'resiliency',
-    highAvailability: 'resiliency'
-};
-
-export const ORACLE_API_FIELD_TO_CATEGORY: Record<string, WellArchitectedCategory> = {
-    hostOsPatch: 'compute',
-    transparentHugepages: 'compute',
-    tcpAdvancedOptions: 'compute',
-    filesystemsIoOptions: 'compute',
-    multiblockReadcount: 'compute',
-    oracleSecurityPatch: 'application',
-    crr: 'resiliency',
-    snapcenterSnapshot: 'resiliency',
-    awsBackup: 'resiliency',
-    clone: 'cloning'
 };
 
 export const categoryOptions = ['Storage', 'Compute', 'Application', 'Resiliency', 'Cloning'];
@@ -1951,18 +1702,6 @@ export const DEMO_MODE_PROTECTION_CRITERIA = {
         }
     ]
 };
-
-export const ENGINE_TYPES = {
-    MSSQL: 'SQL Server',
-    ORACLE: 'Oracle',
-    POSTGRESQL: 'PostgreSQL'
-};
-
-// Dialog "type" prop values used by the well-architected patch dialogs
-export const PATCH_DIALOG_TYPE = {
-    MSSQL_PATCH: 'mssqlPatch',
-    OS_PATCH: 'osPatch'
-} as const;
 
 // `field` query-string values sent to the /assessment/patch-scan endpoint
 export const PATCH_SCAN_FIELD = {
