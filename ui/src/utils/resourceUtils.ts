@@ -359,6 +359,12 @@ export const handleTriggerAssessment = ({
     createNotificationMessage
 }: any) => {
     setTriggerAssessmentInProgress(true);
+    // Capture the instance IDs at the time the assessment is triggered
+    const triggeredForResourceId = selectedResourceId;
+    const triggeredForDatabaseInstance = selectedDatabaseInstance;
+    const triggeredForCredentialId = credentialId;
+    const triggeredForRegionId = regionId;
+
     triggerAssessmentApi({
         credentialId,
         regionId,
@@ -397,7 +403,28 @@ export const handleTriggerAssessment = ({
                                 message: t('databases.well-architect.assessment-completed')
                             })
                         );
-                        refreshGetWellPage();
+                        // Only refresh if the user is still viewing the same instance that triggered the assessment
+                        // Check both slices independently since Oracle uses workloadFactoryResource and MSSQL uses getWellOptimize
+                        const state = store.getState();
+                        
+                        // Check workloadFactoryResource slice (Oracle)
+                        const wfrMatches =
+                            state.workloadFactoryResource?.selectedResourceId === triggeredForResourceId &&
+                            state.workloadFactoryResource?.selectedDatabaseInstance === triggeredForDatabaseInstance &&
+                            state.workloadFactoryResource?.selectedResourceCredId === triggeredForCredentialId &&
+                            state.workloadFactoryResource?.selectedResourceRegionId === triggeredForRegionId;
+
+                        // Check getWellOptimize slice (MSSQL)
+                        const gwoMatches =
+                            state.getWellOptimize?.selectedResourceId === triggeredForResourceId &&
+                            state.getWellOptimize?.selectedDatabaseInstance === triggeredForDatabaseInstance &&
+                            state.getWellOptimize?.selectedGwInstanceCredId === triggeredForCredentialId &&
+                            state.getWellOptimize?.selectedGwInstanceRegionId === triggeredForRegionId;
+
+                        // Refresh if either slice matches - user is still on the same instance
+                        if (wfrMatches || gwoMatches) {
+                            refreshGetWellPage();
+                        }
                         clearInterval(jobInterval);
                     } else if (status === JOB_MONITORING_STATUS.FAILED || status === JOB_MONITORING_STATUS.WARNING) {
                         setTriggerAssessmentInProgress(false);
@@ -417,7 +444,28 @@ export const handleTriggerAssessment = ({
                             );
                         }
 
-                        refreshGetWellPage();
+                        // Only refresh if the user is still viewing the same instance that triggered the assessment
+                        // Check both slices independently since Oracle uses workloadFactoryResource and MSSQL uses getWellOptimize
+                        const state = store.getState();
+                        
+                        // Check workloadFactoryResource slice (Oracle)
+                        const wfrMatches =
+                            state.workloadFactoryResource?.selectedResourceId === triggeredForResourceId &&
+                            state.workloadFactoryResource?.selectedDatabaseInstance === triggeredForDatabaseInstance &&
+                            state.workloadFactoryResource?.selectedResourceCredId === triggeredForCredentialId &&
+                            state.workloadFactoryResource?.selectedResourceRegionId === triggeredForRegionId;
+
+                        // Check getWellOptimize slice (MSSQL)
+                        const gwoMatches =
+                            state.getWellOptimize?.selectedResourceId === triggeredForResourceId &&
+                            state.getWellOptimize?.selectedDatabaseInstance === triggeredForDatabaseInstance &&
+                            state.getWellOptimize?.selectedGwInstanceCredId === triggeredForCredentialId &&
+                            state.getWellOptimize?.selectedGwInstanceRegionId === triggeredForRegionId;
+
+                        // Refresh if either slice matches - user is still on the same instance
+                        if (wfrMatches || gwoMatches) {
+                            refreshGetWellPage();
+                        }
                         let gwErrMsg = jobRes?.data?.error;
                         if (jobRes?.data?.subJobs && jobRes?.data?.subJobs.length > 0) {
                             if (jobRes?.data?.subJobs?.[0]?.subJobs && jobRes?.data?.subJobs?.[0]?.subJobs.length > 0) {
