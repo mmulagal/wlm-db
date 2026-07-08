@@ -1,8 +1,4 @@
-import {
-    DBType,
-    GETWELL_STATUS,
-    CONFIG_NAMES
-} from '../../utils/consts';
+import { DBType, GETWELL_STATUS, CONFIG_NAMES } from '../../utils/consts';
 import {
     AssessmentMetadata,
     AssessmentResponseInterface,

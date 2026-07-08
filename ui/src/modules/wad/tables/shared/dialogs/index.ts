@@ -1,0 +1,1 @@
+export { ResourceTagsDialog } from './ResourceTagsDialog';

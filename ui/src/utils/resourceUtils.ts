@@ -406,7 +406,7 @@ export const handleTriggerAssessment = ({
                         // Only refresh if the user is still viewing the same instance that triggered the assessment
                         // Check both slices independently since Oracle uses workloadFactoryResource and MSSQL uses getWellOptimize
                         const state = store.getState();
-                        
+
                         // Check workloadFactoryResource slice (Oracle)
                         const wfrMatches =
                             state.workloadFactoryResource?.selectedResourceId === triggeredForResourceId &&
@@ -447,7 +447,7 @@ export const handleTriggerAssessment = ({
                         // Only refresh if the user is still viewing the same instance that triggered the assessment
                         // Check both slices independently since Oracle uses workloadFactoryResource and MSSQL uses getWellOptimize
                         const state = store.getState();
-                        
+
                         // Check workloadFactoryResource slice (Oracle)
                         const wfrMatches =
                             state.workloadFactoryResource?.selectedResourceId === triggeredForResourceId &&
