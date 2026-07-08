@@ -16,7 +16,7 @@ export default defineConfig({
         sourcemap: true,
         target: 'esnext',
         lib: {
-            entry: resolve(wadProjectRootDir, 'src/modules/wad/modals.ts'),
+            entry: resolve(wadProjectRootDir, 'src/wad/modals.ts'),
             formats: ['es'],
             fileName: () => 'wad-db-modals.bundle.js',
         },

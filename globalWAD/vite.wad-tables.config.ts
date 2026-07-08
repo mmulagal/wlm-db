@@ -16,7 +16,7 @@ export default defineConfig({
         sourcemap: true,
         target: 'esnext',
         lib: {
-            entry: resolve(wadProjectRootDir, 'src/modules/wad/tables.ts'),
+            entry: resolve(wadProjectRootDir, 'src/wad/tables.ts'),
             formats: ['es'],
             fileName: () => 'wad-db-tables.bundle.js',
         },
