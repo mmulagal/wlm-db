@@ -1,0 +1,28 @@
+{
+    "name": "global-wad",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build:wad": "vite build --config vite.wad-tables.config.ts && vite build --config vite.wad-modals.config.ts",
+        "build:wad:watch": "npm-run-all -p build:wad:watch:tables build:wad:watch:modals",
+        "build:wad:watch:tables": "vite build --config vite.wad-tables.config.ts --watch",
+        "build:wad:watch:modals": "vite build --config vite.wad-modals.config.ts --watch"
+    },
+    "dependencies": {
+        "@emotion/styled": "^11.14.0",
+        "@netapp/bxp-design-system-react": "npm:@tlveng/bxp-design-system-react@2.1.13",
+        "@netapp/bxp-style": "npm:@tlveng/bxp-style@1.0.14",
+        "@tlveng/workload-factory-components": "0.0.1",
+        "react": "^19.2.7",
+        "react-dom": "^19.2.7",
+        "react-inlinesvg": "^4.2.0",
+        "victory": "^37.3.6"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-react-swc": "^4.2.3",
+        "npm-run-all": "^4.1.5",
+        "typescript": "^5.7.3",
+        "vite": "^7.3.2"
+    }
+}

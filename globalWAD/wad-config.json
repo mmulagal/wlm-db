@@ -1,0 +1,14 @@
+{
+    "default": {
+        "table": { "bundle": "wad-db-tables", "tag": "wad-db-tables" },
+        "modal": { "bundle": "wad-db-modals", "tag": "wad-db-modals" }
+    },
+    "configurations": [
+        "compute-rightsizing",
+        "update-automatic-capacity-management"
+    ],
+    "bundles": {
+        "wad-db-tables": { "url": "%VITE_WORKLOAD_IFRAME_URL%/wlm-db/wad-db-tables.bundle.js", "version": "0.0.1" },
+        "wad-db-modals": { "url": "%VITE_WORKLOAD_IFRAME_URL%/wlm-db/wad-db-modals.bundle.js", "version": "0.0.1" }
+    }
+}
