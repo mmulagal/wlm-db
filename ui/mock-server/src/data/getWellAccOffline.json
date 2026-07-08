@@ -683,7 +683,7 @@
                         ],
                         "totalObjectsAssessed": 1,
                         "totalObjectsInViolation": 0,
-                        "current": "separate drive"
+                        "current": "Shared with data files and log files"
                     },
                     {
                         "id": "data-files-location",
@@ -693,7 +693,7 @@
                         "recommendation": "Separate system databases from user databases to different drives/luns and different volumes",
                         "categories": ["Performance efficiency", "Operational excellence"],
                         "status": "not-optimized",
-                        "recommended": "separate-data-log-lun-per-database",
+                        "recommended": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "subType": "layout",
                         "resourceType": "Database",
                         "focusWidgetName": "Data files (.mdf)",
@@ -724,7 +724,7 @@
                         ],
                         "totalObjectsAssessed": 2,
                         "totalObjectsInViolation": 1,
-                        "current": "shared drive"
+                        "current": "Large databases sharing data LUN or volume"
                     },
                     {
                         "id": "log-files-location",
@@ -734,7 +734,7 @@
                         "recommendation": "Separate system databases from user databases to different drives/luns and different volumes",
                         "categories": ["Performance efficiency", "Operational excellence"],
                         "status": "not-optimized",
-                        "recommended": "separate-data-log-lun-per-database",
+                        "recommended": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "subType": "layout",
                         "resourceType": "Database",
                         "focusWidgetName": "Log Files (.ldf)",
@@ -765,7 +765,7 @@
                         ],
                         "totalObjectsAssessed": 4,
                         "totalObjectsInViolation": 1,
-                        "current": "shared drive"
+                        "current": "Large databases sharing log LUN or volume"
                     },
                     {
                         "id": "performance-tier",
@@ -1853,7 +1853,7 @@
                         ],
                         "totalObjectsAssessed": 1,
                         "totalObjectsInViolation": 0,
-                        "current": "separate drive"
+                        "current": "Shared with data files and log files"
                     },
                     {
                         "id": "data-files-location",
@@ -1863,14 +1863,14 @@
                         "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "categories": ["Performance efficiency", "Operational excellence"],
                         "status": "optimized",
-                        "recommended": "separate drive",
+                        "recommended": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "subType": "layout",
                         "resourceType": "Database",
                         "focusWidgetName": "Data files (.mdf)",
                         "objectsInViolation": [],
                         "totalObjectsAssessed": 2,
                         "totalObjectsInViolation": 0,
-                        "current": "separate drive"
+                        "current": "Large databases sharing data LUN or volume"
                     },
                     {
                         "id": "log-files-location",
@@ -1880,14 +1880,14 @@
                         "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "categories": ["Performance efficiency", "Operational excellence"],
                         "status": "optimized",
-                        "recommended": "separate drive",
+                        "recommended": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "subType": "layout",
                         "resourceType": "Database",
                         "focusWidgetName": "Log Files (.ldf)",
                         "objectsInViolation": [],
                         "totalObjectsAssessed": 2,
                         "totalObjectsInViolation": 0,
-                        "current": "separate drive"
+                        "current": "Large databases sharing log LUN or volume"
                     },
                     {
                         "id": "performance-tier",
@@ -2935,7 +2935,7 @@
                         ],
                         "totalObjectsAssessed": 1,
                         "totalObjectsInViolation": 1,
-                        "current": "separate drive"
+                        "current": "Shared with data files and log files"
                     },
                     {
                         "id": "data-files-location",
@@ -2945,14 +2945,14 @@
                         "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "categories": ["Performance efficiency", "Operational excellence"],
                         "status": "optimized",
-                        "recommended": "separate drive",
+                        "recommended": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "subType": "layout",
                         "resourceType": "Database",
                         "focusWidgetName": "Data files (.mdf)",
                         "objectsInViolation": [],
                         "totalObjectsAssessed": 2,
                         "totalObjectsInViolation": 0,
-                        "current": "separate drive"
+                        "current": "Large databases sharing data LUN or volume"
                     },
                     {
                         "id": "log-files-location",
@@ -2962,14 +2962,14 @@
                         "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "categories": ["Performance efficiency", "Operational excellence"],
                         "status": "optimized",
-                        "recommended": "separate drive",
+                        "recommended": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "subType": "layout",
                         "resourceType": "Database",
                         "focusWidgetName": "Log Files (.ldf)",
                         "objectsInViolation": [],
                         "totalObjectsAssessed": 2,
                         "totalObjectsInViolation": 0,
-                        "current": "separate drive"
+                        "current": "Large databases sharing log LUN or volume"
                     },
                     {
                         "id": "performance-tier",
@@ -4006,7 +4006,7 @@
                         ],
                         "totalObjectsAssessed": 1,
                         "totalObjectsInViolation": 0,
-                        "current": "separate drive"
+                        "current": "Shared with data files and log files"
                     },
                     {
                         "id": "data-files-location",
@@ -4016,14 +4016,14 @@
                         "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "categories": ["Performance efficiency", "Operational excellence"],
                         "status": "optimized",
-                        "recommended": "separate drive",
+                        "recommended": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "subType": "layout",
                         "resourceType": "Database",
                         "focusWidgetName": "Data files (.mdf)",
                         "objectsInViolation": [],
                         "totalObjectsAssessed": 0,
                         "totalObjectsInViolation": 0,
-                        "current": "separate drive"
+                        "current": "Large databases sharing data LUN or volume"
                     },
                     {
                         "id": "log-files-location",
@@ -4033,14 +4033,14 @@
                         "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "categories": ["Performance efficiency", "Operational excellence"],
                         "status": "optimized",
-                        "recommended": "separate drive",
+                        "recommended": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "subType": "layout",
                         "resourceType": "Database",
                         "focusWidgetName": "Log Files (.ldf)",
                         "objectsInViolation": [],
                         "totalObjectsAssessed": 0,
                         "totalObjectsInViolation": 0,
-                        "current": "separate drive"
+                        "current": "Large databases sharing log LUN or volume"
                     },
                     {
                         "id": "performance-tier",
@@ -5112,14 +5112,14 @@
                         "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "categories": ["Performance efficiency", "Operational excellence"],
                         "status": "optimized",
-                        "recommended": "separate drive",
+                        "recommended": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "subType": "layout",
                         "resourceType": "Database",
                         "focusWidgetName": "Data files (.mdf)",
                         "objectsInViolation": [],
                         "totalObjectsAssessed": 4,
                         "totalObjectsInViolation": 0,
-                        "current": "separate drive"
+                        "current": "Large databases sharing data LUN or volume"
                     },
                     {
                         "id": "log-files-location",
@@ -5129,14 +5129,14 @@
                         "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "categories": ["Performance efficiency", "Operational excellence"],
                         "status": "optimized",
-                        "recommended": "separate drive",
+                        "recommended": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
                         "subType": "layout",
                         "resourceType": "Database",
                         "focusWidgetName": "Log Files (.ldf)",
                         "objectsInViolation": [],
                         "totalObjectsAssessed": 4,
                         "totalObjectsInViolation": 0,
-                        "current": "separate drive"
+                        "current": "Large databases sharing log LUN or volume"
                     },
                     {
                         "id": "tempdb-drive-size",

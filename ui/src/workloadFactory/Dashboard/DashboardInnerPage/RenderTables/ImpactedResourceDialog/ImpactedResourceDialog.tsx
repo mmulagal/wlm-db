@@ -93,6 +93,8 @@ interface Ec2InterfaceToFix {
 interface AssessmentData {
     violationDetails?: ViolationDetail[];
     objectsInViolation?: ObjectInViolation[];
+    /** Top-level current value for the assessment */
+    current?: string;
     /** Top-level fallback recommended value shared across rows when a row doesn't carry its own */
     recommended?: string;
     sizingViolations?: SizingViolations;
@@ -514,9 +516,13 @@ const getMssqlImpactedResources = (
         case ASSESSMENT_CONFIG_IDS.TEMPDB_PLACEMENT: {
             const columns = [
                 t('databases.well-architect.database-name'),
+                t('databases.well-architect.current-value'),
+                t('databases.well-architect.recommended-value'),
                 t('databases.well-architect.drive-name'),
                 t('databases.well-architect.lun-path')
             ];
+            const topCurrent = data?.current ?? na;
+            const topRecommended = data?.recommended ?? na;
             if (details.length > 0 && details.some(d => d.additionalInfo)) {
                 const grouped = new Map<string, { drives: string[]; lunPaths: string[] }>();
                 for (const detail of details) {
@@ -530,6 +536,8 @@ const getMssqlImpactedResources = (
                 }
                 const rows = Array.from(grouped.entries()).map(([dbName, { drives, lunPaths }]) => [
                     dbName,
+                    topCurrent,
+                    topRecommended,
                     drives.join('|'),
                     lunPaths.join('|')
                 ]);
@@ -537,6 +545,8 @@ const getMssqlImpactedResources = (
             }
             const rows = objects.map((item: ObjectInViolation) => [
                 typeof item === 'string' ? item : item?.databaseName || na,
+                topCurrent,
+                topRecommended,
                 na,
                 na
             ]);
@@ -839,17 +849,22 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
 
     const expandableRowData = useMemo(() => {
         if (!isExpandable || isLoading) return [];
+        // Row shape: [dbName, current, recommended, drives, lunPaths]
         const result: rowDataType[] = [];
         rows.forEach((row: string[], idx: number) => {
             const dbName = row[0];
-            const drives = row[1]?.split('|') || [];
-            const lunPaths = row[2]?.split('|') || [];
+            const currentVal = row[1] || na;
+            const recommendedVal = row[2] || na;
+            const drives = row[3]?.split('|') || [];
+            const lunPaths = row[4]?.split('|') || [];
             const isMulti = drives.length > 1;
             const isExpanded = expandedRows.has(idx);
 
             result.push({
                 id: String(idx),
                 databaseName: dbName,
+                current: currentVal,
+                recommended: recommendedVal,
                 drives: isMulti ? `${drives.length} ${t('databases.well-architect.drives')}` : drives[0] || na,
                 luns: isMulti ? `${lunPaths.length} ${t('databases.well-architect.lun-paths')}` : lunPaths[0] || na,
                 isMulti,
@@ -863,6 +878,8 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
                     result.push({
                         id: `${idx}-sub-${subIdx}`,
                         databaseName: '',
+                        current: currentVal,
+                        recommended: recommendedVal,
                         drives: drive,
                         luns: lunPaths[subIdx] || na,
                         isMulti: false,
@@ -890,6 +907,36 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
                     return (
                         <DsTypography variant="Regular_14" className={styles.cellWrapper} title={cellData}>
                             {cellData}
+                        </DsTypography>
+                    );
+                }
+            },
+            {
+                Header: t('databases.well-architect.current-value'),
+                accessor: 'current',
+                id: 'current',
+                isSortable: false,
+                width: 'auto',
+                renderCell: (cellData: string, rowData: any) => {
+                    if (rowData.isSubRow) return null;
+                    return (
+                        <DsTypography variant="Regular_14" className={styles.cellWrapper} title={cellData}>
+                            {cellData || na}
+                        </DsTypography>
+                    );
+                }
+            },
+            {
+                Header: t('databases.well-architect.recommended-value'),
+                accessor: 'recommended',
+                id: 'recommended',
+                isSortable: false,
+                width: 'auto',
+                renderCell: (cellData: string, rowData: any) => {
+                    if (rowData.isSubRow) return null;
+                    return (
+                        <DsTypography variant="Regular_14" className={styles.cellWrapper} title={cellData}>
+                            {cellData || na}
                         </DsTypography>
                     );
                 }
@@ -945,7 +992,7 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
                     })
             }
         ];
-    }, [isExpandable, toggleRow, t]);
+    }, [isExpandable, columns, toggleRow, t, na]);
 
     const columnProps = useMemo(
         () => (isExpandable ? expandableColumnProps : buildColumnProps(columns, renderTextCell)),

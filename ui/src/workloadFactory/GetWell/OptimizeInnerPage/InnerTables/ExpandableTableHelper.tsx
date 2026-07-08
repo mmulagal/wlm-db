@@ -53,10 +53,8 @@ export const useInitialExpandedRowByIndex = (
 
     useEffect(() => {
         if (!hasSetInitialExpanded.current && isExpandable && rows.length > 0) {
-            const firstExpandableIdx = rows.findIndex(row => {
-                const drives = row[1]?.split('|') || [];
-                return drives.length > 1;
-            });
+            // Row shape: [dbName, current, recommended, drives, lunPaths] → drives at index 3
+            const firstExpandableIdx = rows.findIndex(row => row[3]?.split('|').length > 1);
             if (firstExpandableIdx !== -1) {
                 setExpandedRows(new Set([firstExpandableIdx]));
                 hasSetInitialExpanded.current = true;
@@ -79,12 +77,18 @@ export interface GroupedViolationData {
     lunPath: string[];
     id: string;
     recommended?: string;
+    current?: string;
     cellProps?: Record<string, unknown>;
 }
 
 // Group violation details by database name
 export const groupViolationDetails = (
-    data: { violationDetails?: ViolationDetailWithAdditionalInfo[]; objectsInViolation?: any[]; recommended?: string },
+    data: {
+        violationDetails?: ViolationDetailWithAdditionalInfo[];
+        objectsInViolation?: any[];
+        recommended?: string;
+        current?: string;
+    },
     isWad: boolean,
     t: TFunction,
     getWadCellPropsFn: (
@@ -95,8 +99,9 @@ export const groupViolationDetails = (
 ): GroupedViolationData[] => {
     let idCounter = 0;
     const details = data?.violationDetails || [];
-    // Extract top-level recommended value
+    // Extract top-level recommended and current values
     const topRecommended = data?.recommended;
+    const topCurrent = data?.current;
 
     if (details.length > 0 && details.some((d: ViolationDetailWithAdditionalInfo) => d.additionalInfo)) {
         const grouped = new Map<string, { drives: string[]; lunPaths: string[] }>();
@@ -118,6 +123,7 @@ export const groupViolationDetails = (
                 lunPath: lunPaths,
                 id: String(currentId),
                 recommended: topRecommended,
+                current: topCurrent,
                 cellProps: getWadCellPropsFn(isWad, t, { isDisabled: true })
             };
         });
@@ -131,6 +137,7 @@ export const groupViolationDetails = (
             lunPath: [],
             id: String(currentId),
             recommended: topRecommended,
+            current: topCurrent,
             cellProps: getWadCellPropsFn(isWad, t, { ...row.cellProps, isDisabled: true })
         };
     });

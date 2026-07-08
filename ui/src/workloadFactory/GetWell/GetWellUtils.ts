@@ -2323,6 +2323,7 @@ export const formatFlatAssessments = (
             tags: assessment.categories || [], // Map categories to tags for rendering
             errorMessage: assessment.errorMessage,
             violationDetails: assessment.violationDetails,
+            current: assessment.current,
             // Per sub-config recommendations, used to build Current/Recommended columns for nested configs
             configDetails: assessment.configDetails,
             objectsInViolation: assessment.objectsInViolation,

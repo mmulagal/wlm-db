@@ -434,25 +434,31 @@
                     "key": "databaseName",
                     "label": "Database name",
                     "accessor": "databaseName",
-                    "width": "18%"
+                    "width": "10%"
+                },
+                {
+                    "key": "current",
+                    "label": "Current value",
+                    "accessor": "current",
+                    "width": "10%"
                 },
                 {
                     "key": "recommended",
                     "label": "Recommended value",
                     "accessor": "recommended",
-                    "width": "17%"
+                    "width": "33%"
                 },
                 {
                     "key": "driveDisplay",
                     "label": "Drive name",
                     "accessor": "driveDisplay",
-                    "width": "10%"
+                    "width": "8%"
                 },
                 {
                     "key": "lunPathDisplay",
                     "label": "LUN path",
                     "accessor": "lunPathDisplay",
-                    "width": "30%"
+                    "width": "14%"
                 }
             ],
             "useNestedExpandable": true,
@@ -479,25 +485,31 @@
                     "key": "databaseName",
                     "label": "Database name",
                     "accessor": "databaseName",
-                    "width": "18%"
+                    "width": "10%"
+                },
+                {
+                    "key": "current",
+                    "label": "Current value",
+                    "accessor": "current",
+                    "width": "10%"
                 },
                 {
                     "key": "recommended",
                     "label": "Recommended value",
                     "accessor": "recommended",
-                    "width": "17%"
+                    "width": "33%"
                 },
                 {
                     "key": "driveDisplay",
                     "label": "Drive name",
                     "accessor": "driveDisplay",
-                    "width": "10%"
+                    "width": "8%"
                 },
                 {
                     "key": "lunPathDisplay",
                     "label": "LUN path",
                     "accessor": "lunPathDisplay",
-                    "width": "30%"
+                    "width": "14%"
                 }
             ],
             "useNestedExpandable": true,
@@ -524,25 +536,31 @@
                     "key": "databaseName",
                     "label": "Database name",
                     "accessor": "databaseName",
-                    "width": "18%"
+                    "width": "10%"
+                },
+                {
+                    "key": "current",
+                    "label": "Current value",
+                    "accessor": "current",
+                    "width": "10%"
                 },
                 {
                     "key": "recommended",
                     "label": "Recommended value",
                     "accessor": "recommended",
-                    "width": "17%"
+                    "width": "33%"
                 },
                 {
                     "key": "driveDisplay",
                     "label": "Drive name",
                     "accessor": "driveDisplay",
-                    "width": "10%"
+                    "width": "8%"
                 },
                 {
                     "key": "lunPathDisplay",
                     "label": "LUN path",
                     "accessor": "lunPathDisplay",
-                    "width": "30%"
+                    "width": "14%"
                 }
             ],
             "useNestedExpandable": true,

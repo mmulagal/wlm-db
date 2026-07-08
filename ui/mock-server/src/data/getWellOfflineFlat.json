@@ -1076,13 +1076,13 @@
             "id": "tempdb-files-location",
             "categories": ["Performance efficiency", "Operational excellence"],
             "type": "storage",
-            "current": "separate drive"
+            "current": "Shared with data files and log files"
         },
         {
             "name": "Log files (.ldf)",
             "status": "not-optimized",
             "severity": "critical",
-            "recommended": "separate-drive",
+            "recommended": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
             "resourceType": "Database",
             "totalObjectsAssessed": 2,
@@ -1111,13 +1111,13 @@
             "id": "log-files-location",
             "categories": ["Performance efficiency", "Operational excellence"],
             "type": "storage",
-            "current": "shared drive"
+            "current": "Large databases sharing log LUN or volume"
         },
         {
             "name": "Data files (.mdf)",
             "status": "not-optimized",
             "severity": "critical",
-            "recommended": "separate-drive",
+            "recommended": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
             "recommendation": "Separating data and log files onto different drives improves performance by allowing simultaneous I/O activity it also allows independent backup schedules and leverage fast and granular restore functionality",
             "resourceType": "Database",
             "totalObjectsAssessed": 2,
@@ -1146,7 +1146,7 @@
             "id": "data-files-location",
             "categories": ["Performance efficiency", "Operational excellence"],
             "type": "storage",
-            "current": "shared drive"
+            "current": "Large databases sharing data LUN or volume"
         },
         {
             "name": "Network adapter settings",

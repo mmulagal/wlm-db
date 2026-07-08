@@ -369,6 +369,28 @@ const createDashboardTableConfigOverrides = (
             }
         ]
     },
+    ...Object.fromEntries(
+        [
+            ASSESSMENT_CONFIG_IDS.DATA_FILES_MDF,
+            ASSESSMENT_CONFIG_IDS.LOG_FILES_LDF,
+            ASSESSMENT_CONFIG_IDS.TEMPDB_PLACEMENT
+        ].map(configId => [
+            configId,
+            {
+                dataMapping: (item: any) => ({
+                    current: item?.current,
+                    recommended: item?.recommended,
+                    totalObjectsAssessed: item?.totalObjectsAssessed || 0,
+                    totalObjectsInViolation: item?.totalObjectsInViolation || 0,
+                    violationDetails: item?.violationDetails || [],
+                    objectsInViolation: item?.objectsInViolation || [],
+                    configurationName: configId,
+                    configItem: item
+                }),
+                customColumns: [createDefaultImpactedColumn(configId, engineType)]
+            }
+        ])
+    ),
     [ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT]: {
         dataMapping: (item: any) => ({
             totalObjectsAssessed: item?.totalObjectsAssessed || 0,

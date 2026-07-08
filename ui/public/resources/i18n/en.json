@@ -1111,6 +1111,7 @@
             "volume": "Volume",
             "object-name": "Object name",
             "current": "Current",
+            "current-value": "Current value",
             "recommended": "Recommended",
             "disk-group": "Disk group",
             "disk-group-name": "Disk group name",
