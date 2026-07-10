@@ -1,23 +1,24 @@
 import {
-    ResourceCapacityCellRenderer,
     ResourceColumnId,
+    ResourceTextCellRenderer,
     TableScope,
     createWorkloadColumn,
     fileSystemColumn,
     lastAnalyzedColumn,
     optimizationStatusColumn,
     resourceNameColumn,
-    withEnrichmentLoader,
     type ResourceScanRecord,
     type TableColumn
 } from '@tlveng/workload-factory-components';
 
 enum VolumeColumnId {
-    SIZE = 'size'
+    CURRENT = 'current',
+    RECOMMENDED = 'recommended'
 }
 
 export enum VolumeEnrichmentField {
-    SIZE = 'sizeInBytes'
+    CURRENT = 'current',
+    RECOMMENDED = 'recommended'
 }
 
 const VOLUME_NAME_HEADER = 'Volume name';
@@ -31,14 +32,24 @@ export const volumeNameColumn: TableColumn<ResourceScanRecord> = {
 
 export const volumeWorkloadColumn = createWorkloadColumn(VOLUME_WORKLOAD_POPOVER_TEXT);
 
-export const volumeSizeColumn: TableColumn<ResourceScanRecord> = {
-    header: 'Size',
-    accessor: `metadata.${VolumeEnrichmentField.SIZE}`,
-    id: VolumeColumnId.SIZE,
+export const currentThinProvisioningColumn: TableColumn<ResourceScanRecord> = {
+    header: 'Current',
+    accessor: `metadata.${VolumeEnrichmentField.CURRENT}`,
+    id: VolumeColumnId.CURRENT,
     width: 140,
     sort: { enabled: true },
     filter: { enabled: false },
-    Renderer: withEnrichmentLoader(ResourceCapacityCellRenderer, VolumeEnrichmentField.SIZE)
+    Renderer: ResourceTextCellRenderer
+};
+
+export const recommendedThinProvisioningColumn: TableColumn<ResourceScanRecord> = {
+    header: 'Recommended',
+    accessor: `metadata.${VolumeEnrichmentField.RECOMMENDED}`,
+    id: VolumeColumnId.RECOMMENDED,
+    width: 140,
+    sort: { enabled: true },
+    filter: { enabled: false },
+    Renderer: ResourceTextCellRenderer
 };
 
 export const VOLUME_EXTRA_COLUMNS_ANCHOR_ID: string = ResourceColumnId.WORKLOAD;
@@ -48,7 +59,8 @@ export const DEFAULT_VOLUME_COLUMNS_BY_SCOPE: Record<TableScope, ReadonlyArray<T
         volumeNameColumn,
         fileSystemColumn,
         optimizationStatusColumn,
-        volumeSizeColumn,
+        currentThinProvisioningColumn,
+        recommendedThinProvisioningColumn,
         lastAnalyzedColumn
     ],
     [TableScope.FSX_WAD]: [volumeNameColumn]

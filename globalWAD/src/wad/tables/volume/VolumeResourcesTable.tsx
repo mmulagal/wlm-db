@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import {
     DismissConfirmDialog,
-    EnrichmentProvider,
     FixRowActionLabel,
     ResourceColumnId,
     TableScope,
@@ -15,22 +14,17 @@ import {
 } from '@tlveng/workload-factory-components';
 import { createFixBulkAction } from '../shared/bulkActions';
 import { spliceExtras } from '../shared/columns';
-import { ResourceTagsDialog } from '../shared/dialogs';
-import { useResourceTableEnrichment, type FetchResourceMetadataFn } from '../shared/useResourceTableEnrichment';
-import { DEFAULT_VOLUME_COLUMNS_BY_SCOPE, VOLUME_EXTRA_COLUMNS_ANCHOR_ID, VolumeEnrichmentField } from './columns';
+import { DEFAULT_VOLUME_COLUMNS_BY_SCOPE, VOLUME_EXTRA_COLUMNS_ANCHOR_ID } from './columns';
 import { resolveVolumeConfiguration } from './configurations';
-
-export type { FetchResourceMetadataFn } from '../shared/useResourceTableEnrichment';
 
 const VOLUME_RESOURCE_TYPE_NOUN = { singular: 'volume', plural: 'volumes' };
 
 interface VolumeResourcesTableProps {
     wadApi: WadApi;
     tableScope: TableScope;
-    fetchResourceMetadata?: FetchResourceMetadataFn;
 }
 
-export const VolumeResourcesTable = ({ wadApi, tableScope, fetchResourceMetadata }: VolumeResourcesTableProps) => {
+export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTableProps) => {
     const { configurationId } = wadApi.context;
     const configuration = useMemo(() => resolveVolumeConfiguration(configurationId), [configurationId]);
 
@@ -65,9 +59,6 @@ export const VolumeResourcesTable = ({ wadApi, tableScope, fetchResourceMetadata
         [configuration.fixBulk, resources, wadApi]
     );
 
-    const { handlePageRowsChange, pendingIds, tagsDialog, handleViewTags, handleCloseTags } =
-        useResourceTableEnrichment({ wadApi, fieldKey: VolumeEnrichmentField.SIZE, fetchResourceMetadata });
-
     const columns = useMemo<ReadonlyArray<TableColumn<ResourceScanRecord>>>(() => {
         const baseColumns =
             configuration.columns ??
@@ -88,8 +79,7 @@ export const VolumeResourcesTable = ({ wadApi, tableScope, fetchResourceMetadata
         tableScope,
         showDismissed,
         handleFixRow,
-        handleReactivateRow,
-        handleViewTags
+        handleReactivateRow
     ]);
 
     const bulkActions = useMemo<BulkAction[]>(() => {
@@ -105,7 +95,7 @@ export const VolumeResourcesTable = ({ wadApi, tableScope, fetchResourceMetadata
     }, [configuration.supportsBulkFix, configuration.bulkFixDisabledTooltip, showDismissed, handleFixBulk]);
 
     return (
-        <EnrichmentProvider pendingIds={pendingIds}>
+        <>
             <WadResourcesTable
                 wadApi={wadApi}
                 onDismiss={handleDismissBulk}
@@ -115,7 +105,6 @@ export const VolumeResourcesTable = ({ wadApi, tableScope, fetchResourceMetadata
                 rowMenu={rowMenu}
                 counterLabel={counterLabel}
                 dataTestId={`volume-resources-table-${configurationId}`}
-                onPageRowsChange={handlePageRowsChange}
             />
             {dismissConfirmCopy && (
                 <DismissConfirmDialog
@@ -126,12 +115,6 @@ export const VolumeResourcesTable = ({ wadApi, tableScope, fetchResourceMetadata
                     isSubmitting={isDismissSubmitting}
                 />
             )}
-            <ResourceTagsDialog
-                isOpen={tagsDialog !== null}
-                tags={tagsDialog?.tags ?? []}
-                isPending={tagsDialog?.isPending ?? false}
-                onClose={handleCloseTags}
-            />
-        </EnrichmentProvider>
+        </>
     );
 };

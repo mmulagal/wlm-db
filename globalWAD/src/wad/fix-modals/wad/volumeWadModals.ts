@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import type { FixMetadata, ResourceScanRecord } from '@tlveng/workload-factory-components';
+import { ThinProvisioningFixModal } from '../volume/thin-provisioning/ThinProvisioningFixModal';
 
 export interface VolumeWadFixModalProps {
     recommendationName: string;
@@ -15,4 +16,6 @@ export interface VolumeWadFixModalProps {
     onFixSuccess: () => void;
 }
 
-export const volumeWadModals: Partial<Record<string, ComponentType<VolumeWadFixModalProps>>> = {};
+export const volumeWadModals: Partial<Record<string, ComponentType<VolumeWadFixModalProps>>> = {
+    'wlmdb-thin-provision': ThinProvisioningFixModal
+};

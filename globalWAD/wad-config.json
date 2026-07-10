@@ -4,11 +4,16 @@
         "modal": { "bundle": "wad-db-modals", "tag": "wad-db-modals" }
     },
     "configurations": [
-        "compute-rightsizing",
-        "update-automatic-capacity-management"
+        "wlmdb-thin-provision",
+        "wlmdb-tiering-tco-optimization",
+        "wlmdb-os-type",
+        "wlmdb-block-device-space-management",
+        "wlmdb-snapshot-policy",
+        "wlmdb-storage-efficiencies",
+        "wlmdb-snapcenter-snapshot"
     ],
     "bundles": {
-        "wad-db-tables": { "url": "%VITE_WORKLOAD_IFRAME_URL%/wlm-db/wad-db-tables.bundle.js", "version": "0.0.1" },
-        "wad-db-modals": { "url": "%VITE_WORKLOAD_IFRAME_URL%/wlm-db/wad-db-modals.bundle.js", "version": "0.0.1" }
+        "wad-db-tables": { "url": "%VITE_WORKLOAD_IFRAME_URL%/wlmdb/wad-db-tables.bundle.js", "version": "0.0.1" },
+        "wad-db-modals": { "url": "%VITE_WORKLOAD_IFRAME_URL%/wlmdb/wad-db-modals.bundle.js", "version": "0.0.1" }
     }
 }

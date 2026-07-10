@@ -1,6 +1,4 @@
 import { TableScope, type WadElementProps } from '@tlveng/workload-factory-components';
-import { FileSystemResourcesTable } from './tables/file-system/FileSystemResourcesTable';
-import { FileSystemConfigurationIds } from './tables/file-system/configurations';
 import { VolumeResourcesTable } from './tables/volume/VolumeResourcesTable';
 import { VolumeConfigurationIds } from './tables/volume/configurations';
 import { UnsupportedTableNotice } from './shared/fixModalShared';
@@ -17,10 +15,6 @@ export const FixPageRouter = ({ wadApi }: WadElementProps) => {
 
     if (VolumeConfigurationIds.has(configurationId)) {
         return <VolumeResourcesTable wadApi={wadApi} tableScope={TableScope.GLOBAL_WAD} />;
-    }
-
-    if (FileSystemConfigurationIds.has(configurationId)) {
-        return <FileSystemResourcesTable wadApi={wadApi} tableScope={TableScope.GLOBAL_WAD} />;
     }
 
     return <UnsupportedTableNotice configurationId={configurationId} />;
