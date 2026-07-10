@@ -219,6 +219,7 @@ export interface WorkloadFactoryResourceDetails {
         }>;
         baseDeploymentType?: string;
     };
+    clusterNodeDetails?: ClusterNodeDetail[];
 }
 
 export interface WorkloadFactoryDatabaseItem {
@@ -258,6 +259,13 @@ export interface AoagClusterNode {
     ec2InstanceName?: string;
     databaseHostId?: string;
     databaseInstanceId?: string;
+}
+
+export interface ClusterNodeDetail {
+    ec2InstanceId?: string;
+    ec2InstancePrivateIpAddress?: string;
+    ec2InstanceType?: string;
+    ec2InstanceName?: string;
 }
 
 export interface LunFile {

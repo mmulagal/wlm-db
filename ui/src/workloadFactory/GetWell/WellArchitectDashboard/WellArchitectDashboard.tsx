@@ -11,9 +11,11 @@ import {
     DETECT_HOST_VAR,
     FROM_DIALOG,
     RESET_PASSWORD_TYPE,
+    SQL_DEPLOYMENT_MODE,
     WELL_ARCHITECTED_TABS
 } from '../../../utils/consts';
 import { setDefaultFilterOptions, setOptimizeFilterTags } from '../../../store/workloadFactory/inventoryV2Slice';
+import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import {
     resetGwData,
     resetVisitedTabs,
@@ -29,7 +31,11 @@ import { ReactComponent as MenuIcon } from '../../../assets/ic_actions_menu_circ
 
 import { setRefreshTime } from '../../../store/workloadFactory/headersSlice';
 import { getCurrentDateTime } from '../../../utils/utilityFunctions';
-import { useRegisterResourceCredentialsBulkMutation, workloadFactoryResourceApiV2 } from '../../../utils/apiService';
+import {
+    useGetMssqlInstanceDataV2Mutation,
+    useRegisterResourceCredentialsBulkMutation,
+    workloadFactoryResourceApiV2
+} from '../../../utils/apiService';
 import {
     setIsResourceRefresh,
     setPasswordResetLoading,
@@ -69,6 +75,7 @@ const WellArchitectDashboard = () => {
 
     const { refreshSandboxInstanceTime, sandboxInstanceLoading } = useAppSelector(state => state.sandbox);
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
+    const [getMssqlInstanceData] = useGetMssqlInstanceDataV2Mutation();
 
     const {
         resourceLoading: resourceLoadingState,
@@ -197,6 +204,57 @@ const WellArchitectDashboard = () => {
         dispatch(setPasswordResetLoading(true));
         try {
             const credList = value === RESET_PASSWORD_TYPE.FSXADMIN ? createPayload() : createSqlPayload();
+
+            const getClusterNodesIpAddress = async (): Promise<string[] | undefined> => {
+                if (value === RESET_PASSWORD_TYPE.FSXADMIN) return;
+
+                const state = store.getState();
+                const { inventoryTableData } = state.inventoryV2;
+                const { selectedResourceId, selectedGwInstanceCredId, selectedGwInstanceRegionId } =
+                    state.getWellOptimize;
+                const currentEc2Id =
+                    ec2InstanceId ||
+                    resourceDetails?.nodeTopology?.ec2Details[0]?.id ||
+                    innerPageDetails?.ec2InstanceId;
+                const credId = selectedResourceCredId || selectedGwInstanceCredId;
+                const regionId = selectedResourceRegionId || selectedGwInstanceRegionId;
+
+                const hostData: any =
+                    inventoryTableData?.[uniqueHostRow(selectedResourceId, credId, regionId)] ||
+                    inventoryTableData?.[uniqueHostRow(currentEc2Id, credId, regionId)];
+
+                const instanceData = hostData?.sqlServerInstances?.find(
+                    (inst: any) =>
+                        inst.databaseInstanceName === selectedDatabaseInstanceName ||
+                        inst.sqlServerInstance === selectedDatabaseInstanceName
+                );
+
+                const deploymentType =
+                    instanceData?.sqlServerDeploymentType || resourceDetails?.sqlServerDeploymentType;
+
+                if (deploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+                    const ec2Id = currentEc2Id || hostData?.ec2InstanceId;
+                    const result: any = await getMssqlInstanceData({
+                        credentialId: credId,
+                        regionId,
+                        instances: ec2Id,
+                        fields: 'nodeTopology'
+                    });
+                    const matchingInstance = result?.data?.items?.find(
+                        (item: any) => item?.id === ec2Id || item?.ec2InstanceId === ec2Id
+                    );
+                    const fciNodes = matchingInstance?.clusterNodeDetails;
+                    if (fciNodes?.length > 0) {
+                        const ips = fciNodes
+                            .map((node: { ec2InstancePrivateIpAddress?: string }) => node?.ec2InstancePrivateIpAddress)
+                            .filter((ip: string | undefined): ip is string => Boolean(ip));
+                        if (ips.length > 0) return ips;
+                    }
+                }
+            };
+
+            const clusterNodesIpAddress = await getClusterNodesIpAddress();
+
             const payload = {
                 items: [
                     {
@@ -206,7 +264,8 @@ const WellArchitectDashboard = () => {
                             resourceDetails?.nodeTopology?.ec2Details[0]?.id ||
                             innerPageDetails?.ec2InstanceId,
                         region: selectedResourceRegionId,
-                        credentialsId: selectedResourceCredId
+                        credentialsId: selectedResourceCredId,
+                        ...(clusterNodesIpAddress && { clusterNodesIpAddress })
                     }
                 ]
             };
