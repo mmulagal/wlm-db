@@ -1,5 +1,7 @@
 import type { ComponentType } from 'react';
 import type { FixMetadata, ResourceScanRecord } from '@tlveng/workload-factory-components';
+import { SnapshotPolicyFixModal } from '../volume/snapshot-policy/SnapshotPolicyFixModal';
+import { SnapcenterSnapshotFixModal } from '../volume/snapcenter-snapshot/SnapcenterSnapshotFixModal';
 import { ThinProvisioningFixModal } from '../volume/thin-provisioning/ThinProvisioningFixModal';
 
 export interface VolumeWadFixModalProps {
@@ -17,5 +19,7 @@ export interface VolumeWadFixModalProps {
 }
 
 export const volumeWadModals: Partial<Record<string, ComponentType<VolumeWadFixModalProps>>> = {
-    'wlmdb-thin-provision': ThinProvisioningFixModal
+    'wlmdb-thin-provision': ThinProvisioningFixModal,
+    'wlmdb-snapshot-policy': SnapshotPolicyFixModal,
+    'wlmdb-snapcenter-snapshot': SnapcenterSnapshotFixModal
 };

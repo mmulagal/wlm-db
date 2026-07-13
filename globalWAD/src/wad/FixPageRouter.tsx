@@ -1,4 +1,6 @@
 import { TableScope, type WadElementProps } from '@tlveng/workload-factory-components';
+import { LunResourcesTable } from './tables/lun/LunResourcesTable';
+import { LunConfigurationIds } from './tables/lun/configurations';
 import { VolumeResourcesTable } from './tables/volume/VolumeResourcesTable';
 import { VolumeConfigurationIds } from './tables/volume/configurations';
 import { UnsupportedTableNotice } from './shared/fixModalShared';
@@ -7,7 +9,7 @@ import { UnsupportedTableNotice } from './shared/fixModalShared';
  * Routes to the appropriate DB table component based on `configurationId`.
  *
  * Volume configs → VolumeResourcesTable
- * File system configs → FileSystemResourcesTable
+ * LUN configs → LunResourcesTable
  * Unknown configs → UnsupportedTableNotice
  */
 export const FixPageRouter = ({ wadApi }: WadElementProps) => {
@@ -15,6 +17,10 @@ export const FixPageRouter = ({ wadApi }: WadElementProps) => {
 
     if (VolumeConfigurationIds.has(configurationId)) {
         return <VolumeResourcesTable wadApi={wadApi} tableScope={TableScope.GLOBAL_WAD} />;
+    }
+
+    if (LunConfigurationIds.has(configurationId)) {
+        return <LunResourcesTable wadApi={wadApi} tableScope={TableScope.GLOBAL_WAD} />;
     }
 
     return <UnsupportedTableNotice configurationId={configurationId} />;

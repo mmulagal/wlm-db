@@ -14,19 +14,19 @@ import {
 } from '@tlveng/workload-factory-components';
 import { createFixBulkAction } from '../shared/bulkActions';
 import { spliceExtras } from '../shared/columns';
-import { DEFAULT_VOLUME_COLUMNS_BY_SCOPE, VOLUME_EXTRA_COLUMNS_ANCHOR_ID } from './columns';
-import { resolveVolumeConfiguration } from './configurations';
+import { DEFAULT_LUN_COLUMNS_BY_SCOPE, LUN_EXTRA_COLUMNS_ANCHOR_ID } from './columns';
+import { resolveLunConfiguration } from './configurations';
 
-const VOLUME_RESOURCE_TYPE_NOUN = { singular: 'volume', plural: 'volumes' };
+const LUN_RESOURCE_TYPE_NOUN = { singular: 'LUN', plural: 'LUNs' };
 
-interface VolumeResourcesTableProps {
+interface LunResourcesTableProps {
     wadApi: WadApi;
     tableScope: TableScope;
 }
 
-export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTableProps) => {
+export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps) => {
     const { configurationId } = wadApi.context;
-    const configuration = useMemo(() => resolveVolumeConfiguration(configurationId), [configurationId]);
+    const configuration = useMemo(() => resolveLunConfiguration(configurationId), [configurationId]);
 
     const {
         resources,
@@ -40,7 +40,7 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
         confirmDismiss,
         cancelDismiss,
         isDismissSubmitting
-    } = useResourceTableActions({ wadApi, resourceTypeNoun: VOLUME_RESOURCE_TYPE_NOUN });
+    } = useResourceTableActions({ wadApi, resourceTypeNoun: LUN_RESOURCE_TYPE_NOUN });
 
     const handleFixRow = useCallback(
         (resource: ResourceScanRecord) =>
@@ -63,9 +63,9 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
         const baseColumns =
             configuration.columns ??
             spliceExtras(
-                DEFAULT_VOLUME_COLUMNS_BY_SCOPE[tableScope],
+                DEFAULT_LUN_COLUMNS_BY_SCOPE[tableScope],
                 configuration.extraColumns,
-                VOLUME_EXTRA_COLUMNS_ANCHOR_ID
+                LUN_EXTRA_COLUMNS_ANCHOR_ID
             );
 
         if (showDismissed) {
@@ -121,7 +121,7 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
                 bulkActions={bulkActions}
                 rowMenu={rowMenu}
                 counterLabel={counterLabel}
-                dataTestId={`volume-resources-table-${configurationId}`}
+                dataTestId={`lun-resources-table-${configurationId}`}
             />
             {dismissConfirmCopy && (
                 <DismissConfirmDialog

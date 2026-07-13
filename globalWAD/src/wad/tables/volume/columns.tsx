@@ -52,6 +52,26 @@ export const recommendedThinProvisioningColumn: TableColumn<ResourceScanRecord> 
     Renderer: ResourceTextCellRenderer
 };
 
+export const currentSnapcenterSnapshotColumn: TableColumn<ResourceScanRecord> = {
+    header: 'Snapshot status',
+    accessor: `metadata.${VolumeEnrichmentField.CURRENT}`,
+    id: 'snapcenterCurrent',
+    width: 220,
+    sort: { enabled: true },
+    filter: { enabled: false },
+    Renderer: ResourceTextCellRenderer
+};
+
+export const recommendedSnapcenterSnapshotColumn: TableColumn<ResourceScanRecord> = {
+    header: 'Recommended value',
+    accessor: `metadata.${VolumeEnrichmentField.RECOMMENDED}`,
+    id: 'snapcenterRecommended',
+    width: 220,
+    sort: { enabled: true },
+    filter: { enabled: false },
+    Renderer: ResourceTextCellRenderer
+};
+
 export const VOLUME_EXTRA_COLUMNS_ANCHOR_ID: string = ResourceColumnId.WORKLOAD;
 
 export const DEFAULT_VOLUME_COLUMNS_BY_SCOPE: Record<TableScope, ReadonlyArray<TableColumn<ResourceScanRecord>>> = {
