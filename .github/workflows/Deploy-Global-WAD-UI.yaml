@@ -1,0 +1,134 @@
+name: Build And Deploy Glogal WAD ui staging
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - globalWAD/**
+  workflow_dispatch:
+    inputs:
+      DeployToStandbyOnly:
+        type: choice
+        description: 'Deploy on Standby Only'
+        required: true
+        default: 'false'
+        options:
+        - 'false'
+        - 'true'
+env:
+  REGION: us-east-1
+  ENVIRONMENT: staging
+  BUCKET_NAME: staging-workloads-components
+  DISTRIBUTION_ID: E17H3MZ1OBF4FR
+  STANDBY_DISTRIBUTION_ID: E2ETLUP9HI6NSO
+  STANDBY_BUCKET_NAME: standby.staging-workloads-components
+  STANDBY_REGION: us-west-2
+  DEPLOY_TO_STANDBY_ONLY: ${{ inputs.DeployToStandbyOnly || 'false' }}
+  TOKEN: ${{ secrets.BXP_UI_TOKEN }}
+  PKGS_TOKEN: ${{ secrets.UI_PKGS }}
+
+jobs:
+  build-wad-ui-and-upload-to-S3:
+    runs-on: wlmdb-runner
+
+    steps:
+    - name: Echo SHORT_SHA
+      run: echo ${{env.SHORT_SHA}}
+    - name: Generate GitHub App Token
+      id: generate-token
+      uses: tibdex/github-app-token@v2
+      with:
+        app_id: ${{ vars.APP_ID }}
+        private_key: ${{ secrets.GG_PEM }}
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+          fetch-depth: 0
+          ref: master
+          token: ${{ steps.generate-token.outputs.token }}
+
+    - name: Use Inputs
+      run: |
+        echo "DeployToStandbyOnly Value Is: ${{env.DEPLOY_TO_STANDBY_ONLY}}"
+
+    - name: Install aws cli
+      id: install-aws-cli
+      uses: unfor19/install-aws-cli-action@v1
+      with:
+        version: 2
+        verbose: false
+        arch: amd64
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+          aws-access-key-id: ${{ secrets.WAD_CDN_ACCESS_KEY_STAGING }}
+          aws-secret-access-key: ${{ secrets.WAD_CDN_SECRET_KEY_STAGING }}
+          aws-region: ${{env.REGION}}
+
+    - name: Setup node
+      uses: actions/setup-node@v4
+      with:
+          node-version: 22.12
+    - name: Install Yarn v4
+      run: |
+        corepack enable
+        corepack prepare yarn@4.13 --activate
+        yarn --version
+    - name: Configure Git credentials
+      run: |
+          git config --global url."https://${{ env.PKGS_TOKEN }}@github.com/".insteadOf "https://github.com/"
+      env:
+         NPM_TOKEN: ${{ env.PKGS_TOKEN }}
+
+    - name: Create .yarnrc.yml for GitHub Packages
+      run: |
+          echo "npmScopes:" > .yarnrc.yml
+          echo "  netapp:" >> .yarnrc.yml
+          echo "    npmRegistryServer: \"https://npm.pkg.github.com\"" >> .yarnrc.yml
+          echo "    npmAuthToken: ${{ env.PKGS_TOKEN }}" >> .yarnrc.yml
+          echo "  tlveng:" >> .yarnrc.yml
+          echo "    npmRegistryServer: \"https://npm.pkg.github.com\"" >> .yarnrc.yml
+          echo "    npmAuthToken: ${{ env.PKGS_TOKEN }}" >> .yarnrc.yml
+          echo "nodeLinker: node-modules" >> .yarnrc.yml
+      env:
+          NPM_TOKEN: ${{ env.PKGS_TOKEN }}
+      working-directory: ./globalWAD
+    - name: Build UI
+      run: |
+         chmod +x build.sh
+         bash build.sh
+      working-directory: ./globalWAD
+      env:
+        stage: ${{env.ENVIRONMENT}}
+
+    - name: Deploy UI
+      if: ${{ env.DEPLOY_TO_STANDBY_ONLY == 'false' }}
+      run: |
+         chmod +x deploy.sh
+         bash deploy.sh
+      working-directory: ./globalWAD
+      env:
+        DISTRIBUTION_ID: ${{env.DISTRIBUTION_ID}}
+        bucket: ${{env.BUCKET_NAME}}
+        stage: ${{env.ENVIRONMENT}}
+
+    - name: Deploy UI Standby Bucket
+      if: ${{ env.DEPLOY_TO_STANDBY_ONLY == 'true' }}
+      run: |
+         chmod +x deploy.sh
+         bash deploy.sh
+      working-directory: ./globalWAD
+      env:
+        DISTRIBUTION_ID: ${{env.STANDBY_DISTRIBUTION_ID}}
+        bucket: ${{env.STANDBY_BUCKET_NAME}}
+        stage: ${{env.ENVIRONMENT}}
+        AWS_DEFAULT_REGION: ${{env.STANDBY_REGION}}
+    - name: Send failure notification
+      if: failure()
+      run: |
+            curl -H "Content-Type: application/json" -d '{
+            "type": "message",
+            "text": "<br> 🚨 GitHub Actions Workflow Failed! <br> Check the Workflow: ${{ github.workflow }} <br> <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>GitHub Actions Logs</a> <br>"
+            }' "https://default4b0911a0929b4715944bc03745165b.3a.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/f0883fc97dc1488aae03ea7750871c43/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DQFPWrt2XUMluuxn0TMesMocnPWVyeROc-Hs8phGHBI"
