@@ -71,29 +71,15 @@ jobs:
       uses: actions/setup-node@v4
       with:
           node-version: 22.12
-    - name: Install Yarn v4
-      run: |
-        corepack enable
-        corepack prepare yarn@4.13 --activate
-        yarn --version
     - name: Configure Git credentials
       run: |
           git config --global url."https://${{ env.PKGS_TOKEN }}@github.com/".insteadOf "https://github.com/"
       env:
          NPM_TOKEN: ${{ env.PKGS_TOKEN }}
-
-    - name: Create .yarnrc.yml for GitHub Packages
+    - name: Configure npm for GitHub Packages
       run: |
-          echo "npmScopes:" > .yarnrc.yml
-          echo "  netapp:" >> .yarnrc.yml
-          echo "    npmRegistryServer: \"https://npm.pkg.github.com\"" >> .yarnrc.yml
-          echo "    npmAuthToken: ${{ env.PKGS_TOKEN }}" >> .yarnrc.yml
-          echo "  tlveng:" >> .yarnrc.yml
-          echo "    npmRegistryServer: \"https://npm.pkg.github.com\"" >> .yarnrc.yml
-          echo "    npmAuthToken: ${{ env.PKGS_TOKEN }}" >> .yarnrc.yml
-          echo "nodeLinker: node-modules" >> .yarnrc.yml
-      env:
-          NPM_TOKEN: ${{ env.PKGS_TOKEN }}
+        echo "@TLVeng:registry=https://npm.pkg.github.com" > .npmrc
+        echo "//npm.pkg.github.com/:_authToken=${{ env.PKGS_TOKEN }}" >> .npmrc
       working-directory: ./globalWAD
     - name: Build UI
       run: |
