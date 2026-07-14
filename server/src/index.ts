@@ -64,12 +64,15 @@ import resourceRoutes from './routes/resource';
 import initiateSecrets from './utils/secret';
 import { createAndSubscribeToSnsTopicInAllRegions } from './operations/aws/sns-operations';
 import { processCloudFormationMessages } from './operations/aws/sqs-operations';
+import { close as closeAmqpBroker } from './lib/amqp/broker';
+import { startWadSubscriber } from './operations/wad-manager/subscriber';
 import { execute, initializeDatabase, prisma } from './utils/prisma-utils';
 import sandboxRoutes from './routes/sandbox';
 import { initiateCronOperations } from './operations/cron-operations';
 import { isActiveInstance } from './utils/utils';
 import { resetCache } from './utils/cache';
 import { REDIS_URL } from './utils/continous-optimization-consts';
+import { buildAndPublishWlmdbDescriptor } from './operations/wad-manager/wlmdb-descriptor';
 
 const logger = getLogger();
 const accessLogger = getLogger('access');
@@ -406,6 +409,18 @@ if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && i
     }
 }
 
+// Publish wlmdb.json to s3 and subscribe to wad manager queues
+try {
+    await buildAndPublishWlmdbDescriptor();
+} catch (error) {
+    logger.error('Failed to build and publish wlmdb.json to s3', error);
+}
+try {
+    await startWadSubscriber();
+} catch (error) {
+    logger.error('Failed to start WAD Manager subscriber', error);
+}
+
 logger.info('Initializing database');
 try {
     initializeDatabase();
@@ -437,6 +452,7 @@ const gracefulShutdown = async (signal: string) => {
     logger.info(`Received ${signal}, closing server gracefully`);
     try {
         await app.close();
+        await closeAmqpBroker();
         await prisma.client.$disconnect();
         logger.info('Database connections closed');
         process.exit(0);

@@ -36,6 +36,10 @@ import './simulator/scopes/cloud-manager/cloud-manager-audit-scope';
 import './simulator/scopes/cloud-manager/ubr-scope';
 import './simulator/scopes/cloud-manager/cloud-manager-notification-scope';
 import './simulator/scopes/cloud-manager/proxy-forwarder-scope';
+import './simulator/scopes/cloud-manager/wlm-hosts-scope';
+
+// AMQP Scopes
+import './simulator/scopes/amqp/broker-scope';
 
 // Other Scopes
 import './simulator/scopes/opentelemetry-scope';

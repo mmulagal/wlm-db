@@ -197,7 +197,9 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
                 objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
             }
         ],
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
 
     // ── configuration / lun ─────────────────────────────────────────────────

@@ -1,3 +1,5 @@
+import { OracleMappedOntapVolumesResponse } from '../../workloads/oracle/common-types';
+
 interface ISCIOSAssessment {
     'host-utilities'?: {
         error?: string | null;
@@ -193,6 +195,7 @@ interface StorageAssessment {
             hugepagesSizeInKb: number;
         };
     };
+    mappedOntapVolumes?: Record<string, OracleMappedOntapVolumesResponse>;
 }
 
 interface StorageIscsiAssessment extends StorageAssessment {

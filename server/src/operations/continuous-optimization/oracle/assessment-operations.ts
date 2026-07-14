@@ -44,6 +44,8 @@ import {
 } from '../../workloads/oracle/common-types';
 import { listDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
+import { WadScanContext, WadScanResultRecord } from '../../../utils/wad-consts';
+import { mapDriftToWadScanRecords } from '../wad-storage-scan-mapper';
 import {
     calculateComputeHostOsDrift,
     initiateComputeHostLevelAssessmentCollection,
@@ -1511,6 +1513,30 @@ async function fetchOracleDriftAssessmentPerAccountV1(
     };
 }
 
+async function getOracleStorageResourceScan(
+    ctx: WadScanContext,
+    storageAssessment: StorageAssessment
+): Promise<WadScanResultRecord[]> {
+    const { accountId, credentialsId, region, filesystemId } = ctx;
+    logger.info('Oracle: WAD storage resource scan', { accountId, credentialsId, region, filesystemId });
+
+    const assessmentData = await calculateStorageDrift(
+        accountId,
+        credentialsId,
+        region,
+        '',
+        '',
+        '',
+        '',
+        '',
+        filesystemId,
+        storageAssessment.mappedOntapVolumes ?? {},
+        storageAssessment
+    );
+
+    return mapDriftToWadScanRecords(ctx, assessmentData);
+}
+
 export {
     triggerOracleAssessment,
     onDemandTriggerOracleDriftAssessment,
@@ -1523,5 +1549,6 @@ export {
     initiateInstanceLevelAssessmentDataCollection,
     triggerOracleAssessmentAfterOptimization,
     getOntapVolumeIdsByFileType,
+    getOracleStorageResourceScan,
     ORACLE_V1_MAP_CONFIG
 };

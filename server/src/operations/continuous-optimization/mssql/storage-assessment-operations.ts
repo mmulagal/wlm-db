@@ -48,6 +48,19 @@ import {
 } from '../assessment-utils';
 import { getHeadroomDrift } from '../headroom-assessment';
 
+interface WadManagerMssqlAssessmentDetailsType {
+    id: string;
+    name: string;
+    currentValue: string;
+    recommendedValue: string;
+    status: string;
+    svmName?: string;
+}
+
+interface WadManagerMssqlAssessmentItemType extends MssqlAssessmentItemType {
+    assessmentDetails?: WadManagerMssqlAssessmentDetailsType[];
+}
+
 const logger = getLogger();
 interface DatabaseRecord {
     name: string;
@@ -552,7 +565,7 @@ async function calculateStorageDrift(
         );
     }
 
-    const driftAssessmentData: (MssqlAssessmentItemType | AssessmentErrorItemType)[] = [];
+    const driftAssessmentData: (WadManagerMssqlAssessmentItemType | AssessmentErrorItemType)[] = [];
 
     const { volumes, luns, os, layout, sizing, filesystemId, errors } =
         storageAssessmentData as unknown as StorageAssessment;
@@ -575,11 +588,16 @@ async function calculateStorageDrift(
             let overallStatus = AssessmentStatus.OPTIMIZED;
             const objectsInViolation: string[] = [];
             const violationDetails: GenericViolationResponseType[] = [];
+            const wadManagerAssessmentDetails: WadManagerMssqlAssessmentDetailsType[] = [];
             volumes.forEach(volume => {
                 let objectName = '';
+                let objectId = '';
+                let svmName = '';
                 let volumeStatus = AssessmentStatus.OPTIMIZED;
                 Object.entries(volume).forEach(([key, value]) => {
                     objectName = key === 'name' ? value : objectName;
+                    objectId = key === 'uuid' ? value : objectId;
+                    svmName = key === 'svmName' ? value : svmName;
                     if (key === config.parameter) {
                         volumeStatus =
                             config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
@@ -588,10 +606,19 @@ async function calculateStorageDrift(
                             objectsInViolation.push(objectName!);
                             violationDetails.push({
                                 objectName,
-                                value: value ? value.toString() : '',
+                                value: value != null ? String(value) : '',
                                 objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
                             });
                         }
+                        // For WAD MANAGER INTEGRATION
+                        wadManagerAssessmentDetails.push({
+                            id: objectId,
+                            name: objectName,
+                            currentValue: value != null ? String(value) : '',
+                            recommendedValue: (config.value ?? '').toString(),
+                            status: volumeStatus,
+                            svmName
+                        });
                     }
                 });
             });
@@ -603,7 +630,8 @@ async function calculateStorageDrift(
                 objectsInViolation,
                 totalObjectsAssessed: volumes.length,
                 totalObjectsInViolation: objectsInViolation.length,
-                violationDetails
+                violationDetails,
+                assessmentDetails: wadManagerAssessmentDetails
             });
         });
 
@@ -628,11 +656,14 @@ async function calculateStorageDrift(
             let overallStatus = AssessmentStatus.OPTIMIZED;
             const objectsInViolation: string[] = [];
             const violationDetails: GenericViolationResponseType[] = [];
+            const wadManagerAssessmentDetails: WadManagerMssqlAssessmentDetailsType[] = [];
             luns.forEach(lun => {
                 let objectName = '';
+                let objectId = '';
                 let volumeStatus = AssessmentStatus.OPTIMIZED;
                 Object.entries(lun).forEach(([key, value]) => {
                     objectName = key === 'name' ? value : objectName;
+                    objectId = key === 'uuid' ? value : objectId;
                     if (key === config.parameter) {
                         volumeStatus =
                             config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
@@ -642,10 +673,18 @@ async function calculateStorageDrift(
                             objectsInViolation.push(objectName!);
                             violationDetails.push({
                                 objectName,
-                                value: value ? value.toString() : '',
+                                value: value != null ? String(value) : '',
                                 objectType: ASSESSMENT_RESOURCE_TYPE.LUN
                             });
                         }
+                        // For WAD MANAGER INTEGRATION
+                        wadManagerAssessmentDetails.push({
+                            id: objectId,
+                            name: objectName,
+                            currentValue: value != null ? String(value) : '',
+                            recommendedValue: (config.value ?? '').toString(),
+                            status: volumeStatus
+                        });
                     }
                 });
             });
@@ -658,7 +697,8 @@ async function calculateStorageDrift(
                 totalObjectsAssessed: luns.length,
                 totalObjectsInViolation: objectsInViolation.length,
                 resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
-                violationDetails
+                violationDetails,
+                assessmentDetails: wadManagerAssessmentDetails
             });
         });
 

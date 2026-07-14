@@ -11,7 +11,7 @@ const DESCRIPTOR_KEY = `${SERVICE_ID}/${SERVICE_ID}.json`;
 
 const logger = getLogger();
 
-async function buildWlmdbDescriptor() {
+async function buildAndPublishWlmdbDescriptor() {
     logger.info('Building wlmdb WAD descriptor for version:', { serviceVersion: SERVICE_VERSION });
     const configurations = uniqBy(
         [...MSSQL_GOLDEN_CONFIG, ...ORACLE_GOLDEN_CONFIG]
@@ -41,4 +41,4 @@ async function buildWlmdbDescriptor() {
     logger.info('WAD descriptor built successfully');
 }
 
-export { buildWlmdbDescriptor };
+export { buildAndPublishWlmdbDescriptor };

@@ -454,6 +454,21 @@ const STORAGE_OPTIMIZE_JOB_PARAM = {
 
 const REDIS_SCHEMA = process.env.REDIS_SCHEME || 'redis';
 
+const AMQP_SCHEMA = process.env.AMQP_SCHEMA ?? 'amqps';
+const AMQP_HOST = process.env.AMQP_HOST ?? '';
+const AMQP_PORT = process.env.AMQP_PORT ?? '5671';
+const AMQP_USER = process.env.AMQP_USER ?? 'admin';
+const AMQP_PREFETCH = parseInt(process.env.AMQP_PREFETCH ?? '2', 10);
+const AMQP_RECONNECT_INTERVAL = parseInt(process.env.AMQP_RECONNECT_INTERVAL ?? '5000', 10);
+
+const AMQP_EXCHANGE_NAME = process.env.AMQP_EXCHANGE_NAME ?? 'wad-manager';
+const AMQP_ALT_EXCHANGE_NAME = process.env.AMQP_ALT_EXCHANGE_NAME ?? 'wad-manager-alt';
+const AMQP_DLX_EXCHANGE_NAME = process.env.AMQP_DLX_EXCHANGE_NAME ?? 'wad-manager-dlx';
+const AMQP_QUEUE_MAX_LENGTH = parseInt(process.env.AMQP_QUEUE_MAX_LENGTH ?? '1000', 10);
+const AMQP_MAX_DELIVERY_RETRY = parseInt(process.env.AMQP_MAX_DELIVERY_RETRY ?? '3', 10);
+const AMQP_RECONNECT_MAX_DELAY = 30_000;
+const AMQP_RECONNECT_BACKOFF = 2;
+
 const TEST_CONNECTION_COMMAND =
     'Test-Connection -ComputerName "www.catalog.update.microsoft.com" | Select-Object -ExpandProperty Scope | ConvertTo-Json';
 
@@ -767,5 +782,18 @@ export {
     OptimizeOracleNFSStorageOperatingSystem,
     ORACLE_ASM_STORAGE_CONFIGURATION_ASSESSMENT_MAP,
     MIN_OPTIMIZED_HEADROOM_PERCENTAGE,
-    OptimizeOracleStorageSizing
+    OptimizeOracleStorageSizing,
+    AMQP_SCHEMA,
+    AMQP_HOST,
+    AMQP_PORT,
+    AMQP_USER,
+    AMQP_PREFETCH,
+    AMQP_RECONNECT_INTERVAL,
+    AMQP_EXCHANGE_NAME,
+    AMQP_ALT_EXCHANGE_NAME,
+    AMQP_DLX_EXCHANGE_NAME,
+    AMQP_QUEUE_MAX_LENGTH,
+    AMQP_MAX_DELIVERY_RETRY,
+    AMQP_RECONNECT_MAX_DELAY,
+    AMQP_RECONNECT_BACKOFF
 };

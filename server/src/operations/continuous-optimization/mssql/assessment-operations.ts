@@ -86,6 +86,8 @@ import {
     resolveAssessmentTypes,
     type MapAssessmentToV1Config
 } from '../assessment-utils';
+import { WadScanContext, WadScanResultRecord } from '../../../utils/wad-consts';
+import { mapDriftToWadScanRecords } from '../wad-storage-scan-mapper';
 import {
     DriftAssessmentResponsePerHostType,
     DriftAssessmentResponsePerAccountV1Type,
@@ -1686,6 +1688,15 @@ async function fetchMssqlPatchScan(
     }
 }
 
+async function getMssqlStorageResourceScan(
+    ctx: WadScanContext,
+    storageAssessmentData: StorageAssessment
+): Promise<WadScanResultRecord[]> {
+    const { accountId, credentialsId, region } = ctx;
+    const assessmentData = await calculateStorageDrift(accountId, credentialsId, region, '', '', storageAssessmentData);
+    return mapDriftToWadScanRecords(ctx, assessmentData);
+}
+
 export {
     triggerMssqlAssessment,
     onDemandTriggerMssqlDriftAssessment,
@@ -1697,5 +1708,6 @@ export {
     fetchMssqlPatchScan,
     updateAssessmentResultsInInstanceMetadata,
     triggerMssqlAssessmentAfterOptimization,
+    getMssqlStorageResourceScan,
     MSSQL_V1_MAP_CONFIG
 };
