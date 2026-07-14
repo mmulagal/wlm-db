@@ -1,7 +1,5 @@
 import { memo, useCallback } from 'react';
-import styled from '@emotion/styled';
 import {
-    Modal,
     ModalHeader,
     ModalContent,
     ModalFooter,
@@ -10,8 +8,16 @@ import {
     Text,
     BulletList
 } from '@netapp/bxp-design-system-react';
-import type { VolumeWadFixModalProps } from '../../wad/volumeWadModals';
-import { SnapshotPolicyFixModalTestIds } from './testIds';
+import { FixModalSection, FixModalSectionTitle, HeightCapModal } from '../../shared/fixModalStyles';
+import type { VolumeFixModalProps } from '../../shared/volumeFixModalComponents';
+
+const SnapshotPolicyFixModalTestIds = {
+    modal: 'wlmdb-snapshot-policy-fix-modal',
+    header: 'wlmdb-snapshot-policy-fix-modal-header',
+    content: 'wlmdb-snapshot-policy-fix-modal-content',
+    continueButton: 'wlmdb-snapshot-policy-fix-continue-btn',
+    cancelButton: 'wlmdb-snapshot-policy-fix-cancel-btn'
+} as const;
 
 const ACTION_SUMMARY_TEXT =
     'Workload Factory recommends disabling scheduled snapshots for FSx for ONTAP volumes. Instead, manage snapshots externally using tools such as SnapCenter, which create application-consistent backups and help prevent data corruption during restore operations.';
@@ -24,20 +30,8 @@ const NOTE_NO_DISRUPTION = 'No disruption to your services are expected during t
 const NOTE_AUTHORIZATION =
     'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.';
 
-const BodyWrapper = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-`;
-
-const Section = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-`;
-
 export const SnapshotPolicyFixModal = memo(
-    ({ recommendationName, resources, close, fix, isFixing, onFixSuccess }: VolumeWadFixModalProps) => {
+    ({ recommendationName, resources, close, fix, isFixing, onFixSuccess }: VolumeFixModalProps) => {
         const handleContinue = useCallback(async () => {
             try {
                 await fix(
@@ -52,26 +46,24 @@ export const SnapshotPolicyFixModal = memo(
         }, [close, fix, onFixSuccess, resources]);
 
         return (
-            <Modal dataTestId={SnapshotPolicyFixModalTestIds.modal}>
+            <HeightCapModal dataTestId={SnapshotPolicyFixModalTestIds.modal}>
                 <ModalHeader dataTestId={SnapshotPolicyFixModalTestIds.header}>{recommendationName}</ModalHeader>
                 <ModalContent dataTestId={SnapshotPolicyFixModalTestIds.content}>
-                    <BodyWrapper>
-                        <Section>
-                            <Text bold>Action summary</Text>
-                            <Text>{ACTION_SUMMARY_TEXT}</Text>
-                        </Section>
-                        <Section>
-                            <Text bold>What will happen</Text>
-                            <Text>{WHAT_WILL_HAPPEN_TEXT}</Text>
-                        </Section>
-                        <Section>
-                            <Text bold>Note</Text>
-                            <BulletList>
-                                <>{NOTE_NO_DISRUPTION}</>
-                                <>{NOTE_AUTHORIZATION}</>
-                            </BulletList>
-                        </Section>
-                    </BodyWrapper>
+                    <FixModalSection>
+                        <FixModalSectionTitle bold>Action summary</FixModalSectionTitle>
+                        <Text>{ACTION_SUMMARY_TEXT}</Text>
+                    </FixModalSection>
+                    <FixModalSection>
+                        <FixModalSectionTitle bold>What will happen</FixModalSectionTitle>
+                        <Text>{WHAT_WILL_HAPPEN_TEXT}</Text>
+                    </FixModalSection>
+                    <FixModalSection>
+                        <FixModalSectionTitle bold>Note</FixModalSectionTitle>
+                        <BulletList>
+                            <>{NOTE_NO_DISRUPTION}</>
+                            <>{NOTE_AUTHORIZATION}</>
+                        </BulletList>
+                    </FixModalSection>
                 </ModalContent>
                 <ModalFooter>
                     <ButtonsGroup>
@@ -91,7 +83,7 @@ export const SnapshotPolicyFixModal = memo(
                         </Button>
                     </ButtonsGroup>
                 </ModalFooter>
-            </Modal>
+            </HeightCapModal>
         );
     }
 );

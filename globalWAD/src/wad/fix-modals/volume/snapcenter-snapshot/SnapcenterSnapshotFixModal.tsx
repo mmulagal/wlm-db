@@ -1,17 +1,22 @@
 import { memo } from 'react';
-import styled from '@emotion/styled';
 import {
-    Modal,
     ModalHeader,
     ModalContent,
     ModalFooter,
     ButtonsGroup,
     Button,
-    Text,
-    NumberedList
+    Text
 } from '@netapp/bxp-design-system-react';
-import type { VolumeWadFixModalProps } from '../../wad/volumeWadModals';
-import { SnapcenterSnapshotFixModalTestIds } from './testIds';
+import { FixModalNumberedList, FixModalSection, FixModalSectionTitle, HeightCapModal } from '../../shared/fixModalStyles';
+import type { VolumeFixModalProps } from '../../shared/volumeFixModalComponents';
+
+const SnapcenterSnapshotFixModalTestIds = {
+    modal: 'wlmdb-snapcenter-snapshot-fix-modal',
+    header: 'wlmdb-snapcenter-snapshot-fix-modal-header',
+    content: 'wlmdb-snapcenter-snapshot-fix-modal-content',
+    closeButton: 'wlmdb-snapcenter-snapshot-fix-close-btn',
+    optimizationSteps: 'wlmdb-snapcenter-snapshot-fix-modal-optimization-steps'
+} as const;
 
 const ACTION_SUMMARY_TEXT =
     'Use SnapCenter to create application-consistent snapshots of your volumes at a specific point in time. This helps keep apps stable, protects critical data, and enables faster, more accurate restores with less downtime.';
@@ -42,46 +47,32 @@ const OPTION_2_STEPS = [
     'Assign the policy to a resource group containing the impacted databases and verify that scheduled backups complete successfully.'
 ] as const;
 
-const BodyWrapper = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-`;
-
-const Section = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-`;
-
-export const SnapcenterSnapshotFixModal = memo(({ recommendationName, close }: VolumeWadFixModalProps) => (
-    <Modal dataTestId={SnapcenterSnapshotFixModalTestIds.modal}>
+export const SnapcenterSnapshotFixModal = memo(({ recommendationName, close }: VolumeFixModalProps) => (
+    <HeightCapModal dataTestId={SnapcenterSnapshotFixModalTestIds.modal}>
         <ModalHeader dataTestId={SnapcenterSnapshotFixModalTestIds.header}>{recommendationName}</ModalHeader>
         <ModalContent dataTestId={SnapcenterSnapshotFixModalTestIds.content}>
-            <BodyWrapper>
-                <Section>
-                    <Text bold>Action summary</Text>
-                    <Text>{ACTION_SUMMARY_TEXT}</Text>
-                </Section>
-                <Section>
-                    <Text bold>Optimization steps</Text>
-                    <Text bold>{OPTION_1_TITLE}</Text>
-                    <NumberedList>
-                        {OPTION_1_STEPS.map(step => (
-                            <Text key={step}>{step}</Text>
-                        ))}
-                    </NumberedList>
-                </Section>
-                <Section>
-                    <Text bold>{OPTION_2_TITLE}</Text>
-                    <Text>{OPTION_2_INTRO}</Text>
-                    <NumberedList>
-                        {OPTION_2_STEPS.map(step => (
-                            <Text key={step}>{step}</Text>
-                        ))}
-                    </NumberedList>
-                </Section>
-            </BodyWrapper>
+            <FixModalSection>
+                <FixModalSectionTitle bold>Action summary</FixModalSectionTitle>
+                <Text>{ACTION_SUMMARY_TEXT}</Text>
+            </FixModalSection>
+            <FixModalSection>
+                <FixModalSectionTitle bold>Optimization steps</FixModalSectionTitle>
+                <Text bold>{OPTION_1_TITLE}</Text>
+                <FixModalNumberedList dataTestId={SnapcenterSnapshotFixModalTestIds.optimizationSteps}>
+                    {OPTION_1_STEPS.map(step => (
+                        <Text key={step}>{step}</Text>
+                    ))}
+                </FixModalNumberedList>
+            </FixModalSection>
+            <FixModalSection>
+                <Text bold>{OPTION_2_TITLE}</Text>
+                <Text>{OPTION_2_INTRO}</Text>
+                <FixModalNumberedList dataTestId={SnapcenterSnapshotFixModalTestIds.optimizationSteps}>
+                    {OPTION_2_STEPS.map(step => (
+                        <Text key={step}>{step}</Text>
+                    ))}
+                </FixModalNumberedList>
+            </FixModalSection>
         </ModalContent>
         <ModalFooter>
             <ButtonsGroup>
@@ -90,5 +81,5 @@ export const SnapcenterSnapshotFixModal = memo(({ recommendationName, close }: V
                 </Button>
             </ButtonsGroup>
         </ModalFooter>
-    </Modal>
+    </HeightCapModal>
 ));

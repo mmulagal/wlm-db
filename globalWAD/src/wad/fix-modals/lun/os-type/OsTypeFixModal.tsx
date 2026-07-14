@@ -1,18 +1,23 @@
 import { memo } from 'react';
-import styled from '@emotion/styled';
 import {
-    Modal,
     ModalHeader,
     ModalContent,
     ModalFooter,
     ButtonsGroup,
     Button,
     Text,
-    BulletList,
-    NumberedList
+    BulletList
 } from '@netapp/bxp-design-system-react';
-import { OsTypeFixModalTestIds } from './testIds';
-import { LunWadFixModalProps } from '../../wad/lunWadModals';
+import { FixModalNumberedList, FixModalSection, FixModalSectionTitle, HeightCapModal } from '../../shared/fixModalStyles';
+import type { LunFixModalProps } from '../../shared/lunFixModalComponents';
+
+const OsTypeFixModalTestIds = {
+    modal: 'wlmdb-os-type-fix-modal',
+    header: 'wlmdb-os-type-fix-modal-header',
+    content: 'wlmdb-os-type-fix-modal-content',
+    closeButton: 'wlmdb-os-type-fix-close-btn',
+    optimizationSteps: 'wlmdb-os-type-fix-modal-optimization-steps'
+} as const;
 
 const ACTION_SUMMARY_TEXT =
     'Workload Factory recommends ensuring that the ONTAP LUN operating system (OS) type value matches the operating system partitioning scheme to achieve I/O alignment. Incorrect configuration might reduce performance.';
@@ -32,44 +37,30 @@ const NOTE_ITEMS = [
     'Notify all affected users in advance'
 ] as const;
 
-const BodyWrapper = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-`;
-
-const Section = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-`;
-
-export const OsTypeFixModal = memo(({ recommendationName, close }: LunWadFixModalProps) => (
-    <Modal dataTestId={OsTypeFixModalTestIds.modal}>
+export const OsTypeFixModal = memo(({ recommendationName, close }: LunFixModalProps) => (
+    <HeightCapModal dataTestId={OsTypeFixModalTestIds.modal}>
         <ModalHeader dataTestId={OsTypeFixModalTestIds.header}>{recommendationName}</ModalHeader>
         <ModalContent dataTestId={OsTypeFixModalTestIds.content}>
-            <BodyWrapper>
-                <Section>
-                    <Text bold>Action summary</Text>
-                    <Text>{ACTION_SUMMARY_TEXT}</Text>
-                </Section>
-                <Section>
-                    <Text bold>Optimization steps</Text>
-                    <NumberedList>
-                        {OPTIMIZATION_STEPS.map(step => (
-                            <Text key={step}>{step}</Text>
-                        ))}
-                    </NumberedList>
-                </Section>
-                <Section>
-                    <Text bold>Note</Text>
-                    <BulletList>
-                        {NOTE_ITEMS.map(note => (
-                            <Text key={note}>{note}</Text>
-                        ))}
-                    </BulletList>
-                </Section>
-            </BodyWrapper>
+            <FixModalSection>
+                <FixModalSectionTitle bold>Action summary</FixModalSectionTitle>
+                <Text>{ACTION_SUMMARY_TEXT}</Text>
+            </FixModalSection>
+            <FixModalSection>
+                <FixModalSectionTitle bold>Optimization steps</FixModalSectionTitle>
+                <FixModalNumberedList dataTestId={OsTypeFixModalTestIds.optimizationSteps}>
+                    {OPTIMIZATION_STEPS.map(step => (
+                        <Text key={step}>{step}</Text>
+                    ))}
+                </FixModalNumberedList>
+            </FixModalSection>
+            <FixModalSection>
+                <FixModalSectionTitle bold>Note</FixModalSectionTitle>
+                <BulletList>
+                    {NOTE_ITEMS.map(note => (
+                        <Text key={note}>{note}</Text>
+                    ))}
+                </BulletList>
+            </FixModalSection>
         </ModalContent>
         <ModalFooter>
             <ButtonsGroup>
@@ -78,5 +69,5 @@ export const OsTypeFixModal = memo(({ recommendationName, close }: LunWadFixModa
                 </Button>
             </ButtonsGroup>
         </ModalFooter>
-    </Modal>
+    </HeightCapModal>
 ));
