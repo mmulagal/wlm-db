@@ -1,8 +1,6 @@
 import {
     ResourceColumnId,
-    ResourceTextCellRenderer,
     TableScope,
-    createWorkloadColumn,
     fileSystemColumn,
     lastAnalyzedColumn,
     optimizationStatusColumn,
@@ -10,67 +8,97 @@ import {
     type ResourceScanRecord,
     type TableColumn
 } from '@tlveng/workload-factory-components';
+import { createMetadataFieldColumn } from '../shared/metadataUtils';
 
 enum VolumeColumnId {
     CURRENT = 'current',
-    RECOMMENDED = 'recommended'
+    RECOMMENDED = 'recommended',
+    SNAPCENTER_CURRENT = 'snapcenterCurrent',
+    SNAPCENTER_RECOMMENDED = 'snapcenterRecommended',
+    WORKLOAD = 'workload'
 }
 
 export enum VolumeEnrichmentField {
     CURRENT = 'current',
-    RECOMMENDED = 'recommended'
+    RECOMMENDED = 'recommended',
+    WORKLOAD = 'workload'
 }
 
 const VOLUME_NAME_HEADER = 'Volume name';
-const VOLUME_WORKLOAD_POPOVER_TEXT =
-    'The volume workload definition by Workload Factory or Automatic workload assignment.';
 
 export const volumeNameColumn: TableColumn<ResourceScanRecord> = {
     ...resourceNameColumn,
     header: VOLUME_NAME_HEADER
 };
 
-export const volumeWorkloadColumn = createWorkloadColumn(VOLUME_WORKLOAD_POPOVER_TEXT);
-
-export const currentThinProvisioningColumn: TableColumn<ResourceScanRecord> = {
+export const volumeCurrentColumn = createMetadataFieldColumn({
     header: 'Current',
-    accessor: `metadata.${VolumeEnrichmentField.CURRENT}`,
+    field: VolumeEnrichmentField.CURRENT,
     id: VolumeColumnId.CURRENT,
     width: 140,
     sort: { enabled: true },
-    filter: { enabled: false },
-    Renderer: ResourceTextCellRenderer
-};
+    filter: { enabled: false }
+});
 
-export const recommendedThinProvisioningColumn: TableColumn<ResourceScanRecord> = {
+export const volumeRecommendedColumn = createMetadataFieldColumn({
     header: 'Recommended',
-    accessor: `metadata.${VolumeEnrichmentField.RECOMMENDED}`,
+    field: VolumeEnrichmentField.RECOMMENDED,
     id: VolumeColumnId.RECOMMENDED,
     width: 140,
     sort: { enabled: true },
-    filter: { enabled: false },
-    Renderer: ResourceTextCellRenderer
-};
+    filter: { enabled: false }
+});
 
-export const currentSnapcenterSnapshotColumn: TableColumn<ResourceScanRecord> = {
+export const currentSnapcenterSnapshotColumn = createMetadataFieldColumn({
     header: 'Snapshot status',
-    accessor: `metadata.${VolumeEnrichmentField.CURRENT}`,
-    id: 'snapcenterCurrent',
+    field: VolumeEnrichmentField.CURRENT,
+    id: VolumeColumnId.SNAPCENTER_CURRENT,
     width: 220,
     sort: { enabled: true },
-    filter: { enabled: false },
-    Renderer: ResourceTextCellRenderer
-};
+    filter: { enabled: false }
+});
 
-export const recommendedSnapcenterSnapshotColumn: TableColumn<ResourceScanRecord> = {
+export const recommendedSnapcenterSnapshotColumn = createMetadataFieldColumn({
     header: 'Recommended value',
-    accessor: `metadata.${VolumeEnrichmentField.RECOMMENDED}`,
-    id: 'snapcenterRecommended',
+    field: VolumeEnrichmentField.RECOMMENDED,
+    id: VolumeColumnId.SNAPCENTER_RECOMMENDED,
     width: 220,
     sort: { enabled: true },
-    filter: { enabled: false },
-    Renderer: ResourceTextCellRenderer
-};
+    filter: { enabled: false }
+});
+
+export const volumeWorkloadColumn = createMetadataFieldColumn({
+    header: 'Workload',
+    field: VolumeEnrichmentField.WORKLOAD,
+    id: VolumeColumnId.WORKLOAD,
+    width: 110,
+    sort: { enabled: true },
+    filter: { enabled: true }
+});
+
+export const multiComponentVolumeColumns: ReadonlyArray<TableColumn<ResourceScanRecord>> = [
+    volumeNameColumn,
+    fileSystemColumn,
+    optimizationStatusColumn,
+    createMetadataFieldColumn({
+        header: 'Current',
+        field: VolumeEnrichmentField.CURRENT,
+        id: 'volumeMultiComponentCurrent',
+        width: 320,
+        sort: { enabled: true },
+        filter: { enabled: false }
+    }),
+    createMetadataFieldColumn({
+        header: 'Recommended',
+        field: VolumeEnrichmentField.RECOMMENDED,
+        id: 'volumeMultiComponentRecommended',
+        width: 320,
+        sort: { enabled: true },
+        filter: { enabled: false }
+    }),
+    volumeWorkloadColumn,
+    lastAnalyzedColumn
+];
 
 export const VOLUME_EXTRA_COLUMNS_ANCHOR_ID: string = ResourceColumnId.WORKLOAD;
 
@@ -79,8 +107,9 @@ export const DEFAULT_VOLUME_COLUMNS_BY_SCOPE: Record<TableScope, ReadonlyArray<T
         volumeNameColumn,
         fileSystemColumn,
         optimizationStatusColumn,
-        currentThinProvisioningColumn,
-        recommendedThinProvisioningColumn,
+        volumeCurrentColumn,
+        volumeRecommendedColumn,
+        volumeWorkloadColumn,
         lastAnalyzedColumn
     ],
     [TableScope.FSX_WAD]: [volumeNameColumn]

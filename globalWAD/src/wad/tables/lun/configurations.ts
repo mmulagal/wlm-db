@@ -4,6 +4,7 @@ import type {
     ResourceScanRecord,
     TableColumn
 } from '@tlveng/workload-factory-components';
+import { multiComponentLunColumns } from './columns';
 
 interface LunConfiguration {
     columns?: ReadonlyArray<TableColumn<ResourceScanRecord>>;
@@ -27,7 +28,11 @@ const ViewOnlyLunConfiguration: LunConfiguration = {
 };
 
 export const lunConfigurations: Partial<Record<string, LunConfiguration>> = {
-    'wlmdb-os-type': ViewOnlyLunConfiguration
+    'wlmdb-os-type': ViewOnlyLunConfiguration,
+    'wlmdb-block-device-space-management': {
+        ...DefaultLunConfiguration,
+        columns: multiComponentLunColumns
+    }
 };
 
 export const resolveLunConfiguration = (configurationId: string): LunConfiguration =>

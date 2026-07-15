@@ -11,8 +11,10 @@ import {
 } from '@tlveng/workload-factory-components';
 import {
     currentSnapcenterSnapshotColumn,
+    multiComponentVolumeColumns,
     recommendedSnapcenterSnapshotColumn,
-    volumeNameColumn
+    volumeNameColumn,
+    volumeWorkloadColumn
 } from './columns';
 
 interface VolumeConfiguration {
@@ -40,6 +42,7 @@ const ViewOnlyVolumeConfiguration: VolumeConfiguration = {
         optimizationStatusColumn,
         currentSnapcenterSnapshotColumn,
         recommendedSnapcenterSnapshotColumn,
+        volumeWorkloadColumn,
         lastAnalyzedColumn
     ]
 };
@@ -47,7 +50,15 @@ const ViewOnlyVolumeConfiguration: VolumeConfiguration = {
 export const volumeConfigurations: Partial<Record<string, VolumeConfiguration>> = {
     'wlmdb-thin-provision': DefaultVolumeConfiguration,
     'wlmdb-snapshot-policy': DefaultVolumeConfiguration,
-    'wlmdb-snapcenter-snapshot': ViewOnlyVolumeConfiguration
+    'wlmdb-snapcenter-snapshot': ViewOnlyVolumeConfiguration,
+    'wlmdb-storage-efficiencies': {
+        ...DefaultVolumeConfiguration,
+        columns: multiComponentVolumeColumns
+    },
+    'wlmdb-tiering-tco-optimization': {
+        ...DefaultVolumeConfiguration,
+        columns: multiComponentVolumeColumns
+    }
 };
 
 export const resolveVolumeConfiguration = (configurationId: string): VolumeConfiguration =>
