@@ -82,7 +82,7 @@ describe('subscriber', () => {
     });
 
     describe('publishScanResult envelope shape', () => {
-        it('publishes a flat WadScanResultRecord to wad.scan.results', async () => {
+        it('publishes a WadScanResultRecord to wad.scan.results', async () => {
             const { publishScanResult } = await import('../../../src/operations/wad-manager/publishers');
             const req = makeScanRequest();
 
@@ -92,21 +92,27 @@ describe('subscriber', () => {
                 accountId: req.accountId,
                 serviceId: 'wlmdb',
                 completedAt: Date.now(),
-                configurationId: req.configurationIds[0],
-                parentResource: {
-                    id: 'parent-001',
-                    type: 'DATABASE_INSTANCE',
-                    name: 'parent-001',
-                    region: 'us-east-1',
-                    credentialsIds: ['creds-1']
-                },
-                resources: [
+                configurations: [
                     {
-                        id: 'res-001',
-                        type: 'DATABASE_INSTANCE',
-                        name: 'res-001',
-                        optimizationStatus: 'NOT_OPTIMIZED' as ResourceOptimizationStatus,
-                        isDismissed: false
+                        configurationId: req.configurationIds[0],
+                        parentResource: {
+                            id: 'parent-001',
+                            type: 'DATABASE_INSTANCE',
+                            name: 'parent-001',
+                            accountId: req.accountId,
+                            region: 'us-east-1',
+                            credentialsIds: ['creds-1']
+                        },
+                        resources: [
+                            {
+                                resource: {
+                                    id: 'res-001',
+                                    type: 'DATABASE_INSTANCE',
+                                    name: 'res-001'
+                                },
+                                status: 'NOT_OPTIMIZED' as ResourceOptimizationStatus
+                            }
+                        ]
                     }
                 ]
             });
@@ -115,10 +121,15 @@ describe('subscriber', () => {
             expect(messages).toHaveLength(1);
             expect(messages[0].taskId).toBe('task-001');
             expect(messages[0].requestId).toBe('req-001');
-            expect(messages[0].configurationId).toBe('wlmdb-storage-assessment');
-            expect(messages[0].parentResource).toMatchObject({ id: 'parent-001', region: 'us-east-1' });
-            expect(Array.isArray(messages[0].resources)).toBe(true);
-            expect(messages[0].resources).toHaveLength(1);
+            expect(Array.isArray(messages[0].configurations)).toBe(true);
+            expect(messages[0].configurations).toHaveLength(1);
+            expect(messages[0].configurations[0].configurationId).toBe('wlmdb-storage-assessment');
+            expect(messages[0].configurations[0].parentResource).toMatchObject({
+                id: 'parent-001',
+                region: 'us-east-1'
+            });
+            expect(Array.isArray(messages[0].configurations[0].resources)).toBe(true);
+            expect(messages[0].configurations[0].resources).toHaveLength(1);
         });
     });
 });

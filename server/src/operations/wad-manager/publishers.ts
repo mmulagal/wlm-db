@@ -33,9 +33,8 @@ function publishScanResult(msg: WadScanResultRecord): void {
     logger.info('WAD: published scan result', {
         taskId: msg.taskId,
         accountId: msg.accountId,
-        configurationId: msg.configurationId,
-        resultCount: msg.resources.length,
-        resources: JSON.stringify(msg.resources, null, 2) // Will be removed
+        configurationsCount: msg.configurations.length,
+        configurationIds: msg.configurations.map(({ configurationId }) => configurationId)
     });
 }
 

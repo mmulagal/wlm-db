@@ -1,4 +1,3 @@
-import { flatMap, map } from 'lodash-es';
 import throat from 'throat';
 import getLogger from '../../utils/logger';
 import {
@@ -26,7 +25,7 @@ const logger = getLogger();
 type WorkloadScanFn = (
     ctx: WadScanContext,
     storageAssessment: FsxStorageCollectionResult['storageAssessment']
-) => Promise<WadScanResultRecord[]>;
+) => Promise<WadScanResultRecord>;
 
 const WORKLOAD_SCAN_FNS: Record<string, WorkloadScanFn> = {
     mssql: (ctx, storageAssessment) => getMssqlStorageResourceScan(ctx, storageAssessment as MssqlStorageAssessment),
@@ -46,7 +45,7 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
 
     try {
         const baseCtx = { ...baseStatus, configurationIds };
-        const pairs = flatMap(credentialsIds, credentialsId => map(regions, region => ({ credentialsId, region })));
+        const pairs = credentialsIds.flatMap(credentialsId => regions.map(region => ({ credentialsId, region })));
 
         const settled = await Promise.allSettled(
             pairs.map(({ credentialsId, region }) =>
@@ -58,7 +57,7 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                         const scanFn = WORKLOAD_SCAN_FNS[workloadType];
                         if (scanFn) {
                             // eslint-disable-next-line no-await-in-loop
-                            const scanRecords = await scanFn(
+                            const scanRecord = await scanFn(
                                 {
                                     ...baseCtx,
                                     credentialsId,
@@ -68,7 +67,9 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                                 },
                                 storageAssessment
                             );
-                            scanRecords.forEach(publishScanResult);
+
+                            logger.info('WAD: published scan result', { scanRecord });
+                            publishScanResult(scanRecord);
                         }
                     }
                 })()

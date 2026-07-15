@@ -1516,7 +1516,7 @@ async function fetchOracleDriftAssessmentPerAccountV1(
 async function getOracleStorageResourceScan(
     ctx: WadScanContext,
     storageAssessment: StorageAssessment
-): Promise<WadScanResultRecord[]> {
+): Promise<WadScanResultRecord> {
     const { accountId, credentialsId, region, filesystemId } = ctx;
     logger.info('Oracle: WAD storage resource scan', { accountId, credentialsId, region, filesystemId });
 

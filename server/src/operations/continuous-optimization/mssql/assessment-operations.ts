@@ -1691,7 +1691,7 @@ async function fetchMssqlPatchScan(
 async function getMssqlStorageResourceScan(
     ctx: WadScanContext,
     storageAssessmentData: StorageAssessment
-): Promise<WadScanResultRecord[]> {
+): Promise<WadScanResultRecord> {
     const { accountId, credentialsId, region } = ctx;
     logger.info('Getting MSSQL storage resource scan', { accountId, credentialsId, region });
     const assessmentData = await calculateStorageDrift(accountId, credentialsId, region, '', '', storageAssessmentData);

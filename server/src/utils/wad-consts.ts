@@ -28,6 +28,7 @@ interface ParentResource {
     id: string;
     name: string;
     type: string;
+    accountId: string;
     region: string;
     credentialsIds: string[];
 }
@@ -40,15 +41,21 @@ interface ParentResourceWithScopeForFix {
 
 // ─── Scan / fix result records ────────────────────────────────────────────────
 
-interface ResourceScanRecord {
-    id: string;
-    type: string;
-    name: string;
-    workload?: string;
-    subConfig?: string;
-    optimizationStatus: ResourceOptimizationStatus;
-    isDismissed: boolean;
-    metadata?: Record<string, unknown>;
+interface WadResourceEntry {
+    resource: {
+        id: string;
+        type: string;
+        name: string;
+        workload?: string;
+        metadata?: Record<string, unknown>;
+    };
+    status: ResourceOptimizationStatus;
+}
+
+interface WadConfigurationEntry {
+    configurationId: string;
+    parentResource: ParentResource;
+    resources: WadResourceEntry[];
 }
 
 interface WadScanResultRecord {
@@ -57,9 +64,7 @@ interface WadScanResultRecord {
     accountId: string;
     serviceId: string;
     completedAt: number;
-    configurationId: string;
-    parentResource: ParentResource;
-    resources: ResourceScanRecord[];
+    configurations: WadConfigurationEntry[];
 }
 
 interface DriftAssessmentDetail {
@@ -178,7 +183,8 @@ export {
     ResourceOptimizationStatus,
     TaskStatus,
     ScanTrigger,
-    ResourceScanRecord,
+    WadResourceEntry,
+    WadConfigurationEntry,
     WadScanResultRecord,
     DriftAssessmentDetail,
     DriftAssessmentItem,

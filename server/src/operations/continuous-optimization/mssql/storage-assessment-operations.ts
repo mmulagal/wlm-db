@@ -612,7 +612,7 @@ async function calculateStorageDrift(
                         }
                         // For WAD MANAGER INTEGRATION
                         wadManagerAssessmentDetails.push({
-                            id: objectId,
+                            id: objectId || objectName || '',
                             name: objectName,
                             currentValue: value != null ? String(value) : '',
                             recommendedValue: (config.value ?? '').toString(),
