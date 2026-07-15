@@ -13,7 +13,7 @@
         "wlmdb-snapcenter-snapshot"
     ],
     "bundles": {
-        "wad-db-tables": { "url": "%VITE_WORKLOAD_IFRAME_URL%/wlmdb/wad-db-tables.bundle.js", "version": "0.0.1" },
-        "wad-db-modals": { "url": "%VITE_WORKLOAD_IFRAME_URL%/wlmdb/wad-db-modals.bundle.js", "version": "0.0.1" }
+        "wad-db-tables": { "url": "%VITE_WORKLOAD_IFRAME_URL%/wlmwad-services/wlmdb/wad-db-tables.bundle.js", "version": "0.0.1" },
+        "wad-db-modals": { "url": "%VITE_WORKLOAD_IFRAME_URL%/wlmwad-services/wlmdb/wad-db-modals.bundle.js", "version": "0.0.1" }
     }
 }
