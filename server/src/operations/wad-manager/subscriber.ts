@@ -25,8 +25,8 @@ async function onScanMessage(content: Buffer, ack: () => void, nack: () => void)
         return;
     }
 
-    const { taskId, requestId, accountId } = req;
-    logger.info('WAD: scan request received', { taskId, requestId, accountId });
+    const { taskId, requestId, accountId, credentialsIds } = req;
+    logger.info('WAD: scan request received', { taskId, requestId, accountId, credentialsIds });
 
     publishScanStatus({
         taskId,

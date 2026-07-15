@@ -8,6 +8,9 @@ import {
     WadScanContext,
     WadScanResultRecord
 } from '../../utils/wad-consts';
+import getLogger from '../../utils/logger';
+
+const logger = getLogger();
 
 function toScanResultRecord(
     ctx: WadScanContext,
@@ -16,6 +19,16 @@ function toScanResultRecord(
 ): WadScanResultRecord {
     const { resourceType, assessmentDetails } = driftAssessmentItem;
     const { taskId, requestId, accountId, serviceId, filesystemId, credentialsId, region, workload } = ctx;
+    logger.info('Mapping drift to WAD scan record', {
+        accountId,
+        credentialsId,
+        region,
+        taskId,
+        requestId,
+        serviceId,
+        filesystemId,
+        workload
+    });
 
     return {
         taskId,
@@ -57,8 +70,8 @@ async function mapDriftToWadScanRecords(
     ctx: WadScanContext,
     assessmentData: (DriftAssessmentItem | AssessmentErrorItemType)[]
 ): Promise<WadScanResultRecord[]> {
-    const { serviceId, configurationIds } = ctx;
-
+    const { serviceId, configurationIds, accountId, credentialsId, region } = ctx;
+    logger.info('Mapping drift to WAD scan records', { accountId, credentialsId, region });
     return assessmentData.flatMap(item => {
         const prefixedConfigurationId = `${serviceId}-${item.id}`;
         if ('errorMessage' in item || !configurationIds.includes(prefixedConfigurationId)) {

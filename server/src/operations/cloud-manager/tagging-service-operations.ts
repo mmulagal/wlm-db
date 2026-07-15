@@ -191,7 +191,7 @@ async function buildEc2FsxRelationship(
     credentialsId: string,
     region: string
 ): Promise<Ec2FsxRelationship> {
-    logger.info('Building EC2-FSx relationship', { accountId, region });
+    logger.info('Building EC2-FSx relationship using tagging service apis ', { accountId, region });
 
     const { fsxs = [] } = await callWlmHosts<{ fsxs?: FsxItem[] }>(
         accountId,
@@ -226,7 +226,12 @@ async function buildEc2FsxRelationship(
         })
         .filter(({ workloads, fsxs: f }) => workloads.length > 0 && f.length > 0);
 
-    logger.info('Built EC2-FSx relationship', { accountId, region, ec2Count: ec2s.length });
+    logger.info('Built EC2-FSx relationship using tagging service apis ', {
+        accountId,
+        region,
+        ec2Count: ec2s.length,
+        ec2Ids: ec2s.map(({ instanceId }) => instanceId)
+    });
 
     return { ec2s };
 }

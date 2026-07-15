@@ -1693,6 +1693,7 @@ async function getMssqlStorageResourceScan(
     storageAssessmentData: StorageAssessment
 ): Promise<WadScanResultRecord[]> {
     const { accountId, credentialsId, region } = ctx;
+    logger.info('Getting MSSQL storage resource scan', { accountId, credentialsId, region });
     const assessmentData = await calculateStorageDrift(accountId, credentialsId, region, '', '', storageAssessmentData);
     return mapDriftToWadScanRecords(ctx, assessmentData);
 }

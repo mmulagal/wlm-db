@@ -312,7 +312,7 @@ async function collectOntapAssessmentData(
     accountId: string,
     relationship: Ec2FsxRelationship
 ): Promise<FsxStorageCollectionResult[]> {
-    logger.info('Collecting FSx ONTAP storage assessments', { accountId, ec2Count: relationship.ec2s.length });
+    logger.info('Collecting data for FSx ONTAP storage assessments', { accountId, ec2Count: relationship.ec2s.length });
 
     // Multiple EC2s can share the same FSx, each contributing its own subset of volumes/LUNs.
     // Merge them per fileSystemId so the ONTAP inventory query covers every UUID at once;
@@ -353,7 +353,7 @@ async function collectOntapAssessmentData(
         })
     );
 
-    logger.info('Collected FSx ONTAP storage assessments', { accountId, resultCount: results.length });
+    logger.info('Collected data for FSx ONTAP storage assessments', { accountId, resultCount: results.length });
 
     return results;
 }
