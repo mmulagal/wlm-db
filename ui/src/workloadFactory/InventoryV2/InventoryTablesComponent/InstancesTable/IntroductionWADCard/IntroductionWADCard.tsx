@@ -9,6 +9,7 @@ import { setMssqlInstancesTabVisitCount } from '../../../../../store/workloadFac
 import { DBType, STAGING } from '../../../../../utils/consts';
 
 const MAX_WAD_CARD_VISITS = 3;
+export const HIDE_WAD_CARD_KEY = 'hideWADCard';
 
 const IntroductionWADCard = ({ buttonRef, setIsCardOpen }: any) => {
     const { selectedHostType } = useAppSelector(state => state.inventoryV2);
@@ -17,6 +18,14 @@ const IntroductionWADCard = ({ buttonRef, setIsCardOpen }: any) => {
     const dispatch = useDispatch();
 
     const handleClose = () => {
+        setIsCardOpen(false);
+        if (import.meta.env.VITE_APP_ENVIRONMENT === STAGING) {
+            dispatch(setMssqlInstancesTabVisitCount(MAX_WAD_CARD_VISITS));
+        }
+    };
+
+    const handleDontShowAgain = () => {
+        localStorage.setItem(HIDE_WAD_CARD_KEY, JSON.stringify(true));
         setIsCardOpen(false);
         if (import.meta.env.VITE_APP_ENVIRONMENT === STAGING) {
             dispatch(setMssqlInstancesTabVisitCount(MAX_WAD_CARD_VISITS));
@@ -55,6 +64,9 @@ const IntroductionWADCard = ({ buttonRef, setIsCardOpen }: any) => {
                 </DsTypography>
             </div>
             <div className={styles.buttonContainer}>
+                <DsButton type="text" isThin className={styles.button} onClick={handleDontShowAgain}>
+                    {t('databases.banner.dont-show-again')}
+                </DsButton>
                 <DsButton isThin variant="secondary" className={styles.button} onClick={handleClose}>
                     {t('databases.banner.close')}
                 </DsButton>

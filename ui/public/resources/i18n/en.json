@@ -160,6 +160,7 @@
             "one-time-assessment-content": " Perform a one-time assessment to determine the well-architected status of your Microsoft SQL Server instances without credentials or instance registration.",
             "one-time-assessment-content-oracle": "Perform a one-time assessment to determine the well-architected status of your Oracle databases without credentials or instance registration.",
             "one-time-assessment-content-2": "Simply download our secure script, run it locally, upload the results, and find out the well-architected score of your instance. Optimization insights are included with the results.",
+            "dont-show-again": "Don't show again",
             "close": "Close",
             "pgsql-deployment": "Deployment",
             "PostgreSQL-Server": "PostgreSQL Server",

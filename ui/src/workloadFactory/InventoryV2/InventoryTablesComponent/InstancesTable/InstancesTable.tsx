@@ -135,7 +135,7 @@ import {
     autoSelectRegionInHeaderFilter
 } from './InstanceTableHelper';
 
-import IntroductionWADCard from './IntroductionWADCard/IntroductionWADCard';
+import IntroductionWADCard, { HIDE_WAD_CARD_KEY } from './IntroductionWADCard/IntroductionWADCard';
 import OneTimeWADDialogContent from './OneTimeWADDialogContent/OneTimeWADDialogContent';
 
 const InstancesTable = () => {
@@ -147,8 +147,10 @@ const InstancesTable = () => {
     const buttonRef: any = useRef(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const MAX_WAD_CARD_VISITS = 3;
+    const shouldShowWADCard =
+        mssqlInstancesTabVisitCount < MAX_WAD_CARD_VISITS && localStorage.getItem(HIDE_WAD_CARD_KEY) !== 'true';
     // Card should only be shown for the first 3 visits to MSSQL instances tab
-    const [isCardOpen, setIsCardOpen] = useState(mssqlInstancesTabVisitCount < MAX_WAD_CARD_VISITS);
+    const [isCardOpen, setIsCardOpen] = useState(shouldShowWADCard);
     const isDemoMode = useAppSelector(state => state.auth?.isDemoMode);
 
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -228,7 +230,9 @@ const InstancesTable = () => {
             hasIncrementedVisit.current = true;
             dispatch(incrementMssqlInstancesTabVisitCount());
             // Update card visibility based on the NEW count (after increment)
-            setIsCardOpen(mssqlInstancesTabVisitCount < MAX_WAD_CARD_VISITS);
+            setIsCardOpen(
+                mssqlInstancesTabVisitCount < MAX_WAD_CARD_VISITS && localStorage.getItem(HIDE_WAD_CARD_KEY) !== 'true'
+            );
         }
     }, [selectedHostType, dispatch, mssqlInstancesTabVisitCount]);
 
