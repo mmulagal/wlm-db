@@ -415,10 +415,12 @@ try {
 } catch (error) {
     logger.error('Failed to build and publish wlmdb.json to s3', error);
 }
-try {
-    await startWadSubscriber();
-} catch (error) {
-    logger.error('Failed to start WAD Manager subscriber', error);
+if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && isActiveInstance()) {
+    try {
+        await startWadSubscriber();
+    } catch (error) {
+        logger.error('Failed to start WAD Manager subscriber', error);
+    }
 }
 
 logger.info('Initializing database');
