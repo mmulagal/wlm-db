@@ -41,13 +41,23 @@ interface ParentResourceWithScopeForFix {
 
 // ─── Scan / fix result records ────────────────────────────────────────────────
 
+interface WadResourceComponent {
+    parameter: string;
+    current: string;
+    recommended: string;
+    status: string;
+}
+
 interface WadResourceEntry {
     resource: {
         id: string;
         type: string;
         name: string;
-        workload?: string;
-        metadata?: Record<string, unknown>;
+        metadata?: {
+            workload: string;
+            components: WadResourceComponent[];
+            svmName?: string;
+        };
     };
     status: ResourceOptimizationStatus;
 }
@@ -70,10 +80,11 @@ interface WadScanResultRecord {
 interface DriftAssessmentDetail {
     id: string;
     name: string;
-    currentValue: string;
-    recommendedValue: string;
     status: string;
     svmName?: string;
+    metadata: {
+        components: WadResourceComponent[];
+    };
 }
 
 interface DriftAssessmentItem {
@@ -183,6 +194,7 @@ export {
     ResourceOptimizationStatus,
     TaskStatus,
     ScanTrigger,
+    WadResourceComponent,
     WadResourceEntry,
     WadConfigurationEntry,
     WadScanResultRecord,

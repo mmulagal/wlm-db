@@ -14,8 +14,7 @@ import getLogger from '../../../utils/logger';
 import {
     AssessmentErrorItemType,
     AssessmentItemType,
-    GenericViolationResponseType,
-    ViolatedConfigType
+    GenericViolationResponseType
 } from '../../../routes/types/continuous-optimization.types';
 import type {
     MssqlAssessmentItemType,
@@ -47,18 +46,10 @@ import {
     type GoldenConfigEntry
 } from '../assessment-utils';
 import { getHeadroomDrift } from '../headroom-assessment';
-
-interface WadManagerMssqlAssessmentDetailsType {
-    id: string;
-    name: string;
-    currentValue: string;
-    recommendedValue: string;
-    status: string;
-    svmName?: string;
-}
+import { DriftAssessmentDetail } from '../../../utils/wad-consts';
 
 interface WadManagerMssqlAssessmentItemType extends MssqlAssessmentItemType {
-    assessmentDetails?: WadManagerMssqlAssessmentDetailsType[];
+    assessmentDetails?: DriftAssessmentDetail[];
 }
 
 const logger = getLogger();
@@ -462,10 +453,7 @@ function getTempDbVolumeDrift(
     };
 }
 
-function evaluateStorageEfficiencyParameter(
-    parameter: string,
-    volume: Record<string, unknown>
-): { optimized: boolean; current: string } {
+function evaluateStorageEfficiencyParameter(parameter: string, volume: Record<string, unknown>) {
     const value = volume[parameter];
     const normalized = String(value ?? '').toLowerCase();
     switch (parameter) {
@@ -473,21 +461,24 @@ function evaluateStorageEfficiencyParameter(
             const currentCompression = (volume.compression ?? '').toString();
             return {
                 optimized: currentCompression !== 'none' && normalized === 'adaptive',
-                current: currentCompression === 'none' ? 'none' : String(value ?? '')
+                current: currentCompression === 'none' ? 'none' : String(value ?? ''),
+                recommended: 'adaptive'
             };
         }
         case 'deduplication':
             return {
                 optimized: normalized === 'inline' || normalized === 'both',
-                current: String(value ?? '')
+                current: String(value ?? ''),
+                recommended: 'inline/both'
             };
         case 'compaction':
             return {
                 optimized: normalized === 'enabled' || normalized === 'inline',
-                current: String(value ?? '')
+                current: String(value ?? ''),
+                recommended: 'enabled/inline'
             };
         default:
-            return { optimized: true, current: String(value ?? '') };
+            return { optimized: true, current: String(value ?? ''), recommended: '' };
     }
 }
 
@@ -508,26 +499,53 @@ function buildStorageEfficienciesEntry(
         } as unknown as AssessmentItemType;
     }
 
-    const violationDetails: GenericViolationResponseType[] = [];
+    const assessmentDetails: DriftAssessmentDetail[] = [];
     volumes.forEach(volume => {
-        const { name: volumeName } = volume;
+        const { name: volumeName, uuid } = volume;
         if (typeof volumeName !== 'string' || volumeName.length === 0) {
             return;
         }
-        const violatedConfigs: ViolatedConfigType[] = storageEfficienciesComponents.flatMap(({ parameter, name }) => {
-            const { optimized, current } = evaluateStorageEfficiencyParameter(parameter, volume);
-            return optimized ? [] : [{ id: name ?? parameter, current }];
-        });
-        if (violatedConfigs.length === 0) {
+        const componentsStatus: { id: string; current: string; recommended: string; optimized: boolean }[] =
+            storageEfficienciesComponents.flatMap(({ parameter, name }) => {
+                const { optimized, current, recommended } = evaluateStorageEfficiencyParameter(parameter, volume);
+                return [{ id: name ?? parameter, current, recommended: recommended ?? '', optimized }];
+            });
+
+        if (componentsStatus.length === 0) {
             return;
         }
-        violationDetails.push({
-            objectName: volumeName,
-            value: '',
-            objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-            violatedConfigs
+        assessmentDetails.push({
+            id: (uuid as string) || volumeName || '',
+            name: volumeName || '',
+            status: componentsStatus.every(component => component.optimized)
+                ? AssessmentStatus.OPTIMIZED
+                : AssessmentStatus.NOT_OPTIMIZED,
+            metadata: {
+                components: componentsStatus.map(({ id, current, recommended, optimized }) => ({
+                    parameter: id,
+                    current,
+                    recommended: recommended ?? '',
+                    status: optimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED
+                }))
+            }
         });
     });
+
+    const violationDetails: GenericViolationResponseType[] = assessmentDetails
+        .filter(detail => detail.status === AssessmentStatus.NOT_OPTIMIZED)
+        .map(({ name, metadata }) => ({
+            objectName: name,
+            value: '',
+            objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+            violatedConfigs:
+                metadata?.components
+                    ?.filter(c => c.status === AssessmentStatus.NOT_OPTIMIZED)
+                    .map(({ parameter, current, recommended }) => ({
+                        id: parameter,
+                        current,
+                        recommended
+                    })) ?? []
+        }));
 
     const objectsInViolation = violationDetails.map(row => row.objectName);
     return {
@@ -539,6 +557,7 @@ function buildStorageEfficienciesEntry(
         totalObjectsInViolation: objectsInViolation.length,
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         violationDetails,
+        assessmentDetails,
         configDetails: storageEfficienciesComponents.map(({ name, value }) => ({
             id: name,
             recommended: String(value ?? ''),
@@ -588,7 +607,7 @@ async function calculateStorageDrift(
             let overallStatus = AssessmentStatus.OPTIMIZED;
             const objectsInViolation: string[] = [];
             const violationDetails: GenericViolationResponseType[] = [];
-            const wadManagerAssessmentDetails: WadManagerMssqlAssessmentDetailsType[] = [];
+            const wadManagerAssessmentDetails: DriftAssessmentDetail[] = [];
             volumes.forEach(volume => {
                 let objectName = '';
                 let objectId = '';
@@ -614,10 +633,18 @@ async function calculateStorageDrift(
                         wadManagerAssessmentDetails.push({
                             id: objectId || objectName || '',
                             name: objectName,
-                            currentValue: value != null ? String(value) : '',
-                            recommendedValue: (config.value ?? '').toString(),
                             status: volumeStatus,
-                            svmName
+                            svmName,
+                            metadata: {
+                                components: [
+                                    {
+                                        parameter: config.id,
+                                        current: value != null ? String(value) : '',
+                                        recommended: (config.value ?? '').toString(),
+                                        status: volumeStatus
+                                    }
+                                ]
+                            }
                         });
                     }
                 });
@@ -656,7 +683,7 @@ async function calculateStorageDrift(
             let overallStatus = AssessmentStatus.OPTIMIZED;
             const objectsInViolation: string[] = [];
             const violationDetails: GenericViolationResponseType[] = [];
-            const wadManagerAssessmentDetails: WadManagerMssqlAssessmentDetailsType[] = [];
+            const wadManagerAssessmentDetails: DriftAssessmentDetail[] = [];
             luns.forEach(lun => {
                 let objectName = '';
                 let objectId = '';
@@ -681,9 +708,17 @@ async function calculateStorageDrift(
                         wadManagerAssessmentDetails.push({
                             id: objectId,
                             name: objectName,
-                            currentValue: value != null ? String(value) : '',
-                            recommendedValue: (config.value ?? '').toString(),
-                            status: volumeStatus
+                            status: volumeStatus,
+                            metadata: {
+                                components: [
+                                    {
+                                        parameter: config.id,
+                                        current: value != null ? String(value) : '',
+                                        recommended: (config.value ?? '').toString(),
+                                        status: volumeStatus
+                                    }
+                                ]
+                            }
                         });
                     }
                 });

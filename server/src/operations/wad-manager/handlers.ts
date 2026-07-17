@@ -128,7 +128,6 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                 completedAt: Date.now(),
                 configurations: mergeConfigurations(allConfigurations)
             };
-            logger.info('WAD: published scan result', { scanRecord }); // to be removed
             publishScanResult(scanRecord);
         }
 

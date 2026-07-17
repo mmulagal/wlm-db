@@ -35,23 +35,21 @@ function toConfigurationEntry(
         configurationId: prefixedConfigurationId,
         parentResource: {
             id: filesystemId,
-            name: '',
+            name: filesystemId,
             type: WAD_FILESYSTEM_RESOURCE_TYPE,
             accountId,
             region,
             credentialsIds: [credentialsId]
         },
         resources: (assessmentDetails ?? []).map(
-            ({ id, name, currentValue, recommendedValue, status, svmName }): WadResourceEntry => ({
+            ({ id, name, status, svmName, metadata }): WadResourceEntry => ({
                 resource: {
                     id,
                     type: resourceType ?? '',
                     name,
-                    workload,
                     metadata: {
-                        recommended: recommendedValue,
-                        current: currentValue,
-                        parameterName: prefixedConfigurationId,
+                        workload,
+                        components: metadata?.components ?? [],
                         ...(svmName !== undefined && { svmName })
                     }
                 },

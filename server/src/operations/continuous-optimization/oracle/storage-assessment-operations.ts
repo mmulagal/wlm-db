@@ -33,8 +33,7 @@ import {
 import {
     GenericViolationResponseType,
     AssessmentItemType,
-    AssessmentErrorItemType,
-    ViolatedConfigType
+    AssessmentErrorItemType
 } from '../../../routes/types/continuous-optimization.types';
 import {
     OracleMappedOntapVolumesResponse,
@@ -60,8 +59,13 @@ import {
     normalizeNfsVersion,
     type GoldenConfigEntry
 } from '../assessment-utils';
+import { DriftAssessmentDetail } from '../../../utils/wad-consts';
 
 const logger = getLogger();
+
+interface WadManagerOracleAssessmentItemType extends AssessmentItemType {
+    assessmentDetails?: DriftAssessmentDetail[];
+}
 
 type NfsMountEntry = NonNullable<
     NonNullable<StorageNfsAssessment['os']>['nfs-mount-options']
@@ -1457,7 +1461,7 @@ function getVolumeConfigDrift(
     volumeTypeMap: Record<OracleSysFileTypes, OracleVolumeRecord[]>,
     storageAssessmentData: StorageAssessment,
     storageProtocol: string
-): (AssessmentItemType | AssessmentErrorItemType)[] {
+): (WadManagerOracleAssessmentItemType | AssessmentErrorItemType)[] {
     logger.info(`Fetching volume configuration drift ${storageProtocol}`);
     const {
         CONTROL_FILES: controlFileVolumes,
@@ -1537,13 +1541,14 @@ function getVolumeConfigDrift(
         compactionRecommendations
     };
 
-    const volumeConfigDrift: (AssessmentItemType | AssessmentErrorItemType)[] = volumeConfigData
+    const volumeConfigDrift: (WadManagerOracleAssessmentItemType | AssessmentErrorItemType)[] = volumeConfigData
         .filter(
             config => !COMBINED_VOLUME_CONFIG_IDS.includes(config.id as (typeof COMBINED_VOLUME_CONFIG_IDS)[number])
         )
         .map(config => {
             const objectsInViolation: GenericViolationResponseType[] = [];
             const objectsInViolationNames: string[] = [];
+            const assessmentDetails: DriftAssessmentDetail[] = [];
             let totalObjectsAssessed = volumesData.length;
             if (config.parameter === 'tieringMinCoolingDays') {
                 totalObjectsAssessed = archiveLogVolumeIds.length;
@@ -1576,6 +1581,23 @@ function getVolumeConfigDrift(
                     });
                     objectsInViolationNames.push(objectName);
                 }
+
+                const status = isViolated ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+                assessmentDetails.push({
+                    id: objectId || objectName,
+                    name: objectName,
+                    status,
+                    metadata: {
+                        components: [
+                            {
+                                parameter: config.id,
+                                current: current?.toString() || '',
+                                recommended,
+                                status
+                            }
+                        ]
+                    }
+                });
             });
 
             return {
@@ -1585,7 +1607,8 @@ function getVolumeConfigDrift(
                 objectsInViolation: [...new Set(objectsInViolationNames)],
                 totalObjectsAssessed,
                 totalObjectsInViolation: objectsInViolation.length,
-                violationDetails: objectsInViolation
+                violationDetails: objectsInViolation,
+                assessmentDetails
             };
         });
 
@@ -1601,9 +1624,12 @@ function getVolumeConfigDrift(
                     : TIERING_TCO_OPTIMIZATION_CONFIG_DETAILS;
             const subNames = Object.keys(detailMap);
             const violationDetails: GenericViolationResponseType[] = [];
+            const assessmentDetails: DriftAssessmentDetail[] = [];
 
             volumesData.forEach(volume => {
-                const violatedConfigs: ViolatedConfigType[] = [];
+                const componentsStatus: { name: string; current: string; recommended: string; optimized: boolean }[] =
+                    [];
+                const { name: volumeName, uuid: volumeUuid } = volume;
                 let combinedCategory = '';
                 subNames.forEach(subName => {
                     const parameter = COMBINED_SUB_PARAMETER_TO_PROPERTY[subName];
@@ -1617,24 +1643,46 @@ function getVolumeConfigDrift(
                         '',
                         volumeEvalContext
                     );
-                    if (current === undefined || !isViolated) {
-                        return;
-                    }
-                    violatedConfigs.push({ id: subName, current, recommended: recommended ?? undefined });
+
+                    componentsStatus.push({
+                        name: subName,
+                        current: current || '',
+                        recommended: recommended ?? undefined,
+                        optimized: !isViolated
+                    });
                     combinedCategory =
                         combinedCategory && dataCategory && combinedCategory !== dataCategory
                             ? 'mixed'
                             : combinedCategory || dataCategory;
                 });
+                const violatedConfigs = componentsStatus
+                    .filter(c => !c.optimized)
+                    .map(({ name, current, recommended }) => ({ id: name, current, recommended }));
                 if (violatedConfigs.length > 0) {
                     violationDetails.push({
-                        objectName: (volume.name as string) ?? '',
+                        objectName: volumeName ?? '',
                         value: '',
                         objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
                         ...(combinedCategory ? { dataCategory: combinedCategory } : {}),
                         violatedConfigs
                     });
                 }
+
+                assessmentDetails.push({
+                    id: volumeUuid || volumeName,
+                    name: volumeName,
+                    status: componentsStatus.every(component => component.optimized)
+                        ? AssessmentStatus.OPTIMIZED
+                        : AssessmentStatus.NOT_OPTIMIZED,
+                    metadata: {
+                        components: componentsStatus.map(({ name, current, recommended, optimized }) => ({
+                            parameter: name,
+                            current,
+                            recommended,
+                            status: optimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED
+                        }))
+                    }
+                });
             });
 
             const objectsInViolation = violationDetails.map(detail => detail.objectName);
@@ -1674,7 +1722,8 @@ function getVolumeConfigDrift(
                         ...(overrides.recommendedNote ? { recommendedNote: overrides.recommendedNote } : {})
                     };
                 }),
-                violationDetails
+                violationDetails,
+                assessmentDetails
             });
         });
 
@@ -1684,7 +1733,9 @@ function getVolumeConfigDrift(
     return volumeConfigDrift;
 }
 
-function getLunConfigDrift(storageAssessmentData: StorageAssessment): (AssessmentItemType | AssessmentErrorItemType)[] {
+function getLunConfigDrift(
+    storageAssessmentData: StorageAssessment
+): (WadManagerOracleAssessmentItemType | AssessmentErrorItemType)[] {
     logger.info('Fetching LUN configuration drift');
     const { luns = { data: [], error: '' } } = storageAssessmentData;
     const { data: lunsData, error } = luns;
@@ -1709,6 +1760,25 @@ function getLunConfigDrift(storageAssessmentData: StorageAssessment): (Assessmen
                 recommended: (config.value ?? '').toString()
             }));
 
+        const assessmentDetails: DriftAssessmentDetail[] = lunsData.map(lun => {
+            const status = lun[param] !== config.value ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+            return {
+                id: lun.uuid || lun.name || '',
+                name: lun.name || '',
+                status,
+                metadata: {
+                    components: [
+                        {
+                            parameter: config.id,
+                            current: lun[param]?.toString() || '',
+                            recommended: (config.value ?? '').toString(),
+                            status
+                        }
+                    ]
+                }
+            };
+        });
+
         return {
             ...config,
             recommended: (config.value ?? '').toString(),
@@ -1716,7 +1786,8 @@ function getLunConfigDrift(storageAssessmentData: StorageAssessment): (Assessmen
             objectsInViolation: violationDetails.map(detail => detail.objectName),
             violationDetails,
             totalObjectsAssessed: lunsData.length,
-            totalObjectsInViolation: violationDetails.length
+            totalObjectsInViolation: violationDetails.length,
+            assessmentDetails
         };
     });
 }

@@ -725,6 +725,31 @@ function normalizeForGoldenConfigCompare(val: unknown, template: unknown): strin
     return String(val ?? '');
 }
 
+function buildCombinedAssessmentDetails(
+    objects: Array<Record<string, unknown>>,
+    components: ReadonlyArray<{ parameter: string; value: unknown; name?: string }>,
+    violatedObjectNames: string[]
+) {
+    return objects.map(obj => ({
+        id: String(obj.uuid ?? obj.name),
+        name: String(obj.name),
+        metadata: {
+            components: components.map(c => ({
+                parameter: c.name ?? c.parameter,
+                current: String(obj[c.parameter]),
+                recommended: String(c.value),
+                status: violatedObjectNames.includes(String(obj.name))
+                    ? AssessmentStatus.NOT_OPTIMIZED
+                    : AssessmentStatus.OPTIMIZED
+            }))
+        },
+        ...(obj.svmName !== undefined && { svmName: String(obj.svmName) }),
+        status: violatedObjectNames.includes(String(obj.name))
+            ? AssessmentStatus.NOT_OPTIMIZED
+            : AssessmentStatus.OPTIMIZED
+    }));
+}
+
 /**
  * Assembles a volume-only combined drift entry (e.g. tiering-tco-optimization) by evaluating
  * each volume against all golden-config components via buildViolationRow.
@@ -747,6 +772,7 @@ function buildVolumeCombinedEntry(
     });
 
     const objectsInViolation = violationDetails.map(row => row.objectName);
+    const assessmentDetails = buildCombinedAssessmentDetails(volumes, components, objectsInViolation);
     return {
         ...config,
         recommended: '',
@@ -756,6 +782,7 @@ function buildVolumeCombinedEntry(
         totalObjectsInViolation: objectsInViolation.length,
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         violationDetails,
+        assessmentDetails,
         configDetails: components.map((component: GoldenConfigComponent) => ({
             id: component.name ?? component.parameter,
             recommended: String(component.value),
@@ -841,6 +868,10 @@ function buildBlockDeviceSpaceManagementEntry(
     });
 
     const objectsInViolation = violationDetails.map(row => row.objectName);
+    const assessmentDetails = [
+        ...buildCombinedAssessmentDetails(luns, lunComponents, objectsInViolation),
+        ...buildCombinedAssessmentDetails(volumes, volumeComponents, objectsInViolation)
+    ];
     return {
         ...config,
         recommended: '',
@@ -850,6 +881,7 @@ function buildBlockDeviceSpaceManagementEntry(
         totalObjectsInViolation: objectsInViolation.length,
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME_OR_LUN,
         violationDetails,
+        assessmentDetails,
         configDetails
     } as AssessmentItemType;
 }

@@ -165,25 +165,32 @@ function toMssqlStorageAssessment(
 
     const volumes = Object.values(inventory.volumesByUuid)
         .filter(({ uuid }) => volumeUuids.has(uuid))
-        .map(({ name, uuid, autosize, guarantee, space, snapshot_policy: snapshotPolicy, tiering, svm }) => {
-            const autosizeMode = autosize?.mode;
-            return {
-                name,
-                uuid,
-                svmName: svm?.name,
-                svmUuid: svm?.uuid,
-                'thin-provision': guarantee?.honored,
-                'space-guarantee': guarantee?.type,
-                'autosize-mode': autosizeMode,
-                autosize: autosizeMode && autosizeMode !== 'off' ? 'on' : 'off',
-                'fractional-reserve': space?.fractional_reserve,
-                'snapshot-copy-reserve': space?.snapshot?.reserve_percent,
-                'snapshot-autodelete': space?.snapshot?.autodelete?.enabled,
-                'snapshot-policy': snapshotPolicy?.name,
-                'tiering-policy': tiering?.policy,
-                'tiering-min-cooling-days': tiering?.min_cooling_days
-            };
-        });
+        .map(
+            ({ name, uuid, autosize, guarantee, space, snapshot_policy: snapshotPolicy, tiering, svm, efficiency }) => {
+                const autosizeMode = autosize?.mode;
+                return {
+                    name,
+                    uuid,
+                    svmName: svm?.name,
+                    svmUuid: svm?.uuid,
+                    'thin-provision': guarantee?.honored,
+                    'space-guarantee': guarantee?.type,
+                    'autosize-mode': autosizeMode,
+                    autosize: autosizeMode && autosizeMode !== 'off' ? 'on' : 'off',
+                    'fractional-reserve': space?.fractional_reserve,
+                    'snapshot-copy-reserve': space?.snapshot?.reserve_percent,
+                    'snapshot-autodelete': space?.snapshot?.autodelete?.enabled,
+                    'snapshot-policy': snapshotPolicy?.name,
+                    'tiering-policy': tiering?.policy,
+                    'tiering-min-cooling-days': tiering?.min_cooling_days,
+                    compression: efficiency?.compression,
+                    compressionType: efficiency?.compression_type,
+                    compaction: efficiency?.compaction,
+                    deduplication: efficiency?.dedupe,
+                    'efficiency-type': efficiency?.storage_efficiency_mode
+                };
+            }
+        );
 
     const luns = Object.values(inventory.lunsByUuid)
         .filter(({ uuid }) => lunUuids.has(uuid))
