@@ -5,6 +5,7 @@ import {
     ScanRequestMessage,
     TaskStatus,
     WAD_SERVICE_ID,
+    WadConfigurationEntry,
     WadScanContext,
     WadScanResultRecord
 } from '../../utils/wad-consts';
@@ -21,6 +22,28 @@ import { getOracleStorageResourceScan } from '../continuous-optimization/oracle/
 import { applyOntapStorageFix } from '../continuous-optimization/ontap-storage-fix-operations';
 
 const logger = getLogger();
+
+/**
+ * WAD storage note: the downstream `setResult` call is a plain Redis SET EX, so sending two
+ * entries with the same (configurationId + parentResource.id) causes a full overwrite of the
+ * earlier entry. Merge all resources under a single entry per key before publishing to avoid
+ * silently losing data.
+ */
+function mergeConfigurations(configs: WadConfigurationEntry[]): WadConfigurationEntry[] {
+    const map = new Map<string, WadConfigurationEntry>();
+    for (const entry of configs) {
+        const key = `${entry.parentResource.accountId}:${entry.parentResource.credentialsIds.join(',')}:${
+            entry.parentResource.region
+        }:${entry.parentResource.id}:${entry.configurationId}`;
+        const existing = map.get(key);
+        if (existing) {
+            existing.resources.push(...entry.resources);
+        } else {
+            map.set(key, { ...entry, resources: [...entry.resources] });
+        }
+    }
+    return [...map.values()];
+}
 
 type WorkloadScanFn = (
     ctx: WadScanContext,
@@ -52,12 +75,13 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                 throat(3, async () => {
                     const relationship = await buildEc2FsxRelationship(accountId, credentialsId, region);
                     const storageAssessments = await collectOntapAssessmentData(accountId, relationship);
+                    const pairConfigs: WadConfigurationEntry[] = [];
 
                     for (const { workloadType, fileSystemId, storageAssessment } of storageAssessments) {
                         const scanFn = WORKLOAD_SCAN_FNS[workloadType];
                         if (scanFn) {
                             // eslint-disable-next-line no-await-in-loop
-                            const scanRecord = await scanFn(
+                            const { configurations } = await scanFn(
                                 {
                                     ...baseCtx,
                                     credentialsId,
@@ -67,25 +91,46 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                                 },
                                 storageAssessment
                             );
-
-                            logger.info('WAD: published scan result', { scanRecord });
-                            publishScanResult(scanRecord);
+                            pairConfigs.push(...configurations);
                         }
                     }
+
+                    return pairConfigs;
                 })()
             )
         );
 
         // Log + collect every failed pair individually; none of them are silently dropped.
-        const errors = settled.reduce<string[]>((acc, result, i) => {
-            if (result.status !== 'rejected') {
-                return acc;
+        const allConfigurations: WadConfigurationEntry[] = [];
+        const errors: string[] = [];
+        for (const [i, result] of settled.entries()) {
+            if (result.status === 'rejected') {
+                const { credentialsId, region } = pairs[i];
+                const message = result.reason instanceof Error ? result.reason.message : String(result.reason);
+                logger.error('WAD: scan failed for credentials/region pair', {
+                    taskId,
+                    credentialsId,
+                    region,
+                    message
+                });
+                errors.push(`${credentialsId}/${region}: ${message}`);
+            } else {
+                allConfigurations.push(...result.value);
             }
-            const { credentialsId, region } = pairs[i];
-            const message = result.reason instanceof Error ? result.reason.message : String(result.reason);
-            logger.error('WAD: scan failed for credentials/region pair', { taskId, credentialsId, region, message });
-            return [...acc, `${credentialsId}/${region}: ${message}`];
-        }, []);
+        }
+
+        if (allConfigurations.length > 0) {
+            const scanRecord = {
+                taskId,
+                requestId,
+                accountId,
+                serviceId: WAD_SERVICE_ID,
+                completedAt: Date.now(),
+                configurations: mergeConfigurations(allConfigurations)
+            };
+            logger.info('WAD: published scan result', { scanRecord }); // to be removed
+            publishScanResult(scanRecord);
+        }
 
         publishScanStatus({
             ...baseStatus,
@@ -114,6 +159,14 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
  */
 async function handleFixRequest(req: FixRequestMessage): Promise<void> {
     const { taskId, requestId, accountId, configurationId, parentResource, resourceIds } = req;
+    const baseResult = {
+        taskId,
+        requestId,
+        accountId,
+        serviceId: WAD_SERVICE_ID,
+        configurationId,
+        parentResourceId: parentResource.id
+    };
 
     logger.info('WAD: handling fix request', { taskId, configurationId, resourceCount: resourceIds.length });
 
@@ -128,36 +181,12 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
             value: req.metadata?.value as string | undefined
         });
 
-        publishFixResult({
-            taskId,
-            requestId,
-            accountId,
-            serviceId: WAD_SERVICE_ID,
-            configurationId,
-            parentResourceId: parentResource.id,
-            resourceResults,
-            reportedAt: Date.now()
-        });
-
-        publishFixStatus({
-            taskId,
-            requestId,
-            accountId,
-            serviceId: WAD_SERVICE_ID,
-            configurationId,
-            parentResourceId: parentResource.id,
-            updatedAt: Date.now(),
-            status: TaskStatus.COMPLETED
-        });
+        publishFixResult({ ...baseResult, resourceResults, reportedAt: Date.now() });
+        publishFixStatus({ ...baseResult, updatedAt: Date.now(), status: TaskStatus.COMPLETED });
     } catch (err) {
         logger.error('WAD: fix request failed', { taskId, configurationId, err });
         publishFixStatus({
-            taskId,
-            requestId,
-            accountId,
-            serviceId: WAD_SERVICE_ID,
-            configurationId,
-            parentResourceId: parentResource.id,
+            ...baseResult,
             updatedAt: Date.now(),
             status: TaskStatus.FAILED,
             errorMessage: err instanceof Error ? err.message : String(err)
