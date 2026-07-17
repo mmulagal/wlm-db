@@ -7,7 +7,7 @@ import {
     paginateListInferenceProfiles
 } from '@aws-sdk/client-bedrock';
 import { BedrockRuntimeClient, InvokeModelWithResponseStreamCommand } from '@aws-sdk/client-bedrock-runtime';
-import { Sha256 } from '@aws-crypto/sha256-js';
+import { Sha256 } from '@smithy/core/checksum';
 import { SignatureV4 } from '@smithy/signature-v4';
 import { HttpRequest } from '@smithy/protocol-http';
 import { NodeHttpHandler, streamCollector } from '@smithy/node-http-handler';
