@@ -22,18 +22,19 @@ import {
 } from '../../../workloads/mssql/common-templates';
 import { slqcmdExecutionTemplate, buildAoagQuery } from '../../../workloads/mssql/ssm-script-utils';
 import { TEST_ISCSI_SESSIONS } from '../../../workloads/mssql/storage-scripts';
+import { MSSQL_MTU_HELPER_FUNCTIONS } from '../../../workloads/mssql/mtu-scripts';
 import { GET_RSS_CONFIG_DETAILS } from '../../../workloads/mssql/assessment-scripts';
 import { INSTANCE_GUID, SERVER_DETAILS, ENTERPRISE_CHECK_QUERY } from '../../../workloads/mssql/queries';
 
 /**
  * Version of the offline assessment script.
  */
-const OFFLINE_ASSESSMENT_SCRIPT_VERSION = '1.0.0';
+const OFFLINE_ASSESSMENT_SCRIPT_VERSION = '1.1.0';
 
 const MSSQL_ONE_TIME_WAD = `
 #=====================================================================================
 #        NETAPP CONSOLE WORKLOAD FACTORY - MSSQL SERVER ONE TIME ASSESSMENT COLLECTOR
-#        Version 1.0.0
+#        Version ${OFFLINE_ASSESSMENT_SCRIPT_VERSION}
 #        Copyright (c) 2026 NetApp, Inc. All rights reserved.
 #=====================================================================================
 
@@ -50,6 +51,7 @@ const MSSQL_ONE_TIME_WAD = `
     - Storage configuration best practices analysis
     - High availability settings (FCI/AOAG)
     - Enterprise feature usage for license optimization
+    - Network MTU alignment between SQL Server NICs and FSx for ONTAP ports
     
     The assessment results are saved to a JSON file. By default, files are saved
     in the current working directory. You can specify a custom output path using
@@ -738,6 +740,8 @@ ${TEST_ISCSI_SESSIONS}
 
 ${slqcmdExecutionTemplate}
 
+${MSSQL_MTU_HELPER_FUNCTIONS}
+
 # Collect the number of SQL Server instances on this host
 $sqlServices = Get-Service | Where-Object { $_.DisplayName -like "*SQL Server (*)" }
 $numberOfDatabaseInstances = @($sqlServices).Count
@@ -933,6 +937,7 @@ $FinalResponse['metadata'] = @{
     numberOfDatabaseInstances = $numberOfDatabaseInstances
     assessmentTimestamp = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
     osVersion = (Get-WmiObject -Class Win32_OperatingSystem).Caption
+    scriptVersion = $ScriptVersion
 }
 $FinalResponse['rawdata'] = @{
     hostLevelDetails = @{
@@ -1558,6 +1563,59 @@ ${SERVER_DETAILS}
 
     if ($hasHaInstance) {
         ${hostLevelHighAvailabilityAssessmentTemplate}
+    }
+
+    # ========================================
+    # PART 6: MTU Alignment Assessment (Host Level)
+    # Collects SQL Server NIC MTU (host side) and FSx port MTU (storage side)
+    # so calculateMTUAlignmentDrift can compare them during upload processing.
+    # ========================================
+    try {
+        $mtuSqlProcesses = Get-Process -Name "sqlservr" -ErrorAction SilentlyContinue
+        $sqlMtuInterfaces = @()
+        $sqlMtuError = $null
+
+        if ($mtuSqlProcesses) {
+            $mtuInterfacePortMap = Get-InterfacePortMapping -SqlProcesses $mtuSqlProcesses
+            $sqlMtuInterfaces = @(Build-SqlInterfaceObjects -InterfacePortMap $mtuInterfacePortMap)
+            if ($sqlMtuInterfaces.Count -eq 0) {
+                $sqlMtuError = "No active SQL Server network interfaces found"
+            }
+        } else {
+            $sqlMtuError = "No SQL Server processes found"
+        }
+
+        $fsxMtuInterfaces = @()
+        $fsxMtuError = $null
+        try {
+            $fsxPortResponse = Invoke-ONTAPRequest -ApiEndpoint "/network/ethernet/ports" -ApiQueryFields "fields=name,mtu"
+            foreach ($port in $fsxPortResponse.records) {
+                if ($port.name -and $port.mtu) {
+                    $fsxMtuInterfaces += @{ Name = $port.name; MTU = $port.mtu }
+                }
+            }
+        } catch {
+            $fsxMtuError = $_.Exception.Message
+            Write-Log -Level "WARNING" -Message "Failed to retrieve FSx port MTU data: $fsxMtuError"
+        }
+
+        $FinalResponse['rawdata']['hostLevelDetails']['mtuAlignment'] = @{
+            sqlServerMTU = @{
+                sqlInterfaces = $sqlMtuInterfaces
+                error         = $sqlMtuError
+            }
+            fsxMTU = @{
+                fsxInterfaces = $fsxMtuInterfaces
+                error         = $fsxMtuError
+            }
+        }
+        Write-Log "MTU alignment data collected: $($sqlMtuInterfaces.Count) SQL interface(s), $($fsxMtuInterfaces.Count) FSx port(s)"
+    } catch {
+        Write-Log -Level "WARNING" -Message "Failed to collect MTU alignment data: $($_.Exception.Message)"
+        $FinalResponse['rawdata']['hostLevelDetails']['mtuAlignment'] = @{
+            sqlServerMTU = @{ sqlInterfaces = @(); error = $_.Exception.Message }
+            fsxMTU       = @{ fsxInterfaces = @(); error = $null }
+        }
     }
 
     # Add fciName to metadata from script global variable

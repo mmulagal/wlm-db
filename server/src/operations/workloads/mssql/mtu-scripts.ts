@@ -482,4 +482,22 @@ $response = $responseObject | ConvertTo-Json -Depth 4 -Compress
 return $response
 `;
 
-export { FETCH_MSSQL_INSTANCE_MTU_DETAILS, FETCH_FSX_MTU_DETAILS, OPTIMIZE_NETWORK_INTERFACE_MTU };
+/**
+ * All five MTU helper function definitions concatenated for embedding inline in
+ * scripts that cannot invoke a separate SSM command (e.g. the offline WAD collector).
+ * Consumers must call Get-InterfacePortMapping and Build-SqlInterfaceObjects after embedding.
+ */
+const MSSQL_MTU_HELPER_FUNCTIONS = `
+${GET_NETWORK_FALLBACK_PORTS}
+${GET_SQL_SERVER_PORTS}
+${MAP_INTERFACES_TO_PORTS}
+${GET_INTERFACE_IP_ADDRESSES}
+${BUILD_INTERFACE_OBJECTS}
+`;
+
+export {
+    FETCH_MSSQL_INSTANCE_MTU_DETAILS,
+    FETCH_FSX_MTU_DETAILS,
+    OPTIMIZE_NETWORK_INTERFACE_MTU,
+    MSSQL_MTU_HELPER_FUNCTIONS
+};

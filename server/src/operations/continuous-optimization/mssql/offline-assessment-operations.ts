@@ -14,6 +14,7 @@ import { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/typ
 import { calculateStorageDrift } from './storage-assessment-operations';
 import { calculateRssConfigDrift } from './rssConfig-assessment-operations';
 import { calculateMaxDOPDrift } from './maxdop-assessment-operations';
+import { calculateMTUAlignmentDrift } from './mtu-assessment-operations';
 import calculateOneTimeWADCloneDrift from '../clone-assessment-utils';
 import { getHighAvailabilityDriftData } from './resilience-assessment-operation';
 import {
@@ -43,7 +44,8 @@ import {
     CloneAssessment,
     VolumeRecord,
     VolumeDBMapEntry,
-    LunRecord
+    LunRecord,
+    MtuAlignmentAssessment
 } from '../../../utils/common-types';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { MSSQL_GOLDEN_CONFIG } from './golden-config';
@@ -121,6 +123,7 @@ interface OfflineAssessmentHostLevelDetails {
     rssConfig?: RssConfigAssesment;
     headroom?: OneTimeWADHeadroomData;
     highAvailability?: OfflineAssessmentHostLevelHA;
+    mtuAlignment?: MtuAlignmentAssessment;
     errors?: Record<string, unknown>;
 }
 
@@ -171,6 +174,7 @@ interface MSSQLOfflineAssessmentRawData {
     rssConfig?: ResourceAssessmentData;
     headroom?: OneTimeWADHeadroomData;
     hostLevelHighAvailability?: OfflineAssessmentHostLevelHA;
+    mtuAlignment?: MtuAlignmentAssessment;
     clone?: CloneAssessment;
     snapshotPolicy?: MSSQLOfflineSnapshotPolicy;
     errors?: Record<string, unknown>;
@@ -220,6 +224,7 @@ interface MSSQLOfflineAssessmentMetadataType {
     numberOfDatabaseInstances?: number;
     assessmentTimestamp: string;
     osVersion: string;
+    scriptVersion?: string;
     deploymentType: 'FCI' | 'AOAG' | 'Standalone';
     baseDeploymentType?: 'FCI' | 'Standalone';
     databaseInstanceName: string;
@@ -301,7 +306,13 @@ async function processOfflineAssessmentUpload(
     region?: string
 ) {
     const { hostLevelDetails, instanceLevelDetails } = rawdata;
-    const { rssConfig, headroom, highAvailability: hostLevelHighAvailability, errors } = hostLevelDetails || {};
+    const {
+        rssConfig,
+        headroom,
+        highAvailability: hostLevelHighAvailability,
+        mtuAlignment,
+        errors
+    } = hostLevelDetails || {};
     const {
         databaseType,
         ec2InstanceId,
@@ -311,6 +322,7 @@ async function processOfflineAssessmentUpload(
         numberOfDatabaseInstances,
         assessmentTimestamp,
         osVersion,
+        scriptVersion,
         vmName,
         virtualNetworkId,
         virtualNetworkName,
@@ -384,6 +396,7 @@ async function processOfflineAssessmentUpload(
                             rssConfig: rssConfig || {},
                             headroom: headroom || {},
                             hostLevelHighAvailability: hostLevelHighAvailability || {},
+                            ...(mtuAlignment && !isEmpty(mtuAlignment) && { mtuAlignment }),
                             ...(clone && !isEmpty(clone) && { clone }),
                             ...(snapshotPolicy && !isEmpty(snapshotPolicy) && { snapshotPolicy }),
                             errors: errors?.[instanceName] || errors || {}
@@ -398,6 +411,7 @@ async function processOfflineAssessmentUpload(
                             numberOfDatabaseInstances,
                             assessmentTimestamp,
                             osVersion,
+                            ...(scriptVersion && { scriptVersion }),
                             vmName,
                             ec2InstanceId,
                             virtualNetworkId,
@@ -604,7 +618,7 @@ async function fetchMssqlOfflineAssessment(
         ec2InstanceId,
         fciName
     } = metadata;
-    const { instanceLevelAssessment, rssConfig, headroom, hostLevelHighAvailability, clone } = rawdata;
+    const { instanceLevelAssessment, rssConfig, headroom, hostLevelHighAvailability, mtuAlignment, clone } = rawdata;
     const { maxDop, highAvailability } = (instanceLevelAssessment as MSSQLInstanceLevelAssessment) || {};
 
     let maxDopData: MaxDOPAssesment | undefined;
@@ -672,6 +686,18 @@ async function fetchMssqlOfflineAssessment(
         ? calculateMaxDOPDrift(accountId, '', '', resourceId, databaseInstanceId, maxDopData)
         : undefined;
 
+    const mtuAlignmentResponse =
+        ec2InstanceId && mtuAlignment && !isEmpty(mtuAlignment)
+            ? calculateMTUAlignmentDrift(
+                  accountId,
+                  '',
+                  '',
+                  resourceId,
+                  { node1InstanceId: ec2InstanceId },
+                  { mtuAlignment }
+              )
+            : undefined;
+
     // For offline assessments, only include cluster-quorum and heartbeat settings.
     const highAvailabilityResponse = haResult.filter(
         item => item?.id === 'cluster-quorum' || item?.id === 'heartbeat-settings'
@@ -698,7 +724,7 @@ async function fetchMssqlOfflineAssessment(
             assessments.push(...item);
         }
     });
-    [headroomItem, rssConfigResponse, maxDOPResponse, cloneDriftResponse].forEach(item => {
+    [headroomItem, rssConfigResponse, maxDOPResponse, cloneDriftResponse, mtuAlignmentResponse].forEach(item => {
         if (!isEmpty(item)) {
             assessments.push(item);
         }

@@ -1048,5 +1048,6 @@ export {
     PerHostJobMetadata,
     JobMetadata,
     SSMDocument,
-    ComputeHostOsAssessment
+    ComputeHostOsAssessment,
+    MtuAlignmentAssessment
 };

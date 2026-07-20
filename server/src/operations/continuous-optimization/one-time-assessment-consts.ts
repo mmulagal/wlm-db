@@ -5,6 +5,8 @@
  * including the README content that is included in the downloadable ZIP file.
  */
 
+import { OFFLINE_ASSESSMENT_SCRIPT_VERSION } from './mssql/ssm-scripts/offline-assessment';
+
 const MSSQL_ONE_TIME_ASSESSMENT_README = `
 # MSSQL One-Time Assessment Script
 
@@ -12,7 +14,7 @@ const MSSQL_ONE_TIME_ASSESSMENT_README = `
 
 ## Overview
 
-This PowerShell script performs a comprehensive assessment of your SQL Server environment and its storage configuration on NetApp ONTAP storage systems (Amazon FSx for NetApp ONTAP). The script collects SQL Server instance configuration, mapped ONTAP volumes and LUN details, storage configuration best practices analysis, high availability settings (FCI/AOAG), and enterprise feature usage for license optimization.
+This PowerShell script performs a comprehensive assessment of your SQL Server environment and its storage configuration on NetApp ONTAP storage systems (Amazon FSx for NetApp ONTAP). The script collects SQL Server instance configuration, mapped ONTAP volumes and LUN details, storage configuration best practices analysis, high availability settings (FCI/AOAG), enterprise feature usage for license optimization, and network MTU alignment between SQL Server NICs and FSx for ONTAP ports.
 
 ## Prerequisites
 
@@ -44,7 +46,7 @@ This PowerShell script performs a comprehensive assessment of your SQL Server en
 
 ### Example 1: Using Management FQDN (Default Instance)
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com -SqlInstanceName MSSQLSERVER
+.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com -SqlInstanceName MSSQLSERVER
 \`\`\`
 
 This example:
@@ -54,7 +56,7 @@ This example:
 
 ### Example 2: Using Management IP Address (Named Instance)
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress 10.0.1.100 -SqlInstanceName SQLInstance1
+.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress 10.0.1.100 -SqlInstanceName SQLInstance1
 \`\`\`
 
 This example:
@@ -64,7 +66,7 @@ This example:
 
 ### Example 3: Using FSx File System ID (Default Instance)
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER
+.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER
 \`\`\`
 
 This example:
@@ -74,7 +76,7 @@ This example:
 
 ### Example 4: Custom Output Directory
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER -OutputPath "C:\\AssessmentResults"
+.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER -OutputPath "C:\\AssessmentResults"
 \`\`\`
 
 This example:
@@ -84,7 +86,7 @@ This example:
 
 ### Example 5: Named Instance with Custom Path
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v1.0.0.ps1 -StorageManagementAddress 192.168.1.50 -SqlInstanceName PROD -OutputPath "D:\\Reports\\SQLAssessment"
+.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress 192.168.1.50 -SqlInstanceName PROD -OutputPath "D:\\Reports\\SQLAssessment"
 \`\`\`
 
 ## Parameters
@@ -236,7 +238,7 @@ For additional support and documentation, please refer to the NetApp Workload Fa
 
 ## Version
 
-Script Version: 1.0.0
+Script Version: ${OFFLINE_ASSESSMENT_SCRIPT_VERSION}
 
 ---
 
