@@ -14,16 +14,23 @@
     }
 
     .filterSection {
-        height: 56px;
+        min-height: 56px;
+        height: auto;
         width: 100%;
         padding: 16px 40px;
         display: flex;
+        flex-wrap: wrap;
+        align-items: center;
         justify-content: space-between;
+        gap: 12px 16px;
 
         .radioSection {
             display: flex;
             align-items: center;
-            gap: 24px;
+            flex-wrap: wrap;
+            gap: 16px 24px;
+            flex: 1 1 200px;
+            min-width: 0;
         }
     }
 
@@ -31,6 +38,8 @@
         display: flex;
         align-items: center;
         gap: 16px;
+        flex: 0 0 auto;
+        margin-left: auto;
 
         .imageFilter {
             display: flex;
@@ -72,12 +81,14 @@
             }
         }
         .tile {
-            height: 124px;
+            min-height: 124px;
+            height: auto;
             padding: 24px 0 24px 40px;
             display: flex;
             align-items: center;
-            gap: 24px;
+            gap: 16px;
             border-bottom: 1px solid var(--border);
+            min-width: 0;
 
             [class*='ProgressBar_Suc-progressbar'] {
                 height: 8px;
@@ -87,12 +98,32 @@
                 display: flex;
                 align-items: center;
                 gap: 24px;
+                flex-shrink: 0;
             }
 
             [class*='barComponent'] {
                 width: 100%;
+                min-width: 0;
+                flex: 1 1 auto;
+
                 [class*='rightSection'] {
                     width: 100% !important;
+                    min-width: 0;
+                }
+
+                [class*='bottomSection'] {
+                    min-width: 0;
+                    gap: 8px;
+                }
+
+                [class*='bottomTextSection'] {
+                    min-width: 0;
+                    flex: 1 1 auto;
+                }
+
+                [class*='bottomRightSection'] {
+                    flex-shrink: 0;
+                    gap: 12px;
                 }
             }
         }

@@ -24,12 +24,21 @@ vi.mock('../SquareComponent.module.scss', () => ({
         loadingClass: 'loadingClass',
         loadingClassSmall: 'loadingClassSmall',
         bottomRow: 'bottomRow',
-        square: 'square'
+        square: 'square',
+        labelText: 'labelText'
     }
 }));
 
 vi.mock('../../../utils/CommonStyles.module.scss', () => ({
     default: { notAvailable: 'notAvailable' }
+}));
+
+vi.mock('../../../common/EllipsisTooltipText/EllipsisTooltipText', () => ({
+    default: ({ text, className }: any) => (
+        <span data-testid="ellipsis-tooltip-text" className={className}>
+            {text}
+        </span>
+    )
 }));
 
 describe('SquareComponent', () => {

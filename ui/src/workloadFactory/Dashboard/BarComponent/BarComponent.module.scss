@@ -64,20 +64,43 @@
         .bottomSection {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+
             .bottomTextSection {
                 display: flex;
                 gap: 8px;
+                align-items: center;
+                min-width: 0;
+                flex: 1 1 auto;
+                overflow: hidden;
+
+                .bottomTextLabel {
+                    min-width: 0;
+                    flex-shrink: 1;
+                    font-size: 14px;
+                    font-weight: 400;
+                }
+
+                .bottomTextCount {
+                    flex-shrink: 0;
+                    white-space: nowrap;
+                }
             }
 
             .bottomRightSection {
                 display: flex;
                 gap: 24px;
                 align-items: center;
+                flex-shrink: 0;
 
                 .severity {
                     display: flex;
                     gap: 4px;
                     align-items: center;
+                    flex-shrink: 0;
+                    white-space: nowrap;
 
                     .circle {
                         width: 8px;

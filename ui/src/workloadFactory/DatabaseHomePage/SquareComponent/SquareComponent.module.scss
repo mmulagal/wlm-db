@@ -2,6 +2,10 @@
     display: flex;
     flex-direction: column;
     gap: 5px;
+    min-width: 0;
+    flex: 1 1 0;
+    overflow: hidden;
+    padding-right: 8px;
 
     .headerArea {
         display: flex;
@@ -23,14 +27,25 @@
     .valueText {
         font-size: 14px;
     }
+
     .bottomRow {
         display: flex;
         align-items: center;
         gap: 8px;
+        min-width: 0;
+        overflow: hidden;
 
         .square {
             width: 12px;
             height: 12px;
+            flex-shrink: 0;
+        }
+
+        .labelText {
+            font-size: 14px;
+            font-weight: 400;
+            line-height: unset;
+            padding-right: 8px;
         }
     }
 }

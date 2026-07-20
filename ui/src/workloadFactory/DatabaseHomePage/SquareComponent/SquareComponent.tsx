@@ -2,6 +2,7 @@ import { DsFlashingDotsLoader, Typography } from '@netapp/design-system';
 import React from 'react';
 import styles from './SquareComponent.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import EllipsisTooltipText from '../../../common/EllipsisTooltipText/EllipsisTooltipText';
 
 type SC = {
     value: string;
@@ -57,13 +58,10 @@ const SquareComponent = ({
                 className={`${styles.square} ${showNA ? CommonStyles.notAvailable : ''}`}
                 style={{ backgroundColor: showNA ? 'var(--text-disabled)' : color }}
             />
-            <Typography
-                variant="Regular_14"
-                style={{ lineHeight: 'unset', width: 'max-content', whiteSpace: 'nowrap' }}
-                className={showNA ? CommonStyles.notAvailable : ''}
-            >
-                {text}
-            </Typography>
+            <EllipsisTooltipText
+                text={text}
+                className={`${styles.labelText} ${showNA ? CommonStyles.notAvailable : ''}`}
+            />
             {isLoading && <DsFlashingDotsLoader />}
         </div>
     </div>

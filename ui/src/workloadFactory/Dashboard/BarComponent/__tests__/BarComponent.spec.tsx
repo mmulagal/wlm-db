@@ -37,6 +37,13 @@ vi.mock('../../../../assets/warning.svg', () => ({
 }));
 
 vi.mock('../../../../utils/CommonStyles.module.scss', () => ({ default: { notAvailable: 'notAvailable' } }));
+vi.mock('../../../common/EllipsisTooltipText/EllipsisTooltipText', () => ({
+    default: ({ text, className }: any) => (
+        <span data-testid="ellipsis-tooltip-text" className={className}>
+            {text}
+        </span>
+    )
+}));
 vi.mock('./BarComponent.module.scss', () => ({
     default: {
         barComponent: 'barComponent',
@@ -49,6 +56,8 @@ vi.mock('./BarComponent.module.scss', () => ({
         getWellBar: 'getWellBar',
         progressBar: 'progressBar',
         bottomTextSection: 'bottomTextSection',
+        bottomTextLabel: 'bottomTextLabel',
+        bottomTextCount: 'bottomTextCount',
         bottomRightSection: 'bottomRightSection',
         severity: 'severity',
         circle: 'circle',

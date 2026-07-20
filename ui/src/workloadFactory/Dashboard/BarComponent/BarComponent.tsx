@@ -5,6 +5,7 @@ import ProgressBar from '../../../common/ProgressBar/ProgressBar';
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import { CONFIG_STATES, CONFIG_STATES_UI } from '../../../utils/consts';
 import Tag from '../../../common/Tag/Tag';
+import EllipsisTooltipText from '../../../common/EllipsisTooltipText/EllipsisTooltipText';
 
 type BarComponentType = {
     color: string;
@@ -218,18 +219,20 @@ const BarComponent = ({
                             <>
                                 {tooltipMessage && <TooltipInfo>{tooltipMessage}</TooltipInfo>}
                                 {bottomText && (
-                                    <DsTypography
-                                        variant="Regular_14"
-                                        className={isDisabled ? CommonStyles.notAvailable : ''}
-                                    >
-                                        {bottomText}
-                                    </DsTypography>
+                                    <EllipsisTooltipText
+                                        text={bottomText}
+                                        className={`${styles.bottomTextLabel} ${
+                                            isDisabled ? CommonStyles.notAvailable : ''
+                                        }`}
+                                    />
                                 )}
                                 {from === 'dashboard'
                                     ? beforeOutOf !== undefined && (
                                           <DsTypography
                                               variant="Semibold_14"
-                                              className={isDisabled ? CommonStyles.notAvailable : ''}
+                                              className={`${styles.bottomTextCount} ${
+                                                  isDisabled ? CommonStyles.notAvailable : ''
+                                              }`}
                                           >
                                               {beforeOutOf}
                                           </DsTypography>
@@ -238,7 +241,9 @@ const BarComponent = ({
                                       afterOutOf !== undefined && (
                                           <DsTypography
                                               variant="Semibold_14"
-                                              className={isDisabled ? CommonStyles.notAvailable : ''}
+                                              className={`${styles.bottomTextCount} ${
+                                                  isDisabled ? CommonStyles.notAvailable : ''
+                                              }`}
                                           >
                                               {beforeOutOf} out of {afterOutOf}
                                           </DsTypography>

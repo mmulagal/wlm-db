@@ -23,11 +23,16 @@
         padding: 40px;
         display: flex;
         gap: 56px;
+        min-width: 0;
+        overflow: hidden;
 
         .contentSection {
             display: flex;
             gap: 24px;
             align-items: center;
+            min-width: 0;
+            flex: 1 1 auto;
+            overflow: hidden;
 
             .firstBlock {
                 display: flex;
