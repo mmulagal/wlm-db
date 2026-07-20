@@ -4,6 +4,11 @@ import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-
 import { GetCommandInvocationCommandOutput } from '@aws-sdk/client-ssm';
 import { OracleDeploymentTenacy } from '../operations/workloads/oracle/consts';
 
+enum DiscoverySource {
+    DISCOVER = 'discover',
+    TAGGING_SERVICE = 'tagging-service'
+}
+
 interface LicenseAssessment {
     licenseFinding: string;
     recommendedLicenseType: string;
@@ -966,6 +971,29 @@ interface SSMDocument {
     documentVersion: string;
 }
 
+interface SsmTargetsInfo {
+    ec2InstanceId: string;
+    ec2InstanceName: string;
+    ec2InstanceType: string;
+    ec2UsageOperation: string;
+    ssmState: string;
+    ebsVolumeIDs: (string | undefined)[] | undefined;
+    platform?: string;
+    source: DiscoverySource;
+    hostManageReadiness?: {
+        extensiveRunPermission: boolean;
+        canReadAWSSSMDocuments?: boolean;
+        canQuerySSMInventory?: boolean;
+        fsxLinkExists?: boolean;
+        fsxLinksCount?: number;
+    };
+    vpc?: {
+        id?: string;
+        name?: string;
+        cidrBlock?: string;
+    };
+}
+
 export {
     BulkDismissConfigurationType,
     Metadata,
@@ -1049,5 +1077,7 @@ export {
     JobMetadata,
     SSMDocument,
     ComputeHostOsAssessment,
-    MtuAlignmentAssessment
+    MtuAlignmentAssessment,
+    SsmTargetsInfo,
+    DiscoverySource
 };

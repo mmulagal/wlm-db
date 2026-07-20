@@ -1,5 +1,6 @@
 import { chunk, flatMap } from 'lodash-es';
 import throat from 'throat';
+import { getFsxFileSystemActiveLinks } from '../../lib/cloud-manager/fsx-core';
 import { callProxyForwarder } from '../../lib/cloud-manager/proxy-forwarder';
 import getLogger from '../../utils/logger.js';
 
@@ -125,4 +126,15 @@ async function collectOntapRecordsBatched<T>(
     return responseRecords;
 }
 
-export { collectAllOntapRecords, collectOntapRecordsBatched };
+async function checkFsxLinkExists(credentialsId: string, region: string, fsId: string) {
+    logger.info('Checking FSx link exists', { credentialsId, region, fsId });
+    try {
+        const activeLinks = await getFsxFileSystemActiveLinks(credentialsId, region, fsId);
+        return { exists: activeLinks.length > 0, count: activeLinks.length };
+    } catch (error) {
+        logger.error('Failed to check FSx active links', { fsId, error });
+        return { exists: false, count: 0 };
+    }
+}
+
+export { checkFsxLinkExists, collectAllOntapRecords, collectOntapRecordsBatched };

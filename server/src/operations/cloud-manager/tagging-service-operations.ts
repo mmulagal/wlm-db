@@ -46,6 +46,24 @@ interface FsxItem {
     volumes: FsxVolume[];
 }
 
+interface TaggingServiceEc2Host {
+    instanceId: string;
+    instanceType?: string;
+    platform?: string;
+    platformDetails?: string;
+    architecture?: string;
+    state?: string;
+    imageId?: string;
+    privateIp?: string;
+    privateDnsName?: string;
+    vpcId?: string;
+    region?: string;
+    tags?: { Key?: string; Value?: string }[];
+    iamInstanceProfile?: { arn?: string };
+    blockDeviceMappings?: { ebs?: { volumeId?: string } }[];
+    workloads?: { workload: string }[];
+}
+
 interface Ec2WithStorage {
     instanceId: string;
     region?: string;
@@ -236,4 +254,42 @@ async function buildEc2FsxRelationship(
     return { ec2s };
 }
 
-export { buildEc2FsxRelationship, Ec2FsxRelationship, type Ec2WithStorage, type FsxItem, type FsxVolume, type FsxLun };
+/**
+ * Fetches the tagging-service EC2 inventory (`wlm-hosts/ec2s`) for an account/region.
+ * Used by the discover flow to supplement SSM/EC2-describe based discovery with
+ * instances the tagging service already knows about (see `discoverEc2Instances`).
+ */
+async function fetchTaggingServiceEc2Hosts(
+    accountId: string,
+    credentialsId: string,
+    region: string
+): Promise<TaggingServiceEc2Host[]> {
+    logger.info('Fetching EC2 hosts from tagging service', { accountId, credentialsId, region });
+    const { hosts = [] } = await callWlmHosts<{ hosts?: TaggingServiceEc2Host[] }>(
+        accountId,
+        credentialsId,
+        region,
+        'ec2s'
+    );
+    const databaseHosts = hosts.filter(({ workloads }) =>
+        workloads?.some(({ workload }) => {
+            const normalized = workload.toLowerCase();
+            return (
+                normalized.includes('oracle') || normalized.includes('sql server') || normalized.includes('postgresql')
+            );
+        })
+    );
+    logger.debug('Retrieved EC2 hosts from tagging service', { accountId, region, hostCount: databaseHosts.length });
+    return databaseHosts;
+}
+
+export {
+    buildEc2FsxRelationship,
+    Ec2FsxRelationship,
+    Ec2WithStorage,
+    FsxItem,
+    FsxVolume,
+    FsxLun,
+    fetchTaggingServiceEc2Hosts,
+    TaggingServiceEc2Host
+};

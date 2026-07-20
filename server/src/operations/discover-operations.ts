@@ -47,8 +47,12 @@ import {
     pollCommandStatus,
     getSSMConnectionStatusByInstanceIds,
     executeSSMDocumentMultipleInstances,
-    extractSsmResponse
+    extractSsmResponse,
+    hasExtensiveSsmRunPermission,
+    canReadFleetManagerResource,
+    canQuerySSMInventory
 } from './aws/ssm-operations';
+import { getRegistryOnlySqlServerInstances } from './ssm-doc-operations';
 import { registerJob, updateJobDetails, getJobs } from './database/job-operations';
 import { UpdateJobRecordType } from '../routes/types/jobs.types';
 
@@ -87,7 +91,13 @@ import {
     AOAG_ROLE_SECONDARY,
     SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION
 } from './workloads/mssql/const';
-import { NodeDetails, ResourceDetails, MultipleCommandSsmResponse } from '../utils/common-types';
+import {
+    NodeDetails,
+    ResourceDetails,
+    MultipleCommandSsmResponse,
+    SsmTargetsInfo,
+    DiscoverySource
+} from '../utils/common-types';
 import {
     DiscoverMsSqlResponseBodyType,
     SqlServerInstanceInfoType,
@@ -111,23 +121,17 @@ import { discoverPgsqlHosts } from './workloads/pgsql/pgsql-discover-scripts';
 import { discoverOracleHosts } from './workloads/oracle/oracle-discover-scripts';
 import { OracleDeploymentTenacy, SSM_RUN_SHELL_SCRIPT_DOC } from './workloads/oracle/consts';
 import { OracleDataguardDiscoveryDetailsType } from './workloads/oracle/common-types';
+import {
+    fetchTaggingServiceEc2Hosts,
+    buildEc2FsxRelationship,
+    TaggingServiceEc2Host,
+    Ec2WithStorage
+} from './cloud-manager/tagging-service-operations';
+import { checkFsxLinkExists } from './cloud-manager/proxy-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
 const NO_PGSQL = 'no_pgsql';
-interface SsmTargetsInfo {
-    ec2InstanceId: string;
-    ec2InstanceName: string;
-    ec2InstanceType: string;
-    ec2UsageOperation: string;
-    ssmState: string;
-    ebsVolumeIDs: (string | undefined)[] | undefined;
-    vpc?: {
-        id?: string;
-        name?: string;
-        cidrBlock?: string;
-    };
-}
 
 interface FsxServerConfig {
     deploymentType: string | undefined;
@@ -155,6 +159,8 @@ type DiscoveredEc2InstanceType = (DiscoverPgSqlResponseType | DiscoverOracleResp
     ebsVolumeIDs: (string | undefined)[] | undefined;
     ebsVolumes?: (InstanceBlockDeviceMapping | undefined)[] | undefined;
 };
+
+type TaggingServiceStorageEntry = { type: string; id: string; svmId?: string; fileSystemName?: string };
 
 const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
 const PREPARE_EC2_RERUN_DURATION: number = 20; // in minutes
@@ -321,44 +327,123 @@ async function getHostAndSqlServerInfo(
         const subnetListMap = new Map(subnetList?.map(subnet => [subnet.SubnetId, subnet.AvailabilityZone]));
         const ebsVolumeToAvailabilityZoneMap = new Map(ebsVolumeList?.map(vol => [vol.VolumeId, vol.AvailabilityZone]));
 
-        // PowerShell execution would take some time, so we wait for a second before triggering polling.
-        //
-        // NOTE:
-        //  Getting FSx filesystems and SVMs will take some time, which could serve the
-        // purpose of sleep() below.  Since PowerShell script takes some time to complete,
-        // sleeping for a second would help us get the results in first SSM poll itself.
-        // If run time performance is needed, this is one possible candidate for purge.
-        await sleep(1000);
+        if (commandId) {
+            // PowerShell execution would take some time, so we wait for a second before triggering polling.
+            //
+            // NOTE:
+            //  Getting FSx filesystems and SVMs will take some time, which could serve the
+            // purpose of sleep() below.  Since PowerShell script takes some time to complete,
+            // sleeping for a second would help us get the results in first SSM poll itself.
+            // If run time performance is needed, this is one possible candidate for purge.
+            await sleep(1000);
 
+            await Promise.all(
+                ssmConnectedNodes.map(
+                    throat(pageSize || 10, async (target: SsmTargetsInfo) => {
+                        let dbInfo: SqlServerInstanceInfoType[] = [];
+                        dbInfo = await getHostAndSqlInfoFromPsOutput(
+                            credentialsId,
+                            region,
+                            target,
+                            commandId!,
+                            endPointIpWithFsxInfo,
+                            fsIdWithFsxInfo,
+                            subnetListMap,
+                            ebsVolumeToAvailabilityZoneMap
+                        );
+
+                        if (dbInfo.length) {
+                            dbInfo.forEach(sqlServerInstanceInfo => {
+                                sqlServerInstanceInfo.sqlServerName =
+                                    sqlServerInstanceInfo?.sqlServerName?.toLowerCase();
+                            });
+                            ssmConnectedEc2ResponseInfo.push({
+                                ec2InstanceId: target.ec2InstanceId,
+                                ec2InstanceType: target.ec2InstanceType,
+                                ec2InstanceName: target.ec2InstanceName,
+                                ec2UsageOperation: target.ec2UsageOperation,
+                                ssmState: target.ssmState,
+                                sqlServerInstances: dbInfo,
+                                vpc: target.vpc,
+                                source: target.source,
+                                hostManageReadiness: target.hostManageReadiness
+                            });
+                        }
+                    })
+                )
+            );
+        } else {
+            logger.warn('Skipping SSM script polling: sendSSMCommand failed to start', { region, credentialsId });
+        }
+
+        // Fallback for tagging-service-only instances that couldn't run the PowerShell script
+        // (extensiveRunPermission=false) but do have narrower Fleet Manager document read permission.
+        const alreadyReportedInstanceIds = new Set(
+            ssmConnectedEc2ResponseInfo.map(({ ec2InstanceId }) => ec2InstanceId)
+        );
+        const registryOnlyResponseInfo = await getRegistryOnlySqlServerInstances(
+            accountId,
+            credentialsId,
+            region,
+            ssmConnectedNodes,
+            alreadyReportedInstanceIds
+        );
+        ssmConnectedEc2ResponseInfo.push(...registryOnlyResponseInfo);
+
+        const taggingServiceItemsNeedingStorage = ssmConnectedEc2ResponseInfo.filter(
+            item =>
+                item.source === DiscoverySource.TAGGING_SERVICE &&
+                item.sqlServerInstances?.some(({ storage }) => !storage?.length)
+        );
+        if (taggingServiceItemsNeedingStorage.length) {
+            const ssmConnectedNodesById = new Map(ssmConnectedNodes.map(node => [node.ec2InstanceId, node]));
+            const { ec2s: ec2FsxRelationships } = await buildEc2FsxRelationship(accountId, credentialsId, region).catch(
+                (error): { ec2s: Ec2WithStorage[] } => {
+                    logger.warn('Failed to build EC2-FSx relationship for storage enrichment', { region, error });
+                    return { ec2s: [] };
+                }
+            );
+            const fsxNameById = new Map(
+                fsxList.map(({ FileSystemId, Tags }) => [FileSystemId, getFsxNameFromTags(Tags)])
+            );
+            const svmIdByFsxId = new Map(
+                svmList?.StorageVirtualMachines?.map(({ FileSystemId, StorageVirtualMachineId }) => [
+                    FileSystemId,
+                    StorageVirtualMachineId
+                ])
+            );
+
+            for (const item of taggingServiceItemsNeedingStorage) {
+                const storage = getTaggingServiceStorageForInstance(
+                    item.ec2InstanceId,
+                    ec2FsxRelationships,
+                    fsxNameById,
+                    svmIdByFsxId,
+                    ssmConnectedNodesById.get(item.ec2InstanceId)?.ebsVolumeIDs
+                );
+                applyTaggingServiceStorageEnrichment(item.ec2InstanceId, item.sqlServerInstances, storage);
+            }
+        }
+
+        const itemsWithFsxId = ssmConnectedEc2ResponseInfo.flatMap(item => {
+            const fsId = item.sqlServerInstances
+                ?.flatMap(({ storage }) => storage ?? [])
+                .find(({ type }) => type === STORAGE_TYPE.FSXN)?.id;
+            return fsId ? [{ item, fsId }] : [];
+        });
         await Promise.all(
-            ssmConnectedNodes.map(
-                throat(pageSize || 10, async (target: SsmTargetsInfo) => {
-                    let dbInfo: SqlServerInstanceInfoType[] = [];
-                    dbInfo = await getHostAndSqlInfoFromPsOutput(
+            itemsWithFsxId.map(
+                throat(10, async ({ item, fsId }) => {
+                    const { exists: fsxLinkExists, count: fsxLinksCount } = await checkFsxLinkExists(
                         credentialsId,
                         region,
-                        target,
-                        commandId!,
-                        endPointIpWithFsxInfo,
-                        fsIdWithFsxInfo,
-                        subnetListMap,
-                        ebsVolumeToAvailabilityZoneMap
+                        fsId
                     );
-
-                    if (dbInfo.length) {
-                        dbInfo.forEach(sqlServerInstanceInfo => {
-                            sqlServerInstanceInfo.sqlServerName = sqlServerInstanceInfo?.sqlServerName?.toLowerCase();
-                        });
-                        ssmConnectedEc2ResponseInfo.push({
-                            ec2InstanceId: target.ec2InstanceId,
-                            ec2InstanceType: target.ec2InstanceType,
-                            ec2InstanceName: target.ec2InstanceName,
-                            ec2UsageOperation: target.ec2UsageOperation,
-                            ssmState: target.ssmState,
-                            sqlServerInstances: dbInfo,
-                            vpc: target.vpc
-                        });
-                    }
+                    item.hostManageReadiness = {
+                        ...item.hostManageReadiness!,
+                        fsxLinkExists,
+                        fsxLinksCount
+                    };
                 })
             )
         );
@@ -381,6 +466,69 @@ async function getHostAndSqlServerInfo(
         nextToken: NextToken as string,
         items: [...ssmNotConnectedEc2ResponseInfo, ...ssmConnectedEc2ResponseInfo]
     };
+}
+
+function getTaggingServiceStorageForInstance(
+    ec2InstanceId: string,
+    ec2FsxRelationships: Ec2WithStorage[],
+    fsxNameById: Map<string | undefined, string | undefined>,
+    svmIdByFsxId: Map<string | undefined, string | undefined>,
+    ebsVolumeIds: (string | undefined)[] = []
+): TaggingServiceStorageEntry[] {
+    logger.info('Resolving tagging-service storage for instance', { ec2InstanceId });
+
+    const fsxMatch = ec2FsxRelationships.find(({ instanceId }) => instanceId === ec2InstanceId);
+    let storage: TaggingServiceStorageEntry[];
+
+    if (fsxMatch?.fsxs?.length) {
+        const uniqueFsxIds = [...new Set(fsxMatch.fsxs.map(({ fileSystemId }) => fileSystemId))];
+        storage = uniqueFsxIds.flatMap(fileSystemId => {
+            if (!fileSystemId) {
+                return [];
+            }
+            const svmId = svmIdByFsxId.get(fileSystemId);
+            const fileSystemName = fsxNameById.get(fileSystemId);
+            return [
+                {
+                    type: STORAGE_TYPE.FSXN,
+                    id: fileSystemId,
+                    ...(svmId && { svmId }),
+                    ...(fileSystemName && { fileSystemName })
+                }
+            ];
+        });
+    } else {
+        storage = [...new Set(ebsVolumeIds.filter((id): id is string => Boolean(id)))].map(id => ({
+            type: STORAGE_TYPE.EBS,
+            id
+        }));
+    }
+
+    logger.info('Resolved tagging-service storage for instance', {
+        ec2InstanceId,
+        storageCount: storage.length
+    });
+    return storage;
+}
+
+function applyTaggingServiceStorageEnrichment(
+    ec2InstanceId: string,
+    instances: Array<{ storage?: TaggingServiceStorageEntry[] }> | undefined,
+    storage: TaggingServiceStorageEntry[]
+) {
+    logger.info('Applying tagging-service storage enrichment', { ec2InstanceId });
+
+    if (storage.length) {
+        instances?.forEach(instance => {
+            if (!instance.storage?.length) {
+                instance.storage = storage;
+            }
+        });
+    }
+
+    logger.info('Applied tagging-service storage enrichment', {
+        ec2InstanceId
+    });
 }
 
 async function getHostAndSqlInfoFromPsOutput(
@@ -981,10 +1129,6 @@ async function makeSsmCall(
         logger.info(`SSM command ID is ${commandId} for discovery call`);
     } catch (error) {
         logger.error(`Failed to start EC2 instance information retrieval using sendSSMCommand. Reason: ${error}`);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Failed to start information retrieval from EC2 instances. Reason: ${error}`
-        );
     }
     return commandId;
 }
@@ -1380,6 +1524,58 @@ async function preparePsModulesForManage(
     return jobStatusRecord.status;
 }
 
+function isTaggingServiceHostForDatabaseType(host: TaggingServiceEc2Host, databaseType?: DatabaseTypes): boolean {
+    if (host.state && host.state.toLowerCase() !== 'running') {
+        return false;
+    }
+    const platform = (host.platformDetails ?? host.platform ?? '').toLowerCase();
+    switch (databaseType) {
+        case DatabaseTypes.MS_SQL_SERVER:
+            return platform === 'windows';
+        case DatabaseTypes.ORACLE:
+            return platform.startsWith('red hat enterprise linux') || platform.startsWith('suse linux');
+        case DatabaseTypes.PG_SQL:
+            return platform === 'linux/unix';
+        default:
+            return true;
+    }
+}
+
+function mapTaggingServiceHost(
+    {
+        instanceId,
+        instanceType,
+        platform,
+        platformDetails,
+        privateIp,
+        privateDnsName,
+        vpcId,
+        tags,
+        blockDeviceMappings
+    }: TaggingServiceEc2Host,
+    vpcNames: Map<string | undefined, string | undefined>,
+    vpcCidrs: Map<string | undefined, string | undefined>
+) {
+    return {
+        ec2InstanceId: instanceId,
+        ec2InstanceType: instanceType || '',
+        ec2InstanceName: getResourceNameFromTags(tags) || '',
+        ...(privateIp ? { ec2InstancePrivateIpAddress: privateIp } : {}),
+        ec2HostName: privateDnsName || '',
+        ec2UsageOperation: '',
+        ebsVolumeIDs: blockDeviceMappings?.map(({ ebs }) => ebs?.volumeId),
+        ebsVolumes: [] as InstanceBlockDeviceMapping[],
+        vpc: {
+            ...(vpcId && { id: vpcId }),
+            ...(vpcNames.has(vpcId) && { name: vpcNames.get(vpcId) }),
+            ...(vpcCidrs.has(vpcId) && { cidrBlock: vpcCidrs.get(vpcId) })
+        },
+        error: undefined,
+        platform: platformDetails || platform || '',
+        source: DiscoverySource.TAGGING_SERVICE
+    };
+}
+
 async function discoverEc2Instances(
     accountId: string,
     credentialsId: string,
@@ -1408,31 +1604,37 @@ async function discoverEc2Instances(
         describeInstanceParams.Filters?.push({ Name: 'instance-id', Values: ec2InstanceIds });
     }
 
-    const [[reservations, NextToken], vpcs] = await Promise.all([
+    const [[reservations, NextToken], vpcs, taggingServiceHosts] = await Promise.all([
         describeInstancesWithPagination(credentialsId, region, describeInstanceParams, pageSize, nextToken, {
             useCache: true
         }),
-        paginatedDescribeVpcs(credentialsId, region, {}, { useCache: true })
+        paginatedDescribeVpcs(credentialsId, region, {}, { useCache: true }),
+        IS_DEMO_FLOW
+            ? Promise.resolve<TaggingServiceEc2Host[]>([])
+            : fetchTaggingServiceEc2Hosts(accountId, credentialsId, region)
     ]);
 
     const vpcNames = new Map(vpcs?.map(({ Tags, VpcId }: Vpc) => [VpcId, getResourceNameFromTags(Tags)]));
     const vpcCidrs = new Map(vpcs?.map(({ CidrBlock, VpcId }: Vpc) => [VpcId, CidrBlock]));
 
-    const ec2InstanceList = compact(
-        Array.isArray(reservations) ? reservations.flatMap(reservation => reservation.Instances) : []
-    );
+    const ec2InstanceList = (
+        Array.isArray(reservations) ? reservations.flatMap(({ Instances }) => Instances ?? []) : []
+    ).filter(Boolean);
 
-    if (!ec2InstanceList.length) {
-        return { ec2Instances: [], NextToken };
+    // Resolved by real AWS/tagging-service instance IDs (never the demo-mode randomized display ID below).
+    let ssmConnectionMap = new Map();
+    try {
+        ssmConnectionMap = await getSSMConnectionStatusByInstanceIds(credentialsId, region, [
+            ...new Set([
+                ...ec2InstanceList.map(({ InstanceId }) => InstanceId!),
+                ...taggingServiceHosts.map(({ instanceId }) => instanceId)
+            ])
+        ]);
+    } catch (error) {
+        logger.error('Failed to get SSM connection status by instance ids', { error });
     }
 
-    const ssmConnectionMap = await getSSMConnectionStatusByInstanceIds(
-        credentialsId,
-        region,
-        compact(ec2InstanceList.map(({ InstanceId }) => InstanceId))
-    );
-
-    let ec2Instances = ec2InstanceList?.map(ec2Instance => {
+    const ssmRunCommandInstances = ec2InstanceList.map(ec2Instance => {
         const name = getEc2Hostname(discoveryDbType, ec2Instance?.Tags);
         return {
             ec2InstanceId: IS_DEMO_FLOW ? `i-${randomize('0', 8)}` : ec2Instance?.InstanceId || '',
@@ -1450,15 +1652,101 @@ async function discoverEc2Instances(
                 ...(vpcCidrs.has(ec2Instance?.VpcId) && { cidrBlock: vpcCidrs.get(ec2Instance?.VpcId) })
             },
             error: undefined,
-            platform: ec2Instance?.PlatformDetails || ''
+            platform: ec2Instance?.PlatformDetails || '',
+            source: DiscoverySource.DISCOVER
         };
     });
+
+    const ec2InstanceIdSet = new Set(ec2InstanceList.map(({ InstanceId }) => InstanceId));
+    const taggingServiceOnlyInstances = taggingServiceHosts
+        .filter(host => isTaggingServiceHostForDatabaseType(host, discoveryDbType))
+        .filter(({ instanceId }) => !ec2InstanceIdSet.has(instanceId))
+        .map(host => ({
+            ...mapTaggingServiceHost(host, vpcNames, vpcCidrs),
+            ssmState: ssmConnectionMap.get(host.instanceId) || ConnectionStatus.NOT_CONNECTED
+        }));
+
+    let ec2Instances: SsmTargetsInfo[] = [...ssmRunCommandInstances, ...taggingServiceOnlyInstances];
+
+    if (!ec2Instances.length) {
+        return { ec2Instances: [], NextToken };
+    }
 
     if (IS_DEMO_FLOW) {
         ec2Instances = ec2Instances.filter(
             ec2InstanceDetails => ec2InstanceDetails.ssmState === ConnectionStatus.CONNECTED
         );
+    } else {
+        const connectedInstances = ec2Instances.filter(({ ssmState }) => ssmState === ConnectionStatus.CONNECTED);
+        logger.info('Computing SSM/Fleet Manager readiness for connected instances', {
+            region,
+            discoveryDbType,
+            instanceCount: connectedInstances.length
+        });
+
+        const hostReadinessByInstanceId = new Map(
+            await Promise.all(
+                connectedInstances.map(
+                    throat(10, async ({ ec2InstanceId, platform }) => {
+                        const isWindows = platform?.toLowerCase().includes('windows');
+                        const hasExtensiveRunPermission = await hasExtensiveSsmRunPermission(
+                            credentialsId,
+                            region,
+                            ec2InstanceId,
+                            isWindows ? 'windows' : 'linux',
+                            accountId
+                        );
+
+                        const hostReadiness: SsmTargetsInfo['hostManageReadiness'] = {
+                            extensiveRunPermission: hasExtensiveRunPermission
+                        };
+
+                        // The narrower Fleet Manager document is only worth probing once the broad
+                        // document is denied, and only for the platform each database type supports
+                        // today (MSSQL: Windows-only, Oracle: Linux-only).
+                        const supportsNarrowFallback =
+                            (discoveryDbType === DatabaseTypes.MS_SQL_SERVER && isWindows) ||
+                            (discoveryDbType === DatabaseTypes.ORACLE && !isWindows);
+
+                        if (!hasExtensiveRunPermission) {
+                            const [canReadFleetManager, canInventory] = await Promise.all([
+                                supportsNarrowFallback
+                                    ? canReadFleetManagerResource(
+                                          credentialsId,
+                                          region,
+                                          ec2InstanceId,
+                                          isWindows ? 'windows' : 'linux',
+                                          accountId
+                                      )
+                                    : Promise.resolve(undefined),
+                                canQuerySSMInventory(credentialsId, region, ec2InstanceId, accountId)
+                            ]);
+                            if (supportsNarrowFallback) {
+                                hostReadiness.canReadAWSSSMDocuments = canReadFleetManager;
+                            }
+                            hostReadiness.canQuerySSMInventory = canInventory;
+                        }
+
+                        return [ec2InstanceId, hostReadiness] as const;
+                    })
+                )
+            )
+        );
+
+        ec2Instances = ec2Instances.map(instance => ({
+            ...instance,
+            hostManageReadiness: hostReadinessByInstanceId.get(instance.ec2InstanceId) ?? {
+                extensiveRunPermission: false
+            }
+        }));
+
+        logger.info('Computed SSM/Fleet Manager readiness for connected instances', {
+            region,
+            discoveryDbType,
+            instanceCount: connectedInstances.length
+        });
     }
+
     return { ec2Instances, NextToken };
 }
 
@@ -1983,22 +2271,34 @@ async function discoverOracleResources(
     };
 
     const instancesWithSsmResponse: DiscoverOracleResponseType[] = [];
+    let endPointIpWithFsxInfo: Map<string, FSxInfo> = new Map();
+    let fsIdWithFsxInfo: Map<string, FsxServerConfig> = new Map();
+    let ec2FsxRelationships: Ec2WithStorage[] = [];
+
+    // Start tagging-service FSx fetch in parallel before entering the SSM try block so the
+    // result is available whether SSM succeeds or fails.
+    const ec2FsxRelationshipsPromise = buildEc2FsxRelationship(accountId, credentialsId, region).catch(
+        (error): { ec2s: Ec2WithStorage[] } => {
+            logger.warn('Failed to build EC2-FSx relationship for Oracle storage enrichment', { region, error });
+            return { ec2s: [] };
+        }
+    );
 
     try {
-        const {
-            ssmResponseMap,
-            endPointIpWithFsxInfo,
-            fsIdWithFsxInfo,
-            subnetListMap,
-            ebsVolumeToAvailabilityZoneMap
-        } = await fetchFsxResourceMappings(
-            accountId,
-            credentialsId,
-            region,
-            ssmCommandInput,
-            ssmConnectedEc2Instances,
-            pageSize
-        );
+        const [fetchResult, { ec2s: fetchedEc2FsxRelationships }] = await Promise.all([
+            fetchFsxResourceMappings(
+                accountId,
+                credentialsId,
+                region,
+                ssmCommandInput,
+                ssmConnectedEc2Instances,
+                pageSize
+            ),
+            ec2FsxRelationshipsPromise
+        ]);
+        ({ endPointIpWithFsxInfo, fsIdWithFsxInfo } = fetchResult);
+        ec2FsxRelationships = fetchedEc2FsxRelationships;
+        const { ssmResponseMap, subnetListMap, ebsVolumeToAvailabilityZoneMap } = fetchResult;
 
         await Promise.all(
             ssmConnectedEc2Instances.map(
@@ -2006,8 +2306,7 @@ async function discoverOracleResources(
                     const ssmResponse = ssmResponseMap.get(ec2Instance.ec2InstanceId);
                     const { output, error } = ssmResponse || {};
                     if (error) {
-                        ec2Instance.error = error;
-                        return instancesWithSsmResponse.push(ec2Instance);
+                        return instancesWithSsmResponse.push({ ...ec2Instance, error });
                     }
                     let parsedResponse;
                     try {
@@ -2200,7 +2499,72 @@ async function discoverOracleResources(
         );
     } catch (error: any) {
         logger.error('Failed to discover oracle resources', { error: error.message });
+
+        // SSM failed — fall back to tagging-service data that was already fetched in parallel.
+        const { ec2s: taggingServiceRelationships } = await ec2FsxRelationshipsPromise;
+        ec2FsxRelationships = taggingServiceRelationships;
+
+        const reportedIds = new Set(instancesWithSsmResponse.map(({ ec2InstanceId }) => ec2InstanceId));
+        for (const ec2Instance of ssmConnectedEc2Instances) {
+            if (!reportedIds.has(ec2Instance.ec2InstanceId)) {
+                instancesWithSsmResponse.push({
+                    ...ec2Instance,
+                    source: DiscoverySource.TAGGING_SERVICE,
+                    error: error.message
+                });
+            }
+        }
     }
+
+    const taggingServiceItemsNeedingStorage = instancesWithSsmResponse.filter(
+        item =>
+            item.source === DiscoverySource.TAGGING_SERVICE &&
+            item.databaseInstanceDetails?.some(({ storage }) => !storage?.length)
+    );
+    if (taggingServiceItemsNeedingStorage.length) {
+        const ssmConnectedNodesById = new Map(ssmConnectedEc2Instances.map(node => [node.ec2InstanceId, node]));
+        const fsxNameById = new Map(
+            [...fsIdWithFsxInfo.entries()].map(([fsxId, { fileSystemName }]) => [fsxId, fileSystemName])
+        );
+        const svmIdByFsxId = new Map([...endPointIpWithFsxInfo.values()].map(({ fsxId, svmId }) => [fsxId, svmId]));
+        for (const item of taggingServiceItemsNeedingStorage) {
+            const storage = getTaggingServiceStorageForInstance(
+                item.ec2InstanceId,
+                ec2FsxRelationships,
+                fsxNameById,
+                svmIdByFsxId,
+                ssmConnectedNodesById.get(item.ec2InstanceId)?.ebsVolumeIDs
+            );
+            applyTaggingServiceStorageEnrichment(item.ec2InstanceId, item.databaseInstanceDetails, storage);
+        }
+    }
+
+    const oracleItemsWithFsxId = instancesWithSsmResponse.flatMap(item => {
+        // Prefer FSxN from successfully-discovered DB instance storage; fall back to the
+        // tagging-service EC2-FSx relationship when SSM failed (no databaseInstanceDetails).
+        const fsId =
+            item.databaseInstanceDetails
+                ?.flatMap(({ storage }) => storage ?? [])
+                .find(({ type }) => type === STORAGE_TYPE.FSXN)?.id ??
+            ec2FsxRelationships.find(({ instanceId }) => instanceId === item.ec2InstanceId)?.fsxs[0]?.fileSystemId;
+        return fsId ? [{ item, fsId }] : [];
+    });
+    await Promise.all(
+        oracleItemsWithFsxId.map(
+            throat(10, async ({ item, fsId }) => {
+                const { exists: fsxLinkExists, count: fsxLinksCount } = await checkFsxLinkExists(
+                    credentialsId,
+                    region,
+                    fsId
+                );
+                item.hostManageReadiness = {
+                    ...item.hostManageReadiness!,
+                    fsxLinkExists,
+                    fsxLinksCount
+                };
+            })
+        )
+    );
 
     return {
         count: (ssmNotConnectedEc2Instances.length || 0) + (instancesWithSsmResponse.length || 0),
@@ -2440,5 +2804,9 @@ export {
     prepareDbScriptsForManage,
     getPgSqlResourceDetails,
     discoverOracleResources,
-    getOracleResourceDetails
+    getOracleResourceDetails,
+    discoverEc2Instances,
+    getTaggingServiceStorageForInstance,
+    applyTaggingServiceStorageEnrichment,
+    checkFsxLinkExists
 };

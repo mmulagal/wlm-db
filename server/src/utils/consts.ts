@@ -1884,6 +1884,10 @@ const EC2_ALLOWED_MEMORY_GIB = [4, 8, 16, 32, 64, 128, 160, 256, 512];
 const EC2_ALLOWED_MEMORY_MIB = EC2_ALLOWED_MEMORY_GIB.map(gb => gb * 1024);
 
 const CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE = 'netapp/wlmdb/ssm-response';
+
+const AWS_FLEET_MANAGER_GET_WINDOWS_REGISTRY_CONTENT_DOC = 'AWSFleetManager-GetWindowsRegistryContent';
+const AWS_FLEET_MANAGER_GET_FILE_SYSTEM_CONTENT_DOC = 'AWSFleetManager-GetFileSystemContent';
+const SQL_SERVER_INSTANCE_NAMES_REGISTRY_PATH = 'HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\Instance Names\\SQL';
 const CLONE_AGE: number = config.has('clone-age-in-days') ? config.get('clone-age-in-days') : 60; // Fall Back to 60 days as default if not set in config
 const OTHER_CLONE = 'other';
 const POSTPONE_AGE: number = config.has('postpone-age-in-days') ? config.get('postpone-age-in-days') : 30; // Fall Back to 30 days as default if not set in config
@@ -2332,6 +2336,9 @@ export {
     AWS_REGION_KEYS,
     AMAZON_LINUX_AMI_PATH,
     CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
+    AWS_FLEET_MANAGER_GET_WINDOWS_REGISTRY_CONTENT_DOC,
+    AWS_FLEET_MANAGER_GET_FILE_SYSTEM_CONTENT_DOC,
+    SQL_SERVER_INSTANCE_NAMES_REGISTRY_PATH,
     GENERIC_ASSESSMENT_ERROR_MESSAGE,
     RESTRICTED_FSX_REGIONS,
     GOV_REGIONS,

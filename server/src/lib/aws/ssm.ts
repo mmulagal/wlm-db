@@ -31,7 +31,9 @@ import {
     DescribeParametersCommandInput,
     ParameterMetadata,
     ParameterType,
-    paginateDescribeParameters
+    paginateDescribeParameters,
+    GetInventoryCommand,
+    ListInventoryEntriesCommand
 } from '@aws-sdk/client-ssm';
 import { getCredentialsDetails } from '../../operations/cloud-manager/credentials-operations';
 import { DEFAULT_AWS_REGION } from '../../utils/consts';
@@ -245,6 +247,32 @@ async function describeInstanceInformation(
     return instanceInformation;
 }
 
+async function getSSMInventory(credentialsId: string, region: string, instanceId: string, accountId?: string) {
+    logger.info('Get SSM inventory', { credentialsId, region, instanceId, accountId });
+
+    const ssmClient = await getSSMClient(region, credentialsId, accountId);
+    const response = await ssmClient.send(
+        new GetInventoryCommand({
+            Filters: [{ Key: 'AWS:InstanceInformation.InstanceId', Values: [instanceId], Type: 'Equal' }]
+        })
+    );
+
+    logger.debug('getSSMInventory response', response);
+    return response;
+}
+
+async function listSSMInventoryEntries(credentialsId: string, region: string, instanceId: string, accountId?: string) {
+    logger.info('List SSM inventory entries', { credentialsId, region, instanceId, accountId });
+
+    const ssmClient = await getSSMClient(region, credentialsId, accountId);
+    const response = await ssmClient.send(
+        new ListInventoryEntriesCommand({ InstanceId: instanceId, TypeName: 'AWS:InstanceInformation' })
+    );
+
+    logger.debug('listSSMInventoryEntries response', response);
+    return response;
+}
+
 async function describeParameters(
     credentialsId: string,
     region: string,
@@ -287,5 +315,7 @@ export {
     describeInstancePatches,
     describeAvailablePatches,
     describeInstanceInformation,
-    describeParameters
+    describeParameters,
+    getSSMInventory,
+    listSSMInventoryEntries
 };

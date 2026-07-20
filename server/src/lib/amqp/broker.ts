@@ -93,7 +93,7 @@ async function connectLoop(): Promise<void> {
             try {
                 logger.info('AMQP: connecting', { host: AMQP_HOST, port: AMQP_PORT });
                 // eslint-disable-next-line no-await-in-loop
-                const conn = await amqpConnect(buildAmqpUrl());
+                const conn = await amqpConnect(buildAmqpUrl(), { clientProperties: { connection_name: 'wlm-db' } });
                 conn.on('error', err => logger.error('AMQP: connection error', { err }));
                 conn.on('close', () => {
                     logger.warn('AMQP: connection closed — scheduling reconnect');

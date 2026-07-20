@@ -23,7 +23,9 @@ import {
     putParameter,
     getParameter,
     describeInstanceInformation,
-    describeParameters
+    describeParameters,
+    getSSMInventory,
+    listSSMInventoryEntries
 } from '../../lib/aws/ssm';
 import {
     compressSsmCommand,
@@ -43,7 +45,9 @@ import {
     CLOUDWATCH_LOG_GROUP_FOR_SSM_RESPONSE,
     SSM_COMMAND_RUNTIMES,
     GOV_REGIONS,
-    GOV_ACCOUNT
+    GOV_ACCOUNT,
+    AWS_FLEET_MANAGER_GET_WINDOWS_REGISTRY_CONTENT_DOC,
+    AWS_FLEET_MANAGER_GET_FILE_SYSTEM_CONTENT_DOC
 } from '../../utils/consts';
 import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
 import getLogger from '../../utils/logger';
@@ -51,6 +55,7 @@ import { FSxAvailableRegionType } from '../../routes/types/aws.types';
 import { SSMParameterObject, MultipleCommandSsmResponse, AWSSDKCacheParams } from '../../utils/common-types';
 import { describeRegions } from '../../lib/aws/ec2';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
+import { SSM_RUN_SHELL_SCRIPT_DOC } from '../workloads/oracle/consts';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getCloudWatchLogs, setLogGroupRetentionPolicy } from './cloud-watch-logs-operations';
 import { getLogsAnalyzerBedrockRegionsList } from './bedrock-operations';
@@ -744,6 +749,121 @@ async function getSSMParametersList(
     }
 }
 
+async function probeSendCommand(
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    params: SendCommandCommandInput,
+    accountId?: string
+): Promise<boolean> {
+    const documentName = params.DocumentName;
+    logger.info('Checking SSM Document permission', { instanceId, region, documentName });
+    try {
+        await sendSSMCommand(credentialsId, region, { InstanceIds: [instanceId], ...params }, accountId);
+        logger.info('SSM Document permission check succeeded', {
+            instanceId,
+            region,
+            documentName
+        });
+        return true;
+    } catch (error) {
+        logger.warn('SSM Document permission check failed', {
+            instanceId,
+            region,
+            documentName,
+            error
+        });
+        return false;
+    }
+}
+
+async function hasExtensiveSsmRunPermission(
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    platform: 'windows' | 'linux',
+    accountId?: string
+): Promise<boolean> {
+    logger.info('Checking whether instance has extensive SSM run permission', { instanceId, region, platform });
+
+    const isWindows = platform === 'windows';
+
+    const canRun = await probeSendCommand(
+        credentialsId,
+        region,
+        instanceId,
+        {
+            DocumentName: isWindows ? SSM_RUN_POWERSHELL_SCRIPT_DOC : SSM_RUN_SHELL_SCRIPT_DOC,
+            Comment: 'WLM SSM Document permission check',
+            Parameters: {
+                commands: [isWindows ? 'Write-Output wf-permission-check' : 'echo wf-permission-check']
+            }
+        },
+        accountId
+    );
+
+    logger.info('Instance has extensive SSM run permission', {
+        instanceId,
+        region,
+        platform,
+        canRun
+    });
+    return canRun;
+}
+
+async function canReadFleetManagerResource(
+    credentialsId: string,
+    region: string,
+    instanceId: string,
+    platform: 'windows' | 'linux',
+    accountId?: string
+): Promise<boolean> {
+    logger.info('Checking Fleet Manager read permission', { instanceId, region, platform });
+
+    const isWindows = platform === 'windows';
+    const path = isWindows ? 'HKLM:\\SOFTWARE' : '/etc/fstab';
+    const canRead = await probeSendCommand(
+        credentialsId,
+        region,
+        instanceId,
+        {
+            DocumentName: isWindows
+                ? AWS_FLEET_MANAGER_GET_WINDOWS_REGISTRY_CONTENT_DOC
+                : AWS_FLEET_MANAGER_GET_FILE_SYSTEM_CONTENT_DOC,
+            Comment: 'WLM Fleet Manager read permission check',
+            Parameters: {
+                Path: [path]
+            }
+        },
+        accountId
+    );
+
+    logger.info('Checked Fleet Manager read permission', {
+        instanceId,
+        region,
+        platform,
+        canRead
+    });
+    return canRead;
+}
+
+async function canQuerySSMInventory(credentialsId: string, region: string, instanceId: string, accountId?: string) {
+    logger.info('Checking SSM inventory permissions ', { credentialsId, region, instanceId, accountId });
+    const [inventoryResult, entriesResult] = await Promise.allSettled([
+        getSSMInventory(credentialsId, region, instanceId, accountId),
+        listSSMInventoryEntries(credentialsId, region, instanceId, accountId)
+    ]);
+
+    if (inventoryResult.status === 'rejected') {
+        logger.warn('ssm:GetInventory permission check failed', { error: inventoryResult.reason });
+    }
+    if (entriesResult.status === 'rejected') {
+        logger.warn('ssm:ListInventoryEntries permission check failed', { error: entriesResult.reason });
+    }
+
+    return inventoryResult.status === 'fulfilled' && entriesResult.status === 'fulfilled';
+}
+
 export {
     executeSSMDocument,
     getCachedFsxRegionCodes,
@@ -759,5 +879,8 @@ export {
     getSSMConnectionStatusByInstanceIds,
     extractSsmResponse,
     pollSSMConnectionStatus,
-    getSSMParametersList
+    getSSMParametersList,
+    hasExtensiveSsmRunPermission,
+    canReadFleetManagerResource,
+    canQuerySSMInventory
 };

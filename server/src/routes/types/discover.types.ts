@@ -2,6 +2,7 @@ import { Static, Type } from '@fastify/type-provider-typebox';
 import { DatabaseHostsQueryFields, PGSQL_DEFAULT_INSTANCE_NAME, SqlServerDeploymentModel } from '../../utils/consts';
 import { CredentialsIdParams } from './generic.types';
 import { OracleDataguardDiscoveryDetails } from '../../operations/workloads/oracle/common-types';
+import { DiscoverySource } from '../../utils/common-types';
 
 const allowedFields = Object.values(DatabaseHostsQueryFields);
 
@@ -222,6 +223,29 @@ const DiscoverResponseInfo = Type.Object({
         })
     ),
     platform: Type.Optional(Type.String()),
+    source: Type.Enum(DiscoverySource),
+    hostManageReadiness: Type.Optional(
+        Type.Object({
+            extensiveRunPermission: Type.Boolean(),
+            canReadAWSSSMDocuments: Type.Optional(Type.Boolean()),
+            canQuerySSMInventory: Type.Optional(
+                Type.Boolean({
+                    description:
+                        'Whether the credentials have ssm:GetInventory and ssm:ListInventoryEntries permissions on this instance'
+                })
+            ),
+            fsxLinkExists: Type.Optional(
+                Type.Boolean({
+                    description: 'Whether the FSx file system associated with this host has at least one active link'
+                })
+            ),
+            fsxLinksCount: Type.Optional(
+                Type.Number({
+                    description: 'Number of active links on the FSx file system associated with this host'
+                })
+            )
+        })
+    ),
     sqlServerInstances: Type.Optional(Type.Array(SqlServerInstanceInfo))
 });
 

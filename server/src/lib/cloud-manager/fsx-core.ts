@@ -126,6 +126,23 @@ async function listFSXFileSystem(credentialsId: string, region: string) {
     return items;
 }
 
+async function getFsxFileSystemActiveLinks(credentialsId: string, region: string, fsId: string): Promise<unknown[]> {
+    logger.info('Get FSx file system active links', { credentialsId, region, fsId });
+    const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
+    const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
+
+    const { activeLinks } = await gotInstanceForInternalRequest
+        .get(
+            `${WORKLOAD_FACTORY_ENDPOINT}/accounts/${accountId}/fsx/v2/credentials/${credentialsId}/regions/${region}/file-systems/${fsId}`,
+            {
+                searchParams: { include: 'activeLinks' },
+                headers: { [HEADERS.AUTHORIZATION]: token, ...(IS_DEMO_FLOW && { [HEADERS.SIMULATOR]: 'true' }) }
+            }
+        )
+        .json<{ activeLinks?: unknown[] }>();
+    return activeLinks ?? [];
+}
+
 async function createFSX(requestBody: FSXREQUESTBODY) {
     logger.info('Register fsx in fsx-core', { requestBody });
     const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
@@ -143,4 +160,10 @@ async function createFSX(requestBody: FSXREQUESTBODY) {
     );
 }
 
-export { registerFsxOntapCredentials, listFsxOntapCredentials, listFSXFileSystem, createFSX };
+export {
+    registerFsxOntapCredentials,
+    listFsxOntapCredentials,
+    listFSXFileSystem,
+    createFSX,
+    getFsxFileSystemActiveLinks
+};
