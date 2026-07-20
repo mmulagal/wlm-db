@@ -2,63 +2,107 @@
   "workload": "Databases",
   "packages": [
     {
-      "name": "View, planning, and analysis",
-      "description": "View the inventory of database resources, learn about the health of your resources, review the well-architected analysis of your database configurations, get error log analysis, and explore savings.",
+      "name": "View, and minimal analysis",
+      "description": "View the inventory of database resources, learn about the health of your resources, review the well-architected analysis of your database configurations.",
       "immutable": true,
       "isDefault": true,
       "permissions": {
         "Version": "2012-10-17",
         "Statement": [
+    {
+      "Sid": "CommonGroup",
+      "Effect": "Allow",
+      "Action": [
+        "sns:ListTopics",
+        "ec2:DescribeInstances",
+        "ec2:DescribeVpcs",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeSecurityGroups",
+        "ec2:DescribeImages",
+        "ec2:DescribeRegions",
+        "ec2:DescribeRouteTables",
+        "ec2:DescribeKeyPairs",
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:DescribeInstanceTypes",
+        "ec2:DescribeVpcEndpoints",
+        "ec2:DescribeInstanceTypeOfferings",
+        "ec2:DescribeSnapshots",
+        "ec2:DescribeVolumes",
+        "ec2:DescribeAddresses",
+        "kms:ListAliases",
+        "kms:ListKeys",
+        "kms:DescribeKey",
+        "cloudformation:ListStacks",
+        "cloudformation:DescribeAccountLimits",
+        "ds:DescribeDirectories",
+        "fsx:DescribeVolumes",
+        "fsx:DescribeBackups",
+        "fsx:DescribeStorageVirtualMachines",
+        "fsx:DescribeFileSystems",
+        "servicequotas:ListServiceQuotas",
+        "ssm:GetParametersByPath",
+        "ssm:GetCommandInvocation",
+        "ssm:GetConnectionStatus",
+        "ssm:DescribeInstancePatches",
+        "ssm:DescribePatchBaselines",
+        "ssm:DescribeInstancePatchStates",
+        "ssm:DescribeAvailablePatches",
+        "ssm:ListCommands",
+        "ssm:DescribeInstanceInformation",
+        "fsx:ListTagsForResource",
+        "logs:DescribeLogGroups"
+      ],
+      "Resource": [
+        "*"
+      ]
+    },
+    {
+      "Sid": "AllowSpecificSSMDocuments",
+      "Effect": "Allow",
+      "Action": "ssm:SendCommand",
+      "Resource": [
+        "arn:aws:ssm:*:aws:document/AWSFleetManager-GetWindowsRegistryContent",
+        "arn:aws:ssm:*:aws:document/AWSFleetManager-GetFileSystemContent"
+      ]
+    },
+    {
+      "Sid": "AllowAllEC2InstancesForSendCommand",
+      "Effect": "Allow",
+      "Action": "ssm:SendCommand",
+      "Resource": [
+        "arn:aws:ec2:*:*:instance/*"
+      ]
+    }
+        ]
+      }
+    },
+    {
+      "name": "Extended assessment, Operations and remediation",
+      "description": "Perform operational tasks for your database resources, get error log analysis, explore savings and fix issues for database configurations and the underlying FSx for ONTAP filesystem storage.",
+      "immutable": false,
+      "isDefault": false,
+      "permissions": {
+        "Version": "2012-10-17",
+        "Statement": [
           {
-            "Sid": "CommonGroup",
+            "Sid": "ExtendedCommonGroup",
             "Effect": "Allow",
             "Action": [
               "cloudwatch:GetMetricStatistics",
               "cloudwatch:GetMetricData",
-              "sns:ListTopics",
-              "ec2:DescribeInstances",
-              "ec2:DescribeVpcs",
-              "ec2:DescribeSubnets",
-              "ec2:DescribeSecurityGroups",
-              "ec2:DescribeImages",
-              "ec2:DescribeRegions",
-              "ec2:DescribeRouteTables",
-              "ec2:DescribeKeyPairs",
-              "ec2:DescribeNetworkInterfaces",
-              "ec2:DescribeInstanceTypes",
-              "ec2:DescribeVpcEndpoints",
-              "ec2:DescribeInstanceTypeOfferings",
-              "ec2:DescribeSnapshots",
-              "ec2:DescribeVolumes",
-              "ec2:DescribeAddresses",
-              "kms:ListAliases",
-              "kms:ListKeys",
-              "kms:DescribeKey",
-              "cloudformation:ListStacks",
-              "cloudformation:DescribeAccountLimits",
-              "ds:DescribeDirectories",
-              "fsx:DescribeVolumes",
-              "fsx:DescribeBackups",
-              "fsx:DescribeStorageVirtualMachines",
-              "fsx:DescribeFileSystems",
-              "servicequotas:ListServiceQuotas",
-              "ssm:GetParametersByPath",
-              "ssm:GetCommandInvocation",
-              "ssm:SendCommand",
-              "ssm:GetConnectionStatus",
-              "ssm:DescribeInstancePatches",
-              "ssm:DescribePatchBaselines",
-              "ssm:DescribeInstancePatchStates",
-              "ssm:DescribeAvailablePatches",
-              "ssm:ListCommands",
-              "ssm:DescribeInstanceInformation",
-              "fsx:ListTagsForResource",
-              "logs:DescribeLogGroups",
               "bedrock:GetFoundationModelAvailability",
               "bedrock:ListInferenceProfiles"
             ],
             "Resource": ["*"]
           },
+          {
+            "Sid": "AllowPSSSMDocuments",
+            "Effect": "Allow",
+            "Action": "ssm:SendCommand",
+            "Resource": [
+              "arn:aws:ssm:*:aws:document/AWS-RunPowerShellScript"
+            ]
+          },          
           {
             "Sid": "SSMParameterStore",
             "Effect": "Allow",
@@ -70,18 +114,7 @@
             "Effect": "Allow",
             "Action": ["logs:GetLogEvents", "logs:PutRetentionPolicy"],
             "Resource": "arn:aws:logs:*:*:log-group:netapp/wlmdb/*"
-          }
-        ]
-      }
-    },
-    {
-      "name": "Operations and remediation",
-      "description": "Perform operational tasks for your database resources and fix issues for database configurations and the underlying FSx for ONTAP filesystem storage.",
-      "immutable": false,
-      "isDefault": false,
-      "permissions": {
-        "Version": "2012-10-17",
-        "Statement": [
+          },          
           {
             "Sid": "FSxRemediation",
             "Effect": "Allow",
