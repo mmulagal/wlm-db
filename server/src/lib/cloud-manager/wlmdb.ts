@@ -8,8 +8,8 @@ const logger = getLogger();
 // These must match the exact package names from the WF Console API response
 // Update these constants if package names change in the API
 const PACKAGE_NAMES = {
-    VIEW_PLANNING_ANALYSIS: 'View, and minimal analysis',
-    OPERATIONS_REMEDIATION: 'Extended assessment, Operations and remediation',
+    VIEW_PLANNING_ANALYSIS: 'View, planning, and analysis',
+    OPERATIONS_REMEDIATION: 'Operations and remediation',
     DATABASE_HOST_CREATION: 'Database host creation'
 } as const;
 

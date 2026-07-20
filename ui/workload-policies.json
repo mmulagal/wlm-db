@@ -2,7 +2,7 @@
   "workload": "Databases",
   "packages": [
     {
-      "name": "View, and minimal analysis",
+      "name": "View, planning, and analysis",
       "description": "View the inventory of database resources, learn about the health of your resources, review the well-architected analysis of your database configurations.",
       "immutable": true,
       "isDefault": true,
@@ -77,7 +77,7 @@
       }
     },
     {
-      "name": "Extended assessment, Operations and remediation",
+      "name": "Operations and remediation",
       "description": "Perform operational tasks for your database resources, get error log analysis, explore savings and fix issues for database configurations and the underlying FSx for ONTAP filesystem storage.",
       "immutable": false,
       "isDefault": false,

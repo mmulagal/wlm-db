@@ -13,8 +13,8 @@ export const WIZARD_TYPE = {
 } as const;
 
 export const POLICIES_PERMISSIONS = {
-    VIEW_POLICY: 'View, and minimal analysis',
-    OPERATE_POLICY: 'Extended assessment, Operations and remediation',
+    VIEW_POLICY: 'View, planning, and analysis',
+    OPERATE_POLICY: 'Operations and remediation',
     INSTANCE_PROFILE_POLICY: 'instance-profile',
     WELL_ARCHITECTED_FSX__POLICY: 'well-architected-fsx',
     WELL_ARCHITECTED_COMPUTE_POLICY: 'well-architected-compute-optimizer',
