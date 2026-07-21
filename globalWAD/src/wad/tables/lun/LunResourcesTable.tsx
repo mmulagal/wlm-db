@@ -12,7 +12,7 @@ import {
     type ResourceScanRecord,
     type TableColumn,
     type WadApi
-} from '@tlveng/workload-factory-components/wad';
+} from '@tlveng/workload-factory-components';
 import { createFixBulkAction } from '../shared/bulkActions';
 import { spliceExtras } from '../shared/columns';
 import { DEFAULT_LUN_COLUMNS_BY_SCOPE, LUN_EXTRA_COLUMNS_ANCHOR_ID } from './columns';

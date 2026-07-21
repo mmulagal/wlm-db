@@ -1,7 +1,6 @@
 import styled from '@emotion/styled';
 import { Button, InlineLoader, Modal, ModalContent, ModalFooter, ModalHeader } from '@netapp/bxp-design-system-react';
-import { KeyValueTable } from '@tlveng/workload-factory-components';
-import type { ResourceScanRecord } from '@tlveng/workload-factory-components/wad';
+import { KeyValueTable, type ResourceScanRecord } from '@tlveng/workload-factory-components';
 import { TagIcon } from '@netapp/bxp-style/react-icons/General';
 
 const LoaderWrapper = styled.div`

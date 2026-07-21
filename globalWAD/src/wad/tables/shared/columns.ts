@@ -1,4 +1,4 @@
-import type { TableColumn } from '@tlveng/workload-factory-components/wad';
+import type { TableColumn } from '@tlveng/workload-factory-components';
 
 export const spliceExtras = <TRow>(
     defaults: ReadonlyArray<TableColumn<TRow>>,

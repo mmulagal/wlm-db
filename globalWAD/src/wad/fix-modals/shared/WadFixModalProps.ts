@@ -1,4 +1,4 @@
-import type { FixMetadata, ResourceScanRecord } from '@tlveng/workload-factory-components/wad';
+import type { FixMetadata, ResourceScanRecord } from '@tlveng/workload-factory-components';
 
 export interface WadFixModalProps {
     recommendationName: string;

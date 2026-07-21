@@ -7,7 +7,7 @@ import {
     resourceNameColumn,
     type ResourceScanRecord,
     type TableColumn
-} from '@tlveng/workload-factory-components/wad';
+} from '@tlveng/workload-factory-components';
 import { createMetadataFieldColumn } from '../shared/metadataUtils';
 
 enum LunColumnId {

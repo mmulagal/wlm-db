@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ParentResourceRef, ResourceScanRecord, WadApi } from '@tlveng/workload-factory-components/wad';
+import type { ParentResourceRef, ResourceScanRecord, WadApi } from '@tlveng/workload-factory-components';
 import type { ResourceTag } from './dialogs/ResourceTagsDialog';
 
 export type ResourceMetadataRef = {

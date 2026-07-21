@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import type { FixMetadata, ResourceScanRecord } from '@tlveng/workload-factory-components/wad';
+import type { FixMetadata, ResourceScanRecord } from '@tlveng/workload-factory-components';
 import { SnapshotPolicyFixModal } from '../volume/snapshot-policy/SnapshotPolicyFixModal';
 import { SnapcenterSnapshotFixModal } from '../volume/snapcenter-snapshot/SnapcenterSnapshotFixModal';
 import { StorageEfficienciesFixModal } from '../volume/storage-efficiencies/StorageEfficienciesFixModal';

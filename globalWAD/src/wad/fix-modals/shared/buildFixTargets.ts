@@ -1,4 +1,4 @@
-import type { FixTarget, ResourceScanRecord } from '@tlveng/workload-factory-components/wad';
+import type { FixTarget, ResourceScanRecord } from '@tlveng/workload-factory-components';
 
 const buildFixTarget = (resource: ResourceScanRecord, fixId: string): FixTarget => ({
     id: fixId,
