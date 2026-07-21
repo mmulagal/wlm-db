@@ -56,7 +56,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+            'To optimize storage efficiency and cost-effectiveness, turn on autosize to automatically increases the size of a volume when it nears full capacity, thus preventing a volume from running out of space and becoming read-only, which can disrupt operations.\n Lack of autosize requires manual monitoring and intervention to manage volume sizes, increasing administrative overhead and the possibility of errors.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         configLevel: 'database'
@@ -69,9 +69,9 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
+        severity: SEVERITY.WARNING,
         recommendation:
-            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+            'Set autosize mode to "grow" to automatically increase volume size when it gets full. If autosize is off, you must monitor and resize volumes manually, which takes more time and increases the risk of mistakes.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         configLevel: 'database'
@@ -86,7 +86,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+            'Set the snapshot copy reserve to 0% to use more storage for active file data and reduce costs.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         configLevel: 'database'
@@ -101,7 +101,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.WARNING,
         recommendation:
-            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+            'Turn on automatic snapshot deletion to remove older snapshots when space runs low, so snapshots do not use space needed for user data.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         configLevel: 'database'
@@ -138,7 +138,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.WARNING,
         recommendation:
-            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs If Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+            'When space runs low, try expanding the volume before deleting snapshot copies. This helps prevent "volume full" errors, reduces write failures and app interruptions, and keeps snapshot recovery points for easier, stronger recovery while managing capacity.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         configLevel: 'database'
@@ -286,7 +286,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'Operating system',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
+            'For SQL Server on FSx for ONTAP iSCSI LUNs, use five multipath IO (MPIO) sessions per target interface. This balances traffic across paths and improves redundancy, throughput, and failover',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH,
         configLevel: 'database'

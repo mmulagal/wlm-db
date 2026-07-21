@@ -822,8 +822,19 @@ async function calculateStorageDrift(
                     }
                 ];
             }
+            // Dynamic severity for mpio-iscsi-count:
+            //   < 4  → critical (significant shortfall)
+            //   == 4 or > 5 → warning (close to or above recommendation)
+            let dynamicSeverity: string | undefined;
+            if (key === 'mpio-iscsi-count' && status === AssessmentStatus.NOT_OPTIMIZED) {
+                const sessionCount = Number(value);
+                if (Number.isFinite(sessionCount)) {
+                    dynamicSeverity = sessionCount < 4 ? 'critical' : 'warning';
+                }
+            }
             driftAssessmentData.push({
                 ...goldenData,
+                ...(dynamicSeverity !== undefined ? { severity: dynamicSeverity } : {}),
                 recommended: entryRecommended,
                 status,
                 objectsInViolation: objectsInViolation.map(v => v.objectName),

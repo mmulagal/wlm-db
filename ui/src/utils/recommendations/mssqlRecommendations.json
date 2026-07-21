@@ -7,28 +7,27 @@
     "autosize": {
         "name": "Autosize",
         "title": "Autosize recommendation",
-        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+        "description": "To optimize storage efficiency and cost-effectiveness, turn on autosize to automatically increase the size of a volume when it nears full capacity, thus preventing a volume from running out of space and becoming read-only, which can disrupt operations.\nLack of autosize requires manual monitoring and intervention to manage volume sizes, increasing administrative overhead and the possibility of errors."
     },
     "autosize-mode": {
         "name": "Autosize Mode",
         "title": "Autosize mode recommendation",
-        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+        "description": "Set autosize mode to \"grow\" to automatically increase volume size when it gets full. If autosize is off, you must monitor and resize volumes manually, which takes more time and increases the risk of mistakes."
     },
-
     "snapshot-copy-reserve": {
         "name": "Snapshot Copy Reserve",
         "title": "Snapshot copy reserve recommendation",
-        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+        "description": "Set the snapshot copy reserve to 0% to use more storage for active file data and reduce costs."
     },
     "snapshot-autodelete": {
         "name": "Snapshot Autodelete",
         "title": "Snapshot autodelete recommendation",
-        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+        "description": "Turn on automatic snapshot deletion to remove older snapshots when space runs low, so snapshots do not use space needed for user data."
     },
     "space-mgmt-try-first": {
         "name": "Space Mgmt Try First",
         "title": "Space management try first recommendation",
-        "description": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency."
+        "description": "When space runs low, try expanding the volume before deleting snapshot copies. This helps prevent \"volume full\" errors, reduces write failures and app interruptions, and keeps snapshot recovery points for easier, stronger recovery while managing capacity."
     },
     "tiering-tco-optimization": {
         "name": "Cold data tiering",
@@ -43,7 +42,7 @@
     "mpio-iscsi-count": {
         "name": "Mpio Iscsi Count",
         "title": "MPIO iSCSI session count recommendation",
-        "description": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails."
+        "description": "For SQL Server on FSx for ONTAP iSCSI LUNs, use five multipath I/O (MPIO) sessions per target interface. This balances traffic across paths and improves redundancy, throughput, and failover."
     },
     "mpio-timeout": {
         "name": "Mpio Timeout",
@@ -197,20 +196,32 @@
         "title": "Log drive size recommendation",
         "description": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.\nAn additional 20% buffer is required if the drive is hosting a primary replica of Always On Availability Group.",
         "valuesHeading": "Log drive size (relative to data drive size):",
-        "values": ["Under-provisioned: <20%", "Optimized: 20-30%", "Over-provisioned: >30%"]
+        "values": [
+            "Under-provisioned: <20%",
+            "Optimized: 20-30%",
+            "Over-provisioned: >30%"
+        ]
     },
     "headroom": {
         "name": "File system headroom",
         "title": "File system headroom sizing recommendation",
         "description": "Workload Factory recommends provisioning file system capacity as 1.35 times of total size of provisioned volume to optimize storage performance.",
         "valuesHeading": "File system headroom percentages are as follows:",
-        "values": ["Under-provisioned: <35%", "Optimized: 35-50%", "Over-provisioned: >50%"]
+        "values": [
+            "Under-provisioned: <35%",
+            "Optimized: 35-50%",
+            "Over-provisioned: >50%"
+        ]
     },
     "tempdb-drive-size": {
         "name": "TempDB Drive Size",
         "title": "TempDB drive size recommendation",
         "description": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to well-architect performance and maintain overall stability.",
         "valuesHeading": "TempDB drive size (relative to data drive size):",
-        "values": ["Under-provisioned: <10%", "Optimized: 10-15%", "Over-provisioned: >15%"]
+        "values": [
+            "Under-provisioned: <10%",
+            "Optimized: 10-15%",
+            "Over-provisioned: >15%"
+        ]
     }
 }
