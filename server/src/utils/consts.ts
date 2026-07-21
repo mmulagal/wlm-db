@@ -1763,7 +1763,9 @@ const PERMISSIONS_TO_IGNORE_FOR_DEPLOYMENT = [
     'logs:GetLogEvents',
     'cloudwatch:GetMetricData',
     'cloudwatch:GetMetricStatistics',
-    'ssm:DescribeAvailablePatches'
+    'ssm:DescribeAvailablePatches',
+    'ssm:GetInventory',
+    'ssm:ListInventoryEntries'
 ];
 
 const AWS_ERROR_CODES = {
