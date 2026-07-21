@@ -1,5 +1,5 @@
 {
-    "count": 6,
+    "count": 9,
     "items": [
         {
             "id": "resource-id-aoag1",
@@ -62,10 +62,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -81,10 +78,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -116,9 +110,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 5530543487713.25,
                             "used": 29686813949952,
                             "spaceSavings": 9895604649984,
@@ -326,10 +318,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -345,10 +334,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -600,10 +586,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -619,10 +602,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -640,9 +620,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 5530543487713.25,
                             "used": 29686813949952,
                             "spaceSavings": 9895604649984,
@@ -943,10 +921,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -962,10 +937,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -1284,10 +1256,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -1303,10 +1272,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -1625,10 +1591,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -1644,10 +1607,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -2045,10 +2005,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -2064,10 +2021,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -2386,10 +2340,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -2405,10 +2356,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -2727,10 +2675,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -2746,10 +2691,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -3068,10 +3010,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -3087,10 +3026,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -3488,10 +3424,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -3507,10 +3440,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -3829,10 +3759,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -3848,10 +3775,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -4170,10 +4094,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -4189,10 +4110,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -4511,10 +4429,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -4530,10 +4445,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -4931,10 +4843,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -4950,10 +4859,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -4971,9 +4877,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 0,
                             "used": 0,
                             "spaceSavings": 0,
@@ -5274,10 +5178,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -5293,10 +5194,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -5314,9 +5212,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 0,
                             "used": 0,
                             "spaceSavings": 0,
@@ -5617,10 +5513,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -5636,10 +5529,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -5657,9 +5547,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 0,
                             "used": 0,
                             "spaceSavings": 0,
@@ -5960,10 +5848,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -5979,10 +5864,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -6000,9 +5882,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 0,
                             "used": 0,
                             "spaceSavings": 0,
@@ -6357,10 +6237,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -6376,10 +6253,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -6397,9 +6271,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 0,
                             "used": 0,
                             "spaceSavings": 0,
@@ -6700,10 +6572,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -6719,10 +6588,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -6740,9 +6606,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 0,
                             "used": 0,
                             "spaceSavings": 0,
@@ -7043,10 +6907,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -7062,10 +6923,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -7083,9 +6941,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 0,
                             "used": 0,
                             "spaceSavings": 0,
@@ -7386,10 +7242,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -7405,10 +7258,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -7426,9 +7276,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 0,
                             "used": 0,
                             "spaceSavings": 0,
@@ -7806,10 +7654,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -7825,10 +7670,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -7846,9 +7688,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 0,
                             "used": 0,
                             "spaceSavings": 0,
@@ -8149,10 +7989,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -8168,10 +8005,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -8189,9 +8023,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 0,
                             "used": 0,
                             "spaceSavings": 0,
@@ -8492,10 +8324,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -8511,10 +8340,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -8532,9 +8358,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 0,
                             "used": 0,
                             "spaceSavings": 0,
@@ -8835,10 +8659,7 @@
                         "serverEdition": "SQL Server Standard Edition",
                         "serverVersion": "Microsoft SQL Server 2019",
                         "activeNode": "SQLNODE1-65579",
-                        "nodeNames": [
-                            "SQLNODE1-65579",
-                            "SQLNODE2-65579"
-                        ],
+                        "nodeNames": ["SQLNODE1-65579", "SQLNODE2-65579"],
                         "activeConnections": 8,
                         "creationDate": "1716955603271",
                         "collation": "SQL_Latin1_General_CP1_CI_AS",
@@ -8854,10 +8675,7 @@
                         "fileSystemStatus": "up",
                         "fileSystemStorageCapacity": 0,
                         "fileSystemThroughputCapacity": 0,
-                        "availabilityZones": [
-                            "ap-southeast-1a",
-                            "ap-southeast-1b"
-                        ]
+                        "availabilityZones": ["ap-southeast-1a", "ap-southeast-1b"]
                     },
                     "protection": {
                         "isAwsBackupEnabled": {
@@ -8875,9 +8693,7 @@
                     },
                     "storage": {
                         "fsxn": {
-                            "protocol": [
-                                "SMB"
-                            ],
+                            "protocol": ["SMB"],
                             "size": 0,
                             "used": 0,
                             "spaceSavings": 0,
@@ -9169,7 +8985,151 @@
                     ]
                 }
             ]
+        },
+        {
+            "id": "resource-id-case10",
+            "name": "case10-registered-host",
+            "nodeStatus": "running",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "Connected",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "CASE10REGISTERED",
+                    "isManaged": true,
+                    "instanceState": "UP",
+                    "isDefault": false
+                }
+            ],
+            "nodeTopology": {
+                "windowsClusterName": "case10-sql",
+                "fqdn": "case10-sql.wlmqaauto.com",
+                "nodeIpAddress": "172.31.80.40",
+                "awsAccount": "1234",
+                "region": "US East (N.Virginia)",
+                "vpcId": "vpc-84b3afe6",
+                "vpcName": "wlmdb-vpc",
+                "vpcCidr": "172.31.0.0/16",
+                "keyPairName": "keypair",
+                "ec2Details": [
+                    {
+                        "id": "i-case10-registered",
+                        "name": "case10-registered-host",
+                        "ebsVolumeId": "ebs-volume-case10",
+                        "instanceType": "m5.xlarge",
+                        "availabilityZone": "us-east-1a",
+                        "subnetId": "subnet-case10"
+                    }
+                ],
+                "activeDirectoryDetails": {
+                    "name": "",
+                    "address": ""
+                }
+            },
+            "estimatedUsageCost": {
+                "compute": 850,
+                "storage": {
+                    "fsxn": 300,
+                    "fsxw": 0,
+                    "ebs": 0
+                },
+                "connectivity": 100,
+                "others": 24,
+                "estimationType": "pricing"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "case10-instance-id",
+                    "databaseInstanceName": "CASE10REGISTERED",
+                    "status": "Up",
+                    "databaseCount": 8,
+                    "databaseServer": {
+                        "operatingSystem": "Windows Server 2022",
+                        "serverEdition": "SQL Server Enterprise Edition",
+                        "serverVersion": "Microsoft SQL Server 2022",
+                        "activeNode": "case10-sql",
+                        "nodeNames": ["case10-sql"],
+                        "activeConnections": 12,
+                        "creationDate": "1720955603271",
+                        "collation": "SQL_Latin1_General_CP1_CI_AS",
+                        "clusterName": ""
+                    },
+                    "databaseInstanceTopology": {
+                        "serverType": "Microsoft SQL Server",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fs-case10-fsxn",
+                        "fileSystemName": "case10-fsxn",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "up",
+                        "fileSystemStorageCapacity": 1024,
+                        "fileSystemThroughputCapacity": 256,
+                        "availabilityZones": ["us-east-1a", "us-east-1b"]
+                    },
+                    "protection": {
+                        "isAwsBackupEnabled": {
+                            "fsxn": true,
+                            "fsxw": false,
+                            "ebs": false
+                        },
+                        "isFsxOntapSnapshotsEnabled": true,
+                        "isSqlNativeEnabled": true,
+                        "protectedDatabases": 6
+                    },
+                    "luns": {
+                        "dataFiles": [
+                            {
+                                "name": "lun_data_case10",
+                                "path": "/vol/data_case10/lun_data_case10",
+                                "size": 500,
+                                "used": 320,
+                                "available": 180
+                            }
+                        ],
+                        "logFiles": [
+                            {
+                                "name": "lun_log_case10",
+                                "path": "/vol/log_case10/lun_log_case10",
+                                "size": 200,
+                                "used": 85,
+                                "available": 115
+                            }
+                        ],
+                        "tempDbFiles": [
+                            {
+                                "name": "lun_tempdb_case10",
+                                "path": "/vol/tempdb_case10/lun_tempdb_case10",
+                                "size": 100,
+                                "used": 45,
+                                "available": 55
+                            }
+                        ]
+                    },
+                    "performance": {
+                        "assessment": "Good",
+                        "latency": {
+                            "read": 2.5,
+                            "write": 3.1
+                        },
+                        "iops": {
+                            "read": 1200,
+                            "write": 800
+                        },
+                        "throughput": {
+                            "read": 50,
+                            "write": 40
+                        }
+                    },
+                    "wellArchitectedAssessment": {
+                        "status": "Not Optimized",
+                        "totalFindings": 8,
+                        "criticalFindings": 2,
+                        "highFindings": 3,
+                        "mediumFindings": 2,
+                        "lowFindings": 1,
+                        "lastAssessmentDate": "1720955603271"
+                    }
+                }
+            ]
         }
-    ],
-    "nextToken": null
+    ]
 }

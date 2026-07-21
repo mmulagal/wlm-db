@@ -1,5 +1,5 @@
 {
-    "count": 18,
+    "count": 29,
     "items": [
         {
             "ec2InstanceId": "i-12456768",
@@ -48,7 +48,13 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-02a8c7e5d4b3f12a9",
@@ -125,7 +131,13 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-03b9d6f4c5e2a8b71",
@@ -202,7 +214,13 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-04c8e5b3d6a9f12c4",
@@ -301,7 +319,13 @@
                         "isPrimaryNode": true
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-05d7f6c4e3b8a9d52",
@@ -400,7 +424,13 @@
                         "isPrimaryNode": false
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-06e9a7b5c8d4f3e12",
@@ -536,7 +566,13 @@
                         "isPrimaryNode": true
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-031a1616860f41fe3",
@@ -549,7 +585,13 @@
                 "name": "wlmdb-private-vpc",
                 "cidrBlock": "10.0.0.0/16"
             },
-            "platform": "Red Hat Enterprise Linux with SQL Server Standard"
+            "platform": "Red Hat Enterprise Linux with SQL Server Standard",
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": false,
+                "canQuerySSMInventory": false
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-011be4715142e64f2",
@@ -562,7 +604,13 @@
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
             },
-            "platform": "Red Hat Enterprise Linux"
+            "platform": "Red Hat Enterprise Linux",
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": false,
+                "canQuerySSMInventory": false
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0aaa513fd89a9fc0e",
@@ -575,7 +623,13 @@
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
             },
-            "platform": "SUSE Linux"
+            "platform": "SUSE Linux",
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": false,
+                "canQuerySSMInventory": false
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-025fa87b02cac3a42",
@@ -588,7 +642,13 @@
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
             },
-            "platform": "Red Hat Enterprise Linux"
+            "platform": "Red Hat Enterprise Linux",
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": false,
+                "canQuerySSMInventory": false
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0c9ed69d4ea5557c2",
@@ -601,7 +661,13 @@
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
             },
-            "platform": "Red Hat Enterprise Linux"
+            "platform": "Red Hat Enterprise Linux",
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": false,
+                "canQuerySSMInventory": false
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-08fb58338fbc68a89",
@@ -614,7 +680,13 @@
                 "name": "wlmdb-vpc",
                 "cidrBlock": "172.31.0.0/16"
             },
-            "platform": "Red Hat Enterprise Linux"
+            "platform": "Red Hat Enterprise Linux",
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": false,
+                "canQuerySSMInventory": false
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-055ed011c2068033a",
@@ -628,7 +700,13 @@
                 "cidrBlock": "172.31.0.0/16"
             },
             "platform": "Red Hat Enterprise Linux with SQL Server Standard",
-            "error": "strings: '/mnt/oradata1/ORACLESAN1/control01.ctl': No such file\nstrings: '/mnt/oraredoctl1/ORACLESAN1/control02.ctl': No such file\ndirname: missing operand\nTry 'dirname --help' for more information.\n"
+            "error": "strings: '/mnt/oradata1/ORACLESAN1/control01.ctl': No such file\nstrings: '/mnt/oraredoctl1/ORACLESAN1/control02.ctl': No such file\ndirname: missing operand\nTry 'dirname --help' for more information.\n",
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0adbbacc59d0f3b34",
@@ -667,7 +745,10 @@
                             "fileSystemStorageType": "SSD",
                             "fileSystemName": "wlmdb-fsx-1",
                             "deploymentType": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1c", "ap-southeast-1b"],
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ],
                             "mountDetails": [
                                 {
                                     "mountPoint": "/data_310825235912",
@@ -688,7 +769,14 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-08d0bd2b32ead74e1",
@@ -726,7 +814,10 @@
                             "fileSystemStorageType": "SSD",
                             "fileSystemName": "wlmdb-fsx-1",
                             "deploymentType": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1c", "ap-southeast-1b"],
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ],
                             "mountDetails": [
                                 {
                                     "mountPoint": "/ORADATA1",
@@ -747,7 +838,14 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-00089d8cbf8b728cf",
@@ -786,7 +884,9 @@
                             "fileSystemStorageType": "SSD",
                             "fileSystemName": "Test-FSX",
                             "deploymentType": "SINGLE_AZ_2",
-                            "zones": ["ap-southeast-1c"],
+                            "zones": [
+                                "ap-southeast-1c"
+                            ],
                             "mountDetails": [
                                 {
                                     "mountPoint": "/data_010925103233",
@@ -798,7 +898,9 @@
                     ],
                     "manageReadiness": {
                         "assessment": {
-                            "missingModules": ["python"],
+                            "missingModules": [
+                                "python"
+                            ],
                             "missingPermissions": []
                         },
                         "remediation": {
@@ -807,7 +909,14 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0123456789abcdef0",
@@ -876,32 +985,32 @@
                         "dbName": "dg1",
                         "associatedHosts": [
                             {
-                            "serviceName": "pdbnas1",
-                            "hostIp": "127.0.0.1",
-                            "ec2InstanceId": "i-0123456789abcdef0",
-                            "listenerPort": "1532",
-                            "sidName": "pdbnas1"
+                                "serviceName": "pdbnas1",
+                                "hostIp": "127.0.0.1",
+                                "ec2InstanceId": "i-0123456789abcdef0",
+                                "listenerPort": "1532",
+                                "sidName": "pdbnas1"
                             },
                             {
-                            "serviceName": "pdbnas1s",
-                            "hostIp": "127.0.0.2",
-                            "ec2InstanceId": "i-0123456789abcdef1",
-                            "listenerPort": "1532",
-                            "sidName": ""
+                                "serviceName": "pdbnas1s",
+                                "hostIp": "127.0.0.2",
+                                "ec2InstanceId": "i-0123456789abcdef1",
+                                "listenerPort": "1532",
+                                "sidName": ""
                             },
                             {
-                            "serviceName": "pdbnas2",
-                            "hostIp": "127.0.0.1",
-                            "ec2InstanceId": "i-0123456789abcdef0",
-                            "listenerPort": "1532",
-                            "sidName": "pdbnas2"
+                                "serviceName": "pdbnas2",
+                                "hostIp": "127.0.0.1",
+                                "ec2InstanceId": "i-0123456789abcdef0",
+                                "listenerPort": "1532",
+                                "sidName": "pdbnas2"
                             },
                             {
-                            "serviceName": "pdbnas2s",
-                            "hostIp": "127.0.0.2",
-                            "ec2InstanceId": "i-0123456789abcdef1",
-                            "listenerPort": "1532",
-                            "sidName": ""
+                                "serviceName": "pdbnas2s",
+                                "hostIp": "127.0.0.2",
+                                "ec2InstanceId": "i-0123456789abcdef1",
+                                "listenerPort": "1532",
+                                "sidName": ""
                             }
                         ],
                         "isPrimaryNode": true
@@ -990,38 +1099,45 @@
                         "dbName": "dg2",
                         "associatedHosts": [
                             {
-                            "serviceName": "pdbnas1",
-                            "hostIp": "127.0.0.1",
-                            "ec2InstanceId": "i-0123456789abcdef0",
-                            "listenerPort": "1532",
-                            "sidName": "pdbnas1"
+                                "serviceName": "pdbnas1",
+                                "hostIp": "127.0.0.1",
+                                "ec2InstanceId": "i-0123456789abcdef0",
+                                "listenerPort": "1532",
+                                "sidName": "pdbnas1"
                             },
                             {
-                            "serviceName": "pdbnas1s",
-                            "hostIp": "127.0.0.2",
-                            "ec2InstanceId": "i-0123456789abcdef1",
-                            "listenerPort": "1532",
-                            "sidName": ""
+                                "serviceName": "pdbnas1s",
+                                "hostIp": "127.0.0.2",
+                                "ec2InstanceId": "i-0123456789abcdef1",
+                                "listenerPort": "1532",
+                                "sidName": ""
                             },
                             {
-                            "serviceName": "pdbnas2",
-                            "hostIp": "127.0.0.1",
-                            "ec2InstanceId": "i-0123456789abcdef0",
-                            "listenerPort": "1532",
-                            "sidName": "pdbnas2"
+                                "serviceName": "pdbnas2",
+                                "hostIp": "127.0.0.1",
+                                "ec2InstanceId": "i-0123456789abcdef0",
+                                "listenerPort": "1532",
+                                "sidName": "pdbnas2"
                             },
                             {
-                            "serviceName": "pdbnas2s",
-                            "hostIp": "127.0.0.2",
-                            "ec2InstanceId": "i-0123456789abcdef1",
-                            "listenerPort": "1532",
-                            "sidName": ""
+                                "serviceName": "pdbnas2s",
+                                "hostIp": "127.0.0.2",
+                                "ec2InstanceId": "i-0123456789abcdef1",
+                                "listenerPort": "1532",
+                                "sidName": ""
                             }
                         ],
                         "isPrimaryNode": true
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0123456789abcdef1",
@@ -1090,32 +1206,32 @@
                         "dbName": "dg1",
                         "associatedHosts": [
                             {
-                            "serviceName": "pdbnas1",
-                            "hostIp": "127.0.0.1",
-                            "ec2InstanceId": "i-0123456789abcdef0",
-                            "listenerPort": "1532",
-                            "sidName": ""
+                                "serviceName": "pdbnas1",
+                                "hostIp": "127.0.0.1",
+                                "ec2InstanceId": "i-0123456789abcdef0",
+                                "listenerPort": "1532",
+                                "sidName": ""
                             },
                             {
-                            "serviceName": "pdbnas1s",
-                            "hostIp": "127.0.0.2",
-                            "ec2InstanceId": "i-0123456789abcdef1",
-                            "listenerPort": "1532",
-                            "sidName": "pdbnas1s"
+                                "serviceName": "pdbnas1s",
+                                "hostIp": "127.0.0.2",
+                                "ec2InstanceId": "i-0123456789abcdef1",
+                                "listenerPort": "1532",
+                                "sidName": "pdbnas1s"
                             },
                             {
-                            "serviceName": "pdbnas2",
-                            "hostIp": "127.0.0.1",
-                            "ec2InstanceId": "i-0123456789abcdef0",
-                            "listenerPort": "1532",
-                            "sidName": ""
+                                "serviceName": "pdbnas2",
+                                "hostIp": "127.0.0.1",
+                                "ec2InstanceId": "i-0123456789abcdef0",
+                                "listenerPort": "1532",
+                                "sidName": ""
                             },
                             {
-                            "serviceName": "pdbnas2s",
-                            "hostIp": "127.0.0.2",
-                            "ec2InstanceId": "i-0123456789abcdef1",
-                            "listenerPort": "1532",
-                            "sidName": "pdbnas2s"
+                                "serviceName": "pdbnas2s",
+                                "hostIp": "127.0.0.2",
+                                "ec2InstanceId": "i-0123456789abcdef1",
+                                "listenerPort": "1532",
+                                "sidName": "pdbnas2s"
                             }
                         ],
                         "isPrimaryNode": false
@@ -1180,40 +1296,750 @@
                         }
                     },
                     "isDataGuardDeployed": true,
-                        "dataguardDetails": {
+                    "dataguardDetails": {
                         "dbUniqueName": "pdbnas2s",
                         "dbName": "dg2",
                         "associatedHosts": [
                             {
-                            "serviceName": "pdbnas1",
-                            "hostIp": "127.0.0.1",
-                            "ec2InstanceId": "i-0123456789abcdef0",
-                            "listenerPort": "1532",
-                            "sidName": ""
+                                "serviceName": "pdbnas1",
+                                "hostIp": "127.0.0.1",
+                                "ec2InstanceId": "i-0123456789abcdef0",
+                                "listenerPort": "1532",
+                                "sidName": ""
                             },
                             {
-                            "serviceName": "pdbnas1s",
-                            "hostIp": "127.0.0.2",
-                            "ec2InstanceId": "i-0123456789abcdef1",
-                            "listenerPort": "1532",
-                            "sidName": "pdbnas1s"
+                                "serviceName": "pdbnas1s",
+                                "hostIp": "127.0.0.2",
+                                "ec2InstanceId": "i-0123456789abcdef1",
+                                "listenerPort": "1532",
+                                "sidName": "pdbnas1s"
                             },
                             {
-                            "serviceName": "pdbnas2",
-                            "hostIp": "127.0.0.1",
-                            "ec2InstanceId": "i-0123456789abcdef0",
-                            "listenerPort": "1532",
-                            "sidName": ""
+                                "serviceName": "pdbnas2",
+                                "hostIp": "127.0.0.1",
+                                "ec2InstanceId": "i-0123456789abcdef0",
+                                "listenerPort": "1532",
+                                "sidName": ""
                             },
                             {
-                            "serviceName": "pdbnas2s",
-                            "hostIp": "127.0.0.2",
-                            "ec2InstanceId": "i-0123456789abcdef1",
-                            "listenerPort": "1532",
-                            "sidName": "pdbnas2s"
+                                "serviceName": "pdbnas2s",
+                                "hostIp": "127.0.0.2",
+                                "ec2InstanceId": "i-0123456789abcdef1",
+                                "listenerPort": "1532",
+                                "sidName": "pdbnas2s"
                             }
                         ],
                         "isPrimaryNode": false
+                    }
+                }
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
+        },
+        {
+            "ec2InstanceId": "i-oracle-case1-full-fsxn",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-case1-full-fsxn",
+            "ec2HostName": "ip-172-31-50-100.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE1",
+                    "instanceId": "ORACASE1",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 2,
+                    "databaseDetails": {
+                        "databaseId": "1111111111",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case1oracle",
+                            "svmId": "svm-case1oracle",
+                            "fileSystemStorageType": "SSD",
+                            "fileSystemName": "wlmdb-fsx-case1",
+                            "deploymentType": "MULTI_AZ_1",
+                            "mountDetails": [
+                                {
+                                    "protocol": "NFS",
+                                    "mountPath": "/u01"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-case2-minimal-fsxn",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-case2-minimal-fsxn",
+            "ec2HostName": "ip-172-31-50-101.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE2",
+                    "instanceId": "ORACASE2",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "2222222222",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case2oracle",
+                            "svmId": "svm-case2oracle",
+                            "fileSystemStorageType": "SSD",
+                            "fileSystemName": "wlmdb-fsx-case2",
+                            "deploymentType": "MULTI_AZ_1",
+                            "mountDetails": [
+                                {
+                                    "protocol": "NFS",
+                                    "mountPath": "/u01"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-case3-minimal-ebs",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-case3-minimal-ebs",
+            "ec2HostName": "ip-172-31-50-102.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE3",
+                    "instanceId": "ORACASE3",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "3333333333",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-case3oracle001"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-case3oracle002"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-case4-full-link-broken",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-case4-full-link-broken",
+            "ec2HostName": "ip-172-31-50-103.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": false
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE4",
+                    "instanceId": "ORACASE4",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "4444444444",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case4oracle",
+                            "svmId": "svm-case4oracle",
+                            "fileSystemStorageType": "SSD",
+                            "fileSystemName": "wlmdb-fsx-case4",
+                            "deploymentType": "SINGLE_AZ_2",
+                            "mountDetails": [
+                                {
+                                    "protocol": "NFS",
+                                    "mountPath": "/u01"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-case5-full-ebs",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-case5-full-ebs",
+            "ec2HostName": "ip-172-31-50-104.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE5",
+                    "instanceId": "ORACASE5",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "5555555555",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-case5oracle001"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-case5oracle002"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-case5oracle003"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-case6-full-dataguard-primary",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-case6-full-dataguard-primary",
+            "ec2HostName": "ip-172-31-50-105.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE6DG",
+                    "instanceId": "ORACASE6DG",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "6666666666",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case6oracle",
+                            "svmId": "svm-case6oracle",
+                            "fileSystemStorageType": "SSD",
+                            "fileSystemName": "wlmdb-fsx-case6",
+                            "deploymentType": "MULTI_AZ_1",
+                            "mountDetails": [
+                                {
+                                    "protocol": "NFS",
+                                    "mountPath": "/u01"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    },
+                    "isDataGuardDeployed": true,
+                    "dataguardDetails": {
+                        "dbUniqueName": "ORACASE6DG",
+                        "dbName": "DGCASE6",
+                        "associatedHosts": [
+                            {
+                                "serviceName": "ORACASE6DG",
+                                "hostIp": "172.31.50.105",
+                                "ec2InstanceId": "i-oracle-case6-full-dataguard-primary",
+                                "listenerPort": "1521",
+                                "sidName": "ORACASE6DG"
+                            },
+                            {
+                                "serviceName": "ORACASE6DGS",
+                                "hostIp": "172.31.50.106",
+                                "ec2InstanceId": "i-oracle-case6-full-dataguard-standby",
+                                "listenerPort": "1521",
+                                "sidName": "ORACASE6DGS"
+                            }
+                        ],
+                        "isPrimaryNode": true
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-case6-full-dataguard-standby",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-case6-full-dataguard-standby",
+            "ec2HostName": "ip-172-31-50-106.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE6DGS",
+                    "instanceId": "ORACASE6DGS",
+                    "instanceState": "MOUNTED",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "6666666667",
+                        "openMode": "MOUNTED"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case6oracle-standby",
+                            "svmId": "svm-case6oracle-standby",
+                            "fileSystemStorageType": "SSD",
+                            "fileSystemName": "wlmdb-fsx-case6-standby",
+                            "deploymentType": "MULTI_AZ_1",
+                            "mountDetails": [
+                                {
+                                    "protocol": "NFS",
+                                    "mountPath": "/u01"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    },
+                    "isDataGuardDeployed": true,
+                    "dataguardDetails": {
+                        "dbUniqueName": "ORACASE6DGS",
+                        "dbName": "DGCASE6",
+                        "associatedHosts": [
+                            {
+                                "serviceName": "ORACASE6DG",
+                                "hostIp": "172.31.50.105",
+                                "ec2InstanceId": "i-oracle-case6-full-dataguard-primary",
+                                "listenerPort": "1521",
+                                "sidName": "ORACASE6DG"
+                            },
+                            {
+                                "serviceName": "ORACASE6DGS",
+                                "hostIp": "172.31.50.106",
+                                "ec2InstanceId": "i-oracle-case6-full-dataguard-standby",
+                                "listenerPort": "1521",
+                                "sidName": "ORACASE6DGS"
+                            }
+                        ],
+                        "isPrimaryNode": false
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-case7-minimal-fsxn",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-case7-minimal-fsxn",
+            "ec2HostName": "ip-172-31-50-107.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE7",
+                    "instanceId": "ORACASE7",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "7777777777",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case7oracle",
+                            "svmId": "svm-case7oracle",
+                            "fileSystemStorageType": "SSD",
+                            "fileSystemName": "wlmdb-fsx-case7",
+                            "deploymentType": "SINGLE_AZ_1",
+                            "mountDetails": [
+                                {
+                                    "protocol": "NFS",
+                                    "mountPath": "/u01"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-case8-minimal-ebs",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-case8-minimal-ebs",
+            "ec2HostName": "ip-172-31-50-108.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE8",
+                    "instanceId": "ORACASE8",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "8888888888",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-case8oracle001"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-case8oracle002"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-case9-full-fsxn",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-case9-full-fsxn",
+            "ec2HostName": "ip-172-31-50-109.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE9",
+                    "instanceId": "ORACASE9",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 2,
+                    "databaseDetails": {
+                        "databaseId": "9999999999",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case9oracle",
+                            "svmId": "svm-case9oracle",
+                            "fileSystemStorageType": "SSD",
+                            "fileSystemName": "wlmdb-fsx-case9",
+                            "deploymentType": "MULTI_AZ_1",
+                            "mountDetails": [
+                                {
+                                    "protocol": "NFS",
+                                    "mountPath": "/u01"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-oracle-case10-full-fsxn",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "oracle-case10-full-fsxn",
+            "ec2HostName": "ip-172-31-50-110.us-west-2.compute.internal",
+            "ec2UsageOperation": "RunInstances",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "oracleServerDeploymentType": "Standalone",
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover",
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE10",
+                    "instanceId": "ORACASE10",
+                    "instanceState": "OPEN",
+                    "version": "19.0.0.0.0",
+                    "instanceType": "SINGLE_TENANT",
+                    "databaseCount": 1,
+                    "databaseDetails": {
+                        "databaseId": "1010101010",
+                        "openMode": "READ WRITE"
+                    },
+                    "oracleServerAuthentication": false,
+                    "isDefaultAuthentication": true,
+                    "isInstanceStorageAsmManaged": false,
+                    "asmAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case10oracle",
+                            "svmId": "svm-case10oracle",
+                            "fileSystemStorageType": "SSD",
+                            "fileSystemName": "wlmdb-fsx-case10",
+                            "deploymentType": "MULTI_AZ_1",
+                            "mountDetails": [
+                                {
+                                    "protocol": "NFS",
+                                    "mountPath": "/u01"
+                                }
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
                     }
                 }
             ]

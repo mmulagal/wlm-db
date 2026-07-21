@@ -1,5 +1,5 @@
 {
-    "count": 29,
+    "count": 42,
     "items": [
         {
             "ec2InstanceId": "i-0a6c761f84a4adfd1",
@@ -22,14 +22,26 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-39466", "sqlnode2-39466"],
-                    "nodeIps": ["172.31.48.90", "172.31.9.72"],
+                    "sqlServerNodes": [
+                        "sqlnode1-39466",
+                        "sqlnode2-39466"
+                    ],
+                    "nodeIps": [
+                        "172.31.48.90",
+                        "172.31.9.72"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-09adb571ab7dd6c17",
@@ -56,7 +68,9 @@
                     "sqlServerName": "Rheo",
                     "serverGuid": "491FF39F-8759-4B06-9D0C-C995FFD81CA9",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["Rheo"],
+                    "sqlServerNodes": [
+                        "Rheo"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 4,
@@ -72,29 +86,47 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1c", "ap-southeast-1b"]
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ]
                         }
                     ],
                     "manageReadiness": {
                         "assessment": {
-                            "missingSqlPermissions": ["test"],
+                            "missingSqlPermissions": [
+                                "test"
+                            ],
                             "missingModules": []
                         },
                         "remediation": {
-                            "missingSqlPermissions": ["test"],
+                            "missingSqlPermissions": [
+                                "test"
+                            ],
                             "missingModules": []
                         },
                         "dbcreation": {
-                            "missingSqlPermissions": ["test"],
+                            "missingSqlPermissions": [
+                                "test"
+                            ],
                             "missingModules": []
                         },
                         "sandbox": {
-                            "missingSqlPermissions": ["test"],
+                            "missingSqlPermissions": [
+                                "test"
+                            ],
                             "missingModules": []
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0058178336b854ea9",
@@ -117,14 +149,26 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": true,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-69338", "sqlnode2-69338"],
-                    "nodeIps": ["10.0.138.100", "10.0.27.149"],
+                    "sqlServerNodes": [
+                        "sqlnode1-69338",
+                        "sqlnode2-69338"
+                    ],
+                    "nodeIps": [
+                        "10.0.138.100",
+                        "10.0.27.149"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0756aefb9a361daa9",
@@ -151,7 +195,9 @@
                     "sqlServerName": "EC2AMAZ-3UTIH78",
                     "serverGuid": "0A63AA51-6120-48A4-AF08-18EF0B68E84C",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-3UTIH78"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-3UTIH78"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "AOAG",
                     "databaseCount": 4,
@@ -165,20 +211,52 @@
                     "deploymentTypes": [],
                     "manageReadiness": {
                         "assessment": {
-                            "missingSqlPermissions": ["abc", "def"],
-                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                            "missingSqlPermissions": [
+                                "abc",
+                                "def"
+                            ],
+                            "missingModules": [
+                                "Powershell 7",
+                                "ssm",
+                                "fsx",
+                                "netapp-ontap"
+                            ]
                         },
                         "remediation": {
-                            "missingSqlPermissions": ["abc", "def"],
-                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                            "missingSqlPermissions": [
+                                "abc",
+                                "def"
+                            ],
+                            "missingModules": [
+                                "Powershell 7",
+                                "ssm",
+                                "fsx",
+                                "netapp-ontap"
+                            ]
                         },
                         "dbcreation": {
-                            "missingSqlPermissions": ["abc", "def"],
-                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                            "missingSqlPermissions": [
+                                "abc",
+                                "def"
+                            ],
+                            "missingModules": [
+                                "Powershell 7",
+                                "ssm",
+                                "fsx",
+                                "netapp-ontap"
+                            ]
                         },
                         "sandbox": {
-                            "missingSqlPermissions": ["abc", "def"],
-                            "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
+                            "missingSqlPermissions": [
+                                "abc",
+                                "def"
+                            ],
+                            "missingModules": [
+                                "powershell72",
+                                "ssm",
+                                "fsx",
+                                "netapp-ontap"
+                            ]
                         }
                     },
                     "aoagDetails": {
@@ -250,7 +328,9 @@
                     "sqlServerName": "EC2AMAZ-3UTIH78",
                     "serverGuid": "78D8D6A3-E93F-43CC-9BD7-501D832831BA",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-3UTIH78"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-3UTIH78"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "AOAG",
                     "baseDeploymentType": "FCI",
@@ -265,20 +345,52 @@
                     "deploymentTypes": [],
                     "manageReadiness": {
                         "assessment": {
-                            "missingSqlPermissions": ["abc", "def"],
-                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                            "missingSqlPermissions": [
+                                "abc",
+                                "def"
+                            ],
+                            "missingModules": [
+                                "Powershell 7",
+                                "ssm",
+                                "fsx",
+                                "netapp-ontap"
+                            ]
                         },
                         "remediation": {
-                            "missingSqlPermissions": ["abc", "def"],
-                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                            "missingSqlPermissions": [
+                                "abc",
+                                "def"
+                            ],
+                            "missingModules": [
+                                "Powershell 7",
+                                "ssm",
+                                "fsx",
+                                "netapp-ontap"
+                            ]
                         },
                         "dbcreation": {
-                            "missingSqlPermissions": ["abc", "def"],
-                            "missingModules": ["Powershell 7", "ssm", "fsx", "netapp-ontap"]
+                            "missingSqlPermissions": [
+                                "abc",
+                                "def"
+                            ],
+                            "missingModules": [
+                                "Powershell 7",
+                                "ssm",
+                                "fsx",
+                                "netapp-ontap"
+                            ]
                         },
                         "sandbox": {
-                            "missingSqlPermissions": ["abc", "def"],
-                            "missingModules": ["powershell72", "ssm", "fsx", "netapp-ontap"]
+                            "missingSqlPermissions": [
+                                "abc",
+                                "def"
+                            ],
+                            "missingModules": [
+                                "powershell72",
+                                "ssm",
+                                "fsx",
+                                "netapp-ontap"
+                            ]
                         }
                     }
                 },
@@ -295,7 +407,9 @@
                     "sqlServerName": "EC2AMAZ-3UTIH78",
                     "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-3UTIH78"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-3UTIH78"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 4,
@@ -326,7 +440,13 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0756aefb9a361daa91",
@@ -353,7 +473,9 @@
                     "sqlServerName": "EC2AMAZ-3UTIH781",
                     "serverGuid": "0A63AA51-6120-48A4-AF08-18EF0B68E84C",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-3UTIH781"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-3UTIH781"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 4,
@@ -372,7 +494,9 @@
                             "missingModules": []
                         },
                         "remediation": {
-                            "missingSqlPermissions": ["VIEW ANY DEFINITION"],
+                            "missingSqlPermissions": [
+                                "VIEW ANY DEFINITION"
+                            ],
                             "missingModules": []
                         },
                         "dbcreation": {
@@ -398,7 +522,9 @@
                     "sqlServerName": "EC2AMAZ-3UTIH781",
                     "serverGuid": "78D8D6A3-E93F-43CC-9BD7-501D832831BA",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-3UTIH781"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-3UTIH781"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 4,
@@ -443,7 +569,9 @@
                     "sqlServerName": "EC2AMAZ-3UTIH781",
                     "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-3UTIH781"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-3UTIH781"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 4,
@@ -475,7 +603,13 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0d9afbdd87c7bc4a5",
@@ -502,7 +636,9 @@
                     "sqlServerName": "SQLDBAPFKD",
                     "serverGuid": "CB5F9F8D-C315-42E7-8169-A4BC16A0FEA5",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqldbapfkd"],
+                    "sqlServerNodes": [
+                        "sqldbapfkd"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 7,
@@ -518,7 +654,9 @@
                     "deploymentTypes": [
                         {
                             "type": "Single_AZ_1",
-                            "zones": ["ap-southeast-1c"]
+                            "zones": [
+                                "ap-southeast-1c"
+                            ]
                         }
                     ],
                     "manageReadiness": {
@@ -540,7 +678,14 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-04eebc22cce223f53",
@@ -567,7 +712,9 @@
                     "sqlServerName": "EC2AMAZ-FC7VH9R",
                     "serverGuid": "40CE7485-4BF5-4BEC-811B-48E06A8C4F4A",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-FC7VH9R"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-FC7VH9R"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 4,
@@ -598,7 +745,13 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-04eebc22cce223f55",
@@ -625,7 +778,9 @@
                     "sqlServerName": "EC2AMAZ-FC7VH92",
                     "serverGuid": "40CE7485-4BF5-4BEC-811B-48E06A8C4F42",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-FC7VH92"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-FC7VH92"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 4,
@@ -657,7 +812,13 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-024105dac56a661b1",
@@ -680,14 +841,26 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-46551", "sqlnode2-46551"],
-                    "nodeIps": ["10.0.135.21", "10.0.17.225"],
+                    "sqlServerNodes": [
+                        "sqlnode1-46551",
+                        "sqlnode2-46551"
+                    ],
+                    "nodeIps": [
+                        "10.0.135.21",
+                        "10.0.17.225"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-008b54cdabafdbc58",
@@ -714,8 +887,13 @@
                     "sqlServerName": "WEBER",
                     "serverGuid": "FF715E64-E06E-4623-B2C8-EC86F98DAEF9",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-17126"],
-                    "nodeIps": ["172.31.48.44", "172.31.10.206"],
+                    "sqlServerNodes": [
+                        "sqlnode1-17126"
+                    ],
+                    "nodeIps": [
+                        "172.31.48.44",
+                        "172.31.10.206"
+                    ],
                     "sqlServerDeploymentType": "AOAG",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
@@ -730,7 +908,10 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1c", "ap-southeast-1b"]
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ]
                         }
                     ],
                     "manageReadiness": {
@@ -803,7 +984,14 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-008b54cdabafdbc582",
@@ -830,8 +1018,13 @@
                     "sqlServerName": "WEBER2",
                     "serverGuid": "FF715E64-E06E-4623-B2C8-EC86F98DAEF9",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode2-17126"],
-                    "nodeIps": ["172.31.48.44", "172.31.10.206"],
+                    "sqlServerNodes": [
+                        "sqlnode2-17126"
+                    ],
+                    "nodeIps": [
+                        "172.31.48.44",
+                        "172.31.10.206"
+                    ],
                     "sqlServerDeploymentType": "AOAG",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
@@ -846,7 +1039,10 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1c", "ap-southeast-1b"]
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ]
                         }
                     ],
                     "manageReadiness": {
@@ -919,7 +1115,14 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0cb8e992e9057e820",
@@ -942,14 +1145,26 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-85618", "sqlnode2-85618"],
-                    "nodeIps": ["10.0.130.208", "10.0.20.168"],
+                    "sqlServerNodes": [
+                        "sqlnode1-85618",
+                        "sqlnode2-85618"
+                    ],
+                    "nodeIps": [
+                        "10.0.130.208",
+                        "10.0.20.168"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0d019ce843759d080",
@@ -972,14 +1187,26 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": true,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-12926", "sqlnode2-12926"],
-                    "nodeIps": ["10.0.134.162", "10.0.28.85"],
+                    "sqlServerNodes": [
+                        "sqlnode1-12926",
+                        "sqlnode2-12926"
+                    ],
+                    "nodeIps": [
+                        "10.0.134.162",
+                        "10.0.28.85"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-01f9a1ec6014c6eb1",
@@ -1002,14 +1229,26 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-37687", "sqlnode2-37687"],
-                    "nodeIps": ["10.0.143.197", "10.0.19.151"],
+                    "sqlServerNodes": [
+                        "sqlnode1-37687",
+                        "sqlnode2-37687"
+                    ],
+                    "nodeIps": [
+                        "10.0.143.197",
+                        "10.0.19.151"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-01112f492c27439e6",
@@ -1032,14 +1271,26 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-17126", "sqlnode2-17126"],
-                    "nodeIps": ["172.31.48.44", "172.31.10.206"],
+                    "sqlServerNodes": [
+                        "sqlnode1-17126",
+                        "sqlnode2-17126"
+                    ],
+                    "nodeIps": [
+                        "172.31.48.44",
+                        "172.31.10.206"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-07a29eb681ba37679",
@@ -1062,7 +1313,9 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Exception: The term 'sqlcmd' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.\n",
-                    "sqlServerNodes": ["ADWLMCOM"],
+                    "sqlServerNodes": [
+                        "ADWLMCOM"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "sqlServerAuthentication": true,
@@ -1087,7 +1340,13 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-059bc0d13180bda67",
@@ -1110,7 +1369,9 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\nException: Sqlcmd: Error: Microsoft ODBC Driver 17 for SQL Server : Login failed for user 'WORKGROUP\\EC2AMAZ-SRFHK18$'..\n",
-                    "sqlServerNodes": ["EC2AMAZ-SRFHK18"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-SRFHK18"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "sqlServerAuthentication": false,
@@ -1135,7 +1396,13 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0a5c1035cf85c1bd0",
@@ -1158,7 +1425,9 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\nException: The term 'sqlcmd' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.\n",
-                    "sqlServerNodes": ["ADWLMNEWCOM"],
+                    "sqlServerNodes": [
+                        "ADWLMNEWCOM"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "sqlServerAuthentication": true,
@@ -1183,7 +1452,13 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-01c74698fe83d9f0d",
@@ -1206,14 +1481,26 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": true,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-31974", "sqlnode2-31974"],
-                    "nodeIps": ["10.0.139.193", "10.0.177.176"],
+                    "sqlServerNodes": [
+                        "sqlnode1-31974",
+                        "sqlnode2-31974"
+                    ],
+                    "nodeIps": [
+                        "10.0.139.193",
+                        "10.0.177.176"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-04e474c26d377a39d",
@@ -1236,14 +1523,26 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-49314", "sqlnode2-49314"],
-                    "nodeIps": ["10.0.135.211", "10.0.180.149"],
+                    "sqlServerNodes": [
+                        "sqlnode1-49314",
+                        "sqlnode2-49314"
+                    ],
+                    "nodeIps": [
+                        "10.0.135.211",
+                        "10.0.180.149"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0397e170050487f1c",
@@ -1270,8 +1569,14 @@
                     "sqlServerName": "SNAPMAY22",
                     "serverGuid": "C14E3B5A-C8AD-410E-A040-391BB922FEDC",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-39466", "sqlnode2-39466"],
-                    "nodeIps": ["172.31.48.90", "172.31.9.72"],
+                    "sqlServerNodes": [
+                        "sqlnode1-39466",
+                        "sqlnode2-39466"
+                    ],
+                    "nodeIps": [
+                        "172.31.48.90",
+                        "172.31.9.72"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 36,
                     "sqlServerAuthentication": false,
@@ -1286,7 +1591,10 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1c", "ap-southeast-1b"]
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ]
                         }
                     ],
                     "manageReadiness": {
@@ -1308,7 +1616,14 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0b8da23acc3e1db9a",
@@ -1335,7 +1650,9 @@
                     "sqlServerName": "EC2AMAZ-6F4OJSL",
                     "serverGuid": "11EA0C97-50CE-4A80-9955-771008DE63BF",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-6F4OJSL"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-6F4OJSL"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 5,
@@ -1355,7 +1672,10 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1c", "ap-southeast-1b"]
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ]
                         }
                     ],
                     "manageReadiness": {
@@ -1390,7 +1710,9 @@
                     "sqlServerName": "EC2AMAZ-6F4OJSL",
                     "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-6F4OJSL"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-6F4OJSL"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 5,
@@ -1405,7 +1727,10 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1c", "ap-southeast-1b"]
+                            "zones": [
+                                "ap-southeast-1c",
+                                "ap-southeast-1b"
+                            ]
                         }
                     ],
                     "manageReadiness": {
@@ -1427,7 +1752,13 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0f540c740d3c2673b",
@@ -1454,8 +1785,14 @@
                     "sqlServerName": "SQLDBVYB5E",
                     "serverGuid": "5B07DF94-C03F-47ED-8BE3-AC4C189C2754",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-85618", "sqlnode2-85618"],
-                    "nodeIps": ["10.0.130.208", "10.0.20.168"],
+                    "sqlServerNodes": [
+                        "sqlnode1-85618",
+                        "sqlnode2-85618"
+                    ],
+                    "nodeIps": [
+                        "10.0.130.208",
+                        "10.0.20.168"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
@@ -1470,7 +1807,10 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1a", "ap-southeast-1c"]
+                            "zones": [
+                                "ap-southeast-1a",
+                                "ap-southeast-1c"
+                            ]
                         }
                     ],
                     "manageReadiness": {
@@ -1492,7 +1832,14 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-070f85c1685928c00",
@@ -1515,14 +1862,26 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-37687", "sqlnode2-37687"],
-                    "nodeIps": ["10.0.143.197", "10.0.19.151"],
+                    "sqlServerNodes": [
+                        "sqlnode1-37687",
+                        "sqlnode2-37687"
+                    ],
+                    "nodeIps": [
+                        "10.0.143.197",
+                        "10.0.19.151"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-065dddc35ba1046ac",
@@ -1549,8 +1908,14 @@
                     "sqlServerName": "SQLDBVY0AI",
                     "serverGuid": "DE3E7E2E-1C54-4865-9BDB-F529725FF07D",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-69338", "sqlnode2-69338"],
-                    "nodeIps": ["10.0.138.100", "10.0.27.149"],
+                    "sqlServerNodes": [
+                        "sqlnode1-69338",
+                        "sqlnode2-69338"
+                    ],
+                    "nodeIps": [
+                        "10.0.138.100",
+                        "10.0.27.149"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 6,
                     "sqlServerAuthentication": false,
@@ -1565,7 +1930,10 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1a", "ap-southeast-1c"]
+                            "zones": [
+                                "ap-southeast-1a",
+                                "ap-southeast-1c"
+                            ]
                         }
                     ],
                     "manageReadiness": {
@@ -1587,7 +1955,14 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-01b173ab60fd120f5",
@@ -1610,14 +1985,26 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-46551", "sqlnode2-46551"],
-                    "nodeIps": ["10.0.135.21", "10.0.17.225"],
+                    "sqlServerNodes": [
+                        "sqlnode1-46551",
+                        "sqlnode2-46551"
+                    ],
+                    "nodeIps": [
+                        "10.0.135.21",
+                        "10.0.17.225"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-06c7cbaaf972c9a3a",
@@ -1639,14 +2026,26 @@
                     "isDefaultInstance": true,
                     "windowsAuthentication": false,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-12926", "sqlnode2-12926"],
-                    "nodeIps": ["10.0.134.162", "10.0.28.85"],
+                    "sqlServerNodes": [
+                        "sqlnode1-12926",
+                        "sqlnode2-12926"
+                    ],
+                    "nodeIps": [
+                        "10.0.134.162",
+                        "10.0.28.85"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0dcdde0082d218cfc",
@@ -1673,7 +2072,9 @@
                     "sqlServerName": "sqldbapnsr",
                     "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqldbapnsr"],
+                    "sqlServerNodes": [
+                        "sqldbapnsr"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "Standalone",
                     "databaseCount": 7,
@@ -1693,7 +2094,9 @@
                     "deploymentTypes": [
                         {
                             "type": "SINGLE_AZ_1",
-                            "zones": ["ap-southeast-1a"]
+                            "zones": [
+                                "ap-southeast-1a"
+                            ]
                         }
                     ],
                     "manageReadiness": {
@@ -1715,7 +2118,14 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0104822eca198b0b5",
@@ -1738,14 +2148,35 @@
                     "windowsAuthentication": false,
                     "windowsDomainUserAuthentication": true,
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-52601"],
-                    "nodeIps": ["1", "0", ".", "0", ".", "1", "4", "0", ".", "1", "0", "3"],
+                    "sqlServerNodes": [
+                        "sqlnode1-52601"
+                    ],
+                    "nodeIps": [
+                        "1",
+                        "0",
+                        ".",
+                        "0",
+                        ".",
+                        "1",
+                        "4",
+                        "0",
+                        ".",
+                        "1",
+                        "0",
+                        "3"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "sqlServerAuthentication": false,
                     "storage": [],
                     "deploymentTypes": []
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0aa85d4735ae74bf6",
@@ -1772,8 +2203,14 @@
                     "sqlServerName": "SQPVTVYPHZ",
                     "serverGuid": "70385C91-5ECB-4608-9071-AE95DCCBB950",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-31974", "sqlnode2-31974"],
-                    "nodeIps": ["10.0.139.193", "10.0.177.176"],
+                    "sqlServerNodes": [
+                        "sqlnode1-31974",
+                        "sqlnode2-31974"
+                    ],
+                    "nodeIps": [
+                        "10.0.139.193",
+                        "10.0.177.176"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 6,
                     "sqlServerAuthentication": false,
@@ -1788,7 +2225,10 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1a", "ap-southeast-1b"]
+                            "zones": [
+                                "ap-southeast-1a",
+                                "ap-southeast-1b"
+                            ]
                         }
                     ],
                     "manageReadiness": {
@@ -1810,7 +2250,14 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0c6146aac5a55b55a",
@@ -1837,8 +2284,14 @@
                     "sqlServerName": "SQPVTVY0H8",
                     "serverGuid": "AFE32784-B15B-4A2C-8BEB-8FC34D46797D",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["sqlnode1-49314", "sqlnode2-49314"],
-                    "nodeIps": ["10.0.135.211", "10.0.180.149"],
+                    "sqlServerNodes": [
+                        "sqlnode1-49314",
+                        "sqlnode2-49314"
+                    ],
+                    "nodeIps": [
+                        "10.0.135.211",
+                        "10.0.180.149"
+                    ],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 4,
                     "sqlServerAuthentication": false,
@@ -1853,7 +2306,10 @@
                     "deploymentTypes": [
                         {
                             "type": "MULTI_AZ_1",
-                            "zones": ["ap-southeast-1a", "ap-southeast-1b"]
+                            "zones": [
+                                "ap-southeast-1a",
+                                "ap-southeast-1b"
+                            ]
                         }
                     ],
                     "manageReadiness": {
@@ -1875,7 +2331,14 @@
                         }
                     }
                 }
-            ]
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
         },
         {
             "ec2InstanceId": "i-0db20e831d1ce41e3",
@@ -1902,7 +2365,9 @@
                     "sqlServerName": "EC2AMAZ-6F4OJSL",
                     "serverGuid": "11EA0C97-50CE-4A80-9955-771008DE63BF",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-6F4OJSL"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-6F4OJSL"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 5,
@@ -1951,7 +2416,9 @@
                     "sqlServerName": "EC2AMAZ-6F4OJSL",
                     "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-6F4OJSL"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-6F4OJSL"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 5,
@@ -1995,7 +2462,9 @@
                     "sqlServerName": "EC2AMAZ-6F4OJSL",
                     "serverGuid": "11EA0C97-50CE-4A80-9955-771008DE63BF",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-6F4OJSL"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-6F4OJSL"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 5,
@@ -2043,7 +2512,9 @@
                     "sqlServerName": "EC2AMAZ-6F4OJSL",
                     "serverGuid": "1ADA3542-80EF-47C1-B263-9045AC170428",
                     "failureInfo": "Failed to get network drives from Windows Registry.\n",
-                    "sqlServerNodes": ["EC2AMAZ-6F4OJSL"],
+                    "sqlServerNodes": [
+                        "EC2AMAZ-6F4OJSL"
+                    ],
                     "nodeIps": [],
                     "sqlServerDeploymentType": "FCI",
                     "databaseCount": 5,
@@ -2074,8 +2545,598 @@
                         }
                     }
                 }
+            ],
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover"
+        },
+        {
+            "ec2InstanceId": "i-case1-notconnected",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "notconnected",
+            "ec2InstanceName": "case1-host-offline",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "sqlServerInstances": [],
+            "source": "discover"
+        },
+        {
+            "ec2InstanceId": "i-case2-full-fsxn-linked",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "case2-full-perm-fsxn",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover",
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "CASE2SQL",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4015.1",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": false,
+                    "sqlServerEdition": "Enterprise Edition (64-bit)",
+                    "sqlServerEngineEdition": 3,
+                    "sqlServerName": "case2-sql",
+                    "sqlServerNodes": [
+                        "case2-sql"
+                    ],
+                    "nodeIps": [
+                        "172.31.48.100"
+                    ],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 5,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case2-fsxn",
+                            "svmId": "svm-case2",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "us-east-1a",
+                                "us-east-1b"
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-case3-full-aoag",
+            "ec2InstanceType": "m5.2xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "case3-aoag-primary",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover",
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "CASE3AOAG",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.1000.6",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Enterprise Edition (64-bit)",
+                    "sqlServerEngineEdition": 3,
+                    "sqlServerName": "case3-aoag-node1",
+                    "sqlServerNodes": [
+                        "case3-aoag-node1",
+                        "case3-aoag-node2"
+                    ],
+                    "nodeIps": [
+                        "172.31.50.10",
+                        "172.31.50.11"
+                    ],
+                    "sqlServerDeploymentType": "AOAG",
+                    "databaseCount": 10,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case3-fsxn",
+                            "svmId": "svm-case3",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "us-east-1a",
+                                "us-east-1c"
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-case4-full-fci-linkgone",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "case4-fci-link-broken",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": false
+            },
+            "source": "discover",
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "CASE4FCI",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.2000.5",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Enterprise Edition (64-bit)",
+                    "sqlServerEngineEdition": 3,
+                    "sqlServerName": "case4-fci-node1",
+                    "sqlServerNodes": [
+                        "case4-fci-node1",
+                        "case4-fci-node2"
+                    ],
+                    "nodeIps": [
+                        "172.31.60.20",
+                        "172.31.60.21"
+                    ],
+                    "sqlServerDeploymentType": "FCI",
+                    "databaseCount": 7,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case4-fsxn",
+                            "svmId": "svm-case4",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "SINGLE_AZ_1",
+                            "zones": [
+                                "us-west-2a"
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-case5-ebs-only",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "case5-ebs-only",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover",
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "CASE5EBSONLY",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "14.0.3257.3",
+                    "sqlServerProductYear": 2017,
+                    "isDefaultInstance": true,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "case5-sql",
+                    "sqlServerNodes": [
+                        "case5-sql"
+                    ],
+                    "nodeIps": [
+                        "172.31.50.30"
+                    ],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 3,
+                    "sqlServerAuthentication": true,
+                    "storage": [
+                        {
+                            "type": "EBS",
+                            "id": "vol-case5-ebs-data"
+                        },
+                        {
+                            "type": "EBS",
+                            "id": "vol-case5-ebs-log"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "SINGLE_AZ_1",
+                            "zones": [
+                                "us-east-1a"
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-case6-tagging-registry-fallback",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "case6-tagging-registry",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "tagging-service",
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "CASE6TAGGING",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.2000.5",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": false,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "case6-sql",
+                    "sqlServerNodes": [
+                        "case6-sql"
+                    ],
+                    "nodeIps": [
+                        "172.31.70.30"
+                    ],
+                    "sqlServerDeploymentType": "Standalone",
+                    "sqlServerAuthentication": true,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case6-fsxn",
+                            "svmId": "svm-case6",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "SINGLE_AZ_1",
+                            "zones": [
+                                "eu-west-1a"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-case7-tagging-partial",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "case7-tagging-partial-perm",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": false,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "tagging-service",
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "CASE7PARTIAL",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "15.0.2000.5",
+                    "sqlServerProductYear": 2019,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": false,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "case7-sql",
+                    "sqlServerNodes": [
+                        "case7-sql"
+                    ],
+                    "nodeIps": [
+                        "172.31.70.40"
+                    ],
+                    "sqlServerDeploymentType": "Standalone",
+                    "sqlServerAuthentication": true,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case7-fsxn",
+                            "svmId": "svm-case7",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "SINGLE_AZ_1",
+                            "zones": [
+                                "eu-west-1a"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-case8-tagging-all-denied",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "case8-tagging-no-perms",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "hostManageReadiness": {
+                "extensiveRunPermission": false,
+                "canReadAWSSSMDocuments": false,
+                "canQuerySSMInventory": false,
+                "fsxLinkExists": true
+            },
+            "source": "tagging-service",
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "CASE8NODATA",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "14.0.3000.1",
+                    "sqlServerProductYear": 2017,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": false,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "case8-sql",
+                    "sqlServerNodes": [
+                        "case8-sql"
+                    ],
+                    "nodeIps": [
+                        "172.31.70.50"
+                    ],
+                    "sqlServerDeploymentType": "Standalone",
+                    "sqlServerAuthentication": true,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case8-fsxn",
+                            "svmId": "svm-case8",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "SINGLE_AZ_1",
+                            "zones": [
+                                "eu-west-1b"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "ec2InstanceId": "i-case9-full-no-sql",
+            "ec2InstanceType": "m5.large",
+            "ssmState": "connected",
+            "ec2InstanceName": "case9-full-perm-no-sql",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true
+            },
+            "source": "discover",
+            "sqlServerInstances": []
+        },
+        {
+            "ec2InstanceId": "i-case10-registered",
+            "ec2InstanceType": "m5.xlarge",
+            "ssmState": "connected",
+            "ec2InstanceName": "case10-registered-host",
+            "ec2UsageOperation": "RunInstances:0002",
+            "vpc": {
+                "id": "vpc-84b3afe6",
+                "name": "wlmdb-vpc",
+                "cidrBlock": "172.31.0.0/16"
+            },
+            "hostManageReadiness": {
+                "extensiveRunPermission": true,
+                "canReadAWSSSMDocuments": true,
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true
+            },
+            "source": "discover",
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "CASE10REGISTERED",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4015.1",
+                    "sqlServerProductYear": 2022,
+                    "isDefaultInstance": false,
+                    "windowsAuthentication": true,
+                    "sqlServerEdition": "Enterprise Edition (64-bit)",
+                    "sqlServerEngineEdition": 3,
+                    "sqlServerName": "case10-sql",
+                    "sqlServerNodes": [
+                        "case10-sql"
+                    ],
+                    "nodeIps": [
+                        "172.31.80.40"
+                    ],
+                    "sqlServerDeploymentType": "Standalone",
+                    "databaseCount": 8,
+                    "sqlServerAuthentication": false,
+                    "storage": [
+                        {
+                            "type": "FSXN",
+                            "id": "fs-case10-fsxn",
+                            "svmId": "svm-case10",
+                            "protocol": "iSCSI"
+                        }
+                    ],
+                    "deploymentTypes": [
+                        {
+                            "type": "MULTI_AZ_1",
+                            "zones": [
+                                "us-east-1a",
+                                "us-east-1b"
+                            ]
+                        }
+                    ],
+                    "manageReadiness": {
+                        "assessment": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "remediation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "dbcreation": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        },
+                        "sandbox": {
+                            "missingSqlPermissions": [],
+                            "missingModules": []
+                        }
+                    }
+                }
             ]
         }
-    ],
-    "nextToken": ""
+    ]
 }

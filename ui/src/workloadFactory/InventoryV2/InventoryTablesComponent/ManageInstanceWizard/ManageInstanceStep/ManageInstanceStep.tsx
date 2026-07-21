@@ -355,7 +355,7 @@ export const Content = () => {
                 hostName: item?.data?.name,
                 readinessStatus: isAuthenticated ? manageStates?.overallState : MANAGE_STATES.NOT_READY,
                 readyCount: manageStates?.readyCount,
-                totalCount: hostType === DBType.MSSQL ? 5 : 3,
+                totalCount: hostType === DBType.MSSQL ? 4 : 2,
                 perRowState: manageStates?.perRowState || [],
                 manageStates: rowManageStates,
                 manageReadiness: item?.manageReadiness

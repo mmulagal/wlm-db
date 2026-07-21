@@ -153,73 +153,114 @@ router.get(
     }
 );
 
-router.post(`${BASE_URL}/v1/register-credentials`, async (req: {}, res: any) => {
+/**
+ * Dynamic mock for register-credentials API
+ * - Parses request body to determine what resources are being registered
+ * - Returns appropriate response for MSSQL, ORACLE, or FSX resources
+ * - Adds replicaInfo for AOAG (Always On Availability Group) cases when isReplicaInfoRequired is true
+ * - Returns manageReadiness structure with all required capabilities
+ */
+router.post(`${BASE_URL}/v1/register-credentials`, async (req: any, res: any) => {
     setTimeout(() => {
-        generateResponse(res, 200, {
-            items: [
-                {
-                    ec2InstanceId: 'i-008b54cdabafdbc58',
-                    credentialsId: '3ad8702c-a2fd-48d2-be50-1ba6ce83acd5',
-                    region: 'ap-southeast-1',
-                    errorMessage: '',
-                    registerDetails: [
-                        {
-                            resourceId: 'MSSQLSERVER',
-                            resourceType: 'MSSQL',
-                            manageReadiness: {
-                                assessment: {
-                                    missingSqlPermissions: [],
-                                    missingModules: []
-                                },
-                                remediation: {
-                                    missingSqlPermissions: [],
-                                    missingModules: []
-                                },
-                                dbcreation: {
-                                    missingSqlPermissions: [],
-                                    missingModules: []
-                                },
-                                sandbox: {
-                                    missingSqlPermissions: [],
-                                    missingModules: []
-                                }
-                            }
-                        },
-                        {
-                            resourceId: 'MSSQLSERVER2',
-                            resourceType: 'MSSQL',
-                            manageReadiness: {
-                                assessment: {
-                                    missingSqlPermissions: [],
-                                    missingModules: []
-                                },
-                                remediation: {
-                                    missingSqlPermissions: [],
-                                    missingModules: []
-                                },
-                                dbcreation: {
-                                    missingSqlPermissions: [],
-                                    missingModules: []
-                                },
-                                sandbox: {
-                                    missingSqlPermissions: [],
-                                    missingModules: []
-                                }
-                            }
-                        }
-                    ],
-                    replicaInfo: [
-                        {
-                            ec2InstanceId: 'i-008b54cdabafdbc582',
-                            ec2HostName: 'WEBER2',
-                            sqlServerName: 'WEBER2',
-                            // databaseName: 'MSSQLSERVER2', --- For oracle case ---
-                            role: 'SECONDARY',
-                            availabilityGroupNames: ['satag1', 'AG2']
-                        }
-                    ]
+        const requestBody = req.body || {};
+        const requestItems = requestBody.items || [];
+
+        // Build response items dynamically based on request
+        const responseItems = requestItems.map((item: any) => {
+            const credentials = item.credentials || [];
+            const isReplicaInfoRequired = item.isReplicaInfoRequired || false;
+
+            // Build registerDetails for each credential
+            const registerDetails = credentials.map((cred: any) => {
+                // Use resourceType and resourceId from request if provided, otherwise derive them
+                const resourceType =
+                    cred.resourceType ||
+                    (cred.databaseInstanceName?.includes('ORACLE') || cred.databaseName
+                        ? 'ORACLE'
+                        : cred.fsxId
+                        ? 'FSX'
+                        : 'MSSQL');
+
+                const resourceId =
+                    cred.resourceId ||
+                    cred.fsxId ||
+                    cred.databaseInstanceName ||
+                    cred.databaseName ||
+                    'MSSQLSERVER';
+
+                // Base manageReadiness structure (full permissions by default)
+                const manageReadiness: any = {
+                    remediation: {
+                        missingSqlPermissions: [],
+                        missingModules: []
+                    },
+                    dbcreation: {
+                        missingSqlPermissions: [],
+                        missingModules: []
+                    },
+                    sandbox: {
+                        missingSqlPermissions: [],
+                        missingModules: []
+                    },
+                    errorInvestigation: {
+                        missingSqlPermissions: [],
+                        missingModules: []
+                    }
+                };
+
+                // Build register detail object
+                const registerDetail: any = {
+                    resourceId,
+                    resourceType,
+                    manageReadiness
+                };
+
+                // Add database-specific fields
+                if (resourceType === 'MSSQL') {
+                    registerDetail.databaseCount = 10;
+                    registerDetail.databaseServerEdition = 'Standard';
+                    registerDetail.databaseServerError = '';
                 }
-            ]
+
+                if (resourceType === 'ORACLE') {
+                    registerDetail.databaseCount = 5;
+                    registerDetail.databaseServerError = '';
+                    registerDetail.oracleAsmError = '';
+                }
+
+                if (resourceType === 'FSX') {
+                    registerDetail.fsxnError = '';
+                }
+
+                return registerDetail;
+            });
+
+            // Build replicaInfo array if AOAG is required
+            const replicaInfo =
+                isReplicaInfoRequired && credentials.some((c: any) => c.databaseInstanceName)
+                    ? [
+                          {
+                              ec2InstanceId: 'i-' + Math.random().toString(36).substring(2, 15),
+                              ec2HostName: 'REPLICA-HOST',
+                              sqlServerName: credentials[0]?.databaseInstanceName || 'MSSQLSERVER',
+                              role: 'SECONDARY',
+                              availabilityGroupNames: ['AG1', 'AG2']
+                          }
+                      ]
+                    : [];
+
+            return {
+                ec2InstanceId: item.ec2InstanceId,
+                credentialsId: item.credentialsId,
+                region: item.region,
+                errorMessage: '',
+                registerDetails,
+                ...(replicaInfo.length > 0 && { replicaInfo })
+            };
+        });
+
+        generateResponse(res, 200, {
+            items: responseItems
         });
     }, 5000);
 });

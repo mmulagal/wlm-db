@@ -56,22 +56,20 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
 
     // Helper to get capability key from item id based on engine type
     const getCapabilityKey = (itemId: string, engine?: string): string | null => {
-        // Oracle has 3 capabilities: assessment, remediation, errorInvestigation
+        // Oracle has 2 capabilities: remediation, errorInvestigation
         if (engine === DBType.ORACLE) {
             const oracleMapping: Record<string, string> = {
-                '1': 'assessment',
-                '2': 'remediation',
-                '5': 'errorInvestigation'
+                '1': 'remediation',
+                '2': 'errorInvestigation'
             };
             return oracleMapping[itemId] || null;
         }
-        // MSSQL has 5 capabilities
+        // MSSQL has 4 capabilities
         const mssqlMapping: Record<string, string> = {
-            '1': 'assessment',
-            '2': 'remediation',
-            '3': 'dbcreation',
-            '4': 'sandbox',
-            '5': 'errorInvestigation'
+            '1': 'remediation',
+            '2': 'dbcreation',
+            '3': 'sandbox',
+            '4': 'errorInvestigation'
         };
         return mssqlMapping[itemId] || null;
     };

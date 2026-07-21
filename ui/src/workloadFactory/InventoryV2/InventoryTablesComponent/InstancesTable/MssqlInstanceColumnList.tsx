@@ -38,8 +38,7 @@ import {
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import { manageActionCol } from '../../InventoryUtilsV2';
-import { resetAgenticPreCheckData } from '../../../../store/workloadFactory/agenticAISlice';
+import { hasFullPermission } from '../../InventoryUtilsV2';
 import { logAnalyzerStatusCol, handleWadOptimizeAction, notAvailableWithTooltip } from './InstanceTableHelper';
 import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -125,6 +124,16 @@ export function getMssqlInstanceTableColumns({
             width: '240px',
             filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
             renderCell: (cellData: string, rowData: any) => {
+                // Check for minimal permission - show N/A if no full permission and no WAD data
+                const hasFullPerm = hasFullPermission(rowData?.hostManageReadiness);
+                if (!hasFullPerm && !rowData?.isWad) {
+                    return (
+                        <DsTypography variant="Regular_14" className={styles.colText}>
+                            {t('databases.general.not-available-table-columns')}
+                        </DsTypography>
+                    );
+                }
+
                 // If the computed display value is "Not analyzed", show with tooltip
                 if (cellData === INVENTORY_TABLE_STATUS.NOT_ANALYZED) {
                     return (
@@ -148,7 +157,7 @@ export function getMssqlInstanceTableColumns({
                     return <DsFlashingDotsLoader />;
                 }
 
-                // For WAD (offline assessment) rows with valid optimization status, show tooltip and View link
+                // For WAD (offline assessment) rows with valid optimization status, show tooltip without View link
                 if (rowData?.isWad && cellData) {
                     return (
                         <div className={styles.naContainer}>
@@ -171,9 +180,6 @@ export function getMssqlInstanceTableColumns({
                                 </div>
                             </Popover>
                             <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                            <DsButton type="text" onClick={() => handleWadOptimizeAction(rowData, dispatch)}>
-                                {t('databases.general.view')}
-                            </DsButton>
                         </div>
                     );
                 }
@@ -520,13 +526,27 @@ export function getMssqlInstanceTableColumns({
             width: '200px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                const { colText, disableMsg } = manageActionCol(t, DBType.MSSQL, rowData);
-
-                // Disable action button when bulk selection is active
                 const isDisabledByBulkSelection = isBulkSelectionActive;
+
+                // Determine if "View and Fix" should be enabled based on hasFullPermission
+                // View and Fix is only available for:
+                // 1. WAD (offline assessment) instances with isWad flag, OR
+                // 2. Registered/managed instances with resourceId
+                const isRegisteredOrManaged =
+                    rowData?.statusColText === INVENTORY_STATUS.MANAGED || rowData?.resourceId;
+                const canViewAndFix = rowData?.isWad || isRegisteredOrManaged;
+                const viewAndFixDisableMsg = !canViewAndFix ? t('databases.general.view-and-fix-disabled-tooltip') : '';
+
                 const effectiveDisableMsg = isDisabledByBulkSelection
                     ? t('databases.bulk-register.action-disabled-during-bulk-selection')
-                    : disableMsg;
+                    : viewAndFixDisableMsg;
+
+                // Determine button text based on optimization status
+                const buttonText =
+                    rowData?.optimizationStatus === ACTION_CTA.WELL_ARCHITECTED
+                        ? t('databases.general.well-architected')
+                        : t('databases.general.view-and-fix');
+
                 return (
                     <>
                         {effectiveDisableMsg ? (
@@ -537,12 +557,12 @@ export function getMssqlInstanceTableColumns({
                                 container={
                                     <div className={styles.buttonContainer}>
                                         <DsButton
-                                            data-testid={`wlm-db-mssql-${colText}`}
+                                            data-testid="wlm-db-mssql-view-and-fix"
                                             variant="secondary"
                                             isThin
                                             isDisabled
                                         >
-                                            {colText}
+                                            {buttonText}
                                         </DsButton>
                                     </div>
                                 }
@@ -552,12 +572,13 @@ export function getMssqlInstanceTableColumns({
                                 <DsButton
                                     variant="secondary"
                                     isThin
-                                    data-testid={`wlm-db-mssql-${colText}`}
+                                    data-testid="wlm-db-mssql-view-and-fix"
                                     onClick={() => {
-                                        if (
-                                            colText === ACTION_CTA.FIX_ISSUES ||
-                                            colText === ACTION_CTA.WELL_ARCHITECTED
-                                        ) {
+                                        if (rowData?.isWad) {
+                                            // For WAD instances, use offline assessment handler
+                                            handleWadOptimizeAction(rowData, dispatch);
+                                        } else {
+                                            // For managed instances, use regular optimize action
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
                                             dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
                                             dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
@@ -567,23 +588,10 @@ export function getMssqlInstanceTableColumns({
                                                 )
                                             );
                                             optimizeAction(rowData, dispatch);
-                                        } else {
-                                            dispatch(setManageSingleInstanceData(rowData));
-                                            dispatch(setWizardOperationType('single'));
-                                            dispatch(setRegisterHostType(DBType.MSSQL));
-                                            navigate('../register-wizard');
-                                            dispatch(resetAgenticPreCheckData());
-                                            postBlueXPMessage({
-                                                type: BlueXPListeners.navigate,
-                                                payload: {
-                                                    pathname: './register-wizard',
-                                                    replace: true
-                                                }
-                                            });
                                         }
                                     }}
                                 >
-                                    {colText}
+                                    {buttonText}
                                 </DsButton>
                             </div>
                         )}

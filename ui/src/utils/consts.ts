@@ -638,6 +638,7 @@ export const DETECT_HOST_VAR = {
     EBS: 'EBS',
     FSXW: 'FSXW',
     SSM_CONNECTED: 'connected',
+    SSM_NOT_CONNECTED: 'notconnected',
     MOVE_TO_MANAGE: 'move_to_manage',
     MOVE_TO_UNMANAGE: 'move_to_unmanage',
     FSX: 'FSX',
@@ -650,6 +651,26 @@ export const DETECT_HOST_VAR = {
     SHOW: 'show',
     HIDE: 'hide'
 };
+
+/** Discovery source types */
+export const DISCOVERY_SOURCE = {
+    DISCOVER: 'discover',
+    TAGGING_SERVICE: 'tagging-service'
+} as const;
+
+/** FSx authentication/link status */
+export const FSX_AUTH_STATUS = {
+    SUCCESS: 'success',
+    FAILED: 'failed',
+    PENDING: 'pending',
+    LINKED: 'linked'
+} as const;
+
+/** SSM connection state */
+export const SSM_STATE = {
+    CONNECTED: 'connected',
+    NOT_CONNECTED: 'notconnected'
+} as const;
 
 export const RESET_PASSWORD_TYPE = {
     FSXADMIN: 'fsxadmin',

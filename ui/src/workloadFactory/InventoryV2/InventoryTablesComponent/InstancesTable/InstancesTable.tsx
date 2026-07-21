@@ -42,7 +42,8 @@ import {
     instanceExtraDataUpdate,
     manageActionCol,
     uniqueHostRow,
-    updateInstanceStatus
+    updateInstanceStatus,
+    hasFullPermission
 } from '../../InventoryUtilsV2';
 import { bxpRedirect, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
@@ -61,6 +62,7 @@ import {
     setInProgressInstances,
     setInventoryTableData,
     setRegisterHostType,
+    setRegistrationWizardData,
     setSelectedFilterValue,
     setSelectedMultiDetectInstances,
     setSelectedRowsForBulkRegister,
@@ -1002,16 +1004,42 @@ const InstancesTable = () => {
                     });
                 }
 
+                // For NOT_REGISTERED or UNDETECTED instances (discovered but not yet registered), add Register option
+                const isNotRegistered =
+                    rowData.statusColText === INVENTORY_STATUS.NOT_REGISTERED ||
+                    rowData.statusColText === INVENTORY_STATUS.UNDETECTED;
+
+                if (isNotRegistered) {
+                    // Check if FSx link exists and if has full permission
+                    const fsxLinkMissing = rowData?.hostManageReadiness?.fsxLinkExists === false;
+                    const lacksPermission = !hasFullPermission(rowData?.hostManageReadiness);
+                    const isDisabled = fsxLinkMissing || lacksPermission;
+
+                    let tooltipMsg = '';
+                    if (lacksPermission) {
+                        tooltipMsg = t('databases.inventory.registration-requires-full-permission');
+                    } else if (fsxLinkMissing) {
+                        tooltipMsg = t('databases.register-flow.fsx-link-required-message');
+                    }
+
+                    menu.push({
+                        id: 'register-instance',
+                        displayName: t('databases.register-flow.register'),
+                        disabled: isDisabled,
+                        infoText: tooltipMsg || undefined
+                    });
+                }
+
                 // Use shared utility for disabling logic
                 const disableResult = isInstanceActionDisabled(rowData, selectedHostType, t);
-                // For menu, also disable if status is unmanaged/undetected/in-progress or bulk selection is active
-                // Exception: WAD MSSQL and Oracle rows should have the menu enabled
+                // For menu, also disable if status is unmanaged/in-progress or bulk selection is active
+                // Exception: WAD MSSQL and Oracle rows, and NOT_REGISTERED/UNDETECTED rows (for Register option) should have the menu enabled
                 const isWadRow = isWadMssqlRow || isWadOracleRow;
                 const shouldDisableMenu =
                     !isWadRow &&
+                    !isNotRegistered &&
                     (isBulkActionVisible ||
                         rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                        rowData.statusColText === INVENTORY_STATUS.UNDETECTED ||
                         rowData.statusColText === INVENTORY_STATUS.IN_PROGRESS ||
                         disableResult.isDisabled);
                 const width = disableResult.tooltipWidth || '';
@@ -1059,6 +1087,37 @@ const InstancesTable = () => {
                                                 handleWadViewDatabasesAction(rowData, dispatch);
                                             } else if (menuId === 'oracle-optimize-wad') {
                                                 handleOracleWadOptimizeAction(rowData, dispatch);
+                                            } else if (menuId === 'register-instance') {
+                                                // Handle Register action for NOT_REGISTERED/UNDETECTED instances
+                                                // Navigate to register-bulk-wizard (single instance registration)
+                                                // Format the instance data the same way as bulk registration
+                                                const transformedInstance = [
+                                                    {
+                                                        id: rowData.id,
+                                                        label: `${rowData.databaseInstanceName}, ${rowData.name}`,
+                                                        value: rowData.name,
+                                                        data: rowData,
+                                                        authorized: rowData?.authorized ?? false,
+                                                        manageReadiness: rowData.manageReadiness
+                                                    }
+                                                ];
+
+                                                // Set the selected instances for the wizard using combined action
+                                                dispatch(
+                                                    setRegistrationWizardData({
+                                                        selectedInstances: transformedInstance,
+                                                        registerHostType: selectedHostType,
+                                                        wizardOperationType: 'single',
+                                                        manageSingleInstanceData: rowData
+                                                    })
+                                                );
+                                                dispatch(resetAgenticPreCheckData());
+
+                                                if (isWorkloadFactory) {
+                                                    navigate('../register-bulk-wizard');
+                                                } else {
+                                                    navigate('../fsxdb/register-bulk-wizard');
+                                                }
                                             } else {
                                                 handleInstanceMenuSelection({
                                                     menuId,
@@ -1232,10 +1291,14 @@ const InstancesTable = () => {
             };
         });
 
-        // Set the selected instances for the bulk wizard
-        dispatch(setSelectedMultiDetectInstances(transformedInstances));
-        dispatch(setWizardOperationType('bulk'));
-        dispatch(setRegisterHostType(selectedHostType));
+        // Set the selected instances for the bulk wizard using combined action
+        dispatch(
+            setRegistrationWizardData({
+                selectedInstances: transformedInstances,
+                registerHostType: selectedHostType,
+                wizardOperationType: 'bulk'
+            })
+        );
         dispatch(resetAgenticPreCheckData());
 
         // Clear the table selection after navigating

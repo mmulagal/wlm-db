@@ -1,3 +1,8 @@
+/**
+ * FSx Authentication Step - CURRENTLY COMMENTED OUT
+ * Current sprint: FSx link validation happens before registration wizard
+ * TODO: Remove this step when ready
+ */
 import { useWizard } from '@netapp/design-system/dist/components/Wizard';
 import { useEffect, useRef, useMemo } from 'react';
 import { useDispatch } from 'react-redux';

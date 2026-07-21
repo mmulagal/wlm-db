@@ -14,6 +14,7 @@ import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificat
 import {
     AUTHENTICATION_TYPE,
     DBType,
+    FSX_AUTH_STATUS,
     FSX_FOR_ONTAP_CRED_OPTION,
     INVENTORY_STATUS,
     ACTION_TYPE,
@@ -1026,7 +1027,7 @@ export const handleReplicaAuthenticationAndDialog = async (
                         batchPayload.items.forEach(item => {
                             item.credentials.forEach((cred: { resourceId: string }) => {
                                 const uniqueKey = generateInstanceUniqueKey(item.ec2InstanceId, cred.resourceId);
-                                authStatusUpdates[uniqueKey] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                                authStatusUpdates[uniqueKey] = FSX_AUTH_STATUS.FAILED;
                             });
                         });
 

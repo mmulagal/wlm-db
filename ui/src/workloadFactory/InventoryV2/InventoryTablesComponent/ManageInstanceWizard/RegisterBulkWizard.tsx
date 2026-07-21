@@ -8,7 +8,6 @@ import styles from './ManageInstanceWizard.module.scss';
 import * as ManageInstanceStep from './ManageInstanceStep/ManageInstanceStep';
 import * as AuthenticateBulkInstance from './SelectInstancesStep/AuthenticateBulkInstance';
 import * as AuthenticateOracleBulkInstance from './SelectInstancesStep/AuthenticateOracleBulkInstance';
-import * as AuthenticateFSxStep from './AuthenticateFSxStep/AuthenticateFSxStep';
 
 import {
     setLandingFromWizard,
@@ -74,11 +73,16 @@ const RegisterBulkWizard = () => {
                 : t('databases.register-flow.authenticate-instance'),
             component: isOracle ? AuthenticateOracleBulkInstance : AuthenticateBulkInstance
         },
+        /*
+         * FSx authentication step commented out for this sprint per Global WAD Gradual Trust plan
+         * FSx link validation now happens before user enters registration wizard
+         * TODO: Remove in next sprint when FSx link + credential flow is finalized
         {
             key: 'authenticate-fsx',
             label: t('databases.register-flow.authenticate-fsx-for-ontap'),
             component: AuthenticateFSxStep
         },
+        */
         {
             key: 'manage-instance',
             label: t('databases.register-flow.prepare'),
@@ -94,15 +98,15 @@ const RegisterBulkWizard = () => {
     const initialState: any = {};
 
     // Determine initial step based on whether we're coming from replica authentication
-    const getInitialStep = () => {
+    const getInitialStep = () =>
+        /* FSx step commented out - skipping FSx step logic
         if (bulkWizardStartAtFsxStep) {
             // Clear the flag after reading it
             dispatch(setBulkWizardStartAtFsxStep(false));
             return 'authenticate-fsx';
         }
-        return isOracle ? 'authenticate-database' : 'authenticate-instance';
-    };
-
+        */
+        isOracle ? 'authenticate-database' : 'authenticate-instance';
     return (
         <WizardContextProvider
             stepsMap={stepsMap}

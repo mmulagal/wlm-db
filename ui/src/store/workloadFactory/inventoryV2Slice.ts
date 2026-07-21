@@ -648,6 +648,22 @@ const inventoryV2Slice = createSlice({
         setManageSingleInstanceData: (state, action: PayloadAction<any>) => {
             state.manageSingleInstanceData = action.payload;
         },
+        setRegistrationWizardData: (
+            state,
+            action: PayloadAction<{
+                selectedInstances: any[];
+                registerHostType: any;
+                wizardOperationType: 'single' | 'bulk';
+                manageSingleInstanceData?: any;
+            }>
+        ) => {
+            state.selectedMultiDetectInstances = action.payload.selectedInstances;
+            state.registerHostType = action.payload.registerHostType;
+            state.wizardOperationType = action.payload.wizardOperationType;
+            if (action.payload.manageSingleInstanceData) {
+                state.manageSingleInstanceData = action.payload.manageSingleInstanceData;
+            }
+        },
         setReplicaSelectedRowsForManage: (state, action: PayloadAction<any>) => {
             state.replicaSelectedRowsForManage = action.payload;
         },
@@ -857,6 +873,7 @@ export const {
     setManageSingleInstanceChecks,
     setManageSingleInstanceReadiness,
     setManageSingleInstanceData,
+    setRegistrationWizardData,
     setReplicaSelectedRowsForManage,
     setBulkDetectedInstanceList,
     setSelectedRowsForBulkRegister,

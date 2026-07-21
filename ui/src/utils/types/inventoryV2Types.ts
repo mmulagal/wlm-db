@@ -1,13 +1,35 @@
 import { ErrorInvestigationInstance } from './agenticAITypes';
+import { DISCOVERY_SOURCE, FSX_AUTH_STATUS, SSM_STATE } from '../consts';
 
-/** FSx authentication status value */
-export type FsxAuthStatus = 'success' | 'failed' | 'pending';
+/**
+ * Host manage readiness object returned by discovery API
+ * Indicates what level of permissions are available for the host
+ */
+export interface HostManageReadiness {
+    /** Full SSM run permission - allows running SSM documents */
+    extensiveRunPermission?: boolean;
+    /** Fleet Manager can read SSM documents (tagging-service fallback) */
+    canReadAWSSSMDocuments?: boolean;
+    /** Can read SSM inventory (tagging-service fallback) */
+    canQuerySSMInventory?: boolean;
+    /** FSx link status: true/false/absent. Absent means EBS-only (not in inventory discovery) */
+    fsxLinkExists?: boolean;
+}
+
+/** Discovery source type derived from DISCOVERY_SOURCE constant */
+export type DiscoverySource = (typeof DISCOVERY_SOURCE)[keyof typeof DISCOVERY_SOURCE];
+
+/** FSx authentication status value derived from FSX_AUTH_STATUS constant */
+export type FsxAuthStatus = (typeof FSX_AUTH_STATUS)[keyof typeof FSX_AUTH_STATUS];
 
 /** Map of FSx IDs to their authentication status */
 export type FsxAuthStatusMap = Record<string, FsxAuthStatus>;
 
-/** Instance authentication status value */
-export type InstanceAuthStatus = 'success' | 'failed' | 'pending';
+/** Instance authentication status value - subset of FSx status (excludes 'linked') */
+export type InstanceAuthStatus = Exclude<FsxAuthStatus, 'linked'>;
+
+/** SSM connection state type derived from SSM_STATE constant */
+export type SsmState = (typeof SSM_STATE)[keyof typeof SSM_STATE];
 
 /** Map of Instance IDs to their authentication status */
 export type InstanceAuthStatusMap = Record<string, InstanceAuthStatus>;
@@ -181,7 +203,7 @@ export interface InventoryTableData {
     name?: string;
     hostType?: string;
     status?: string;
-    ssmState?: string;
+    ssmState?: SsmState | string;
     totalInstance?: number;
     managedInstance?: number;
     serverInstallationMode?: string;
@@ -212,6 +234,12 @@ export interface InventoryTableData {
     isWad?: boolean;
     storage?: Array<DiscoveredStorageObj>;
     oracleEdition?: string;
+    /** Host manage readiness object with permission flags */
+    hostManageReadiness?: HostManageReadiness;
+    /** Source of discovery: 'discover' (extensive run) or 'tagging-service' (Fleet Manager fallback) */
+    source?: DiscoverySource;
+    /** Derived permission level: 'minimal' | 'full' | 'none' */
+    permissionLevel?: 'minimal' | 'full' | 'none';
 }
 
 export interface OraclePluggableDatabase {
@@ -508,6 +536,10 @@ export interface ManagedHostsRowInterface {
         fsxn?: number;
         ebs?: number;
     };
+    /** Host manage readiness object with permission flags */
+    hostManageReadiness?: HostManageReadiness;
+    /** Source of discovery: 'discover' (extensive run) or 'tagging-service' (Fleet Manager fallback) */
+    source?: DiscoverySource;
 }
 
 export interface EC2DetailsInterface {
@@ -566,12 +598,16 @@ export interface InstancesHostsRowInterface {
     nodeInstanceError?: string;
     sqlLicenseIncluded?: boolean;
     oracleEdition?: string;
+    /** Host manage readiness object with permission flags */
+    hostManageReadiness?: HostManageReadiness;
+    /** Source of discovery: 'discover' (extensive run) or 'tagging-service' (Fleet Manager fallback) */
+    source?: DiscoverySource;
 }
 
 export interface DiscoverHostInterface {
     ec2InstanceId: string;
     ec2InstanceType?: string;
-    ssmState?: string;
+    ssmState?: SsmState | string;
     ec2InstanceName?: string;
     ec2UsageOperation?: string;
     nodesList?: Array<string>;
@@ -587,6 +623,10 @@ export interface DiscoverHostInterface {
     pgsqlServerInstances?: Array<PgsqlInstancesDiscovered>;
     oracleServerDeploymentType?: string;
     databaseInstanceDetails?: Array<OracleInstancesDiscovered>;
+    /** Host manage readiness object with permission flags */
+    hostManageReadiness?: HostManageReadiness;
+    /** Source of discovery: 'discover' (extensive run) or 'tagging-service' (Fleet Manager fallback) */
+    source?: DiscoverySource;
     [key: string]: any;
 }
 
@@ -594,7 +634,7 @@ export interface DiscoverOracleHostInterface {
     ec2InstanceId: string;
     ec2InstanceType?: string;
     platform?: string;
-    ssmState?: string;
+    ssmState?: SsmState | string;
     ec2InstanceName?: string;
     ec2UsageOperation?: string;
     key?: string;
@@ -607,12 +647,16 @@ export interface DiscoverOracleHostInterface {
     databaseInstanceDetails?: Array<OracleInstancesDiscovered>;
     credentialId?: string;
     regionId?: string;
+    /** Host manage readiness object with permission flags */
+    hostManageReadiness?: HostManageReadiness;
+    /** Source of discovery: 'discover' (extensive run) or 'tagging-service' (Fleet Manager fallback) */
+    source?: DiscoverySource;
 }
 
 export interface DiscoverPgsqlHostInterface {
     ec2InstanceId: string;
     ec2InstanceType?: string;
-    ssmState?: string;
+    ssmState?: SsmState | string;
     ec2InstanceName?: string;
     ec2UsageOperation?: string;
     nodesList?: Array<string>;
@@ -629,6 +673,10 @@ export interface DiscoverPgsqlHostInterface {
         id?: string;
         name?: string;
     }>;
+    /** Host manage readiness object with permission flags */
+    hostManageReadiness?: HostManageReadiness;
+    /** Source of discovery: 'discover' (extensive run) or 'tagging-service' (Fleet Manager fallback) */
+    source?: DiscoverySource;
 }
 
 export interface OracleInstancesDiscovered {

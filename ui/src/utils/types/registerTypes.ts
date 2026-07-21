@@ -13,7 +13,6 @@ export interface ManageStates {
     installMissingPowershell?: boolean;
     installMissingJQ?: boolean;
     installMissingPython?: boolean;
-    assessment: string;
     remediation: string;
     dbcreation: string;
     sandbox: string;
@@ -25,6 +24,7 @@ export interface ManageStates {
     manageReadinessData?: ManageReadinessData;
     regionId: string;
     credentialId: string;
+    perRowState?: Array<{ key: string; value: string }>;
 }
 
 export interface BulkDetectedInstance {

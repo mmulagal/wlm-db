@@ -20,7 +20,8 @@ import {
     renderCellData,
     renderInstanceListText,
     renderUnmanagedAZ,
-    uniqueHostRow
+    uniqueHostRow,
+    hasFullPermission
 } from '../../InventoryV2/InventoryUtilsV2';
 import { getFilterOptions, getSelectedFromSelectionState } from '../../../utils/utilityFunctions';
 import useResize from '../../../common/hooks/useResize';
@@ -156,11 +157,14 @@ const ExploreSavingsTableV2 = () => {
 
                 const limitReached = selectedRowsForExploreSavingsEBSBulk.length >= 5;
                 const shouldDisableDueToLimit = limitReached && !isSelected;
+                const lacksFullPermission = !hasFullPermission(item?.hostManageReadiness);
 
-                const isDisabled = !sharesGroupWithSelection || shouldDisableDueToLimit;
+                const isDisabled = !sharesGroupWithSelection || shouldDisableDueToLimit || lacksFullPermission;
 
                 let tooltipTitle = '';
-                if (!sharesGroupWithSelection) {
+                if (lacksFullPermission) {
+                    tooltipTitle = t('databases.inventory.full-permission-required-explore-savings');
+                } else if (!sharesGroupWithSelection) {
                     tooltipTitle = t('databases.explore-savings.disabled-tooltip');
                 } else if (shouldDisableDueToLimit) {
                     tooltipTitle = t('databases.explore-savings.disabled-tooltip-limit-exceed');
@@ -184,7 +188,9 @@ const ExploreSavingsTableV2 = () => {
                         selectionProps: {
                             title: tooltipTitle,
                             titleProps: {
-                                placement: 'bottom'
+                                placement: 'bottom',
+                                width: '380px',
+                                height: '50px'
                             }
                         }
                     }
@@ -263,15 +269,21 @@ const ExploreSavingsTableV2 = () => {
         width: windowSize.width >= 1920 ? '15.37%' : '247px',
         renderCell: (cellData: any, rowData: any) => {
             const isBulkSelectionActive = selectedRowsForExploreSavingsEBSBulk.length > 0;
-            const tooltipMessage = isBulkSelectionActive
-                ? t('databases.explore-savings.disabled-tooltip-bulk-selection')
-                : '';
+            const lacksFullPermission = !hasFullPermission(rowData?.hostManageReadiness);
+            const isDisabled = isBulkSelectionActive || lacksFullPermission;
+
+            let tooltipMessage = '';
+            if (lacksFullPermission) {
+                tooltipMessage = t('databases.inventory.full-permission-required-explore-savings');
+            } else if (isBulkSelectionActive) {
+                tooltipMessage = t('databases.explore-savings.disabled-tooltip-bulk-selection');
+            }
 
             const exploreSavingsButton = (
                 <div
-                    className={isBulkSelectionActive ? CommonStyles.detectManageDisable : CommonStyles.detectManage}
+                    className={isDisabled ? CommonStyles.detectManageDisable : CommonStyles.detectManage}
                     onClick={
-                        isBulkSelectionActive
+                        isDisabled
                             ? undefined
                             : () => {
                                   dispatch(setEbsTCOAction('bulk'));
@@ -289,8 +301,8 @@ const ExploreSavingsTableV2 = () => {
                 </div>
             );
 
-            return isBulkSelectionActive ? (
-                <TooltipComponent title={tooltipMessage} placement="bottom" width="240px" height="50px">
+            return isDisabled ? (
+                <TooltipComponent title={tooltipMessage} placement="bottom" width="380px" height="50px">
                     {exploreSavingsButton}
                 </TooltipComponent>
             ) : (

@@ -564,7 +564,7 @@ export const Content = () => {
                                             <button
                                                 className={styles.closeButton}
                                                 onClick={() => handleRemoveInstance(instance.uniqueKey)}
-                                                aria-label={t('databases.register-flow.remove-instance')}
+                                                aria-label={t('databases.register-flow.remove')}
                                             >
                                                 <CloseIcon />
                                             </button>

@@ -153,7 +153,8 @@
             "security-group-rules-col-protocol": "Protocol",
             "security-group-rules-col-port-range": "Port range",
             "security-group-max-selection": "Maximum {{max}} security groups allowed",
-            "security-group-count-selected": "{{count}} selected"
+            "security-group-count-selected": "{{count}} selected",
+            "view-and-fix-disabled-tooltip": "Well-Architected assessment requires full permissions. This feature will be enabled via Global WAD in a future release."
         },
         "banner": {
             "one-time-assessment": "One-time assessment",
@@ -257,6 +258,7 @@
             "ec2-iam-instance-profile-permissions": "EC2 IAM instance profile permissions",
             "capability": "Capability",
             "fix-well-architected-issues": "Fix well-architected issues",
+            "extended-analysis-and-fix": "Extended analysis and Fix",
             "powershell-modules": "PowerShell modules",
             "sql-server-permissions": "SQL Server permissions",
             "review-well-architected-issues-and-recommendations": "Review well-architected issues and recommendations",
@@ -289,6 +291,7 @@
             "register-database": "Register database",
             "previous": "Previous",
             "next": "Next",
+            "remove": "Remove",
             "readiness-status-complete": "Complete",
             "readiness-status-incomplete": "Incomplete",
             "register": "Register",
@@ -336,8 +339,7 @@
                 "authenticated-status": "Authentication status",
                 "readiness-status": "Readiness status",
                 "prerequisite-check": "Prerequisite check",
-                "review-well-architected": "Review well-architected ",
-                "fix-well-architected": "Fix well-architected ",
+                "extended-analysis-and-fix": "Extended analysis and Fix",
                 "create-database": "Create database",
                 "create-sandbox": "Create sandbox",
                 "error-analysis": "Error analysis"
@@ -435,6 +437,7 @@
             "authentication-status": "Authentication status",
             "success": "Success",
             "failed": "Failed",
+            "fsx-link-required-message": "Associate a link to register instance",
             "capabilities-information": {
                 "review-well-architected-issues": "Gain deep insights into the health and performance of your Microsoft SQL Server instances on FSx for ONTAP with the well-architected feature. It continuously analyzes configurations against industry and vendor best practices, reports misalignments, and provides clear, actionable recommendations to optimize performance, security, and compliance.",
                 "fix-well-architected-issues": "Resolve configuration issues effortlessly with the well-architected feature for Microsoft SQL Server instances on FSx for ONTAP. Fix storage misalignments and other configuration issues automatically with a single click or follow guided steps for manual remediation to ensure optimal performance and compliance.",
@@ -1594,6 +1597,11 @@
             "wad-accordion-three-point-five-option-one": "AWS Secrets Manager",
             "wad-accordion-three-point-five-option-two": "Windows Credential Manager",
             "wad-accordion-three-point-five-option-three": "Interactive prompt ",
+            "registration-requires-full-permission": "Full permissions required to register instance. Database authentication is mandatory for registration.",
+            "full-permission-required-explore-savings": "Full permissions required for Explore savings. Enable extensive run permission to use this feature.",
+            "view-and-fix": "View and Fix",
+            "register-instance": "Register instance",
+            "no-permission-data-available": "No permission data available",
 
             "oracle-wad-accordion-one-point-two": "Copy the script to your Oracle Server host.",
             "oracle-wad-accordion-one-point-three": "Run the Python script. One script collects metadata from the database.",

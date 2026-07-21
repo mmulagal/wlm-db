@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { DBType, DETECT_HOST_VAR, ACTION_TYPE, INVENTORY_STATUS } from '../../../../../utils/consts';
+import { DBType, DETECT_HOST_VAR, ACTION_TYPE, INVENTORY_STATUS, FSX_AUTH_STATUS } from '../../../../../utils/consts';
 import {
     DiscoverHostInterface,
     DiscoverOracleHostInterface,
@@ -380,13 +380,13 @@ export const hasPartialAuthSuccess = (
 
     if (needAuthFsxIds.length === 0) return false;
 
-    const failedCount = needAuthFsxIds.filter(id => fsxAuthStatus?.[id] === 'failed').length;
+    const failedCount = needAuthFsxIds.filter(id => fsxAuthStatus?.[id] === FSX_AUTH_STATUS.FAILED).length;
 
     // First landing - no attempts yet (no failures), Enable radio buttons
     if (failedCount === 0) return false;
 
     // Count successful authentications in this session
-    const successCount = allFsxIds.filter(id => fsxAuthStatus?.[id] === 'success').length;
+    const successCount = allFsxIds.filter(id => fsxAuthStatus?.[id] === FSX_AUTH_STATUS.SUCCESS).length;
 
     // Partial success - some FSx authenticated and some FSx failed
     // This is the case where we disable radio buttons

@@ -3,12 +3,10 @@ import styles from './PermissionListComponent.module.scss';
 import { ACTION_TYPE, MANAGE_STATES } from '../../../../../../utils/consts';
 import { AccordionItem } from '../ManageInstanceAccordion/ManageInstanceAccordion';
 import { PermissionContent } from './PermissionContent/PermissionContent';
-import { ReactComponent as Review } from '../../../../../../assets/Review.svg';
 import { ReactComponent as Fix } from '../../../../../../assets/Fix.svg';
 import { ReactComponent as Database } from '../../../../../../assets/Database.svg';
 import { ReactComponent as SandboxImage } from '../../../../../../assets/create-db-copies.svg';
 
-import { ReactComponent as ReviewDisabled } from '../../../../../../assets/Review-disabled.svg';
 import { ReactComponent as FixDisabled } from '../../../../../../assets/Fix-disabled.svg';
 import { ReactComponent as DatabaseDisabled } from '../../../../../../assets/Database-disabled.svg';
 import { ReactComponent as SandboxImageDisabled } from '../../../../../../assets/Sandbox-disabled.svg';
@@ -30,17 +28,31 @@ export const PermissionListComponentItems = (
         : MANAGE_STATES.AI_ANALYSIS_DISABLED;
     const errorInvestigationMissingPermission =
         !aiAnalysisEnabled || manageChecks?.errorInvestigation !== MANAGE_STATES.READY;
-    // MSSQL blocks (original)
-    const mssqlBlocks = [
+
+    // MSSQL blocks for remediation (Extended analysis and fix)
+    const mssqlBlocksRemediation = [
         {
             label: t('databases.register-flow.aws-iam-policy-permissions'),
-            values: [t('databases.register-flow.dbwl-read-only-permissions')],
+            values: [
+                {
+                    title: t('databases.register-flow.dbwl-operate-only-permissions'),
+                    items: []
+                },
+                {
+                    title: t('databases.register-flow.additional-fsx-ontap-permissions'),
+                    items: []
+                },
+                {
+                    title: t('databases.register-flow.additional-compute-optimizer-permissions'),
+                    items: []
+                }
+            ],
             showCopy: false,
             viewPolicy: {
                 value: true,
-                withTabs: false
+                withTabs: true
             },
-            dialogHeader: t('databases.register-flow.review-well-architected-issues-and-recommendations')
+            dialogHeader: t('databases.register-flow.extended-analysis-and-fix')
         },
         {
             label: t('databases.register-flow.ec2-iam-instance-profile-permissions'),
@@ -50,21 +62,21 @@ export const PermissionListComponentItems = (
                 value: true,
                 withTabs: false
             },
-            dialogHeader: t('databases.register-flow.review-well-architected-issues-and-recommendations')
+            dialogHeader: t('databases.register-flow.extended-analysis-and-fix')
         },
         {
             label: t('databases.register-flow.sql-server-permissions'),
-            values: ['VIEW ANY DEFINITION', 'VIEW SERVER STATE'],
+            values: ['VIEW ANY DEFINITION', 'ALTER SETTINGS', 'VIEW SERVER STATE'],
             showCopy: false
         },
         {
             label: t('databases.register-flow.powershell-modules'),
-            values: ['AWS.Tools.SimpleSystemsManagement', 'AWS.Tools.CloudWatch']
+            values: ['AWS.Tools.SimpleSystemsManagement']
         }
     ];
 
-    // Oracle blocks
-    const oracleBlocks = [
+    // Oracle blocks for remediation
+    const oracleBlocksRemediation = [
         {
             label: t('databases.register-flow.aws-iam-policy-permissions'),
             values: [t('databases.register-flow.dbwl-read-only-permissions')],
@@ -73,7 +85,7 @@ export const PermissionListComponentItems = (
                 value: true,
                 withTabs: false
             },
-            dialogHeader: t('databases.register-flow.review-well-architected-issues-and-recommendations')
+            dialogHeader: t('databases.register-flow.extended-analysis-and-fix')
         },
         {
             label: t('databases.register-flow.ec2-iam-instance-profile-permissions'),
@@ -83,22 +95,13 @@ export const PermissionListComponentItems = (
                 value: true,
                 withTabs: false
             },
-            dialogHeader: t('databases.register-flow.review-well-architected-issues-and-recommendations')
+            dialogHeader: t('databases.register-flow.extended-analysis-and-fix')
         },
         {
             label: t('databases.register-flow.dependent-modules'),
             values: ['AWS-CLI', 'JQ', 'PYTHON'],
             showCopy: false
         },
-        {
-            label: t('databases.register-flow.oracle-user-permissions'),
-            values: ['CREATE SESSION', 'SELECT_CATALOG_ROLE CONTAINER = ALL'],
-            secondLineValues: ['SET CONTAINER = ALL', 'SET CONTAINER_DATA = ALL CONTAINER = CURRENT']
-        }
-    ];
-
-    const oracleBlocksRemediation = [
-        ...oracleBlocks.slice(0, -1), // All blocks except the last one as need to add 'ALTER SYSTEM'
         {
             label: t('databases.register-flow.oracle-user-permissions'),
             values: ['CREATE SESSION', 'SELECT_CATALOG_ROLE CONTAINER = ALL'],
@@ -111,30 +114,7 @@ export const PermissionListComponentItems = (
         return [
             {
                 id: '1',
-                title: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
-                subtitle: t('databases.register-flow.capability'),
-                readinessStatus: manageChecks?.assessment,
-                missingPermission: manageChecks?.assessment !== MANAGE_STATES.READY,
-                image:
-                    wizardOperationType !== ACTION_TYPE.BULK && manageChecks?.assessment !== MANAGE_STATES.READY ? (
-                        <ReviewDisabled />
-                    ) : (
-                        <Review />
-                    ),
-                content: (
-                    <PermissionContent
-                        title={t('databases.register-flow.prerequisites-list')}
-                        infoBlock={t(
-                            'databases.register-flow.capabilities-information.oracle-capabilities.review-well-architected-issues'
-                        )}
-                        blocks={oracleBlocks}
-                        policies={policiesList}
-                    />
-                )
-            },
-            {
-                id: '2',
-                title: t('databases.register-flow.fix-well-architected-issues'),
+                title: t('databases.register-flow.extended-analysis-and-fix'),
                 subtitle: t('databases.register-flow.capability'),
                 readinessStatus: manageChecks?.remediation,
                 missingPermission: manageChecks?.remediation !== MANAGE_STATES.READY,
@@ -156,7 +136,7 @@ export const PermissionListComponentItems = (
                 )
             },
             {
-                id: '5',
+                id: '2',
                 title: t('databases.register-flow.error-investigation'),
                 subtitle: t('databases.register-flow.capability'),
                 readinessStatus: errorInvestigationReadinessStatus,
@@ -209,28 +189,7 @@ export const PermissionListComponentItems = (
     const items: AccordionItem[] = [
         {
             id: '1',
-            title: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
-            subtitle: t('databases.register-flow.capability'),
-            readinessStatus: manageChecks?.assessment,
-            missingPermission: manageChecks?.assessment !== MANAGE_STATES.READY,
-            image:
-                wizardOperationType !== ACTION_TYPE.BULK && manageChecks?.assessment !== MANAGE_STATES.READY ? (
-                    <ReviewDisabled />
-                ) : (
-                    <Review />
-                ),
-            content: (
-                <PermissionContent
-                    title={t('databases.register-flow.prerequisites-list')}
-                    infoBlock={t('databases.register-flow.capabilities-information.review-well-architected-issues')}
-                    blocks={mssqlBlocks}
-                    policies={policiesList}
-                />
-            )
-        },
-        {
-            id: '2',
-            title: t('databases.register-flow.fix-well-architected-issues'),
+            title: t('databases.register-flow.extended-analysis-and-fix'),
             subtitle: t('databases.register-flow.capability'),
             readinessStatus: manageChecks?.remediation,
             missingPermission: manageChecks?.remediation !== MANAGE_STATES.READY,
@@ -244,56 +203,13 @@ export const PermissionListComponentItems = (
                 <PermissionContent
                     title={t('databases.register-flow.prerequisites-list')}
                     infoBlock={t('databases.register-flow.capabilities-information.fix-well-architected-issues')}
-                    blocks={[
-                        {
-                            label: t('databases.register-flow.aws-iam-policy-permissions'),
-                            values: [
-                                {
-                                    title: t('databases.register-flow.dbwl-operate-only-permissions'),
-                                    items: []
-                                },
-                                {
-                                    title: t('databases.register-flow.additional-fsx-ontap-permissions'),
-                                    items: []
-                                },
-                                {
-                                    title: t('databases.register-flow.additional-compute-optimizer-permissions'),
-                                    items: []
-                                }
-                            ],
-                            showCopy: false,
-                            viewPolicy: {
-                                value: true,
-                                withTabs: true
-                            },
-                            dialogHeader: t('databases.register-flow.fix-well-architected-issues')
-                        },
-                        {
-                            label: t('databases.register-flow.ec2-iam-instance-profile-permissions'),
-                            values: [t('databases.register-flow.dbwl-ec2-instance-profile-permissions')],
-                            showCopy: false,
-                            viewPolicy: {
-                                value: true,
-                                withTabs: false
-                            },
-                            dialogHeader: t('databases.register-flow.fix-well-architected-issues')
-                        },
-                        {
-                            label: t('databases.register-flow.sql-server-permissions'),
-                            values: ['VIEW ANY DEFINITION', 'ALTER SETTINGS', 'VIEW SERVER STATE'],
-                            showCopy: false
-                        },
-                        {
-                            label: t('databases.register-flow.powershell-modules'),
-                            values: ['AWS.Tools.SimpleSystemsManagement']
-                        }
-                    ]}
+                    blocks={mssqlBlocksRemediation}
                     policies={policiesList}
                 />
             )
         },
         {
-            id: '3',
+            id: '2',
             title: t('databases.register-flow.create-database'),
             subtitle: t('databases.register-flow.capability'),
             readinessStatus: manageChecks?.dbcreation,
@@ -344,7 +260,7 @@ export const PermissionListComponentItems = (
             )
         },
         {
-            id: '4',
+            id: '3',
             title: t('databases.register-flow.create-database-copies-sandbox'),
             subtitle: t('databases.register-flow.capability'),
             readinessStatus: manageChecks?.sandbox,
@@ -402,7 +318,7 @@ export const PermissionListComponentItems = (
             )
         },
         {
-            id: '5',
+            id: '4',
             title: t('databases.register-flow.error-investigation'),
             subtitle: t('databases.register-flow.capability'),
             readinessStatus: errorInvestigationReadinessStatus,

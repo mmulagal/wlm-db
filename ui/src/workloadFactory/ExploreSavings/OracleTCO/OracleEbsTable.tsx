@@ -10,7 +10,8 @@ import {
     renderCellData,
     renderInstanceListText,
     renderUnmanagedAZ,
-    uniqueHostRow
+    uniqueHostRow,
+    hasFullPermission
 } from '../../InventoryV2/InventoryUtilsV2';
 import { getSelectedFromSelectionState } from '../../../utils/utilityFunctions';
 import { onClickESHostOracleEbs } from '../ExploreSavingsUtils';
@@ -94,11 +95,14 @@ const OracleEbsTable = () => {
 
                 const limitReached = selectedRowsForExploreSavingsOracleEbsBulk.length >= 5;
                 const shouldDisableDueToLimit = limitReached && !isSelected;
+                const lacksFullPermission = !hasFullPermission(item?.hostManageReadiness);
 
-                const isDisabled = !sharesGroupWithSelection || shouldDisableDueToLimit;
+                const isDisabled = !sharesGroupWithSelection || shouldDisableDueToLimit || lacksFullPermission;
 
                 let tooltipTitle = '';
-                if (!sharesGroupWithSelection) {
+                if (lacksFullPermission) {
+                    tooltipTitle = t('databases.inventory.full-permission-required-explore-savings');
+                } else if (!sharesGroupWithSelection) {
                     tooltipTitle = t('databases.explore-savings.disabled-tooltip');
                 } else if (shouldDisableDueToLimit) {
                     tooltipTitle = t('databases.explore-savings.disabled-tooltip-limit-exceed');
@@ -119,7 +123,9 @@ const OracleEbsTable = () => {
                         selectionProps: {
                             title: tooltipTitle,
                             titleProps: {
-                                placement: 'bottom'
+                                placement: 'bottom',
+                                width: '380px',
+                                height: '50px'
                             }
                         }
                     }
@@ -158,14 +164,20 @@ const OracleEbsTable = () => {
         width: windowSize.width >= 1920 ? '15.37%' : '247px',
         renderCell: (_cellData: any, rowData: any) => {
             const isBulkSelectionActive = selectedRowsForExploreSavingsOracleEbsBulk.length > 0;
-            const tooltipMessage = isBulkSelectionActive
-                ? t('databases.explore-savings.disabled-tooltip-bulk-selection')
-                : '';
+            const lacksFullPermission = !hasFullPermission(rowData?.hostManageReadiness);
+            const isDisabled = isBulkSelectionActive || lacksFullPermission;
+
+            let tooltipMessage = '';
+            if (lacksFullPermission) {
+                tooltipMessage = t('databases.inventory.full-permission-required-explore-savings');
+            } else if (isBulkSelectionActive) {
+                tooltipMessage = t('databases.explore-savings.disabled-tooltip-bulk-selection');
+            }
 
             const exploreSavingsButton = (
                 <div
-                    className={isBulkSelectionActive ? CommonStyles.detectManageDisable : CommonStyles.detectManage}
-                    onClick={isBulkSelectionActive ? undefined : () => handleSingleAction(rowData)}
+                    className={isDisabled ? CommonStyles.detectManageDisable : CommonStyles.detectManage}
+                    onClick={isDisabled ? undefined : () => handleSingleAction(rowData)}
                 >
                     <Typography variant="Regular_14" className={CommonStyles.textStyle}>
                         {t('databases.explore-savings.explore-savings-title')}
@@ -173,8 +185,8 @@ const OracleEbsTable = () => {
                 </div>
             );
 
-            return isBulkSelectionActive ? (
-                <TooltipComponent title={tooltipMessage} placement="bottom" width="240px" height="50px">
+            return isDisabled ? (
+                <TooltipComponent title={tooltipMessage} placement="bottom" width="380px" height="50px">
                     {exploreSavingsButton}
                 </TooltipComponent>
             ) : (

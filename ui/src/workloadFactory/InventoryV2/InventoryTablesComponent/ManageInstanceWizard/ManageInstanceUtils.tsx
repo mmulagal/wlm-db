@@ -280,10 +280,9 @@ export const callManageSingleInstanceApi = async (
 const permissionMissing = (engineType: string, manageSingleInstanceChecks: ManageStates) => {
     switch (engineType) {
         case DBType.ORACLE:
-            return manageSingleInstanceChecks?.assessment === REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
+            return manageSingleInstanceChecks?.remediation === REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         case DBType.MSSQL:
             return (
-                manageSingleInstanceChecks?.assessment === REGISTER_INSTANCE_STATE.NOT_AVAILABLE &&
                 manageSingleInstanceChecks?.remediation === REGISTER_INSTANCE_STATE.NOT_AVAILABLE &&
                 manageSingleInstanceChecks?.dbcreation === REGISTER_INSTANCE_STATE.NOT_AVAILABLE &&
                 manageSingleInstanceChecks?.sandbox === REGISTER_INSTANCE_STATE.NOT_AVAILABLE &&
@@ -755,9 +754,8 @@ export const getPermissionState = (type: string, manageReadinessData: ManageRead
     return MANAGE_STATES.READY;
 };
 
-// Checks the overall manage state based on individual states of assessment, remediation, dbcreation, and sandbox
+// Checks the overall manage state based on individual states of remediation, dbcreation, sandbox, and errorInvestigation
 export const checkOverallManageState = (
-    assessment: string,
     remediation: string,
     dbcreation?: string,
     sandbox?: string,
@@ -766,9 +764,7 @@ export const checkOverallManageState = (
     let overallState = '';
 
     // Filter out undefined values to handle optional parameters for Oracle
-    const states = [assessment, remediation, dbcreation, sandbox, errorInvestigation].filter(
-        state => state !== undefined
-    );
+    const states = [remediation, dbcreation, sandbox, errorInvestigation].filter(state => state !== undefined);
 
     if (states.includes(MANAGE_STATES.READY)) {
         overallState = MANAGE_STATES.READY;

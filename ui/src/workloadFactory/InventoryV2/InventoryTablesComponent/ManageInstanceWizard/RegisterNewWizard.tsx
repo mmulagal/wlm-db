@@ -79,11 +79,16 @@ const RegisterNewWizard = () => {
                 : t('databases.register-flow.authenticate-instance'),
             component: DetectInstanceStep
         },
+        /*
+         * FSx authentication step commented out for this sprint per Global WAD Gradual Trust plan
+         * FSx link validation now happens before user enters registration wizard
+         * TODO: Remove in next sprint when FSx link + credential flow is finalized
         {
             key: 'authenticate-fsx-step',
             label: t('databases.register-flow.authenticate-fsx-for-ontap'),
             component: AuthenticateFSxStep
         },
+        */
         { key: 'manage-instance', label: t('databases.register-flow.prepare'), component: ManageInstanceStep }
     ];
 

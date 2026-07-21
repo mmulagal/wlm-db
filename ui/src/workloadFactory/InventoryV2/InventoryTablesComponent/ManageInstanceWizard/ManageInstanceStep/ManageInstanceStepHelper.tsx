@@ -131,11 +131,9 @@ export const getManageCheckObjInitial = (hostType: string) => {
     };
 
     if (hostType === DBType.ORACLE) {
-        manageCheckObj.assessment = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.remediation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.errorInvestigation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
     } else {
-        manageCheckObj.assessment = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.remediation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.dbcreation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.sandbox = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
@@ -164,14 +162,12 @@ export function getManageCheckObjFinal(
     if (hostType === DBType.ORACLE) {
         return {
             ...baseObj,
-            assessment: getPermissionState('assessment', manageReadinessData),
             remediation: getPermissionState('remediation', manageReadinessData),
             errorInvestigation: getPermissionState('errorInvestigation', manageReadinessData)
         };
     }
     return {
         ...baseObj,
-        assessment: getPermissionState('assessment', manageReadinessData),
         remediation: getPermissionState('remediation', manageReadinessData),
         dbcreation: getPermissionState('dbcreation', manageReadinessData),
         sandbox: getPermissionState('sandbox', manageReadinessData),
@@ -192,16 +188,11 @@ export const getManageCheckObjMultiInitial = (hostType: string, t: TFunction) =>
     };
 
     if (hostType === DBType.ORACLE) {
-        manageCheckObj.assessment = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.remediation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.errorInvestigation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.perRowState = [
             {
-                key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
-                value: REGISTER_INSTANCE_STATE.NOT_AVAILABLE
-            },
-            {
-                key: t('databases.register-flow.fix-well-architected-issues'),
+                key: t('databases.register-flow.extended-analysis-and-fix'),
                 value: REGISTER_INSTANCE_STATE.NOT_AVAILABLE
             },
             {
@@ -210,18 +201,13 @@ export const getManageCheckObjMultiInitial = (hostType: string, t: TFunction) =>
             }
         ];
     } else {
-        manageCheckObj.assessment = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.remediation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.dbcreation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.sandbox = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.errorInvestigation = REGISTER_INSTANCE_STATE.NOT_AVAILABLE;
         manageCheckObj.perRowState = [
             {
-                key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
-                value: REGISTER_INSTANCE_STATE.NOT_AVAILABLE
-            },
-            {
-                key: t('databases.register-flow.fix-well-architected-issues'),
+                key: t('databases.register-flow.extended-analysis-and-fix'),
                 value: REGISTER_INSTANCE_STATE.NOT_AVAILABLE
             },
             {
@@ -250,21 +236,16 @@ export function getManageCheckObjMultiFinal(
     t: TFunction
 ): Partial<ExtendedManageStates> {
     if (hostType === DBType.ORACLE) {
-        const assessment = getPermissionState('assessment', manageReadinessData);
         const remediation = getPermissionState('remediation', manageReadinessData);
         const errorInvestigation = getPermissionState('errorInvestigation', manageReadinessData);
 
-        const states = [assessment, remediation, errorInvestigation];
-        const overallState = checkOverallManageState(assessment, remediation, errorInvestigation);
+        const states = [remediation, errorInvestigation];
+        const overallState = checkOverallManageState(remediation, undefined, undefined, errorInvestigation);
         const readyCount = states.filter(state => state === MANAGE_STATES.READY).length;
 
         const perRowState = [
             {
-                key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
-                value: assessment
-            },
-            {
-                key: t('databases.register-flow.fix-well-architected-issues'),
+                key: t('databases.register-flow.extended-analysis-and-fix'),
                 value: remediation
             },
             {
@@ -274,7 +255,6 @@ export function getManageCheckObjMultiFinal(
         ];
         return {
             ...manageCheckObj,
-            assessment,
             remediation,
             overallState,
             readyCount,
@@ -286,23 +266,18 @@ export function getManageCheckObjMultiFinal(
             manageReadinessData
         };
     }
-    const assessment = getPermissionState('assessment', manageReadinessData);
     const remediation = getPermissionState('remediation', manageReadinessData);
     const dbcreation = getPermissionState('dbcreation', manageReadinessData);
     const sandbox = getPermissionState('sandbox', manageReadinessData);
     const errorInvestigation = getPermissionState('errorInvestigation', manageReadinessData);
 
-    const states = [assessment, remediation, dbcreation, sandbox, errorInvestigation];
-    const overallState = checkOverallManageState(assessment, remediation, dbcreation, sandbox, errorInvestigation);
+    const states = [remediation, dbcreation, sandbox, errorInvestigation];
+    const overallState = checkOverallManageState(remediation, dbcreation, sandbox, errorInvestigation);
     const readyCount = states.filter(state => state === MANAGE_STATES.READY).length;
 
     const perRowState = [
         {
-            key: t('databases.register-flow.review-well-architected-issues-and-recommendations'),
-            value: assessment
-        },
-        {
-            key: t('databases.register-flow.fix-well-architected-issues'),
+            key: t('databases.register-flow.extended-analysis-and-fix'),
             value: remediation
         },
         {
@@ -320,7 +295,6 @@ export function getManageCheckObjMultiFinal(
     ];
     return {
         ...manageCheckObj,
-        assessment,
         remediation,
         dbcreation,
         sandbox,

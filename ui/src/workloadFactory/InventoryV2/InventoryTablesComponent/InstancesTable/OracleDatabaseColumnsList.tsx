@@ -32,7 +32,7 @@ import {
     setSelectedHeaderTab,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
-import { manageActionCol } from '../../InventoryUtilsV2';
+import { hasFullPermission } from '../../InventoryUtilsV2';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 import { setFSXId } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { logAnalyzerStatusCol, handleOracleWadOptimizeAction, notAvailableWithTooltip } from './InstanceTableHelper';
@@ -142,6 +142,16 @@ export function getOracleDatabaseColumnsList({
             width: '240px',
             filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
             renderCell: (cellData: string, rowData: any) => {
+                // Check for minimal permission - show N/A if no full permission and no WAD data
+                const hasFullPerm = hasFullPermission(rowData?.hostManageReadiness);
+                if (!hasFullPerm && !rowData?.isWad) {
+                    return (
+                        <DsTypography variant="Regular_14" className={styles.colText}>
+                            {t('databases.general.not-available-table-columns')}
+                        </DsTypography>
+                    );
+                }
+
                 // If the computed display value is "Not analyzed", show with tooltip
                 if (cellData === INVENTORY_TABLE_STATUS.NOT_ANALYZED) {
                     return (
@@ -165,7 +175,7 @@ export function getOracleDatabaseColumnsList({
                     return <DsFlashingDotsLoader />;
                 }
 
-                // For WAD (offline assessment) rows with valid optimization status, show tooltip and View link
+                // For WAD (offline assessment) rows with valid optimization status, show tooltip without View link
                 if (rowData?.isWad && cellData) {
                     return (
                         <div className={styles.naContainer}>
@@ -188,9 +198,6 @@ export function getOracleDatabaseColumnsList({
                                 </div>
                             </Popover>
                             <DsTypography variant="Regular_14">{cellData}</DsTypography>
-                            <DsButton type="text" onClick={() => handleOracleWadOptimizeAction(rowData, dispatch)}>
-                                {t('databases.general.view')}
-                            </DsButton>
                         </div>
                     );
                 }
@@ -658,13 +665,26 @@ export function getOracleDatabaseColumnsList({
             width: '200px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                const { colText, disableMsg } = manageActionCol(t, DBType.ORACLE, rowData);
-
-                // Disable action button when bulk selection is active
                 const isDisabledByBulkSelection = isBulkSelectionActive;
+
+                // View and Fix is only available for:
+                // 1. WAD (offline assessment) instances with isWad flag, OR
+                // 2. Registered/managed instances with resourceId
+                const isRegisteredOrManaged =
+                    rowData?.statusColText === INVENTORY_STATUS.MANAGED || rowData?.resourceId;
+                const canViewAndFix = rowData?.isWad || isRegisteredOrManaged;
+                const viewAndFixDisableMsg = !canViewAndFix ? t('databases.general.view-and-fix-disabled-tooltip') : '';
+
                 const effectiveDisableMsg = isDisabledByBulkSelection
                     ? t('databases.bulk-register.action-disabled-during-bulk-selection')
-                    : disableMsg;
+                    : viewAndFixDisableMsg;
+
+                // Determine button text based on optimization status
+                const buttonText =
+                    rowData?.optimizationStatus === ACTION_CTA.WELL_ARCHITECTED
+                        ? t('databases.general.well-architected')
+                        : t('databases.general.view-and-fix');
+
                 return (
                     <>
                         {effectiveDisableMsg ? (
@@ -675,12 +695,12 @@ export function getOracleDatabaseColumnsList({
                                 container={
                                     <div className={styles.buttonContainer}>
                                         <DsButton
+                                            data-testid="wlm-db-oracle-view-and-fix"
                                             variant="secondary"
-                                            data-testid={`wlm-db-oracle-${colText}`}
                                             isThin
                                             isDisabled
                                         >
-                                            {colText}
+                                            {buttonText}
                                         </DsButton>
                                     </div>
                                 }
@@ -690,12 +710,13 @@ export function getOracleDatabaseColumnsList({
                                 <DsButton
                                     variant="secondary"
                                     isThin
-                                    data-testid={`wlm-db-oracle-${colText}`}
+                                    data-testid="wlm-db-oracle-view-and-fix"
                                     onClick={() => {
-                                        if (
-                                            colText === ACTION_CTA.FIX_ISSUES ||
-                                            colText === ACTION_CTA.WELL_ARCHITECTED
-                                        ) {
+                                        if (rowData?.isWad) {
+                                            // For WAD instances, use offline assessment handler
+                                            handleOracleWadOptimizeAction(rowData, dispatch);
+                                        } else {
+                                            // For managed instances, use regular optimize action
                                             dispatch(
                                                 setFSXId({
                                                     fsxId: rowData?.fsxId,
@@ -711,22 +732,10 @@ export function getOracleDatabaseColumnsList({
                                             );
                                             dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
                                             optimizeAction(rowData, dispatch);
-                                        } else {
-                                            dispatch(setManageSingleInstanceData(rowData));
-                                            dispatch(setWizardOperationType('single'));
-                                            dispatch(setRegisterHostType(DBType.ORACLE));
-                                            navigate('../register-wizard');
-                                            postBlueXPMessage({
-                                                type: BlueXPListeners.navigate,
-                                                payload: {
-                                                    pathname: './register-wizard',
-                                                    replace: true
-                                                }
-                                            });
                                         }
                                     }}
                                 >
-                                    {colText}
+                                    {buttonText}
                                 </DsButton>
                             </div>
                         )}

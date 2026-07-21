@@ -1,5 +1,5 @@
 {
-    "count": 5,
+    "count": 7,
     "items": [
         {
             "id": "65c6fd61d60cd207",
@@ -585,9 +585,7 @@
                             "ssdUsed": 4343635968,
                             "capacityPoolUsed": 98363595,
                             "snapshotUsed": 297222144,
-                            "protocol": [
-                                "NFS"
-                            ]
+                            "protocol": ["NFS"]
                         }
                     },
                     "resourceUtilization": {
@@ -652,18 +650,18 @@
                         "dbName": "dg2",
                         "associatedHosts": [
                             {
-                            "serviceName": "oracle-primary",
-                            "hostIp": "127.0.0.1",
-                            "ec2InstanceId": "i-0123456789abcdef01",
-                            "listenerPort": "1532",
-                            "sidName": "oracle-primary"
+                                "serviceName": "oracle-primary",
+                                "hostIp": "127.0.0.1",
+                                "ec2InstanceId": "i-0123456789abcdef01",
+                                "listenerPort": "1532",
+                                "sidName": "oracle-primary"
                             },
                             {
-                            "serviceName": "oracle-standby",
-                            "hostIp": "127.0.0.2",
-                            "ec2InstanceId": "i-0123456789abcdef11",
-                            "listenerPort": "1532",
-                            "sidName": "oracle-standby"
+                                "serviceName": "oracle-standby",
+                                "hostIp": "127.0.0.2",
+                                "ec2InstanceId": "i-0123456789abcdef11",
+                                "listenerPort": "1532",
+                                "sidName": "oracle-standby"
                             }
                         ],
                         "isPrimaryNode": true,
@@ -1098,9 +1096,7 @@
                             "ssdUsed": 4343635968,
                             "capacityPoolUsed": 98363595,
                             "snapshotUsed": 297222144,
-                            "protocol": [
-                                "NFS"
-                            ]
+                            "protocol": ["NFS"]
                         }
                     },
                     "resourceUtilization": {
@@ -1165,18 +1161,18 @@
                         "dbName": "dg2",
                         "associatedHosts": [
                             {
-                            "serviceName": "oracle-primary",
-                            "hostIp": "127.0.0.1",
-                            "ec2InstanceId": "i-0123456789abcdef01",
-                            "listenerPort": "1532",
-                            "sidName": "oracle-primary"
+                                "serviceName": "oracle-primary",
+                                "hostIp": "127.0.0.1",
+                                "ec2InstanceId": "i-0123456789abcdef01",
+                                "listenerPort": "1532",
+                                "sidName": "oracle-primary"
                             },
                             {
-                            "serviceName": "oracle-standby",
-                            "hostIp": "127.0.0.2",
-                            "ec2InstanceId": "i-0123456789abcdef11",
-                            "listenerPort": "1532",
-                            "sidName": "oracle-standby"
+                                "serviceName": "oracle-standby",
+                                "hostIp": "127.0.0.2",
+                                "ec2InstanceId": "i-0123456789abcdef11",
+                                "listenerPort": "1532",
+                                "sidName": "oracle-standby"
                             }
                         ],
                         "isPrimaryNode": false,
@@ -1188,7 +1184,320 @@
                     }
                 }
             ]
+        },
+        {
+            "id": "oracle-case10-managed",
+            "name": "oracle-case10-full-fsxn",
+            "vmInstanceId": "i-oracle-case10-full-fsxn",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "connected",
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "storageAllocation": {
+                "fsxn": 1099511627776,
+                "fsxw": 0,
+                "ebs": 0
+            },
+            "ec2Details": [
+                {
+                    "id": "i-oracle-case10-full-fsxn",
+                    "name": "oracle-case10-full-fsxn",
+                    "instanceType": "m5.xlarge",
+                    "availabilityZone": "us-west-2a",
+                    "subnetId": "subnet-case10oracle"
+                }
+            ],
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE10",
+                    "databaseInstanceId": "ORACASE10",
+                    "isManaged": true,
+                    "instanceState": "Up",
+                    "isDefault": false
+                }
+            ],
+            "fsxnResourceInfo": [
+                {
+                    "id": "fs-case10oracle",
+                    "capacityCost": 307.2,
+                    "operationalCost": 178.052,
+                    "size": 1099511627776
+                }
+            ],
+            "estimatedUsageCost": {
+                "compute": 154.76,
+                "storage": {
+                    "fsxn": 485.252,
+                    "ebs": 0,
+                    "fsxnBreakDownById": [
+                        {
+                            "id": "fs-case10oracle",
+                            "capacityCost": 307.2,
+                            "operationalCost": 178.052,
+                            "size": 1099511627776
+                        }
+                    ]
+                },
+                "connectivity": 0,
+                "others": 0,
+                "estimationType": "pricing"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "ORACASE10",
+                    "databaseInstanceName": "ORACASE10",
+                    "status": "Up",
+                    "databaseCount": 1,
+                    "databaseInstanceTopology": {
+                        "serverType": "ORACLE",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fs-case10oracle",
+                        "fileSystemName": "wlmdb-fsx-case10",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "AVAILABLE",
+                        "fileSystemStorageCapacity": 1024,
+                        "fileSystemThroughputCapacity": 128,
+                        "fileSystemStorageType": "SSD",
+                        "storageSummary": {
+                            "volumes": [
+                                {
+                                    "id": "vol-case10-oracle-data",
+                                    "name": "data_case10",
+                                    "luns": [{}]
+                                }
+                            ],
+                            "totalVolumes": 1,
+                            "totalLuns": 1
+                        }
+                    },
+                    "protection": {
+                        "isSqlNativeEnabled": false,
+                        "isAwsBackupEnabled": {
+                            "fsxn": false,
+                            "fsxw": false,
+                            "ebs": false
+                        },
+                        "isFsxOntapSnapshotsEnabled": false
+                    },
+                    "performance": {
+                        "assessment": "Excellent ( <=1 ms )",
+                        "rwMetrics": {
+                            "latency": {
+                                "read": [],
+                                "write": []
+                            },
+                            "iops": {
+                                "read": [],
+                                "write": []
+                            },
+                            "throughput": {
+                                "read": [],
+                                "write": []
+                            }
+                        }
+                    },
+                    "storageSavings": {
+                        "compressionRatio": 1.2,
+                        "deduplicationRatio": 1.1,
+                        "thinProvisioning": 1.05,
+                        "totalSavingsRatio": 1.386,
+                        "storageAllocatedCapacityInBytes": 1099511627776,
+                        "storageUsedCapacityInBytes": 793316253696,
+                        "logicalUsedCapacityInBytes": 900000000000
+                    },
+                    "storageSavingsText": "38.6%",
+                    "allocatedCapacity": "1 TiB",
+                    "logAnalyzer": {
+                        "status": "NOT_ANALYZED"
+                    },
+                    "resourceUtilization": {
+                        "cpu": []
+                    },
+                    "sqlServerDeploymentType": "Standalone",
+                    "databases": [
+                        {
+                            "name": "ORADB10",
+                            "status": "ONLINE",
+                            "type": "Single tenant",
+                            "size": 5000000000,
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": false,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": false
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "oracle-case9-managed",
+            "name": "oracle-case9-full-fsxn",
+            "vmInstanceId": "i-oracle-case9-full-fsxn",
+            "databaseHostStatus": "ONLINE",
+            "ssmStatus": "connected",
+            "platform": "Red Hat Enterprise Linux 8.9 (Ootpa)",
+            "storageAllocation": {
+                "fsxn": 2199023255552,
+                "fsxw": 0,
+                "ebs": 0
+            },
+            "ec2Details": [
+                {
+                    "id": "i-oracle-case9-full-fsxn",
+                    "name": "oracle-case9-full-fsxn",
+                    "instanceType": "m5.xlarge",
+                    "availabilityZone": "us-west-2a",
+                    "subnetId": "subnet-case9oracle"
+                }
+            ],
+            "databaseInstanceDetails": [
+                {
+                    "instanceName": "ORACASE9",
+                    "databaseInstanceId": "ORACASE9",
+                    "isManaged": true,
+                    "instanceState": "Up",
+                    "isDefault": false
+                }
+            ],
+            "fsxnResourceInfo": [
+                {
+                    "id": "fs-case9oracle",
+                    "capacityCost": 614.4,
+                    "operationalCost": 356.104,
+                    "size": 2199023255552
+                }
+            ],
+            "estimatedUsageCost": {
+                "compute": 154.76,
+                "storage": {
+                    "fsxn": 970.504,
+                    "ebs": 0,
+                    "fsxnBreakDownById": [
+                        {
+                            "id": "fs-case9oracle",
+                            "capacityCost": 614.4,
+                            "operationalCost": 356.104,
+                            "size": 2199023255552
+                        }
+                    ]
+                },
+                "connectivity": 0,
+                "others": 0,
+                "estimationType": "pricing"
+            },
+            "databaseInstancesSummary": [
+                {
+                    "databaseInstanceId": "ORACASE9",
+                    "databaseInstanceName": "ORACASE9",
+                    "status": "Up",
+                    "databaseCount": 2,
+                    "databaseInstanceTopology": {
+                        "serverType": "ORACLE",
+                        "serverInstallationMode": "Standalone",
+                        "fileSystemType": "FSx for ONTAP",
+                        "fileSystemId": "fs-case9oracle",
+                        "fileSystemName": "wlmdb-fsx-case9",
+                        "fileSystemDeploymentMode": "MULTI_AZ_1",
+                        "fileSystemStatus": "AVAILABLE",
+                        "fileSystemStorageCapacity": 2048,
+                        "fileSystemThroughputCapacity": 256,
+                        "fileSystemStorageType": "SSD",
+                        "storageSummary": {
+                            "volumes": [
+                                {
+                                    "id": "vol-case9-oracle-data",
+                                    "name": "data_case9",
+                                    "luns": [{}]
+                                }
+                            ],
+                            "totalVolumes": 1,
+                            "totalLuns": 2
+                        }
+                    },
+                    "protection": {
+                        "isSqlNativeEnabled": false,
+                        "isAwsBackupEnabled": {
+                            "fsxn": true,
+                            "fsxw": false,
+                            "ebs": false
+                        },
+                        "isFsxOntapSnapshotsEnabled": true
+                    },
+                    "performance": {
+                        "assessment": "Good ( <=2 ms )",
+                        "rwMetrics": {
+                            "latency": {
+                                "read": [],
+                                "write": []
+                            },
+                            "iops": {
+                                "read": [],
+                                "write": []
+                            },
+                            "throughput": {
+                                "read": [],
+                                "write": []
+                            }
+                        }
+                    },
+                    "storageSavings": {
+                        "compressionRatio": 1.3,
+                        "deduplicationRatio": 1.2,
+                        "thinProvisioning": 1.1,
+                        "totalSavingsRatio": 1.716,
+                        "storageAllocatedCapacityInBytes": 2199023255552,
+                        "storageUsedCapacityInBytes": 1281502032000,
+                        "logicalUsedCapacityInBytes": 1800000000000
+                    },
+                    "storageSavingsText": "71.6%",
+                    "allocatedCapacity": "2 TiB",
+                    "logAnalyzer": {
+                        "status": "ANALYZED",
+                        "lastAnalyzedTimestamp": "1730000000000"
+                    },
+                    "resourceUtilization": {
+                        "cpu": []
+                    },
+                    "sqlServerDeploymentType": "Standalone",
+                    "databases": [
+                        {
+                            "name": "ORADB9A",
+                            "status": "ONLINE",
+                            "type": "Single tenant",
+                            "size": 8000000000,
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        },
+                        {
+                            "name": "ORADB9B",
+                            "status": "ONLINE",
+                            "type": "Single tenant",
+                            "size": 10000000000,
+                            "protection": {
+                                "isSqlNativeEnabled": false,
+                                "isAwsBackupEnabled": {
+                                    "fsxn": true,
+                                    "fsxw": false,
+                                    "ebs": false
+                                },
+                                "isFsxOntapSnapshotsEnabled": true
+                            }
+                        }
+                    ]
+                }
+            ]
         }
-    ],
-    "nextToken": ""
+    ]
 }

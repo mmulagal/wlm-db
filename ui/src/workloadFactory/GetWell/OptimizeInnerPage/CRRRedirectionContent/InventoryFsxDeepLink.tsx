@@ -4,7 +4,14 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import HeaderComponent from '../../../DatabaseHomePage/HeaderComponent/HeaderComponent';
 import ComponentLoader from '../../../../common/ComponentLoader/ComponentLoader';
-import { ASSESSMENT_CONFIG_NAMES, DBType, FIVE_MINUTES_MS, GETWELL_STATUS, WLF_TABS } from '../../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_NAMES,
+    DBType,
+    FIVE_MINUTES_MS,
+    GETWELL_STATUS,
+    SSM_STATE,
+    WLF_TABS
+} from '../../../../utils/consts';
 import {
     useAssociateSelectedLinkMutation,
     useGetExistingLinksMutation,
@@ -151,7 +158,7 @@ const InventoryFsxDeepLink = () => {
             );
             const latest = sorted[0];
 
-            if (latest?.state?.status?.toLowerCase() === 'connected') {
+            if (latest?.state?.status?.toLowerCase() === SSM_STATE.CONNECTED) {
                 const linkCheck: any = await checkExistingLinkApi({ fsxId });
 
                 const creationTime = latest?.creationTime;

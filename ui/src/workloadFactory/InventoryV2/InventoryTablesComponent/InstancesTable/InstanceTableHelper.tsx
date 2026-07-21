@@ -47,7 +47,8 @@ import {
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
     formatOfflineAssessmentToInventoryData,
-    formatOracleOfflineAssessmentToInventoryData
+    formatOracleOfflineAssessmentToInventoryData,
+    hasFullPermission
 } from '../../InventoryUtilsV2';
 import { formatOfflineDataToAssessmentFormat } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import store from '../../../../store/store';
@@ -749,6 +750,16 @@ export const isInstanceActionDisabled = (
         };
     }
 
+    // Check permission level - registration requires extensiveRunPermission for database authentication
+    if (!hasFullPermission(rowData?.hostManageReadiness)) {
+        return {
+            isDisabled: true,
+            disableMsg: t('databases.inventory.registration-requires-full-permission'),
+            tooltipWidth: '500px',
+            tooltipHeight: '70px'
+        };
+    }
+
     // Check FSx/ONTAP storage requirement for unmanaged/undetected instances.
     // An UNDETECTED instance may have no discover data at all (e.g. SQL*Plus init error on
     // the host) and therefore no fileSystemType, no storage array, and no fsxId — it must
@@ -789,6 +800,21 @@ export const isInstanceActionDisabled = (
             isDisabled: true,
             disableMsg: t('databases.wad.register-disabled-no-credentials'),
             tooltipWidth: '280px',
+            tooltipHeight: '50px'
+        };
+    }
+
+    // Check FSx link exists for unregistered instances (Case 4: fsxLinkExists is false)
+    // Only check for NOT_REGISTERED or UNDETECTED statuses
+    if (
+        (rowData?.statusColText === INVENTORY_STATUS.NOT_REGISTERED ||
+            rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+        rowData?.hostManageReadiness?.fsxLinkExists === false
+    ) {
+        return {
+            isDisabled: true,
+            disableMsg: t('databases.register-flow.fsx-link-required-message'),
+            tooltipWidth: '380px',
             tooltipHeight: '50px'
         };
     }

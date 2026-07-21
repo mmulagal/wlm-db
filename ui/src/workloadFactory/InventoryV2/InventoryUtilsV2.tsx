@@ -54,7 +54,8 @@ import {
     OraclePluggableDatabase,
     PgsqlInstancesDiscovered,
     SQLServerInstancesDiscovered,
-    StatusObjInterface
+    StatusObjInterface,
+    HostManageReadiness
 } from '../../utils/types/inventoryV2Types';
 import {
     formatFractionalNumber,
@@ -83,6 +84,41 @@ import {
     getOracleCardsData
 } from '../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 import { isAuthRequiredForInstance } from './InventoryTablesComponent/ManageInstanceWizard/DetectInstanceStep/DetectContent/DetectContentHelper';
+
+/**
+ * Checks if the host has full permissions (extensive run permission)
+ * @param hostManageReadiness - Host manage readiness object
+ * @returns true if host has full permission
+ */
+export const hasFullPermission = (hostManageReadiness?: HostManageReadiness): boolean =>
+    hostManageReadiness?.extensiveRunPermission === true;
+
+/**
+ * Validates if registration can proceed based on FSx link status
+ * @param hostManageReadiness - Host manage readiness object
+ * @returns Object with canRegister flag and reason (i18n key) if blocked
+ */
+export const canRegisterWithFsxLink = (
+    hostManageReadiness?: HostManageReadiness
+): {
+    canRegister: boolean;
+    reason?: string;
+} => {
+    if (!hostManageReadiness) {
+        return { canRegister: false, reason: 'databases.inventory.no-permission-data-available' };
+    }
+
+    // Block if FSx storage exists but link is false (broken/removed link)
+    if (hostManageReadiness.fsxLinkExists === false) {
+        return {
+            canRegister: false,
+            reason: 'databases.register-flow.fsx-link-required-message'
+        };
+    }
+
+    // Allow if link exists or field is absent (EBS only - but these won't appear in inventory)
+    return { canRegister: true };
+};
 
 export const uniqueHostRow = (id: string, cred: string, region: string) => `${id}_${cred}_${region}`;
 
@@ -835,7 +871,10 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     perRow?.oracleServerDeploymentType ||
                     statusObj?.[0]?.discoverInstanceData?.oracleServerDeploymentType,
                 dataguardDetails: perRow?.dataguardDetails || statusObj?.[0]?.discoverInstanceData?.dataguardDetails,
-                ...authAndDetectFields
+                ...authAndDetectFields,
+                // Copy host-level permission data to instance (for registered/managed hosts)
+                hostManageReadiness: row?.hostManageReadiness,
+                source: row?.source
             };
         });
     }
@@ -1516,7 +1555,9 @@ export const formatDiscoveredRows = (
         regionId: discoveredRow?.regionId,
         credentialName: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.name,
         accountId: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.providerAccountId,
-        regionName: regionMapping?.[discoveredRow?.regionId || GENERAL.NOT_AVAILABLE]?.regionName
+        regionName: regionMapping?.[discoveredRow?.regionId || GENERAL.NOT_AVAILABLE]?.regionName,
+        hostManageReadiness: discoveredRow?.hostManageReadiness,
+        source: discoveredRow?.source
     };
     return result;
 };
@@ -1571,7 +1612,9 @@ export const formatPgsqlDiscoveredRows = (
         regionId: discoveredRow?.regionId,
         credentialName: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.name,
         accountId: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.providerAccountId,
-        regionName: regionMapping?.[discoveredRow?.regionId || GENERAL.NOT_AVAILABLE]?.regionName
+        regionName: regionMapping?.[discoveredRow?.regionId || GENERAL.NOT_AVAILABLE]?.regionName,
+        hostManageReadiness: discoveredRow?.hostManageReadiness,
+        source: discoveredRow?.source
     };
     return result;
 };
@@ -1648,7 +1691,9 @@ export const formatOracleDiscoveredRows = (
         regionId: discoveredRow?.regionId,
         credentialName: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.name,
         accountId: credentialMapping?.[discoveredRow?.credentialId || GENERAL.NOT_AVAILABLE]?.providerAccountId,
-        regionName: regionMapping?.[discoveredRow?.regionId || GENERAL.NOT_AVAILABLE]?.regionName
+        regionName: regionMapping?.[discoveredRow?.regionId || GENERAL.NOT_AVAILABLE]?.regionName,
+        hostManageReadiness: discoveredRow?.hostManageReadiness,
+        source: discoveredRow?.source
     };
     return result;
 };
@@ -1671,6 +1716,10 @@ export const getDiscoverHostname = (discoveredRow: DiscoverHostInterface, type: 
                 name = val?.sqlServerName;
             }
         }
+        // Fall back to ec2InstanceName if no SQL Server instance name found
+        if (!name && discoveredRow?.ec2InstanceName) {
+            name = discoveredRow.ec2InstanceName;
+        }
     } else if (type === GENERAL.POSTGRESQL_TYPE && discoveredRow?.pgsqlServerInstances) {
         for (let i = 0; i < discoveredRow?.pgsqlServerInstances?.length; i++) {
             const val = discoveredRow?.pgsqlServerInstances[i];
@@ -1678,6 +1727,10 @@ export const getDiscoverHostname = (discoveredRow: DiscoverHostInterface, type: 
                 name = val?.pgsqlServerName;
                 break;
             }
+        }
+        // Fall back to ec2InstanceName if no PostgreSQL server name found
+        if (!name && discoveredRow?.ec2InstanceName) {
+            name = discoveredRow.ec2InstanceName;
         }
     } else if (type === GENERAL.ORACLE_TYPE && discoveredRow?.ec2HostName) {
         name = discoveredRow?.ec2HostName;
@@ -2137,7 +2190,10 @@ export const formatDiscoverInstanceData = (
             windowsDomainUserAuthentication: perRow?.windowsDomainUserAuthentication,
             detectOption: statusObj?.[0]?.detectOption,
             detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg,
-            manageReadiness: perRow?.manageReadiness
+            manageReadiness: perRow?.manageReadiness,
+            // Copy host-level permission data to instance
+            hostManageReadiness: row?.hostManageReadiness,
+            source: row?.source
             // protection: {},
             // performance: {},
             // storageSavingsText: '',
@@ -2174,7 +2230,10 @@ export const formatPgsqlDiscoverInstanceData = (
             isFsxRegistered: statusObj?.[0]?.isFsxRegistered,
             isDefaultAuth: perRow?.defaultAuth,
             detectOption: statusObj?.[0]?.detectOption,
-            detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg
+            detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg,
+            // Copy host-level permission data to instance
+            hostManageReadiness: row?.hostManageReadiness,
+            source: row?.source
             // protection: {},
             // performance: {},
             // storageSavingsText: '',
@@ -2211,6 +2270,9 @@ export const formatOracleDiscoverInstanceData = (
             databaseCount: perRow?.databaseCount,
             statusColText: statusObj ? statusObj?.[0]?.status : INVENTORY_STATUS.UNDETECTED,
             fileSystemType: getDiscoverFileSystemType(perRow),
+            // Copy host-level permission data to instance
+            hostManageReadiness: row?.hostManageReadiness,
+            source: row?.source,
             storage: perRow?.storage,
             fsxId: statusObj?.[0]?.fsxId,
             fileSystemName: statusObj?.[0]?.fileSystemName,
@@ -4359,6 +4421,9 @@ export const manageActionCol = (translation: TFunction, engineType: string, rowD
     } else if (rowData?.isWad && (!rowData?.credentialId || !rowData?.regionId)) {
         // WAD (offline assessment) rows without credentials cannot be registered
         disableMsg = translation('databases.wad.register-disabled-no-credentials');
+    } else if (!hasFullPermission(rowData?.hostManageReadiness)) {
+        // Registration requires extensiveRunPermission for database authentication
+        disableMsg = translation('databases.inventory.registration-requires-full-permission');
     }
 
     if (colText === ACTION_CTA.FIX_ISSUES || colText === ACTION_CTA.WELL_ARCHITECTED) {

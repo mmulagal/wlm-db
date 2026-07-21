@@ -118,6 +118,7 @@ const InventoryV2 = () => {
             let hostUniqueId: number = 0;
             let instanceUniqueId: number = 0;
             const allDatabaseTableRows: any = [];
+
             Object.keys(inventoryTableData).map((key: string) => {
                 if (removeSecNodeDiscoveredList.includes(key)) {
                     return;

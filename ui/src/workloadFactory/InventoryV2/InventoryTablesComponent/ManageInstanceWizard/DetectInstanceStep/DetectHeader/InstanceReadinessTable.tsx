@@ -46,7 +46,6 @@ const InstanceReadinessTable = () => {
         const manageReadinessData: ManageReadinessData = item?.manageReadiness || item?.data?.manageReadiness || {};
 
         // Use getPermissionState like ManageInstanceStepHelper
-        const assessment = getPermissionState('assessment', manageReadinessData);
         const remediation = getPermissionState('remediation', manageReadinessData);
         const dbcreation = getPermissionState('dbcreation', manageReadinessData);
         const sandbox = getPermissionState('sandbox', manageReadinessData);
@@ -60,8 +59,7 @@ const InstanceReadinessTable = () => {
                 ? t('databases.general.authenticated')
                 : t('databases.general.unauthenticated'),
             isAuthenticated,
-            reviewWellArchitected: assessment,
-            fixWellArchitected: remediation,
+            extendedAnalysisAndFix: remediation,
             createDatabase: dbcreation,
             createSandbox: sandbox,
             errorAnalysis: errorInvestigation
@@ -94,14 +92,8 @@ const InstanceReadinessTable = () => {
         },
         {
             id: '2',
-            Header: t('databases.register-flow.detect-instance-table-col.review-well-architected'),
-            accessor: 'reviewWellArchitected',
-            renderCell: (cellData: string) => renderStatusCell(cellData, t)
-        },
-        {
-            id: '3',
-            Header: t('databases.register-flow.detect-instance-table-col.fix-well-architected'),
-            accessor: 'fixWellArchitected',
+            Header: t('databases.register-flow.detect-instance-table-col.extended-analysis-and-fix'),
+            accessor: 'extendedAnalysisAndFix',
             renderCell: (cellData: string) => renderStatusCell(cellData, t)
         }
     ];
@@ -109,13 +101,13 @@ const InstanceReadinessTable = () => {
     // MSSQL-specific columns (Create Database, Create Sandbox)
     const mssqlColumns: ColumnProps[] = [
         {
-            id: '4',
+            id: '3',
             Header: t('databases.register-flow.detect-instance-table-col.create-database'),
             accessor: 'createDatabase',
             renderCell: (cellData: string) => renderStatusCell(cellData, t)
         },
         {
-            id: '5',
+            id: '4',
             Header: t('databases.register-flow.detect-instance-table-col.create-sandbox'),
             accessor: 'createSandbox',
             renderCell: (cellData: string) => renderStatusCell(cellData, t)
@@ -124,7 +116,7 @@ const InstanceReadinessTable = () => {
 
     // Error Analysis column (common to all)
     const errorAnalysisColumn: ColumnProps = {
-        id: registerHostType === DBType.MSSQL ? '6' : '4',
+        id: registerHostType === DBType.MSSQL ? '5' : '3',
         Header: t('databases.register-flow.detect-instance-table-col.error-analysis'),
         accessor: 'errorAnalysis',
         renderCell: (cellData: string) => renderStatusCell(cellData, t)

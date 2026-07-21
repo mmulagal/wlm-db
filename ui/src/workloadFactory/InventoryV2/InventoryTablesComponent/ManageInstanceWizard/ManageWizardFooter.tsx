@@ -48,8 +48,8 @@ import {
     DBType,
     DETECT_HOST_VAR,
     DETECT_PAYLOAD_SIZE,
+    FSX_AUTH_STATUS,
     FSX_FOR_ONTAP_CRED_OPTION,
-    RESPONSE_STATUS,
     SQL_DEPLOYMENT_MODE
 } from '../../../../utils/consts';
 import { BulkDetectedInstance, UseWizardReturn } from '../../../../utils/types/registerTypes';
@@ -244,10 +244,10 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
 
                             if (detail?.fsxnError) {
                                 failedFsxIds.push(resourceId);
-                                authStatusUpdates[resourceId] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                                authStatusUpdates[resourceId] = FSX_AUTH_STATUS.FAILED;
                             } else {
                                 successFsxIds.push(resourceId);
-                                authStatusUpdates[resourceId] = RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success';
+                                authStatusUpdates[resourceId] = FSX_AUTH_STATUS.SUCCESS;
                             }
                         });
                     });
@@ -256,7 +256,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     batchPayload.items.forEach(item => {
                         item.credentials.forEach((cred: { resourceId: string }) => {
                             failedFsxIds.push(cred.resourceId);
-                            authStatusUpdates[cred.resourceId] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                            authStatusUpdates[cred.resourceId] = FSX_AUTH_STATUS.FAILED;
                         });
                     });
                 }
@@ -422,7 +422,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                                 dispatch(
                                     setInstanceAuthStatus({
                                         instanceId: primaryUniqueKey,
-                                        status: RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success'
+                                        status: FSX_AUTH_STATUS.SUCCESS
                                     })
                                 );
                             }
@@ -537,10 +537,10 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     // Update FSx auth status in state
                     const authStatusUpdate: FsxAuthStatusMap = {};
                     failedFsxIds.forEach(fsxId => {
-                        authStatusUpdate[fsxId] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                        authStatusUpdate[fsxId] = FSX_AUTH_STATUS.FAILED;
                     });
                     successFsxIds.forEach(fsxId => {
-                        authStatusUpdate[fsxId] = RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success';
+                        authStatusUpdate[fsxId] = FSX_AUTH_STATUS.SUCCESS;
                     });
                     dispatch(setFsxAuthStatus(authStatusUpdate));
 
@@ -715,9 +715,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                                 '';
                             const hasError = !!errorMessage;
 
-                            authStatusUpdates[uniqueKey] = hasError
-                                ? (RESPONSE_STATUS.FAILED.toLowerCase() as 'failed')
-                                : (RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success');
+                            authStatusUpdates[uniqueKey] = hasError ? FSX_AUTH_STATUS.FAILED : FSX_AUTH_STATUS.SUCCESS;
 
                             // Store per-instance error using unique key for precise matching
                             if (hasError && ec2InstanceId) {
@@ -735,7 +733,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     batchPayload.items.forEach(item => {
                         item.credentials.forEach((cred: { resourceId: string }) => {
                             const uniqueKey = generateInstanceUniqueKey(item.ec2InstanceId, cred.resourceId);
-                            authStatusUpdates[uniqueKey] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                            authStatusUpdates[uniqueKey] = FSX_AUTH_STATUS.FAILED;
                         });
                     });
 
@@ -811,12 +809,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 goToNextStep();
             } else {
                 // Show notification about partial success
-                const successCount = Object.values(authStatusUpdates).filter(
-                    s => s === RESPONSE_STATUS.SUCCESS.toLowerCase()
-                ).length;
-                const failedCount = Object.values(authStatusUpdates).filter(
-                    s => s === RESPONSE_STATUS.FAILED.toLowerCase()
-                ).length;
+                const successCount = Object.values(authStatusUpdates).filter(s => s === FSX_AUTH_STATUS.SUCCESS).length;
+                const failedCount = Object.values(authStatusUpdates).filter(s => s === FSX_AUTH_STATUS.FAILED).length;
 
                 if (successCount > 0 && failedCount > 0) {
                     dispatch(
@@ -957,9 +951,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                                 '';
                             const hasError = !!errorMessage;
 
-                            authStatusUpdates[uniqueKey] = hasError
-                                ? (RESPONSE_STATUS.FAILED.toLowerCase() as 'failed')
-                                : (RESPONSE_STATUS.SUCCESS.toLowerCase() as 'success');
+                            authStatusUpdates[uniqueKey] = hasError ? FSX_AUTH_STATUS.FAILED : FSX_AUTH_STATUS.SUCCESS;
 
                             // Store per-instance error using unique key for precise matching
                             if (hasError && ec2InstanceId) {
@@ -977,7 +969,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     batchPayload.items.forEach(item => {
                         item.credentials.forEach((cred: { resourceId: string }) => {
                             const uniqueKey = generateInstanceUniqueKey(item.ec2InstanceId, cred.resourceId);
-                            authStatusUpdates[uniqueKey] = RESPONSE_STATUS.FAILED.toLowerCase() as 'failed';
+                            authStatusUpdates[uniqueKey] = FSX_AUTH_STATUS.FAILED;
                         });
                     });
 
@@ -1050,12 +1042,8 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                 goToNextStep();
             } else {
                 // Show notification about partial success
-                const successCount = Object.values(authStatusUpdates).filter(
-                    s => s === RESPONSE_STATUS.SUCCESS.toLowerCase()
-                ).length;
-                const failedCount = Object.values(authStatusUpdates).filter(
-                    s => s === RESPONSE_STATUS.FAILED.toLowerCase()
-                ).length;
+                const successCount = Object.values(authStatusUpdates).filter(s => s === FSX_AUTH_STATUS.SUCCESS).length;
+                const failedCount = Object.values(authStatusUpdates).filter(s => s === FSX_AUTH_STATUS.FAILED).length;
 
                 if (successCount > 0 && failedCount > 0) {
                     dispatch(

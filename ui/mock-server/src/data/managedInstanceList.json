@@ -1,6 +1,10 @@
 {
-    "count": 18,
+    "count": 19,
     "items": [
+        {
+            "instances": ["i-case10-registered"],
+            "resourceId": "resource-id-case10"
+        },
         {
             "instances": ["i-0db20e831d1ce41e3", "i-0e6a7b54b2b5951e3"],
             "resourceId": "d271cefe8dc4b400e2ba9aa7998c32e8d96d4a805253db6c9b10a5ab697c0d62"
@@ -50,6 +54,20 @@
         {
             "instances": ["i-0adbbacc59d0f3b34"],
             "resourceId": "65c6fd61d60cd207",
+            "credentialId": "1dec50d8-5cf8-4557-8753-765cd5d3dfb1",
+            "region": "ap-southeast-1",
+            "databaseType": "ORACLE"
+        },
+        {
+            "instances": ["i-oracle-case10-full-fsxn"],
+            "resourceId": "oracle-case10-managed",
+            "credentialId": "1dec50d8-5cf8-4557-8753-765cd5d3dfb1",
+            "region": "ap-southeast-1",
+            "databaseType": "ORACLE"
+        },
+        {
+            "instances": ["i-oracle-case9-full-fsxn"],
+            "resourceId": "oracle-case9-managed",
             "credentialId": "1dec50d8-5cf8-4557-8753-765cd5d3dfb1",
             "region": "ap-southeast-1",
             "databaseType": "ORACLE"
