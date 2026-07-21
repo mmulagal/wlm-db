@@ -805,9 +805,9 @@ export const isInstanceActionDisabled = (
     }
 
     // Check FSx link exists for unregistered instances (Case 4: fsxLinkExists is false)
-    // Only check for NOT_REGISTERED or UNDETECTED statuses
+    // Only check for UNMANAGED or UNDETECTED statuses
     if (
-        (rowData?.statusColText === INVENTORY_STATUS.NOT_REGISTERED ||
+        (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
             rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) &&
         rowData?.hostManageReadiness?.fsxLinkExists === false
     ) {

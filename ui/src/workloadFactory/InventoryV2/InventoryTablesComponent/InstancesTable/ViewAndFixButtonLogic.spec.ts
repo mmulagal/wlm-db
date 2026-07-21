@@ -183,9 +183,9 @@ describe('View and Fix Button Logic', () => {
         });
 
         describe('No permission or WAD-only permission', () => {
-            it('disables View and Fix for unregistered instance with no permission', () => {
+            it('disables View and Fix for unmanaged instance with no permission', () => {
                 const rowData = {
-                    statusColText: INVENTORY_STATUS.NOT_REGISTERED,
+                    statusColText: INVENTORY_STATUS.UNMANAGED,
                     hostManageReadiness: {
                         extensiveRunPermission: false,
                         canReadAWSSSMDocuments: false
@@ -222,9 +222,9 @@ describe('View and Fix Button Logic', () => {
                 expect(canViewAndFix).toBe(true);
             });
 
-            it('disables for unregistered instance with missing hostManageReadiness', () => {
+            it('disables for unmanaged instance with missing hostManageReadiness', () => {
                 const rowData = {
-                    statusColText: INVENTORY_STATUS.NOT_REGISTERED,
+                    statusColText: INVENTORY_STATUS.UNMANAGED,
                     hostManageReadiness: undefined
                 };
                 const isRegisteredOrManaged = rowData.statusColText === INVENTORY_STATUS.MANAGED || rowData.resourceId;
@@ -320,7 +320,7 @@ describe('View and Fix Button Logic', () => {
             it('prioritizes isWad over permission checks', () => {
                 const rowData = {
                     isWad: true,
-                    statusColText: INVENTORY_STATUS.NOT_REGISTERED,
+                    statusColText: INVENTORY_STATUS.UNMANAGED,
                     hostManageReadiness: {
                         extensiveRunPermission: false,
                         canReadAWSSSMDocuments: false

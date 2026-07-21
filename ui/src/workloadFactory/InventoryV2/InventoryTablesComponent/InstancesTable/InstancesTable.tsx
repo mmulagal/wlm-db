@@ -1006,7 +1006,7 @@ const InstancesTable = () => {
 
                 // For NOT_REGISTERED or UNDETECTED instances (discovered but not yet registered), add Register option
                 const isNotRegistered =
-                    rowData.statusColText === INVENTORY_STATUS.NOT_REGISTERED ||
+                    rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
                     rowData.statusColText === INVENTORY_STATUS.UNDETECTED;
 
                 if (isNotRegistered) {
@@ -1033,7 +1033,7 @@ const InstancesTable = () => {
                 // Use shared utility for disabling logic
                 const disableResult = isInstanceActionDisabled(rowData, selectedHostType, t);
                 // For menu, also disable if status is unmanaged/in-progress or bulk selection is active
-                // Exception: WAD MSSQL and Oracle rows, and NOT_REGISTERED/UNDETECTED rows (for Register option) should have the menu enabled
+                // Exception: WAD MSSQL and Oracle rows, and UNMANAGED/UNDETECTED rows (for Register option) should have the menu enabled
                 const isWadRow = isWadMssqlRow || isWadOracleRow;
                 const shouldDisableMenu =
                     !isWadRow &&
