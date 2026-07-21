@@ -48,6 +48,8 @@
         "ssm:DescribeInstancePatchStates",
         "ssm:DescribeAvailablePatches",
         "ssm:ListCommands",
+        "ssm:GetInventory",
+        "ssm:ListInventoryEntries",
         "ssm:DescribeInstanceInformation",
         "fsx:ListTagsForResource",
         "logs:DescribeLogGroups"
@@ -61,8 +63,8 @@
       "Effect": "Allow",
       "Action": "ssm:SendCommand",
       "Resource": [
-        "arn:aws:ssm:*:aws:document/AWSFleetManager-GetWindowsRegistryContent",
-        "arn:aws:ssm:*:aws:document/AWSFleetManager-GetFileSystemContent"
+        "arn:aws:ssm:*::document/AWSFleetManager-GetWindowsRegistryContent",
+        "arn:aws:ssm:*::document/AWSFleetManager-GetFileSystemContent"
       ]
     },
     {
@@ -100,7 +102,9 @@
             "Effect": "Allow",
             "Action": "ssm:SendCommand",
             "Resource": [
-              "arn:aws:ssm:*:aws:document/AWS-RunPowerShellScript"
+              "arn:aws:ssm:*::document/AWS-RunPowerShellScript",
+              "arn:aws:ssm:*::document/AWS-RunShellScript",
+              "arn:aws:ssm:*::document/AWS-RunPatchBaseline"
             ]
           },          
           {
