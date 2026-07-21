@@ -1118,10 +1118,16 @@
             "recommended": "36-100%",
             "recommendation": "For optimal storage performance, provision file-system capacity to 1.35x times the size of total database usage.",
             "resourceType": "File system (FSx for ONTAP)",
-            "totalObjectsAssessed": 0,
-            "totalObjectsInViolation": 0,
-            "objectsInViolation": [],
-            "violationDetails": [],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "violationDetails": [
+                {
+                    "objectName": "fs-0abc123def456789",
+                    "current": "47%",
+                    "recommended": "35%",
+                    "objectType": "File system"
+                }
+            ],
             "id": "headroom",
             "categories": [
                 "Performance efficiency"
@@ -1268,9 +1274,9 @@
             "recommended": "2",
             "recommendation": "For optimal performance, it is recommended to set max degree of parallelism (MAXDOP) to 4 if the number of virtual CPUs is less than or equal to 8, 8 if the number of vCPUs is between 9 and 16, and 16 if the number of vCPUs is greater than 16. Your current settings are not optimized.",
             "resourceType": "SQL instance",
-            "totalObjectsAssessed": 0,
-            "totalObjectsInViolation": 0,
-            "objectsInViolation": [],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": ["MSSQLSERVER"],
             "violationDetails": [],
             "id": "maxdop",
             "categories": [

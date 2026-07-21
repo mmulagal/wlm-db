@@ -148,6 +148,13 @@ const DynamicOptimizeInnerPage = () => {
         return getColumnConfig(configId, engineType);
     }, [configId, engineType]);
 
+    // Check if this is a patch config (they don't have columnConfig but should still render)
+    const isPatchConfig = useMemo(() => {
+        if (!configId) return false;
+        const configEntry = getConfigEntry(configId, engineType);
+        return configEntry?.dialogContent?.features?.showPatchTable ?? false;
+    }, [configId, engineType]);
+
     // Determine if optimization is supported for inner page row-level fixes
     // Check if optimizeApi exists (not the fixSupported flag which is for dashboard bulk)
     const canOptimize = useMemo(() => {
@@ -559,12 +566,15 @@ const DynamicOptimizeInnerPage = () => {
                 )}
 
                 {/* Clone management uses its own dedicated component */}
-                {configId === 'clone-management' && <CloneTabs fromPage="innerPage" engineType={engineType} />}
+                {configId === ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT && (
+                    <CloneTabs fromPage="innerPage" engineType={engineType} />
+                )}
 
                 {/* Dynamic Table - Route to nested or flat table based on config */}
-                {configId !== 'clone-management' && columnConfig && (
+                {/* Render if: has columnConfig OR is a patch config */}
+                {configId !== ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT && (columnConfig || isPatchConfig) && (
                     <div className={styles.tableSection}>
-                        {columnConfig.useNestedExpandable ? (
+                        {columnConfig?.useNestedExpandable ? (
                             <NestedDynamicInnerTable
                                 configId={configId}
                                 data={configData}

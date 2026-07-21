@@ -24,6 +24,7 @@ import { buildSubConfigValues, getColumnConfig } from '../../../../../utils/conf
 interface ViolationDetail {
     objectName?: string;
     value?: string | number;
+    current?: string | number;
     objectType?: string;
     recommended?: string;
     nfsMount?: string;
@@ -348,24 +349,28 @@ const mssqlSizingViolationsToDriveTable = (
     sizing: SizingViolations,
     drivePathKey: SizingDrivePathKey,
     percentColumnI18nKey: string,
+    recommended: string | undefined,
     na: string,
     t: (key: string) => string
 ): ImpactedResourcesResult => {
     const drivePath = (drive: SizingDrive) => drive[drivePathKey] || na;
+    const recommendedValue = recommended || na;
     const columns = [
         t('databases.well-architect.drive-name'),
+        t(percentColumnI18nKey),
+        t('databases.well-architect.recommended-value'),
         t('databases.well-architect.lun-path'),
         t('databases.well-architect.databases'),
-        t('databases.well-architect.status'),
-        t(percentColumnI18nKey)
+        t('databases.well-architect.status')
     ];
     const mapDrives = (drives: SizingDrive[] | undefined, statusI18nKey: string) =>
         (drives || []).map((drive: SizingDrive) => [
             drivePath(drive),
+            drive?.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : na,
+            recommendedValue,
             drive?.lunPath || na,
             (drive?.databases || []).join(', ') || na,
-            t(statusI18nKey),
-            drive?.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : na
+            t(statusI18nKey)
         ]);
     const rows = [
         ...mapDrives(sizing?.overProvisionedDrives, 'databases.well-architect.over-provisioned'),
@@ -418,17 +423,25 @@ const mapGenericConfigFromRegistry = (
 
     // Generic mapping for standard configs
     const details: ViolationDetail[] = data?.violationDetails || [];
+    const objects: ObjectInViolation[] = data?.objectsInViolation || [];
     const columns = columnConfig.columns.map(col => t(col.label) || col.label);
-    // Top-level `recommended` is shared by all rows when a row doesn't carry its own (mirrors DynamicInnerTable)
+    // Top-level recommended/current are shared by all rows when a row doesn't carry its own (mirrors DynamicInnerTable)
     const topRecommended = data?.recommended;
+    const topCurrent = data?.current;
 
-    const rows = details.map(detail =>
+    const getDetailValue = (detail: ViolationDetail, accessor: string): string | number | undefined => {
+        if (accessor === 'recommended') return detail?.recommended || topRecommended;
+        if (accessor === 'objectName') return detail?.objectName || detail?.nfsMount;
+        if (accessor === 'value' || accessor === 'current') {
+            return (detail?.[accessor as keyof ViolationDetail] as string | number | undefined) ?? topCurrent;
+        }
+        return detail?.[accessor as keyof ViolationDetail] as string | number | undefined;
+    };
+
+    const mapDetailRow = (detail: ViolationDetail) =>
         columnConfig.columns.map(col => {
             const accessor = col.accessor || col.key;
-            const value =
-                accessor === 'recommended'
-                    ? detail?.recommended || topRecommended
-                    : detail?.[accessor as keyof ViolationDetail];
+            const value = getDetailValue(detail, accessor);
 
             // Special formatting based on column key
             if (col.key === 'value' && typeof value === 'number') {
@@ -447,8 +460,31 @@ const mapGenericConfigFromRegistry = (
             }
 
             return value != null && value !== '' ? String(value) : na;
-        })
-    );
+        });
+
+    let rows: string[][];
+    if (details.length > 0) {
+        rows = details.map(mapDetailRow);
+    } else {
+        // Fallback: map objectsInViolation using top-level current/recommended
+        rows = objects.map(item =>
+            columnConfig.columns.map(col => {
+                const accessor = col.accessor || col.key;
+                if (accessor === 'objectName') {
+                    return typeof item === 'string'
+                        ? item
+                        : (item as ViolationVolume)?.ontapVolumeName || (item as ViolationVolume)?.objectName || na;
+                }
+                if (accessor === 'value' || accessor === 'current') {
+                    return data?.current != null ? String(data.current) : na;
+                }
+                if (accessor === 'recommended') {
+                    return data?.recommended != null ? String(data.recommended) : na;
+                }
+                return na;
+            })
+        );
+    }
 
     return ensureRows(columns, rows, na);
 };
@@ -467,36 +503,13 @@ const getMssqlImpactedResources = (
     const sizing: SizingViolations = data?.sizingViolations || {};
 
     switch (configName) {
-        // === SUB-CONFIG CASES (storage-efficiencies, etc.) ===
-        case ASSESSMENT_CONFIG_IDS.STORAGE_EFFICIENCIES:
-        case ASSESSMENT_CONFIG_IDS.TIERING_TCO_OPTIMIZATION:
-            return mapSubConfigViolations(
-                data,
-                [
-                    t('databases.well-architect.volume-name'),
-                    t('databases.well-architect.current'),
-                    t('databases.well-architect.recommended')
-                ],
-                na
-            );
-
-        case ASSESSMENT_CONFIG_IDS.BLOCK_DEVICE_SPACE_MANAGEMENT:
-            return mapSubConfigViolations(
-                data,
-                [
-                    t('databases.well-architect.object-name'),
-                    t('databases.well-architect.current'),
-                    t('databases.well-architect.recommended')
-                ],
-                na
-            );
-
         // === SPECIAL SIZING CASES ===
         case ASSESSMENT_CONFIG_IDS.LOG_DRIVE_SIZE:
             return mssqlSizingViolationsToDriveTable(
                 sizing,
                 'logAccessPath',
                 'databases.well-architect.log-drive-size-percentage',
+                data?.recommended,
                 na,
                 t
             );
@@ -506,6 +519,7 @@ const getMssqlImpactedResources = (
                 sizing,
                 'tempdbAccessPath',
                 'databases.well-architect.tempdb-drive-size-percentage',
+                data?.recommended,
                 na,
                 t
             );
@@ -584,8 +598,6 @@ const getMssqlImpactedResources = (
             return mapMtuInterfacesToTable(data, na, t);
 
         // === SIMPLE VOLUME NAME ONLY CASES ===
-        case ASSESSMENT_CONFIG_IDS.SCHEDULED_LOCAL_SNAPSHOT:
-        case ASSESSMENT_CONFIG_IDS.CRR:
         case ASSESSMENT_CONFIG_IDS.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
             return mapObjectsToVolumeName(objects, na);
 
@@ -604,12 +616,21 @@ const getMssqlImpactedResources = (
 /**
  * Oracle flat API configs use internal API IDs (e.g. 'oracle-binary-placement').
  */
-const getOracleImpactedResources = (configName: string, data: AssessmentData, na: string): ImpactedResourcesResult => {
+const getOracleImpactedResources = (
+    configName: string,
+    data: AssessmentData,
+    na: string,
+    t: (key: string) => string
+): ImpactedResourcesResult => {
     const details: ViolationDetail[] = data?.violationDetails || [];
     const objects: ObjectInViolation[] = data?.objectsInViolation || [];
 
     const oracleVolumeConfigWithValue = (valueName: string): ImpactedResourcesResult => {
-        const columns = ['Volume name', valueName, 'Recommended value'];
+        const columns = [
+            t('databases.well-architect.volume-name'),
+            valueName,
+            t('databases.well-architect.recommended-value')
+        ];
         const rows = details.map(detail => [
             detail?.objectName || na,
             String(detail?.value ?? na),
@@ -619,42 +640,9 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
     };
 
     switch (configName) {
-        // === SUB-CONFIG CASES (storage-efficiencies, etc.) ===
-        case ASSESSMENT_CONFIG_IDS.STORAGE_EFFICIENCIES:
-        case ASSESSMENT_CONFIG_IDS.TIERING_TCO_OPTIMIZATION:
-            return mapSubConfigViolations(data, ['Volume name', 'Current', 'Recommended'], na);
-
-        case ASSESSMENT_CONFIG_IDS.BLOCK_DEVICE_SPACE_MANAGEMENT:
-            return mapSubConfigViolations(data, ['Object name', 'Current', 'Recommended'], na);
-
-        // === ORACLE VOLUME CONFIGS (common pattern) ===
+        // === ORACLE VOLUME CONFIGS (no registry entry or accessor mismatch) ===
         case ASSESSMENT_CONFIG_IDS.THIN_PROVISIONING:
-        case ASSESSMENT_CONFIG_IDS.SNAPSHOT_AUTODELETE:
-        case ASSESSMENT_CONFIG_IDS.SPACE_MANAGEMENT:
-        case ASSESSMENT_CONFIG_IDS.COMPACTION:
             return oracleVolumeConfigWithValue(configName);
-
-        // === DNFS SPECIAL CASES (use nfsMount field) ===
-        case ASSESSMENT_CONFIG_IDS.DNFS_CONFIGURATION_FILE: {
-            const columns = ['NFS mount', 'Current dNFS configuration', 'Recommended dNFS configuration'];
-            const rows = details.map(detail => [
-                detail?.objectName || detail?.nfsMount || na,
-                String(detail?.value ?? na),
-                detail?.recommended || na
-            ]);
-            return ensureRows(columns, rows, na);
-        }
-
-        case ASSESSMENT_CONFIG_IDS.DNFS_NO_SHARED_CACHE:
-        case ASSESSMENT_CONFIG_IDS.NFS_MOUNT_OPTIONS_DATABASEFILES: {
-            const columns = ['NFS mount', 'Current mount options', 'Recommended mount options'];
-            const rows = details.map(detail => [
-                detail?.objectName || detail?.nfsMount || na,
-                String(detail?.value ?? na),
-                detail?.recommended || na
-            ]);
-            return ensureRows(columns, rows, na);
-        }
 
         // === PATCH CASES (special data structure) ===
         case ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH: {
@@ -688,17 +676,9 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
             return ensureRows(columns, rows, na);
         }
 
-        // === PLACEMENT CONFIGS ===
-        case ASSESSMENT_CONFIG_IDS.CRR:
-        case ASSESSMENT_CONFIG_IDS.SNAPCENTER_SNAPSHOT:
-        case ASSESSMENT_CONFIG_IDS.SCHEDULED_FSX_FOR_ONTAP_BACKUPS:
-        case ASSESSMENT_CONFIG_IDS.ORACLE_BINARY_PLACEMENT:
-        case ASSESSMENT_CONFIG_IDS.DATAFILES_PLACEMENT:
-        case ASSESSMENT_CONFIG_IDS.CONTROLFILES_PLACEMENT:
-        case ASSESSMENT_CONFIG_IDS.REDO_LOGS_PLACEMENT:
-        case ASSESSMENT_CONFIG_IDS.TEMP_LOGS_PLACEMENT:
-        case ASSESSMENT_CONFIG_IDS.ARCHIVE_PLACEMENT: {
-            const columns = ['Volume name'];
+        // === SIMPLE VOLUME NAME ONLY CASES (Oracle) ===
+        case ASSESSMENT_CONFIG_IDS.SCHEDULED_FSX_FOR_ONTAP_BACKUPS: {
+            const columns = [t('databases.well-architect.volume-name')];
             if (details.length > 0) {
                 const rows = details.map(detail => [detail?.objectName || na]);
                 return ensureRows(columns, rows, na);
@@ -710,11 +690,8 @@ const getOracleImpactedResources = (configName: string, data: AssessmentData, na
         }
 
         // === INSTANCE-ONLY CONFIGS ===
-        case ASSESSMENT_CONFIG_IDS.TRANSPARENT_HUGEPAGES:
-        case ASSESSMENT_CONFIG_IDS.TCP_ADVANCED_OPTIONS:
-        case ASSESSMENT_CONFIG_IDS.FILESYSTEMS_IO_OPTIONS:
-        case ASSESSMENT_CONFIG_IDS.MULTIPATH_READCOUNT: {
-            const columns = ['Instance ID'];
+        case ASSESSMENT_CONFIG_IDS.TCP_ADVANCED_OPTIONS: {
+            const columns = [t('databases.well-architect.instance-id')];
             const rows = objects.map((item: ObjectInViolation) => [typeof item === 'string' ? item : na]);
             return ensureRows(columns, rows, na);
         }
@@ -775,7 +752,7 @@ const resolveImpactedResources = (
     const resolver =
         engineType === DBType.MSSQL
             ? (name: string) => getMssqlImpactedResources(name, data, na, t)
-            : (name: string) => getOracleImpactedResources(name, data, na);
+            : (name: string) => getOracleImpactedResources(name, data, na, t);
 
     const result = resolver(configName);
     if (result.columns.length > 0) {

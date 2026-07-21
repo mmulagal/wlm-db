@@ -209,6 +209,7 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
             // Update blockSixValue to show total patch count, not EC2 instance count
             const totalPatches = criticalViolations + securityViolations + otherViolations;
             blockSixValue = String(totalPatches);
+            blockSixCount = { totalObjectsInViolation: totalPatches };
         }
     } else if (
         isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH) &&
@@ -220,6 +221,7 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
 
         // Update blockSixValue to show total patch count
         blockSixValue = String(assessment.missingPatchesCount);
+        blockSixCount = { totalObjectsInViolation: assessment.missingPatchesCount };
     }
 
     // Get correct block_six.type label based on config
@@ -230,6 +232,8 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
         blockSixType = BLOCK_SIX_LABELS.MISSING_PATCHES;
     } else if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM)) {
         blockSixType = BLOCK_SIX_LABELS.FILE_SYSTEM_HEADROOM;
+    } else if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.SWAP_SPACE)) {
+        blockSixType = BLOCK_SIX_LABELS.SWAP_SPACE;
     } else if (assessment.resourceType) {
         blockSixType = `${assessment.resourceType}s`;
     } else {

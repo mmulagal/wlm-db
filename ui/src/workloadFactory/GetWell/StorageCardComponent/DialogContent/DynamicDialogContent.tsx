@@ -198,73 +198,6 @@ const DynamicDialogContent = ({
         }
     };
 
-    // Patch table (for OS patch / security patch dialogs)
-    const showPatchTable = resolvedConfig?.features?.showPatchTable ?? false;
-    const patchField = resolvedConfig?.features?.patchField || '';
-    const hasIds = Boolean(
-        selectedGwInstanceCredId && selectedGwInstanceRegionId && selectedResourceId && selectedDatabaseInstance
-    );
-
-    const { data: missingPatchResponse, isFetching } = useGetMissingPatchAssessmentDataQuery(
-        {
-            dbType: engineType === DBType.ORACLE ? WIZARD_TYPE.ORACLE : WIZARD_TYPE.MSSQL,
-            credentialId: selectedGwInstanceCredId,
-            regionId: selectedGwInstanceRegionId,
-            databaseHostId: selectedResourceId,
-            instanceId: selectedDatabaseInstance,
-            field: PATCH_SCAN_FIELD[patchField as keyof typeof PATCH_SCAN_FIELD]
-        },
-        { skip: !hasIds || !showPatchTable }
-    );
-
-    const patchTableData = useMemo(() => {
-        if (!showPatchTable || !missingPatchResponse) return [];
-        const instances = (missingPatchResponse as any)?.ec2InstancesToPatch ?? [];
-        const list = instances.flatMap((inst: any) =>
-            (inst?.missingPatchDetails ?? []).map((patch: any) => {
-                const mappedPatch: any = { ...patch, instanceName: inst?.ec2InstanceName };
-
-                if (configId === ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH && engineType === DBType.ORACLE) {
-                    mappedPatch.component = patch.classification;
-                    mappedPatch.packageName = patch.title;
-                    mappedPatch.updateType = patch.state;
-                }
-
-                return mappedPatch;
-            })
-        );
-        return list.map((item: any, index: number) => ({ ...item, id: String(index) }));
-    }, [missingPatchResponse, showPatchTable, configId, engineType]);
-
-    const patchColDefs: ColumnProps[] = useMemo(() => {
-        // Get columns from registry if available
-        const patchColumns = resolvedConfig?.features?.patchColumns;
-
-        if (patchColumns && patchColumns.length > 0) {
-            return patchColumns.map((col: { header: string; accessor: string; width: string }, index: number) => ({
-                Header: t(col.header),
-                accessor: col.accessor,
-                id: String(index + 1),
-                isSortable: true,
-                width: index === 1 ? 'auto' : col.width
-            }));
-        }
-
-        return [];
-    }, [t, resolvedConfig]);
-
-    const patchTableProps = useTable({
-        manageColumnsProps: {},
-        isSorting: false,
-        selectionType: 'none',
-        columns: patchColDefs,
-        rows: patchTableData,
-        pageSize: 50,
-        isLazyLoading: isFetching
-    });
-
-    const tableComponentProps = getTableLazyLoadingComponentProps(t('databases.general.loading'));
-
     // Instance selector (compute rightsizing)
     const generateRecommendedInstanceTypes = useMemo<optionType[]>(() => {
         const options: optionType[] = [];
@@ -545,28 +478,6 @@ const DynamicDialogContent = ({
             {/* Custom Backup UI */}
             {resolvedConfig.features?.showCustomBackupUI && (
                 <ScheduledAWSBackupDialog type={configId} engineType={engineType} />
-            )}
-
-            {/* Patch Table */}
-            {showPatchTable && (
-                <div className={styles['first-section']}>
-                    <div className={styles['heading-with-loader']}>
-                        <DsTypography variant="Semibold_14">
-                            {configId === ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH && engineType === DBType.MSSQL
-                                ? t('databases.well-architect.mssql-os-patch-missing-patches')
-                                : configId === ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH &&
-                                  engineType === DBType.ORACLE
-                                ? t('databases.well-architect.oracle-os-patch-missing-patches')
-                                : configId === ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH
-                                ? t('databases.well-architect.oracle-critical-patch-security-patches')
-                                : t('databases.well-architect.oracle-os-patch-missing-patches')}
-                        </DsTypography>
-                    </div>
-                    <div className={styles.table}>
-                        {/* @ts-ignore */}
-                        <Table tableProps={patchTableProps} {...tableComponentProps} variant="innerTable" />
-                    </div>
-                </div>
             )}
 
             {/* Post-Patch Sections (Action Required, etc.) */}

@@ -346,7 +346,7 @@
             "name": "Tiering / TCO optimization",
             "type": "storage",
             "severity": "critical",
-            "recommendation": "Workload Factory recommends enabling tiering for some Oracle database volumes on Amazon FSx for NetApp ONTAP where appropriate, to move cold data to lower-cost capacity storage and reduce overall storage costs, while keeping active database data on high-performance SSDs to preserve critical performance. Recommended policies are based on the data type in each volume, with tiering disabled (none) for data files and redo logs, and auto for archive logs. For archive/FRA volumes, it is also recommended to set an appropriate cooling period before data is tiered—typically 2 days for compressed backups and 14 days for uncompressed backups—to balance cost efficiency and performance.",
+            "recommendation": "Workload Factory recommends enabling tiering for some Oracle database volumes on Amazon FSx for NetApp ONTAP where appropriate, to move cold data to lower-cost capacity storage and reduce overall storage costs, while keeping active database data on high-performance SSDs to preserve critical performance. Recommended policies are based on the data type in each volume, with tiering disabled (none) for data files and redo logs, and auto for archive logs. For archive/FRA volumes, it is also recommended to set an appropriate cooling period before data is tiered\u2014typically 2 days for compressed backups and 14 days for uncompressed backups\u2014to balance cost efficiency and performance.",
             "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "status": "not-optimized",
             "recommended": "",
@@ -410,7 +410,7 @@
             "name": "Storage efficiencies",
             "type": "storage",
             "severity": "warning",
-            "recommendation": "Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle's I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.",
+            "recommendation": "Workload Factory recommends implementing storage efficiencies\u2014compression, compaction, and deduplication\u2014in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle's I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.",
             "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "status": "not-optimized",
             "recommended": "",
@@ -571,8 +571,8 @@
                     "recommended": "128"
                 }
             ],
-            "totalObjectsAssessed": 1,
-            "totalObjectsInViolation": 1,
+            "totalObjectsAssessed": 2,
+            "totalObjectsInViolation": 2,
             "focusWidgetName": "Operating system"
         },
         {
@@ -907,30 +907,6 @@
                     "value": "always",
                     "objectType": "kernel parameter",
                     "recommended": "never"
-                }
-            ],
-            "totalObjectsAssessed": 1,
-            "totalObjectsInViolation": 1,
-            "focusWidgetName": "Operating system"
-        },
-        {
-            "id": "selinux",
-            "name": "SELinux",
-            "type": "compute",
-            "severity": "warning",
-            "recommendation": "Workload Factory recommends setting SELinux to permissive or disabled mode for Oracle database hosts to avoid potential access issues and performance impacts.",
-            "categories": ["Operational excellence", "Performance efficiency"],
-            "status": "not-optimized",
-            "recommended": "permissive or disabled",
-            "subType": "configuration",
-            "resourceType": "EC2 Instance",
-            "objectsInViolation": ["i-5520fe41798c75632"],
-            "violationDetails": [
-                {
-                    "objectName": "SELinux",
-                    "value": "enforcing",
-                    "objectType": "security setting",
-                    "recommended": "permissive or disabled"
                 }
             ],
             "totalObjectsAssessed": 1,
@@ -1331,7 +1307,7 @@
         {
             "id": "oracle-security-patch",
             "name": "Oracle critical security patch",
-            "type": "compute",
+            "type": "Application",
             "severity": "critical",
             "recommendation": "Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.",
             "categories": ["Security", "Reliability"],
@@ -1437,6 +1413,360 @@
                 }
             ],
             "cloneDriftMessage": "1 out of 2 clones are old and divergent"
+        },
+        {
+            "id": "multipath-io",
+            "name": "Multipath I/O",
+            "type": "compute",
+            "severity": "critical",
+            "recommendation": "Workload Factory recommends enabling and configuring multipath I/O for Oracle database hosts using iSCSI to ensure redundancy and improve storage performance.",
+            "categories": ["Reliability", "Performance efficiency"],
+            "status": "not-optimized",
+            "recommended": "Enabled",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "objectsInViolation": ["i-5520fe41798c75632"],
+            "violationDetails": [
+                {
+                    "objectName": "multipathd",
+                    "value": "Disabled",
+                    "objectType": "service",
+                    "recommended": "Enabled"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "host-utilities",
+            "name": "Host utilities",
+            "type": "compute",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends installing NetApp Linux Host Utilities on Oracle database hosts. Host utilities provide optimized multipath settings and improved storage connectivity for NetApp storage systems.",
+            "categories": ["Operational excellence", "Reliability"],
+            "status": "not-optimized",
+            "recommended": "Installed",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "objectsInViolation": ["i-5520fe41798c75632"],
+            "violationDetails": [
+                {
+                    "objectName": "NetApp Linux Host Utilities",
+                    "value": "Not installed",
+                    "objectType": "Software",
+                    "recommended": "Installed"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "multipath-io-sessions",
+            "name": "Multipath I/O sessions",
+            "type": "compute",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends configuring the optimal number of iSCSI sessions per target for Oracle database hosts to maximize throughput and redundancy.",
+            "categories": ["Performance efficiency", "Reliability"],
+            "status": "not-optimized",
+            "recommended": "4",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "objectsInViolation": ["i-5520fe41798c75632"],
+            "violationDetails": [
+                {
+                    "objectName": "iqn.2005-03.com.target:storage1",
+                    "value": "2",
+                    "objectType": "iSCSI target",
+                    "recommended": "4"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "iscsi-replacement-timeout",
+            "name": "iSCSI replacement timeout",
+            "type": "compute",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends configuring the iSCSI replacement timeout to an appropriate value for Oracle database hosts to prevent unnecessary session timeouts during storage failover.",
+            "categories": ["Reliability"],
+            "status": "not-optimized",
+            "recommended": "120",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "objectsInViolation": ["i-5520fe41798c75632"],
+            "violationDetails": [
+                {
+                    "objectName": "replacement_timeout",
+                    "value": "20",
+                    "objectType": "iSCSI parameter",
+                    "recommended": "120"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "multipath-friendly-names",
+            "name": "Multipath friendly names",
+            "type": "compute",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends disabling multipath friendly names for Oracle database hosts to ensure consistent device naming based on WWIDs.",
+            "categories": ["Operational excellence", "Reliability"],
+            "status": "not-optimized",
+            "recommended": "no",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "objectsInViolation": ["i-5520fe41798c75632"],
+            "violationDetails": [
+                {
+                    "objectName": "use_friendly_names",
+                    "value": "yes",
+                    "objectType": "multipath configuration",
+                    "recommended": "no"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "multipath-configuration",
+            "name": "Multipath configuration",
+            "type": "compute",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends configuring multipath.conf with the recommended settings for Oracle database hosts using NetApp storage to ensure optimal I/O performance and reliability.",
+            "categories": ["Performance efficiency", "Reliability"],
+            "status": "not-optimized",
+            "recommended": "Optimized",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "objectsInViolation": ["i-5520fe41798c75632"],
+            "violationDetails": [
+                {
+                    "objectName": "path_selector",
+                    "value": "round-robin 0",
+                    "objectType": "multipath configuration",
+                    "recommended": "service-time 0"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "asm-setup",
+            "name": "ASM setup",
+            "type": "application",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends verifying that Oracle ASM is properly configured for use with FSx for ONTAP. Proper ASM setup ensures optimal storage management and performance for Oracle databases.",
+            "categories": ["Operational excellence", "Reliability"],
+            "status": "not-optimized",
+            "recommended": "Optimized",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "objectsInViolation": ["i-5520fe41798c75632"],
+            "violationDetails": [
+                {
+                    "objectName": "ASM configuration",
+                    "value": "Not optimized",
+                    "objectType": "ASM configuration",
+                    "recommended": "Optimized"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Application"
+        },
+        {
+            "id": "asm-external-redundancy",
+            "name": "ASM external redundancy",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends configuring ASM disk groups with external redundancy when using FSx for ONTAP, which provides its own redundancy. Using ASM internal redundancy would mirror data unnecessarily, consuming double the storage.",
+            "categories": ["Cost optimization", "Operational excellence"],
+            "status": "not-optimized",
+            "recommended": "EXTERNAL",
+            "subType": "configuration",
+            "resourceType": "ASM disk group",
+            "objectsInViolation": ["DATA", "REDO"],
+            "violationDetails": [
+                {
+                    "objectName": "DATA",
+                    "value": "NORMAL",
+                    "objectType": "ASM disk group",
+                    "recommended": "EXTERNAL"
+                },
+                {
+                    "objectName": "REDO",
+                    "value": "NORMAL",
+                    "objectType": "ASM disk group",
+                    "recommended": "EXTERNAL"
+                }
+            ],
+            "totalObjectsAssessed": 3,
+            "totalObjectsInViolation": 2,
+            "focusWidgetName": "Storage"
+        },
+        {
+            "id": "afd-logical-block-size",
+            "name": "AFD logical block size",
+            "type": "application",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends verifying that the AFD (ASM Filter Driver) logical block size is correctly configured for Oracle ASM disk groups. Incorrect block size can lead to I/O alignment issues and performance degradation.",
+            "categories": ["Performance efficiency", "Operational excellence"],
+            "status": "not-optimized",
+            "recommended": "512",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "objectsInViolation": ["i-5520fe41798c75632"],
+            "violationDetails": [
+                {
+                    "objectName": "AFD block size",
+                    "value": "4096",
+                    "objectType": "AFD configuration",
+                    "recommended": "512"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Application"
+        },
+        {
+            "id": "asmlib-logical-block-size",
+            "name": "ASMLib logical block size",
+            "type": "application",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends verifying that the ASMLib logical block size is correctly configured for Oracle ASM disk groups. Incorrect block size can lead to I/O alignment issues and performance degradation.",
+            "categories": ["Performance efficiency", "Operational excellence"],
+            "status": "not-optimized",
+            "recommended": "512",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "objectsInViolation": ["i-5520fe41798c75632"],
+            "violationDetails": [
+                {
+                    "objectName": "ASMLib block size",
+                    "value": "4096",
+                    "objectType": "ASMLib configuration",
+                    "recommended": "512"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Application"
+        },
+        {
+            "id": "data-dg-lun-layout",
+            "name": "Data disk group LUN layout",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends distributing LUNs evenly across disk groups to optimize I/O performance and storage utilization for Oracle ASM data disk groups.",
+            "categories": ["Performance efficiency", "Operational excellence"],
+            "status": "not-optimized",
+            "recommended": "8",
+            "subType": "configuration",
+            "resourceType": "Disk group",
+            "impactedCount": 1,
+            "recommendationText": "Distribute LUNs evenly across disk groups",
+            "objectsInViolation": ["DATA"],
+            "violationDetails": [
+                {
+                    "objectName": "DATA",
+                    "dataCategory": "DATA",
+                    "value": "4",
+                    "objectType": "Disk group",
+                    "recommended": "8"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Storage"
+        },
+        {
+            "id": "redolog-dg-lun-layout",
+            "name": "Redo log disk group LUN layout",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends distributing LUNs evenly across disk groups to optimize I/O performance and storage utilization for Oracle ASM redo log disk groups.",
+            "categories": ["Performance efficiency", "Operational excellence"],
+            "status": "not-optimized",
+            "recommended": "4",
+            "subType": "configuration",
+            "resourceType": "Disk group",
+            "impactedCount": 1,
+            "recommendationText": "Distribute LUNs evenly across disk groups",
+            "objectsInViolation": ["REDO"],
+            "violationDetails": [
+                {
+                    "objectName": "REDO",
+                    "dataCategory": "REDO",
+                    "value": "2",
+                    "objectType": "Disk group",
+                    "recommended": "4"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Storage"
+        },
+        {
+            "id": "fra-dg-lun-layout",
+            "name": "FRA disk group LUN layout",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends distributing LUNs evenly across disk groups to optimize I/O performance and storage utilization for Oracle ASM FRA disk groups.",
+            "categories": ["Performance efficiency", "Operational excellence"],
+            "status": "not-optimized",
+            "recommended": "4",
+            "subType": "configuration",
+            "resourceType": "Disk group",
+            "impactedCount": 1,
+            "recommendationText": "Distribute LUNs evenly across disk groups",
+            "objectsInViolation": ["FRA"],
+            "violationDetails": [
+                {
+                    "objectName": "FRA",
+                    "dataCategory": "FRA",
+                    "value": "2",
+                    "objectType": "Disk group",
+                    "recommended": "4"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Storage"
+        },
+        {
+            "id": "archivelog-dg-lun-layout",
+            "name": "Archive log disk group LUN layout",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends distributing LUNs evenly across disk groups to optimize I/O performance and storage utilization for Oracle ASM archive log disk groups.",
+            "categories": ["Performance efficiency", "Operational excellence"],
+            "status": "not-optimized",
+            "recommended": "4",
+            "subType": "configuration",
+            "resourceType": "Disk group",
+            "impactedCount": 1,
+            "recommendationText": "Distribute LUNs evenly across disk groups",
+            "objectsInViolation": ["ARCH"],
+            "violationDetails": [
+                {
+                    "objectName": "ARCH",
+                    "dataCategory": "ARCH",
+                    "value": "2",
+                    "objectType": "Disk group",
+                    "recommended": "4"
+                }
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "focusWidgetName": "Storage"
         }
     ],
     "dismissedConfigurations": [],

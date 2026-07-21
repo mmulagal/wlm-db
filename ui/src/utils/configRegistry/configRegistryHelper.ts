@@ -538,6 +538,12 @@ export interface ConfigEntry {
     fixSupported: boolean;
 
     /**
+     * Whether the impacted resource View dialog is supported for this config.
+     * When false, no View button is shown in the dashboard table.
+     */
+    viewLink?: boolean;
+
+    /**
      * Explicitly marks that optimize/fix action is not available.
      * Used for findings that should show UI but have no remediation path yet.
      *

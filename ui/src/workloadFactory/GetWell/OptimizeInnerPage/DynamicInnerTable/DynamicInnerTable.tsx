@@ -18,14 +18,28 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 import { getWadCellProps } from '../../GetWellUtils';
 import { ReactComponent as TooltipIcon } from '../../../../assets/tooltipGrey.svg';
-import { buildSubConfigValues, ColumnConfig, pluralizeResourceType } from '../../../../utils/configRegistry';
-import { ASSESSMENT_CONFIG_IDS, DBType, GETWELL_STATUS, RSS_COLUMN_KEYS } from '../../../../utils/consts';
+import {
+    buildSubConfigValues,
+    ColumnConfig,
+    pluralizeResourceType,
+    getConfigEntry
+} from '../../../../utils/configRegistry';
+import {
+    ASSESSMENT_CONFIG_IDS,
+    DBType,
+    GETWELL_STATUS,
+    RSS_COLUMN_KEYS,
+    PATCH_SCAN_FIELD,
+    WIZARD_TYPE
+} from '../../../../utils/consts';
 import { normalizeResourceTypeCasing } from '../../../../utils/resourceUtils';
+import { useGetMissingPatchAssessmentDataQuery } from '../../../../utils/apiService';
+import { getTableLazyLoadingComponentProps } from '../../../../common/Lib/Table/tableLazyLoadingProps';
 
 interface DynamicInnerTableProps {
     configId: string;
     data: any;
-    columnConfig: ColumnConfig;
+    columnConfig?: ColumnConfig;
     engineType: string;
     isWad?: boolean;
     canOptimize?: boolean;
@@ -52,7 +66,48 @@ const DynamicInnerTable = ({
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { selectedRowsForOptimizeInnerPage } = useAppSelector((state: any) => state.databaseHome);
-    const { inProgressOptimizationData } = useAppSelector((state: any) => state.getWellOptimize);
+    const {
+        inProgressOptimizationData,
+        selectedResourceId,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId,
+        selectedDatabaseInstance
+    } = useAppSelector((state: any) => state.getWellOptimize);
+
+    // Check if this is a patch config and get patch field/columns from registry
+    const configEntry = useMemo(() => {
+        if (!configId) return undefined;
+        return getConfigEntry(configId, engineType);
+    }, [configId, engineType]);
+
+    const isPatchConfig = configEntry?.dialogContent?.features?.showPatchTable ?? false;
+
+    const patchField = useMemo(() => {
+        if (!configEntry?.dialogContent?.features?.showPatchTable) return '';
+        return (configEntry?.dialogContent?.features as any)?.patchField || '';
+    }, [configEntry]);
+
+    const patchColumns = useMemo(() => {
+        if (!configEntry?.dialogContent?.features?.showPatchTable) return [];
+        return (configEntry?.dialogContent?.features as any)?.patchColumns || [];
+    }, [configEntry]);
+
+    // Fetch patch data for patch configs
+    const hasIds = Boolean(
+        selectedGwInstanceCredId && selectedGwInstanceRegionId && selectedResourceId && selectedDatabaseInstance
+    );
+
+    const { data: missingPatchResponse, isFetching: isPatchDataLoading } = useGetMissingPatchAssessmentDataQuery(
+        {
+            dbType: engineType === DBType.ORACLE ? WIZARD_TYPE.ORACLE : WIZARD_TYPE.MSSQL,
+            credentialId: selectedGwInstanceCredId,
+            regionId: selectedGwInstanceRegionId,
+            databaseHostId: selectedResourceId,
+            instanceId: selectedDatabaseInstance,
+            field: PATCH_SCAN_FIELD[patchField as keyof typeof PATCH_SCAN_FIELD]
+        },
+        { skip: !isPatchConfig || !hasIds || !patchField }
+    );
 
     // Transform API data to table rows
     // Returns empty array when:
@@ -60,6 +115,48 @@ const DynamicInnerTable = ({
     // 2. violationDetails/objectsInViolation are empty (no violations found)
     // 3. Custom dataMapping sources return no data
     const tableData = useMemo(() => {
+        // Handle patch configs separately
+        if (isPatchConfig) {
+            // While loading, return empty array - table will show loading state via isLazyLoading
+            if (isPatchDataLoading) {
+                return [];
+            }
+
+            if (missingPatchResponse) {
+                const instances =
+                    (
+                        missingPatchResponse as {
+                            ec2InstancesToPatch?: Array<{
+                                ec2InstanceName?: string;
+                                missingPatchDetails?: Record<string, unknown>[];
+                            }>;
+                        }
+                    )?.ec2InstancesToPatch ?? [];
+
+                return instances.flatMap((inst, instIdx) =>
+                    (inst?.missingPatchDetails ?? []).map((patch: any, patchIdx) => {
+                        const mappedPatch: any = {
+                            ...patch,
+                            instanceName: inst?.ec2InstanceName,
+                            id: `${instIdx}-${patchIdx}`
+                        };
+
+                        // Oracle OS patch requires field mapping
+                        if (configId === ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH && engineType === DBType.ORACLE) {
+                            mappedPatch.component = patch.classification;
+                            mappedPatch.packageName = patch.title;
+                            mappedPatch.updateType = patch.state;
+                        }
+
+                        return mappedPatch;
+                    })
+                );
+            }
+
+            // No data available yet
+            return [];
+        }
+
         // Early return if errorMessage exists - show empty table with no data state
         if (data?.errorMessage) {
             return [];
@@ -100,7 +197,7 @@ const DynamicInnerTable = ({
         };
 
         // Handle custom data mapping (read from alternate paths)
-        if (columnConfig.dataMapping?.sources) {
+        if (columnConfig?.dataMapping?.sources) {
             return columnConfig.dataMapping.sources.flatMap(({ path, status }) => {
                 const sourceData = path.split('.').reduce((obj: any, key) => obj?.[key], data);
                 if (!Array.isArray(sourceData)) return [];
@@ -123,15 +220,20 @@ const DynamicInnerTable = ({
 
         // Default: violationDetails
         if (data?.violationDetails?.length) {
-            // Top-level recommended value is the same for all rows in many configs
+            // Top-level recommended and current values are the same for all rows in many configs
             const topRecommended = data?.recommended;
+            const topCurrent = data?.current;
 
             return data.violationDetails.map((row: any) =>
                 addRowMeta({
                     ...row,
+                    // Inject top-level current value if the row doesn't have value or current
+                    ...(!row.value &&
+                        !row.current &&
+                        topCurrent !== undefined && { value: topCurrent, current: topCurrent }),
                     // Inject top-level recommended if the row itself doesn't have one
                     recommended: row.recommended ?? topRecommended,
-                    ...(columnConfig.hasSubConfigs ? buildSubConfigValues(row, data?.configDetails) : {})
+                    ...(columnConfig?.hasSubConfigs ? buildSubConfigValues(row, data?.configDetails) : {})
                 })
             );
         }
@@ -139,10 +241,18 @@ const DynamicInnerTable = ({
         // Fallback: objectsInViolation
         // Handle both string[] and object[] cases (e.g., {ontapVolumeName, ontapVolumeUuid})
         if (data?.objectsInViolation?.length) {
+            const topCurrent = data?.current;
+            const topRecommended = data?.recommended;
+
             return data.objectsInViolation.map((item: any) => {
                 // If item is a string, use it as objectName
                 if (typeof item === 'string') {
-                    return addRowMeta({ objectName: item });
+                    return addRowMeta({
+                        objectName: item,
+                        // Inject both 'value' and 'current' fields to cover all column accessor cases
+                        ...(topCurrent !== undefined && { value: String(topCurrent), current: String(topCurrent) }),
+                        ...(topRecommended !== undefined && { recommended: String(topRecommended) })
+                    });
                 }
                 // If item is an object, extract ontapVolumeName
                 const objectName = item.ontapVolumeName || JSON.stringify(item);
@@ -152,10 +262,65 @@ const DynamicInnerTable = ({
 
         // Return empty array - table will show "no data" state
         return [];
-    }, [data, isWad, t, columnConfig, configId]);
+    }, [
+        data,
+        isWad,
+        t,
+        columnConfig,
+        configId,
+        isPatchConfig,
+        missingPatchResponse,
+        patchField,
+        engineType,
+        isPatchDataLoading
+    ]);
 
     // Build column definitions dynamically from registry
     const TableColDefs: ColumnProps[] = useMemo(() => {
+        // Handle patch configs with custom column definitions
+        if (isPatchConfig && patchColumns.length > 0) {
+            const dataColumns: ColumnProps[] = patchColumns.map((col: any, index: number) => ({
+                Header: t(col.header),
+                accessor: col.accessor,
+                id: String(index + 1),
+                isSortable: false,
+                filterOptions: 'auto' as const,
+                isSticky: index === 0, // First column is sticky
+                width: index === 1 ? 'auto' : col.width,
+                minWidth: col.width,
+                maxWidth: col.width
+            }));
+
+            // Add action button column if handleRowFix is provided
+            if (handleRowFix) {
+                const buttonLabel = t('databases.well-architect.fix');
+
+                const actionColumn: ColumnProps = {
+                    Header: '',
+                    accessor: 'action',
+                    id: String(dataColumns.length + 1),
+                    isSortable: false,
+                    isSticky: true,
+                    width: '230px',
+                    renderCell: (_cellData: any, rowData: any) => (
+                        <div className={styles.buttonContainer}>
+                            <div />
+                            <DsButton isThin variant="secondary" onClick={() => handleRowFix(rowData)}>
+                                {buttonLabel}
+                            </DsButton>
+                        </div>
+                    )
+                };
+
+                dataColumns.push(actionColumn);
+            }
+
+            return dataColumns;
+        }
+
+        // For non-patch configs, columnConfig is required
+        if (!columnConfig) return [];
+
         const dataColumns: ColumnProps[] = columnConfig.columns.map((col: any, index: number) => ({
             Header: col.label,
             accessor: col.accessor || col.key,
@@ -385,7 +550,9 @@ const DynamicInnerTable = ({
         selectedRowsForOptimizeInnerPage,
         t,
         crrPrefetchLoading,
-        optimizingInstanceData
+        optimizingInstanceData,
+        isPatchConfig,
+        patchColumns
     ]);
 
     // Table props
@@ -397,13 +564,14 @@ const DynamicInnerTable = ({
         columns: TableColDefs,
         rows: tableData || [],
         pageSize: 50,
-        selectionType: canOptimize ? 'multiple' : 'none',
-        defaultSelectedRows: []
+        selectionType: isPatchConfig ? 'none' : canOptimize ? 'multiple' : 'none',
+        defaultSelectedRows: [],
+        isLazyLoading: isPatchConfig ? isPatchDataLoading : undefined
     });
 
     // Handle row selection
     useEffect(() => {
-        if (!canOptimize) return;
+        if (!canOptimize || isPatchConfig) return;
 
         const rowsData = getSelectedFromSelectionState(tableProps.selectionState, tableData);
         dispatch(setSelectedRowsForOptimizeInnerPage(rowsData));
@@ -411,11 +579,25 @@ const DynamicInnerTable = ({
         if (rowsData.length > 0 && inProgressOptimizationData?.[configId]?.length) {
             checkBoxHandle(tableProps.selectionState, rowsData, dispatch);
         }
-    }, [tableProps.selectionState, canOptimize, configId, inProgressOptimizationData, tableData, dispatch]);
+    }, [
+        tableProps.selectionState,
+        canOptimize,
+        isPatchConfig,
+        configId,
+        inProgressOptimizationData,
+        tableData,
+        dispatch
+    ]);
 
     // Determine table titles
-    const resourceTypeLabel = columnConfig.resourceTypeLabel || 'Item';
-    const tableTitle = columnConfig.tableTitle || pluralizeResourceType(resourceTypeLabel);
+    // For patch configs, use impactedLabel from registry cardMetadata (e.g. "Impacted missing patches")
+    // which is already defined consistently for both MSSQL and Oracle patch configs.
+    const resourceTypeLabel = isPatchConfig
+        ? configEntry?.cardMetadata?.impactedLabel || 'Missing patch'
+        : columnConfig?.resourceTypeLabel || 'Item';
+    const tableTitle = isPatchConfig
+        ? configEntry?.cardMetadata?.impactedLabel || 'Impacted missing patches'
+        : columnConfig?.tableTitle || pluralizeResourceType(resourceTypeLabel);
 
     // If tableTitle starts with "Impacted", create singular form using the resourceTypeLabel
     // e.g., tableTitle: "Impacted volumes", resourceTypeLabel: "Volume" -> "Impacted volume"
@@ -427,6 +609,8 @@ const DynamicInnerTable = ({
         ? createSingularImpactedLabel(resourceTypeLabel)
         : resourceTypeLabel;
 
+    const tableComponentProps = getTableLazyLoadingComponentProps(t('databases.general.loading'));
+
     return (
         <div className={styles['inner-table']}>
             <TableTopBar
@@ -435,12 +619,17 @@ const DynamicInnerTable = ({
                 pluralTitle={tableTitle}
                 singularTitle={singularTitle}
             />
-            {canOptimize && selectedRowsForOptimizeInnerPage.length > 0 && !optimizingInstanceData && (
-                <BulkActionContainer action={t('databases.well-architect.fix')} onClick={handleBulkAction} />
-            )}
+            {!isPatchConfig &&
+                canOptimize &&
+                selectedRowsForOptimizeInnerPage.length > 0 &&
+                !optimizingInstanceData && (
+                    <BulkActionContainer action={t('databases.well-architect.fix')} onClick={handleBulkAction} />
+                )}
             <Table
                 // @ts-ignore
                 tableProps={tableProps}
+                // @ts-ignore
+                lazyLoadingText={tableComponentProps.lazyLoadingText}
                 isDoubleRow
                 key={Date.now()}
             />

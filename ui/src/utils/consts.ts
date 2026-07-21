@@ -1740,7 +1740,8 @@ export const BLOCK_SIX_LABELS = {
     MISSING_PATCHES: 'Missing patches',
     FILE_SYSTEM_HEADROOM: 'File system headroom',
     IMPACTED_RESOURCES: 'Impacted resources',
-    MAXDOP: 'MAXDOP'
+    MAXDOP: 'MAXDOP',
+    SWAP_SPACE: 'Swap space'
 } as const;
 
 /**

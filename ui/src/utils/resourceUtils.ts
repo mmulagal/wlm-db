@@ -41,7 +41,14 @@ export const toSentenceCase = (str: string): string => {
  */
 export const normalizeResourceTypeCasing = (resourceType: string): string => {
     if (!resourceType || typeof resourceType !== 'string') return resourceType;
-    return resourceType.replace(/\bec2\b/gi, 'EC2').replace(/\blun(s)?\b/gi, (_match, plural) => `LUN${plural || ''}`);
+    return resourceType
+        .replace(/\bec2\b/gi, 'EC2')
+        .replace(/\blun(s)?\b/gi, (_match, plural) => `LUN${plural || ''}`)
+        .replace(/\bnfs\b/gi, 'NFS')
+        .replace(/\bsql\b/gi, 'SQL')
+        .replace(/\bafd\b/gi, 'AFD')
+        .replace(/\basmlib\b/gi, 'ASMLib')
+        .replace(/\basm\b/gi, 'ASM');
 };
 
 export const getUniqueEntries = (arrays: any) => {

@@ -1146,19 +1146,10 @@
                         ],
                         "violationDetails": [
                             {
-                                "objectName": "CrossSiteThreshold",
-                                "value": "20",
-                                "objectType": "configuration"
-                            },
-                            {
-                                "objectName": "SameSubnetThreshold",
-                                "value": "20",
-                                "objectType": "configuration"
-                            },
-                            {
-                                "objectName": "CrossSubnetThreshold",
-                                "value": "20",
-                                "objectType": "configuration"
+                                "objectType": "configuration",
+                                "objectName": "SameSubnetDelay",
+                                "value": "2000",
+                                "recommended": "1000"
                             }
                         ],
                         "id": "heartbeat-settings",
@@ -2326,25 +2317,10 @@
                         ],
                         "violationDetails": [
                             {
-                                "objectName": "CrossSiteThreshold",
-                                "value": "20",
                                 "objectType": "configuration",
-                                "recommended": "",
-                                "dataCategory": ""
-                            },
-                            {
-                                "objectName": "SameSubnetThreshold",
-                                "value": "20",
-                                "objectType": "configuration",
-                                "recommended": "",
-                                "dataCategory": ""
-                            },
-                            {
-                                "objectName": "CrossSubnetThreshold",
-                                "value": "20",
-                                "objectType": "configuration",
-                                "recommended": "",
-                                "dataCategory": ""
+                                "objectName": "SameSubnetDelay",
+                                "value": "2000",
+                                "recommended": "1000"
                             }
                         ],
                         "totalObjectsAssessed": 1,
@@ -3510,25 +3486,10 @@
                         ],
                         "violationDetails": [
                             {
-                                "objectName": "CrossSiteThreshold",
-                                "value": "20",
                                 "objectType": "configuration",
-                                "recommended": "",
-                                "dataCategory": ""
-                            },
-                            {
-                                "objectName": "SameSubnetThreshold",
-                                "value": "20",
-                                "objectType": "configuration",
-                                "recommended": "",
-                                "dataCategory": ""
-                            },
-                            {
-                                "objectName": "CrossSubnetThreshold",
-                                "value": "20",
-                                "objectType": "configuration",
-                                "recommended": "",
-                                "dataCategory": ""
+                                "objectName": "SameSubnetDelay",
+                                "value": "2000",
+                                "recommended": "1000"
                             }
                         ],
                         "totalObjectsAssessed": 1,
@@ -4670,19 +4631,10 @@
                         ],
                         "violationDetails": [
                             {
-                                "objectName": "CrossSiteThreshold",
-                                "value": "20",
-                                "objectType": "configuration"
-                            },
-                            {
-                                "objectName": "SameSubnetThreshold",
-                                "value": "20",
-                                "objectType": "configuration"
-                            },
-                            {
-                                "objectName": "CrossSubnetThreshold",
-                                "value": "20",
-                                "objectType": "configuration"
+                                "objectType": "configuration",
+                                "objectName": "SameSubnetDelay",
+                                "value": "2000",
+                                "recommended": "1000"
                             }
                         ],
                         "id": "heartbeat-settings",
@@ -5768,6 +5720,7 @@
                         ],
                         "status": "over-provisioned",
                         "recommended": "35%",
+                        "objectsInViolation": ["fs-07a22f282fd4f5a20"],
                         "subType": "sizing",
                         "resourceType": "File system (FSx for ONTAP)",
                         "focusWidgetName": "File system headroom",
@@ -5898,7 +5851,7 @@
                                 "objectName": "isPhysicalDiskAndMajority",
                                 "value": "false",
                                 "objectType": "configuration",
-                                "recommended": "",
+                                "recommended": "true",
                                 "dataCategory": ""
                             }
                         ],
@@ -5924,25 +5877,10 @@
                         ],
                         "violationDetails": [
                             {
-                                "objectName": "CrossSiteThreshold",
-                                "value": "20",
                                 "objectType": "configuration",
-                                "recommended": "",
-                                "dataCategory": ""
-                            },
-                            {
-                                "objectName": "SameSubnetThreshold",
-                                "value": "20",
-                                "objectType": "configuration",
-                                "recommended": "",
-                                "dataCategory": ""
-                            },
-                            {
-                                "objectName": "CrossSubnetThreshold",
-                                "value": "20",
-                                "objectType": "configuration",
-                                "recommended": "",
-                                "dataCategory": ""
+                                "objectName": "SameSubnetDelay",
+                                "value": "2000",
+                                "recommended": "1000"
                             }
                         ],
                         "totalObjectsAssessed": 1,

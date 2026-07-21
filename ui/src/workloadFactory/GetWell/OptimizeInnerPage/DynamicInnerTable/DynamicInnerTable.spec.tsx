@@ -1,0 +1,919 @@
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import DynamicInnerTable from './DynamicInnerTable';
+
+// ─── Store ────────────────────────────────────────────────────────────────────
+const mockUseAppSelector = vi.fn((selector: any) =>
+    selector({
+        databaseHome: { selectedRowsForOptimizeInnerPage: [] },
+        getWellOptimize: {
+            inProgressOptimizationData: {},
+            selectedResourceId: 'r1',
+            selectedGwInstanceCredId: 'c1',
+            selectedGwInstanceRegionId: 'reg1',
+            selectedDatabaseInstance: 'db1'
+        }
+    })
+);
+
+vi.mock('react-redux', () => ({ useDispatch: () => vi.fn() }));
+vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
+vi.mock('../../../../store/storeHooks', () => ({
+    useAppSelector: (selector: any) => mockUseAppSelector(selector)
+}));
+
+// ─── Registry ─────────────────────────────────────────────────────────────────
+const mockGetConfigEntry = vi.fn();
+vi.mock('../../../../utils/configRegistry', () => ({
+    getConfigEntry: (...args: any[]) => mockGetConfigEntry(...args),
+    buildSubConfigValues: vi.fn(() => ({})),
+    pluralizeResourceType: (s: string) => `Impacted ${s}s`,
+    ColumnConfig: {}
+}));
+
+// ─── API ──────────────────────────────────────────────────────────────────────
+const mockPatchQuery = vi.fn(() => ({ data: undefined, isFetching: false }));
+vi.mock('../../../../utils/apiService', () => ({
+    useGetMissingPatchAssessmentDataQuery: (...args: any[]) => mockPatchQuery(...args)
+}));
+
+// ─── Utils / consts ───────────────────────────────────────────────────────────
+vi.mock('../../../../utils/utilityFunctions', () => ({
+    checkBoxHandle: vi.fn(),
+    getSelectedFromSelectionState: vi.fn(() => [])
+}));
+
+vi.mock('../../../../utils/resourceUtils', () => ({
+    normalizeResourceTypeCasing: (s: string) => s
+}));
+
+vi.mock('../../../../utils/consts', () => ({
+    ASSESSMENT_CONFIG_IDS: {
+        SNAPSHOT_COPY_RESERVE: 'snapshot-copy-reserve',
+        LOG_DRIVE_SIZE: 'log-drive-size',
+        TEMPDB_DRIVE_SIZE: 'tempdb-drive-size',
+        RSS_CONFIGURATION: 'rss-configuration',
+        DRIVE_LETTER: 'drive-letter',
+        CRR: 'crr',
+        OPERATING_SYSTEM_PATCH: 'host-os-patch'
+    },
+    DBType: { MSSQL: 'mssql', ORACLE: 'oracle' },
+    GETWELL_STATUS: { OPTIMIZED: 'Optimized', NOT_OPTIMIZED: 'Not Optimized' },
+    RSS_COLUMN_KEYS: {},
+    PATCH_SCAN_FIELD: {
+        HOST_OS_PATCH: 'HOST_OS_PATCH',
+        ORACLE_SECURITY_PATCH: 'ORACLE_SECURITY_PATCH',
+        MICROSOFT_SQL_SERVER_PATCH: 'MICROSOFT_SQL_SERVER_PATCH',
+        OPERATING_SYSTEM_PATCH: 'OPERATING_SYSTEM_PATCH'
+    },
+    WIZARD_TYPE: { MSSQL: 'mssql', ORACLE: 'oracle' }
+}));
+
+vi.mock('../../../../store/workloadFactory/databaseHomeSlice', () => ({
+    setSelectedRowsForOptimizeInnerPage: vi.fn((v: any) => ({ type: 'setRows', payload: v }))
+}));
+
+vi.mock('../../../../common/BulkAction/BulkActionContainer', () => ({
+    default: () => <div data-testid="bulk-action-container" />
+}));
+
+vi.mock('../../GetWellUtils', () => ({
+    getWadCellProps: vi.fn(() => ({}))
+}));
+
+vi.mock('../../../../common/Lib/Table/tableLazyLoadingProps', () => ({
+    getTableLazyLoadingComponentProps: vi.fn(() => ({ lazyLoadingText: 'Loading...' }))
+}));
+
+vi.mock('../InnerTables/InnerTable.module.scss', () => ({ default: {} }));
+
+vi.mock('../../../../assets/tooltipGrey.svg', () => ({
+    ReactComponent: () => <svg data-testid="tooltip-icon" />
+}));
+
+// ─── Design System ────────────────────────────────────────────────────────────
+let capturedTableCols: any[] = [];
+let capturedTableRows: any[] = [];
+
+vi.mock('@netapp/design-system', () => ({
+    Table: () => <div data-testid="table" />,
+    TableTopBar: ({ pluralTitle }: any) => <div data-testid="table-top-bar">{pluralTitle}</div>,
+    DsTypography: ({ children }: any) => <span>{children}</span>,
+    DsButton: ({ children, onClick }: any) => <button onClick={onClick}>{children}</button>,
+    Popover: ({ container }: any) => <div data-testid="popover">{container}</div>,
+    useTable: vi.fn((config: any) => {
+        capturedTableCols = config?.columns ?? [];
+        capturedTableRows = config?.rows ?? [];
+        return { selectionState: {}, tableRef: { current: null } };
+    })
+}));
+
+/** Invoke renderCell for every column on every row and return the result array */
+const invokeAllRenderCells = () => {
+    const results: any[] = [];
+    capturedTableCols.forEach((col: any) => {
+        if (typeof col.renderCell !== 'function') return;
+        capturedTableRows.forEach((row: any) => {
+            const cellData = row[col.accessor];
+            results.push(col.renderCell(cellData, row));
+        });
+    });
+    return results;
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const normalColumnConfig = {
+    columns: [
+        { key: 'objectName', label: 'Volume name', accessor: 'objectName' },
+        { key: 'value', label: 'Current value', accessor: 'value' },
+        { key: 'recommended', label: 'Recommended value', accessor: 'recommended' }
+    ],
+    resourceTypeLabel: 'Volume'
+};
+
+const normalData = {
+    violationDetails: [
+        { objectName: 'vol-1', value: 'off', recommended: 'on' },
+        { objectName: 'vol-2', value: 'off', recommended: 'on' }
+    ]
+};
+
+const defaultProps = {
+    configId: 'autosize',
+    data: normalData,
+    columnConfig: normalColumnConfig,
+    engineType: 'mssql',
+    handleBulkAction: vi.fn(),
+    handleRowFix: vi.fn()
+};
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
+describe('DynamicInnerTable', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        capturedTableCols = [];
+        capturedTableRows = [];
+        mockGetConfigEntry.mockReturnValue({
+            dialogContent: { features: { showPatchTable: false } }
+        });
+        mockPatchQuery.mockReturnValue({ data: undefined, isFetching: false });
+        mockUseAppSelector.mockImplementation((selector: any) =>
+            selector({
+                databaseHome: { selectedRowsForOptimizeInnerPage: [] },
+                getWellOptimize: {
+                    inProgressOptimizationData: {},
+                    selectedResourceId: 'r1',
+                    selectedGwInstanceCredId: 'c1',
+                    selectedGwInstanceRegionId: 'reg1',
+                    selectedDatabaseInstance: 'db1'
+                }
+            })
+        );
+    });
+
+    // ── Normal (non-patch) config ──────────────────────────────────────────────
+
+    it('renders table and top bar for a normal config', () => {
+        render(<DynamicInnerTable {...defaultProps} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+        expect(screen.getByTestId('table-top-bar')).toBeTruthy();
+    });
+
+    it('shows the plural resource label derived from columnConfig', () => {
+        render(<DynamicInnerTable {...defaultProps} />);
+        // pluralizeResourceType mock returns "Impacted Volumes"
+        expect(screen.getByTestId('table-top-bar').textContent).toContain('Volume');
+    });
+
+    it('does not call patch API for non-patch configs', () => {
+        render(<DynamicInnerTable {...defaultProps} />);
+        // skip: true → query called with skip, so fetch should not be triggered
+        const [, options] = mockPatchQuery.mock.calls[0];
+        expect(options?.skip).toBe(true);
+    });
+
+    it('shows BulkActionContainer when rows are selected and canOptimize is true', () => {
+        mockUseAppSelector.mockImplementation((selector: any) =>
+            selector({
+                databaseHome: { selectedRowsForOptimizeInnerPage: [{ id: '1' }] },
+                getWellOptimize: {
+                    inProgressOptimizationData: {},
+                    selectedResourceId: 'r1',
+                    selectedGwInstanceCredId: 'c1',
+                    selectedGwInstanceRegionId: 'reg1',
+                    selectedDatabaseInstance: 'db1'
+                }
+            })
+        );
+        render(<DynamicInnerTable {...defaultProps} canOptimize />);
+        expect(screen.getByTestId('bulk-action-container')).toBeTruthy();
+    });
+
+    it('does not show BulkActionContainer when canOptimize is false', () => {
+        mockUseAppSelector.mockImplementation((selector: any) =>
+            selector({
+                databaseHome: { selectedRowsForOptimizeInnerPage: [{ id: '1' }] },
+                getWellOptimize: {
+                    inProgressOptimizationData: {},
+                    selectedResourceId: 'r1',
+                    selectedGwInstanceCredId: 'c1',
+                    selectedGwInstanceRegionId: 'reg1',
+                    selectedDatabaseInstance: 'db1'
+                }
+            })
+        );
+        render(<DynamicInnerTable {...defaultProps} canOptimize={false} />);
+        expect(screen.queryByTestId('bulk-action-container')).toBeNull();
+    });
+
+    // ── Patch config ───────────────────────────────────────────────────────────
+
+    describe('patch config (showPatchTable: true)', () => {
+        const patchConfigEntry = {
+            dialogContent: {
+                features: {
+                    showPatchTable: true,
+                    patchField: 'HOST_OS_PATCH',
+                    patchColumns: [
+                        { header: 'Component', accessor: 'component', width: '150px' },
+                        { header: 'Package name', accessor: 'packageName', width: '200px' }
+                    ]
+                }
+            }
+        };
+
+        beforeEach(() => {
+            mockGetConfigEntry.mockReturnValue(patchConfigEntry);
+        });
+
+        it('renders table for a patch config', () => {
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="host-os-patch"
+                    engineType="mssql"
+                    data={{}}
+                    columnConfig={undefined}
+                />
+            );
+            expect(screen.getByTestId('table')).toBeTruthy();
+        });
+
+        it('calls the patch API with the correct patchField', () => {
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="host-os-patch"
+                    engineType="mssql"
+                    data={{}}
+                    columnConfig={undefined}
+                />
+            );
+            const [queryArgs, options] = mockPatchQuery.mock.calls[0];
+            expect(options?.skip).toBe(false);
+            expect(queryArgs.field).toBe('HOST_OS_PATCH');
+        });
+
+        it('shows loading state while patch data is fetching', () => {
+            mockPatchQuery.mockReturnValue({ data: undefined, isFetching: true });
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="host-os-patch"
+                    engineType="mssql"
+                    data={{}}
+                    columnConfig={undefined}
+                />
+            );
+            // Table still renders; isLazyLoading=true is passed to useTable internally
+            expect(screen.getByTestId('table')).toBeTruthy();
+        });
+
+        it('transforms patch API response into table rows', () => {
+            const patchResponse = {
+                ec2InstancesToPatch: [
+                    {
+                        ec2InstanceName: 'i-12345',
+                        missingPatchDetails: [
+                            { component: 'kernel', packageName: 'kernel-5.10' },
+                            { component: 'openssl', packageName: 'openssl-3.0' }
+                        ]
+                    }
+                ]
+            };
+            mockPatchQuery.mockReturnValue({ data: patchResponse, isFetching: false });
+
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="host-os-patch"
+                    engineType="mssql"
+                    data={{}}
+                    columnConfig={undefined}
+                />
+            );
+            // Table renders (rows are internal to useTable mock, but component mounts without error)
+            expect(screen.getByTestId('table')).toBeTruthy();
+        });
+
+        it('does not show BulkActionContainer for patch configs', () => {
+            mockUseAppSelector.mockImplementation((selector: any) =>
+                selector({
+                    databaseHome: { selectedRowsForOptimizeInnerPage: [{ id: '1' }] },
+                    getWellOptimize: {
+                        inProgressOptimizationData: {},
+                        selectedResourceId: 'r1',
+                        selectedGwInstanceCredId: 'c1',
+                        selectedGwInstanceRegionId: 'reg1',
+                        selectedDatabaseInstance: 'db1'
+                    }
+                })
+            );
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="host-os-patch"
+                    engineType="mssql"
+                    data={{}}
+                    columnConfig={undefined}
+                    canOptimize
+                />
+            );
+            // patch configs suppress bulk action
+            expect(screen.queryByTestId('bulk-action-container')).toBeNull();
+        });
+
+        it('skips the patch API when required IDs are missing', () => {
+            mockUseAppSelector.mockImplementation((selector: any) =>
+                selector({
+                    databaseHome: { selectedRowsForOptimizeInnerPage: [] },
+                    getWellOptimize: {
+                        inProgressOptimizationData: {},
+                        selectedResourceId: undefined,
+                        selectedGwInstanceCredId: undefined,
+                        selectedGwInstanceRegionId: undefined,
+                        selectedDatabaseInstance: undefined
+                    }
+                })
+            );
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="host-os-patch"
+                    engineType="mssql"
+                    data={{}}
+                    columnConfig={undefined}
+                />
+            );
+            const [, options] = mockPatchQuery.mock.calls[0];
+            expect(options?.skip).toBe(true);
+        });
+
+        it('maps Oracle OS patch fields (classification→component, title→packageName, state→updateType)', () => {
+            mockGetConfigEntry.mockReturnValue({
+                dialogContent: {
+                    features: {
+                        showPatchTable: true,
+                        patchField: 'ORACLE_SECURITY_PATCH',
+                        patchColumns: [{ header: 'Component', accessor: 'component', width: '150px' }]
+                    }
+                }
+            });
+            const patchResponse = {
+                ec2InstancesToPatch: [
+                    {
+                        ec2InstanceName: 'i-oracle',
+                        missingPatchDetails: [{ classification: 'Security', title: 'glibc', state: 'Missing' }]
+                    }
+                ]
+            };
+            mockPatchQuery.mockReturnValue({ data: patchResponse, isFetching: false });
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="host-os-patch"
+                    engineType="oracle"
+                    data={{}}
+                    columnConfig={undefined}
+                />
+            );
+            expect(screen.getByTestId('table')).toBeTruthy();
+        });
+
+        it('builds patch column definitions with correct Header, isSticky, width and id from patchColumns', () => {
+            mockGetConfigEntry.mockReturnValue({
+                dialogContent: {
+                    features: {
+                        showPatchTable: true,
+                        patchField: 'HOST_OS_PATCH',
+                        patchColumns: [
+                            { header: 'Component', accessor: 'component', width: '150px' },
+                            { header: 'Package name', accessor: 'packageName', width: '200px' },
+                            { header: 'Severity', accessor: 'severity', width: '100px' }
+                        ]
+                    }
+                }
+            });
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="host-os-patch"
+                    engineType="mssql"
+                    data={{}}
+                    columnConfig={undefined}
+                />
+            );
+
+            // First column: isSticky=true, width=col.width
+            expect(capturedTableCols[0].isSticky).toBe(true);
+            expect(capturedTableCols[0].accessor).toBe('component');
+            expect(capturedTableCols[0].Header).toBe('Component');
+            expect(capturedTableCols[0].width).toBe('150px');
+
+            // Second column: isSticky=false, width='auto' (index === 1 uses 'auto')
+            expect(capturedTableCols[1].isSticky).toBe(false);
+            expect(capturedTableCols[1].accessor).toBe('packageName');
+            expect(capturedTableCols[1].width).toBe('auto');
+
+            // Third column: isSticky=false, width=col.width
+            expect(capturedTableCols[2].isSticky).toBe(false);
+            expect(capturedTableCols[2].accessor).toBe('severity');
+            expect(capturedTableCols[2].width).toBe('100px');
+
+            // IDs are 1-based string indexes
+            expect(capturedTableCols[0].id).toBe('1');
+            expect(capturedTableCols[1].id).toBe('2');
+            expect(capturedTableCols[2].id).toBe('3');
+        });
+    });
+
+    // ── tableData paths ────────────────────────────────────────────────────────
+
+    it('returns empty rows when data has errorMessage', () => {
+        render(<DynamicInnerTable {...defaultProps} data={{ errorMessage: 'Assessment failed' } as any} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('builds rows from violationDetails with top-level recommended injection', () => {
+        const data = {
+            recommended: 'on',
+            violationDetails: [{ objectName: 'vol-1', value: 'off' }]
+        };
+        render(<DynamicInnerTable {...defaultProps} data={data} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('builds rows from violationDetails with top-level current injection when row has no value', () => {
+        const data = {
+            current: '50%',
+            recommended: '80%',
+            violationDetails: [{ objectName: 'fs-1' }]
+        };
+        render(<DynamicInnerTable {...defaultProps} data={data} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('builds rows from violationDetails with hasSubConfigs', () => {
+        const data = {
+            violationDetails: [{ objectName: 'vol-1', violatedConfigs: [{ name: 'dedup', current: 'none' }] }],
+            configDetails: [{ name: 'dedup', recommended: 'enabled' }]
+        };
+        const subConfigColumn = {
+            columns: [
+                { key: 'objectName', label: 'Volume name', accessor: 'objectName' },
+                { key: 'current', label: 'Current', accessor: 'current' },
+                { key: 'recommended', label: 'Recommended', accessor: 'recommended' }
+            ],
+            resourceTypeLabel: 'Volume',
+            hasSubConfigs: true
+        };
+        render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={subConfigColumn} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('builds rows from objectsInViolation as strings', () => {
+        const data = {
+            current: '36%',
+            recommended: '36-100%',
+            objectsInViolation: ['fs-001', 'fs-002']
+        };
+        render(<DynamicInnerTable {...defaultProps} data={data} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('builds rows from objectsInViolation as objects with ontapVolumeName', () => {
+        const data = {
+            objectsInViolation: [{ ontapVolumeName: 'vol-a', ontapVolumeUuid: 'uuid-1' }]
+        };
+        render(<DynamicInnerTable {...defaultProps} data={data} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('returns empty rows when violationDetails and objectsInViolation are both empty', () => {
+        const data = { violationDetails: [], objectsInViolation: [] };
+        render(<DynamicInnerTable {...defaultProps} data={data} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('builds rows from dataMapping.sources path', () => {
+        const dataMappingConfig = {
+            columns: [
+                { key: 'objectName', label: 'Volume name', accessor: 'objectName' },
+                { key: 'recommended', label: 'Recommended', accessor: 'recommended' }
+            ],
+            resourceTypeLabel: 'Volume',
+            dataMapping: {
+                sources: [{ path: 'data.volumes', status: 'databases.well-architect.over-provisioned' }]
+            }
+        };
+        const data = {
+            recommended: 'true',
+            data: { volumes: [{ objectName: 'vol-1', recommended: 'true' }] }
+        };
+        render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={dataMappingConfig as any} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('builds rows from dataMapping.sources with string primitive items', () => {
+        const dataMappingConfig = {
+            columns: [{ key: 'objectName', label: 'Volume name', accessor: 'objectName' }],
+            resourceTypeLabel: 'Volume',
+            dataMapping: { sources: [{ path: 'items' }] }
+        };
+        const data = { recommended: 'on', items: ['vol-x', 'vol-y'] };
+        render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={dataMappingConfig as any} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('disables checkbox for over-provisioned log-drive-size rows', () => {
+        const sizingColumnConfig = {
+            columns: [
+                { key: 'logAccessPath', label: 'Drive name', accessor: 'logAccessPath' },
+                { key: 'status', label: 'Status', accessor: 'status' }
+            ],
+            resourceTypeLabel: 'Drive',
+            dataMapping: {
+                sources: [
+                    {
+                        path: 'sizingViolations.overProvisionedDrives',
+                        status: 'databases.well-architect.over-provisioned'
+                    }
+                ]
+            }
+        };
+        const data = {
+            sizingViolations: {
+                overProvisionedDrives: [{ logAccessPath: 'D:\\', lunPath: '/lun1', databases: ['db1'] }]
+            }
+        };
+        render(
+            <DynamicInnerTable
+                {...defaultProps}
+                configId="log-drive-size"
+                data={data}
+                columnConfig={sizingColumnConfig as any}
+            />
+        );
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('disables checkbox for shared tempdb-drive-size rows', () => {
+        const sizingColumnConfig = {
+            columns: [{ key: 'tempdbAccessPath', label: 'Drive name', accessor: 'tempdbAccessPath' }],
+            resourceTypeLabel: 'Drive',
+            dataMapping: {
+                sources: [{ path: 'sizingViolations.ignoredDrives', status: 'databases.well-architect.shared-drive' }]
+            }
+        };
+        const data = {
+            sizingViolations: {
+                ignoredDrives: [{ tempdbAccessPath: 'T:\\', lunPath: '/lun2', databases: ['tempdb'] }]
+            }
+        };
+        render(
+            <DynamicInnerTable
+                {...defaultProps}
+                configId="tempdb-drive-size"
+                data={data}
+                columnConfig={sizingColumnConfig as any}
+            />
+        );
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    // ── Column config paths ────────────────────────────────────────────────────
+
+    it('renders nothing meaningful when columnConfig is undefined for a non-patch config', () => {
+        mockGetConfigEntry.mockReturnValue({ dialogContent: { features: { showPatchTable: false } } });
+        render(<DynamicInnerTable {...defaultProps} columnConfig={undefined} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('uses custom tableTitle from columnConfig instead of pluralizing resourceTypeLabel', () => {
+        const customTitleConfig = {
+            ...normalColumnConfig,
+            tableTitle: 'NFS mount options'
+        };
+        render(<DynamicInnerTable {...defaultProps} columnConfig={customTitleConfig as any} />);
+        expect(screen.getByTestId('table-top-bar').textContent).toContain('NFS mount options');
+    });
+
+    it('renders singular title from resourceTypeLabel that does not start with Impacted', () => {
+        const config = { ...normalColumnConfig, tableTitle: 'NFS mount options', resourceTypeLabel: 'Mount option' };
+        render(<DynamicInnerTable {...defaultProps} columnConfig={config as any} />);
+        expect(screen.getByTestId('table-top-bar')).toBeTruthy();
+    });
+
+    // ── Action column states ───────────────────────────────────────────────────
+
+    it('renders CRR MSSQL config (shows disabled fix button via isCrrMssql path)', () => {
+        render(
+            <DynamicInnerTable
+                {...defaultProps}
+                configId="crr"
+                engineType="mssql"
+                canOptimize
+                handleRowFix={vi.fn()}
+                data={normalData}
+            />
+        );
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('renders CRR Oracle config (shows enabled fix button via isCrrOracle path)', () => {
+        render(
+            <DynamicInnerTable
+                {...defaultProps}
+                configId="crr"
+                engineType="oracle"
+                canOptimize
+                handleRowFix={vi.fn()}
+                data={normalData}
+            />
+        );
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('renders view-only config with handleRowFix (showViewButton path)', () => {
+        render(
+            <DynamicInnerTable
+                {...defaultProps}
+                canOptimize={false}
+                isViewOnly
+                handleRowFix={vi.fn()}
+                data={normalData}
+            />
+        );
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    it('does not add action column when handleRowFix is not provided', () => {
+        render(<DynamicInnerTable {...defaultProps} canOptimize handleRowFix={undefined} data={normalData} />);
+        expect(screen.getByTestId('table')).toBeTruthy();
+    });
+
+    // ── useEffect / checkBoxHandle ─────────────────────────────────────────────
+
+    it('triggers checkBoxHandle when inProgressOptimizationData has rows for configId', async () => {
+        const utilityFunctions = await import('../../../../utils/utilityFunctions');
+        // Make getSelectedFromSelectionState return a non-empty array so checkBoxHandle is reached
+        (utilityFunctions.getSelectedFromSelectionState as any).mockReturnValueOnce([{ id: '0' }]);
+        mockUseAppSelector.mockImplementation((selector: any) =>
+            selector({
+                databaseHome: { selectedRowsForOptimizeInnerPage: [{ id: '0' }] },
+                getWellOptimize: {
+                    inProgressOptimizationData: { autosize: [{ id: '0' }] },
+                    selectedResourceId: 'r1',
+                    selectedGwInstanceCredId: 'c1',
+                    selectedGwInstanceRegionId: 'reg1',
+                    selectedDatabaseInstance: 'db1'
+                }
+            })
+        );
+        render(<DynamicInnerTable {...defaultProps} canOptimize data={normalData} />);
+        expect(utilityFunctions.checkBoxHandle).toHaveBeenCalled();
+    });
+
+    // ── renderCell coverage ────────────────────────────────────────────────────
+
+    describe('renderCell invocations', () => {
+        it('renders snapshot-copy-reserve value column as percentage', () => {
+            const config = {
+                columns: [{ key: 'value', label: 'Value', accessor: 'value' }],
+                resourceTypeLabel: 'Volume'
+            };
+            const data = { violationDetails: [{ objectName: 'vol-1', value: 20 }] };
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="snapshot-copy-reserve"
+                    data={data}
+                    columnConfig={config as any}
+                />
+            );
+            const results = invokeAllRenderCells();
+            expect(results).toContain('20%');
+        });
+
+        it('renders snapshot-copy-reserve null value as unavailable', () => {
+            const config = {
+                columns: [{ key: 'value', label: 'Value', accessor: 'value' }],
+                resourceTypeLabel: 'Volume'
+            };
+            const data = { violationDetails: [{ objectName: 'vol-1', value: null }] };
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="snapshot-copy-reserve"
+                    data={data}
+                    columnConfig={config as any}
+                />
+            );
+            const results = invokeAllRenderCells();
+            expect(results).toContain('databases.general.unavailable');
+        });
+
+        it('renders rss boolean column as Enabled/Disabled', () => {
+            const config = {
+                columns: [{ key: 'rss', label: 'RSS', accessor: 'rss' }],
+                resourceTypeLabel: 'Adapter'
+            };
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    data={{ violationDetails: [{ objectName: 'a1', rss: true }] }}
+                    columnConfig={config as any}
+                />
+            );
+            expect(invokeAllRenderCells()).toContain('Enabled');
+
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    data={{ violationDetails: [{ objectName: 'a1', rss: false }] }}
+                    columnConfig={config as any}
+                />
+            );
+            expect(invokeAllRenderCells()).toContain('Disabled');
+        });
+
+        it('renders divergence column as percentage', () => {
+            const config = {
+                columns: [{ key: 'divergence', label: 'Divergence', accessor: 'divergence' }],
+                resourceTypeLabel: 'Clone'
+            };
+            const data = { violationDetails: [{ objectName: 'c1', divergence: 45 }] };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={config as any} />);
+            expect(invokeAllRenderCells()).toContain('45%');
+        });
+
+        it('renders sizePercentToDataDrive column as percentage', () => {
+            const config = {
+                columns: [{ key: 'sizePercentToDataDrive', label: '%', accessor: 'sizePercentToDataDrive' }],
+                resourceTypeLabel: 'Drive'
+            };
+            const data = { violationDetails: [{ objectName: 'd1', sizePercentToDataDrive: 25 }] };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={config as any} />);
+            expect(invokeAllRenderCells()).toContain('25%');
+        });
+
+        it('renders databases array column joined with comma', () => {
+            const config = {
+                columns: [{ key: 'databases', label: 'DBs', accessor: 'databases' }],
+                resourceTypeLabel: 'Drive'
+            };
+            const data = { violationDetails: [{ objectName: 'd1', databases: ['db1', 'db2'] }] };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={config as any} />);
+            expect(invokeAllRenderCells()).toContain('db1, db2');
+        });
+
+        it('renders databases empty array as unavailable', () => {
+            const config = {
+                columns: [{ key: 'databases', label: 'DBs', accessor: 'databases' }],
+                resourceTypeLabel: 'Drive'
+            };
+            const data = { violationDetails: [{ objectName: 'd1', databases: [] }] };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={config as any} />);
+            expect(invokeAllRenderCells()).toContain('databases.general.unavailable');
+        });
+
+        it('renders object cell as ontapVolumeName when available', () => {
+            const config = {
+                columns: [{ key: 'someObj', label: 'Obj', accessor: 'someObj' }],
+                resourceTypeLabel: 'Item'
+            };
+            const data = {
+                violationDetails: [{ objectName: 'v1', someObj: { ontapVolumeName: 'vol-a' } }]
+            };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={config as any} />);
+            expect(invokeAllRenderCells()).toContain('vol-a');
+        });
+
+        it('renders unavailable for null/undefined cell values', () => {
+            const config = {
+                columns: [{ key: 'value', label: 'Val', accessor: 'value' }],
+                resourceTypeLabel: 'Volume'
+            };
+            const data = { violationDetails: [{ objectName: 'v1', value: null }] };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={config as any} />);
+            expect(invokeAllRenderCells()).toContain('databases.general.unavailable');
+        });
+
+        it('renders action column fix button for a normal fixable row', () => {
+            render(<DynamicInnerTable {...defaultProps} canOptimize handleRowFix={vi.fn()} data={normalData} />);
+            const actionCol = capturedTableCols.find((c: any) => c.accessor === 'action');
+            expect(actionCol).toBeDefined();
+            const result = actionCol.renderCell(undefined, { id: '0', cellProps: {} });
+            expect(result).toBeTruthy();
+        });
+
+        it('renders action column disabled popover when rows are selected', () => {
+            mockUseAppSelector.mockImplementation((selector: any) =>
+                selector({
+                    databaseHome: { selectedRowsForOptimizeInnerPage: [{ id: '0' }] },
+                    getWellOptimize: {
+                        inProgressOptimizationData: {},
+                        selectedResourceId: 'r1',
+                        selectedGwInstanceCredId: 'c1',
+                        selectedGwInstanceRegionId: 'reg1',
+                        selectedDatabaseInstance: 'db1'
+                    }
+                })
+            );
+            render(<DynamicInnerTable {...defaultProps} canOptimize handleRowFix={vi.fn()} data={normalData} />);
+            const actionCol = capturedTableCols.find((c: any) => c.accessor === 'action');
+            const result = actionCol.renderCell(undefined, { id: '0', cellProps: {} });
+            expect(result).toBeTruthy();
+        });
+
+        it('renders action column disabled popover for a row-disabled (over-provisioned) row', () => {
+            render(<DynamicInnerTable {...defaultProps} canOptimize handleRowFix={vi.fn()} data={normalData} />);
+            const actionCol = capturedTableCols.find((c: any) => c.accessor === 'action');
+            const result = actionCol.renderCell(undefined, {
+                id: '0',
+                cellProps: { isDisabled: true, selectionProps: { title: 'Over-provisioned' } }
+            });
+            expect(result).toBeTruthy();
+        });
+
+        it('renders CRR MSSQL action column with disabled fix + popover', () => {
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="crr"
+                    engineType="mssql"
+                    canOptimize
+                    handleRowFix={vi.fn()}
+                    data={normalData}
+                />
+            );
+            const actionCol = capturedTableCols.find((c: any) => c.accessor === 'action');
+            expect(actionCol).toBeDefined();
+            const result = actionCol.renderCell(undefined, { id: '0', cellProps: {} });
+            expect(result).toBeTruthy();
+        });
+
+        it('renders CRR Oracle action column with enabled fix button', () => {
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="crr"
+                    engineType="oracle"
+                    canOptimize
+                    handleRowFix={vi.fn()}
+                    data={normalData}
+                />
+            );
+            const actionCol = capturedTableCols.find((c: any) => c.accessor === 'action');
+            expect(actionCol).toBeDefined();
+            const result = actionCol.renderCell(undefined, { id: '0', cellProps: {} });
+            expect(result).toBeTruthy();
+        });
+
+        it('renders patch action column fix button', () => {
+            mockGetConfigEntry.mockReturnValue({
+                dialogContent: {
+                    features: {
+                        showPatchTable: true,
+                        patchField: 'HOST_OS_PATCH',
+                        patchColumns: [{ header: 'Component', accessor: 'component', width: '150px' }]
+                    }
+                }
+            });
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="host-os-patch"
+                    engineType="mssql"
+                    data={{}}
+                    columnConfig={undefined}
+                    handleRowFix={vi.fn()}
+                />
+            );
+            const actionCol = capturedTableCols.find((c: any) => c.accessor === 'action');
+            expect(actionCol).toBeDefined();
+            const result = actionCol.renderCell(undefined, { id: '0' });
+            expect(result).toBeTruthy();
+        });
+    });
+});

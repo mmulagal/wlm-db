@@ -2251,6 +2251,8 @@ export const formatFlatAssessments = (
             blockSixType = BLOCK_SIX_LABELS.FILE_SYSTEM_HEADROOM;
         } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.MAXDOP)) {
             blockSixType = BLOCK_SIX_LABELS.MAXDOP;
+        } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.SWAP_SPACE)) {
+            blockSixType = BLOCK_SIX_LABELS.SWAP_SPACE;
         } else if (assessment.resourceType) {
             blockSixType = `${assessment.resourceType}s`;
         } else {
@@ -2324,6 +2326,7 @@ export const formatFlatAssessments = (
             errorMessage: assessment.errorMessage,
             violationDetails: assessment.violationDetails,
             current: assessment.current,
+            totalObjectsInViolation: assessment.totalObjectsInViolation,
             // Per sub-config recommendations, used to build Current/Recommended columns for nested configs
             configDetails: assessment.configDetails,
             objectsInViolation: assessment.objectsInViolation,

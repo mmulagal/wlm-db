@@ -195,6 +195,31 @@ const createMissingPatchesColumn = (configId: string, engineType: string) => ({
         )
 });
 
+const createValueWithViewColumn = (header: string, configId: string) => ({
+    Header: header,
+    accessor: 'current',
+    id: '4',
+    width: '200px',
+    renderCell: (
+        cellData: string,
+        rowData: ConfigTableRowData,
+        t: TFunction,
+        handleImpactedResourceDialog: HandleImpactedResourceDialog
+    ) => (
+        <div className={CommonStyles.impactedDrivesCell}>
+            {cellData || t('databases.general.not-available-table-columns')}
+            {(rowData?.totalObjectsInViolation ?? 0) > 0 && (
+                <Button
+                    variant="text"
+                    onClick={() => handleImpactedResourceDialog({ ...rowData, configurationName: configId })}
+                >
+                    {t('databases.dashboard.view')}
+                </Button>
+            )}
+        </div>
+    )
+});
+
 const createDashboardTableConfigOverrides = (
     engineType: string
 ): Record<string, Partial<ReturnType<typeof createDashboardTableConfig>>> => ({
@@ -311,18 +336,16 @@ const createDashboardTableConfigOverrides = (
             current: item?.current,
             totalObjectsAssessed: item?.totalObjectsAssessed || 0,
             totalObjectsInViolation: item?.totalObjectsInViolation || 0,
+            objectsInViolation: item?.objectsInViolation || [],
+            violationDetails: item?.violationDetails || [],
             configurationName: ASSESSMENT_CONFIG_IDS.MAXDOP,
             configItem: item
         }),
         customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.maxdop-value',
-                accessor: 'current',
-                id: '4',
-                width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    cellData || t('databases.general.not-available-table-columns')
-            }
+            createValueWithViewColumn(
+                'databases.well-architect.dashboard-table-headers.maxdop-value',
+                ASSESSMENT_CONFIG_IDS.MAXDOP
+            )
         ]
     },
     [ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM]: {
@@ -330,21 +353,17 @@ const createDashboardTableConfigOverrides = (
             current: item?.current,
             recommended: item?.recommended,
             totalObjectsAssessed: item?.totalObjectsAssessed || 0,
-            totalObjectsInViolation: item?.totalObjectsInViolation || 0,
+            totalObjectsInViolation: item?.totalObjectsInViolation || item?.objectsInViolation?.length || 0,
             violationDetails: item?.violationDetails || [],
             objectsInViolation: item?.objectsInViolation || [],
             configurationName: ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM,
             configItem: item
         }),
         customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.file-system-headroom',
-                accessor: 'current',
-                id: '4',
-                width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    cellData || t('databases.general.not-available-table-columns')
-            }
+            createValueWithViewColumn(
+                'databases.well-architect.dashboard-table-headers.file-system-headroom',
+                ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM
+            )
         ]
     },
     [ASSESSMENT_CONFIG_IDS.SWAP_SPACE]: {
@@ -359,14 +378,10 @@ const createDashboardTableConfigOverrides = (
             configItem: item
         }),
         customColumns: [
-            {
-                Header: 'databases.well-architect.dashboard-table-headers.swap-space',
-                accessor: 'current',
-                id: '4',
-                width: '200px',
-                renderCell: (cellData: string, rowData: ConfigTableRowData, t: TFunction) =>
-                    cellData || t('databases.general.not-available-table-columns')
-            }
+            createValueWithViewColumn(
+                'databases.well-architect.dashboard-table-headers.swap-space',
+                ASSESSMENT_CONFIG_IDS.SWAP_SPACE
+            )
         ]
     },
     ...Object.fromEntries(

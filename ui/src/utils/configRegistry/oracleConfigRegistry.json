@@ -1,9 +1,33 @@
 {
     "headroom": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
         "statusDependentFix": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted file systems",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "File system",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "File system"
+        },
         "optimizeApi": {
             "mutation": "optimizeOracleOperatingSystem",
             "payloadScope": "bulk",
@@ -121,12 +145,37 @@
                 }
             ]
         },
-        "storagePriority": 1
+        "storagePriority": 1,
+        "viewLink": true
     },
     "swap-space": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": true,
         "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted EC2 instances",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "EC2 instance",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "EC2 instance"
+        },
         "dialogContent": {
             "sections": [
                 {
@@ -160,7 +209,8 @@
                 "content": "databases.well-architect.oracle-swap-space-note"
             }
         },
-        "storagePriority": 2
+        "storagePriority": 2,
+        "viewLink": true
     },
     "oracle-binary-placement": {
         "hasInnerPage": true,
@@ -224,7 +274,8 @@
                 }
             ]
         },
-        "storagePriority": 3
+        "storagePriority": 3,
+        "viewLink": true
     },
     "datafiles-placement": {
         "hasInnerPage": true,
@@ -293,7 +344,8 @@
                 "showLinkedConfigBanner": true
             }
         },
-        "storagePriority": 4
+        "storagePriority": 4,
+        "viewLink": true
     },
     "controlfiles-placement": {
         "hasInnerPage": true,
@@ -358,7 +410,8 @@
                 }
             ]
         },
-        "storagePriority": 5
+        "storagePriority": 5,
+        "viewLink": true
     },
     "redologs-placement": {
         "hasInnerPage": true,
@@ -425,7 +478,8 @@
                 "showLinkedConfigBanner": true
             }
         },
-        "storagePriority": 6
+        "storagePriority": 6,
+        "viewLink": true
     },
     "templogs-placement": {
         "hasInnerPage": true,
@@ -486,7 +540,8 @@
                 }
             ]
         },
-        "storagePriority": 7
+        "storagePriority": 7,
+        "viewLink": true
     },
     "archive-placement": {
         "hasInnerPage": true,
@@ -562,7 +617,8 @@
                 "showLinkedConfigBanner": true
             }
         },
-        "storagePriority": 8
+        "storagePriority": 8,
+        "viewLink": true
     },
     "data-dg-lun-layout": {
         "hasInnerPage": true,
@@ -585,11 +641,6 @@
                     "accessor": "objectName"
                 },
                 {
-                    "key": "dataCategory",
-                    "label": "Type",
-                    "accessor": "dataCategory"
-                },
-                {
                     "key": "value",
                     "label": "Number of LUNs",
                     "accessor": "value"
@@ -598,10 +649,14 @@
                     "key": "recommended",
                     "label": "Recommended",
                     "accessor": "recommended"
+                },
+                {
+                    "key": "dataCategory",
+                    "label": "Type",
+                    "accessor": "dataCategory"
                 }
             ],
-            "resourceTypeLabel": "Disk group",
-            "tableTitle": "Impacted disk groups"
+            "resourceTypeLabel": "Disk group"
         },
         "optimizeApi": {
             "mutation": "optimizeOracleStorageLayoutAsm",
@@ -627,7 +682,8 @@
                 "type": "standard"
             }
         },
-        "storagePriority": 9
+        "storagePriority": 9,
+        "viewLink": true
     },
     "redolog-dg-lun-layout": {
         "hasInnerPage": true,
@@ -650,11 +706,6 @@
                     "accessor": "objectName"
                 },
                 {
-                    "key": "dataCategory",
-                    "label": "Type",
-                    "accessor": "dataCategory"
-                },
-                {
                     "key": "value",
                     "label": "Number of LUNs",
                     "accessor": "value"
@@ -663,10 +714,14 @@
                     "key": "recommended",
                     "label": "Recommended",
                     "accessor": "recommended"
+                },
+                {
+                    "key": "dataCategory",
+                    "label": "Type",
+                    "accessor": "dataCategory"
                 }
             ],
-            "resourceTypeLabel": "Disk group",
-            "tableTitle": "Impacted disk groups"
+            "resourceTypeLabel": "Disk group"
         },
         "optimizeApi": {
             "mutation": "optimizeOracleStorageLayoutAsm",
@@ -692,7 +747,8 @@
                 "type": "standard"
             }
         },
-        "storagePriority": 10
+        "storagePriority": 10,
+        "viewLink": true
     },
     "archivelog-dg-lun-layout": {
         "hasInnerPage": true,
@@ -715,11 +771,6 @@
                     "accessor": "objectName"
                 },
                 {
-                    "key": "dataCategory",
-                    "label": "Type",
-                    "accessor": "dataCategory"
-                },
-                {
                     "key": "value",
                     "label": "Number of LUNs",
                     "accessor": "value"
@@ -728,10 +779,14 @@
                     "key": "recommended",
                     "label": "Recommended",
                     "accessor": "recommended"
+                },
+                {
+                    "key": "dataCategory",
+                    "label": "Type",
+                    "accessor": "dataCategory"
                 }
             ],
-            "resourceTypeLabel": "Disk group",
-            "tableTitle": "Impacted disk groups"
+            "resourceTypeLabel": "Disk group"
         },
         "optimizeApi": {
             "mutation": "optimizeOracleStorageLayoutAsm",
@@ -757,7 +812,8 @@
                 "type": "standard"
             }
         },
-        "storagePriority": 11
+        "storagePriority": 11,
+        "viewLink": true
     },
     "fra-dg-lun-layout": {
         "hasInnerPage": true,
@@ -780,11 +836,6 @@
                     "accessor": "objectName"
                 },
                 {
-                    "key": "dataCategory",
-                    "label": "Type",
-                    "accessor": "dataCategory"
-                },
-                {
                     "key": "value",
                     "label": "Number of LUNs",
                     "accessor": "value"
@@ -793,10 +844,14 @@
                     "key": "recommended",
                     "label": "Recommended",
                     "accessor": "recommended"
+                },
+                {
+                    "key": "dataCategory",
+                    "label": "Type",
+                    "accessor": "dataCategory"
                 }
             ],
-            "resourceTypeLabel": "Disk group",
-            "tableTitle": "Impacted disk groups"
+            "resourceTypeLabel": "Disk group"
         },
         "optimizeApi": {
             "mutation": "optimizeOracleStorageLayoutAsm",
@@ -822,7 +877,8 @@
                 "type": "standard"
             }
         },
-        "storagePriority": 11
+        "storagePriority": 11,
+        "viewLink": true
     },
     "thin-provision": {
         "hasInnerPage": true,
@@ -881,7 +937,8 @@
             },
             "wellArchitectedConfig": "Thin provisioning (-space-guarantee = none)"
         },
-        "storagePriority": 21
+        "storagePriority": 21,
+        "viewLink": true
     },
     "autosize": {
         "hasInnerPage": true,
@@ -936,7 +993,8 @@
             },
             "wellArchitectedConfig": "Autosize on"
         },
-        "storagePriority": 22
+        "storagePriority": 22,
+        "viewLink": true
     },
     "autosize-mode": {
         "hasInnerPage": true,
@@ -991,7 +1049,8 @@
             },
             "wellArchitectedConfig": "Autosize-mode = grow"
         },
-        "storagePriority": 23
+        "storagePriority": 23,
+        "viewLink": true
     },
     "block-device-space-management": {
         "hasInnerPage": true,
@@ -1046,7 +1105,8 @@
                 "type": "standard"
             }
         },
-        "storagePriority": 24
+        "storagePriority": 24,
+        "viewLink": true
     },
     "snapshot-copy-reserve": {
         "hasInnerPage": true,
@@ -1105,7 +1165,8 @@
             },
             "wellArchitectedConfig": "Snapshot copy reserve = 0%"
         },
-        "storagePriority": 25
+        "storagePriority": 25,
+        "viewLink": true
     },
     "snapshot-autodelete": {
         "hasInnerPage": true,
@@ -1160,7 +1221,8 @@
             },
             "wellArchitectedConfig": "Snapshot autodelete (Volume/oldest first)"
         },
-        "storagePriority": 26
+        "storagePriority": 26,
+        "viewLink": true
     },
     "space-mgmt-try-first": {
         "hasInnerPage": true,
@@ -1219,7 +1281,8 @@
             },
             "wellArchitectedConfig": "Space-mgmt-try-first = volume_grow"
         },
-        "storagePriority": 27
+        "storagePriority": 27,
+        "viewLink": true
     },
     "snapshot-policy": {
         "hasInnerPage": true,
@@ -1279,7 +1342,8 @@
             },
             "wellArchitectedConfig": "Snapshot policy = none"
         },
-        "resiliencyPriority": 1
+        "resiliencyPriority": 1,
+        "viewLink": true
     },
     "snapshot-policy-vol": {
         "hasInnerPage": true,
@@ -1313,7 +1377,8 @@
             "statusType": "ontap",
             "supportsDashboardBulk": false
         },
-        "storagePriority": 28
+        "storagePriority": 28,
+        "viewLink": true
     },
     "tiering-tco-optimization": {
         "hasInnerPage": true,
@@ -1370,7 +1435,8 @@
                 "type": "standard"
             }
         },
-        "storagePriority": 29
+        "storagePriority": 29,
+        "viewLink": true
     },
     "storage-efficiencies": {
         "hasInnerPage": true,
@@ -1427,7 +1493,8 @@
                 "type": "standard"
             }
         },
-        "storagePriority": 30
+        "storagePriority": 30,
+        "viewLink": true
     },
     "snapcenter-snapshot": {
         "hasInnerPage": true,
@@ -1483,7 +1550,8 @@
                 "content": "databases.well-architect.oracle-snapcenter-notes"
             }
         },
-        "resiliencyPriority": 3
+        "resiliencyPriority": 3,
+        "viewLink": true
     },
     "tcp-advanced-options": {
         "hasInnerPage": false,
@@ -1522,7 +1590,8 @@
                 "net.ipv4.tcp_window_scaling = 1"
             ]
         },
-        "storagePriority": 32
+        "storagePriority": 32,
+        "viewLink": false
     },
     "nfs-mount-options-databasefiles": {
         "hasInnerPage": true,
@@ -1540,22 +1609,21 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Mount point",
+                    "label": "NFS mount",
                     "accessor": "objectName"
                 },
                 {
                     "key": "value",
-                    "label": "Current options",
+                    "label": "Current mount options",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended mount options",
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "EC2 instance",
-            "tableTitle": "Impacted NFS mounts"
+            "resourceTypeLabel": "EC2 instance"
         },
         "dialogContent": {
             "sections": [
@@ -1580,12 +1648,37 @@
                 "content": "databases.well-architect.oracle-nfs-mount-options-dbfiles-note"
             }
         },
-        "storagePriority": 33
+        "storagePriority": 33,
+        "viewLink": true
     },
     "nfs-mount-options-adrhome": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": true,
         "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted NFS mounts",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Mount options",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "NFS mount"
+        },
         "cardHeights": {
             "recommendationSection": "170px",
             "tagSection": "266px"
@@ -1613,19 +1706,45 @@
                 "content": "databases.well-architect.oracle-nfs-mount-options-adrhome-note"
             }
         },
-        "storagePriority": 34
+        "storagePriority": 34,
+        "viewLink": true
     },
     "nfsv4-domain-name": {
         "hasInnerPage": false,
         "viewOnly": true,
         "fixSupported": false,
         "optimizeNotAvailable": true,
-        "storagePriority": 35
+        "storagePriority": 35,
+        "viewLink": false
     },
     "nfs-caching-options": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": true,
         "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted NFS mounts",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Mount options",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "NFS mount"
+        },
         "cardHeights": {
             "recommendationSection": "170px",
             "tagSection": "266px"
@@ -1653,7 +1772,8 @@
                 "content": "databases.well-architect.oracle-nfs-caching-options-note"
             }
         },
-        "storagePriority": 36
+        "storagePriority": 36,
+        "viewLink": true
     },
     "dnfs-enablement": {
         "hasInnerPage": false,
@@ -1682,7 +1802,8 @@
                 "content": "databases.well-architect.dnfs-enablement-note"
             }
         },
-        "storagePriority": 37
+        "storagePriority": 37,
+        "viewLink": true
     },
     "dnfs-enabled": {
         "hasInnerPage": false,
@@ -1711,7 +1832,8 @@
                 "content": "databases.well-architect.dnfs-enablement-note"
             }
         },
-        "storagePriority": 37
+        "storagePriority": 37,
+        "viewLink": false
     },
     "dnfs-configuration-file": {
         "hasInnerPage": true,
@@ -1729,7 +1851,7 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Configuration file",
+                    "label": "NFS mount",
                     "accessor": "objectName"
                 },
                 {
@@ -1739,12 +1861,11 @@
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended value",
+                    "label": "Recommended dNFS configuration",
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "EC2 instance",
-            "tableTitle": "Impacted EC2 instances"
+            "resourceTypeLabel": "EC2 instance"
         },
         "dialogContent": {
             "sections": [
@@ -1767,12 +1888,37 @@
                 "content": "databases.well-architect.dnfs-config-file-note"
             }
         },
-        "storagePriority": 38
+        "storagePriority": 38,
+        "viewLink": true
     },
     "dnfs-consistent-ip-resolution": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": true,
         "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted EC2 instances",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "EC2 instance",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "EC2 instance"
+        },
         "dialogContent": {
             "sections": [
                 {
@@ -1786,7 +1932,8 @@
                 "content": "databases.well-architect.dnfs-consistent-ip-resolution-note"
             }
         },
-        "storagePriority": 39
+        "storagePriority": 39,
+        "viewLink": true
     },
     "dnfs-no-shared-cache": {
         "hasInnerPage": true,
@@ -1804,22 +1951,21 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Parameter",
+                    "label": "NFS mount",
                     "accessor": "objectName"
                 },
                 {
                     "key": "value",
-                    "label": "Current value",
+                    "label": "Current mount options",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended mount options",
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "EC2 instance",
-            "tableTitle": "Impacted NFS mounts"
+            "resourceTypeLabel": "EC2 instance"
         },
         "dialogContent": {
             "sections": [
@@ -1844,7 +1990,8 @@
                 "content": "databases.well-architect.dnfs-no-shared-cache-note"
             }
         },
-        "storagePriority": 40
+        "storagePriority": 40,
+        "viewLink": true
     },
     "nfs-rootonly": {
         "hasInnerPage": true,
@@ -1904,7 +2051,8 @@
             },
             "wellArchitectedConfig": "nfs-rootonly = disabled"
         },
-        "storagePriority": 41
+        "storagePriority": 41,
+        "viewLink": true
     },
     "export-policy": {
         "hasInnerPage": true,
@@ -1963,7 +2111,8 @@
             },
             "wellArchitectedConfig": ["superuser = sys", "allow-suid=true"]
         },
-        "storagePriority": 42
+        "storagePriority": 42,
+        "viewLink": true
     },
     "os-type": {
         "hasInnerPage": true,
@@ -2021,7 +2170,8 @@
             },
             "wellArchitectedConfig": "OS type = linux"
         },
-        "storagePriority": 43
+        "storagePriority": 43,
+        "viewLink": true
     },
     "selinux": {
         "hasInnerPage": false,
@@ -2060,12 +2210,17 @@
             },
             "wellArchitectedConfig": "SELINUX=disabled"
         },
-        "storagePriority": 44
+        "storagePriority": 44,
+        "viewLink": false
     },
     "host-os-patch": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": true,
         "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted missing patches",
+            "countSource": "impactedCount"
+        },
         "dialogContent": {
             "sections": [
                 {
@@ -2148,7 +2303,8 @@
                 "content": "databases.well-architect.oracle-os-patch-note"
             }
         },
-        "computePriority": 1
+        "computePriority": 1,
+        "viewLink": true
     },
     "transparent-hugepages": {
         "hasInnerPage": true,
@@ -2163,20 +2319,17 @@
                 {
                     "key": "objectName",
                     "label": "Parameter name",
-                    "accessor": "objectName",
-                    "width": "35%"
+                    "accessor": "objectName"
                 },
                 {
                     "key": "value",
                     "label": "Current value",
-                    "accessor": "value",
-                    "width": "30%"
+                    "accessor": "value"
                 },
                 {
                     "key": "recommended",
                     "label": "Recommended value",
-                    "accessor": "recommended",
-                    "width": "25%"
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "EC2 instance"
@@ -2210,15 +2363,36 @@
             },
             "wellArchitectedConfig": "Transparent Hugepages disabled (enabled=never, defrag=never)"
         },
-        "computePriority": 2
+        "computePriority": 2,
+        "viewLink": true
     },
     "filesystems-io-options": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": true,
         "fixSupported": false,
         "cardMetadata": {
-            "impactedLabel": "Impacted databases",
+            "impactedLabel": "Impacted configurations",
             "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Configuration name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Configuration"
         },
         "dialogContent": {
             "sections": [
@@ -2242,7 +2416,8 @@
                 "content": "databases.well-architect.oracle-multipath-io-note"
             }
         },
-        "computePriority": 3
+        "computePriority": 3,
+        "viewLink": true
     },
     "multiblock-readcount": {
         "hasInnerPage": true,
@@ -2257,20 +2432,17 @@
                 {
                     "key": "objectName",
                     "label": "Parameter name",
-                    "accessor": "objectName",
-                    "width": "35%"
+                    "accessor": "objectName"
                 },
                 {
                     "key": "value",
                     "label": "Current value",
-                    "accessor": "value",
-                    "width": "30%"
+                    "accessor": "value"
                 },
                 {
                     "key": "recommended",
                     "label": "Recommended value",
-                    "accessor": "recommended",
-                    "width": "25%"
+                    "accessor": "recommended"
                 }
             ],
             "resourceTypeLabel": "EC2 instance"
@@ -2304,7 +2476,8 @@
             },
             "wellArchitectedConfig": "db_file_multiblock_read_count unset in init.ora"
         },
-        "computePriority": 4
+        "computePriority": 4,
+        "viewLink": true
     },
     "multipath-readcount": {
         "hasInnerPage": false,
@@ -2314,7 +2487,8 @@
             "impactedLabel": "Impacted databases",
             "countSource": "totalObjectsInViolation"
         },
-        "computePriority": 5
+        "computePriority": 5,
+        "viewLink": true
     },
     "host-utilities": {
         "hasInnerPage": false,
@@ -2353,12 +2527,37 @@
             },
             "wellArchitectedConfig": "Install host utilities"
         },
-        "computePriority": 6
+        "computePriority": 6,
+        "viewLink": false
     },
     "kernel-parameters": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted configurations",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Configuration name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Configuration"
+        },
         "cardHeights": {
             "recommendationSection": "170px",
             "tagSection": "266px"
@@ -2392,7 +2591,8 @@
             },
             "wellArchitectedConfig": ["sunrpc.tcp_max_slot_table_entries = 128", "sunrpc.tcp_slot_table_entries = 128"]
         },
-        "computePriority": 7
+        "computePriority": 7,
+        "viewLink": true
     },
     "multipath-io": {
         "hasInnerPage": false,
@@ -2433,19 +2633,40 @@
                 "content": "databases.well-architect.oracle-multipath-io-note"
             }
         },
-        "computePriority": 8
+        "computePriority": 8,
+        "viewLink": false
     },
     "multipath-io-sessions": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted configurations",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Configuration name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Configuration"
+        },
         "cardHeights": {
             "recommendationSection": "170px",
             "tagSection": "266px"
-        },
-        "cardMetadata": {
-            "impactedLabel": "Impacted volumes",
-            "countSource": "totalObjectsInViolation"
         },
         "optimizeApi": {
             "mutation": "optimizeOracleOperatingSystem",
@@ -2476,12 +2697,37 @@
             },
             "wellArchitectedConfig": "4 active iSCSI sessions per host"
         },
-        "computePriority": 10
+        "computePriority": 10,
+        "viewLink": true
     },
     "iscsi-replacement-timeout": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted configurations",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Configuration name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Configuration"
+        },
         "cardHeights": {
             "recommendationSection": "170px",
             "tagSection": "266px"
@@ -2515,12 +2761,37 @@
             },
             "wellArchitectedConfig": "node.session.timeo.replacement_timeout = 5 in /etc/iscsi/iscsid.conf"
         },
-        "computePriority": 13
+        "computePriority": 13,
+        "viewLink": true
     },
     "multipath-configuration": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted configurations",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Configuration name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Configuration"
+        },
         "cardHeights": {
             "recommendationSection": "200px",
             "tagSection": "296px"
@@ -2573,12 +2844,37 @@
                 "max_sectors_kb: 4096"
             ]
         },
-        "computePriority": 14
+        "computePriority": 14,
+        "viewLink": true
     },
     "multipath-friendly-names": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted configurations",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Configuration name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Configuration"
+        },
         "cardHeights": {
             "recommendationSection": "170px",
             "tagSection": "266px"
@@ -2612,12 +2908,17 @@
             },
             "wellArchitectedConfig": "user_friendly_names = yes in /etc/multipath.conf"
         },
-        "computePriority": 15
+        "computePriority": 15,
+        "viewLink": true
     },
     "oracle-security-patch": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": true,
         "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted missing patches",
+            "countSource": "impactedCount"
+        },
         "dialogContent": {
             "sections": [
                 {
@@ -2681,7 +2982,8 @@
                 ]
             }
         },
-        "applicationPriority": 2
+        "applicationPriority": 2,
+        "viewLink": true
     },
     "asm-setup": {
         "hasInnerPage": false,
@@ -2715,7 +3017,8 @@
                 "content": "databases.well-architect.oracle-asm-setup-note"
             }
         },
-        "applicationPriority": 4
+        "applicationPriority": 4,
+        "viewLink": false
     },
     "asm-external-redundancy": {
         "hasInnerPage": true,
@@ -2773,12 +3076,37 @@
                 "content": "databases.well-architect.oracle-afd-logical-block-size-note"
             }
         },
-        "applicationPriority": 5
+        "applicationPriority": 5,
+        "viewLink": true
     },
     "afd-logical-block-size": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": true,
         "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted AFD configurations",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Configuration",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "AFD configuration"
+        },
         "dialogContent": {
             "sections": [
                 {
@@ -2804,12 +3132,37 @@
                 "content": "databases.well-architect.oracle-afd-logical-block-size-note"
             }
         },
-        "applicationPriority": 6
+        "applicationPriority": 6,
+        "viewLink": true
     },
     "asmlib-logical-block-size": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": true,
         "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted ASMLib configurations",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Configuration name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "ASMLib configuration"
+        },
         "dialogContent": {
             "sections": [
                 {
@@ -2835,7 +3188,8 @@
                 "content": "databases.well-architect.oracle-afd-logical-block-size-note"
             }
         },
-        "applicationPriority": 6
+        "applicationPriority": 6,
+        "viewLink": true
     },
     "crr": {
         "hasInnerPage": true,
@@ -2910,7 +3264,8 @@
                 ]
             }
         },
-        "resiliencyPriority": 2
+        "resiliencyPriority": 2,
+        "viewLink": true
     },
     "backup-configuration": {
         "hasInnerPage": false,
@@ -2929,7 +3284,8 @@
                 "showCustomBackupUI": true
             }
         },
-        "resiliencyPriority": 4
+        "resiliencyPriority": 4,
+        "viewLink": false
     },
     "clone-management": {
         "hasInnerPage": true,
@@ -2965,6 +3321,7 @@
                 "type": "standard"
             }
         },
-        "cloningPriority": 1
+        "cloningPriority": 1,
+        "viewLink": false
     }
 }

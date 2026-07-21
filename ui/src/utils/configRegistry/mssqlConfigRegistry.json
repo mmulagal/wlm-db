@@ -61,13 +61,38 @@
                 "type": "standard"
             }
         },
-        "storagePriority": 1
+        "storagePriority": 1,
+        "viewLink": true
     },
     "headroom": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
         "statusDependentFix": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted file systems",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "File system",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "current",
+                    "label": "Current value",
+                    "accessor": "current"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "File system"
+        },
         "optimizeApi": {
             "mutation": "optimizeStorageSizingForBulk",
             "payloadScope": "bulk",
@@ -185,7 +210,8 @@
                 }
             ]
         },
-        "storagePriority": 2
+        "storagePriority": 2,
+        "viewLink": true
     },
     "log-drive-size": {
         "hasInnerPage": true,
@@ -299,7 +325,8 @@
                 }
             ]
         },
-        "storagePriority": 3
+        "storagePriority": 3,
+        "viewLink": true
     },
     "tempdb-drive-size": {
         "hasInnerPage": true,
@@ -413,7 +440,8 @@
                 }
             ]
         },
-        "storagePriority": 4
+        "storagePriority": 4,
+        "viewLink": true
     },
     "data-files-location": {
         "hasInnerPage": true,
@@ -464,7 +492,8 @@
             "useNestedExpandable": true,
             "resourceTypeLabel": "Database"
         },
-        "storagePriority": 5
+        "storagePriority": 5,
+        "viewLink": true
     },
     "log-files-location": {
         "hasInnerPage": true,
@@ -515,7 +544,8 @@
             "useNestedExpandable": true,
             "resourceTypeLabel": "Database"
         },
-        "storagePriority": 6
+        "storagePriority": 6,
+        "viewLink": true
     },
     "tempdb-files-location": {
         "hasInnerPage": true,
@@ -566,7 +596,8 @@
             "useNestedExpandable": true,
             "resourceTypeLabel": "Database"
         },
-        "storagePriority": 7
+        "storagePriority": 7,
+        "viewLink": true
     },
     "thin-provision": {
         "hasInnerPage": true,
@@ -623,7 +654,8 @@
                 "type": "standard"
             }
         },
-        "storagePriority": 21
+        "storagePriority": 21,
+        "viewLink": true
     },
     "autosize": {
         "hasInnerPage": true,
@@ -677,7 +709,8 @@
             },
             "wellArchitectedConfig": "Autosize on"
         },
-        "storagePriority": 22
+        "storagePriority": 22,
+        "viewLink": true
     },
     "autosize-mode": {
         "hasInnerPage": true,
@@ -731,7 +764,8 @@
             },
             "wellArchitectedConfig": "Autosize-mode = grow"
         },
-        "storagePriority": 23
+        "storagePriority": 23,
+        "viewLink": true
     },
     "block-device-space-management": {
         "hasInnerPage": true,
@@ -800,7 +834,8 @@
                 "type": "standard"
             }
         },
-        "storagePriority": 24
+        "storagePriority": 24,
+        "viewLink": true
     },
     "snapshot-copy-reserve": {
         "hasInnerPage": true,
@@ -863,7 +898,8 @@
             },
             "wellArchitectedConfig": "Snapshot copy reserve = 0%"
         },
-        "storagePriority": 25
+        "storagePriority": 25,
+        "viewLink": true
     },
     "snapshot-autodelete": {
         "hasInnerPage": true,
@@ -917,7 +953,8 @@
             },
             "wellArchitectedConfig": "Snapshot autodelete (Volume/oldest first)"
         },
-        "storagePriority": 26
+        "storagePriority": 26,
+        "viewLink": true
     },
     "space-mgmt-try-first": {
         "hasInnerPage": true,
@@ -975,7 +1012,8 @@
             },
             "wellArchitectedConfig": "Space-mgmt-try-first = volume_grow"
         },
-        "storagePriority": 27
+        "storagePriority": 27,
+        "viewLink": true
     },
     "snapshot-policy": {
         "hasInnerPage": true,
@@ -1037,7 +1075,8 @@
                 "type": "standard"
             }
         },
-        "resiliencyPriority": 1
+        "resiliencyPriority": 1,
+        "viewLink": true
     },
     "tiering-tco-optimization": {
         "hasInnerPage": true,
@@ -1091,7 +1130,8 @@
                 "type": "standard"
             }
         },
-        "storagePriority": 29
+        "storagePriority": 29,
+        "viewLink": true
     },
     "storage-efficiencies": {
         "hasInnerPage": true,
@@ -1145,7 +1185,8 @@
                 "type": "standard"
             }
         },
-        "storagePriority": 30
+        "storagePriority": 30,
+        "viewLink": true
     },
     "snapcenter-snapshot": {
         "hasInnerPage": true,
@@ -1216,7 +1257,8 @@
                 }
             ]
         },
-        "resiliencyPriority": 2
+        "resiliencyPriority": 2,
+        "viewLink": true
     },
     "os-type": {
         "hasInnerPage": true,
@@ -1288,7 +1330,8 @@
                 ]
             }
         },
-        "storagePriority": 32
+        "storagePriority": 32,
+        "viewLink": true
     },
     "mpio-load-balance-policy": {
         "hasInnerPage": true,
@@ -1346,7 +1389,8 @@
             },
             "wellArchitectedConfig": "Multipath I/O Policy = Round Robin"
         },
-        "storagePriority": 33
+        "storagePriority": 33,
+        "viewLink": true
     },
     "mpio-iscsi-count": {
         "hasInnerPage": true,
@@ -1404,7 +1448,8 @@
             },
             "wellArchitectedConfig": "Multipath I/O Sessions = 5"
         },
-        "storagePriority": 34
+        "storagePriority": 34,
+        "viewLink": true
     },
     "mpio-enabled": {
         "hasInnerPage": true,
@@ -1462,7 +1507,8 @@
             },
             "wellArchitectedConfig": "Multipath I/O Status = Enabled"
         },
-        "storagePriority": 35
+        "storagePriority": 35,
+        "viewLink": true
     },
     "mpio-timeout": {
         "hasInnerPage": true,
@@ -1521,7 +1567,8 @@
             },
             "wellArchitectedConfig": "Multipath I/O Timeout = 60 seconds"
         },
-        "storagePriority": 36
+        "storagePriority": 36,
+        "viewLink": true
     },
     "ntfs-allocation-unit-size": {
         "hasInnerPage": true,
@@ -1581,7 +1628,8 @@
                 }
             ]
         },
-        "storagePriority": 37
+        "storagePriority": 37,
+        "viewLink": true
     },
     "compute-rightsizing": {
         "hasInnerPage": false,
@@ -1609,12 +1657,17 @@
                 "type": "failover"
             }
         },
-        "computePriority": 1
+        "computePriority": 1,
+        "viewLink": false
     },
     "host-os-patch": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": true,
         "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted missing patches",
+            "countSource": "impactedCount"
+        },
         "dialogContent": {
             "sections": [
                 {
@@ -1635,7 +1688,7 @@
                     {
                         "header": "databases.well-architect.name",
                         "accessor": "title",
-                        "width": "262px"
+                        "width": "220px"
                     },
                     {
                         "header": "databases.well-architect.classification",
@@ -1684,7 +1737,8 @@
                 "content": "databases.well-architect.mssql-os-patch-note2"
             }
         },
-        "computePriority": 2
+        "computePriority": 2,
+        "viewLink": true
     },
     "rss-config": {
         "hasInnerPage": true,
@@ -1781,7 +1835,8 @@
                 "type": "failover"
             }
         },
-        "computePriority": 3
+        "computePriority": 3,
+        "viewLink": false
     },
     "mtu-alignment": {
         "hasInnerPage": true,
@@ -1848,19 +1903,25 @@
                 ]
             }
         },
-        "computePriority": 4
+        "computePriority": 4,
+        "viewLink": true
     },
     "sql-license": {
         "hasInnerPage": false,
         "viewOnly": true,
         "fixSupported": false,
         "optimizeNotAvailable": true,
-        "applicationPriority": 1
+        "applicationPriority": 1,
+        "viewLink": false
     },
     "mssql-patch": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": true,
         "fixSupported": false,
+        "cardMetadata": {
+            "impactedLabel": "Impacted missing patches",
+            "countSource": "impactedCount"
+        },
         "dialogContent": {
             "sections": [
                 {
@@ -1881,7 +1942,7 @@
                     {
                         "header": "databases.well-architect.name",
                         "accessor": "title",
-                        "width": "262px"
+                        "width": "220px"
                     },
                     {
                         "header": "databases.well-architect.classification",
@@ -1921,12 +1982,37 @@
                 ]
             }
         },
-        "applicationPriority": 2
+        "applicationPriority": 2,
+        "viewLink": true
     },
     "maxdop": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted SQL instances",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "SQL instance",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "SQL instance"
+        },
         "optimizeApi": {
             "mutation": "optimizeMaxdopConfigForBulk",
             "payloadScope": "bulk",
@@ -1952,7 +2038,8 @@
                 "type": "standard"
             }
         },
-        "applicationPriority": 3
+        "applicationPriority": 3,
+        "viewLink": true
     },
     "snapshot-local": {
         "hasInnerPage": false,
@@ -1971,7 +2058,8 @@
                 "patchField": "SNAPSHOT_LOCAL"
             }
         },
-        "resiliencyPriority": 3
+        "resiliencyPriority": 3,
+        "viewLink": true
     },
     "crr": {
         "hasInnerPage": true,
@@ -2036,7 +2124,8 @@
                 ]
             }
         },
-        "resiliencyPriority": 4
+        "resiliencyPriority": 4,
+        "viewLink": true
     },
     "backup-configuration": {
         "hasInnerPage": false,
@@ -2055,7 +2144,8 @@
                 "showCustomBackupUI": true
             }
         },
-        "resiliencyPriority": 5
+        "resiliencyPriority": 5,
+        "viewLink": false
     },
     "scheduled-fsx-backup": {
         "hasInnerPage": false,
@@ -2067,7 +2157,8 @@
                 "showCustomBackupUI": true
             }
         },
-        "resiliencyPriority": 6
+        "resiliencyPriority": 6,
+        "viewLink": true
     },
     "cluster-quorum": {
         "hasInnerPage": true,
@@ -2127,7 +2218,8 @@
                 "type": "clusterQuorum"
             }
         },
-        "resiliencyPriority": 7
+        "resiliencyPriority": 7,
+        "viewLink": true
     },
     "drive-letter": {
         "hasInnerPage": true,
@@ -2182,10 +2274,11 @@
                 "type": "driveLetter"
             }
         },
-        "resiliencyPriority": 8
+        "resiliencyPriority": 8,
+        "viewLink": true
     },
     "heartbeat-settings": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
@@ -2239,7 +2332,28 @@
                 "type": "failover"
             }
         },
-        "resiliencyPriority": 9
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Configuration name",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current heartbeat setting",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended heartbeat setting",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "heartbeat setting"
+        },
+        "resiliencyPriority": 9,
+        "viewLink": true
     },
     "shared-storage": {
         "hasInnerPage": true,
@@ -2306,7 +2420,8 @@
                 "type": "failover"
             }
         },
-        "resiliencyPriority": 10
+        "resiliencyPriority": 10,
+        "viewLink": true
     },
     "sql-server-service": {
         "hasInnerPage": true,
@@ -2370,7 +2485,8 @@
                 "type": "clusterQuorum"
             }
         },
-        "resiliencyPriority": 11
+        "resiliencyPriority": 11,
+        "viewLink": true
     },
     "clone-management": {
         "hasInnerPage": true,
@@ -2391,6 +2507,7 @@
             "statusType": "os",
             "supportsDashboardBulk": true
         },
-        "cloningPriority": 1
+        "cloningPriority": 1,
+        "viewLink": false
     }
 }

@@ -26,9 +26,14 @@ const OptimizeCard = ({ fromPage = '', recommendationHeight }: any) => {
     useEffect(() => {
         if (selectedOptimizeConfig && !fromPage) {
             let dataObj = {};
+            const blockSixCount = selectedOptimizeConfig?.data?.block_six?.count?.totalObjectsInViolation;
+            // Patch configs (host-os-patch, mssql-patch) set block_six.value to a bare integer
+            // string (e.g. "4") instead of a count object. Fall back to that when count is absent.
+            const blockSixValue = String(selectedOptimizeConfig?.data?.block_six?.value ?? '');
+            const patchCount = /^\d+$/.test(blockSixValue) ? Number(blockSixValue) : undefined;
             dataObj = {
                 ...selectedOptimizeConfig?.data,
-                impactedCount: selectedOptimizeConfig?.data?.block_six?.count?.totalObjectsInViolation,
+                impactedCount: blockSixCount ?? patchCount,
                 severity: selectedOptimizeConfig?.data?.block_four?.value,
                 tags: selectedOptimizeConfig?.data?.tags
             };
