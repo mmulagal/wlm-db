@@ -127,7 +127,7 @@ import {
     TaggingServiceEc2Host,
     Ec2WithStorage
 } from './cloud-manager/tagging-service-operations';
-import { checkFsxLinkExists } from './cloud-manager/proxy-operations';
+import { checkFsxLinkExists } from '../lib/cloud-manager/fsx-core';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();

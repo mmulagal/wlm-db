@@ -96,11 +96,8 @@ import {
     mockAoagResourceAssessmentDataAllOptimized,
     aoagPrimaryHostName
 } from '../utils/demo-utils/hostAssementsData';
-import {
-    copyPowerShellModule,
-    validateOntapConnectivity,
-    validateSQLInstanceConnectivity
-} from './workloads/mssql/ssm-script-utils';
+import { copyPowerShellModule, validateSQLInstanceConnectivity } from './workloads/mssql/ssm-script-utils';
+import { getClusterInfo } from '../lib/ontap/ontap-gateway';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import {
     OracleDeploymentTenacy,
@@ -130,6 +127,14 @@ const NEW_SSM_PARAMETERS = 'NEW_SSM_PARAMETERS';
 const TEMP = '_temp';
 const WINDOWS_LOCAL_USER_ACCESS_ERROR =
     'Authenticating with Windows local/domain credentials require enable CredSSP on the system for delegating credentials within domain computers. If this is blocked on the system with domain group policies, feature will not work.';
+
+interface FsxConnectivityTarget {
+    accountId: string;
+    credentialsId: string;
+    region: string;
+    fsxId: string;
+}
+
 async function installPowershell7(
     accountId: string,
     credentialsId: string,
@@ -2686,6 +2691,17 @@ async function validateCredentials(
     }
 }
 
+async function checkFsxConnectivity(
+    target: FsxConnectivityTarget
+): Promise<{ ontapconnectivity: true } | { ontapconnectivity: false; ontaperror: string }> {
+    try {
+        await getClusterInfo(target);
+        return { ontapconnectivity: true };
+    } catch (error) {
+        return { ontapconnectivity: false, ontaperror: error instanceof Error ? error.message : String(error) };
+    }
+}
+
 /**
  * Collects AOAG replica information for registered SQL Server instances
  * Returns an array of replica info objects with EC2 instance details
@@ -2717,11 +2733,11 @@ async function validateWindowsCredentials(
     });
 
     let parsedResponse;
-    let command = '$WarningPreference = "SilentlyContinue";';
+    let command = '$WarningPreference = "SilentlyContinue"; $responseObject = @{};';
     const newSqlCredentials = cloneDeep(sqlCredentials);
     const replicaInfoObject: ReplicaInfoType[] = []; // Use this to add AOAG replica info in future
 
-    if (fsxCredentials || sqlCredentials.length || windowsUserCredentials) {
+    if (fsxCredentials || sqlCredentials.length || windowsUserCredentials.length) {
         // Get signed url for aws_ssm.zip to install the ps modules
         const artifactsRegion = getArtifactsBucketRegion(region);
         const bucketname = getArtifactsRegionBucketName(region);
@@ -2732,9 +2748,9 @@ async function validateWindowsCredentials(
         command += `${copyPowerShellModule(copyPSModuleS3SignedUrl, moduleNames)};\n`;
     }
 
-    if (fsxCredentials) {
-        command += `${validateOntapConnectivity([fsxCredentials.resourceId], region)};\n`;
-    }
+    const fsxConnectivityCheck = fsxCredentials
+        ? checkFsxConnectivity({ accountId, credentialsId, region, fsxId: fsxCredentials.resourceId })
+        : undefined;
 
     const isGovCloudAccount = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
 
@@ -2764,13 +2780,16 @@ async function validateWindowsCredentials(
 
     command += '$responseObject | ConvertTo-Json -Compress -Depth 10';
 
-    const ssmresponse = await callSsmExecution({
-        credentialsId,
-        region,
-        commands: [command],
-        ec2InstanceId: instanceId,
-        comment: 'Validate credentials'
-    });
+    const [ssmresponse, fsxConnectivityResult] = await Promise.all([
+        callSsmExecution({
+            credentialsId,
+            region,
+            commands: [command],
+            ec2InstanceId: instanceId,
+            comment: 'Validate database credentials'
+        }),
+        fsxConnectivityCheck
+    ]);
 
     const cleanResponse = ssmresponse?.replaceAll('\r\n', '');
     parsedResponse = attempt(JSON.parse, cleanResponse);
@@ -2785,35 +2804,33 @@ async function validateWindowsCredentials(
     const paramsToDelete: string[] = [];
     const instancesToBeDeleted: string[] = [];
 
-    if (fsxCredentials) {
+    if (fsxCredentials && fsxConnectivityResult) {
         const isGovCloudFsx = getAsyncLocalStorageResource<boolean>(GOV_ACCOUNT) ?? false;
-        parsedResponse.fsxResults.map(async (fsxResult: FSxCredsRegistration) => {
-            if (fsxResult.ontapconnectivity === false && fsxResult.fsxId === fsxCredentials.resourceId) {
-                response.push({
-                    resourceId: fsxCredentials.resourceId,
-                    resourceType: RESOURCESTYPE.FSX,
-                    fsxnError: fsxResult.ontaperror
-                });
-                if (!isGovCloudFsx) {
-                    paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
-                }
-            } else if (fsxResult.ontapconnectivity === true && fsxResult.fsxId === fsxCredentials.resourceId) {
-                response.push({
-                    resourceId: fsxCredentials.resourceId,
-                    resourceType: RESOURCESTYPE.FSX,
-                    fsxnError: ''
-                });
-                if (!isGovCloudFsx) {
-                    await registerFsxOntapCredentials(
-                        accountId,
-                        credentialsId,
-                        region,
-                        fsxCredentials.resourceId,
-                        fsxCredentials.password!
-                    );
-                }
+        if (!fsxConnectivityResult.ontapconnectivity) {
+            response.push({
+                resourceId: fsxCredentials.resourceId,
+                resourceType: RESOURCESTYPE.FSX,
+                fsxnError: fsxConnectivityResult.ontaperror
+            });
+            if (!isGovCloudFsx) {
+                paramsToDelete.push(`${SSM_PARAM_PREFIX}${fsxCredentials.resourceId}`);
             }
-        });
+        } else {
+            response.push({
+                resourceId: fsxCredentials.resourceId,
+                resourceType: RESOURCESTYPE.FSX,
+                fsxnError: ''
+            });
+            if (!isGovCloudFsx) {
+                await registerFsxOntapCredentials(
+                    accountId,
+                    credentialsId,
+                    region,
+                    fsxCredentials.resourceId,
+                    fsxCredentials.password!
+                );
+            }
+        }
     }
 
     if (sqlCredentials.length || windowsUserCredentials.length) {
@@ -3706,6 +3723,7 @@ export {
     manageSqlServerV2,
     validateAndStoreDiscoveredParameters,
     validateOracleCredentials,
+    validateWindowsCredentials,
     validateCredentialsByAccountType,
     unmanageDatabaseInstance,
     checkCredentialsExistence

@@ -956,52 +956,6 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
     }
 `;
 
-const validateOntapConnectivity = (fsxids: string[], fsxregion: string) => `
-    $ProgressPreference = 'SilentlyContinue'
-    if ($responseObject -eq $null) {
-        $responseObject = @{}
-    }
-
-    $certHost = $(if ('${fsxregion}' -like 'us-gov-*') { 'fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com' } else { 'fsx-aws-certificates.s3.amazonaws.com' })
-    $connection = Test-Connection -ComputerName $certHost -Quiet -Count 1
-    if ($connection -ne $True) {
-        # Set the registry key to disable certificate revocation check in case of private subnet
-        Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\" -Name State -Value 146944 -Force | Out-Null
-    }
-    $ssmmodulePath =  (Get-Module -Name 'AWS.Tools.SimpleSystemsManagement' -ListAvailable).Path
-    if($ssmmodulePath -is [System.Array]) {
-        $ssmmodulePath = $ssmmodulePath[0]
-    }
-
-    Import-Module -Name $ssmmodulePath
-
-    $fsxids = '${JSON.stringify(fsxids)}' | ConvertFrom-Json
-    $responseObject['fsxResults'] = @()
-
-    $fsxids | ForEach-Object {
-        $fsxid = $_
-        try {
-            $FSxRegion = '${fsxregion}'
-
-            # Ensure ontapRestRequest is defined or replace it with the correct implementation
-            ${ontapRestRequest}
-            $ontapresult = Invoke-ONTAPRequest -ApiEndPoint '/cluster?fields=version'
-
-            $responseObject['fsxResults'] += @{
-                'fsxId' = $fsxid
-                'ontapconnectivity' = $True
-
-            }
-        } catch {
-            $responseObject['fsxResults'] += @{
-                'fsxId' = $fsxid
-                'ontaperror' = $_.Exception.Message
-                'ontapconnectivity' = $False
-            }
-        }
-    }
-`;
-
 const installPowerShellModule = (module: string) => `
     $modulename = '${module}'
     if ($responseObject -eq $null) {
@@ -2748,7 +2702,6 @@ export {
     GET_DEFAULT_COLLATION,
     RESOURCE_UTILIZATION,
     validateSQLInstanceConnectivity,
-    validateOntapConnectivity,
     installPowerShellModule,
     getMappedOntapVolumesScript,
     restGetUtilForOntap,

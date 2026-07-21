@@ -6,7 +6,7 @@ import {
     getTaggingServiceStorageForInstance,
     applyTaggingServiceStorageEnrichment
 } from '../../src/operations/discover-operations';
-import { checkFsxLinkExists } from '../../src/operations/cloud-manager/proxy-operations';
+import { checkFsxLinkExists } from '../../src/lib/cloud-manager/fsx-core';
 import {
     getRegistryOnlySqlServerInstances,
     getSqlServerInstancesFromRegistry

@@ -143,6 +143,17 @@ async function getFsxFileSystemActiveLinks(credentialsId: string, region: string
     return activeLinks ?? [];
 }
 
+async function checkFsxLinkExists(credentialsId: string, region: string, fsId: string) {
+    logger.info('Checking FSx link exists', { credentialsId, region, fsId });
+    try {
+        const activeLinks = await getFsxFileSystemActiveLinks(credentialsId, region, fsId);
+        return { exists: activeLinks.length > 0, count: activeLinks.length };
+    } catch (error) {
+        logger.error('Failed to check FSx active links', { fsId, error });
+        return { exists: false, count: 0 };
+    }
+}
+
 async function createFSX(requestBody: FSXREQUESTBODY) {
     logger.info('Register fsx in fsx-core', { requestBody });
     const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
@@ -165,5 +176,6 @@ export {
     listFsxOntapCredentials,
     listFSXFileSystem,
     createFSX,
-    getFsxFileSystemActiveLinks
+    getFsxFileSystemActiveLinks,
+    checkFsxLinkExists
 };

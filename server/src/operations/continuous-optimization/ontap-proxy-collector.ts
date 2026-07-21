@@ -1,6 +1,6 @@
 import throat from 'throat';
 import { Ec2FsxRelationship, Ec2WithStorage } from '../cloud-manager/tagging-service-operations';
-import { collectOntapRecordsBatched } from '../cloud-manager/proxy-operations';
+import { collectOntapRecordsBatched } from '../../lib/ontap/ontap-gateway';
 import { StorageAssessment as MssqlStorageAssessment } from '../../utils/common-types';
 import { StorageAssessment as OracleStorageAssessment } from './oracle/common-types';
 import {

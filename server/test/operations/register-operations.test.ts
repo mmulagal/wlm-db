@@ -1,11 +1,13 @@
 import { faker } from '@faker-js/faker';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../utils/consts';
 
+import * as fsxOperations from '../../src/operations/aws/fsx-operations';
 import {
     registerDatabaseServerInstances,
     manageSqlServerV2,
     validateAndStoreDiscoveredParameters,
     validateOracleCredentials,
+    validateWindowsCredentials,
     unmanageDatabaseInstance
 } from '../../src/operations/register-operations';
 import { DatabaseTypes } from '../../src/utils/consts';
@@ -15,6 +17,7 @@ import {
     deleteResource,
     upsertDatabaseInstance
 } from '../../src/lib/database/db';
+import { registerProxyGetResponse, resetProxyOverrides } from '../simulator/scopes/cloud-manager/proxy-forwarder-scope';
 
 const TEST_EC2_INSTANCE_ID = '36E53042-04E8-40C9-AE69-26E56CB0D216';
 const TEST_CREDENTIALS_ID = 'f6082f35-c1db-4619-bb5c-84bcb5bf3286';
@@ -176,6 +179,92 @@ describe('Manage operations', () => {
                 })
             ])
         );
+    });
+
+    describe('validateWindowsCredentials: ONTAP connectivity', () => {
+        const WINDOWS_EC2_INSTANCE_ID = 'i-07e76a4b916548dc0';
+
+        function mockManagementEndpoint(fsxId: string): void {
+            vi.spyOn(fsxOperations, 'getFSXDetails').mockResolvedValueOnce([
+                {
+                    fileSystemId: fsxId,
+                    lifecycle: 'AVAILABLE',
+                    ontapConfiguration: {
+                        endpoints: {
+                            management: { dnsName: `management.${fsxId}.fsx.${DEFAULT_AWS_REGION}.amazonaws.com` }
+                        }
+                    }
+                }
+            ]);
+        }
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+            resetProxyOverrides();
+        });
+
+        it('should register FSx ONTAP credentials when the cluster connectivity check succeeds', async () => {
+            const fsxId = 'fs-0f53fbecdd3d85fb2';
+            mockManagementEndpoint(fsxId);
+            registerProxyGetResponse({
+                targetId: fsxId,
+                ontapPath: 'api/cluster',
+                body: { version: { full: 'NetApp Release 9.13.1' } }
+            });
+            const fsxCredentials = {
+                resourceId: fsxId,
+                resourceType: 'FSX',
+                username: 'fsxadmin',
+                password: 'netapp1!'
+            };
+
+            const { response } = await validateWindowsCredentials(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                WINDOWS_EC2_INSTANCE_ID,
+                fsxCredentials,
+                [],
+                [],
+                [WINDOWS_EC2_INSTANCE_ID]
+            );
+
+            expect(response).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        resourceId: fsxId,
+                        resourceType: 'FSX',
+                        fsxnError: ''
+                    })
+                ])
+            );
+        });
+
+        it('should surface the ONTAP error without registering credentials when connectivity fails', async () => {
+            const fsxId = 'error-target';
+            mockManagementEndpoint(fsxId);
+            const fsxCredentials = {
+                resourceId: fsxId,
+                resourceType: 'FSX',
+                username: 'fsxadmin',
+                password: 'netapp1!'
+            };
+
+            const { response } = await validateWindowsCredentials(
+                ACCOUNT_ID,
+                DEFAULT_AWS_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                WINDOWS_EC2_INSTANCE_ID,
+                fsxCredentials,
+                [],
+                [],
+                [WINDOWS_EC2_INSTANCE_ID]
+            );
+
+            const fsxResult = response.find(item => item.resourceId === fsxId);
+            expect(fsxResult).toMatchObject({ resourceId: fsxId, resourceType: 'FSX' });
+            expect(fsxResult?.fsxnError).toBeTruthy();
+        });
     });
 
     it('Manage EC2 hosting SQL Server V2: No SSM connectivity)', async () => {

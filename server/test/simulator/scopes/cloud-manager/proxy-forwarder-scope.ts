@@ -22,6 +22,10 @@ function isErrorTarget(uri: string): boolean {
 type ProxyGetOverride = { status: number; body: unknown };
 const getOverrides = new Map<string, ProxyGetOverride>();
 
+// Per-test override registry for multi-call sequences (e.g. polling loops), keyed the same way.
+// Responses are consumed in order; the last entry is returned for any further calls once exhausted.
+const getOverrideSequences = new Map<string, ProxyGetOverride[]>();
+
 function overrideKey({ targetId, ontapPath }: { targetId: string; ontapPath: string }): string {
     return `${targetId}|${ontapPath.replace(/^\/+/, '')}`;
 }
@@ -31,8 +35,26 @@ function registerProxyGetResponse(opts: { targetId: string; ontapPath: string; s
     getOverrides.set(overrideKey({ targetId, ontapPath }), { status, body });
 }
 
+/**
+ * Registers a sequence of GET responses for the same `targetId`+`ontapPath`, returned one per
+ * call in order (the last response repeats for any calls beyond the sequence's length). Use for
+ * polling loops (e.g. `getClusterJobStatus`) that call the same endpoint multiple times.
+ */
+function registerProxyGetResponseSequence(opts: {
+    targetId: string;
+    ontapPath: string;
+    responses: Array<{ status?: number; body: unknown }>;
+}): void {
+    const { targetId, ontapPath, responses } = opts;
+    getOverrideSequences.set(
+        overrideKey({ targetId, ontapPath }),
+        responses.map(({ status = 200, body }) => ({ status, body }))
+    );
+}
+
 function resetProxyOverrides(): void {
     getOverrides.clear();
+    getOverrideSequences.clear();
 }
 
 nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
@@ -43,7 +65,13 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
     .reply(uri => {
         const parsed = parseProxyUri(uri);
         if (parsed) {
-            const override = getOverrides.get(overrideKey(parsed));
+            const key = overrideKey(parsed);
+            const sequence = getOverrideSequences.get(key);
+            if (sequence?.length) {
+                const next = sequence.length > 1 ? sequence.shift()! : sequence[0];
+                return [next.status, next.body];
+            }
+            const override = getOverrides.get(key);
             if (override) {
                 return [override.status, override.body];
             }
@@ -67,4 +95,4 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
     .head(PROXY_PATH_REGEX)
     .reply(uri => (isErrorTarget(uri) ? [500, {}] : [200, {}]));
 
-export { registerProxyGetResponse, resetProxyOverrides };
+export { registerProxyGetResponse, registerProxyGetResponseSequence, resetProxyOverrides };

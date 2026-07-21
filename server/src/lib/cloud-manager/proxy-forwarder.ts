@@ -91,4 +91,4 @@ async function callProxyForwarder<T>(opts: CallProxyForwarderOptions): Promise<T
     }
 }
 
-export { callProxyForwarder };
+export { callProxyForwarder, type ProxyHttpMethod };
