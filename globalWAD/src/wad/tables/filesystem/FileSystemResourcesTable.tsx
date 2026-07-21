@@ -16,26 +16,26 @@ import {
     type WadApi
 } from '@tlveng/workload-factory-components';
 import { createFixBulkAction } from '../shared/bulkActions';
+import { spliceExtras } from '../shared/columns';
 import {
     hasMixedWorkloads,
     MIXED_WORKLOAD_BULK_FIX_ERROR,
     MIXED_WORKLOAD_ROW_TOOLTIP,
     readResourceWorkloadType
 } from '../shared/metadataUtils';
-import { spliceExtras } from '../shared/columns';
-import { DEFAULT_VOLUME_COLUMNS_BY_SCOPE, VOLUME_EXTRA_COLUMNS_ANCHOR_ID } from './columns';
-import { resolveVolumeConfiguration } from './configurations';
+import { DEFAULT_FILE_SYSTEM_COLUMNS_BY_SCOPE, FILE_SYSTEM_EXTRA_COLUMNS_ANCHOR_ID } from './columns';
+import { resolveFileSystemConfiguration } from './configurations';
 
-const VOLUME_RESOURCE_TYPE_NOUN = { singular: 'volume', plural: 'volumes' };
+const FILE_SYSTEM_RESOURCE_TYPE_NOUN = { singular: 'file system', plural: 'file systems' };
 
-interface VolumeResourcesTableProps {
+interface FileSystemResourcesTableProps {
     wadApi: WadApi;
     tableScope: TableScope;
 }
 
-export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTableProps) => {
+export const FileSystemResourcesTable = ({ wadApi, tableScope }: FileSystemResourcesTableProps) => {
     const { configurationId } = wadApi.context;
-    const configuration = useMemo(() => resolveVolumeConfiguration(configurationId), [configurationId]);
+    const configuration = useMemo(() => resolveFileSystemConfiguration(configurationId), [configurationId]);
 
     const {
         resources,
@@ -49,7 +49,7 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
         confirmDismiss,
         cancelDismiss,
         isDismissSubmitting
-    } = useResourceTableActions({ wadApi, resourceTypeNoun: VOLUME_RESOURCE_TYPE_NOUN });
+    } = useResourceTableActions({ wadApi, resourceTypeNoun: FILE_SYSTEM_RESOURCE_TYPE_NOUN });
 
     const handleFixRow = useCallback(
         (resource: ResourceScanRecord) =>
@@ -96,9 +96,9 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
         const baseColumns =
             configuration.columns ??
             spliceExtras(
-                DEFAULT_VOLUME_COLUMNS_BY_SCOPE[tableScope],
+                DEFAULT_FILE_SYSTEM_COLUMNS_BY_SCOPE[tableScope],
                 configuration.extraColumns,
-                VOLUME_EXTRA_COLUMNS_ANCHOR_ID
+                FILE_SYSTEM_EXTRA_COLUMNS_ANCHOR_ID
             );
 
         if (showDismissed) {
@@ -156,7 +156,7 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
                 rowMenu={rowMenu}
                 counterLabel={counterLabel}
                 disableRowSelection={disableRowSelection}
-                dataTestId={`volume-resources-table-${configurationId}`}
+                dataTestId={`file-system-resources-table-${configurationId}`}
             />
             {dismissConfirmCopy && (
                 <DismissConfirmDialog

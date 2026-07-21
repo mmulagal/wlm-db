@@ -54,6 +54,7 @@ export const BlockDeviceSpaceManagementFixModal = memo(
                 );
                 onFixSuccess?.();
             } catch {
+                // ponytail: errors surface via modal close; success path uses onFixSuccess
             } finally {
                 close();
             }
@@ -82,8 +83,8 @@ export const BlockDeviceSpaceManagementFixModal = memo(
                     <FixModalSection>
                         <FixModalSectionTitle bold>Note</FixModalSectionTitle>
                         <BulletList>
-                            <>{NOTE_NO_DISRUPTION}</>
-                            <>{NOTE_AUTHORIZATION}</>
+                            {NOTE_NO_DISRUPTION}
+                            {NOTE_AUTHORIZATION}
                         </BulletList>
                     </FixModalSection>
                 </ModalContent>

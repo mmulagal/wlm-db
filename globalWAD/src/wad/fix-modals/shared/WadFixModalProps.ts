@@ -15,3 +15,9 @@ export interface WadFixModalProps {
     dataError?: string | undefined;
     onFixSuccess?: () => void;
 }
+
+export interface FileSystemFixModalProps extends Omit<WadFixModalProps, 'fix'> {
+    fix: (selectedFileSystemIds: string[], metadata: FixMetadata) => Promise<void>;
+}
+
+export type FileSystemWadFixModalProps = FileSystemFixModalProps;

@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import {
     DismissConfirmDialog,
     FixRowActionLabel,
+    OptimizationStatus,
     ResourceColumnId,
     TableScope,
     WadResourcesTable,
@@ -45,21 +46,24 @@ export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps
     const handleFixRow = useCallback(
         (resource: ResourceScanRecord) =>
             configuration.fixRow ? configuration.fixRow(wadApi, resource) : wadApi.openFixModal([resource]),
-        [configuration.fixRow, wadApi]
+        [configuration, wadApi]
     );
 
     const handleFixBulk = useCallback(
         (resourceIds: string[]) => {
             const selectedResources = resources.filter(resource => resourceIds.includes(resource.id));
             if (!selectedResources.length) return;
-            configuration.fixBulk
-                ? configuration.fixBulk(wadApi, selectedResources)
-                : wadApi.openFixModal(selectedResources);
+            if (configuration.fixBulk) {
+                configuration.fixBulk(wadApi, selectedResources);
+            } else {
+                wadApi.openFixModal(selectedResources);
+            }
         },
-        [configuration.fixBulk, resources, wadApi]
+        [configuration, resources, wadApi]
     );
 
     const columns = useMemo<ReadonlyArray<TableColumn<ResourceScanRecord>>>(() => {
+        const isFixDisabled = (row: ResourceScanRecord) => row.optimizationStatus !== OptimizationStatus.NOT_OPTIMIZED;
         const baseColumns =
             configuration.columns ??
             spliceExtras(
@@ -86,7 +90,8 @@ export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps
             ...spliceExtras(baseColumns, [], ResourceColumnId.LAST_ANALYZED),
             resourceRowActionColumn({
                 label: FixRowActionLabel.FIX,
-                onClick: handleFixRow
+                onClick: handleFixRow,
+                isDisabled: isFixDisabled
             })
         ];
     }, [

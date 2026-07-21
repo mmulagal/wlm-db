@@ -7,7 +7,11 @@
         "build:wad": "vite build --config vite.wad-tables.config.ts && vite build --config vite.wad-modals.config.ts",
         "build:wad:watch": "npm-run-all -p build:wad:watch:tables build:wad:watch:modals",
         "build:wad:watch:tables": "vite build --config vite.wad-tables.config.ts --watch",
-        "build:wad:watch:modals": "vite build --config vite.wad-modals.config.ts --watch"
+        "build:wad:watch:modals": "vite build --config vite.wad-modals.config.ts --watch",
+        "format": "../node_modules/prettier/bin-prettier.js --write \"src/**/*.{js,jsx,ts,tsx,css,scss,md,json}\"",
+        "format:check": "../node_modules/prettier/bin-prettier.js --check \"src/**/*.{js,jsx,ts,tsx,css,scss,md,json}\"",
+        "lint": "../node_modules/eslint/bin/eslint.js \"src/**/*.{js,jsx,ts,tsx}\"",
+        "lint:fix": "../node_modules/eslint/bin/eslint.js \"src/**/*.{js,jsx,ts,tsx}\" --fix"
     },
     "dependencies": {
         "@emotion/styled": "^11.14.0",

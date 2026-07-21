@@ -10,7 +10,8 @@
         "wlmdb-block-device-space-management",
         "wlmdb-snapshot-policy",
         "wlmdb-storage-efficiencies",
-        "wlmdb-snapcenter-snapshot"
+        "wlmdb-snapcenter-snapshot",
+        "wlmdb-headroom"
     ],
     "bundles": {
         "wad-db-tables": { "url": "%VITE_WORKLOAD_IFRAME_URL%/wlmwad-services/wlmdb/wad-db-tables.bundle.js", "version": "0.0.1" },

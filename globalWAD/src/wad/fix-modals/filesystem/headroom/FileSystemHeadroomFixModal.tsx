@@ -9,35 +9,32 @@ import {
     BulletList
 } from '@netapp/bxp-design-system-react';
 import { FixModalSection, FixModalSectionTitle, HeightCapModal } from '../../shared/fixModalStyles';
-import type { VolumeFixModalProps } from '../../shared/volumeFixModalComponents';
+import type { FileSystemFixModalProps } from '../../shared/WadFixModalProps';
 import { readResourceWorkloadType, WorkloadType, type WorkloadTypeValue } from '../../../tables/shared/metadataUtils';
 
-const StorageEfficienciesFixModalTestIds = {
-    modal: 'wlmdb-storage-efficiencies-fix-modal',
-    header: 'wlmdb-storage-efficiencies-fix-modal-header',
-    content: 'wlmdb-storage-efficiencies-fix-modal-content',
-    continueButton: 'wlmdb-storage-efficiencies-fix-continue-btn',
-    cancelButton: 'wlmdb-storage-efficiencies-fix-cancel-btn'
+const FileSystemHeadroomFixModalTestIds = {
+    modal: 'wlmdb-headroom-fix-modal',
+    header: 'wlmdb-headroom-fix-modal-header',
+    content: 'wlmdb-headroom-fix-modal-content',
+    continueButton: 'wlmdb-headroom-fix-continue-btn',
+    cancelButton: 'wlmdb-headroom-fix-cancel-btn'
 } as const;
 
-const STORAGE_EFFICIENCIES_COPY: Record<
+const ACTION_SUMMARY_TEXT =
+    'Workload Factory recommends increasing the FSx for ONTAP file system capacity to maintain the right headroom.';
+
+const HEADROOM_COPY: Record<
     WorkloadTypeValue,
     {
-        actionSummary: string;
         whatWillHappen: string;
     }
 > = {
     [WorkloadType.MSSQL]: {
-        actionSummary:
-            'Workload Factory recommends enabling storage efficiencies—deduplication, adaptive compression, and compaction—on volumes used by Microsoft SQL Server to reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance.',
-        whatWillHappen:
-            'Workload Factory will update the selected volumes to apply the recommended settings for deduplication, adaptive compression, and compaction.'
+        whatWillHappen: 'Storage capacity update: The capacity of your FSx for ONTAP file system will be increased'
     },
     [WorkloadType.ORACLE]: {
-        actionSummary:
-            'Workload Factory recommends implementing storage efficiencies—compression, compaction, and deduplication—in NetApp ONTAP for Oracle database environments to significantly reduce storage footprint, lower costs, and optimize resource utilization while maintaining performance. Tailored settings for each volume type ensure alignment with Oracle’s I/O patterns: Data and archive Volumes benefit from inline adaptive compression (8KB), compaction and deduplication while Redo Log Volumes prioritize performance with minimal savings from these features.',
         whatWillHappen:
-            'Workload Factory will set the recommended efficiency mechanisms based on the type of file that is located in the volume.'
+            'Storage capacity update: The capacity of your FSx for ONTAP file system will be increased to maintain ~20% free space in the aggregate.'
     }
 };
 
@@ -46,11 +43,11 @@ const NOTE_NO_DISRUPTION = 'No disruption to your services are expected during t
 const NOTE_AUTHORIZATION =
     'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.';
 
-export const StorageEfficienciesFixModal = memo(
-    ({ recommendationName, resources, close, fix, isFixing, onFixSuccess }: VolumeFixModalProps) => {
+export const FileSystemHeadroomFixModal = memo(
+    ({ recommendationName, resources, close, fix, isFixing, onFixSuccess }: FileSystemFixModalProps) => {
         const copy = useMemo(() => {
             const workloadType = readResourceWorkloadType(resources[0]) ?? WorkloadType.MSSQL;
-            return STORAGE_EFFICIENCIES_COPY[workloadType];
+            return HEADROOM_COPY[workloadType];
         }, [resources]);
 
         const handleContinue = useCallback(async () => {
@@ -68,12 +65,12 @@ export const StorageEfficienciesFixModal = memo(
         }, [close, fix, onFixSuccess, resources]);
 
         return (
-            <HeightCapModal dataTestId={StorageEfficienciesFixModalTestIds.modal}>
-                <ModalHeader dataTestId={StorageEfficienciesFixModalTestIds.header}>{recommendationName}</ModalHeader>
-                <ModalContent dataTestId={StorageEfficienciesFixModalTestIds.content}>
+            <HeightCapModal dataTestId={FileSystemHeadroomFixModalTestIds.modal}>
+                <ModalHeader dataTestId={FileSystemHeadroomFixModalTestIds.header}>{recommendationName}</ModalHeader>
+                <ModalContent dataTestId={FileSystemHeadroomFixModalTestIds.content}>
                     <FixModalSection>
                         <FixModalSectionTitle bold>Action summary</FixModalSectionTitle>
-                        <Text>{copy.actionSummary}</Text>
+                        <Text>{ACTION_SUMMARY_TEXT}</Text>
                     </FixModalSection>
                     <FixModalSection>
                         <FixModalSectionTitle bold>What will happen</FixModalSectionTitle>
@@ -92,14 +89,14 @@ export const StorageEfficienciesFixModal = memo(
                         <Button
                             onClick={handleContinue}
                             isSubmitting={isFixing}
-                            dataTestId={StorageEfficienciesFixModalTestIds.continueButton}
+                            dataTestId={FileSystemHeadroomFixModalTestIds.continueButton}
                         >
                             Continue
                         </Button>
                         <Button
                             color="secondary"
                             onClick={close}
-                            dataTestId={StorageEfficienciesFixModalTestIds.cancelButton}
+                            dataTestId={FileSystemHeadroomFixModalTestIds.cancelButton}
                         >
                             Cancel
                         </Button>

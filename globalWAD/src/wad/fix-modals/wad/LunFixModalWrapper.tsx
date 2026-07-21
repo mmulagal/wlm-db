@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { FixMetadata, WadElementProps } from '@tlveng/workload-factory-components';
 import { UnsupportedConfigurationNotice } from '../../shared/fixModalShared';
-import { buildVolumeFixTargets } from '../shared/buildVolumeFixTargets';
+import { buildVolumeFixTargets } from '../shared/buildFixTargets';
 import { lunWadModals } from './lunWadModals';
 
 export const LunFixModalWrapper = ({ wadApi }: WadElementProps) => {
@@ -23,7 +23,7 @@ export const LunFixModalWrapper = ({ wadApi }: WadElementProps) => {
     );
 
     const onFixSuccess = useCallback(() => {
-        void wadApi.fetchResources();
+        wadApi.fetchResources().catch(() => undefined);
     }, [wadApi]);
 
     const lunFixModalProps = useMemo(

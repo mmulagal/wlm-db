@@ -4,11 +4,7 @@ import type {
     ResourceScanRecord,
     TableColumn
 } from '@tlveng/workload-factory-components';
-import {
-    fileSystemColumn,
-    lastAnalyzedColumn,
-    optimizationStatusColumn
-} from '@tlveng/workload-factory-components';
+import { fileSystemColumn, lastAnalyzedColumn, optimizationStatusColumn } from '@tlveng/workload-factory-components';
 import {
     currentSnapcenterSnapshotColumn,
     multiComponentVolumeColumns,
@@ -23,6 +19,7 @@ interface VolumeConfiguration {
     supportsBulkFix: boolean;
     supportsRowFix: boolean;
     bulkFixDisabledTooltip?: string;
+    restrictBulkSelectionToSameWorkload?: boolean;
     fixRow?: FixRowHandler;
     fixBulk?: FixBulkHandler;
 }
@@ -49,15 +46,20 @@ const ViewOnlyVolumeConfiguration: VolumeConfiguration = {
 
 export const volumeConfigurations: Partial<Record<string, VolumeConfiguration>> = {
     'wlmdb-thin-provision': DefaultVolumeConfiguration,
-    'wlmdb-snapshot-policy': DefaultVolumeConfiguration,
+    'wlmdb-snapshot-policy': {
+        ...DefaultVolumeConfiguration,
+        restrictBulkSelectionToSameWorkload: true
+    },
     'wlmdb-snapcenter-snapshot': ViewOnlyVolumeConfiguration,
     'wlmdb-storage-efficiencies': {
         ...DefaultVolumeConfiguration,
-        columns: multiComponentVolumeColumns
+        columns: multiComponentVolumeColumns,
+        restrictBulkSelectionToSameWorkload: true
     },
     'wlmdb-tiering-tco-optimization': {
         ...DefaultVolumeConfiguration,
-        columns: multiComponentVolumeColumns
+        columns: multiComponentVolumeColumns,
+        restrictBulkSelectionToSameWorkload: true
     }
 };
 

@@ -8,7 +8,12 @@ import {
     Text,
     BulletList
 } from '@netapp/bxp-design-system-react';
-import { FixModalNumberedList, FixModalSection, FixModalSectionTitle, HeightCapModal } from '../../shared/fixModalStyles';
+import {
+    FixModalNumberedList,
+    FixModalSection,
+    FixModalSectionTitle,
+    HeightCapModal
+} from '../../shared/fixModalStyles';
 import type { LunFixModalProps } from '../../shared/lunFixModalComponents';
 
 const OsTypeFixModalTestIds = {

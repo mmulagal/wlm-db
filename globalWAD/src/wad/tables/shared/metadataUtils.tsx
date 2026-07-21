@@ -57,7 +57,7 @@ export const getComponentMetadataValue = (
     const directValue = toDisplayValue(metadata[field]);
     if (directValue !== undefined) return directValue;
 
-    const components = metadata.components;
+    const { components } = metadata;
     if (!Array.isArray(components) || components.length === 0 || field === 'workload') return undefined;
 
     const typedComponents = components.filter(
@@ -89,14 +89,9 @@ interface CreateMetadataFieldColumnOptions {
     filter: { enabled: boolean };
 }
 
-const MetadataFieldCellRenderer = memo(
-    ({ field, row }: { field: MetadataField; row: ResourceScanRecord }) => (
-        <ResourceTextCellRenderer
-            value={getMetadataFieldDisplayValue(row, field) ?? ''}
-            row={row}
-        />
-    )
-);
+const MetadataFieldCellRenderer = memo(({ field, row }: { field: MetadataField; row: ResourceScanRecord }) => (
+    <ResourceTextCellRenderer value={getMetadataFieldDisplayValue(row, field) ?? ''} row={row} />
+));
 MetadataFieldCellRenderer.displayName = 'MetadataFieldCellRenderer';
 
 export const createMetadataFieldColumn = ({
@@ -115,3 +110,37 @@ export const createMetadataFieldColumn = ({
     filter,
     Renderer: ({ row }) => <MetadataFieldCellRenderer field={field} row={row} />
 });
+
+export const WorkloadType = {
+    MSSQL: 'mssql',
+    ORACLE: 'oracle'
+} as const;
+
+export type WorkloadTypeValue = (typeof WorkloadType)[keyof typeof WorkloadType];
+
+export const MIXED_WORKLOAD_ROW_TOOLTIP = 'Select resources with the same workload type to fix them together.';
+
+export const MIXED_WORKLOAD_BULK_FIX_ERROR =
+    'Bulk fix is unavailable when selected resources have different workload types.';
+
+export const readResourceWorkload = (resource: ResourceScanRecord): string | undefined =>
+    getMetadataFieldDisplayValue(resource, 'workload');
+
+export const normalizeWorkloadType = (workload: string | undefined): WorkloadTypeValue | undefined => {
+    const normalized = workload?.trim().toLowerCase();
+    if (normalized === WorkloadType.MSSQL) return WorkloadType.MSSQL;
+    if (normalized === WorkloadType.ORACLE) return WorkloadType.ORACLE;
+    return undefined;
+};
+
+export const readResourceWorkloadType = (resource: ResourceScanRecord): WorkloadTypeValue | undefined =>
+    normalizeWorkloadType(readResourceWorkload(resource));
+
+export const hasMixedWorkloads = (resources: ResourceScanRecord[]): boolean => {
+    const workloadTypes = new Set(
+        resources
+            .map(readResourceWorkloadType)
+            .filter((workloadType): workloadType is WorkloadTypeValue => workloadType !== undefined)
+    );
+    return workloadTypes.size > 1;
+};

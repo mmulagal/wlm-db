@@ -1,10 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { FixMetadata, WadElementProps } from '@tlveng/workload-factory-components';
 import { PlaceholderFixModal, UnsupportedConfigurationNotice } from '../../shared/fixModalShared';
-import { buildVolumeFixTargets } from '../shared/buildFixTargets';
-import { volumeWadModals } from './volumeWadModals';
+import { buildFileSystemFixTargets } from '../shared/buildFixTargets';
+import { fileSystemWadModals } from './fileSystemWadModals';
 
-export const VolumeFixModalWrapper = ({ wadApi }: WadElementProps) => {
+export const FileSystemFixModalWrapper = ({ wadApi }: WadElementProps) => {
     const { configurationId } = wadApi.context;
     const { resources } = wadApi.fixModalPayload;
     const parentResource = resources[0]?.parentResource;
@@ -14,10 +14,10 @@ export const VolumeFixModalWrapper = ({ wadApi }: WadElementProps) => {
     const [isFixing, setIsFixing] = useState(false);
 
     const fix = useCallback(
-        async (selectedVolumeIds: string[], metadata: FixMetadata) => {
+        async (selectedFileSystemIds: string[], metadata: FixMetadata) => {
             setIsFixing(true);
             try {
-                const targets = buildVolumeFixTargets(resources, selectedVolumeIds);
+                const targets = buildFileSystemFixTargets(resources, selectedFileSystemIds);
                 await wadApi.fix(targets, metadata);
             } finally {
                 setIsFixing(false);
@@ -30,7 +30,7 @@ export const VolumeFixModalWrapper = ({ wadApi }: WadElementProps) => {
         wadApi.fetchResources().catch(() => undefined);
     }, [wadApi]);
 
-    const volumeFixModalProps = useMemo(
+    const fileSystemFixModalProps = useMemo(
         () => ({
             recommendationName: wadApi.context.configurationName,
             resources,
@@ -51,10 +51,10 @@ export const VolumeFixModalWrapper = ({ wadApi }: WadElementProps) => {
         return <UnsupportedConfigurationNotice configurationId={configurationId} />;
     }
 
-    const FixModalComponent = volumeWadModals[configurationId];
+    const FixModalComponent = fileSystemWadModals[configurationId];
 
     if (FixModalComponent) {
-        return <FixModalComponent {...volumeFixModalProps} />;
+        return <FixModalComponent {...fileSystemFixModalProps} />;
     }
 
     return <PlaceholderFixModal onClose={wadApi.closeFixModal} />;

@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import {
     ModalHeader,
     ModalContent,
@@ -10,6 +10,7 @@ import {
 } from '@netapp/bxp-design-system-react';
 import { FixModalSection, FixModalSectionTitle, HeightCapModal } from '../../shared/fixModalStyles';
 import type { VolumeFixModalProps } from '../../shared/volumeFixModalComponents';
+import { readResourceWorkloadType, WorkloadType, type WorkloadTypeValue } from '../../../tables/shared/metadataUtils';
 
 const SnapshotPolicyFixModalTestIds = {
     modal: 'wlmdb-snapshot-policy-fix-modal',
@@ -19,11 +20,24 @@ const SnapshotPolicyFixModalTestIds = {
     cancelButton: 'wlmdb-snapshot-policy-fix-cancel-btn'
 } as const;
 
-const ACTION_SUMMARY_TEXT =
-    'Workload Factory recommends disabling scheduled snapshots for FSx for ONTAP volumes. Instead, manage snapshots externally using tools such as SnapCenter, which create application-consistent backups and help prevent data corruption during restore operations.';
-
-const WHAT_WILL_HAPPEN_TEXT =
-    'Workload Factory will disable the snapshot policy on the selected volumes.';
+const SNAPSHOT_POLICY_COPY: Record<
+    WorkloadTypeValue,
+    {
+        actionSummary: string;
+        whatWillHappen: string;
+    }
+> = {
+    [WorkloadType.MSSQL]: {
+        actionSummary:
+            'Workload Factory recommends disabling scheduled snapshots for FSx for ONTAP volumes used by Microsoft SQL Server. Instead, manage snapshots externally using tools such as SnapCenter, which create application-consistent backups and help prevent data corruption during restore operations.',
+        whatWillHappen: 'Workload Factory will disable the snapshot policy on the selected volumes.'
+    },
+    [WorkloadType.ORACLE]: {
+        actionSummary:
+            'Workload Factory recommends disabling the native ONTAP snapshots for FSx ONTAP volumes for Oracle databases. Oracle snapshots should be managed externally via tools like SnapCenter, which creates application-consistent snapshots, preventing corruption during restoration.',
+        whatWillHappen: 'Workload Factory will disable the snapshot policy on the selected volumes.'
+    }
+};
 
 const NOTE_NO_DISRUPTION = 'No disruption to your services are expected during this process.';
 
@@ -32,6 +46,11 @@ const NOTE_AUTHORIZATION =
 
 export const SnapshotPolicyFixModal = memo(
     ({ recommendationName, resources, close, fix, isFixing, onFixSuccess }: VolumeFixModalProps) => {
+        const copy = useMemo(() => {
+            const workloadType = readResourceWorkloadType(resources[0]) ?? WorkloadType.MSSQL;
+            return SNAPSHOT_POLICY_COPY[workloadType];
+        }, [resources]);
+
         const handleContinue = useCallback(async () => {
             try {
                 await fix(
@@ -40,6 +59,7 @@ export const SnapshotPolicyFixModal = memo(
                 );
                 onFixSuccess?.();
             } catch {
+                // ponytail: errors surface via modal close; success path uses onFixSuccess
             } finally {
                 close();
             }
@@ -51,17 +71,17 @@ export const SnapshotPolicyFixModal = memo(
                 <ModalContent dataTestId={SnapshotPolicyFixModalTestIds.content}>
                     <FixModalSection>
                         <FixModalSectionTitle bold>Action summary</FixModalSectionTitle>
-                        <Text>{ACTION_SUMMARY_TEXT}</Text>
+                        <Text>{copy.actionSummary}</Text>
                     </FixModalSection>
                     <FixModalSection>
                         <FixModalSectionTitle bold>What will happen</FixModalSectionTitle>
-                        <Text>{WHAT_WILL_HAPPEN_TEXT}</Text>
+                        <Text>{copy.whatWillHappen}</Text>
                     </FixModalSection>
                     <FixModalSection>
                         <FixModalSectionTitle bold>Note</FixModalSectionTitle>
                         <BulletList>
-                            <>{NOTE_NO_DISRUPTION}</>
-                            <>{NOTE_AUTHORIZATION}</>
+                            {NOTE_NO_DISRUPTION}
+                            {NOTE_AUTHORIZATION}
                         </BulletList>
                     </FixModalSection>
                 </ModalContent>
