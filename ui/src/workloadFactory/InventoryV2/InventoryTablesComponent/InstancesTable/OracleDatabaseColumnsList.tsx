@@ -37,6 +37,7 @@ import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory
 import { setFSXId } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { logAnalyzerStatusCol, handleOracleWadOptimizeAction, notAvailableWithTooltip } from './InstanceTableHelper';
 import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 export function getOracleDatabaseColumnsList({
     t,
@@ -49,6 +50,7 @@ export function getOracleDatabaseColumnsList({
 }): ColumnProps[] {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const aiAnalysisEnabled = useAppSelector(state => state.auth.aiAnalysisEnabled);
 
     const allColumns: ColumnProps[] = [
         {
@@ -130,7 +132,8 @@ export function getOracleDatabaseColumnsList({
             id: '17',
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'logAnalyzer.status'),
-            renderCell: (cellData: string, rowData: any) => logAnalyzerStatusCol(styles, t, rowData, cellData)
+            renderCell: (cellData: string, rowData: any) =>
+                logAnalyzerStatusCol(styles, t, rowData, cellData, aiAnalysisEnabled)
         },
         {
             Header: t('databases.databases-table.oracle.headers.well-architected-status'),

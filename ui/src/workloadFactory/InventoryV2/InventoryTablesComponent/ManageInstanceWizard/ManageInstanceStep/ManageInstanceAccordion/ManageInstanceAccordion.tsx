@@ -9,7 +9,7 @@ import { ReactComponent as Success } from '../../../../../../assets/success.svg'
 import { ReactComponent as Cross } from '../../../../../../assets/black-cross.svg';
 import { ReactComponent as InfoIcon } from '../../../../../../assets/ic_info.svg';
 import { useAppSelector } from '../../../../../../store/storeHooks';
-import { ACTION_TYPE, DBType } from '../../../../../../utils/consts';
+import { ACTION_TYPE, DBType, MANAGE_STATES } from '../../../../../../utils/consts';
 import SeparatorComponent from '../../../../../../common/SeparatorComponent/SeparatorComponent';
 
 export type AccordionItem = {
@@ -36,6 +36,7 @@ type AccordionProps = {
         { ready: number; total: number; missingInstances?: { name: string; hostName: string }[] }
     > | null;
     engineType?: string;
+    aiAnalysisEnabled?: boolean;
 };
 
 export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
@@ -47,7 +48,8 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
     errorInvestigationLoading = false,
     type,
     readinessCounts = null,
-    engineType
+    engineType,
+    aiAnalysisEnabled = true
 }) => {
     const { t } = useTranslation();
     const { wizardOperationType } = useAppSelector(state => state.inventoryV2);
@@ -86,195 +88,353 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
         if (readinessStr === 'Missing') {
             return t('databases.log-analyzer.readiness-status-incomplete');
         }
+        if (readinessStr === MANAGE_STATES.AI_ANALYSIS_DISABLED) {
+            return t('databases.log-analyzer.readiness-status-incomplete');
+        }
         return readinessStr;
     };
 
     return (
         <div className={styles['accordion-container']}>
-            {items.map(item => (
-                <div
-                    key={item.id}
-                    className={`${styles['accordion-item']} 
+            {items.map(item => {
+                const isAiAnalysisDisabledRow =
+                    !aiAnalysisEnabled &&
+                    (type === 'log-analyzer' || item.readinessStatus === MANAGE_STATES.AI_ANALYSIS_DISABLED);
+                const disabledTextClass = isAiAnalysisDisabledRow ? styles.disabledText : '';
+
+                return (
+                    <div
+                        key={item.id}
+                        className={`${styles['accordion-item']} 
             ${expandedId === item.id ? styles.expanded : ''} 
-            ${wizardOperationType !== ACTION_TYPE.BULK ? disableAll || item.disabled : false ? styles.disabled : ''}`}
-                >
-                    <div className={styles['accordion-header-wrapper']}>
-                        {wizardOperationType !== ACTION_TYPE.BULK && (
-                            <div className={styles['accordion-header']} onClick={() => handleToggle(item.id)}>
-                                <div className={styles['accordion-title']}>
-                                    <div className={styles.imageContainer}>{item.image}</div>
-
-                                    <div className={styles.valueSection}>
-                                        <DsTypography variant="Semibold_14">{item.title}</DsTypography>
-                                        <DsTypography variant="Regular_14">{item.subtitle}</DsTypography>
-                                    </div>
-                                </div>
-
-                                <div className={styles.readinessSection}>
-                                    <div className={styles.valueSection}>
-                                        {loading || (errorInvestigationLoading && item?.id === '5') ? (
-                                            <div className={styles.loadingSection}>
-                                                <DsFlashingDotsLoader />
-                                            </div>
-                                        ) : (
-                                            <div className={styles.statusSection}>
-                                                {!item?.missingPermission && <Success />}
-                                                {item?.missingPermission && <Cross />}
-                                                <DsTypography variant="Semibold_14">
-                                                    {readinessString(item.readinessStatus)}
-                                                </DsTypography>
-                                            </div>
-                                        )}
-                                        <DsTypography variant="Regular_14">
-                                            {t('databases.register-flow.readiness')}
-                                        </DsTypography>
-                                    </div>
-                                </div>
-                                <div className={styles['accordion-status']}>
-                                    {type !== 'log-analyzer' && (
-                                        <DsTypography className={styles.text} variant="Semibold_14">
-                                            {t('databases.register-flow.view-prerequisites-list')}
-                                        </DsTypography>
-                                    )}
-                                    {type === 'log-analyzer' && (
-                                        <DsTypography className={styles.text} variant="Semibold_14">
-                                            {t('databases.log-analyzer.setup-details')}
-                                        </DsTypography>
-                                    )}
-                                    <Arrow />
-                                </div>
-                            </div>
-                        )}
-                        {wizardOperationType === ACTION_TYPE.BULK && (
-                            <div className={styles['accordion-header-bulk']} onClick={() => handleToggle(item.id)}>
-                                <div className={styles['accordion-title-bulk']}>
-                                    <div className={styles.imageContainer}>{item.image}</div>
-
-                                    <div className={styles.valueSection}>
-                                        <div className={styles.nameSection}>
-                                            <DsTypography variant="Semibold_14">{item.title}</DsTypography>
-                                        </div>
-                                        <DsTypography variant="Regular_14">{item.subtitle}</DsTypography>
-                                    </div>
-                                </div>
-
-                                {/* Readiness status column for bulk MSSQL/Oracle */}
-                                {(engineType === DBType.MSSQL || engineType === DBType.ORACLE) &&
-                                    readinessCounts &&
-                                    (() => {
-                                        const capKey = getCapabilityKey(item.id, engineType);
-                                        const counts = capKey ? readinessCounts[capKey] : null;
-
-                                        if (!counts) return null;
-
-                                        // Show loading indicator for errorInvestigation while API call is in progress
-                                        const isErrorInvestigationLoading =
-                                            errorInvestigationLoading && item?.id === '5';
-
-                                        if (isErrorInvestigationLoading) {
-                                            return (
-                                                <div className={styles.readinessSectionBulk}>
-                                                    <div className={styles.statusRow}>
-                                                        <DsFlashingDotsLoader />
+            ${wizardOperationType !== ACTION_TYPE.BULK && (disableAll || item.disabled) ? styles.disabled : ''}`}
+                    >
+                        <div className={styles['accordion-header-wrapper']}>
+                            {wizardOperationType !== ACTION_TYPE.BULK && (
+                                <>
+                                    {isAiAnalysisDisabledRow && type !== 'log-analyzer' ? (
+                                        <Popover
+                                            trigger="hover"
+                                            container={
+                                                <div className={styles['accordion-header']}>
+                                                    <div className={styles['accordion-title']}>
+                                                        <div className={styles.imageContainer}>{item.image}</div>
+                                                        <div className={styles.valueSection}>
+                                                            <DsTypography
+                                                                variant="Semibold_14"
+                                                                className={disabledTextClass}
+                                                            >
+                                                                {item.title}
+                                                            </DsTypography>
+                                                            <DsTypography
+                                                                variant="Regular_14"
+                                                                className={disabledTextClass}
+                                                            >
+                                                                {item.subtitle}
+                                                            </DsTypography>
+                                                        </div>
                                                     </div>
-                                                    <DsTypography variant="Regular_14">
+                                                    <div className={styles.readinessSection}>
+                                                        <div className={styles.valueSection}>
+                                                            {loading ||
+                                                            (errorInvestigationLoading && item?.id === '5') ? (
+                                                                <div className={styles.loadingSection}>
+                                                                    <DsFlashingDotsLoader />
+                                                                </div>
+                                                            ) : (
+                                                                <div className={styles.statusSection}>
+                                                                    {!item?.missingPermission && <Success />}
+                                                                    {item?.missingPermission && <Cross />}
+                                                                    <DsTypography
+                                                                        variant="Semibold_14"
+                                                                        className={disabledTextClass}
+                                                                    >
+                                                                        {readinessString(item.readinessStatus)}
+                                                                    </DsTypography>
+                                                                </div>
+                                                            )}
+                                                            <DsTypography
+                                                                variant="Regular_14"
+                                                                className={disabledTextClass}
+                                                            >
+                                                                {t('databases.register-flow.readiness')}
+                                                            </DsTypography>
+                                                        </div>
+                                                    </div>
+                                                    <div
+                                                        className={`${styles['accordion-status']} ${styles.disabledAccordionStatus}`}
+                                                    >
+                                                        {type !== 'log-analyzer' && (
+                                                            <DsTypography className={styles.text} variant="Semibold_14">
+                                                                {t('databases.register-flow.view-prerequisites-list')}
+                                                            </DsTypography>
+                                                        )}
+                                                        {type === 'log-analyzer' && (
+                                                            <DsTypography className={styles.text} variant="Semibold_14">
+                                                                {t('databases.log-analyzer.setup-details')}
+                                                            </DsTypography>
+                                                        )}
+                                                        <Arrow />
+                                                    </div>
+                                                </div>
+                                            }
+                                        >
+                                            {t('databases.log-analyzer.ai-analysis-disabled')}
+                                        </Popover>
+                                    ) : (
+                                        <div
+                                            className={styles['accordion-header']}
+                                            onClick={() => !isAiAnalysisDisabledRow && handleToggle(item.id)}
+                                        >
+                                            <div className={styles['accordion-title']}>
+                                                <div className={styles.imageContainer}>{item.image}</div>
+                                                <div className={styles.valueSection}>
+                                                    <DsTypography variant="Semibold_14" className={disabledTextClass}>
+                                                        {item.title}
+                                                    </DsTypography>
+                                                    <DsTypography variant="Regular_14" className={disabledTextClass}>
+                                                        {item.subtitle}
+                                                    </DsTypography>
+                                                </div>
+                                            </div>
+                                            <div className={styles.readinessSection}>
+                                                <div className={styles.valueSection}>
+                                                    {loading || (errorInvestigationLoading && item?.id === '5') ? (
+                                                        <div className={styles.loadingSection}>
+                                                            <DsFlashingDotsLoader />
+                                                        </div>
+                                                    ) : (
+                                                        <div className={styles.statusSection}>
+                                                            {!item?.missingPermission && <Success />}
+                                                            {item?.missingPermission && <Cross />}
+                                                            <DsTypography
+                                                                variant="Semibold_14"
+                                                                className={disabledTextClass}
+                                                            >
+                                                                {readinessString(item.readinessStatus)}
+                                                            </DsTypography>
+                                                        </div>
+                                                    )}
+                                                    <DsTypography variant="Regular_14" className={disabledTextClass}>
                                                         {t('databases.register-flow.readiness')}
                                                     </DsTypography>
                                                 </div>
-                                            );
-                                        }
+                                            </div>
+                                            <div className={styles['accordion-status']}>
+                                                {type !== 'log-analyzer' && (
+                                                    <DsTypography className={styles.text} variant="Semibold_14">
+                                                        {t('databases.register-flow.view-prerequisites-list')}
+                                                    </DsTypography>
+                                                )}
+                                                {type === 'log-analyzer' && (
+                                                    <DsTypography className={styles.text} variant="Semibold_14">
+                                                        {t('databases.log-analyzer.setup-details')}
+                                                    </DsTypography>
+                                                )}
+                                                <Arrow />
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                            {wizardOperationType === ACTION_TYPE.BULK && (
+                                <Popover
+                                    trigger="hover"
+                                    container={
+                                        <div
+                                            className={styles['accordion-header-bulk']}
+                                            onClick={() => !isAiAnalysisDisabledRow && handleToggle(item.id)}
+                                        >
+                                            <div className={styles['accordion-title-bulk']}>
+                                                <div className={styles.imageContainer}>{item.image}</div>
 
-                                        const allReady = counts.ready === counts.total && counts.total > 0;
-                                        const noneReady = counts.ready === 0;
-                                        const partialReady = counts.ready > 0 && counts.ready < counts.total;
-
-                                        return (
-                                            <div className={styles.readinessSectionBulk}>
-                                                <div className={styles.statusRow}>
-                                                    {allReady && (
-                                                        <span className={styles.iconWrapper}>
-                                                            <Success className={styles.statusIcon} />
-                                                        </span>
-                                                    )}
-                                                    {noneReady && (
-                                                        <span className={styles.iconWrapper}>
-                                                            <Cross
-                                                                className={`${styles.statusIcon} ${styles.greyIcon}`}
-                                                            />
-                                                        </span>
-                                                    )}
-                                                    {partialReady && (
-                                                        <Popover
-                                                            popoverClass={CommonStyles.scrollablePopover}
-                                                            trigger="hover"
-                                                            placement="bottom"
-                                                            delayHide={200}
-                                                            interactive
-                                                            isAppendedToBody
-                                                            container={<InfoIcon className={styles.blueIcon} />}
+                                                <div className={styles.valueSection}>
+                                                    <div className={styles.nameSection}>
+                                                        <DsTypography
+                                                            variant="Semibold_14"
+                                                            className={disabledTextClass}
                                                         >
-                                                            <div className={CommonStyles.popoverTooltipContent}>
-                                                                <DsTypography
-                                                                    variant="Semibold_14"
-                                                                    className={CommonStyles.popoverTooltipTitle}
-                                                                >
-                                                                    {t('databases.register-flow.missing-prerequisite')}
-                                                                </DsTypography>
-                                                                {counts.missingInstances?.map(instance => (
-                                                                    <React.Fragment
-                                                                        key={`${instance.name}-${instance.hostName}`}
-                                                                    >
-                                                                        <SeparatorComponent variant="horizontal" />
-                                                                        <div
-                                                                            className={
-                                                                                CommonStyles.popoverInstanceHostRow
-                                                                            }
-                                                                        >
-                                                                            <DsTypography variant="Semibold_14">
-                                                                                {instance.name}
-                                                                            </DsTypography>
-                                                                            <DsTypography variant="Regular_14">
-                                                                                {t('databases.general.host')}
-                                                                                {': '}
-                                                                                {instance.hostName}
-                                                                            </DsTypography>
-                                                                        </div>
-                                                                    </React.Fragment>
-                                                                ))}
-                                                            </div>
-                                                        </Popover>
-                                                    )}
-                                                    <DsTypography variant="Semibold_14">
-                                                        {allReady && t('databases.register-flow.prepare-all-ready')}
-                                                        {noneReady && t('databases.register-flow.prepare-none-ready')}
-                                                        {partialReady &&
-                                                            t('databases.register-flow.prepare-partial-ready', {
-                                                                readyCount: counts.ready,
-                                                                totalCount: counts.total
-                                                            })}
+                                                            {item.title}
+                                                        </DsTypography>
+                                                    </div>
+                                                    <DsTypography variant="Regular_14" className={disabledTextClass}>
+                                                        {item.subtitle}
                                                     </DsTypography>
                                                 </div>
-                                                <DsTypography variant="Regular_14">
-                                                    {t('databases.register-flow.readiness')}
-                                                </DsTypography>
                                             </div>
-                                        );
-                                    })()}
 
-                                <div className={styles['accordion-status']}>
-                                    <DsTypography className={styles.text} variant="Semibold_14">
-                                        {engineType === DBType.MSSQL || engineType === DBType.ORACLE
-                                            ? t('databases.log-analyzer.setup-details')
-                                            : t('databases.register-flow.view-prerequisites-list')}
-                                    </DsTypography>
-                                    <Arrow />
-                                </div>
-                            </div>
-                        )}
+                                            {/* Readiness status column for bulk MSSQL/Oracle */}
+                                            {(engineType === DBType.MSSQL || engineType === DBType.ORACLE) &&
+                                                readinessCounts &&
+                                                (() => {
+                                                    const capKey = getCapabilityKey(item.id, engineType);
+                                                    const counts = capKey ? readinessCounts[capKey] : null;
+
+                                                    if (!counts) return null;
+
+                                                    if (isAiAnalysisDisabledRow) {
+                                                        return (
+                                                            <div className={styles.readinessSectionBulk}>
+                                                                <div className={styles.statusRow}>
+                                                                    <span className={styles.iconWrapper}>
+                                                                        <Cross
+                                                                            className={`${styles.statusIcon} ${styles.greyIcon}`}
+                                                                        />
+                                                                    </span>
+                                                                    <DsTypography
+                                                                        variant="Semibold_14"
+                                                                        className={disabledTextClass}
+                                                                    >
+                                                                        {t(
+                                                                            'databases.log-analyzer.readiness-status-incomplete'
+                                                                        )}
+                                                                    </DsTypography>
+                                                                </div>
+                                                                <DsTypography
+                                                                    variant="Regular_14"
+                                                                    className={disabledTextClass}
+                                                                >
+                                                                    {t('databases.register-flow.readiness')}
+                                                                </DsTypography>
+                                                            </div>
+                                                        );
+                                                    }
+
+                                                    // Show loading indicator for errorInvestigation while API call is in progress
+                                                    const isErrorInvestigationLoading =
+                                                        errorInvestigationLoading && item?.id === '5';
+
+                                                    if (isErrorInvestigationLoading) {
+                                                        return (
+                                                            <div className={styles.readinessSectionBulk}>
+                                                                <div className={styles.statusRow}>
+                                                                    <DsFlashingDotsLoader />
+                                                                </div>
+                                                                <DsTypography variant="Regular_14">
+                                                                    {t('databases.register-flow.readiness')}
+                                                                </DsTypography>
+                                                            </div>
+                                                        );
+                                                    }
+
+                                                    const allReady = counts.ready === counts.total && counts.total > 0;
+                                                    const noneReady = counts.ready === 0;
+                                                    const partialReady =
+                                                        counts.ready > 0 && counts.ready < counts.total;
+
+                                                    return (
+                                                        <div className={styles.readinessSectionBulk}>
+                                                            <div className={styles.statusRow}>
+                                                                {allReady && (
+                                                                    <span className={styles.iconWrapper}>
+                                                                        <Success className={styles.statusIcon} />
+                                                                    </span>
+                                                                )}
+                                                                {noneReady && (
+                                                                    <span className={styles.iconWrapper}>
+                                                                        <Cross
+                                                                            className={`${styles.statusIcon} ${styles.greyIcon}`}
+                                                                        />
+                                                                    </span>
+                                                                )}
+                                                                {partialReady && (
+                                                                    <Popover
+                                                                        popoverClass={CommonStyles.scrollablePopover}
+                                                                        trigger="hover"
+                                                                        placement="bottom"
+                                                                        delayHide={200}
+                                                                        interactive
+                                                                        isAppendedToBody
+                                                                        container={
+                                                                            <InfoIcon className={styles.blueIcon} />
+                                                                        }
+                                                                    >
+                                                                        <div
+                                                                            className={
+                                                                                CommonStyles.popoverTooltipContent
+                                                                            }
+                                                                        >
+                                                                            <DsTypography
+                                                                                variant="Semibold_14"
+                                                                                className={
+                                                                                    CommonStyles.popoverTooltipTitle
+                                                                                }
+                                                                            >
+                                                                                {t(
+                                                                                    'databases.register-flow.missing-prerequisite'
+                                                                                )}
+                                                                            </DsTypography>
+                                                                            {counts.missingInstances?.map(instance => (
+                                                                                <React.Fragment
+                                                                                    key={`${instance.name}-${instance.hostName}`}
+                                                                                >
+                                                                                    <SeparatorComponent variant="horizontal" />
+                                                                                    <div
+                                                                                        className={
+                                                                                            CommonStyles.popoverInstanceHostRow
+                                                                                        }
+                                                                                    >
+                                                                                        <DsTypography variant="Semibold_14">
+                                                                                            {instance.name}
+                                                                                        </DsTypography>
+                                                                                        <DsTypography variant="Regular_14">
+                                                                                            {t(
+                                                                                                'databases.general.host'
+                                                                                            )}
+                                                                                            {': '}
+                                                                                            {instance.hostName}
+                                                                                        </DsTypography>
+                                                                                    </div>
+                                                                                </React.Fragment>
+                                                                            ))}
+                                                                        </div>
+                                                                    </Popover>
+                                                                )}
+                                                                <DsTypography variant="Semibold_14">
+                                                                    {allReady &&
+                                                                        t('databases.register-flow.prepare-all-ready')}
+                                                                    {noneReady &&
+                                                                        t('databases.register-flow.prepare-none-ready')}
+                                                                    {partialReady &&
+                                                                        t(
+                                                                            'databases.register-flow.prepare-partial-ready',
+                                                                            {
+                                                                                readyCount: counts.ready,
+                                                                                totalCount: counts.total
+                                                                            }
+                                                                        )}
+                                                                </DsTypography>
+                                                            </div>
+                                                            <DsTypography variant="Regular_14">
+                                                                {t('databases.register-flow.readiness')}
+                                                            </DsTypography>
+                                                        </div>
+                                                    );
+                                                })()}
+
+                                            <div
+                                                className={`${styles['accordion-status']} ${
+                                                    isAiAnalysisDisabledRow ? styles.disabledAccordionStatus : ''
+                                                }`}
+                                            >
+                                                <DsTypography className={styles.text} variant="Semibold_14">
+                                                    {engineType === DBType.MSSQL || engineType === DBType.ORACLE
+                                                        ? t('databases.log-analyzer.setup-details')
+                                                        : t('databases.register-flow.view-prerequisites-list')}
+                                                </DsTypography>
+                                                <Arrow />
+                                            </div>
+                                        </div>
+                                    }
+                                >
+                                    {isAiAnalysisDisabledRow ? t('databases.log-analyzer.ai-analysis-disabled') : ''}
+                                </Popover>
+                            )}
+                        </div>
+                        {expandedId === item.id && <div className={styles['accordion-content']}>{item.content}</div>}
                     </div>
-                    {expandedId === item.id && <div className={styles['accordion-content']}>{item.content}</div>}
-                </div>
-            ))}
+                );
+            })}
         </div>
     );
 };

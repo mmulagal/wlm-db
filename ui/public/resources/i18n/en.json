@@ -1835,6 +1835,7 @@
             "status-investigating": "Status: Investigating",
             "running-status": "(This process can take upto 30 minutes)",
             "bedrock-in-region-not-supported": "Error analysis is not available as the region is not supported by Amazon Bedrock.",
+            "ai-analysis-disabled": "Error analysis capability has been disabled by your administrator",
             "readiness-status-complete": "Complete",
             "readiness-status-incomplete": "Incomplete"
         },

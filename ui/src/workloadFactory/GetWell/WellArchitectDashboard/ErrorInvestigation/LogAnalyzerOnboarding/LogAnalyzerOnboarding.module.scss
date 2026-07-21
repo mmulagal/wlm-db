@@ -30,6 +30,16 @@
                 align-items: center;
             }
 
+            .infoSectionDisabled {
+                svg path {
+                    fill: var(--text-disabled);
+                }
+            }
+
+            .infoTextDisabled {
+                color: var(--text-disabled);
+            }
+
             .rightPart {
                 display: flex;
                 align-items: center;
@@ -41,6 +51,13 @@
                         --icon-primary-color: var(--button-secondary);
 
                         margin-top: 5px;
+                    }
+                }
+
+                .refreshIconDisabled {
+                    cursor: default;
+                    svg path {
+                        fill: var(--text-disabled);
                     }
                 }
             }

@@ -42,6 +42,7 @@ import { manageActionCol } from '../../InventoryUtilsV2';
 import { resetAgenticPreCheckData } from '../../../../store/workloadFactory/agenticAISlice';
 import { logAnalyzerStatusCol, handleWadOptimizeAction, notAvailableWithTooltip } from './InstanceTableHelper';
 import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
+import { useAppSelector } from '../../../../store/storeHooks';
 
 export function getMssqlInstanceTableColumns({
     t,
@@ -54,6 +55,7 @@ export function getMssqlInstanceTableColumns({
 }): ColumnProps[] {
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const aiAnalysisEnabled = useAppSelector(state => state.auth.aiAnalysisEnabled);
 
     const allColumns: ColumnProps[] = [
         {
@@ -113,7 +115,8 @@ export function getMssqlInstanceTableColumns({
             id: '14',
             width: '200px',
             filterOptions: getFilterOptions(updatedTableData, 'logAnalyzer.status'),
-            renderCell: (cellData: string, rowData: any) => logAnalyzerStatusCol(styles, t, rowData, cellData)
+            renderCell: (cellData: string, rowData: any) =>
+                logAnalyzerStatusCol(styles, t, rowData, cellData, aiAnalysisEnabled)
         },
         {
             Header: t('databases.instance-table.headers.well-architected-status'),

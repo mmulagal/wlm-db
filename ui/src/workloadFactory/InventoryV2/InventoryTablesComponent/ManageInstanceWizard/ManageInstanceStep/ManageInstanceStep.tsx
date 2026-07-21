@@ -72,6 +72,7 @@ export const Content = () => {
     const { discoveredHostData } = useAppSelector(state => state.inventoryV2.discoveredHosts);
     const { discoveredOracleHostData } = useAppSelector(state => state.inventoryV2.discoveredOracleHosts);
     const { data: agenticPreReqData } = useAppSelector(state => state.agenticAI.agenticRegisterFlowChecks);
+    const { aiAnalysisEnabled } = useAppSelector(state => state.auth);
 
     const isAlreadyDetected = useMemo(
         () => isAlreadyDetectedCheck(manageSingleInstanceData),
@@ -215,26 +216,34 @@ export const Content = () => {
                 manageSingleInstanceData,
                 manageCheckObj
             );
-            dispatch(setManageSingleInstanceChecks(manageCheckObj));
 
-            // Fetch agentic pre-requisites if available
+            // Fetch agentic pre-requisites if available. Skipped entirely when AI analysis has been
+            // disabled by the administrator - the accordion shows the disabled message instead.
             if (
                 (hostType === DBType.MSSQL || hostType === DBType.ORACLE) &&
                 wizardOperationType === ACTION_TYPE.SINGLE
             ) {
-                fetchErrorInvestigationState(
-                    manageCheckObj,
-                    getLogAnalyzerPreReqApi,
-                    getLogAnalyzerPreReqOracleApi,
-                    dispatch,
-                    manageSingleInstanceData,
-                    hostType
-                );
+                if (aiAnalysisEnabled) {
+                    fetchErrorInvestigationState(
+                        manageCheckObj,
+                        getLogAnalyzerPreReqApi,
+                        getLogAnalyzerPreReqOracleApi,
+                        dispatch,
+                        manageSingleInstanceData,
+                        hostType
+                    );
+                } else {
+                    manageCheckObj.errorInvestigation = MANAGE_STATES.AI_ANALYSIS_DISABLED;
+                    dispatch(setManageSingleInstanceChecks(manageCheckObj));
+                }
+            } else {
+                dispatch(setManageSingleInstanceChecks(manageCheckObj));
             }
+        } else {
+            dispatch(setManageSingleInstanceChecks(manageCheckObj));
         }
-        dispatch(setManageSingleInstanceChecks(manageCheckObj));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [manageSingleInstanceData, manageSingleInstanceReadiness, hostType]);
+    }, [manageSingleInstanceData, manageSingleInstanceReadiness, hostType, aiAnalysisEnabled]);
 
     // Function to determine if the action component should be shown
     const shouldShowActionComponent = (manageChecks: any, engineType: string) => {
@@ -362,9 +371,10 @@ export const Content = () => {
     }, [selectedMultiDetectInstances, agenticPreReqData, instanceAuthStatus]);
 
     // Fetch error investigation prerequisites for bulk mode
-    // This API call is needed to determine errorInvestigation readiness status
+    // This API call is needed to determine errorInvestigation readiness status.
+    // Skipped entirely when AI analysis has been disabled by the administrator.
     useEffect(() => {
-        if (wizardOperationType === ACTION_TYPE.BULK && selectedMultiDetectInstances?.length > 0) {
+        if (aiAnalysisEnabled && wizardOperationType === ACTION_TYPE.BULK && selectedMultiDetectInstances?.length > 0) {
             if (hostType === DBType.MSSQL) {
                 fetchErrorInvestigationStateBulk(
                     selectedMultiDetectInstances,
@@ -381,7 +391,15 @@ export const Content = () => {
                 );
             }
         }
-    }, [selectedMultiDetectInstances]);
+    }, [
+        selectedMultiDetectInstances,
+        aiAnalysisEnabled,
+        wizardOperationType,
+        hostType,
+        getLogAnalyzerPreReqApi,
+        getLogAnalyzerPreReqOracleApi,
+        dispatch
+    ]);
 
     return (
         <div className={styles['manage-instance-step']}>

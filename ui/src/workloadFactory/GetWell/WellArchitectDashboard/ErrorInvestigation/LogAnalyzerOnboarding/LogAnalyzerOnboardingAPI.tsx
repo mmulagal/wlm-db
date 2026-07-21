@@ -29,6 +29,7 @@ const LogAnalyzerOnboardingAPI = ({ dbType }: { dbType: string }) => {
     } = useAppSelector(state => state.getWellOptimize);
 
     const { eiRefreshPage } = useAppSelector(state => state.agenticAI);
+    const { aiAnalysisEnabled } = useAppSelector(state => state.auth);
 
     const [getLogAnalyzerPreReqApi] = useGetLogAnalyzerPreReqMutation();
     const [getLogAnalyzerPreReqOracleApi] = useGetLogAnalyzerPreReqOracleMutation();
@@ -50,25 +51,34 @@ const LogAnalyzerOnboardingAPI = ({ dbType }: { dbType: string }) => {
     };
 
     useEffect(() => {
+        if (!aiAnalysisEnabled) {
+            dispatch(setLogAnalyzerPreReqData(null));
+            dispatch(setLogAnalyzerPreReqLoading(false));
+        }
+    }, [aiAnalysisEnabled, dispatch]);
+
+    useEffect(() => {
         // On page refresh, call the API to get data
-        if (eiRefreshPage) {
+        if (aiAnalysisEnabled && eiRefreshPage) {
             runInvestigationPreReqApi();
             // runInvestigationPricingApi(); // Commenting this as pricing data as not required for now
             dispatch(setEiRefreshPage(false));
+        } else if (!aiAnalysisEnabled && eiRefreshPage) {
+            dispatch(setEiRefreshPage(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [eiRefreshPage]);
+    }, [eiRefreshPage, aiAnalysisEnabled, dispatch]);
 
     useEffect(() => {
         // On page load, call the API to get data
-        if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION]) {
+        if (aiAnalysisEnabled && !landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION]) {
             runInvestigationPreReqApi();
             // runInvestigationPricingApi(); // Commenting this as pricing data as not required for now
-        } else {
+        } else if (aiAnalysisEnabled) {
             dispatch(setLandingFromInnerPage(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [aiAnalysisEnabled]);
 };
 
 export default LogAnalyzerOnboardingAPI;

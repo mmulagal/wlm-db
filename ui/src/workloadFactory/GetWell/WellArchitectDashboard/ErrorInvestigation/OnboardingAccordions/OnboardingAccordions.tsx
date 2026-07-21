@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as Bedrock } from '../../../../../assets/Bedrock.svg';
 import { ReactComponent as Networking } from '../../../../../assets/networking.svg';
@@ -25,8 +25,13 @@ const OnboardingAccordions = ({ dbType }: { dbType: string }) => {
     const [disableAll] = useState(false);
 
     const { data, loading } = useAppSelector(state => state.agenticAI.logAnalyzerPreReq);
+    const { aiAnalysisEnabled } = useAppSelector(state => state.auth);
 
     const readinessString = (preReq: any) => {
+        if (!aiAnalysisEnabled) {
+            return t('databases.log-analyzer.readiness-status-incomplete');
+        }
+
         if (!preReq || typeof preReq.ready === 'undefined') {
             return t('databases.log-analyzer.n/a');
         }
@@ -37,14 +42,16 @@ const OnboardingAccordions = ({ dbType }: { dbType: string }) => {
         return t('databases.log-analyzer.readiness-status-missing');
     };
 
+    const isPrereqReady = (preReq: any) => aiAnalysisEnabled && !!preReq?.ready;
+
     const items: AccordionItem[] = [
         {
             id: '1',
             title: t('databases.log-analyzer.amazon-bedrock'),
             subtitle: t('databases.log-analyzer.prerequisites'),
             readinessStatus: readinessString(data?.bedrockPreRequisites),
-            missingPermission: !data?.bedrockPreRequisites?.ready,
-            image: !data?.bedrockPreRequisites?.ready ? <BedrockDisabled /> : <Bedrock />,
+            missingPermission: !aiAnalysisEnabled || !data?.bedrockPreRequisites?.ready,
+            image: !isPrereqReady(data?.bedrockPreRequisites) ? <BedrockDisabled /> : <Bedrock />,
             content: (
                 <PermissionContent
                     title={t('databases.log-analyzer.prerequisites-list')}
@@ -90,8 +97,8 @@ const OnboardingAccordions = ({ dbType }: { dbType: string }) => {
             title: t('databases.log-analyzer.onboarding-accordion-3-title'),
             subtitle: t('databases.log-analyzer.prerequisites'),
             readinessStatus: readinessString(data?.instanceProfilePreRequisites),
-            missingPermission: !data?.instanceProfilePreRequisites?.ready,
-            image: !data?.instanceProfilePreRequisites?.ready ? <EC2InstanceDisabled /> : <EC2Instance />,
+            missingPermission: !aiAnalysisEnabled || !data?.instanceProfilePreRequisites?.ready,
+            image: !isPrereqReady(data?.instanceProfilePreRequisites) ? <EC2InstanceDisabled /> : <EC2Instance />,
             content: (
                 <PermissionContent
                     title={t('databases.log-analyzer.prerequisites-list')}
@@ -120,8 +127,12 @@ const OnboardingAccordions = ({ dbType }: { dbType: string }) => {
             title: t('databases.log-analyzer.onboarding-accordion-4-title'),
             subtitle: t('databases.log-analyzer.prerequisites'),
             readinessStatus: readinessString(data?.credentialsPreRequisites),
-            missingPermission: !data?.credentialsPreRequisites?.ready,
-            image: !data?.credentialsPreRequisites?.ready ? <CredentialAssociatedDisabled /> : <CredentialAssociated />,
+            missingPermission: !aiAnalysisEnabled || !data?.credentialsPreRequisites?.ready,
+            image: !isPrereqReady(data?.credentialsPreRequisites) ? (
+                <CredentialAssociatedDisabled />
+            ) : (
+                <CredentialAssociated />
+            ),
             content: (
                 <PermissionContent
                     title={t('databases.log-analyzer.prerequisites-list')}
@@ -152,8 +163,8 @@ const OnboardingAccordions = ({ dbType }: { dbType: string }) => {
             title: t('databases.log-analyzer.onboarding-accordion-2-title'),
             subtitle: t('databases.log-analyzer.prerequisites'),
             readinessStatus: readinessString(data?.networkingPreRequisites),
-            missingPermission: !data?.networkingPreRequisites?.ready,
-            image: !data?.networkingPreRequisites?.ready ? <NetworkingDisabled /> : <Networking />,
+            missingPermission: !aiAnalysisEnabled || !data?.networkingPreRequisites?.ready,
+            image: !isPrereqReady(data?.networkingPreRequisites) ? <NetworkingDisabled /> : <Networking />,
             content: (
                 <PermissionContent
                     title={t('databases.log-analyzer.prerequisites-list')}
@@ -185,8 +196,8 @@ const OnboardingAccordions = ({ dbType }: { dbType: string }) => {
                       title: t('databases.log-analyzer.onboarding-accordion-5-title'),
                       subtitle: t('databases.log-analyzer.prerequisites'),
                       readinessStatus: readinessString(data?.oraclePermissionsPreRequisites),
-                      missingPermission: !data?.oraclePermissionsPreRequisites?.ready,
-                      image: !data?.oraclePermissionsPreRequisites?.ready ? <UserDisabled /> : <User />,
+                      missingPermission: !aiAnalysisEnabled || !data?.oraclePermissionsPreRequisites?.ready,
+                      image: !isPrereqReady(data?.oraclePermissionsPreRequisites) ? <UserDisabled /> : <User />,
                       content: (
                           <PermissionContent
                               title={t('databases.log-analyzer.prerequisites-list')}
@@ -217,8 +228,9 @@ const OnboardingAccordions = ({ dbType }: { dbType: string }) => {
                     expandedId={expandedId}
                     setExpandedId={setExpandedId}
                     disableAll={disableAll}
-                    loading={loading}
+                    loading={loading && aiAnalysisEnabled}
                     type="log-analyzer"
+                    aiAnalysisEnabled={aiAnalysisEnabled}
                 />
             </div>
         </div>

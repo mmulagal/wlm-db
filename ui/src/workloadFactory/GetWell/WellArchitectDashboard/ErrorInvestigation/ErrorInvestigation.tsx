@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import styles from './ErrorInvestigation.module.scss';
@@ -32,9 +33,11 @@ import {
 } from './ErrorInvestigationUtility';
 import { formatDateWithTime } from '../../../../utils/utilityFunctions';
 import { DBType } from '../../../../utils/consts';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 
 const ErrorInvestigation = ({ dbType }: { dbType: string }) => {
     const { t } = useTranslation();
+    const dispatch = useDispatch();
     const rightRef = useRef<HTMLDivElement>(null);
     const [rightHeight, setRightHeight] = useState(0);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(0);
@@ -68,6 +71,18 @@ const ErrorInvestigation = ({ dbType }: { dbType: string }) => {
         investigationDatesLoading
     } = useAppSelector(state => state.agenticAI);
     const loading = errorInvestigationLoading || investigationDatesLoading;
+    const { aiAnalysisEnabled } = useAppSelector(state => state.auth);
+
+    useEffect(() => {
+        if (!aiAnalysisEnabled) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: t('databases.log-analyzer.ai-analysis-disabled')
+                })
+            );
+        }
+    }, [aiAnalysisEnabled, dispatch, t]);
 
     useEffect(() => {
         if (errorInvestigationData) {

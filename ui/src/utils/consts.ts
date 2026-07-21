@@ -1598,7 +1598,8 @@ export const MANAGE_STATES = {
     MISSING_PREREQUISITES: 'Missing prerequisites',
     POWERSHELL7: 'Powershell 7',
     JQ: 'jq',
-    PYTHON: 'python'
+    PYTHON: 'python',
+    AI_ANALYSIS_DISABLED: 'AI analysis disabled'
 };
 
 export const ACTION_CTA = {

@@ -245,6 +245,7 @@ const InstancesTable = () => {
 
     // Prefetch SnapCenter hosts and instances to decide Protect/Edit Protection
     const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
+    const aiAnalysisEnabled = useAppSelector(state => state.auth.aiAnalysisEnabled);
     const protectionPrefetchRun = useRef(false);
     useEffect(() => {
         if (protectionPrefetchRun.current || isDemoMode || isGovAccount) return;
@@ -971,7 +972,8 @@ const InstancesTable = () => {
                             disableCreateDb,
                             disableCreateDbMsg,
                             isBedRockAvailable,
-                            isGovAccount
+                            isGovAccount,
+                            aiAnalysisEnabled
                         )
                     );
                 }

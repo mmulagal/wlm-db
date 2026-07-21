@@ -1,6 +1,6 @@
 import { DsButton, DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
-import { TooltipInfo, useDialog } from '@netapp/design-system';
+import { Popover, TooltipInfo, useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useMemo } from 'react';
 import styles from './ErrorInvestigationOverview.module.scss';
@@ -58,7 +58,7 @@ const ErrorInvestigationOverview = () => {
     const { setDialog, closeDialog } = useDialog();
     const dispatch = useDispatch();
     const { showNA, multiDataLoading } = useAppSelector(state => state.headers);
-    const { isGovAccount } = useAppSelector(state => state.auth);
+    const { isGovAccount, aiAnalysisEnabled } = useAppSelector(state => state.auth);
     const { allLogAnalysisLoading, allLogAnalysisOracleLoading, allLogAnalysisData, inventoryTableData } =
         useAppSelector(state => state.inventoryV2);
     const loading = useMemo(
@@ -70,6 +70,10 @@ const ErrorInvestigationOverview = () => {
         () => getErrorInvestigationSummary(allLogAnalysisData),
         [allLogAnalysisData, inventoryTableData]
     );
+
+    // Wait until log analysis data finishes loading before treating emptyState as real.
+    // While loading, allLogAnalysisData is empty so emptyState is misleadingly true.
+    const isAnalyzeDisabledByAdmin = !loading && errInvestigationOverview?.emptyState && !aiAnalysisEnabled;
 
     const activeTableRows: any = useMemo(() => {
         const data = createLogAnalyzerActiveInstance(allLogAnalysisData) || [];
@@ -301,34 +305,85 @@ const ErrorInvestigationOverview = () => {
                         </div>
                     )}
                     <div className={styles.buttonContainer}>
-                        <DsButton
-                            children="Analyze"
-                            variant="secondary"
-                            isThin
-                            isDisabled={loading || showNA || isGovAccount}
-                            dropDown={{
-                                trigger: 'click',
-                                autoPosition: true,
-                                items: [
-                                    {
-                                        id: 'wlm-db-activate-error-investigation',
-                                        label: t('databases.dashboard.activate-error-investigation'),
-                                        onClick: () => {
-                                            handleClick('activate');
+                        {isAnalyzeDisabledByAdmin ? (
+                            <Popover
+                                trigger="hover"
+                                container={
+                                    <span>
+                                        <DsButton
+                                            children="Analyze"
+                                            variant="secondary"
+                                            isThin
+                                            isDisabled
+                                            dropDown={{
+                                                trigger: 'click',
+                                                autoPosition: true,
+                                                items: [
+                                                    {
+                                                        id: 'wlm-db-activate-error-investigation',
+                                                        label: t('databases.dashboard.activate-error-investigation'),
+                                                        onClick: () => {
+                                                            handleClick('activate');
+                                                        },
+                                                        isDisabled:
+                                                            notActiveTableRows?.length === 0 ||
+                                                            (!loading && !aiAnalysisEnabled),
+                                                        disabledReason:
+                                                            !loading && !aiAnalysisEnabled
+                                                                ? t('databases.log-analyzer.ai-analysis-disabled')
+                                                                : ''
+                                                    },
+                                                    {
+                                                        id: 'wlm-db-view-error-investigation',
+                                                        label: t('databases.dashboard.view-error-investigation'),
+                                                        onClick: () => {
+                                                            handleClick('view');
+                                                        },
+                                                        isDisabled: activeTableRows?.length === 0
+                                                    }
+                                                ]
+                                            }}
+                                        />
+                                    </span>
+                                }
+                            >
+                                {t('databases.log-analyzer.ai-analysis-disabled')}
+                            </Popover>
+                        ) : (
+                            <DsButton
+                                children="Analyze"
+                                variant="secondary"
+                                isThin
+                                isDisabled={loading || showNA || isGovAccount}
+                                dropDown={{
+                                    trigger: 'click',
+                                    autoPosition: true,
+                                    items: [
+                                        {
+                                            id: 'wlm-db-activate-error-investigation',
+                                            label: t('databases.dashboard.activate-error-investigation'),
+                                            onClick: () => {
+                                                handleClick('activate');
+                                            },
+                                            isDisabled:
+                                                notActiveTableRows?.length === 0 || (!loading && !aiAnalysisEnabled),
+                                            disabledReason:
+                                                !loading && !aiAnalysisEnabled
+                                                    ? t('databases.log-analyzer.ai-analysis-disabled')
+                                                    : ''
                                         },
-                                        isDisabled: notActiveTableRows?.length === 0
-                                    },
-                                    {
-                                        id: 'wlm-db-view-error-investigation',
-                                        label: t('databases.dashboard.view-error-investigation'),
-                                        onClick: () => {
-                                            handleClick('view');
-                                        },
-                                        isDisabled: activeTableRows?.length === 0
-                                    }
-                                ]
-                            }}
-                        />
+                                        {
+                                            id: 'wlm-db-view-error-investigation',
+                                            label: t('databases.dashboard.view-error-investigation'),
+                                            onClick: () => {
+                                                handleClick('view');
+                                            },
+                                            isDisabled: activeTableRows?.length === 0
+                                        }
+                                    ]
+                                }}
+                            />
+                        )}
                     </div>
                 </div>
             </div>

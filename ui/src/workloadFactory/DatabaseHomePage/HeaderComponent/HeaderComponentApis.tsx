@@ -16,7 +16,7 @@ import {
     setRegionMapping,
     setShowNA
 } from '../../../store/workloadFactory/headersSlice';
-import { updateIsGovAccount } from '../../../store/authSlice';
+import { updateAiAnalysisEnabled, updateIsGovAccount } from '../../../store/authSlice';
 import { makeCredMapping, makeRegionMapping } from '../../../utils/utilityFunctions';
 
 const HeaderComponentApi = () => {
@@ -58,6 +58,7 @@ const HeaderComponentApi = () => {
     useEffect(() => {
         if (accountInfoData) {
             dispatch(updateIsGovAccount(accountInfoData.isGovAccount));
+            dispatch(updateAiAnalysisEnabled(accountInfoData.aiAnalysisEnabled));
         }
     }, [accountInfoData, dispatch]);
 

@@ -14,6 +14,7 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
     const [disableAll] = useState(false);
     const { wizardOperationType, bulkDetectedInstanceList } = useAppSelector(state => state.inventoryV2);
     const { loading } = useAppSelector(state => state.agenticAI.agenticRegisterFlowChecks);
+    const { aiAnalysisEnabled } = useAppSelector(state => state.auth);
 
     // Calculate readiness counts for bulk MSSQL/Oracle mode
     // Uses getPermissionState to read from manageReadiness data which gets updated when API responses arrive
@@ -68,7 +69,8 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
         manageChecks,
         policiesList,
         wizardOperationType,
-        engineType
+        engineType,
+        aiAnalysisEnabled
     );
 
     return (
@@ -81,9 +83,10 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
                     expandedId={expandedId}
                     setExpandedId={setExpandedId}
                     disableAll={disableAll}
-                    errorInvestigationLoading={loading}
+                    errorInvestigationLoading={loading && aiAnalysisEnabled}
                     readinessCounts={readinessCounts}
                     engineType={engineType}
+                    aiAnalysisEnabled={aiAnalysisEnabled}
                 />
             </div>
         </div>

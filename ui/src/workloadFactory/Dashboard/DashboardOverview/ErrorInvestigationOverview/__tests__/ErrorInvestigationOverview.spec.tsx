@@ -16,6 +16,12 @@ const mockSetDialog = vi.fn();
 const mockCloseDialog = vi.fn();
 
 vi.mock('@netapp/design-system', () => ({
+    Popover: ({ children, container }: any) => (
+        <div data-testid="popover">
+            {container}
+            {children && <div data-testid="popover-content">{children}</div>}
+        </div>
+    ),
     TooltipInfo: ({ children }: any) => <div data-testid="tooltip-info">{children}</div>,
     useDialog: () => ({ setDialog: mockSetDialog, closeDialog: mockCloseDialog })
 }));
@@ -180,6 +186,13 @@ const makeStore = (overrides: any = {}) =>
                     selectedErrorInvestigationRow: null,
                     selectedViewInvestigationRow: null,
                     ...overrides.agenticAI
+                }
+            ) => s,
+            auth: (
+                s: any = {
+                    isGovAccount: false,
+                    aiAnalysisEnabled: true,
+                    ...overrides.auth
                 }
             ) => s
         }
@@ -389,5 +402,97 @@ describe('ErrorInvestigationOverview', () => {
             </Provider>
         );
         expect(screen.getByTestId('chart')).toBeTruthy();
+    });
+
+    // ── AI Analysis disabled by admin ──
+    it('disables Analyze button when aiAnalysisEnabled is false and emptyState is true', () => {
+        mockedGetErrorInvestigationSummary.mockReturnValue({
+            severity1: 0,
+            severity2: 0,
+            severity3: 0,
+            totalEvents: 0,
+            activeResource: 0,
+            totalResource: 0,
+            emptyState: true
+        });
+        render(
+            <Provider store={makeStore({ auth: { isGovAccount: false, aiAnalysisEnabled: false } })}>
+                <ErrorInvestigationOverview />
+            </Provider>
+        );
+        const analyzeButton = screen.getByTestId('ds-button');
+        expect(analyzeButton).toHaveProperty('disabled', true);
+    });
+
+    it('shows AI analysis disabled tooltip when aiAnalysisEnabled is false and emptyState is true', () => {
+        mockedGetErrorInvestigationSummary.mockReturnValue({
+            severity1: 0,
+            severity2: 0,
+            severity3: 0,
+            totalEvents: 0,
+            activeResource: 0,
+            totalResource: 0,
+            emptyState: true
+        });
+        render(
+            <Provider store={makeStore({ auth: { isGovAccount: false, aiAnalysisEnabled: false } })}>
+                <ErrorInvestigationOverview />
+            </Provider>
+        );
+        expect(screen.getAllByText('databases.log-analyzer.ai-analysis-disabled').length).toBeGreaterThan(0);
+    });
+
+    it('disables activate dropdown item when aiAnalysisEnabled is false', () => {
+        render(
+            <Provider store={makeStore({ auth: { isGovAccount: false, aiAnalysisEnabled: false } })}>
+                <ErrorInvestigationOverview />
+            </Provider>
+        );
+        const activateButton = screen.getByTestId('wlm-db-activate-error-investigation');
+        expect(activateButton).toHaveProperty('disabled', true);
+    });
+
+    it('does not disable Analyze button when aiAnalysisEnabled is false but emptyState is false', () => {
+        mockedGetErrorInvestigationSummary.mockReturnValue({
+            severity1: 5,
+            severity2: 3,
+            severity3: 2,
+            totalEvents: 10,
+            activeResource: 3,
+            totalResource: 5,
+            emptyState: false
+        });
+        render(
+            <Provider store={makeStore({ auth: { isGovAccount: false, aiAnalysisEnabled: false } })}>
+                <ErrorInvestigationOverview />
+            </Provider>
+        );
+        const analyzeButton = screen.getByTestId('ds-button');
+        expect(analyzeButton).toHaveProperty('disabled', false);
+    });
+
+    it('does not disable Analyze button when loading even if aiAnalysisEnabled is false', () => {
+        mockedGetErrorInvestigationSummary.mockReturnValue({
+            severity1: 0,
+            severity2: 0,
+            severity3: 0,
+            totalEvents: 0,
+            activeResource: 0,
+            totalResource: 0,
+            emptyState: true
+        });
+        render(
+            <Provider
+                store={makeStore({
+                    auth: { isGovAccount: false, aiAnalysisEnabled: false },
+                    headers: { showNA: false, multiDataLoading: true }
+                })}
+            >
+                <ErrorInvestigationOverview />
+            </Provider>
+        );
+        const analyzeButton = screen.getByTestId('ds-button');
+        // While loading, isAnalyzeDisabledByAdmin is false (because loading=true)
+        expect(analyzeButton).toHaveProperty('disabled', true); // disabled due to loading
     });
 });

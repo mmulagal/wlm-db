@@ -107,8 +107,9 @@ router.get(`${BASE_URL}/v1/status`, async (req: {}, res: any) => {
 });
 
 // Toggle isGovAccount to true to test GovCloud SSM ARN flows
+// Toggle aiAnalysisEnabled to false to test the error-analysis-disabled-by-administrator flows
 router.get(`${BASE_URL}/v1/account-info`, async (req: {}, res: any) => {
-    generateResponse(res, 200, { isGovAccount: false });
+    generateResponse(res, 200, { isGovAccount: false, aiAnalysisEnabled: true });
 });
 
 router.get(`${BASE_URL}/v1/jobs`, async (req: {}, res: any) => {

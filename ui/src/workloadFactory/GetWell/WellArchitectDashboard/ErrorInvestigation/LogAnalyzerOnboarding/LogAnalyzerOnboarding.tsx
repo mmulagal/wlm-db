@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { useDialog } from '@netapp/design-system';
+import { Popover, useDialog } from '@netapp/design-system';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { useEffect, useState } from 'react';
 import { DsButton, DsTypography } from '@tlveng/wlm-ds';
@@ -32,6 +32,7 @@ import { addAllLogAnalysisData } from '../../../../../store/workloadFactory/inve
 import { uniqueHostRow } from '../../../../InventoryV2/InventoryUtilsV2';
 import DialogComponent from '../../../../../common/Dialog/DialogComponent';
 import AnalyzeCustomTimeframe from '../LogAnalyserHeader/AnalyzeCustomTimeframe/AnalyzeCustomTimeframe';
+import { addNotification, NOTIFICATION_TYPES } from '../../../../../store/notificationSlice';
 
 const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
     const { t } = useTranslation();
@@ -48,6 +49,20 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
     const { data, loading } = useAppSelector(state => state.agenticAI.logAnalyzerPricing);
 
     const { data: preReqData, loading: preReqLoading } = useAppSelector(state => state.agenticAI.logAnalyzerPreReq);
+
+    const { aiAnalysisEnabled } = useAppSelector(state => state.auth);
+    const isScanDisabledByAdmin = !preReqLoading && !aiAnalysisEnabled;
+
+    useEffect(() => {
+        if (!aiAnalysisEnabled) {
+            dispatch(
+                addNotification({
+                    notificationType: NOTIFICATION_TYPES.INFO,
+                    message: t('databases.log-analyzer.ai-analysis-disabled')
+                })
+            );
+        }
+    }, [aiAnalysisEnabled, dispatch, t]);
 
     useEffect(() => {
         if (preReqData) {
@@ -189,47 +204,92 @@ const LogAnalyzerOnboarding = ({ dbType }: { dbType: string }) => {
                         </DsTypography>
                         <div className={styles.rightPart}>
                             <div
-                                className={styles.refreshIcon}
+                                className={`${styles.refreshIcon} ${
+                                    !aiAnalysisEnabled ? styles.refreshIconDisabled : ''
+                                }`}
                                 onClick={() => {
-                                    runInvestigationPreReqApi();
+                                    if (aiAnalysisEnabled) {
+                                        runInvestigationPreReqApi();
+                                    }
                                 }}
                             >
                                 <RefreshIcon />
                             </div>
 
-                            <DsButton
-                                children={t('databases.log-analyzer.scan-now')}
-                                variant="primary"
-                                isDisabled={!isActive || preReqLoading}
-                                isThin
-                                dropDown={{
-                                    trigger: 'click',
-                                    autoPosition: true,
-                                    items: [
-                                        {
-                                            id: 'wlm-db-last-24-hours',
-                                            label: 'Last 24 hours',
-                                            onClick: () => {
-                                                activateHandler('manual');
+                            {isScanDisabledByAdmin ? (
+                                <Popover
+                                    trigger="hover"
+                                    container={
+                                        <span>
+                                            <DsButton
+                                                children={t('databases.log-analyzer.scan-now')}
+                                                variant="primary"
+                                                isDisabled
+                                                isThin
+                                                dropDown={{
+                                                    trigger: 'click',
+                                                    autoPosition: true,
+                                                    items: [
+                                                        {
+                                                            id: 'wlm-db-last-24-hours',
+                                                            label: 'Last 24 hours',
+                                                            onClick: () => {
+                                                                activateHandler('manual');
+                                                            }
+                                                        },
+                                                        {
+                                                            id: 'wlm-db-custom-timeframe',
+                                                            label: 'Custom timeframe',
+                                                            onClick: () => {
+                                                                handleCustomTimeframe();
+                                                            }
+                                                        }
+                                                    ]
+                                                }}
+                                            />
+                                        </span>
+                                    }
+                                >
+                                    {t('databases.log-analyzer.ai-analysis-disabled')}
+                                </Popover>
+                            ) : (
+                                <DsButton
+                                    children={t('databases.log-analyzer.scan-now')}
+                                    variant="primary"
+                                    isDisabled={!isActive || preReqLoading}
+                                    isThin
+                                    dropDown={{
+                                        trigger: 'click',
+                                        autoPosition: true,
+                                        items: [
+                                            {
+                                                id: 'wlm-db-last-24-hours',
+                                                label: 'Last 24 hours',
+                                                onClick: () => {
+                                                    activateHandler('manual');
+                                                }
+                                            },
+                                            {
+                                                id: 'wlm-db-custom-timeframe',
+                                                label: 'Custom timeframe',
+                                                onClick: () => {
+                                                    handleCustomTimeframe();
+                                                }
                                             }
-                                        },
-                                        {
-                                            id: 'wlm-db-custom-timeframe',
-                                            label: 'Custom timeframe',
-                                            onClick: () => {
-                                                handleCustomTimeframe();
-                                            }
-                                        }
-                                    ]
-                                }}
-                            />
+                                        ]
+                                    }}
+                                />
+                            )}
                         </div>
                     </div>
-                    <div className={styles.infoSection}>
+                    <div className={`${styles.infoSection} ${!aiAnalysisEnabled ? styles.infoSectionDisabled : ''}`}>
                         <div>
                             <InfoIcon />
                         </div>
-                        <DsTypography variant="Semibold_14">
+                        <DsTypography
+                            variant="Semibold_14"
+                            className={!aiAnalysisEnabled ? styles.infoTextDisabled : ''}
+                        >
                             {dbType === DBType.ORACLE
                                 ? t('databases.log-analyzer.info-text-oracle')
                                 : t('databases.log-analyzer.info-text')}

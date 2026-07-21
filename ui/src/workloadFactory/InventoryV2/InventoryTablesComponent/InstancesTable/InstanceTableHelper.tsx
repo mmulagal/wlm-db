@@ -139,8 +139,14 @@ export const getInstanceTableMenuOptions = (
     disableCreateDb: boolean,
     disableCreateDbMsg: string,
     isBedRockAvailable: boolean,
-    isGovAccount: boolean = false
+    isGovAccount: boolean = false,
+    aiAnalysisEnabled: boolean = true
 ) => {
+    // Analysis can still be viewed for instances that already have a previously generated result;
+    // only block starting a new analysis when it has never completed (Not active/Running).
+    const isAiAnalysisDisabledForRow = (row: any) =>
+        !aiAnalysisEnabled && row?.logAnalyzer?.status !== ERROR_ANALYZER_STATUS.ACTIVE;
+
     switch (rowData.hostType) {
         case DBType.POSTGRESQL:
             return [
@@ -160,11 +166,14 @@ export const getInstanceTableMenuOptions = (
                 {
                     id: 'oracle-investigateErrors',
                     displayName: t('databases.databases-table.oracle.menu-options.investigate-errors'),
-                    disabled: !isBedRockAvailable || isGovAccount || disableOption,
+                    disabled:
+                        !isBedRockAvailable || isGovAccount || disableOption || isAiAnalysisDisabledForRow(rowData),
                     infoText: isGovAccount
                         ? t('databases.general.not-supported-in-govcloud')
                         : !isBedRockAvailable
                         ? t('databases.log-analyzer.bedrock-in-region-not-supported')
+                        : isAiAnalysisDisabledForRow(rowData)
+                        ? t('databases.log-analyzer.ai-analysis-disabled')
                         : disableMessage
                 },
                 {
@@ -197,11 +206,14 @@ export const getInstanceTableMenuOptions = (
                 {
                     id: 'mssql-investigateErrors',
                     displayName: t('databases.instance-table.menu-options.investigate-errors'),
-                    disabled: !isBedRockAvailable || isGovAccount || disableOption,
+                    disabled:
+                        !isBedRockAvailable || isGovAccount || disableOption || isAiAnalysisDisabledForRow(rowData),
                     infoText: isGovAccount
                         ? t('databases.general.not-supported-in-govcloud')
                         : !isBedRockAvailable
                         ? t('databases.log-analyzer.bedrock-in-region-not-supported')
+                        : isAiAnalysisDisabledForRow(rowData)
+                        ? t('databases.log-analyzer.ai-analysis-disabled')
                         : disableMessage
                 },
                 {
@@ -570,7 +582,13 @@ export const inventoryBannerFilterUpdates = (
     }
 };
 
-export const logAnalyzerStatusCol = (styles: any, t: any, rowData: any, cellData: string) => {
+export const logAnalyzerStatusCol = (
+    styles: any,
+    t: any,
+    rowData: any,
+    cellData: string,
+    aiAnalysisEnabled: boolean = true
+) => {
     // If the computed display value is "Not active", show with tooltip
     if (cellData === ERROR_ANALYZER_STATUS.ACTIVE) {
         return (
@@ -601,7 +619,19 @@ export const logAnalyzerStatusCol = (styles: any, t: any, rowData: any, cellData
     if (cellData === ERROR_ANALYZER_STATUS.NOT_ACTIVE) {
         return (
             <div className={styles.naContainer}>
-                <NotActiveNotificationIcon />
+                {aiAnalysisEnabled ? (
+                    <NotActiveNotificationIcon />
+                ) : (
+                    <div>
+                        <TooltipInfo className={styles['tooltip-icon']} trigger="hover">
+                            <div className={styles.tooltipContent}>
+                                <DsTypography variant="Regular_14">
+                                    {t('databases.log-analyzer.ai-analysis-disabled')}
+                                </DsTypography>
+                            </div>
+                        </TooltipInfo>
+                    </div>
+                )}
                 <DsTypography variant="Regular_14">{cellData}</DsTypography>
             </div>
         );

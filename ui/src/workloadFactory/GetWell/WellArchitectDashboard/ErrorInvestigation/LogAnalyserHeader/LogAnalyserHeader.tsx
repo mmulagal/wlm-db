@@ -1,5 +1,5 @@
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
-import { DsButton, TooltipInfo, useDialog } from '@netapp/design-system';
+import { DsButton, Popover, TooltipInfo, useDialog } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
@@ -35,7 +35,9 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
     const { errorInvestigationLoading } = useAppSelector(state => state.agenticAI.errorInvestigation);
     const { investigationDatesLoading, noData } = useAppSelector(state => state.agenticAI);
     const { scanInProgress } = useAppSelector(state => state.agenticAI);
+    const { aiAnalysisEnabled } = useAppSelector(state => state.auth);
     const loading = errorInvestigationLoading || investigationDatesLoading;
+    const isScanDisabledByAdmin = !loading && !aiAnalysisEnabled;
 
     const [scanErrorInvestigation] = useScanErrorInvestigationMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
@@ -203,32 +205,70 @@ const LogAnalyserHeader = ({ headerData, dbType }: { headerData: LogAnalyserHead
                             </div>
                         )}
 
-                        <DsButton
-                            children={t('databases.log-analyzer.scan-now')}
-                            variant="primary"
-                            isDisabled={loading || scanInProgress?.[instKey]}
-                            isThin
-                            dropDown={{
-                                trigger: 'click',
-                                autoPosition: true,
-                                items: [
-                                    {
-                                        id: 'wlm-db-last-24-hours',
-                                        label: 'Last 24 hours',
-                                        onClick: () => {
-                                            handleScan('manual');
+                        {isScanDisabledByAdmin ? (
+                            <Popover
+                                trigger="hover"
+                                container={
+                                    <span>
+                                        <DsButton
+                                            children={t('databases.log-analyzer.scan-now')}
+                                            variant="primary"
+                                            isDisabled
+                                            isThin
+                                            dropDown={{
+                                                trigger: 'click',
+                                                autoPosition: true,
+                                                items: [
+                                                    {
+                                                        id: 'wlm-db-last-24-hours',
+                                                        label: 'Last 24 hours',
+                                                        onClick: () => {
+                                                            handleScan('manual');
+                                                        }
+                                                    },
+                                                    {
+                                                        id: 'wlm-db-custom-timeframe',
+                                                        label: 'Custom timeframe',
+                                                        onClick: () => {
+                                                            handleCustomTimeframe();
+                                                        }
+                                                    }
+                                                ]
+                                            }}
+                                        />
+                                    </span>
+                                }
+                            >
+                                {t('databases.log-analyzer.ai-analysis-disabled')}
+                            </Popover>
+                        ) : (
+                            <DsButton
+                                children={t('databases.log-analyzer.scan-now')}
+                                variant="primary"
+                                isDisabled={loading || scanInProgress?.[instKey]}
+                                isThin
+                                dropDown={{
+                                    trigger: 'click',
+                                    autoPosition: true,
+                                    items: [
+                                        {
+                                            id: 'wlm-db-last-24-hours',
+                                            label: 'Last 24 hours',
+                                            onClick: () => {
+                                                handleScan('manual');
+                                            }
+                                        },
+                                        {
+                                            id: 'wlm-db-custom-timeframe',
+                                            label: 'Custom timeframe',
+                                            onClick: () => {
+                                                handleCustomTimeframe();
+                                            }
                                         }
-                                    },
-                                    {
-                                        id: 'wlm-db-custom-timeframe',
-                                        label: 'Custom timeframe',
-                                        onClick: () => {
-                                            handleCustomTimeframe();
-                                        }
-                                    }
-                                ]
-                            }}
-                        />
+                                    ]
+                                }}
+                            />
+                        )}
                     </div>
                 </div>
             </div>

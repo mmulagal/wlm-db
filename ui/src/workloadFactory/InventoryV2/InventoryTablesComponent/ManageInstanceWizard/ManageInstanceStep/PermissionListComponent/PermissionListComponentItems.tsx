@@ -20,8 +20,16 @@ export const PermissionListComponentItems = (
     manageChecks: any,
     policiesList: any,
     wizardOperationType: string,
-    engineType: any
+    engineType: any,
+    aiAnalysisEnabled: boolean = true
 ) => {
+    // Error investigation readiness is overridden when AI analysis has been disabled by the
+    // administrator - it takes precedence over the normal prerequisite readiness state.
+    const errorInvestigationReadinessStatus = aiAnalysisEnabled
+        ? manageChecks?.errorInvestigation
+        : MANAGE_STATES.AI_ANALYSIS_DISABLED;
+    const errorInvestigationMissingPermission =
+        !aiAnalysisEnabled || manageChecks?.errorInvestigation !== MANAGE_STATES.READY;
     // MSSQL blocks (original)
     const mssqlBlocks = [
         {
@@ -151,11 +159,11 @@ export const PermissionListComponentItems = (
                 id: '5',
                 title: t('databases.register-flow.error-investigation'),
                 subtitle: t('databases.register-flow.capability'),
-                readinessStatus: manageChecks?.errorInvestigation,
-                missingPermission: manageChecks?.errorInvestigation !== MANAGE_STATES.READY,
+                readinessStatus: errorInvestigationReadinessStatus,
+                missingPermission: errorInvestigationMissingPermission,
                 image:
-                    wizardOperationType !== ACTION_TYPE.BULK &&
-                    manageChecks?.errorInvestigation !== MANAGE_STATES.READY ? (
+                    (wizardOperationType !== ACTION_TYPE.BULK && errorInvestigationMissingPermission) ||
+                    !aiAnalysisEnabled ? (
                         <div className={`${styles.logAnalyzer} ${styles.logAnalyzerDisabled}`}>
                             <LogAnalyzerDisabled />
                         </div>
@@ -397,10 +405,11 @@ export const PermissionListComponentItems = (
             id: '5',
             title: t('databases.register-flow.error-investigation'),
             subtitle: t('databases.register-flow.capability'),
-            readinessStatus: manageChecks?.errorInvestigation,
-            missingPermission: manageChecks?.errorInvestigation !== MANAGE_STATES.READY,
+            readinessStatus: errorInvestigationReadinessStatus,
+            missingPermission: errorInvestigationMissingPermission,
             image:
-                wizardOperationType !== ACTION_TYPE.BULK && manageChecks?.errorInvestigation !== MANAGE_STATES.READY ? (
+                (wizardOperationType !== ACTION_TYPE.BULK && errorInvestigationMissingPermission) ||
+                !aiAnalysisEnabled ? (
                     <div className={`${styles.logAnalyzer} ${styles.logAnalyzerDisabled}`}>
                         <LogAnalyzerDisabled />
                     </div>

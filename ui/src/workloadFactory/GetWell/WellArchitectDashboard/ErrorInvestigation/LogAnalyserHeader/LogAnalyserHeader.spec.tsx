@@ -26,6 +26,12 @@ const mockSetDialog = vi.fn();
 const mockCloseDialog = vi.fn();
 
 vi.mock('@netapp/design-system', () => ({
+    Popover: ({ children, container }: any) => (
+        <div data-testid="popover">
+            {container}
+            {children && <div data-testid="popover-content">{children}</div>}
+        </div>
+    ),
     DsButton: ({ children, isDisabled, dropDown, isThin, variant, ...props }: any) => (
         <div data-testid="ds-button" data-disabled={isDisabled} {...props}>
             {children}
@@ -140,6 +146,9 @@ describe('LogAnalyserHeader', () => {
             selectedCustomAnalysisTime: { label: '10:00 AM' },
             selectedCustomAnalysisTimeFrameUnit: { label: 'EST' },
             durationCustomAnalysis: 3600000
+        },
+        auth: {
+            aiAnalysisEnabled: true
         }
     };
 
@@ -589,5 +598,89 @@ describe('LogAnalyserHeader', () => {
         expect(variants).toContain('Semibold_14');
         expect(variants).toContain('Semibold_13');
         expect(variants).toContain('Regular_13');
+    });
+
+    // ── AI Analysis disabled by admin ──
+    it('should disable scan button when aiAnalysisEnabled is false', () => {
+        const disabledState = {
+            ...defaultState,
+            auth: {
+                aiAnalysisEnabled: false
+            }
+        };
+        mockUseAppSelector.mockImplementation(selector => selector(disabledState));
+
+        render(<LogAnalyserHeader headerData={mockHeaderData} dbType="mssql" />);
+
+        const button = screen.getByTestId('ds-button');
+        expect(button).toHaveAttribute('data-disabled', 'true');
+    });
+
+    it('should show AI analysis disabled tooltip when aiAnalysisEnabled is false', () => {
+        const disabledState = {
+            ...defaultState,
+            auth: {
+                aiAnalysisEnabled: false
+            }
+        };
+        mockUseAppSelector.mockImplementation(selector => selector(disabledState));
+
+        render(<LogAnalyserHeader headerData={mockHeaderData} dbType="mssql" />);
+
+        const popoverContent = screen.queryAllByText('databases.log-analyzer.ai-analysis-disabled');
+        expect(popoverContent.length).toBeGreaterThan(0);
+    });
+
+    it('should enable scan button when aiAnalysisEnabled is true', () => {
+        render(<LogAnalyserHeader headerData={mockHeaderData} dbType="mssql" />);
+
+        const button = screen.getByTestId('ds-button');
+        // Button should not be disabled - check that data-disabled is either false or not set
+        expect(button.getAttribute('data-disabled')).not.toBe('true');
+    });
+
+    it('should disable button due to loading even when aiAnalysisEnabled is true', () => {
+        const loadingState = {
+            ...defaultState,
+            agenticAI: {
+                ...defaultState.agenticAI,
+                errorInvestigation: {
+                    errorInvestigationLoading: true
+                }
+            },
+            auth: {
+                aiAnalysisEnabled: true
+            }
+        };
+        mockUseAppSelector.mockImplementation(selector => selector(loadingState));
+
+        render(<LogAnalyserHeader headerData={mockHeaderData} dbType="mssql" />);
+
+        const button = screen.getByTestId('ds-button');
+        expect(button).toHaveAttribute('data-disabled', 'true');
+    });
+
+    it('should combine multiple disabled conditions correctly', () => {
+        const multiDisabledState = {
+            ...defaultState,
+            agenticAI: {
+                ...defaultState.agenticAI,
+                errorInvestigation: {
+                    errorInvestigationLoading: true
+                },
+                scanInProgress: {
+                    'resource-123_instance-123_cred-456_region-456': true
+                }
+            },
+            auth: {
+                aiAnalysisEnabled: false
+            }
+        };
+        mockUseAppSelector.mockImplementation(selector => selector(multiDisabledState));
+
+        render(<LogAnalyserHeader headerData={mockHeaderData} dbType="mssql" />);
+
+        const button = screen.getByTestId('ds-button');
+        expect(button).toHaveAttribute('data-disabled', 'true');
     });
 });

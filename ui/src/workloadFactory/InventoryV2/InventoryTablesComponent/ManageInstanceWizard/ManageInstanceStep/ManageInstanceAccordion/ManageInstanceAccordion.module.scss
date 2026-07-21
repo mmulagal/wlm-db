@@ -87,6 +87,13 @@
             width: 24px;
             height: 24px;
         }
+
+        .greyIcon {
+            color: var(--text-disabled);
+            svg path {
+                fill: var(--text-disabled);
+            }
+        }
     }
 
     .valueSection {
@@ -113,6 +120,10 @@
         }
     }
 
+    .disabledText {
+        color: var(--text-disabled);
+    }
+
     .main-title {
         font-weight: 600;
         font-size: 16px;
@@ -133,6 +144,17 @@
 
         .text {
             color: var(--text-button-primary);
+        }
+    }
+
+    .disabledAccordionStatus {
+        .text {
+            color: var(--text-disabled);
+        }
+
+        svg path {
+            fill: var(--text-disabled);
+            stroke: var(--text-disabled);
         }
     }
 
