@@ -1,4 +1,4 @@
-import { TableScope, type WadElementProps } from '@tlveng/workload-factory-components';
+import { TableScope, type WadElementProps } from '@tlveng/workload-factory-components/wad';
 import { FileSystemResourcesTable } from './tables/filesystem/FileSystemResourcesTable';
 import { FileSystemConfigurationIds } from './tables/filesystem/configurations';
 import { LunResourcesTable } from './tables/lun/LunResourcesTable';

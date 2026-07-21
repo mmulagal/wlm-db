@@ -1,4 +1,4 @@
-import type { BulkAction } from '@tlveng/workload-factory-components';
+import type { BulkAction } from '@tlveng/workload-factory-components/wad';
 
 export enum BulkActionId {
     FIX = 'fix'

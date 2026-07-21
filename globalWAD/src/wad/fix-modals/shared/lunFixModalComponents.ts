@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import type { FixMetadata, ResourceScanRecord } from '@tlveng/workload-factory-components';
+import type { FixMetadata, ResourceScanRecord } from '@tlveng/workload-factory-components/wad';
 import { BlockDeviceSpaceManagementFixModal } from '../lun/block-device-space-management/BlockDeviceSpaceManagementFixModal';
 import { OsTypeFixModal } from '../lun/os-type/OsTypeFixModal';
 

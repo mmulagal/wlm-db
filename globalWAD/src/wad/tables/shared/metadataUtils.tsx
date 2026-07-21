@@ -3,7 +3,7 @@ import {
     ResourceTextCellRenderer,
     type ResourceScanRecord,
     type TableColumn
-} from '@tlveng/workload-factory-components';
+} from '@tlveng/workload-factory-components/wad';
 
 type MetadataField = 'current' | 'recommended' | 'workload';
 

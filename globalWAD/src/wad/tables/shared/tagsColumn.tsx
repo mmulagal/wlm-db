@@ -1,6 +1,6 @@
 import { memo, useCallback } from 'react';
 import { Button } from '@netapp/bxp-design-system-react';
-import type { ResourceScanRecord, TableColumn } from '@tlveng/workload-factory-components';
+import type { ResourceScanRecord, TableColumn } from '@tlveng/workload-factory-components/wad';
 
 export const SHARED_TAGS_COLUMN_ID = 'tags';
 
