@@ -124,16 +124,6 @@ export function getMssqlInstanceTableColumns({
             width: '240px',
             filterOptions: getFilterOptions(updatedTableData, 'optimizationStatus'),
             renderCell: (cellData: string, rowData: any) => {
-                // Check for minimal permission - show N/A if no full permission and no WAD data
-                const hasFullPerm = hasFullPermission(rowData?.hostManageReadiness);
-                if (!hasFullPerm && !rowData?.isWad) {
-                    return (
-                        <DsTypography variant="Regular_14" className={styles.colText}>
-                            {t('databases.general.not-available-table-columns')}
-                        </DsTypography>
-                    );
-                }
-
                 // If the computed display value is "Not analyzed", show with tooltip
                 if (cellData === INVENTORY_TABLE_STATUS.NOT_ANALYZED) {
                     return (

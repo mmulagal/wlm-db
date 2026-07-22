@@ -1,4 +1,4 @@
-import { DsTypography, Spinner } from '@netapp/design-system';
+import { DsTypography } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -401,6 +401,15 @@ export const Content = () => {
         dispatch
     ]);
 
+    // Check if prerequisite checks are still being computed
+    // Show loading whenever the computed checks are not available yet, regardless of whether source data exists
+    // This prevents rendering accordions with undefined/incomplete data during the brief computation period
+    // For single mode: Show loading until manageChecks is computed by the useEffect
+    // For bulk mode: Show loading until manageMultiChecks state is populated by the useEffect
+    const isLoadingPrerequisites =
+        (wizardOperationType === ACTION_TYPE.SINGLE && !manageChecks) ||
+        (wizardOperationType === ACTION_TYPE.BULK && Object.keys(manageMultiChecks).length === 0);
+
     return (
         <div className={styles['manage-instance-step']}>
             {wizardOperationType !== ACTION_TYPE.BULK && isAlreadyDetected && (
@@ -435,11 +444,12 @@ export const Content = () => {
                                     />
                                 )}
 
-                            {wizardOperationType === ACTION_TYPE.BULK && manageMultiChecks && (
+                            {wizardOperationType === ACTION_TYPE.BULK && (
                                 <PermissionListComponent
-                                    manageChecks={manageMultiChecks}
+                                    manageChecks={manageMultiChecks || {}}
                                     policiesList={policiesList}
                                     engineType={hostType}
+                                    isLoadingPrerequisites={isLoadingPrerequisites}
                                 />
                             )}
                         </>
@@ -470,20 +480,22 @@ export const Content = () => {
                             />
                         )}
 
-                    {/* Accordions */}
-                    {wizardOperationType === ACTION_TYPE.SINGLE && manageChecks && (
+                    {/* Accordions - always show structure, even while loading */}
+                    {wizardOperationType === ACTION_TYPE.SINGLE && (
                         <PermissionListComponent
-                            manageChecks={manageChecks}
+                            manageChecks={manageChecks || {}}
                             policiesList={policiesList}
                             engineType={hostType}
+                            isLoadingPrerequisites={isLoadingPrerequisites}
                         />
                     )}
 
-                    {wizardOperationType === ACTION_TYPE.BULK && manageMultiChecks && (
+                    {wizardOperationType === ACTION_TYPE.BULK && (
                         <PermissionListComponent
-                            manageChecks={manageMultiChecks}
+                            manageChecks={manageMultiChecks || {}}
                             policiesList={policiesList}
                             engineType={hostType}
+                            isLoadingPrerequisites={isLoadingPrerequisites}
                         />
                     )}
                 </>

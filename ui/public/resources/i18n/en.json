@@ -578,6 +578,7 @@
         },
         "well-architect": {
             "not-supported": "Not supported",
+            "not-applicable-tooltip": "This configuration assessment is not applicable for the current database setup or deployment type.",
             "crr-dialog-text": "A link allows Workload Factory to directly access the FSx for ONTAP file system and perform advanced management operations. You can either create a new link or associate an existing link with the file system.",
             "create-new-link-text": "Selecting 'Continue' redirects you to the Create link page.",
             "link-name": "Link name",
@@ -1603,7 +1604,7 @@
             "wad-accordion-three-point-five-option-one": "AWS Secrets Manager",
             "wad-accordion-three-point-five-option-two": "Windows Credential Manager",
             "wad-accordion-three-point-five-option-three": "Interactive prompt ",
-            "registration-requires-full-permission": "Full permissions required to register instance. Database authentication is mandatory for registration.",
+            "registration-requires-full-permission": "Extensive run permission required to register instance.",
             "full-permission-required-explore-savings": "Full permissions required for Explore savings. Enable extensive run permission to use this feature.",
             "view-and-fix": "View and Fix",
             "register-instance": "Register instance",

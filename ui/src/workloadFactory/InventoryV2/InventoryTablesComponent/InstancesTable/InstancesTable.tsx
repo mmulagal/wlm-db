@@ -1005,17 +1005,24 @@ const InstancesTable = () => {
                 }
 
                 // For NOT_REGISTERED or UNDETECTED instances (discovered but not yet registered), add Register option
+                // Exclude WAD (offline assessment) rows as they are not discovered instances
                 const isNotRegistered =
-                    rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
-                    rowData.statusColText === INVENTORY_STATUS.UNDETECTED;
+                    (rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
+                        rowData.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+                    !rowData?.isWad;
 
                 if (isNotRegistered) {
-                    // Check if FSx link exists and if has full permission
+                    // Use manageActionCol to check for storage and other standard checks (same as old column implementation)
+                    const { disableMsg } = manageActionCol(t, selectedHostType, rowData);
+
+                    // Additionally check for new FSx link and permission requirements
                     const fsxLinkMissing = rowData?.hostManageReadiness?.fsxLinkExists === false;
                     const lacksPermission = !hasFullPermission(rowData?.hostManageReadiness);
-                    const isDisabled = fsxLinkMissing || lacksPermission;
 
-                    let tooltipMsg = '';
+                    // Combine checks: disabled if manageActionCol says so OR if FSx link missing OR lacks permission
+                    const isDisabled = !!disableMsg || fsxLinkMissing || lacksPermission;
+
+                    let tooltipMsg = disableMsg || '';
                     if (lacksPermission) {
                         tooltipMsg = t('databases.inventory.registration-requires-full-permission');
                     } else if (fsxLinkMissing) {

@@ -1,8 +1,9 @@
 import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import { DsPopover, Popover } from '@netapp/design-system';
-import { CONFIG_STATES, GETWELL_STATUS } from '../../../../../utils/consts';
+import { CONFIG_STATES, GETWELL_STATUS, GETWELL_VALUES, GETWELL_DISPLAY } from '../../../../../utils/consts';
 import { GENERAL } from '../../../../../utils/appConstants';
+import { isNotApplicableStatus } from '../OracleWellArchitectedUtils';
 import styles from './OracleCardComponent.module.scss';
 import { ReactComponent as NotActive } from '../../../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../../../assets/optimized.svg';
@@ -48,6 +49,32 @@ const StatusSection = ({ cardData, loading, disableText }: any) => {
             </DsTypography>
         );
     }
+
+    // Not applicable status - show with tooltip and icon (similar to WAD excluded)
+    const statusValue = cardData?.block_two?.value;
+
+    if (isNotApplicableStatus(statusValue)) {
+        const displayValue = GETWELL_DISPLAY.NOT_APPLICABLE;
+        return (
+            <span className={styles.overProvisioned}>
+                <span className={styles.tooltipLevel}>
+                    <DsPopover
+                        title={t('databases.well-architect.not-applicable-tooltip')}
+                        trigger="hover"
+                        placement="bottom"
+                    >
+                        <TooltipIcon />
+                    </DsPopover>
+                </span>
+                <span style={{ marginLeft: '8px' }}>
+                    <DsTypography variant="Semibold_14" isDisabled>
+                        {displayValue}
+                    </DsTypography>
+                </span>
+            </span>
+        );
+    }
+
     // WAD excluded configurations show Unavailable with tooltip
     if (cardData?.isWadExcluded) {
         return (

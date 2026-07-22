@@ -30,6 +30,7 @@ type AccordionProps = {
     disableAll?: boolean;
     loading?: boolean;
     errorInvestigationLoading?: boolean;
+    prerequisitesLoading?: boolean;
     type?: string;
     readinessCounts?: Record<
         string,
@@ -46,6 +47,7 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
     disableAll = false,
     loading = false,
     errorInvestigationLoading = false,
+    prerequisitesLoading = false,
     type,
     readinessCounts = null,
     engineType,
@@ -72,6 +74,12 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
             '4': 'errorInvestigation'
         };
         return mssqlMapping[itemId] || null;
+    };
+
+    // Helper to check if an item is Error analysis
+    const isErrorAnalysisItem = (itemId: string, engine?: string): boolean => {
+        const capabilityKey = getCapabilityKey(itemId, engine);
+        return capabilityKey === 'errorInvestigation';
     };
 
     const handleToggle = (id: string) => {
@@ -135,7 +143,10 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                                                     <div className={styles.readinessSection}>
                                                         <div className={styles.valueSection}>
                                                             {loading ||
-                                                            (errorInvestigationLoading && item?.id === '5') ? (
+                                                            (errorInvestigationLoading &&
+                                                                isErrorAnalysisItem(item?.id, engineType)) ||
+                                                            (prerequisitesLoading &&
+                                                                !isErrorAnalysisItem(item?.id, engineType)) ? (
                                                                 <div className={styles.loadingSection}>
                                                                     <DsFlashingDotsLoader />
                                                                 </div>
@@ -197,7 +208,11 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                                             </div>
                                             <div className={styles.readinessSection}>
                                                 <div className={styles.valueSection}>
-                                                    {loading || (errorInvestigationLoading && item?.id === '5') ? (
+                                                    {loading ||
+                                                    (errorInvestigationLoading &&
+                                                        isErrorAnalysisItem(item?.id, engineType)) ||
+                                                    (prerequisitesLoading &&
+                                                        !isErrorAnalysisItem(item?.id, engineType)) ? (
                                                         <div className={styles.loadingSection}>
                                                             <DsFlashingDotsLoader />
                                                         </div>
@@ -299,10 +314,13 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                                                     }
 
                                                     // Show loading indicator for errorInvestigation while API call is in progress
-                                                    const isErrorInvestigationLoading =
-                                                        errorInvestigationLoading && item?.id === '5';
+                                                    // Also show loading for other checks when prerequisitesLoading is true
+                                                    const isErrorAnalysis = isErrorAnalysisItem(item?.id, engineType);
+                                                    const isLoadingThisCheck =
+                                                        (errorInvestigationLoading && isErrorAnalysis) ||
+                                                        (prerequisitesLoading && !isErrorAnalysis);
 
-                                                    if (isErrorInvestigationLoading) {
+                                                    if (isLoadingThisCheck) {
                                                         return (
                                                             <div className={styles.readinessSectionBulk}>
                                                                 <div className={styles.statusRow}>

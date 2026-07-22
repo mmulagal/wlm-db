@@ -20,6 +20,7 @@ import {
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
     DBType,
+    GETWELL_DISPLAY,
     GETWELL_STATUS,
     GETWELL_VALUES,
     isConfigIdMatch,
@@ -146,6 +147,10 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
         status = GETWELL_STATUS.NOT_APPLICABLE;
     }
 
+    // Map status to display format using GETWELL_VALUES (like MSSQL does)
+    // This ensures backend status keys ('not-applicable') are shown as display labels ('Not applicable')
+    const displayStatus = (status && GETWELL_VALUES[status]) || status;
+
     // Capitalize severity to match constants
     const severity = assessment.severity
         ? assessment.severity.charAt(0).toUpperCase() + assessment.severity.slice(1)
@@ -252,7 +257,7 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
         },
         block_two: {
             type: 'Status',
-            value: assessment.errorMessage ? i18next.t('databases.general.unavailable') : status
+            value: assessment.errorMessage ? i18next.t('databases.general.unavailable') : displayStatus
         },
         block_three: {
             type: 'Current',
@@ -1260,4 +1265,17 @@ export const callOptimizeOracleApi = ({
             DBType.ORACLE
         );
     });
+};
+
+/**
+ * Helper to check if a status value represents "not applicable" state.
+ * Handles both backend key ('not-applicable') and display label ('Not applicable').
+ *
+ * @param statusValue - The status value to check (from cardData.block_two.value)
+ * @returns true if the status is not-applicable in either format
+ */
+export const isNotApplicableStatus = (statusValue: string | undefined): boolean => {
+    if (!statusValue) return false;
+    // Check both backend format and display format for backwards compatibility
+    return statusValue === GETWELL_STATUS.NOT_APPLICABLE || statusValue === GETWELL_DISPLAY.NOT_APPLICABLE;
 };

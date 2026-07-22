@@ -17,6 +17,7 @@ import {
     ASSESSMENT_CONFIG_IDS,
     CONFIG_STATES,
     DBType,
+    GETWELL_DISPLAY,
     GETWELL_STATUS,
     GETWELL_VALUES,
     isConfigIdMatch,
@@ -104,10 +105,12 @@ const StorageCardComponent = ({
     // Function to determine if dismissed style should be applied
     const shouldApplyDismissedStyle = () => {
         // WAD excluded configs should have disabled/dismissed style
+        // Not applicable configs should have disabled/dismissed style
         // If the configuration data is not available, show the disabled/dismissed style
         if (
             cardData?.isWadExcluded ||
             cardData?.block_two?.value === GENERAL.UNAVAILABLE ||
+            cardData?.block_two?.value === GETWELL_DISPLAY.NOT_APPLICABLE ||
             cardData?.errorMessage ||
             !cardData?.block_four?.value
         ) {
@@ -121,7 +124,8 @@ const StorageCardComponent = ({
     // Function to determine if pointer should be removed (non-clickable)
     const shouldRemoveActivatingPointer = () => {
         // WAD excluded configs should not be clickable
-        if (cardData?.isWadExcluded) {
+        // Not applicable configs should not be clickable
+        if (cardData?.isWadExcluded || cardData?.block_two?.value === GETWELL_DISPLAY.NOT_APPLICABLE) {
             return true;
         }
 
@@ -159,35 +163,42 @@ const StorageCardComponent = ({
     const { setDialog, closeDialog } = useDialog();
 
     const disableOptimizeButton = useMemo(() => {
+        const statusValue = cardData?.block_two?.value;
+
+        // Disable optimize button for 'not-applicable' status
+        if (statusValue === GETWELL_DISPLAY.NOT_APPLICABLE) {
+            return true;
+        }
+
         if (cardData?.id === ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM) {
             return (
-                cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
-                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED &&
-                cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
+                statusValue !== GETWELL_STATUS.UNDER_PROVISIONED &&
+                statusValue !== GETWELL_STATUS.NOT_OPTIMIZED &&
+                statusValue !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
         if (cardData?.id === ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING) {
             return (
-                cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
-                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED &&
-                cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
+                statusValue !== GETWELL_STATUS.UNDER_PROVISIONED &&
+                statusValue !== GETWELL_STATUS.NOT_OPTIMIZED &&
+                statusValue !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
         if (cardData?.id === ASSESSMENT_CONFIG_IDS.TEMPDB_DRIVE_SIZE) {
             return (
-                cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
-                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED &&
-                cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
+                statusValue !== GETWELL_STATUS.UNDER_PROVISIONED &&
+                statusValue !== GETWELL_STATUS.NOT_OPTIMIZED &&
+                statusValue !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
         if (cardData?.id === ASSESSMENT_CONFIG_IDS.LOG_DRIVE_SIZE) {
             return (
-                cardData?.block_two?.value !== GETWELL_STATUS.UNDER_PROVISIONED &&
-                cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED &&
-                cardData?.block_two?.value !== GETWELL_STATUS.OVER_PROVISIONED
+                statusValue !== GETWELL_STATUS.UNDER_PROVISIONED &&
+                statusValue !== GETWELL_STATUS.NOT_OPTIMIZED &&
+                statusValue !== GETWELL_STATUS.OVER_PROVISIONED
             );
         }
-        return cardData?.block_two?.value !== GETWELL_STATUS.NOT_OPTIMIZED;
+        return statusValue !== GETWELL_STATUS.NOT_OPTIMIZED;
     }, [cardData]);
 
     const disableOptimizeButtonTooltip = useMemo(() => {
@@ -265,6 +276,29 @@ const StorageCardComponent = ({
                         {GETWELL_STATUS.OPTIMIZING}
                     </span>
                 </DsTypography>
+            );
+        }
+
+        // Not applicable status - show with tooltip and icon (similar to WAD excluded)
+        const statusValue = cardData?.block_two?.value;
+        if (statusValue === GETWELL_DISPLAY.NOT_APPLICABLE) {
+            return (
+                <span className={styles.overProvisioned}>
+                    <span className={styles.tooltipLevel}>
+                        <DsPopover
+                            title={t('databases.well-architect.not-applicable-tooltip')}
+                            trigger="hover"
+                            placement="bottom"
+                        >
+                            <TooltipIcon />
+                        </DsPopover>
+                    </span>
+                    <span style={{ marginLeft: '8px' }}>
+                        <DsTypography variant="Semibold_14" isDisabled>
+                            {statusValue}
+                        </DsTypography>
+                    </span>
+                </span>
             );
         }
 

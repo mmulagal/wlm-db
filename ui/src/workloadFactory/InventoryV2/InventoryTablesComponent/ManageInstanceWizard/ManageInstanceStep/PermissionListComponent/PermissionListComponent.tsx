@@ -8,7 +8,7 @@ import { PermissionListComponentItems } from './PermissionListComponentItems';
 import { MANAGE_STATES, ACTION_TYPE, DBType } from '../../../../../../utils/consts';
 import { getPermissionState } from '../../ManageInstanceUtils';
 
-const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any) => {
+const PermissionListComponent = ({ manageChecks, policiesList, engineType, isLoadingPrerequisites = false }: any) => {
     const { t } = useTranslation();
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [disableAll] = useState(false);
@@ -84,6 +84,7 @@ const PermissionListComponent = ({ manageChecks, policiesList, engineType }: any
                     setExpandedId={setExpandedId}
                     disableAll={disableAll}
                     errorInvestigationLoading={loading && aiAnalysisEnabled}
+                    prerequisitesLoading={isLoadingPrerequisites}
                     readinessCounts={readinessCounts}
                     engineType={engineType}
                     aiAnalysisEnabled={aiAnalysisEnabled}

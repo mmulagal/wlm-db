@@ -20,9 +20,14 @@ import {
     WLF_TABS,
     FORM_TO_WLF_NAVIGATE_JOB_MONITORING,
     FORM_TO_WLF_NAVIGATE_BLUEXP_JM,
-    GETWELL_STATUS
+    GETWELL_STATUS,
+    GETWELL_VALUES
 } from '../../../../../utils/consts';
-import { formatOracleWellArchitectedData, callOptimizeOracleApi } from '../OracleWellArchitectedUtils';
+import {
+    formatOracleWellArchitectedData,
+    callOptimizeOracleApi,
+    isNotApplicableStatus
+} from '../OracleWellArchitectedUtils';
 import { normalizeResourceTypeCasing } from '../../../../../utils/resourceUtils';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../../../../../store/notificationSlice';
 import { setSelectedHeaderTab } from '../../../../../store/workloadFactory/inventoryV2Slice';
@@ -139,10 +144,11 @@ const OracleCardComponent = ({
     // Function to determine if dismissed style should be applied
     const shouldApplyDismissedStyle = () => {
         // WAD excluded configs should have disabled/dismissed style
+        // Not applicable configs should have disabled/dismissed style
         // If the configuration data is not available, show the disabled/dismissed style
         if (
             cardData?.isWadExcluded ||
-            cardData?.block_two?.value === GETWELL_STATUS.NOT_APPLICABLE ||
+            isNotApplicableStatus(cardData?.block_two?.value) ||
             cardData?.errorMessage ||
             !cardData?.block_four?.value
         ) {
@@ -154,7 +160,8 @@ const OracleCardComponent = ({
     // Function to determine if dismissed style should be applied
     const shouldRemoveActivatingPointer = () => {
         // WAD excluded configs should not be clickable
-        if (cardData?.isWadExcluded) {
+        // Not applicable configs should not be clickable
+        if (cardData?.isWadExcluded || isNotApplicableStatus(cardData?.block_two?.value)) {
             return true;
         }
         return cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING;

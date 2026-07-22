@@ -954,11 +954,16 @@ export const GETWELL_STATUS = {
     OVER_PROVISIONED: 'Over-provisioned',
     OPTIMIZING: 'Optimizing',
     FIXING: 'Fixing',
-    NOT_APPLICABLE: 'Unavailable',
+    NOT_APPLICABLE: 'not-applicable',
     ANALYZING: 'Analyzing',
     CRITICAL: 'Critical',
     WARNING: 'Warning',
     SHARED_DRIVE: 'Shared drive'
+};
+
+// Display text constants for UI labels (maps backend keys to user-friendly text)
+export const GETWELL_DISPLAY = {
+    NOT_APPLICABLE: 'Not applicable' // Display format for 'not-applicable' status
 };
 
 export const WELL_ARCHITECTED_TABS = {
@@ -970,10 +975,10 @@ export const WELL_ARCHITECTED_TABS = {
     ERROR_INVESTIGATION: 'Error investigation'
 };
 
-export const GETWELL_VALUES: any = {
+export const GETWELL_VALUES: Record<string, string> = {
     optimized: 'Optimized',
     optimizing: 'Optimizing',
-    'not-applicable': 'Unavailable',
+    'not-applicable': 'Not applicable',
     'not-optimized': 'Not optimized',
     analyzing: 'Analyzing',
     'under-provisioned': 'Under-provisioned',

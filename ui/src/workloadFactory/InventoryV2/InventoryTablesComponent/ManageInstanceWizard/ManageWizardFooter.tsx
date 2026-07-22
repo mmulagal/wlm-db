@@ -1156,6 +1156,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
     };
 
     // Handles bulk registration flow for both MSSQL and Oracle
+    // Bulk flow has 2 steps: Step 0 (authenticate instances/FSx), Step 1 (review and register)
     const bulkGoForward = (currentStepIndexVal: number) => {
         if (currentStepIndexVal === 0) {
             // @ts-ignore
@@ -1163,38 +1164,15 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
             // Pass bulk mode flag and selected instances for proper FSx validation
             const fieldsCorrect = detectAuthFieldsValidation(null, engineType, true, selectedMultiDetectInstances);
             if (fieldsCorrect) {
-                // New flow: Step 0 is authentication - call appropriate bulk auth handler
+                // Step 0: Authenticate database instances and FSx resources
                 if (registerHostType === DBType.ORACLE) {
                     handleBulkOracleInstanceAuthenticate();
                 } else {
                     handleBulkInstanceAuthenticate();
                 }
             }
-        } else if (currentStepIndexVal === 1) {
-            // Check if all FSx from all selected instances are authenticated
-            const isFsxAlreadyAuthenticated = areAllFsxAuthenticated(
-                undefined,
-                fsxCredentialStatusObj,
-                true,
-                selectedMultiDetectInstances,
-                undefined,
-                discoverContext
-            );
-
-            if (isFsxAlreadyAuthenticated) {
-                goToNextStep();
-            } else {
-                setState({ hitNextForStep2: true });
-                // @ts-ignore
-                const engineType = selectedMultiDetectInstances[0]?.data?.hostType || DBType.MSSQL;
-                // Pass bulk mode flag and selected instances for proper FSx validation
-                const fieldsCorrect = detectFsxFieldsValidation(null, engineType, true, selectedMultiDetectInstances);
-                if (fieldsCorrect) {
-                    // Use handleBulkFsxAuthenticate for FSx-only authentication (similar to single flow)
-                    handleBulkFsxAuthenticate();
-                }
-            }
         }
+        // Step 1 (manage/register) is handled by the footer's "Register" button
     };
 
     const handleManage = () => {
@@ -1253,18 +1231,6 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                     )}
                     {currentStepIndex === 1 && (
                         <DsButton
-                            data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
-                            isThin
-                            onClick={goFsxForwardForSingleRegister}
-                            variant="primary"
-                            isLoading={detectHostLoading}
-                            {...rest}
-                        >
-                            {t('databases.register-flow.next')}
-                        </DsButton>
-                    )}
-                    {currentStepIndex === 2 && (
-                        <DsButton
                             data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
                             isThin
                             onClick={handleManage}
@@ -1291,7 +1257,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             {t('databases.register-flow.previous')}
                         </DsButton>
                     )}
-                    {currentStepIndex < 2 && (
+                    {currentStepIndex < 1 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-next-${currentStep}`}
                             isThin
@@ -1303,7 +1269,7 @@ const ManageWizardFooter = (props: PlanningWizardFooterProps) => {
                             {t('databases.register-flow.next')}
                         </DsButton>
                     )}
-                    {currentStepIndex === 2 && (
+                    {currentStepIndex === 1 && (
                         <DsButton
                             data-testid={`wlm-db-manage-wizard-manage-${currentStep}`}
                             isThin
