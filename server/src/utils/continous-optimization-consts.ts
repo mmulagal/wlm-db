@@ -247,6 +247,11 @@ const OptimizeStorageApiData = {
         body: { 'space-guarantee': 'none' },
         type: VOLUME
     }),
+    THIN_PROVISIONING_REST: () => ({
+        api: '/storage/volumes',
+        body: { guarantee: { type: 'none' } },
+        type: VOLUME
+    }),
     AUTOSIZE: () => ({
         api: '/private/cli/volume',
         body: { 'autosize-mode': 'grow' },
@@ -260,6 +265,11 @@ const OptimizeStorageApiData = {
     FRACTIONAL_RESERVE: () => ({
         api: '/private/cli/volume',
         body: { 'fractional-reserve': '0' },
+        type: VOLUME
+    }),
+    FRACTIONAL_RESERVE_REST: () => ({
+        api: '/storage/volumes',
+        body: { space: { fractional_reserve: 0 } },
         type: VOLUME
     }),
     SNAPSHOT_POLICY: () => ({
@@ -314,9 +324,19 @@ const OptimizeStorageApiData = {
         body: { 'space-reserve': 'enabled' },
         type: LUN
     }),
+    SPACE_RESERVATION_REST: () => ({
+        api: '/storage/luns',
+        body: { space: { guarantee: { requested: true } } },
+        type: LUN
+    }),
     SPACE_ALLOCATION: () => ({
         api: '/private/cli/lun',
         body: { 'space-allocation': 'enabled' },
+        type: LUN
+    }),
+    SPACE_ALLOCATION_REST: () => ({
+        api: '/storage/luns',
+        body: { space: { scsi_thin_provisioning_support_enabled: true } },
         type: LUN
     }),
     SPACE_MANAGEMENT: () => ({

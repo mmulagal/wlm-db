@@ -4,6 +4,8 @@ import { callProxyForwarder } from '../../lib/cloud-manager/proxy-forwarder';
 import getLogger from '../../utils/logger';
 import {
     COMBINED_OPTIMIZE_DESCRIPTORS,
+    LUN,
+    LUN_PATH_PATTERN,
     OptimizeStorageApiData,
     OptimizeStorageConfigs,
     QUERY_PARAMS,
@@ -15,6 +17,13 @@ const logger = getLogger();
 const CONFIG_KEY_BY_ID: Record<string, string> = Object.fromEntries(
     Object.entries(OptimizeStorageConfigs).map(([key, value]) => [value, key])
 );
+
+const REST_FIX_CONFIG_KEYS = new Set([
+    'THIN_PROVISIONING',
+    'FRACTIONAL_RESERVE',
+    'SPACE_RESERVATION',
+    'SPACE_ALLOCATION'
+]);
 
 interface OntapStorageFixParams {
     accountId: string;
@@ -37,8 +46,15 @@ function buildOntapFixSearchParams(
     svmName: string,
     resourceIds: string[],
     configKey: string,
-    value: string
+    value: string,
+    usesRestFix: boolean
 ): Record<string, string | number | boolean> {
+    if (usesRestFix) {
+        if (['THIN_PROVISIONING', 'FRACTIONAL_RESERVE'].includes(configKey)) {
+            return { uuid: resourceIds.join('|') };
+        }
+        return { name: resourceIds.join('|') };
+    }
     if (
         ['DEDUPLICATION', 'COMPACTION', 'EXPORT_POLICY'].includes(configKey) ||
         (value === 'none' && configKey === 'COMPRESSION')
@@ -66,10 +82,12 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<Onta
     const base = { accountId, targetId: fsxId, endpoint };
 
     const configs = isCombinedOptimizeConfig(configurationId)
-        ? COMBINED_OPTIMIZE_DESCRIPTORS[configurationId].components.map(({ configKey }) => ({
-              configurationId: configKey,
-              resourceIds
-          }))
+        ? COMBINED_OPTIMIZE_DESCRIPTORS[configurationId].components
+              .map(({ configKey, source }) => ({
+                  configurationId: configKey,
+                  resourceIds: resourceIds.filter(id => LUN_PATH_PATTERN.test(id) === (source === LUN))
+              }))
+              .filter(({ resourceIds: ids }) => ids.length > 0)
         : [{ configurationId, resourceIds }];
 
     const results = await Promise.all(
@@ -85,7 +103,9 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<Onta
                     }));
                 }
 
-                const apiFn = OptimizeStorageApiData[configKey as keyof typeof OptimizeStorageApiData];
+                const usesRestFix = REST_FIX_CONFIG_KEYS.has(configKey);
+                const apiKey = usesRestFix ? `${configKey}_REST` : configKey;
+                const apiFn = OptimizeStorageApiData[apiKey as keyof typeof OptimizeStorageApiData];
                 const { api, body, type } = apiFn(value || undefined);
                 const ontapPath = `api${api}`;
 
@@ -95,7 +115,7 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<Onta
                         ontapPath,
                         method: 'PATCH',
                         body,
-                        searchParams: buildOntapFixSearchParams(type, svmName, ids, configKey, value)
+                        searchParams: buildOntapFixSearchParams(type, svmName, ids, configKey, value, usesRestFix)
                     });
                     return map(ids, id => ({ resourceId: id, success: true }));
                 } catch (err) {
