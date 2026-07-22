@@ -46,6 +46,9 @@ import { listDatabaseInstanceConfigData } from '../../../lib/database/database-i
 import { calculateStorageDrift, initiateStorageAssessmentCollection } from './storage-assessment-operations';
 import { WadScanContext, WadScanResultRecord } from '../../../utils/wad-consts';
 import { mapDriftToWadScanRecords } from '../wad-storage-scan-mapper';
+import { AggregateHeadroomData, WadSnapcenterData } from '../ontap-proxy-collector';
+import { calculateWADHeadroomDrift } from '../wad-headroom-utils';
+import ORACLE_GOLDEN_CONFIG from './golden-config';
 import {
     calculateComputeHostOsDrift,
     initiateComputeHostLevelAssessmentCollection,
@@ -1515,26 +1518,64 @@ async function fetchOracleDriftAssessmentPerAccountV1(
 
 async function getOracleStorageResourceScan(
     ctx: WadScanContext,
-    storageAssessment: StorageAssessment
+    storageAssessment: StorageAssessment,
+    headroomData?: AggregateHeadroomData,
+    snapcenterData?: WadSnapcenterData
 ): Promise<WadScanResultRecord> {
     const { accountId, credentialsId, region, filesystemId } = ctx;
-    logger.info('Oracle: WAD storage resource scan', { accountId, credentialsId, region, filesystemId });
-
-    const assessmentData = await calculateStorageDrift(
+    logger.info('Oracle: WAD storage resource scan', {
         accountId,
         credentialsId,
         region,
-        '',
-        '',
-        '',
-        '',
-        '',
         filesystemId,
-        storageAssessment.mappedOntapVolumes ?? {},
-        storageAssessment
-    );
+        hasHeadroomData: !!headroomData,
+        hasSnapcenterData: !!snapcenterData
+    });
+    const skipHeadroom = true;
+    const [storageItems, headroomItem, snapcenterItem] = await Promise.all([
+        calculateStorageDrift(
+            accountId,
+            credentialsId,
+            region,
+            '',
+            '',
+            '',
+            '',
+            '',
+            filesystemId,
+            storageAssessment.mappedOntapVolumes ?? {},
+            storageAssessment,
+            skipHeadroom
+        ),
+        headroomData
+            ? calculateWADHeadroomDrift(
+                  filesystemId,
+                  headroomData,
+                  ORACLE_GOLDEN_CONFIG.find(e => e.id === 'headroom'),
+                  RESOURCESTYPE.ORACLE
+              )
+            : undefined,
+        snapcenterData
+            ? calculateSnapCenterDrift(snapcenterData as unknown as SnapcenterAssessmentData, {
+                  dataFileVolumeIds: [],
+                  controlFileVolumeIds: [],
+                  archiveLogVolumeIds: []
+              })
+            : undefined
+    ]);
 
-    return mapDriftToWadScanRecords(ctx, assessmentData);
+    const assessmentData = [
+        ...storageItems,
+        ...(headroomItem ? [headroomItem] : []),
+        ...(snapcenterItem ? [snapcenterItem] : [])
+    ];
+    const result = await mapDriftToWadScanRecords(ctx, assessmentData);
+    logger.info('Oracle WAD storage resource scan complete', {
+        accountId,
+        filesystemId,
+        configurationCount: result.configurations.length
+    });
+    return result;
 }
 
 export {

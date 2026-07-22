@@ -21,7 +21,6 @@ import {
 import {
     generateSqlResourceId,
     parseAssessmentFileContent,
-    calculateFsxStorageCapacityForHeadroomOptimization,
     IS_DEMO_FLOW,
     validateWithSchema
 } from '../../../utils/utils';
@@ -42,8 +41,6 @@ import { calculateSnapCenterDrift, SnapcenterAssessmentData } from './snapcenter
 import { getOntapVolumeIdsByFileType, ORACLE_V1_MAP_CONFIG } from './assessment-operations';
 import { mapAssessmentToV1, resolveAssessmentTypes, GOLDEN_CONFIG_LOOKUP } from '../assessment-utils';
 import { ISCIOSAssessment, NFSOSAssessment, StorageAssessment } from './common-types';
-import { AssessmentStatus, MIN_OPTIMIZED_HEADROOM_PERCENTAGE } from '../../../utils/continous-optimization-consts';
-import ORACLE_GOLDEN_CONFIG from './golden-config';
 import { loadAndModifyDemoOracleISCSIData } from '../../demo-operations';
 import {
     OracleAssessmentResponse,
@@ -51,6 +48,8 @@ import {
     OracleDriftAssessmentResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE } from '../one-time-assessment-consts';
+import { OneTimeWADHeadroomData, calculateWADHeadroomDrift } from '../wad-headroom-utils';
+import ORACLE_GOLDEN_CONFIG from './golden-config';
 
 const logger = getLogger();
 
@@ -137,62 +136,6 @@ interface OracleOfflineAssessmentRawData {
     hostLevelDetails?: Record<string, unknown>;
     instanceLevelDetails?: Record<string, OracleOfflineAssessmentInstanceData>;
     errors?: string[];
-}
-
-/** FSx aggregate headroom metrics from `hostLevelDetails.headroom`, used to compute storage over/under-provisioning drift. */
-interface OneTimeWADHeadroomData {
-    ssdStorageCapacityInBytes?: number;
-    storageUsedInBytes?: number;
-    storageAvailableInBytes?: number;
-    headroomPercent?: number;
-    aggregateCount?: number;
-}
-
-function calculateOracleOneTimeWADHeadroomDrift(fsxFileSystemId: string, headroomData: OneTimeWADHeadroomData) {
-    const { ssdStorageCapacityInBytes, storageUsedInBytes, headroomPercent } = headroomData;
-
-    const [headroomGoldenConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'headroom');
-    if (!headroomGoldenConfig) {
-        logger.warn('Headroom golden config not found');
-        return undefined;
-    }
-
-    if (!ssdStorageCapacityInBytes || headroomPercent === undefined) {
-        logger.warn('Headroom data not available in one-time WAD assessment');
-        return undefined;
-    }
-
-    const minOptimizedHeadroomPercent = MIN_OPTIMIZED_HEADROOM_PERCENTAGE.ORACLE;
-    const minSsdStorageCapacityInBytes = 1024 * 1024 * 1024 * 1024;
-
-    let status: AssessmentStatus;
-    if (headroomPercent < minOptimizedHeadroomPercent) {
-        status = AssessmentStatus.UNDER_PROVISIONED;
-    } else if (headroomPercent > 50 && ssdStorageCapacityInBytes > minSsdStorageCapacityInBytes) {
-        status = AssessmentStatus.OVER_PROVISIONED;
-    } else {
-        status = AssessmentStatus.OPTIMIZED;
-    }
-
-    let recommendedSizeInGib = 0;
-    if (status !== AssessmentStatus.OPTIMIZED && storageUsedInBytes) {
-        recommendedSizeInGib = calculateFsxStorageCapacityForHeadroomOptimization(
-            storageUsedInBytes,
-            ssdStorageCapacityInBytes,
-            RESOURCESTYPE.ORACLE
-        );
-    }
-
-    return {
-        ...headroomGoldenConfig,
-        status,
-        current: `${headroomPercent}%`,
-        recommended: `${minOptimizedHeadroomPercent}%`,
-        recommendedSizeInGib,
-        totalObjectsAssessed: 1,
-        totalObjectsInViolation: status !== AssessmentStatus.OPTIMIZED ? 1 : 0,
-        objectsInViolation: status !== AssessmentStatus.OPTIMIZED ? [fsxFileSystemId] : []
-    };
 }
 
 async function processOracleOfflineAssessmentUpload(
@@ -535,9 +478,20 @@ async function fetchOracleOfflineAssessment(
     );
 
     const { headroom } = rawdata.hostLevelDetails || {};
-    const headroomDrift = !isEmpty(headroom)
-        ? calculateOracleOneTimeWADHeadroomDrift(fileSystemIdentifier, headroom as OneTimeWADHeadroomData)
-        : undefined;
+    logger.info('Oracle one-time WAD: calculating headroom drift', { fileSystemIdentifier });
+    const headroomDrift =
+        !isEmpty(headroom) && fileSystemIdentifier
+            ? calculateWADHeadroomDrift(
+                  fileSystemIdentifier,
+                  headroom as OneTimeWADHeadroomData,
+                  ORACLE_GOLDEN_CONFIG.find(e => e.id === 'headroom'),
+                  RESOURCESTYPE.ORACLE
+              )
+            : undefined;
+    logger.info('Oracle one-time WAD: headroom drift calculated', {
+        fileSystemIdentifier,
+        hasHeadroomDrift: !!headroomDrift
+    });
 
     const cloneDriftResponse = !isEmpty(cloneAssessmentData)
         ? calculateOneTimeWADCloneDrift(

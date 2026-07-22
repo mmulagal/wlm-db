@@ -9,6 +9,7 @@ import {
     AssessmentStatus
 } from '../../../utils/continous-optimization-consts';
 import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
+import type { DriftAssessmentDetail } from '../../../utils/wad-consts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { registerJob } from '../../database/job-operations';
@@ -44,6 +45,8 @@ interface SnapcenterRelevantVolumeIds {
     controlFileVolumeIds: string[];
     archiveLogVolumeIds: string[];
 }
+
+type OracleSnapcenterWadResult = AssessmentItemType & { assessmentDetails: DriftAssessmentDetail[] };
 
 async function initiateSnapCenterAssessmentCollection(
     accountId: string,
@@ -172,7 +175,7 @@ async function initiateSnapCenterAssessmentCollection(
 function calculateSnapCenterDrift(
     assessmentData: SnapcenterAssessmentData,
     volumeIds: SnapcenterRelevantVolumeIds
-): AssessmentItemType | AssessmentErrorItemType | undefined {
+): OracleSnapcenterWadResult | AssessmentErrorItemType | undefined {
     const [goldenConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'snapcenter-snapshot');
 
     if (!assessmentData || isEmpty(assessmentData)) {
@@ -208,6 +211,27 @@ function calculateSnapCenterDrift(
     const unprotectedVolumes = volumesToAssess.filter(v => !isVolumeProtected(v));
     const isOptimized = volumesToAssess.length > 0 && unprotectedVolumes.length === 0;
 
+    const assessmentDetails: DriftAssessmentDetail[] = volumesToAssess.map(v => {
+        const protected_ = isVolumeProtected(v);
+        const status = protected_ ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+        return {
+            id: v.volumeId,
+            name: v.volumeName,
+            svmName: v.svmName,
+            status,
+            metadata: {
+                components: [
+                    {
+                        parameter: 'snapcenter-protection',
+                        current: protected_ ? 'configured' : 'not-configured',
+                        recommended: 'configured',
+                        status
+                    }
+                ]
+            }
+        };
+    });
+
     const snapEntryRecommended = goldenConfig.recommended ?? '';
     return {
         ...goldenConfig,
@@ -224,8 +248,14 @@ function calculateSnapCenterDrift(
             objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             value: 'SnapCenter protection not configured',
             recommended: 'SnapCenter protection enabled'
-        }))
+        })),
+        assessmentDetails
     };
 }
 
-export { initiateSnapCenterAssessmentCollection, calculateSnapCenterDrift, SnapcenterAssessmentData };
+export {
+    initiateSnapCenterAssessmentCollection,
+    calculateSnapCenterDrift,
+    type SnapcenterAssessmentData,
+    type OracleSnapcenterWadResult
+};

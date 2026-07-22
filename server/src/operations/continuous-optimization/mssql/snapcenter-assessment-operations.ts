@@ -10,6 +10,7 @@ import {
     ASSESSMENT_RESOURCE_TYPE
 } from '../../../utils/continous-optimization-consts';
 import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
+import type { DriftAssessmentDetail } from '../../../utils/wad-consts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { registerJob } from '../../database/job-operations';
@@ -41,6 +42,8 @@ interface MssqlSnapCenterRelevantVolumeIds {
     dataVolumeIds: string[];
     tempdbVolumeIds: string[];
 }
+
+type MssqlSnapcenterWadResult = AssessmentItemType & { assessmentDetails: DriftAssessmentDetail[] };
 
 const logger = getLogger();
 
@@ -154,7 +157,7 @@ async function initiateSnapCenterAssessmentCollection(
 function calculateSnapCenterDrift(
     assessmentData: MssqlSnapcenterAssessmentData | undefined,
     relevantVolumeIds: MssqlSnapCenterRelevantVolumeIds
-): AssessmentItemType | AssessmentErrorItemType | undefined {
+): MssqlSnapcenterWadResult | AssessmentErrorItemType | undefined {
     const [goldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'snapcenter-snapshot');
 
     if (!assessmentData || isEmpty(assessmentData)) {
@@ -188,6 +191,27 @@ function calculateSnapCenterDrift(
 
     const isOptimized = assessableVolumes.length > 0 && violatingVolumes.length === 0;
 
+    const assessmentDetails: DriftAssessmentDetail[] = assessableVolumes.map(v => {
+        const protected_ = isVolumeProtected(v);
+        const status = protected_ ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+        return {
+            id: v.volumeId,
+            name: v.volumeName,
+            svmName: v.svmName,
+            status,
+            metadata: {
+                components: [
+                    {
+                        parameter: 'snapcenter-protection',
+                        current: protected_ ? 'configured' : 'not-configured',
+                        recommended: 'configured',
+                        status
+                    }
+                ]
+            }
+        };
+    });
+
     return {
         ...goldenConfig,
         recommended: goldenConfig.recommended ?? '',
@@ -203,7 +227,8 @@ function calculateSnapCenterDrift(
             objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
             value: 'SnapCenter protection not configured',
             recommended: 'SnapCenter protection enabled'
-        }))
+        })),
+        assessmentDetails
     };
 }
 
@@ -211,5 +236,6 @@ export {
     initiateSnapCenterAssessmentCollection,
     calculateSnapCenterDrift,
     type MssqlSnapcenterAssessmentData,
-    type MssqlSnapCenterRelevantVolumeIds
+    type MssqlSnapCenterRelevantVolumeIds,
+    type MssqlSnapcenterWadResult
 };

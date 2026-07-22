@@ -883,7 +883,8 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             'To optimize storage performance, provision file system capacity as 1.2 times of total size of provisioned volume.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true
     },
 
     // ── resiliency ───────────────────────────────────────────────────────────

@@ -573,7 +573,8 @@ async function calculateStorageDrift(
     databaseHostId: string,
     databaseInstanceId: string,
     storageAssessmentData: StorageAssessment,
-    aoagContext?: { databaseRoles: Array<{ databaseName: string; agName: string; replicaRole: string }> }
+    aoagContext?: { databaseRoles: Array<{ databaseName: string; agName: string; replicaRole: string }> },
+    skipHeadroom: boolean = false
 ) {
     logger.info('Calculating storage drift', { accountId, credentialsId, region, databaseHostId });
 
@@ -1278,32 +1279,34 @@ async function calculateStorageDrift(
 
     // Headroom drift assessment
 
-    try {
-        const [goldenData] = sizingConfigData.filter(data => data.parameter === 'headroom');
-        const { status, headroomPercent, missingPermissions, newFsxStorageCapacityGiB } = await getHeadroomDrift(
-            credentialsId,
-            region,
-            filesystemId,
-            RESOURCESTYPE.MSSQL,
-            accountId
-        );
+    if (!skipHeadroom) {
+        try {
+            const [goldenData] = sizingConfigData.filter(data => data.parameter === 'headroom');
+            const { status, headroomPercent, missingPermissions, newFsxStorageCapacityGiB } = await getHeadroomDrift(
+                credentialsId,
+                region,
+                filesystemId,
+                RESOURCESTYPE.MSSQL,
+                accountId
+            );
 
-        driftAssessmentData.push({
-            ...goldenData,
-            recommended: `${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.MSSQL}%`,
-            status,
-            missingPermissions,
-            recommendedSizeInGib: newFsxStorageCapacityGiB ? Math.ceil(newFsxStorageCapacityGiB) : 0,
-            current: `${headroomPercent}%`,
-            totalObjectsAssessed: 1,
-            totalObjectsInViolation: status === AssessmentStatus.OPTIMIZED ? 0 : 1,
-            objectsInViolation: status === AssessmentStatus.OPTIMIZED ? [] : [filesystemId].filter(Boolean)
-        });
-    } catch (error: any) {
-        logger.error(
-            `Error while calculating headroom details for ${databaseHostId}, ${databaseInstanceId}, ${filesystemId}.`,
-            error
-        );
+            driftAssessmentData.push({
+                ...goldenData,
+                recommended: `${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.MSSQL}%`,
+                status,
+                missingPermissions,
+                recommendedSizeInGib: newFsxStorageCapacityGiB ? Math.ceil(newFsxStorageCapacityGiB) : 0,
+                current: `${headroomPercent}%`,
+                totalObjectsAssessed: 1,
+                totalObjectsInViolation: status === AssessmentStatus.OPTIMIZED ? 0 : 1,
+                objectsInViolation: status === AssessmentStatus.OPTIMIZED ? [] : [filesystemId].filter(Boolean)
+            });
+        } catch (error: any) {
+            logger.error(
+                `Error while calculating headroom details for ${databaseHostId}, ${databaseInstanceId}, ${filesystemId}.`,
+                error
+            );
+        }
     }
 
     return sortStorageAssessments(driftAssessmentData);

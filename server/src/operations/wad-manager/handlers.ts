@@ -13,7 +13,9 @@ import { publishFixResult, publishFixStatus, publishScanResult, publishScanStatu
 import { buildEc2FsxRelationship } from '../cloud-manager/tagging-service-operations';
 import {
     collectOntapAssessmentData,
-    FsxStorageCollectionResult
+    FsxStorageCollectionResult,
+    AggregateHeadroomData,
+    WadSnapcenterData
 } from '../continuous-optimization/ontap-proxy-collector';
 import { StorageAssessment as MssqlStorageAssessment } from '../../utils/common-types';
 import { StorageAssessment as OracleStorageAssessment } from '../continuous-optimization/oracle/common-types';
@@ -47,12 +49,16 @@ function mergeConfigurations(configs: WadConfigurationEntry[]): WadConfiguration
 
 type WorkloadScanFn = (
     ctx: WadScanContext,
-    storageAssessment: FsxStorageCollectionResult['storageAssessment']
+    storageAssessment: FsxStorageCollectionResult['storageAssessment'],
+    headroomData?: AggregateHeadroomData,
+    snapcenterData?: WadSnapcenterData
 ) => Promise<WadScanResultRecord>;
 
 const WORKLOAD_SCAN_FNS: Record<string, WorkloadScanFn> = {
-    mssql: (ctx, storageAssessment) => getMssqlStorageResourceScan(ctx, storageAssessment as MssqlStorageAssessment),
-    oracle: (ctx, storageAssessment) => getOracleStorageResourceScan(ctx, storageAssessment as OracleStorageAssessment)
+    mssql: (ctx, storageAssessment, headroomData, snapcenterData) =>
+        getMssqlStorageResourceScan(ctx, storageAssessment as MssqlStorageAssessment, headroomData, snapcenterData),
+    oracle: (ctx, storageAssessment, headroomData, snapcenterData) =>
+        getOracleStorageResourceScan(ctx, storageAssessment as OracleStorageAssessment, headroomData, snapcenterData)
 };
 
 /**
@@ -77,7 +83,13 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                     const storageAssessments = await collectOntapAssessmentData(accountId, relationship);
                     const pairConfigs: WadConfigurationEntry[] = [];
 
-                    for (const { workloadType, fileSystemId, storageAssessment } of storageAssessments) {
+                    for (const {
+                        workloadType,
+                        fileSystemId,
+                        storageAssessment,
+                        headroomData,
+                        snapcenterData
+                    } of storageAssessments) {
                         const scanFn = WORKLOAD_SCAN_FNS[workloadType];
                         if (scanFn) {
                             // eslint-disable-next-line no-await-in-loop
@@ -89,7 +101,9 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                                     filesystemId: fileSystemId,
                                     workload: workloadType
                                 },
-                                storageAssessment
+                                storageAssessment,
+                                headroomData,
+                                snapcenterData
                             );
                             pairConfigs.push(...configurations);
                         }
@@ -128,6 +142,7 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                 completedAt: Date.now(),
                 configurations: mergeConfigurations(allConfigurations)
             };
+
             publishScanResult(scanRecord);
         }
 

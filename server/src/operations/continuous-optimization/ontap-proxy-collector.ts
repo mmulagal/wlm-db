@@ -14,6 +14,8 @@ const logger = getLogger();
 
 const HOST_SIDE_NOT_COLLECTED = 'Not collected via proxy forwarder';
 
+const AGGREGATE_FIELDS = 'space.block_storage.size,space.block_storage.used,space.block_storage.available';
+
 const VOLUME_FIELDS =
     'name,uuid,svm,nas.path,autosize,space.fractional_reserve,space.snapshot.reserve_percent,' +
     'space.snapshot.autodelete.enabled,space.snapshot.autodelete.delete_order,snapshot_policy,' +
@@ -46,6 +48,29 @@ interface OntapVolumeRecord {
     };
 }
 
+interface OntapSnapshotRecord {
+    volume?: { uuid?: string };
+}
+
+interface WadSnapcenterVolumeResult {
+    svmId: string;
+    svmName: string;
+    volumeId: string;
+    volumeName: string;
+    hasSnapcenterSnapshot: boolean;
+    foundInSnapcenterLogs: false;
+}
+
+interface WadSnapcenterData {
+    volumes: WadSnapcenterVolumeResult[];
+    standaloneCheck: {
+        pluginServiceRunning: false;
+        sidFoundInLogs: false;
+    };
+    isDataguardPrimary: false;
+    errorMessage: '';
+}
+
 interface OntapLunRecord {
     name: string;
     uuid: string;
@@ -54,6 +79,24 @@ interface OntapLunRecord {
         guarantee?: { requested?: boolean };
         scsi_thin_provisioning_support_enabled?: boolean;
     };
+}
+
+interface OntapAggregateRecord {
+    space?: {
+        block_storage?: {
+            size?: number;
+            used?: number;
+            available?: number;
+        };
+    };
+}
+
+interface AggregateHeadroomData {
+    ssdStorageCapacityInBytes: number;
+    storageUsedInBytes: number;
+    storageAvailableInBytes: number;
+    headroomPercent: number;
+    aggregateCount: number;
 }
 
 interface OntapPrivateCliVolumeRecord {
@@ -66,10 +109,14 @@ interface FsxOntapInventory {
     volumesByUuid: Record<string, OntapVolumeRecord>;
     lunsByUuid: Record<string, OntapLunRecord>;
     spaceMgmtTryFirstByName: Record<string, string | undefined>;
+    snapcenterProtectedVolumeUuids: Set<string>;
+    headroomData?: AggregateHeadroomData;
     errors: {
         volumes?: string;
         luns?: string;
         privateCliVolumes?: string;
+        aggregates?: string;
+        snapshots?: string;
     };
 }
 
@@ -86,6 +133,72 @@ interface FsxStorageCollectionResult {
     fileSystemId: string;
     workloadType: string;
     storageAssessment: MssqlStorageAssessment | OracleStorageAssessment;
+    headroomData?: AggregateHeadroomData;
+    snapcenterData?: WadSnapcenterData;
+}
+
+function computeHeadroomData(aggregates: OntapAggregateRecord[]) {
+    logger.info('FSx: computing headroom data', { aggregateCount: aggregates.length });
+    if (!aggregates.length) {
+        logger.debug('FSx: no aggregates returned, skipping headroom computation');
+        return undefined;
+    }
+
+    const { totalSize, totalUsed, totalAvailable } = aggregates.reduce(
+        (acc, { space }) => ({
+            totalSize: acc.totalSize + (space?.block_storage?.size ?? 0),
+            totalUsed: acc.totalUsed + (space?.block_storage?.used ?? 0),
+            totalAvailable: acc.totalAvailable + (space?.block_storage?.available ?? 0)
+        }),
+        { totalSize: 0, totalUsed: 0, totalAvailable: 0 }
+    );
+
+    if (!totalSize) {
+        logger.warn('FSx: aggregate total size is zero, skipping headroom computation');
+        return undefined;
+    }
+
+    const headroomPercent = Math.ceil(((totalSize - totalUsed) / totalSize) * 100);
+
+    logger.info('FSx: computed aggregate headroom data', {
+        aggregateCount: aggregates.length,
+        ssdStorageCapacityInBytes: totalSize,
+        storageUsedInBytes: totalUsed,
+        headroomPercent
+    });
+
+    return {
+        ssdStorageCapacityInBytes: totalSize,
+        storageUsedInBytes: totalUsed,
+        storageAvailableInBytes: totalAvailable,
+        headroomPercent,
+        aggregateCount: aggregates.length
+    };
+}
+
+function buildWadSnapcenterData(
+    ec2: Ec2WithStorage,
+    fileSystemId: string,
+    inventory: FsxOntapInventory
+): WadSnapcenterData {
+    const { volumeUuids } = getAttachedUuids(ec2, fileSystemId);
+    const volumes: WadSnapcenterVolumeResult[] = [...volumeUuids].map(uuid => {
+        const { name = '', svm } = inventory.volumesByUuid[uuid] ?? {};
+        return {
+            svmId: svm?.uuid ?? '',
+            svmName: svm?.name ?? '',
+            volumeId: uuid,
+            volumeName: name,
+            hasSnapcenterSnapshot: inventory.snapcenterProtectedVolumeUuids.has(uuid),
+            foundInSnapcenterLogs: false
+        };
+    });
+    return {
+        volumes,
+        standaloneCheck: { pluginServiceRunning: false, sidFoundInLogs: false },
+        isDataguardPrimary: false,
+        errorMessage: ''
+    };
 }
 
 function getAttachedUuids(ec2: Ec2WithStorage, fileSystemId: string) {
@@ -96,6 +209,19 @@ function getAttachedUuids(ec2: Ec2WithStorage, fileSystemId: string) {
     };
 }
 
+/** Unwraps a settled result, logging and recording an error string on rejection. */
+function unwrapSettled<T>(
+    result: PromiseSettledResult<T[]>,
+    label: string,
+    fileSystemId: string
+): { data: T[]; error?: string } {
+    if (result.status === 'fulfilled') {
+        return { data: result.value };
+    }
+    logger.warn(`FSx: failed to fetch ${label}`, { fileSystemId, err: result.reason });
+    return { data: [], error: String(result.reason) };
+}
+
 async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Promise<FsxOntapInventory> {
     const { fileSystemId, region, volumeUuids, volumeNames, lunUuids } = query;
     logger.debug('FSx: fetching ONTAP inventory', { accountId, fileSystemId });
@@ -103,7 +229,7 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
     const endpoint = `management.${fileSystemId}.fsx.${region}.amazonaws.com`;
     const base = { accountId, targetId: fileSystemId, endpoint };
 
-    const [volumesRes, lunsRes, privateCliRes] = await Promise.allSettled([
+    const [volumesRes, lunsRes, privateCliRes, aggregatesRes, snapshotsRes] = await Promise.allSettled([
         volumeUuids.length === 0
             ? Promise.resolve<OntapVolumeRecord[]>([])
             : collectOntapRecordsBatched<OntapVolumeRecord>(base, 'api/storage/volumes', 'uuid', volumeUuids, {
@@ -124,35 +250,57 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
                   {
                       fields: 'space-mgmt-try-first'
                   }
+              ),
+        collectOntapRecordsBatched<OntapAggregateRecord>(base, 'api/storage/aggregates', 'uuid', [], {
+            fields: AGGREGATE_FIELDS
+        }),
+        volumeUuids.length === 0
+            ? Promise.resolve<OntapSnapshotRecord[]>([])
+            : collectOntapRecordsBatched<OntapSnapshotRecord>(
+                  base,
+                  'api/storage/volumes/*/snapshots',
+                  'volume.uuid',
+                  volumeUuids,
+                  { comment: 'creator%3Dsnapcenter', fields: 'volume' }
               )
     ]);
 
-    const errors: FsxOntapInventory['errors'] = {};
-    const volumes = volumesRes.status === 'fulfilled' ? volumesRes.value : [];
-    const luns = lunsRes.status === 'fulfilled' ? lunsRes.value : [];
-    const privateCli = privateCliRes.status === 'fulfilled' ? privateCliRes.value : [];
+    const { data: volumes, error: volumesError } = unwrapSettled(volumesRes, 'volumes', fileSystemId);
+    const { data: luns, error: lunsError } = unwrapSettled(lunsRes, 'LUNs', fileSystemId);
+    const { data: privateCli, error: privateCliError } = unwrapSettled(
+        privateCliRes,
+        'private CLI volumes',
+        fileSystemId
+    );
+    const { data: aggregates, error: aggregatesError } = unwrapSettled(aggregatesRes, 'aggregates', fileSystemId);
+    const { data: snapshots, error: snapshotsError } = unwrapSettled(
+        snapshotsRes,
+        'SnapCenter snapshots',
+        fileSystemId
+    );
 
-    if (volumesRes.status === 'rejected') {
-        logger.warn('FSx: failed to fetch volumes', { fileSystemId, err: volumesRes.reason });
-        errors.volumes = String(volumesRes.reason);
+    if (!aggregatesError) {
+        logger.debug('FSx: fetched aggregates', { fileSystemId, aggregateCount: aggregates.length });
     }
 
-    if (lunsRes.status === 'rejected') {
-        logger.warn('FSx: failed to fetch LUNs', { fileSystemId, err: lunsRes.reason });
-        errors.luns = String(lunsRes.reason);
-    }
-
-    if (privateCliRes.status === 'rejected') {
-        logger.warn('FSx: failed to fetch private CLI volumes', { fileSystemId, err: privateCliRes.reason });
-        errors.privateCliVolumes = String(privateCliRes.reason);
-    }
+    const snapcenterProtectedVolumeUuids = new Set(
+        snapshots.map(s => s.volume?.uuid).filter((uuid): uuid is string => Boolean(uuid))
+    );
 
     return {
         fileSystemId,
         volumesByUuid: Object.fromEntries(volumes.map(v => [v.uuid, v])),
         lunsByUuid: Object.fromEntries(luns.map(l => [l.uuid, l])),
         spaceMgmtTryFirstByName: Object.fromEntries(privateCli.map(p => [p.volume, p.space_mgmt_try_first])),
-        errors
+        snapcenterProtectedVolumeUuids,
+        headroomData: computeHeadroomData(aggregates),
+        errors: {
+            volumes: volumesError,
+            luns: lunsError,
+            privateCliVolumes: privateCliError,
+            aggregates: aggregatesError,
+            snapshots: snapshotsError
+        }
     };
 }
 
@@ -355,7 +503,9 @@ async function collectOntapAssessmentData(
                 storageAssessment:
                     workloadType === 'mssql'
                         ? toMssqlStorageAssessment(ec2, fileSystemId, inventory)
-                        : toOracleStorageAssessment(ec2, fileSystemId, inventory)
+                        : toOracleStorageAssessment(ec2, fileSystemId, inventory),
+                headroomData: inventory.headroomData,
+                snapcenterData: buildWadSnapcenterData(ec2, fileSystemId, inventory)
             }));
         })
     );
@@ -365,4 +515,4 @@ async function collectOntapAssessmentData(
     return results;
 }
 
-export { collectOntapAssessmentData, FsxStorageCollectionResult };
+export { collectOntapAssessmentData, AggregateHeadroomData, FsxStorageCollectionResult, WadSnapcenterData };

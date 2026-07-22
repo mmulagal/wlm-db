@@ -30,9 +30,10 @@ import {
     DatabaseTypes,
     HttpErrorCodes,
     MSSQL_DATABASE_TYPES,
-    MSSQL_SYSTEM_DATABASES
+    MSSQL_SYSTEM_DATABASES,
+    RESOURCESTYPE
 } from '../../../utils/consts';
-import { AssessmentStatus, MIN_OPTIMIZED_HEADROOM_PERCENTAGE } from '../../../utils/continous-optimization-consts';
+import { AssessmentStatus } from '../../../utils/continous-optimization-consts';
 import {
     StorageAssessment,
     MaxDOPAssesment,
@@ -48,7 +49,6 @@ import {
     MtuAlignmentAssessment
 } from '../../../utils/common-types';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
-import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { loadAndModifyDemoFCIData } from '../../demo-operations';
 import {
@@ -60,6 +60,8 @@ import { MSSQL_V1_MAP_CONFIG } from './assessment-operations';
 import { mapAssessmentToV1, resolveAssessmentTypes, GOLDEN_CONFIG_LOOKUP } from '../assessment-utils';
 import { OfflineAssessmentListResponseType } from '../../../routes/types/offline-assessment.types';
 import { ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE } from '../one-time-assessment-consts';
+import { OneTimeWADHeadroomData, calculateWADHeadroomDrift } from '../wad-headroom-utils';
+import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 
 const logger = getLogger();
 
@@ -89,14 +91,6 @@ interface MSSQLDatabaseInstanceData {
         agName?: string;
         [key: string]: unknown;
     }>;
-}
-
-interface OneTimeWADHeadroomData {
-    ssdStorageCapacityInBytes?: number;
-    storageUsedInBytes?: number;
-    storageAvailableInBytes?: number;
-    headroomPercent?: number;
-    aggregateCount?: number;
 }
 
 /**
@@ -241,60 +235,6 @@ interface MSSQLOfflineAssessmentMetadataType {
     }>;
     fciName?: string;
     agName?: string;
-}
-
-/**
- * Calculate headroom drift assessment for one-time WAD using ONTAP aggregate data
- * This is a separate function from getHeadroomDrift which uses CloudWatch metrics
- *
- * @param headroomData - Headroom data collected from ONTAP REST API aggregates endpoint
- * @returns Headroom assessment result compatible with storage sizing drift response
- */
-function calculateOneTimeWADHeadroomDrift(
-    headroomData: OneTimeWADHeadroomData
-): AssessmentItemType | AssessmentErrorItemType {
-    const { ssdStorageCapacityInBytes, storageUsedInBytes, headroomPercent } = headroomData;
-
-    // Get headroom golden config using array destructuring
-    const [headroomGoldenConfig] = MSSQL_GOLDEN_CONFIG.filter(e => e.id === 'headroom');
-
-    if (!ssdStorageCapacityInBytes || headroomPercent === undefined) {
-        logger.warn('Headroom data not available in one-time WAD assessment');
-        return { ...headroomGoldenConfig!, errorMessage: 'Headroom data not available in one-time WAD assessment' };
-    }
-
-    const minOptimizedHeadroomPercent = MIN_OPTIMIZED_HEADROOM_PERCENTAGE.MSSQL;
-    const minSsdStorageCapacityInBytes = 1024 * 1024 * 1024 * 1024; // 1 TiB in bytes
-
-    let status: AssessmentStatus;
-    if (headroomPercent < minOptimizedHeadroomPercent) {
-        status = AssessmentStatus.UNDER_PROVISIONED;
-    } else if (headroomPercent > 50 && ssdStorageCapacityInBytes > minSsdStorageCapacityInBytes) {
-        // Over-provisioned only if capacity is > 1 TiB (smaller databases are considered optimized)
-        status = AssessmentStatus.OVER_PROVISIONED;
-    } else {
-        status = AssessmentStatus.OPTIMIZED;
-    }
-
-    let recommendedSizeInGib = 0;
-    if (status !== AssessmentStatus.OPTIMIZED && storageUsedInBytes) {
-        // Target headroom: MIN_OPTIMIZED_HEADROOM_PERCENTAGE + 1% buffer
-        const targetHeadroomPercent = minOptimizedHeadroomPercent + 1;
-        const targetUsagePercent = (100 - targetHeadroomPercent) / 100;
-        const recommendedSizeInBytes = storageUsedInBytes / targetUsagePercent;
-        recommendedSizeInGib = Math.ceil(recommendedSizeInBytes / (1024 * 1024 * 1024));
-    }
-
-    return {
-        ...headroomGoldenConfig,
-        recommended: `${MIN_OPTIMIZED_HEADROOM_PERCENTAGE.MSSQL}%`,
-        status,
-        current: `${headroomPercent}%`,
-        recommendedSizeInGib,
-        objectsInViolation: [],
-        totalObjectsAssessed: 1,
-        totalObjectsInViolation: status !== AssessmentStatus.OPTIMIZED ? 1 : 0
-    };
 }
 
 async function processOfflineAssessmentUpload(
@@ -705,7 +645,20 @@ async function fetchMssqlOfflineAssessment(
 
     const fileSystemIdentifier = fsxId || storageEndpoint;
 
-    const headroomItem = headroom && !isEmpty(headroom) ? calculateOneTimeWADHeadroomDrift(headroom) : undefined;
+    logger.info('MSSQL one-time WAD: calculating headroom drift', { fileSystemIdentifier });
+    const headroomItem =
+        headroom && !isEmpty(headroom) && fileSystemIdentifier
+            ? calculateWADHeadroomDrift(
+                  fileSystemIdentifier,
+                  headroom,
+                  MSSQL_GOLDEN_CONFIG.find(e => e.id === 'headroom'),
+                  RESOURCESTYPE.MSSQL
+              )
+            : undefined;
+    logger.info('MSSQL one-time WAD: headroom drift calculated', {
+        fileSystemIdentifier,
+        hasHeadroomItem: !!headroomItem
+    });
 
     const cloneDriftResponse =
         clone && !isEmpty(clone)

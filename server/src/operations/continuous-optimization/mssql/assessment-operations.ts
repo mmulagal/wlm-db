@@ -88,6 +88,9 @@ import {
 } from '../assessment-utils';
 import { WadScanContext, WadScanResultRecord } from '../../../utils/wad-consts';
 import { mapDriftToWadScanRecords } from '../wad-storage-scan-mapper';
+import { AggregateHeadroomData, WadSnapcenterData } from '../ontap-proxy-collector';
+import { calculateWADHeadroomDrift } from '../wad-headroom-utils';
+import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 import {
     DriftAssessmentResponsePerHostType,
     DriftAssessmentResponsePerAccountV1Type,
@@ -1690,12 +1693,50 @@ async function fetchMssqlPatchScan(
 
 async function getMssqlStorageResourceScan(
     ctx: WadScanContext,
-    storageAssessmentData: StorageAssessment
+    storageAssessmentData: StorageAssessment,
+    headroomData?: AggregateHeadroomData,
+    snapcenterData?: WadSnapcenterData
 ): Promise<WadScanResultRecord> {
-    const { accountId, credentialsId, region } = ctx;
-    logger.info('Getting MSSQL storage resource scan', { accountId, credentialsId, region });
-    const assessmentData = await calculateStorageDrift(accountId, credentialsId, region, '', '', storageAssessmentData);
-    return mapDriftToWadScanRecords(ctx, assessmentData);
+    const { accountId, credentialsId, region, filesystemId } = ctx;
+    logger.info('Getting MSSQL storage resource scan', {
+        accountId,
+        credentialsId,
+        region,
+        hasHeadroomData: !!headroomData,
+        hasSnapcenterData: !!snapcenterData
+    });
+    const skipHeadroom = true;
+    const relevantVolumeIds: MssqlSnapCenterRelevantVolumeIds = {
+        dataVolumeIds: snapcenterData ? snapcenterData.volumes.map(v => v.volumeId) : [],
+        tempdbVolumeIds: []
+    };
+    const [storageItems, headroomItem, snapcenterItem] = await Promise.all([
+        calculateStorageDrift(accountId, credentialsId, region, '', '', storageAssessmentData, undefined, skipHeadroom),
+        headroomData
+            ? calculateWADHeadroomDrift(
+                  filesystemId,
+                  headroomData,
+                  MSSQL_GOLDEN_CONFIG.find(e => e.id === 'headroom'),
+                  RESOURCESTYPE.MSSQL
+              )
+            : undefined,
+        snapcenterData
+            ? calculateSnapCenterDrift(snapcenterData as unknown as MssqlSnapcenterAssessmentData, relevantVolumeIds)
+            : undefined
+    ]);
+
+    const assessmentData = [
+        ...storageItems,
+        ...(headroomItem ? [headroomItem] : []),
+        ...(snapcenterItem ? [snapcenterItem] : [])
+    ];
+    const result = await mapDriftToWadScanRecords(ctx, assessmentData);
+    logger.info('MSSQL WAD storage resource scan complete', {
+        accountId,
+        filesystemId,
+        configurationCount: result.configurations.length
+    });
+    return result;
 }
 
 export {

@@ -406,7 +406,8 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true
     },
     {
         id: 'log-drive-size',
@@ -532,7 +533,9 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         recommendation:
             'Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.',
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true }
     },
 
     // ── resiliency / highAvailability ────────────────────────────────────────
