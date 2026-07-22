@@ -7,7 +7,6 @@ import {
     ResourceColumnId,
     TableScope,
     WadResourcesTable,
-    resourceRowActionColumn,
     useResourceTableActions,
     type BulkAction,
     type DisableRowSelection,
@@ -22,7 +21,7 @@ import {
     MIXED_WORKLOAD_ROW_TOOLTIP,
     readResourceWorkloadType
 } from '../shared/metadataUtils';
-import { spliceExtras } from '../shared/columns';
+import { spliceExtras, stickyResourceRowActionColumn } from '../shared/columns';
 import { DEFAULT_VOLUME_COLUMNS_BY_SCOPE, VOLUME_EXTRA_COLUMNS_ANCHOR_ID } from './columns';
 import { resolveVolumeConfiguration } from './configurations';
 
@@ -43,7 +42,6 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
         handleDismissBulk,
         handleReactivateRow,
         dismissedView,
-        rowMenu,
         counterLabel,
         dismissConfirmCopy,
         confirmDismiss,
@@ -60,7 +58,9 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
     const handleFixBulk = useCallback(
         (resourceIds: string[]) => {
             const selectedResources = resources.filter(resource => resourceIds.includes(resource.id));
-            if (!selectedResources.length) return;
+            if (!selectedResources.length) {
+                return;
+            }
 
             if (configuration.restrictBulkSelectionToSameWorkload && hasMixedWorkloads(selectedResources)) {
                 wadApi.notify({
@@ -81,10 +81,14 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
 
     const disableRowSelection = useCallback<DisableRowSelection>(
         (row, selectedRows) => {
-            if (!configuration.restrictBulkSelectionToSameWorkload || selectedRows.length === 0) return undefined;
+            if (!configuration.restrictBulkSelectionToSameWorkload || selectedRows.length === 0) {
+                return undefined;
+            }
 
             const selectedWorkloadType = readResourceWorkloadType(selectedRows[0]);
-            if (readResourceWorkloadType(row) === selectedWorkloadType) return undefined;
+            if (readResourceWorkloadType(row) === selectedWorkloadType) {
+                return undefined;
+            }
 
             return MIXED_WORKLOAD_ROW_TOOLTIP;
         },
@@ -104,7 +108,7 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
         if (showDismissed) {
             return [
                 ...spliceExtras(baseColumns, [], ResourceColumnId.LAST_ANALYZED),
-                resourceRowActionColumn({
+                stickyResourceRowActionColumn({
                     label: FixRowActionLabel.REACTIVATE,
                     onClick: handleReactivateRow
                 })
@@ -117,7 +121,7 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
 
         return [
             ...spliceExtras(baseColumns, [], ResourceColumnId.LAST_ANALYZED),
-            resourceRowActionColumn({
+            stickyResourceRowActionColumn({
                 label: FixRowActionLabel.FIX,
                 onClick: handleFixRow,
                 isDisabled: isFixDisabled
@@ -134,7 +138,9 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
     ]);
 
     const bulkActions = useMemo<BulkAction[]>(() => {
-        if (showDismissed || !configuration.supportsBulkFix) return [];
+        if (showDismissed || !configuration.supportsBulkFix) {
+            return [];
+        }
         return [
             createFixBulkAction(handleFixBulk, {
                 isDisabled: !configuration.supportsBulkFix,
@@ -153,7 +159,6 @@ export const VolumeResourcesTable = ({ wadApi, tableScope }: VolumeResourcesTabl
                 dismissedView={dismissedView}
                 columns={columns}
                 bulkActions={bulkActions}
-                rowMenu={rowMenu}
                 counterLabel={counterLabel}
                 disableRowSelection={disableRowSelection}
                 dataTestId={`volume-resources-table-${configurationId}`}

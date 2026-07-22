@@ -32,7 +32,7 @@ export const volumeNameColumn: TableColumn<ResourceScanRecord> = {
 };
 
 export const volumeCurrentColumn = createMetadataFieldColumn({
-    header: 'Current',
+    header: 'Current value',
     field: VolumeEnrichmentField.CURRENT,
     id: VolumeColumnId.CURRENT,
     width: 140,
@@ -41,7 +41,7 @@ export const volumeCurrentColumn = createMetadataFieldColumn({
 });
 
 export const volumeRecommendedColumn = createMetadataFieldColumn({
-    header: 'Recommended',
+    header: 'Recommended value',
     field: VolumeEnrichmentField.RECOMMENDED,
     id: VolumeColumnId.RECOMMENDED,
     width: 140,
@@ -53,7 +53,7 @@ export const currentSnapcenterSnapshotColumn = createMetadataFieldColumn({
     header: 'Snapshot status',
     field: VolumeEnrichmentField.CURRENT,
     id: VolumeColumnId.SNAPCENTER_CURRENT,
-    width: 220,
+    width: 200,
     sort: { enabled: true },
     filter: { enabled: false }
 });
@@ -62,7 +62,7 @@ export const recommendedSnapcenterSnapshotColumn = createMetadataFieldColumn({
     header: 'Recommended value',
     field: VolumeEnrichmentField.RECOMMENDED,
     id: VolumeColumnId.SNAPCENTER_RECOMMENDED,
-    width: 220,
+    width: 200,
     sort: { enabled: true },
     filter: { enabled: false }
 });
@@ -81,7 +81,7 @@ export const multiComponentVolumeColumns: ReadonlyArray<TableColumn<ResourceScan
     fileSystemColumn,
     optimizationStatusColumn,
     createMetadataFieldColumn({
-        header: 'Current',
+        header: 'Current value',
         field: VolumeEnrichmentField.CURRENT,
         id: 'volumeMultiComponentCurrent',
         width: 320,
@@ -89,7 +89,7 @@ export const multiComponentVolumeColumns: ReadonlyArray<TableColumn<ResourceScan
         filter: { enabled: false }
     }),
     createMetadataFieldColumn({
-        header: 'Recommended',
+        header: 'Recommended value',
         field: VolumeEnrichmentField.RECOMMENDED,
         id: 'volumeMultiComponentRecommended',
         width: 320,

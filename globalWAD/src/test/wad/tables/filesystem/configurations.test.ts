@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import {
-    FileSystemConfigurationIds,
-    resolveFileSystemConfiguration
-} from '@wad/tables/filesystem/configurations';
+import { FileSystemConfigurationIds, resolveFileSystemConfiguration } from '@wad/tables/filesystem/configurations';
 
 describe('filesystem configurations', () => {
     it('registers headroom configuration', () => {

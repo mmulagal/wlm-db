@@ -6,7 +6,6 @@ import {
     ResourceColumnId,
     TableScope,
     WadResourcesTable,
-    resourceRowActionColumn,
     useResourceTableActions,
     type BulkAction,
     type ResourceScanRecord,
@@ -14,11 +13,13 @@ import {
     type WadApi
 } from '@tlveng/workload-factory-components';
 import { createFixBulkAction } from '../shared/bulkActions';
-import { spliceExtras } from '../shared/columns';
+import { spliceExtras, stickyResourceRowActionColumn } from '../shared/columns';
 import { DEFAULT_LUN_COLUMNS_BY_SCOPE, LUN_EXTRA_COLUMNS_ANCHOR_ID } from './columns';
 import { resolveLunConfiguration } from './configurations';
 
-const LUN_RESOURCE_TYPE_NOUN = { singular: 'LUN', plural: 'LUNs' };
+const LUN_RESOURCE_TYPE_NOUN = { singular: 'block device', plural: 'block devices' };
+
+const VOLUME_LUN_RESOURCE_TYPE_NOUN = { singular: 'volume/block device', plural: 'volumes/block devices' };
 
 interface LunResourcesTableProps {
     wadApi: WadApi;
@@ -28,6 +29,12 @@ interface LunResourcesTableProps {
 export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps) => {
     const { configurationId } = wadApi.context;
     const configuration = useMemo(() => resolveLunConfiguration(configurationId), [configurationId]);
+    const resourceTypeNoun = useMemo(() => {
+        if (configurationId === 'wlmdb-block-device-space-management') {
+            return VOLUME_LUN_RESOURCE_TYPE_NOUN;
+        }
+        return LUN_RESOURCE_TYPE_NOUN;
+    }, [configurationId]);
 
     const {
         resources,
@@ -35,13 +42,12 @@ export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps
         handleDismissBulk,
         handleReactivateRow,
         dismissedView,
-        rowMenu,
         counterLabel,
         dismissConfirmCopy,
         confirmDismiss,
         cancelDismiss,
         isDismissSubmitting
-    } = useResourceTableActions({ wadApi, resourceTypeNoun: LUN_RESOURCE_TYPE_NOUN });
+    } = useResourceTableActions({ wadApi, resourceTypeNoun });
 
     const handleFixRow = useCallback(
         (resource: ResourceScanRecord) =>
@@ -52,7 +58,9 @@ export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps
     const handleFixBulk = useCallback(
         (resourceIds: string[]) => {
             const selectedResources = resources.filter(resource => resourceIds.includes(resource.id));
-            if (!selectedResources.length) return;
+            if (!selectedResources.length) {
+                return;
+            }
             if (configuration.fixBulk) {
                 configuration.fixBulk(wadApi, selectedResources);
             } else {
@@ -75,7 +83,7 @@ export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps
         if (showDismissed) {
             return [
                 ...spliceExtras(baseColumns, [], ResourceColumnId.LAST_ANALYZED),
-                resourceRowActionColumn({
+                stickyResourceRowActionColumn({
                     label: FixRowActionLabel.REACTIVATE,
                     onClick: handleReactivateRow
                 })
@@ -88,7 +96,7 @@ export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps
 
         return [
             ...spliceExtras(baseColumns, [], ResourceColumnId.LAST_ANALYZED),
-            resourceRowActionColumn({
+            stickyResourceRowActionColumn({
                 label: FixRowActionLabel.FIX,
                 onClick: handleFixRow,
                 isDisabled: isFixDisabled
@@ -105,7 +113,9 @@ export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps
     ]);
 
     const bulkActions = useMemo<BulkAction[]>(() => {
-        if (showDismissed || !configuration.supportsBulkFix) return [];
+        if (showDismissed || !configuration.supportsBulkFix) {
+            return [];
+        }
         return [
             createFixBulkAction(handleFixBulk, {
                 isDisabled: !configuration.supportsBulkFix,
@@ -124,7 +134,6 @@ export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps
                 dismissedView={dismissedView}
                 columns={columns}
                 bulkActions={bulkActions}
-                rowMenu={rowMenu}
                 counterLabel={counterLabel}
                 dataTestId={`lun-resources-table-${configurationId}`}
             />

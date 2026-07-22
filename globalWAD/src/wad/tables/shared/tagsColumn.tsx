@@ -14,7 +14,9 @@ const TagsCellRenderer = memo(({ row, onView }: TagsCellRendererProps) => {
         onView?.(row);
     }, [onView, row]);
 
-    if (!onView) return null;
+    if (!onView) {
+        return null;
+    }
 
     return (
         <Button variant="text" onClick={handleClick} isDisabled={row.isDismissed}>

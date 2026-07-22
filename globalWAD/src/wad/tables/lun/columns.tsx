@@ -22,11 +22,14 @@ export enum LunEnrichmentField {
     WORKLOAD = 'workload'
 }
 
-const LUN_NAME_HEADER = 'LUN name';
-
-export const lunNameColumn: TableColumn<ResourceScanRecord> = {
+export const objectNameColumn: TableColumn<ResourceScanRecord> = {
     ...resourceNameColumn,
-    header: LUN_NAME_HEADER
+    header: 'Object name'
+};
+
+export const blockDeviceNameColumn: TableColumn<ResourceScanRecord> = {
+    ...resourceNameColumn,
+    header: 'Block device name'
 };
 
 export const currentOsTypeColumn = createMetadataFieldColumn({
@@ -39,7 +42,7 @@ export const currentOsTypeColumn = createMetadataFieldColumn({
 });
 
 export const recommendedOsTypeColumn = createMetadataFieldColumn({
-    header: 'Recommended',
+    header: 'Recommended value',
     field: LunEnrichmentField.RECOMMENDED,
     id: LunColumnId.RECOMMENDED_OS_TYPE,
     width: 150,
@@ -57,11 +60,11 @@ export const lunWorkloadColumn = createMetadataFieldColumn({
 });
 
 export const multiComponentLunColumns: ReadonlyArray<TableColumn<ResourceScanRecord>> = [
-    lunNameColumn,
+    objectNameColumn,
     fileSystemColumn,
     optimizationStatusColumn,
     createMetadataFieldColumn({
-        header: 'Current',
+        header: 'Current value',
         field: LunEnrichmentField.CURRENT,
         id: 'lunMultiComponentCurrent',
         width: 320,
@@ -69,7 +72,7 @@ export const multiComponentLunColumns: ReadonlyArray<TableColumn<ResourceScanRec
         filter: { enabled: false }
     }),
     createMetadataFieldColumn({
-        header: 'Recommended',
+        header: 'Recommended value',
         field: LunEnrichmentField.RECOMMENDED,
         id: 'lunMultiComponentRecommended',
         width: 320,
@@ -84,7 +87,7 @@ export const LUN_EXTRA_COLUMNS_ANCHOR_ID: string = ResourceColumnId.OPTIMIZATION
 
 export const DEFAULT_LUN_COLUMNS_BY_SCOPE: Record<TableScope, ReadonlyArray<TableColumn<ResourceScanRecord>>> = {
     [TableScope.GLOBAL_WAD]: [
-        lunNameColumn,
+        blockDeviceNameColumn,
         fileSystemColumn,
         optimizationStatusColumn,
         currentOsTypeColumn,
@@ -92,5 +95,5 @@ export const DEFAULT_LUN_COLUMNS_BY_SCOPE: Record<TableScope, ReadonlyArray<Tabl
         lunWorkloadColumn,
         lastAnalyzedColumn
     ],
-    [TableScope.FSX_WAD]: [lunNameColumn]
+    [TableScope.FSX_WAD]: [blockDeviceNameColumn]
 };

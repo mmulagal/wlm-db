@@ -9,11 +9,12 @@ type StubProps = {
 
 const stub =
     (name: string) =>
-    ({ children, dataTestId, onClick, ...rest }: StubProps) => (
-        <div data-testid={dataTestId ?? name} onClick={onClick} role={onClick ? 'button' : undefined} {...rest}>
-            {children}
-        </div>
-    );
+    ({ children, dataTestId, onClick, ...rest }: StubProps) =>
+        (
+            <div data-testid={dataTestId ?? name} onClick={onClick} role={onClick ? 'button' : undefined} {...rest}>
+                {children}
+            </div>
+        );
 
 export const InlineNotification = ({ children, ...rest }: StubProps) => (
     <div data-testid="InlineNotification" {...rest}>

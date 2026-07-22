@@ -6,11 +6,7 @@ import {
     UnsupportedConfigurationNotice,
     UnsupportedTableNotice
 } from '@wad/shared/fixModalShared';
-import {
-    FixModalRouterTestIds,
-    FixPageRouterTestIds,
-    PlaceholderFixModalTestIds
-} from '@wad/shared/fixModalTestIds';
+import { FixModalRouterTestIds, FixPageRouterTestIds, PlaceholderFixModalTestIds } from '@wad/shared/fixModalTestIds';
 
 describe('fixModalShared', () => {
     it('renders unsupported configuration notice', () => {

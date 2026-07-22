@@ -23,7 +23,9 @@ interface MetadataComponent {
 }
 
 const toDisplayValue = (value: unknown): string | undefined => {
-    if (value == null || value === '') return undefined;
+    if (value == null || value === '') {
+        return undefined;
+    }
     return String(value);
 };
 
@@ -35,7 +37,9 @@ const formatComponentEntries = (
         .map(component => {
             const parameter = toDisplayValue(component.parameter);
             const value = toDisplayValue(component[field]);
-            if (!parameter || value === undefined) return undefined;
+            if (!parameter || value === undefined) {
+                return undefined;
+            }
             return `${parameter}=${value}`;
         })
         .filter((entry): entry is string => entry !== undefined);
@@ -52,18 +56,26 @@ export const getComponentMetadataValue = (
     metadata: Record<string, unknown> | undefined,
     field: MetadataField
 ): string | undefined => {
-    if (!metadata) return undefined;
+    if (!metadata) {
+        return undefined;
+    }
 
     const directValue = toDisplayValue(metadata[field]);
-    if (directValue !== undefined) return directValue;
+    if (directValue !== undefined) {
+        return directValue;
+    }
 
     const { components } = metadata;
-    if (!Array.isArray(components) || components.length === 0 || field === 'workload') return undefined;
+    if (!Array.isArray(components) || components.length === 0 || field === 'workload') {
+        return undefined;
+    }
 
     const typedComponents = components.filter(
         (component): component is MetadataComponent => !!component && typeof component === 'object'
     );
-    if (typedComponents.length === 0) return undefined;
+    if (typedComponents.length === 0) {
+        return undefined;
+    }
 
     if (typedComponents.length === 1) {
         return toDisplayValue(typedComponents[0][field]);
@@ -74,9 +86,13 @@ export const getComponentMetadataValue = (
 
 const getMetadataFieldDisplayValue = (row: ResourceScanRecord, field: MetadataField): string | undefined => {
     const fromMetadata = getComponentMetadataValue(row.metadata as Record<string, unknown> | undefined, field);
-    if (fromMetadata !== undefined) return fromMetadata;
+    if (fromMetadata !== undefined) {
+        return fromMetadata;
+    }
     const rowKey = ROW_FIELD_FALLBACK[field];
-    if (rowKey) return toDisplayValue(row[rowKey]);
+    if (rowKey) {
+        return toDisplayValue(row[rowKey]);
+    }
     return undefined;
 };
 
@@ -128,8 +144,12 @@ export const readResourceWorkload = (resource: ResourceScanRecord): string | und
 
 export const normalizeWorkloadType = (workload: string | undefined): WorkloadTypeValue | undefined => {
     const normalized = workload?.trim().toLowerCase();
-    if (normalized === WorkloadType.MSSQL) return WorkloadType.MSSQL;
-    if (normalized === WorkloadType.ORACLE) return WorkloadType.ORACLE;
+    if (normalized === WorkloadType.MSSQL) {
+        return WorkloadType.MSSQL;
+    }
+    if (normalized === WorkloadType.ORACLE) {
+        return WorkloadType.ORACLE;
+    }
     return undefined;
 };
 

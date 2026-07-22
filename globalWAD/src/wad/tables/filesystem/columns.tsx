@@ -29,7 +29,7 @@ export const fileSystemNameColumn: TableColumn<ResourceScanRecord> = {
 };
 
 export const fileSystemCurrentColumn = createMetadataFieldColumn({
-    header: 'Current',
+    header: 'Current value',
     field: FileSystemEnrichmentField.CURRENT,
     id: FileSystemColumnId.CURRENT,
     width: 140,
@@ -38,7 +38,7 @@ export const fileSystemCurrentColumn = createMetadataFieldColumn({
 });
 
 export const fileSystemRecommendedColumn = createMetadataFieldColumn({
-    header: 'Recommended',
+    header: 'Recommended value',
     field: FileSystemEnrichmentField.RECOMMENDED,
     id: FileSystemColumnId.RECOMMENDED,
     width: 140,

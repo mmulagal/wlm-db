@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest';
 
 import { TableScope } from '@tlveng/workload-factory-components';
 
-import { DEFAULT_LUN_COLUMNS_BY_SCOPE, lunNameColumn } from '@wad/tables/lun/columns';
+import { blockDeviceNameColumn, DEFAULT_LUN_COLUMNS_BY_SCOPE } from '@wad/tables/lun/columns';
 
 describe('lun columns', () => {
     it('uses lun name header on the name column', () => {
-        expect(lunNameColumn.header).toBe('LUN name');
+        expect(blockDeviceNameColumn.header).toBe('Block device name');
     });
 
     it('includes os type columns in the default global wad columns', () => {

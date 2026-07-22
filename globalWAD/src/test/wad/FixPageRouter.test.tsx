@@ -13,11 +13,7 @@ describe('FixPageRouter', () => {
     });
 
     it('renders the volume resources table for volume configuration ids', () => {
-        render(
-            <FixPageRouter
-                wadApi={createMockWadApi({ context: { configurationId: 'wlmdb-thin-provision' } })}
-            />
-        );
+        render(<FixPageRouter wadApi={createMockWadApi({ context: { configurationId: 'wlmdb-thin-provision' } })} />);
 
         expect(screen.getByTestId('volume-resources-table-wlmdb-thin-provision')).toBeInTheDocument();
     });

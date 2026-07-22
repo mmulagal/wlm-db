@@ -7,9 +7,7 @@ import { createMockWadApi } from '@test/helpers/testUtils';
 
 describe('LunFixModalWrapper', () => {
     it('renders the mapped fix modal for known lun configurations', () => {
-        render(
-            <LunFixModalWrapper wadApi={createMockWadApi({ context: { configurationId: 'wlmdb-os-type' } })} />
-        );
+        render(<LunFixModalWrapper wadApi={createMockWadApi({ context: { configurationId: 'wlmdb-os-type' } })} />);
 
         expect(screen.getByTestId('wlmdb-os-type-fix-modal')).toBeInTheDocument();
     });

@@ -53,7 +53,9 @@ export function useResourceTableEnrichment({
 
     const handlePageRowsChange = useCallback(
         async (visibleRows: ResourceScanRecord[]) => {
-            if (!fetchResourceMetadata) return;
+            if (!fetchResourceMetadata) {
+                return;
+            }
             const { signal } = abortControllerRef.current;
             const { configurationId: currentConfigurationId } = wadApi.context;
 
@@ -61,7 +63,9 @@ export function useResourceTableEnrichment({
                 wadApi.getResource(row.id)?.metadata?.[fieldKey] !== undefined || completedIds.current.has(row.id);
 
             const toEnrich = visibleRows.filter(row => !isAlreadyEnriched(row) && !inFlightIds.current.has(row.id));
-            if (toEnrich.length === 0) return;
+            if (toEnrich.length === 0) {
+                return;
+            }
 
             const batches = toChunks(toEnrich, ResourceEnrichmentBatchSize.MAX);
             await Promise.all(
@@ -80,7 +84,9 @@ export function useResourceTableEnrichment({
                             })),
                             signal
                         );
-                        if (signal.aborted) return;
+                        if (signal.aborted) {
+                            return;
+                        }
                         batch.forEach(row => completedIds.current.add(row.id));
                         results.forEach(result => {
                             wadApi.updateResource({
@@ -124,12 +130,16 @@ export function useResourceTableEnrichment({
                     ],
                     signal
                 );
-                if (signal.aborted) return;
+                if (signal.aborted) {
+                    return;
+                }
                 const metadata = results?.[0]?.metadata;
                 const tags = Array.isArray(metadata?.tags) ? (metadata.tags as ResourceTag[]) : [];
                 setTagsDialog({ tags, isPending: false });
             } catch {
-                if (signal.aborted) return;
+                if (signal.aborted) {
+                    return;
+                }
                 setTagsDialog({ tags: [], isPending: false });
             }
         },

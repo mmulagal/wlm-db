@@ -1,11 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { FixMetadata, WadElementProps } from '@tlveng/workload-factory-components';
 import { PlaceholderFixModal, UnsupportedConfigurationNotice } from '../../shared/fixModalShared';
-import { buildVolumeFixTargets } from '../shared/buildFixTargets';
+import { resolveVolumeConfiguration } from '../../tables/volume/configurations';
+import { buildVolumeFixTargets } from '../shared/modalUtils';
 import { volumeWadModals } from './volumeWadModals';
 
 export const VolumeFixModalWrapper = ({ wadApi }: WadElementProps) => {
     const { configurationId } = wadApi.context;
+    const configuration = useMemo(() => resolveVolumeConfiguration(configurationId), [configurationId]);
+    const requiresFsxContext = configuration.requiresFsxContext ?? true;
     const { resources } = wadApi.fixModalPayload;
     const parentResource = resources[0]?.parentResource;
     const credentialId = parentResource?.credentialsIds?.[0];
@@ -47,7 +50,7 @@ export const VolumeFixModalWrapper = ({ wadApi }: WadElementProps) => {
         [wadApi, credentialId, region, fsxId, fix, isFixing, onFixSuccess, resources]
     );
 
-    if (!credentialId || !region || !fsxId) {
+    if (requiresFsxContext && (!credentialId || !region || !fsxId)) {
         return <UnsupportedConfigurationNotice configurationId={configurationId} />;
     }
 

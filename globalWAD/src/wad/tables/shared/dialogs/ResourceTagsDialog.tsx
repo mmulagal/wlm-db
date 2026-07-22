@@ -19,7 +19,9 @@ interface ResourceTagsDialogProps {
 }
 
 const readTagsFromResource = (resource: ResourceScanRecord | null | undefined): ResourceTag[] => {
-    if (!resource?.metadata) return [];
+    if (!resource?.metadata) {
+        return [];
+    }
     const candidate = (resource.metadata as { tags?: unknown }).tags;
     return Array.isArray(candidate) ? (candidate as ResourceTag[]) : [];
 };
@@ -32,7 +34,9 @@ export const ResourceTagsDialog = ({
     isPending = false
 }: ResourceTagsDialogProps) => {
     const isVisible = resource != null || isOpen === true;
-    if (!isVisible) return null;
+    if (!isVisible) {
+        return null;
+    }
     const tags = tagsProp ?? readTagsFromResource(resource);
     return (
         <Modal>

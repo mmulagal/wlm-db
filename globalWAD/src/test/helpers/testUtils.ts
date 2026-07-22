@@ -1,10 +1,7 @@
 import { vi } from 'vitest';
 import type { ResourceScanRecord, WadApi } from '@tlveng/workload-factory-components';
 
-export const createMockResource = (
-    id: string,
-    overrides: Partial<ResourceScanRecord> = {}
-): ResourceScanRecord => ({
+export const createMockResource = (id: string, overrides: Partial<ResourceScanRecord> = {}): ResourceScanRecord => ({
     id,
     ...overrides
 });

@@ -6,7 +6,10 @@ describe('fetchVolumeResourceMetadata', () => {
     it('returns mocked size metadata for each resource', async () => {
         vi.useFakeTimers();
 
-        const promise = fetchVolumeResourceMetadata([{ id: 'vol-1', configurationId: 'wlmdb-thin-provision' }], new AbortController().signal);
+        const promise = fetchVolumeResourceMetadata(
+            [{ id: 'vol-1', configurationId: 'wlmdb-thin-provision' }],
+            new AbortController().signal
+        );
         await vi.runAllTimersAsync();
         const results = await promise;
 

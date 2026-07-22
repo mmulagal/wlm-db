@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { FixMetadata, WadElementProps } from '@tlveng/workload-factory-components';
 import { PlaceholderFixModal, UnsupportedConfigurationNotice } from '../../shared/fixModalShared';
-import { buildFileSystemFixTargets } from '../shared/buildFixTargets';
+import { buildFileSystemFixTargets } from '../shared/modalUtils';
 import { fileSystemWadModals } from './fileSystemWadModals';
 
 export const FileSystemFixModalWrapper = ({ wadApi }: WadElementProps) => {

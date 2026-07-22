@@ -21,9 +21,7 @@ describe('FileSystemFixModalWrapper', () => {
 
     it('renders the mapped fix modal for headroom configuration', () => {
         render(
-            <FileSystemFixModalWrapper
-                wadApi={createMockWadApi({ context: { configurationId: 'wlmdb-headroom' } })}
-            />
+            <FileSystemFixModalWrapper wadApi={createMockWadApi({ context: { configurationId: 'wlmdb-headroom' } })} />
         );
 
         expect(screen.getByTestId('wlmdb-headroom-fix-modal')).toBeInTheDocument();

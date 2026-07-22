@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import {
-    FixModalRouterTestIds,
-    FixPageRouterTestIds,
-    PlaceholderFixModalTestIds
-} from '@wad/shared/fixModalTestIds';
+import { FixModalRouterTestIds, FixPageRouterTestIds, PlaceholderFixModalTestIds } from '@wad/shared/fixModalTestIds';
 
 describe('fixModalTestIds', () => {
     it('defines stable router and modal test ids', () => {

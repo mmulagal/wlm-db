@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { FixMetadata, WadElementProps } from '@tlveng/workload-factory-components';
 import { UnsupportedConfigurationNotice } from '../../shared/fixModalShared';
-import { buildVolumeFixTargets } from '../shared/buildFixTargets';
+import { buildVolumeFixTargets } from '../shared/modalUtils';
 import { lunWadModals } from './lunWadModals';
 
 export const LunFixModalWrapper = ({ wadApi }: WadElementProps) => {

@@ -13,11 +13,7 @@ describe('FixModalRouter', () => {
     });
 
     it('renders the volume fix modal wrapper for volume configuration ids', () => {
-        render(
-            <FixModalRouter
-                wadApi={createMockWadApi({ context: { configurationId: 'wlmdb-thin-provision' } })}
-            />
-        );
+        render(<FixModalRouter wadApi={createMockWadApi({ context: { configurationId: 'wlmdb-thin-provision' } })} />);
 
         expect(screen.getByTestId('wlmdb-thin-provisioning-fix-modal')).toBeInTheDocument();
     });

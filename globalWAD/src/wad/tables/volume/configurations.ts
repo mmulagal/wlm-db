@@ -18,6 +18,8 @@ interface VolumeConfiguration {
     extraColumns?: ReadonlyArray<TableColumn<ResourceScanRecord>>;
     supportsBulkFix: boolean;
     supportsRowFix: boolean;
+    /** When false, the fix modal can open without FSx parentResource context (guidance-only modals). */
+    requiresFsxContext?: boolean;
     bulkFixDisabledTooltip?: string;
     restrictBulkSelectionToSameWorkload?: boolean;
     fixRow?: FixRowHandler;
@@ -32,6 +34,7 @@ const DefaultVolumeConfiguration: VolumeConfiguration = {
 const ViewOnlyVolumeConfiguration: VolumeConfiguration = {
     supportsBulkFix: false,
     supportsRowFix: true,
+    requiresFsxContext: false,
     bulkFixDisabledTooltip: "Fix isn't supported for this configuration.",
     columns: [
         volumeNameColumn,
