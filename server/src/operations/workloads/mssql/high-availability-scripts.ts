@@ -30,6 +30,7 @@ const CLUSTER_QUORUM_TYPE = `
 $quorumInfo = Get-ClusterQuorum
 $quorumResourceName = [string]$quorumInfo.QuorumResource
 $quorumType = $quorumInfo.QuorumType
+$windowsClusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
 
 # Get all cluster resources of type 'Physical Disk'
 $physicalDisks = Get-ClusterResource | Where-Object { $_.ResourceType -eq "Physical Disk" }
@@ -44,6 +45,7 @@ $result = [PSCustomObject]@{
                 IsPhysicalDisk = !!$quorumResource
                 IsMajority = $quorumType -eq "Majority"
                 IsPhysicalDiskAndMajority = !!$quorumResource -and ($quorumType -eq "Majority")
+                WindowsClusterName = $windowsClusterName
 }
 $result | ConvertTo-Json -Compress
 `;

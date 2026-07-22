@@ -14,7 +14,7 @@ type RawVolume = {
     'tiering-policy'?: string;
     'tiering-min-cooling-days'?: number;
     'fractional-reserve'?: number;
-    [key: string]: string | number | undefined;
+    [key: string]: string | number | boolean | undefined;
 };
 
 type RawLun = {
@@ -46,7 +46,8 @@ const defaultAssessmentErrors: StorageAssessment['errors'] = {
     'tempdb-files-location': '',
     'default-log-files-location': '',
     'default-data-files-location': '',
-    'data-tempdb-drive-details': ''
+    'data-tempdb-drive-details': '',
+    spaceMgmtTryFirst: ''
 };
 
 const { getHeadroomDriftMock } = vi.hoisted(() => ({
@@ -501,6 +502,23 @@ describe('calculateStorageDrift storage-efficiencies', () => {
     });
 });
 
+describe('calculateStorageDrift space-mgmt-try-first', () => {
+    it('should surface the collector error message instead of a silent/empty result', async () => {
+        const errorMessage =
+            'Unable to fetch ONTAP space-mgmt-try-first details as the mapped volume names are either null or empty.';
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                volumes: [optimizedVolume('v1')],
+                errors: { spaceMgmtTryFirst: errorMessage }
+            })
+        );
+        const entry = drift.find(item => 'id' in item && item.id === OptimizeStorageConfigs.SPACE_MANAGEMENT);
+
+        expect(entry).toMatchObject({ id: OptimizeStorageConfigs.SPACE_MANAGEMENT, errorMessage });
+        expect(entry).not.toHaveProperty('status');
+    });
+});
+
 describe('expandCombinedTargets', () => {
     const driftEntry = (rows: Array<{ name: string; type: 'lun' | 'volume'; violated: string[] }>) => ({
         id: 'block-device-space-management',
@@ -696,5 +714,45 @@ describe('snapshot-policy assessment (storage/configuration)', () => {
             totalObjectsAssessed: 2,
             totalObjectsInViolation: 1
         });
+    });
+
+    it('should not flag a volume as a violation when its snapshot-policy data was not collected', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                volumes: [{ name: 'vol1', 'snapshot-policy': 'none' }, { name: 'vol2' }]
+            })
+        );
+        const entry = drift.find(item => 'id' in item && item.id === 'snapshot-policy');
+        expect(entry).toMatchObject({
+            status: AssessmentStatus.OPTIMIZED,
+            objectsInViolation: [],
+            totalObjectsAssessed: 2,
+            totalObjectsInViolation: 0
+        });
+    });
+
+    it('should stringify numeric and boolean violation values instead of leaving them as their original type', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                volumes: [
+                    { name: 'vol1', 'snapshot-copy-reserve': 10, 'thin-provision': false },
+                    { name: 'vol2', 'snapshot-copy-reserve': 0, 'thin-provision': true }
+                ]
+            })
+        );
+
+        const reserveEntry = drift.find(item => 'id' in item && item.id === 'snapshot-copy-reserve') as {
+            violationDetails?: Array<{ objectName: string; value: unknown }>;
+        };
+        const reserveViolation = reserveEntry.violationDetails?.find(v => v.objectName === 'vol1');
+        expect(typeof reserveViolation?.value).toBe('string');
+        expect(reserveViolation?.value).toBe('10');
+
+        const thinProvisionEntry = drift.find(item => 'id' in item && item.id === 'thin-provision') as {
+            violationDetails?: Array<{ objectName: string; value: unknown }>;
+        };
+        const thinProvisionViolation = thinProvisionEntry.violationDetails?.find(v => v.objectName === 'vol1');
+        expect(typeof thinProvisionViolation?.value).toBe('string');
+        expect(thinProvisionViolation?.value).toBe('false');
     });
 });

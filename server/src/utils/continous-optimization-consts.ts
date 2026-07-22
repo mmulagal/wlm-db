@@ -43,7 +43,8 @@ enum AssessmentStatus {
     NOT_OPTIMIZED = 'not-optimized',
     UNDER_PROVISIONED = 'under-provisioned',
     OVER_PROVISIONED = 'over-provisioned',
-    ANALYZING = 'analyzing'
+    ANALYZING = 'analyzing',
+    NOT_APPLICABLE = 'not-applicable'
 }
 
 enum AwsWellArchitecturedPillars {
@@ -518,7 +519,8 @@ const ASSESSMENT_RESOURCE_TYPE = {
     STORAGE_MULTIPATH: 'Storage multipath',
     // Combined LUN+Volume resource type used by aggregate configs like
     // block-device-space-management whose offending objects span both sources.
-    VOLUME_OR_LUN: 'Volume/Lun'
+    VOLUME_OR_LUN: 'Volume/Lun',
+    WINDOWS_CLUSTER: 'Windows Cluster'
 };
 
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];

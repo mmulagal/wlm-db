@@ -376,6 +376,7 @@ const mockResourceAssessmentData = {
                     isPhysicalDiskAndMajority: true
                 }
             },
+            windowsClusterName: 'SQL-DEV-FCI-CLUSTER',
             heartbeat: {
                 status: 'not-optimized',
                 details: {
@@ -608,6 +609,7 @@ const mockResourceAssessmentDataAllOptimized = {
                     isPhysicalDiskAndMajority: true
                 }
             },
+            windowsClusterName: 'SQL-PROD-FCI-CLUSTER',
             heartbeat: {
                 status: 'optimized',
                 details: {
@@ -795,6 +797,7 @@ const mockAoagResourceAssessmentData = {
                     isPhysicalDiskAndMajority: true
                 }
             },
+            windowsClusterName: 'SQL-PROD-AOAG-CLUSTER',
             heartbeat: {
                 status: 'not-optimized',
                 details: {
@@ -946,6 +949,7 @@ const mockAoagResourceAssessmentDataAllOptimized = {
                     isPhysicalDiskAndMajority: true
                 }
             },
+            windowsClusterName: 'SQL-PROD-AOAG-CLUSTER',
             heartbeat: {
                 status: 'optimized',
                 details: {

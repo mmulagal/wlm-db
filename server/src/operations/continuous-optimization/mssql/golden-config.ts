@@ -580,7 +580,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'Microsoft SQL Server High Availability',
         severity: SEVERITY.CRITICAL,
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
-        resourceType: ASSESSMENT_RESOURCE_TYPE.INSTANCE,
+        resourceType: ASSESSMENT_RESOURCE_TYPE.WINDOWS_CLUSTER,
         recommendation:
             'The quorum configuration should be tailored to a 2-node Windows Failover Cluster, using Node and Disk Majority with a Disk Witness to ensure high availability.',
         recommended: '',

@@ -297,6 +297,7 @@ interface ResourceAssessmentData {
             details: HighAvailabilityClusterQuorumDetails;
             error?: string;
         };
+        windowsClusterName: string;
     };
     aoagDetails?: {
         replicaRole: string;
@@ -693,6 +694,7 @@ interface StorageAssessment {
         'default-log-files-location': string;
         'default-data-files-location': string;
         'data-tempdb-drive-details': string;
+        spaceMgmtTryFirst: string;
     };
 }
 

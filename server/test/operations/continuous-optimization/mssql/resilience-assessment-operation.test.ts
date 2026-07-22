@@ -4,6 +4,7 @@ import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../.
 import { RESOURCE_ID } from '../../../../src/utils/consts';
 import {
     collectVolumeSnapshotCopiesData,
+    getHighAvailabilityDriftData,
     getResilienceDriftAssessment,
     getVolumesWithoutSnapshotPolicy,
     initiateHostLevelHighAvailabilityAssessment,
@@ -11,7 +12,8 @@ import {
 } from '../../../../src/operations/continuous-optimization/mssql/resilience-assessment-operation';
 import { WorkloadInstance } from '../../../../src/utils/common-types';
 import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/database-instance-config';
-import { AssessmentCategories } from '../../../../src/utils/continous-optimization-consts';
+import { AssessmentCategories, AssessmentStatus } from '../../../../src/utils/continous-optimization-consts';
+import { ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA } from '../../../../src/utils/demo-utils/demoMockdata';
 
 const INSTANCE_CONFIG = {
     volumes: [
@@ -170,7 +172,10 @@ describe('Resilience drift assessment', () => {
             RESOURCE_ID,
             RESOURCE_ID,
             'f4b7c5d3-e1f6-4g2a-9b5d',
-            [AssessmentCategories.CRR, AssessmentCategories.AWS_BACKUP, AssessmentCategories.HIGH_AVAILABILITY]
+            [AssessmentCategories.CRR, AssessmentCategories.AWS_BACKUP, AssessmentCategories.HIGH_AVAILABILITY],
+            {},
+            [],
+            'i-07e76a4b916548dc0'
         );
         const snapshotPolicy = res.find(item => item.id === AssessmentCategories.SNAPSHOT_POLICY);
         expect(snapshotPolicy).toBeUndefined();
@@ -241,5 +246,65 @@ describe('High Availability Assessment', () => {
         );
 
         expect(result).toBeUndefined();
+    });
+
+    it('should only include the violating node in sql-server-service violationDetails, not every assessed node', async () => {
+        const result = await getHighAvailabilityDriftData(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            'test-resource',
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            {},
+            {
+                sqlServerServices: {
+                    status: AssessmentStatus.NOT_OPTIMIZED,
+                    nodesInViolation: ['i-preferred'],
+                    totalNodes: 2,
+                    details: [],
+                    nodeDetails: [
+                        { nodeId: 'i-preferred', current: 'not manual', recommended: 'manual' },
+                        { nodeId: 'i-standby', current: 'manual', recommended: 'manual' }
+                    ]
+                }
+            },
+            'i-07e76a4b916548dc0'
+        );
+
+        const sqlServerServiceEntry = result.find(item => 'id' in item && item.id === 'sql-server-service') as {
+            totalObjectsAssessed?: number;
+            totalObjectsInViolation?: number;
+            violationDetails?: Array<{ objectName: string }>;
+        };
+
+        expect(sqlServerServiceEntry.totalObjectsAssessed).toBe(2);
+        expect(sqlServerServiceEntry.totalObjectsInViolation).toBe(1);
+        expect(sqlServerServiceEntry.violationDetails).toHaveLength(1);
+        expect(sqlServerServiceEntry.violationDetails?.[0].objectName).toBe('i-preferred');
+    });
+
+    it('should populate a non-blank violation value for the demo not-optimized sql-server-service scenario', async () => {
+        const result = await getHighAvailabilityDriftData(
+            accountId,
+            credentialsId,
+            region,
+            databaseHostId,
+            'test-resource',
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            {},
+            {
+                sqlServerServices: ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA.sqlServerServices
+            } as unknown as Parameters<typeof getHighAvailabilityDriftData>[7],
+            'i-07e76a4b916548dc0'
+        );
+
+        const sqlServerServiceEntry = result.find(item => 'id' in item && item.id === 'sql-server-service') as {
+            violationDetails?: Array<{ objectName: string; value: string }>;
+        };
+
+        expect(sqlServerServiceEntry.violationDetails).toHaveLength(1);
+        expect(sqlServerServiceEntry.violationDetails?.[0].objectName).toBe('demo-sql-prod-fci-001');
+        expect(sqlServerServiceEntry.violationDetails?.[0].value).toBeTruthy();
     });
 });

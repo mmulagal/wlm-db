@@ -368,7 +368,8 @@ function toMssqlStorageAssessment(
             'tempdb-files-location': HOST_SIDE_NOT_COLLECTED,
             'default-log-files-location': HOST_SIDE_NOT_COLLECTED,
             'default-data-files-location': HOST_SIDE_NOT_COLLECTED,
-            'data-tempdb-drive-details': HOST_SIDE_NOT_COLLECTED
+            'data-tempdb-drive-details': HOST_SIDE_NOT_COLLECTED,
+            spaceMgmtTryFirst: HOST_SIDE_NOT_COLLECTED
         }
     };
 }

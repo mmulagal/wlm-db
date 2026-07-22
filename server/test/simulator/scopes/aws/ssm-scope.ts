@@ -1619,7 +1619,7 @@ ssmMock
     .resolves(
         getSampleCommandResponseWithOutput(
             'clusterQuorumHeartBeat',
-            '{"QuorumResourceName":"Quorum","QuorumType":2,"IsPhysicalDisk":false,"IsMajority":false,"IsPhysicalDiskAndMajority":false}{"CrossSubnetDelay":  1000,"SameSubnetThreshold":  10,"CrossSiteDelay":  8000,"SameSubnetDelay":  1000,"CrossSubnetThreshold":  20,"CrossSiteThreshold":  20}'
+            '{"QuorumResourceName":"Quorum","QuorumType":2,"IsPhysicalDisk":false,"IsMajority":false,"IsPhysicalDiskAndMajority":false,"WindowsClusterName":"SQL-DEMO-FCI-CLUSTER"}{"CrossSubnetDelay":  1000,"SameSubnetThreshold":  10,"CrossSiteDelay":  8000,"SameSubnetDelay":  1000,"CrossSubnetThreshold":  20,"CrossSiteThreshold":  20}'
         )
     )
     .on(GetCommandInvocationCommand, {

@@ -605,7 +605,11 @@ async function calculateStorageDrift(
                 );
                 return;
             }
-            let overallStatus = AssessmentStatus.OPTIMIZED;
+            if (config.id === OptimizeStorageConfigs.SPACE_MANAGEMENT && errors?.spaceMgmtTryFirst) {
+                driftAssessmentData.push({ ...config, errorMessage: errors.spaceMgmtTryFirst });
+                return;
+            }
+            let overallStatus: AssessmentStatus = AssessmentStatus.NOT_APPLICABLE;
             const objectsInViolation: string[] = [];
             const violationDetails: GenericViolationResponseType[] = [];
             const wadManagerAssessmentDetails: DriftAssessmentDetail[] = [];
@@ -613,7 +617,7 @@ async function calculateStorageDrift(
                 let objectName = '';
                 let objectId = '';
                 let svmName = '';
-                let volumeStatus = AssessmentStatus.OPTIMIZED;
+                let volumeStatus = AssessmentStatus.NOT_APPLICABLE;
                 Object.entries(volume).forEach(([key, value]) => {
                     objectName = key === 'name' ? value : objectName;
                     objectId = key === 'uuid' ? value : objectId;
@@ -621,7 +625,11 @@ async function calculateStorageDrift(
                     if (key === config.parameter) {
                         volumeStatus =
                             config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
-                        overallStatus = volumeStatus === AssessmentStatus.NOT_OPTIMIZED ? volumeStatus : overallStatus;
+                        overallStatus =
+                            overallStatus === AssessmentStatus.NOT_OPTIMIZED ||
+                            volumeStatus === AssessmentStatus.NOT_OPTIMIZED
+                                ? AssessmentStatus.NOT_OPTIMIZED
+                                : AssessmentStatus.OPTIMIZED;
                         if (volumeStatus === AssessmentStatus.NOT_OPTIMIZED) {
                             objectsInViolation.push(objectName!);
                             violationDetails.push({
@@ -681,21 +689,25 @@ async function calculateStorageDrift(
         });
     } else {
         lunConfigData.forEach(config => {
-            let overallStatus = AssessmentStatus.OPTIMIZED;
+            let overallStatus = AssessmentStatus.NOT_APPLICABLE;
             const objectsInViolation: string[] = [];
             const violationDetails: GenericViolationResponseType[] = [];
             const wadManagerAssessmentDetails: DriftAssessmentDetail[] = [];
             luns.forEach(lun => {
                 let objectName = '';
                 let objectId = '';
-                let volumeStatus = AssessmentStatus.OPTIMIZED;
+                let volumeStatus = AssessmentStatus.NOT_APPLICABLE;
                 Object.entries(lun).forEach(([key, value]) => {
                     objectName = key === 'name' ? value : objectName;
                     objectId = key === 'uuid' ? value : objectId;
                     if (key === config.parameter) {
                         volumeStatus =
                             config.value !== value ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
-                        overallStatus = volumeStatus === AssessmentStatus.NOT_OPTIMIZED ? volumeStatus : overallStatus;
+                        overallStatus =
+                            overallStatus === AssessmentStatus.NOT_OPTIMIZED ||
+                            volumeStatus === AssessmentStatus.NOT_OPTIMIZED
+                                ? AssessmentStatus.NOT_OPTIMIZED
+                                : AssessmentStatus.OPTIMIZED;
 
                         if (volumeStatus === AssessmentStatus.NOT_OPTIMIZED) {
                             objectsInViolation.push(objectName!);

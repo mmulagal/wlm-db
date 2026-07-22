@@ -371,7 +371,25 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $APIEndpoint = '/storage/volumes'
     $APIQueryFilter = "uuid=${instanceRecord.mappedVolumesUuids?.join('|')}"
     $ApiQueryFields = "fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee,efficiency"
-    
+
+    # space-mgmt-try-first is fetched via the private CLI endpoint instead of the API endpoint
+    $SpaceMgmtTryFirstLookup = @{}
+    try {
+        if (-not $MappedVolumeNames -or $MappedVolumeNames.Count -eq 0) {
+            throw "Unable to fetch ONTAP space-mgmt-try-first details as the mapped volume names are either null or empty."
+        }
+        $SpaceMgmtApiEndpoint = '/private/cli/volume'
+        $SpaceMgmtApiQueryFilter = "volume=$($MappedVolumeNames -join '|')"
+        $SpaceMgmtApiQueryFields = "fields=space-mgmt-try-first"
+        $SpaceMgmtResponse = Invoke-ONTAPRequest -ApiEndpoint $SpaceMgmtApiEndpoint -ApiQueryFilter $SpaceMgmtApiQueryFilter -ApiQueryFields $SpaceMgmtApiQueryFields
+        foreach ($spaceMgmtRecord in $SpaceMgmtResponse.records) {
+            $SpaceMgmtTryFirstLookup[$spaceMgmtRecord.volume] = $spaceMgmtRecord.space_mgmt_try_first
+        }
+    } catch {
+        Write-Information "Error occurred while fetching ONTAP space-mgmt-try-first details. Error: $($_.Exception.Message)"
+        $DriftAssessmentData['errors']['spaceMgmtTryFirst'] = $_.Exception.Message
+    }
+
     # Volume details
     Write-Information "Getting ONTAP volume details for UUIDs: $MappedVolumeUuids"
     try{
@@ -396,6 +414,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
                 'snapshot-copy-reserve' = $perVolumeData.space.snapshot.reserve_percent
                 'snapshot-autodelete' = $perVolumeData.space.snapshot.autodelete.enabled
                 'snapshot-policy' = $perVolumeData.snapshot_policy.name
+                'space-mgmt-try-first' = $SpaceMgmtTryFirstLookup[$perVolumeData.name]
                 'tiering-policy' = $perVolumeData.tiering.policy
                 'tiering-min-cooling-days' = $perVolumeData.tiering.min_cooling_days
                 'compression' = $perVolumeData.efficiency.compression

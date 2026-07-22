@@ -136,7 +136,8 @@ async function getResilienceDriftAssessment(
     databaseInstanceId: string,
     fieldsValues: string[] = [],
     resourceAssessmentData: ResourceAssessmentData = {},
-    databaseInstanceConfigData: Array<{ config_data_type: string; config_data: any }> = []
+    databaseInstanceConfigData: Array<{ config_data_type: string; config_data: any }> = [],
+    ec2InstanceId: string
 ): Promise<(AssessmentItemType | AssessmentErrorItemType)[]> {
     logger.info('Getting resilience drift assessment for:', {
         credentialsId,
@@ -200,7 +201,8 @@ async function getResilienceDriftAssessment(
                       resourceName,
                       databaseInstanceId,
                       resourceAssessmentData,
-                      highAvailabilityAssessmentData
+                      highAvailabilityAssessmentData,
+                      ec2InstanceId
                   )
                 : Promise.resolve(undefined)
         ]);
@@ -958,6 +960,7 @@ async function initiateHostLevelHighAvailabilityAssessment(
         const [parsedQuorumData, parsedHeartSettingsData, parsedAoagData] = rawResponsesParsed;
 
         const aoagDetails = isAoag ? deriveAoagDetails(parsedAoagData as Record<string, unknown>) : undefined;
+        const windowsClusterName = parsedQuorumData?.WindowsClusterName;
 
         let clusterQuorumResult: {
             status: AssessmentStatus;
@@ -1043,6 +1046,7 @@ async function initiateHostLevelHighAvailabilityAssessment(
         response = {
             clusterQuorum: clusterQuorumResult,
             heartbeat: heartbeatResult,
+            ...(windowsClusterName && { windowsClusterName }),
             ...(aoagDetails && { aoagDetails })
         };
     } catch (err: any) {
@@ -1148,7 +1152,8 @@ async function getHighAvailabilityDriftData(
     resourceName: string,
     databaseInstanceId: string,
     resourceAssessmentData: ResourceAssessmentData,
-    highAvailabilityAssessmentData: HighAvailabilityAssessment
+    highAvailabilityAssessmentData: HighAvailabilityAssessment,
+    ec2InstanceId: string
 ): Promise<(AssessmentItemType | AssessmentErrorItemType)[]> {
     logger.info('Initiating High availability resiliency assessment for:', {
         accountId,
@@ -1168,7 +1173,7 @@ async function getHighAvailabilityDriftData(
     }
 
     try {
-        const { highAvailability: { clusterQuorum, heartbeat } = {} } = resourceAssessmentData;
+        const { highAvailability: { clusterQuorum, heartbeat, windowsClusterName } = {} } = resourceAssessmentData;
 
         const { sharedStorage, driveLetter, sqlServerServices } = highAvailabilityAssessmentData;
 
@@ -1264,7 +1269,8 @@ async function getHighAvailabilityDriftData(
                       ...clusterQuorumConfig,
                       recommended: clusterQuorumConfig.recommended ?? '',
                       status: clusterQuorum.status as AssessmentStatus,
-                      objectsInViolation: clusterQuorum.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
+                      objectsInViolation:
+                          clusterQuorum.status === AssessmentStatus.OPTIMIZED ? [] : [windowsClusterName ?? ''],
                       violationDetails:
                           clusterQuorum.status !== AssessmentStatus.OPTIMIZED
                               ? [
@@ -1287,7 +1293,7 @@ async function getHighAvailabilityDriftData(
                       ...heartbeatConfig,
                       recommended: heartbeatConfig.recommended ?? '',
                       status: heartbeat.status as AssessmentStatus,
-                      objectsInViolation: heartbeat.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
+                      objectsInViolation: heartbeat.status === AssessmentStatus.OPTIMIZED ? [] : [ec2InstanceId],
                       violationDetails:
                           heartbeat.status !== AssessmentStatus.OPTIMIZED
                               ? Object.entries(heartbeat.details || {})
@@ -1311,7 +1317,9 @@ async function getHighAvailabilityDriftData(
                           sqlServerServices.status !== AssessmentStatus.OPTIMIZED
                               ? sqlServerServices.nodesInViolation ?? []
                               : [];
-                      const nodeDetails = sqlServerServices.nodeDetails ?? [];
+                      const nodeDetails = (sqlServerServices.nodeDetails ?? []).filter(
+                          ({ nodeId }: { nodeId: string }) => violatingNodes.includes(nodeId)
+                      );
                       return {
                           ...sqlServerServiceConfig,
                           recommended: sqlServerServiceConfig.recommended ?? '',

@@ -382,7 +382,8 @@ async function fetchMssqlDriftAssessment(
                   databaseInstanceId,
                   assessmentTypes,
                   hostLevelAssessmentData as ResourceAssessmentData,
-                  databaseInstanceConfigData
+                  databaseInstanceConfigData,
+                  (resourceMetadata as Metadata)?.node1InstanceId
               )
             : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([])
     ]);
@@ -988,7 +989,12 @@ async function initiateHostLevelAssessmentDataCollection(
         );
         if (haResult) {
             const { clusterQuorum, heartbeat } = haResult;
-            highAvailabilityAssessment = { clusterQuorum, heartbeat };
+            const windowsClusterName = 'windowsClusterName' in haResult ? haResult.windowsClusterName : undefined;
+            highAvailabilityAssessment = {
+                clusterQuorum,
+                heartbeat,
+                ...(windowsClusterName && { windowsClusterName })
+            };
             if ('aoagDetails' in haResult) {
                 aoagDetails = haResult.aoagDetails;
             }

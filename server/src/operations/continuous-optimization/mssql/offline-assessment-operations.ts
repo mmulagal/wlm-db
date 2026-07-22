@@ -227,6 +227,7 @@ interface MSSQLOfflineAssessmentMetadataType {
     virtualNetworkId?: string;
     virtualNetworkName?: string;
     region?: string;
+    windowsClusterName?: string | null;
     windowsClusterNodes?: Array<{
         Node: string;
         State?: string;
@@ -556,6 +557,7 @@ async function fetchMssqlOfflineAssessment(
         deploymentType,
         baseDeploymentType,
         ec2InstanceId,
+        windowsClusterName,
         fciName
     } = metadata;
     const { instanceLevelAssessment, rssConfig, headroom, hostLevelHighAvailability, mtuAlignment, clone } = rawdata;
@@ -587,7 +589,8 @@ async function fetchMssqlOfflineAssessment(
         ...rssConfig,
         highAvailability: {
             clusterQuorum: hostLevelHighAvailability?.clusterQuorum,
-            heartbeat: hostLevelHighAvailability?.heartbeat
+            heartbeat: hostLevelHighAvailability?.heartbeat,
+            ...(windowsClusterName && { windowsClusterName })
         }
     } as ResourceAssessmentData;
 
@@ -611,7 +614,8 @@ async function fetchMssqlOfflineAssessment(
                   hostname,
                   databaseInstanceId,
                   resourceAssessmentDataWithHA,
-                  highAvailability as HighAvailabilityAssessment
+                  highAvailability as HighAvailabilityAssessment,
+                  ec2InstanceId || ''
               )
             : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([])
     ]);

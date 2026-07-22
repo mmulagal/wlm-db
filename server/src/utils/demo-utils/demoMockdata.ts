@@ -6607,6 +6607,18 @@ const ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA = {
         totalNodes: 2,
         details: [
             { Name: 'MSSQLSERVER', Status: 'Running', StartType: 'Automatic', DisplayName: 'SQL Server (MSSQLSERVER)' }
+        ],
+        nodeDetails: [
+            {
+                nodeId: 'demo-sql-prod-fci-001',
+                current: 'SQL Server service startup type is not set to Manual.',
+                recommended: 'SQL Server service startup type must be set to Manual.'
+            },
+            {
+                nodeId: 'demo-sql-prod-fci-002',
+                current: 'SQL Server service is configured with Manual startup.',
+                recommended: 'SQL Server service startup type must be set to Manual.'
+            }
         ]
     }
 };
