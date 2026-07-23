@@ -1985,3 +1985,128 @@ ssmMock.on(ListCommandsCommand).callsFake(async (command: ListCommandsCommand) =
     return response;
 });
 ssmMock.on(DescribeInstanceInformationCommand).resolves(getSsmInstanceInformationResponse);
+
+const FLEET_MANAGER_REGISTRY_DOCUMENT = 'AWSFleetManager-GetWindowsRegistryContent';
+const FLEET_MANAGER_FILESYSTEM_DOCUMENT = 'AWSFleetManager-GetFileSystemContent';
+const FLEET_MANAGER_COMMAND_ID_PREFIX = 'fleetManager:';
+
+const FLEET_MANAGER_REGISTRY_FIXTURES = {
+    'HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\Instance Names\\SQL': {
+        data: { results: [{ Name: 'MSSQLSERVER', Type: 'String', Value: 'MSSQL13.MSSQLSERVER' }], nextToken: '' }
+    },
+    'HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\Instance Names\\SQL\\Paginated': {
+        '*': {
+            data: { results: [{ Name: 'ENTSQL', Type: 'String', Value: 'MSSQL16.ENTSQL' }], nextToken: 'cGFnZTI=' }
+        },
+        'cGFnZTI=': {
+            data: {
+                results: [{ Name: 'MSSQLSERVER', Type: 'String', Value: 'MSSQL16.MSSQLSERVER' }],
+                nextToken: ''
+            }
+        }
+    },
+    'HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL13.MSSQLSERVER\\MSSQLServer': {
+        data: {
+            results: [
+                { Name: 'DefaultData', Type: 'String', Value: 'S:\\mssql\\data' },
+                { Name: 'DefaultLog', Type: 'String', Value: 'L:\\mssql\\log' },
+                { Name: 'BackupDirectory', Type: 'String', Value: 'S:\\mssql\\backup' }
+            ],
+            nextToken: ''
+        }
+    },
+    'HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\MSSQL13.MSSQLSERVER\\MSSQLServer\\Parameters': {
+        data: {
+            results: [
+                { Name: 'SQLArg0', Type: 'String', Value: '-dS:\\mssql\\data\\master.mdf' },
+                { Name: 'SQLArg1', Type: 'String', Value: '-eL:\\mssql\\log\\ERRORLOG' },
+                { Name: 'SQLArg2', Type: 'String', Value: '-lL:\\mssql\\log\\mastlog.ldf' }
+            ],
+            nextToken: ''
+        }
+    },
+    'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\mpio\\Parameters': {
+        data: {
+            results: [
+                { Name: 'PathVerifyEnabled', Type: 'DWord', Value: '1' },
+                { Name: 'PathVerificationPeriod', Type: 'DWord', Value: '30' }
+            ],
+            nextToken: ''
+        }
+    },
+    'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Disk': {
+        data: { results: [{ Name: 'TimeOutValue', Type: 'DWord', Value: '60' }], nextToken: '' }
+    },
+    'HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\Instance Names\\SQL\\PaginatedFailure': {
+        '*': {
+            data: { results: [{ Name: 'ENTSQL', Type: 'String', Value: 'MSSQL16.ENTSQL' }], nextToken: 'cGFnZTI=' }
+        },
+        'cGFnZTI=': { error: 'Simulated page failure' }
+    }
+};
+
+const FLEET_MANAGER_FILESYSTEM_FIXTURES = {
+    'S:\\mssql\\data': {
+        data: {
+            results: [{ Name: 'master.mdf', Mode: '-a---', Length: '8388608', LastWriteTimeUTC: '1731000000000' }],
+            nextToken: ''
+        }
+    },
+    'L:\\mssql\\log': {
+        data: {
+            results: [
+                { Name: 'mastlog.ldf', Mode: '-a---', Length: '524288', LastWriteTimeUTC: '1731000000000' },
+                { Name: 'master.mdf', Mode: '-a---', Length: '8388608', LastWriteTimeUTC: '1731000000000' }
+            ],
+            nextToken: ''
+        }
+    }
+};
+
+const FLEET_MANAGER_NOT_FOUND_ERRORS = {
+    [FLEET_MANAGER_REGISTRY_DOCUMENT]: 'The specified registry key does not exist.',
+    [FLEET_MANAGER_FILESYSTEM_DOCUMENT]: 'The specified path does not exist.'
+};
+
+function fleetManagerNotFoundError(documentName) {
+    return { error: FLEET_MANAGER_NOT_FOUND_ERRORS[documentName] };
+}
+
+function fleetManagerCommandId(documentName, path, nextToken) {
+    return `${FLEET_MANAGER_COMMAND_ID_PREFIX}${documentName}::${path}::${nextToken}`;
+}
+
+function isFleetManagerCommand(input) {
+    return (
+        input.DocumentName === FLEET_MANAGER_REGISTRY_DOCUMENT ||
+        input.DocumentName === FLEET_MANAGER_FILESYSTEM_DOCUMENT
+    );
+}
+
+ssmMock.on(SendCommandCommand, isFleetManagerCommand).callsFake(async input => {
+    const [path] = input.Parameters?.Path ?? [];
+    const [nextToken] = input.Parameters?.NextToken ?? ['*'];
+    return { Command: { CommandId: fleetManagerCommandId(input.DocumentName, path, nextToken) } };
+});
+
+ssmMock
+    .on(
+        GetCommandInvocationCommand,
+        input => typeof input.CommandId === 'string' && input.CommandId.startsWith(FLEET_MANAGER_COMMAND_ID_PREFIX)
+    )
+    .callsFake(async input => {
+        const [documentName, path, nextToken] = input.CommandId.slice(FLEET_MANAGER_COMMAND_ID_PREFIX.length).split(
+            '::'
+        );
+        const fixtures =
+            documentName === FLEET_MANAGER_REGISTRY_DOCUMENT
+                ? FLEET_MANAGER_REGISTRY_FIXTURES
+                : FLEET_MANAGER_FILESYSTEM_FIXTURES;
+        const fixture = fixtures[path];
+        const page = fixture && '*' in fixture ? fixture[nextToken] : fixture;
+        return {
+            Status: 'Success',
+            StandardOutputContent: JSON.stringify(page ?? fleetManagerNotFoundError(documentName)),
+            StandardErrorContent: ''
+        };
+    });

@@ -243,7 +243,8 @@ async function executeSSMDocument(
     region: string,
     params: SendCommandCommandInput,
     accountId?: string,
-    pollDuration?: number
+    pollDuration?: number,
+    pluginName?: string
 ) {
     logger.info('Execute SSM document', { credentialsId, region, params: params?.Comment, accountId, pollDuration });
 
@@ -252,7 +253,8 @@ async function executeSSMDocument(
     const [instanceIds] = params?.InstanceIds ?? [];
     const pollParams = {
         CommandId: commandId,
-        InstanceId: instanceIds
+        InstanceId: instanceIds,
+        ...(pluginName && { PluginName: pluginName })
     };
 
     // Sleep for 1 second in non-demo flow to avoid immediate polling

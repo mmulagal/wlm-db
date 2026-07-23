@@ -15,6 +15,7 @@ import {
     CombinedOptimizeConfigName,
     isCombinedOptimizeConfig,
     mergeOptimizationTargets,
+    OptimizeStorageConfigs,
     OptimizeStorageRequestParams
 } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
@@ -376,6 +377,38 @@ const GOLDEN_CONFIG_LOOKUP = {
     [DatabaseTypes.MS_SQL_SERVER]: new Map(MSSQL_GOLDEN_CONFIG.map(entry => [entry.id, entry])),
     [DatabaseTypes.ORACLE]: new Map(ORACLE_GOLDEN_CONFIG.map(entry => [entry.id, entry]))
 };
+
+// MSSQL storage golden-config entries, bucketed by resource type; consumed by the storage assessment/drift flow.
+const mssqlVolumeConfigData = MSSQL_GOLDEN_CONFIG.filter(
+    e =>
+        e.type === 'storage' &&
+        e.subType === 'configuration' &&
+        e.resourceType === 'Volume' &&
+        e.id !== OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION
+);
+const mssqlLunConfigData = MSSQL_GOLDEN_CONFIG.filter(
+    e => e.type === 'storage' && e.subType === 'configuration' && e.resourceType === 'Lun'
+);
+const mssqlOsConfigData = MSSQL_GOLDEN_CONFIG.filter(
+    e =>
+        e.type === 'storage' &&
+        e.subType === 'configuration' &&
+        e.resourceType !== 'Volume' &&
+        e.resourceType !== 'Lun' &&
+        e.id !== OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT
+);
+const mssqlLayoutConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'layout');
+const mssqlSizingConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'sizing');
+
+function getGoldenConfigEntryById(configData: GoldenConfigEntry[], id: string): GoldenConfigEntry {
+    const entry = configData.find(data => data.id === id);
+    if (!entry) {
+        const errorMessage = `Golden config entry with id "${id}" was not found. It may have been renamed or removed.`;
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+    return entry;
+}
 
 function enrichWithGoldenConfig(entries: DismissConfig[], databaseType: DatabaseTypes): DismissedConfigurationType[] {
     const lookup = GOLDEN_CONFIG_LOOKUP[databaseType as keyof typeof GOLDEN_CONFIG_LOOKUP];
@@ -980,7 +1013,13 @@ export {
     enrichWithGoldenConfig,
     mapAssessmentToV1,
     resolveAssessmentTypes,
-    GOLDEN_CONFIG_LOOKUP
+    GOLDEN_CONFIG_LOOKUP,
+    mssqlVolumeConfigData,
+    mssqlLunConfigData,
+    mssqlOsConfigData,
+    mssqlLayoutConfigData,
+    mssqlSizingConfigData,
+    getGoldenConfigEntryById
 };
 
 export type { GoldenConfigEntry, GoldenConfigComponent, MapAssessmentToV1Config, UnOptimizedDiskGroups };

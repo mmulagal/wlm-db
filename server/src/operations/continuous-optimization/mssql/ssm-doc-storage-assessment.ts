@@ -1,0 +1,557 @@
+import createError from 'http-errors';
+import { isEmpty } from 'lodash-es';
+
+import {
+    getWindowsRegistryContent,
+    getFileSystemContent,
+    type RegistryEntry
+} from '../../aws/ssm-fleet-manager-operations';
+import {
+    AssessmentStatus,
+    ASSESSMENT_RESOURCE_TYPE,
+    DEFAULT_MPIO_TIMEOUT
+} from '../../../utils/continous-optimization-consts';
+import { HttpErrorCodes } from '../../../utils/consts';
+import getLogger from '../../../utils/logger';
+
+import type {
+    AssessmentErrorItemType,
+    GenericViolationResponseType
+} from '../../../routes/types/continuous-optimization.types';
+import type { MssqlAssessmentItemType } from '../../../routes/types/mssql-continuous-optimisation.types';
+import {
+    getGoldenConfigEntryById,
+    mssqlLayoutConfigData as layoutConfigData,
+    mssqlOsConfigData as osConfigData,
+    type GoldenConfigEntry
+} from '../assessment-utils';
+
+const logger = getLogger();
+
+const SQL_INSTANCE_NAMES_PATH = 'HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\Instance Names\\SQL';
+const MPIO_PARAMETERS_PATH = 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\mpio\\Parameters';
+const DISK_TIMEOUT_PATH = 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Disk';
+const DRIVE_LETTER_PATTERN = /^[A-Za-z]:/;
+const SYSTEM_DATABASE_FILE_PATTERN = /^(master|mastlog|model|tempdb|templog|msdb)/i;
+const mssqlInstanceRegistryPath = (registryInstanceId: string, suffix = ''): string =>
+    `HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\${registryInstanceId}\\MSSQLServer${suffix}`;
+const mssqlInstanceSetupRegistryPath = (registryInstanceId: string): string =>
+    `HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\${registryInstanceId}\\Setup`;
+
+const findRegistryValue = (entries: RegistryEntry[], name: string): string | undefined =>
+    entries.find(entry => entry.name === name && entry.type !== 'Key')?.value;
+
+const extractDriveLetter = (path: string): string | undefined => DRIVE_LETTER_PATTERN.exec(path)?.[0];
+
+interface DiscoveredSqlInstance {
+    instanceName: string;
+    registryInstanceId: string;
+}
+
+interface SqlDefaultPaths {
+    installRoot?: string;
+    defaultData?: string;
+    defaultLog?: string;
+    backupDirectory?: string;
+    error?: string;
+}
+
+interface MultipathConfig {
+    mpioEnabled: boolean;
+    pathVerifyEnabled?: string;
+    pathVerificationPeriod?: string;
+    diskTimeoutValue?: string;
+}
+
+interface DirectoryLayoutCheck {
+    path?: string;
+    mdfCount: number;
+    ldfCount: number;
+    ndfCount: number;
+    otherFileNames: string[];
+    systemFileNames: string[];
+    error?: string;
+}
+
+interface LayoutBySection {
+    'default-data-files-location': DirectoryLayoutCheck;
+    'default-log-files-location': DirectoryLayoutCheck;
+}
+
+interface SqlInstanceAssessment {
+    instanceName: string;
+    registryInstanceId: string;
+    paths: SqlDefaultPaths;
+    layout: LayoutBySection;
+    mpio: MultipathConfig;
+    activeOnThisHost?: boolean;
+}
+
+function classifyDirectoryListing(fileNames: string[]): Omit<DirectoryLayoutCheck, 'path' | 'error'> {
+    const otherFileNames: string[] = [];
+    const systemFileNames: string[] = [];
+    let mdfCount = 0;
+    let ldfCount = 0;
+    let ndfCount = 0;
+
+    fileNames.forEach(fileName => {
+        if (SYSTEM_DATABASE_FILE_PATTERN.test(fileName)) {
+            systemFileNames.push(fileName);
+            return;
+        }
+
+        const extension = fileName.split('.').pop()?.toLowerCase();
+        if (extension === 'mdf') {
+            mdfCount += 1;
+        } else if (extension === 'ldf') {
+            ldfCount += 1;
+        } else if (extension === 'ndf') {
+            ndfCount += 1;
+        } else {
+            otherFileNames.push(fileName);
+        }
+    });
+
+    return { mdfCount, ldfCount, ndfCount, otherFileNames, systemFileNames };
+}
+
+function emptyDirectoryLayoutCheck(path?: string, error?: string): DirectoryLayoutCheck {
+    return { path, mdfCount: 0, ldfCount: 0, ndfCount: 0, otherFileNames: [], systemFileNames: [], error };
+}
+
+async function discoverSqlInstances(
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    accountId?: string
+): Promise<DiscoveredSqlInstance[]> {
+    logger.info('Discovering SQL instances via AWSFleetManager-GetWindowsRegistryContent', {
+        credentialsId,
+        region,
+        ec2InstanceId
+    });
+
+    const { found, entries, error } = await getWindowsRegistryContent(
+        credentialsId,
+        region,
+        ec2InstanceId,
+        SQL_INSTANCE_NAMES_PATH,
+        accountId
+    );
+
+    if (!found) {
+        logger.error('Failed to discover SQL instances via registry read', { ec2InstanceId, error });
+        return [];
+    }
+
+    return entries
+        .filter(entry => entry.type !== 'Key')
+        .map(entry => ({ instanceName: entry.name, registryInstanceId: entry.value }));
+}
+
+async function getSqlDefaultPaths(
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    registryInstanceId: string,
+    accountId?: string
+): Promise<SqlDefaultPaths> {
+    logger.info('Reading SQL default paths via registry read', {
+        credentialsId,
+        accountId,
+        ec2InstanceId,
+        registryInstanceId
+    });
+
+    const [defaultPaths, setup] = await Promise.all([
+        getWindowsRegistryContent(
+            credentialsId,
+            region,
+            ec2InstanceId,
+            mssqlInstanceRegistryPath(registryInstanceId),
+            accountId
+        ),
+        getWindowsRegistryContent(
+            credentialsId,
+            region,
+            ec2InstanceId,
+            mssqlInstanceSetupRegistryPath(registryInstanceId),
+            accountId
+        )
+    ]);
+
+    if (!defaultPaths.found) {
+        return { error: defaultPaths.error };
+    }
+
+    return {
+        installRoot: setup.found ? findRegistryValue(setup.entries, 'SQLDataRoot') : undefined,
+        defaultData: findRegistryValue(defaultPaths.entries, 'DefaultData'),
+        defaultLog: findRegistryValue(defaultPaths.entries, 'DefaultLog'),
+        backupDirectory: findRegistryValue(defaultPaths.entries, 'BackupDirectory')
+    };
+}
+
+async function getMultipathConfig(
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    accountId?: string
+): Promise<MultipathConfig> {
+    logger.info('Reading MPIO configuration via registry read', { ec2InstanceId });
+
+    const [mpioParameters, diskSettings] = await Promise.all([
+        getWindowsRegistryContent(credentialsId, region, ec2InstanceId, MPIO_PARAMETERS_PATH, accountId),
+        getWindowsRegistryContent(credentialsId, region, ec2InstanceId, DISK_TIMEOUT_PATH, accountId)
+    ]);
+
+    if (!mpioParameters.found) {
+        return { mpioEnabled: false };
+    }
+
+    return {
+        mpioEnabled: true,
+        pathVerifyEnabled: findRegistryValue(mpioParameters.entries, 'PathVerifyEnabled'),
+        pathVerificationPeriod: findRegistryValue(mpioParameters.entries, 'PathVerificationPeriod'),
+        diskTimeoutValue: diskSettings.found ? findRegistryValue(diskSettings.entries, 'TimeOutValue') : undefined
+    };
+}
+
+async function getDirectoryLayoutCheck(
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    directoryPath?: string,
+    accountId?: string
+): Promise<DirectoryLayoutCheck> {
+    logger.info('Checking directory layout via file system read', {
+        credentialsId,
+        accountId,
+        ec2InstanceId,
+        directoryPath
+    });
+
+    if (isEmpty(directoryPath)) {
+        return emptyDirectoryLayoutCheck(undefined, 'Path not available');
+    }
+
+    const { found, entries, error } = await getFileSystemContent(
+        credentialsId,
+        region,
+        ec2InstanceId,
+        directoryPath!,
+        accountId
+    );
+
+    if (!found) {
+        return emptyDirectoryLayoutCheck(directoryPath, error);
+    }
+
+    return {
+        path: directoryPath,
+        ...classifyDirectoryListing(entries.map(entry => entry.name))
+    };
+}
+
+async function getLayoutViolations(
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    paths: SqlDefaultPaths,
+    accountId?: string
+): Promise<LayoutBySection> {
+    logger.info('Getting layout violations for default data/log directories', {
+        credentialsId,
+        accountId,
+        ec2InstanceId
+    });
+
+    const [defaultDataLayout, defaultLogLayout] = await Promise.all([
+        getDirectoryLayoutCheck(credentialsId, region, ec2InstanceId, paths.defaultData, accountId),
+        getDirectoryLayoutCheck(credentialsId, region, ec2InstanceId, paths.defaultLog, accountId)
+    ]);
+
+    return {
+        'default-data-files-location': defaultDataLayout,
+        'default-log-files-location': defaultLogLayout
+    };
+}
+
+async function assessSqlInstance(
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    instance: DiscoveredSqlInstance,
+    accountId?: string
+): Promise<Omit<SqlInstanceAssessment, 'mpio'>> {
+    logger.info('Assessing SQL instance', {
+        credentialsId,
+        accountId,
+        ec2InstanceId,
+        instanceName: instance.instanceName
+    });
+
+    const paths = await getSqlDefaultPaths(
+        credentialsId,
+        region,
+        ec2InstanceId,
+        instance.registryInstanceId,
+        accountId
+    );
+    const layout = await getLayoutViolations(credentialsId, region, ec2InstanceId, paths, accountId);
+    // Registry paths resolve on both the active and standby cluster nodes, so `paths` alone
+    // can't tell which node is active. The file-system read only succeeds on the node with the
+    // shared disk mounted, so a failed listing (path attempted but errored) marks a standby node.
+    const attemptedLayouts = [layout['default-data-files-location'], layout['default-log-files-location']].filter(
+        (entry): entry is DirectoryLayoutCheck => Boolean(entry.path)
+    );
+    const activeOnThisHost = attemptedLayouts.length > 0 ? attemptedLayouts.every(entry => !entry.error) : undefined;
+
+    return { ...instance, paths, layout, activeOnThisHost };
+}
+
+async function runLayoutAssessment(
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    instanceName: string,
+    accountId?: string
+): Promise<Omit<SqlInstanceAssessment, 'mpio'>> {
+    logger.info('Running SSM-doc-based layout assessment', {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId,
+        instanceName
+    });
+
+    const discoveredInstances = await discoverSqlInstances(credentialsId, region, ec2InstanceId, accountId);
+    const matchedInstance = discoveredInstances.find(instance => instance.instanceName === instanceName);
+    if (!matchedInstance) {
+        const errorMessage = `SQL instance ${instanceName} not found on host ${ec2InstanceId}`;
+        logger.error(errorMessage, { ec2InstanceId, instanceName });
+        throw createError(HttpErrorCodes.NOT_FOUND, errorMessage);
+    }
+    return assessSqlInstance(credentialsId, region, ec2InstanceId, matchedInstance, accountId);
+}
+
+const NO_ASSESSABLE_PATH_ERROR =
+    'No SQL instance on this host has a registry path that resolves to a drive letter for this location.';
+const NO_MPIO_DATA_ERROR = 'The MPIO Parameters registry key was not found on this host.';
+const MPIO_DISABLED_TIMEOUT_ERROR = 'MPIO is disabled on this host; the path verification timeout is not applicable.';
+
+interface LayoutViolationEntry {
+    instanceName: string;
+    sharedDriveLetter?: string;
+    misplacedFilesPath?: string;
+}
+
+interface InstanceDriveLetters {
+    instanceName: string;
+    dataDrive?: string;
+    logDrive?: string;
+}
+
+function getInstanceDriveLetters(instance: SqlInstanceAssessment): InstanceDriveLetters {
+    return {
+        instanceName: instance.instanceName,
+        dataDrive: extractDriveLetter(instance.paths.defaultData ?? ''),
+        logDrive: extractDriveLetter(instance.paths.defaultLog ?? '')
+    };
+}
+
+function buildDriveSharingViolations(entries: LayoutViolationEntry[]): {
+    objectsInViolation: string[];
+    violationDetails: GenericViolationResponseType[];
+} {
+    const instanceNamesByDrive = new Map<string, string[]>();
+    const misplacedPathByInstance = new Map<string, string>();
+    entries.forEach(({ instanceName, sharedDriveLetter, misplacedFilesPath }) => {
+        if (sharedDriveLetter) {
+            instanceNamesByDrive.set(sharedDriveLetter, [
+                ...(instanceNamesByDrive.get(sharedDriveLetter) ?? []),
+                instanceName
+            ]);
+        }
+        if (misplacedFilesPath) {
+            misplacedPathByInstance.set(instanceName, misplacedFilesPath);
+        }
+    });
+
+    const violationDetails: GenericViolationResponseType[] = [
+        ...[...instanceNamesByDrive.entries()].map(([driveLetter, instanceNames]) => ({
+            objectName: driveLetter,
+            value: instanceNames.join(', '),
+            objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
+        })),
+        ...[...misplacedPathByInstance.entries()].map(([instanceName, path]) => ({
+            objectName: path,
+            value: instanceName,
+            objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
+        }))
+    ];
+    const objectsInViolation = [...new Set([...instanceNamesByDrive.keys(), ...misplacedPathByInstance.values()])];
+    return { objectsInViolation, violationDetails };
+}
+
+function buildRegistryLayoutFinding(
+    goldenData: GoldenConfigEntry,
+    totalObjectsAssessed: number,
+    entries: LayoutViolationEntry[]
+): MssqlAssessmentItemType {
+    const { objectsInViolation, violationDetails } = buildDriveSharingViolations(entries);
+    const status = objectsInViolation.length > 0 ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+    const hasDriveViolation = entries.some(e => e.sharedDriveLetter);
+    const hasContentViolation = entries.some(e => e.misplacedFilesPath);
+    const current =
+        status === AssessmentStatus.OPTIMIZED
+            ? 'Separate drive'
+            : hasDriveViolation
+            ? 'Shared drive with log/data files'
+            : hasContentViolation
+            ? 'Log/data files co-located in same directory'
+            : 'Shared drive with log/data files';
+    return {
+        ...goldenData,
+        recommended: (goldenData.value ?? '').toString(),
+        status,
+        current,
+        objectsInViolation,
+        totalObjectsAssessed,
+        totalObjectsInViolation: objectsInViolation.length,
+        violationDetails: violationDetails.length > 0 ? violationDetails : undefined
+    } as unknown as MssqlAssessmentItemType;
+}
+
+function calculateRegistryStorageLayoutDrift(
+    instances: SqlInstanceAssessment[]
+): (MssqlAssessmentItemType | AssessmentErrorItemType)[] {
+    logger.info('Calculating registry-based storage layout drift', { instanceCount: instances.length });
+
+    const driveLetters = instances.map(getInstanceDriveLetters);
+    const dataAssessableCount = driveLetters.filter(d => d.dataDrive).length;
+    const logAssessableCount = driveLetters.filter(d => d.logDrive).length;
+
+    const dataFilesGoldenData = getGoldenConfigEntryById(layoutConfigData, 'data-files-location');
+    const logFilesGoldenData = getGoldenConfigEntryById(layoutConfigData, 'log-files-location');
+
+    const sharedDriveLetterOf = (d: InstanceDriveLetters): string | undefined =>
+        d.dataDrive && d.logDrive && d.dataDrive === d.logDrive ? d.dataDrive : undefined;
+
+    const dataEntries: LayoutViolationEntry[] = instances.map((instance, i) => ({
+        instanceName: driveLetters[i].instanceName,
+        sharedDriveLetter: sharedDriveLetterOf(driveLetters[i]),
+        misplacedFilesPath:
+            instance.layout['default-data-files-location']?.ldfCount > 0
+                ? instance.layout['default-data-files-location'].path
+                : undefined
+    }));
+    const logEntries: LayoutViolationEntry[] = instances.map((instance, i) => ({
+        instanceName: driveLetters[i].instanceName,
+        sharedDriveLetter: sharedDriveLetterOf(driveLetters[i]),
+        misplacedFilesPath:
+            instance.layout['default-log-files-location']?.mdfCount > 0
+                ? instance.layout['default-log-files-location'].path
+                : undefined
+    }));
+
+    return [
+        dataAssessableCount === 0
+            ? { ...dataFilesGoldenData, errorMessage: NO_ASSESSABLE_PATH_ERROR }
+            : buildRegistryLayoutFinding(dataFilesGoldenData, dataAssessableCount, dataEntries),
+        logAssessableCount === 0
+            ? { ...logFilesGoldenData, errorMessage: NO_ASSESSABLE_PATH_ERROR }
+            : buildRegistryLayoutFinding(logFilesGoldenData, logAssessableCount, logEntries)
+    ];
+}
+
+function buildRegistryBooleanFinding(
+    goldenData: GoldenConfigEntry,
+    status: AssessmentStatus,
+    current: string,
+    recommended: string
+): MssqlAssessmentItemType {
+    const isViolation = status === AssessmentStatus.NOT_OPTIMIZED;
+    return {
+        ...goldenData,
+        recommended,
+        status,
+        current,
+        objectsInViolation: isViolation ? [goldenData.id] : [],
+        totalObjectsAssessed: 1,
+        totalObjectsInViolation: isViolation ? 1 : 0,
+        violationDetails: isViolation
+            ? [{ objectName: goldenData.id, value: current, objectType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH }]
+            : undefined
+    } as unknown as MssqlAssessmentItemType;
+}
+
+function calculateRegistryMpioDrift(
+    instances: SqlInstanceAssessment[]
+): (MssqlAssessmentItemType | AssessmentErrorItemType)[] {
+    logger.info('Calculating registry-based MPIO drift', { instanceCount: instances.length });
+
+    const mpioEnabledGoldenData = getGoldenConfigEntryById(osConfigData, 'mpio-enabled');
+    const mpioTimeoutGoldenData = getGoldenConfigEntryById(osConfigData, 'mpio-timeout');
+    const mpio = instances[0]?.mpio;
+
+    if (!mpio) {
+        return [
+            { ...mpioEnabledGoldenData, errorMessage: NO_MPIO_DATA_ERROR },
+            { ...mpioTimeoutGoldenData, errorMessage: NO_MPIO_DATA_ERROR }
+        ];
+    }
+
+    const enabledStatus = mpio.mpioEnabled ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+    const mpioEnabledFinding = buildRegistryBooleanFinding(
+        mpioEnabledGoldenData,
+        enabledStatus,
+        mpio.mpioEnabled ? 'Enabled' : 'Disabled',
+        'Enabled'
+    );
+
+    if (!mpio.mpioEnabled) {
+        return [mpioEnabledFinding, { ...mpioTimeoutGoldenData, errorMessage: MPIO_DISABLED_TIMEOUT_ERROR }];
+    }
+
+    const timeoutStatus =
+        Number(mpio.diskTimeoutValue) === DEFAULT_MPIO_TIMEOUT
+            ? AssessmentStatus.OPTIMIZED
+            : AssessmentStatus.NOT_OPTIMIZED;
+    const mpioTimeoutFinding = buildRegistryBooleanFinding(
+        mpioTimeoutGoldenData,
+        timeoutStatus,
+        mpio.diskTimeoutValue !== undefined ? String(mpio.diskTimeoutValue) : 'Unknown',
+        `${DEFAULT_MPIO_TIMEOUT}`
+    );
+
+    return [mpioEnabledFinding, mpioTimeoutFinding];
+}
+
+export {
+    discoverSqlInstances,
+    getSqlDefaultPaths,
+    getMultipathConfig,
+    getLayoutViolations,
+    runLayoutAssessment,
+    extractDriveLetter,
+    mssqlInstanceRegistryPath,
+    SQL_INSTANCE_NAMES_PATH,
+    MPIO_PARAMETERS_PATH,
+    getInstanceDriveLetters,
+    buildDriveSharingViolations,
+    buildRegistryLayoutFinding,
+    calculateRegistryStorageLayoutDrift,
+    buildRegistryBooleanFinding,
+    calculateRegistryMpioDrift
+};
+export type {
+    DiscoveredSqlInstance,
+    SqlDefaultPaths,
+    MultipathConfig,
+    DirectoryLayoutCheck,
+    LayoutBySection,
+    SqlInstanceAssessment,
+    LayoutViolationEntry,
+    InstanceDriveLetters
+};

@@ -349,9 +349,30 @@ const FetchMssqlPatchScanSchema = {
     }
 };
 
+const MssqlUnregisteredAssessmentParams = Type.Intersect([
+    CredentialsIdParams,
+    Type.Object({
+        ec2InstanceId: Type.String({ minLength: 1, description: 'EC2 instance ID hosting the SQL Server instance.' }),
+        instanceName: Type.String({ minLength: 1, description: 'SQL Server instance name, e.g. MSSQLSERVER.' })
+    })
+]);
+
+const TriggerMssqlUnregisteredAssessmentSchema = {
+    tags: [RouteTags.MSSQL_ASSESSMENT],
+    summary: 'Trigger a one-time storage assessment for an unregistered MSSQL instance',
+    description:
+        'Collects registry-based storage layout and MPIO configuration via AWS Fleet Manager for a SQL Server ' +
+        'instance that is not registered with Workload Factory (e.g. when the credential only has AWS-doc permission).',
+    params: MssqlUnregisteredAssessmentParams,
+    response: {
+        202: JobIdResponse
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     TriggerDriftAssessmentSchema,
+    TriggerMssqlUnregisteredAssessmentSchema,
     OptimizeStorageSchema,
     OptimizeSizingSchema,
     OptimizeComputeSchema,

@@ -34,7 +34,8 @@ import {
     BulkOptimizeMTUAlignmentSchema,
     FetchMssqlPatchScanSchema,
     DriftAssessmentDataCollectionV1,
-    DriftAssessmentPerAccountV1
+    DriftAssessmentPerAccountV1,
+    TriggerMssqlUnregisteredAssessmentSchema
 } from './schemas/mssql-continuous-optimization-schema';
 import {
     optimizeStorage,
@@ -81,7 +82,8 @@ import {
     fetchMssqlOfflineAssessmentV1,
     listMssqlOfflineAssessmentDatabases,
     deleteOfflineAssessmentRecord,
-    listMssqlOfflineAssessmentDatabasesPerAccount
+    listMssqlOfflineAssessmentDatabasesPerAccount,
+    triggerMssqlUnregisteredAssessment
 } from '../operations/continuous-optimization/mssql/offline-assessment-operations';
 import { uploadOfflineAssessment, downloadOfflineAssessmentScript } from '../operations/offline-assessment-operations';
 import {
@@ -163,6 +165,23 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                     fields
                 );
                 return reply.send(response);
+            }
+        )
+        .post(
+            `${MSSQL_API_PREFIX_PATH}/ec2-instances/:ec2InstanceId/database-instances/:instanceName/assessment`,
+            { schema: TriggerMssqlUnregisteredAssessmentSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, ec2InstanceId, instanceName }
+                } = castRequest(request);
+                const response = await triggerMssqlUnregisteredAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    ec2InstanceId,
+                    instanceName
+                );
+                return reply.code(202).send(response);
             }
         )
         .get(

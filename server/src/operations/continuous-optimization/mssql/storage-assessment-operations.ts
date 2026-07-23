@@ -43,6 +43,11 @@ import {
     checkForMissingOptimizePermissions,
     buildBlockDeviceSpaceManagementEntry,
     buildVolumeCombinedEntry,
+    mssqlVolumeConfigData as volumeConfigData,
+    mssqlLunConfigData as lunConfigData,
+    mssqlOsConfigData as osConfigData,
+    mssqlLayoutConfigData as layoutConfigData,
+    mssqlSizingConfigData as sizingConfigData,
     type GoldenConfigEntry
 } from '../assessment-utils';
 import { getHeadroomDrift } from '../headroom-assessment';
@@ -53,6 +58,7 @@ interface WadManagerMssqlAssessmentItemType extends MssqlAssessmentItemType {
 }
 
 const logger = getLogger();
+
 interface DatabaseRecord {
     name: string;
     sizeInMb: number;
@@ -80,26 +86,6 @@ interface DatabaseVolumeRecord {
     logSizeInMb?: number;
     databaseDetails?: Array<DatabaseRecord>;
 }
-const volumeConfigData = MSSQL_GOLDEN_CONFIG.filter(
-    e =>
-        e.type === 'storage' &&
-        e.subType === 'configuration' &&
-        e.resourceType === 'Volume' &&
-        e.id !== OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION
-);
-const lunConfigData = MSSQL_GOLDEN_CONFIG.filter(
-    e => e.type === 'storage' && e.subType === 'configuration' && e.resourceType === 'Lun'
-);
-const osConfigData = MSSQL_GOLDEN_CONFIG.filter(
-    e =>
-        e.type === 'storage' &&
-        e.subType === 'configuration' &&
-        e.resourceType !== 'Volume' &&
-        e.resourceType !== 'Lun' &&
-        e.id !== OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT
-);
-const layoutConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'layout');
-const sizingConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'sizing');
 async function initiateStorageAssessmentCollection(
     accountId: string,
     credentialsId: string,
@@ -1229,10 +1215,11 @@ async function calculateStorageDrift(
                 }
 
                 let missingPermissions: string[] = [];
-                // Check for 'fsx:UpdateVolume' permissions
                 if (
                     (key === 'tempdb-drive-size' || key === 'log-drive-size') &&
-                    status !== AssessmentStatus.OPTIMIZED
+                    status !== AssessmentStatus.OPTIMIZED &&
+                    credentialsId &&
+                    region
                 ) {
                     missingPermissions =
                         // eslint-disable-next-line no-await-in-loop
@@ -1289,9 +1276,7 @@ async function calculateStorageDrift(
         }
     }
 
-    // Headroom drift assessment
-
-    if (!skipHeadroom) {
+    if (!skipHeadroom && credentialsId && region) {
         try {
             const [goldenData] = sizingConfigData.filter(data => data.parameter === 'headroom');
             const { status, headroomPercent, missingPermissions, newFsxStorageCapacityGiB } = await getHeadroomDrift(
@@ -1313,11 +1298,13 @@ async function calculateStorageDrift(
                 totalObjectsInViolation: status === AssessmentStatus.OPTIMIZED ? 0 : 1,
                 objectsInViolation: status === AssessmentStatus.OPTIMIZED ? [] : [filesystemId].filter(Boolean)
             });
-        } catch (error: any) {
-            logger.error(
-                `Error while calculating headroom details for ${databaseHostId}, ${databaseInstanceId}, ${filesystemId}.`,
+        } catch (error: unknown) {
+            logger.error('Error while calculating headroom details', {
+                databaseHostId,
+                databaseInstanceId,
+                filesystemId,
                 error
-            );
+            });
         }
     }
 

@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { calculateStorageDrift } from '../../../../src/operations/continuous-optimization/mssql/storage-assessment-operations';
+import {
+    calculateRegistryStorageLayoutDrift,
+    calculateRegistryMpioDrift,
+    type SqlInstanceAssessment
+} from '../../../../src/operations/continuous-optimization/mssql/ssm-doc-storage-assessment';
 import { expandCombinedTargets } from '../../../../src/operations/continuous-optimization/assessment-utils';
 import { MSSQL_GOLDEN_CONFIG } from '../../../../src/operations/continuous-optimization/mssql/golden-config';
 import {
@@ -754,5 +759,241 @@ describe('snapshot-policy assessment (storage/configuration)', () => {
         const thinProvisionViolation = thinProvisionEntry.violationDetails?.find(v => v.objectName === 'vol1');
         expect(typeof thinProvisionViolation?.value).toBe('string');
         expect(thinProvisionViolation?.value).toBe('false');
+    });
+});
+
+describe('calculateRegistryStorageLayoutDrift', () => {
+    const registryInstance = (
+        instanceName: string,
+        paths: { defaultData?: string; defaultLog?: string }
+    ): SqlInstanceAssessment => ({
+        instanceName,
+        registryInstanceId: `MSSQL13.${instanceName}`,
+        paths,
+        layout: {
+            'default-data-files-location': {
+                mdfCount: 0,
+                ldfCount: 0,
+                ndfCount: 0,
+                otherFileNames: [],
+                systemFileNames: []
+            },
+            'default-log-files-location': {
+                mdfCount: 0,
+                ldfCount: 0,
+                ndfCount: 0,
+                otherFileNames: [],
+                systemFileNames: []
+            }
+        },
+        mpio: { mpioEnabled: false }
+    });
+
+    const findFinding = (drift: ReturnType<typeof calculateRegistryStorageLayoutDrift>, id: string) =>
+        drift.find(item => 'id' in item && item.id === id);
+
+    it('should mark both findings OPTIMIZED when every instance has separate drives', () => {
+        const drift = calculateRegistryStorageLayoutDrift([
+            registryInstance('MSSQLSERVER', {
+                defaultData: 'D:\\mssql\\data',
+                defaultLog: 'L:\\mssql\\log'
+            })
+        ]);
+
+        expect(drift).toHaveLength(2);
+        ['data-files-location', 'log-files-location'].forEach(id => {
+            expect(findFinding(drift, id)).toMatchObject({
+                status: AssessmentStatus.OPTIMIZED,
+                current: 'Separate drive',
+                objectsInViolation: [],
+                totalObjectsAssessed: 1,
+                totalObjectsInViolation: 0
+            });
+        });
+    });
+
+    it('should flag data-files-location and log-files-location as NOT_OPTIMIZED when data and log share a drive', () => {
+        const drift = calculateRegistryStorageLayoutDrift([
+            registryInstance('MSSQLSERVER', {
+                defaultData: 'D:\\mssql\\data',
+                defaultLog: 'D:\\mssql\\log'
+            })
+        ]);
+
+        [
+            { id: 'data-files-location', name: 'MSSQLSERVER' },
+            { id: 'log-files-location', name: 'MSSQLSERVER' }
+        ].forEach(({ id, name }) => {
+            expect(findFinding(drift, id)).toMatchObject({
+                status: AssessmentStatus.NOT_OPTIMIZED,
+                current: 'Shared drive with log/data files',
+                objectsInViolation: ['D:'],
+                totalObjectsAssessed: 1,
+                totalObjectsInViolation: 1,
+                violationDetails: [{ objectName: 'D:', value: name, objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE }]
+            });
+        });
+    });
+
+    it('should handle a multi-instance host with mixed optimized/violating instances', () => {
+        const drift = calculateRegistryStorageLayoutDrift([
+            registryInstance('MSSQLSERVER', {
+                defaultData: 'D:\\mssql\\data',
+                defaultLog: 'L:\\mssql\\log'
+            }),
+            registryInstance('NIKE', {
+                defaultData: 'E:\\mssql\\data',
+                defaultLog: 'E:\\mssql\\log'
+            })
+        ]);
+
+        expect(findFinding(drift, 'data-files-location')).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            objectsInViolation: ['E:'],
+            totalObjectsAssessed: 2,
+            totalObjectsInViolation: 1,
+            violationDetails: [{ objectName: 'E:', value: 'NIKE', objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE }]
+        });
+    });
+
+    it('should return an errorMessage for a finding when no instance has a resolvable path', () => {
+        const drift = calculateRegistryStorageLayoutDrift([
+            registryInstance('MSSQLSERVER', {
+                defaultLog: 'L:\\mssql\\log'
+            })
+        ]);
+
+        const dataFinding = findFinding(drift, 'data-files-location');
+        expect(dataFinding).toMatchObject({ id: 'data-files-location' });
+        expect((dataFinding as { errorMessage?: string })?.errorMessage).toBeDefined();
+        expect((dataFinding as { status?: string })?.status).toBeUndefined();
+        expect(findFinding(drift, 'log-files-location')).toMatchObject({ status: AssessmentStatus.OPTIMIZED });
+    });
+
+    it('should flag log-files-location as NOT_OPTIMIZED when the log path itself contains an .mdf, even on a separate drive letter', () => {
+        const instance: SqlInstanceAssessment = {
+            ...registryInstance('MSSQLSERVER', {
+                defaultData: 'S:\\MSSQL\\Data',
+                defaultLog: 'L:\\MSSQL\\Log'
+            }),
+            layout: {
+                'default-data-files-location': {
+                    path: 'S:\\MSSQL\\Data',
+                    mdfCount: 1,
+                    ldfCount: 0,
+                    ndfCount: 0,
+                    otherFileNames: [],
+                    systemFileNames: []
+                },
+                'default-log-files-location': {
+                    path: 'L:\\MSSQL\\Log',
+                    mdfCount: 1,
+                    ldfCount: 1,
+                    ndfCount: 0,
+                    otherFileNames: [],
+                    systemFileNames: []
+                }
+            }
+        };
+        const drift = calculateRegistryStorageLayoutDrift([instance]);
+
+        expect(findFinding(drift, 'data-files-location')).toMatchObject({
+            status: AssessmentStatus.OPTIMIZED,
+            current: 'Separate drive'
+        });
+        expect(findFinding(drift, 'log-files-location')).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            current: 'Log/data files co-located in same directory',
+            objectsInViolation: ['L:\\MSSQL\\Log'],
+            violationDetails: [
+                { objectName: 'L:\\MSSQL\\Log', value: 'MSSQLSERVER', objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE }
+            ]
+        });
+    });
+});
+
+describe('calculateRegistryMpioDrift', () => {
+    const registryInstance = (mpio: SqlInstanceAssessment['mpio']): SqlInstanceAssessment => ({
+        instanceName: 'MSSQLSERVER',
+        registryInstanceId: 'MSSQL13.MSSQLSERVER',
+        paths: {},
+        layout: {
+            'default-data-files-location': {
+                mdfCount: 0,
+                ldfCount: 0,
+                ndfCount: 0,
+                otherFileNames: [],
+                systemFileNames: []
+            },
+            'default-log-files-location': {
+                mdfCount: 0,
+                ldfCount: 0,
+                ndfCount: 0,
+                otherFileNames: [],
+                systemFileNames: []
+            }
+        },
+        mpio
+    });
+
+    const findFinding = (drift: ReturnType<typeof calculateRegistryMpioDrift>, id: string) =>
+        drift.find(item => 'id' in item && item.id === id);
+
+    it('should mark both findings OPTIMIZED when MPIO is enabled with the recommended timeout', () => {
+        const drift = calculateRegistryMpioDrift([
+            registryInstance({ mpioEnabled: true, pathVerifyEnabled: '1', diskTimeoutValue: '60' })
+        ]);
+
+        expect(drift).toHaveLength(2);
+        expect(findFinding(drift, 'mpio-enabled')).toMatchObject({
+            status: AssessmentStatus.OPTIMIZED,
+            current: 'Enabled'
+        });
+        expect(findFinding(drift, 'mpio-timeout')).toMatchObject({ status: AssessmentStatus.OPTIMIZED, current: '60' });
+    });
+
+    it('should flag mpio-enabled as NOT_OPTIMIZED and error mpio-timeout when MPIO is disabled', () => {
+        const drift = calculateRegistryMpioDrift([registryInstance({ mpioEnabled: false })]);
+
+        expect(findFinding(drift, 'mpio-enabled')).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            current: 'Disabled',
+            objectsInViolation: ['mpio-enabled'],
+            totalObjectsInViolation: 1
+        });
+        const timeoutFinding = findFinding(drift, 'mpio-timeout');
+        expect((timeoutFinding as { errorMessage?: string })?.errorMessage).toMatch(/disabled/i);
+        expect((timeoutFinding as { errorMessage?: string })?.errorMessage).not.toMatch(/not found/i);
+        expect((timeoutFinding as { status?: string })?.status).toBeUndefined();
+    });
+
+    it('should coerce a numeric diskTimeoutValue (DWORD registry read) to a string current', () => {
+        const drift = calculateRegistryMpioDrift([
+            registryInstance({ mpioEnabled: true, pathVerifyEnabled: '1', diskTimeoutValue: 60 as unknown as string })
+        ]);
+
+        expect(findFinding(drift, 'mpio-timeout')).toMatchObject({ status: AssessmentStatus.OPTIMIZED, current: '60' });
+    });
+
+    it('should flag mpio-timeout as NOT_OPTIMIZED when the period differs from the recommended 60 seconds', () => {
+        const drift = calculateRegistryMpioDrift([
+            registryInstance({ mpioEnabled: true, pathVerifyEnabled: '1', diskTimeoutValue: '30' })
+        ]);
+
+        expect(findFinding(drift, 'mpio-timeout')).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            current: '30',
+            objectsInViolation: ['mpio-timeout'],
+            totalObjectsInViolation: 1
+        });
+    });
+
+    it('should return an errorMessage for both findings when no instance is present', () => {
+        const drift = calculateRegistryMpioDrift([]);
+
+        const enabledFinding = findFinding(drift, 'mpio-enabled');
+        const timeoutFinding = findFinding(drift, 'mpio-timeout');
+        expect((enabledFinding as { errorMessage?: string })?.errorMessage).toBeDefined();
+        expect((timeoutFinding as { errorMessage?: string })?.errorMessage).toBeDefined();
     });
 });
