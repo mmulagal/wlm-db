@@ -81,12 +81,6 @@ const JobIdResponse = Type.Object({
 
 type JobIdResponseType = Static<typeof JobIdResponse>;
 
-const OptimizationResponse = {
-    200: JobIdResponse,
-    400: { type: 'object', properties: { message: { type: 'string' } } },
-    404: { type: 'object', properties: { message: { type: 'string' } } }
-};
-
 const HttpErrorResponse = Type.Object({ message: Type.String() });
 
 export {
@@ -105,6 +99,5 @@ export {
     CredentialsIdParamsType,
     JobIdResponse,
     JobIdResponseType,
-    OptimizationResponse,
     HttpErrorResponse
 };

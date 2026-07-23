@@ -22,7 +22,7 @@ import {
     OracleDriftAssessmentResponse
 } from '../types/oracle-continuous-optimization.types';
 import { resourceRequest } from './database-hosts-schemas';
-import { AccountIdParams, CredentialsIdParams, HttpErrorResponse, OptimizationResponse } from '../types/generic.types';
+import { AccountIdParams, CredentialsIdParams, HttpErrorResponse, JobIdResponse } from '../types/generic.types';
 import { BaseBulkDismissConfigurationSchema } from './generic-schemas';
 
 const DriftAssessmentDataCollection = {
@@ -92,7 +92,9 @@ const OracleOptimizeSchema = {
     params: AccountIdParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
     body: OptimizeRequestBody,
-    response: OptimizationResponse
+    response: {
+        200: JobIdResponse
+    }
 };
 
 const OracleOptimizeStorageSchema = {
@@ -102,7 +104,9 @@ const OracleOptimizeStorageSchema = {
     params: DatabaseHostOptionalInstanceSummaryParams,
     tags: [RouteTags.ORACLE_ASSESSMENT],
     body: OptimizeStorageConfigurationRequestBody,
-    response: OptimizationResponse
+    response: {
+        200: JobIdResponse
+    }
 };
 
 const OracleOptimizeStorageConfigurationSchema = {
