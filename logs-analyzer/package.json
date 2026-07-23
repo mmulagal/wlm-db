@@ -33,6 +33,9 @@
     "license": "ISC",
     "main": "dist/src/agent.js",
     "name": "logs-analyzer",
+    "overrides": {
+        "body-parser": "^2.3.0"
+    },
     "pkg": {
         "assets": [
             "dist/**/*",
