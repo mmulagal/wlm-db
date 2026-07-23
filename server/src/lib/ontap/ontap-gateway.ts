@@ -73,6 +73,47 @@ interface ProxyOperationBaseOpts {
     maxRecords?: number;
 }
 
+interface ProxyCollectionEnvelope<T> {
+    Count: number;
+    value: T[];
+}
+
+interface OntapVolumeRecord {
+    name: string;
+    uuid: string;
+    svm?: { name?: string; uuid?: string };
+    nas?: { path?: string };
+    autosize?: { mode?: string };
+    space?: {
+        fractional_reserve?: number;
+        snapshot?: {
+            reserve_percent?: number;
+            autodelete?: { enabled?: boolean; delete_order?: string };
+        };
+    };
+    snapshot_policy?: { name?: string };
+    tiering?: { policy?: string; min_cooling_days?: number };
+    guarantee?: { honored?: boolean; type?: string };
+    efficiency?: {
+        compression?: string;
+        compression_type?: string;
+        compaction?: string;
+        dedupe?: string;
+        storage_efficiency_mode?: string;
+    };
+}
+
+interface OntapLunRecord {
+    name: string;
+    uuid: string;
+    os_type?: string;
+    space?: { guarantee?: { requested?: boolean }; scsi_thin_provisioning_support_enabled?: boolean };
+}
+
+function isProxyCollectionEnvelope<T>(value: unknown): value is ProxyCollectionEnvelope<T> {
+    return typeof value === 'object' && value !== null && Array.isArray((value as ProxyCollectionEnvelope<T>).value);
+}
+
 /**
  * Resolves the ONTAP management endpoint (DNS name, falling back to an IP address) for an FSx
  * for ONTAP file system, reusing the same AWS SDK lookup as `getFSXDetails`.
@@ -165,6 +206,28 @@ function isOntapPagedResponse<T>(value: unknown): value is OntapPage<T> {
     return typeof value === 'object' && value !== null && Array.isArray((value as OntapPage<T>).records);
 }
 
+function extractErrorMessage(reason: unknown): string {
+    return reason instanceof Error ? reason.message : String(reason);
+}
+
+/** Builds the `{ accountId, targetId, endpoint }` base shared by all proxy-forwarder ONTAP calls for an FSx file system. */
+function buildOntapProxyBase(accountId: string, targetId: string, region: string): ProxyOperationBaseOpts {
+    return { accountId, targetId, endpoint: `management.${targetId}.fsx.${region}.amazonaws.com` };
+}
+
+/** Unwraps a settled batched-fetch result, logging and recording an error string on rejection. */
+function unwrapOntapSettled<T>(
+    result: PromiseSettledResult<T[]>,
+    label: string,
+    targetId: string
+): { data: T[]; error?: string } {
+    if (result.status === 'fulfilled') {
+        return { data: result.value };
+    }
+    logger.warn(`Failed to fetch ONTAP ${label}`, { targetId, err: result.reason });
+    return { data: [], error: extractErrorMessage(result.reason) };
+}
+
 async function collectAllOntapRecords<T>(
     base: ProxyOperationBaseOpts,
     ontapPath: string,
@@ -181,12 +244,24 @@ async function collectAllOntapRecords<T>(
 
     while (currentPath) {
         // eslint-disable-next-line no-await-in-loop
-        const page: OntapPage<T> | T = await callProxyForwarder<OntapPage<T> | T>({
+        const page: OntapPage<T> | ProxyCollectionEnvelope<T> | T = await callProxyForwarder<
+            OntapPage<T> | ProxyCollectionEnvelope<T> | T
+        >({
             ...base,
             ontapPath: currentPath,
             ...(currentParams ? { searchParams: currentParams } : {})
         });
         pageCount += 1;
+
+        if (isProxyCollectionEnvelope<T>(page)) {
+            records.push(...page.value);
+            logger.debug('Fetched ONTAP page (proxy collection envelope)', {
+                page: pageCount,
+                pageRecords: page.value.length,
+                total: records.length
+            });
+            break;
+        }
 
         // Single-resource ONTAP endpoints (e.g. /storage/volumes/{uuid}) return the
         // object directly with no `records` array; treat as a one-item collection.
@@ -258,4 +333,15 @@ async function collectOntapRecordsBatched<T>(
     return responseRecords;
 }
 
-export { callOntapApi, getClusterInfo, getClusterJobStatus, collectAllOntapRecords, collectOntapRecordsBatched };
+export {
+    callOntapApi,
+    getClusterInfo,
+    getClusterJobStatus,
+    collectAllOntapRecords,
+    collectOntapRecordsBatched,
+    extractErrorMessage,
+    buildOntapProxyBase,
+    unwrapOntapSettled,
+    OntapVolumeRecord,
+    OntapLunRecord
+};

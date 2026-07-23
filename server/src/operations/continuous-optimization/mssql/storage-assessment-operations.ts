@@ -52,6 +52,14 @@ import {
 } from '../assessment-utils';
 import { getHeadroomDrift } from '../headroom-assessment';
 import { DriftAssessmentDetail } from '../../../utils/wad-consts';
+import {
+    fetchDirectOntapAssessmentData,
+    fetchLunsBySerialNumbers,
+    buildLayoutAndSizing,
+    RawDriveDetails,
+    AllDriveDetailRow,
+    DefaultTempDbDriveRow
+} from './storage-ontap-merge';
 
 interface WadManagerMssqlAssessmentItemType extends MssqlAssessmentItemType {
     assessmentDetails?: DriftAssessmentDetail[];
@@ -86,6 +94,61 @@ interface DatabaseVolumeRecord {
     logSizeInMb?: number;
     databaseDetails?: Array<DatabaseRecord>;
 }
+
+async function mergeOntapDriveIdentityIntoAssessment(
+    accountId: string,
+    instanceRecord: WorkloadInstance,
+    rawResponse: Record<string, unknown>
+) {
+    const { rawDriveDetails, ...responseWithoutRawDriveDetails } = rawResponse;
+    const serialKeyedDriveDetails = (rawDriveDetails ?? {}) as RawDriveDetails;
+    const sizing = (responseWithoutRawDriveDetails.sizing ?? {}) as Record<string, unknown>;
+    // The host only sets these when it got that far without an unhandled exception (see
+    // STORAGE_CONFIGURATION_ASSESSMENT) - preserve that "key absent on failure" contract rather
+    // than always emitting an enriched-but-empty value.
+    const hasAllDriveDetails = Array.isArray(sizing['data-log-drive-details']);
+    const rawDefaultTempDBDriveDetails = sizing['data-tempdb-drive-details'];
+    const hasDefaultTempDBDriveDetails = rawDefaultTempDBDriveDetails !== undefined;
+    const allDriveDetails = (hasAllDriveDetails ? sizing['data-log-drive-details'] : []) as AllDriveDetailRow[];
+    const defaultTempDBDriveDetails = (
+        Array.isArray(rawDefaultTempDBDriveDetails)
+            ? rawDefaultTempDBDriveDetails
+            : rawDefaultTempDBDriveDetails
+            ? [rawDefaultTempDBDriveDetails]
+            : []
+    ) as DefaultTempDbDriveRow[];
+
+    const serialNumbers = [
+        ...(serialKeyedDriveDetails.data ?? []),
+        ...(serialKeyedDriveDetails.log ?? []),
+        ...(serialKeyedDriveDetails.tempDb ?? [])
+    ]
+        .map(drive => drive.lunSerialNumber)
+        .filter((serialNumber): serialNumber is string => Boolean(serialNumber));
+
+    const { luns: lunsBySerial } = await fetchLunsBySerialNumbers(accountId, instanceRecord, [
+        ...new Set(serialNumbers)
+    ]);
+
+    const { userDatabaseLayout, dataTempdbDriveDetails, dataLogDriveDetails } = buildLayoutAndSizing(
+        { allDriveDetails, defaultTempDBDriveDetails, serialKeyedDriveDetails },
+        lunsBySerial
+    );
+
+    return {
+        ...responseWithoutRawDriveDetails,
+        layout: {
+            ...((responseWithoutRawDriveDetails.layout as Record<string, unknown>) ?? {}),
+            'user-database-layout': userDatabaseLayout
+        },
+        sizing: {
+            ...sizing,
+            ...(hasDefaultTempDBDriveDetails ? { 'data-tempdb-drive-details': dataTempdbDriveDetails } : {}),
+            ...(hasAllDriveDetails ? { 'data-log-drive-details': dataLogDriveDetails } : {})
+        }
+    };
+}
+
 async function initiateStorageAssessmentCollection(
     accountId: string,
     credentialsId: string,
@@ -115,7 +178,8 @@ async function initiateStorageAssessmentCollection(
             logger.error(errorMessage);
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
-        const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord)];
+        const ontapAssessmentData = await fetchDirectOntapAssessmentData(accountId, instanceRecord);
+        const command = [STORAGE_CONFIGURATION_ASSESSMENT(instanceRecord, ontapAssessmentData)];
         const ssmComment = 'Get Storage Configuration Assessment for MSSQL Database Instance';
         const response = await callSsmExecution({
             credentialsId,
@@ -128,8 +192,9 @@ async function initiateStorageAssessmentCollection(
             shouldReadFromCloudWatchLogs: true
         });
 
-        const parsedResponse = response ? sqlResponseParsing(response) : {};
-        const { volumes, luns, os, layout, sizing } = parsedResponse as unknown as StorageAssessment;
+        const rawResponse = (response ? sqlResponseParsing(response) : {}) as Record<string, unknown>;
+        const finalResponse = await mergeOntapDriveIdentityIntoAssessment(accountId, instanceRecord, rawResponse);
+        const { volumes, luns, os, layout, sizing } = finalResponse as unknown as StorageAssessment;
         await createDatabaseInstanceConfigData([
             {
                 account_id: accountId,
@@ -139,7 +204,7 @@ async function initiateStorageAssessmentCollection(
                 database_instance_id: instanceRecord.id,
                 creation_time: new Date(Date.now()),
                 config_data_type: AssessmentCategories.STORAGE,
-                config_data: parsedResponse
+                config_data: finalResponse
             }
         ]);
         const configJobStatus = IS_DEMO_FLOW
@@ -1154,7 +1219,7 @@ async function calculateStorageDrift(
                                 )
                                 .map((volumeDetail: { performanceTierPercent: number; volumeName: string }) => ({
                                     objectName: volumeDetail.volumeName,
-                                    value: volumeDetail.performanceTierPercent.toString(),
+                                    value: (volumeDetail.performanceTierPercent ?? '').toString(),
                                     objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
                                 }));
 

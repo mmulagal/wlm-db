@@ -1,6 +1,12 @@
 import throat from 'throat';
 import { Ec2FsxRelationship, Ec2WithStorage } from '../cloud-manager/tagging-service-operations';
-import { collectOntapRecordsBatched } from '../../lib/ontap/ontap-gateway';
+import {
+    buildOntapProxyBase,
+    collectOntapRecordsBatched,
+    unwrapOntapSettled,
+    OntapLunRecord,
+    OntapVolumeRecord
+} from '../../lib/ontap/ontap-gateway';
 import { StorageAssessment as MssqlStorageAssessment } from '../../utils/common-types';
 import { StorageAssessment as OracleStorageAssessment } from './oracle/common-types';
 import {
@@ -23,31 +29,6 @@ const VOLUME_FIELDS =
 
 const LUN_FIELDS = 'name,uuid,os_type,space.guarantee.requested,space.scsi_thin_provisioning_support_enabled';
 
-interface OntapVolumeRecord {
-    name: string;
-    uuid: string;
-    svm?: { name?: string; uuid?: string };
-    nas?: { path?: string };
-    autosize?: { mode?: string };
-    space?: {
-        fractional_reserve?: number;
-        snapshot?: {
-            reserve_percent?: number;
-            autodelete?: { enabled?: boolean; delete_order?: string };
-        };
-    };
-    snapshot_policy?: { name?: string };
-    tiering?: { policy?: string; min_cooling_days?: number };
-    guarantee?: { honored?: boolean; type?: string };
-    efficiency?: {
-        compression?: string;
-        compression_type?: string;
-        compaction?: string;
-        dedupe?: string;
-        storage_efficiency_mode?: string;
-    };
-}
-
 interface OntapSnapshotRecord {
     volume?: { uuid?: string };
 }
@@ -69,16 +50,6 @@ interface WadSnapcenterData {
     };
     isDataguardPrimary: false;
     errorMessage: '';
-}
-
-interface OntapLunRecord {
-    name: string;
-    uuid: string;
-    os_type?: string;
-    space?: {
-        guarantee?: { requested?: boolean };
-        scsi_thin_provisioning_support_enabled?: boolean;
-    };
 }
 
 interface OntapAggregateRecord {
@@ -209,25 +180,11 @@ function getAttachedUuids(ec2: Ec2WithStorage, fileSystemId: string) {
     };
 }
 
-/** Unwraps a settled result, logging and recording an error string on rejection. */
-function unwrapSettled<T>(
-    result: PromiseSettledResult<T[]>,
-    label: string,
-    fileSystemId: string
-): { data: T[]; error?: string } {
-    if (result.status === 'fulfilled') {
-        return { data: result.value };
-    }
-    logger.warn(`FSx: failed to fetch ${label}`, { fileSystemId, err: result.reason });
-    return { data: [], error: String(result.reason) };
-}
-
 async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Promise<FsxOntapInventory> {
     const { fileSystemId, region, volumeUuids, volumeNames, lunUuids } = query;
     logger.debug('FSx: fetching ONTAP inventory', { accountId, fileSystemId });
 
-    const endpoint = `management.${fileSystemId}.fsx.${region}.amazonaws.com`;
-    const base = { accountId, targetId: fileSystemId, endpoint };
+    const base = buildOntapProxyBase(accountId, fileSystemId, region);
 
     const [volumesRes, lunsRes, privateCliRes, aggregatesRes, snapshotsRes] = await Promise.allSettled([
         volumeUuids.length === 0
@@ -265,15 +222,15 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
               )
     ]);
 
-    const { data: volumes, error: volumesError } = unwrapSettled(volumesRes, 'volumes', fileSystemId);
-    const { data: luns, error: lunsError } = unwrapSettled(lunsRes, 'LUNs', fileSystemId);
-    const { data: privateCli, error: privateCliError } = unwrapSettled(
+    const { data: volumes, error: volumesError } = unwrapOntapSettled(volumesRes, 'volumes', fileSystemId);
+    const { data: luns, error: lunsError } = unwrapOntapSettled(lunsRes, 'LUNs', fileSystemId);
+    const { data: privateCli, error: privateCliError } = unwrapOntapSettled(
         privateCliRes,
         'private CLI volumes',
         fileSystemId
     );
-    const { data: aggregates, error: aggregatesError } = unwrapSettled(aggregatesRes, 'aggregates', fileSystemId);
-    const { data: snapshots, error: snapshotsError } = unwrapSettled(
+    const { data: aggregates, error: aggregatesError } = unwrapOntapSettled(aggregatesRes, 'aggregates', fileSystemId);
+    const { data: snapshots, error: snapshotsError } = unwrapOntapSettled(
         snapshotsRes,
         'SnapCenter snapshots',
         fileSystemId

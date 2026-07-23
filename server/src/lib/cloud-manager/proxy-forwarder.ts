@@ -6,6 +6,24 @@ import { getWfServiceToken } from './auth';
 
 const logger = getLogger();
 
+function extractUpstreamErrorDetail(body: unknown): string | undefined {
+    if (!body) {
+        return undefined;
+    }
+    if (typeof body === 'string') {
+        try {
+            return extractUpstreamErrorDetail(JSON.parse(body));
+        } catch {
+            return body.slice(0, 500);
+        }
+    }
+    if (typeof body === 'object') {
+        const { message, errorMessage, error, error_description: errorDescription } = body as Record<string, unknown>;
+        return String(message ?? errorMessage ?? error ?? errorDescription ?? JSON.stringify(body)).slice(0, 500);
+    }
+    return String(body).slice(0, 500);
+}
+
 type ProxyHttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE' | 'HEAD';
 
 const METHODS_WITH_BODY: ReadonlySet<ProxyHttpMethod> = new Set(['POST', 'PATCH', 'PUT']);
@@ -75,6 +93,8 @@ async function callProxyForwarder<T>(opts: CallProxyForwarderOptions): Promise<T
         return await gotInstanceForInternalRequest(url, requestOptions).json<T>();
     } catch (error: unknown) {
         const statusCode = error instanceof Error && isHTTPError(error) ? error.response.statusCode : undefined;
+        const upstreamDetail =
+            error instanceof Error && isHTTPError(error) ? extractUpstreamErrorDetail(error.response.body) : undefined;
         logger.error('Proxy-forwarder request failed', {
             error,
             accountId,
@@ -82,11 +102,15 @@ async function callProxyForwarder<T>(opts: CallProxyForwarderOptions): Promise<T
             ontapPath: normalizedPath,
             endpoint,
             method,
-            statusCode
+            statusCode,
+            upstreamDetail
         });
+        const reason = upstreamDetail ?? (error instanceof Error ? error.message : String(error));
         throw createError(
             statusCode ?? HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Proxy-forwarder ${method} to target ${targetId} (${normalizedPath}) failed`
+            `Proxy-forwarder ${method} to target ${targetId} (${normalizedPath}) failed${
+                statusCode ? ` with status ${statusCode}` : ''
+            }${reason ? `: ${reason}` : ''}`
         );
     }
 }

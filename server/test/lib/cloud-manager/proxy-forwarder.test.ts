@@ -27,7 +27,7 @@ describe('Proxy forwarder lib', () => {
         expect(response.job?.uuid).toBeDefined();
     });
 
-    it('Rejects when the proxy-forwarder returns an error', async () => {
+    it('Rejects when the proxy-forwarder returns an error, surfacing the upstream status and message', async () => {
         await expect(
             callProxyForwarder({
                 accountId: ACCOUNT_ID,
@@ -35,6 +35,6 @@ describe('Proxy forwarder lib', () => {
                 ontapPath: 'api/cluster',
                 endpoint
             })
-        ).rejects.toThrow();
+        ).rejects.toThrow(/status 500.*Internal server error/);
     });
 });

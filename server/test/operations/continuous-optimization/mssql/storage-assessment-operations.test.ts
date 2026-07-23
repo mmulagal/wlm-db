@@ -128,6 +128,55 @@ describe('MSSQL golden config combined storage entries', () => {
     });
 });
 
+describe('calculateStorageDrift performance-tier sizing', () => {
+    it('should not throw and should still flag a violation when an ONTAP footprint record is missing performanceTierPercent', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                sizing: {
+                    'performance-tier': [
+                        { volumeName: 'v1', performanceTierPercent: 100 },
+                        { volumeName: 'v2', performanceTierPercent: undefined }
+                    ]
+                } as unknown as StorageAssessment['sizing']
+            })
+        );
+        const entry = drift.find(item => 'parameter' in item && item.parameter === 'performance-tier');
+
+        expect(entry).toMatchObject({
+            status: AssessmentStatus.NOT_OPTIMIZED,
+            totalObjectsAssessed: 2,
+            totalObjectsInViolation: 1,
+            violationDetails: [{ objectName: 'v2', value: '', objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME }]
+        });
+    });
+});
+
+describe('calculateStorageDrift data-log-drive-details sizing', () => {
+    it('should not throw when dataAccessPath is a plain string (the shape ONTAP-merged drive details use)', async () => {
+        const drift = await runStorageDrift(
+            minimalStorageAssessment({
+                sizing: {
+                    'data-log-drive-details': [
+                        {
+                            databaseName: 'Nachos',
+                            dataDriveLetter: 'F:',
+                            dataDriveTotalSizeMB: 1000,
+                            logDriveLetter: 'G:',
+                            logDriveTotalSizeMB: 250,
+                            dataAccessPath: 'F:\\',
+                            logAccessPath: 'G:\\',
+                            diskNumber: 6
+                        }
+                    ]
+                } as unknown as StorageAssessment['sizing']
+            })
+        );
+        const entry = drift.find(item => 'parameter' in item && item.parameter === 'log-drive-size');
+
+        expect(entry).toMatchObject({ totalObjectsAssessed: 1 });
+    });
+});
+
 describe('calculateStorageDrift combined entries', () => {
     it('should report tiering-tco-optimization OPTIMIZED when every volume passes both sub-parameters', async () => {
         const drift = await runStorageDrift(

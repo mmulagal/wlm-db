@@ -1,8 +1,29 @@
 import { WorkloadInstance, OntapRequestParams } from '../../../utils/common-types';
-import { INSTANCE_DRIVE_DETAILS_TEMPLATE } from './assessment-scripts';
+import { DATABASE_VOLUME_LUN_RAW_DETAILS, INSTANCE_DRIVE_DETAILS_TEMPLATE } from './assessment-scripts';
 import { ontapRestRequest } from './common-templates';
 import { SIZING_OPERATIONS_LOG_PATH, STORAGE_ASSESSMENT_LOG_PATH } from './const';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
+
+interface DirectOntapAssessmentData {
+    volumesJson: string;
+    performanceTierJson: string;
+    lunsJson: string;
+    errors: {
+        volumes?: string;
+        sizing?: string;
+        luns?: string;
+        spaceMgmtTryFirst?: string;
+    };
+}
+
+// PowerShell single-quoted strings only treat '' as an escape for a literal quote.
+function escapeForPowerShellSingleQuotedString(value: string): string {
+    return value.replace(/'/g, match => match + match);
+}
+
+const VOLUMES_JSON_PLACEHOLDER = '__WLMDB_VOLUMES_JSON_PLACEHOLDER__';
+const PERFORMANCE_TIER_JSON_PLACEHOLDER = '__WLMDB_PERFORMANCE_TIER_JSON_PLACEHOLDER__';
+const LUNS_JSON_PLACEHOLDER = '__WLMDB_LUNS_JSON_PLACEHOLDER__';
 
 const JSON_CHECK = `
         function Test-ValidJson {
@@ -327,7 +348,10 @@ function Test-IscsiSessions {
 
 `;
 
-const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
+const STORAGE_CONFIGURATION_ASSESSMENT = (
+    instanceRecord: WorkloadInstance,
+    ontapAssessmentData: DirectOntapAssessmentData
+) =>
     `#Get Storage Configuration Assessment
 
     ${JSON_CHECK}
@@ -348,11 +372,7 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     $sqlInstance = "${instanceRecord.name}"
     $FSxID = "${instanceRecord.fsxFileSystem}"
     $FSxRegion = "${instanceRecord.region}"
-    $OntapSvmUuid = "${instanceRecord.svmOntapUuid}"
-    $MappedVolumeNames = '${JSON.stringify(instanceRecord.mappedVolumeNames)}' | ConvertFrom-Json
-    $MappedVolumeUuids = '${JSON.stringify(instanceRecord.mappedVolumesUuids)}' | ConvertFrom-Json
-    $MappedLunNames = '${JSON.stringify(instanceRecord.mappedLunNames)}' | ConvertFrom-Json
-  
+
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
     $sqlCredential = @{'useSqlAuth' = $False}
 
@@ -365,211 +385,57 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     }
     Write-Information "SQL Service Instance Name: $instanceServiceName"
 
-    ${ontapRestRequest}
-
     $DriftAssessmentData['filesystemId'] = $FSxID
-    $APIEndpoint = '/storage/volumes'
-    $APIQueryFilter = "uuid=${instanceRecord.mappedVolumesUuids?.join('|')}"
-    $ApiQueryFields = "fields=svm,autosize,space.fractional_reserve,space.snapshot.reserve_percent,space.snapshot.autodelete.enabled,snapshot_policy,tiering,guarantee,efficiency"
 
-    # space-mgmt-try-first is fetched via the private CLI endpoint instead of the API endpoint
-    $SpaceMgmtTryFirstLookup = @{}
-    try {
-        if (-not $MappedVolumeNames -or $MappedVolumeNames.Count -eq 0) {
-            throw "Unable to fetch ONTAP space-mgmt-try-first details as the mapped volume names are either null or empty."
-        }
-        $SpaceMgmtApiEndpoint = '/private/cli/volume'
-        $SpaceMgmtApiQueryFilter = "volume=$($MappedVolumeNames -join '|')"
-        $SpaceMgmtApiQueryFields = "fields=space-mgmt-try-first"
-        $SpaceMgmtResponse = Invoke-ONTAPRequest -ApiEndpoint $SpaceMgmtApiEndpoint -ApiQueryFilter $SpaceMgmtApiQueryFilter -ApiQueryFields $SpaceMgmtApiQueryFields
-        foreach ($spaceMgmtRecord in $SpaceMgmtResponse.records) {
-            $SpaceMgmtTryFirstLookup[$spaceMgmtRecord.volume] = $spaceMgmtRecord.space_mgmt_try_first
-        }
-    } catch {
-        Write-Information "Error occurred while fetching ONTAP space-mgmt-try-first details. Error: $($_.Exception.Message)"
-        $DriftAssessmentData['errors']['spaceMgmtTryFirst'] = $_.Exception.Message
+    # Volume, volume-footprint and lun-by-name details are fetched server-side ahead of time. Placeholder
+    # tokens are spliced in below (and swapped for the real JSON after ConvertTo-Json further down) instead
+    # of parsing the JSON here, since round-tripping it through ConvertFrom-Json/ConvertTo-Json on the host
+    # has been observed to re-wrap the array in a Count/value envelope. No ONTAP REST calls are made
+    # from the script.
+    $VolumesFetchError = '${escapeForPowerShellSingleQuotedString(ontapAssessmentData.errors.volumes ?? '')}'
+    if (-not [string]::IsNullOrEmpty($VolumesFetchError)) {
+        $DriftAssessmentData['errors']['volumes'] = $VolumesFetchError
+    } else {
+        $DriftAssessmentData['volumes'] = @('${VOLUMES_JSON_PLACEHOLDER}')
     }
 
-    # Volume details
-    Write-Information "Getting ONTAP volume details for UUIDs: $MappedVolumeUuids"
-    try{
-        if([string]::IsNullOrEmpty($MappedVolumeUuids)) {
-            throw "Unable to fetch ONTAP volumes details as the mapped volume UUIDs are either null or empty."
-        }
-        $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
-        $Volumes = $Response.records
-
-        $VolumeList = @()
-        # loop through each volume and get data
-        $SvmNames = @()
-        foreach ($perVolumeData in $Volumes) {
-            # Using PSCustomObject
-            $perVolRow = [PSCustomObject]@{
-                name = $perVolumeData.name
-                'uuid' = $perVolumeData.uuid
-                'thin-provision' = $perVolumeData.guarantee.honored
-                'space-guarantee' = $perVolumeData.guarantee.type
-                'autosize-mode' = $perVolumeData.autosize.mode
-                'fractional-reserve' = $perVolumeData.space.fractional_reserve
-                'snapshot-copy-reserve' = $perVolumeData.space.snapshot.reserve_percent
-                'snapshot-autodelete' = $perVolumeData.space.snapshot.autodelete.enabled
-                'snapshot-policy' = $perVolumeData.snapshot_policy.name
-                'space-mgmt-try-first' = $SpaceMgmtTryFirstLookup[$perVolumeData.name]
-                'tiering-policy' = $perVolumeData.tiering.policy
-                'tiering-min-cooling-days' = $perVolumeData.tiering.min_cooling_days
-                'compression' = $perVolumeData.efficiency.compression
-                'compressionType' = $perVolumeData.efficiency.compression_type
-                'deduplication' = $perVolumeData.efficiency.dedupe
-                'compaction' = $perVolumeData.efficiency.compaction
-            }
-            if($perVolumeData.autosize.mode -ne 'off') {
-                $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "on"
-            }
-            else {
-                $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "off"
-            }
-            $VolumeList += $($perVolRow)
-            $SvmNames += $perVolumeData.svm.name
-        }
-        $DriftAssessmentData['volumes'] = @($($VolumeList))
-    } catch {
-     Write-Information "Error occurred while fetching ONTAP volume details. Error: $_.Exception.Message"
-     $DriftAssessmentData['errors']['volumes'] = $_.Exception.Message
-     }
-    
-    # Volume footprint details
-    $SvmNamesWithDelimiter = $SvmNames -join '|'
-    $APIEndpoint = '/private/cli/volume/show-footprint'
-    $APIQueryFilter = "vserver=$SvmNamesWithDelimiter,volume=${instanceRecord.mappedVolumeNames?.join('|')}"
-    $ApiQueryFields = "fields=volume-blocks-footprint-bin0-percent"
-    
-    Write-Information "Getting ONTAP volume footprint details for volumes: ${instanceRecord.mappedVolumeNames?.join(
-        '|'
-    )}"
-    try{
-        if([string]::IsNullOrEmpty($MappedVolumeNames)) {
-            throw "Unable to fetch ONTAP volumes details as the mapped volume names are either null or empty."
-        }
-        $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFields $ApiQueryFields
-        $Volumes = $Response.records
-
-        # loop through each volume and get data
-        # $PerformanceTierPercent = $Volumes | Where-Object {$MappedVolumeNames -contains $_.volume} | Select-Object -ExpandProperty volume_blocks_footprint_bin0_percent | Select-Object -Unique
+    $FootprintFetchError = '${escapeForPowerShellSingleQuotedString(ontapAssessmentData.errors.sizing ?? '')}'
+    if (-not [string]::IsNullOrEmpty($FootprintFetchError)) {
+        $DriftAssessmentData['errors']['sizing'] = $FootprintFetchError
         $PerformanceTierDetails = @()
-        foreach ($perVolumeData in $Volumes) {
-        if(($MappedVolumeNames -contains $perVolumeData.volume)) {
-                $object = @{
-                    "volumeName" = $perVolumeData.volume;
-                    "performanceTierPercent" = $perVolumeData.volume_blocks_footprint_bin0_percent}
-                $PerformanceTierDetails += $object
-               
-        }
-        }
-    } catch {
-      Write-Information "Error occurred while fetching ONTAP volume footprint details. Error: $_.Exception.Message"
-     $DriftAssessmentData['errors']['sizing'] = $_.Exception.Message
-     }
-    
-   
-    # Lun details
-    $APIEndpoint = '/storage/luns'
-    $APIQueryFilter = "name=${instanceRecord.mappedLunNames?.join('|')}"
-
-    if ($OntapSvmUuid -ne '') {
-        $APIQueryFilter += "&svm.uuid=$OntapSvmUuid"
+    } else {
+        $PerformanceTierDetails = @('${PERFORMANCE_TIER_JSON_PLACEHOLDER}')
     }
 
-    $ApiQueryFields = "fields=space.guarantee.requested,space.scsi_thin_provisioning_support_enabled,os_type"
-    Write-Information "Getting ONTAP LUN details for LUNs: ${instanceRecord.mappedLunNames?.join('|')}"
-    try{
-        if([string]::IsNullOrEmpty($MappedLunNames)) {
-            throw "Unable to fetch ONTAP lun details as the mapped lun names are either null or empty."
-        }
-        $Response = Invoke-ONTAPRequest -ApiEndpoint $APIEndpoint -ApiQueryFilter $APIQueryFilter -ApiQueryFields $ApiQueryFields
-        $Luns = $Response.records
-    
-        $LunsList = @()
+    $LunsFetchError = '${escapeForPowerShellSingleQuotedString(ontapAssessmentData.errors.luns ?? '')}'
+    if (-not [string]::IsNullOrEmpty($LunsFetchError)) {
+        $DriftAssessmentData['errors']['luns'] = $LunsFetchError
+    } else {
+        $DriftAssessmentData['luns'] = @('${LUNS_JSON_PLACEHOLDER}')
+    }
 
-        # loop through luns and get per lun data
-        foreach ($perLunData in $Luns) {
-            # Using PSCustomObject
-            $perLunRow = [PSCustomObject]@{
-                name = $($perLunData.name)
-                'os-type' = $($perLunData.os_type)
-                'space-reservation-enabled' = $($perLunData.space.guarantee.requested)
-                'space-allocation-allocated' = $($perLunData.space.scsi_thin_provisioning_support_enabled)
-            }
-            $LunsList += $($perLunRow)
-        }
-        $DriftAssessmentData['luns'] = @($($LunsList))
-    } catch {
-     Write-Information "Error occurred while fetching ONTAP LUN details. Error: $_.Exception.Message"
-     $DriftAssessmentData['errors']['luns'] = $_.Exception.Message
-     }
-    
+    # space-mgmt-try-first is fetched server-side via the private CLI endpoint and merged into
+    # each volume's row (see fetchDirectOntapAssessmentData) - only the fetch error is surfaced here.
+    $SpaceMgmtTryFirstFetchError = '${escapeForPowerShellSingleQuotedString(
+        ontapAssessmentData.errors.spaceMgmtTryFirst ?? ''
+    )}'
+    if (-not [string]::IsNullOrEmpty($SpaceMgmtTryFirstFetchError)) {
+        $DriftAssessmentData['errors']['spaceMgmtTryFirst'] = $SpaceMgmtTryFirstFetchError
+    }
 
     # gather storage layout data
     Write-Information "Gathering storage layout data"
-    $consolidatedDriveDetails = @()
+    $DriftAssessmentData['layout'] = @{}
+    $DriftAssessmentData['sizing'] = @{}
     try{
         ${INSTANCE_DRIVE_DETAILS_TEMPLATE(instanceRecord.name, instanceRecord.sqlAuthEnabled)}
 
-        ${DATABASE_VOLUME_LUN_DETAILS(instanceRecord)}
-        
-        $consolidatedDriveDetails = @()
-        foreach ($drive in $allDriveDetails) {
-            $logVolumeLunDetails = $responseObject.log | Where-Object { $_.name -eq $drive.databaseName }
-            $dataVolumeLunDetails = $responseObject.data | Where-Object { $_.name -eq $drive.databaseName }  
-            # Case when database has multiple drives
-            if(-Not ($dataVolumeLunDetails -is [array])) { $dataVolumeLunDetails = @($dataVolumeLunDetails)}
-            if ($logVolumeLunDetails) {
-                if(-Not ($logVolumeLunDetails -is [array])) { $logVolumeLunDetails = @($logVolumeLunDetails)}
-                foreach($logVolumeLunDetail in $logVolumeLunDetails) {
-                    
-                    $driveObject = New-Object PSObject
-                    # Copy each property from the source object to the new object
-                    foreach ($property in $drive.PSObject.Properties) {
-                        $driveObject | Add-Member -MemberType NoteProperty -Name $property.Name -Value $property.Value
-                        }
-                    # When database has data files in multiple different drives, pick dataaccess path for the data drive currently being considered
-                    $dataAccessPaths = $dataVolumeLunDetails | ForEach-Object { if($_.accessPaths -and $_.accessPaths.Count -gt 0 -and $_.accessPaths[0].startswith($drive.dataDriveLetter)) {$_.accessPaths[0]} }
-                    # When database has multiple data files in the same drive, filter out the duplicate data access paths
-                    $dataAccessPaths = $dataAccessPaths | Select -unique
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $logVolumeLunDetail.ontapVolumeUuid 
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $logVolumeLunDetail.ontapVolumeName
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $logVolumeLunDetail.lunUuid
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "svmName" -Value $logVolumeLunDetail.svmName
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $logVolumeLunDetail.diskNumber
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $logVolumeLunDetail.lunSerialNumber
-                    $driveObject | Add-Member -MemberType NoteProperty -Name "dataAccessPath" -Value $dataAccessPaths   
-                    if($logVolumeLunDetail.accessPaths -and $logVolumeLunDetail.accessPaths.Count -gt 0) {
-                        $driveObject | Add-Member -MemberType NoteProperty -Name "logAccessPath" -Value $logVolumeLunDetail.accessPaths[0]
-                        }
-                    $consolidatedDriveDetails += $driveObject
-                    }
-                }
-            else {
-                $consolidatedDriveDetails += $drive
-                }
-            }
-            
-            
-        
-        foreach ($drive in $defaultTempDBDriveDetails) {
-            $tempdbVolumeLunDetails = $responseObject.tempDb
-            if ($tempdbVolumeLunDetails) {
-                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeUuid" -Value $tempdbVolumeLunDetails.ontapVolumeUuid 
-                $drive | Add-Member -MemberType NoteProperty -Name "ontapVolumeName" -Value $tempdbVolumeLunDetails.ontapVolumeName
-                $drive | Add-Member -MemberType NoteProperty -Name "lunUuid" -Value $tempdbVolumeLunDetails.lunUuid
-                $drive | Add-Member -MemberType NoteProperty -Name "svmName" -Value $tempdbVolumeLunDetails.svmName
-                $drive | Add-Member -MemberType NoteProperty -Name "diskNumber" -Value $tempdbVolumeLunDetails.diskNumber
-                $drive | Add-Member -MemberType NoteProperty -Name "diskSerialNumber" -Value $tempdbVolumeLunDetails.lunSerialNumber
-                }
-                
-            }
-        
-        
-        $DriftAssessmentData['layout'] = @{}
+        ${DATABASE_VOLUME_LUN_RAW_DETAILS(instanceRecord)}
+
+        # Disk serial numbers are only known now (discovered locally via WMI above); the lun-by-serial
+        # ONTAP lookup and layout/sizing consolidation that depends on it happen server-side afterwards.
+        $DriftAssessmentData['rawDriveDetails'] = $responseObject
+
         if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceTempDBDriveError"] ))) {
             $DriftAssessmentData['errors']['tempdb-files-location'] = $driveDetailsErrors["instanceTempDBDriveError"]
         }
@@ -591,49 +457,6 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
             $DriftAssessmentData['layout']['default-log-files-location'] =  $defaultLogDrive;
         }
 
-        $SimplifiedDataDriveDetails = @()
-        foreach($drive in $responseObject.data) {
-            $Detail = $SimplifiedDataDriveDetails | Where-Object { $_.diskNumber -eq $drive.diskNumber }
-             $object = @{
-                    "name" = $drive.name
-                    "sizeInMb" = $drive.sizeInMb
-                }
-            if($null -eq $Detail) {
-                $drive.PSObject.Properties.Remove('name')
-                $drive.PSObject.Properties.Remove('sizeInMb')
-                $drive.databaseDetails = @($object)
-                $SimplifiedDataDriveDetails += $drive
-            }  else {
-                $Detail.databaseDetails += $object
-            }
-        }
-
-        $SimplifiedLogDriveDetails = @()
-        foreach($drive in $responseObject.log) {
-            $Detail = $SimplifiedLogDriveDetails | Where-Object { $_.diskNumber -eq $drive.diskNumber }
-            $object = @{
-                    "name" = $drive.name
-                    "sizeInMb" = $drive.sizeInMb
-                }
-            if($null -eq $Detail) {
-                $drive.PSObject.Properties.Remove('name')
-                $drive.PSObject.Properties.Remove('sizeInMb')
-                $drive.databaseDetails = @($object)
-                $SimplifiedLogDriveDetails += $drive
-            }  else {
-               
-                $Detail.databaseDetails += $object
-            }
-        }
-
-        $userDatabaseLayout = @{
-            "data" = $SimplifiedDataDriveDetails
-            "log" = $SimplifiedLogDriveDetails
-            "tempDb" = $responseObject.tempDb
-        }
-        $DriftAssessmentData['layout']['user-database-layout'] = $($userDatabaseLayout)
-
-        $DriftAssessmentData['sizing'] = @{}
         if(-not ([string]::IsNullOrEmpty($driveDetailsErrors["instanceTempDBDriveError"] ))) {
             $DriftAssessmentData['errors']['data-tempdb-drive-details'] = $driveDetailsErrors["instanceTempDBDriveError"]
         }
@@ -642,19 +465,8 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
         }
 
         $DriftAssessmentData['sizing']['performance-tier'] =  @($PerformanceTierDetails);
+        $DriftAssessmentData['sizing']['data-log-drive-details'] = @($($allDriveDetails));
 
-        $SimplifiedDriveDetails = @()
-        foreach($drive in $consolidatedDriveDetails) {
-            $Detail = $SimplifiedDriveDetails | Where-Object { $_.logAccessPath -eq $drive.logAccessPath -and $_.dataAccessPath -eq $drive.dataAccessPath }
-            if($null -eq $Detail) {
-                $SimplifiedDriveDetails += $drive
-            }  else {
-                $Detail.databaseName =  $Detail.databaseName + ',' + $drive.databaseName
-            }
-        }
-
-        $DriftAssessmentData['sizing']['data-log-drive-details'] = @($($SimplifiedDriveDetails));
-        
     } catch { 
         $DriftAssessmentData['errors']['layout'] = $_.Exception.Message
         $DriftAssessmentData['errors']['sizing'] = $_.Exception.Message
@@ -746,6 +558,15 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (instanceRecord: WorkloadInstance) =>
     } catch {$DriftAssessmentData['errors']['ntfs-allocation'] = $_.Exception.Message}
 
     $response = $DriftAssessmentData | ConvertTo-Json -Depth 8 -Compress
+    $response = $response.Replace('["${VOLUMES_JSON_PLACEHOLDER}"]', '${escapeForPowerShellSingleQuotedString(
+        ontapAssessmentData.volumesJson
+    )}')
+    $response = $response.Replace('["${PERFORMANCE_TIER_JSON_PLACEHOLDER}"]', '${escapeForPowerShellSingleQuotedString(
+        ontapAssessmentData.performanceTierJson
+    )}')
+    $response = $response.Replace('["${LUNS_JSON_PLACEHOLDER}"]', '${escapeForPowerShellSingleQuotedString(
+        ontapAssessmentData.lunsJson
+    )}')
 
     if([string]::IsNullOrEmpty($response)) {
         throw "Failed to compress the response because the response is either null or empty. $response"
@@ -800,5 +621,6 @@ export {
     DATABASE_VOLUME_LUN_DETAILS,
     TEST_ISCSI_SESSIONS,
     STORAGE_CONFIGURATION_ASSESSMENT,
-    RESCAN_EXTEND_LUN
+    RESCAN_EXTEND_LUN,
+    DirectOntapAssessmentData
 };

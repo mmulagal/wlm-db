@@ -1,6 +1,7 @@
 import { ontapRestRequest } from './common-templates';
 import { DISCOVER_OPERATION_LOG_PATH, RESILIENCY_OPTIMIZE_LOG_PATH } from './const';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
+import { WorkloadInstance } from '../../../utils/common-types';
 import {
     INSTANCE_DATA_DRIVES_QUERY,
     INSTANCE_LOG_DB_DRIVE_SIZES,
@@ -217,6 +218,129 @@ const INSTANCE_DRIVE_DETAILS_TEMPLATE = (instance: string, sqlAuthEnabled: boole
     }
     }
 
+`;
+
+// Same as DATABASE_VOLUME_LUN_DETAILS (storage-scripts.ts) but stops after Get-SerialNumberOfWinVolumes:
+// the ONTAP lun-by-serial-number lookup (Get-LunFromSerialNumber) now happens server-side via
+// callProxyForwarder once these raw (unenriched) drive details reach the operations layer.
+const DATABASE_VOLUME_LUN_RAW_DETAILS = (instanceRecord: WorkloadInstance) => `
+    $WarningPreference = 'SilentlyContinue';
+    $sqlInstance = "${instanceRecord.name}"
+    $FSxID = "${instanceRecord.fsxFileSystem}"
+    $FSxRegion = "${instanceRecord.region}"
+    $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
+    $PSToolkitRequiredVersion = '9.15.1.2407'
+    $responseObject = @{}
+    $responseObject['data'] = @()
+    $responseObject['log'] = @()
+    $responseObject['tempDb'] = @()
+    # Build sql instance service name
+    $instanceServiceName = "$env:COMPUTERNAME"
+    if ($sqlInstance -ne 'MSSQLSERVER') {
+        $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
+    }
+    
+    try {
+        $sqlquery = @"
+            SET NOCOUNT ON;
+            DECLARE @JSON nvarchar(max)
+            SET @JSON = (SELECT DISTINCT db.name, vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid, mf.size * 8 / 1024.0 as sizeInMb, LEFT(mf.physical_name, 2) AS driveLetter,
+            vs.total_bytes / 1048576 AS driveTotalSizeMB FROM sys.master_files AS mf
+            join sys.databases db
+            on db.database_id = mf.database_id
+            CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
+            where db.database_id > 4 or db.name = 'msdb'
+            FOR JSON PATH)
+            SELECT @JSON
+            ;
+"@
+
+        $sqlqueryForTempdb = @"
+                SET NOCOUNT ON;
+                SELECT DISTINCT mf.name, vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid, mf.size * 8 / 1024.0 as sizeInMb, LEFT(mf.physical_name, 2) AS driveLetter,
+                vs.total_bytes / 1048576 AS driveTotalSizeMB FROM tempdb.sys.database_files AS mf
+                CROSS APPLY sys.dm_os_volume_stats(2, mf.[file_id]) AS vs
+                where mf.name = 'tempdev'
+                FOR JSON PATH;
+"@
+        Function Get-SerialNumberOfWinVolumes {
+            param(
+                [Parameter(Mandatory = $true)]
+                [string[]]$sqlresponse
+            )
+            $responseObject = [ordered]@{}
+            $responseObject['data'] = @()
+            $responseObject['log'] = @()
+            $responseObject['tempDb'] = @()
+            $partitionmap = @{}
+            $winvolumes = $sqlresponse | ConvertFrom-Json
+            foreach ($winvolume in $winvolumes) {
+                # check in winvolume volume id is null or empty string
+                if (-Not ([string]::IsNullOrEmpty($winvolume.volumeid))) {
+                    if( -not $partitionmap.Contains( $winvolume.volumeid ) ) {
+                        $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
+                        $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
+                        $partitionmap[$winvolume.volumeid] = @{"volume"= $vol
+                                                      "partition" = $partition
+                                         }
+                    } else {
+                        $vol = $partitionmap[$winvolume.volumeid]["volume"]
+                        $partition = $partitionmap[$winvolume.volumeid]["partition"]
+                
+                }
+                
+                    if ($vol.bustype -eq 'iscsi') {
+                        $object = @{
+                        "name" = $winvolume.name
+                        "lunSerialNumber" = $vol.serialnumber
+                        "sizeInMb" = $winvolume.sizeInMb
+                        "diskNumber" = $vol.number
+                        "accessPaths" = $partition.accesspaths
+                        "driveLetter" = $winvolume.driveLetter
+                    }
+                    $type = 'data'
+                    if ($winvolume.name -Contains "tempdev") {
+                        $type = 'tempDb'
+                    }
+                    elseif ($winvolume.type -eq 1) {
+                        $type = 'log'
+                    }
+                    $responseObject[$type] += $object
+                    }
+                    }
+                }
+            return $responseObject
+        }
+    
+        $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
+        if($sqlAuthEnabled) {
+            ${readSsmParameter(instanceRecord.name)}
+        }
+
+        $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "$instanceServiceName" 
+        $queryResponseForTempDb =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlqueryForTempdb" -InstanceName "$instanceServiceName"
+
+         if(([string]::IsNullOrEmpty($queryResponse) -or $queryResponse -eq "NULL") -and ([string]::IsNullOrEmpty($queryResponseForTempDb) -or $queryResponseForTempDb -eq "NULL")) { 
+            throw "Unable to fetch details of user databases and tempdb"
+        }
+        elseif([string]::IsNullOrEmpty($queryResponse) -or $queryResponse -eq "NULL") {
+            $combinedResponse = ($queryResponseForTempDb | ConvertFrom-Json) | ConvertTo-Json
+        }
+        elseif ([string]::IsNullOrEmpty($queryResponseForTempDb) -or $queryResponseForTempDb -eq "NULL") {
+            $combinedResponse = ($queryResponse | ConvertFrom-Json) | ConvertTo-Json
+        }
+        else {
+            $combinedResponse = (($queryResponse  | ConvertFrom-Json) + ($queryResponseForTempDb | ConvertFrom-Json)) | ConvertTo-Json
+        }
+        
+        $responseObject = Get-SerialNumberOfWinVolumes $combinedResponse
+       
+    } catch {
+        if ($responseObject -eq $null) {
+            $responseObject = @{}
+        }
+        $responseObject['error'] = $_.Exception.Message
+    } 
 `;
 
 const CHECK_NODE_STATUS = (nodeName: string) => `
@@ -526,6 +650,7 @@ export {
     JSON_CHECK,
     INSTANCE_NETAPP_DRIVES,
     INSTANCE_DRIVE_DETAILS_TEMPLATE,
+    DATABASE_VOLUME_LUN_RAW_DETAILS,
     CHECK_NODE_STATUS,
     GET_CLUSTER_NODE_NAMES,
     GET_RSS_CONFIG_DETAILS,
