@@ -1767,45 +1767,47 @@ async function discoverPgSqlResources(
         ec2InstanceIds
     });
 
-    const al2023ImageIdList = compact(await getAmazonLinux2023AmiList(credentialsId, region));
-
-    const filters = [
-        { Name: 'platform-details', Values: ['Linux/UNIX'] },
-        ...(!isEmpty(al2023ImageIdList) ? [{ Name: 'image-id', Values: al2023ImageIdList }] : [])
-    ];
-    const { ec2Instances, NextToken } = await discoverEc2Instances(
-        accountId,
-        credentialsId,
-        region,
-        filters,
-        pageSize,
-        nextToken,
-        ec2InstanceIds,
-        DatabaseTypes.PG_SQL
-    );
-
-    logger.debug('Discovered PostgreSQL resources', { ec2Instances, NextToken });
-
-    const ssmNotConnectedEc2Instances: DiscoveredEc2InstanceType[] = ec2Instances.filter(
-        ({ ssmState }) => ssmState === ConnectionStatus.NOT_CONNECTED
-    );
-    const ssmConnectedEc2Instances = ec2Instances.filter(
-        ({ ssmState }) => ssmState === ConnectionStatus.CONNECTED
-    ) as DiscoveredEc2InstanceType[];
-
-    const ssmCommandInput: SendCommandCommandInput = {
-        DocumentName: SSM_RUN_SHELL_SCRIPT_DOC,
-        InstanceIds: compact(ssmConnectedEc2Instances.map(target => target?.ec2InstanceId)),
-        Comment: 'Discover PostgreSQL resources',
-        Parameters: {
-            commands: [discoverPgsqlHosts],
-            executionTimeout: [config.get<string>('ssm.execution-timeout')]
-        }
-    };
-
+    let ssmNotConnectedEc2Instances: DiscoveredEc2InstanceType[] = [];
     let instancesWithSsmResponse: DiscoverPgSqlResponseType[] = [];
-
+    let NextToken: string | undefined;
     try {
+        const al2023ImageIdList = compact(await getAmazonLinux2023AmiList(credentialsId, region));
+
+        const filters = [
+            { Name: 'platform-details', Values: ['Linux/UNIX'] },
+            ...(!isEmpty(al2023ImageIdList) ? [{ Name: 'image-id', Values: al2023ImageIdList }] : [])
+        ];
+        const { ec2Instances, NextToken: fetchedNextToken } = await discoverEc2Instances(
+            accountId,
+            credentialsId,
+            region,
+            filters,
+            pageSize,
+            nextToken,
+            ec2InstanceIds,
+            DatabaseTypes.PG_SQL
+        );
+
+        NextToken = fetchedNextToken as string;
+        logger.debug('Discovered PostgreSQL resources', { ec2Instances, fetchedNextToken });
+
+        ssmNotConnectedEc2Instances = ec2Instances.filter(
+            ({ ssmState }) => ssmState === ConnectionStatus.NOT_CONNECTED
+        );
+        const ssmConnectedEc2Instances = ec2Instances.filter(
+            ({ ssmState }) => ssmState === ConnectionStatus.CONNECTED
+        ) as DiscoveredEc2InstanceType[];
+
+        const ssmCommandInput: SendCommandCommandInput = {
+            DocumentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            InstanceIds: compact(ssmConnectedEc2Instances.map(target => target?.ec2InstanceId)),
+            Comment: 'Discover PostgreSQL resources',
+            Parameters: {
+                commands: [discoverPgsqlHosts],
+                executionTimeout: [config.get<string>('ssm.execution-timeout')]
+            }
+        };
+
         const {
             ssmResponseMap,
             endPointIpWithFsxInfo,

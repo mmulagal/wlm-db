@@ -64,6 +64,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Standard Edition (64-bit)',
@@ -162,6 +163,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Enterprise Edition (64-bit)',
@@ -208,6 +210,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Enterprise Edition (64-bit)',
@@ -254,6 +257,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Enterprise Edition (64-bit)',
@@ -300,6 +304,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Enterprise Edition (64-bit)',
@@ -349,6 +354,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Enterprise Edition (64-bit)',
@@ -498,6 +504,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Standard Edition (64-bit)',
@@ -641,6 +648,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
             ec2InstanceName: 'app-server-19',
             ec2UsageOperation: 'RunInstances:0006',
             ssmState: 'connected',
+            hostManageReadiness: { extensiveRunPermission: true },
             sqlServerInstances: [
                 {
                     sqlServerVersion: '16.0.4015.1',
@@ -705,6 +713,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Enterprise Edition (64-bit)',
@@ -781,6 +790,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Standard Edition (64-bit)',
@@ -866,6 +876,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Standard Edition (64-bit)',
@@ -950,6 +961,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Standard Edition (64-bit)',
@@ -999,6 +1011,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Standard Edition (64-bit)',
@@ -1048,6 +1061,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Standard Edition (64-bit)',
@@ -1100,6 +1114,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Enterprise Edition (64-bit)',
@@ -1207,6 +1222,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Enterprise Edition (64-bit)',
@@ -1318,6 +1334,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Enterprise Edition (64-bit)',
@@ -1425,6 +1442,7 @@ function inventoryDemoData(fsxId: string, ebsVolId: string): DiscoverMsSqlRespon
                 name: 'wlmdb-vpc',
                 cidrBlock: '172.31.0.0/16'
             },
+            hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
             sqlServerInstances: [
                 {
                     sqlServerEdition: 'Enterprise Edition (64-bit)',
@@ -1656,6 +1674,8 @@ async function discoverDemoDataOracle(
                 error: undefined,
                 platform: 'Red Hat Enterprise Linux 8.10 (Ootpa)',
                 oracleServerDeploymentType: 'Standalone',
+                source: DiscoverySource.DISCOVER,
+                hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
                 databaseInstanceDetails: [
                     {
                         instanceId: 'oracleasm',
@@ -1744,6 +1764,8 @@ async function discoverDemoDataOracle(
                 error: undefined,
                 platform: 'Red Hat Enterprise Linux 8.10 (Ootpa)',
                 oracleServerDeploymentType: 'Standalone',
+                source: DiscoverySource.DISCOVER,
+                hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
                 databaseInstanceDetails: [
                     {
                         instanceId: 'oracle',
@@ -1832,6 +1854,8 @@ async function discoverDemoDataOracle(
                 error: undefined,
                 platform: 'Red Hat Enterprise Linux 8.10 (Ootpa)',
                 oracleServerDeploymentType: 'Standalone',
+                source: DiscoverySource.DISCOVER,
+                hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
                 databaseInstanceDetails: [
                     {
                         databaseDetails: {
@@ -1898,6 +1922,8 @@ async function discoverDemoDataOracle(
                 error: undefined,
                 platform: 'Linux/UNIX',
                 oracleServerDeploymentType: 'Standalone',
+                source: DiscoverySource.DISCOVER,
+                hostManageReadiness: { extensiveRunPermission: true },
                 databaseInstanceDetails: [
                     {
                         instanceId: 'pdbebs1',
@@ -1958,6 +1984,8 @@ async function discoverDemoDataOracle(
                 error: undefined,
                 platform: 'Red Hat Enterprise Linux with SQL Server Standard',
                 oracleServerDeploymentType: 'Standalone',
+                source: DiscoverySource.DISCOVER,
+                hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
                 databaseInstanceDetails: [
                     {
                         instanceName: 'dataguard-primary',
@@ -2055,6 +2083,8 @@ async function discoverDemoDataOracle(
                 error: undefined,
                 platform: 'Red Hat Enterprise Linux with SQL Server Standard',
                 oracleServerDeploymentType: 'Standalone',
+                source: DiscoverySource.DISCOVER,
+                hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
                 databaseInstanceDetails: [
                     {
                         instanceName: 'dataguard-standby',
@@ -2141,6 +2171,8 @@ async function discoverDemoDataOracle(
                 error: undefined,
                 platform: 'Linux/UNIX',
                 oracleServerDeploymentType: 'Standalone',
+                source: DiscoverySource.DISCOVER,
+                hostManageReadiness: { extensiveRunPermission: true },
                 databaseInstanceDetails: [
                     {
                         instanceId: 'orclstd1',
@@ -2189,6 +2221,8 @@ async function discoverDemoDataOracle(
                 error: undefined,
                 platform: 'Linux/UNIX',
                 oracleServerDeploymentType: 'Standalone',
+                source: DiscoverySource.DISCOVER,
+                hostManageReadiness: { extensiveRunPermission: true },
                 databaseInstanceDetails: [
                     {
                         instanceId: 'orclstd2',
@@ -2237,6 +2271,8 @@ async function discoverDemoDataOracle(
                 error: undefined,
                 platform: 'Linux/UNIX',
                 oracleServerDeploymentType: 'Standalone',
+                source: DiscoverySource.DISCOVER,
+                hostManageReadiness: { extensiveRunPermission: true },
                 databaseInstanceDetails: [
                     {
                         instanceName: 'orclebs_pri',
@@ -2307,6 +2343,8 @@ async function discoverDemoDataOracle(
                 error: undefined,
                 platform: 'Linux/UNIX',
                 oracleServerDeploymentType: 'Standalone',
+                source: DiscoverySource.DISCOVER,
+                hostManageReadiness: { extensiveRunPermission: true },
                 databaseInstanceDetails: [
                     {
                         instanceName: 'orclebs_stdby',
@@ -2377,6 +2415,8 @@ async function discoverDemoDataOracle(
                 error: undefined,
                 platform: 'Linux/UNIX',
                 oracleServerDeploymentType: 'Standalone',
+                source: DiscoverySource.DISCOVER,
+                hostManageReadiness: { extensiveRunPermission: true },
                 databaseInstanceDetails: [
                     {
                         instanceId: 'orclmix_std',
@@ -2493,7 +2533,9 @@ async function discoverDemoDataOracle(
                             cidrBlock: registeredHost.nodeTopology?.vpcCidr
                         },
                         platform: registeredHost.platform,
+                        source: DiscoverySource.DISCOVER,
                         oracleServerDeploymentType: 'Standalone',
+                        hostManageReadiness: { extensiveRunPermission: true, fsxLinkExists: true, fsxLinksCount: 1 },
                         databaseInstanceDetails: registeredHost.databaseInstancesSummary?.map(
                             dbInstance =>
                                 ({
