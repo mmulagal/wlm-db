@@ -65,6 +65,7 @@ export type ResourceScanRecord = {
     id: string;
     workload?: string;
     metadata?: Record<string, unknown>;
+    optimizationStatus?: string;
     isDismissed?: boolean;
     parentResource?: {
         id: string;

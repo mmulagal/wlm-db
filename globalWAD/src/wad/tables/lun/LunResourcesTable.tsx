@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import {
     DismissConfirmDialog,
     FixRowActionLabel,
+    NotificationType,
     OptimizationStatus,
     ResourceColumnId,
     TableScope,
@@ -12,7 +13,11 @@ import {
     type TableColumn,
     type WadApi
 } from '@tlveng/workload-factory-components';
-import { createFixBulkAction } from '../shared/bulkActions';
+import {
+    createFixBulkAction,
+    filterNeedsOptimizationResources,
+    NO_NEEDS_OPTIMIZATION_BULK_FIX_ERROR
+} from '../shared/bulkActions';
 import { spliceExtras, stickyResourceRowActionColumn } from '../shared/columns';
 import { DEFAULT_LUN_COLUMNS_BY_SCOPE, LUN_EXTRA_COLUMNS_ANCHOR_ID } from './columns';
 import { resolveLunConfiguration } from './configurations';
@@ -61,10 +66,20 @@ export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps
             if (!selectedResources.length) {
                 return;
             }
+
+            const fixableResources = filterNeedsOptimizationResources(selectedResources);
+            if (!fixableResources.length) {
+                wadApi.notify({
+                    type: NotificationType.ERROR,
+                    message: NO_NEEDS_OPTIMIZATION_BULK_FIX_ERROR
+                });
+                return;
+            }
+
             if (configuration.fixBulk) {
-                configuration.fixBulk(wadApi, selectedResources);
+                configuration.fixBulk(wadApi, fixableResources);
             } else {
-                wadApi.openFixModal(selectedResources);
+                wadApi.openFixModal(fixableResources);
             }
         },
         [configuration, resources, wadApi]
