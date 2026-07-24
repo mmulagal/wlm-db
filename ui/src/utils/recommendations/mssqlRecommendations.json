@@ -196,20 +196,32 @@
         "title": "Log drive size recommendation",
         "description": "Ensure accurate sizing and regular monitoring of the SQL Server log drive to prevent issues such as transaction rollbacks, database unavailability, data corruption, and performance degradation caused by a full log drive.\nAn additional 20% buffer is required if the drive is hosting a primary replica of Always On Availability Group.",
         "valuesHeading": "Log drive size (relative to data drive size):",
-        "values": ["Under-provisioned: <20%", "Optimized: 20-30%", "Over-provisioned: >30%"]
+        "values": [
+            "Under-provisioned: <20%",
+            "Optimized: 20-30%",
+            "Over-provisioned: >30%"
+        ]
     },
     "headroom": {
         "name": "File system headroom",
         "title": "File system headroom sizing recommendation",
         "description": "Workload Factory recommends provisioning file system capacity as 1.35 times of total size of provisioned volume to optimize storage performance.",
         "valuesHeading": "File system headroom percentages are as follows:",
-        "values": ["Under-provisioned: <35%", "Optimized: 35-50%", "Over-provisioned: >50%"]
+        "values": [
+            "Under-provisioned: <35%",
+            "Optimized: 35-50%",
+            "Over-provisioned: >50%"
+        ]
     },
     "tempdb-drive-size": {
         "name": "TempDB Drive Size",
         "title": "TempDB drive size recommendation",
         "description": "Ensure accurate sizing and regular monitoring of the SQL Server TempDB to well-architect performance and maintain overall stability.",
         "valuesHeading": "TempDB drive size (relative to data drive size):",
-        "values": ["Under-provisioned: <10%", "Optimized: 10-15%", "Over-provisioned: >15%"]
+        "values": [
+            "Under-provisioned: <10%",
+            "Optimized: 10-15%",
+            "Over-provisioned: >15%"
+        ]
     }
 }

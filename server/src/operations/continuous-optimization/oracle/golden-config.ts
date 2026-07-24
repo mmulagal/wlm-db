@@ -56,7 +56,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'ONTAP',
-        severity: SEVERITY.CRITICAL,
+        severity: SEVERITY.WARNING,
         recommendation:
             'Workload Factory recommends enabling volume autogrow for FSx for ONTAP volumes for Oracle databases. This configuration enhances flexibility and availability by allowing volumes to grow dynamically to accommodate unexpected data growth. This prevents space shortages and helps avoid downtime if a volume runs out of space, ensuring seamless scalability for Oracle databases. Volume autogrow is essential when using thin provisioning.',
         categories: [

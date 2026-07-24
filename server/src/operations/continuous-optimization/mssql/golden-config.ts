@@ -269,7 +269,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         type: 'storage',
         subType: 'configuration',
         focusWidgetName: 'Operating system',
-        severity: SEVERITY.CRITICAL,
+        severity: SEVERITY.WARNING,
         recommendation:
             'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],

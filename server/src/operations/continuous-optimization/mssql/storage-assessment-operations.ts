@@ -726,12 +726,24 @@ async function calculateStorageDrift(
             c => c.id === OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION
         );
         if (tieringTcoConfig) {
-            driftAssessmentData.push(
-                buildVolumeCombinedEntry(
-                    tieringTcoConfig,
-                    volumes as Array<Record<string, unknown>>
-                ) as MssqlAssessmentItemType
-            );
+            const tieringEntry = buildVolumeCombinedEntry(
+                tieringTcoConfig,
+                volumes as Array<Record<string, unknown>>
+            ) as MssqlAssessmentItemType;
+
+            // Dynamic severity for cold-data tiering:
+            //   tiering-policy = 'none'            → not-optimized, warning  (tiering disabled, low risk)
+            //   tiering-policy = 'snapshot_only'   → optimized (handled above)
+            //   tiering-policy = any other value   → not-optimized, critical (active-data tiering)
+            if (tieringEntry.status === AssessmentStatus.NOT_OPTIMIZED) {
+                const violatingPolicies = (volumes as Array<Record<string, unknown>>)
+                    .map(v => v['tiering-policy'] as string | undefined)
+                    .filter(p => p !== undefined && p !== 'snapshot_only');
+                const hasAggressivePolicy = violatingPolicies.some(p => p !== 'none');
+                tieringEntry.severity = hasAggressivePolicy ? 'critical' : 'warning';
+            }
+
+            driftAssessmentData.push(tieringEntry);
         }
     }
     if (errors && errors.luns) {
