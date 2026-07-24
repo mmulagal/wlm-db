@@ -1,0 +1,56 @@
+{
+    "assessments": [
+        {
+            "id": "thin-provision",
+            "name": "Thin provisioning",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends configuring thin provisioning for FSx for ONTAP volumes hosting Oracle databases. This approach optimizes storage efficiency and cost-effectiveness.",
+            "categories": ["Cost optimization", "Operational excellence"],
+            "status": "not-optimized",
+            "recommended": "true",
+            "subType": "configuration",
+            "resourceType": "Volume",
+            "focusWidgetName": "ONTAP",
+            "objectsInViolation": ["oraclevol1", "oraclevol2"],
+            "violationDetails": [
+                {"objectName": "oraclevol1", "value": "false", "objectType": "Volume"},
+                {"objectName": "oraclevol2", "value": "false", "objectType": "Volume"}
+            ],
+            "totalObjectsAssessed": 4,
+            "totalObjectsInViolation": 2
+        },
+        {
+            "id": "redo-logs-placement",
+            "name": "Redo logs placement",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Place redo logs on separate volumes for better performance and reliability",
+            "categories": ["Reliability", "Performance efficiency"],
+            "status": "not-optimized",
+            "recommended": "separate volume",
+            "subType": "configuration",
+            "resourceType": "Volume",
+            "focusWidgetName": "Oracle",
+            "objectsInViolation": ["redo_vol1"],
+            "violationDetails": [
+                {"objectName": "redo_vol1", "value": "shared with data", "objectType": "Volume"}
+            ],
+            "totalObjectsAssessed": 2,
+            "totalObjectsInViolation": 1
+        }
+    ],
+    "dismissedConfigurations": [],
+    "metadata": {
+        "lastAssessmentTimestamp": 1773510000000,
+        "fileSystemId": "fs-unregisteredoracle",
+        "ec2InstanceId": "i-0unregisteredoracle789",
+        "databaseInstanceName": "ORCL",
+        "deploymentType": "Standalone",
+        "databaseHostName": "unregistered-oracle-host",
+        "storageProtocol": "NFS",
+        "isASMManaged": false,
+        "source": "unregistered",
+        "isUnregistered": true
+    }
+}

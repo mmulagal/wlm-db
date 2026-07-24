@@ -33,7 +33,8 @@ export const handleDialog = (
     operation,
     singleRowData,
     engineType = DBType.MSSQL,
-    isWad = false
+    isWad = false,
+    isUnregistered = false
 ) => {
     // Get display name from cardData (flat API provides 'name' field)
     const displayName = cardData?.name || type || '';
@@ -42,6 +43,7 @@ export const handleDialog = (
     if (
         engineType === DBType.ORACLE &&
         !isWad &&
+        !isUnregistered &&
         (type === ASSESSMENT_CONFIG_NAMES.FILE_SYSTEM_HEADROOM ||
             type === 'headroom' ||
             displayName === 'File system headroom') &&
@@ -60,6 +62,7 @@ export const handleDialog = (
                         engineType={engineType}
                         status={cardData?.block_two?.value}
                         isWad={isWad}
+                        isUnregistered={isUnregistered}
                     />
                 }
                 primaryButton={i18next.t('databases.general.continue')}
@@ -73,7 +76,11 @@ export const handleDialog = (
                 customClass="innerPage"
             />
         );
-    } else if (isWad || !hasFixSupport(type, engineType, cardData?.block_two?.value, cardData?.missingPermissions)) {
+    } else if (
+        isUnregistered ||
+        isWad ||
+        !hasFixSupport(type, engineType, cardData?.block_two?.value, cardData?.missingPermissions)
+    ) {
         setDialog(
             <DialogComponent
                 header={displayName}
@@ -86,6 +93,7 @@ export const handleDialog = (
                         engineType={engineType}
                         status={cardData?.block_two?.value}
                         isWad={isWad}
+                        isUnregistered={isUnregistered}
                     />
                 }
                 primaryButton="Close"
@@ -110,6 +118,7 @@ export const handleDialog = (
                         recommendedSizeInGib={cardData?.recommendedSizeInGib}
                         engineType={engineType}
                         isWad={isWad}
+                        isUnregistered={isUnregistered}
                     />
                 }
                 primaryButton={i18next.t('databases.general.continue')}
@@ -138,6 +147,7 @@ export const handleConfigDialog = (
     operation,
     singleRowData,
     isWad = false,
+    isUnregistered = false,
     forceEnableInnerPage = false
 ) => {
     // Get config ID and display name from flat API
@@ -148,6 +158,7 @@ export const handleConfigDialog = (
     // For Oracle CRR in inner page, force enable Continue button even though fixSupported is false
     const isCloseButton =
         isWad ||
+        isUnregistered ||
         (!forceEnableInnerPage &&
             !hasFixSupport(configId, rowData?.engineType, rowData?.data?.status, rowData?.data?.missingPermissions));
     if (isCloseButton) {
@@ -159,6 +170,7 @@ export const handleConfigDialog = (
                         type={configId}
                         engineType={rowData?.engineType}
                         isWad={isWad}
+                        isUnregistered={isUnregistered}
                         objectsInViolation={rowData?.data?.objectsInViolation}
                         status={rowData?.data?.status}
                         missingPermissions={rowData?.data?.missingPermissions}
@@ -183,6 +195,7 @@ export const handleConfigDialog = (
                         type={configId}
                         engineType={rowData?.engineType}
                         isWad={isWad}
+                        isUnregistered={isUnregistered}
                         objectsInViolation={rowData?.data?.objectsInViolation}
                         status={rowData?.data?.status}
                         missingPermissions={rowData?.data?.missingPermissions}

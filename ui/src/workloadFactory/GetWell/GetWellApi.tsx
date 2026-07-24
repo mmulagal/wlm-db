@@ -10,14 +10,19 @@ import {
     setLandingFromInnerPage,
     setGwSelectedRowFsxId
 } from '../../store/workloadFactory/getWellOptimizeSlice';
-import { useGetMssqlAssessmentDataMutation, useLazyGetOfflineMssqlAssessmentDataQuery } from '../../utils/apiService';
+import {
+    useGetMssqlAssessmentDataMutation,
+    useLazyGetOfflineMssqlAssessmentDataQuery,
+    useLazyGetUnregisteredMssqlAssessmentQuery
+} from '../../utils/apiService';
 import { formatGetWellDataFlat, resetGwValuesOnRefresh, updateAccountLevelAssessmentData } from './GetWellUtils';
 import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-    const { credIdFromJM, regionFromJM, landingFrom, landingFromInnerPage, isWad } = useAppSelector(
+    const accountId = useAppSelector(state => state.auth.accountId);
+    const { credIdFromJM, regionFromJM, landingFrom, landingFromInnerPage, isWad, isUnregistered } = useAppSelector(
         state => state.getWellOptimize
     );
 
@@ -32,11 +37,14 @@ const GetWellApi = () => {
 
     const [assessmentDetailsApi] = useGetMssqlAssessmentDataMutation();
     const [getOfflineMssqlAssessmentData] = useLazyGetOfflineMssqlAssessmentDataQuery();
+    const [getUnregisteredMssqlAssessmentData] = useLazyGetUnregisteredMssqlAssessmentQuery();
 
     useEffect(() => {
-        // On page load, call the appropriate API based on isWad
+        // On page load, call the appropriate API based on isWad or isUnregistered
         if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
-            if (isWad) {
+            if (isUnregistered) {
+                viewUnregisteredOptimizeAction(false); // Unregistered: Call offline assessment with ec2InstanceId
+            } else if (isWad) {
                 viewWadOptimizeAction(false); // WAD: Call offline assessment API
             } else {
                 viewOptimizeAction(false); // Normal: Call regular assessment API
@@ -45,7 +53,7 @@ const GetWellApi = () => {
             dispatch(setLandingFromInnerPage(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isWad]);
+    }, [isWad, isUnregistered]);
 
     /**
      * Call the offline assessment API for WAD instances
@@ -58,6 +66,44 @@ const GetWellApi = () => {
                 instanceId: selectedDatabaseInstance,
                 credentialId: selectedGwInstanceCredId || null,
                 regionId: selectedGwInstanceRegionId || null
+            });
+            if (result && !result?.error && result?.data) {
+                const assessmentData = result.data;
+
+                dispatch(setDriftAssessmentData(assessmentData));
+                formatGetWellDataFlat(dispatch, assessmentData, false, isRefresh, false, t);
+                dispatch(setGwSelectedRowFsxId(assessmentData.metadata?.fileSystemId));
+
+                updateAccountLevelAssessmentData(dispatch, assessmentData, {
+                    databaseHostId: selectedResourceId,
+                    databaseInstanceId: selectedDatabaseInstance,
+                    credentialId: selectedGwInstanceCredId || '',
+                    regionId: selectedGwInstanceRegionId || ''
+                });
+                dispatch(setOptimizePageLoading(false));
+                dispatch(setIsAssessmentAvailable(true));
+            } else {
+                dispatch(setIsAssessmentAvailable(false));
+                dispatch(setOptimizePageLoading(false));
+            }
+        } catch (error) {
+            dispatch(setIsAssessmentAvailable(false));
+            dispatch(setOptimizePageLoading(false));
+        }
+    };
+
+    /**
+     * Call the offline assessment API for unregistered instances using ec2InstanceId
+     */
+    const runUnregisteredAssessmentApi = async (isRefresh: boolean = false) => {
+        try {
+            dispatch(setOptimizePageLoading(true));
+            const result: { data?: any; error?: any } = await getUnregisteredMssqlAssessmentData({
+                accountId,
+                ec2InstanceId: selectedResourceId, // For unregistered, resourceId is the ec2InstanceId
+                instanceName: selectedDatabaseInstance, // For unregistered, this is the instanceName
+                region: selectedGwInstanceRegionId || null,
+                credentialId: selectedGwInstanceCredId || null
             });
             if (result && !result?.error && result?.data) {
                 const assessmentData = result.data;
@@ -131,6 +177,17 @@ const GetWellApi = () => {
     };
 
     /**
+     * Trigger unregistered assessment action
+     */
+    const viewUnregisteredOptimizeAction = (isRefresh: boolean = false) => {
+        resetGwValuesOnRefresh(dispatch);
+        setTimeout(() => {
+            dispatch(setOptimizePageLoading(true));
+            runUnregisteredAssessmentApi(isRefresh);
+        }, 10);
+    };
+
+    /**
      * Trigger regular assessment action
      */
     const viewOptimizeAction = (isRefresh: boolean = false) => {
@@ -144,7 +201,9 @@ const GetWellApi = () => {
     useEffect(() => {
         // On page refresh, call the appropriate API
         if (gwRefreshPage) {
-            if (isWad) {
+            if (isUnregistered) {
+                viewUnregisteredOptimizeAction(true); // Unregistered: Call offline assessment with ec2InstanceId
+            } else if (isWad) {
                 viewWadOptimizeAction(true); // WAD: Call offline assessment API
             } else {
                 viewOptimizeAction(true); // Normal: Call regular assessment API
@@ -152,7 +211,7 @@ const GetWellApi = () => {
             dispatch(setGwRefreshPage(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [gwRefreshPage, isWad]);
+    }, [gwRefreshPage, isWad, isUnregistered]);
 };
 
 export default GetWellApi;

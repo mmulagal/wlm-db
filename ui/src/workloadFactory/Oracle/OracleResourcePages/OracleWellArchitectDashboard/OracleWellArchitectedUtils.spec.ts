@@ -186,9 +186,10 @@ describe('OracleWellArchitectedUtils', () => {
             expect(result.compute).toHaveLength(1);
         });
 
-        it('skips WA_FLAG_SKIP keys (isWad, storageProtocol, deploymentType, baseDeploymentType)', () => {
+        it('skips WA_FLAG_SKIP keys (isWad, isUnregistered, storageProtocol, deploymentType, baseDeploymentType)', () => {
             const cardData = {
                 isWad: true,
+                isUnregistered: true,
                 storageProtocol: 'iSCSI',
                 deploymentType: 'single',
                 baseDeploymentType: 'single',
@@ -242,7 +243,7 @@ describe('OracleWellArchitectedUtils', () => {
         it('returns empty cardsData (only metadata keys) for empty assessments', () => {
             const { cardsData } = getOracleCardsData(makeData() as any, {});
             const nonMeta = Object.keys(cardsData).filter(
-                k => !['storageProtocol', 'isWad', 'deploymentType', 'baseDeploymentType'].includes(k)
+                k => !['storageProtocol', 'isWad', 'isUnregistered', 'deploymentType', 'baseDeploymentType'].includes(k)
             );
             expect(nonMeta).toHaveLength(0);
         });
@@ -292,12 +293,12 @@ describe('OracleWellArchitectedUtils', () => {
             expect(cardsData['some-config'].block_two.value).toBe('Over-provisioned');
         });
 
-        it('maps unknown status to "Unavailable"', () => {
+        it('maps unknown status to "Not applicable"', () => {
             const { cardsData } = getOracleCardsData(
                 makeData([makeAssessment({ status: 'something-else' })]) as any,
                 {}
             );
-            expect(cardsData['some-config'].block_two.value).toBe('Unavailable');
+            expect(cardsData['some-config'].block_two.value).toBe('Not applicable');
         });
 
         // ── severity capitalization ─────────────────────────────────────────
@@ -518,6 +519,15 @@ describe('OracleWellArchitectedUtils', () => {
             expect(cardsData.isWad).toBe(true);
             expect(cardsData.deploymentType).toBe('rac');
             expect(cardsData.baseDeploymentType).toBe('single');
+        });
+
+        it('sets isUnregistered when metadata.source is unregistered', () => {
+            const { cardsData } = getOracleCardsData(
+                makeData([], [], { source: 'unregistered', isWad: false }) as any,
+                {}
+            );
+            expect(cardsData.isUnregistered).toBe(true);
+            expect(cardsData.isWad).toBe(false);
         });
 
         // ── optional spread fields ──────────────────────────────────────────
@@ -784,9 +794,10 @@ describe('OracleWellArchitectedUtils', () => {
         });
 
         it('skips WA_FLAG_SKIP keys from results', () => {
-            const cardData = { isWad: true, a: makeCard() } as any;
+            const cardData = { isWad: true, isUnregistered: true, a: makeCard() } as any;
             const { data } = oracleApplyFilter(cardData, []);
             expect((data as any).isWad).toBeUndefined();
+            expect((data as any).isUnregistered).toBeUndefined();
         });
 
         it('skips null/undefined card values', () => {

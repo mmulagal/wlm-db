@@ -85,7 +85,9 @@ const StorageCardComponent = ({
     const [showDismissButton, setShowDismissButton] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
-    const { isWad: isWadFromStore } = useAppSelector(state => state.getWellOptimize);
+    const { isWad: isWadFromStore, isUnregistered: isUnregisteredFromStore } = useAppSelector(
+        state => state.getWellOptimize
+    );
 
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const {
@@ -968,6 +970,10 @@ const StorageCardComponent = ({
     // Use Redux store flag which is set when navigating to WAD assessment
     const isWad = isWadFromStore || fullCardData?.isWad || false;
 
+    // Check if this is an unregistered (on-demand assessment) instance
+    // Use Redux store flag which is set when navigating to unregistered assessment
+    const isUnregistered = isUnregisteredFromStore || fullCardData?.isUnregistered || false;
+
     // Get the config ID from API (flat structure) or fallback to legacy type prop
     const configId = cardData?.id || type;
 
@@ -989,7 +995,8 @@ const StorageCardComponent = ({
                 undefined,
                 undefined,
                 engineType,
-                isWad
+                isWad,
+                isUnregistered
             );
         }
     };

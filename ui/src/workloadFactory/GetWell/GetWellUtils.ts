@@ -51,7 +51,8 @@ import {
     WELL_ARCHITECTED_CATEGORY_LABELS,
     WELL_ARCHITECTED_CATEGORY_ORDER,
     WLF_TABS,
-    WELL_ARCHITECTED_STATUS
+    WELL_ARCHITECTED_STATUS,
+    ASSESSMENT_METADATA_SOURCE
 } from '../../utils/consts';
 import { groupByType, mapDismissedValues } from '../../utils/resourceUtils';
 import { AssessmentResponseInterface } from '../../utils/types/getWellTypes';
@@ -2114,7 +2115,8 @@ export const formatFlatAssessments = (
     const cardsData: any = {
         deploymentType: data.metadata.deploymentType || '',
         baseDeploymentType: data.metadata.baseDeploymentType || '',
-        isWad: data.metadata.isWad || false
+        isWad: data.metadata.isWad || false,
+        isUnregistered: data.metadata?.source === ASSESSMENT_METADATA_SOURCE.UNREGISTERED
     };
 
     // Always process assessments array, not dismissedConfigurations
@@ -2579,7 +2581,7 @@ export const groupConfigurationsByCategory = (cardData: any): Record<string, any
     // Iterate through all keys in cardData (except metadata fields)
     Object.keys(cardData).forEach(key => {
         // Skip metadata fields
-        if (key === 'deploymentType' || key === 'baseDeploymentType' || key === 'isWad') {
+        if (key === 'deploymentType' || key === 'baseDeploymentType' || key === 'isWad' || key === 'isUnregistered') {
             return;
         }
 

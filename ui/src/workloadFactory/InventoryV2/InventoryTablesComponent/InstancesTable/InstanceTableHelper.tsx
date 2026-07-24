@@ -1475,16 +1475,27 @@ const dispatchWadWellArchitectedFromInventoryRow = (
     rowData: any,
     dispatch: Dispatch,
     wellArchitectedTab: WellArchitectedTabValue,
-    options?: { resetVisitedTabs?: boolean }
+    options?: { resetVisitedTabs?: boolean; isUnregistered?: boolean }
 ) => {
     if (options?.resetVisitedTabs) {
         dispatch(resetVisitedTabs());
     }
 
     const databaseHostId = rowData?.databaseHostId || rowData?.hostRow?.id || rowData?.hostRow?.resourceId;
-    const instanceId = rowData?.databaseInstanceId;
+    const ec2InstanceId = rowData?.ec2InstanceId || rowData?.hostRow?.ec2InstanceId;
+
+    // For unregistered instances, use sqlServerInstance (MSSQL) or oracleInstance (Oracle) as the instanceId
+    // For registered/WAD instances, use databaseInstanceId
+    let instanceId = rowData?.databaseInstanceId;
+    const isUnregisteredFlow = !!(options?.isUnregistered || rowData?.isUnregistered);
+    const isWadFlow = !isUnregisteredFlow && !!rowData?.isWad;
+    if (isUnregisteredFlow) {
+        instanceId = rowData?.sqlServerInstance || rowData?.oracleInstance || rowData?.databaseInstanceName;
+    }
+
     const credentialId = rowData?.credentialId || rowData?.hostRow?.credentialId;
     const regionId = rowData?.regionId || rowData?.hostRow?.regionId;
+    const resourceId = isUnregisteredFlow ? ec2InstanceId || databaseHostId : databaseHostId;
 
     dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));
     dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
@@ -1496,13 +1507,14 @@ const dispatchWadWellArchitectedFromInventoryRow = (
     dispatch(
         setGwPageLoadInstanceData({
             hostname: rowData?.name || rowData?.hostRow?.name,
-            resourceId: databaseHostId,
+            resourceId,
             instanceId,
-            instanceName: rowData?.databaseInstanceName,
+            instanceName: rowData?.databaseInstanceName || instanceId,
             credId: credentialId,
             regionId,
             storageType: rowData?.sqlServerDeploymentType,
-            isWad: true
+            isWad: isWadFlow,
+            isUnregistered: isUnregisteredFlow
         })
     );
 
@@ -1510,7 +1522,7 @@ const dispatchWadWellArchitectedFromInventoryRow = (
     dispatch(setSelectedHostname(rowData?.name || rowData?.hostRow?.name));
     dispatch(
         setSelectedResourcePageHostData({
-            resourceId: databaseHostId,
+            resourceId,
             databaseInstanceId: instanceId,
             databaseInstanceName: rowData?.databaseInstanceName,
             credentialId,
@@ -1539,6 +1551,20 @@ export const handleWadOptimizeAction = (rowData: any, dispatch: Dispatch) => {
 export const handleWadViewDatabasesAction = (rowData: any, dispatch: Dispatch) => {
     dispatchWadWellArchitectedFromInventoryRow(rowData, dispatch, WELL_ARCHITECTED_TABS.DATABASES, {
         resetVisitedTabs: true
+    });
+};
+
+/**
+ * Unregistered on-demand assessment: open resource screen Well-Architected Status tab.
+ * Sets isUnregistered flag and navigates to the Well-Architected page.
+ * The on-demand assessment API is called in GetWellApi.tsx based on isUnregistered flag.
+ *
+ * @param rowData - The unregistered instance row data
+ * @param dispatch - Redux dispatch function
+ */
+export const handleUnregisteredOptimizeAction = (rowData: any, dispatch: Dispatch) => {
+    dispatchWadWellArchitectedFromInventoryRow(rowData, dispatch, WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS, {
+        isUnregistered: true
     });
 };
 
@@ -1582,7 +1608,8 @@ export const handleOracleWadOptimizeAction = (rowData: any, dispatch: Dispatch) 
             credId: credentialId,
             regionId,
             storageType: rowData?.sqlServerDeploymentType,
-            isWad: true
+            isWad: true,
+            isUnregistered: false // Explicitly set isUnregistered=false for WAD instances
         })
     );
 
@@ -1594,6 +1621,63 @@ export const handleOracleWadOptimizeAction = (rowData: any, dispatch: Dispatch) 
             resourceId: databaseHostId,
             databaseInstanceId: instanceId,
             databaseInstanceName: rowData?.databaseInstanceName,
+            credentialId,
+            regionId
+        })
+    );
+    dispatch(resetEiData({}));
+};
+
+/**
+ * Handler for Oracle unregistered on-demand assessment optimize action.
+ * Sets isUnregistered flag and navigates to the Oracle resource page.
+ * The on-demand assessment API is called based on isUnregistered flag.
+ *
+ * @param rowData - The Oracle unregistered instance row data
+ * @param dispatch - Redux dispatch function
+ */
+export const handleUnregisteredOracleOptimizeAction = (rowData: any, dispatch: Dispatch) => {
+    const hostRow = rowData?.hostRow;
+    const ec2InstanceId = rowData?.ec2InstanceId || hostRow?.ec2InstanceId;
+    const resourceId = ec2InstanceId || rowData?.databaseHostId || hostRow?.id || hostRow?.resourceId;
+    const instanceId = rowData?.databaseInstanceName || rowData?.oracleInstance;
+    const credentialId = rowData?.credentialId || hostRow?.credentialId;
+    const regionId = rowData?.regionId || hostRow?.regionId;
+    const hostname = rowData?.name || hostRow?.name;
+
+    dispatch(
+        setFSXId({
+            fsxId: rowData?.fsxId,
+            ec2InstanceId: rowData?.ec2InstanceId,
+            isInstanceStorageAsmManaged: rowData?.isInstanceStorageAsmManaged
+        })
+    );
+
+    dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
+    dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+    dispatch(setBreadCrumbSelectedFrom(WLF_TABS.INVENTORY));
+    dispatch(setLandingFrom(WLF_TABS.INVENTORY));
+
+    dispatch(
+        setGwPageLoadInstanceData({
+            hostname,
+            resourceId,
+            instanceId,
+            instanceName: instanceId,
+            credId: credentialId,
+            regionId,
+            isWad: false,
+            isUnregistered: true
+        })
+    );
+
+    dispatch(resetWorkloadFactoryResourceData());
+    dispatch(setSelectedHostname(hostname));
+    dispatch(
+        setSelectedResourcePageHostData({
+            resourceId,
+            databaseInstanceId: instanceId,
+            databaseInstanceName: instanceId,
             credentialId,
             regionId
         })

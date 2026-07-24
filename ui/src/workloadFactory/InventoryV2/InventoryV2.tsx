@@ -232,11 +232,17 @@ const InventoryV2 = () => {
                         const protectionText = getProtectionText(perRow);
                         let optimizationStatus = '';
                         let optimizationLastTimestamp = '';
-                        // For WAD (offline assessment) data, use getWadOptimizationStatus
-                        if (perRow?.isWad && inventoryTableData?.[key]?.hostType === DBType.MSSQL) {
+                        // For WAD (offline assessment) or unregistered data, use getWadOptimizationStatus
+                        if (
+                            (perRow?.isWad || perRow?.isUnregistered) &&
+                            inventoryTableData?.[key]?.hostType === DBType.MSSQL
+                        ) {
                             optimizationStatus = getWadOptimizationStatus(perRow?.wadAssessmentData);
                             optimizationLastTimestamp = perRow?.wadAssessmentData?.metadata?.lastAssessmentTimestamp;
-                        } else if (perRow?.isWad && inventoryTableData?.[key]?.hostType === DBType.ORACLE) {
+                        } else if (
+                            (perRow?.isWad || perRow?.isUnregistered) &&
+                            inventoryTableData?.[key]?.hostType === DBType.ORACLE
+                        ) {
                             optimizationStatus = getOracleWadOptimizationStatus(perRow?.wadAssessmentData);
                             optimizationLastTimestamp = perRow?.wadAssessmentData?.metadata?.lastAssessmentTimestamp;
                         } else {
@@ -252,8 +258,8 @@ const InventoryV2 = () => {
                         const fsxList = getFsxList(perRow);
 
                         // assessment loading for mssql and oracle
-                        // For WAD (offline assessment) data, loading should always be false
-                        if (perRow?.isWad) {
+                        // For WAD (offline assessment) or unregistered data, loading should always be false
+                        if (perRow?.isWad || perRow?.isUnregistered) {
                             optimizationStatusLoading = false;
                         } else if (
                             perRow?.statusColText === INVENTORY_STATUS.MANAGED &&
@@ -444,7 +450,8 @@ const InventoryV2 = () => {
                                 ec2InstanceId: perHost?.ec2InstanceId,
                                 serverInstallationMode,
                                 totalReplicaCount,
-                                isWad: perRow?.isWad
+                                isWad: perRow?.isWad,
+                                isUnregistered: perRow?.isUnregistered
                             };
                             // Only add Oracle PDB databases or all non-Oracle databases
                             if (

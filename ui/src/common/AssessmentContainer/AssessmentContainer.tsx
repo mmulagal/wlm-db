@@ -16,6 +16,7 @@ interface AssessmentContainerProps {
     gwAdhocError: string;
     optimizePageLoading: boolean;
     isWad?: boolean;
+    isUnregistered?: boolean;
     dbType?: string;
 }
 
@@ -26,6 +27,7 @@ const AssessmentContainer = ({
     gwAdhocError,
     optimizePageLoading,
     isWad = false,
+    isUnregistered = false,
     dbType
 }: AssessmentContainerProps) => {
     const { t } = useTranslation();
@@ -37,6 +39,10 @@ const AssessmentContainer = ({
             ? t('databases.wad.tab-disabled-message-oracle')
             : t('databases.wad.tab-disabled-message');
 
+    // Button should be disabled only for WAD (offline) instances that are not unregistered
+    // Unregistered instances should have enabled button
+    const isButtonDisabled = isWad && !isUnregistered;
+
     return (
         <div className={styles.assessment}>
             <div className={styles.leftSide}>
@@ -46,8 +52,10 @@ const AssessmentContainer = ({
                     </div>
                     <div className={styles.textSection}>
                         <DsTypography variant="Regular_14">
-                            {isWad
+                            {isWad && !isUnregistered
                                 ? t('databases.inventory.one-time-assessment')
+                                : isUnregistered
+                                ? t('databases.inventory.on-demand-assessment')
                                 : t('databases.general.assessment-performed')}
                         </DsTypography>
                         <SeparatorComponent variant="vertical" height="16px" />
@@ -56,7 +64,7 @@ const AssessmentContainer = ({
                             {!optimizePageLoading && gwTimestamp && gwTimestamp !== '0' && (
                                 <>
                                     <DsTypography variant="Regular_14">
-                                        {isWad
+                                        {isWad && !isUnregistered
                                             ? t('databases.general.data-collection-date')
                                             : t('databases.general.last-update')}
                                     </DsTypography>
@@ -80,7 +88,7 @@ const AssessmentContainer = ({
                 </div>
             </div>
             <div className={styles.rightSide}>
-                {isWad ? (
+                {isButtonDisabled ? (
                     <TooltipComponent placement="bottom" title={wadTooltipMessage} width={300}>
                         <Button variant="secondary" data-testid="wlm-db-analyze-now" isThin isDisabled>
                             {t('databases.general.assess-now')}

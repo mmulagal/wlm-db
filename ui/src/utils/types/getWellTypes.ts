@@ -56,6 +56,7 @@ export interface AssessmentMetadata {
     storageProtocol?: string;
     baseDeploymentType?: string;
     isWad?: boolean;
+    source?: string;
 }
 
 export interface DismissedConfigurationItem {
@@ -187,7 +188,7 @@ export interface FlatAssessmentItem extends PerConfigInterface {
 export interface FlatAssessmentResponse {
     assessments: FlatAssessmentItem[];
     dismissedConfigurations: FlatAssessmentItem[];
-    metadata: {
+    metadata: AssessmentMetadata & {
         lastAssessmentTimestamp: number;
         fileSystemId: string;
         ec2InstanceId: string;
@@ -315,5 +316,6 @@ export interface GetWellSliceInterface {
     cloneIsOptimizedRows: any;
     inProgressStateData: any;
     isWad?: boolean; // Flag to indicate if the instance is from WAD (offline assessment)
+    isUnregistered?: boolean; // Flag to indicate on-demand assessment for unregistered instances
     instanceStatus?: string;
 }

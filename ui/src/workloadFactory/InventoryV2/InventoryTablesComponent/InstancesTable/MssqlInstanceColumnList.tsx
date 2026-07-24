@@ -38,8 +38,13 @@ import {
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import { hasFullPermission } from '../../InventoryUtilsV2';
-import { logAnalyzerStatusCol, handleWadOptimizeAction, notAvailableWithTooltip } from './InstanceTableHelper';
+import { canTriggerUnregisteredAssessment } from '../../InventoryUtilsV2';
+import {
+    logAnalyzerStatusCol,
+    handleWadOptimizeAction,
+    handleUnregisteredOptimizeAction,
+    notAvailableWithTooltip
+} from './InstanceTableHelper';
 import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 import { useAppSelector } from '../../../../store/storeHooks';
 
@@ -86,6 +91,7 @@ export function getMssqlInstanceTableColumns({
                                 status={rowData?.status}
                                 loading={rowData?.loading}
                                 isWad={rowData?.isWad}
+                                isUnregistered={rowData?.isUnregistered}
                             />
                         </div>
                     </div>
@@ -147,8 +153,12 @@ export function getMssqlInstanceTableColumns({
                     return <DsFlashingDotsLoader />;
                 }
 
-                // For WAD (offline assessment) rows with valid optimization status, show tooltip without View link
-                if (rowData?.isWad && cellData) {
+                // For WAD (offline assessment) or unregistered rows with valid optimization status, show tooltip
+                if ((rowData?.isWad || rowData?.isUnregistered) && cellData) {
+                    const tooltipText = rowData?.isUnregistered
+                        ? t('databases.inventory.on-demand-assessment')
+                        : t('databases.inventory.one-time-assessment');
+
                     return (
                         <div className={styles.naContainer}>
                             <Popover
@@ -159,9 +169,7 @@ export function getMssqlInstanceTableColumns({
                                 container={<TooltipIcon />}
                             >
                                 <div>
-                                    <DsTypography variant="Regular_13">
-                                        {t('databases.inventory.one-time-assessment')}
-                                    </DsTypography>
+                                    <DsTypography variant="Regular_13">{tooltipText}</DsTypography>
                                     {rowData?.optimizationLastTimestamp && (
                                         <DsTypography variant="Semibold_13">
                                             {formatDateWithTime(rowData.optimizationLastTimestamp)}
@@ -518,14 +526,21 @@ export function getMssqlInstanceTableColumns({
             renderCell: (cellData: any, rowData: any) => {
                 const isDisabledByBulkSelection = isBulkSelectionActive;
 
-                // Determine if "View and Fix" should be enabled based on hasFullPermission
-                // View and Fix is only available for:
+                // Determine if "View and Fix" should be enabled
+                // View and Fix is available for:
                 // 1. WAD (offline assessment) instances with isWad flag, OR
-                // 2. Registered/managed instances with resourceId
+                // 2. Registered/managed instances with resourceId, OR
+                // 3. Unregistered instances with permissions (extensiveRunPermission or canReadAWSSSMDocuments)
                 const isRegisteredOrManaged =
                     rowData?.statusColText === INVENTORY_STATUS.MANAGED || rowData?.resourceId;
-                const canViewAndFix = rowData?.isWad || isRegisteredOrManaged;
-                const viewAndFixDisableMsg = !canViewAndFix ? t('databases.general.view-and-fix-disabled-tooltip') : '';
+                const hasUnregisteredPermissions = canTriggerUnregisteredAssessment(rowData?.hostManageReadiness);
+                const canViewAndFix =
+                    rowData?.isWad || rowData?.isUnregistered || isRegisteredOrManaged || hasUnregisteredPermissions;
+
+                // Tooltip for disabled button
+                const viewAndFixDisableMsg = !canViewAndFix
+                    ? t('databases.inventory.register-instance-to-enable-view-fix')
+                    : '';
 
                 const effectiveDisableMsg = isDisabledByBulkSelection
                     ? t('databases.bulk-register.action-disabled-during-bulk-selection')
@@ -567,6 +582,12 @@ export function getMssqlInstanceTableColumns({
                                         if (rowData?.isWad) {
                                             // For WAD instances, use offline assessment handler
                                             handleWadOptimizeAction(rowData, dispatch);
+                                        } else if (
+                                            rowData?.isUnregistered ||
+                                            (hasUnregisteredPermissions && !isRegisteredOrManaged)
+                                        ) {
+                                            // For unregistered instances with permissions, trigger on-demand assessment
+                                            handleUnregisteredOptimizeAction(rowData, dispatch);
                                         } else {
                                             // For managed instances, use regular optimize action
                                             dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE));

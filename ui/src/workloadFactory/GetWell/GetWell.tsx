@@ -27,17 +27,10 @@ import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
 
-import {
-    ASSESSMENT_CONFIG_NAMES,
-    CONFIG_STATES,
-    DBType,
-    WLF_TABS,
-    WELL_ARCHITECTED_CATEGORY_ORDER
-} from '../../utils/consts';
+import { CONFIG_STATES, DBType, WELL_ARCHITECTED_CATEGORY_ORDER } from '../../utils/consts';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
 import {
-    generateDate,
     applyFilter,
     resetGwValuesOnRefresh,
     generateDynamicFilterOptions,
@@ -61,7 +54,11 @@ import { GENERAL } from '../../utils/appConstants';
 import DialogComponent from '../../common/Dialog/DialogComponent';
 import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
 import downloadPdf from '../../common/pdfGenerator';
-import { useLazyGetSubTaskListQuery, useTriggerInstanceAssessmentMutation } from '../../utils/apiService';
+import {
+    useLazyGetSubTaskListQuery,
+    useTriggerInstanceAssessmentMutation,
+    useTriggerUnregisteredMssqlAssessmentMutation
+} from '../../utils/apiService';
 import AssessmentContainer from '../../common/AssessmentContainer/AssessmentContainer';
 import PartialDataContainer from './PartialDataContainer/PartialDataContainer';
 import {
@@ -86,6 +83,7 @@ const GetWell = () => {
     const dispatch = useDispatch();
     const { optimizeFilterTags, defaultFilterOptions } = useAppSelector(state => state.inventoryV2);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const accountId = useAppSelector(state => state.auth.accountId);
     const totalConfigCount = useAppSelector(state => state.getWellOptimize.optimizationBreakDown?.total?.total);
     const loading = useAppSelector(state => state.getWellOptimize.optimizePageLoading);
     const {
@@ -93,6 +91,7 @@ const GetWell = () => {
         isAssessmentAvailable,
         selectedResourceId,
         selectedDatabaseInstance,
+        selectedDatabaseInstanceName,
         selectedGwInstanceCredId,
         selectedGwInstanceRegionId,
         selectedDatabaseStorageType,
@@ -101,8 +100,10 @@ const GetWell = () => {
         gwAdhocError,
         optimizationBreakDown,
         driftAssessmentData,
-        isWad: isWadFromStore
+        isWad: isWadFromStore,
+        isUnregistered: isUnregisteredFromStore
     } = useAppSelector(state => state.getWellOptimize);
+    const isUnregistered = isUnregisteredFromStore || !!cardData?.isUnregistered;
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
@@ -116,6 +117,7 @@ const GetWell = () => {
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
 
     const [triggerAssessmentApi] = useTriggerInstanceAssessmentMutation();
+    const [triggerUnregisteredAssessmentApi] = useTriggerUnregisteredMssqlAssessmentMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     useEffect(() => {
@@ -170,10 +172,14 @@ const GetWell = () => {
         handleTriggerAssessment({
             setTriggerAssessmentInProgress,
             triggerAssessmentApi,
+            triggerUnregisteredAssessmentApi,
             credentialId: selectedGwInstanceCredId,
             regionId: selectedGwInstanceRegionId,
             selectedResourceId,
             selectedDatabaseInstance,
+            instanceName: selectedDatabaseInstanceName,
+            accountId,
+            isUnregistered,
             dispatch,
             isWorkloadFactory,
             getJobDetailApi,
@@ -449,6 +455,7 @@ const GetWell = () => {
                     gwAdhocError={gwAdhocError || ''}
                     optimizePageLoading={loading || false}
                     isWad={isWadFromStore || cardData?.isWad || false}
+                    isUnregistered={isUnregistered}
                     dbType={DBType.MSSQL}
                 />
                 {showChartArea && (

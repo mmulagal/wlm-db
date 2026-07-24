@@ -1012,6 +1012,11 @@ export const NETWORK_PERFORMANCE_OPTIONS: any = {
 
 export const ERR_MSG_TO_CHECK = ['does not match schema definition.'];
 
+export const ASSESSMENT_METADATA_SOURCE = {
+    OFFLINE: 'offline',
+    UNREGISTERED: 'unregistered'
+} as const;
+
 export const ASSESSMENT_CONFIG_OTHER = {
     STORAGE: 'Storage',
     COMPUTE: 'Compute',
@@ -1826,4 +1831,4 @@ export const OPTIMIZE_PAYLOAD_TYPES = {
 export const SSM_ARN_REGEX = /^arn:aws(-us-gov)?:ssm:[^:]+:\d{12}:parameter\/netapp\/wlmdb\/.+$/;
 export const isValidSsmArn = (arn: string) => SSM_ARN_REGEX.test(arn);
 
-export const WA_FLAG_SKIP = ['deploymentType', 'storageProtocol', 'isWad', 'baseDeploymentType'];
+export const WA_FLAG_SKIP = ['deploymentType', 'storageProtocol', 'isWad', 'isUnregistered', 'baseDeploymentType'];

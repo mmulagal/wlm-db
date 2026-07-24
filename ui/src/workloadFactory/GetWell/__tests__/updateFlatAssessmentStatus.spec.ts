@@ -330,6 +330,24 @@ describe('formatFlatAssessments', () => {
         expect(result.cardsData.isWad).toBe(true);
     });
 
+    it('sets isUnregistered when metadata.source is unregistered', () => {
+        const flatData = {
+            metadata: {
+                deploymentType: 'standalone',
+                baseDeploymentType: 'standalone',
+                isWad: false,
+                source: 'unregistered'
+            },
+            assessments: [],
+            dismissedConfigurations: []
+        };
+
+        const result = formatFlatAssessments(flatData, {}, false, mockTranslation);
+
+        expect(result.cardsData.isUnregistered).toBe(true);
+        expect(result.cardsData.isWad).toBe(false);
+    });
+
     it('adds dismissedObj when config is dismissed', () => {
         const flatData = {
             metadata: { deploymentType: 'standalone', isWad: false },

@@ -24,12 +24,15 @@ const OracleTabs = () => {
         selectedGwInstanceCredId,
         selectedDatabaseInstance,
         selectedResourceId: waSelectedResourceId,
-        isWad
+        isWad,
+        isUnregistered
     } = useAppSelector(state => state.getWellOptimize);
     const { allLogAnalysisData } = useAppSelector(state => state.inventoryV2);
 
     // WAD tooltip message for disabled tabs (Oracle specific)
     const wadDisabledMessage = t('databases.wad.tab-disabled-message-oracle');
+    // Unregistered tooltip message for disabled tabs (Oracle specific)
+    const unregisteredDisabledMessage = t('databases.wad.unregistered-tab-disabled-message-oracle');
 
     const { isSingleTenant, hasWadPdbData } = useMemo(() => {
         if (!selectedResourceId || !selectedDatabaseInstanceName || !inventoryTableData) {
@@ -86,9 +89,13 @@ const OracleTabs = () => {
 
     return (
         <div className={styles['oracle-tabs']}>
-            {/* Overview Tab - disabled for WAD */}
-            {isWad ? (
-                <TooltipComponent placement="bottom" title={wadDisabledMessage} width={300}>
+            {/* Overview Tab - disabled for WAD or unregistered instances */}
+            {isWad || isUnregistered ? (
+                <TooltipComponent
+                    placement="bottom"
+                    title={isUnregistered ? unregisteredDisabledMessage : wadDisabledMessage}
+                    width={300}
+                >
                     <div className={`${styles.headers} ${styles.headerWidthFirst}`}>
                         <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
                             {t('databases.oracle-inner-page.overview')}
@@ -138,13 +145,15 @@ const OracleTabs = () => {
                 </DsTypography>
             </div>
 
-            {/* Error Investigation Tab - disabled for WAD, GovCloud, or when Bedrock not supported */}
-            {(isWad || isGovAccount || !isBedrockSupportedForRegion) && (
+            {/* Error Investigation Tab - disabled for WAD, unregistered, GovCloud, or when Bedrock not supported */}
+            {(isWad || isUnregistered || isGovAccount || !isBedrockSupportedForRegion) && (
                 <TooltipComponent
                     placement="bottom"
                     title={
                         isGovAccount
                             ? t('databases.general.not-supported-in-govcloud')
+                            : isUnregistered
+                            ? unregisteredDisabledMessage
                             : isWad
                             ? wadDisabledMessage
                             : t('databases.log-analyzer.bedrock-in-region-not-supported')
@@ -161,7 +170,7 @@ const OracleTabs = () => {
                     </div>
                 </TooltipComponent>
             )}
-            {!isWad && !isGovAccount && isBedrockSupportedForRegion && (
+            {!isWad && !isUnregistered && !isGovAccount && isBedrockSupportedForRegion && (
                 <div
                     className={
                         selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION
@@ -190,9 +199,13 @@ const OracleTabs = () => {
                 </div>
             )}
 
-            {/* PDB Tab - disabled for WAD without PDB data or Single Tenant */}
-            {isWad && !hasWadPdbData ? (
-                <TooltipComponent placement="bottom" title={wadDisabledMessage} width={300}>
+            {/* PDB Tab - disabled for WAD without PDB data, unregistered, or Single Tenant */}
+            {(isWad && !hasWadPdbData) || isUnregistered ? (
+                <TooltipComponent
+                    placement="bottom"
+                    title={isUnregistered ? unregisteredDisabledMessage : wadDisabledMessage}
+                    width={300}
+                >
                     <div className={`${styles.headers} ${styles.headerWidthThird}`}>
                         <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
                             {t('databases.oracle-inner-page.pdb')}

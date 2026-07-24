@@ -1476,6 +1476,43 @@ export const getWellApi = createApi({
                     : `v2/oracle/database-hosts/${databaseHostId}/database-instances/${instanceId}/offline-assessment`;
             }
         }),
+        // Unregistered assessment APIs - use ec2InstanceId instead of databaseHostId
+        triggerUnregisteredMssqlAssessment: builder.mutation({
+            query: ({ credentialId, region, ec2InstanceId, instanceName }) => ({
+                url: `v1/mssql/credentials/${credentialId}/regions/${region}/ec2-instances/${ec2InstanceId}/database-instances/${instanceName}/assessment`,
+                method: 'POST'
+            })
+        }),
+        triggerUnregisteredOracleAssessment: builder.mutation({
+            query: ({ credentialId, region, ec2InstanceId, instanceName }) => ({
+                url: `v1/oracle/credentials/${credentialId}/regions/${region}/ec2-instances/${ec2InstanceId}/database-instances/${instanceName}/assessment`,
+                method: 'POST'
+            })
+        }),
+        getUnregisteredMssqlAssessment: builder.query({
+            query: ({ accountId, ec2InstanceId, instanceName, region, credentialId = null }) => {
+                const params = new URLSearchParams();
+                if (accountId) params.append('accountId', accountId);
+                if (region) params.append('region', region);
+                if (credentialId) params.append('credentialsId', credentialId);
+                const queryString = params.toString();
+                return queryString
+                    ? `v2/mssql/database-hosts/${ec2InstanceId}/database-instances/${instanceName}/offline-assessment?${queryString}`
+                    : `v2/mssql/database-hosts/${ec2InstanceId}/database-instances/${instanceName}/offline-assessment`;
+            }
+        }),
+        getUnregisteredOracleAssessment: builder.query({
+            query: ({ accountId, ec2InstanceId, instanceName, region, credentialId = null }) => {
+                const params = new URLSearchParams();
+                if (accountId) params.append('accountId', accountId);
+                if (region) params.append('region', region);
+                if (credentialId) params.append('credentialsId', credentialId);
+                const queryString = params.toString();
+                return queryString
+                    ? `v2/oracle/database-hosts/${ec2InstanceId}/database-instances/${instanceName}/offline-assessment?${queryString}`
+                    : `v2/oracle/database-hosts/${ec2InstanceId}/database-instances/${instanceName}/offline-assessment`;
+            }
+        }),
         getOracleAssessmentData: builder.mutation({
             query: ({ credentialId, regionId, databaseHostId, instanceId }) => ({
                 url: `v2/oracle/credentials/${credentialId}/regions/${regionId}/database-hosts/${databaseHostId}/database-instances/${instanceId}/assessment`
@@ -1908,6 +1945,10 @@ export const {
     useLazyGetSnapshotPoliciesQuery,
     useLazyGetOfflineMssqlAssessmentDataQuery,
     useLazyGetOfflineOracleAssessmentDataQuery,
+    useTriggerUnregisteredMssqlAssessmentMutation,
+    useTriggerUnregisteredOracleAssessmentMutation,
+    useLazyGetUnregisteredMssqlAssessmentQuery,
+    useLazyGetUnregisteredOracleAssessmentQuery,
     useOptimizeResiliencyMutation,
     useOptimizeAwsBackupMutation,
     useOptimizeCloneCleanupMutation,

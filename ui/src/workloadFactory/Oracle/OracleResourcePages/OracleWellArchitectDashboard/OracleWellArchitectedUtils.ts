@@ -16,6 +16,7 @@ import {
 import { addAllOracleHostAssessmentData } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
     ASSESSMENT_CONFIG_IDS,
+    ASSESSMENT_METADATA_SOURCE,
     BLOCK_SIX_LABELS,
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
@@ -409,6 +410,7 @@ const processOracleFlatAssessments = (data: any, optimizingData: Record<string, 
     // Add metadata
     cardsData.storageProtocol = data.metadata?.storageProtocol || '';
     cardsData.isWad = data.metadata?.isWad || false;
+    cardsData.isUnregistered = data.metadata?.source === ASSESSMENT_METADATA_SOURCE.UNREGISTERED;
     cardsData.deploymentType = data.metadata?.deploymentType || '';
     cardsData.baseDeploymentType = data.metadata?.baseDeploymentType || '';
 

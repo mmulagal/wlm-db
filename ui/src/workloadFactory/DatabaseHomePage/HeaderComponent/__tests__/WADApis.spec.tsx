@@ -21,6 +21,9 @@ const {
     mockAddOfflineMssqlDatabasesData,
     mockAddAllMssqlHostAssessmentData,
     mockAddAllOracleHostAssessmentData,
+    mockAddUnregisteredMssqlAssessmentData,
+    mockAddUnregisteredOracleAssessmentData,
+    mockSetUnregisteredAssessmentLoading,
     mockFormatOfflineAssessmentToInventoryData,
     mockFormatOracleOfflineAssessmentToInventoryData,
     mockFormatOfflineDataToAssessmentFormat
@@ -62,6 +65,18 @@ const {
         type: 'addAllOracleHostAssessmentData',
         payload: v
     })),
+    mockAddUnregisteredMssqlAssessmentData: vi.fn((v: any) => ({
+        type: 'addUnregisteredMssqlAssessmentData',
+        payload: v
+    })),
+    mockAddUnregisteredOracleAssessmentData: vi.fn((v: any) => ({
+        type: 'addUnregisteredOracleAssessmentData',
+        payload: v
+    })),
+    mockSetUnregisteredAssessmentLoading: vi.fn((v: any) => ({
+        type: 'setUnregisteredAssessmentLoading',
+        payload: v
+    })),
     mockFormatOfflineAssessmentToInventoryData: vi.fn(() => ({})),
     mockFormatOracleOfflineAssessmentToInventoryData: vi.fn(() => ({})),
     mockFormatOfflineDataToAssessmentFormat: vi.fn(() => [])
@@ -84,15 +99,26 @@ vi.mock('../../../../store/workloadFactory/inventoryV2Slice', () => ({
     addOfflineMssqlDatabasesData: mockAddOfflineMssqlDatabasesData,
     addAllMssqlHostAssessmentData: mockAddAllMssqlHostAssessmentData,
     addAllOracleHostAssessmentData: mockAddAllOracleHostAssessmentData,
+    addUnregisteredMssqlAssessmentData: mockAddUnregisteredMssqlAssessmentData,
+    addUnregisteredOracleAssessmentData: mockAddUnregisteredOracleAssessmentData,
+    setUnregisteredAssessmentLoading: mockSetUnregisteredAssessmentLoading,
     setInventoryTableData: mockSetInventoryTableData,
     setOfflineMssqlHostAssessmentLoading: mockSetOfflineMssqlHostAssessmentLoading,
     setOfflineOracleHostAssessmentLoading: mockSetOfflineOracleHostAssessmentLoading,
     setOfflineMssqlDatabasesLoading: mockSetOfflineMssqlDatabasesLoading
 }));
 
+vi.mock('../../../WellArchitectedTab/assessmentFormatUtils', () => ({
+    isOfflineAssessmentItem: (item: any) =>
+        item?.assessments?.metadata?.source !== 'unregistered' &&
+        (item?.assessments?.metadata?.source === 'offline' || !item?.assessments?.metadata?.source),
+    isUnregisteredAssessmentItem: (item: any) => item?.assessments?.metadata?.source === 'unregistered'
+}));
+
 vi.mock('../../../InventoryV2/InventoryUtilsV2', () => ({
     formatOfflineAssessmentToInventoryData: mockFormatOfflineAssessmentToInventoryData,
-    formatOracleOfflineAssessmentToInventoryData: mockFormatOracleOfflineAssessmentToInventoryData
+    formatOracleOfflineAssessmentToInventoryData: mockFormatOracleOfflineAssessmentToInventoryData,
+    mergeUnregisteredAssessmentIntoInventory: vi.fn((inventory: any) => inventory)
 }));
 
 vi.mock('../../DatabaseHomeUtils', () => ({
@@ -171,6 +197,34 @@ describe('WADApis', () => {
         expect(mockSetOfflineMssqlHostAssessmentLoading).toHaveBeenCalledWith(true);
     });
 
+    it('keeps unregisteredAssessmentLoading true until both MSSQL and Oracle fetches finish', async () => {
+        let resolveOracle: (value: unknown) => void = () => undefined;
+        mockGetAllOfflineOracleAssessmentAPI.mockImplementation(
+            () =>
+                new Promise(resolve => {
+                    resolveOracle = resolve;
+                })
+        );
+        mockGetAllOfflineAssessmentAPI.mockResolvedValue({
+            data: { items: [], nextToken: null }
+        });
+
+        await act(async () => {
+            render(<Wrapper store={makeStore()} />);
+            await Promise.resolve();
+        });
+
+        expect(mockSetUnregisteredAssessmentLoading).toHaveBeenCalledWith(true);
+        expect(mockSetUnregisteredAssessmentLoading).not.toHaveBeenCalledWith(false);
+
+        await act(async () => {
+            resolveOracle({ data: { items: [], nextToken: null } });
+            await Promise.resolve();
+        });
+
+        expect(mockSetUnregisteredAssessmentLoading).toHaveBeenCalledWith(false);
+    });
+
     it('dispatches setOfflineMssqlHostAssessmentLoading(false) after API completes', async () => {
         mockGetAllOfflineAssessmentAPI.mockResolvedValue({
             data: { items: [{ hostId: 'h1', isWad: false }], nextToken: null }
@@ -180,13 +234,16 @@ describe('WADApis', () => {
     });
 
     it('dispatches addOfflineMssqlHostAssessmentData with fetched items', async () => {
-        const items = [{ hostId: 'h1' }, { hostId: 'h2' }];
+        const items = [{ hostId: 'h1', assessments: { metadata: { source: 'offline' } } }, { hostId: 'h2' }];
         mockGetAllOfflineAssessmentAPI.mockResolvedValue({
             data: { items, nextToken: null }
         });
         await act(async () => render(<Wrapper store={makeStore()} />));
         expect(mockAddOfflineMssqlHostAssessmentData).toHaveBeenCalledWith(
-            items.map(item => ({ ...item, isWad: true }))
+            expect.arrayContaining([
+                expect.objectContaining({ hostId: 'h1', isWad: true }),
+                expect.objectContaining({ hostId: 'h2', isWad: true })
+            ])
         );
     });
 
@@ -210,7 +267,10 @@ describe('WADApis', () => {
                 data: { items: [{ hostId: 'h2' }], nextToken: null }
             });
 
-        await act(async () => render(<Wrapper store={makeStore()} />));
+        await act(async () => {
+            render(<Wrapper store={makeStore()} />);
+            await new Promise(resolve => setTimeout(resolve, 0));
+        });
         expect(mockGetAllOfflineAssessmentAPI).toHaveBeenCalledTimes(2);
         expect(mockGetAllOfflineAssessmentAPI).toHaveBeenNthCalledWith(2, {
             credentialId: null,

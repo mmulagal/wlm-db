@@ -1,4 +1,4 @@
-import { DBType, GETWELL_STATUS, CONFIG_NAMES } from '../../utils/consts';
+import { ASSESSMENT_METADATA_SOURCE, DBType, GETWELL_STATUS, CONFIG_NAMES } from '../../utils/consts';
 import {
     AssessmentMetadata,
     AssessmentResponseInterface,
@@ -24,6 +24,21 @@ const isDismissedConfigurationList = (
 
 export const getAssessmentMetadata = (instanceAssessments?: AssessmentResponseInterface | null): AssessmentMetadata =>
     instanceAssessments?.metadata ?? {};
+
+/** Reads metadata.source from flat offline-assessment item (source lives under assessments.metadata). */
+export const getAssessmentItemSource = (item?: { assessments?: AssessmentResponseInterface | null } | null): string =>
+    item?.assessments?.metadata?.source ?? '';
+
+export const isOfflineAssessmentItem = (
+    item?: { assessments?: AssessmentResponseInterface | null } | null
+): boolean => {
+    const source = getAssessmentItemSource(item);
+    return source === ASSESSMENT_METADATA_SOURCE.OFFLINE || !source;
+};
+
+export const isUnregisteredAssessmentItem = (
+    item?: { assessments?: AssessmentResponseInterface | null } | null
+): boolean => getAssessmentItemSource(item) === ASSESSMENT_METADATA_SOURCE.UNREGISTERED;
 
 export const getLastAssessmentTimestamp = (
     instanceAssessments?: AssessmentResponseInterface | null

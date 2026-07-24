@@ -159,6 +159,9 @@ export interface InventorySliceData {
     offlineOracleHostAssessmentLoading: boolean;
     offlineMssqlDatabasesData: any;
     offlineMssqlDatabasesLoading: boolean;
+    unregisteredMssqlAssessmentData: any;
+    unregisteredOracleAssessmentData: any;
+    unregisteredAssessmentLoading: boolean;
     potentialSavingsHostData: {
         [key: string]: any;
     };
@@ -232,6 +235,7 @@ export interface InventoryTableData {
     platform?: string;
     protocol?: string;
     isWad?: boolean;
+    isUnregistered?: boolean;
     storage?: Array<DiscoveredStorageObj>;
     oracleEdition?: string;
     /** Host manage readiness object with permission flags */
@@ -330,6 +334,7 @@ export interface InventoryTableInstanceDatInterface {
     sqlServerAuthentication?: boolean;
     windowsDomainUserAuthentication?: boolean;
     isWad?: boolean;
+    isUnregistered?: boolean;
     wadAssessmentData?: any;
     oracleServerDeploymentType?: string; // will get for Oracle databases
     dataguardDetails?: any; // will get for Oracle databases

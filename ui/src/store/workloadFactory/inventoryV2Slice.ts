@@ -109,6 +109,9 @@ const initialInventoryV2State: InventorySliceData = {
     offlineOracleHostAssessmentLoading: false,
     offlineMssqlDatabasesData: [],
     offlineMssqlDatabasesLoading: false,
+    unregisteredMssqlAssessmentData: [],
+    unregisteredOracleAssessmentData: [],
+    unregisteredAssessmentLoading: false,
     potentialSavingsHostData: {},
     selectedInventoryTab: 'Instances',
     selectedOptimizeConfig: {
@@ -578,6 +581,15 @@ const inventoryV2Slice = createSlice({
         setOfflineMssqlDatabasesLoading: (state, action: PayloadAction<any>) => {
             state.offlineMssqlDatabasesLoading = action.payload;
         },
+        addUnregisteredMssqlAssessmentData: (state, action: PayloadAction<any>) => {
+            state.unregisteredMssqlAssessmentData = action.payload;
+        },
+        addUnregisteredOracleAssessmentData: (state, action: PayloadAction<any>) => {
+            state.unregisteredOracleAssessmentData = action.payload;
+        },
+        setUnregisteredAssessmentLoading: (state, action: PayloadAction<any>) => {
+            state.unregisteredAssessmentLoading = action.payload;
+        },
         setPotentialSavingsHostData: (state, action: PayloadAction<any>) => {
             state.potentialSavingsHostData = action.payload;
         },
@@ -847,6 +859,9 @@ export const {
     setOfflineOracleHostAssessmentLoading,
     addOfflineMssqlDatabasesData,
     setOfflineMssqlDatabasesLoading,
+    addUnregisteredMssqlAssessmentData,
+    addUnregisteredOracleAssessmentData,
+    setUnregisteredAssessmentLoading,
     setPotentialSavingsHostData,
     resetPerComboData,
     setTableManageColumnState,

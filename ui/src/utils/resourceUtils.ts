@@ -353,10 +353,14 @@ export const handleFSXAdminApply = async (
 export const handleTriggerAssessment = ({
     setTriggerAssessmentInProgress,
     triggerAssessmentApi,
+    triggerUnregisteredAssessmentApi,
     credentialId,
     regionId,
     selectedResourceId,
     selectedDatabaseInstance,
+    instanceName,
+    accountId,
+    isUnregistered = false,
     dispatch,
     isWorkloadFactory,
     getJobDetailApi,
@@ -372,12 +376,22 @@ export const handleTriggerAssessment = ({
     const triggeredForCredentialId = credentialId;
     const triggeredForRegionId = regionId;
 
-    triggerAssessmentApi({
-        credentialId,
-        regionId,
-        databaseHostId: selectedResourceId,
-        instanceId: selectedDatabaseInstance
-    }).then((res: any) => {
+    const assessmentRequest = isUnregistered
+        ? triggerUnregisteredAssessmentApi({
+              accountId,
+              credentialId,
+              region: regionId,
+              ec2InstanceId: selectedResourceId,
+              instanceName: instanceName || selectedDatabaseInstance
+          })
+        : triggerAssessmentApi({
+              credentialId,
+              regionId,
+              databaseHostId: selectedResourceId,
+              instanceId: selectedDatabaseInstance
+          });
+
+    assessmentRequest.then((res: any) => {
         const jobId = res?.data?.jobId;
         if (jobId) {
             const handleJobMonitoringClick = () => {

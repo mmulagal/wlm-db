@@ -89,6 +89,7 @@ const DynamicOptimizeInnerPage = () => {
         isInnerPageOptimize,
         optimizingInstanceData,
         isWad: isWadFromStore,
+        isUnregistered: isUnregisteredFromStore,
         selectedRowFsxId,
         driftAssessmentData
     } = useAppSelector(state => state.getWellOptimize);
@@ -101,6 +102,8 @@ const DynamicOptimizeInnerPage = () => {
     const engineType = selectedOptimizeConfig?.engineType || DBType.MSSQL;
     // Check isWad from config data (API response) OR from Redux store (set on WAD navigation)
     const isWad = configData?.isWad || isWadFromStore || false;
+    // Check isUnregistered from config data (API response) OR from Redux store (set on unregistered navigation)
+    const isUnregistered = configData?.isUnregistered || isUnregisteredFromStore || false;
 
     // Flat API provides display name in the 'name' field of the response
     const displayName = configData?.name || configId || '';
@@ -410,7 +413,8 @@ const DynamicOptimizeInnerPage = () => {
             },
             'bulk',
             null,
-            isWad
+            isWad,
+            isUnregistered
         );
     }, [
         configId,
@@ -418,6 +422,7 @@ const DynamicOptimizeInnerPage = () => {
         displayName,
         engineType,
         isWad,
+        isUnregistered,
         selectedRowsForOptimizeInnerPage,
         setDialog,
         closeDialog,
@@ -474,6 +479,7 @@ const DynamicOptimizeInnerPage = () => {
                     'single',
                     rowData,
                     isWad,
+                    isUnregistered,
                     true // forceEnableInnerPage - enables Continue button for Oracle CRR
                 );
                 return;
@@ -493,7 +499,8 @@ const DynamicOptimizeInnerPage = () => {
                 },
                 'single',
                 rowData,
-                isWad
+                isWad,
+                isUnregistered
             );
         },
         [
@@ -502,6 +509,7 @@ const DynamicOptimizeInnerPage = () => {
             displayName,
             engineType,
             isWad,
+            isUnregistered,
             setDialog,
             closeDialog,
             callOptimizeApi,

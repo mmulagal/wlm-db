@@ -50,6 +50,7 @@ type DialogType = {
     assessmentStatus?: boolean;
     status?: string;
     isWad?: boolean;
+    isUnregistered?: boolean;
     skipFixNotSupportedBanner?: boolean;
 };
 
@@ -59,11 +60,13 @@ const shouldShowUnsupportedFixBanner = (
     type: string,
     engineType: string,
     isWad: boolean,
+    isUnregistered: boolean,
     status?: string,
     missingPermissions?: string[]
 ): BannerConfig | '' => {
     const isOracle = engineType === DBType.ORACLE;
     const wadKey = isOracle ? 'databases.wad.tab-disabled-message-oracle' : 'databases.wad.tab-disabled-message';
+    const unregisteredKey = 'databases.wad.unregistered-dialog-banner-message';
     const isOverProvisioned =
         OVER_PROVISIONED_UNSUPPORTED_FIX_TYPES.has(type) && status === GETWELL_STATUS.OVER_PROVISIONED;
     const isUnderProvisionedWithMissingPerms =
@@ -73,6 +76,7 @@ const shouldShowUnsupportedFixBanner = (
     const configNameLower = type.toLowerCase();
 
     const rules: [boolean, BannerConfig][] = [
+        [isUnregistered, { key: unregisteredKey }],
         [isWad, { key: wadKey }],
         [
             isOverProvisioned,
@@ -106,13 +110,14 @@ const DialogContent = ({
     assessmentStatus = false,
     status,
     isWad = false,
+    isUnregistered = false,
     skipFixNotSupportedBanner = false
 }: DialogType) => {
     const { t } = useTranslation();
 
     const showUnsupportedFixBanner =
         !skipFixNotSupportedBanner &&
-        shouldShowUnsupportedFixBanner(type, engineType, isWad, status, missingPermissions);
+        shouldShowUnsupportedFixBanner(type, engineType, isWad, isUnregistered, status, missingPermissions);
 
     return (
         <div className={styles.dialogContent}>

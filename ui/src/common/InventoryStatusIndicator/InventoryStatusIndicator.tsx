@@ -29,11 +29,19 @@ interface InventoryStatusIndicatorProps {
     status?: string;
     loading?: boolean;
     isWad?: boolean;
+    isUnregistered?: boolean;
     typographyClassName?: string;
 }
 
-const InventoryStatusIndicator = ({ status, loading, isWad, typographyClassName }: InventoryStatusIndicatorProps) => {
+const InventoryStatusIndicator = ({
+    status,
+    loading,
+    isWad,
+    isUnregistered,
+    typographyClassName
+}: InventoryStatusIndicatorProps) => {
     const category = getStatusCategory(status);
+    const shouldShowUnknownStatus = !isWad && !isUnregistered;
 
     return (
         <>
@@ -41,7 +49,7 @@ const InventoryStatusIndicator = ({ status, loading, isWad, typographyClassName 
             <DsTypography variant="Regular_13" className={typographyClassName}>
                 {status && getStatusDisplayText(status, category)}
                 {!status && loading && <DsFlashingDotsLoader />}
-                {!status && !loading && !isWad && INVENTORY_STATUS.UNKNOWN}
+                {!status && !loading && shouldShowUnknownStatus && INVENTORY_STATUS.UNKNOWN}
             </DsTypography>
         </>
     );

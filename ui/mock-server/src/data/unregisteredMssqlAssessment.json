@@ -1,0 +1,77 @@
+{
+    "assessments": [
+        {
+            "name": "Thin provisioning",
+            "status": "not-optimized",
+            "severity": "critical",
+            "recommended": "true",
+            "recommendation": "To optimize storage efficiency and cost-effectiveness, configure thin provisioning for your FSx ONTAP volumes and LUNs. If Not Configured Properly: Over-provisioning risks, increased storage costs, limited scalability.",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 8,
+            "totalObjectsInViolation": 5,
+            "objectsInViolation": ["unregvol1", "unregvol2", "unregvol3", "unregvol4", "unregvol5"],
+            "violationDetails": [
+                {"objectName": "unregvol1", "value": "false", "objectType": "Volume"},
+                {"objectName": "unregvol2", "value": "false", "objectType": "Volume"},
+                {"objectName": "unregvol3", "value": "false", "objectType": "Volume"},
+                {"objectName": "unregvol4", "value": "false", "objectType": "Volume"},
+                {"objectName": "unregvol5", "value": "false", "objectType": "Volume"}
+            ],
+            "id": "thin-provision",
+            "categories": ["Cost optimization", "Operational excellence"],
+            "type": "storage",
+            "focusWidgetName": "ONTAP"
+        },
+        {
+            "name": "Storage tier",
+            "status": "not-optimized",
+            "severity": "warning",
+            "recommended": "capacity pool",
+            "recommendation": "Use capacity pool tier for better cost optimization",
+            "resourceType": "Volume",
+            "totalObjectsAssessed": 5,
+            "totalObjectsInViolation": 3,
+            "objectsInViolation": ["unregvol1", "unregvol2", "unregvol3"],
+            "violationDetails": [
+                {"objectName": "unregvol1", "value": "performance", "objectType": "Volume"},
+                {"objectName": "unregvol2", "value": "performance", "objectType": "Volume"},
+                {"objectName": "unregvol3", "value": "performance", "objectType": "Volume"}
+            ],
+            "id": "storage-tier",
+            "categories": ["Cost optimization"],
+            "type": "storage",
+            "focusWidgetName": "ONTAP"
+        },
+        {
+            "name": "Compute rightsizing",
+            "status": "not-optimized",
+            "severity": "warning",
+            "recommended": "m5.2xlarge",
+            "recommendation": "Right-size your EC2 instance to match your workload requirements and save costs",
+            "resourceType": "EC2 Instance",
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "objectsInViolation": ["i-0unregistered123456"],
+            "violationDetails": [
+                {"objectName": "i-0unregistered123456", "value": "m5.4xlarge", "objectType": "EC2 Instance", "recommended": "m5.2xlarge"}
+            ],
+            "id": "compute-rightsizing",
+            "categories": ["Cost optimization"],
+            "type": "compute",
+            "focusWidgetName": "Compute"
+        }
+    ],
+    "dismissedConfigurations": [],
+    "metadata": {
+        "lastAssessmentTimestamp": 1773500000000,
+        "fileSystemId": "fs-unregistered123",
+        "ec2InstanceId": "i-0unregistered123456",
+        "databaseInstanceName": "MSSQLSERVER",
+        "deploymentType": "Standalone",
+        "databaseHostName": "unregistered-sql-host",
+        "storageProtocol": "iSCSI",
+        "isASMManaged": false,
+        "source": "unregistered",
+        "isUnregistered": true
+    }
+}

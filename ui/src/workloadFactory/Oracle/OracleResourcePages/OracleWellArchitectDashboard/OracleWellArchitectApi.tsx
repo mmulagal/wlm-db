@@ -4,7 +4,8 @@ import { DBType, WELL_ARCHITECTED_TABS } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     useGetOracleAssessmentDataMutation,
-    useLazyGetOfflineOracleAssessmentDataQuery
+    useLazyGetOfflineOracleAssessmentDataQuery,
+    useLazyGetUnregisteredOracleAssessmentQuery
 } from '../../../../utils/apiService';
 import { formatOracleWellArchitectedData } from './OracleWellArchitectedUtils';
 import {
@@ -21,6 +22,7 @@ import { updateAccountLevelAssessmentData } from '../../../GetWell/GetWellUtils'
 
 const useOracleWellArchitectApi = () => {
     const dispatch = useDispatch();
+    const accountId = useAppSelector(state => state.auth.accountId);
     const { selectedResourceId, selectedDatabaseInstance, selectedResourceCredId, selectedResourceRegionId } =
         useAppSelector(state => state.workloadFactoryResource);
 
@@ -30,13 +32,15 @@ const useOracleWellArchitectApi = () => {
         selectedResourceId: getWellResourceId,
         selectedDatabaseInstance: getWellSelectedDatabaseInstance,
         landingFromInnerPage,
-        isWad
+        isWad,
+        isUnregistered
     } = useAppSelector(state => state.getWellOptimize);
 
     const { visitedTabs, refreshWellArchitect } = useAppSelector(state => state.oracleSlice);
 
     const [getOracleAssessmentDataApi] = useGetOracleAssessmentDataMutation();
     const [getOfflineOracleAssessmentData] = useLazyGetOfflineOracleAssessmentDataQuery();
+    const [getUnregisteredOracleAssessmentData] = useLazyGetUnregisteredOracleAssessmentQuery();
 
     /**
      * Call the offline assessment API for WAD instances
@@ -127,12 +131,67 @@ const useOracleWellArchitectApi = () => {
     };
 
     /**
+     * Call the offline assessment API for unregistered instances using ec2InstanceId
+     */
+    const runUnregisteredAssessmentApi = async () => {
+        try {
+            dispatch(setOptimizePageLoading(true));
+            dispatch(setCardData({}));
+            const result: { data?: any; error?: any } = await getUnregisteredOracleAssessmentData({
+                accountId,
+                ec2InstanceId: selectedResourceId || getWellResourceId, // For unregistered, resourceId is the ec2InstanceId
+                instanceName: selectedDatabaseInstance || getWellSelectedDatabaseInstance, // For unregistered, this is the instanceName
+                region: selectedResourceRegionId || regionFromJM || null,
+                credentialId: selectedResourceCredId || credIdFromJM || null
+            });
+
+            if (result && !result?.error && result?.data) {
+                const assessmentData = {
+                    ...result.data,
+                    isUnregistered: true
+                };
+                dispatch(setDriftAssessmentData(assessmentData));
+                formatOracleWellArchitectedData(dispatch, assessmentData, false, true);
+                updateAccountLevelAssessmentData(
+                    dispatch,
+                    assessmentData,
+                    {
+                        databaseHostId: selectedResourceId || getWellResourceId,
+                        databaseInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance,
+                        credentialId: selectedResourceCredId || credIdFromJM || '',
+                        regionId: selectedResourceRegionId || regionFromJM || ''
+                    },
+                    DBType.ORACLE
+                );
+                dispatch(setOptimizePageLoading(false));
+                dispatch(setIsAssessmentAvailable(true));
+                dispatch(setGwSelectedRowFsxId(result?.data?.metadata?.fileSystemId));
+            } else {
+                dispatch(setOptimizePageLoading(false));
+                dispatch(setIsAssessmentAvailable(false));
+            }
+        } catch (error) {
+            dispatch(setOptimizePageLoading(false));
+            dispatch(setIsAssessmentAvailable(false));
+        }
+    };
+
+    /**
      * Trigger WAD (offline) assessment action
      */
     const viewWadResourceAction = () => {
         dispatch(setDriftAssessmentData({}));
         dispatch(setOptimizePageLoading(true));
         runOfflineAssessmentApi();
+    };
+
+    /**
+     * Trigger unregistered assessment action
+     */
+    const viewUnregisteredResourceAction = () => {
+        dispatch(setDriftAssessmentData({}));
+        dispatch(setOptimizePageLoading(true));
+        runUnregisteredAssessmentApi();
     };
 
     /**
@@ -145,10 +204,12 @@ const useOracleWellArchitectApi = () => {
     };
 
     useEffect(() => {
-        // On page load, call the appropriate API based on isWad
+        // On page load, call the appropriate API based on isWad or isUnregistered
         if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
             dispatch(setOracleRefreshTimes({ optimizeRefreshTime: getCurrentDateTime() }));
-            if (isWad) {
+            if (isUnregistered) {
+                viewUnregisteredResourceAction(); // Unregistered: Call offline assessment with ec2InstanceId
+            } else if (isWad) {
                 viewWadResourceAction(); // WAD: Call offline assessment API
             } else {
                 viewResourceAction(); // Normal: Call regular assessment API
@@ -157,12 +218,14 @@ const useOracleWellArchitectApi = () => {
             dispatch(setLandingFromInnerPage(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isWad]);
+    }, [isWad, isUnregistered]);
 
     useEffect(() => {
         // Handle Oracle-specific refresh
         if (refreshWellArchitect) {
-            if (isWad) {
+            if (isUnregistered) {
+                viewUnregisteredResourceAction(); // Unregistered: Call offline assessment with ec2InstanceId
+            } else if (isWad) {
                 viewWadResourceAction(); // WAD: Call offline assessment API
             } else {
                 viewResourceAction(); // Normal: Call regular assessment API
@@ -170,7 +233,7 @@ const useOracleWellArchitectApi = () => {
             dispatch(setRefreshOracleWellArchitect(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [refreshWellArchitect, isWad]);
+    }, [refreshWellArchitect, isWad, isUnregistered]);
 };
 
 export default useOracleWellArchitectApi;

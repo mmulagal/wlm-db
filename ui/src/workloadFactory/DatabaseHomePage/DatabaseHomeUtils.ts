@@ -1881,7 +1881,8 @@ export const formatOfflineDataToAssessmentFormat = (
             vmInstanceId: firstInstance?.vmInstanceId || '',
             vmName: firstInstance?.vmName || '',
             numberOfDatabaseInstances: instances.length,
-            isWad: true,
+            isWad: !firstInstance?.isUnregistered,
+            isUnregistered: !!firstInstance?.isUnregistered,
             instancesAssessment
         };
 

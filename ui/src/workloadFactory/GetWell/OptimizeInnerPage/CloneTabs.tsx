@@ -44,15 +44,21 @@ import { cloneAgeRange } from '../../../utils/utilityFunctions';
 const CloneTabs = ({ fromPage = '', engineType = DBType.MSSQL }: any) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-    const { selectedCloneTab, cardData: fullCardData } = useAppSelector(state => state.getWellOptimize);
+    const {
+        selectedCloneTab,
+        cardData: fullCardData,
+        isWad: isWadFromStore,
+        isUnregistered: isUnregisteredFromStore
+    } = useAppSelector(state => state.getWellOptimize);
     const optimizingData = useAppSelector(state => state.getWellOptimize.optimizingData);
     const { cloneDashboardData, cloneIsOptimizedRows } = useAppSelector(state => state.getWellOptimize);
     const { inProgressOptimizationData, inProgressHostData, inProgressResourceOptimizeData } = useAppSelector(
         state => state.getWellOptimize
     );
     const isOracle = engineType === DBType.ORACLE;
-    // Check if this is a WAD (offline assessment) instance
-    const isWad = fullCardData?.isWad || false;
+    const isWad = isWadFromStore || fullCardData?.isWad || false;
+    const isUnregistered = isUnregisteredFromStore || fullCardData?.isUnregistered || false;
+    const isFixDisabled = isWad || isUnregistered;
     const [wfDatabase, setWfDatabase] = useState<any>(null);
     const [otherDatabase, setOtherDatabase] = useState<any>(null);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
@@ -435,12 +441,13 @@ const CloneTabs = ({ fromPage = '', engineType = DBType.MSSQL }: any) => {
                         type={`${GENERAL.CLONE_MANAGEMENT} ${actionType}`}
                         engineType={engineType}
                         isWad={isWad}
+                        isUnregistered={isUnregistered}
                     />
                 }
-                primaryButton={isWad ? GENERAL.CLOSE : GENERAL.CONTINUE}
-                secondaryButton={!isWad ? GENERAL.CANCEL : undefined}
+                primaryButton={isFixDisabled ? GENERAL.CLOSE : GENERAL.CONTINUE}
+                secondaryButton={!isFixDisabled ? GENERAL.CANCEL : undefined}
                 callback={() => {
-                    if (isWad) {
+                    if (isFixDisabled) {
                         closeDialog();
                     } else {
                         callCloneOptimizeApi(actionType, operation, rowData);

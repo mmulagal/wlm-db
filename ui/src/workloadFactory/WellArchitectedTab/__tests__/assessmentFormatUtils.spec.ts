@@ -1,6 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
     getAssessmentMetadata,
+    getAssessmentItemSource,
+    isOfflineAssessmentItem,
+    isUnregisteredAssessmentItem,
     getLastAssessmentTimestamp,
     hasAssessmentTimestamp,
     getAssessmentItems,
@@ -22,6 +25,11 @@ vi.mock('../../../utils/consts', () => ({
         CRITICAL: 'Critical',
         WARNING: 'Warning'
     },
+    ASSESSMENT_METADATA_SOURCE: {
+        OFFLINE: 'offline',
+        UNREGISTERED: 'unregistered',
+        REGISTERED: 'registered'
+    },
     CONFIG_NAMES: {
         'thin-provisioning': 'Thin Provisioning',
         autosize: 'Autosize',
@@ -34,6 +42,34 @@ vi.mock('../../../utils/consts', () => ({
 }));
 
 describe('assessmentFormatUtils', () => {
+    describe('getAssessmentItemSource', () => {
+        it('reads source from assessments.metadata', () => {
+            expect(
+                getAssessmentItemSource({
+                    assessments: { metadata: { source: 'unregistered' } }
+                })
+            ).toBe('unregistered');
+        });
+
+        it('returns empty string when metadata is missing', () => {
+            expect(getAssessmentItemSource({ assessments: {} })).toBe('');
+        });
+    });
+
+    describe('isOfflineAssessmentItem / isUnregisteredAssessmentItem', () => {
+        it('classifies offline and unregistered sources', () => {
+            const offline = { assessments: { metadata: { source: 'offline' } } };
+            const unregistered = { assessments: { metadata: { source: 'unregistered' } } };
+            const missing = { assessments: { metadata: {} } };
+
+            expect(isOfflineAssessmentItem(offline)).toBe(true);
+            expect(isUnregisteredAssessmentItem(offline)).toBe(false);
+            expect(isOfflineAssessmentItem(unregistered)).toBe(false);
+            expect(isUnregisteredAssessmentItem(unregistered)).toBe(true);
+            expect(isOfflineAssessmentItem(missing)).toBe(true);
+        });
+    });
+
     describe('getAssessmentMetadata', () => {
         it('returns empty object when instanceAssessments is null', () => {
             const result = getAssessmentMetadata(null);

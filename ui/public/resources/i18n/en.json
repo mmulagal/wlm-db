@@ -1569,6 +1569,8 @@
             "one-time-wad-upload-success-with-resource-region": "Uploaded one-time assessment results for {{resourceName}} in {{regionName}} region.",
             "one-time-wad-download-success": "Downloaded script for the one-time assessment.",
             "one-time-assessment": "One-time assessment",
+            "on-demand-assessment": "On-demand assessment",
+            "register-instance-to-enable-view-fix": "Register the instance to enable View and fix",
             "download-script": "Download script",
             "invalid-file-type": "Invalid file type. Please upload a JSON file.",
             "file-size-exceeds": "File size exceeds",
@@ -2359,7 +2361,10 @@
         "wad": {
             "tab-disabled-message-oracle": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
             "tab-disabled-message": "The one-time assessment provides only well-architected status and recommendations. Register instances to unlock more features.",
-            "register-disabled-no-credentials": "Registration requires AWS credentials. Add database credentials to register this instance."
+            "register-disabled-no-credentials": "Registration requires AWS credentials. Add database credentials to register this instance.",
+            "unregistered-tab-disabled-message-oracle": "Register this database to unlock full features and enable all tabs.",
+            "unregistered-tab-disabled-message": "Register this instance to unlock full features and enable all tabs.",
+            "unregistered-dialog-banner-message": "This instance is not registered. Register the instance to unlock full monitoring, management, and optimization capabilities."
         },
         "marketing": {
             "run-assessment": "Run Assessment",

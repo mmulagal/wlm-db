@@ -43,7 +43,8 @@ import {
     manageActionCol,
     uniqueHostRow,
     updateInstanceStatus,
-    hasFullPermission
+    hasFullPermission,
+    isUnregisteredInventoryRow
 } from '../../InventoryUtilsV2';
 import { bxpRedirect, isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
@@ -539,12 +540,20 @@ const InstancesTable = () => {
         );
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
 
+        const isUnregisteredFlow = isUnregisteredInventoryRow(rowData, targettedDbInstance);
+
         let resourceId = '';
-        if (targettedDbInstance?.resourceId) {
+        if (isUnregisteredFlow) {
+            resourceId = rowData?.ec2InstanceId || targettedHost?.ec2InstanceId || targettedHost?.resourceId;
+        } else if (targettedDbInstance?.resourceId) {
             resourceId = targettedDbInstance?.resourceId;
         } else {
             resourceId = targettedHost?.resourceId;
         }
+
+        const instanceId = isUnregisteredFlow
+            ? targettedDbInstance?.databaseInstanceName
+            : targettedDbInstance?.databaseInstanceId;
 
         dispatch(setOptimizingData({}));
 
@@ -552,11 +561,13 @@ const InstancesTable = () => {
             setGwPageLoadInstanceData({
                 hostname: rowData?.name,
                 resourceId,
-                instanceId: targettedDbInstance?.databaseInstanceId,
+                instanceId,
                 instanceName: targettedDbInstance?.databaseInstanceName,
                 credId: targettedHost?.credentialId,
                 regionId: targettedHost?.regionId,
-                storageType: targettedDbInstance?.sqlServerDeploymentType
+                storageType: targettedDbInstance?.sqlServerDeploymentType,
+                isWad: !!rowData?.isWad && !isUnregisteredFlow,
+                isUnregistered: isUnregisteredFlow
             })
         );
 

@@ -8,7 +8,11 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { setGwAdhocError, setIsInnerPageOptimize } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { setRefreshOracleWellArchitect } from '../../../../store/workloadFactory/oracleSlice';
 import { GENERAL } from '../../../../utils/appConstants';
-import { useLazyGetSubTaskListQuery, useTriggerOracleInstanceAssessmentMutation } from '../../../../utils/apiService';
+import {
+    useLazyGetSubTaskListQuery,
+    useTriggerOracleInstanceAssessmentMutation,
+    useTriggerUnregisteredOracleAssessmentMutation
+} from '../../../../utils/apiService';
 import AssessmentContainer from '../../../../common/AssessmentContainer/AssessmentContainer';
 import { handleTriggerAssessment, useWellArchitectRefresh } from '../../../../utils/resourceUtils';
 import { resetGwValuesOnRefresh } from '../../../GetWell/GetWellUtils';
@@ -17,7 +21,7 @@ import { DBType } from '../../../../utils/consts';
 const OracleWellArchitectBanner = () => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-    const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const { isWorkloadFactory, accountId } = useAppSelector(state => state?.auth);
     const { selectedResourceId, selectedDatabaseInstance, selectedResourceCredId, selectedResourceRegionId } =
         useAppSelector(state => state.workloadFactoryResource);
     const {
@@ -26,15 +30,18 @@ const OracleWellArchitectBanner = () => {
         gwAdhocError,
         optimizePageLoading,
         cardData,
-        isWad: isWadFromStore
+        isWad: isWadFromStore,
+        isUnregistered: isUnregisteredFromStore,
+        selectedResourceId: getWellResourceId,
+        selectedDatabaseInstanceName
     } = useAppSelector(state => state.getWellOptimize);
     const [triggerAssessmentInProgress, setTriggerAssessmentInProgress] = useState(false);
 
-    // Check if this is a WAD (offline assessment) instance
-    // Use Redux store flag which is set when navigating to WAD assessment
-    const isWad = isWadFromStore || cardData?.isWad || false;
+    const isWad = isWadFromStore || !!cardData?.isWad;
+    const isUnregistered = isUnregisteredFromStore || !!cardData?.isUnregistered;
 
     const [triggerAssessmentApi] = useTriggerOracleInstanceAssessmentMutation();
+    const [triggerUnregisteredAssessmentApi] = useTriggerUnregisteredOracleAssessmentMutation();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
 
     // Oracle-specific refresh function using common utility hook
@@ -61,10 +68,14 @@ const OracleWellArchitectBanner = () => {
         handleTriggerAssessment({
             setTriggerAssessmentInProgress,
             triggerAssessmentApi,
+            triggerUnregisteredAssessmentApi,
             credentialId: selectedResourceCredId,
             regionId: selectedResourceRegionId,
-            selectedResourceId,
+            selectedResourceId: isUnregistered ? getWellResourceId || selectedResourceId : selectedResourceId,
             selectedDatabaseInstance,
+            instanceName: selectedDatabaseInstanceName,
+            accountId,
+            isUnregistered,
             dispatch,
             isWorkloadFactory,
             getJobDetailApi,
@@ -90,6 +101,7 @@ const OracleWellArchitectBanner = () => {
             gwAdhocError={gwAdhocError || ''}
             optimizePageLoading={optimizePageLoading || false}
             isWad={isWad}
+            isUnregistered={isUnregistered}
             dbType={DBType.ORACLE}
         />
     );

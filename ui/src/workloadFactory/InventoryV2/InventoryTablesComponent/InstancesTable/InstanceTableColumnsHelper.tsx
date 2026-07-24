@@ -16,7 +16,7 @@ import {
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import styles from '../InventoryTable.module.scss';
 import store from '../../../../store/store';
-import { uniqueHostRow } from '../../InventoryUtilsV2';
+import { uniqueHostRow, isUnregisteredInventoryRow } from '../../InventoryUtilsV2';
 import {
     resetWorkloadFactoryResourceData,
     setSelectedHostname,
@@ -79,22 +79,32 @@ export const optimizeAction = (rowData: any, dispatch: any) => {
     );
     dispatch(setLandingFrom(WLF_TABS.INVENTORY));
 
+    const isUnregisteredFlow = isUnregisteredInventoryRow(rowData, targettedDbInstance);
+
     let resourceId = '';
-    if (targettedDbInstance?.resourceId) {
+    if (isUnregisteredFlow) {
+        resourceId = rowData?.ec2InstanceId || targettedHost?.ec2InstanceId || targettedHost?.resourceId;
+    } else if (targettedDbInstance?.resourceId) {
         resourceId = targettedDbInstance?.resourceId;
     } else {
         resourceId = targettedHost?.resourceId;
     }
 
+    const instanceId = isUnregisteredFlow
+        ? targettedDbInstance?.databaseInstanceName
+        : targettedDbInstance?.databaseInstanceId;
+
     dispatch(
         setGwPageLoadInstanceData({
             hostname: rowData?.name,
             resourceId,
-            instanceId: targettedDbInstance?.databaseInstanceId,
+            instanceId,
             instanceName: targettedDbInstance?.databaseInstanceName,
             credId: targettedHost?.credentialId,
             regionId: targettedHost?.regionId,
-            storageType: targettedDbInstance?.sqlServerDeploymentType
+            storageType: targettedDbInstance?.sqlServerDeploymentType,
+            isWad: !!rowData?.isWad && !isUnregisteredFlow,
+            isUnregistered: isUnregisteredFlow
         })
     );
 

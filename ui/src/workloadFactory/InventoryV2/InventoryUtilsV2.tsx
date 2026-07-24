@@ -94,6 +94,22 @@ export const hasFullPermission = (hostManageReadiness?: HostManageReadiness): bo
     hostManageReadiness?.extensiveRunPermission === true;
 
 /**
+ * Checks if View and Fix should be enabled for unregistered instances
+ * Enabled if extensiveRunPermission OR canReadAWSSSMDocuments is true
+ * @param hostManageReadiness - Host manage readiness object
+ * @returns true if instance can trigger on-demand assessments
+ */
+export const canTriggerUnregisteredAssessment = (hostManageReadiness?: HostManageReadiness): boolean =>
+    hostManageReadiness?.extensiveRunPermission === true || hostManageReadiness?.canReadAWSSSMDocuments === true;
+
+/** Discover/unmerged rows: permissions + not managed + no registered resource id. */
+export const isUnregisteredInventoryRow = (rowData: any, managedDbInstance?: { resourceId?: string }): boolean =>
+    !!rowData?.isUnregistered ||
+    (canTriggerUnregisteredAssessment(rowData?.hostManageReadiness) &&
+        rowData?.statusColText !== INVENTORY_STATUS.MANAGED &&
+        !managedDbInstance?.resourceId);
+
+/**
  * Validates if registration can proceed based on FSx link status
  * @param hostManageReadiness - Host manage readiness object
  * @returns Object with canRegister flag and reason (i18n key) if blocked
@@ -227,7 +243,8 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
                 fsxId: assessments?.storageEndpoint,
                 isDetected: false,
                 isManaged: false,
-                isWad: true,
+                isWad: !instanceData?.isUnregistered,
+                isUnregistered: !!instanceData?.isUnregistered,
                 wadAssessmentData: assessments,
                 storage: instanceStorageArray.length > 0 ? instanceStorageArray : undefined,
                 aoagDetails
@@ -281,7 +298,8 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
             credentialName: credentialMapping?.[credId]?.name,
             accountId: credentialMapping?.[credId]?.providerAccountId,
             regionName: firstInstance?.regionName,
-            isWad: true, // Mark as WAD (offline assessment) data
+            isWad: !firstInstance?.isUnregistered,
+            isUnregistered: !!firstInstance?.isUnregistered,
             ec2Details: ec2Details.length > 0 ? ec2Details : undefined,
             statusColText: INVENTORY_STATUS.UNMANAGED // Hardcoded until status is available from API
         };
@@ -290,6 +308,70 @@ export const formatOfflineAssessmentToInventoryData = (offlineData: any[]): { [k
     });
 
     return result;
+};
+
+/**
+ * Merges on-demand unregistered assessment results onto matching discovered inventory hosts.
+ * Matches by ec2InstanceId + databaseInstanceName (case-insensitive).
+ */
+export const mergeUnregisteredAssessmentIntoInventory = (
+    inventoryTableData: { [key: string]: InventoryTableData },
+    unregisteredData: any[],
+    dbType: string
+): { [key: string]: InventoryTableData } => {
+    if (!unregisteredData?.length || !inventoryTableData) {
+        return inventoryTableData;
+    }
+
+    let changed = false;
+    const merged: { [key: string]: InventoryTableData } = { ...inventoryTableData };
+
+    unregisteredData.forEach((assessmentItem: any) => {
+        const ec2Id = assessmentItem?.vmInstanceId || assessmentItem?.resourceId;
+        const instanceName = assessmentItem?.databaseInstanceName?.toLowerCase();
+        if (!ec2Id || !instanceName) {
+            return;
+        }
+
+        Object.keys(merged).forEach((key: string) => {
+            const host = merged[key];
+            if (host?.hostType !== dbType) {
+                return;
+            }
+            const hostEc2Id = host?.ec2InstanceId || host?.resourceId;
+            if (hostEc2Id !== ec2Id) {
+                return;
+            }
+
+            let hostChanged = false;
+            const instances = host?.sqlServerInstances?.map((inst: InventoryTableInstanceDatInterface) => {
+                if (inst?.databaseInstanceName?.toLowerCase() !== instanceName) {
+                    return inst;
+                }
+                if (
+                    inst?.isUnregistered &&
+                    inst?.isWad === false &&
+                    inst?.wadAssessmentData === assessmentItem?.assessments
+                ) {
+                    return inst;
+                }
+                hostChanged = true;
+                return {
+                    ...inst,
+                    isUnregistered: true,
+                    isWad: false,
+                    wadAssessmentData: assessmentItem?.assessments
+                };
+            });
+
+            if (hostChanged && instances) {
+                changed = true;
+                merged[key] = { ...host, sqlServerInstances: instances };
+            }
+        });
+    });
+
+    return changed ? merged : inventoryTableData;
 };
 
 /**
@@ -391,7 +473,8 @@ export const formatOracleOfflineAssessmentToInventoryData = (
                 protocol: assessmentMetadata.storageProtocol || '',
                 isDetected: false,
                 isManaged: false,
-                isWad: true,
+                isWad: !instanceData?.isUnregistered,
+                isUnregistered: !!instanceData?.isUnregistered,
                 wadAssessmentData: assessments,
                 storage: instanceStorageArray.length > 0 ? instanceStorageArray : undefined,
                 databases: databases && databases.length > 0 ? databases : undefined
@@ -435,7 +518,8 @@ export const formatOracleOfflineAssessmentToInventoryData = (
             accountId: credentialMapping?.[credId]?.providerAccountId,
             regionName: firstInstance?.regionName,
             platform: firstInstance?.vmPlatform,
-            isWad: true, // Mark as WAD (offline assessment) data
+            isWad: !firstInstance?.isUnregistered,
+            isUnregistered: !!firstInstance?.isUnregistered,
             ec2Details: ec2Details.length > 0 ? ec2Details : undefined,
             statusColText: INVENTORY_STATUS.UNMANAGED // Hardcoded until status is available from API
         };
@@ -1700,23 +1784,25 @@ export const formatOracleDiscoveredRows = (
 
 export const getDiscoverHostname = (discoveredRow: DiscoverHostInterface, type: string) => {
     let name: string = '';
-    if (type === GENERAL.MICROSOFT_SQL_SERVER_TYPE && discoveredRow?.sqlServerInstances) {
-        for (let i = 0; i < discoveredRow?.sqlServerInstances?.length; i++) {
-            const val = discoveredRow?.sqlServerInstances[i];
-            // For Failover or AOAG cluster, we will take sqlServerName as name
-            if (
-                val?.sqlServerName &&
-                (val?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE ||
-                    val?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG)
-            ) {
-                name = val?.sqlServerName;
-                break;
-            } else if (!name && val?.sqlServerName) {
-                // For other instances, we will take sqlServerInstance as name but still check for FCI or AOAG name
-                name = val?.sqlServerName;
+    if (type === GENERAL.MICROSOFT_SQL_SERVER_TYPE) {
+        if (discoveredRow?.sqlServerInstances?.length) {
+            for (let i = 0; i < discoveredRow.sqlServerInstances.length; i++) {
+                const val = discoveredRow.sqlServerInstances[i];
+                // For Failover or AOAG cluster, we will take sqlServerName as name
+                if (
+                    val?.sqlServerName &&
+                    (val?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE ||
+                        val?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG)
+                ) {
+                    name = val?.sqlServerName;
+                    break;
+                } else if (!name && val?.sqlServerName) {
+                    // For other instances, we will take sqlServerInstance as name but still check for FCI or AOAG name
+                    name = val?.sqlServerName;
+                }
             }
         }
-        // Fall back to ec2InstanceName if no SQL Server instance name found
+        // Fall back to ec2InstanceName when sqlServerInstances is missing, empty, or has no sqlServerName
         if (!name && discoveredRow?.ec2InstanceName) {
             name = discoveredRow.ec2InstanceName;
         }
@@ -4896,8 +4982,8 @@ export const getOptimizationStatusData = (rowData: any, t: any) => {
     let disableMsg = '';
     const cellData = rowData.optimizationStatus;
 
-    // For WAD (offline assessment) data, return the optimizationStatus directly if it has a value
-    if (rowData?.isWad && cellData) {
+    // For WAD (offline) or unregistered (on-demand) assessment data, return status directly when present
+    if ((rowData?.isWad || rowData?.isUnregistered) && cellData) {
         return { displayValue: cellData, disableMsg: '', isDisabled: false };
     }
 

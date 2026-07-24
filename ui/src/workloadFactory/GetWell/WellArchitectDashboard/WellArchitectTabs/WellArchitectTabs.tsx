@@ -14,7 +14,7 @@ const WellArchitectTabs = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [selectedTab, setSelectedTab] = useState<any>();
-    const { selectedWellArchitectTab, isWad } = useAppSelector(state => state.getWellOptimize);
+    const { selectedWellArchitectTab, isWad, isUnregistered } = useAppSelector(state => state.getWellOptimize);
     const { isGovAccount } = useAppSelector(state => state.auth);
     const { regionMapping } = useAppSelector(state => state.headers);
     const { selectedGwInstanceRegionId, selectedGwInstanceCredId, selectedResourceId, selectedDatabaseInstance } =
@@ -23,6 +23,8 @@ const WellArchitectTabs = () => {
 
     // WAD tooltip message for disabled tabs
     const wadDisabledMessage = t('databases.wad.tab-disabled-message');
+    // Unregistered tooltip message for disabled tabs
+    const unregisteredDisabledMessage = t('databases.wad.unregistered-tab-disabled-message');
 
     const isBedrockSupportedForRegion = useMemo(() => {
         let isBedRockAvailable = true;
@@ -59,9 +61,13 @@ const WellArchitectTabs = () => {
 
     return (
         <div className={styles['well-architect-tabs']}>
-            {/* Overview Tab - disabled for WAD */}
-            {isWad ? (
-                <TooltipComponent placement="bottom" title={wadDisabledMessage} width={300}>
+            {/* Overview Tab - disabled for WAD or unregistered instances */}
+            {isWad || isUnregistered ? (
+                <TooltipComponent
+                    placement="bottom"
+                    title={isUnregistered ? unregisteredDisabledMessage : wadDisabledMessage}
+                    width={300}
+                >
                     <div className={`${styles.headers} ${styles.headerWidthFirst}`}>
                         <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
                             {t('databases.general.overview')}
@@ -111,13 +117,15 @@ const WellArchitectTabs = () => {
                 </DsTypography>
             </div>
 
-            {/* Error Investigation Tab - disabled for WAD, GovCloud, or when Bedrock not supported */}
-            {(isWad || isGovAccount || !isBedrockSupportedForRegion) && (
+            {/* Error Investigation Tab - disabled for WAD, unregistered, GovCloud, or when Bedrock not supported */}
+            {(isWad || isUnregistered || isGovAccount || !isBedrockSupportedForRegion) && (
                 <TooltipComponent
                     placement="bottom"
                     title={
                         isGovAccount
                             ? t('databases.general.not-supported-in-govcloud')
+                            : isUnregistered
+                            ? unregisteredDisabledMessage
                             : isWad
                             ? wadDisabledMessage
                             : t('databases.log-analyzer.bedrock-in-region-not-supported')
@@ -134,7 +142,7 @@ const WellArchitectTabs = () => {
                     </div>
                 </TooltipComponent>
             )}
-            {!isWad && !isGovAccount && isBedrockSupportedForRegion && (
+            {!isWad && !isUnregistered && !isGovAccount && isBedrockSupportedForRegion && (
                 <div
                     className={
                         selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION
@@ -185,9 +193,13 @@ const WellArchitectTabs = () => {
                 </DsTypography>
             </div>
 
-            {/* Sandboxes Tab - disabled for WAD */}
-            {isWad ? (
-                <TooltipComponent placement="bottom" title={wadDisabledMessage} width={300}>
+            {/* Sandboxes Tab - disabled for WAD or unregistered instances */}
+            {isWad || isUnregistered ? (
+                <TooltipComponent
+                    placement="bottom"
+                    title={isUnregistered ? unregisteredDisabledMessage : wadDisabledMessage}
+                    width={300}
+                >
                     <div className={`${styles.headers} ${styles.headerWidthThird}`}>
                         <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
                             {t('databases.general.sandboxes')}

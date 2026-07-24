@@ -2772,7 +2772,7 @@ const InventoryApisV3 = () => {
         if (!refreshBlocked) {
             // Replace only this cred+region's non-WAD entries; preserve other creds/regions and all WAD data.
             const otherMssql = allmssqlHostAssessmentDataS.filter(
-                (h: any) => !(h.credentialId === credId && h.regionId === regionId && !h.isWad)
+                (h: any) => !(h.credentialId === credId && h.regionId === regionId && !h.isWad && !h.isUnregistered)
             );
             dispatch(addAllMssqlHostAssessmentData([...otherMssql, ...allmssqlHostAssessmentData]));
         }
@@ -2782,7 +2782,7 @@ const InventoryApisV3 = () => {
         if (!refreshBlocked) {
             // Replace only this cred+region's non-WAD entries; preserve other creds/regions and all WAD data.
             const otherOracle = allOracleHostAssessmentDataS.filter(
-                (h: any) => !(h.credentialId === credId && h.regionId === regionId && !h.isWad)
+                (h: any) => !(h.credentialId === credId && h.regionId === regionId && !h.isWad && !h.isUnregistered)
             );
             dispatch(addAllOracleHostAssessmentData([...otherOracle, ...allOracleHostAssessmentData]));
         }

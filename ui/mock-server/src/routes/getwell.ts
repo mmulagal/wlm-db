@@ -3,6 +3,8 @@ import GetWellFlatJson from '../data/getWellFlat.json';
 import GetWellOracleFlatJson from '../data/getWellOracleFlat.json';
 import GetWellOfflineFlatJson from '../data/getWellOfflineFlat.json';
 import OracleAssessmentOfflineFlatJson from '../data/offlineOracleAssessmentFlat.json';
+import UnregisteredMssqlAssessmentJson from '../data/unregisteredMssqlAssessment.json';
+import UnregisteredOracleAssessmentJson from '../data/unregisteredOracleAssessment.json';
 import SnapshotPolicies from '../data/snapshotPolicies.json';
 import GetWellAccJson from '../data/getWellAcc.json';
 import GetWellAccOfflineJson from '../data/getWellAccOffline.json';
@@ -48,18 +50,70 @@ router.post(
 
 router.get(
     `${BASE_URL}/v2/mssql/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/offline-assessment`,
-    async (req: {}, res: any) => {
+    async (req: any, res: any) => {
         setTimeout(() => {
-            generateResponse(res, 200, GetWellOfflineFlatJson);
+            // Check if this is an unregistered assessment (ec2InstanceId param)
+            const { databaseHostId } = req.params;
+            // If databaseHostId starts with 'i-', it's an ec2InstanceId (unregistered)
+            if (databaseHostId?.startsWith('i-') && databaseHostId.includes('unregistered')) {
+                generateResponse(res, 200, UnregisteredMssqlAssessmentJson);
+            } else if (databaseHostId?.startsWith('i-')) {
+                const unregisteredData = {
+                    ...GetWellOfflineFlatJson,
+                    metadata: {
+                        ...GetWellOfflineFlatJson.metadata,
+                        source: 'unregistered',
+                        ec2InstanceId: databaseHostId,
+                        isWad: false,
+                        isUnregistered: true
+                    }
+                };
+                generateResponse(res, 200, unregisteredData);
+            } else {
+                const offlineData = {
+                    ...GetWellOfflineFlatJson,
+                    metadata: {
+                        ...GetWellOfflineFlatJson.metadata,
+                        source: 'offline'
+                    }
+                };
+                generateResponse(res, 200, offlineData);
+            }
         }, 500);
     }
 );
 
 router.get(
     `${BASE_URL}/v2/oracle/database-hosts/:databaseHostId/database-instances/:databaseInstanceId/offline-assessment`,
-    async (req: {}, res: any) => {
+    async (req: any, res: any) => {
         setTimeout(() => {
-            generateResponse(res, 200, OracleAssessmentOfflineFlatJson);
+            // Check if this is an unregistered assessment (ec2InstanceId param)
+            const { databaseHostId } = req.params;
+            // If databaseHostId starts with 'i-', it's an ec2InstanceId (unregistered)
+            if (databaseHostId?.startsWith('i-') && databaseHostId.includes('unregistered')) {
+                generateResponse(res, 200, UnregisteredOracleAssessmentJson);
+            } else if (databaseHostId?.startsWith('i-')) {
+                const unregisteredData = {
+                    ...OracleAssessmentOfflineFlatJson,
+                    metadata: {
+                        ...OracleAssessmentOfflineFlatJson.metadata,
+                        source: 'unregistered',
+                        ec2InstanceId: databaseHostId,
+                        isWad: false,
+                        isUnregistered: true
+                    }
+                };
+                generateResponse(res, 200, unregisteredData);
+            } else {
+                const offlineData = {
+                    ...OracleAssessmentOfflineFlatJson,
+                    metadata: {
+                        ...OracleAssessmentOfflineFlatJson.metadata,
+                        source: 'offline'
+                    }
+                };
+                generateResponse(res, 200, offlineData);
+            }
         }, 500);
     }
 );
@@ -95,6 +149,25 @@ router.post(
     async (req: {}, res: any) => {
         setTimeout(() => {
             generateResponse(res, 200, { jobId: '1234' });
+        }, 20);
+    }
+);
+
+// Unregistered assessment endpoints - using ec2InstanceId instead of databaseHostId
+router.post(
+    `${BASE_URL}/v1/mssql/credentials/:credentialsId/regions/:region/ec2-instances/:ec2InstanceId/database-instances/:instanceName/assessment`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 202, { jobId: 'unregistered-mssql-assessment-job-123' });
+        }, 20);
+    }
+);
+
+router.post(
+    `${BASE_URL}/v1/oracle/credentials/:credentialsId/regions/:region/ec2-instances/:ec2InstanceId/database-instances/:instanceName/assessment`,
+    async (req: {}, res: any) => {
+        setTimeout(() => {
+            generateResponse(res, 202, { jobId: 'unregistered-oracle-assessment-job-123' });
         }, 20);
     }
 );

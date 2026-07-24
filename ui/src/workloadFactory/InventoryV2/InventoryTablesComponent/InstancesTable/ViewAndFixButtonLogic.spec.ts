@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { INVENTORY_STATUS, ACTION_CTA } from '../../../../utils/consts';
+import { canTriggerUnregisteredAssessment } from '../../InventoryUtilsV2';
+
+const getCanViewAndFix = (rowData: any) => {
+    const isRegisteredOrManaged = rowData?.statusColText === INVENTORY_STATUS.MANAGED || rowData?.resourceId;
+    const hasUnregisteredPermissions = canTriggerUnregisteredAssessment(rowData?.hostManageReadiness);
+    return !!(rowData?.isWad || rowData?.isUnregistered || isRegisteredOrManaged || hasUnregisteredPermissions);
+};
 
 /**
  * Tests for View and Fix button enable/disable logic
@@ -9,36 +16,50 @@ describe('View and Fix Button Logic', () => {
     describe('canViewAndFix determination', () => {
         it('enables for WAD instances', () => {
             const rowData = { isWad: true };
-            const canViewAndFix = rowData.isWad || false;
-            expect(canViewAndFix).toBe(true);
+            expect(getCanViewAndFix(rowData)).toBe(true);
         });
 
         it('enables for managed instances (statusColText === MANAGED)', () => {
             const rowData = { statusColText: INVENTORY_STATUS.MANAGED };
-            const isRegisteredOrManaged = rowData.statusColText === INVENTORY_STATUS.MANAGED || rowData.resourceId;
-            const canViewAndFix = rowData.isWad || isRegisteredOrManaged;
-            expect(canViewAndFix).toBe(true);
+            expect(getCanViewAndFix(rowData)).toBe(true);
         });
 
         it('enables for registered instances (has resourceId)', () => {
             const rowData = { resourceId: 'res-12345' };
-            const isRegisteredOrManaged = rowData.statusColText === INVENTORY_STATUS.MANAGED || rowData.resourceId;
-            const canViewAndFix = !!(rowData.isWad || isRegisteredOrManaged);
-            expect(canViewAndFix).toBe(true);
+            expect(getCanViewAndFix(rowData)).toBe(true);
         });
 
-        it('disables for unregistered discovered instances', () => {
-            const rowData = { statusColText: 'Not registered', resourceId: null };
-            const isRegisteredOrManaged = rowData.statusColText === INVENTORY_STATUS.MANAGED || rowData.resourceId;
-            const canViewAndFix = !!(rowData.isWad || isRegisteredOrManaged);
-            expect(canViewAndFix).toBe(false);
+        it('enables for merged unregistered instances', () => {
+            const rowData = { isUnregistered: true, statusColText: INVENTORY_STATUS.UNMANAGED };
+            expect(getCanViewAndFix(rowData)).toBe(true);
+        });
+
+        it('enables discover instances with unregistered assessment permissions', () => {
+            const rowData = {
+                statusColText: INVENTORY_STATUS.UNMANAGED,
+                resourceId: '',
+                hostManageReadiness: {
+                    extensiveRunPermission: true,
+                    canReadAWSSSMDocuments: true
+                }
+            };
+            expect(getCanViewAndFix(rowData)).toBe(true);
+        });
+
+        it('disables for discover instances without permissions', () => {
+            const rowData = {
+                statusColText: INVENTORY_STATUS.UNMANAGED,
+                resourceId: '',
+                hostManageReadiness: {
+                    extensiveRunPermission: false,
+                    canReadAWSSSMDocuments: false
+                }
+            };
+            expect(getCanViewAndFix(rowData)).toBe(false);
         });
 
         it('disables for instances without any valid state', () => {
-            const rowData = {};
-            const isRegisteredOrManaged = rowData.statusColText === INVENTORY_STATUS.MANAGED || rowData.resourceId;
-            const canViewAndFix = !!(rowData.isWad || isRegisteredOrManaged);
-            expect(canViewAndFix).toBe(false);
+            expect(getCanViewAndFix({})).toBe(false);
         });
     });
 
@@ -373,24 +394,44 @@ describe('View and Fix Button Logic', () => {
             expect(buttonText).toBe('databases.general.view-and-fix');
         });
 
-        it('Unregistered instance shows disabled message with view-and-fix text', () => {
-            const rowData = { statusColText: 'Not registered', resourceId: null };
+        it('Unregistered discover instance with permissions is enabled', () => {
+            const rowData = {
+                statusColText: INVENTORY_STATUS.UNMANAGED,
+                resourceId: '',
+                hostManageReadiness: { extensiveRunPermission: true, canReadAWSSSMDocuments: true }
+            };
             const isBulkSelectionActive = false;
 
-            const isRegisteredOrManaged = rowData.statusColText === INVENTORY_STATUS.MANAGED || rowData.resourceId;
-            const canViewAndFix = !!(rowData.isWad || isRegisteredOrManaged);
-            const viewAndFixDisableMsg = !canViewAndFix ? 'databases.general.view-and-fix-disabled-tooltip' : '';
+            const canViewAndFix = getCanViewAndFix(rowData);
+            const viewAndFixDisableMsg = !canViewAndFix
+                ? 'databases.inventory.register-instance-to-enable-view-fix'
+                : '';
             const effectiveDisableMsg = isBulkSelectionActive
                 ? 'databases.bulk-register.action-disabled-during-bulk-selection'
                 : viewAndFixDisableMsg;
-            const buttonText =
-                rowData.optimizationStatus === ACTION_CTA.WELL_ARCHITECTED
-                    ? 'databases.general.well-architected'
-                    : 'databases.general.view-and-fix';
+
+            expect(canViewAndFix).toBe(true);
+            expect(effectiveDisableMsg).toBe('');
+        });
+
+        it('Unregistered instance without permissions shows disabled message', () => {
+            const rowData = {
+                statusColText: INVENTORY_STATUS.UNMANAGED,
+                resourceId: '',
+                hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: false }
+            };
+            const isBulkSelectionActive = false;
+
+            const canViewAndFix = getCanViewAndFix(rowData);
+            const viewAndFixDisableMsg = !canViewAndFix
+                ? 'databases.inventory.register-instance-to-enable-view-fix'
+                : '';
+            const effectiveDisableMsg = isBulkSelectionActive
+                ? 'databases.bulk-register.action-disabled-during-bulk-selection'
+                : viewAndFixDisableMsg;
 
             expect(canViewAndFix).toBe(false);
-            expect(effectiveDisableMsg).toBe('databases.general.view-and-fix-disabled-tooltip');
-            expect(buttonText).toBe('databases.general.view-and-fix');
+            expect(effectiveDisableMsg).toBe('databases.inventory.register-instance-to-enable-view-fix');
         });
     });
 });

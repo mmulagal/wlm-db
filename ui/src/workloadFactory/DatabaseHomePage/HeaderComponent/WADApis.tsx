@@ -10,19 +10,24 @@ import {
     addOfflineOracleHostAssessmentData,
     addAllMssqlHostAssessmentData,
     addAllOracleHostAssessmentData,
+    addUnregisteredMssqlAssessmentData,
+    addUnregisteredOracleAssessmentData,
     setInventoryTableData,
     setOfflineMssqlHostAssessmentLoading,
     setOfflineOracleHostAssessmentLoading,
+    setUnregisteredAssessmentLoading,
     addOfflineMssqlDatabasesData,
     setOfflineMssqlDatabasesLoading
 } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     formatOfflineAssessmentToInventoryData,
-    formatOracleOfflineAssessmentToInventoryData
+    formatOracleOfflineAssessmentToInventoryData,
+    mergeUnregisteredAssessmentIntoInventory
 } from '../../InventoryV2/InventoryUtilsV2';
 import { formatOfflineDataToAssessmentFormat } from '../DatabaseHomeUtils';
 import store from '../../../store/store';
 import { DBType } from '../../../utils/consts';
+import { isOfflineAssessmentItem, isUnregisteredAssessmentItem } from '../../WellArchitectedTab/assessmentFormatUtils';
 
 const WADApis = () => {
     const dispatch = useAppDispatch();
@@ -31,6 +36,10 @@ const WADApis = () => {
     const inventoryTableData = useAppSelector(state => state.inventoryV2.inventoryTableData);
     const offlineMssqlHostAssessmentData = useAppSelector(state => state.inventoryV2.offlineMssqlHostAssessmentData);
     const offlineOracleHostAssessmentData = useAppSelector(state => state.inventoryV2.offlineOracleHostAssessmentData);
+    const unregisteredMssqlAssessmentData = useAppSelector(state => state.inventoryV2.unregisteredMssqlAssessmentData);
+    const unregisteredOracleAssessmentData = useAppSelector(
+        state => state.inventoryV2.unregisteredOracleAssessmentData
+    );
     const offlineMssqlDatabasesData = useAppSelector(state => state.inventoryV2.offlineMssqlDatabasesData);
     const isRefreshed = useAppSelector(state => state.inventoryV2.isRefreshed);
 
@@ -38,6 +47,8 @@ const WADApis = () => {
     const headerSelectedMultiCredIdsListRef = useRef(headerSelectedMultiCredIdsList);
     const headerSelectedMultiRegionIdsListRef = useRef(headerSelectedMultiRegionIdsList);
     const isUpdatingRef = useRef(false);
+    // ponytail: ref-count parallel MSSQL/Oracle host fetches; shared unregistered loading clears only when both finish
+    const hostAssessmentFetchInFlightRef = useRef(0);
 
     // API hooks for lazy queries
     const [getAllOfflineAssessmentAPI] = useLazyGetAllOfflineMssqlHostsAssessmentDataQuery();
@@ -56,8 +67,8 @@ const WADApis = () => {
     // Call offline assessment APIs on mount
     useEffect(() => {
         // Always call these APIs regardless of cred/region availability
-        getAllOfflineAssessmentData([], null);
-        getAllOfflineOracleAssessmentData([], null);
+        getAllOfflineAssessmentData([], [], null);
+        getAllOfflineOracleAssessmentData([], [], null);
         getAllOfflineMssqlDatabasesData([], null);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -65,8 +76,8 @@ const WADApis = () => {
     // Re-call offline assessment APIs on refresh
     useEffect(() => {
         if (isRefreshed) {
-            getAllOfflineAssessmentData([], null);
-            getAllOfflineOracleAssessmentData([], null);
+            getAllOfflineAssessmentData([], [], null);
+            getAllOfflineOracleAssessmentData([], [], null);
             getAllOfflineMssqlDatabasesData([], null);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -94,15 +105,15 @@ const WADApis = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, offlineOracleHostAssessmentData]);
 
-    // Re-merge WAD data when inventoryTableData changes (e.g., when InventoryApisV3 updates it)
+    // Re-merge WAD / unregistered data when inventoryTableData changes (e.g., when InventoryApisV3 updates it)
     useEffect(() => {
-        // Prevent infinite loop - only re-merge if we're not the one updating
+        // Skip offline WAD re-add when this component just dispatched; still merge unregistered onto discover rows.
         if (isUpdatingRef.current) {
             isUpdatingRef.current = false;
+            mergeAllUnregisteredIntoInventory();
             return;
         }
 
-        // Check if we have offline data and if WAD entries are missing per DB type from inventoryTableData
         if (inventoryTableData) {
             const inventoryEntries = Object.values(inventoryTableData);
             const hasMssqlWadEntries = inventoryEntries.some(
@@ -118,41 +129,140 @@ const WADApis = () => {
             if (!hasOracleWadEntries && offlineOracleHostAssessmentData && offlineOracleHostAssessmentData.length > 0) {
                 updateInventoryWithOfflineData(offlineOracleHostAssessmentData, DBType.ORACLE);
             }
+
+            // Discover inventory loaded — merge unregistered assessments onto matching rows
+            mergeAllUnregisteredIntoInventory();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [inventoryTableData]);
 
+    // Re-merge when unregistered assessment data arrives after discover inventory is already loaded
+    useEffect(() => {
+        if (unregisteredMssqlAssessmentData?.length || unregisteredOracleAssessmentData?.length) {
+            mergeAllUnregisteredIntoInventory();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [unregisteredMssqlAssessmentData, unregisteredOracleAssessmentData]);
+
+    /**
+     * Clears loading flags after an offline/unregistered assessment fetch completes.
+     * Engine-specific loading clears per fetch; shared unregistered loading clears only when none remain in flight.
+     */
+    const beginHostAssessmentFetch = (dbType: typeof DBType.MSSQL | typeof DBType.ORACLE) => {
+        hostAssessmentFetchInFlightRef.current += 1;
+        if (dbType === DBType.MSSQL) {
+            dispatch(setOfflineMssqlHostAssessmentLoading(true));
+        } else {
+            dispatch(setOfflineOracleHostAssessmentLoading(true));
+        }
+        if (hostAssessmentFetchInFlightRef.current === 1) {
+            dispatch(setUnregisteredAssessmentLoading(true));
+        }
+    };
+
+    const clearHostAssessmentFetchLoading = (dbType: typeof DBType.MSSQL | typeof DBType.ORACLE) => {
+        if (dbType === DBType.MSSQL) {
+            dispatch(setOfflineMssqlHostAssessmentLoading(false));
+        } else {
+            dispatch(setOfflineOracleHostAssessmentLoading(false));
+        }
+        hostAssessmentFetchInFlightRef.current = Math.max(0, hostAssessmentFetchInFlightRef.current - 1);
+        if (hostAssessmentFetchInFlightRef.current === 0) {
+            dispatch(setUnregisteredAssessmentLoading(false));
+        }
+    };
+
+    /**
+     * Stores raw offline and unregistered assessment arrays in their respective slice buckets.
+     */
+    const storeFetchedAssessmentData = (
+        offlineData: any[],
+        unregisteredData: any[],
+        dbType: typeof DBType.MSSQL | typeof DBType.ORACLE
+    ) => {
+        if (dbType === DBType.MSSQL) {
+            dispatch(addOfflineMssqlHostAssessmentData(offlineData));
+            dispatch(addUnregisteredMssqlAssessmentData(unregisteredData));
+        } else {
+            dispatch(addOfflineOracleHostAssessmentData(offlineData));
+            dispatch(addUnregisteredOracleAssessmentData(unregisteredData));
+        }
+    };
+
+    /**
+     * Persists fetched assessment data and optionally syncs inventory + all-assessment stores.
+     * Replaces the repeated dispatch/update block at the end of paginated fetches.
+     */
+    const commitFetchedAssessmentData = (
+        offlineData: any[],
+        unregisteredData: any[],
+        dbType: typeof DBType.MSSQL | typeof DBType.ORACLE,
+        { syncInventory = true }: { syncInventory?: boolean } = {}
+    ) => {
+        clearHostAssessmentFetchLoading(dbType);
+        storeFetchedAssessmentData(offlineData, unregisteredData, dbType);
+        addOfflineDataToAllAssessment(offlineData, unregisteredData, dbType);
+        if (syncInventory) {
+            updateInventoryWithAssessmentData(offlineData, unregisteredData, dbType);
+        }
+    };
+
     /**
      * Adds offline assessment data to the "all" assessment data store.
      * Transforms flat offline data to hierarchical assessment format with host → instancesAssessment structure.
-     * @param offlineData - The offline assessment data to add (flat instance-level structure)
+     * @param offlineData - The offline assessment data to add (flat instance-level structure, source='offline')
+     * @param unregisteredData - The unregistered assessment data to add (flat instance-level structure, source='unregistered')
      * @param dbType - The database type (DBType.MSSQL or DBType.ORACLE)
      */
-    const addOfflineDataToAllAssessment = (offlineData: any[], dbType: typeof DBType.MSSQL | typeof DBType.ORACLE) => {
+    const addOfflineDataToAllAssessment = (
+        offlineData: any[],
+        unregisteredData: any[],
+        dbType: typeof DBType.MSSQL | typeof DBType.ORACLE
+    ) => {
         const state = store.getState();
-        // Transform flat offline data to hierarchical assessment format
-        const formattedAssessmentData = formatOfflineDataToAssessmentFormat(offlineData, dbType);
+        // Transform flat offline and unregistered data to hierarchical assessment format
+        const formattedOfflineData = formatOfflineDataToAssessmentFormat(offlineData, dbType);
+        const formattedUnregisteredData = formatOfflineDataToAssessmentFormat(unregisteredData, dbType);
 
         if (dbType === DBType.MSSQL) {
             const existingAllData = state.inventoryV2.allmssqlHostAssessmentData || [];
-            // Filter out any existing WAD data to avoid duplicates, then add new formatted offline data
-            const nonWadData = existingAllData.filter((item: any) => !item?.isWad);
-            dispatch(addAllMssqlHostAssessmentData([...nonWadData, ...formattedAssessmentData]));
+            // Filter out any existing WAD and unregistered data to avoid duplicates, then add new formatted data
+            const registeredOnlyData = existingAllData.filter((item: any) => !item?.isWad && !item?.isUnregistered);
+            dispatch(
+                addAllMssqlHostAssessmentData([
+                    ...registeredOnlyData,
+                    ...formattedOfflineData,
+                    ...formattedUnregisteredData
+                ])
+            );
         } else {
             const existingAllData = state.inventoryV2.allOracleHostAssessmentData || [];
-            // Filter out any existing WAD data to avoid duplicates, then add new formatted offline data
-            const nonWadData = existingAllData.filter((item: any) => !item?.isWad);
-            dispatch(addAllOracleHostAssessmentData([...nonWadData, ...formattedAssessmentData]));
+            // Filter out any existing WAD and unregistered data to avoid duplicates, then add new formatted data
+            const registeredOnlyData = existingAllData.filter((item: any) => !item?.isWad && !item?.isUnregistered);
+            dispatch(
+                addAllOracleHostAssessmentData([
+                    ...registeredOnlyData,
+                    ...formattedOfflineData,
+                    ...formattedUnregisteredData
+                ])
+            );
         }
     };
 
     /**
      * Fetches all offline MSSQL host assessment data.
      * This API is called irrespective of credential/region selection.
+     * Separates offline (one-time WAD upload) from unregistered (on-demand) assessments by metadata.source.
      */
-    const getAllOfflineAssessmentData = async (assessmentData: any[], nextToken: string | null) => {
+    const getAllOfflineAssessmentData = async (
+        assessmentData: any[],
+        unregisteredData: any[],
+        nextToken: string | null
+    ) => {
         try {
-            dispatch(setOfflineMssqlHostAssessmentLoading(true));
+            if (nextToken === null) {
+                beginHostAssessmentFetch(DBType.MSSQL);
+            }
 
             const result: any = await getAllOfflineAssessmentAPI({
                 credentialId: null,
@@ -161,39 +271,36 @@ const WADApis = () => {
             });
 
             if (result && !result?.error && result?.data) {
-                const newAssessmentData = [
-                    ...assessmentData,
-                    ...(Array.isArray(result?.data?.items)
-                        ? result.data.items.map((assessment: any) => ({
-                              ...assessment,
-                              isWad: true // Mark as WAD (offline) data
-                          }))
-                        : [])
-                ];
+                const allItems = Array.isArray(result?.data?.items) ? result.data.items : [];
+
+                // Separate offline (one-time WAD) from unregistered (on-demand) by assessments.metadata.source
+                const offlineItems = allItems
+                    .filter((item: any) => isOfflineAssessmentItem(item))
+                    .map((item: any) => ({ ...item, isWad: true }));
+
+                const unregisteredItems = allItems
+                    .filter((item: any) => isUnregisteredAssessmentItem(item))
+                    .map((item: any) => ({ ...item, isUnregistered: true }));
+
+                const newOfflineData = [...assessmentData, ...offlineItems];
+                const newUnregisteredData = [...unregisteredData, ...unregisteredItems];
 
                 if (result?.data?.nextToken) {
                     // Continue fetching with pagination
-                    getAllOfflineAssessmentData(newAssessmentData, result?.data?.nextToken);
+                    await getAllOfflineAssessmentData(newOfflineData, newUnregisteredData, result?.data?.nextToken);
                 } else {
-                    // All data fetched, store in slice
-                    dispatch(setOfflineMssqlHostAssessmentLoading(false));
-                    dispatch(addOfflineMssqlHostAssessmentData(newAssessmentData));
-                    addOfflineDataToAllAssessment(newAssessmentData, DBType.MSSQL);
-                    updateInventoryWithOfflineData(newAssessmentData, DBType.MSSQL);
+                    commitFetchedAssessmentData(newOfflineData, newUnregisteredData, DBType.MSSQL);
                 }
+            } else if (assessmentData.length > 0 || unregisteredData.length > 0) {
+                commitFetchedAssessmentData(assessmentData, unregisteredData, DBType.MSSQL);
             } else {
-                dispatch(setOfflineMssqlHostAssessmentLoading(false));
-                if (assessmentData.length > 0) {
-                    dispatch(addOfflineMssqlHostAssessmentData(assessmentData));
-                    addOfflineDataToAllAssessment(assessmentData, DBType.MSSQL);
-                    updateInventoryWithOfflineData(assessmentData, DBType.MSSQL);
-                }
+                clearHostAssessmentFetchLoading(DBType.MSSQL);
             }
         } catch (error) {
-            dispatch(setOfflineMssqlHostAssessmentLoading(false));
-            if (assessmentData.length > 0) {
-                dispatch(addOfflineMssqlHostAssessmentData(assessmentData));
-                addOfflineDataToAllAssessment(assessmentData, DBType.MSSQL);
+            if (assessmentData.length > 0 || unregisteredData.length > 0) {
+                commitFetchedAssessmentData(assessmentData, unregisteredData, DBType.MSSQL, { syncInventory: false });
+            } else {
+                clearHostAssessmentFetchLoading(DBType.MSSQL);
             }
         }
     };
@@ -201,10 +308,17 @@ const WADApis = () => {
     /**
      * Fetches all offline Oracle host assessment data.
      * This API is called irrespective of credential/region selection.
+     * Separates offline (one-time WAD upload) from unregistered (on-demand) assessments by metadata.source.
      */
-    const getAllOfflineOracleAssessmentData = async (assessmentData: any[], nextToken: string | null) => {
+    const getAllOfflineOracleAssessmentData = async (
+        assessmentData: any[],
+        unregisteredData: any[],
+        nextToken: string | null
+    ) => {
         try {
-            dispatch(setOfflineOracleHostAssessmentLoading(true));
+            if (nextToken === null) {
+                beginHostAssessmentFetch(DBType.ORACLE);
+            }
 
             const result: any = await getAllOfflineOracleAssessmentAPI({
                 credentialId: null,
@@ -213,39 +327,40 @@ const WADApis = () => {
             });
 
             if (result && !result?.error && result?.data) {
-                const newAssessmentData = [
-                    ...assessmentData,
-                    ...(Array.isArray(result?.data?.items)
-                        ? result.data.items.map((assessment: any) => ({
-                              ...assessment,
-                              isWad: true // Mark as WAD (offline) data
-                          }))
-                        : [])
-                ];
+                const allItems = Array.isArray(result?.data?.items) ? result.data.items : [];
+
+                // Separate offline (one-time WAD) from unregistered (on-demand) by assessments.metadata.source
+                const offlineItems = allItems
+                    .filter((item: any) => isOfflineAssessmentItem(item))
+                    .map((item: any) => ({ ...item, isWad: true }));
+
+                const unregisteredItems = allItems
+                    .filter((item: any) => isUnregisteredAssessmentItem(item))
+                    .map((item: any) => ({ ...item, isUnregistered: true }));
+
+                const newOfflineData = [...assessmentData, ...offlineItems];
+                const newUnregisteredData = [...unregisteredData, ...unregisteredItems];
 
                 if (result?.data?.nextToken) {
                     // Continue fetching with pagination
-                    getAllOfflineOracleAssessmentData(newAssessmentData, result?.data?.nextToken);
+                    await getAllOfflineOracleAssessmentData(
+                        newOfflineData,
+                        newUnregisteredData,
+                        result?.data?.nextToken
+                    );
                 } else {
-                    // All data fetched, store in slice
-                    dispatch(setOfflineOracleHostAssessmentLoading(false));
-                    dispatch(addOfflineOracleHostAssessmentData(newAssessmentData));
-                    addOfflineDataToAllAssessment(newAssessmentData, DBType.ORACLE);
-                    updateInventoryWithOfflineData(newAssessmentData, DBType.ORACLE);
+                    commitFetchedAssessmentData(newOfflineData, newUnregisteredData, DBType.ORACLE);
                 }
+            } else if (assessmentData.length > 0 || unregisteredData.length > 0) {
+                commitFetchedAssessmentData(assessmentData, unregisteredData, DBType.ORACLE);
             } else {
-                dispatch(setOfflineOracleHostAssessmentLoading(false));
-                if (assessmentData.length > 0) {
-                    dispatch(addOfflineOracleHostAssessmentData(assessmentData));
-                    addOfflineDataToAllAssessment(assessmentData, DBType.ORACLE);
-                    updateInventoryWithOfflineData(assessmentData, DBType.ORACLE);
-                }
+                clearHostAssessmentFetchLoading(DBType.ORACLE);
             }
         } catch (error) {
-            dispatch(setOfflineOracleHostAssessmentLoading(false));
-            if (assessmentData.length > 0) {
-                dispatch(addOfflineOracleHostAssessmentData(assessmentData));
-                addOfflineDataToAllAssessment(assessmentData, DBType.ORACLE);
+            if (assessmentData.length > 0 || unregisteredData.length > 0) {
+                commitFetchedAssessmentData(assessmentData, unregisteredData, DBType.ORACLE, { syncInventory: false });
+            } else {
+                clearHostAssessmentFetchLoading(DBType.ORACLE);
             }
         }
     };
@@ -333,31 +448,22 @@ const WADApis = () => {
     };
 
     /**
-     * Updates the inventory table data with formatted offline assessment data.
-     * If no credential/region is selected, shows all offline data.
-     * If credential/region is selected, filters data accordingly or shows instances without cred/region.
-     * @param offlineData - The offline assessment data to format and merge
-     * @param dbType - The database type (DBType.MSSQL or DBType.ORACLE)
+     * Builds merged inventory from offline WAD rows and unregistered discover-row overlays.
      */
-    const updateInventoryWithOfflineData = (offlineData: any[], dbType: typeof DBType.MSSQL | typeof DBType.ORACLE) => {
-        const state = store.getState();
-        const currentInventoryTableData = state.inventoryV2.inventoryTableData || {};
+    const buildMergedInventoryData = (
+        currentInventoryTableData: Record<string, any>,
+        offlineData: any[],
+        unregisteredData: any[],
+        dbType: typeof DBType.MSSQL | typeof DBType.ORACLE
+    ) => {
         const selectedCredIds = headerSelectedMultiCredIdsListRef.current;
         const selectedRegionIds = headerSelectedMultiRegionIdsListRef.current;
 
-        // Filter offline data based on selected credentials and regions
         let filteredOfflineData = offlineData;
-
-        // If credentials and regions are selected, filter data
-        // Show data that matches the selected cred/region OR has no cred/region
         if (selectedCredIds?.length > 0 && selectedRegionIds?.length > 0) {
             filteredOfflineData = offlineData.filter((host: any) => {
                 const hostCredId = host?.credentialId || host?.credentialsId;
                 const hostRegionId = host?.regionId || host?.region;
-
-                // Include if:
-                // 1. Host has matching credentialId and regionId
-                // 2. Host has no credentialId/regionId (unregistered offline data)
                 const hasMatchingCred = hostCredId && selectedCredIds.includes(hostCredId);
                 const hasMatchingRegion = hostRegionId && selectedRegionIds.includes(hostRegionId);
                 const hasNoCred = !hostCredId;
@@ -367,28 +473,95 @@ const WADApis = () => {
             });
         }
 
-        // Format the filtered offline data based on db type
         let formattedOfflineData =
             dbType === DBType.ORACLE
                 ? formatOracleOfflineAssessmentToInventoryData(filteredOfflineData)
                 : formatOfflineAssessmentToInventoryData(filteredOfflineData);
 
-        // For MSSQL WAD hosts, merge the offline databases (from
-        // getOfflineMssqlAssessmentDatabases) onto each matching instance so the
-        // Databases tab can render one-time WAD database rows.
         if (dbType === DBType.MSSQL) {
-            const offlineDatabasesItems = state.inventoryV2.offlineMssqlDatabasesData || [];
+            const offlineDatabasesItems = store.getState().inventoryV2.offlineMssqlDatabasesData || [];
             formattedOfflineData = mergeOfflineDatabasesIntoWadHosts(formattedOfflineData, offlineDatabasesItems);
         }
 
-        // Merge with existing inventory data
-        // Note: Offline data uses a special key format to avoid conflicts
-        const mergedInventoryData = {
+        let mergedInventoryData = {
             ...currentInventoryTableData,
             ...formattedOfflineData
         };
 
-        // Set flag to prevent infinite loop in useEffect
+        if (unregisteredData?.length) {
+            mergedInventoryData = mergeUnregisteredAssessmentIntoInventory(
+                mergedInventoryData,
+                unregisteredData,
+                dbType
+            );
+        }
+
+        return mergedInventoryData;
+    };
+
+    /**
+     * Updates inventory with offline WAD rows and unregistered overlays in a single dispatch.
+     */
+    const updateInventoryWithAssessmentData = (
+        offlineData: any[],
+        unregisteredData: any[],
+        dbType: typeof DBType.MSSQL | typeof DBType.ORACLE
+    ) => {
+        const state = store.getState();
+        const currentInventoryTableData = state.inventoryV2.inventoryTableData || {};
+        const mergedInventoryData = buildMergedInventoryData(
+            currentInventoryTableData,
+            offlineData,
+            unregisteredData,
+            dbType
+        );
+
+        if (mergedInventoryData === currentInventoryTableData) {
+            return;
+        }
+
+        isUpdatingRef.current = true;
+        dispatch(setInventoryTableData(mergedInventoryData));
+    };
+
+    /**
+     * Updates the inventory table data with formatted offline assessment data.
+     * If no credential/region is selected, shows all offline data.
+     * If credential/region is selected, filters data accordingly or shows instances without cred/region.
+     * @param offlineData - The offline assessment data to format and merge
+     * @param dbType - The database type (DBType.MSSQL or DBType.ORACLE)
+     */
+    const updateInventoryWithOfflineData = (offlineData: any[], dbType: typeof DBType.MSSQL | typeof DBType.ORACLE) => {
+        updateInventoryWithAssessmentData(offlineData, [], dbType);
+    };
+
+    /**
+     * Merges unregistered (on-demand) assessment data onto matching discovered inventory rows.
+     * Does not create separate WAD inventory entries.
+     */
+    const mergeAllUnregisteredIntoInventory = () => {
+        const state = store.getState();
+        let mergedInventoryData = state.inventoryV2.inventoryTableData || {};
+
+        if (unregisteredMssqlAssessmentData?.length > 0) {
+            mergedInventoryData = mergeUnregisteredAssessmentIntoInventory(
+                mergedInventoryData,
+                unregisteredMssqlAssessmentData,
+                DBType.MSSQL
+            );
+        }
+        if (unregisteredOracleAssessmentData?.length > 0) {
+            mergedInventoryData = mergeUnregisteredAssessmentIntoInventory(
+                mergedInventoryData,
+                unregisteredOracleAssessmentData,
+                DBType.ORACLE
+            );
+        }
+
+        if (mergedInventoryData === state.inventoryV2.inventoryTableData) {
+            return;
+        }
+
         isUpdatingRef.current = true;
         dispatch(setInventoryTableData(mergedInventoryData));
     };
