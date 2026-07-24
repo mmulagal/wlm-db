@@ -34,7 +34,8 @@
     "main": "dist/src/agent.js",
     "name": "logs-analyzer",
     "overrides": {
-        "body-parser": "^2.3.0"
+        "body-parser": "^2.3.0",
+        "brace-expansion": "^5.0.7"
     },
     "pkg": {
         "assets": [
