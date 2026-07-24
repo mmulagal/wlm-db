@@ -22,9 +22,7 @@ import { spliceExtras, stickyResourceRowActionColumn } from '../shared/columns';
 import { DEFAULT_LUN_COLUMNS_BY_SCOPE, LUN_EXTRA_COLUMNS_ANCHOR_ID } from './columns';
 import { resolveLunConfiguration } from './configurations';
 
-const LUN_RESOURCE_TYPE_NOUN = { singular: 'block device', plural: 'block devices' };
-
-const VOLUME_LUN_RESOURCE_TYPE_NOUN = { singular: 'volume/block device', plural: 'volumes/block devices' };
+const BLOCK_DEVICE_RESOURCE_TYPE_NOUN = { singular: 'block device', plural: 'block devices' };
 
 interface LunResourcesTableProps {
     wadApi: WadApi;
@@ -34,12 +32,6 @@ interface LunResourcesTableProps {
 export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps) => {
     const { configurationId } = wadApi.context;
     const configuration = useMemo(() => resolveLunConfiguration(configurationId), [configurationId]);
-    const resourceTypeNoun = useMemo(() => {
-        if (configurationId === 'wlmdb-block-device-space-management') {
-            return VOLUME_LUN_RESOURCE_TYPE_NOUN;
-        }
-        return LUN_RESOURCE_TYPE_NOUN;
-    }, [configurationId]);
 
     const {
         resources,
@@ -52,7 +44,7 @@ export const LunResourcesTable = ({ wadApi, tableScope }: LunResourcesTableProps
         confirmDismiss,
         cancelDismiss,
         isDismissSubmitting
-    } = useResourceTableActions({ wadApi, resourceTypeNoun });
+    } = useResourceTableActions({ wadApi, resourceTypeNoun: BLOCK_DEVICE_RESOURCE_TYPE_NOUN });
 
     const handleFixRow = useCallback(
         (resource: ResourceScanRecord) =>
