@@ -274,7 +274,8 @@ async function createDeploymentMockDataInDB(
         resourceId,
         instanceId,
         DEFAULT_INSTANCE_NAME,
-        sqlDeploymentMode
+        sqlDeploymentMode,
+        optimizedResourceName.includes(resourceName)
     );
 
     const jobData = createJobMockData(

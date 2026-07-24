@@ -3464,6 +3464,16 @@ const MAPPED_ONTAP_VOLUMES_DATA = {
         ]
     }
 };
+const MSSQL_NOT_OPTIMIZED_MAPPED_ONTAP_VOLUMES_DATA = {
+    SQL1: {
+        ...MAPPED_ONTAP_VOLUMES_DATA.SQL1,
+        volumeDBMap: MAPPED_ONTAP_VOLUMES_DATA.SQL1.volumeDBMap.map(entry =>
+            entry.ontapVolumeuuid === '73df15ec-dc72-11ef-b430-bb0ad6a3b8df'
+                ? { ...entry, dataLunUuids: ['81e84adc-cdb8-4cf1-8a85-a5559d18f2c7'] }
+                : entry
+        )
+    }
+};
 
 const MSSQL_SNAPCENTER_ASSESSMENT_DATA = {
     volumes: [
@@ -3538,7 +3548,7 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
             {
                 svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
                 svmName: 'wlmdb_sqlsvm_1735809893269',
-                volumeId: 'db1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
                 volumeName: 'oracledata2',
                 lunName: '/vol/wlmdb_oracledata_1735809893269/lun2',
                 lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7b',
@@ -5850,7 +5860,8 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
             'fractional-reserve': 0,
             'snapshot-autodelete': true,
             'snapshot-copy-reserve': 0,
-            'tiering-min-cooling-days': 7
+            'tiering-min-cooling-days': 7,
+            'space-mgmt-try-first': 'volume_grow'
         },
         {
             name: 'wlmdb_sqltemp_1750140716368',
@@ -5867,7 +5878,8 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
             'fractional-reserve': 0,
             'snapshot-autodelete': true,
             'snapshot-copy-reserve': 0,
-            'tiering-min-cooling-days': 7
+            'tiering-min-cooling-days': 7,
+            'space-mgmt-try-first': 'volume_grow'
         }
     ],
     filesystemId: 'fs-07a22f282fd4f5a20'
@@ -6183,7 +6195,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                     },
                     exportPolicyName: 'wf2_policy'
                 },
-                volumeId: 'a678830e-a9e0-11f0-bb42-83fc639f5501',
+                volumeId: 'db1ed9f2-eee7-11ef-8fbb-837e18df6f7a',
                 mountPath: '/mnt/orahome',
                 oracleSid: 'ordbsdl',
                 isNfsMount: true,
@@ -6373,7 +6385,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
                         local_lock: 'none',
                         noac: true
                     },
-                    'mount-point': '/mnt/oraarch',
+                    'mount-point': '/mnt/oradata/oraarch',
                     'remote-path': '/oraclearch2',
                     'filesystem-type': 'nfs4'
                 },
@@ -6686,9 +6698,11 @@ async function createAssessmentData(
     resourceId: string,
     databaseInstanceId: string,
     databaseInstanceName: string = DEFAULT_INSTANCE_NAME,
-    sqlDeploymentType: string = SqlServerDeploymentModel.SQL_STANDALONE_SHORT
+    sqlDeploymentType: string = SqlServerDeploymentModel.SQL_STANDALONE_SHORT,
+    useNotOptimizedFixtures: boolean = false
 ) {
     accountId = checkAccount(accountId);
+    const isDefaultOptimizedInstance = databaseInstanceName === DEFAULT_INSTANCE_NAME && !useNotOptimizedFixtures;
     const baseConfig = {
         account_id: accountId,
         credentials_id: credentialsId,
@@ -6700,46 +6714,33 @@ async function createAssessmentData(
     const instanceConfigDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategories.STORAGE,
-        config_data:
-            databaseInstanceName === DEFAULT_INSTANCE_NAME ? MSSQL_ASSESMENT_CONFIG_DATA : ASSESMENT_CONFIG_DATA
+        config_data: isDefaultOptimizedInstance ? MSSQL_ASSESMENT_CONFIG_DATA : ASSESMENT_CONFIG_DATA
     };
     const instanceConfigMappedOntapDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategories.MAPPED_ONTAP_VOLUMES,
-        config_data: MAPPED_ONTAP_VOLUMES_DATA
+        config_data: useNotOptimizedFixtures ? MSSQL_NOT_OPTIMIZED_MAPPED_ONTAP_VOLUMES_DATA : MAPPED_ONTAP_VOLUMES_DATA
     };
 
     const instanceCRRConfigDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategories.CRR,
-        config_data:
-            databaseInstanceName === DEFAULT_INSTANCE_NAME
-                ? MSSQL_ASSESSMENT_CRR_CONFIG_DATA
-                : ASSESSMENT_CRR_CONFIG_DATA
+        config_data: isDefaultOptimizedInstance ? MSSQL_ASSESSMENT_CRR_CONFIG_DATA : ASSESSMENT_CRR_CONFIG_DATA
     };
     const instanceAWSBackupConfigDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategories.AWS_BACKUP,
-        config_data:
-            databaseInstanceName === DEFAULT_INSTANCE_NAME
-                ? MSSQL_ASSESSMENT_AWS_BACKUP_DATA
-                : ASSESSMENT_AWS_BACKUP_DATA
+        config_data: isDefaultOptimizedInstance ? MSSQL_ASSESSMENT_AWS_BACKUP_DATA : ASSESSMENT_AWS_BACKUP_DATA
     };
     const instanceMaxdopConfigDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategories.MAXDOP,
-        config_data:
-            databaseInstanceName === DEFAULT_INSTANCE_NAME
-                ? MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA
-                : ASSESSMENT_MAXDOP_CONFIG_DATA
+        config_data: isDefaultOptimizedInstance ? MSSQL_ASSESSMENT_MAXDOP_CONFIG_DATA : ASSESSMENT_MAXDOP_CONFIG_DATA
     };
     const instanceCloneConfigDataRecord = {
         ...baseConfig,
         config_data_type: AssessmentCategories.CLONE,
-        config_data:
-            databaseInstanceName === DEFAULT_INSTANCE_NAME
-                ? MSSQL_ASSESSMENT_CLONE_CONFIG_DATA
-                : ASSESSMENT_CLONE_CONFIG_DATA
+        config_data: isDefaultOptimizedInstance ? MSSQL_ASSESSMENT_CLONE_CONFIG_DATA : ASSESSMENT_CLONE_CONFIG_DATA
     };
     const instanceSnapcenterConfigDataRecord = {
         ...baseConfig,
@@ -6749,7 +6750,7 @@ async function createAssessmentData(
     const haConfigData =
         sqlDeploymentType === SqlServerDeploymentModel.SQL_AOAG_SHORT
             ? AOAG_STANDALONE_HIGH_AVAILABILITY_CONFIG_DATA
-            : databaseInstanceName === DEFAULT_INSTANCE_NAME
+            : isDefaultOptimizedInstance
             ? MSSQL_ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA
             : ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA;
 
