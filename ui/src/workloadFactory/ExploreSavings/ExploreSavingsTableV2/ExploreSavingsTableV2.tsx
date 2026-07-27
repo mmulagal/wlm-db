@@ -159,12 +159,14 @@ const ExploreSavingsTableV2 = () => {
                 const shouldDisableDueToLimit = limitReached && !isSelected;
                 const lacksFullPermission = !hasFullPermission(item?.hostManageReadiness);
 
-                const isDisabled = !sharesGroupWithSelection || shouldDisableDueToLimit || lacksFullPermission;
+                // const isDisabled = !sharesGroupWithSelection || shouldDisableDueToLimit || lacksFullPermission;
+                const isDisabled = !sharesGroupWithSelection || shouldDisableDueToLimit;
 
                 let tooltipTitle = '';
-                if (lacksFullPermission) {
-                    tooltipTitle = t('databases.inventory.full-permission-required-explore-savings');
-                } else if (!sharesGroupWithSelection) {
+                // if (lacksFullPermission) {
+                //     tooltipTitle = t('databases.inventory.full-permission-required-explore-savings');
+                // }
+                if (!sharesGroupWithSelection) {
                     tooltipTitle = t('databases.explore-savings.disabled-tooltip');
                 } else if (shouldDisableDueToLimit) {
                     tooltipTitle = t('databases.explore-savings.disabled-tooltip-limit-exceed');
@@ -270,12 +272,14 @@ const ExploreSavingsTableV2 = () => {
         renderCell: (cellData: any, rowData: any) => {
             const isBulkSelectionActive = selectedRowsForExploreSavingsEBSBulk.length > 0;
             const lacksFullPermission = !hasFullPermission(rowData?.hostManageReadiness);
-            const isDisabled = isBulkSelectionActive || lacksFullPermission;
+            // const isDisabled = isBulkSelectionActive || lacksFullPermission;
+            const isDisabled = isBulkSelectionActive;
 
             let tooltipMessage = '';
-            if (lacksFullPermission) {
-                tooltipMessage = t('databases.inventory.full-permission-required-explore-savings');
-            } else if (isBulkSelectionActive) {
+            // if (lacksFullPermission) {
+            //     tooltipMessage = t('databases.inventory.full-permission-required-explore-savings');
+            // }
+            if (isBulkSelectionActive) {
                 tooltipMessage = t('databases.explore-savings.disabled-tooltip-bulk-selection');
             }
 
