@@ -1,19 +1,25 @@
 import { WorkloadInstance } from '../../../../utils/common-types';
-import { ontapRestRequest } from '../../../workloads/mssql/common-templates';
 
-const SNAPCENTER_ASSESSMENT_SCRIPT = (instanceRecord: WorkloadInstance) => {
-    const fsxId = instanceRecord.fsxFileSystem.split(',')[0];
+interface SnapCenterVolumeOntapInfo {
+    svmId: string;
+    svmName: string;
+    hasSnapcenterSnapshot: boolean;
+}
+
+interface SnapCenterOntapData {
+    response: Record<string, SnapCenterVolumeOntapInfo>;
+    errors: Record<string, string>;
+}
+
+const SNAPCENTER_ASSESSMENT_SCRIPT = (instanceRecord: WorkloadInstance, snapCenterOntapData: SnapCenterOntapData) => {
     const volumeNames = instanceRecord.mappedVolumeNames || [];
     const volumeUuids = instanceRecord.mappedVolumesUuids || [];
 
     return `
 $ErrorActionPreference = 'Stop'
-$FSxID = '${fsxId}'
-$FSxRegion = '${instanceRecord.region}'
 $volumeNames = '${JSON.stringify(volumeNames)}' | ConvertFrom-Json
 $volumeUuids = '${JSON.stringify(volumeUuids)}' | ConvertFrom-Json
-
-${ontapRestRequest}
+$snapCenterOntapData = '${JSON.stringify(snapCenterOntapData.response)}' | ConvertFrom-Json
 
 function Test-SnapCenterPluginRunning {
     $splServices = Get-Service -ErrorAction SilentlyContinue | Where-Object {
@@ -83,29 +89,13 @@ function Test-SnapCenterLogsForVolumes {
     return @{ volumeLogHits = $volumeLogHits }
 }
 
-function Get-VolumeHasSnapcenterSnapshot {
+function Get-VolumeOntapInfo {
     param([string]$VolumeUuid)
-    try {
-        $endpoint = "/storage/volumes/$VolumeUuid/snapshots"
-        $filter = 'comment=creator%3Dsnapcenter&max_records=1&fields=comment'
-        $data = Invoke-ONTAPRequest -ApiEndpoint $endpoint -ApiQueryFilter $filter
-        return [bool]($data -and $data.num_records -gt 0)
-    } catch {
-        return $false
+    $info = $snapCenterOntapData.$VolumeUuid
+    if ($info) {
+        return @{ svmId = $info.svmId; svmName = $info.svmName; hasSnapcenterSnapshot = [bool]$info.hasSnapcenterSnapshot }
     }
-}
-
-function Get-VolumeSvmInfo {
-    param([string]$VolumeUuid)
-    try {
-        $data = Invoke-ONTAPRequest -ApiEndpoint "/storage/volumes/$VolumeUuid" -ApiQueryFields 'svm'
-        return @{
-            svmId = $data.svm.uuid
-            svmName = $data.svm.name
-        }
-    } catch {
-        return @{ svmId = ''; svmName = '' }
-    }
+    return @{ svmId = ''; svmName = ''; hasSnapcenterSnapshot = $false }
 }
 
 $pluginRunning = Test-SnapCenterPluginRunning
@@ -115,15 +105,15 @@ $snapcenterVolumes = @()
 for ($i = 0; $i -lt $volumeUuids.Count; $i++) {
     $volUuid = $volumeUuids[$i]
     $volName = if ($i -lt $volumeNames.Count) { $volumeNames[$i] } else { '' }
-    $svmInfo = Get-VolumeSvmInfo -VolumeUuid $volUuid
-    $hasSnapcenter = Get-VolumeHasSnapcenterSnapshot -VolumeUuid $volUuid
+    $ontapInfo = Get-VolumeOntapInfo -VolumeUuid $volUuid
+    $hasSnapcenter = $ontapInfo.hasSnapcenterSnapshot
     $foundInLogs = $false
     if ($logScan.volumeLogHits.ContainsKey($volName)) {
         $foundInLogs = $logScan.volumeLogHits[$volName]
     }
     $snapcenterVolumes += [PSCustomObject]@{
-        svmId = $svmInfo.svmId
-        svmName = $svmInfo.svmName
+        svmId = $ontapInfo.svmId
+        svmName = $ontapInfo.svmName
         volumeId = $volUuid
         volumeName = $volName
         hasSnapcenterSnapshot = $hasSnapcenter
@@ -143,4 +133,4 @@ Write-Output ($output | ConvertTo-Json -Compress -Depth 5)
 `;
 };
 
-export { SNAPCENTER_ASSESSMENT_SCRIPT };
+export { SNAPCENTER_ASSESSMENT_SCRIPT, type SnapCenterOntapData, type SnapCenterVolumeOntapInfo };

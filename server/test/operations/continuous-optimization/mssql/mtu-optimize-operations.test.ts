@@ -5,6 +5,10 @@ import {
 } from '../../../../src/operations/continuous-optimization/mssql/mtu-optimize-operations';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
 import { ACCOUNT_ID, DEFAULT_AWS_REGION, DEFAULT_AWS_CREDENTIALS_ID } from '../../../utils/consts';
+import {
+    registerProxyGetResponse,
+    resetProxyOverrides
+} from '../../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
 
 describe('MTU optimization', () => {
     const RESOURCE_ID = 'a1b2c3d4e5f60001';
@@ -46,6 +50,10 @@ describe('MTU optimization', () => {
 
     afterAll(async () => {
         await deleteResource(ACCOUNT_ID, RESOURCE_ID);
+    });
+
+    afterEach(() => {
+        resetProxyOverrides();
     });
 
     const accountId = ACCOUNT_ID;
@@ -138,7 +146,18 @@ describe('MTU optimization', () => {
             activeNodeInstanceid: instanceId,
             resourceName: 'test-mtu-resource'
         };
-        const mtu = await getFSxMTUValue(credentialsId, region, instanceRecord, accountId);
+        registerProxyGetResponse({
+            targetId: instanceRecord.fsxFileSystem,
+            ontapPath: 'api/network/ethernet/ports',
+            body: {
+                records: [
+                    { name: 'e0a', mtu: 9000 },
+                    { name: 'e0b', mtu: 9001 }
+                ],
+                num_records: 2
+            }
+        });
+        const mtu = await getFSxMTUValue(instanceRecord, accountId);
         expect(mtu).toBeDefined();
         expect(typeof mtu).toBe('number');
         expect(mtu).toBeGreaterThan(0);
@@ -156,7 +175,12 @@ describe('MTU optimization', () => {
             activeNodeInstanceid: instanceId,
             resourceName: 'test-mtu-resource-2'
         };
-        const mtu = await getFSxMTUValue(credentialsId, region, instanceRecord, accountId);
+        registerProxyGetResponse({
+            targetId: instanceRecord.fsxFileSystem,
+            ontapPath: 'api/network/ethernet/ports',
+            body: { records: [{ name: 'e0a', mtu: 9000 }], num_records: 1 }
+        });
+        const mtu = await getFSxMTUValue(instanceRecord, accountId);
         expect(mtu).toBeDefined();
         expect(typeof mtu).toBe('number');
         expect(mtu).toBeGreaterThan(0);

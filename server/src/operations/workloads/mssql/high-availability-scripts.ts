@@ -4,6 +4,14 @@ import { ontapRestRequest } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
 import { readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
+interface LunIgroupMapping {
+    lunUuid: string;
+    lunName: string;
+    igroupUuid: string;
+    igroupName: string;
+    initiatorNames: string[];
+}
+
 const DRIVE_LETTER = `
 # Get available drive letters
 $used = (Get-PSDrive -PSProvider 'FileSystem').Name
@@ -63,51 +71,19 @@ Get-Service -Name $serviceName -ErrorAction SilentlyContinue |
         ConvertTo-Json | Write-Output
 `;
 
-const GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN = (fsxId: string, fsxRegion: string, lunUuids: string[]) => `
+const GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN = (lunMappings: LunIgroupMapping[]) => `
 # Get LUN, igroup, initiator names and host IQN Script
 Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
 $WarningPreference = 'SilentlyContinue'
-$FSxID = '${fsxId}'
-$FSxRegion = '${fsxRegion}'
-${ontapRestRequest}
+# Pre-fetched server-side via proxy-forwarder (identical for every node, so wrap in @() to
+# guard against ConvertFrom-Json collapsing a single-element JSON array to a scalar object).
+$lunMappings = @('${JSON.stringify(lunMappings)}' | ConvertFrom-Json)
 
 $hostIqns = (Get-InitiatorPort | Select-Object -ExpandProperty NodeAddress) -join ', '
 $response = [PSCustomObject]@{
         hostIqns = $hostIqns
-        lunMappings = @()
+        lunMappings = $lunMappings
 }
-
-$filterLuns = @(${lunUuids.map(uuid => `'${uuid}'`).join(',')})
-$nextToken = $null
-
-Do {
-        if ($null -eq $nextToken) {
-                $lunMapsResp = Invoke-ONTAPRequest -ApiEndpoint "/protocols/san/lun-maps" -ApiQueryFilter 'fields=igroup' -method "GET"
-        } else {
-                $nextToken = $nextToken -replace '/api', ''
-                Write-Information "Next Token: $nextToken"
-                $lunMapsResp = Invoke-ONTAPRequest -ApiEndpoint $nextToken
-        }
-
-        if ($lunMapsResp.records) {
-                $filteredMappings = $lunMapsResp.records | Where-Object { $filterLuns -contains $_.lun.uuid } | ForEach-Object {
-                        $igroup = $_.igroup
-                        if (-not [string]::IsNullOrEmpty($igroup)) {
-                                [PSCustomObject]@{
-                                        lunUuid = $_.lun.uuid
-                                        lunName = $_.lun.name
-                                        igroupUuid = $igroup.uuid
-                                        igroupName = $igroup.name
-                                        initiatorNames = $igroup.initiators -split '[,\\s]+' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-                                }
-                        }
-                }
-                $response.lunMappings += $filteredMappings
-        }
-
-        $nextToken = $lunMapsResp._links.next.href
-
-} While ($null -ne $nextToken)
 
 $response | ConvertTo-Json -Depth 5 -Compress
 Stop-Transcript | Out-Null
@@ -465,5 +441,6 @@ export {
     REMEDIATE_HEARTBEAT_SETTINGS,
     REMEDIATE_CLUSTER_QUORUM_SETTINGS,
     REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE,
-    AOAG_INSTANCE_ROLE
+    AOAG_INSTANCE_ROLE,
+    type LunIgroupMapping
 };

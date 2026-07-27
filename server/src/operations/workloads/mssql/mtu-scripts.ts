@@ -1,6 +1,3 @@
-import { WorkloadInstance } from '../../../utils/common-types';
-import { ontapRestRequest } from './common-templates';
-
 const GET_NETWORK_FALLBACK_PORTS = `
     function Get-NetworkFallbackPorts {
         param(
@@ -328,65 +325,6 @@ const FETCH_MSSQL_INSTANCE_MTU_DETAILS = `
     }
     return $response`;
 
-const FETCH_FSX_MTU_DETAILS = (instanceRecord: WorkloadInstance) => `
-    #Get FSx MTU Details
-
-    $WarningPreference = 'SilentlyContinue';
-    $FSxID = "${instanceRecord.fsxFileSystem}"
-    $FSxRegion = "${instanceRecord.region}"
-    ${ontapRestRequest}
-
-    $responseObject = @{
-        fsxInterfaces = @()
-        error = $null
-    }
-
-    try {
-        function Get-FSxNetworkInterfaces {
-            $fsxInterfaces = @()
-            
-            try {
-                # Get FSx ethernet ports - using correct endpoint
-                $ApiEndpoint = "/network/ethernet/ports"
-                $ApiQueryFields = "fields=name,mtu"
-                $Response = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFields $ApiQueryFields
-            
-                foreach ($fsxInterface in $Response.records) {
-                    if ($fsxInterface.name -and $fsxInterface.mtu) {
-                        $fsxInterfaces += @{
-                            Name = $fsxInterface.name
-                            MTU = $fsxInterface.mtu
-                        }
-                    }
-                }
-                
-                return $fsxInterfaces
-                
-            } catch {
-                if ($_.Exception.Response.GetResponseStream) {
-                    $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
-                    $responseBody = $reader.ReadToEnd()
-                    Write-Information "Response Body: $responseBody"
-                    $reader.Close()
-                }
-                throw "Failed to get FSx IP interfaces: $($_.Exception.Message)"
-            }
-        }
-
-        $responseObject.fsxInterfaces = Get-FSxNetworkInterfaces
-
-    } catch {
-        if ($null -eq $responseObject) { $responseObject = @{} }
-        $responseObject.error = $_.Exception.Message
-    }
-
-    $response = $responseObject | ConvertTo-Json -Compress
-    if ([string]::IsNullOrEmpty($response)) {
-        throw "Failed to generate response because the response is either null or empty. $response"
-    }
-    $response
-`;
-
 const OPTIMIZE_NETWORK_INTERFACE_MTU = (targetMTU: number, interfaceNames: string[], deploymentType: string) => `
     #Optimize Network Interface MTU Settings
 
@@ -495,9 +433,4 @@ ${GET_INTERFACE_IP_ADDRESSES}
 ${BUILD_INTERFACE_OBJECTS}
 `;
 
-export {
-    FETCH_MSSQL_INSTANCE_MTU_DETAILS,
-    FETCH_FSX_MTU_DETAILS,
-    OPTIMIZE_NETWORK_INTERFACE_MTU,
-    MSSQL_MTU_HELPER_FUNCTIONS
-};
+export { FETCH_MSSQL_INSTANCE_MTU_DETAILS, OPTIMIZE_NETWORK_INTERFACE_MTU, MSSQL_MTU_HELPER_FUNCTIONS };

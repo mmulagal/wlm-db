@@ -5,6 +5,12 @@ import {
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
 import { createResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
 import { AssessmentStatus } from '../../../../src/utils/continous-optimization-consts';
+import {
+    registerProxyGetResponse,
+    resetProxyOverrides
+} from '../../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
+
+const FSX_FILE_SYSTEM_ID = 'fs-0f53fbecdd3d85fb2';
 
 const RESOURCE_ID = '6cbdabbfe3fb147e';
 const DATABASE_INSTANCE_ID = 'f4b7c5d3-e1f6-4g2a-9b5d';
@@ -37,10 +43,14 @@ beforeAll(async () => {
         isDefault: true,
         source: 'deployment',
         sqlDeploymentType: 'FCI',
-        fsxSvmId: { 'fs-0f53fbecdd3d85fb2': 'svm-0123456789abcdef0' },
-        fsxnIds: 'fs-0f53fbecdd3d85fb2',
+        fsxSvmId: { [FSX_FILE_SYSTEM_ID]: 'svm-0123456789abcdef0' },
+        fsxnIds: FSX_FILE_SYSTEM_ID,
         databaseType: 'MSSQL'
     });
+});
+
+afterEach(() => {
+    resetProxyOverrides();
 });
 
 describe('calculateMTUAlignmentDrift', () => {
@@ -176,6 +186,18 @@ describe('assessMTUAlignment', () => {
     const resourceName = 'test-mtu-resource';
 
     it('should successfully assess MTU alignment and return data', async () => {
+        registerProxyGetResponse({
+            targetId: FSX_FILE_SYSTEM_ID,
+            ontapPath: 'api/network/ethernet/ports',
+            body: {
+                records: [
+                    { name: 'e0a', mtu: 9001 },
+                    { name: 'e0b', mtu: 9001 }
+                ],
+                num_records: 2
+            }
+        });
+
         const result = await assessMTUAlignment(
             ACCOUNT_ID,
             DEFAULT_AWS_CREDENTIALS_ID,

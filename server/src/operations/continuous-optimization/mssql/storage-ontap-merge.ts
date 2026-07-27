@@ -1,9 +1,9 @@
 import { WorkloadInstance } from '../../../utils/common-types';
 import {
-    buildOntapProxyBase,
     collectOntapRecordsBatched,
-    extractErrorMessage,
     unwrapOntapSettled,
+    buildOntapProxyBase,
+    extractErrorMessage,
     OntapLunRecord,
     OntapVolumeRecord
 } from '../../../lib/ontap/ontap-gateway';
@@ -83,11 +83,6 @@ interface RawStorageLayoutInputs {
     serialKeyedDriveDetails: RawDriveDetails;
 }
 
-function buildInstanceOntapProxyBase(accountId: string, instanceRecord: WorkloadInstance) {
-    const { fsxFileSystem: targetId, region } = instanceRecord;
-    return buildOntapProxyBase(accountId, targetId, region);
-}
-
 function toVolumeRow(volume: OntapVolumeRecord, spaceMgmtTryFirstByName: Record<string, string | undefined>) {
     const autosizeMode = volume.autosize?.mode;
     return {
@@ -128,7 +123,7 @@ async function fetchDirectOntapAssessmentData(
     accountId: string,
     instanceRecord: WorkloadInstance
 ): Promise<DirectOntapAssessmentData> {
-    const base = buildInstanceOntapProxyBase(accountId, instanceRecord);
+    const base = buildOntapProxyBase(accountId, instanceRecord.fsxFileSystem, instanceRecord.region);
     const volumeUuids = instanceRecord.mappedVolumesUuids ?? [];
     const volumeNames = instanceRecord.mappedVolumeNames ?? [];
     const lunNames = instanceRecord.mappedLunNames ?? [];
@@ -237,7 +232,7 @@ async function fetchLunsBySerialNumbers(
     if (serialNumbers.length === 0) {
         return { luns: [] };
     }
-    const base = buildInstanceOntapProxyBase(accountId, instanceRecord);
+    const base = buildOntapProxyBase(accountId, instanceRecord.fsxFileSystem, instanceRecord.region);
     try {
         const luns = await collectOntapRecordsBatched<OntapLunBySerialRecord>(
             base,

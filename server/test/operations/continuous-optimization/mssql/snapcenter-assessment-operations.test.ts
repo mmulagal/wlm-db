@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { AssessmentStatus, AssessmentCategories } from '../../../../src/utils/continous-optimization-consts';
 import {
     calculateSnapCenterDrift,
+    fetchSnapCenterVolumeOntapData,
     type MssqlSnapcenterAssessmentData
 } from '../../../../src/operations/continuous-optimization/mssql/snapcenter-assessment-operations';
 import { AssessmentItemType } from '../../../../src/routes/types/continuous-optimization.types';
@@ -9,6 +10,14 @@ import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../../src/utils/consts';
 import { callSsmExecution } from '../../../../src/operations/aws/ssm-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
 import getCommandInvocationResponse from '../../../simulator/responses/aws/ssm-getCommand-invocation.json';
+import {
+    registerProxyGetResponse,
+    resetProxyOverrides
+} from '../../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
+
+function ontapPage<T>(records: T[]) {
+    return { records, num_records: records.length };
+}
 
 const BASE_ASSESSMENT_DATA: MssqlSnapcenterAssessmentData = {
     volumes: [],
@@ -367,6 +376,61 @@ describe('calculateSnapCenterDrift (MSSQL)', () => {
                 recommended: 'SnapCenter protection enabled'
             }
         ]);
+    });
+});
+
+describe('fetchSnapCenterVolumeOntapData', () => {
+    beforeEach(() => {
+        resetProxyOverrides();
+    });
+
+    it('merges SVM identity and SnapCenter snapshot presence per volume', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-1',
+            body: { svm: { uuid: 'svm-uuid-1', name: 'svm-a' } }
+        });
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-1/snapshots',
+            body: ontapPage([{ comment: 'creator=snapcenter' }])
+        });
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-2',
+            body: { svm: { uuid: 'svm-uuid-1', name: 'svm-a' } }
+        });
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-2/snapshots',
+            body: ontapPage([])
+        });
+
+        const result = await fetchSnapCenterVolumeOntapData('acct-1', 'fs-1', 'us-east-1', [
+            'vol-uuid-1',
+            'vol-uuid-2'
+        ]);
+
+        expect(result.response).toEqual({
+            'vol-uuid-1': { svmId: 'svm-uuid-1', svmName: 'svm-a', hasSnapcenterSnapshot: true },
+            'vol-uuid-2': { svmId: 'svm-uuid-1', svmName: 'svm-a', hasSnapcenterSnapshot: false }
+        });
+        expect(result.errors).toEqual({});
+    });
+
+    it('records a per-volume error without failing the others', async () => {
+        // The 'error-target' fsxId makes the scope's fallback reply with a 500 for every path.
+        const result = await fetchSnapCenterVolumeOntapData('acct-1', 'error-target', 'us-east-1', ['vol-uuid-1']);
+
+        expect(result.response).toEqual({});
+        expect(result.errors['vol-uuid-1']).toBeDefined();
+    });
+
+    it('returns an empty result without calling the proxy when there are no volume UUIDs', async () => {
+        const result = await fetchSnapCenterVolumeOntapData('acct-1', 'fs-1', 'us-east-1', []);
+
+        expect(result.response).toEqual({});
+        expect(result.errors).toEqual({});
     });
 });
 

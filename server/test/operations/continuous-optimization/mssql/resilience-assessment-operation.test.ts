@@ -8,12 +8,39 @@ import {
     getResilienceDriftAssessment,
     getVolumesWithoutSnapshotPolicy,
     initiateHostLevelHighAvailabilityAssessment,
-    initiateInstanceLevelHighAvailabilityAssessment
+    initiateInstanceLevelHighAvailabilityAssessment,
+    fetchDirectOntapCrrData,
+    fetchLunIgroupMappings
 } from '../../../../src/operations/continuous-optimization/mssql/resilience-assessment-operation';
 import { WorkloadInstance } from '../../../../src/utils/common-types';
 import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/database-instance-config';
 import { AssessmentCategories, AssessmentStatus } from '../../../../src/utils/continous-optimization-consts';
 import { ASSESSMENT_HIGH_AVAILABILITY_CONFIG_DATA } from '../../../../src/utils/demo-utils/demoMockdata';
+import {
+    registerProxyGetResponse,
+    resetProxyOverrides
+} from '../../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
+
+function ontapPage<T>(records: T[]) {
+    return { records, num_records: records.length };
+}
+
+function buildCrrInstanceRecord(overrides: Partial<WorkloadInstance> = {}): WorkloadInstance {
+    return {
+        id: 'instance-1',
+        name: 'MSSQLSERVER',
+        type: 'mssql',
+        region: 'us-east-1',
+        sqlAuthEnabled: false,
+        fsxFileSystem: 'fs-1',
+        activeNodeInstanceid: 'i-1',
+        resourceName: 'test-resource',
+        mappedVolumeNames: ['sqldata'],
+        mappedVolumesUuids: ['vol-uuid-1'],
+        svmOntapUuid: 'svm-uuid-1',
+        ...overrides
+    };
+}
 
 const INSTANCE_CONFIG = {
     volumes: [
@@ -111,6 +138,10 @@ afterAll(async () => {
     await deleteResource(ACCOUNT_ID, RESOURCE_ID);
 });
 
+afterEach(() => {
+    resetProxyOverrides();
+});
+
 describe('Snapshot policy assessment', () => {
     it('should return volumes without snapshot policy (none or empty)', () => {
         const testVolumes = [
@@ -132,7 +163,6 @@ describe('Snapshot policy assessment', () => {
     });
 
     it('should collect volume snapshot copies data', async () => {
-        const credentialsId = 'test-credentials';
         const accountId = 'test-account';
         const instanceRecord: WorkloadInstance = {
             region: 'us-west-2',
@@ -146,16 +176,22 @@ describe('Snapshot policy assessment', () => {
             resourceName: 'fsxn'
         };
         const volumeAssessmentData = INSTANCE_CONFIG.volumes;
-        const violations = ['vol1'];
+        const [violatingVolume] = volumeAssessmentData;
+        const violations = [violatingVolume.name];
+
+        registerProxyGetResponse({
+            targetId: instanceRecord.fsxFileSystem,
+            ontapPath: `api/storage/volumes/${violatingVolume.uuid}/snapshots`,
+            body: ontapPage([{ create_time: '2024-01-01T00:00:00Z' }])
+        });
 
         const result = await collectVolumeSnapshotCopiesData(
-            credentialsId,
             accountId,
             instanceRecord,
             volumeAssessmentData as Array<Record<string, unknown>>,
             violations
         );
-        const dates = Object.values(result).map(dateValues => {
+        const dates = Object.values(result ?? {}).map(dateValues => {
             const record = dateValues as Record<string, unknown>;
             return new Date(record.create_time as string);
         });
@@ -306,5 +342,178 @@ describe('High Availability Assessment', () => {
         expect(sqlServerServiceEntry.violationDetails).toHaveLength(1);
         expect(sqlServerServiceEntry.violationDetails?.[0].objectName).toBe('demo-sql-prod-fci-001');
         expect(sqlServerServiceEntry.violationDetails?.[0].value).toBeTruthy();
+    });
+});
+
+describe('fetchDirectOntapCrrData', () => {
+    beforeEach(() => {
+        resetProxyOverrides();
+    });
+
+    it('fetches cluster peers, svm peers and snapmirror relationships and shapes them like the old PowerShell code did', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/cluster/peers',
+            body: ontapPage([{ name: 'FsxIdfs-remote1', status: { state: 'available' } }])
+        });
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/svm/peers',
+            body: ontapPage([
+                {
+                    name: 'peer-relationship-1',
+                    state: 'peered',
+                    applications: ['snapmirror'],
+                    peer: { cluster: { name: 'FsxIdfs-remote1' }, svm: { uuid: 'peer-svm-uuid', name: 'peer-svm' } },
+                    svm: { name: 'svm1', uuid: 'svm-uuid-1' }
+                }
+            ])
+        });
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/snapmirror/relationships',
+            body: ontapPage([
+                {
+                    policy: { name: 'MirrorAllSnapshots', type: 'async_mirror' },
+                    state: 'snapmirrored',
+                    source: { path: 'svm1:sqldata', svm: { name: 'svm1', uuid: 'svm-uuid-1' } },
+                    destination: { path: 'peer-svm:sqldata_dest', svm: { name: 'peer-svm', uuid: 'peer-svm-uuid' } }
+                }
+            ])
+        });
+
+        const result = await fetchDirectOntapCrrData('acct-1', buildCrrInstanceRecord());
+
+        expect(JSON.parse(result.clusterPeerDetailsJson)).toEqual([
+            { peerClusterName: 'FsxIdfs-remote1', availability: 'available' }
+        ]);
+        expect(JSON.parse(result.vserverPeerDetailsJson)).toEqual([
+            {
+                name: 'peer-relationship-1',
+                state: 'peered',
+                applications: ['snapmirror'],
+                peerClusterName: 'FsxIdfs-remote1',
+                peerSvmUuid: 'peer-svm-uuid',
+                peerSvmName: 'peer-svm',
+                svmname: 'svm1',
+                svmuuid: 'svm-uuid-1'
+            }
+        ]);
+        expect(JSON.parse(result.snapMirrorDestinationDetailsJson)).toEqual([
+            {
+                policyName: 'MirrorAllSnapshots',
+                policyType: 'async_mirror',
+                state: 'snapmirrored',
+                sourceVserverName: 'svm1',
+                sourceVserverUuid: 'svm-uuid-1',
+                sourcePath: 'svm1:sqldata',
+                destinationVserverName: 'peer-svm',
+                destinationVserverUuid: 'peer-svm-uuid',
+                destinationPath: 'peer-svm:sqldata_dest'
+            }
+        ]);
+    });
+
+    it('skips svm peers and snapmirror relationships without failing cluster peers when the mapped SVM UUID is missing', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/cluster/peers',
+            body: ontapPage([{ name: 'FsxIdfs-remote1', status: { state: 'available' } }])
+        });
+
+        const result = await fetchDirectOntapCrrData('acct-1', buildCrrInstanceRecord({ svmOntapUuid: undefined }));
+
+        expect(JSON.parse(result.clusterPeerDetailsJson)).toHaveLength(1);
+        expect(result.vserverPeerDetailsJson).toBe('[]');
+        expect(result.snapMirrorDestinationDetailsJson).toBe('[]');
+    });
+
+    it('resolves the SVM UUID from an array when svmOntapUuid has multiple entries', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/svm/peers',
+            body: ontapPage([{ name: 'peer-1', state: 'peered', svm: { name: 'svm1', uuid: 'svm-uuid-1' } }])
+        });
+
+        const result = await fetchDirectOntapCrrData(
+            'acct-1',
+            buildCrrInstanceRecord({ svmOntapUuid: ['svm-uuid-1', 'svm-uuid-2'] })
+        );
+
+        expect(JSON.parse(result.vserverPeerDetailsJson)).toHaveLength(1);
+    });
+});
+
+describe('fetchLunIgroupMappings', () => {
+    beforeEach(() => {
+        resetProxyOverrides();
+    });
+
+    it('returns an empty result without calling the proxy when there are no LUN UUIDs', async () => {
+        const result = await fetchLunIgroupMappings('acct-1', 'fs-1', 'us-east-1', []);
+
+        expect(result).toEqual({ lunMappings: [] });
+    });
+
+    it('filters lun-maps down to the requested LUN UUIDs and splits string-shaped initiators', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/protocols/san/lun-maps',
+            body: ontapPage([
+                {
+                    lun: { uuid: 'lun-uuid-1', name: '/vol/sqldata/sqldata' },
+                    igroup: { uuid: 'igroup-uuid-1', name: 'igroup-a', initiators: 'iqn.host1, iqn.host2' }
+                },
+                {
+                    lun: { uuid: 'lun-uuid-2', name: '/vol/sqllog/sqllog' },
+                    igroup: { uuid: 'igroup-uuid-2', name: 'igroup-b', initiators: [{ name: 'iqn.host1' }] }
+                },
+                {
+                    lun: { uuid: 'lun-uuid-not-requested', name: '/vol/other/other' },
+                    igroup: { uuid: 'igroup-uuid-3', name: 'igroup-c', initiators: 'iqn.host3' }
+                }
+            ])
+        });
+
+        const result = await fetchLunIgroupMappings('acct-1', 'fs-1', 'us-east-1', ['lun-uuid-1', 'lun-uuid-2']);
+
+        expect(result).toEqual({
+            lunMappings: [
+                {
+                    lunUuid: 'lun-uuid-1',
+                    lunName: '/vol/sqldata/sqldata',
+                    igroupUuid: 'igroup-uuid-1',
+                    igroupName: 'igroup-a',
+                    initiatorNames: ['iqn.host1', 'iqn.host2']
+                },
+                {
+                    lunUuid: 'lun-uuid-2',
+                    lunName: '/vol/sqllog/sqllog',
+                    igroupUuid: 'igroup-uuid-2',
+                    igroupName: 'igroup-b',
+                    initiatorNames: ['iqn.host1']
+                }
+            ]
+        });
+    });
+
+    it('skips lun-map records without an igroup', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/protocols/san/lun-maps',
+            body: ontapPage([{ lun: { uuid: 'lun-uuid-1', name: '/vol/sqldata/sqldata' } }])
+        });
+
+        const result = await fetchLunIgroupMappings('acct-1', 'fs-1', 'us-east-1', ['lun-uuid-1']);
+
+        expect(result).toEqual({ lunMappings: [] });
+    });
+
+    it('reports an error instead of throwing when the proxy request fails', async () => {
+        // The 'error-target' fsxId makes the scope's fallback reply with a 500 for every path.
+        const result = await fetchLunIgroupMappings('acct-1', 'error-target', 'us-east-1', ['lun-uuid-1']);
+
+        expect(result.lunMappings).toEqual([]);
+        expect(result.error).toBeDefined();
     });
 });

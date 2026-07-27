@@ -8,7 +8,8 @@ import { AssessmentCategories, AssessmentTriggeredBy } from '../../../utils/cont
 import { getServerNameWithHostname, retryWithDelay, sqlResponseParsing, IS_DEMO_FLOW } from '../../../utils/utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { getActiveSqlNode } from '../../workloads/mssql/mssql-operations';
-import { FETCH_FSX_MTU_DETAILS, OPTIMIZE_NETWORK_INTERFACE_MTU } from '../../workloads/mssql/mtu-scripts';
+import { OPTIMIZE_NETWORK_INTERFACE_MTU } from '../../workloads/mssql/mtu-scripts';
+import { fetchFsxMtuData } from './mtu-assessment-operations';
 import { updateJobDetails } from '../../database/job-operations';
 import { getInstanceInfo, updateResourceMetaData } from '../../database/database-operations';
 import { updateLongRunningAuditGroup } from '../../cloud-manager/audit-operations';
@@ -87,40 +88,22 @@ async function optimizeMTUAlignment(
     }
 }
 
-async function getFSxMTUValue(
-    credentialsId: string,
-    region: string,
-    instanceRecord: WorkloadInstance,
-    accountId: string
-): Promise<number> {
+async function getFSxMTUValue(instanceRecord: WorkloadInstance, accountId: string): Promise<number> {
     try {
-        const rawResponse = await retryWithDelay(
-            callSsmExecution.bind(null, {
-                credentialsId,
-                region,
-                commands: [FETCH_FSX_MTU_DETAILS(instanceRecord)],
-                ec2InstanceId: instanceRecord.activeNodeInstanceid,
-                comment: `Get FSx MTU details for ${instanceRecord.fsxFileSystem}`,
-                accountId,
-                shouldReadFromCloudWatchLogs: true
-            }),
-            3,
-            2000
-        );
+        const fsxMtuData = await fetchFsxMtuData(accountId, instanceRecord);
 
-        const parsedResponse = sqlResponseParsing(rawResponse);
-        if (parsedResponse?.error) {
-            throw new Error(`Failed to get FSx MTU: ${parsedResponse.error}`);
+        if (fsxMtuData?.error) {
+            throw new Error(`Failed to get FSx MTU: ${fsxMtuData.error}`);
         }
 
-        if (!parsedResponse?.fsxInterfaces || parsedResponse.fsxInterfaces.length === 0) {
+        if (!fsxMtuData?.fsxInterfaces || fsxMtuData.fsxInterfaces.length === 0) {
             throw new Error('No FSx interfaces found');
         }
 
         // Get the minimum MTU from all FSx interfaces
-        const fsxMTU = Math.min(...parsedResponse.fsxInterfaces.map((iface: { MTU: number }) => iface.MTU));
+        const fsxMTU = Math.min(...fsxMtuData.fsxInterfaces.map((iface: { MTU: number }) => iface.MTU));
 
-        logger.info('Retrieved FSx MTU value', { fsxMTU, interfaceCount: parsedResponse.fsxInterfaces.length });
+        logger.info('Retrieved FSx MTU value', { fsxMTU, interfaceCount: fsxMtuData.fsxInterfaces.length });
         return fsxMTU;
     } catch (error) {
         logger.error('Failed to get FSx MTU value', { error: (error as Error).message });
@@ -220,7 +203,7 @@ async function handleOptimizeMTUAlignment(
         };
 
         // Get FSx MTU value
-        const targetMTU = await getFSxMTUValue(credentialsId, region, instanceRecord, accountId);
+        const targetMTU = await getFSxMTUValue(instanceRecord, accountId);
 
         formattedInstanceName = getServerNameWithHostname(resourceName, instanceName);
 

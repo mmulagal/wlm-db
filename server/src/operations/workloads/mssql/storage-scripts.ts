@@ -2,7 +2,7 @@ import { WorkloadInstance, OntapRequestParams } from '../../../utils/common-type
 import { DATABASE_VOLUME_LUN_RAW_DETAILS, INSTANCE_DRIVE_DETAILS_TEMPLATE } from './assessment-scripts';
 import { ontapRestRequest } from './common-templates';
 import { SIZING_OPERATIONS_LOG_PATH, STORAGE_ASSESSMENT_LOG_PATH } from './const';
-import { compressResponse, readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
+import { compressResponse, slqcmdExecutionTemplate } from './ssm-script-utils';
 
 interface DirectOntapAssessmentData {
     volumesJson: string;
@@ -46,21 +46,16 @@ const JSON_CHECK = `
         }
     `;
 
-// This function is used to get the MSSQL instance volume and lun details for data,log and tempdb drives
 const FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS = (instanceRecord: WorkloadInstance) => `
     # Get MSSQL Instance Volume LUN Drive Details
     ${slqcmdExecutionTemplate}
 
     $sqlInstance = "${instanceRecord.name}"
-    $FSxID = "${instanceRecord.fsxFileSystem}"
-    $FSxRegion = "${instanceRecord.region}"
-    ${ontapRestRequest}
-
     $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
     $sqlCredential = @{'useSqlAuth' = $False}
 
-    # No need to build $instanceServiceName here, DATABASE_VOLUME_LUN_DETAILS handles it internally
-    ${DATABASE_VOLUME_LUN_DETAILS(instanceRecord)}
+    # No need to build $instanceServiceName here, DATABASE_VOLUME_LUN_RAW_DETAILS handles it internally
+    ${DATABASE_VOLUME_LUN_RAW_DETAILS(instanceRecord)}
 
     $response = $responseObject | ConvertTo-Json -Compress
 
@@ -84,194 +79,6 @@ ${ontapRestRequest}
 $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -method "GET"
 $ontapResponse | ConvertTo-Json
 Stop-Transcript | Out-Null
-`;
-
-const DATABASE_VOLUME_LUN_DETAILS = (instanceRecord: WorkloadInstance) => `
-    $WarningPreference = 'SilentlyContinue';
-    $sqlInstance = "${instanceRecord.name}"
-    $FSxID = "${instanceRecord.fsxFileSystem}"
-    $FSxRegion = "${instanceRecord.region}"
-    $sqlAuthEnabled = [System.Convert]::ToBoolean('${instanceRecord.sqlAuthEnabled}')
-    $PSToolkitRequiredVersion = '9.15.1.2407'
-    $responseObject = @{}
-    $responseObject['data'] = @()
-    $responseObject['log'] = @()
-    $responseObject['tempDb'] = @()
-    # Build sql instance service name
-    $instanceServiceName = "$env:COMPUTERNAME"
-    if ($sqlInstance -ne 'MSSQLSERVER') {
-        $instanceServiceName = "$env:COMPUTERNAME\\$sqlInstance"
-    }
-    
-    try {
-        $sqlquery = @"
-            SET NOCOUNT ON;
-            DECLARE @JSON nvarchar(max)
-            SET @JSON = (SELECT DISTINCT db.name, vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid, mf.size * 8 / 1024.0 as sizeInMb, LEFT(mf.physical_name, 2) AS driveLetter,
-            vs.total_bytes / 1048576 AS driveTotalSizeMB FROM sys.master_files AS mf
-            join sys.databases db
-            on db.database_id = mf.database_id
-            CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
-            where db.database_id > 4 or db.name = 'msdb'
-            FOR JSON PATH)
-            SELECT @JSON
-            ;
-"@
-
-        $sqlqueryForTempdb = @"
-                SET NOCOUNT ON;
-                SELECT DISTINCT mf.name, vs.volume_id as volumeid, mf.physical_name as filename, mf.type, mf.file_id as fileid, mf.size * 8 / 1024.0 as sizeInMb, LEFT(mf.physical_name, 2) AS driveLetter,
-                vs.total_bytes / 1048576 AS driveTotalSizeMB FROM tempdb.sys.database_files AS mf
-                CROSS APPLY sys.dm_os_volume_stats(2, mf.[file_id]) AS vs
-                where mf.name = 'tempdev'
-                FOR JSON PATH;
-"@
-        Function Get-SerialNumberOfWinVolumes {
-            param(
-                [Parameter(Mandatory = $true)]
-                [string[]]$sqlresponse
-            )
-            $responseObject = [ordered]@{}
-            $responseObject['data'] = @()
-            $responseObject['log'] = @()
-            $responseObject['tempDb'] = @()
-            $partitionmap = @{}
-            $winvolumes = $sqlresponse | ConvertFrom-Json
-            foreach ($winvolume in $winvolumes) {
-                # check in winvolume volume id is null or empty string
-                if (-Not ([string]::IsNullOrEmpty($winvolume.volumeid))) {
-                    if( -not $partitionmap.Contains( $winvolume.volumeid ) ) {
-                        $vol = get-volume -Path $winvolume.volumeid | Get-Partition | get-disk | Select serialnumber, bustype, number
-                        $partition = get-volume -Path $winvolume.volumeid | Get-Partition | Select accesspaths
-                        $partitionmap[$winvolume.volumeid] = @{"volume"= $vol
-                                                      "partition" = $partition
-                                         }
-                    } else {
-                        $vol = $partitionmap[$winvolume.volumeid]["volume"]
-                        $partition = $partitionmap[$winvolume.volumeid]["partition"]
-                
-                }
-                
-                    if ($vol.bustype -eq 'iscsi') {
-                        $object = @{
-                        "name" = $winvolume.name
-                        "lunSerialNumber" = $vol.serialnumber
-                        "sizeInMb" = $winvolume.sizeInMb
-                        "diskNumber" = $vol.number
-                        "accessPaths" = $partition.accesspaths
-                        "driveLetter" = $winvolume.driveLetter
-                    }
-                    $type = 'data'
-                    if ($winvolume.name -Contains "tempdev") {
-                        $type = 'tempDb'
-                    }
-                    elseif ($winvolume.type -eq 1) {
-                        $type = 'log'
-                    }
-                    $responseObject[$type] += $object
-                    }
-                    }
-                }
-            return $responseObject
-        }
-    
-        Function Get-LunFromSerialNumber($responseObject) {
-            $responseJson = $responseObject | ConvertTo-Json -Depth 5
-            Write-Information "$logPrefix Get ONTAP lun name from serial numbers for: $responseJson"
-   
-            $QueryFilter = ''
-            $serialNumbers = @()
-            $serialNumbers += $responseObject.data | ForEach-Object { $_.lunSerialNumber }
-            $serialNumbers += $responseObject.log | ForEach-Object { $_.lunSerialNumber }
-            $serialNumbers += $responseObject.tempDb | ForEach-Object { $_.lunSerialNumber }
-            $serialNumbers = $serialNumbers | Select-Object -Unique
-
-            foreach ($serialNumber in $serialNumbers) {
-                $QueryFilter += $serialNumber + '|'
-            }
-            $QueryFilter = $QueryFilter.TrimEnd('|')
-            $Params = @{
-                "ApiEndPoint" = "/storage/luns"
-            }
-    
-            if ($QueryFilter -ne '') {
-                $QueryFilter = [System.Web.HttpUtility]::UrlEncode($QueryFilter)
-                $Params += @{"ApiQueryFilter" = "serial_number=$QueryFilter"}
-            }
-    
-            $params += @{"ApiQueryFields" = "fields=svm.name,location.volume.*"}
-    
-            $Response = Invoke-ONTAPRequest @Params
-    
-            $LunRecords = $Response.records
-    
-            if ($LunRecords.count -gt 0) {
-                $LunRecords | ForEach-Object {
-                    $lunrecord = $_
-                    foreach ($dataVol in $responseObject.data) {
-                        if ($dataVol.lunSerialNumber -ceq $lunrecord.serial_number) {
-                            $dataVol.Add("lunPath", $lunrecord.name)
-                            $dataVol.Add("lunUuid", $lunrecord.uuid)
-                            $dataVol.Add("ontapVolumeName", $lunrecord.location.volume.name)
-                            $dataVol.Add("ontapVolumeUuid", $lunrecord.location.volume.uuid)
-                            $dataVol.Add("svmName", $lunrecord.svm.name)
-                        }
-                    }
-                    foreach ($logVol in $responseObject.log) {
-                        if ($logVol.lunSerialNumber -ceq $lunrecord.serial_number) {
-                            $logVol.Add("lunPath", $lunrecord.name)
-                            $logVol.Add("lunUuid", $lunrecord.uuid)
-                            $logVol.Add("ontapVolumeName", $lunrecord.location.volume.name)
-                            $logVol.Add("ontapVolumeUuid", $lunrecord.location.volume.uuid)
-                            $logVol.Add("svmName", $lunrecord.svm.name)
-                        }
-                    }
-                    foreach ($tempdbVol in $responseObject.tempDb) {
-                        if ($tempdbVol.lunSerialNumber -ceq $lunrecord.serial_number) {
-                            $tempdbVol.Add("lunPath", $lunrecord.name)
-                            $tempdbVol.Add("lunUuid", $lunrecord.uuid)
-                            $tempdbVol.Add("ontapVolumeName", $lunrecord.location.volume.name)
-                            $tempdbVol.Add("ontapVolumeUuid", $lunrecord.location.volume.uuid)
-                            $tempdbVol.Add("svmName", $lunrecord.svm.name)
-                        }
-                    }
-                }
-            } else {
-                 throw "Unable to fetch lun details for the serial numbers."
-            }
-            return $responseObject
-        }
-    
-        $sqlCredential = @{'useSqlAuth' = $False; 'useDomainAuth' = $False}
-        if($sqlAuthEnabled) {
-            ${readSsmParameter(instanceRecord.name)}
-        }
-
-        $queryResponse =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlquery" -InstanceName "$instanceServiceName" 
-        $queryResponseForTempDb =  Call-SqlCmd -SqlCredential $sqlCredential -Query "$sqlqueryForTempdb" -InstanceName "$instanceServiceName"
-
-         if(([string]::IsNullOrEmpty($queryResponse) -or $queryResponse -eq "NULL") -and ([string]::IsNullOrEmpty($queryResponseForTempDb) -or $queryResponseForTempDb -eq "NULL")) { 
-            throw "Unable to fetch details of user databases and tempdb"
-        }
-        elseif([string]::IsNullOrEmpty($queryResponse) -or $queryResponse -eq "NULL") {
-            $combinedResponse = ($queryResponseForTempDb | ConvertFrom-Json) | ConvertTo-Json
-        }
-        elseif ([string]::IsNullOrEmpty($queryResponseForTempDb) -or $queryResponseForTempDb -eq "NULL") {
-            $combinedResponse = ($queryResponse | ConvertFrom-Json) | ConvertTo-Json
-        }
-        else {
-            $combinedResponse = (($queryResponse  | ConvertFrom-Json) + ($queryResponseForTempDb | ConvertFrom-Json)) | ConvertTo-Json
-        }
-        
-        $responseObject = Get-SerialNumberOfWinVolumes $combinedResponse
-        $responseObject = Get-LunFromSerialNumber $responseObject
-       
-    } catch {
-        if ($responseObject -eq $null) {
-            $responseObject = @{}
-        }
-        $responseObject['error'] = $_.Exception.Message
-    } 
 `;
 
 const TEST_ISCSI_SESSIONS = `
@@ -618,7 +425,6 @@ Write-Output $jsonResult
 export {
     FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS,
     GET_ONTAP_LUN_DETAILS,
-    DATABASE_VOLUME_LUN_DETAILS,
     TEST_ISCSI_SESSIONS,
     STORAGE_CONFIGURATION_ASSESSMENT,
     RESCAN_EXTEND_LUN,

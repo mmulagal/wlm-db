@@ -253,7 +253,8 @@ async function getProtectionStatus(
                       true,
                       activeNodeInstanceId,
                       databaseInstances,
-                      isSqlAuth
+                      isSqlAuth,
+                      undefined
                   )
                 : Promise.resolve(),
             fsxwId ? isFsxwAwsBackupEnabled(credentialsId, region, fsxwId) : Promise.resolve(),
@@ -1415,7 +1416,7 @@ async function getProtectionDetails(
                         fileSystemId,
                         volumeUuids[instanceName],
                         volumeDBMap[instanceName],
-                        activeNodeInstanceId!
+                        accountId
                     )
                 ]);
 

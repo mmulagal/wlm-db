@@ -10,7 +10,11 @@ import {
     getCapturedProxyGetUris
 } from '../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
 import * as fsxLib from '../../../src/lib/aws/fsx';
-import { DEFAULT_AWS_REGION, DEFAULT_INSTANCE_NAME } from '../../../src/utils/consts';
+import {
+    DEFAULT_AWS_REGION,
+    DEFAULT_INSTANCE_NAME,
+    SNAPCENTER_BACKUP_SNAPSHOT_COMMENT
+} from '../../../src/utils/consts';
 import {
     getFSxFileSystemsList,
     getOntapVolumesSnapshotCount,
@@ -22,7 +26,8 @@ import {
     updateFsxBackup,
     isInstanceAppConsistentBackupEnabled,
     resolveOntapVolumeMappings,
-    updateVolumeMappings
+    updateVolumeMappings,
+    fetchOntapVolumeSnapshotDetails
 } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID, INVENTORY_AWS_VPC_ID, ACCOUNT_ID, CREDENTIALS_ID } from '../../utils/consts';
 import fsxResponse from '../../simulator/responses/aws/fsx-operations-response.json';
@@ -85,6 +90,10 @@ function registerMappedVolumesOntapMocks(): void {
             ]
         }
     });
+}
+
+function ontapPage<T>(records: T[]) {
+    return { records, num_records: records.length };
 }
 
 describe('Testcases for Amazon FSx resources operations', () => {
@@ -441,17 +450,92 @@ describe('Testcases for Amazon FSx resources operations', () => {
             '74a8a789-c5dd-11ef-b315-11b9ce95d982',
             '438cc269-edeb-11ef-994b-3b81e03bea3e'
         ];
+        const fsxId = 'fs-4242424242';
+        volUuids.forEach(volumeUuid => {
+            registerProxyGetResponse({
+                targetId: fsxId,
+                ontapPath: `api/storage/volumes/${volumeUuid}/snapshots`,
+                body: { records: [{ comment: SNAPCENTER_BACKUP_SNAPSHOT_COMMENT }], num_records: 1 }
+            });
+        });
+
         const res = await isInstanceAppConsistentBackupEnabled(
             CREDENTIALS_ID,
             DEFAULT_AWS_REGION,
-            'fs-4242424242',
+            fsxId,
             volUuids,
             volumeDBMap,
-            'i-4242424242'
+            ACCOUNT_ID
         );
         expect(res).toBeDefined();
         if (res && !isEmpty(res)) {
             expect(Object.values(res).every(Boolean)).toBe(true);
         }
+    });
+});
+
+describe('fetchOntapVolumeSnapshotDetails', () => {
+    afterEach(() => {
+        resetProxyOverrides();
+    });
+
+    it('fetches the requested field per volume and shapes it like the old PowerShell code did', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-1/snapshots',
+            body: ontapPage([{ create_time: '2024-05-01T00:00:00Z' }])
+        });
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-2/snapshots',
+            body: ontapPage([{ create_time: '2024-05-02T00:00:00Z' }])
+        });
+
+        const result = await fetchOntapVolumeSnapshotDetails('acct-1', 'fs-1', 'us-east-1', [
+            'vol-uuid-1',
+            'vol-uuid-2'
+        ]);
+
+        expect(result.response).toEqual({
+            'vol-uuid-1': { create_time: '2024-05-01T00:00:00Z' },
+            'vol-uuid-2': { create_time: '2024-05-02T00:00:00Z' }
+        });
+        expect(result.errors).toEqual({});
+    });
+
+    it('returns undefined for the field when a volume has no matching snapshots', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-1/snapshots',
+            body: ontapPage([])
+        });
+
+        const result = await fetchOntapVolumeSnapshotDetails('acct-1', 'fs-1', 'us-east-1', ['vol-uuid-1']);
+
+        expect(result.response).toEqual({ 'vol-uuid-1': { create_time: undefined } });
+        expect(result.errors).toEqual({});
+    });
+
+    it('records a per-volume error without failing the others', async () => {
+        // The 'error-target' fsxId makes the scope's fallback reply with a 500 for every path.
+        const result = await fetchOntapVolumeSnapshotDetails('acct-1', 'error-target', 'us-east-1', ['vol-uuid-1']);
+
+        expect(result.response).toEqual({});
+        expect(result.errors['vol-uuid-1']).toBeDefined();
+    });
+
+    it('supports custom query filters and fields, matching a comment-based lookup', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-1/snapshots',
+            body: ontapPage([{ comment: 'creator=snapcenter' }])
+        });
+
+        const result = await fetchOntapVolumeSnapshotDetails('acct-1', 'fs-1', 'us-east-1', ['vol-uuid-1'], {
+            queryFilter: 'comment=creator=snapcenter&max_records=1',
+            queryFields: 'comment'
+        });
+
+        expect(result.response).toEqual({ 'vol-uuid-1': { comment: 'creator=snapcenter' } });
     });
 });

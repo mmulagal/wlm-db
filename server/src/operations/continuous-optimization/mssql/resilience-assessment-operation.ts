@@ -29,11 +29,10 @@ import {
     VolumeDBMapEntry
 } from '../../../utils/common-types';
 import { getInstanceInfo } from '../../database/database-operations';
-import { CROSS_REGION_REPLICATION_SCRIPT } from '../../workloads/mssql/resiliency-scripts';
+import { CROSS_REGION_REPLICATION_SCRIPT, type DirectOntapCrrData } from '../../workloads/mssql/resiliency-scripts';
 import { FETCH_MSSQL_INSTANCE_VOLUME_LUN_DRIVE_DETAILS } from '../../workloads/mssql/storage-scripts';
-import { GET_SNAPSHOT_DETAILS } from '../../workloads/mssql/assessment-scripts';
 import { callSsmExecution } from '../../aws/ssm-operations';
-import { getMZFsxnNodePreference } from '../../aws/fsx-operations';
+import { getMZFsxnNodePreference, fetchOntapVolumeSnapshotDetails } from '../../aws/fsx-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { resolveCrossRegionPeerIds, updateCrrDetailsWithCrossRegionStatus } from '../crr-assessment-utils';
 import {
@@ -46,10 +45,208 @@ import {
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
     GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN,
-    AOAG_INSTANCE_ROLE
+    AOAG_INSTANCE_ROLE,
+    type LunIgroupMapping
 } from '../../workloads/mssql/high-availability-scripts';
+import { collectAllOntapRecords, buildOntapProxyBase, extractErrorMessage } from '../../../lib/ontap/ontap-gateway';
 
 const logger = getLogger();
+
+const CLUSTER_PEER_FIELDS = 'name,status.state,remote.ip_addresses';
+const SVM_PEER_FIELDS = 'name,state,applications,peer.cluster.name,peer.svm.uuid,peer.svm.name,svm.name,svm.uuid';
+const SNAPMIRROR_RELATIONSHIP_FIELDS =
+    'policy.name,policy.type,state,source.path,source.svm.name,source.svm.uuid,destination.path,destination.svm.name,destination.svm.uuid';
+
+interface OntapClusterPeerRecord {
+    name?: string;
+    status?: { state?: string };
+}
+
+interface OntapSvmPeerRecord {
+    name?: string;
+    state?: string;
+    applications?: string[];
+    peer?: { cluster?: { name?: string }; svm?: { uuid?: string; name?: string } };
+    svm?: { name?: string; uuid?: string };
+}
+
+interface OntapSnapmirrorRelationshipRecord {
+    policy?: { name?: string; type?: string };
+    state?: string;
+    source?: { path?: string; svm?: { name?: string; uuid?: string } };
+    destination?: { path?: string; svm?: { name?: string; uuid?: string } };
+}
+
+function toClusterPeerRow(peer: OntapClusterPeerRecord) {
+    return { peerClusterName: peer.name, availability: peer.status?.state };
+}
+
+function toSvmPeerRow(peer: OntapSvmPeerRecord) {
+    return {
+        name: peer.name,
+        state: peer.state,
+        applications: peer.applications,
+        peerClusterName: peer.peer?.cluster?.name,
+        peerSvmUuid: peer.peer?.svm?.uuid,
+        peerSvmName: peer.peer?.svm?.name,
+        svmname: peer.svm?.name,
+        svmuuid: peer.svm?.uuid
+    };
+}
+
+function toSnapmirrorRelationshipRow(relationship: OntapSnapmirrorRelationshipRecord) {
+    return {
+        policyName: relationship.policy?.name,
+        policyType: relationship.policy?.type,
+        state: relationship.state,
+        sourceVserverName: relationship.source?.svm?.name,
+        sourceVserverUuid: relationship.source?.svm?.uuid,
+        sourcePath: relationship.source?.path,
+        destinationVserverName: relationship.destination?.svm?.name,
+        destinationVserverUuid: relationship.destination?.svm?.uuid,
+        destinationPath: relationship.destination?.path
+    };
+}
+
+async function fetchDirectOntapCrrData(
+    accountId: string,
+    instanceRecord: WorkloadInstance
+): Promise<DirectOntapCrrData> {
+    const base = buildOntapProxyBase(accountId, instanceRecord.fsxFileSystem, instanceRecord.region);
+    const svmUuid = Array.isArray(instanceRecord.svmOntapUuid)
+        ? instanceRecord.svmOntapUuid[0]
+        : instanceRecord.svmOntapUuid;
+
+    logger.info('Fetching direct ONTAP CRR assessment data via proxy-forwarder', {
+        accountId,
+        targetId: base.targetId,
+        svmUuid
+    });
+
+    const [clusterPeersRes, svmPeersRes, snapmirrorRes] = await Promise.allSettled([
+        collectAllOntapRecords<OntapClusterPeerRecord>(base, 'api/cluster/peers', { fields: CLUSTER_PEER_FIELDS }),
+        !svmUuid
+            ? Promise.reject(new Error('Unable to fetch ONTAP svm peers as the mapped SVM UUID is missing.'))
+            : collectAllOntapRecords<OntapSvmPeerRecord>(base, 'api/svm/peers', {
+                  'svm.uuid': svmUuid,
+                  fields: SVM_PEER_FIELDS
+              }),
+        !svmUuid
+            ? Promise.reject(
+                  new Error('Unable to fetch ONTAP snapmirror relationships as the mapped SVM UUID is missing.')
+              )
+            : collectAllOntapRecords<OntapSnapmirrorRelationshipRecord>(base, 'api/snapmirror/relationships', {
+                  list_destinations_only: true,
+                  'svm.uuid': svmUuid,
+                  fields: SNAPMIRROR_RELATIONSHIP_FIELDS
+              })
+    ]);
+
+    let clusterPeerDetails: ReturnType<typeof toClusterPeerRow>[] = [];
+    if (clusterPeersRes.status === 'fulfilled') {
+        clusterPeerDetails = clusterPeersRes.value.map(toClusterPeerRow);
+    } else {
+        logger.warn('Failed to fetch ONTAP cluster peers for CRR assessment', {
+            targetId: base.targetId,
+            err: clusterPeersRes.reason
+        });
+    }
+
+    let vserverPeerDetails: ReturnType<typeof toSvmPeerRow>[] = [];
+    if (svmPeersRes.status === 'fulfilled') {
+        vserverPeerDetails = svmPeersRes.value.map(toSvmPeerRow);
+    } else {
+        logger.warn('Failed to fetch ONTAP svm peers for CRR assessment', {
+            targetId: base.targetId,
+            err: svmPeersRes.reason
+        });
+    }
+
+    let snapMirrorDestinationDetails: ReturnType<typeof toSnapmirrorRelationshipRow>[] = [];
+    if (snapmirrorRes.status === 'fulfilled') {
+        snapMirrorDestinationDetails = snapmirrorRes.value.map(toSnapmirrorRelationshipRow);
+    } else {
+        logger.warn('Failed to fetch ONTAP snapmirror relationships for CRR assessment', {
+            targetId: base.targetId,
+            err: snapmirrorRes.reason
+        });
+    }
+
+    return {
+        clusterPeerDetailsJson: JSON.stringify(clusterPeerDetails),
+        vserverPeerDetailsJson: JSON.stringify(vserverPeerDetails),
+        snapMirrorDestinationDetailsJson: JSON.stringify(snapMirrorDestinationDetails)
+    };
+}
+
+interface OntapLunMapRecord {
+    lun?: { uuid?: string; name?: string };
+    igroup?: { uuid?: string; name?: string; initiators?: unknown };
+}
+
+interface LunIgroupMappingsResult {
+    lunMappings: LunIgroupMapping[];
+    error?: string;
+}
+
+function extractInitiatorNames(initiators: unknown): string[] {
+    if (typeof initiators === 'string') {
+        return initiators
+            .split(/[,\s]+/)
+            .map(name => name.trim())
+            .filter(Boolean);
+    }
+    if (Array.isArray(initiators)) {
+        return initiators
+            .map(initiator =>
+                typeof initiator === 'string' ? initiator : (initiator as { name?: string })?.name ?? ''
+            )
+            .map(name => name.trim())
+            .filter(Boolean);
+    }
+    return [];
+}
+
+async function fetchLunIgroupMappings(
+    accountId: string,
+    fsxFileSystem: string,
+    region: string,
+    lunUuids: string[]
+): Promise<LunIgroupMappingsResult> {
+    if (lunUuids.length === 0) {
+        return { lunMappings: [] };
+    }
+
+    const base = buildOntapProxyBase(accountId, fsxFileSystem, region);
+    const lunUuidSet = new Set(lunUuids);
+
+    logger.info('Fetching ONTAP LUN/igroup mappings via proxy-forwarder', {
+        accountId,
+        targetId: base.targetId,
+        lunCount: lunUuids.length
+    });
+
+    try {
+        const records = await collectAllOntapRecords<OntapLunMapRecord>(base, 'api/protocols/san/lun-maps', {
+            fields: 'igroup'
+        });
+
+        const lunMappings = records
+            .filter(record => record.igroup && record.lun?.uuid && lunUuidSet.has(record.lun.uuid))
+            .map(record => ({
+                lunUuid: record.lun?.uuid as string,
+                lunName: record.lun?.name ?? '',
+                igroupUuid: record.igroup?.uuid ?? '',
+                igroupName: record.igroup?.name ?? '',
+                initiatorNames: extractInitiatorNames(record.igroup?.initiators)
+            }));
+
+        return { lunMappings };
+    } catch (error) {
+        logger.warn('Failed to fetch ONTAP LUN/igroup mappings', { targetId: base.targetId, err: error });
+        return { lunMappings: [], error: extractErrorMessage(error) };
+    }
+}
 
 function filterDataLogVolumes(instanceVolumeMapping: MappedOnTapVolumeResponse) {
     const volumeRecords =
@@ -89,7 +286,6 @@ function getVolumesWithoutSnapshotPolicy(volumes: Array<{ Key?: string; Value?: 
 }
 
 async function collectVolumeSnapshotCopiesData(
-    credentialsId: string,
     accountId: string,
     instanceRecord: WorkloadInstance,
     volumeAssessmentData: Array<{ Key?: string; Value?: string }>,
@@ -103,24 +299,11 @@ async function collectVolumeSnapshotCopiesData(
             .filter((vol: Record<string, string>) => violations?.includes(vol?.name))
             .map((vol: Record<string, string>) => vol?.uuid);
 
-        const command = [GET_SNAPSHOT_DETAILS(volumesToCheck, fsxId, region)];
-        const ssmComment = 'Get snapshot copy details for volumes';
-        const rawResponse = await callSsmExecution({
-            credentialsId,
-            region: instanceRecord.region,
-            commands: command,
-            ec2InstanceId: instanceRecord.activeNodeInstanceid,
-            comment: ssmComment,
-            accountId,
-            shouldReadFromCloudWatchLogs: true
-        });
-        const { response: ssmResponse, error: ssmError } = sqlResponseParsing(rawResponse);
-        if (!isEmpty(ssmError)) {
-            throw Error(
-                `Error executing SSM command to retrieve snapshot copy details for volumes: ${volumesToCheck}. Error: ${ssmError}`
-            );
+        const { response, errors } = await fetchOntapVolumeSnapshotDetails(accountId, fsxId, region, volumesToCheck);
+        if (!isEmpty(errors)) {
+            logger.warn('Some volumes failed while fetching snapshot copy details', { errors });
         }
-        return ssmResponse;
+        return response;
     } catch (error) {
         // Any error caught here shall not fail the resilience assessment as it is an additional check.
         logger.error('Error checking for volume snapshot copies', error);
@@ -336,7 +519,8 @@ async function initiateCrossRegionResiliencyAssessment(
         instanceRecord.mappedVolumesUuids = Array.from(dataLogVolumeMap.keys());
         instanceRecord.mappedVolumeNames = Array.from(dataLogVolumeMap.values());
 
-        const command = [CROSS_REGION_REPLICATION_SCRIPT(instanceRecord)];
+        const ontapCrrData = await fetchDirectOntapCrrData(accountId, instanceRecord);
+        const command = [CROSS_REGION_REPLICATION_SCRIPT(instanceRecord, ontapCrrData)];
         const ssmComment = 'Get Cross Region Replication Assessment';
 
         const response = await callSsmExecution({
@@ -511,7 +695,17 @@ async function getSharedStorageAssessment(
             throw createError(HttpErrorCodes.VALIDATION_ERROR, errorMessage);
         }
 
-        const command = GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN(fsxFileSystem, region, mappedLunUuids || []);
+        const { lunMappings, error: lunMappingsError } = await fetchLunIgroupMappings(
+            accountId,
+            fsxFileSystem,
+            region,
+            mappedLunUuids || []
+        );
+        if (lunMappingsError) {
+            throw new Error(`Unable to fetch ONTAP LUN/igroup mappings: ${lunMappingsError}`);
+        }
+
+        const command = GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN(lunMappings);
         const [primaryNodeResponse, standbyNodeResponse] = await Promise.all([
             callSsmExecution({
                 credentialsId,
@@ -1356,5 +1550,7 @@ export {
     initiateInstanceLevelHighAvailabilityAssessment,
     getHighAvailabilityDriftData,
     initiateHostLevelHighAvailabilityAssessment,
-    getSqlServiceStartupAssessment
+    getSqlServiceStartupAssessment,
+    fetchDirectOntapCrrData,
+    fetchLunIgroupMappings
 };

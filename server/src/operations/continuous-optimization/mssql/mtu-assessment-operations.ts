@@ -11,12 +11,52 @@ import { Metadata, ResourceAssessmentData, WorkloadInstance } from '../../../uti
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getInstanceInfo } from '../../database/database-operations';
 import { callSsmExecution } from '../../aws/ssm-operations';
-import { FETCH_MSSQL_INSTANCE_MTU_DETAILS, FETCH_FSX_MTU_DETAILS } from '../../workloads/mssql/mtu-scripts';
+import { FETCH_MSSQL_INSTANCE_MTU_DETAILS } from '../../workloads/mssql/mtu-scripts';
 import type { AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import type { MssqlAssessmentItemType } from '../../../routes/types/mssql-continuous-optimisation.types';
 import { MSSQL_GOLDEN_CONFIG } from './golden-config';
+import { collectAllOntapRecords, buildOntapProxyBase, extractErrorMessage } from '../../../lib/ontap/ontap-gateway';
 
 const logger = getLogger();
+
+const FSX_ETHERNET_PORT_FIELDS = 'name,mtu';
+
+interface OntapEthernetPortRecord {
+    name?: string;
+    mtu?: number;
+}
+
+interface FsxInterfaceRecord {
+    Name: string;
+    MTU: number;
+}
+
+interface FsxMtuData {
+    fsxInterfaces: FsxInterfaceRecord[];
+    error: string | null;
+}
+
+function toFsxInterfaceRow(port: OntapEthernetPortRecord): FsxInterfaceRecord | undefined {
+    return port.name && port.mtu ? { Name: port.name, MTU: port.mtu } : undefined;
+}
+
+/** Replaces the previous host-side `Invoke-ONTAPRequest` call in `FETCH_FSX_MTU_DETAILS`. */
+async function fetchFsxMtuData(accountId: string, instanceRecord: WorkloadInstance): Promise<FsxMtuData> {
+    const base = buildOntapProxyBase(accountId, instanceRecord.fsxFileSystem, instanceRecord.region);
+    logger.info('Fetching FSx ethernet port MTU details via proxy-forwarder', { accountId, targetId: base.targetId });
+
+    try {
+        const ports = await collectAllOntapRecords<OntapEthernetPortRecord>(base, 'api/network/ethernet/ports', {
+            fields: FSX_ETHERNET_PORT_FIELDS
+        });
+        const fsxInterfaces = ports.map(toFsxInterfaceRow).filter((port): port is FsxInterfaceRecord => Boolean(port));
+        return { fsxInterfaces, error: null };
+    } catch (error) {
+        logger.warn('Failed to fetch FSx ethernet port MTU details', { targetId: base.targetId, err: error });
+        return { fsxInterfaces: [], error: extractErrorMessage(error) };
+    }
+}
+
 interface SqlInterface {
     name: string;
     mtu: number;
@@ -81,7 +121,7 @@ async function mtuAssessment(
         resourceName: databaseHostId
     };
     try {
-        const [mssqlResponse, fsxResponse] = await Promise.all([
+        const [mssqlResponse, fsxMTU] = await Promise.all([
             callSsmExecution({
                 credentialsId,
                 region,
@@ -91,23 +131,14 @@ async function mtuAssessment(
                 accountId,
                 shouldReadFromCloudWatchLogs: true
             }),
-            callSsmExecution({
-                credentialsId,
-                region,
-                commands: [FETCH_FSX_MTU_DETAILS(instanceRecord)],
-                ec2InstanceId: activeNodeInstanceId,
-                comment: 'Fetch FSx MTU details',
-                accountId,
-                shouldReadFromCloudWatchLogs: true
-            })
+            fetchFsxMtuData(accountId, instanceRecord)
         ]);
 
         const parsedMssqlResponse = typeof mssqlResponse === 'string' ? JSON.parse(mssqlResponse) : mssqlResponse;
-        const parsedFsxResponse = typeof fsxResponse === 'string' ? JSON.parse(fsxResponse) : fsxResponse;
 
         return {
             sqlServerMTU: parsedMssqlResponse,
-            fsxMTU: parsedFsxResponse
+            fsxMTU
         };
     } catch (error) {
         logger.error('Failed to assess MTU alignment', {
@@ -283,4 +314,4 @@ async function assessMTUAlignment(
     return { mtuAlignmentAssessment, errorMessage };
 }
 
-export { calculateMTUAlignmentDrift, assessMTUAlignment };
+export { calculateMTUAlignmentDrift, assessMTUAlignment, fetchFsxMtuData, type FsxMtuData, type FsxInterfaceRecord };

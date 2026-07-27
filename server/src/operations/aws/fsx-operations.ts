@@ -52,7 +52,6 @@ import {
     getArnPartition,
     getFsxArn,
     sleep,
-    sqlResponseParsing,
     IS_DEMO_FLOW
 } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
@@ -61,16 +60,19 @@ import { getMappedVolumesHostDataScript } from '../workloads/mssql/ssm-script-ut
 import { demoGetFsxnVolIdsFromOntapVolIds } from '../demo-operations';
 import { populateDbInstances } from '../database/database-operations';
 import { describeInstance, describeSubnets } from '../../lib/aws/ec2';
-import { OntapRestRequestParams, GET_SNAPSHOT_DETAILS } from '../workloads/mssql/assessment-scripts';
+import { OntapRestRequestParams } from '../workloads/mssql/assessment-scripts';
 import {
     getLunBySerialNumber,
     getVolumeByName,
     getCifsShareVolumes,
+    buildOntapProxyBase,
+    extractErrorMessage,
     type OntapGatewayTarget,
     type OntapLunRecord,
     type OntapVolumeRecord,
     type OntapCifsShareRecord
 } from '../../lib/ontap/ontap-gateway';
+import { callProxyForwarder } from '../../lib/cloud-manager/proxy-forwarder';
 
 const logger = getLogger();
 
@@ -1221,13 +1223,109 @@ async function validateSvmCountCapacity(
     }
 }
 
+const DEFAULT_LATEST_SNAPSHOT_FIELDS: OntapRestRequestParams = {
+    queryFilter: 'order_by=create_time desc&max_records=1',
+    queryFields: 'create_time'
+};
+
+interface VolumeSnapshotDetails {
+    response: Record<string, Record<string, unknown>>;
+    errors: Record<string, string>;
+}
+
+function parseOntapQueryFilter(queryFilter?: string): Record<string, string> {
+    if (!queryFilter) {
+        return {};
+    }
+    return Object.fromEntries(
+        queryFilter
+            .split('&')
+            .filter(Boolean)
+            .map(pair => {
+                const [key, value = ''] = pair.split('=');
+                return [key, value];
+            })
+    );
+}
+
+function extractField(records: Record<string, unknown>[], field: string): unknown {
+    const values = records.map(record => record[field]);
+    if (values.length <= 1) {
+        return values[0];
+    }
+    return values;
+}
+
+async function fetchOntapVolumeSnapshotDetails(
+    accountId: string,
+    fsxId: string,
+    region: string,
+    volumeUuids: string[],
+    fields: OntapRestRequestParams = DEFAULT_LATEST_SNAPSHOT_FIELDS
+): Promise<VolumeSnapshotDetails> {
+    const base = buildOntapProxyBase(accountId, fsxId, region);
+    const fieldNames = (fields.queryFields ?? '')
+        .split(',')
+        .map(field => field.trim())
+        .filter(Boolean);
+    const searchParams = {
+        ...parseOntapQueryFilter(fields.queryFilter),
+        ...(fieldNames.length ? { fields: fieldNames.join(',') } : {})
+    };
+
+    logger.info('Fetching ONTAP volume snapshot details via proxy-forwarder', {
+        accountId,
+        targetId: base.targetId,
+        volumeCount: volumeUuids.length,
+        fields
+    });
+
+    const results = await Promise.all(
+        volumeUuids.map(
+            throat(5, async volumeUuid => {
+                try {
+                    const { records = [] } = await callProxyForwarder<{ records?: Record<string, unknown>[] }>({
+                        ...base,
+                        ontapPath: `api/storage/volumes/${volumeUuid}/snapshots`,
+                        searchParams
+                    });
+                    const resultObj: Record<string, unknown> = {};
+                    fieldNames.forEach(field => {
+                        resultObj[field] = extractField(records, field);
+                    });
+                    return { volumeUuid, resultObj };
+                } catch (error) {
+                    logger.warn('Failed to fetch ONTAP snapshot details for volume', {
+                        targetId: base.targetId,
+                        volumeUuid,
+                        err: error
+                    });
+                    return { volumeUuid, error: extractErrorMessage(error) };
+                }
+            })
+        )
+    );
+
+    const response: VolumeSnapshotDetails['response'] = {};
+    const errors: VolumeSnapshotDetails['errors'] = {};
+    results.forEach(({ volumeUuid, resultObj, error }) => {
+        if (error) {
+            errors[volumeUuid] = error;
+        } else if (resultObj) {
+            response[volumeUuid] = resultObj;
+        }
+    });
+
+    return { response, errors };
+}
+
 async function isInstanceAppConsistentBackupEnabled(
     credentialsId: string,
     region: string,
     fsxId: string,
     volumesToCheck: string[],
     volumeDBMap: Array<{ ontapVolumeuuid: string; databaseName: string }>,
-    activeNodeInstanceid: string
+    accountId?: string
 ) {
     logger.info(
         'Checking if app consistent backup details for MSSQL server are available in snapshot',
@@ -1235,31 +1333,32 @@ async function isInstanceAppConsistentBackupEnabled(
         credentialsId,
         region
     );
+    if (!accountId) {
+        logger.error('Missing accountId while checking app consistent backup details', { fsxId, region });
+        return;
+    }
     try {
         const ontapApiQueryParams: OntapRestRequestParams = {
             queryFilter: `comment=${SNAPCENTER_BACKUP_SNAPSHOT_COMMENT}&max_records=1`,
             queryFields: 'comment'
         };
-        const command = [GET_SNAPSHOT_DETAILS(volumesToCheck, fsxId, region, ontapApiQueryParams)];
-        const rawResponse = await callSsmExecution({
-            credentialsId,
+        const { response, errors } = await fetchOntapVolumeSnapshotDetails(
+            accountId,
+            fsxId,
             region,
-            commands: command,
-            ec2InstanceId: activeNodeInstanceid,
-            comment: 'Get snapshot copy details for volumes',
-            cacheData: true
-        });
-        const { response: ssmResponse, error: ssmError } = sqlResponseParsing(rawResponse);
-        if (!isEmpty(ssmError) || isEmpty(ssmResponse)) {
+            volumesToCheck,
+            ontapApiQueryParams
+        );
+        if (isEmpty(response)) {
             throw Error(
-                `Error executing SSM command to retrieve snapshot copy details for volumes: ${volumesToCheck}. Error: ${ssmError}`
+                `Error fetching snapshot copy details for volumes: ${volumesToCheck}. Errors: ${JSON.stringify(errors)}`
             );
         }
         const appConsistentBackupMap: Record<string, boolean> = {};
 
         for (const db of volumeDBMap) {
             const { databaseName, ontapVolumeuuid } = db;
-            const { comment = '' } = ssmResponse?.[ontapVolumeuuid] ?? {};
+            const { comment = '' } = response?.[ontapVolumeuuid] ?? {};
             appConsistentBackupMap[databaseName] = IS_DEMO_FLOW || comment === SNAPCENTER_BACKUP_SNAPSHOT_COMMENT;
         }
 
@@ -1399,5 +1498,8 @@ export {
     getFSXPreferredSubnetAndAZ,
     getMZFsxnNodePreference,
     resolveOntapVolumeMappings,
-    updateVolumeMappings
+    updateVolumeMappings,
+    fetchOntapVolumeSnapshotDetails,
+    DEFAULT_LATEST_SNAPSHOT_FIELDS,
+    type VolumeSnapshotDetails
 };

@@ -1,5 +1,6 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import { isEmpty } from 'lodash-es';
+import throat from 'throat';
 
 import getLogger from '../../../utils/logger';
 import { WorkloadInstance } from '../../../utils/common-types';
@@ -15,9 +16,81 @@ import { callSsmExecution } from '../../aws/ssm-operations';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
 import { registerJob } from '../../database/job-operations';
 import { sqlResponseParsing } from '../../../utils/utils';
+import { collectAllOntapRecords, buildOntapProxyBase, extractErrorMessage } from '../../../lib/ontap/ontap-gateway';
 
-import { SNAPCENTER_ASSESSMENT_SCRIPT } from './ssm-scripts/snapcenter-assessment-scripts';
+import { SNAPCENTER_ASSESSMENT_SCRIPT, type SnapCenterOntapData } from './ssm-scripts/snapcenter-assessment-scripts';
 import { MSSQL_GOLDEN_CONFIG } from './golden-config';
+
+const SVM_INFO_QUERY = { fields: 'svm' };
+const SNAPCENTER_SNAPSHOT_QUERY = { comment: 'creator=snapcenter', max_records: 1, fields: 'comment' };
+
+interface OntapVolumeSvmRecord {
+    svm?: { uuid?: string; name?: string };
+}
+
+async function fetchSnapCenterVolumeOntapData(
+    accountId: string,
+    fsxFileSystem: string,
+    region: string,
+    volumeUuids: string[]
+): Promise<SnapCenterOntapData> {
+    const base = buildOntapProxyBase(accountId, fsxFileSystem, region);
+
+    logger.info('Fetching SnapCenter volume ONTAP data via proxy-forwarder', {
+        accountId,
+        targetId: base.targetId,
+        volumeCount: volumeUuids.length
+    });
+
+    const results = await Promise.all(
+        volumeUuids.map(
+            throat(5, async volumeUuid => {
+                try {
+                    const [svmRecords, snapshotRecords] = await Promise.all([
+                        collectAllOntapRecords<OntapVolumeSvmRecord>(
+                            base,
+                            `api/storage/volumes/${volumeUuid}`,
+                            SVM_INFO_QUERY
+                        ),
+                        collectAllOntapRecords<Record<string, unknown>>(
+                            base,
+                            `api/storage/volumes/${volumeUuid}/snapshots`,
+                            SNAPCENTER_SNAPSHOT_QUERY
+                        )
+                    ]);
+                    const [svmRecord] = svmRecords;
+                    return {
+                        volumeUuid,
+                        info: {
+                            svmId: svmRecord?.svm?.uuid ?? '',
+                            svmName: svmRecord?.svm?.name ?? '',
+                            hasSnapcenterSnapshot: snapshotRecords.length > 0
+                        }
+                    };
+                } catch (error) {
+                    logger.warn('Failed to fetch SnapCenter ONTAP data for volume', {
+                        targetId: base.targetId,
+                        volumeUuid,
+                        err: error
+                    });
+                    return { volumeUuid, error: extractErrorMessage(error) };
+                }
+            })
+        )
+    );
+
+    const response: SnapCenterOntapData['response'] = {};
+    const errors: SnapCenterOntapData['errors'] = {};
+    results.forEach(({ volumeUuid, info, error }) => {
+        if (error) {
+            errors[volumeUuid] = error;
+        } else if (info) {
+            response[volumeUuid] = info;
+        }
+    });
+
+    return { response, errors };
+}
 
 interface MssqlSnapcenterVolumeResult {
     svmId: string;
@@ -87,10 +160,17 @@ async function initiateSnapCenterAssessmentCollection(
             throw new Error(noVolumesMessage);
         }
 
+        const snapCenterOntapData = await fetchSnapCenterVolumeOntapData(
+            accountId,
+            fsxFileSystem,
+            region,
+            mappedVolumesUuids ?? []
+        );
+
         const response = await callSsmExecution({
             credentialsId,
             region,
-            commands: [SNAPCENTER_ASSESSMENT_SCRIPT(instanceRecord)],
+            commands: [SNAPCENTER_ASSESSMENT_SCRIPT(instanceRecord, snapCenterOntapData)],
             ec2InstanceId: activeNodeInstanceid,
             comment: 'SnapCenter snapshot assessment for MSSQL instance',
             accountId,
@@ -235,6 +315,7 @@ function calculateSnapCenterDrift(
 export {
     initiateSnapCenterAssessmentCollection,
     calculateSnapCenterDrift,
+    fetchSnapCenterVolumeOntapData,
     type MssqlSnapcenterAssessmentData,
     type MssqlSnapCenterRelevantVolumeIds,
     type MssqlSnapcenterWadResult

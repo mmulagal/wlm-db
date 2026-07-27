@@ -1,96 +1,25 @@
 import { WorkloadInstance } from '../../../utils/common-types';
-import { compressResponse, ontapRestRequest } from './common-templates';
+import { compressResponse } from './common-templates';
 import { CRR_ASSESSMENT_LOG_PATH } from './const';
 import { JSON_CHECK } from './assessment-scripts';
 
-const CLUSTER_PEER_DETAILS_SCRIPT = `
-   
-    Function Get-OntapClusterPeerDetails {
-        Write-Information "Get Cluster Peer Details"
-        $Params = @{
-                        "ApiEndPoint" = "/cluster/peers"
-                        "ApiQueryFilter" = "fields=name,status.state,remote.ip_addresses"
-                    }
-        $Response = Invoke-ONTAPRequest @Params
-        $ClusterPeerDetails = @()
-        foreach ($record in $Response.records) {
-            $ClusterPeerDetails += @{
-                "peerClusterName" = $record.name
-                "availability" = $record.status.state
-            }
-        }
-        return $ClusterPeerDetails
-    }
-    
-`;
+interface DirectOntapCrrData {
+    clusterPeerDetailsJson: string;
+    vserverPeerDetailsJson: string;
+    snapMirrorDestinationDetailsJson: string;
+}
 
-const VSERVER_PEER_DETAILS_SCRIPT = `
-    Function Get-VServerPeerDetails($MappedSVMId) {
-        Write-Information "Get SVM Peer Details"
-        $Params = @{
-                        "ApiEndPoint" = "/svm/peers?svm.uuid=$MappedSVMId&fields=name,state,applications,peer.cluster.name,peer.svm.uuid,peer.svm.name,svm.name,svm.uuid"
-                    }
-        $Response = Invoke-ONTAPRequest @Params
-        $VserverPeerDetails = @()
-        foreach ($record in $Response.records) {
-            $VserverPeerDetails += @{
-                "name" = $record.name
-                "state" = $record.state
-                "applications" = $record.applications
-                "peerClusterName" = $record.peer.cluster.name
-                "peerSvmUuid" = $record.peer.svm.uuid
-                "peerSvmName" = $record.peer.svm.name
-                "svmname" = $record.svm.name
-                "svmuuid" = $record.svm.uuid
-            }
-        }
-        return $VserverPeerDetails
-    }
-`;
-
-const SNAPMIRROR_DESTINATION_DETAILS_SCRIPT = `
-    Function Get-SnapMirrorDestinationDetails($MappedSVMId) {
-        Write-Information "Get SnapMirror Destination Details"
-        $Params = @{
-                        "ApiEndPoint" = "/snapmirror/relationships/?list_destinations_only=true&svm.uuid=$MappedSVMId&fields=policy.name,policy.type,state,source.path,source.svm.name,source.svm.uuid,destination.path,destination.svm.name,destination.svm.uuid"
-                    }
-        $Response = Invoke-ONTAPRequest @Params
-        $SnapMirrorDestinationDetails = @()
-        foreach ($record in $Response.records) {
-            $SnapMirrorDestinationDetails += @{
-                "policyName" = $record.policy.name
-                "policyType" = $record.policy.type
-                "state" = $record.state
-                "sourceVserverName" = $record.source.svm.name
-                "sourceVserverUuid" = $record.source.svm.uuid
-                "sourcePath" = $record.source.path
-                "destinationVserverName" = $record.destination.svm.name
-                "destinationVserverUuid" = $record.destination.svm.uuid
-                "destinationPath" = $record.destination.path
-            }
-        }
-        return $SnapMirrorDestinationDetails
-    }
-`;
-const CROSS_REGION_REPLICATION_SCRIPT = (instanceRecord: WorkloadInstance) => `
+const CROSS_REGION_REPLICATION_SCRIPT = (instanceRecord: WorkloadInstance, ontapCrrData: DirectOntapCrrData) => `
     #Get CRR details
 
     ${JSON_CHECK}
 
     ${compressResponse}
 
-    ${CLUSTER_PEER_DETAILS_SCRIPT}
-
-    ${VSERVER_PEER_DETAILS_SCRIPT}
-
-    ${SNAPMIRROR_DESTINATION_DETAILS_SCRIPT}
-
     $CRRDetails = @{}
     $CRRDetails['errors'] = ''
     $CRRDetails['crrDetails'] = @()
     
-    $FSxID = "${instanceRecord.fsxFileSystem}"
-    $FSxRegion = "${instanceRecord.region}"
     $InstanceName = "${instanceRecord.name}"
     $MappedSVMId = "${instanceRecord.svmOntapUuid}"
     $MappedVolumeNames = '${JSON.stringify(instanceRecord.mappedVolumeNames)}' | ConvertFrom-Json
@@ -107,10 +36,10 @@ const CROSS_REGION_REPLICATION_SCRIPT = (instanceRecord: WorkloadInstance) => `
 
     Write-Information "Starting CRR Assessment for $instanceName, $mappedSVMId,  $mappedVolumeUuids"
 
-    ${ontapRestRequest}
-
-    #Fetch cluster peer details
-    $ClusterPeerDetails = Get-OntapClusterPeerDetails
+    #Cluster peer, svm peer and snapmirror relationship details, fetched server-side via proxy-forwarder
+    $ClusterPeerDetails = '${ontapCrrData.clusterPeerDetailsJson}' | ConvertFrom-Json
+    $VServerPeerDetails = '${ontapCrrData.vserverPeerDetailsJson}' | ConvertFrom-Json
+    $SnapMirrorDestinationDetails = '${ontapCrrData.snapMirrorDestinationDetailsJson}' | ConvertFrom-Json
 
     $AvailableRemoteClusters =  @()
     foreach($cluster in $ClusterPeerDetails) {
@@ -118,12 +47,6 @@ const CROSS_REGION_REPLICATION_SCRIPT = (instanceRecord: WorkloadInstance) => `
             $AvailableRemoteClusters += $cluster.peerClusterName
         }
     }
-
-    #Fetch vserver peer details
-    $VServerPeerDetails = Get-VServerPeerDetails $MappedSVMId
-
-    #Fetch snapmirror destination details
-    $SnapMirrorDestinationDetails = Get-SnapMirrorDestinationDetails $MappedSVMId
 
     #Lets check if CRR is enabled
     foreach($volume in $MappedVolumeNames) {
@@ -192,4 +115,4 @@ const CROSS_REGION_REPLICATION_SCRIPT = (instanceRecord: WorkloadInstance) => `
     return (Deflate-String $CRRDetailsJson)
 
 `;
-export { CROSS_REGION_REPLICATION_SCRIPT };
+export { CROSS_REGION_REPLICATION_SCRIPT, type DirectOntapCrrData };

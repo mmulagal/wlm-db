@@ -435,5 +435,6 @@ export {
     type OntapGatewayTarget,
     type OntapLunRecord,
     type OntapVolumeRecord,
-    type OntapCifsShareRecord
+    type OntapCifsShareRecord,
+    type ProxyOperationBaseOpts
 };
