@@ -211,6 +211,7 @@ async function getUniqueCrrDetails(
 }
 
 async function getProtectionStatus(
+    accountId: string,
     activeNodeInstanceId: string,
     instanceName: string | undefined,
     resourceDetail?: ResourceDetails,
@@ -218,7 +219,7 @@ async function getProtectionStatus(
     version?: string,
     isSqlAuth: boolean = false
 ): Promise<ProtectionPerStorageTypeResponseType | ProtectionPerStorageTypeResponseType[] | undefined> {
-    logger.info('Get protection status', { resourceId: resourceDetail?.resource_id, instanceName });
+    logger.info('Get protection status', { accountId, resourceId: resourceDetail?.resource_id, instanceName });
 
     if (!databaseInstances || isEmpty(databaseInstances) || version !== VERSION_2_0) {
         logger.info(
@@ -245,6 +246,7 @@ async function getProtectionStatus(
             getNativeSQLProtection(credentialsId, region, activeNodeInstanceId, instanceNames, isSqlAuth),
             fsxnId
                 ? getProtectionDetails(
+                      accountId,
                       credentialsId,
                       region,
                       fsxnId,
@@ -1286,6 +1288,7 @@ function buildUserDatabaseLuns(
 }
 
 async function fetchInstanceVolumeMapping(
+    accountId: string,
     credentialsId: string,
     region: string,
     fileSystemId: string,
@@ -1314,7 +1317,7 @@ async function fetchInstanceVolumeMapping(
             instanceDetails?.map(instance => instance.database_instance_name),
             isSqlAuthEnabled,
             false,
-            undefined,
+            accountId,
             undefined,
             undefined,
             instanceOntapDetails,
@@ -1325,6 +1328,7 @@ async function fetchInstanceVolumeMapping(
 }
 
 async function getProtectionDetails(
+    accountId: string,
     credentialsId: string,
     region: string,
     fileSystemId: string,
@@ -1340,6 +1344,7 @@ async function getProtectionDetails(
     isAppConsistentBackupEnabled: Record<string, BackupType>;
 }> {
     logger.info('Getting Proteciton details', {
+        accountId,
         credentialsId,
         region,
         fileSystemId,
@@ -1350,6 +1355,7 @@ async function getProtectionDetails(
     const instanceVolumeMapping =
         preFetchedInstanceVolumeMapping ??
         (await fetchInstanceVolumeMapping(
+            accountId,
             credentialsId,
             region,
             fileSystemId,
@@ -1567,6 +1573,7 @@ async function getDatabaseDetails(
         const instanceVolumeMapping: Record<string, MappedOnTapVolumeResponse> =
             activeNodeInstanceId && fileSystemId
                 ? await fetchInstanceVolumeMapping(
+                      accountId,
                       credentialsId,
                       region,
                       fileSystemId,
@@ -1638,6 +1645,7 @@ async function getDatabaseDetails(
                 ...(activeNodeInstanceId && getProtection
                     ? [
                           getProtectionDetails(
+                              accountId,
                               credentialsId,
                               region,
                               fileSystemId,
@@ -2009,6 +2017,7 @@ async function getDatabaseInstancesSummary(
                 ...(getProtection && !shouldQueryDatabasesWithProtection
                     ? [
                           getProtectionStatus(
+                              accountId,
                               activeNodeInstanceId,
                               undefined,
                               undefined,
@@ -2045,7 +2054,14 @@ async function getDatabaseInstancesSummary(
                       ]
                     : [Promise.resolve()]),
                 ...(getStorageSavings && shouldGetStorageSavingsFromOntap
-                    ? [getMssqlStorageDataFromOntap(activeNodeInstanceId, databaseInstances, isSqlAuthEnabled)]
+                    ? [
+                          getMssqlStorageDataFromOntap(
+                              accountId,
+                              activeNodeInstanceId,
+                              databaseInstances,
+                              isSqlAuthEnabled
+                          )
+                      ]
                     : [Promise.resolve()]),
                 ...(shouldQueryDatabasesWithProtection || shouldQueryDatabasesWithoutProtection
                     ? [

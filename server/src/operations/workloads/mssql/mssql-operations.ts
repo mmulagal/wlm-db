@@ -67,7 +67,7 @@ import {
     GET_CLUSTER_NAME_AND_FCI_INSTANCES,
     GET_FQDN,
     GET_NODE_IP_ADDRESS,
-    getMappedOntapVolumesScript,
+    getMappedVolumesHostDataScript,
     INSTANCE_DETAILS,
     RESOURCE_UTILIZATION,
     sqlQueryExecution,
@@ -79,6 +79,8 @@ import { hasCache, readFromCacheByKey, writeToCache } from '../../../utils/cache
 import { getPgSqlInstanceDetails } from '../pgsql/pgsql-operations';
 import { getOracleInstanceDetails } from '../oracle/oracle-operations';
 import { SQL_SERVER_VERSION_TO_YEAR } from './discover-consts';
+import { resolveOntapVolumeMappings } from '../../aws/fsx-operations';
+import { type OntapGatewayTarget } from '../../../lib/ontap/ontap-gateway';
 
 const logger = getLogger();
 
@@ -1759,13 +1761,22 @@ function getSqlAuthEnabledStatus(instanceName: string, sql: any[], domain: any[]
     return sqlAuthEnabled;
 }
 
+const STORAGE_SAVINGS_ONTAP_FIELDS =
+    'efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used,space.physical_used,space.performance_tier_footprint,space.capacity_tier_footprint,space.snapshot.used';
+
 async function getMssqlStorageDataFromOntap(
+    accountId: string,
     activeNodeInstanceId: string,
     instanceDetails: DatabaseInstance[],
     isSqlAuthEnabled: boolean
 ) {
     const ssmComment = 'Get storage data from ONTAP';
-    logger.info(ssmComment, ':', { activeNodeInstanceId, instancesLength: instanceDetails.length, isSqlAuthEnabled });
+    logger.info(ssmComment, ':', {
+        accountId,
+        activeNodeInstanceId,
+        instancesLength: instanceDetails.length,
+        isSqlAuthEnabled
+    });
 
     try {
         const managedInstances = instanceDetails.filter(
@@ -1774,20 +1785,14 @@ async function getMssqlStorageDataFromOntap(
         const [{ credentials_id: credentialsId, region, fsxn_ids: fsxnId }] = managedInstances;
 
         const instanceNames = managedInstances.map(({ database_instance_name: instanceName }) => instanceName);
-        const command = getMappedOntapVolumesScript(
-            fsxnId,
-            region,
-            '$false',
-            instanceNames,
-            isSqlAuthEnabled,
-            'efficiency.space_savings.total,efficiency.space_savings.total_percent,space.size,space.used,space.physical_used,space.performance_tier_footprint,space.capacity_tier_footprint,space.snapshot.used'
-        );
+        const command = getMappedVolumesHostDataScript('$false', instanceNames, isSqlAuthEnabled);
         const response = await callSsmExecution({
             credentialsId,
             region,
             commands: [command],
             ec2InstanceId: activeNodeInstanceId,
             comment: ssmComment,
+            accountId,
             cacheData: true,
             shouldReadFromCloudWatchLogs: true
         });
@@ -1798,48 +1803,65 @@ async function getMssqlStorageDataFromOntap(
         parsedResponse = parsedResponse instanceof Error ? undefined : parsedResponse;
         logger.debug({ parsedResponse });
 
+        const target: OntapGatewayTarget = { accountId, credentialsId, region, fsxId: fsxnId };
         const instancesResponse: { [key: string]: any } = {};
-        instanceNames?.forEach((iName: string) => {
-            if (
-                parsedResponse?.[iName] &&
-                !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
-            ) {
-                const { volumes } = parsedResponse?.[iName] ?? {};
-                const initialStorage = {
-                    size: 0,
-                    used: 0,
-                    spaceSavings: 0,
-                    physicalUsed: 0,
-                    ssdUsed: 0,
-                    capacityPoolUsed: 0,
-                    snapshotUsed: 0
-                };
-                if (volumes && !isEmpty(volumes?.records)) {
-                    const storageSavings = volumes.records.reduce(
-                        (savings: Record<string, number>, { space, efficiency }: VolumeSpaceRecord) => ({
-                            size: savings.size + space.size,
-                            used: savings.used + space.used,
-                            physicalUsed: savings.physicalUsed + (space.physical_used ?? 0),
-                            ssdUsed: savings.ssdUsed + (space.performance_tier_footprint ?? 0),
-                            capacityPoolUsed: savings.capacityPoolUsed + (space.capacity_tier_footprint ?? 0),
-                            snapshotUsed: savings.snapshotUsed + (space.snapshot?.used ?? 0),
-                            spaceSavings: savings.spaceSavings + efficiency.space_savings.total
-                        }),
-                        initialStorage as Record<string, number>
-                    );
-                    // storageSavings.spaceSavingsPercent = (storageSavings.spaceSavings / storageSavings.used) * 100;
-                    instancesResponse[iName] = { ...storageSavings };
-                } else {
-                    instancesResponse[iName] = { ...initialStorage };
-                }
-            } else {
-                logger.error(
-                    'Failed to get storage savings from ONTAP for the instance:',
-                    iName,
-                    parsedResponse?.[iName]
-                );
-            }
-        });
+        await Promise.all(
+            instanceNames.map(
+                throat(3, async (iName: string) => {
+                    const hostData = parsedResponse?.[iName];
+
+                    if (!hostData || (typeof hostData === 'string' && hostData.includes('error'))) {
+                        logger.error('Failed to get storage savings from ONTAP for the instance:', iName, hostData);
+                        return;
+                    }
+
+                    const initialStorage = {
+                        size: 0,
+                        used: 0,
+                        spaceSavings: 0,
+                        physicalUsed: 0,
+                        ssdUsed: 0,
+                        capacityPoolUsed: 0,
+                        snapshotUsed: 0
+                    };
+
+                    try {
+                        const { volumes } = await resolveOntapVolumeMappings(target, hostData, {
+                            additionalFields: STORAGE_SAVINGS_ONTAP_FIELDS
+                        });
+
+                        if (isEmpty(volumes?.records)) {
+                            instancesResponse[iName] = { ...initialStorage };
+                            return;
+                        }
+
+                        const storageSavings = (volumes.records as unknown as VolumeSpaceRecord[]).reduce(
+                            (savings: Record<string, number>, { space, efficiency }: VolumeSpaceRecord) => ({
+                                size: savings.size + space.size,
+                                used: savings.used + space.used,
+                                physicalUsed: savings.physicalUsed + (space.physical_used ?? 0),
+                                ssdUsed: savings.ssdUsed + (space.performance_tier_footprint ?? 0),
+                                capacityPoolUsed: savings.capacityPoolUsed + (space.capacity_tier_footprint ?? 0),
+                                snapshotUsed: savings.snapshotUsed + (space.snapshot?.used ?? 0),
+                                spaceSavings: savings.spaceSavings + efficiency.space_savings.total
+                            }),
+                            initialStorage as Record<string, number>
+                        );
+                        instancesResponse[iName] = { ...storageSavings };
+                    } catch (error) {
+                        logger.error('Failed to resolve ONTAP volume mappings for storage savings', {
+                            accountId,
+                            credentialsId,
+                            region,
+                            fsxId: fsxnId,
+                            instanceName: iName,
+                            error
+                        });
+                        instancesResponse[iName] = { ...initialStorage };
+                    }
+                })
+            )
+        );
 
         return instancesResponse;
     } catch (error) {

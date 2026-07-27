@@ -58,7 +58,17 @@ fsxMock.on(DescribeFileSystemsCommand).callsFake(input => {
                 AutomaticBackupRetentionDays: overrideDays ?? 0,
                 DailyAutomaticBackupStartTime: '03:00',
                 DeploymentType: 'SINGLE_AZ_1',
-                ThroughputCapacity: 128
+                ThroughputCapacity: 128,
+                Endpoints: {
+                    Management: {
+                        DNSName: `management.${id}.fsx.us-east-1.amazonaws.com`,
+                        IpAddresses: ['172.31.0.100']
+                    },
+                    Intercluster: {
+                        DNSName: `intercluster.${id}.fsx.us-east-1.amazonaws.com`,
+                        IpAddresses: ['172.31.0.101']
+                    }
+                }
             },
             Tags: [
                 {

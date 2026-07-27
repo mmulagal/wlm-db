@@ -319,7 +319,9 @@ const invokeCommandWithCredSSP = `
 `;
 
 // Shared helper functions for mapped volumes operations
-// These functions are used by both getMappedOntapVolumesScript and MSSQL_ONE_TIME_WAD
+// Used by the MSSQL_ONE_TIME_WAD offline-assessment flow.
+// TODO(follow-up / ONTAP gateway migration): same host-only + Node resolveOntapVolumeMappings
+// split as getMappedVolumesHostDataScript, still pending for this offline-assessment copy.
 const mappedVolumesHelperFunctions = `
     Function Get-VolumeIdsList($sqlqueryresponse) {
         $sqlJsonResponse = $sqlqueryresponse | ConvertFrom-Json

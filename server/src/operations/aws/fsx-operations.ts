@@ -9,7 +9,7 @@ import {
     ListTagsForResourceCommandInput,
     Tag
 } from '@aws-sdk/client-fsx';
-import { attempt, compact, isEmpty, uniq } from 'lodash-es';
+import { attempt, compact, isEmpty, omit, uniq } from 'lodash-es';
 import ms from 'ms';
 import throat from 'throat';
 import {
@@ -36,7 +36,15 @@ import {
     SNAPCENTER_BACKUP_SNAPSHOT_COMMENT
 } from '../../utils/consts';
 import { getNetworkInterfacesList } from './ec2-operations';
-import { AwsFsxNBackupConfig, ResourceDetails, VolumeRecord } from '../../utils/common-types';
+import {
+    AwsFsxNBackupConfig,
+    ResourceDetails,
+    VolumeRecord,
+    LunRecord,
+    VolumeDBMapEntry,
+    MappedVolumesHostData,
+    DatabaseVolumeMapRow
+} from '../../utils/common-types';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import {
     convertToBytes,
@@ -49,11 +57,20 @@ import {
 } from '../../utils/utils';
 import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
-import { getMappedOntapVolumesScript } from '../workloads/mssql/ssm-script-utils';
+import { getMappedVolumesHostDataScript } from '../workloads/mssql/ssm-script-utils';
 import { demoGetFsxnVolIdsFromOntapVolIds } from '../demo-operations';
 import { populateDbInstances } from '../database/database-operations';
 import { describeInstance, describeSubnets } from '../../lib/aws/ec2';
 import { OntapRestRequestParams, GET_SNAPSHOT_DETAILS } from '../workloads/mssql/assessment-scripts';
+import {
+    getLunBySerialNumber,
+    getVolumeByName,
+    getCifsShareVolumes,
+    type OntapGatewayTarget,
+    type OntapLunRecord,
+    type OntapVolumeRecord,
+    type OntapCifsShareRecord
+} from '../../lib/ontap/ontap-gateway';
 
 const logger = getLogger();
 
@@ -62,6 +79,26 @@ interface FsxStorage {
 }
 
 type FSxFileSystemType = Static<typeof FSxFileSystemSchema>;
+
+interface ResolveLunsResult {
+    lunNames: string[];
+    volumeLunMapping: Record<string, string>;
+    volumeLunUuidMapping: Record<string, string>;
+    lunDetails: OntapLunRecord[];
+}
+
+type VolumeNameMapping = Record<string, { uuid: string; name: string }>;
+
+interface ResolveOntapVolumeMappingsOpts {
+    svmUuid?: string;
+    additionalFields?: string;
+}
+
+interface ResolveOntapVolumeMappingsResult {
+    volumes: { records: VolumeRecord[] };
+    luns: LunRecord[];
+    volumeDBMap: VolumeDBMapEntry[];
+}
 
 async function getFSXDetails(credentialsId: string, region: string, fileSystems: FileSystem[]) {
     const allFileSystems: FSxFileSystemType[] = [];
@@ -515,6 +552,252 @@ async function getOntapVolumesSnapshotCount(
     }
 }
 
+function stripOntapLinks(record: OntapVolumeRecord | VolumeRecord): VolumeRecord {
+    return omit(record as VolumeRecord & { _links?: unknown }, '_links') as VolumeRecord;
+}
+
+/**
+ * Ports the post-processing half of the legacy `Get-LunFromSerialNumber` PowerShell function:
+ * matches ONTAP LUN records (already fetched via `getLunBySerialNumber`) back to the Windows
+ * volume ids that reported each disk serial number.
+ */
+function resolveLunsFromSerialNumbers(
+    volumeSerialMapping: Record<string, string>,
+    lunRecords: OntapLunRecord[]
+): ResolveLunsResult {
+    const volumeIdsBySerial: Record<string, string[]> = {};
+    Object.entries(volumeSerialMapping).forEach(([volumeId, serial]) => {
+        if (!serial) {
+            return;
+        }
+        (volumeIdsBySerial[serial] ??= []).push(volumeId);
+    });
+
+    const lunNames: string[] = [];
+    const volumeLunMapping: Record<string, string> = {};
+    const volumeLunUuidMapping: Record<string, string> = {};
+    const lunDetails: OntapLunRecord[] = [];
+
+    lunRecords.forEach(record => {
+        const { uuid, name, serial_number: serialNumber } = record;
+        // LUN `name` is a path (`/vol/<volume>/<lun>`); volumes API `name=` needs the volume segment.
+        const volumeName = name.replace(/^\/vol\/(.*?)\/.*$/, '$1');
+        if (!lunNames.includes(volumeName)) {
+            lunNames.push(volumeName);
+        }
+        lunDetails.push({ uuid, name, serial_number: serialNumber });
+
+        const matchingVolumes = volumeIdsBySerial[serialNumber];
+        if (!matchingVolumes) {
+            return;
+        }
+
+        matchingVolumes.forEach(volumeId => {
+            volumeLunMapping[volumeId] = volumeName;
+            volumeLunUuidMapping[volumeId] = uuid;
+        });
+    });
+
+    return { lunNames, volumeLunMapping, volumeLunUuidMapping, lunDetails };
+}
+
+/**
+ * Ports the post-processing half of the legacy `Get-VolumeIdFromName` PowerShell function:
+ * matches ONTAP volume records (already fetched via `getVolumeByName`) back to the Windows
+ * volume ids whose LUN name they correspond to.
+ */
+function resolveVolumesFromLunNames(
+    volumeLunMapping: Record<string, string>,
+    volumeRecords: OntapVolumeRecord[]
+): VolumeNameMapping {
+    const volumeIdsByLunName: Record<string, string[]> = {};
+    Object.entries(volumeLunMapping).forEach(([volumeId, lunName]) => {
+        if (!lunName) {
+            return;
+        }
+        (volumeIdsByLunName[lunName] ??= []).push(volumeId);
+    });
+
+    const volumeNameMapping: VolumeNameMapping = {};
+    volumeRecords.forEach(({ uuid, name }) => {
+        const matching = volumeIdsByLunName[name];
+        if (!matching) {
+            return;
+        }
+        matching.forEach(volumeId => {
+            volumeNameMapping[volumeId] = { uuid, name };
+        });
+    });
+
+    return volumeNameMapping;
+}
+
+/**
+ * Ports the legacy `GetSMBVolumes` PowerShell function's post-processing: appends a bare
+ * `{ uuid }` volume record (no `name`/`space`/etc., matching the legacy shape) for each CIFS
+ * share's backing volume.
+ */
+function resolveCifsShareVolumes(cifsShareRecords: OntapCifsShareRecord[]): VolumeRecord[] {
+    return cifsShareRecords.flatMap(({ volume }) => {
+        const uuid = volume?.uuid;
+        return uuid ? [{ uuid } as unknown as VolumeRecord] : [];
+    });
+}
+
+/**
+ * Ports the legacy driveLetter/ontapVolumeuuid enrichment block: for each LUN, resolves the
+ * Windows drive letter (mount point) and ONTAP volume uuid of the Windows volume(s) that share its
+ * disk serial number.
+ */
+function enrichLunDetails(
+    lunDetails: OntapLunRecord[],
+    volumeSerialMapping: Record<string, string>,
+    databaseVolumeMap: DatabaseVolumeMapRow[],
+    volumeNameMapping: VolumeNameMapping
+): LunRecord[] {
+    const volumeMountPointMapping: Record<string, string> = {};
+    databaseVolumeMap.forEach(row => {
+        if (!row.VolumeId) {
+            return;
+        }
+        const volumeId = row.VolumeId.replace(/[\r\n]/g, '').replace(/ /g, '');
+        if (volumeMountPointMapping[volumeId] !== undefined) {
+            return;
+        }
+        volumeMountPointMapping[volumeId] = row.MountPoint?.replace(/[\r\n]/g, '') ?? '';
+    });
+
+    const enrichmentBySerial: Record<string, { driveLetter: string; ontapVolumeuuid: string }> = {};
+    Object.entries(volumeSerialMapping).forEach(([volumeId, serial]) => {
+        if (!serial) {
+            return;
+        }
+        if (!enrichmentBySerial[serial]) {
+            enrichmentBySerial[serial] = { driveLetter: '', ontapVolumeuuid: '' };
+        }
+        const entry = enrichmentBySerial[serial];
+        const mountPoint = volumeMountPointMapping[volumeId];
+        const volumeUuid = volumeNameMapping[volumeId]?.uuid;
+        if (!entry.driveLetter && mountPoint) {
+            entry.driveLetter = mountPoint;
+        }
+        if (!entry.ontapVolumeuuid && volumeUuid) {
+            entry.ontapVolumeuuid = volumeUuid;
+        }
+    });
+
+    return lunDetails.map(lunEntry => {
+        const { uuid, name, serial_number: serialNumber } = lunEntry;
+        const enrichment = enrichmentBySerial[serialNumber];
+        return {
+            uuid,
+            name,
+            serial_number: serialNumber,
+            driveLetter: enrichment?.driveLetter ?? '',
+            ontapVolumeuuid: enrichment?.ontapVolumeuuid ?? ''
+        };
+    });
+}
+
+/**
+ * Ports the legacy `updateVolumeMappings` PowerShell function: groups per-file SQL rows by
+ * database+volume, bucketing LUN uuids into `dataLunUuids`/`logLunUuids` by `FileType` (0 = ROWS
+ * data files, 1 = LOG files; other values are not mapped to either bucket).
+ */
+function updateVolumeMappings(
+    databaseVolumeMap: DatabaseVolumeMapRow[],
+    volumeNameMapping: VolumeNameMapping,
+    volumeLunUuidMapping: Record<string, string>
+): VolumeDBMapEntry[] {
+    const groupedEntries = new Map<
+        string,
+        { databaseName: string; ontapVolumeuuid: string; dataLunUuids: Set<string>; logLunUuids: Set<string> }
+    >();
+
+    databaseVolumeMap.forEach(dbMapping => {
+        if (!dbMapping.VolumeId) {
+            return;
+        }
+        const volumeId = dbMapping.VolumeId.replace(/[\r\n]/g, '').replace(/ /g, '');
+        const value = volumeNameMapping[volumeId];
+        if (!value) {
+            return;
+        }
+
+        const databaseName = dbMapping.DatabaseName?.replace(/[\r\n]/g, '') ?? dbMapping.DatabaseName;
+        const ontapVolumeuuid = value.uuid;
+        const groupKey = `${databaseName}|${ontapVolumeuuid}`;
+
+        if (!groupedEntries.has(groupKey)) {
+            groupedEntries.set(groupKey, {
+                databaseName,
+                ontapVolumeuuid,
+                dataLunUuids: new Set(),
+                logLunUuids: new Set()
+            });
+        }
+
+        const lunUuid = volumeLunUuidMapping[volumeId];
+        if (!lunUuid) {
+            return;
+        }
+
+        // FileType (sys.database_files / master_files type): 0 = ROWS (MDF/NDF), 1 = LOG (LDF).
+        // Other values (2 FILESTREAM, 4 FULLTEXT, etc.) are not mapped to data or log LUN lists.
+        const entry = groupedEntries.get(groupKey)!;
+        if (Number(dbMapping.FileType) === 0) {
+            entry.dataLunUuids.add(lunUuid);
+        } else if (Number(dbMapping.FileType) === 1) {
+            entry.logLunUuids.add(lunUuid);
+        }
+    });
+
+    return Array.from(groupedEntries.values(), ({ databaseName, ontapVolumeuuid, dataLunUuids, logLunUuids }) => ({
+        databaseName,
+        ontapVolumeuuid,
+        dataLunUuids: Array.from(dataLunUuids),
+        logLunUuids: Array.from(logLunUuids)
+    }));
+}
+
+/**
+ * Resolves ONTAP LUN/volume/CIFS-share mappings for one SQL Server instance's host-collected
+ * data, replacing the ONTAP REST calls the legacy `getMappedOntapVolumesScript` used to make from
+ * inside the SSM PowerShell session. Returns the same `{volumes, luns, volumeDBMap}` shape the
+ * PowerShell script used to hand back per instance.
+ */
+async function resolveOntapVolumeMappings(
+    target: OntapGatewayTarget,
+    hostData: MappedVolumesHostData,
+    opts: ResolveOntapVolumeMappingsOpts = {}
+): Promise<ResolveOntapVolumeMappingsResult> {
+    const { svmUuid, additionalFields } = opts;
+
+    const [lunRecords, cifsShareRecords] = await Promise.all([
+        getLunBySerialNumber(target, hostData.serialNumbers, { svmUuid }),
+        getCifsShareVolumes(target, hostData.cifsShareNames)
+    ]);
+    const { lunNames, volumeLunMapping, volumeLunUuidMapping, lunDetails } = resolveLunsFromSerialNumbers(
+        hostData.volumeSerialMapping,
+        lunRecords
+    );
+
+    const volumeRecords = await getVolumeByName(target, lunNames, { svmUuid, fields: additionalFields });
+    const volumeNameMapping = resolveVolumesFromLunNames(volumeLunMapping, volumeRecords);
+    const cifsVolumeRecords = resolveCifsShareVolumes(cifsShareRecords);
+
+    const records = [...volumeRecords, ...cifsVolumeRecords].map(stripOntapLinks);
+    const volumeDBMap = updateVolumeMappings(hostData.databaseVolumeMap, volumeNameMapping, volumeLunUuidMapping);
+    const luns = enrichLunDetails(
+        lunDetails,
+        hostData.volumeSerialMapping,
+        hostData.databaseVolumeMap,
+        volumeNameMapping
+    );
+
+    return { volumes: { records }, luns, volumeDBMap };
+}
+
 async function getMappedOntapVolumes(
     credentialsId: string,
     region: string,
@@ -548,19 +831,20 @@ async function getMappedOntapVolumes(
     });
 
     try {
+        if (!accountId) {
+            const errorMessage = `accountId is required to resolve ONTAP volume mappings for FSx file system ${fileSystemId}`;
+            logger.error(errorMessage, { credentialsId, region, fileSystemId });
+            throw createError(HttpErrorCodes.BAD_REQUEST, errorMessage);
+        }
+
         // retrieve the mapped volumes for system databases alone when isSystemDatabase is true otherwise includes user dbs also
         const psIsSystemDatabase = isSystemDatabase ? '$true' : '$false';
 
-        const command = getMappedOntapVolumesScript(
-            fileSystemId,
-            region,
+        const command = getMappedVolumesHostDataScript(
             psIsSystemDatabase,
             instanceNames,
             isSqlAuthEnabled,
-            fields,
             includeLogVolumes,
-            svmOntapUuid,
-            instanceOntapDetails,
             includeAoag
         );
 
@@ -583,46 +867,75 @@ async function getMappedOntapVolumes(
         logger.debug({ parsedResponse });
 
         const instancesResponse: { [key: string]: any } = {};
-        instanceNames?.forEach((iName: string) => {
-            const originalInstanceName = iName;
-            iName = IS_DEMO_FLOW ? DEFAULT_INSTANCE_NAME : iName;
-            if (
-                parsedResponse?.[iName] &&
-                !(typeof parsedResponse?.[iName] === 'string' && parsedResponse?.[iName].includes('error'))
-            ) {
-                const { volumeDBMap, volumes, luns, databasesSummary, sqlNativeBackupEnabledDatabases } =
-                    parsedResponse?.[iName] ?? {};
-                const normalizedVolumeDBMap = Array.isArray(volumeDBMap)
-                    ? volumeDBMap
-                    : volumeDBMap
-                    ? [volumeDBMap]
-                    : [];
-                const normalizedDatabasesSummary = Array.isArray(databasesSummary) ? databasesSummary : [];
-                const normalizedSqlNativeBackupEnabledDatabases = Array.isArray(sqlNativeBackupEnabledDatabases)
-                    ? sqlNativeBackupEnabledDatabases
-                    : [];
-                iName = originalInstanceName;
-                if (volumes && !isEmpty(volumes?.records)) {
-                    instancesResponse[iName] = {
-                        volumeRecords: volumes.records,
-                        volumeDBMap: normalizedVolumeDBMap,
-                        lunRecords: luns,
-                        databasesSummary: normalizedDatabasesSummary,
-                        sqlNativeBackupEnabledDatabases: normalizedSqlNativeBackupEnabledDatabases
-                    };
-                } else {
-                    instancesResponse[iName] = {
+        await Promise.all(
+            (instanceNames ?? []).map(
+                throat(3, async (originalInstanceName: string) => {
+                    const iName = IS_DEMO_FLOW ? DEFAULT_INSTANCE_NAME : originalInstanceName;
+                    const hostData = parsedResponse?.[iName];
+
+                    if (!hostData || (typeof hostData === 'string' && hostData.includes('error'))) {
+                        logger.error(
+                            'Failed to get mapped ontap volumes for the instance:',
+                            originalInstanceName,
+                            hostData
+                        );
+                        return;
+                    }
+
+                    const { databasesSummary, sqlNativeBackupEnabledDatabases } = hostData as MappedVolumesHostData;
+                    const normalizedDatabasesSummary = Array.isArray(databasesSummary) ? databasesSummary : [];
+                    const normalizedSqlNativeBackupEnabledDatabases = Array.isArray(sqlNativeBackupEnabledDatabases)
+                        ? sqlNativeBackupEnabledDatabases
+                        : [];
+
+                    const emptyInstanceResponse = {
                         volumeRecords: [],
                         volumeDBMap: [],
                         lunRecords: [],
                         databasesSummary: normalizedDatabasesSummary,
                         sqlNativeBackupEnabledDatabases: normalizedSqlNativeBackupEnabledDatabases
                     };
-                }
-            } else {
-                logger.error('Failed to get mapped ontap volumes for the instance:', iName, parsedResponse?.[iName]);
-            }
-        });
+
+                    const instanceDetails = instanceOntapDetails?.[originalInstanceName] as
+                        | { fsxId?: string; svmUuid?: string }
+                        | undefined;
+                    const target: OntapGatewayTarget = {
+                        accountId,
+                        credentialsId,
+                        region,
+                        fsxId: instanceDetails?.fsxId ?? fileSystemId
+                    };
+
+                    try {
+                        const { volumes, luns, volumeDBMap } = await resolveOntapVolumeMappings(
+                            target,
+                            hostData as MappedVolumesHostData,
+                            { svmUuid: instanceDetails?.svmUuid ?? svmOntapUuid, additionalFields: fields }
+                        );
+
+                        instancesResponse[originalInstanceName] = isEmpty(volumes?.records)
+                            ? emptyInstanceResponse
+                            : {
+                                  volumeRecords: volumes.records,
+                                  volumeDBMap,
+                                  lunRecords: luns,
+                                  databasesSummary: normalizedDatabasesSummary,
+                                  sqlNativeBackupEnabledDatabases: normalizedSqlNativeBackupEnabledDatabases
+                              };
+                    } catch (error) {
+                        logger.error('Failed to resolve ONTAP volume mappings for the instance', {
+                            accountId,
+                            credentialsId,
+                            region,
+                            fileSystemId,
+                            instanceName: originalInstanceName,
+                            error
+                        });
+                        instancesResponse[originalInstanceName] = emptyInstanceResponse;
+                    }
+                })
+            )
+        );
 
         const { fsxVolumeIdUuidMap } = await getFsxnVolIdsFromOntapVolIds(
             credentialsId,
@@ -1084,5 +1397,7 @@ export {
     validateSvmCountCapacity,
     isInstanceAppConsistentBackupEnabled,
     getFSXPreferredSubnetAndAZ,
-    getMZFsxnNodePreference
+    getMZFsxnNodePreference,
+    resolveOntapVolumeMappings,
+    updateVolumeMappings
 };

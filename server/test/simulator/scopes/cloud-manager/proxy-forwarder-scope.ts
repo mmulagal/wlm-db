@@ -26,6 +26,9 @@ const getOverrides = new Map<string, ProxyGetOverride>();
 // Responses are consumed in order; the last entry is returned for any further calls once exhausted.
 const getOverrideSequences = new Map<string, ProxyGetOverride[]>();
 
+/** Captured GET request URIs (path + query) for assertions; cleared by `resetProxyOverrides`. */
+const capturedProxyGetUris: string[] = [];
+
 function overrideKey({ targetId, ontapPath }: { targetId: string; ontapPath: string }): string {
     return `${targetId}|${ontapPath.replace(/^\/+/, '')}`;
 }
@@ -55,6 +58,11 @@ function registerProxyGetResponseSequence(opts: {
 function resetProxyOverrides(): void {
     getOverrides.clear();
     getOverrideSequences.clear();
+    capturedProxyGetUris.length = 0;
+}
+
+function getCapturedProxyGetUris(): readonly string[] {
+    return capturedProxyGetUris;
 }
 
 nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
@@ -63,6 +71,7 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
     .persist(true)
     .get(PROXY_PATH_REGEX)
     .reply(uri => {
+        capturedProxyGetUris.push(uri);
         const parsed = parseProxyUri(uri);
         if (parsed) {
             const key = overrideKey(parsed);
@@ -95,4 +104,4 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
     .head(PROXY_PATH_REGEX)
     .reply(uri => (isErrorTarget(uri) ? [500, {}] : [200, {}]));
 
-export { registerProxyGetResponse, registerProxyGetResponseSequence, resetProxyOverrides };
+export { registerProxyGetResponse, registerProxyGetResponseSequence, resetProxyOverrides, getCapturedProxyGetUris };

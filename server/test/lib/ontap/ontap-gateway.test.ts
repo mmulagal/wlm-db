@@ -1,11 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import * as fsxOperations from '../../../src/operations/aws/fsx-operations';
+import type { DescribeFileSystemsCommandOutput } from '@aws-sdk/client-fsx';
+import * as fsxLib from '../../../src/lib/aws/fsx';
 import {
     callOntapApi,
     getClusterInfo,
     getClusterJobStatus,
     collectAllOntapRecords,
-    collectOntapRecordsBatched
+    collectOntapRecordsBatched,
+    getLunBySerialNumber,
+    getVolumeByName,
+    getCifsShareVolumes
 } from '../../../src/lib/ontap/ontap-gateway';
 import {
     registerProxyGetResponse,
@@ -31,16 +35,21 @@ function mockManagementEndpoint(
     management: { dnsName?: string; ipAddresses?: string[] } = { dnsName: MANAGEMENT_DNS_NAME },
     persist = false
 ): void {
-    const resolvedValue = [
-        {
-            fileSystemId: TEST_FSX_ID,
-            lifecycle: 'AVAILABLE',
-            ontapConfiguration: {
-                endpoints: { management }
+    const resolvedValue: DescribeFileSystemsCommandOutput = {
+        $metadata: {},
+        FileSystems: [
+            {
+                FileSystemId: TEST_FSX_ID,
+                Lifecycle: 'AVAILABLE',
+                OntapConfiguration: {
+                    Endpoints: {
+                        Management: { DNSName: management.dnsName, IpAddresses: management.ipAddresses }
+                    }
+                }
             }
-        }
-    ];
-    const spy = vi.spyOn(fsxOperations, 'getFSXDetails');
+        ]
+    };
+    const spy = vi.spyOn(fsxLib, 'describeFSx');
     if (persist) {
         spy.mockResolvedValue(resolvedValue);
     } else {
@@ -232,6 +241,72 @@ describe('ONTAP gateway', () => {
             );
 
             expect(records).toEqual([{ name: 'vol1' }, { name: 'vol1' }]);
+        });
+    });
+
+    describe('getLunBySerialNumber', () => {
+        it('should resolve the FSx endpoint and fetch LUN records by serial number', async () => {
+            mockManagementEndpoint();
+            registerProxyGetResponse({
+                targetId: TEST_FSX_ID,
+                ontapPath: 'api/storage/luns',
+                body: {
+                    num_records: 1,
+                    records: [{ uuid: 'lun-uuid-1', name: '/vol/vol1/sqldata', serial_number: 'SERIAL1' }]
+                }
+            });
+
+            const records = await getLunBySerialNumber(GATEWAY_TARGET, ['SERIAL1']);
+
+            expect(records).toEqual([{ uuid: 'lun-uuid-1', name: '/vol/vol1/sqldata', serial_number: 'SERIAL1' }]);
+        });
+
+        it('should return an empty array without making a request when serialNumbers is empty', async () => {
+            const records = await getLunBySerialNumber(GATEWAY_TARGET, []);
+
+            expect(records).toEqual([]);
+        });
+    });
+
+    describe('getVolumeByName', () => {
+        it('should resolve the FSx endpoint and fetch volume records by name', async () => {
+            mockManagementEndpoint();
+            registerProxyGetResponse({
+                targetId: TEST_FSX_ID,
+                ontapPath: 'api/storage/volumes',
+                body: { num_records: 1, records: [{ uuid: 'vol-uuid-1', name: 'vol1', snapshot_count: 2 }] }
+            });
+
+            const records = await getVolumeByName(GATEWAY_TARGET, ['vol1'], { fields: 'space.size' });
+
+            expect(records).toEqual([{ uuid: 'vol-uuid-1', name: 'vol1', snapshot_count: 2 }]);
+        });
+
+        it('should return an empty array without making a request when names is empty', async () => {
+            const records = await getVolumeByName(GATEWAY_TARGET, []);
+
+            expect(records).toEqual([]);
+        });
+    });
+
+    describe('getCifsShareVolumes', () => {
+        it('should resolve the FSx endpoint and fetch the volume backing each CIFS share', async () => {
+            mockManagementEndpoint();
+            registerProxyGetResponse({
+                targetId: TEST_FSX_ID,
+                ontapPath: 'api/protocols/cifs/shares',
+                body: { num_records: 1, records: [{ volume: { uuid: 'vol-uuid-2', name: 'share1' } }] }
+            });
+
+            const records = await getCifsShareVolumes(GATEWAY_TARGET, ['share1']);
+
+            expect(records).toEqual([{ volume: { uuid: 'vol-uuid-2', name: 'share1' } }]);
+        });
+
+        it('should return an empty array without making a request when shareNames is empty', async () => {
+            const records = await getCifsShareVolumes(GATEWAY_TARGET, []);
+
+            expect(records).toEqual([]);
         });
     });
 });

@@ -3045,7 +3045,8 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
                 activeNodeInstanceId!,
                 [instanceName],
                 sqlAuthEnabled,
-                true
+                true,
+                accountId
             )) || [];
         const mappedVolumeNames = (
             Object.values(instanceVolumeMapping)

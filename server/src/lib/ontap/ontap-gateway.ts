@@ -7,7 +7,6 @@ import getLogger from '../../utils/logger';
 import { sleep } from '../../utils/utils';
 
 import { describeFSx } from '../aws/fsx';
-import { getFSXDetails } from '../../operations/aws/fsx-operations';
 import { callProxyForwarder, type ProxyHttpMethod } from '../cloud-manager/proxy-forwarder';
 
 const logger = getLogger();
@@ -114,9 +113,27 @@ function isProxyCollectionEnvelope<T>(value: unknown): value is ProxyCollectionE
     return typeof value === 'object' && value !== null && Array.isArray((value as ProxyCollectionEnvelope<T>).value);
 }
 
+interface OntapLunRecord {
+    uuid: string;
+    name: string;
+    serial_number: string;
+}
+
+interface OntapVolumeRecord {
+    uuid: string;
+    name: string;
+    [key: string]: unknown;
+}
+
+interface OntapCifsShareRecord {
+    volume?: { uuid: string; name?: string };
+}
+
 /**
  * Resolves the ONTAP management endpoint (DNS name, falling back to an IP address) for an FSx
- * for ONTAP file system, reusing the same AWS SDK lookup as `getFSXDetails`.
+ * for ONTAP file system directly from the raw `DescribeFileSystems` response — deliberately not
+ * routed through `getFSXDetails` (which enriches with SVMs/volumes/network interfaces this lookup
+ * doesn't need) to avoid an import cycle between this module and `operations/aws/fsx-operations.ts`.
  */
 async function resolveFsxManagementEndpoint(
     credentialsId: string,
@@ -130,8 +147,8 @@ async function resolveFsxManagementEndpoint(
         { FileSystemIds: [fsxId] },
         accountId
     );
-    const [fsxDetails] = await getFSXDetails(credentialsId, region, fileSystems);
-    const { dnsName, ipAddresses } = fsxDetails?.ontapConfiguration?.endpoints?.management ?? {};
+    const { DNSName: dnsName, IpAddresses: ipAddresses } =
+        fileSystems[0]?.OntapConfiguration?.Endpoints?.Management ?? {};
     const managementEndpoint = dnsName || ipAddresses?.[0];
 
     if (!managementEndpoint) {
@@ -141,6 +158,18 @@ async function resolveFsxManagementEndpoint(
     }
 
     return managementEndpoint;
+}
+
+/**
+ * Resolves an {@link OntapGatewayTarget} into the `accountId`/`targetId`/`endpoint` base needed by
+ * `collectAllOntapRecords`/`collectOntapRecordsBatched`, reusing the same endpoint lookup as
+ * `callOntapApi`.
+ */
+async function toProxyBase(target: OntapGatewayTarget): Promise<ProxyOperationBaseOpts> {
+    const { accountId, credentialsId, region, fsxId } = target;
+    const endpoint = await resolveFsxManagementEndpoint(credentialsId, region, fsxId, accountId);
+
+    return { accountId, targetId: fsxId, endpoint };
 }
 
 /**
@@ -333,15 +362,78 @@ async function collectOntapRecordsBatched<T>(
     return responseRecords;
 }
 
+/**
+ * Looks up ONTAP LUNs by serial number, batching the `serial_number` filter across requests of up
+ * to {@link ONTAP_FILTER_BATCH_SIZE} values. Returns `[]` without making a request when
+ * `serialNumbers` is empty.
+ */
+async function getLunBySerialNumber(
+    target: OntapGatewayTarget,
+    serialNumbers: string[],
+    opts?: { svmUuid?: string; fields?: string }
+): Promise<OntapLunRecord[]> {
+    if (serialNumbers.length === 0) {
+        return [];
+    }
+
+    const base = await toProxyBase(target);
+    return collectOntapRecordsBatched<OntapLunRecord>(base, 'api/storage/luns', 'serial_number', serialNumbers, {
+        ...(opts?.fields ? { fields: opts.fields } : {}),
+        ...(opts?.svmUuid ? { 'svm.uuid': opts.svmUuid } : {})
+    });
+}
+
+/**
+ * Looks up ONTAP volumes by name, batching the `name` filter across requests of up to
+ * {@link ONTAP_FILTER_BATCH_SIZE} values. Always requests `snapshot_count` in addition to any
+ * caller-supplied `fields`. Returns `[]` without making a request when `names` is empty.
+ */
+async function getVolumeByName(
+    target: OntapGatewayTarget,
+    names: string[],
+    opts?: { svmUuid?: string; fields?: string }
+): Promise<OntapVolumeRecord[]> {
+    if (names.length === 0) {
+        return [];
+    }
+
+    const base = await toProxyBase(target);
+    return collectOntapRecordsBatched<OntapVolumeRecord>(base, 'api/storage/volumes', 'name', names, {
+        fields: `snapshot_count${opts?.fields ? `,${opts.fields}` : ''}`,
+        ...(opts?.svmUuid ? { 'svm.uuid': opts.svmUuid } : {})
+    });
+}
+
+/**
+ * Looks up the ONTAP volume backing each CIFS share name, batching the `name` filter across
+ * requests of up to {@link ONTAP_FILTER_BATCH_SIZE} values. Returns `[]` without making a request
+ * when `shareNames` is empty.
+ */
+async function getCifsShareVolumes(target: OntapGatewayTarget, shareNames: string[]): Promise<OntapCifsShareRecord[]> {
+    if (shareNames.length === 0) {
+        return [];
+    }
+
+    const base = await toProxyBase(target);
+    return collectOntapRecordsBatched<OntapCifsShareRecord>(base, 'api/protocols/cifs/shares', 'name', shareNames, {
+        fields: 'volume'
+    });
+}
+
 export {
     callOntapApi,
     getClusterInfo,
     getClusterJobStatus,
     collectAllOntapRecords,
     collectOntapRecordsBatched,
-    extractErrorMessage,
+    getLunBySerialNumber,
+    getVolumeByName,
+    getCifsShareVolumes,
     buildOntapProxyBase,
+    extractErrorMessage,
     unwrapOntapSettled,
-    OntapVolumeRecord,
-    OntapLunRecord
+    type OntapGatewayTarget,
+    type OntapLunRecord,
+    type OntapVolumeRecord,
+    type OntapCifsShareRecord
 };

@@ -884,6 +884,23 @@ interface InstancesResponse {
     [key: string]: MappedOnTapVolumeResponse;
 }
 
+interface DatabaseVolumeMapRow {
+    DatabaseName: string;
+    VolumeName: string;
+    VolumeId: string;
+    FileType: number;
+    MountPoint: string;
+}
+
+interface MappedVolumesHostData {
+    serialNumbers: string[];
+    volumeSerialMapping: Record<string, string>;
+    databaseVolumeMap: DatabaseVolumeMapRow[];
+    cifsShareNames: string[];
+    databasesSummary: MappedDatabaseSummary[];
+    sqlNativeBackupEnabledDatabases: SqlNativeBackupEnabledDatabase[];
+}
+
 interface BulkDismissConfigurationType {
     configurationName: string;
     configState: string;
@@ -1079,6 +1096,8 @@ export {
     VolumeDBMapEntry,
     MappedDatabaseSummary,
     SqlNativeBackupEnabledDatabase,
+    DatabaseVolumeMapRow,
+    MappedVolumesHostData,
     AWSBackupAssessment,
     ResourceAssessmentData,
     ClonedVolumeDetail,

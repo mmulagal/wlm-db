@@ -978,17 +978,17 @@ const installPowerShellModule = (module: string) => `
 // existing callers (none of which currently set it to `$true`). The optimized combined-query
 // pipeline below no longer branches on system-vs-user databases. Remove the parameter once all
 // call sites are confirmed to be passing `$false`.
-const getMappedOntapVolumesScript = (
-    fsxid: string,
-    fsxregion: string,
+//
+// Host-only: collects SQL file/volume data and Windows disk serial numbers. ONTAP LUN/volume/CIFS
+// resolution (previously embedded here via Invoke-ONTAPRequest) now happens in Node — see
+// `resolveOntapVolumeMappings` in `fsx-operations.ts` — using the `MappedVolumesHostData` shape
+// this script returns per instance.
+const getMappedVolumesHostDataScript = (
     // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
     _isSystemDatabase: string = '$false',
     instances: string[] = [],
     sqlAuthEnabled: boolean = false,
-    fields: string = '',
     includeLogVolumes: boolean = false,
-    svmOntapUuid: string = '',
-    instanceLevelFsxnIds: Record<string, object> = {},
     includeAoag: boolean = false
 ) => `
     #Get Mapped Ontap Volumes
@@ -1011,12 +1011,7 @@ const getMappedOntapVolumesScript = (
     try {
         #Requires -Module AWS.Tools.SimpleSystemsManagement
 
-        $FSxID                = '${fsxid}'
-        $FSxRegion            = '${fsxregion}'
-        $instances            = '${JSON.stringify(instances)}' | ConvertFrom-Json
-        $additionalFields     = '${fields}'
-        $svmOntapUuid         = '${svmOntapUuid}'
-        $instanceLevelFsxnIds = '${JSON.stringify(instanceLevelFsxnIds)}' | ConvertFrom-Json
+        $instances = '${JSON.stringify(instances)}' | ConvertFrom-Json
 
         # ---------- One-time machine / metadata lookups (cached) ----------
         $cs                  = Get-CimInstance -ClassName Win32_ComputerSystem
@@ -1128,95 +1123,7 @@ const getMappedOntapVolumesScript = (
             }
         }
 
-        # ---------- TLS / certificate setup (done once, NOT per-instance) ----------
-        # Use ServerCertificateValidationCallback (faster, no Add-Type roundtrip if already set).
-        if (-not ('TrustAllCertsPolicy' -as [type])) {
-            Add-Type @"
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
-public class TrustAllCertsPolicy : ICertificatePolicy {
-    public bool CheckValidationResult(ServicePoint srvPoint, X509Certificate certificate, WebRequest request, int certificateProblem) { return true; }
-}
-"@
-        }
-        [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-
-        # If upstream already determined connectivity, don't re-probe.
-        if ($null -eq $connection) {
-            $tcp = New-Object System.Net.Sockets.TcpClient
-            try {
-                $certHost = $(if ($FSxRegion -like 'us-gov-*') { 'fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com' } else { 'fsx-aws-certificates.s3.amazonaws.com' })
-                $iar = $tcp.BeginConnect($certHost, 443, $null, $null)
-                $connection = $iar.AsyncWaitHandle.WaitOne(1500) -and $tcp.Connected
-                if ($connection) { $tcp.EndConnect($iar) | Out-Null }
-            } catch {
-                $connection = $false
-            } finally {
-                $tcp.Close()
-            }
-            if (-not $connection) {
-                Set-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\WinTrust\\Trust Providers\\Software Publishing\\' \`
-                    -Name State -Value 146944 -Force | Out-Null
-            }
-        }
-
-        $isprivatesubnet = -not $connection
-        $regionCertificate = $null
-        if (-not $isprivatesubnet) {
-            try {
-                $certHost = $(if ($FSxRegion -like 'us-gov-*') { 'fsx-aws-us-gov-certificates.s3.us-gov-west-1.amazonaws.com' } else { 'fsx-aws-Certificates.s3.amazonaws.com' })
-                $FSxCertificateUri = "https://$certHost/bundle-$FSxRegion.pem"
-                # Stream cert into memory then write a temp file for Import-Certificate (avoids Invoke-WebRequest progress overhead)
-                $tempCertFile = [System.IO.Path]::GetTempFileName()
-                Invoke-WebRequest -Uri $FSxCertificateUri -OutFile $tempCertFile -UseBasicParsing
-                $importedCert = Import-Certificate -FilePath $tempCertFile -CertStoreLocation Cert:\\LocalMachine\\Root
-                # The imported cert IS the cert we want; no need to re-enumerate the entire root store.
-                $regionCertificate = $importedCert
-                Remove-Item -LiteralPath $tempCertFile -Force -ErrorAction SilentlyContinue
-            } catch {
-                Write-Information "Certificate import failed: $($_.Exception.Message)"
-            }
-        }
-
         # ---------- Functions defined ONCE outside the per-instance loop ----------
-
-        Function Invoke-ONTAPRequest {
-            param(
-                [Parameter(Mandatory = $true)]
-                [string]$ApiEndpoint,
-                [string]$ApiQueryFilter = '',
-                [string]$ApiQueryFields = '',
-                [string]$method         = 'GET',
-                [string]$body,
-                [string]$FSxCredentialsInBase64 = $FSxCredentialsInBase64,
-                [string]$FSxHostName            = $FSxHostName
-            )
-
-            Write-Information "Invoke ONTAP rest request $ApiEndpoint $ApiQueryFilter $ApiQueryFields $method $body"
-
-            $sb = [System.Text.StringBuilder]::new(128)
-            [void]$sb.Append('https://').Append($FSxHostName).Append('/api').Append($ApiEndpoint)
-            $hasFilter = -not [string]::IsNullOrEmpty($ApiQueryFilter)
-            $hasFields = -not [string]::IsNullOrEmpty($ApiQueryFields)
-            if ($hasFilter -or $hasFields) { [void]$sb.Append('?') }
-            if ($hasFilter) { [void]$sb.Append($ApiQueryFilter) }
-            if ($hasFilter -and $hasFields) { [void]$sb.Append('&') }
-            if ($hasFields) { [void]$sb.Append($ApiQueryFields) }
-
-            $Params = @{
-                URI         = $sb.ToString()
-                Method      = $method
-                Headers     = @{ Authorization = "Basic $FSxCredentialsInBase64" }
-                ContentType = 'application/json'
-            }
-            if (-not [string]::IsNullOrEmpty($body)) { $Params['Body'] = $body }
-
-            if (-not $isprivatesubnet -and $null -ne $regionCertificate) {
-                return Invoke-RestMethod @Params -Certificate $regionCertificate
-            }
-            return Invoke-RestMethod @Params
-        }
 
         Function Is-CredSSPEnabled {
             try {
@@ -1283,42 +1190,6 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
                 return $output | ForEach-Object { ($_ -split '\\s{2,}')[-1] }
             }
             return $output
-        }
-
-        Function Get-FSxNDetails {
-            param([string]$fsxId = $FSxID)
-            Write-Debug "fsxId to get ontap creds: $fsxId"
-            $SsmParameter = (Get-SSMParameter -Name "/netapp/wlmdb/$fsxId" -WithDecryption $true).Value | Out-String | ConvertFrom-Json
-            $FSxUserName = $SsmParameter.fsx.username
-            $FSxPassword = $SsmParameter.fsx.password
-            $FSxPasswordSecureString = ConvertTo-SecureString $FSxPassword -AsPlainText -Force
-            $FSxCredentials          = New-Object System.Management.Automation.PSCredential($FSxUserName, $FSxPasswordSecureString)
-            $FSxCredentialsInBase64  = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($FSxUserName + ':' + $FSxPassword))
-            $FSxHostName             = "management.$fsxId.fsx.$FSxRegion.amazonaws.com"
-            $FSxIPUsed               = $false
-            try {
-                $req = [System.Net.WebRequest]::Create("https://$FSxHostName")
-                $req.Timeout = 5000
-                $resp = $req.GetResponse()
-                $resp.Close()
-            } catch {
-                Write-Information "FSxNHTTP_Response: $($_.Exception.Message)"
-                if ($_.Exception.Message -like '*remote server returned an error*') {
-                    Write-Information 'Server connection works, returned error for 0 arguments'
-                } else {
-                    Write-Information "FSxN Management domain $FSxHostName is not resolved. Switching to management IP."
-                    $FileSystemDetails = Get-FSXFileSystem -FileSystemId $fsxId
-                    $FSxHostName = $FileSystemDetails.ontapconfiguration.Endpoints.Management.IpAddresses
-                    if ($FSxHostName -is [array]) { $FSxHostName = $FSxHostName[0] }
-                    $FSxIPUsed = $true
-                }
-            }
-            return @{
-                FSxCredentialsInBase64 = $FSxCredentialsInBase64
-                FSxHostName            = $FSxHostName
-                FSxCredentials         = $FSxCredentials
-                FSxIPUsed              = $FSxIPUsed
-            }
         }
 
         Function Get-VolumeIdsList($sqlJsonResponse) {
@@ -1393,257 +1264,6 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
             }
         }
 
-        Function Get-LunFromSerialNumber($SerialNumbers, $VolumeSerialMapping) {
-            Write-Debug "Get ONTAP lun name from serial numbers for: $VolumeSerialMapping"
-
-            $sb = [System.Text.StringBuilder]::new(256)
-            foreach ($SerialNumber in $SerialNumbers) {
-                if ($SerialNumber -ne '') {
-                    if ($sb.Length -gt 0) { [void]$sb.Append('|') }
-                    [void]$sb.Append([System.Web.HttpUtility]::UrlEncode($SerialNumber))
-                }
-            }
-            $QueryFilter = $sb.ToString()
-            if ($svmOntapUuid -ne '') { $QueryFilter += "&svm.uuid=$svmOntapUuid" }
-
-            $LunNamesList         = New-Object 'System.Collections.Generic.List[string]'
-            $VolumeLunMapping     = @{}
-            $VolumeLunUuidMapping = @{}
-            $LunDetails           = New-Object 'System.Collections.Generic.List[object]'
-
-            if ($QueryFilter -ne '') {
-                $Params = @{
-                    ApiEndPoint            = '/storage/luns'
-                    ApiQueryFilter         = "serial_number=$QueryFilter"
-                    FSxCredentialsInBase64 = $visitedFilesystems.$instanceLevelFsxnId.FSxCredentialsInBase64
-                    FSxHostName            = $visitedFilesystems.$instanceLevelFsxnId.FSxHostName
-                }
-                $Response   = Invoke-ONTAPRequest @Params
-                $LunRecords = $Response.records
-
-                Write-Debug "Lun Records Mapping: $($LunRecords | ConvertTo-Json)"
-
-                $volumeIdsBySerial = @{}
-                foreach ($volumeId in $VolumeSerialMapping.Keys) {
-                    $serial = $VolumeSerialMapping[$volumeId]
-                    if ($null -eq $serial) { continue }
-                    $list = $volumeIdsBySerial[$serial]
-                    if ($null -eq $list) {
-                        $list = New-Object 'System.Collections.Generic.List[object]'
-                        $volumeIdsBySerial[$serial] = $list
-                    }
-                    $list.Add($volumeId)
-                }
-
-                foreach ($record in $LunRecords) {
-                    $LunNamesList.Add($record.name)
-                    $LunDetails.Add(@{
-                        uuid          = $record.uuid
-                        name          = $record.name
-                        serial_number = $record.serial_number
-                    })
-                    $matchingVolumes = $volumeIdsBySerial[$record.serial_number]
-                    if ($null -ne $matchingVolumes) {
-                        $lunName = $record.name -replace '^\\/vol\\/(.*?)\\/.*$', '$1'
-                        $uuid    = $record.uuid
-                        foreach ($volumeId in $matchingVolumes) {
-                            $VolumeLunMapping[$volumeId]     = $lunName
-                            $VolumeLunUuidMapping[$volumeId] = $uuid
-                        }
-                    }
-                }
-            }
-            [string[]]$LunNames = $LunNamesList.ToArray()
-            Write-Debug "Lun volume Mapping: $($VolumeLunMapping | ConvertTo-Json)"
-            Write-Debug "Lun volume Uuid Mapping: $($VolumeLunUuidMapping | ConvertTo-Json)"
-            Write-Debug "Lun names: $LunNames"
-            return @{
-                LunNames             = $LunNames
-                VolumeLunMapping     = $VolumeLunMapping
-                VolumeLunUuidMapping = $VolumeLunUuidMapping
-                LunDetails           = $LunDetails
-            }
-        }
-
-        Function Get-VolumeIdFromName($Names, $volumeLunMapping) {
-            Write-Debug "Get Volume Id from name: $Names"
-
-            $sb = [System.Text.StringBuilder]::new(256)
-            foreach ($Name in $Names) {
-                if ($Name -ne '') {
-                    if ($sb.Length -gt 0) { [void]$sb.Append('|') }
-                    [void]$sb.Append([System.Web.HttpUtility]::UrlEncode($Name))
-                }
-            }
-            $QueryFilter = $sb.ToString()
-
-            $svmUuid = $instanceLevelFsxnIds.$serverInstanceName.svmUuid
-            if (-not [string]::IsNullOrEmpty($svmUuid)) {
-                $QueryFilter += "&svm.uuid=$svmUuid"
-            } elseif ($svmOntapUuid -ne '') {
-                $QueryFilter += "&svm.uuid=$svmOntapUuid"
-            }
-
-            $VolumeNameMapping = @{}
-            $Response          = $null
-
-            if ($QueryFilter -ne '') {
-                $Params = @{
-                    ApiEndPoint            = '/storage/volumes'
-                    ApiQueryFilter         = "name=$QueryFilter&fields=snapshot_count,$additionalFields"
-                    FSxCredentialsInBase64 = $visitedFilesystems.$instanceLevelFsxnId.FSxCredentialsInBase64
-                    FSxHostName            = $visitedFilesystems.$instanceLevelFsxnId.FSxHostName
-                }
-                $Response = Invoke-ONTAPRequest @Params
-
-                $volumeIdsByLunName = @{}
-                foreach ($volumeId in $VolumeLunMapping.Keys) {
-                    $lunName = $VolumeLunMapping[$volumeId]
-                    if ($null -eq $lunName) { continue }
-                    $list = $volumeIdsByLunName[$lunName]
-                    if ($null -eq $list) {
-                        $list = New-Object 'System.Collections.Generic.List[object]'
-                        $volumeIdsByLunName[$lunName] = $list
-                    }
-                    $list.Add($volumeId)
-                }
-
-                foreach ($record in $Response.records) {
-                    $matching = $volumeIdsByLunName[$record.name]
-                    if ($null -ne $matching) {
-                        $value = @{ uuid = $record.uuid; name = $record.name }
-                        foreach ($volumeId in $matching) {
-                            $VolumeNameMapping[$volumeId] = $value
-                        }
-                    }
-                }
-            }
-            Write-Debug "final Mapping: $($VolumeLunMapping | ConvertTo-Json)"
-
-            return @{
-                Response          = $Response
-                volumeNameMapping = $VolumeNameMapping
-            }
-        }
-
-        Function GetSMBVolumes {
-            param(
-                [Parameter(Mandatory = $true)]
-                [string[]]$sqlresponse
-            )
-
-            $SmbShares = $sqlresponse | ConvertFrom-Json
-
-            $sb = [System.Text.StringBuilder]::new(256)
-            foreach ($SmbShare in $SmbShares) {
-                $volname = $SmbShare.volumename
-                if ($volname -ne '') {
-                    if ($sb.Length -gt 0) { [void]$sb.Append('|') }
-                    [void]$sb.Append([System.Web.HttpUtility]::UrlEncode($volname))
-                }
-            }
-            $QueryFilter = $sb.ToString()
-
-            $volumeIds = New-Object 'System.Collections.Generic.List[object]'
-            if ($QueryFilter -ne '') {
-                $Params = @{
-                    ApiEndPoint            = '/protocols/cifs/shares'
-                    ApiQueryFilter         = "name=$QueryFilter&fields=volume"
-                    FSxCredentialsInBase64 = $visitedFilesystems.$instanceLevelFsxnId.FSxCredentialsInBase64
-                    FSxHostName            = $visitedFilesystems.$instanceLevelFsxnId.FSxHostName
-                }
-                $cifsShares  = Invoke-ONTAPRequest @Params
-                $cifsRecords = $cifsShares.records
-
-                foreach ($record in $cifsRecords) {
-                    $volumeIds.Add([pscustomobject]@{ uuid = $record.volume.uuid })
-                }
-            }
-            if ($volumeIds.Count -eq 1) { return @(, $volumeIds.ToArray()) }
-            return $volumeIds.ToArray()
-        }
-
-        Function updateVolumeMappings($sqlJsonResponse, $volumeNameMapping, $volumeLunUuidMapping) {
-            try {
-                $groupedEntries  = [ordered]@{}
-                $dataLunSetByKey = @{}
-                $logLunSetByKey  = @{}
-
-                foreach ($dbMapping in $sqlJsonResponse) {
-                    $rawVolumeId = $dbMapping.VolumeId
-                    if ($null -eq $rawVolumeId) { continue }
-                    $volumeId = ($rawVolumeId -replace "\`r", '' -replace "\`n", '').Replace(' ', '')
-
-                    if ($null -ne $volumeNameMapping -and $volumeNameMapping.ContainsKey($volumeId)) {
-                        $value           = $volumeNameMapping[$volumeId]
-                        $rawDatabaseName = $dbMapping.DatabaseName
-                        $databaseName    = if ($null -ne $rawDatabaseName) { $rawDatabaseName -replace "\`r", '' -replace "\`n", '' } else { $rawDatabaseName }
-                        $ontapVolumeUuid = $value['uuid']
-                        $groupKey        = "$databaseName|$ontapVolumeUuid"
-
-                        if (-not $groupedEntries.Contains($groupKey)) {
-                            $groupedEntries[$groupKey] = @{
-                                databaseName    = $databaseName
-                                ontapVolumeuuid = $ontapVolumeUuid
-                                dataLunUuids    = New-Object 'System.Collections.Generic.List[string]'
-                                logLunUuids     = New-Object 'System.Collections.Generic.List[string]'
-                            }
-                            $dataLunSetByKey[$groupKey] = New-Object 'System.Collections.Generic.HashSet[string]'
-                            $logLunSetByKey[$groupKey]  = New-Object 'System.Collections.Generic.HashSet[string]'
-                        }
-
-                        $lunUuid = $null
-                        if ($null -ne $volumeLunUuidMapping -and $volumeLunUuidMapping.ContainsKey($volumeId)) {
-                            $lunUuid = $volumeLunUuidMapping[$volumeId]
-                        }
-                        if ([string]::IsNullOrEmpty($lunUuid)) { continue }
-
-                        # FileType (sys.database_files / master_files type): 0 = ROWS (MDF/NDF), 1 = LOG (LDF).
-                        # Other values (2 FILESTREAM, 4 FULLTEXT, etc.) are not mapped to data or log LUN lists.
-                        $fileType = [int]$dbMapping.FileType
-                        if ($fileType -eq 0) {
-                            if ($dataLunSetByKey[$groupKey].Add($lunUuid)) {
-                                $groupedEntries[$groupKey]['dataLunUuids'].Add($lunUuid)
-                            }
-                        } elseif ($fileType -eq 1) {
-                            if ($logLunSetByKey[$groupKey].Add($lunUuid)) {
-                                $groupedEntries[$groupKey]['logLunUuids'].Add($lunUuid)
-                            }
-                        }
-                    }
-                }
-
-                $newArray = New-Object 'System.Collections.Generic.List[object]'
-                foreach ($key in $groupedEntries.Keys) {
-                    $entry = $groupedEntries[$key]
-                    $newArray.Add(@{
-                        databaseName    = $entry['databaseName']
-                        ontapVolumeuuid = $entry['ontapVolumeuuid']
-                        dataLunUuids    = @($entry['dataLunUuids'].ToArray())
-                        logLunUuids     = @($entry['logLunUuids'].ToArray())
-                    })
-                }
-                return $newArray.ToArray()
-            } catch {
-                Write-Debug "updateVolumeMappings failed: $($_.Exception.Message)"
-                throw $_.Exception.Message
-            }
-        }
-
-        Function Process-Records($inputObject) {
-            $output = New-Object 'System.Collections.Generic.List[object]'
-            if ($null -ne $inputObject.records) {
-                foreach ($record in $inputObject.records) {
-                    $props = @{}
-                    foreach ($p in $record.PSObject.Properties) {
-                        if ($p.Name -ne '_links') { $props[$p.Name] = $p.Value }
-                    }
-                    $output.Add([PSCustomObject]$props)
-                }
-            }
-            return @{ records = $output.ToArray() }
-        }
-
         Function Deflate-String([string]$stringToCompress) {
             if ([string]::IsNullOrEmpty($stringToCompress)) {
                 Write-Information 'The string to compress is either null or empty.'
@@ -1663,8 +1283,7 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
             return $encodedString
         }
 
-        $visitedFileSystems = @{}
-        $instanceRespones   = @{}
+        $instanceRespones = @{}
 
         if ($isAtleastOneCredentialIsOfDomain) { Enable-CredSSP }
 
@@ -1673,18 +1292,6 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
                 $sqlCredential      = $si.sqlCredential
                 $executableInstance = $si.executableInstance
                 $serverInstanceName = $si.serverInstanceName
-
-                $instanceLevelFsxnId = $instanceLevelFsxnIds.$serverInstanceName.fsxId
-                Write-Debug "Instance Level FSxN Id: $instanceLevelFsxnId"
-                if ([string]::IsNullOrEmpty($instanceLevelFsxnId)) { $instanceLevelFsxnId = $FSxID }
-
-                if ($null -ne $instanceLevelFsxnId -and -not $visitedFileSystems.ContainsKey($instanceLevelFsxnId)) {
-                    $FSxNDetails = Get-FSxNDetails -fsxId $instanceLevelFsxnId
-                    $visitedFileSystems[$instanceLevelFsxnId] = @{
-                        FSxCredentialsInBase64 = $FSxNDetails.FSxCredentialsInBase64
-                        FSxHostName            = $FSxNDetails.FSxHostName
-                    }
-                }
 
                 # ---------- Build inner SELECT fragments (chosen once per loop) ----------
                 if ($includeLogVolumes) {
@@ -1830,11 +1437,8 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER);
                     throw "Failed to parse combined SQL response: $($_.Exception.Message)"
                 }
 
-                # The volume list is consumed by GetSMBVolumes which immediately ConvertFrom-Jsons
-                # its input. Re-serialize once with minimal depth so the contract is preserved.
                 $volumeListArray = if ($null -ne $combinedParsed.volumeList) { @($combinedParsed.volumeList) } else { @() }
-                $sqlresponse     = $volumeListArray | ConvertTo-Json -Compress -Depth 5
-                if ([string]::IsNullOrEmpty($sqlresponse)) { $sqlresponse = '[]' }
+                $cifsShareNames  = @($volumeListArray | ForEach-Object { $_.volumename } | Where-Object { -not [string]::IsNullOrEmpty($_) } | Select-Object -Unique)
 
                 $sqlJsonResponseParsed = if ($null -ne $combinedParsed.databaseVolumeMap) { @($combinedParsed.databaseVolumeMap) } else { @() }
 
@@ -1858,92 +1462,16 @@ FOR JSON PATH, WITHOUT_ARRAY_WRAPPER);
                 $volumeIds = Get-VolumeIdsList $sqlJsonResponseParsed
                 Write-Debug "volume List: $volumeIds"
 
-                $result        = Get-SerialNumberOfWinVolumes $volumeIds
-                $SerialNumbers = $result.Lunserialnumbers
+                $result = Get-SerialNumberOfWinVolumes $volumeIds
 
-                Write-Debug "Serial Numbers: $SerialNumbers"
+                Write-Debug "Serial Numbers: $($result.Lunserialnumbers)"
                 Write-Debug "Volume Serial Mapping: $($result.VolumeSerialMapping | ConvertTo-Json)"
 
-                $lunResult        = Get-LunFromSerialNumber $SerialNumbers $result.VolumeSerialMapping
-                $VolumeNames      = $lunResult.LunNames
-                $volumeLunMapping = $lunResult.VolumeLunMapping
-
-                Write-Debug "Volume Names: $VolumeNames"
-                Write-Debug "Volume Lun Mapping: $($volumeLunMapping | ConvertTo-Json)"
-
-                if (-not ($VolumeNames.Count -gt 0)) {
-                    throw "Couldn't get associated Ontap LUN volume names"
-                }
-
-                $volumeResult      = Get-VolumeIdFromName $VolumeNames $volumeLunMapping
-                $volumes           = $volumeResult.Response
-                $volumeNameMapping = $volumeResult.volumeNameMapping
-                Write-Debug "Volume Ids: $($volumes | ConvertTo-Json)"
-                Write-Debug "Volume Name mapping: $($volumeNameMapping | ConvertTo-Json)"
-
-                $cifsVolumes = GetSMBVolumes $sqlresponse
-                Write-Debug "CIFS Volumes:  $($cifsVolumes | ConvertTo-Json)"
-
-                if ($cifsVolumes) {
-                    if ($null -ne $volumes.records) {
-                        $volumes['records'] += $cifsVolumes
-                    } else {
-                        $volumes = @{ records = $cifsVolumes }
-                    }
-                }
-
-                $processedRecords = Process-Records $volumes
-                Write-Debug "Processed volumes:  $($processedRecords | ConvertTo-Json)"
-
-                # VolumeId -> MountPoint, single pass over the parsed SQL response.
-                $volumeMountPointMapping = @{}
-                foreach ($row in $sqlJsonResponseParsed) {
-                    $rowVolumeId = $row.VolumeId
-                    if ($null -eq $rowVolumeId) { continue }
-                    $rowVolumeId = ($rowVolumeId -replace "\`r", '' -replace "\`n", '').Replace(' ', '')
-                    if ($volumeMountPointMapping.ContainsKey($rowVolumeId)) { continue }
-                    $rowMountPoint = $row.MountPoint
-                    if ($null -ne $rowMountPoint) { $rowMountPoint = $rowMountPoint -replace "\`r", '' -replace "\`n", '' }
-                    $volumeMountPointMapping[$rowVolumeId] = $rowMountPoint
-                }
-
-                # Build serial -> (driveLetter, ontapVolumeuuid) once.
-                $enrichmentBySerial = @{}
-                foreach ($volId in $result.VolumeSerialMapping.Keys) {
-                    $sn = $result.VolumeSerialMapping[$volId]
-                    if ($null -eq $sn) { continue }
-                    $e = $enrichmentBySerial[$sn]
-                    if ($null -eq $e) {
-                        $e = @{ driveLetter = ''; ontapVolumeuuid = '' }
-                        $enrichmentBySerial[$sn] = $e
-                    }
-                    if ([string]::IsNullOrEmpty($e['driveLetter']) -and $volumeMountPointMapping.ContainsKey($volId)) {
-                        $e['driveLetter'] = $volumeMountPointMapping[$volId]
-                    }
-                    if ([string]::IsNullOrEmpty($e['ontapVolumeuuid']) -and $null -ne $volumeNameMapping -and $volumeNameMapping.ContainsKey($volId)) {
-                        $e['ontapVolumeuuid'] = $volumeNameMapping[$volId]['uuid']
-                    }
-                }
-                $enrichedLunDetailsList = New-Object 'System.Collections.Generic.List[object]'
-                foreach ($lunEntry in $lunResult.LunDetails) {
-                    $e = $enrichmentBySerial[$lunEntry.serial_number]
-                    $enrichedLunDetailsList.Add(@{
-                        uuid            = $lunEntry.uuid
-                        name            = $lunEntry.name
-                        serial_number   = $lunEntry.serial_number
-                        driveLetter     = if ($null -ne $e) { $e['driveLetter'] }     else { '' }
-                        ontapVolumeuuid = if ($null -ne $e) { $e['ontapVolumeuuid'] } else { '' }
-                    })
-                }
-                $enrichedLunDetails = $enrichedLunDetailsList.ToArray()
-
-                $volumeDBMap = updateVolumeMappings $sqlJsonResponseParsed $volumeNameMapping $lunResult.VolumeLunUuidMapping
-                Write-Debug "final volume details: $($volumeDBMap | ConvertTo-Json)"
-
                 $instanceResponse = @{
-                    volumes                         = $processedRecords
-                    volumeDBMap                     = $volumeDBMap
-                    luns                            = $enrichedLunDetails
+                    serialNumbers                   = $result.Lunserialnumbers
+                    volumeSerialMapping             = $result.VolumeSerialMapping
+                    databaseVolumeMap               = $sqlJsonResponseParsed
+                    cifsShareNames                  = $cifsShareNames
                     databasesSummary                = $databasesSummary
                     sqlNativeBackupEnabledDatabases = $sqlNativeBackupEnabledDatabases
                 }
@@ -2703,7 +2231,7 @@ export {
     RESOURCE_UTILIZATION,
     validateSQLInstanceConnectivity,
     installPowerShellModule,
-    getMappedOntapVolumesScript,
+    getMappedVolumesHostDataScript,
     restGetUtilForOntap,
     INSTANCE_DETAILS,
     copyPowerShellModule,
