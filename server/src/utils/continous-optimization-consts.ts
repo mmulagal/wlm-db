@@ -512,14 +512,14 @@ const ASSESSMENT_RESOURCE_TYPE = {
     DATABASE: 'Database',
     INSTANCE: 'EC2 instance',
     NETWORK_ADAPTER: 'Network Adapter',
-    LUN: 'Lun',
+    LUN: 'Block device',
     SQL_INSTANCE: 'SQL instance',
     NETWORK_INTERFACE: 'Network Interface',
     DISK_GROUP: 'Disk Group',
     STORAGE_MULTIPATH: 'Storage multipath',
     // Combined LUN+Volume resource type used by aggregate configs like
     // block-device-space-management whose offending objects span both sources.
-    VOLUME_OR_LUN: 'Volume/Lun',
+    VOLUME_OR_LUN: 'Volume/Block device',
     WINDOWS_CLUSTER: 'Windows Cluster'
 };
 

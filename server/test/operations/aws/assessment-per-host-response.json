@@ -155,7 +155,7 @@
                                 "status": "not-optimized",
                                 "recommended": "windows_2008",
                                 "severity": "critical",
-                                "recommendation": "ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
+                                "recommendation": "ONTAP LUN os type value shall match the operating system partitioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
                                 "tags": ["Performance efficiency"],
                                 "objectsInViolation": [
                                     "/vol/wlmdb_sqldata_1728552629461/sqldata",
@@ -573,7 +573,7 @@
                                 "status": "not-optimized",
                                 "recommended": "windows_2008",
                                 "severity": "critical",
-                                "recommendation": "ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
+                                "recommendation": "ONTAP LUN os type value shall match the operating system partitioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
                                 "tags": ["Performance efficiency"],
                                 "objectsInViolation": [
                                     "/vol/wlmdb_sqldata_1728552629461/sqldata",
@@ -987,7 +987,7 @@
                                 "status": "not-optimized",
                                 "recommended": "windows_2008",
                                 "severity": "critical",
-                                "recommendation": "ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
+                                "recommendation": "ONTAP LUN os type value shall match the operating system partitioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
                                 "tags": ["Performance efficiency"],
                                 "objectsInViolation": [
                                     "/vol/wlmdb_sqldata_1728552629461/sqldata",

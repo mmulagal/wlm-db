@@ -2,6 +2,7 @@ import { uniqBy } from 'lodash-es';
 import getLogger from '../../utils/logger';
 import { TEMPLATE_BUCKET_REGION, WAD_MANAGER_BUCKET_NAME } from '../../utils/consts';
 import { putObjectBucket } from '../../lib/aws/s3';
+import { registerWadManagerService } from '../../lib/cloud-manager/wad-manager';
 import { MSSQL_GOLDEN_CONFIG } from '../continuous-optimization/mssql/golden-config';
 import ORACLE_GOLDEN_CONFIG from '../continuous-optimization/oracle/golden-config';
 
@@ -39,6 +40,9 @@ async function buildAndPublishWlmdbDescriptor() {
 
     await putObjectBucket(TEMPLATE_BUCKET_REGION, WAD_MANAGER_BUCKET_NAME, DESCRIPTOR_KEY, JSON.stringify(descriptor));
     logger.info('WAD descriptor built successfully');
+
+    await registerWadManagerService();
+    logger.info('WLMDB service registation initiated with WAD manager');
 }
 
 export { buildAndPublishWlmdbDescriptor };

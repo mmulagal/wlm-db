@@ -78,7 +78,7 @@ const oracleAssessmentMetadata = {
                 parameter: 'data-dg-lun-layout',
                 recommended: 'associated-lun-count',
                 recommendation:
-                    'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.It is recommended that ASM Disk Group that contains data files will consist of at least 4-8 LUNs.',
+                    'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains data files will consist of at least 4-8 LUNs.',
                 objectsInViolation: ['DATADG'],
                 totalObjectsAssessed: 1,
                 totalObjectsInViolation: 2
@@ -91,7 +91,7 @@ const oracleAssessmentMetadata = {
                 parameter: 'redolog-dg-lun-layout',
                 recommended: 'associated-lun-count',
                 recommendation:
-                    'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.',
+                    'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.',
                 objectsInViolation: [],
                 totalObjectsAssessed: 2,
                 totalObjectsInViolation: 0

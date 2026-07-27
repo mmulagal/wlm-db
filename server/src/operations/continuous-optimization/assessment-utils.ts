@@ -383,18 +383,18 @@ const mssqlVolumeConfigData = MSSQL_GOLDEN_CONFIG.filter(
     e =>
         e.type === 'storage' &&
         e.subType === 'configuration' &&
-        e.resourceType === 'Volume' &&
+        e.resourceType === ASSESSMENT_RESOURCE_TYPE.VOLUME &&
         e.id !== OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION
 );
 const mssqlLunConfigData = MSSQL_GOLDEN_CONFIG.filter(
-    e => e.type === 'storage' && e.subType === 'configuration' && e.resourceType === 'Lun'
+    e => e.type === 'storage' && e.subType === 'configuration' && e.resourceType === ASSESSMENT_RESOURCE_TYPE.LUN
 );
 const mssqlOsConfigData = MSSQL_GOLDEN_CONFIG.filter(
     e =>
         e.type === 'storage' &&
         e.subType === 'configuration' &&
-        e.resourceType !== 'Volume' &&
-        e.resourceType !== 'Lun' &&
+        e.resourceType !== ASSESSMENT_RESOURCE_TYPE.VOLUME &&
+        e.resourceType !== ASSESSMENT_RESOURCE_TYPE.LUN &&
         e.id !== OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT
 );
 const mssqlLayoutConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'layout');

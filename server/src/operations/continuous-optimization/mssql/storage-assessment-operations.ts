@@ -690,6 +690,7 @@ async function calculateStorageDrift(
                             });
                         }
                         // For WAD MANAGER INTEGRATION
+                        const isThinProvision = config.id === OptimizeStorageConfigs.THIN_PROVISIONING;
                         wadManagerAssessmentDetails.push({
                             id: objectId || objectName || '',
                             name: objectName,
@@ -699,8 +700,14 @@ async function calculateStorageDrift(
                                 components: [
                                     {
                                         parameter: config.id,
-                                        current: value != null ? String(value) : '',
-                                        recommended: (config.value ?? '').toString(),
+                                        current: isThinProvision
+                                            ? volumeStatus === AssessmentStatus.OPTIMIZED
+                                                ? 'enabled'
+                                                : 'disabled'
+                                            : value != null
+                                            ? String(value)
+                                            : '',
+                                        recommended: isThinProvision ? 'enabled' : (config.value ?? '').toString(),
                                         status: volumeStatus
                                     }
                                 ]
@@ -782,7 +789,7 @@ async function calculateStorageDrift(
                         }
                         // For WAD MANAGER INTEGRATION
                         wadManagerAssessmentDetails.push({
-                            id: objectId,
+                            id: objectId || objectName || '',
                             name: objectName,
                             status: volumeStatus,
                             metadata: {

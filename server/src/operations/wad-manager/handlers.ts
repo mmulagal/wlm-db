@@ -108,7 +108,11 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
             pairs.map(({ credentialsId, region }) =>
                 throat(3, async () => {
                     const relationship = await buildEc2FsxRelationship(accountId, credentialsId, region);
-                    const storageAssessments = await collectOntapAssessmentData(accountId, relationship, scanTaskId);
+                    const allAssessments = await collectOntapAssessmentData(accountId, relationship, scanTaskId);
+                    // One scan per filesystem+workload, even if multiple EC2s share the same FSx.
+                    const storageAssessments = [
+                        ...new Map(allAssessments.map(a => [`${a.fileSystemId}:${a.workloadType}`, a])).values()
+                    ];
                     const pairConfigs: WadConfigurationEntry[] = [];
 
                     for (const {

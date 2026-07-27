@@ -18,7 +18,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.WARNING,
         recommendation:
-            'Workload Factory recommends configuring thin provisioning for FSx for ONTAP volumes hosting Oracle databases. This approach optimizes storage efficiency and cost-effectiveness by allowing more logical data to be stored than physically available.',
+            'Workload Factory recommends configuring thin provisioning for FSx for ONTAP volumes hosting databases. This approach optimizes storage efficiency and cost-effectiveness by allowing more logical data to be stored than physically available.',
         categories: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
@@ -266,7 +266,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'Workload Factory recommends configuring block device space settings for LUNs used by Oracle database instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin-provisioned volumes:\n- Space reservation: enabled - reserves enough space in the volume so writes to the LUN do not fail.\n- Space allocation: enabled - allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data.\n- Fractional reserve: disabled - avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.\nTogether, these settings help ensure predictable database behavior while minimizing wasted capacity.',
+            'Workload Factory recommends configuring block device space settings for block devices used by database instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin-provisioned volumes:\n- Space reservation: enabled - reserves enough space in the volume so writes to the block device do not fail.\n- Space allocation: enabled - allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data.\n- Fractional reserve: disabled - avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.\nTogether, these settings help ensure predictable database behavior while minimizing wasted capacity.',
         categories: [
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
@@ -295,7 +295,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.CRITICAL,
         resourceType: 'EC2 Instance',
         recommendation:
-            'Workload Factory recommends enabling Multipath I/O (MPIO) on database hosts that connect to ISCSI LUNs for Oracle databases. This host-level configuration enhances storage reliability and performance by providing redundant data paths between the server and storage. With multipath enabled, the system can automatically reroute I/O operations in the event of a path failure, minimizing downtime and ensuring consistent access to critical data.',
+            'Workload Factory recommends enabling Multipath I/O (MPIO) on database hosts that connect to ISCSI block devices for Oracle databases. This host-level configuration enhances storage reliability and performance by providing redundant data paths between the server and storage. With multipath enabled, the system can automatically reroute I/O operations in the event of a path failure, minimizing downtime and ensuring consistent access to critical data.',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
         applicableTo: 'iscsi',
         configLevel: 'database'
@@ -311,7 +311,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.WARNING,
         resourceType: 'EC2 Instance',
         recommendation:
-            'Workload Factory recommends installing host utilities for LUN and multipath management on systems hosting Oracle databases. These utilities ensure optimal compatibility, performance, and reliability when connecting to enterprise storage systems. Proper installation of host utilities helps streamline storage operations and supports best practices for Oracle deployments.',
+            'Workload Factory recommends installing host utilities for block device and multipath management on systems hosting Oracle databases. These utilities ensure optimal compatibility, performance, and reliability when connecting to enterprise storage systems. Proper installation of host utilities helps streamline storage operations and supports best practices for Oracle deployments.',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
         applicableTo: 'iscsi',
         configLevel: 'database'
@@ -438,7 +438,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.CRITICAL,
         resourceType: 'EC2 Instance',
         recommendation:
-            'Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP LUNs, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.',
+            'Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP block devices, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
         applicableTo: 'iscsi',
         configLevel: 'database'
@@ -472,7 +472,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.WARNING,
         resourceType: 'ASM Disk Group',
         recommendation:
-            'Workload Factory recommends configuring Oracle ASM disk groups with External Redundancy for FSxN iSCSI LUNs to leverage FSxN\u2019s built-in high availability, optimize storage efficiency, and reduce costs by avoiding Oracle-level data mirroring.',
+            'Workload Factory recommends configuring Oracle ASM disk groups with External Redundancy for FSxN iSCSI block devices to leverage FSxN\u2019s built-in high availability, optimize storage efficiency, and reduce costs by avoiding Oracle-level data mirroring.',
         categories: [AwsWellArchitecturedPillars.COST_EFFICIENCY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
         applicableTo: 'asm',
         configLevel: 'database'
@@ -789,7 +789,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ASM data disk group LUNs',
         severity: SEVERITY.WARNING,
         recommendation:
-            'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains data files will consist of at least 4-8 LUNs.',
+            'Multiple block devices laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains data files will consist of at least 4-8 block devices.',
         categories: [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
@@ -808,7 +808,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ASM logs disk group LUNs',
         severity: SEVERITY.WARNING,
         recommendation:
-            'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.',
+            'Multiple block devices laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 block devices.',
         categories: [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
@@ -827,7 +827,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ASM archive log disk group LUNs',
         severity: SEVERITY.WARNING,
         recommendation:
-            'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.',
+            'Multiple block devices laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 block devices.',
         categories: [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
@@ -846,7 +846,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ASM archive log disk group LUNs',
         severity: SEVERITY.WARNING,
         recommendation:
-            'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 LUNs.',
+            'Multiple block devices laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 block devices.',
         categories: [
             AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE,
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY

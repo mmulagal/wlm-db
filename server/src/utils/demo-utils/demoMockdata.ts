@@ -6056,7 +6056,7 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
             recommended: 'associated-lun-count',
             severity: 'warning',
             recommendation:
-                'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance.It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.',
+                'Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group that contains redo logs will consist of at least 2-8 LUNs.',
             tags: ['Operational excellence', 'Performance efficiency'],
             objectsInViolation: ['DISK1'],
             violationDetails: [

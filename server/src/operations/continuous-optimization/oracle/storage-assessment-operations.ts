@@ -9,7 +9,8 @@ import {
     ASSESSMENT_RESOURCE_TYPE,
     AssessmentCategories,
     AssessmentStatus,
-    MIN_OPTIMIZED_HEADROOM_PERCENTAGE
+    MIN_OPTIMIZED_HEADROOM_PERCENTAGE,
+    OptimizeStorageConfigs
 } from '../../../utils/continous-optimization-consts';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob } from '../../database/job-operations';
@@ -103,21 +104,33 @@ function addNosharecacheViolationIfNeeded(
 
 const storageConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.type === 'storage');
 const volumeConfigData = ORACLE_GOLDEN_CONFIG.filter(
-    e => e.type === 'storage' && e.subType === 'configuration' && !e.applicableTo && e.resourceType === 'Volume'
+    e =>
+        e.type === 'storage' &&
+        e.subType === 'configuration' &&
+        !e.applicableTo &&
+        e.resourceType === ASSESSMENT_RESOURCE_TYPE.VOLUME
 );
-const volumeNfsConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'nfs' && e.resourceType === 'Volume');
-const lunConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'iscsi' && e.resourceType === 'Lun');
+const volumeNfsConfigData = ORACLE_GOLDEN_CONFIG.filter(
+    e => e.applicableTo === 'nfs' && e.resourceType === ASSESSMENT_RESOURCE_TYPE.VOLUME
+);
+const lunConfigData = ORACLE_GOLDEN_CONFIG.filter(
+    e => e.applicableTo === 'iscsi' && e.resourceType === ASSESSMENT_RESOURCE_TYPE.LUN
+);
 const blockDeviceConfig = ORACLE_GOLDEN_CONFIG.find(e => e.id === 'block-device-space-management');
-const osIsciConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'iscsi' && e.resourceType !== 'Lun');
-const osNfsConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.applicableTo === 'nfs' && e.resourceType !== 'Volume');
+const osIsciConfigData = ORACLE_GOLDEN_CONFIG.filter(
+    e => e.applicableTo === 'iscsi' && e.resourceType !== ASSESSMENT_RESOURCE_TYPE.LUN
+);
+const osNfsConfigData = ORACLE_GOLDEN_CONFIG.filter(
+    e => e.applicableTo === 'nfs' && e.resourceType !== ASSESSMENT_RESOURCE_TYPE.VOLUME
+);
 const sizingConfigData = ORACLE_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'sizing');
 const asmOSConfig = ORACLE_GOLDEN_CONFIG.filter(
     e =>
         e.type === 'storage' &&
         e.subType === 'configuration' &&
         !e.applicableTo &&
-        e.resourceType !== 'Volume' &&
-        e.resourceType !== 'Lun'
+        e.resourceType !== ASSESSMENT_RESOURCE_TYPE.VOLUME &&
+        e.resourceType !== ASSESSMENT_RESOURCE_TYPE.LUN
 );
 
 const [archivePlacementConfig] = ORACLE_GOLDEN_CONFIG.filter(e => e.id === 'archive-placement');
@@ -1583,6 +1596,7 @@ function getVolumeConfigDrift(
                 }
 
                 const status = isViolated ? AssessmentStatus.NOT_OPTIMIZED : AssessmentStatus.OPTIMIZED;
+                const isThinProvision = config.id === OptimizeStorageConfigs.THIN_PROVISIONING;
                 assessmentDetails.push({
                     id: objectId || objectName,
                     name: objectName,
@@ -1591,8 +1605,12 @@ function getVolumeConfigDrift(
                         components: [
                             {
                                 parameter: config.id,
-                                current: current?.toString() || '',
-                                recommended,
+                                current: isThinProvision
+                                    ? status === AssessmentStatus.OPTIMIZED
+                                        ? 'enabled'
+                                        : 'disabled'
+                                    : current?.toString() || '',
+                                recommended: isThinProvision ? 'enabled' : recommended,
                                 status
                             }
                         ]

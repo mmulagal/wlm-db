@@ -39,7 +39,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and LUNs\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
+            'To optimize storage efficiency and cost-effectiveness, configure thin provisioning, autosize and space management options for your FSx ONTAP volumes and block devices\nIf Not Configured Properly:\n- Over-provisioning risks: Without thin provisioning, storage is allocated upfront, leading to inefficient use and higher costs due to over-provisioning.\n- Increased storage costs: Static allocation results in paying for unused capacity, increasing expenses.\n- Limited scalability: Lack of dynamic allocation hampers scalability and flexibility, impacting performance.\n- Inefficient space utilization: Without space reclamation, deleted data occupies space, reducing efficiency.',
         categories: [AwsWellArchitecturedPillars.COST_OPTIMIZATION, AwsWellArchitecturedPillars.OPERATIONAL_EXCELLENCE],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         configLevel: 'database',
@@ -214,7 +214,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
         recommendation:
-            'ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance',
+            'ONTAP block device os type value shall match the operating system partitioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
         configLevel: 'database',
         globalWadApplicable: true,
@@ -228,7 +228,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'ONTAP',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'Workload Factory recommends configuring block device space settings for LUNs used by Microsoft SQL server instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin-provisioned volumes:\n- Space reservation: enabled - reserves enough space in the volume so writes to the LUN do not fail.\n- Space allocation: enabled - allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data.\n- Fractional reserve: disabled - avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.\nTogether, these settings help ensure predictable database behavior while minimizing wasted capacity.',
+            'Workload Factory recommends configuring block device space settings for block devices used by database instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin-provisioned volumes:\n- Space reservation: enabled - reserves enough space in the volume so writes to the block device do not fail.\n- Space allocation: enabled - allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data.\n- Fractional reserve: disabled - avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.\nTogether, these settings help ensure predictable database behavior while minimizing wasted capacity.',
         categories: [
             AwsWellArchitecturedPillars.RELIABILITY,
             AwsWellArchitecturedPillars.COST_OPTIMIZATION,
@@ -256,7 +256,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'Operating system',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
+            'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying block devices provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH,
         configLevel: 'database'
@@ -271,7 +271,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'Operating system',
         severity: SEVERITY.WARNING,
         recommendation:
-            'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying LUNs provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
+            'To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying block devices provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
         configLevel: 'database'
@@ -286,7 +286,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         focusWidgetName: 'Operating system',
         severity: SEVERITY.CRITICAL,
         recommendation:
-            'For SQL Server on FSx for ONTAP iSCSI LUNs, use five multipath IO (MPIO) sessions per target interface. This balances traffic across paths and improves redundancy, throughput, and failover',
+            'For SQL Server on FSx for ONTAP iSCSI block devices, use five multipath IO (MPIO) sessions per target interface. This balances traffic across paths and improves redundancy, throughput, and failover',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY, AwsWellArchitecturedPillars.RELIABILITY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.STORAGE_MULTIPATH,
         configLevel: 'database'
@@ -551,7 +551,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
         recommendation:
-            'All shared disks (iSCSI LUNs) must be accessible by both nodes in the FCI deployment model to allow failover.',
+            'All shared disks (iSCSI block devices) must be accessible by both nodes in the FCI deployment model to allow failover.',
         recommended: '',
         configLevel: 'database'
     },
