@@ -109,6 +109,10 @@ interface OntapLunRecord {
     space?: { guarantee?: { requested?: boolean }; scsi_thin_provisioning_support_enabled?: boolean };
 }
 
+interface OntapIgroupRecord {
+    name: string;
+}
+
 function isProxyCollectionEnvelope<T>(value: unknown): value is ProxyCollectionEnvelope<T> {
     return typeof value === 'object' && value !== null && Array.isArray((value as ProxyCollectionEnvelope<T>).value);
 }
@@ -362,6 +366,230 @@ async function collectOntapRecordsBatched<T>(
     return responseRecords;
 }
 
+function extractBaseIqn(iqn: string): string | undefined {
+    const match = iqn.match(/(.*:.+?)\./);
+    return match?.[1];
+}
+
+async function lookupIgroupByInitiators(base: ProxyOperationBaseOpts, svmName: string, iqnList: string) {
+    logger.info('Starting lookupIgroupByInitiators', { targetId: base.targetId, svmName, iqnList });
+    const records = await collectAllOntapRecords<OntapIgroupRecord>(
+        base,
+        'api/protocols/san/igroups',
+        { 'svm.name': svmName, 'initiators.name': iqnList, protocol: 'iscsi' },
+        1
+    );
+    const iGroup = records[0]?.name;
+    logger.info('Completed lookupIgroupByInitiators', { targetId: base.targetId, svmName, iqnList, iGroup });
+    return iGroup;
+}
+
+async function findIgroupForInitiators(
+    base: ProxyOperationBaseOpts,
+    svmName: string,
+    nodeIqn: string,
+    standbyIqn?: string
+) {
+    logger.info('Starting findIgroupForInitiators', { targetId: base.targetId, svmName, nodeIqn, standbyIqn });
+
+    const iqnList = [nodeIqn, standbyIqn].filter(Boolean).join(',');
+    let iGroup = await lookupIgroupByInitiators(base, svmName, iqnList);
+    if (iGroup) {
+        return iGroup;
+    }
+
+    const baseIqn = extractBaseIqn(nodeIqn);
+    const baseStandbyIqn = standbyIqn ? extractBaseIqn(standbyIqn) : undefined;
+    if (!baseIqn) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'Unable to find initiator group allowing access to the node'
+        );
+    }
+
+    const baseIqnList = [baseIqn, baseStandbyIqn].filter(Boolean).join(',');
+    iGroup = await lookupIgroupByInitiators(base, svmName, baseIqnList);
+    if (!iGroup) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            'Unable to find initiator group allowing access to the node'
+        );
+    }
+
+    logger.info('Completed findIgroupForInitiators', { targetId: base.targetId, svmName, iGroup });
+    return iGroup;
+}
+
+async function createOntapVolume(base: ProxyOperationBaseOpts, body: Record<string, unknown>) {
+    logger.info('Starting createOntapVolume', { targetId: base.targetId, body });
+
+    await callProxyForwarder({
+        ...base,
+        ontapPath: 'api/storage/volumes',
+        method: 'POST',
+        body
+    });
+
+    logger.info('Completed createOntapVolume', { targetId: base.targetId });
+}
+
+async function patchOntapVolumeByCliName(
+    base: ProxyOperationBaseOpts,
+    svmName: string,
+    volumeName: string,
+    body: Record<string, unknown>
+) {
+    logger.info('Starting patchOntapVolumeByCliName', { targetId: base.targetId, svmName, volumeName });
+
+    await callProxyForwarder({
+        ...base,
+        ontapPath: 'api/private/cli/volume',
+        method: 'PATCH',
+        searchParams: { vserver: svmName, volume: volumeName },
+        body
+    });
+
+    logger.info('Completed patchOntapVolumeByCliName', { targetId: base.targetId, svmName, volumeName });
+}
+
+async function patchOntapVolumeSnapshotAutodelete(
+    base: ProxyOperationBaseOpts,
+    svmName: string,
+    volumeName: string,
+    body: Record<string, unknown>
+) {
+    logger.info('Starting patchOntapVolumeSnapshotAutodelete', { targetId: base.targetId, svmName, volumeName });
+
+    await callProxyForwarder({
+        ...base,
+        ontapPath: 'api/private/cli/volume/snapshot/autodelete',
+        method: 'PATCH',
+        searchParams: { vserver: svmName, volume: volumeName },
+        body
+    });
+
+    logger.info('Completed patchOntapVolumeSnapshotAutodelete', { targetId: base.targetId, svmName, volumeName });
+}
+
+async function createOntapLun(base: ProxyOperationBaseOpts, lunPath: string, body: Record<string, unknown>) {
+    logger.info('Starting createOntapLun', { targetId: base.targetId, lunPath });
+
+    await callProxyForwarder({
+        ...base,
+        ontapPath: 'api/storage/luns',
+        method: 'POST',
+        body
+    });
+
+    logger.info('Completed createOntapLun', { targetId: base.targetId, lunPath });
+}
+
+async function createOntapLunMapping(base: ProxyOperationBaseOpts, body: Record<string, unknown>) {
+    logger.info('Starting createOntapLunMapping', { targetId: base.targetId, body });
+
+    await callProxyForwarder({
+        ...base,
+        ontapPath: 'api/protocols/san/lun-maps',
+        method: 'POST',
+        body
+    });
+
+    logger.info('Completed createOntapLunMapping', { targetId: base.targetId });
+}
+
+async function patchOntapLunByCliPath(
+    base: ProxyOperationBaseOpts,
+    svmName: string,
+    lunPath: string,
+    body: Record<string, unknown>
+) {
+    logger.info('Starting patchOntapLunByCliPath', { targetId: base.targetId, svmName, lunPath });
+
+    await callProxyForwarder({
+        ...base,
+        ontapPath: 'api/private/cli/lun',
+        method: 'PATCH',
+        searchParams: { vserver: svmName, path: lunPath },
+        body
+    });
+
+    logger.info('Completed patchOntapLunByCliPath', { targetId: base.targetId, svmName, lunPath });
+}
+
+async function getOntapLunSerialNumbers(base: ProxyOperationBaseOpts, lunPaths: string[]) {
+    logger.info('Starting getOntapLunSerialNumbers', { targetId: base.targetId, lunPaths });
+
+    if (!lunPaths.length) {
+        return {};
+    }
+
+    const records = await collectAllOntapRecords<{ name: string; serial_number?: string }>(
+        base,
+        'api/storage/luns',
+        { name: lunPaths.join('|'), fields: 'name,serial_number' },
+        lunPaths.length
+    );
+    const serialsByPath = Object.fromEntries(records.map(record => [record.name, record.serial_number]));
+
+    logger.info('Completed getOntapLunSerialNumbers', { targetId: base.targetId, lunPaths, serialsByPath });
+    return serialsByPath;
+}
+
+async function deleteOntapLunMappings(
+    base: ProxyOperationBaseOpts,
+    svmName: string,
+    iGroup: string,
+    lunPaths: string[]
+) {
+    logger.info('Starting deleteOntapLunMappings', { targetId: base.targetId, svmName, iGroup, lunPaths });
+
+    if (!lunPaths.length) {
+        return;
+    }
+
+    await callProxyForwarder({
+        ...base,
+        ontapPath: 'api/private/cli/lun/mapping',
+        method: 'DELETE',
+        searchParams: { vserver: svmName, igroup: iGroup, path: lunPaths.join('|') }
+    });
+
+    logger.info('Completed deleteOntapLunMappings', { targetId: base.targetId, svmName, iGroup, lunPaths });
+}
+
+async function deleteOntapLuns(base: ProxyOperationBaseOpts, svmName: string, lunPaths: string[]) {
+    logger.info('Starting deleteOntapLuns', { targetId: base.targetId, svmName, lunPaths });
+
+    if (!lunPaths.length) {
+        return;
+    }
+
+    await callProxyForwarder({
+        ...base,
+        ontapPath: 'api/private/cli/lun',
+        method: 'DELETE',
+        searchParams: { vserver: svmName, path: lunPaths.join('|') }
+    });
+
+    logger.info('Completed deleteOntapLuns', { targetId: base.targetId, svmName, lunPaths });
+}
+
+async function deleteOntapVolumes(base: ProxyOperationBaseOpts, volumeNames: string[]): Promise<void> {
+    logger.info('Starting deleteOntapVolumes', { targetId: base.targetId, volumeNames });
+
+    if (!volumeNames.length) {
+        return;
+    }
+
+    await callProxyForwarder({
+        ...base,
+        ontapPath: 'api/storage/volumes',
+        method: 'DELETE',
+        searchParams: { name: volumeNames.join('|') }
+    });
+
+    logger.info('Completed deleteOntapVolumes', { targetId: base.targetId, volumeNames });
+}
 /**
  * Looks up ONTAP LUNs by serial number, batching the `serial_number` filter across requests of up
  * to {@link ONTAP_FILTER_BATCH_SIZE} values. Returns `[]` without making a request when
@@ -432,6 +660,18 @@ export {
     buildOntapProxyBase,
     extractErrorMessage,
     unwrapOntapSettled,
+    extractBaseIqn,
+    findIgroupForInitiators,
+    createOntapVolume,
+    patchOntapVolumeByCliName,
+    patchOntapVolumeSnapshotAutodelete,
+    createOntapLun,
+    createOntapLunMapping,
+    patchOntapLunByCliPath,
+    getOntapLunSerialNumbers,
+    deleteOntapLunMappings,
+    deleteOntapLuns,
+    deleteOntapVolumes,
     type OntapGatewayTarget,
     type OntapLunRecord,
     type OntapVolumeRecord,

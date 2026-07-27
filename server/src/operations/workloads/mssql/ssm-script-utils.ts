@@ -6,10 +6,7 @@ import { GOOGLE_DNS, REQUIRED_PS_MODULES_FOR_MANAGEMENT, SCRIPT_VERSON_FILE } fr
 import { compressResponse, ontapRestRequest, enableCredSSP, invokeCommandWithCredSSP } from './common-templates';
 
 const REQUIRED_DATABASE_CREATE_FILE_LIST: string = `
-  'C:\\SSM\\Cleanup-ONTAP.ps1',
-  'C:\\SSM\\Configure-LUNs.ps1',
   'C:\\SSM\\Create-Database.ps1',
-  'C:\\SSM\\Invoke-virtualmount.ps1',
   'C:\\SSM\\NewDB_Initialize-Iscsidisk.ps1',
   'C:\\SSM\\Script-Version.txt'
 `;

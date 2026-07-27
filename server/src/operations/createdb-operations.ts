@@ -48,18 +48,237 @@ import { getAsyncLocalStorageResource } from '../utils/async-local-storage';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateUserDBIntoInstanceTable, updateUserDBIntoResourceData } from './demo-operations';
 import { resetCache } from '../utils/cache';
-import { CONFIGURELUNSCRIPT, CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
+import { CREATEDBSCRIPT, INITIALIZEDBSCRIPT } from './workloads/mssql/const';
 import { cleanupResources } from './workloads/mssql/createdb-scripts';
+import {
+    buildOntapProxyBase,
+    findIgroupForInitiators,
+    createOntapVolume,
+    patchOntapVolumeByCliName,
+    patchOntapVolumeSnapshotAutodelete,
+    createOntapLun,
+    createOntapLunMapping,
+    patchOntapLunByCliPath,
+    getOntapLunSerialNumbers,
+    deleteOntapLunMappings,
+    deleteOntapLuns,
+    deleteOntapVolumes,
+    ProxyOperationBaseOpts
+} from '../lib/ontap/ontap-gateway';
 import { checkScriptNeedsUpdate, copyScriptsToHost } from './resource-operations';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
 import { CHECK_POWERSHELL7_AVAILABLE, IS_PS7_AVAILABLE } from './workloads/mssql/discover-consts';
 
 const logger = getLogger();
 
+const LOGLUN = 'sqllog';
+const DATALUN = 'sqldata';
+
 interface SqlInstance {
     name: string;
     executableName: string;
     sqlAuthEnabled: boolean;
+}
+
+interface ProvisionOntapStorageParams {
+    accountId: string;
+    fsxId: string;
+    region: string;
+    svmName: string;
+    nodeIqn: string;
+    standbyIqn?: string;
+    dataVolumeSize: number;
+    logVolumeSize: number;
+    isDataNew: boolean;
+    isLogNew: boolean;
+}
+
+interface CleanupOntapStorageParams {
+    accountId: string;
+    fsxId: string;
+    region: string;
+    svmName: string;
+    iGroup: string;
+    fsxDataVolumeName?: string;
+    fsxLogVolumeName?: string;
+}
+
+function buildSqlVolumeBody(svmName: string, volumeName: string, lunSizeMB: number) {
+    const volumeSizeMB = Math.round(lunSizeMB * 1.3 * 100) / 100;
+    return {
+        name: volumeName,
+        state: 'online',
+        type: 'RW',
+        svm: { name: svmName },
+        'aggregates.name': ['aggr1'],
+        snapshot_policy: { name: 'none' },
+        style: 'flexvol',
+        nas: { security_style: 'NTFS' },
+        size: `${volumeSizeMB}M`
+    };
+}
+
+function buildSqlLunBody(svmName: string, lunPath: string, lunSizeMB: number) {
+    return {
+        name: lunPath,
+        os_type: 'windows_2008',
+        svm: { name: svmName },
+        space: { size: `${lunSizeMB}M` }
+    };
+}
+
+const SQL_VOLUME_BEST_PRACTICES_BODY: Record<string, unknown> = {
+    'fractional-reserve': '0',
+    'space-guarantee': 'none',
+    'space-mgmt-try-first': 'volume_grow',
+    'percent-snapshot-space': '0',
+    'tiering-policy': 'snapshot-only',
+    'tiering-minimum-cooling-days': '7',
+    'snapshot-policy': 'none',
+    'autosize-mode': 'grow',
+    'min-readahead': 'true'
+};
+
+const SQL_VOLUME_SNAPSHOT_AUTODELETE_BODY: Record<string, unknown> = { enabled: 'true' };
+
+const SQL_LUN_BEST_PRACTICES_BODY: Record<string, unknown> = {
+    'space-reserve': 'enabled',
+    'space-allocation': 'enabled'
+};
+
+async function createSqlVolume(base: ProxyOperationBaseOpts, svmName: string, volumeName: string, lunSizeMB: number) {
+    logger.info('Starting createSqlVolume', { targetId: base.targetId, svmName, volumeName, lunSizeMB });
+    await createOntapVolume(base, buildSqlVolumeBody(svmName, volumeName, lunSizeMB));
+    await patchOntapVolumeByCliName(base, svmName, volumeName, SQL_VOLUME_BEST_PRACTICES_BODY);
+    await patchOntapVolumeSnapshotAutodelete(base, svmName, volumeName, SQL_VOLUME_SNAPSHOT_AUTODELETE_BODY);
+    logger.info('Completed createSqlVolume', { targetId: base.targetId, svmName, volumeName, lunSizeMB });
+}
+
+async function applySqlLunBestPractices(base: ProxyOperationBaseOpts, svmName: string, lunPath: string) {
+    logger.info('Starting applySqlLunBestPractices', { targetId: base.targetId, svmName, lunPath });
+    await patchOntapLunByCliPath(base, svmName, lunPath, SQL_LUN_BEST_PRACTICES_BODY);
+    logger.info('Completed applySqlLunBestPractices', { targetId: base.targetId, svmName, lunPath });
+}
+
+async function provisionOntapStorage(params: ProvisionOntapStorageParams) {
+    const {
+        accountId,
+        fsxId,
+        region,
+        svmName,
+        nodeIqn,
+        standbyIqn,
+        dataVolumeSize,
+        logVolumeSize,
+        isDataNew,
+        isLogNew
+    } = params;
+
+    logger.info('Starting provisionOntapStorage', { accountId, fsxId, svmName, isDataNew, isLogNew });
+
+    if (!isDataNew && !isLogNew) {
+        throw createError(
+            HttpErrorCodes.VALIDATION_ERROR,
+            'Need to define at least one new drive to configure storage'
+        );
+    }
+
+    const base = buildOntapProxyBase(accountId, fsxId, region);
+    const iGroup = await findIgroupForInitiators(base, svmName, nodeIqn, standbyIqn);
+
+    const epoch = Math.floor(Date.now() / 1000);
+    const fsxDataVolumeName = isDataNew ? `wlmdb_sqldata_${epoch}` : undefined;
+    const fsxLogVolumeName = isLogNew ? `wlmdb_sqllog_${epoch}` : undefined;
+    const dataLunPath = fsxDataVolumeName ? `/vol/${fsxDataVolumeName}/${DATALUN}` : undefined;
+    const logLunPath = fsxLogVolumeName ? `/vol/${fsxLogVolumeName}/${LOGLUN}` : undefined;
+
+    try {
+        await Promise.all([
+            fsxDataVolumeName ? createSqlVolume(base, svmName, fsxDataVolumeName, dataVolumeSize) : Promise.resolve(),
+            fsxLogVolumeName ? createSqlVolume(base, svmName, fsxLogVolumeName, logVolumeSize) : Promise.resolve()
+        ]);
+
+        await Promise.all([
+            dataLunPath
+                ? createOntapLun(base, dataLunPath, buildSqlLunBody(svmName, dataLunPath, dataVolumeSize))
+                : Promise.resolve(),
+            logLunPath
+                ? createOntapLun(base, logLunPath, buildSqlLunBody(svmName, logLunPath, logVolumeSize))
+                : Promise.resolve()
+        ]);
+
+        const lunPaths = [dataLunPath, logLunPath].filter((path): path is string => Boolean(path));
+
+        await Promise.all(
+            lunPaths.map(path =>
+                createOntapLunMapping(base, { svm: { name: svmName }, lun: { name: path }, igroup: { name: iGroup } })
+            )
+        );
+        await Promise.all(lunPaths.map(path => applySqlLunBestPractices(base, svmName, path)));
+
+        const serialsByPath = await getOntapLunSerialNumbers(base, lunPaths);
+        const dataSerial = dataLunPath ? serialsByPath[dataLunPath] : undefined;
+        const logSerial = logLunPath ? serialsByPath[logLunPath] : undefined;
+
+        logger.info('Completed provisionOntapStorage', {
+            accountId,
+            fsxId,
+            iGroup,
+            fsxDataVolumeName,
+            fsxLogVolumeName
+        });
+
+        return { iGroup, fsxDataVolumeName, fsxLogVolumeName, dataSerial, logSerial };
+    } catch (err: any) {
+        const errorMessage = `Failed to provision storage on FSx for NetApp ONTAP for file system ${fsxId}. ${err?.message}`;
+        logger.error(errorMessage, err);
+        throw createError(err.statusCode || HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage, {
+            data: { iGroup, fsxDataVolumeName, fsxLogVolumeName }
+        });
+    }
+}
+
+async function cleanupOntapStorage(params: CleanupOntapStorageParams) {
+    const { accountId, fsxId, region, svmName, iGroup, fsxDataVolumeName, fsxLogVolumeName } = params;
+
+    logger.info('Starting cleanupOntapStorage', {
+        accountId,
+        fsxId,
+        svmName,
+        fsxDataVolumeName,
+        fsxLogVolumeName
+    });
+
+    const volumeNames = [fsxDataVolumeName, fsxLogVolumeName].filter((name): name is string => Boolean(name));
+    if (!volumeNames.length) {
+        logger.warn('No ONTAP volumes to clean up', { accountId, fsxId });
+        return;
+    }
+
+    const base = buildOntapProxyBase(accountId, fsxId, region);
+    const lunPaths = volumeNames.map(
+        volumeName => `/vol/${volumeName}/${volumeName === fsxDataVolumeName ? DATALUN : LOGLUN}`
+    );
+
+    try {
+        await deleteOntapLunMappings(base, svmName, iGroup, lunPaths);
+    } catch (err) {
+        logger.error('Failed to delete ONTAP LUN mappings during cleanup', { fsxId, lunPaths, err });
+    }
+
+    try {
+        await deleteOntapLuns(base, svmName, lunPaths);
+    } catch (err) {
+        logger.error('Failed to delete ONTAP LUNs during cleanup', { fsxId, lunPaths, err });
+    }
+
+    try {
+        await deleteOntapVolumes(base, volumeNames);
+    } catch (err) {
+        logger.error('Failed to delete ONTAP volumes during cleanup', { fsxId, volumeNames, err });
+    }
+
+    logger.info('Completed cleanupOntapStorage', { accountId, fsxId, fsxDataVolumeName, fsxLogVolumeName });
 }
 
 async function getDefaultDrives(
@@ -1102,17 +1321,6 @@ async function configureLuns(
         serverNameWithHostName
     });
 
-    let configureLuncommands;
-    if (standbyIqn) {
-        configureLuncommands = [
-            `$env:path = $env:path + ";C:\\Program Files\\PowerShell\\7";pwsh -Command {$WarningPreference = 'SilentlyContinue';${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists} -StandbyIQN ${standbyIqn}}`
-        ];
-    } else {
-        configureLuncommands = [
-            `$env:path = $env:path + ";C:\\Program Files\\PowerShell\\7";pwsh -Command {$WarningPreference = 'SilentlyContinue';${CONFIGURELUNSCRIPT} -FileSystemId ${fileSystemId} -SQLVMName ${sqlVMName}  -FSxDataLunSize ${dataVolumeSize}  -FSxLogLunSize ${logVolumeSize} -LogNew ${isLogDriveExists} -DataNew ${isDataDriveExists}}`
-        ];
-    }
-
     const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
         type: JOBTYPE.CREATE_RESOURCE,
         status: JOBSTATUS.IN_PROGRESS,
@@ -1123,40 +1331,54 @@ async function configureLuns(
         startTime: Date.now()
     });
 
-    let status;
-    let errMsg;
+    let status: JOBSTATUS = JOBSTATUS.FAILED;
+    let errMsg: string | undefined;
     try {
-        const configureLunresponse = await retryWithDelay(
-            callSsmExecution.bind(null, {
-                credentialsId,
-                region,
-                commands: configureLuncommands,
-                ec2InstanceId: activeNodeInstanceId,
-                comment: 'Configuring LUNs',
-                accountId,
-                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
-            })
-        );
-        logger.debug('Configure luns is done', configureLunresponse);
-        const parsedLunsResponse = configureLunresponse ? sqlResponseParsing(configureLunresponse) : {};
-
-        if (parsedLunsResponse?.Status === COMPLETE) {
-            status = JOBSTATUS.COMPLETED;
-        } else {
-            status = JOBSTATUS.FAILED;
-            errMsg = parsedLunsResponse.Message;
-            const exception = JSON.stringify(parsedLunsResponse?.Exception);
-            logger.error(`Exception for configure lun ${parsedLunsResponse.Message} ${exception}`);
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `${errMsg}.`, {
-                data: {
-                    iGroup: parsedLunsResponse?.Resources?.Igroup,
-                    fsxLogVolumeName: parsedLunsResponse?.Resources?.FSxLogVolumeName,
-                    fsxDataVolumeName: parsedLunsResponse?.Resources?.FSxDataVolumeName
-                }
-            });
+        const nodeIqnCommand = ['(Get-InitiatorPort).NodeAddress'];
+        const nodeIqnResponse = await callSsmExecution({
+            credentialsId,
+            region,
+            commands: nodeIqnCommand,
+            ec2InstanceId: activeNodeInstanceId,
+            comment: 'Get IQN for active node',
+            accountId,
+            executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+        });
+        const nodeIqn = nodeIqnResponse ? nodeIqnResponse.replaceAll('\r\n', '') : undefined;
+        if (!nodeIqn) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                'Unable to fetch initiator IQN for the active node'
+            );
         }
 
-        return parsedLunsResponse;
+        const { iGroup, fsxDataVolumeName, fsxLogVolumeName, dataSerial, logSerial } = await provisionOntapStorage({
+            accountId,
+            fsxId: fileSystemId as string,
+            region,
+            svmName: sqlVMName as string,
+            nodeIqn,
+            standbyIqn,
+            dataVolumeSize,
+            logVolumeSize,
+            isDataNew: isDataDriveExists === 'true',
+            isLogNew: isLogDriveExists === 'true'
+        });
+
+        status = JOBSTATUS.COMPLETED;
+
+        // FSxDataVolumeName/FSxLogVolumeName/DataSerial/LogSerial are only populated for the
+        // drive(s) that were actually provisioned; downstream consumers already tolerate an
+        // undefined value for whichever side used an existing drive.
+        return {
+            Resources: {
+                Igroup: iGroup,
+                FSxDataVolumeName: fsxDataVolumeName as string,
+                FSxLogVolumeName: fsxLogVolumeName as string,
+                DataSerial: dataSerial as string,
+                LogSerial: logSerial as string
+            }
+        };
     } catch (err: any) {
         const errorMsg = `Error while configuring storage in account ${accountId}.`;
         logger.error(errorMsg, err);
@@ -1347,19 +1569,10 @@ async function cleanUpDatabaseDeployment(
     let status;
     let errMsg;
     try {
+        // Cluster resource dependency removal and virtual-mount folder cleanup must happen
+        // before the underlying ONTAP storage is deleted.
         const cleanupCommand = [
-            cleanupResources(
-                fileSystemId!,
-                sqlVMName!,
-                iGroup,
-                databaseName,
-                isClustered,
-                instanceNameForScript,
-                isDefaultInstance,
-                filePaths!,
-                dataVolumeName,
-                logVolumeName
-            )
+            cleanupResources(databaseName, isClustered, instanceNameForScript, isDefaultInstance, filePaths!)
         ];
 
         const cleanUpResponse = await retryWithDelay(
@@ -1374,6 +1587,17 @@ async function cleanUpDatabaseDeployment(
         );
 
         const parsedCleanUpResponse = cleanUpResponse ? sqlResponseParsing(cleanUpResponse) : {};
+
+        await cleanupOntapStorage({
+            accountId,
+            fsxId: fileSystemId as string,
+            region,
+            svmName: sqlVMName as string,
+            iGroup,
+            fsxDataVolumeName: dataVolumeName,
+            fsxLogVolumeName: logVolumeName
+        });
+
         status = parsedCleanUpResponse?.Status === COMPLETE ? JOBSTATUS.COMPLETED : JOBSTATUS.FAILED;
         errMsg = parsedCleanUpResponse.Message;
 

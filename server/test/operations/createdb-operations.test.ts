@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import {
     getDriveInfo,
     deployDatabase,
@@ -10,6 +11,7 @@ import {
 import { ACCOUNT_ID, DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../src/utils/consts';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../src/lib/database/db';
 import createDbResponse from '../simulator/responses/workload/createdb-response.json';
+import { registerProxyGetResponse, resetProxyOverrides } from '../simulator/scopes/cloud-manager/proxy-forwarder-scope';
 
 const createDBRequest = {
     databaseName: 'tempdb8',
@@ -140,23 +142,54 @@ describe('Create database operations', () => {
     });
 
     it('Configure luns in a host', async () => {
-        const resp = await configureLuns(
-            reqData.accountId,
-            reqData.credentialsId,
-            reqData.region,
-            reqData.parentJobId,
-            reqData.activeNodeInstanceId,
-            reqData.sqlServerName,
-            reqData.fileSystemId,
-            reqData.sqlVMName,
-            1074,
-            1074,
-            'false',
-            'false',
-            reqData.serverNameWithHostName
-        );
+        resetProxyOverrides();
 
-        expect(resp.Status).toBe('Complete');
+        // provisionOntapStorage derives the LUN path from Date.now(), and the ONTAP LUN serial
+        // lookup keys its result by the LUN's `name`, so the mocked record must use the same
+        // deterministic path the code under test will generate.
+        const fixedEpochMs = 1_700_000_000_000;
+        const dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(fixedEpochMs);
+        const expectedDataLunPath = `/vol/wlmdb_sqldata_${Math.floor(fixedEpochMs / 1000)}/sqldata`;
+
+        registerProxyGetResponse({
+            targetId: reqData.fileSystemId,
+            ontapPath: 'api/protocols/san/igroups',
+            body: { records: [{ name: reqData.iGroup }], num_records: 1 }
+        });
+        registerProxyGetResponse({
+            targetId: reqData.fileSystemId,
+            ontapPath: 'api/storage/luns',
+            body: {
+                records: [{ name: expectedDataLunPath, serial_number: reqData.dataSerial }],
+                num_records: 1
+            }
+        });
+
+        let resp;
+        try {
+            resp = await configureLuns(
+                reqData.accountId,
+                reqData.credentialsId,
+                reqData.region,
+                reqData.parentJobId,
+                reqData.activeNodeInstanceId,
+                reqData.sqlServerName,
+                reqData.fileSystemId,
+                reqData.sqlVMName,
+                1074,
+                1074,
+                'false',
+                'true',
+                reqData.serverNameWithHostName
+            );
+        } finally {
+            dateNowSpy.mockRestore();
+        }
+
+        expect(resp.Resources.Igroup).toBe(reqData.iGroup);
+        expect(resp.Resources.DataSerial).toBe(reqData.dataSerial);
+        expect(resp.Resources.FSxDataVolumeName).toMatch(/^wlmdb_sqldata_/);
+        expect(resp.Resources.FSxLogVolumeName).toBeUndefined();
     });
 
     it('New DB Initialise in server', async () => {

@@ -674,11 +674,6 @@ ssmMock
     })
     .resolves(listSendCommandCommandResponse.createDBResponse)
     .on(SendCommandCommand, params => {
-        const commandRegex = /Configure-LUNs.ps1/;
-        return commandRegex.test(params.Parameters.commands?.[0]);
-    })
-    .resolves(listSendCommandCommandResponse.configureLunsResponse)
-    .on(SendCommandCommand, params => {
         const commandRegex = /NewDB_Initialize-Iscsidisk.ps1/;
         return commandRegex.test(params.Parameters.commands?.[0]);
     })
