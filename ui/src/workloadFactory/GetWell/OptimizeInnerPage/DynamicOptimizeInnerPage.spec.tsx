@@ -28,12 +28,7 @@ vi.mock('../../../store/workloadFactory/getWellOptimizeSlice', () => ({
 }));
 
 // ─── Registry ─────────────────────────────────────────────────────────────────
-const {
-    mockGetColumnConfig,
-    mockIsViewOnlyConfig,
-    mockGetOptimizeApiConfig,
-    mockGetConfigEntry
-} = vi.hoisted(() => ({
+const { mockGetColumnConfig, mockIsViewOnlyConfig, mockGetOptimizeApiConfig, mockGetConfigEntry } = vi.hoisted(() => ({
     mockGetColumnConfig: vi.fn(),
     mockIsViewOnlyConfig: vi.fn(() => false),
     mockGetOptimizeApiConfig: vi.fn(() => null),
@@ -151,7 +146,11 @@ vi.mock('./DynamicInnerTable/DynamicInnerTable', () => ({
             data-can-optimize={String(props.canOptimize)}
             data-is-view-only={String(props.isViewOnly)}
         >
-            <button type="button" data-testid="row-fix-button" onClick={() => props.handleRowFix?.({ objectName: 'vol1' })}>
+            <button
+                type="button"
+                data-testid="row-fix-button"
+                onClick={() => props.handleRowFix?.({ objectName: 'vol1' })}
+            >
                 Fix
             </button>
         </div>

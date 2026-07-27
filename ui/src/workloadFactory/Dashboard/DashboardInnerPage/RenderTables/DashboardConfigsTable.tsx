@@ -519,14 +519,7 @@ const DashboardConfigsTable = ({
             }
         },
         // Last column with actions
-        lastColDetails(
-            configType,
-            {},
-            inProgressOptimizationData,
-            inProgressHostData,
-            showDismissed,
-            isRowFixEnabled
-        )
+        lastColDetails(configType, {}, inProgressOptimizationData, inProgressHostData, showDismissed, isRowFixEnabled)
     ];
 
     const tableProps = useTable({

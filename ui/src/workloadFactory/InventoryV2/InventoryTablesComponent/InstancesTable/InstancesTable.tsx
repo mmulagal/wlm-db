@@ -33,13 +33,7 @@ import {
     getRegistrationRequiresFullPermissionMessageKey
 } from '../../InventoryUtilsV2';
 import { isSmbProtocol } from '../../../../utils/utilityFunctions';
-import {
-    ACTION_CTA,
-    DBType,
-    INVENTORY_STATUS,
-    JOB_MONITORING_STATUS,
-    WLF_TABS
-} from '../../../../utils/consts';
+import { ACTION_CTA, DBType, INVENTORY_STATUS, JOB_MONITORING_STATUS, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import store from '../../../../store/store';
 

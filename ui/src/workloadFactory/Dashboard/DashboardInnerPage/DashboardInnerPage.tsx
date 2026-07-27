@@ -62,7 +62,11 @@ import {
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
-import { findFlatConfigItem, hasConfigStats, resolveConfigTypeId } from '../../WellArchitectedTab/assessmentFormatUtils';
+import {
+    findFlatConfigItem,
+    hasConfigStats,
+    resolveConfigTypeId
+} from '../../WellArchitectedTab/assessmentFormatUtils';
 import { getOptimizeApiConfig, hasFixSupport } from '../../../utils/configRegistry';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import {

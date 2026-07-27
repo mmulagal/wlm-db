@@ -165,9 +165,11 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.WINDOWS_AUTH &&
             dialogFrom !== FROM_DIALOG.MANAGE_WIZARD &&
             dialogFrom !== FROM_DIALOG.CRR_REDIRECTION &&
-            !(dialogFrom === FROM_DIALOG.OPTIMIZE &&
+            !(
+                dialogFrom === FROM_DIALOG.OPTIMIZE &&
                 (selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_IDS.CRR ||
-                    selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_IDS.SNAPCENTER_SNAPSHOT))
+                    selectedOptimizeConfig?.type === ASSESSMENT_CONFIG_IDS.SNAPCENTER_SNAPSHOT)
+            )
         ) {
             closeDialog();
         }

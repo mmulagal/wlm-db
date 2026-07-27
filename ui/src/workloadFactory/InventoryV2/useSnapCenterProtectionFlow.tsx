@@ -113,7 +113,10 @@ export function useSnapCenterProtectionFlow(
             setDialog(
                 <DialogComponent
                     header={
-                        <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div
+                            className={styles.headerClass}
+                            style={{ display: 'flex', justifyContent: 'space-between' }}
+                        >
                             <DsTypography variant="Regular_14">{protectHeader}</DsTypography>
                             {extraStep && (
                                 <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
@@ -149,7 +152,10 @@ export function useSnapCenterProtectionFlow(
             setDialog(
                 <DialogComponent
                     header={
-                        <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div
+                            className={styles.headerClass}
+                            style={{ display: 'flex', justifyContent: 'space-between' }}
+                        >
                             <DsTypography variant="Regular_14">{protectHeader}</DsTypography>
                             {!hostExists && !extraStep && (
                                 <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
@@ -227,7 +233,10 @@ export function useSnapCenterProtectionFlow(
             setDialog(
                 <DialogComponent
                     header={
-                        <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <div
+                            className={styles.headerClass}
+                            style={{ display: 'flex', justifyContent: 'space-between' }}
+                        >
                             <DsTypography variant="Regular_14">{protectHeader}</DsTypography>
                             <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
                                 {t('databases.inventory.step-1-out-of')}
@@ -328,7 +337,16 @@ export function useSnapCenterProtectionFlow(
                 />
             );
         },
-        [closeDialog, dispatch, protectHeader, registerResourceCredBulk, setDialog, showNoAgentDialog, showSingleAgentDialog, t]
+        [
+            closeDialog,
+            dispatch,
+            protectHeader,
+            registerResourceCredBulk,
+            setDialog,
+            showNoAgentDialog,
+            showSingleAgentDialog,
+            t
+        ]
     );
 
     const startProtection = useCallback(
@@ -389,7 +407,12 @@ export function useSnapCenterProtectionFlow(
                     getDiscoverHostResult
                 );
             } else {
-                bxpRedirect(isWorkloadFactory, { ...rowData, editProtection: true }, 'instance', getDiscoverInstanceResult);
+                bxpRedirect(
+                    isWorkloadFactory,
+                    { ...rowData, editProtection: true },
+                    'instance',
+                    getDiscoverInstanceResult
+                );
             }
         },
         [dialogType, getDiscoverHostResult, getDiscoverInstanceResult, isWorkloadFactory]

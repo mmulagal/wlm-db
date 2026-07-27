@@ -5,6 +5,8 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { DBType } from '../../../../../utils/consts';
 
+import DashboardConfigsTable from '../DashboardConfigsTable';
+
 vi.hoisted(() => {
     Object.defineProperty(globalThis, 'localStorage', {
         value: {
@@ -17,8 +19,6 @@ vi.hoisted(() => {
         configurable: true
     });
 });
-
-import DashboardConfigsTable from '../DashboardConfigsTable';
 
 const mockSetDialog = vi.fn();
 vi.mock('@netapp/design-system', () => ({
@@ -927,7 +927,9 @@ describe('DashboardConfigsTable', () => {
         fireEvent.click(viewButtons[0]);
 
         const dialogElement = mockSetDialog.mock.calls[0][0];
-        expect(dialogElement.props.header).toBe('databases.well-architect.dashboard-table-headers.file-system-headroom');
+        expect(dialogElement.props.header).toBe(
+            'databases.well-architect.dashboard-table-headers.file-system-headroom'
+        );
         expect(dialogElement.props.content).toBeTruthy();
         expect(dialogElement.props.callback).toBeTypeOf('function');
     });

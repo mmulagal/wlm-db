@@ -33,8 +33,7 @@ const isFsxLinkMissingForRegistration = (rowData: {
     statusColText?: string;
     hostManageReadiness?: { fsxLinkExists?: boolean };
 }) =>
-    (rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
-        rowData.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+    (rowData.statusColText === INVENTORY_STATUS.UNMANAGED || rowData.statusColText === INVENTORY_STATUS.UNDETECTED) &&
     rowData.hostManageReadiness?.fsxLinkExists === false;
 
 /**

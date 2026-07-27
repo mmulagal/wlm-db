@@ -1,13 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { buildSnapCenterProtectionRowData, buildSnapCenterProtectionRowDataFromDashboardRow } from './snapCenterProtectionRowData';
+import {
+    buildSnapCenterProtectionRowData,
+    buildSnapCenterProtectionRowDataFromDashboardRow
+} from './snapCenterProtectionRowData';
+
+import store from '../../store/store';
 
 vi.mock('../../store/store', () => ({
     default: {
         getState: vi.fn()
     }
 }));
-
-import store from '../../store/store';
 
 describe('buildSnapCenterProtectionRowData', () => {
     beforeEach(() => {

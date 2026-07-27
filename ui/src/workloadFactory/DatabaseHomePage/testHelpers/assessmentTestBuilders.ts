@@ -78,12 +78,18 @@ const normalizeDismissedConfigurations = (dismissed: unknown) => {
 
         if (key.endsWith('_configuration') && value && typeof value === 'object' && 'configState' in value) {
             const configId = key.replace(/_configuration$/, '');
-            entries.push({ id: resolveConfigId(configId), configState: String((value as { configState: string }).configState) });
+            entries.push({
+                id: resolveConfigId(configId),
+                configState: String((value as { configState: string }).configState)
+            });
             return;
         }
 
         if (value && typeof value === 'object' && 'configState' in value) {
-            entries.push({ id: resolveConfigId(key), configState: String((value as { configState: string }).configState) });
+            entries.push({
+                id: resolveConfigId(key),
+                configState: String((value as { configState: string }).configState)
+            });
         }
     });
 

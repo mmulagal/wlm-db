@@ -40,7 +40,11 @@ vi.mock('../../../../utils/configRegistry/configRegistryHelper', () => ({
 }));
 
 vi.mock('../../../../workloadFactory/WellArchitectedTab/assessmentFormatUtils', () => ({
-    createDashboardTableConfig: (id: string) => ({ id, isFixSupported: true, dataMapping: (item: any, instanceData?: any) => item }),
+    createDashboardTableConfig: (id: string) => ({
+        id,
+        isFixSupported: true,
+        dataMapping: (item: any, instanceData?: any) => item
+    }),
     resolveConfigTypeId: (id: string) => id
 }));
 
