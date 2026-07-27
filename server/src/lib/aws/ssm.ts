@@ -247,13 +247,13 @@ async function describeInstanceInformation(
     return instanceInformation;
 }
 
-async function getSSMInventory(credentialsId: string, region: string, instanceId: string, accountId?: string) {
-    logger.info('Get SSM inventory', { credentialsId, region, instanceId, accountId });
+async function getSSMInventory(credentialsId: string, region: string, instanceIds: string[], accountId?: string) {
+    logger.info('Get SSM inventory', { credentialsId, region, instanceIds, accountId });
 
     const ssmClient = await getSSMClient(region, credentialsId, accountId);
     const response = await ssmClient.send(
         new GetInventoryCommand({
-            Filters: [{ Key: 'AWS:InstanceInformation.InstanceId', Values: [instanceId], Type: 'Equal' }]
+            Filters: [{ Key: 'AWS:InstanceInformation.InstanceId', Values: instanceIds, Type: 'Equal' }]
         })
     );
 

@@ -48,9 +48,7 @@ import {
     getSSMConnectionStatusByInstanceIds,
     executeSSMDocumentMultipleInstances,
     extractSsmResponse,
-    hasExtensiveSsmRunPermission,
-    canReadFleetManagerResource,
-    canQuerySSMInventory
+    getFallbackPermissionReadiness
 } from './aws/ssm-operations';
 import { getRegistryOnlySqlServerInstances } from './ssm-doc-operations';
 import { registerJob, updateJobDetails, getJobs } from './database/job-operations';
@@ -165,6 +163,26 @@ type TaggingServiceStorageEntry = { type: string; id: string; svmId?: string; fi
 const MINIMUM_SQL_SERVER_SUPPORTED = 2016;
 const PREPARE_EC2_RERUN_DURATION: number = 20; // in minutes
 const TEN_MINUTES = 10 * 60 * 1000;
+
+async function applyFsxLinkReadiness(
+    credentialsId: string,
+    region: string,
+    itemsWithFsxId: { item: DiscoverResponseInfoType; fsId: string }[]
+) {
+    const uniqueFsIds = [...new Set(itemsWithFsxId.map(({ fsId }) => fsId))];
+    const fsxLinksByFsId = new Map(
+        await Promise.all(
+            uniqueFsIds.map(
+                throat(10, async fsId => [fsId, await checkFsxLinkExists(credentialsId, region, fsId)] as const)
+            )
+        )
+    );
+
+    itemsWithFsxId.forEach(({ item, fsId }) => {
+        const { exists: fsxLinkExists, count: fsxLinksCount } = fsxLinksByFsId.get(fsId)!;
+        item.hostManageReadiness = { ...item.hostManageReadiness!, fsxLinkExists, fsxLinksCount };
+    });
+}
 
 async function getHostAndSqlServerInfo(
     accountId: string,
@@ -337,11 +355,10 @@ async function getHostAndSqlServerInfo(
             // If run time performance is needed, this is one possible candidate for purge.
             await sleep(1000);
 
-            await Promise.all(
+            const scriptResults = await Promise.all(
                 ssmConnectedNodes.map(
                     throat(pageSize || 10, async (target: SsmTargetsInfo) => {
-                        let dbInfo: SqlServerInstanceInfoType[] = [];
-                        dbInfo = await getHostAndSqlInfoFromPsOutput(
+                        const { dbInfo, scriptSucceeded } = await getHostAndSqlInfoFromPsOutput(
                             credentialsId,
                             region,
                             target,
@@ -351,29 +368,60 @@ async function getHostAndSqlServerInfo(
                             subnetListMap,
                             ebsVolumeToAvailabilityZoneMap
                         );
-
-                        if (dbInfo.length) {
-                            dbInfo.forEach(sqlServerInstanceInfo => {
-                                sqlServerInstanceInfo.sqlServerName =
-                                    sqlServerInstanceInfo?.sqlServerName?.toLowerCase();
-                            });
-                            ssmConnectedEc2ResponseInfo.push({
-                                ec2InstanceId: target.ec2InstanceId,
-                                ec2InstanceType: target.ec2InstanceType,
-                                ec2InstanceName: target.ec2InstanceName,
-                                ec2UsageOperation: target.ec2UsageOperation,
-                                ssmState: target.ssmState,
-                                sqlServerInstances: dbInfo,
-                                vpc: target.vpc,
-                                source: target.source,
-                                hostManageReadiness: target.hostManageReadiness
-                            });
-                        }
+                        return { target, dbInfo, scriptSucceeded };
                     })
                 )
             );
+
+            // extensiveRunPermission is derived from the real discovery script's own outcome: a
+            // successful run already proves the broad SSM document permission, so only instances
+            // where it failed need the narrower fallback permission checks (batched together).
+            const instanceIds = scriptResults
+                .filter(({ scriptSucceeded }) => !scriptSucceeded)
+                .map(({ target }) => target.ec2InstanceId);
+            const fallbackReadinessByInstanceId = await getFallbackPermissionReadiness(
+                accountId,
+                credentialsId,
+                region,
+                instanceIds,
+                'windows'
+            );
+
+            scriptResults.forEach(({ target, dbInfo, scriptSucceeded }) => {
+                target.hostManageReadiness = scriptSucceeded
+                    ? { extensiveRunPermission: true }
+                    : fallbackReadinessByInstanceId.get(target.ec2InstanceId);
+
+                if (dbInfo.length) {
+                    dbInfo.forEach(sqlServerInstanceInfo => {
+                        sqlServerInstanceInfo.sqlServerName = sqlServerInstanceInfo?.sqlServerName?.toLowerCase();
+                    });
+                    ssmConnectedEc2ResponseInfo.push({
+                        ec2InstanceId: target.ec2InstanceId,
+                        ec2InstanceType: target.ec2InstanceType,
+                        ec2InstanceName: target.ec2InstanceName,
+                        ec2UsageOperation: target.ec2UsageOperation,
+                        ssmState: target.ssmState,
+                        sqlServerInstances: dbInfo,
+                        vpc: target.vpc,
+                        source: target.source,
+                        hostManageReadiness: target.hostManageReadiness
+                    });
+                }
+            });
         } else {
             logger.warn('Skipping SSM script polling: sendSSMCommand failed to start', { region, credentialsId });
+            const instanceIds = ssmConnectedNodes.map(({ ec2InstanceId }) => ec2InstanceId);
+            const fallbackReadinessByInstanceId = await getFallbackPermissionReadiness(
+                accountId,
+                credentialsId,
+                region,
+                instanceIds,
+                'windows'
+            );
+            ssmConnectedNodes.forEach(target => {
+                target.hostManageReadiness = fallbackReadinessByInstanceId.get(target.ec2InstanceId);
+            });
         }
 
         // Fallback for tagging-service-only instances that couldn't run the PowerShell script
@@ -431,22 +479,7 @@ async function getHostAndSqlServerInfo(
                 .find(({ type }) => type === STORAGE_TYPE.FSXN)?.id;
             return fsId ? [{ item, fsId }] : [];
         });
-        await Promise.all(
-            itemsWithFsxId.map(
-                throat(10, async ({ item, fsId }) => {
-                    const { exists: fsxLinkExists, count: fsxLinksCount } = await checkFsxLinkExists(
-                        credentialsId,
-                        region,
-                        fsId
-                    );
-                    item.hostManageReadiness = {
-                        ...item.hostManageReadiness!,
-                        fsxLinkExists,
-                        fsxLinksCount
-                    };
-                })
-            )
-        );
+        await applyFsxLinkReadiness(credentialsId, region, itemsWithFsxId);
 
         if (isRedisConnected(redisClient)) {
             await Promise.all(
@@ -540,7 +573,7 @@ async function getHostAndSqlInfoFromPsOutput(
     fsIdWithFsxInfo: Map<string, FsxServerConfig>,
     subnetListMap: Map<string | undefined, string | undefined>,
     ebsVolumeToAvailabilityZoneMap: Map<string | undefined, string | undefined>
-): Promise<SqlServerInstanceInfoType[]> {
+): Promise<{ dbInfo: SqlServerInstanceInfoType[]; scriptSucceeded: boolean }> {
     logger.info('Get host and SQL server details from PowerShell output', {
         credentialsId,
         region,
@@ -1089,7 +1122,7 @@ async function getHostAndSqlInfoFromPsOutput(
         );
     }
 
-    return ssmTargetSqlServerInstancesInfo;
+    return { dbInfo: ssmTargetSqlServerInstancesInfo, scriptSucceeded: !ssmResponse?.StandardErrorContent };
 }
 
 async function makeSsmCall(
@@ -1676,75 +1709,6 @@ async function discoverEc2Instances(
         ec2Instances = ec2Instances.filter(
             ec2InstanceDetails => ec2InstanceDetails.ssmState === ConnectionStatus.CONNECTED
         );
-    } else {
-        const connectedInstances = ec2Instances.filter(({ ssmState }) => ssmState === ConnectionStatus.CONNECTED);
-        logger.info('Computing SSM/Fleet Manager readiness for connected instances', {
-            region,
-            discoveryDbType,
-            instanceCount: connectedInstances.length
-        });
-
-        const hostReadinessByInstanceId = new Map(
-            await Promise.all(
-                connectedInstances.map(
-                    throat(10, async ({ ec2InstanceId, platform }) => {
-                        const isWindows = platform?.toLowerCase().includes('windows');
-                        const hasExtensiveRunPermission = await hasExtensiveSsmRunPermission(
-                            credentialsId,
-                            region,
-                            ec2InstanceId,
-                            isWindows ? 'windows' : 'linux',
-                            accountId
-                        );
-
-                        const hostReadiness: SsmTargetsInfo['hostManageReadiness'] = {
-                            extensiveRunPermission: hasExtensiveRunPermission
-                        };
-
-                        // The narrower Fleet Manager document is only worth probing once the broad
-                        // document is denied, and only for the platform each database type supports
-                        // today (MSSQL: Windows-only, Oracle: Linux-only).
-                        const supportsNarrowFallback =
-                            (discoveryDbType === DatabaseTypes.MS_SQL_SERVER && isWindows) ||
-                            (discoveryDbType === DatabaseTypes.ORACLE && !isWindows);
-
-                        if (!hasExtensiveRunPermission) {
-                            const [canReadFleetManager, canInventory] = await Promise.all([
-                                supportsNarrowFallback
-                                    ? canReadFleetManagerResource(
-                                          credentialsId,
-                                          region,
-                                          ec2InstanceId,
-                                          isWindows ? 'windows' : 'linux',
-                                          accountId
-                                      )
-                                    : Promise.resolve(undefined),
-                                canQuerySSMInventory(credentialsId, region, ec2InstanceId, accountId)
-                            ]);
-                            if (supportsNarrowFallback) {
-                                hostReadiness.canReadAWSSSMDocuments = canReadFleetManager;
-                            }
-                            hostReadiness.canQuerySSMInventory = canInventory;
-                        }
-
-                        return [ec2InstanceId, hostReadiness] as const;
-                    })
-                )
-            )
-        );
-
-        ec2Instances = ec2Instances.map(instance => ({
-            ...instance,
-            hostManageReadiness: hostReadinessByInstanceId.get(instance.ec2InstanceId) ?? {
-                extensiveRunPermission: false
-            }
-        }));
-
-        logger.info('Computed SSM/Fleet Manager readiness for connected instances', {
-            region,
-            discoveryDbType,
-            instanceCount: connectedInstances.length
-        });
     }
 
     return { ec2Instances, NextToken };
@@ -2209,6 +2173,20 @@ function getDiscoveredOracleInstancesStorageDetails(
     );
 }
 
+function createFallbackOracleInstance(): DiscoverOracleInstanceType {
+    return {
+        instanceName: 'oracle',
+        instanceId: 'oracle',
+        instanceState: ORACLE_INSTANCE_STATE.STARTED,
+        version: '',
+        instanceType: OracleDeploymentTenacy.SINGLE_TENANT,
+        databaseCount: 0,
+        databaseDetails: {},
+        oracleServerAuthentication: false,
+        isDefaultAuthentication: false
+    };
+}
+
 async function discoverOracleResources(
     accountId: string,
     credentialsId: string,
@@ -2277,8 +2255,6 @@ async function discoverOracleResources(
     let fsIdWithFsxInfo: Map<string, FsxServerConfig> = new Map();
     let ec2FsxRelationships: Ec2WithStorage[] = [];
 
-    // Start tagging-service FSx fetch in parallel before entering the SSM try block so the
-    // result is available whether SSM succeeds or fails.
     const ec2FsxRelationshipsPromise = buildEc2FsxRelationship(accountId, credentialsId, region).catch(
         (error): { ec2s: Ec2WithStorage[] } => {
             logger.warn('Failed to build EC2-FSx relationship for Oracle storage enrichment', { region, error });
@@ -2499,6 +2475,27 @@ async function discoverOracleResources(
                 })
             )
         );
+
+        const failedInstances = ssmConnectedEc2Instances.filter(
+            ({ ec2InstanceId }) =>
+                !ssmResponseMap.has(ec2InstanceId) || Boolean(ssmResponseMap.get(ec2InstanceId)?.error)
+        );
+        const fallbackReadinessByInstanceId = await getFallbackPermissionReadiness(
+            accountId,
+            credentialsId,
+            region,
+            failedInstances.map(({ ec2InstanceId }) => ec2InstanceId),
+            'linux'
+        );
+        instancesWithSsmResponse.forEach(item => {
+            const hostManageReadiness = fallbackReadinessByInstanceId.get(item.ec2InstanceId) ?? {
+                extensiveRunPermission: true
+            };
+            item.hostManageReadiness = hostManageReadiness;
+            if (!hostManageReadiness.extensiveRunPermission) {
+                item.databaseInstanceDetails = [createFallbackOracleInstance()];
+            }
+        });
     } catch (error: any) {
         logger.error('Failed to discover oracle resources', { error: error.message });
 
@@ -2507,12 +2504,21 @@ async function discoverOracleResources(
         ec2FsxRelationships = taggingServiceRelationships;
 
         const reportedIds = new Set(instancesWithSsmResponse.map(({ ec2InstanceId }) => ec2InstanceId));
+        const fallbackReadinessByInstanceId = await getFallbackPermissionReadiness(
+            accountId,
+            credentialsId,
+            region,
+            ssmConnectedEc2Instances.map(({ ec2InstanceId }) => ec2InstanceId),
+            'linux'
+        );
         for (const ec2Instance of ssmConnectedEc2Instances) {
             if (!reportedIds.has(ec2Instance.ec2InstanceId)) {
                 instancesWithSsmResponse.push({
                     ...ec2Instance,
                     source: DiscoverySource.TAGGING_SERVICE,
-                    error: error.message
+                    error: error.message,
+                    hostManageReadiness: fallbackReadinessByInstanceId.get(ec2Instance.ec2InstanceId),
+                    databaseInstanceDetails: [createFallbackOracleInstance()]
                 });
             }
         }
@@ -2551,22 +2557,7 @@ async function discoverOracleResources(
             ec2FsxRelationships.find(({ instanceId }) => instanceId === item.ec2InstanceId)?.fsxs[0]?.fileSystemId;
         return fsId ? [{ item, fsId }] : [];
     });
-    await Promise.all(
-        oracleItemsWithFsxId.map(
-            throat(10, async ({ item, fsId }) => {
-                const { exists: fsxLinkExists, count: fsxLinksCount } = await checkFsxLinkExists(
-                    credentialsId,
-                    region,
-                    fsId
-                );
-                item.hostManageReadiness = {
-                    ...item.hostManageReadiness!,
-                    fsxLinkExists,
-                    fsxLinksCount
-                };
-            })
-        )
-    );
+    await applyFsxLinkReadiness(credentialsId, region, oracleItemsWithFsxId);
 
     return {
         count: (ssmNotConnectedEc2Instances.length || 0) + (instancesWithSsmResponse.length || 0),

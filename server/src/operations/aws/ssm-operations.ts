@@ -55,7 +55,6 @@ import { FSxAvailableRegionType } from '../../routes/types/aws.types';
 import { SSMParameterObject, MultipleCommandSsmResponse, AWSSDKCacheParams } from '../../utils/common-types';
 import { describeRegions } from '../../lib/aws/ec2';
 import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from '../workloads/mssql/const';
-import { SSM_RUN_SHELL_SCRIPT_DOC } from '../workloads/oracle/consts';
 import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { getCloudWatchLogs, setLogGroupRetentionPolicy } from './cloud-watch-logs-operations';
 import { getLogsAnalyzerBedrockRegionsList } from './bedrock-operations';
@@ -751,26 +750,32 @@ async function getSSMParametersList(
     }
 }
 
-async function probeSendCommand(
-    credentialsId: string,
-    region: string,
-    instanceId: string,
-    params: SendCommandCommandInput,
-    accountId?: string
-): Promise<boolean> {
+async function probeSendCommand({
+    credentialsId,
+    region,
+    instanceIds,
+    params,
+    accountId
+}: {
+    credentialsId: string;
+    region: string;
+    instanceIds: string[];
+    params: SendCommandCommandInput;
+    accountId?: string;
+}): Promise<boolean> {
     const documentName = params.DocumentName;
-    logger.info('Checking SSM Document permission', { instanceId, region, documentName });
+    logger.info('Checking SSM Document permission', { instanceIds, region, documentName });
     try {
-        await sendSSMCommand(credentialsId, region, { InstanceIds: [instanceId], ...params }, accountId);
+        await sendSSMCommand(credentialsId, region, { InstanceIds: instanceIds, ...params }, accountId);
         logger.info('SSM Document permission check succeeded', {
-            instanceId,
+            instanceIds,
             region,
             documentName
         });
         return true;
     } catch (error) {
         logger.warn('SSM Document permission check failed', {
-            instanceId,
+            instanceIds,
             region,
             documentName,
             error
@@ -779,56 +784,28 @@ async function probeSendCommand(
     }
 }
 
-async function hasExtensiveSsmRunPermission(
-    credentialsId: string,
-    region: string,
-    instanceId: string,
-    platform: 'windows' | 'linux',
-    accountId?: string
-): Promise<boolean> {
-    logger.info('Checking whether instance has extensive SSM run permission', { instanceId, region, platform });
-
-    const isWindows = platform === 'windows';
-
-    const canRun = await probeSendCommand(
-        credentialsId,
-        region,
-        instanceId,
-        {
-            DocumentName: isWindows ? SSM_RUN_POWERSHELL_SCRIPT_DOC : SSM_RUN_SHELL_SCRIPT_DOC,
-            Comment: 'WLM SSM Document permission check',
-            Parameters: {
-                commands: [isWindows ? 'Write-Output wf-permission-check' : 'echo wf-permission-check']
-            }
-        },
-        accountId
-    );
-
-    logger.info('Instance has extensive SSM run permission', {
-        instanceId,
-        region,
-        platform,
-        canRun
-    });
-    return canRun;
-}
-
-async function canReadFleetManagerResource(
-    credentialsId: string,
-    region: string,
-    instanceId: string,
-    platform: 'windows' | 'linux',
-    accountId?: string
-): Promise<boolean> {
-    logger.info('Checking Fleet Manager read permission', { instanceId, region, platform });
+async function canReadFleetManagerResource({
+    credentialsId,
+    region,
+    instanceIds,
+    platform,
+    accountId
+}: {
+    credentialsId: string;
+    region: string;
+    instanceIds: string[];
+    platform: 'windows' | 'linux';
+    accountId?: string;
+}): Promise<boolean> {
+    logger.info('Checking Fleet Manager read permission', { instanceIds, region, platform });
 
     const isWindows = platform === 'windows';
     const path = isWindows ? 'HKLM:\\SOFTWARE' : '/etc/fstab';
-    const canRead = await probeSendCommand(
+    const canRead = await probeSendCommand({
         credentialsId,
         region,
-        instanceId,
-        {
+        instanceIds,
+        params: {
             DocumentName: isWindows
                 ? AWS_FLEET_MANAGER_GET_WINDOWS_REGISTRY_CONTENT_DOC
                 : AWS_FLEET_MANAGER_GET_FILE_SYSTEM_CONTENT_DOC,
@@ -838,10 +815,10 @@ async function canReadFleetManagerResource(
             }
         },
         accountId
-    );
+    });
 
     logger.info('Checked Fleet Manager read permission', {
-        instanceId,
+        instanceIds,
         region,
         platform,
         canRead
@@ -849,11 +826,11 @@ async function canReadFleetManagerResource(
     return canRead;
 }
 
-async function canQuerySSMInventory(credentialsId: string, region: string, instanceId: string, accountId?: string) {
-    logger.info('Checking SSM inventory permissions ', { credentialsId, region, instanceId, accountId });
+async function canQuerySSMInventory(accountId: string, credentialsId: string, region: string, instanceIds: string[]) {
+    logger.info('Checking SSM inventory permissions ', { credentialsId, region, instanceIds, accountId });
     const [inventoryResult, entriesResult] = await Promise.allSettled([
-        getSSMInventory(credentialsId, region, instanceId, accountId),
-        listSSMInventoryEntries(credentialsId, region, instanceId, accountId)
+        getSSMInventory(credentialsId, region, instanceIds, accountId),
+        listSSMInventoryEntries(credentialsId, region, instanceIds[0], accountId)
     ]);
 
     if (inventoryResult.status === 'rejected') {
@@ -864,6 +841,41 @@ async function canQuerySSMInventory(credentialsId: string, region: string, insta
     }
 
     return inventoryResult.status === 'fulfilled' && entriesResult.status === 'fulfilled';
+}
+
+async function getFallbackPermissionReadiness(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    instanceIds: string[],
+    platform: 'windows' | 'linux'
+) {
+    logger.info('Checking fallback discover permissions for instances', {
+        credentialsId,
+        region,
+        platform,
+        instanceCount: instanceIds.length
+    });
+
+    if (isEmpty(instanceIds)) {
+        return new Map();
+    }
+
+    const [canQueryInventory, canReadFleetManager] = await Promise.all([
+        canQuerySSMInventory(accountId, credentialsId, region, instanceIds),
+        canReadFleetManagerResource({ credentialsId, region, instanceIds, platform, accountId })
+    ]);
+
+    return new Map(
+        instanceIds.map(ec2InstanceId => [
+            ec2InstanceId,
+            {
+                extensiveRunPermission: false,
+                canQuerySSMInventory: canQueryInventory,
+                canReadAWSSSMDocuments: canReadFleetManager
+            }
+        ])
+    );
 }
 
 export {
@@ -882,7 +894,7 @@ export {
     extractSsmResponse,
     pollSSMConnectionStatus,
     getSSMParametersList,
-    hasExtensiveSsmRunPermission,
     canReadFleetManagerResource,
-    canQuerySSMInventory
+    canQuerySSMInventory,
+    getFallbackPermissionReadiness
 };
