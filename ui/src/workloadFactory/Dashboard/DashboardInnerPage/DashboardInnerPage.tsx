@@ -11,7 +11,7 @@ import LinkedConfigBanner from '../../../common/LinkedConfigBanner/LinkedConfigB
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './DashboardInnerPage.module.scss';
 import store from '../../../store/store';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedHeaderTab, setSelectedOptimizeConfig } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
     ACTION_TYPE,
     ASSESSMENT_CONFIG_IDS,
@@ -62,7 +62,7 @@ import {
     setOptimizingInstanceData
 } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/DatabaseHomeUtils';
-import { findFlatConfigItem, hasConfigStats } from '../../WellArchitectedTab/assessmentFormatUtils';
+import { findFlatConfigItem, hasConfigStats, resolveConfigTypeId } from '../../WellArchitectedTab/assessmentFormatUtils';
 import { getOptimizeApiConfig, hasFixSupport } from '../../../utils/configRegistry';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import {
@@ -71,7 +71,9 @@ import {
     filterNotOptimizedRows,
     getAssessmentStatusConsistency
 } from './DashboardInnerPageHelper';
-import { checkLinkedConfigAcknowledge } from '../../GetWell/StorageCardComponent/optimizeUtils';
+import { checkLinkedConfigAcknowledge, handleConfigDialog } from '../../GetWell/StorageCardComponent/optimizeUtils';
+import { useSnapCenterProtectionFlow } from '../../InventoryV2/useSnapCenterProtectionFlow';
+import { buildSnapCenterProtectionRowDataFromDashboardRow } from '../../InventoryV2/snapCenterProtectionRowData';
 import DashboardConfigsTable from './RenderTables/DashboardConfigsTable';
 import { formatOracleWellArchitectedData } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
 import { engineTypeBasedResourceStr } from '../../WellArchitectedTab/WellArchitectedTabUtils';
@@ -91,6 +93,7 @@ const DashboardInnerPage = () => {
     const { credIdFromJM, regionFromJM } = useAppSelector(state => state.getWellOptimize);
     const { allmssqlHostAssessmentData, allOracleHostAssessmentData } = useAppSelector(state => state.inventoryV2);
     const { setDialog, closeDialog } = useDialog();
+    const { startProtection } = useSnapCenterProtectionFlow(setDialog, closeDialog, { dialogType: 'instance' });
     const [valueCardData, setValueCardData] = useState<any>({
         optimizationScore: '',
         dismissedInstances: '',
@@ -530,6 +533,48 @@ const DashboardInnerPage = () => {
                 );
             }
             dispatch(setSelectedHeaderTab(WLF_TABS.DASHBOARD_OPTIMIZE_INNER_PAGE));
+        } else if (
+            resolveConfigTypeId(configId) === ASSESSMENT_CONFIG_IDS.SNAPCENTER_SNAPSHOT &&
+            configEngineType === DBType.MSSQL &&
+            operation === 'single'
+        ) {
+            const technicalConfigId = ASSESSMENT_CONFIG_IDS.SNAPCENTER_SNAPSHOT;
+            dispatch(
+                setSelectedOptimizeConfig({
+                    type: technicalConfigId,
+                    data: {},
+                    engineType: DBType.MSSQL
+                })
+            );
+            const closeSnapcenterDialog = () => {
+                dispatch(setSelectedOptimizeConfig(null));
+                closeDialog();
+            };
+            const startProtectFlow = () => {
+                startProtection(buildSnapCenterProtectionRowDataFromDashboardRow(rowData));
+            };
+
+            handleConfigDialog(
+                setDialog,
+                startProtectFlow,
+                closeSnapcenterDialog,
+                {
+                    engineType: configEngineType,
+                    data: {
+                        ...configItem,
+                        name: configDisplayName,
+                        id: technicalConfigId,
+                        status: rowData?.status,
+                        missingPermissions: rowData?.missingPermissions,
+                        objectsInViolation: rowData?.objectsInViolation
+                    }
+                },
+                operation,
+                rowData,
+                rowData?.isWad || rowData?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP,
+                rowData?.isUnregistered ?? false,
+                true
+            );
         } else {
             const assessmentStatusConsistent = getAssessmentStatusConsistency(rowData);
             // Check if ALL rows are WAD (offline assessment) instances - only disable if there are no fixable rows

@@ -3,6 +3,20 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import { DBType } from '../../../../../utils/consts';
+
+vi.hoisted(() => {
+    Object.defineProperty(globalThis, 'localStorage', {
+        value: {
+            getItem: vi.fn(() => null),
+            setItem: vi.fn(),
+            removeItem: vi.fn(),
+            clear: vi.fn()
+        },
+        writable: true,
+        configurable: true
+    });
+});
 
 import DashboardConfigsTable from '../DashboardConfigsTable';
 
@@ -217,6 +231,8 @@ vi.mock('../../../../GetWell/GetWellUtils', () => ({
     isWadExcludedConfig: vi.fn(() => false)
 }));
 
+const mockBulkFixDisableCheck = vi.fn(() => ({ isFixDisabled: false, fixDisableMsg: '' }));
+
 vi.mock('../../DashboardInnerPageHelper', () => ({
     bulkDismissPostponeDisableCheck: vi.fn(() => ({
         isDismissDisabled: false,
@@ -224,7 +240,7 @@ vi.mock('../../DashboardInnerPageHelper', () => ({
         isPostponeDisabled: false,
         postponeDisableMsg: ''
     })),
-    bulkFixDisableCheck: vi.fn(() => ({ isFixDisabled: false, fixDisableMsg: '' })),
+    bulkFixDisableCheck: (...args: unknown[]) => mockBulkFixDisableCheck(...args),
     sortOptimizeDashboardInnerTable: vi.fn((data: any) => data)
 }));
 
@@ -233,7 +249,10 @@ vi.mock('../../../../WellArchitectedTab/WellArchitectedTabUtils', () => ({
 }));
 
 vi.mock('../../../../../utils/manageColumnUtils', () => ({
-    initialDashboardInnerPageOptimizeColState: {}
+    initialDashboardInnerPageOptimizeColState: {},
+    getInitialInstanceTableColState: vi.fn(() => ({})),
+    getInitialHostTableColState: vi.fn(() => ({})),
+    getInitialDatabaseTableColState: vi.fn(() => ({}))
 }));
 
 vi.mock('../../../../../assets/ic_not_active.svg', () => ({ ReactComponent: () => <svg data-testid="not-active" /> }));
@@ -298,7 +317,7 @@ const makeStore = (overrides: any = {}) =>
                     inProgressOptimizationData: {},
                     inProgressHostData: {},
                     inProgressStateData: {},
-                    configEngineType: 'MSSQL',
+                    configEngineType: DBType.MSSQL,
                     ...overrides.getWellOptimize
                 }
             ) => s
@@ -340,13 +359,13 @@ describe('DashboardConfigsTable', () => {
         expect(screen.getByTestId('toggle-switch')).toBeTruthy();
     });
 
-    it('returns null for unknown config type', () => {
-        const { container } = render(
+    it('renders table shell for unrecognized config type', () => {
+        render(
             <Provider store={makeStore()}>
-                <DashboardConfigsTable {...defaultProps} configType="unknown-config" />
+                <DashboardConfigsTable {...defaultProps} configType="totally-invalid-config-xyz" />
             </Provider>
         );
-        expect(container.innerHTML).toBe('');
+        expect(screen.getByTestId('table')).toBeTruthy();
     });
 
     it('renders bulk action controller when rows are selected', () => {
@@ -850,7 +869,7 @@ describe('DashboardConfigsTable', () => {
     it('renders View button for rows with violations > 0', () => {
         render(
             <Provider store={makeStore()}>
-                <DashboardConfigsTable {...defaultProps} />
+                <DashboardConfigsTable {...defaultProps} configType="headroom" />
             </Provider>
         );
         const viewButtons = screen.getAllByText('databases.dashboard.view');
@@ -889,7 +908,7 @@ describe('DashboardConfigsTable', () => {
         mockSetDialog.mockClear();
         render(
             <Provider store={makeStore()}>
-                <DashboardConfigsTable {...defaultProps} />
+                <DashboardConfigsTable {...defaultProps} configType="headroom" />
             </Provider>
         );
         const viewButtons = screen.getAllByText('databases.dashboard.view');
@@ -901,14 +920,14 @@ describe('DashboardConfigsTable', () => {
         mockSetDialog.mockClear();
         render(
             <Provider store={makeStore()}>
-                <DashboardConfigsTable {...defaultProps} />
+                <DashboardConfigsTable {...defaultProps} configType="headroom" />
             </Provider>
         );
         const viewButtons = screen.getAllByText('databases.dashboard.view');
         fireEvent.click(viewButtons[0]);
 
         const dialogElement = mockSetDialog.mock.calls[0][0];
-        expect(dialogElement.props.header).toBe('databases.well-architect.dashboard-table-headers.impacted-volumes');
+        expect(dialogElement.props.header).toBe('databases.well-architect.dashboard-table-headers.file-system-headroom');
         expect(dialogElement.props.content).toBeTruthy();
         expect(dialogElement.props.callback).toBeTypeOf('function');
     });
@@ -947,7 +966,7 @@ describe('DashboardConfigsTable', () => {
         };
 
         it('renders enabled View button (no Popover) for online instance (status Up)', () => {
-            const col = getCustomCol('Microsoft SQL Server patch');
+            const col = getCustomCol('mssql-patch');
             const { queryByTestId } = render(
                 col.renderCell('3', { configState: 'ACTIVE', status: 'Up', loadingStatus: false })
             );
@@ -955,7 +974,7 @@ describe('DashboardConfigsTable', () => {
         });
 
         it('renders enabled View button (no Popover) for online instance (status Running)', () => {
-            const col = getCustomCol('Microsoft SQL Server patch');
+            const col = getCustomCol('mssql-patch');
             const { queryByTestId } = render(
                 col.renderCell('3', { configState: 'ACTIVE', status: 'Running', loadingStatus: false })
             );
@@ -963,7 +982,7 @@ describe('DashboardConfigsTable', () => {
         });
 
         it('renders disabled View button in Popover for offline instance (status Down)', () => {
-            const col = getCustomCol('Microsoft SQL Server patch');
+            const col = getCustomCol('mssql-patch');
             const { getByTestId, getByText } = render(
                 col.renderCell('3', { configState: 'ACTIVE', status: 'Down', loadingStatus: false })
             );
@@ -976,7 +995,7 @@ describe('DashboardConfigsTable', () => {
 
         it('does not attach onClick handler for offline instance — dialog not opened', () => {
             mockSetDialog.mockClear();
-            const col = getCustomCol('Microsoft SQL Server patch');
+            const col = getCustomCol('mssql-patch');
             const { getByText } = render(
                 col.renderCell('3', { configState: 'ACTIVE', status: 'Down', loadingStatus: false })
             );
@@ -986,7 +1005,7 @@ describe('DashboardConfigsTable', () => {
         });
 
         it('renders enabled View button (no Popover) when loadingStatus is true (inventory still fetching)', () => {
-            const col = getCustomCol('Microsoft SQL Server patch');
+            const col = getCustomCol('mssql-patch');
             const { queryByTestId } = render(
                 col.renderCell('3', { configState: 'ACTIVE', status: undefined, loadingStatus: true })
             );
@@ -994,7 +1013,7 @@ describe('DashboardConfigsTable', () => {
         });
 
         it('also works for Oracle OS patch config', () => {
-            const col = getCustomCol('Operating system patch');
+            const col = getCustomCol('host-os-patch');
             const { getByTestId } = render(
                 col.renderCell('5', { configState: 'ACTIVE', status: 'Stopped', loadingStatus: false })
             );
@@ -1002,6 +1021,56 @@ describe('DashboardConfigsTable', () => {
             expect(getByTestId('popover-content').textContent).toBe(
                 'databases.well-architect.view-offline-instance-disabled'
             );
+        });
+    });
+
+    describe('snapcenter-snapshot fix flow', () => {
+        beforeEach(() => {
+            mockBulkFixDisableCheck.mockClear();
+            defaultProps.lastColDetails.mockClear();
+        });
+
+        it('enables row Fix even when registry marks fixSupported false', () => {
+            render(
+                <Provider store={makeStore({ databaseHome: { selectedRowsForOptimize: [{ id: '1' }] } })}>
+                    <DashboardConfigsTable {...defaultProps} configType="snapcenter-snapshot" />
+                </Provider>
+            );
+
+            expect(defaultProps.lastColDetails).toHaveBeenCalledWith(
+                'snapcenter-snapshot',
+                {},
+                expect.anything(),
+                expect.anything(),
+                false,
+                true
+            );
+        });
+
+        it('disables bulk Fix with bulk-not-supported message path', () => {
+            render(
+                <Provider store={makeStore({ databaseHome: { selectedRowsForOptimize: [{ id: '1' }] } })}>
+                    <DashboardConfigsTable {...defaultProps} configType="snapcenter-snapshot" />
+                </Provider>
+            );
+
+            expect(mockBulkFixDisableCheck).toHaveBeenCalledWith(
+                'snapcenter-snapshot',
+                true,
+                [{ id: '1' }],
+                expect.any(Function),
+                DBType.MSSQL,
+                false
+            );
+        });
+
+        it('renders table for snapcenter-snapshot config', () => {
+            render(
+                <Provider store={makeStore()}>
+                    <DashboardConfigsTable {...defaultProps} configType="snapcenter-snapshot" />
+                </Provider>
+            );
+            expect(screen.getByTestId('table')).toBeTruthy();
         });
     });
 

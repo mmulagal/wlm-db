@@ -14,7 +14,14 @@ import { ReactComponent as InProgress } from '../../../../assets/In Progress.svg
 import { mapHostStatusToAssessmentData, shouldSkipDatabaseHost } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { checkBoxHandle, formatDateWithTime, getSelectedFromSelectionState } from '../../../../utils/utilityFunctions';
 import { setSelectedRowsForOptimize } from '../../../../store/workloadFactory/databaseHomeSlice';
-import { CONFIG_STATE_ACTIONS, CONFIG_STATES, DBType, GETWELL_STATUS, GETWELL_VALUES } from '../../../../utils/consts';
+import {
+    ASSESSMENT_CONFIG_IDS,
+    CONFIG_STATE_ACTIONS,
+    CONFIG_STATES,
+    DBType,
+    GETWELL_STATUS,
+    GETWELL_VALUES
+} from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
     disableOptimizeCheckBoxForOptimizeCase
@@ -271,8 +278,12 @@ const DashboardConfigsTable = ({
 
     // Check if fix is not supported for this configuration type
     const isFixNotSupported = config.isFixSupported === false;
-    const supportsDashboardBulkFix =
-        getOptimizeApiConfig(config.configId, configEngineType)?.supportsDashboardBulk ?? true;
+    const isSnapcenterProtectConfig =
+        config.configId === ASSESSMENT_CONFIG_IDS.SNAPCENTER_SNAPSHOT && configEngineType === DBType.MSSQL;
+    const isRowFixEnabled = config.isFixSupported || isSnapcenterProtectConfig;
+    const supportsDashboardBulkFix = isSnapcenterProtectConfig
+        ? false
+        : getOptimizeApiConfig(config.configId, configEngineType)?.supportsDashboardBulk ?? true;
 
     // Determine if fix button should be enabled based on selected rows and configuration support
     const { isFixDisabled, fixDisableMsg } = bulkFixDisableCheck(
@@ -514,7 +525,7 @@ const DashboardConfigsTable = ({
             inProgressOptimizationData,
             inProgressHostData,
             showDismissed,
-            config.isFixSupported
+            isRowFixEnabled
         )
     ];
 

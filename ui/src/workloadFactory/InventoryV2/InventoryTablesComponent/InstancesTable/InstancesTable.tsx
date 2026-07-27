@@ -6,38 +6,22 @@ import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
-    useAddHostJobScMutation,
-    useAddHostScMutation,
-    useAssignBackupRecoveryLicenseMutation,
-    useAssignRBACPrivilegesMutation,
-    useConfigureDirectoryMutation,
-    useDeleteHostScMutation,
-    useDiscoverExistingFsxNMutation,
-    useGenerateCredentialIDMutation,
-    useGetBackupRecoveryLicenseMutation,
     useGetConnectorsMutation,
-    useGetDiscoverHostResultMutation,
     useGetDiscoverInstanceResultMutation,
-    useGetFsxDetailsMutation,
     useGetOneTimeWADDownloadScriptMutation,
     useGetOneTimeWADUploadScriptMutation,
     useGetOrganizationIdsMutation,
-    useGetRBACPrivilegesMutation,
-    useGetSCCrendentialsMutation,
     useGetWorkSpaceIDMutation,
     useLazyGetAllOfflineMssqlHostsAssessmentDataQuery,
     useLazyGetAllOfflineOracleHostsAssessmentDataQuery,
     useLazyGetOfflineMssqlAssessmentDatabasesQuery,
     useLazyGetSubTaskListQuery,
-    useListAllDirectoriesMutation,
     useListExistingHostsMutation,
-    useRegisterResourceCredentialsBulkMutation,
     useUnmanageMssqlInstanceMutation,
     useUnmanageOracleInstanceMutation,
     useUnmanagePgsqlInstanceMutation
 } from '../../../../utils/apiService';
 import {
-    addHostHandlerSc,
     getDeregisterContent,
     instanceExtraDataUpdate,
     manageActionCol,
@@ -46,12 +30,10 @@ import {
     hasFullPermission,
     isUnregisteredInventoryRow
 } from '../../InventoryUtilsV2';
-import { bxpRedirect, isSmbProtocol } from '../../../../utils/utilityFunctions';
+import { isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
     ACTION_CTA,
     DBType,
-    DETECT_HOST_VAR,
-    FROM_DIALOG,
     INVENTORY_STATUS,
     JOB_MONITORING_STATUS,
     WLF_TABS
@@ -91,13 +73,7 @@ import styles from '../InventoryTable.module.scss';
 import { TableTopBar } from '../../../../common/Lib/Table/TableTopBar';
 import { Table } from '../../../../common/Lib/Table/Table';
 import { useTable } from '../../../../common/Lib/Table/useTable';
-import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
-import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
-import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 import {
-    cancelProtectionForRow,
-    setAuthVerification,
-    setDataForRow,
     upsertProtectionHosts,
     upsertInstanceProtectionBatch,
     setWorkSpaceData,
@@ -108,8 +84,7 @@ import {
     resetEiData,
     setLogAnalyzerState
 } from '../../../../store/workloadFactory/agenticAISlice';
-import { setActionsDisabled } from '../../../../store/workloadFactory/dialogComponentSlice';
-import { handleProtectionUtil } from '../../AddHostUtils';
+import { useSnapCenterProtectionFlow } from '../../useSnapCenterProtectionFlow';
 import { getInstanceTableColumns } from './InstanceTableColumns';
 import { mssqlInstanceColumnFilterMap } from './MssqlInstanceColumnList';
 import { oracleDatabaseColumnFilterMap } from './OracleDatabaseColumnsList';
@@ -117,7 +92,6 @@ import { pgsqlInstanceColumnFilterMap } from './PgsqlInstanceColumnList';
 import { getInitialInstanceTableColState } from '../../../../utils/manageColumnUtils';
 import BulkActionContainer from '../../../../common/BulkAction/BulkActionContainer';
 
-import WindowsAuthDialog from '../ProtectionDialogs/WindowsAuthDialog';
 import {
     getInstableTableTopMenuOptions,
     getInstanceTableMenuOptions,
@@ -190,6 +164,8 @@ const InstancesTable = () => {
     const inventoryTableRef = useRef<HTMLDivElement>(null);
     const hasShownDataGuardNotification = useRef(false);
     const { setDialog, closeDialog } = useDialog();
+    const { startProtection: handleProtection, startEditProtection: handleEditProtection } =
+        useSnapCenterProtectionFlow(setDialog, closeDialog, { dialogType: 'instance' });
     const navigate = useNavigate();
 
     const dispatch = useDispatch();
@@ -198,24 +174,9 @@ const InstancesTable = () => {
     const [unmanageApiPgsql] = useUnmanagePgsqlInstanceMutation();
     const [unmanageApiOracle] = useUnmanageOracleInstanceMutation();
     const [getConnector] = useGetConnectorsMutation();
-    const [getFsxDetails] = useGetFsxDetailsMutation();
-    const [discoverExistingFsxN] = useDiscoverExistingFsxNMutation();
     const [getWorkSpaceID] = useGetWorkSpaceIDMutation();
-    const [getRBACPrivileges] = useGetRBACPrivilegesMutation();
-    const [getBackupRecoveryLicense] = useGetBackupRecoveryLicenseMutation();
-    const [assignBackupRecoveryLicense] = useAssignBackupRecoveryLicenseMutation();
     const [listExistingHosts] = useListExistingHostsMutation();
-    const [assignRBACPrivileges] = useAssignRBACPrivilegesMutation();
-    const [generateCredentialID] = useGenerateCredentialIDMutation();
-    const [addHostScApi] = useAddHostScMutation();
-    const [addHostJobScApi] = useAddHostJobScMutation();
-    const [deleteHostSc] = useDeleteHostScMutation();
-    const [configureDirectory] = useConfigureDirectoryMutation();
-    const [listAllDirectories] = useListAllDirectoriesMutation();
-    const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
     const [getDiscoverInstanceResult] = useGetDiscoverInstanceResultMutation();
-    const [getSCCrendentials] = useGetSCCrendentialsMutation();
-    const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     const [getOrganizationIds] = useGetOrganizationIdsMutation();
     const [getOneTimeWADDownloadScript] = useGetOneTimeWADDownloadScriptMutation();
     const [getOneTimeWADUploadScript] = useGetOneTimeWADUploadScriptMutation();
@@ -337,12 +298,6 @@ const InstancesTable = () => {
         isDemoMode,
         isGovAccount
     ]);
-
-    // Direct Edit Protection handler - no prereqs, redirect only
-    const handleEditProtection = (rowData: any) => {
-        if (isGovAccount) return;
-        bxpRedirect(isWorkloadFactory, { ...rowData, editProtection: true }, 'instance', getDiscoverInstanceResult);
-    };
 
     useEffect(() => {
         setLoading(
@@ -585,237 +540,6 @@ const InstancesTable = () => {
         );
         dispatch(resetEiData({}));
         dispatch(setLogAnalyzerState(rowData?.logAnalyzer?.status));
-    };
-
-    // Snapcenter Protection code starts
-
-    const fetchDialog = (key: string) => {
-        setDialog(
-            <DialogComponent
-                header={t('databases.inventory.protect-header')}
-                content={<FetchingDialog />}
-                secondaryButton={GENERAL.CANCEL}
-                closeCallback={() => {
-                    dispatch(cancelProtectionForRow(key));
-                    closeDialog();
-                }}
-                hidePrimaryButton
-                customClass={styles.protectionDialog}
-                dialogFrom={FROM_DIALOG.LOADER}
-            />
-        );
-    };
-
-    // SC Auth Dialog
-    const scAuthDialog = (key: string, dialogToOpen: string, activeAgents?: [], boolValue?: boolean, rowData?: any) => {
-        setDialog(
-            <DialogComponent
-                header={
-                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
-
-                        <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                            {t('databases.inventory.step-1-out-of')}
-                        </DsTypography>
-                    </div>
-                }
-                content={<WindowsAuthDialog />}
-                primaryButton={t('databases.inventory.continue')}
-                secondaryButton={GENERAL.CANCEL}
-                closeCallback={() => {
-                    dispatch(cancelProtectionForRow(key));
-                    closeDialog();
-                }}
-                callback={async () => {
-                    try {
-                        dispatch(setAuthVerification(true));
-                        const state = store.getState();
-                        const credDetails = state.snapCenter.credentials;
-                        const { isGovAccount } = state.auth;
-                        const credential = isGovAccount
-                            ? {
-                                  resourceId: rowData?.databaseInstanceName,
-                                  resourceType: DETECT_HOST_VAR.WINDOWS,
-                                  ssmParameterArn: credDetails.ssmParameterArn || ''
-                              }
-                            : {
-                                  resourceId: rowData?.databaseInstanceName,
-                                  resourceType: DETECT_HOST_VAR.WINDOWS,
-                                  username: credDetails.username,
-                                  password: credDetails.password
-                              };
-                        const payload = {
-                            items: [
-                                {
-                                    credentials: [credential],
-                                    ec2InstanceId: rowData?.ec2InstanceId,
-                                    region: rowData.regionId,
-                                    credentialsId: rowData.credentialId
-                                }
-                            ]
-                        };
-                        const result = await registerResourceCredBulk({ payload });
-                        if (result && !result?.error && result?.data) {
-                            if (result?.data?.items[0]?.registerDetails[0]?.databaseServerError) {
-                                dispatch(setAuthVerification(false));
-                                dispatch(
-                                    addNotification({
-                                        notificationType: NOTIFICATION_TYPES.ERROR,
-                                        message:
-                                            result?.data?.items[0]?.registerDetails[0]?.databaseServerError ||
-                                            'Authentication failed. Please check the credentials and try again.'
-                                    })
-                                );
-                            } else {
-                                // Mark authentication as completed for this row
-                                dispatch(
-                                    setDataForRow({
-                                        key,
-                                        stepData: {
-                                            scCredentialsChecked: true,
-                                            scCredentialsValid: true
-                                        }
-                                    })
-                                );
-
-                                if (dialogToOpen === 'openNoAgent') {
-                                    setTimeout(() => {
-                                        showNoAgentDialog(true, rowData);
-                                    }, 10);
-                                } else {
-                                    setTimeout(() => {
-                                        showSingleAgentDialog(activeAgents, boolValue, rowData, true);
-                                    }, 10);
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        dispatch(setAuthVerification(false));
-                    } finally {
-                        dispatch(setAuthVerification(false));
-                    }
-                }}
-                customClass={styles.protectionDialog}
-                dialogFrom={FROM_DIALOG.WINDOWS_AUTH}
-            />
-        );
-    };
-
-    const handleProtection = async (rowData: any) => {
-        await handleProtectionUtil(rowData, {
-            dispatch,
-            fetchDialog,
-            showSingleAgentDialog,
-            showNoAgentDialog,
-            closeDialog,
-            listExistingHosts,
-            getWorkSpaceID,
-            getConnector,
-            getFsxDetails,
-            discoverExistingFsxN,
-            assignRBACPrivileges,
-            getRBACPrivileges,
-            getBackupRecoveryLicense,
-            assignBackupRecoveryLicense,
-            isDemoMode,
-            getSCCrendentials,
-            scAuthDialog,
-            getOrganizationIds
-        });
-    };
-
-    const showNoAgentDialog = (extraStep?: boolean, rowData?: any) => {
-        setDialog(
-            <DialogComponent
-                header={
-                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
-
-                        {extraStep && (
-                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                                {t('databases.inventory.step-2-out-of')}
-                            </DsTypography>
-                        )}
-                    </div>
-                }
-                content={<NoAgentDialog />}
-                primaryButton={t('databases.inventory.redirect')}
-                secondaryButton={GENERAL.CANCEL}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                callback={() => {
-                    bxpRedirect(isWorkloadFactory, rowData);
-                }}
-                customClass={styles.protectionDialog}
-            />
-        );
-    };
-
-    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any, extraStep?: boolean) => {
-        const state = store.getState();
-        const dialogKeyValue = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
-        const protectionState = state.snapCenter.protectionProcessState[dialogKeyValue];
-        if (protectionState?.step1Status === 'running' || protectionState?.step2Status === 'running') {
-            dispatch(setActionsDisabled(true));
-        } else {
-            dispatch(setActionsDisabled(false));
-        }
-
-        setDialog(
-            <DialogComponent
-                header={
-                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
-                        {!hostExists && !extraStep && (
-                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                                {t('databases.inventory.step-1-out-of')}
-                            </DsTypography>
-                        )}
-                        {extraStep && !hostExists && (
-                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                                {t('databases.inventory.step-2-out-of-3')}
-                            </DsTypography>
-                        )}
-                    </div>
-                }
-                content={
-                    <SingleAgentDialog
-                        agents={connectors}
-                        hostExists={hostExists}
-                        dialogKey={dialogKeyValue}
-                        extraStep={extraStep}
-                        rowData={rowData}
-                        dialogType="instance"
-                    />
-                }
-                primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.continue')}
-                secondaryButton={t('databases.inventory.cancel')}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                callback={() => {
-                    if (hostExists) {
-                        bxpRedirect(isWorkloadFactory, rowData, 'instance', getDiscoverInstanceResult);
-                    } else {
-                        addHostHandlerSc(
-                            rowData,
-                            dispatch,
-                            generateCredentialID,
-                            addHostScApi,
-                            addHostJobScApi,
-                            t,
-                            deleteHostSc,
-                            listAllDirectories,
-                            configureDirectory,
-                            getDiscoverHostResult
-                        );
-                    }
-                }}
-                customClass={styles.protectionDialog}
-                dialogFrom={FROM_DIALOG.SINGLE_AGENT}
-            />
-        );
     };
 
     // For Oracle: Check if there are any registerable rows (used for the Register button in TableTopBar)

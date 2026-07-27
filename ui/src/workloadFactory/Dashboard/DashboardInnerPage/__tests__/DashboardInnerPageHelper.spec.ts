@@ -542,6 +542,20 @@ describe('DashboardInnerPageHelper', () => {
             expect(result.isFixDisabled).toBe(true);
         });
 
+        it('returns bulk-fix-not-supported when supportsDashboardBulkFix is false (snapcenter-snapshot)', () => {
+            const rows = [{ assessmentStatus: 'Not optimized', status: 'Up' }];
+            const result = bulkFixDisableCheck(
+                'snapcenter-snapshot',
+                true,
+                rows,
+                mockT,
+                'MSSQL',
+                false
+            );
+            expect(result.isFixDisabled).toBe(true);
+            expect(result.fixDisableMsg).toBe('databases.well-architect.bulk-fix-not-supported');
+        });
+
         it('returns isFixDisabled=true when all rows are optimized', () => {
             const rows = [
                 { assessmentStatus: 'Optimized', status: 'Up' },

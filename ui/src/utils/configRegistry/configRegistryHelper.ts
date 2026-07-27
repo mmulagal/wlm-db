@@ -714,6 +714,11 @@ export const getButtonText = (configId: string, dbType: string, status?: string)
         if (normalizedStatus === WELL_ARCHITECTED_STATUS.UNDER_PROVISIONED) return t('databases.general.view-and-fix');
     }
 
+    // MSSQL snapcenter: registry stays viewOnly (no optimize API) but inner-page Fix opens Protect flow
+    if (configId === ASSESSMENT_CONFIG_IDS.SNAPCENTER_SNAPSHOT && dbType === DBType.MSSQL) {
+        return t('databases.general.view-and-fix');
+    }
+
     const entry = getRegistry(dbType)[configId];
     return entry?.viewOnly ? t('databases.general.view') : t('databases.general.view-and-fix');
 };

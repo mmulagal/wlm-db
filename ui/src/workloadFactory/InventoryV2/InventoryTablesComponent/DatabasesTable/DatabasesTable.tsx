@@ -1,9 +1,9 @@
-import { DsTypography, useDialog } from '@netapp/design-system';
+import { useDialog } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { DBType, DETECT_HOST_VAR, FROM_DIALOG } from '../../../../utils/consts';
+import { DBType } from '../../../../utils/consts';
 import styles from '../InventoryTable.module.scss';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedFilterValue, setTableManageColumnState } from '../../../../store/workloadFactory/inventoryV2Slice';
@@ -13,51 +13,27 @@ import { Table } from '../../../../common/Lib/Table/Table';
 import { bxpRedirect, collapseAllRows, createSandboxNavigation } from '../../../../utils/utilityFunctions';
 import MenuPopover from '../../../../common/MenuPopover/MenuPopover';
 import { setSelectedCsData, setSelectedSandboxHeaderValue } from '../../../../store/workloadFactory/createSandboxSlice';
-import { handleProtectionUtil } from '../../AddHostUtils';
-import DialogComponent from '../../../../common/Dialog/DialogComponent';
-import NoAgentDialog from '../ProtectionDialogs/NoAgentDialog';
 import store from '../../../../store/store';
-import { setActionsDisabled } from '../../../../store/workloadFactory/dialogComponentSlice';
-import SingleAgentDialog from '../ProtectionDialogs/SingleAgentDialog';
 import {
-    useAddHostJobScMutation,
-    useAddHostScMutation,
-    useAssignBackupRecoveryLicenseMutation,
-    useAssignRBACPrivilegesMutation,
-    useConfigureDirectoryMutation,
-    useDeleteHostScMutation,
-    useDiscoverExistingFsxNMutation,
-    useGenerateCredentialIDMutation,
-    useGetBackupRecoveryLicenseMutation,
     useGetConnectorsMutation,
     useGetDiscoverHostResultMutation,
-    useGetFsxDetailsMutation,
     useGetOrganizationIdsMutation,
-    useGetRBACPrivilegesMutation,
-    useGetSCCrendentialsMutation,
     useGetWorkSpaceIDMutation,
-    useListAllDirectoriesMutation,
-    useListExistingHostsMutation,
-    useRegisterResourceCredentialsBulkMutation
+    useListExistingHostsMutation
 } from '../../../../utils/apiService';
-import FetchingDialog from '../ProtectionDialogs/FetchingDIalog';
 import {
-    cancelProtectionForRow,
-    setAuthVerification,
-    setDataForRow,
     upsertDatabaseProtectionBatch,
     upsertProtectionHosts,
     setWorkSpaceData,
     setSelectedAgent
 } from '../../../../store/workloadFactory/snapcenterSlice';
-import { addHostHandlerSc, determineProtectionStatusMssql, mssqlDatabaseMenuOptions } from '../../InventoryUtilsV2';
+import { determineProtectionStatusMssql, mssqlDatabaseMenuOptions } from '../../InventoryUtilsV2';
+import { useSnapCenterProtectionFlow } from '../../useSnapCenterProtectionFlow';
 import { getLunFilterOptions, getUniqueLunNames } from '../../../WellArchitectedTab/WellArchitectedTabUtils';
 import { getDatabaseTableColumns } from './DatabaseTableColumns';
 import { mssqlPgsqlDatabaseColumnFilterMap } from './MssqlPgsqlDatabaseTableColumns';
 import { oraclePDBColumnFilterMap } from './OraclePDBTableColumns';
 import { getInitialDatabaseTableColState } from '../../../../utils/manageColumnUtils';
-import WindowsAuthDialog from '../ProtectionDialogs/WindowsAuthDialog';
-import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
 import { updateOrgId } from '../../../../store/authSlice';
 import AoagReplicaTable from './ReplicaTable/AoagReplicaTable';
 import { ReactComponent as ArrowIcon } from '../../../../assets/row_arrow.svg';
@@ -73,6 +49,7 @@ const DatabasesTable = () => {
         useAppSelector(state => state.inventoryV2.getPgSqlDatabaseHosts);
     const { multiDataLoading } = useAppSelector(state => state.headers);
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
+    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
     const databaseTableRef = useRef<HTMLDivElement>(null);
@@ -81,26 +58,28 @@ const DatabasesTable = () => {
     const menuOpenedRowDetail: any = useRef(null);
     const navigate = useNavigate();
 
-    // Protection api's
     const [getConnector] = useGetConnectorsMutation();
-    const [getFsxDetails] = useGetFsxDetailsMutation();
-    const [discoverExistingFsxN] = useDiscoverExistingFsxNMutation();
     const [getWorkSpaceID] = useGetWorkSpaceIDMutation();
-    const [getRBACPrivileges] = useGetRBACPrivilegesMutation();
-    const [getBackupRecoveryLicense] = useGetBackupRecoveryLicenseMutation();
-    const [assignBackupRecoveryLicense] = useAssignBackupRecoveryLicenseMutation();
     const [listExistingHosts] = useListExistingHostsMutation();
-    const [assignRBACPrivileges] = useAssignRBACPrivilegesMutation();
-    const [generateCredentialID] = useGenerateCredentialIDMutation();
-    const [addHostScApi] = useAddHostScMutation();
-    const [addHostJobScApi] = useAddHostJobScMutation();
-    const [deleteHostSc] = useDeleteHostScMutation();
-    const [configureDirectory] = useConfigureDirectoryMutation();
-    const [listAllDirectories] = useListAllDirectoriesMutation();
     const [getDiscoverHostResult] = useGetDiscoverHostResultMutation();
-    const [getSCCrendentials] = useGetSCCrendentialsMutation();
-    const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     const [getOrganizationIds] = useGetOrganizationIdsMutation();
+
+    const { startProtection: handleProtection, startEditProtection: handleEditProtectionDb } =
+        useSnapCenterProtectionFlow(setDialog, closeDialog, { dialogType: 'database' });
+
+    const handleViewProtectionDetailsDb = useCallback(
+        (rowData: any) => {
+            if (isGovAccount) return;
+            bxpRedirect(
+                isWorkloadFactory,
+                { ...rowData, viewProtectionDetails: true },
+                'database',
+                undefined,
+                getDiscoverHostResult
+            );
+        },
+        [getDiscoverHostResult, isGovAccount, isWorkloadFactory]
+    );
 
     const updatedTableData = useMemo(
         () =>
@@ -236,272 +215,12 @@ const DatabasesTable = () => {
         return undefined;
     };
 
-    // handle protection logic
-
-    const fetchDialog = (key: string) => {
-        setDialog(
-            <DialogComponent
-                header={t('databases.inventory.protect-header-database')}
-                content={<FetchingDialog />}
-                secondaryButton={t('databases.general.cancel')}
-                closeCallback={() => {
-                    dispatch(cancelProtectionForRow(key));
-                    closeDialog();
-                }}
-                hidePrimaryButton
-                callback={() => {}}
-                customClass={styles.protectionDialog}
-                dialogFrom={FROM_DIALOG.LOADER}
-            />
-        );
-    };
-
-    // SC Auth Dialog
-    const scAuthDialog = (key: string, dialogToOpen: string, activeAgents?: [], boolValue?: boolean, rowData?: any) => {
-        setDialog(
-            <DialogComponent
-                header={
-                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <DsTypography variant="Regular_14">{t('databases.inventory.protect-header')}</DsTypography>
-
-                        <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                            {t('databases.inventory.step-1-out-of')}
-                        </DsTypography>
-                    </div>
-                }
-                content={<WindowsAuthDialog />}
-                primaryButton={t('databases.inventory.continue')}
-                secondaryButton={t('databases.general.cancel')}
-                closeCallback={() => {
-                    dispatch(cancelProtectionForRow(key));
-                    closeDialog();
-                }}
-                callback={async () => {
-                    try {
-                        dispatch(setAuthVerification(true));
-                        const state = store.getState();
-                        const credDetails = state.snapCenter.credentials;
-                        const { isGovAccount } = state.auth;
-                        const credential = isGovAccount
-                            ? {
-                                  resourceId: rowData?.databaseInstanceName,
-                                  resourceType: DETECT_HOST_VAR.WINDOWS,
-                                  ssmParameterArn: credDetails.ssmParameterArn || ''
-                              }
-                            : {
-                                  resourceId: rowData?.databaseInstanceName,
-                                  resourceType: DETECT_HOST_VAR.WINDOWS,
-                                  username: credDetails.username,
-                                  password: credDetails.password
-                              };
-                        const payload = {
-                            items: [
-                                {
-                                    credentials: [credential],
-                                    ec2InstanceId: rowData?.ec2InstanceId,
-                                    region: rowData.regionId,
-                                    credentialsId: rowData.credentialId
-                                }
-                            ]
-                        };
-                        const result = await registerResourceCredBulk({ payload });
-                        if (result && !result?.error && result?.data) {
-                            if (result?.data?.items[0]?.registerDetails[0]?.databaseServerError) {
-                                dispatch(setAuthVerification(false));
-                                dispatch(
-                                    addNotification({
-                                        notificationType: NOTIFICATION_TYPES.ERROR,
-                                        message:
-                                            result?.data?.items[0]?.registerDetails[0]?.databaseServerError ||
-                                            t('databases.inventory.authentication-failed-msg')
-                                    })
-                                );
-                            } else {
-                                // Mark authentication as completed for this row
-                                dispatch(
-                                    setDataForRow({
-                                        key,
-                                        stepData: {
-                                            scCredentialsChecked: true,
-                                            scCredentialsValid: true
-                                        }
-                                    })
-                                );
-
-                                if (dialogToOpen === 'openNoAgent') {
-                                    setTimeout(() => {
-                                        showNoAgentDialog(true);
-                                    }, 10);
-                                } else {
-                                    setTimeout(() => {
-                                        showSingleAgentDialog(activeAgents, boolValue, rowData, true);
-                                    }, 10);
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        dispatch(setAuthVerification(false));
-                    } finally {
-                        dispatch(setAuthVerification(false));
-                    }
-                }}
-                customClass={styles.protectionDialog}
-                dialogFrom={FROM_DIALOG.WINDOWS_AUTH}
-            />
-        );
-    };
-
-    const handleProtection = async (rowData: any) => {
-        await handleProtectionUtil(rowData, {
-            dispatch,
-            fetchDialog,
-            showSingleAgentDialog,
-            showNoAgentDialog,
-            closeDialog,
-            listExistingHosts,
-            getWorkSpaceID,
-            getConnector,
-            getFsxDetails,
-            discoverExistingFsxN,
-            assignRBACPrivileges,
-            getRBACPrivileges,
-            getBackupRecoveryLicense,
-            assignBackupRecoveryLicense,
-            isDemoMode,
-            getSCCrendentials,
-            scAuthDialog,
-            getOrganizationIds
-        });
-    };
-
-    // Direct redirect handlers for cleaner usage in menu selection
-    const handleEditProtectionDb = (rowData: any) => {
-        if (isGovAccount) return;
-        bxpRedirect(
-            isWorkloadFactory,
-            { ...rowData, editProtection: true },
-            'database',
-            undefined,
-            getDiscoverHostResult
-        );
-    };
-
-    const handleViewProtectionDetailsDb = (rowData: any) => {
-        if (isGovAccount) return;
-        bxpRedirect(
-            isWorkloadFactory,
-            { ...rowData, viewProtectionDetails: true },
-            'database',
-            undefined,
-            getDiscoverHostResult
-        );
-    };
-
-    const showNoAgentDialog = (extraStep?: boolean, rowData?: any) => {
-        setDialog(
-            <DialogComponent
-                header={
-                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.inventory.protect-header-database')}
-                        </DsTypography>
-
-                        {extraStep && (
-                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                                {t('databases.inventory.step-2-out-of')}
-                            </DsTypography>
-                        )}
-                    </div>
-                }
-                content={<NoAgentDialog dialogType="database" />}
-                primaryButton={t('databases.inventory.redirect')}
-                secondaryButton={t('databases.general.cancel')}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                callback={() => {
-                    bxpRedirect(isWorkloadFactory, rowData);
-                }}
-                customClass={styles.protectionDialog}
-            />
-        );
-    };
-
-    const showSingleAgentDialog = (connectors?: any, hostExists?: boolean, rowData?: any, extraStep?: boolean) => {
-        const state = store.getState();
-        const dialogKeyValue = `${rowData.databaseInstanceName}_${rowData.name}_${rowData.credentialId}_${rowData.regionId}`;
-        const protectionState = state.snapCenter.protectionProcessState[dialogKeyValue];
-        if (protectionState?.step1Status === 'running' || protectionState?.step2Status === 'running') {
-            dispatch(setActionsDisabled(true));
-        } else {
-            dispatch(setActionsDisabled(false));
-        }
-
-        setDialog(
-            <DialogComponent
-                header={
-                    <div className={styles.headerClass} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <DsTypography variant="Regular_14">
-                            {t('databases.inventory.protect-header-database')}
-                        </DsTypography>
-                        {!hostExists && !extraStep && (
-                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                                {t('databases.inventory.step-1-out-of')}
-                            </DsTypography>
-                        )}
-                        {extraStep && !hostExists && (
-                            <DsTypography variant="Regular_14" className={styles.protectionHeaderText}>
-                                {t('databases.inventory.step-2-out-of-3')}
-                            </DsTypography>
-                        )}
-                    </div>
-                }
-                content={
-                    <SingleAgentDialog
-                        agents={connectors}
-                        hostExists={hostExists}
-                        dialogKey={dialogKeyValue}
-                        dialogType="database"
-                        extraStep={extraStep}
-                        rowData={rowData}
-                    />
-                }
-                primaryButton={hostExists ? t('databases.inventory.redirect') : t('databases.inventory.continue')}
-                secondaryButton={t('databases.inventory.cancel')}
-                closeCallback={() => {
-                    closeDialog();
-                }}
-                callback={() => {
-                    if (hostExists) {
-                        bxpRedirect(isWorkloadFactory, rowData, 'database', undefined, getDiscoverHostResult);
-                    } else {
-                        addHostHandlerSc(
-                            rowData,
-                            dispatch,
-                            generateCredentialID,
-                            addHostScApi,
-                            addHostJobScApi,
-                            t,
-                            deleteHostSc,
-                            listAllDirectories,
-                            configureDirectory,
-                            getDiscoverHostResult
-                        );
-                    }
-                }}
-                customClass={styles.protectionDialog}
-                dialogFrom={FROM_DIALOG.SINGLE_AGENT}
-            />
-        );
-    };
-
     const getTableColDefsPerEngineType = () =>
         getDatabaseTableColumns({ t, databaseTableRows, selectedHostType, setDialog, lunFilterOptions });
 
     // Prefetch SnapCenter databases per host
     const prefetchRun = useRef(false);
     const orgId = useAppSelector(state => state.auth?.orgId);
-    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const { databaseProtection } = useAppSelector(state => state.snapCenter);
     useEffect(() => {
         if (prefetchRun.current || isDemoMode || isGovAccount) return;
@@ -624,7 +343,7 @@ const DatabasesTable = () => {
                 handleViewProtectionDetailsDb={handleViewProtectionDetailsDb}
             />
         ),
-        [databaseTableRef]
+        [handleEditProtectionDb, handleProtection, handleViewProtectionDetailsDb]
     );
     const tableComponentProps = {
         ExpandedRow,

@@ -82,6 +82,7 @@ let mockState = {
     },
     crrRedirection: { associateLinkLoading: false, crrPrefetchLoading: false },
     snapCenter: { credentials: { username: '', password: '' }, authVerification: false },
+    auth: { isGovAccount: false },
     exploreSavingsBulk: {
         bulkAuthCredentials: {},
         rowsRequiringAuthBulk: [],

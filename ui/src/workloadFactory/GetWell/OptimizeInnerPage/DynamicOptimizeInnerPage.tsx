@@ -63,12 +63,15 @@ import { handleConfigDialog } from '../StorageCardComponent/optimizeUtils';
 import { useLazyGetSubTaskListQuery } from '../../../utils/apiService';
 import store from '../../../store/store';
 import { useAssociateCrrLinkPrefetch } from './CRRRedirectionContent/associateCrrLinkPrefetch';
+import { useSnapCenterProtectionFlow } from '../../InventoryV2/useSnapCenterProtectionFlow';
+import { buildSnapCenterProtectionRowData } from '../../InventoryV2/snapCenterProtectionRowData';
 
 const DynamicOptimizeInnerPage = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const { setDialog, closeDialog } = useDialog();
     const { runAssociateLinkPrefetch } = useAssociateCrrLinkPrefetch(setDialog, closeDialog);
+    const { startProtection } = useSnapCenterProtectionFlow(setDialog, closeDialog, { dialogType: 'instance' });
 
     const mutationMap = useOptimizeMutations();
     const [getJobDetailApi] = useLazyGetSubTaskListQuery();
@@ -434,6 +437,33 @@ const DynamicOptimizeInnerPage = () => {
         (rowData: Record<string, unknown>) => {
             if (!configId) return;
 
+            // MSSQL application-consistent snapshots: explain, then reuse inventory Protect flow
+            if (engineType === DBType.MSSQL && configId === ASSESSMENT_CONFIG_IDS.SNAPCENTER_SNAPSHOT) {
+                const startProtectFlow = () => {
+                    startProtection(buildSnapCenterProtectionRowData());
+                };
+
+                handleConfigDialog(
+                    setDialog,
+                    startProtectFlow,
+                    closeDialog,
+                    {
+                        engineType,
+                        data: {
+                            ...configData,
+                            name: displayName,
+                            id: configId
+                        }
+                    },
+                    'single',
+                    rowData,
+                    isWad,
+                    isUnregistered,
+                    true
+                );
+                return;
+            }
+
             // Special handling for Oracle CRR - show explanation dialog first, then Associate Link dialog
             if (engineType === DBType.ORACLE && configId === ASSESSMENT_CONFIG_IDS.CRR) {
                 // Pre-compute translated strings to avoid context issues
@@ -514,6 +544,7 @@ const DynamicOptimizeInnerPage = () => {
             closeDialog,
             callOptimizeApi,
             runAssociateLinkPrefetch,
+            startProtection,
             t
         ]
     );

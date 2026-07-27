@@ -1230,13 +1230,16 @@
                 },
                 {
                     "heading": "databases.well-architect.mssql-snapcenter-option1",
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-snapcenter-option1-intro"
+                },
+                {
                     "type": "numberedSteps",
                     "items": [
                         "databases.well-architect.mssql-snapcenter-option1-step1",
                         "databases.well-architect.mssql-snapcenter-option1-step2",
                         "databases.well-architect.mssql-snapcenter-option1-step3",
-                        "databases.well-architect.mssql-snapcenter-option1-step4",
-                        "databases.well-architect.mssql-snapcenter-option1-step5"
+                        "databases.well-architect.mssql-snapcenter-option1-step4"
                     ]
                 },
                 {

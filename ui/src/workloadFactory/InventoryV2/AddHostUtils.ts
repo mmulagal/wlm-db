@@ -2,7 +2,12 @@ import { updateOrgId } from '../../store/authSlice';
 import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSlice';
 import store from '../../store/store';
 import { setDialogErrorWithTooltip } from '../../store/workloadFactory/dialogComponentSlice';
-import { setAlreadyExistAgentId, setDataForRow, setWorkSpaceData } from '../../store/workloadFactory/snapcenterSlice';
+import {
+    cancelProtectionForRow,
+    setAlreadyExistAgentId,
+    setDataForRow,
+    setWorkSpaceData
+} from '../../store/workloadFactory/snapcenterSlice';
 import { PRODUCTION, RBAC_PROD_ROLE_ID, RBAC_STAGE_ROLE_ID } from '../../utils/consts';
 
 export const isCancelled = (key: any) => store.getState().snapCenter.dataMap[key]?.cancelled;
@@ -98,6 +103,8 @@ export const handleProtectionUtil = async (
 
     dispatch(setDataForRow({ key, stepData: { cancelled: false } }));
 
+    fetchDialog(key);
+
     const { isWorkloadFactory } = store.getState().auth;
 
     if (isWorkloadFactory && store.getState().auth.orgId === undefined) {
@@ -114,11 +121,11 @@ export const handleProtectionUtil = async (
                     message: 'No organizations found for the user.'
                 })
             );
+            dispatch(cancelProtectionForRow(key));
+            closeDialog();
             return;
         }
     }
-
-    fetchDialog(key);
 
     // Check SC credentials first
     if (!existingData.scCredentialsChecked) {

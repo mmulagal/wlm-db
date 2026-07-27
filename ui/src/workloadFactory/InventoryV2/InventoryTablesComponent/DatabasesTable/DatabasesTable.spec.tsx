@@ -69,6 +69,13 @@ vi.mock('../../../../common/MenuPopover/MenuPopover', () => ({
     default: ({ ...props }: any) => <div data-testid="menu-popover" {...props} />
 }));
 
+vi.mock('../../useSnapCenterProtectionFlow', () => ({
+    useSnapCenterProtectionFlow: () => ({
+        startProtection: vi.fn(),
+        startEditProtection: vi.fn()
+    })
+}));
+
 vi.mock('../../../../common/Dialog/DialogComponent', () => ({
     default: ({ ...props }: any) => <div data-testid="dialog-component" {...props} />
 }));

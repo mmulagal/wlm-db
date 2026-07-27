@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import DynamicOptimizeInnerPage from './DynamicOptimizeInnerPage';
 
 // ─── Store ────────────────────────────────────────────────────────────────────
@@ -28,10 +28,12 @@ vi.mock('../../../store/workloadFactory/getWellOptimizeSlice', () => ({
 }));
 
 // ─── Registry ─────────────────────────────────────────────────────────────────
-const mockGetColumnConfig: Mock = vi.fn();
-const mockIsViewOnlyConfig: Mock = vi.fn(() => false);
-const mockGetOptimizeApiConfig: Mock = vi.fn(() => null);
-const mockGetConfigEntry: Mock = vi.fn(() => undefined);
+const { mockGetColumnConfig, mockIsViewOnlyConfig, mockGetOptimizeApiConfig, mockGetConfigEntry } = vi.hoisted(() => ({
+    mockGetColumnConfig: vi.fn(),
+    mockIsViewOnlyConfig: vi.fn(() => false),
+    mockGetOptimizeApiConfig: vi.fn(() => null),
+    mockGetConfigEntry: vi.fn(() => undefined)
+}));
 
 vi.mock('../../../utils/configRegistry', () => ({
     getColumnConfig: mockGetColumnConfig,
@@ -53,7 +55,8 @@ vi.mock('../../../utils/consts', () => ({
     ASSESSMENT_CONFIG_IDS: {
         CLONE_MANAGEMENT: 'clone-management',
         RSS_CONFIGURATION: 'rss-configuration',
-        CRR: 'crr'
+        CRR: 'crr',
+        SNAPCENTER_SNAPSHOT: 'snapcenter-snapshot'
     },
     GETWELL_STATUS: { OPTIMIZING: 'Optimizing' },
     WELL_ARCHITECTED_STATUS: { OPTIMIZING: 'Optimizing' }
@@ -85,8 +88,14 @@ vi.mock('../../../store/store', () => ({
 }));
 
 // ─── Oracle config dependencies ───────────────────────────────────────────────
-const mockIsLinkedConfig: Mock = vi.fn(() => false);
-const mockGetLinkedConfigNames: Mock = vi.fn((): string[] => []);
+const { mockIsLinkedConfig, mockGetLinkedConfigNames, mockHandleConfigDialog, mockStartProtection } = vi.hoisted(
+    () => ({
+        mockIsLinkedConfig: vi.fn(() => false),
+        mockGetLinkedConfigNames: vi.fn((): string[] => []),
+        mockHandleConfigDialog: vi.fn(),
+        mockStartProtection: vi.fn()
+    })
+);
 
 vi.mock('../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleConfigDependencies', () => ({
     isLinkedConfig: mockIsLinkedConfig,
@@ -94,7 +103,6 @@ vi.mock('../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleCon
 }));
 
 // ─── Optimize utils ───────────────────────────────────────────────────────────
-const mockHandleConfigDialog = vi.fn();
 vi.mock('../StorageCardComponent/optimizeUtils', () => ({
     handleConfigDialog: mockHandleConfigDialog
 }));
@@ -102,6 +110,14 @@ vi.mock('../StorageCardComponent/optimizeUtils', () => ({
 // ─── CRR prefetch ─────────────────────────────────────────────────────────────
 vi.mock('./CRRRedirectionContent/associateCrrLinkPrefetch', () => ({
     useAssociateCrrLinkPrefetch: () => ({ runAssociateLinkPrefetch: vi.fn() })
+}));
+
+vi.mock('../../InventoryV2/useSnapCenterProtectionFlow', () => ({
+    useSnapCenterProtectionFlow: () => ({ startProtection: mockStartProtection, startEditProtection: vi.fn() })
+}));
+
+vi.mock('../../InventoryV2/snapCenterProtectionRowData', () => ({
+    buildSnapCenterProtectionRowData: () => ({ databaseInstanceName: 'MSSQLSERVER' })
 }));
 
 // ─── Design system ────────────────────────────────────────────────────────────
@@ -129,7 +145,11 @@ vi.mock('./DynamicInnerTable/DynamicInnerTable', () => ({
             data-testid="dynamic-inner-table"
             data-can-optimize={String(props.canOptimize)}
             data-is-view-only={String(props.isViewOnly)}
-        />
+        >
+            <button type="button" data-testid="row-fix-button" onClick={() => props.handleRowFix?.({ objectName: 'vol1' })}>
+                Fix
+            </button>
+        </div>
     )
 }));
 vi.mock('./DynamicInnerTable/NestedDynamicInnerTable', () => ({
@@ -515,6 +535,61 @@ describe('DynamicOptimizeInnerPage', () => {
             baseState();
             render(<DynamicOptimizeInnerPage />);
             expect(screen.getByTestId('tag-component')).toBeTruthy();
+        });
+    });
+
+    describe('snapcenter-snapshot fix flow', () => {
+        beforeEach(() => {
+            mockHandleConfigDialog.mockClear();
+            mockStartProtection.mockClear();
+            mockGetColumnConfig.mockReturnValue({
+                columns: [{ key: 'objectName', label: 'Volume name', accessor: 'objectName' }]
+            });
+            mockIsViewOnlyConfig.mockReturnValue(true);
+        });
+
+        it('opens explanation dialog with Continue enabled for snapcenter-snapshot Fix', () => {
+            baseState({
+                selectedOptimizeConfig: {
+                    type: 'snapcenter-snapshot',
+                    engineType: 'mssql',
+                    data: { name: 'Application-consistent snapshots', categories: [], violationDetails: [] }
+                }
+            });
+            render(<DynamicOptimizeInnerPage />);
+            fireEvent.click(screen.getByTestId('row-fix-button'));
+
+            expect(mockHandleConfigDialog).toHaveBeenCalledWith(
+                expect.any(Function),
+                expect.any(Function),
+                expect.any(Function),
+                expect.objectContaining({
+                    engineType: 'mssql',
+                    data: expect.objectContaining({ id: 'snapcenter-snapshot' })
+                }),
+                'single',
+                expect.objectContaining({ objectName: 'vol1' }),
+                false,
+                false,
+                true
+            );
+        });
+
+        it('starts protect flow when Continue is clicked on snapcenter-snapshot dialog', () => {
+            mockHandleConfigDialog.mockImplementation((_setDialog, onContinue) => {
+                onContinue();
+            });
+            baseState({
+                selectedOptimizeConfig: {
+                    type: 'snapcenter-snapshot',
+                    engineType: 'mssql',
+                    data: { name: 'Application-consistent snapshots', categories: [], violationDetails: [] }
+                }
+            });
+            render(<DynamicOptimizeInnerPage />);
+            fireEvent.click(screen.getByTestId('row-fix-button'));
+
+            expect(mockStartProtection).toHaveBeenCalledWith({ databaseInstanceName: 'MSSQLSERVER' });
         });
     });
 });

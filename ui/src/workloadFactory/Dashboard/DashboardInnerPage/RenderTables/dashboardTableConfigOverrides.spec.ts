@@ -1,4 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const { mockGetConfigEntry } = vi.hoisted(() => ({
+    mockGetConfigEntry: vi.fn(() => undefined)
+}));
 
 vi.mock('../../../../utils/consts', async importOriginal => ({
     ...(await importOriginal<typeof import('../../../../utils/consts')>()),
@@ -15,6 +19,7 @@ vi.mock('../../../../utils/consts', async importOriginal => ({
         MTU: 'mtu-alignment',
         SWAP_SPACE: 'swap-space',
         CLONE_MANAGEMENT: 'clone-management',
+        SNAPCENTER_SNAPSHOT: 'snapcenter-snapshot',
         DATA_FILES_MDF: 'data-files-location',
         LOG_FILES_LDF: 'log-files-location',
         TEMPDB_PLACEMENT: 'tempdb-files-location',
@@ -31,11 +36,11 @@ vi.mock('../../../../utils/consts', async importOriginal => ({
 }));
 
 vi.mock('../../../../utils/configRegistry/configRegistryHelper', () => ({
-    getConfigEntry: () => undefined
+    getConfigEntry: (...args: unknown[]) => mockGetConfigEntry(...args)
 }));
 
 vi.mock('../../../../workloadFactory/WellArchitectedTab/assessmentFormatUtils', () => ({
-    createDashboardTableConfig: (id: string) => ({ id, dataMapping: (item: any, instanceData?: any) => item }),
+    createDashboardTableConfig: (id: string) => ({ id, isFixSupported: true, dataMapping: (item: any, instanceData?: any) => item }),
     resolveConfigTypeId: (id: string) => id
 }));
 
@@ -64,6 +69,18 @@ const getModule = async () => {
 };
 
 describe('dashboardTableConfigOverrides - dataMapping', () => {
+    beforeEach(() => {
+        mockGetConfigEntry.mockReturnValue(undefined);
+    });
+
+    describe('resolveDashboardTableConfig - fixSupported from registry', () => {
+        it('disables Fix when registry fixSupported is false', async () => {
+            mockGetConfigEntry.mockReturnValue({ fixSupported: false });
+            const resolveDashboardTableConfig = await getModule();
+            expect(resolveDashboardTableConfig('snapcenter-snapshot', 'MSSQL').isFixSupported).toBe(false);
+            expect(resolveDashboardTableConfig('headroom', 'MSSQL').isFixSupported).toBe(false);
+        });
+    });
     describe('FILE_SYSTEM_HEADROOM (MSSQL) - totalObjectsInViolation fallback', () => {
         it('uses totalObjectsInViolation when present', async () => {
             const resolveDashboardTableConfig = await getModule();

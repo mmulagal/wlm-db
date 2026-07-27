@@ -84,6 +84,17 @@ vi.mock('../RenderTables/DashboardConfigsTable', () => ({
     default: ({ configType }: any) => <div data-testid="dashboard-configs-table">{configType}</div>
 }));
 
+const { mockStartProtection } = vi.hoisted(() => ({
+    mockStartProtection: vi.fn()
+}));
+
+vi.mock('../../../InventoryV2/useSnapCenterProtectionFlow', () => ({
+    useSnapCenterProtectionFlow: () => ({
+        startProtection: mockStartProtection,
+        startEditProtection: vi.fn()
+    })
+}));
+
 vi.mock('../../../../common/Dialog/DialogComponent', () => ({
     default: (props: any) => <div data-testid="dialog-component">{props.header}</div>
 }));
@@ -151,6 +162,13 @@ vi.mock('../../../GetWell/GetWellUtils', () => ({
     handleOptimizeStorageJob: vi.fn(),
     nameToIdConfigMapping: vi.fn((type: string) => type),
     setOptimizeInnerpageSummary: vi.fn()
+}));
+
+vi.mock('../../../GetWell/optimizeApiUtils', () => ({
+    useOptimizeMutations: () => ({}),
+    buildOptimizeApiInput: vi.fn(() => ({})),
+    buildOptimizeInfoNotification: vi.fn(() => ({ type: 'notification' })),
+    buildOptimizeFailedMessage: vi.fn(() => ({ type: 'failed' }))
 }));
 
 vi.mock('../../../InventoryV2/InventoryUtilsV2', () => ({
