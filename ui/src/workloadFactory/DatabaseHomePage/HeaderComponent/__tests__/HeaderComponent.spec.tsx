@@ -355,6 +355,14 @@ vi.mock('../../../../utils/consts', () => ({
         REGISTER_COMPONENT: 'register-component',
         MSSQL_ON_PREMISES: 'mssql-on-premises',
         ORACLE_SERVER_ON_PREMISES: 'oracle-server-on-premises'
+    },
+    WELL_ARCHITECTED_TABS: {
+        OVERVIEW: 'Overview',
+        WELL_ARCHITECTED_STATUS: 'Well-architected status',
+        PDB: 'PDB',
+        DATABASES: 'Databases',
+        SANDBOXES: 'Sandboxes',
+        ERROR_INVESTIGATION: 'Error investigation'
     }
 }));
 

@@ -38,12 +38,13 @@ import {
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import { canTriggerUnregisteredAssessment } from '../../InventoryUtilsV2';
 import {
     logAnalyzerStatusCol,
     handleWadOptimizeAction,
     handleUnregisteredOptimizeAction,
-    notAvailableWithTooltip
+    notAvailableWithTooltip,
+    getCanViewAndFix,
+    getViewAndFixDisableMsg
 } from './InstanceTableHelper';
 import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -526,21 +527,15 @@ export function getMssqlInstanceTableColumns({
             renderCell: (cellData: any, rowData: any) => {
                 const isDisabledByBulkSelection = isBulkSelectionActive;
 
-                // Determine if "View and Fix" should be enabled
-                // View and Fix is available for:
-                // 1. WAD (offline assessment) instances with isWad flag, OR
-                // 2. Registered/managed instances with resourceId, OR
-                // 3. Unregistered instances with permissions (extensiveRunPermission or canReadAWSSSMDocuments)
+                // View and Fix is available for WAD, registered/managed, or unregistered rows with FSx link + permissions
                 const isRegisteredOrManaged =
                     rowData?.statusColText === INVENTORY_STATUS.MANAGED || rowData?.resourceId;
-                const hasUnregisteredPermissions = canTriggerUnregisteredAssessment(rowData?.hostManageReadiness);
-                const canViewAndFix =
-                    rowData?.isWad || rowData?.isUnregistered || isRegisteredOrManaged || hasUnregisteredPermissions;
+                const hasUnregisteredPermissions =
+                    !isRegisteredOrManaged && getCanViewAndFix(rowData) && !rowData?.isWad;
+                const canViewAndFix = getCanViewAndFix(rowData);
 
                 // Tooltip for disabled button
-                const viewAndFixDisableMsg = !canViewAndFix
-                    ? t('databases.inventory.register-instance-to-enable-view-fix')
-                    : '';
+                const viewAndFixDisableMsg = getViewAndFixDisableMsg(rowData, canViewAndFix, t);
 
                 const effectiveDisableMsg = isDisabledByBulkSelection
                     ? t('databases.bulk-register.action-disabled-during-bulk-selection')

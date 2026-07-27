@@ -102,6 +102,10 @@ export const hasFullPermission = (hostManageReadiness?: HostManageReadiness): bo
 export const canTriggerUnregisteredAssessment = (hostManageReadiness?: HostManageReadiness): boolean =>
     hostManageReadiness?.extensiveRunPermission === true || hostManageReadiness?.canReadAWSSSMDocuments === true;
 
+/** SSM document read permission without extensive run — view/on-demand only, no database credential fixes. */
+export const hasPartialRunPermission = (hostManageReadiness?: HostManageReadiness): boolean =>
+    hostManageReadiness?.canReadAWSSSMDocuments === true && hostManageReadiness?.extensiveRunPermission !== true;
+
 /** Discover/unmerged rows: permissions + not managed + no registered resource id. */
 export const isUnregisteredInventoryRow = (rowData: any, managedDbInstance?: { resourceId?: string }): boolean =>
     !!rowData?.isUnregistered ||
@@ -109,32 +113,16 @@ export const isUnregisteredInventoryRow = (rowData: any, managedDbInstance?: { r
         rowData?.statusColText !== INVENTORY_STATUS.MANAGED &&
         !managedDbInstance?.resourceId);
 
-/**
- * Validates if registration can proceed based on FSx link status
- * @param hostManageReadiness - Host manage readiness object
- * @returns Object with canRegister flag and reason (i18n key) if blocked
- */
-export const canRegisterWithFsxLink = (
-    hostManageReadiness?: HostManageReadiness
-): {
-    canRegister: boolean;
-    reason?: string;
-} => {
-    if (!hostManageReadiness) {
-        return { canRegister: false, reason: 'databases.inventory.no-permission-data-available' };
-    }
+/** i18n key for register disabled when FSx link is missing (engine-specific). */
+export const getFsxLinkRequiredMessageKey = (engineType?: string): string =>
+    engineType === DBType.ORACLE
+        ? 'databases.register-flow.fsx-link-required-message-oracle'
+        : 'databases.register-flow.fsx-link-required-message';
 
-    // Block if FSx storage exists but link is false (broken/removed link)
-    if (hostManageReadiness.fsxLinkExists === false) {
-        return {
-            canRegister: false,
-            reason: 'databases.register-flow.fsx-link-required-message'
-        };
-    }
-
-    // Allow if link exists or field is absent (EBS only - but these won't appear in inventory)
-    return { canRegister: true };
-};
+export const getRegistrationRequiresFullPermissionMessageKey = (engineType?: string): string =>
+    engineType === DBType.ORACLE
+        ? 'databases.inventory.registration-requires-full-permission-oracle'
+        : 'databases.inventory.registration-requires-full-permission';
 
 export const uniqueHostRow = (id: string, cred: string, region: string) => `${id}_${cred}_${region}`;
 
@@ -4509,7 +4497,7 @@ export const manageActionCol = (translation: TFunction, engineType: string, rowD
         disableMsg = translation('databases.wad.register-disabled-no-credentials');
     } else if (!hasFullPermission(rowData?.hostManageReadiness)) {
         // Registration requires extensiveRunPermission for database authentication
-        disableMsg = translation('databases.inventory.registration-requires-full-permission');
+        disableMsg = translation(getRegistrationRequiresFullPermissionMessageKey(engineType));
     }
 
     if (colText === ACTION_CTA.FIX_ISSUES || colText === ACTION_CTA.WELL_ARCHITECTED) {

@@ -75,12 +75,12 @@ let mockState = {
         startCustomAnalysisTime: '08:00'
     },
     workloadFactoryResource: {
-        fsxAdminPasswords: { password: '', confirmPassword: '' },
         sqlServerPasswords: { password: '', confirmPassword: '' },
         sqlServerUserName: '',
         passwordResetLoading: false
     },
     crrRedirection: { associateLinkLoading: false, crrPrefetchLoading: false },
+    auth: { isGovAccount: false },
     snapCenter: { credentials: { username: '', password: '' }, authVerification: false },
     auth: { isGovAccount: false },
     exploreSavingsBulk: {
@@ -95,7 +95,6 @@ vi.mock('../../store/storeHooks', () => ({
 }));
 
 const FROM_DIALOG_VALUES = {
-    FSXADMIN: 'fsxadmin',
     SQLSERVER: 'sqlserver',
     LOAD_CONFIG: 'load_config',
     SAVE_CONFIG: 'save_config',
@@ -116,7 +115,6 @@ vi.mock('../../utils/consts', () => ({
         SCHEDULED_LOCAL_SNAPSHOT: 'scheduled_local_snapshot'
     },
     FROM_DIALOG: {
-        FSXADMIN: 'fsxadmin',
         SQLSERVER: 'sqlserver',
         LOAD_CONFIG: 'load_config',
         SAVE_CONFIG: 'save_config',
@@ -343,39 +341,6 @@ describe('DialogComponent', () => {
         );
         const btn = container.querySelector('button');
         expect(btn?.disabled).toBe(true);
-    });
-
-    // ---- disabledCheck: FSXADMIN ----
-    it('should disable primary button for FSXADMIN with mismatched passwords', () => {
-        mockState.workloadFactoryResource.fsxAdminPasswords = { password: 'abc', confirmPassword: 'xyz' };
-        const { container } = render(
-            <DialogComponent
-                header="Header"
-                content="Content"
-                primaryButton="Apply"
-                dialogFrom={FROM_DIALOG_VALUES.FSXADMIN}
-                callback={vi.fn()}
-                closeCallback={vi.fn()}
-            />
-        );
-        const btn = container.querySelector('button');
-        expect(btn?.disabled).toBe(true);
-    });
-
-    it('should enable primary button for FSXADMIN with matching non-empty passwords', () => {
-        mockState.workloadFactoryResource.fsxAdminPasswords = { password: 'Secret1!', confirmPassword: 'Secret1!' };
-        const { container } = render(
-            <DialogComponent
-                header="Header"
-                content="Content"
-                primaryButton="Apply"
-                dialogFrom={FROM_DIALOG_VALUES.FSXADMIN}
-                callback={vi.fn()}
-                closeCallback={vi.fn()}
-            />
-        );
-        const btn = container.querySelector('button');
-        expect(btn?.disabled).toBe(false);
     });
 
     // ---- disabledCheck: EXPLORE_SAVINGS single ----

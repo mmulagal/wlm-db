@@ -575,6 +575,8 @@ export const resetGwValuesOnRefresh = (dispatch: any) => {
     dispatch(setOptimizationBreakDown(null));
     dispatch(setOptimizingData({}));
     dispatch(setOptimizingInstanceData(false));
+    dispatch(setGwRefreshTimestamp(''));
+    dispatch(setGwTimestamp('0'));
 };
 
 // This function is used to update the progress of the Fixing process for assessment confif resource level jobs.

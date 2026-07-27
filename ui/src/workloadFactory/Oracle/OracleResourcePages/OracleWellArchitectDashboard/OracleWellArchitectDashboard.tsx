@@ -16,6 +16,8 @@ import OracleFilterComponent from './FilterComponent/OracleFilterComponent';
 import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import OracleExportPDF from './ExportPDFComponent/OracleExportPDF';
 import OracleWellArchitectBanner from './OracleWellArchitectBanner';
+import PartialDataContainer from '../../../GetWell/PartialDataContainer/PartialDataContainer';
+import { hasPartialRunPermission } from '../../../InventoryV2/InventoryUtilsV2';
 import { checkHasDismissedConfigurations } from '../../../GetWell/GetWellHelper';
 import { getCategoryTranslationKey } from '../../../GetWell/GetWellUtils';
 import {
@@ -52,12 +54,16 @@ const OracleWellArchitectDashboard = () => {
         gwTimestamp,
         driftAssessmentData,
         selectedDatabaseStorageType,
-        isWad: isWadFromStore
+        isWad: isWadFromStore,
+        isUnregistered: isUnregisteredFromStore,
+        hostManageReadiness
     } = useAppSelector(state => state.getWellOptimize);
 
     // Check if this is a WAD (offline assessment) instance
     // Use Redux store flag which is set when navigating to WAD assessment
     const isWad = isWadFromStore || cardData?.isWad || false;
+    const isUnregistered = isUnregisteredFromStore || !!cardData?.isUnregistered;
+    const showPartialPermissionBanner = isUnregistered && hasPartialRunPermission(hostManageReadiness);
 
     const [showChartArea, setShowChartArea] = useState(true);
 
@@ -249,6 +255,9 @@ const OracleWellArchitectDashboard = () => {
                 </>
             )}
             <div className={styles['well-architected']} id="export-oracle-optimize-pdf">
+                {showPartialPermissionBanner && (
+                    <PartialDataContainer variant="missingExtensiveRunPermission" resourceType="database" />
+                )}
                 <OracleWellArchitectBanner />
 
                 {showChartArea && (

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { INVENTORY_STATUS, DBType, STORAGE_TYPES } from '../../../../utils/consts';
+import { getRegistrationRequiresFullPermissionMessageKey } from '../../InventoryUtilsV2';
 
 /**
  * Tests for Register menu option logic in InstancesTable.tsx side menu
@@ -269,12 +270,28 @@ describe('Register Menu Option Logic', () => {
 
             let tooltipMsg = disableMsg || '';
             if (lacksPermission) {
-                tooltipMsg = 'databases.inventory.registration-requires-full-permission';
+                tooltipMsg = getRegistrationRequiresFullPermissionMessageKey(DBType.MSSQL);
             } else if (fsxLinkMissing) {
                 tooltipMsg = 'databases.register-flow.fsx-link-required-message';
             }
 
             expect(tooltipMsg).toBe('databases.inventory.registration-requires-full-permission');
+        });
+
+        it('shows Oracle permission message when lacking permission for Oracle engine', () => {
+            const rowData = {
+                statusColText: INVENTORY_STATUS.UNMANAGED,
+                fileSystemType: STORAGE_TYPES.FSX_FOR_ONTAP,
+                hostManageReadiness: {
+                    extensiveRunPermission: false,
+                    fsxLinkExists: false
+                }
+            };
+
+            const lacksPermission = !hasFullPermission(rowData?.hostManageReadiness);
+            const tooltipMsg = lacksPermission ? getRegistrationRequiresFullPermissionMessageKey(DBType.ORACLE) : '';
+
+            expect(tooltipMsg).toBe('databases.inventory.registration-requires-full-permission-oracle');
         });
 
         it('shows FSx link message when link missing (second priority)', () => {
@@ -293,7 +310,7 @@ describe('Register Menu Option Logic', () => {
 
             let tooltipMsg = disableMsg || '';
             if (lacksPermission) {
-                tooltipMsg = 'databases.inventory.registration-requires-full-permission';
+                tooltipMsg = getRegistrationRequiresFullPermissionMessageKey(DBType.MSSQL);
             } else if (fsxLinkMissing) {
                 tooltipMsg = 'databases.register-flow.fsx-link-required-message';
             }
@@ -318,7 +335,7 @@ describe('Register Menu Option Logic', () => {
 
             let tooltipMsg = disableMsg || '';
             if (lacksPermission) {
-                tooltipMsg = 'databases.inventory.registration-requires-full-permission';
+                tooltipMsg = getRegistrationRequiresFullPermissionMessageKey(DBType.MSSQL);
             } else if (fsxLinkMissing) {
                 tooltipMsg = 'databases.register-flow.fsx-link-required-message';
             }

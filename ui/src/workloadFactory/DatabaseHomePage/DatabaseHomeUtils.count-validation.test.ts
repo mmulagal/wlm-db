@@ -6,6 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getManagedOptimizationSummary, getAssessmentGroupedByCategory } from './DatabaseHomeUtils';
+import { buildMssqlAssessment, buildOracleAssessment } from './testHelpers/assessmentTestBuilders';
 
 vi.mock('../../store/store', () => ({
     default: {
@@ -36,62 +37,6 @@ vi.mock('../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellAr
 }));
 
 // --- Data builders ---
-
-const buildMssqlAssessment = (overrides: Record<string, unknown> = {}) => ({
-    lastAssessmentTimestamp: '1730074791000',
-    deploymentType: 'Standalone',
-    dismissedConfigurations: {},
-    compute: { status: 'optimized', severity: 'warning' },
-    rssConfig: { status: 'optimized', severity: 'warning' },
-    hostOsPatch: { status: 'optimized', severity: 'critical' },
-    mtuAlignment: { status: 'optimized', severity: 'critical' },
-    license: { status: 'optimized', severity: 'warning' },
-    mssqlPatch: { status: 'optimized', severity: 'warning' },
-    maxDOP: { status: 'optimized', severity: 'warning' },
-    clone: { status: 'optimized', severity: 'warning' },
-    snapshotPolicy: { status: 'optimized', severity: 'warning' },
-    crr: { status: 'optimized', severity: 'warning' },
-    awsBackup: { status: 'optimized', severity: 'warning' },
-    storage: {
-        layout: [
-            { name: 'data-files-location', status: 'optimized', severity: 'critical' },
-            { name: 'log-files-location', status: 'optimized', severity: 'critical' },
-            { name: 'tempdb-files-location', status: 'optimized', severity: 'critical' }
-        ],
-        sizing: [
-            { name: 'headroom', status: 'optimized', severity: 'critical' },
-            { name: 'tempdb-drive-size', status: 'optimized', severity: 'critical' },
-            { name: 'log-drive-size', status: 'optimized', severity: 'critical' },
-            { name: 'performance-tier', status: 'optimized', severity: 'critical' }
-        ],
-        configuration: {
-            volumes: [{ name: 'thin-provision', status: 'optimized', severity: 'critical' }],
-            luns: [],
-            os: []
-        }
-    },
-    ...overrides
-});
-
-const buildOracleAssessment = (overrides: Record<string, unknown> = {}) => ({
-    lastAssessmentTimestamp: '1730074791000',
-    dismissedConfigurations: {},
-    hostOsPatch: { status: 'optimized', severity: 'warning' },
-    oracleSecurityPatch: { status: 'optimized', severity: 'critical' },
-    crr: { status: 'optimized', severity: 'warning' },
-    storage: {
-        layout: [
-            { name: 'redologs-placement', status: 'optimized', severity: 'warning' },
-            { name: 'datafiles-placement', status: 'optimized', severity: 'critical' }
-        ],
-        sizing: [
-            { name: 'swap-space', status: 'optimized', severity: 'critical' },
-            { name: 'headroom', status: 'optimized', severity: 'warning' }
-        ],
-        configuration: { volumes: [], luns: [], os: [] }
-    },
-    ...overrides
-});
 
 const wrapMssqlHost = (assessments: Record<string, unknown>[], hostOverrides: Record<string, unknown> = {}) => ({
     credentialId: 'cred-1',

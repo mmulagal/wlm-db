@@ -438,6 +438,8 @@
             "success": "Success",
             "failed": "Failed",
             "fsx-link-required-message": "Associate a link to register instance",
+            "fsx-link-required-message-oracle": "Associate a link to register database",
+            "fsx-link-required-view-and-fix": "Associate a link to enable view and fix capabilities",
             "capabilities-information": {
                 "review-well-architected-issues": "Gain deep insights into the health and performance of your Microsoft SQL Server instances on FSx for ONTAP with the well-architected feature. It continuously analyzes configurations against industry and vendor best practices, reports misalignments, and provides clear, actionable recommendations to optimize performance, security, and compliance.",
                 "fix-well-architected-issues": "Resolve configuration issues effortlessly with the well-architected feature for Microsoft SQL Server instances on FSx for ONTAP. Fix storage misalignments and other configuration issues automatically with a single click or follow guided steps for manual remediation to ensure optimal performance and compliance.",
@@ -1494,7 +1496,16 @@
                 "Must not contain non-English letters or 'admin'."
             ],
             "passwords-not-match": "Passwords do not match.",
-            "username-invalid-sql": "Username cannot contain these special characters: * : ; | = , + ? ` ' \""
+            "username-invalid-sql": "Username cannot contain these special characters: * : ; | = , + ? ` ' \"",
+            "user-name-label": "User name",
+            "password-label": "Password",
+            "confirm-password-label": "Confirm password",
+            "sql-password-content": "The password for your Windows login might have changed. Update credentials to register this Microsoft SQL Server instance.",
+            "oracle-password-content": "The password for your Oracle login might have changed. Update credentials to register this Oracle Server database.",
+            "sql-server-password-updated-success": "Microsoft SQL Server password updated successfully",
+            "sql-server-password-update-failed": "Failed to update Microsoft SQL Server password.",
+            "oracle-server-password-updated-success": "Oracle Server password updated successfully",
+            "oracle-server-password-update-failed": "Failed to update Oracle Server password."
         },
         "bluexp-menu": {
             "api-hub": "API Hub",
@@ -1570,7 +1581,7 @@
             "one-time-wad-download-success": "Downloaded script for the one-time assessment.",
             "one-time-assessment": "One-time assessment",
             "on-demand-assessment": "On-demand assessment",
-            "register-instance-to-enable-view-fix": "Register the instance to enable View and fix",
+            "register-instance-to-enable-view-fix": "Minimal permission is required to enable View and fix",
             "download-script": "Download script",
             "invalid-file-type": "Invalid file type. Please upload a JSON file.",
             "file-size-exceeds": "File size exceeds",
@@ -1607,6 +1618,7 @@
             "wad-accordion-three-point-five-option-two": "Windows Credential Manager",
             "wad-accordion-three-point-five-option-three": "Interactive prompt ",
             "registration-requires-full-permission": "Extensive run permission required to register instance.",
+            "registration-requires-full-permission-oracle": "Extensive run permission required to register database.",
             "full-permission-required-explore-savings": "Full permissions required for Explore savings. Enable extensive run permission to use this feature.",
             "view-and-fix": "View and Fix",
             "register-instance": "Register instance",
@@ -2364,7 +2376,16 @@
             "register-disabled-no-credentials": "Registration requires AWS credentials. Add database credentials to register this instance.",
             "unregistered-tab-disabled-message-oracle": "Register this database to unlock full features and enable all tabs.",
             "unregistered-tab-disabled-message": "Register this instance to unlock full features and enable all tabs.",
-            "unregistered-dialog-banner-message": "This instance is not registered. Register the instance to unlock full monitoring, management, and optimization capabilities."
+            "unregistered-dialog-banner-message": "This instance is not registered. Register the instance to unlock full monitoring, management, and optimization capabilities.",
+            "partial-data-displayed-title": "Partial data is displayed.",
+            "partial-data-missing-link-prefix": "Some data isn't shown because this file system doesn't have an associated link.",
+            "partial-data-missing-extensive-run-permission-message-instance": "Some data isn't shown because the instance don't have full extensive run permission.",
+            "partial-data-missing-extensive-run-permission-message-database": "Some data isn't shown because the database doesn't have full extensive run permission.",
+            "partial-data-missing-permissions-title": "Warning: Partial data displayed due to missing permissions",
+            "partial-data-missing-permissions-message": "Add compute optimizer permissions for getting recommendations on Compute rightsizing based on AWS Cloud watch metrics and Compute Optimizer.",
+            "associate-and-authenticate-link": "Associate and authenticate link.",
+            "learn-more-about-links-prefix": "Learn more about",
+            "learn-more-about-links": "links"
         },
         "marketing": {
             "run-assessment": "Run Assessment",

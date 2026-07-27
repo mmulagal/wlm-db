@@ -48,7 +48,10 @@ import {
 import {
     formatOfflineAssessmentToInventoryData,
     formatOracleOfflineAssessmentToInventoryData,
-    hasFullPermission
+    hasFullPermission,
+    canTriggerUnregisteredAssessment,
+    getFsxLinkRequiredMessageKey,
+    getRegistrationRequiresFullPermissionMessageKey
 } from '../../InventoryUtilsV2';
 import { formatOfflineDataToAssessmentFormat } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import store from '../../../../store/store';
@@ -754,7 +757,7 @@ export const isInstanceActionDisabled = (
     if (!hasFullPermission(rowData?.hostManageReadiness)) {
         return {
             isDisabled: true,
-            disableMsg: t('databases.inventory.registration-requires-full-permission'),
+            disableMsg: t(getRegistrationRequiresFullPermissionMessageKey(selectedHostType)),
             tooltipWidth: '500px',
             tooltipHeight: '70px'
         };
@@ -813,7 +816,7 @@ export const isInstanceActionDisabled = (
     ) {
         return {
             isDisabled: true,
-            disableMsg: t('databases.register-flow.fsx-link-required-message'),
+            disableMsg: t(getFsxLinkRequiredMessageKey(selectedHostType)),
             tooltipWidth: '380px',
             tooltipHeight: '50px'
         };
@@ -823,6 +826,39 @@ export const isInstanceActionDisabled = (
         isDisabled: false,
         disableMsg: ''
     };
+};
+
+export const getCanViewAndFix = (rowData: any): boolean => {
+    const isRegisteredOrManaged = rowData?.statusColText === INVENTORY_STATUS.MANAGED || rowData?.resourceId;
+
+    if (rowData?.isWad || isRegisteredOrManaged) {
+        return true;
+    }
+
+    if (rowData?.hostManageReadiness?.fsxLinkExists === false) {
+        return false;
+    }
+
+    return !!(rowData?.isUnregistered || canTriggerUnregisteredAssessment(rowData?.hostManageReadiness));
+};
+
+export const getViewAndFixDisableMsg = (rowData: any, canViewAndFix: boolean, t: TFunction): string => {
+    if (
+        (rowData?.detectOption === DETECT_HOST_VAR.DISABLE || rowData?.detectOption === DETECT_HOST_VAR.HIDE) &&
+        rowData?.detectOptionDisableMsg
+    ) {
+        return rowData.detectOptionDisableMsg;
+    }
+
+    const isRegisteredOrManaged = rowData?.statusColText === INVENTORY_STATUS.MANAGED || rowData?.resourceId;
+    if (!isRegisteredOrManaged && !rowData?.isWad && rowData?.hostManageReadiness?.fsxLinkExists === false) {
+        return t('databases.register-flow.fsx-link-required-view-and-fix');
+    }
+
+    if (!canViewAndFix) {
+        return t('databases.inventory.register-instance-to-enable-view-fix');
+    }
+    return '';
 };
 
 /**
@@ -1514,7 +1550,8 @@ const dispatchWadWellArchitectedFromInventoryRow = (
             regionId,
             storageType: rowData?.sqlServerDeploymentType,
             isWad: isWadFlow,
-            isUnregistered: isUnregisteredFlow
+            isUnregistered: isUnregisteredFlow,
+            hostManageReadiness: rowData?.hostManageReadiness
         })
     );
 
@@ -1667,7 +1704,8 @@ export const handleUnregisteredOracleOptimizeAction = (rowData: any, dispatch: D
             credId: credentialId,
             regionId,
             isWad: false,
-            isUnregistered: true
+            isUnregistered: true,
+            hostManageReadiness: rowData?.hostManageReadiness
         })
     );
 

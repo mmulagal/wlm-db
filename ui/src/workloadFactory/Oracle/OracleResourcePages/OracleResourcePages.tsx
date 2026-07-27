@@ -16,10 +16,7 @@ import OracleOverview from './OracleOverview/OracleOverview';
 import { GENERAL } from '../../../utils/appConstants';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { useRegisterResourceCredentialsBulkMutation } from '../../../utils/apiService';
-import {
-    FSXPasswordContent,
-    OracleServerPasswordContent
-} from '../../GetWell/WellArchitectDashboard/FSXPasswordContent/FSXPasswordContent';
+import { OracleServerPasswordContent } from '../../GetWell/WellArchitectDashboard/ServerPasswordContent/ServerPasswordContent';
 import OraclePDB from './OraclePDB/OraclePDB';
 import {
     resetOracleResourceVisitedTabs,
@@ -29,7 +26,7 @@ import {
     setRefreshOracleOverview,
     setRefreshOracleWellArchitect
 } from '../../../store/workloadFactory/oracleSlice';
-import { handleFSXAdminApply } from '../../../utils/resourceUtils';
+import { handleOracleServerPasswordApply } from '../../../utils/resourceUtils';
 import { getCurrentDateTime } from '../../../utils/utilityFunctions';
 import { instanceBreadCrumbSelectedFrom, selectHeaderTabFromBreadCrumb } from '../../GetWell/GetWellUtils';
 import OracleErrorInvestigationTab from './OracleErrorInvestigation/OracleErrorInvestigationTab';
@@ -43,9 +40,14 @@ const OracleResourcePages = () => {
     const { selectedOracleInnerPageTab, visitedTabs, resourceDetails, refreshTimes } = useAppSelector(
         state => state.oracleSlice
     );
-    const { selectedHostname, selectedDatabaseInstanceName, innerPageDetails, isWad } = useAppSelector(
-        state => state.getWellOptimize
-    );
+    const {
+        selectedHostname,
+        selectedDatabaseInstanceName,
+        innerPageDetails,
+        isWad,
+        gwRefreshTimestamp,
+        isAssessmentAvailable
+    } = useAppSelector(state => state.getWellOptimize);
     const { selectedResourceCredId, selectedResourceRegionId, selectedResourceId } = useAppSelector(
         state => state.workloadFactoryResource
     );
@@ -61,25 +63,15 @@ const OracleResourcePages = () => {
         [dispatch]
     );
 
-    const handleUpdatePassword = (type: string) => {
-        let header = GENERAL.UPDATE_FSX_ADMIN_PASSWORD;
-        let content = (
-            <FSXPasswordContent type={RESET_PASSWORD_TYPE.FSXADMIN} engine={RESET_PASSWORD_TYPE.ORACLESERVER} />
-        );
-
-        if (type === RESET_PASSWORD_TYPE.ORACLESERVER) {
-            header = GENERAL.UPDATE_ORACLE_SERVER_PASSWORD;
-            content = <OracleServerPasswordContent type={RESET_PASSWORD_TYPE.ORACLESERVER} />;
-        }
+    const handleUpdatePassword = () => {
         setDialog(
             <DialogComponent
-                header={header}
-                content={content}
+                header={GENERAL.UPDATE_ORACLE_SERVER_PASSWORD}
+                content={<OracleServerPasswordContent type={RESET_PASSWORD_TYPE.ORACLESERVER} />}
                 primaryButton={GENERAL.UPDATE}
                 secondaryButton={GENERAL.CANCEL}
                 callback={() => {
-                    handleFSXAdminApply(
-                        type,
+                    handleOracleServerPasswordApply(
                         selectedDatabaseInstanceName,
                         resourceDetails,
                         innerPageDetails,
@@ -94,7 +86,7 @@ const OracleResourcePages = () => {
                     dispatch(resetAllPasswords());
                     closeDialog();
                 }}
-                dialogFrom={type === RESET_PASSWORD_TYPE.FSXADMIN ? FROM_DIALOG.FSXADMIN : FROM_DIALOG.SQLSERVER}
+                dialogFrom={FROM_DIALOG.SQLSERVER}
             />
         );
     };
@@ -122,13 +114,18 @@ const OracleResourcePages = () => {
             return refreshTimes.overviewRefreshTime;
         }
         if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
-            return refreshTimes.optimizeRefreshTime;
+            return gwRefreshTimestamp;
         }
         if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION) {
             return eiRefreshTimestamp;
         }
         return '';
     };
+
+    const refreshTimeOnIcon = setRefreshTimeOnIcon();
+    const showLastUpdatePopover =
+        selectedOracleInnerPageTab !== WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS ||
+        (isAssessmentAvailable && !!refreshTimeOnIcon && refreshTimeOnIcon !== '0');
 
     const handleOracleRefresh = () => {
         if (
@@ -140,7 +137,6 @@ const OracleResourcePages = () => {
             dispatch(setOracleRefreshTimes({ overviewRefreshTime: getCurrentDateTime() }));
         } else if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS) {
             dispatch(setRefreshOracleWellArchitect(true));
-            dispatch(setOracleRefreshTimes({ optimizeRefreshTime: getCurrentDateTime() }));
         } else if (selectedOracleInnerPageTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION) {
             dispatch(resetEiData({ dbType: DBType.ORACLE }));
             dispatch(setEiRefreshTimestamp(getCurrentDateTime()));
@@ -164,16 +160,23 @@ const OracleResourcePages = () => {
                     ]}
                 />
                 <div className={styles.rightSection}>
-                    <Popover
-                        popoverClass={styles['copy-popover']}
-                        children={`Last update: ${setRefreshTimeOnIcon()}`}
-                        trigger="hover"
-                        container={
-                            <div className={styles.refreshIcon} onClick={handleOracleRefresh}>
-                                <RefreshIcon />
-                            </div>
-                        }
-                    />
+                    {showLastUpdatePopover && (
+                        <Popover
+                            popoverClass={styles['copy-popover']}
+                            children={`Last update: ${refreshTimeOnIcon}`}
+                            trigger="hover"
+                            container={
+                                <div className={styles.refreshIcon} onClick={handleOracleRefresh}>
+                                    <RefreshIcon />
+                                </div>
+                            }
+                        />
+                    )}
+                    {!showLastUpdatePopover && (
+                        <div className={styles.refreshIcon} onClick={handleOracleRefresh}>
+                            <RefreshIcon />
+                        </div>
+                    )}
 
                     {selectedOracleInnerPageTab !== WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && !isWad && (
                         <div className={styles.buttonContainer}>
@@ -184,18 +187,7 @@ const OracleResourcePages = () => {
                                     {
                                         id: 'updateOracleServerPassword',
                                         children: GENERAL.UPDATE_ORACLE_SERVER_PASSWORD,
-
-                                        onClick: () => {
-                                            handleUpdatePassword(RESET_PASSWORD_TYPE.ORACLESERVER);
-                                        }
-                                    },
-                                    {
-                                        id: 'updateFsxAdminPassword',
-                                        children: GENERAL.UPDATE_FSX_ADMIN_PASSWORD,
-
-                                        onClick: () => {
-                                            handleUpdatePassword(RESET_PASSWORD_TYPE.FSXADMIN);
-                                        }
+                                        onClick: handleUpdatePassword
                                     }
                                 ]}
                             >

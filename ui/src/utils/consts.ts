@@ -191,7 +191,6 @@ export const FROM_DIALOG = {
     SANDBOX_REFRESH: 'sandbox_refresh',
     DISMISS: 'dismiss',
     OPTIMIZE: 'optimize',
-    FSXADMIN: 'fsxadmin',
     SQLSERVER: 'sqlserver',
     ORACLEASM: 'oracleasm',
     ORACLESERVER: 'oracleserver',
@@ -673,7 +672,6 @@ export const SSM_STATE = {
 } as const;
 
 export const RESET_PASSWORD_TYPE = {
-    FSXADMIN: 'fsxadmin',
     SQLSERVER: 'sqlserver',
     ORACLESERVER: 'oracleserver',
     ORACLEASM: 'oracleasm'

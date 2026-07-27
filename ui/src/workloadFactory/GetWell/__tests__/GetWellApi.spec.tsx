@@ -59,7 +59,9 @@ vi.mock('../../../store/workloadFactory/getWellOptimizeSlice', () => ({
     setGwRefreshPage: vi.fn((payload: unknown) => ({ type: 'setGwRefreshPage', payload })),
     setIsAssessmentAvailable: vi.fn((payload: unknown) => ({ type: 'setIsAssessmentAvailable', payload })),
     setLandingFromInnerPage: vi.fn((payload: unknown) => ({ type: 'setLandingFromInnerPage', payload })),
-    setGwSelectedRowFsxId: vi.fn((payload: unknown) => ({ type: 'setGwSelectedRowFsxId', payload }))
+    setGwSelectedRowFsxId: vi.fn((payload: unknown) => ({ type: 'setGwSelectedRowFsxId', payload })),
+    setGwRefreshTimestamp: vi.fn((payload: unknown) => ({ type: 'setGwRefreshTimestamp', payload })),
+    setGwTimestamp: vi.fn((payload: unknown) => ({ type: 'setGwTimestamp', payload }))
 }));
 
 const baseGetWellState = {
@@ -155,17 +157,40 @@ describe('GetWellApi page-load routing', () => {
         expect(mockGetOfflineMssqlAssessmentData).not.toHaveBeenCalled();
     });
 
-    it('skips page-load fetch when well-architected status tab was already visited', async () => {
+    it('refetches unregistered assessment when instance changes even if tab was visited', async () => {
         getWellState = {
             ...baseGetWellState,
             isUnregistered: true,
+            selectedResourceId: 'i-other',
+            selectedDatabaseInstance: 'OTHER',
             visitedTabs: { [WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]: true }
         };
 
         await renderGetWellApi();
 
-        expect(mockGetUnregisteredMssqlAssessmentData).not.toHaveBeenCalled();
-        expect(mockGetOfflineMssqlAssessmentData).not.toHaveBeenCalled();
-        expect(mockAssessmentDetailsApi).not.toHaveBeenCalled();
+        expect(mockGetUnregisteredMssqlAssessmentData).toHaveBeenCalledWith({
+            accountId: 'account-1',
+            ec2InstanceId: 'i-other',
+            instanceName: 'OTHER',
+            region: 'us-east-1',
+            credentialId: 'cred-1'
+        });
+    });
+
+    it('clears assessment timestamps when unregistered offline-assessment GET fails', async () => {
+        getWellState = {
+            ...baseGetWellState,
+            isUnregistered: true,
+            selectedResourceId: 'i-case2',
+            selectedDatabaseInstance: 'CASE2SQL'
+        };
+        mockGetUnregisteredMssqlAssessmentData.mockResolvedValue({ error: { message: 'WAD assessment not found' } });
+
+        await renderGetWellApi();
+
+        expect(mockDispatch).toHaveBeenCalledWith({ type: 'setIsAssessmentAvailable', payload: false });
+        expect(mockDispatch).toHaveBeenCalledWith({ type: 'setGwRefreshTimestamp', payload: '' });
+        expect(mockDispatch).toHaveBeenCalledWith({ type: 'setGwTimestamp', payload: '0' });
+        expect(mockFormatGetWellDataFlat).not.toHaveBeenCalled();
     });
 });

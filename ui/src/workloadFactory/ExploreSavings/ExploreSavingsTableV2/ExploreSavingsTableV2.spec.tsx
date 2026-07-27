@@ -118,7 +118,9 @@ vi.mock('../../InventoryV2/InventoryUtilsV2', () => ({
     renderInstanceListText: (cellData: any) => <span data-testid="render-instance">{cellData}</span>,
     renderAllocatedCapacity: (cellData: any) => <span data-testid="render-capacity">{cellData}</span>,
     renderUnmanagedAZ: (cellData: any) => <span data-testid="render-az">{cellData}</span>,
-    renderCellData: (cellData: any) => <span data-testid="render-cell">{cellData}</span>
+    renderCellData: (cellData: any) => <span data-testid="render-cell">{cellData}</span>,
+    hasFullPermission: (hostManageReadPermission?: { extensiveRunPermission?: boolean }) =>
+        hostManageReadPermission?.extensiveRunPermission === true
 }));
 
 vi.mock('../../../utils/utilityFunctions', () => ({

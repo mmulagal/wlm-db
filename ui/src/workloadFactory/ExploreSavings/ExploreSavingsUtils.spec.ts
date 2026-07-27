@@ -294,6 +294,9 @@ const resetMockState = () => {
         },
         inventoryV2: {
             inventoryTableData: {}
+        },
+        auth: {
+            isGovAccount: false
         }
     };
 };

@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import i18next from 'i18next';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds/src/hooks/useBlueXP';
 import store from '../store/store';
 import { NOTIFICATION_TYPES, addNotification, clearNotifications } from '../store/notificationSlice';
@@ -12,7 +13,6 @@ import {
     JOB_MONITORING_STATUS,
     OPTIMIZE_POLLING_INTERVAL,
     DETECT_HOST_VAR,
-    RESET_PASSWORD_TYPE,
     CONFIG_STATES
 } from './consts';
 
@@ -226,7 +226,7 @@ export const mapDismissedValues = (data: any, itemName: string | any) => {
     return null;
 };
 
-export const createOraclePayLoad = (value: string, selectedDatabaseInstanceName: string) => {
+export const createOraclePayLoad = (selectedDatabaseInstanceName: string) => {
     const state = store.getState();
     const { isGovAccount } = state.auth;
     const { sqlServerPasswords, sqlServerUserName, credentialUpdateSsmArn } = state.workloadFactoryResource;
@@ -248,30 +248,7 @@ export const createOraclePayLoad = (value: string, selectedDatabaseInstanceName:
     return { credentials: [credential] };
 };
 
-export const createPayload = (resourceDetails: any, innerPageDetails: any) => {
-    const state = store.getState();
-    const { isGovAccount } = state.auth;
-    const { fsxAdminPasswords, credentialUpdateSsmArn } = state.workloadFactoryResource;
-    const { password } = fsxAdminPasswords;
-
-    const credential = isGovAccount
-        ? {
-              resourceId: resourceDetails?.topology?.fileSystemId || innerPageDetails?.fsxId,
-              resourceType: DETECT_HOST_VAR.FSX,
-              ssmParameterArn: credentialUpdateSsmArn
-          }
-        : {
-              resourceId: resourceDetails?.topology?.fileSystemId || innerPageDetails?.fsxId,
-              resourceType: DETECT_HOST_VAR.FSX,
-              username: 'fsxadmin',
-              password
-          };
-
-    return { credentials: [credential] };
-};
-
-export const handleFSXAdminApply = async (
-    value: string,
+export const handleOracleServerPasswordApply = async (
     selectedDatabaseInstanceName: string,
     resourceDetails: any,
     innerPageDetails: any,
@@ -283,12 +260,7 @@ export const handleFSXAdminApply = async (
 ) => {
     dispatch(setPasswordResetLoading(true));
     try {
-        let credList = createOraclePayLoad(RESET_PASSWORD_TYPE.ORACLESERVER, selectedDatabaseInstanceName);
-        if (value === RESET_PASSWORD_TYPE.FSXADMIN) {
-            credList = createPayload(resourceDetails, innerPageDetails);
-        }
-        const getPasswordTypeLabel = (type: string) =>
-            type === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Oracle Server';
+        const credList = createOraclePayLoad(selectedDatabaseInstanceName);
         const payload = {
             items: [
                 {
@@ -310,7 +282,7 @@ export const handleFSXAdminApply = async (
                 dispatch(
                     addNotification({
                         notificationType: NOTIFICATION_TYPES.SUCCESS,
-                        message: `${getPasswordTypeLabel(value)} password updated successfully`
+                        message: i18next.t('databases.update-credentials.oracle-server-password-updated-success')
                     })
                 );
             } else {
@@ -321,7 +293,7 @@ export const handleFSXAdminApply = async (
                             result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
                             result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
                             result?.data?.items?.[0]?.registerDetails?.[0]?.oracleAsmError ||
-                            `Failed to update ${getPasswordTypeLabel(value)} password. `
+                            i18next.t('databases.update-credentials.oracle-server-password-update-failed')
                     })
                 );
             }
@@ -331,7 +303,8 @@ export const handleFSXAdminApply = async (
                     notificationType: NOTIFICATION_TYPES.ERROR,
                     message:
                         // @ts-ignore
-                        result?.error?.data?.message || `Failed to update ${getPasswordTypeLabel(value)} password. `
+                        result?.error?.data?.message ||
+                        i18next.t('databases.update-credentials.oracle-server-password-update-failed')
                 })
             );
         }
@@ -339,7 +312,7 @@ export const handleFSXAdminApply = async (
         dispatch(
             addNotification({
                 notificationType: NOTIFICATION_TYPES.ERROR,
-                message: error || 'Failed to update fsxadmin password. '
+                message: error || i18next.t('databases.update-credentials.oracle-server-password-update-failed')
             })
         );
     } finally {

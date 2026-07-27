@@ -346,7 +346,7 @@ describe('Registration Wizard Operation Type', () => {
         describe('FSx step removal rationale', () => {
             it('FSx link validation happens before wizard entry (Global WAD Gradual Trust plan)', () => {
                 // FSx authentication step is commented out
-                // FSx link validation now happens in canRegisterWithFsxLink check
+                // FSx link validation happens in InstanceTableHelper / InstancesTable before wizard entry
                 // before user enters registration wizard
                 const fsxValidationMovedToPreCheck = true;
 

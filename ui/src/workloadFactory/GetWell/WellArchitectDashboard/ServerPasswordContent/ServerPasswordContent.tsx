@@ -3,12 +3,9 @@ import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 import { DsRadioButton } from '@tlveng/wlm-ds';
-import styles from './FSXPasswordContent.module.scss';
+import styles from './ServerPasswordContent.module.scss';
 import SsmArnTooltipContent from '../../../../common/SsmArnTooltipContent/SsmArnTooltipContent';
-import { GENERAL } from '../../../../utils/appConstants';
 import {
-    setFsxAdminConfirmPassword,
-    setFsxAdminPassword,
     setSqlServerConfirmPassword,
     setSqlServerPassword,
     setSqlServerUserName,
@@ -30,11 +27,6 @@ interface PasswordContentProps {
     setConfirmPassword: (value: string) => void;
     description: string;
     username: string;
-}
-
-interface FSXPasswordContentProps {
-    type: string;
-    engine: string;
 }
 
 interface ORACLEPasswordContentProps {
@@ -69,12 +61,9 @@ const PasswordContent = ({
             {type === RESET_PASSWORD_TYPE.SQLSERVER && authModeRadio()}
 
             <div className={styles.textArea}>
-                {type === RESET_PASSWORD_TYPE.FSXADMIN && (
-                    <TextField label={GENERAL.USER_NAME} value={username} className={styles.textField} isDisabled />
-                )}
                 {(type === RESET_PASSWORD_TYPE.SQLSERVER || type === RESET_PASSWORD_TYPE.ORACLESERVER) && (
                     <TextField
-                        label={GENERAL.USER_NAME}
+                        label={t('databases.update-credentials.user-name-label')}
                         value={username}
                         className={styles.textField}
                         isDisabled={false}
@@ -86,7 +75,7 @@ const PasswordContent = ({
                 )}
                 <div className={styles.tooltipContainer}>
                     <PasswordField
-                        label={GENERAL.PASSWORD}
+                        label={t('databases.update-credentials.password-label')}
                         error={useDelayedError(
                             passwordTouched && password.length === 0 ? t('databases.general.action-required') : false
                         )}
@@ -99,7 +88,7 @@ const PasswordContent = ({
                     />
                 </div>
                 <PasswordField
-                    label="Confirm password"
+                    label={t('databases.update-credentials.confirm-password-label')}
                     error={useDelayedError(isValidConfirmPassword(confirmPassword))}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setConfirmPassword(e.target.value);
@@ -126,7 +115,7 @@ const GovCloudArnContent = () => {
     })();
 
     return (
-        <div className={styles['fsxadmin-password']}>
+        <div className={styles['gov-cloud-arn-content']}>
             <div className={styles.textArea}>
                 <TextField
                     label={t('databases.register-flow.ssm-parameter-arn-label')}
@@ -150,32 +139,9 @@ const GovCloudArnContent = () => {
     );
 };
 
-const FSXPasswordContent = ({ type, engine }: FSXPasswordContentProps) => {
-    const dispatch = useDispatch();
-    const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
-    const { password, confirmPassword } = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
-
-    if (isGovAccount) return <GovCloudArnContent />;
-
-    return (
-        <PasswordContent
-            type={type}
-            password={password}
-            confirmPassword={confirmPassword}
-            setPassword={(value: string) => dispatch(setFsxAdminPassword(value))}
-            setConfirmPassword={(value: string) => dispatch(setFsxAdminConfirmPassword(value))}
-            description={
-                engine === RESET_PASSWORD_TYPE.ORACLESERVER
-                    ? GENERAL.ORACLE_FSX_PASSWORD_CONTENT
-                    : GENERAL.FSX_PASSWORD_CONTENT
-            }
-            username="fsxadmin"
-        />
-    );
-};
-
 const OracleServerPasswordContent = ({ type }: ORACLEPasswordContentProps) => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const { password: sqlPassword, confirmPassword: sqlConfirmPassword } = useAppSelector(
         state => state.workloadFactoryResource.sqlServerPasswords
@@ -191,7 +157,7 @@ const OracleServerPasswordContent = ({ type }: ORACLEPasswordContentProps) => {
             confirmPassword={sqlConfirmPassword}
             setPassword={(value: string) => dispatch(setSqlServerPassword(value))}
             setConfirmPassword={(value: string) => dispatch(setSqlServerConfirmPassword(value))}
-            description={GENERAL.ORACLE_PASSWORD_CONTENT}
+            description={t('databases.update-credentials.oracle-password-content')}
             username={sqlServerUserName}
         />
     );
@@ -199,6 +165,7 @@ const OracleServerPasswordContent = ({ type }: ORACLEPasswordContentProps) => {
 
 const SQLServerPasswordContent = () => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const { password: sqlPassword, confirmPassword: sqlConfirmPassword } = useAppSelector(
         state => state.workloadFactoryResource.sqlServerPasswords
@@ -214,7 +181,7 @@ const SQLServerPasswordContent = () => {
             confirmPassword={sqlConfirmPassword}
             setPassword={(value: string) => dispatch(setSqlServerPassword(value))}
             setConfirmPassword={(value: string) => dispatch(setSqlServerConfirmPassword(value))}
-            description={GENERAL.SQL_PASSWORD_CONTENT}
+            description={t('databases.update-credentials.sql-password-content')}
             username={sqlServerUserName}
         />
     );
@@ -263,5 +230,5 @@ const authModeRadio = () => {
     );
 };
 
-export { FSXPasswordContent, SQLServerPasswordContent, OracleServerPasswordContent };
+export { SQLServerPasswordContent, OracleServerPasswordContent };
 export default PasswordContent;

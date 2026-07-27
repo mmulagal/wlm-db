@@ -149,10 +149,6 @@ const initialState: WorkloadFactoryResourceEntities = {
     selectedResourceRegionId: '',
     selectedHostname: '',
     isResourceRefresh: false,
-    fsxAdminPasswords: {
-        password: '',
-        confirmPassword: ''
-    },
     sqlServerPasswords: {
         password: '',
         confirmPassword: ''
@@ -187,12 +183,6 @@ const workloadFactoryResourceSlice = createSlice({
         },
         setPasswordResetLoading: (state, action: PayloadAction<any>) => {
             state.passwordResetLoading = action.payload;
-        },
-        setFsxAdminPassword: (state, action: PayloadAction<any>) => {
-            state.fsxAdminPasswords.password = action.payload;
-        },
-        setFsxAdminConfirmPassword: (state, action: PayloadAction<any>) => {
-            state.fsxAdminPasswords.confirmPassword = action.payload;
         },
         setSqlServerPassword: (state, action: PayloadAction<any>) => {
             state.sqlServerPasswords.password = action.payload;
@@ -256,8 +246,6 @@ const workloadFactoryResourceSlice = createSlice({
             state.selectedAuthenticationType = action.payload;
         },
         resetAllPasswords: state => {
-            state.fsxAdminPasswords.password = '';
-            state.fsxAdminPasswords.confirmPassword = '';
             state.sqlServerPasswords.password = '';
             state.sqlServerPasswords.confirmPassword = '';
             state.sqlServerUserName = '';
@@ -271,8 +259,6 @@ export const {
     setInstanceDetailsData,
     setSqlServerUserName,
     setPasswordResetLoading,
-    setFsxAdminPassword,
-    setFsxAdminConfirmPassword,
     setSqlServerPassword,
     setSqlServerConfirmPassword,
     setResourceLoading,

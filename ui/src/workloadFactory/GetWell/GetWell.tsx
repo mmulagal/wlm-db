@@ -61,6 +61,7 @@ import {
 } from '../../utils/apiService';
 import AssessmentContainer from '../../common/AssessmentContainer/AssessmentContainer';
 import PartialDataContainer from './PartialDataContainer/PartialDataContainer';
+import { hasPartialRunPermission } from '../InventoryV2/InventoryUtilsV2';
 import {
     handleSelectForFilter,
     removeEntry,
@@ -101,9 +102,11 @@ const GetWell = () => {
         optimizationBreakDown,
         driftAssessmentData,
         isWad: isWadFromStore,
-        isUnregistered: isUnregisteredFromStore
+        isUnregistered: isUnregisteredFromStore,
+        hostManageReadiness
     } = useAppSelector(state => state.getWellOptimize);
     const isUnregistered = isUnregisteredFromStore || !!cardData?.isUnregistered;
+    const showPartialPermissionBanner = isUnregistered && hasPartialRunPermission(hostManageReadiness);
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
@@ -446,6 +449,10 @@ const GetWell = () => {
                 {/* Partial data warning here - based on condition */}
 
                 {cardData?.compute_rightsizing?.isMissingPermissions && <PartialDataContainer />}
+
+                {showPartialPermissionBanner && (
+                    <PartialDataContainer variant="missingExtensiveRunPermission" resourceType="instance" />
+                )}
 
                 {/* Assessment Section here */}
                 <AssessmentContainer

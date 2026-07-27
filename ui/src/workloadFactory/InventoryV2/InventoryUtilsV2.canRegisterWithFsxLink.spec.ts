@@ -1,7 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { canRegisterWithFsxLink } from './InventoryUtilsV2';
+import { DBType, INVENTORY_STATUS } from '../../utils/consts';
+import {
+    hasFullPermission,
+    getFsxLinkRequiredMessageKey,
+    getRegistrationRequiresFullPermissionMessageKey
+} from './InventoryUtilsV2';
 
-// Mock dependencies that InventoryUtilsV2 imports
 vi.mock('../../store/store', () => ({
     default: {
         getState: vi.fn(() => ({
@@ -22,64 +26,142 @@ vi.mock('./InventoryTablesComponent/ManageInstanceWizard/DetectInstanceStep/Dete
     isAuthRequiredForInstance: vi.fn()
 }));
 
-describe('canRegisterWithFsxLink', () => {
-    it('returns false with i18n key when hostManageReadiness is undefined', () => {
-        const result = canRegisterWithFsxLink(undefined);
-        expect(result.canRegister).toBe(false);
-        expect(result.reason).toBe('databases.inventory.no-permission-data-available');
+/**
+ * Mirrors InstanceTableHelper isInstanceActionDisabled FSx link branch for UNMANAGED/UNDETECTED rows.
+ */
+const isFsxLinkMissingForRegistration = (rowData: {
+    statusColText?: string;
+    hostManageReadiness?: { fsxLinkExists?: boolean };
+}) =>
+    (rowData.statusColText === INVENTORY_STATUS.UNMANAGED ||
+        rowData.statusColText === INVENTORY_STATUS.UNDETECTED) &&
+    rowData.hostManageReadiness?.fsxLinkExists === false;
+
+/**
+ * Mirrors InstancesTable register menu tooltip priority: permission first, then FSx link.
+ */
+const getRegisterBlockReasonKey = (
+    rowData: { hostManageReadiness?: { fsxLinkExists?: boolean; extensiveRunPermission?: boolean } },
+    engineType: string
+) => {
+    const fsxLinkMissing = rowData.hostManageReadiness?.fsxLinkExists === false;
+    const lacksPermission = !hasFullPermission(rowData.hostManageReadiness);
+
+    if (lacksPermission) {
+        return getRegistrationRequiresFullPermissionMessageKey(engineType);
+    }
+    if (fsxLinkMissing) {
+        return getFsxLinkRequiredMessageKey(engineType);
+    }
+    return undefined;
+};
+
+describe('registration pre-checks (inline InstanceTableHelper / InstancesTable flow)', () => {
+    const unmanagedRow = { statusColText: INVENTORY_STATUS.UNMANAGED };
+
+    it('blocks registration when fsxLinkExists is false for UNMANAGED rows', () => {
+        expect(
+            isFsxLinkMissingForRegistration({
+                ...unmanagedRow,
+                hostManageReadiness: { fsxLinkExists: false }
+            })
+        ).toBe(true);
     });
 
-    it('returns false with i18n key when hostManageReadiness is null', () => {
-        const result = canRegisterWithFsxLink(null as any);
-        expect(result.canRegister).toBe(false);
-        expect(result.reason).toBe('databases.inventory.no-permission-data-available');
+    it('uses oracle FSx link message key when fsxLinkExists is false for Oracle', () => {
+        const reasonKey = getRegisterBlockReasonKey(
+            { hostManageReadiness: { fsxLinkExists: false, extensiveRunPermission: true } },
+            DBType.ORACLE
+        );
+
+        expect(reasonKey).toBe(getFsxLinkRequiredMessageKey(DBType.ORACLE));
     });
 
-    it('returns false with i18n key when fsxLinkExists is false', () => {
-        const result = canRegisterWithFsxLink({ fsxLinkExists: false });
-        expect(result.canRegister).toBe(false);
-        expect(result.reason).toBe('databases.register-flow.fsx-link-required-message');
+    it('blocks on FSx link even when extensiveRunPermission is true', () => {
+        const reasonKey = getRegisterBlockReasonKey(
+            {
+                hostManageReadiness: {
+                    fsxLinkExists: false,
+                    extensiveRunPermission: true,
+                    canReadAWSSSMDocuments: true
+                }
+            },
+            DBType.MSSQL
+        );
+
+        expect(reasonKey).toBe(getFsxLinkRequiredMessageKey());
     });
 
-    it('returns false with i18n key when fsxLinkExists is false even with other permissions', () => {
-        const result = canRegisterWithFsxLink({
-            fsxLinkExists: false,
-            extensiveRunPermission: true,
-            canReadAWSSSMDocuments: true
-        });
-        expect(result.canRegister).toBe(false);
-        expect(result.reason).toBe('databases.register-flow.fsx-link-required-message');
+    it('does not block on FSx link when fsxLinkExists is true', () => {
+        expect(
+            isFsxLinkMissingForRegistration({
+                ...unmanagedRow,
+                hostManageReadiness: { fsxLinkExists: true, extensiveRunPermission: true }
+            })
+        ).toBe(false);
     });
 
-    it('returns true when fsxLinkExists is true', () => {
-        const result = canRegisterWithFsxLink({
-            fsxLinkExists: true,
-            extensiveRunPermission: true
-        });
-        expect(result.canRegister).toBe(true);
-        expect(result.reason).toBeUndefined();
+    it('does not block on FSx link when fsxLinkExists is undefined (EBS-only)', () => {
+        expect(
+            isFsxLinkMissingForRegistration({
+                ...unmanagedRow,
+                hostManageReadiness: { extensiveRunPermission: true, canReadAWSSSMDocuments: true }
+            })
+        ).toBe(false);
     });
 
-    it('returns true when fsxLinkExists is undefined (EBS-only scenario)', () => {
-        const result = canRegisterWithFsxLink({
-            extensiveRunPermission: true,
-            canReadAWSSSMDocuments: true
-        });
-        expect(result.canRegister).toBe(true);
-        expect(result.reason).toBeUndefined();
+    it('does not block on FSx link when hostManageReadiness is empty (EBS-only)', () => {
+        expect(
+            isFsxLinkMissingForRegistration({
+                ...unmanagedRow,
+                hostManageReadiness: {}
+            })
+        ).toBe(false);
     });
 
-    it('returns true when fsxLinkExists is true with minimal other permissions', () => {
-        const result = canRegisterWithFsxLink({
-            fsxLinkExists: true
-        });
-        expect(result.canRegister).toBe(true);
-        expect(result.reason).toBeUndefined();
+    it('blocks on missing full permission when hostManageReadiness is undefined', () => {
+        expect(hasFullPermission(undefined)).toBe(false);
+        expect(getRegisterBlockReasonKey({}, DBType.MSSQL)).toBe(
+            getRegistrationRequiresFullPermissionMessageKey(DBType.MSSQL)
+        );
     });
 
-    it('returns true for empty object with no fsxLinkExists field (EBS-only)', () => {
-        const result = canRegisterWithFsxLink({});
-        expect(result.canRegister).toBe(true);
-        expect(result.reason).toBeUndefined();
+    it('blocks on missing full permission when hostManageReadiness is null', () => {
+        expect(hasFullPermission(null as any)).toBe(false);
+    });
+
+    it('allows register pre-check when fsxLinkExists is true and full permission is granted', () => {
+        expect(
+            getRegisterBlockReasonKey(
+                { hostManageReadiness: { fsxLinkExists: true, extensiveRunPermission: true } },
+                DBType.MSSQL
+            )
+        ).toBeUndefined();
+    });
+});
+
+describe('getFsxLinkRequiredMessageKey', () => {
+    it('returns MSSQL FSx link message key by default', () => {
+        expect(getFsxLinkRequiredMessageKey()).toBe('databases.register-flow.fsx-link-required-message');
+    });
+
+    it('returns Oracle FSx link message key for Oracle engine', () => {
+        expect(getFsxLinkRequiredMessageKey(DBType.ORACLE)).toBe(
+            'databases.register-flow.fsx-link-required-message-oracle'
+        );
+    });
+});
+
+describe('getRegistrationRequiresFullPermissionMessageKey', () => {
+    it('returns MSSQL registration permission message key by default', () => {
+        expect(getRegistrationRequiresFullPermissionMessageKey()).toBe(
+            'databases.inventory.registration-requires-full-permission'
+        );
+    });
+
+    it('returns Oracle registration permission message key for Oracle engine', () => {
+        expect(getRegistrationRequiresFullPermissionMessageKey(DBType.ORACLE)).toBe(
+            'databases.inventory.registration-requires-full-permission-oracle'
+        );
     });
 });

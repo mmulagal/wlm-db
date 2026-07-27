@@ -104,7 +104,8 @@ export const optimizeAction = (rowData: any, dispatch: any) => {
             regionId: targettedHost?.regionId,
             storageType: targettedDbInstance?.sqlServerDeploymentType,
             isWad: !!rowData?.isWad && !isUnregisteredFlow,
-            isUnregistered: isUnregisteredFlow
+            isUnregistered: isUnregisteredFlow,
+            hostManageReadiness: rowData?.hostManageReadiness || targettedHost?.hostManageReadiness
         })
     );
 

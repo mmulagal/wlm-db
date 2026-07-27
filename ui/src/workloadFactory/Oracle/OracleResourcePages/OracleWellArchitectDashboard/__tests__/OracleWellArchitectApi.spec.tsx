@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, act } from '@testing-library/react';
 import React from 'react';
-import { WELL_ARCHITECTED_TABS } from '../../../../../utils/consts';
 
 import useOracleWellArchitectApi from '../OracleWellArchitectApi';
 
@@ -12,7 +11,7 @@ const {
     mockGetOracleAssessmentDataApi,
     mockFormatOracleWellArchitectedData,
     mockUpdateAccountLevelAssessmentData,
-    mockGetCurrentDateTime
+    mockResetGwValuesOnRefresh
 } = vi.hoisted(() => ({
     mockDispatch: vi.fn(),
     mockGetUnregisteredOracleAssessmentData: vi.fn(),
@@ -20,7 +19,7 @@ const {
     mockGetOracleAssessmentDataApi: vi.fn(),
     mockFormatOracleWellArchitectedData: vi.fn(),
     mockUpdateAccountLevelAssessmentData: vi.fn(),
-    mockGetCurrentDateTime: vi.fn(() => '2026-07-23T12:00:00Z')
+    mockResetGwValuesOnRefresh: vi.fn()
 }));
 
 let getWellState: Record<string, unknown> = {};
@@ -52,25 +51,23 @@ vi.mock('../OracleWellArchitectedUtils', () => ({
 }));
 
 vi.mock('../../../../GetWell/GetWellUtils', () => ({
-    updateAccountLevelAssessmentData: (...args: unknown[]) => mockUpdateAccountLevelAssessmentData(...args)
-}));
-
-vi.mock('../../../../../utils/utilityFunctions', () => ({
-    getCurrentDateTime: () => mockGetCurrentDateTime()
+    updateAccountLevelAssessmentData: (...args: unknown[]) => mockUpdateAccountLevelAssessmentData(...args),
+    resetGwValuesOnRefresh: (...args: unknown[]) => mockResetGwValuesOnRefresh(...args)
 }));
 
 vi.mock('../../../../../store/workloadFactory/getWellOptimizeSlice', () => ({
     setCardData: vi.fn((payload: unknown) => ({ type: 'setCardData', payload })),
     setDriftAssessmentData: vi.fn((payload: unknown) => ({ type: 'setDriftAssessmentData', payload })),
     setGwSelectedRowFsxId: vi.fn((payload: unknown) => ({ type: 'setGwSelectedRowFsxId', payload })),
+    setGwRefreshTimestamp: vi.fn((payload: unknown) => ({ type: 'setGwRefreshTimestamp', payload })),
+    setGwTimestamp: vi.fn((payload: unknown) => ({ type: 'setGwTimestamp', payload })),
     setIsAssessmentAvailable: vi.fn((payload: unknown) => ({ type: 'setIsAssessmentAvailable', payload })),
     setLandingFromInnerPage: vi.fn((payload: unknown) => ({ type: 'setLandingFromInnerPage', payload })),
     setOptimizePageLoading: vi.fn((payload: unknown) => ({ type: 'setOptimizePageLoading', payload }))
 }));
 
 vi.mock('../../../../../store/workloadFactory/oracleSlice', () => ({
-    setRefreshOracleWellArchitect: vi.fn((payload: unknown) => ({ type: 'setRefreshOracleWellArchitect', payload })),
-    setOracleRefreshTimes: vi.fn((payload: unknown) => ({ type: 'setOracleRefreshTimes', payload }))
+    setRefreshOracleWellArchitect: vi.fn((payload: unknown) => ({ type: 'setRefreshOracleWellArchitect', payload }))
 }));
 
 const OracleApiHarness = () => {
@@ -172,20 +169,38 @@ describe('OracleWellArchitectApi page-load routing', () => {
         expect(mockGetOfflineOracleAssessmentData).not.toHaveBeenCalled();
     });
 
-    it('skips page-load fetch when well-architected status tab was already visited', async () => {
-        getWellState = { ...baseGetWellState, isUnregistered: true };
+    it('refetches unregistered assessment when instance changes even if tab was visited', async () => {
+        getWellState = {
+            ...baseGetWellState,
+            isUnregistered: true,
+            selectedResourceId: 'i-other',
+            selectedDatabaseInstance: 'OTHER'
+        };
         oracleSliceState = {
             ...baseOracleSliceState,
-            visitedTabs: { [WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]: true }
+            visitedTabs: { 'Well-architected status': true }
         };
 
         await act(async () => {
             render(<OracleApiHarness />);
         });
 
-        expect(mockGetUnregisteredOracleAssessmentData).not.toHaveBeenCalled();
-        expect(mockGetOfflineOracleAssessmentData).not.toHaveBeenCalled();
-        expect(mockGetOracleAssessmentDataApi).not.toHaveBeenCalled();
+        expect(mockResetGwValuesOnRefresh).toHaveBeenCalledWith(mockDispatch);
+        expect(mockGetUnregisteredOracleAssessmentData).toHaveBeenCalled();
+    });
+
+    it('clears assessment timestamps when unregistered offline-assessment GET fails', async () => {
+        getWellState = { ...baseGetWellState, isUnregistered: true };
+        mockGetUnregisteredOracleAssessmentData.mockResolvedValue({ error: { message: 'WAD assessment not found' } });
+
+        await act(async () => {
+            render(<OracleApiHarness />);
+        });
+
+        expect(mockDispatch).toHaveBeenCalledWith({ type: 'setIsAssessmentAvailable', payload: false });
+        expect(mockDispatch).toHaveBeenCalledWith({ type: 'setGwRefreshTimestamp', payload: '' });
+        expect(mockDispatch).toHaveBeenCalledWith({ type: 'setGwTimestamp', payload: '0' });
+        expect(mockFormatOracleWellArchitectedData).not.toHaveBeenCalled();
     });
 
     it('calls unregistered GET on Oracle refresh when refreshWellArchitect is true', async () => {

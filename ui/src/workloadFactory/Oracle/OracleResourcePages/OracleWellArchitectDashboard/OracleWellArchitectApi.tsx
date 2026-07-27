@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux';
 import { useEffect } from 'react';
-import { DBType, WELL_ARCHITECTED_TABS } from '../../../../utils/consts';
+import { DBType } from '../../../../utils/consts';
 import { useAppSelector } from '../../../../store/storeHooks';
 import {
     useGetOracleAssessmentDataMutation,
@@ -12,13 +12,14 @@ import {
     setCardData,
     setDriftAssessmentData,
     setGwSelectedRowFsxId,
+    setGwRefreshTimestamp,
+    setGwTimestamp,
     setIsAssessmentAvailable,
     setLandingFromInnerPage,
     setOptimizePageLoading
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
-import { setRefreshOracleWellArchitect, setOracleRefreshTimes } from '../../../../store/workloadFactory/oracleSlice';
-import { getCurrentDateTime } from '../../../../utils/utilityFunctions';
-import { updateAccountLevelAssessmentData } from '../../../GetWell/GetWellUtils';
+import { setRefreshOracleWellArchitect } from '../../../../store/workloadFactory/oracleSlice';
+import { updateAccountLevelAssessmentData, resetGwValuesOnRefresh } from '../../../GetWell/GetWellUtils';
 
 const useOracleWellArchitectApi = () => {
     const dispatch = useDispatch();
@@ -36,11 +37,16 @@ const useOracleWellArchitectApi = () => {
         isUnregistered
     } = useAppSelector(state => state.getWellOptimize);
 
-    const { visitedTabs, refreshWellArchitect } = useAppSelector(state => state.oracleSlice);
+    const { refreshWellArchitect } = useAppSelector(state => state.oracleSlice);
 
     const [getOracleAssessmentDataApi] = useGetOracleAssessmentDataMutation();
     const [getOfflineOracleAssessmentData] = useLazyGetOfflineOracleAssessmentDataQuery();
     const [getUnregisteredOracleAssessmentData] = useLazyGetUnregisteredOracleAssessmentQuery();
+
+    const clearAssessmentTimestamps = () => {
+        dispatch(setGwRefreshTimestamp(''));
+        dispatch(setGwTimestamp('0'));
+    };
 
     /**
      * Call the offline assessment API for WAD instances
@@ -81,10 +87,12 @@ const useOracleWellArchitectApi = () => {
             } else {
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(false));
+                clearAssessmentTimestamps();
             }
         } catch (error) {
             dispatch(setOptimizePageLoading(false));
             dispatch(setIsAssessmentAvailable(false));
+            clearAssessmentTimestamps();
         }
     };
 
@@ -123,10 +131,12 @@ const useOracleWellArchitectApi = () => {
             } else {
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(false));
+                clearAssessmentTimestamps();
             }
         } catch (error) {
             dispatch(setOptimizePageLoading(false));
             dispatch(setIsAssessmentAvailable(false));
+            clearAssessmentTimestamps();
         }
     };
 
@@ -169,10 +179,12 @@ const useOracleWellArchitectApi = () => {
             } else {
                 dispatch(setOptimizePageLoading(false));
                 dispatch(setIsAssessmentAvailable(false));
+                clearAssessmentTimestamps();
             }
         } catch (error) {
             dispatch(setOptimizePageLoading(false));
             dispatch(setIsAssessmentAvailable(false));
+            clearAssessmentTimestamps();
         }
     };
 
@@ -180,7 +192,7 @@ const useOracleWellArchitectApi = () => {
      * Trigger WAD (offline) assessment action
      */
     const viewWadResourceAction = () => {
-        dispatch(setDriftAssessmentData({}));
+        resetGwValuesOnRefresh(dispatch);
         dispatch(setOptimizePageLoading(true));
         runOfflineAssessmentApi();
     };
@@ -189,7 +201,7 @@ const useOracleWellArchitectApi = () => {
      * Trigger unregistered assessment action
      */
     const viewUnregisteredResourceAction = () => {
-        dispatch(setDriftAssessmentData({}));
+        resetGwValuesOnRefresh(dispatch);
         dispatch(setOptimizePageLoading(true));
         runUnregisteredAssessmentApi();
     };
@@ -198,15 +210,14 @@ const useOracleWellArchitectApi = () => {
      * Trigger regular assessment action
      */
     const viewResourceAction = () => {
-        dispatch(setDriftAssessmentData({}));
+        resetGwValuesOnRefresh(dispatch);
         dispatch(setOptimizePageLoading(true));
         runAssessmentDetailsApi();
     };
 
     useEffect(() => {
-        // On page load, call the appropriate API based on isWad or isUnregistered
-        if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
-            dispatch(setOracleRefreshTimes({ optimizeRefreshTime: getCurrentDateTime() }));
+        // On page load or instance change, call the appropriate API based on isWad or isUnregistered
+        if (!landingFromInnerPage) {
             if (isUnregistered) {
                 viewUnregisteredResourceAction(); // Unregistered: Call offline assessment with ec2InstanceId
             } else if (isWad) {
@@ -218,7 +229,7 @@ const useOracleWellArchitectApi = () => {
             dispatch(setLandingFromInnerPage(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isWad, isUnregistered]);
+    }, [isWad, isUnregistered, getWellResourceId, getWellSelectedDatabaseInstance]);
 
     useEffect(() => {
         // Handle Oracle-specific refresh

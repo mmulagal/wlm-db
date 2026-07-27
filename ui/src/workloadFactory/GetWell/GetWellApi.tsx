@@ -8,7 +8,9 @@ import {
     setGwRefreshPage,
     setIsAssessmentAvailable,
     setLandingFromInnerPage,
-    setGwSelectedRowFsxId
+    setGwSelectedRowFsxId,
+    setGwRefreshTimestamp,
+    setGwTimestamp
 } from '../../store/workloadFactory/getWellOptimizeSlice';
 import {
     useGetMssqlAssessmentDataMutation,
@@ -16,7 +18,7 @@ import {
     useLazyGetUnregisteredMssqlAssessmentQuery
 } from '../../utils/apiService';
 import { formatGetWellDataFlat, resetGwValuesOnRefresh, updateAccountLevelAssessmentData } from './GetWellUtils';
-import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../utils/consts';
+import { WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
     const dispatch = useDispatch();
@@ -31,17 +33,21 @@ const GetWellApi = () => {
         selectedDatabaseInstance,
         gwRefreshPage,
         selectedGwInstanceCredId,
-        selectedGwInstanceRegionId,
-        visitedTabs
+        selectedGwInstanceRegionId
     } = useAppSelector(state => state.getWellOptimize);
 
     const [assessmentDetailsApi] = useGetMssqlAssessmentDataMutation();
     const [getOfflineMssqlAssessmentData] = useLazyGetOfflineMssqlAssessmentDataQuery();
     const [getUnregisteredMssqlAssessmentData] = useLazyGetUnregisteredMssqlAssessmentQuery();
 
+    const clearAssessmentTimestamps = () => {
+        dispatch(setGwRefreshTimestamp(''));
+        dispatch(setGwTimestamp('0'));
+    };
+
     useEffect(() => {
-        // On page load, call the appropriate API based on isWad or isUnregistered
-        if (!landingFromInnerPage && !visitedTabs[WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS]) {
+        // On page load or instance change, call the appropriate API based on isWad or isUnregistered
+        if (!landingFromInnerPage) {
             if (isUnregistered) {
                 viewUnregisteredOptimizeAction(false); // Unregistered: Call offline assessment with ec2InstanceId
             } else if (isWad) {
@@ -53,7 +59,7 @@ const GetWellApi = () => {
             dispatch(setLandingFromInnerPage(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isWad, isUnregistered]);
+    }, [isWad, isUnregistered, selectedResourceId, selectedDatabaseInstance]);
 
     /**
      * Call the offline assessment API for WAD instances
@@ -84,10 +90,12 @@ const GetWellApi = () => {
                 dispatch(setIsAssessmentAvailable(true));
             } else {
                 dispatch(setIsAssessmentAvailable(false));
+                clearAssessmentTimestamps();
                 dispatch(setOptimizePageLoading(false));
             }
         } catch (error) {
             dispatch(setIsAssessmentAvailable(false));
+            clearAssessmentTimestamps();
             dispatch(setOptimizePageLoading(false));
         }
     };
@@ -122,10 +130,12 @@ const GetWellApi = () => {
                 dispatch(setIsAssessmentAvailable(true));
             } else {
                 dispatch(setIsAssessmentAvailable(false));
+                clearAssessmentTimestamps();
                 dispatch(setOptimizePageLoading(false));
             }
         } catch (error) {
             dispatch(setIsAssessmentAvailable(false));
+            clearAssessmentTimestamps();
             dispatch(setOptimizePageLoading(false));
         }
     };
@@ -157,10 +167,12 @@ const GetWellApi = () => {
                 dispatch(setIsAssessmentAvailable(true));
             } else {
                 dispatch(setIsAssessmentAvailable(false));
+                clearAssessmentTimestamps();
                 dispatch(setOptimizePageLoading(false));
             }
         } catch (error) {
             dispatch(setIsAssessmentAvailable(false));
+            clearAssessmentTimestamps();
             dispatch(setOptimizePageLoading(false));
         }
     };

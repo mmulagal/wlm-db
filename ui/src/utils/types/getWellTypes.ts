@@ -1,3 +1,5 @@
+import type { HostManageReadiness } from './inventoryV2Types';
+
 export interface InnerPageDetailsInterface {
     fsxId: string;
     ec2InstanceId: string;
@@ -318,4 +320,5 @@ export interface GetWellSliceInterface {
     isWad?: boolean; // Flag to indicate if the instance is from WAD (offline assessment)
     isUnregistered?: boolean; // Flag to indicate on-demand assessment for unregistered instances
     instanceStatus?: string;
+    hostManageReadiness?: HostManageReadiness;
 }

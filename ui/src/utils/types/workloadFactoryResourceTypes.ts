@@ -51,7 +51,6 @@ export interface WorkloadFactoryResourceEntities {
     selectedResourceRegionId: any;
     selectedHostname: string;
     isResourceRefresh: boolean;
-    fsxAdminPasswords: any;
     sqlServerPasswords: any;
     selectedAuthenticationType: string;
 }

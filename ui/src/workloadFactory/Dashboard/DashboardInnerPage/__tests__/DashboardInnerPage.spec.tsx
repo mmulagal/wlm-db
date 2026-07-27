@@ -186,23 +186,29 @@ vi.mock('../DashboardInnerPageHelper', () => ({
     getAssessmentStatusConsistency: vi.fn(() => false)
 }));
 
+const optimizeMutation = () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))];
+
 vi.mock('../../../../utils/apiService', () => ({
     useLazyGetSubTaskListQuery: () => [vi.fn()],
-    useOptimizeComputeConfigMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))],
-    useOptimizeStorageConfigMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))],
-    useOptimizeStorageSizingMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))],
-    useOptimizeStorageTierMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))],
-    useOptimizeStorageSizingForBulkMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))],
-    useOptimizeStorageTierForBulkMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))],
-    useOptimizeComputeConfigForBulkMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))],
-    useOptimizeMTUConfigForBulkMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))],
-    useOptimizeMaxdopConfigForBulkMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))],
-    useOptimizeResiliencyMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))],
-    useOptimizeAwsBackupMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))],
+    useOptimizeComputeConfigMutation: optimizeMutation,
+    useOptimizeStorageConfigMutation: optimizeMutation,
+    useOptimizeStorageSizingMutation: optimizeMutation,
+    useOptimizeStorageTierMutation: optimizeMutation,
+    useOptimizeStorageSizingForBulkMutation: optimizeMutation,
+    useOptimizeStorageTierForBulkMutation: optimizeMutation,
+    useOptimizeComputeConfigForBulkMutation: optimizeMutation,
+    useOptimizeMTUConfigForBulkMutation: optimizeMutation,
+    useOptimizeMaxdopConfigForBulkMutation: optimizeMutation,
+    useOptimizeResiliencyMutation: optimizeMutation,
+    useOptimizeAwsBackupMutation: optimizeMutation,
     useDismissMssqlAssessmentMutation: () => [vi.fn(() => Promise.resolve({ data: {} }))],
     useDismissOracleAssessmentMutation: () => [vi.fn(() => Promise.resolve({ data: {} }))],
-    useOptimizeOracleStorageLayoutAsmMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))],
-    useOptimizeOracleOperatingSystemMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))]
+    useOptimizeOracleStorageConfigMutation: optimizeMutation,
+    useOptimizeOracleStorageLayoutAsmMutation: optimizeMutation,
+    useOptimizeOracleOperatingSystemMutation: optimizeMutation,
+    useOptimizeOperatingSystemForBulkMutation: optimizeMutation,
+    useOptimizeCloneCleanupMutation: optimizeMutation,
+    useOptimizeHAMssqlMutation: optimizeMutation
 }));
 
 const mockIsLayoutConfig = vi.fn(() => false);

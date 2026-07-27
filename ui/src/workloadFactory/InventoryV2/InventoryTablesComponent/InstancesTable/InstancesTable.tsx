@@ -28,7 +28,9 @@ import {
     uniqueHostRow,
     updateInstanceStatus,
     hasFullPermission,
-    isUnregisteredInventoryRow
+    isUnregisteredInventoryRow,
+    getFsxLinkRequiredMessageKey,
+    getRegistrationRequiresFullPermissionMessageKey
 } from '../../InventoryUtilsV2';
 import { isSmbProtocol } from '../../../../utils/utilityFunctions';
 import {
@@ -759,9 +761,9 @@ const InstancesTable = () => {
 
                     let tooltipMsg = disableMsg || '';
                     if (lacksPermission) {
-                        tooltipMsg = t('databases.inventory.registration-requires-full-permission');
+                        tooltipMsg = t(getRegistrationRequiresFullPermissionMessageKey(selectedHostType));
                     } else if (fsxLinkMissing) {
-                        tooltipMsg = t('databases.register-flow.fsx-link-required-message');
+                        tooltipMsg = t(getFsxLinkRequiredMessageKey(selectedHostType));
                     }
 
                     menu.push({

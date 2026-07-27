@@ -85,7 +85,9 @@ vi.mock('../../InventoryV2/InventoryUtilsV2', () => ({
     renderAllocatedCapacity: vi.fn(() => <span>capacity</span>),
     renderCellData: vi.fn((_cellData: any, _rowData: any) => <span>cell</span>),
     renderUnmanagedAZ: vi.fn(() => <span>az</span>),
-    uniqueHostRow: vi.fn((id: string, credId: string, regionId: string) => `${id}_${credId}_${regionId}`)
+    uniqueHostRow: vi.fn((id: string, credId: string, regionId: string) => `${id}_${credId}_${regionId}`),
+    hasFullPermission: (hostManageReadiness?: { extensiveRunPermission?: boolean }) =>
+        hostManageReadiness?.extensiveRunPermission === true
 }));
 
 vi.mock('../../../utils/utilityFunctions', () => ({

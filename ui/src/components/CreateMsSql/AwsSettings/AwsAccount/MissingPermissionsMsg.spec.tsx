@@ -30,6 +30,7 @@ vi.mock('./MissingPermissionTable/MissingPermissionTable', () => ({
 const makeStore = (overrides: any = {}) =>
     configureStore({
         reducer: {
+            auth: () => ({ isGovAccount: false, ...overrides.auth }),
             mssql: () => ({
                 getPolicies: {
                     policiesList: overrides.policiesList ?? { packages: [] }

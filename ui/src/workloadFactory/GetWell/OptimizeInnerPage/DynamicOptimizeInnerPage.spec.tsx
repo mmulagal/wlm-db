@@ -28,7 +28,12 @@ vi.mock('../../../store/workloadFactory/getWellOptimizeSlice', () => ({
 }));
 
 // ─── Registry ─────────────────────────────────────────────────────────────────
-const { mockGetColumnConfig, mockIsViewOnlyConfig, mockGetOptimizeApiConfig, mockGetConfigEntry } = vi.hoisted(() => ({
+const {
+    mockGetColumnConfig,
+    mockIsViewOnlyConfig,
+    mockGetOptimizeApiConfig,
+    mockGetConfigEntry
+} = vi.hoisted(() => ({
     mockGetColumnConfig: vi.fn(),
     mockIsViewOnlyConfig: vi.fn(() => false),
     mockGetOptimizeApiConfig: vi.fn(() => null),

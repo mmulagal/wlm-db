@@ -1,18 +1,65 @@
 import { describe, it, expect } from 'vitest';
-import { INVENTORY_STATUS, ACTION_CTA } from '../../../../utils/consts';
-import { canTriggerUnregisteredAssessment } from '../../InventoryUtilsV2';
+import { INVENTORY_STATUS, ACTION_CTA, DETECT_HOST_VAR } from '../../../../utils/consts';
+import { getCanViewAndFix, getViewAndFixDisableMsg } from './InstanceTableHelper';
 
-const getCanViewAndFix = (rowData: any) => {
-    const isRegisteredOrManaged = rowData?.statusColText === INVENTORY_STATUS.MANAGED || rowData?.resourceId;
-    const hasUnregisteredPermissions = canTriggerUnregisteredAssessment(rowData?.hostManageReadiness);
-    return !!(rowData?.isWad || rowData?.isUnregistered || isRegisteredOrManaged || hasUnregisteredPermissions);
-};
+const t = (key: string) => key;
 
 /**
  * Tests for View and Fix button enable/disable logic
  * in MssqlInstanceColumnList.tsx and OracleDatabaseColumnsList.tsx
  */
 describe('View and Fix Button Logic', () => {
+    describe('getViewAndFixDisableMsg', () => {
+        it('disables with detectOption message when storage could not be identified', () => {
+            const rowData = {
+                detectOption: DETECT_HOST_VAR.DISABLE,
+                detectOptionDisableMsg: 'Storage could not be identified',
+                hostManageReadiness: { extensiveRunPermission: true, canReadAWSSSMDocuments: true }
+            };
+
+            expect(getViewAndFixDisableMsg(rowData, getCanViewAndFix(rowData), t)).toBe(
+                'Storage could not be identified'
+            );
+        });
+
+        it('prefers detectOption message over register-instance tooltip', () => {
+            const rowData = {
+                detectOption: DETECT_HOST_VAR.DISABLE,
+                detectOptionDisableMsg: 'Storage could not be identified'
+            };
+
+            expect(getViewAndFixDisableMsg(rowData, false, t)).toBe('Storage could not be identified');
+        });
+
+        it('disables with fsx link message for unregistered rows when fsxLinkExists is false', () => {
+            const rowData = {
+                statusColText: INVENTORY_STATUS.UNMANAGED,
+                hostManageReadiness: {
+                    fsxLinkExists: false,
+                    extensiveRunPermission: true,
+                    canReadAWSSSMDocuments: true
+                }
+            };
+
+            expect(getCanViewAndFix(rowData)).toBe(false);
+            expect(getViewAndFixDisableMsg(rowData, false, t)).toBe(
+                'databases.register-flow.fsx-link-required-view-and-fix'
+            );
+        });
+
+        it('allows unregistered rows with permissions when fsxLinkExists is true', () => {
+            const rowData = {
+                statusColText: INVENTORY_STATUS.UNMANAGED,
+                hostManageReadiness: {
+                    fsxLinkExists: true,
+                    extensiveRunPermission: true
+                }
+            };
+
+            expect(getCanViewAndFix(rowData)).toBe(true);
+        });
+    });
+
     describe('canViewAndFix determination', () => {
         it('enables for WAD instances', () => {
             const rowData = { isWad: true };

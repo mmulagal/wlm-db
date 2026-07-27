@@ -58,7 +58,8 @@ const initialState: GetWellSliceInterface = {
     configEngineType: DBType.MSSQL,
     isWad: false,
     isUnregistered: false,
-    instanceStatus: ''
+    instanceStatus: '',
+    hostManageReadiness: undefined
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -165,6 +166,9 @@ const getWellOptimizeSlice = createSlice({
             state.recommendedInstanceInBulk = {};
             state.selectedGwInstanceCredId = '';
             state.selectedGwInstanceRegionId = '';
+            state.gwRefreshTimestamp = '';
+            state.gwTimestamp = '0';
+            state.hostManageReadiness = undefined;
         },
         setOptimizingData: (state, action: PayloadAction<any>) => {
             state.optimizingData = action.payload;
@@ -217,6 +221,7 @@ const getWellOptimizeSlice = createSlice({
             state.isWad = action.payload.isWad || false;
             state.isUnregistered = action.payload.isUnregistered || false;
             state.instanceStatus = action.payload.instanceStatus || '';
+            state.hostManageReadiness = action.payload.hostManageReadiness;
         },
         setLandingFromInnerPage: (state, action: PayloadAction<any>) => {
             state.landingFromInnerPage = action.payload;

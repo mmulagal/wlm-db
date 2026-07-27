@@ -1,6 +1,7 @@
 import { useDispatch } from 'react-redux';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ButtonWithDropdown, Popover, useDialog } from '@netapp/design-system';
 import styles from './WellArchitectDashboard.module.scss';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
@@ -10,7 +11,6 @@ import {
     AUTHENTICATION_TYPE,
     DETECT_HOST_VAR,
     FROM_DIALOG,
-    RESET_PASSWORD_TYPE,
     SQL_DEPLOYMENT_MODE,
     WELL_ARCHITECTED_TABS
 } from '../../../utils/consts';
@@ -44,7 +44,7 @@ import {
 import { instanceBreadCrumbSelectedFrom, resetGwValuesOnRefresh, selectHeaderTabFromBreadCrumb } from '../GetWellUtils';
 import DialogComponent from '../../../common/Dialog/DialogComponent';
 import { GENERAL } from '../../../utils/appConstants';
-import { FSXPasswordContent, SQLServerPasswordContent } from './FSXPasswordContent/FSXPasswordContent';
+import { SQLServerPasswordContent } from './ServerPasswordContent/ServerPasswordContent';
 import SandboxInstanceTable from './ResourceMSSQLOverview/SandboxInstanceTable/SandboxInstanceTable';
 import {
     setAggregatedSandboxInstanceList,
@@ -58,6 +58,7 @@ import ErrorInvestigationTab from './ErrorInvestigation/ErrorInvestigationTab';
 
 const WellArchitectDashboard = () => {
     const dispatch = useDispatch();
+    const { t } = useTranslation();
     const { breadCrumbSelectedFrom } = useAppSelector(state => state.inventoryV2);
     const { setDialog, closeDialog } = useDialog();
     const {
@@ -67,7 +68,8 @@ const WellArchitectDashboard = () => {
         visitedTabs,
         gwRefreshTimestamp,
         innerPageDetails,
-        isWad
+        isWad,
+        isAssessmentAvailable
     } = useAppSelector(state => state.getWellOptimize);
 
     const { refreshTime } = useAppSelector(state => state.headers);
@@ -83,7 +85,7 @@ const WellArchitectDashboard = () => {
         selectedResourceCredId,
         selectedResourceRegionId,
         resourceDetails,
-        instanceDetailsData: { databaseInstanceName, fsxId, ec2InstanceId }
+        instanceDetailsData: { ec2InstanceId }
     } = useAppSelector(state => state.workloadFactoryResource);
 
     // Reset visited tabs when leaving the dashboard
@@ -145,27 +147,10 @@ const WellArchitectDashboard = () => {
         return refreshSandboxInstanceTime;
     };
 
-    const createPayload = () => {
-        const state = store.getState();
-        const { isGovAccount } = state.auth;
-        const { fsxAdminPasswords, credentialUpdateSsmArn } = state.workloadFactoryResource;
-        const { password } = fsxAdminPasswords;
-
-        const credential = isGovAccount
-            ? {
-                  resourceId: fsxId || resourceDetails?.topology?.fileSystemId || innerPageDetails?.fsxId,
-                  resourceType: DETECT_HOST_VAR.FSX,
-                  ssmParameterArn: credentialUpdateSsmArn
-              }
-            : {
-                  resourceId: fsxId || resourceDetails?.topology?.fileSystemId || innerPageDetails?.fsxId,
-                  resourceType: DETECT_HOST_VAR.FSX,
-                  username: 'fsxadmin',
-                  password
-              };
-
-        return { credentials: [credential] };
-    };
+    const refreshTimeOnIcon = setRefreshTimeOnIcon();
+    const showLastUpdatePopover =
+        selectedWellArchitectTab !== WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS ||
+        (isAssessmentAvailable && !!refreshTimeOnIcon && refreshTimeOnIcon !== '0');
 
     const createSqlPayload = () => {
         const state = store.getState();
@@ -200,14 +185,12 @@ const WellArchitectDashboard = () => {
         dispatch(resetAllPasswords());
     };
 
-    const handleFSXAdminApply = async (value: string) => {
+    const handleSqlServerPasswordApply = async () => {
         dispatch(setPasswordResetLoading(true));
         try {
-            const credList = value === RESET_PASSWORD_TYPE.FSXADMIN ? createPayload() : createSqlPayload();
+            const credList = createSqlPayload();
 
             const getClusterNodesIpAddress = async (): Promise<string[] | undefined> => {
-                if (value === RESET_PASSWORD_TYPE.FSXADMIN) return;
-
                 const state = store.getState();
                 const { inventoryTableData } = state.inventoryV2;
                 const { selectedResourceId, selectedGwInstanceCredId, selectedGwInstanceRegionId } =
@@ -279,9 +262,7 @@ const WellArchitectDashboard = () => {
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.SUCCESS,
-                            message: `${
-                                value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
-                            } password updated successfully`
+                            message: t('databases.update-credentials.sql-server-password-updated-success')
                         })
                     );
                 } else {
@@ -291,9 +272,7 @@ const WellArchitectDashboard = () => {
                             message:
                                 result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError ||
                                 result?.data?.items?.[0]?.registerDetails?.[0]?.databaseServerError ||
-                                `Failed to update ${
-                                    value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
-                                } password. `
+                                t('databases.update-credentials.sql-server-password-update-failed')
                         })
                     );
                 }
@@ -304,9 +283,7 @@ const WellArchitectDashboard = () => {
                         message:
                             // @ts-ignore
                             result?.error?.data?.message ||
-                            `Failed to update ${
-                                value === RESET_PASSWORD_TYPE.FSXADMIN ? 'fsxadmin' : 'Microsoft SQL Server'
-                            } password. `
+                            t('databases.update-credentials.sql-server-password-update-failed')
                     })
                 );
             }
@@ -314,7 +291,7 @@ const WellArchitectDashboard = () => {
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.ERROR,
-                    message: error || 'Failed to update fsxadmin password. '
+                    message: error || t('databases.update-credentials.sql-server-password-update-failed')
                 })
             );
         } finally {
@@ -324,34 +301,19 @@ const WellArchitectDashboard = () => {
         }
     };
 
-    const handleFsxPassword = (type: string) => {
+    const handleSqlServerPassword = () => {
         setDialog(
             <DialogComponent
-                header={
-                    type === RESET_PASSWORD_TYPE.FSXADMIN
-                        ? GENERAL.UPDATE_FSX_ADMIN_PASSWORD
-                        : GENERAL.UPDATE_SQL_SERVER_PASSWORD
-                }
-                content={
-                    type === RESET_PASSWORD_TYPE.FSXADMIN ? (
-                        <FSXPasswordContent
-                            type={RESET_PASSWORD_TYPE.FSXADMIN}
-                            engine={RESET_PASSWORD_TYPE.SQLSERVER}
-                        />
-                    ) : (
-                        <SQLServerPasswordContent />
-                    )
-                }
+                header={GENERAL.UPDATE_SQL_SERVER_PASSWORD}
+                content={<SQLServerPasswordContent />}
                 primaryButton={GENERAL.UPDATE}
                 secondaryButton={GENERAL.CANCEL}
-                callback={() => {
-                    handleFSXAdminApply(type);
-                }}
+                callback={handleSqlServerPasswordApply}
                 closeCallback={() => {
                     resetPasswords();
                     closeDialog();
                 }}
-                dialogFrom={type === RESET_PASSWORD_TYPE.FSXADMIN ? FROM_DIALOG.FSXADMIN : FROM_DIALOG.SQLSERVER}
+                dialogFrom={FROM_DIALOG.SQLSERVER}
             />
         );
     };
@@ -375,16 +337,23 @@ const WellArchitectDashboard = () => {
                 />
 
                 <div className={styles.rightSection}>
-                    <Popover
-                        popoverClass={styles['copy-popover']}
-                        children={`Last update: ${setRefreshTimeOnIcon()}`}
-                        trigger="hover"
-                        container={
-                            <div className={styles.refreshIcon} onClick={handleRefresh}>
-                                <RefreshIcon />
-                            </div>
-                        }
-                    />
+                    {showLastUpdatePopover && (
+                        <Popover
+                            popoverClass={styles['copy-popover']}
+                            children={`Last update: ${refreshTimeOnIcon}`}
+                            trigger="hover"
+                            container={
+                                <div className={styles.refreshIcon} onClick={handleRefresh}>
+                                    <RefreshIcon />
+                                </div>
+                            }
+                        />
+                    )}
+                    {!showLastUpdatePopover && (
+                        <div className={styles.refreshIcon} onClick={handleRefresh}>
+                            <RefreshIcon />
+                        </div>
+                    )}
 
                     {selectedWellArchitectTab !== WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && !isWad && (
                         <div className={styles.buttonContainer}>
@@ -395,18 +364,7 @@ const WellArchitectDashboard = () => {
                                     {
                                         id: 'resetSQLServerPassword',
                                         children: GENERAL.UPDATE_SQL_SERVER_PASSWORD,
-
-                                        onClick: () => {
-                                            handleFsxPassword(RESET_PASSWORD_TYPE.SQLSERVER);
-                                        }
-                                    },
-                                    {
-                                        id: 'resetFSxAdminPassword',
-                                        children: GENERAL.UPDATE_FSX_ADMIN_PASSWORD,
-
-                                        onClick: () => {
-                                            handleFsxPassword(RESET_PASSWORD_TYPE.FSXADMIN);
-                                        }
+                                        onClick: handleSqlServerPassword
                                     }
                                 ]}
                             >

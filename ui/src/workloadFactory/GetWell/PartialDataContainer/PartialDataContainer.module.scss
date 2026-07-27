@@ -12,6 +12,39 @@
 
     .firstSegment {
         display: flex;
+        align-items: center;
         gap: 16px;
+    }
+
+    &.missingLink {
+        height: auto;
+
+        .topSection {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .closeButton {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            border: none;
+            background: none;
+            padding: 0;
+        }
+
+        .body {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .externalLinkButton {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
     }
 }

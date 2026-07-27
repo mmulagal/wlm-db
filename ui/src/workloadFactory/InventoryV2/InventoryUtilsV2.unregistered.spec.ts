@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { canTriggerUnregisteredAssessment, isUnregisteredInventoryRow } from './InventoryUtilsV2';
+import {
+    canTriggerUnregisteredAssessment,
+    isUnregisteredInventoryRow,
+    hasPartialRunPermission
+} from './InventoryUtilsV2';
 import { INVENTORY_STATUS } from '../../utils/consts';
 
 describe('canTriggerUnregisteredAssessment', () => {
@@ -24,6 +28,35 @@ describe('canTriggerUnregisteredAssessment', () => {
     it('returns false when neither permission is granted', () => {
         expect(
             canTriggerUnregisteredAssessment({
+                extensiveRunPermission: false,
+                canReadAWSSSMDocuments: false
+            })
+        ).toBe(false);
+    });
+});
+
+describe('hasPartialRunPermission', () => {
+    it('returns true when canReadAWSSSMDocuments is true and extensiveRunPermission is false', () => {
+        expect(
+            hasPartialRunPermission({
+                extensiveRunPermission: false,
+                canReadAWSSSMDocuments: true
+            })
+        ).toBe(true);
+    });
+
+    it('returns false when extensiveRunPermission is true', () => {
+        expect(
+            hasPartialRunPermission({
+                extensiveRunPermission: true,
+                canReadAWSSSMDocuments: true
+            })
+        ).toBe(false);
+    });
+
+    it('returns false when canReadAWSSSMDocuments is false', () => {
+        expect(
+            hasPartialRunPermission({
                 extensiveRunPermission: false,
                 canReadAWSSSMDocuments: false
             })

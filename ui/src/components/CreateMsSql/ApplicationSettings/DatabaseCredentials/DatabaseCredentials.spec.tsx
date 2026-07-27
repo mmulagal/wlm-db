@@ -60,6 +60,7 @@ vi.mock('../../../../store/chatbot/chatbotSlice', () => ({
 const makeStore = (overrides: any = {}) =>
     configureStore({
         reducer: {
+            auth: () => ({ isGovAccount: false, ...overrides.auth }),
             mssqlForm: () => ({
                 dbCredentials: { name: 'Admin', password: '' },
                 activeDirectory: { useManagedServiceAccount: false },

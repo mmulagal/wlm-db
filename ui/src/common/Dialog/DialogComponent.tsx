@@ -78,18 +78,14 @@ const DialogComponent = ({
     } = useAppSelector(state => state.agenticAI);
 
     // Memoize the password object to prevent unnecessary re-renders
-    const fsxAdminPasswords = useAppSelector(state => state.workloadFactoryResource.fsxAdminPasswords);
     const sqlServerPasswords = useAppSelector(state => state.workloadFactoryResource.sqlServerPasswords);
 
     const { password, confirmPassword } = useMemo(() => {
-        if (dialogFrom === FROM_DIALOG.FSXADMIN) {
-            return fsxAdminPasswords;
-        }
         if (dialogFrom === FROM_DIALOG.SQLSERVER) {
             return sqlServerPasswords;
         }
         return { password: '', confirmPassword: '' };
-    }, [dialogFrom, fsxAdminPasswords, sqlServerPasswords]);
+    }, [dialogFrom, sqlServerPasswords]);
 
     const { sqlServerUserName, credentialUpdateSsmArn } = useAppSelector(state => state.workloadFactoryResource);
     const { passwordResetLoading } = useAppSelector(state => state.workloadFactoryResource);
@@ -146,7 +142,6 @@ const DialogComponent = ({
         (dialogFrom === FROM_DIALOG.MANAGE_WIZARD && detectReplicaHostLoading) ||
         (dialogFrom === FROM_DIALOG.LOAD_CONFIG && isLoadConfig) ||
         ((dialogFrom === FROM_DIALOG.SAVE_CONFIG || dialogFrom === FROM_DIALOG.HEADER_CROSS) && isSaveConfigLoading) ||
-        (dialogFrom === FROM_DIALOG.FSXADMIN && passwordResetLoading) ||
         (dialogFrom === FROM_DIALOG.SQLSERVER && passwordResetLoading) ||
         (dialogFrom === FROM_DIALOG.EXPLORE_SAVINGS && actionsDisabled) ||
         (dialogFrom === FROM_DIALOG.WINDOWS_AUTH && authVerification) ||
@@ -164,7 +159,6 @@ const DialogComponent = ({
             dialogFrom !== FROM_DIALOG.LOAD_CONFIG &&
             dialogFrom !== FROM_DIALOG.SAVE_CONFIG &&
             dialogFrom !== FROM_DIALOG.HEADER_CROSS &&
-            dialogFrom !== FROM_DIALOG.FSXADMIN &&
             dialogFrom !== FROM_DIALOG.SQLSERVER &&
             dialogFrom !== FROM_DIALOG.SINGLE_AGENT &&
             dialogFrom !== FROM_DIALOG.EXPLORE_SAVINGS &&
@@ -234,14 +228,6 @@ const DialogComponent = ({
                 password !== confirmPassword ||
                 isValidSqlUsername(sqlServerUserName, t)
             ) {
-                return true;
-            }
-        }
-        if (dialogFrom === FROM_DIALOG.FSXADMIN) {
-            if (isGovAccount) {
-                return !isValidSsmArn(credentialUpdateSsmArn);
-            }
-            if ((password.length === 0 && confirmPassword.length === 0) || password !== confirmPassword) {
                 return true;
             }
         }

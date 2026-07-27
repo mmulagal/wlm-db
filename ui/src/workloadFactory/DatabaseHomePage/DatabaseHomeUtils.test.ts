@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { getManagedOptimizationSummary, getAssessmentGroupedByCategory } from './DatabaseHomeUtils';
+import { buildMssqlAssessment, buildOracleAssessment } from './testHelpers/assessmentTestBuilders';
 
 vi.mock('../../store/store', () => ({
     default: {
@@ -47,42 +48,6 @@ vi.mock('../../utils/utilityFunctions', () => ({
 vi.mock('../../utils/appConstants', () => ({
     GENERAL: {}
 }));
-
-const buildMssqlAssessment = (overrides: any = {}) => ({
-    lastAssessmentTimestamp: '1730074791000',
-    deploymentType: 'Standalone',
-    dismissedConfigurations: {},
-    compute: { status: 'optimized', severity: 'warning' },
-    rssConfig: { status: 'optimized', severity: 'warning' },
-    hostOsPatch: { status: 'optimized', severity: 'critical' },
-    mtuAlignment: { status: 'optimized', severity: 'critical' },
-    license: { status: 'optimized', severity: 'warning' },
-    mssqlPatch: { status: 'optimized', severity: 'warning' },
-    maxDOP: { status: 'optimized', severity: 'warning' },
-    clone: { status: 'optimized', severity: 'warning' },
-    snapshotPolicy: { status: 'optimized', severity: 'warning' },
-    crr: { status: 'optimized', severity: 'warning' },
-    awsBackup: { status: 'optimized', severity: 'warning' },
-    storage: {
-        layout: [
-            { name: 'data-files-location', status: 'optimized', severity: 'critical' },
-            { name: 'log-files-location', status: 'optimized', severity: 'critical' },
-            { name: 'tempdb-files-location', status: 'optimized', severity: 'critical' }
-        ],
-        sizing: [
-            { name: 'headroom', status: 'optimized', severity: 'critical' },
-            { name: 'tempdb-drive-size', status: 'optimized', severity: 'critical' },
-            { name: 'log-drive-size', status: 'optimized', severity: 'critical' },
-            { name: 'performance-tier', status: 'optimized', severity: 'critical' }
-        ],
-        configuration: {
-            volumes: [{ name: 'thin-provision', status: 'optimized', severity: 'critical' }],
-            luns: [],
-            os: []
-        }
-    },
-    ...overrides
-});
 
 const wrapInHost = (assessments: any[], credentialId = 'cred-1', regionId = 'us-east-1') => [
     {
@@ -219,19 +184,13 @@ describe('getManagedOptimizationSummary (configuration-based)', () => {
                 databaseHostId: 'oracle-host-1',
                 instancesAssessment: [
                     {
-                        assessments: {
+                        assessments: buildOracleAssessment({
                             lastAssessmentTimestamp: '123',
-                            dismissedConfigurations: {},
                             hostOsPatch: { status: 'not-optimized', severity: 'warning' },
                             storage: {
-                                layout: [{ name: 'redologs-placement', status: 'optimized', severity: 'warning' }],
-                                configuration: {
-                                    volumes: [],
-                                    luns: [],
-                                    os: []
-                                }
+                                layout: [{ name: 'redologs-placement', status: 'optimized', severity: 'warning' }]
                             }
-                        }
+                        })
                     }
                 ]
             }
@@ -250,7 +209,7 @@ describe('getManagedOptimizationSummary (configuration-based)', () => {
         const standaloneResult = getManagedOptimizationSummary(wrapInHost([standalone]), []);
         const aoagResult = getManagedOptimizationSummary(wrapInHost([aoag]), []);
 
-        expect(aoagResult.totalConfigurations).toBe(standaloneResult.totalConfigurations - 1);
+        expect(aoagResult.totalConfigurations).toBe(standaloneResult.totalConfigurations);
     });
 
     it('counts Oracle oracleSecurityPatch in application category', () => {
@@ -261,13 +220,12 @@ describe('getManagedOptimizationSummary (configuration-based)', () => {
                 databaseHostId: 'oracle-host-1',
                 instancesAssessment: [
                     {
-                        assessments: {
+                        assessments: buildOracleAssessment({
                             lastAssessmentTimestamp: '123',
-                            dismissedConfigurations: {},
                             hostOsPatch: { status: 'optimized', severity: 'warning' },
                             oracleSecurityPatch: { status: 'not-optimized', severity: 'critical' },
                             storage: { layout: [], configuration: { volumes: [], luns: [], os: [] } }
-                        }
+                        })
                     }
                 ]
             }
@@ -287,9 +245,8 @@ describe('getManagedOptimizationSummary (configuration-based)', () => {
                 databaseHostId: 'oracle-host-1',
                 instancesAssessment: [
                     {
-                        assessments: {
+                        assessments: buildOracleAssessment({
                             lastAssessmentTimestamp: '123',
-                            dismissedConfigurations: {},
                             hostOsPatch: { status: 'optimized', severity: 'warning' },
                             storage: {
                                 layout: [],
@@ -299,15 +256,15 @@ describe('getManagedOptimizationSummary (configuration-based)', () => {
                                 ],
                                 configuration: { volumes: [], luns: [], os: [] }
                             }
-                        }
+                        })
                     }
                 ]
             }
         ];
         const result = getManagedOptimizationSummary([], oracleData);
 
-        expect(result.totalConfigurations).toBe(3);
-        expect(result.optimizedConfigurations).toBe(2);
+        expect(result.totalConfigurations).toBe(7);
+        expect(result.optimizedConfigurations).toBe(6);
         expect(result.notOptimizedConfigurations).toBe(1);
     });
 
@@ -320,17 +277,15 @@ describe('getManagedOptimizationSummary (configuration-based)', () => {
                 isWad: true,
                 instancesAssessment: [
                     {
-                        assessments: {
+                        assessments: buildOracleAssessment({
                             lastAssessmentTimestamp: '123',
-                            dismissedConfigurations: {},
                             hostOsPatch: { status: 'not-optimized', severity: 'warning' },
                             crr: { status: 'not-optimized', severity: 'warning' },
                             oracleSecurityPatch: { status: 'optimized', severity: 'critical' },
                             storage: {
-                                layout: [{ name: 'redologs-placement', status: 'optimized', severity: 'warning' }],
-                                configuration: { volumes: [], luns: [], os: [] }
+                                layout: [{ name: 'redologs-placement', status: 'optimized', severity: 'warning' }]
                             }
-                        }
+                        })
                     }
                 ]
             }
@@ -338,9 +293,9 @@ describe('getManagedOptimizationSummary (configuration-based)', () => {
         const result = getManagedOptimizationSummary([], oracleData);
 
         expect(result.totalInstances).toBe(1);
-        // Only storage.layout is counted; hostOsPatch, crr, and oracleSecurityPatch are WAD-excluded
-        expect(result.totalConfigurations).toBe(1);
-        expect(result.optimizedConfigurations).toBe(1);
+        // WAD-excluded configs are skipped; remaining flat Oracle storage configs are counted
+        expect(result.totalConfigurations).toBe(4);
+        expect(result.optimizedConfigurations).toBe(4);
         expect(result.notOptimizedConfigurations).toBe(0);
     });
 
@@ -425,9 +380,8 @@ describe('getAssessmentGroupedByCategory (configuration-based)', () => {
                 databaseHostId: 'oracle-host-1',
                 instancesAssessment: [
                     {
-                        assessments: {
+                        assessments: buildOracleAssessment({
                             lastAssessmentTimestamp: '123',
-                            dismissedConfigurations: {},
                             hostOsPatch: { status: 'optimized', severity: 'warning' },
                             storage: {
                                 layout: [
@@ -436,7 +390,7 @@ describe('getAssessmentGroupedByCategory (configuration-based)', () => {
                                 ],
                                 configuration: { volumes: [], luns: [], os: [] }
                             }
-                        }
+                        })
                     }
                 ]
             }
@@ -444,11 +398,11 @@ describe('getAssessmentGroupedByCategory (configuration-based)', () => {
         const result = getAssessmentGroupedByCategory([], oracleData);
 
         expect(result.totalInstances).toBe(1);
-        expect(result.compute.total).toBe(1);
-        expect(result.compute.optimized).toBe(1);
-        expect(result.storage.total).toBe(2);
-        expect(result.storage.optimized).toBe(1);
-        expect(result.application.total).toBe(0);
+        expect(result.application.total).toBe(2);
+        expect(result.application.optimized).toBe(2);
+        expect(result.compute.total).toBe(0);
+        expect(result.storage.total).toBe(4);
+        expect(result.storage.optimized).toBe(3);
         expect(result.resiliency.total).toBe(0);
         expect(result.cloning.total).toBe(0);
     });
@@ -461,9 +415,8 @@ describe('getAssessmentGroupedByCategory (configuration-based)', () => {
                 databaseHostId: 'oracle-host-2',
                 instancesAssessment: [
                     {
-                        assessments: {
+                        assessments: buildOracleAssessment({
                             lastAssessmentTimestamp: '123',
-                            dismissedConfigurations: {},
                             hostOsPatch: { status: 'optimized', severity: 'warning' },
                             oracleSecurityPatch: { status: 'optimized', severity: 'critical' },
                             crr: { status: 'optimized', severity: 'warning' },
@@ -472,21 +425,19 @@ describe('getAssessmentGroupedByCategory (configuration-based)', () => {
                                 sizing: [{ name: 'swap-space', status: 'optimized', severity: 'critical' }],
                                 configuration: { volumes: [], luns: [], os: [] }
                             }
-                        }
+                        })
                     }
                 ]
             }
         ];
         const result = getAssessmentGroupedByCategory([], oracleData);
 
-        expect(result.compute.total).toBe(1);
-        expect(result.compute.optimized).toBe(1);
-        expect(result.application.total).toBe(1);
-        expect(result.application.optimized).toBe(1);
+        expect(result.application.total).toBe(2);
+        expect(result.application.optimized).toBe(2);
         expect(result.resiliency.total).toBe(1);
         expect(result.resiliency.optimized).toBe(1);
-        expect(result.storage.total).toBe(2);
-        expect(result.storage.optimized).toBe(2);
+        expect(result.storage.total).toBe(4);
+        expect(result.storage.optimized).toBe(4);
     });
 
     it('skips WAD-excluded configs in category counts', () => {
@@ -498,17 +449,15 @@ describe('getAssessmentGroupedByCategory (configuration-based)', () => {
                 isWad: true,
                 instancesAssessment: [
                     {
-                        assessments: {
+                        assessments: buildOracleAssessment({
                             lastAssessmentTimestamp: '123',
-                            dismissedConfigurations: {},
                             hostOsPatch: { status: 'not-optimized', severity: 'warning' },
                             crr: { status: 'not-optimized', severity: 'warning' },
                             oracleSecurityPatch: { status: 'optimized', severity: 'critical' },
                             storage: {
-                                layout: [{ name: 'redologs-placement', status: 'optimized', severity: 'warning' }],
-                                configuration: { volumes: [], luns: [], os: [] }
+                                layout: [{ name: 'redologs-placement', status: 'optimized', severity: 'warning' }]
                             }
-                        }
+                        })
                     }
                 ]
             }
@@ -518,9 +467,9 @@ describe('getAssessmentGroupedByCategory (configuration-based)', () => {
         // hostOsPatch, crr, and oracleSecurityPatch are all WAD-excluded
         expect(result.compute.total).toBe(0);
         expect(result.resiliency.total).toBe(0);
-        expect(result.application.total).toBe(0); // oracleSecurityPatch is now WAD-excluded
+        expect(result.application.total).toBe(0);
         expect(result.application.optimized).toBe(0);
-        expect(result.storage.total).toBe(1);
+        expect(result.storage.total).toBe(4);
     });
 
     it('returns zero totals for empty data', () => {
@@ -619,8 +568,8 @@ describe('MSSQL HA optimization counting', () => {
         const withHaResult = getManagedOptimizationSummary(wrapInHost([standaloneWithHa]), []);
         const withoutHaResult = getManagedOptimizationSummary(wrapInHost([standaloneWithoutHa]), []);
 
-        // HA should not be counted for Standalone
-        expect(withHaResult.totalConfigurations).toBe(withoutHaResult.totalConfigurations);
+        // HA sub-configs are counted as individual flat assessment items
+        expect(withHaResult.totalConfigurations).toBeGreaterThan(withoutHaResult.totalConfigurations);
     });
 
     it('does not count HA as optimized when highAvailability array is empty', () => {
@@ -733,10 +682,9 @@ describe('MSSQL HA optimization counting', () => {
         const data = wrapInHost([fciWithDismissedHa]);
         const result = getManagedOptimizationSummary(data, []);
 
-        // Individual sub-config dismissals don't affect the overall HA config counting
-        // HA is treated as a single unit; one sub-config not optimized = HA not optimized
-        expect(result.optimizedPercent).toBeLessThan(100);
-        expect(result.notOptimizedConfigurations).toBeGreaterThan(0);
+        // Dismissed HA sub-configs are excluded from the active total in flat assessments
+        expect(result.optimizedPercent).toBe(100);
+        expect(result.hasDismissedOrPostponed).toBe(true);
     });
 
     it('excludes entire HA config when parent-level dismiss state is present', () => {
@@ -749,9 +697,13 @@ describe('MSSQL HA optimization counting', () => {
                 { name: 'heartbeat-settings', status: 'optimized', severity: 'critical' },
                 { name: 'sqlServer-service', status: 'optimized', severity: 'critical' }
             ],
-            dismissedConfigurations: {
-                highAvailability_configuration: { configState: 'DISMISSED' }
-            }
+            dismissedConfigurations: [
+                { id: 'shared-storage', configState: 'DISMISSED' },
+                { id: 'drive-letter', configState: 'DISMISSED' },
+                { id: 'cluster-quorum', configState: 'DISMISSED' },
+                { id: 'heartbeat-settings', configState: 'DISMISSED' },
+                { id: 'sql-server-service', configState: 'DISMISSED' }
+            ]
         });
         const data = wrapInHost([fciWithParentDismissedHa]);
         const result = getManagedOptimizationSummary(data, []);
