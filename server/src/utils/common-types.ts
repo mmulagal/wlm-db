@@ -973,6 +973,30 @@ interface SSMDocument {
     documentVersion: string;
 }
 
+enum TrackerTaskStatus {
+    PENDING = 'pending',
+    SUCCESS = 'success',
+    FAILURE = 'failure'
+}
+
+interface TaskCreate {
+    id?: string;
+    status: TrackerTaskStatus;
+    actionName: string;
+    actionDescription?: string;
+    resourceId?: string;
+    resourceName?: string;
+    parentTaskId?: string;
+    principal?: string;
+    region?: string;
+    failureReason?: string[];
+}
+
+interface TaskUpdateParams {
+    status: TrackerTaskStatus.SUCCESS | TrackerTaskStatus.FAILURE;
+    failureReason?: string[];
+}
+
 interface SsmTargetsInfo {
     ec2InstanceId: string;
     ec2InstanceName: string;
@@ -1067,6 +1091,8 @@ export {
     FSxCredsRegistration,
     DatabaseInstanceRegistration,
     OracleCredential,
+    TaskCreate,
+    TaskUpdateParams,
     SqlCredential,
     OracleInstanceRegistration,
     HighAvailabilityAssessment,
@@ -1079,6 +1105,7 @@ export {
     JobMetadata,
     SSMDocument,
     ComputeHostOsAssessment,
+    TrackerTaskStatus,
     MtuAlignmentAssessment,
     SsmTargetsInfo,
     DiscoverySource

@@ -1,5 +1,6 @@
 import throat from 'throat';
 import { Ec2FsxRelationship, Ec2WithStorage } from '../cloud-manager/tagging-service-operations';
+import { trackSubtask } from '../cloud-manager/tracker-operations';
 import {
     buildOntapProxyBase,
     collectOntapRecordsBatched,
@@ -423,7 +424,8 @@ function toOracleStorageAssessment(
 
 async function collectOntapAssessmentData(
     accountId: string,
-    relationship: Ec2FsxRelationship
+    relationship: Ec2FsxRelationship,
+    parentTaskId?: string
 ): Promise<FsxStorageCollectionResult[]> {
     logger.info('Collecting data for FSx ONTAP storage assessments', { accountId, ec2Count: relationship.ec2s.length });
 
@@ -447,7 +449,24 @@ async function collectOntapAssessmentData(
         };
     });
 
-    const inventoryList = await Promise.all(fsxQueries.map(throat(3, query => fetchOntapInventory(accountId, query))));
+    const inventoryList = await Promise.all(
+        fsxQueries.map(
+            throat(3, query =>
+                parentTaskId
+                    ? trackSubtask(
+                          accountId,
+                          parentTaskId,
+                          {
+                              actionName: `Fetch ONTAP inventory for ${query.fileSystemId}`,
+                              resourceId: query.fileSystemId,
+                              resourceName: query.fileSystemId
+                          },
+                          () => fetchOntapInventory(accountId, query)
+                      )
+                    : fetchOntapInventory(accountId, query)
+            )
+        )
+    );
     const inventoryByFsx = Object.fromEntries(inventoryList.map(inv => [inv.fileSystemId, inv]));
 
     const results: FsxStorageCollectionResult[] = relationship.ec2s.flatMap(ec2 =>

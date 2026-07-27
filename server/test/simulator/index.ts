@@ -32,6 +32,7 @@ async function initiateSimulator() {
     await import('./scopes/cloud-manager/link-service-scope');
     await import('./scopes/cloud-manager/ubr-scope');
     await import('./scopes/cloud-manager/proxy-forwarder-scope');
+    await import('./scopes/cloud-manager/tracker-scope');
     await import('./scopes/cloud-manager/wlm-hosts-scope');
 
     if (process.env.NODE_ENV === 'simulator') {

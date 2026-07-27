@@ -3,12 +3,14 @@ import getLogger from '../../utils/logger';
 import {
     FixRequestMessage,
     ScanRequestMessage,
+    ScanTrigger,
     TaskStatus,
     WAD_SERVICE_ID,
     WadConfigurationEntry,
     WadScanContext,
     WadScanResultRecord
 } from '../../utils/wad-consts';
+import { createTrackerTask, getTrackerTask, updateTrackerTaskStatus } from '../../lib/cloud-manager/tracker';
 import { publishFixResult, publishFixStatus, publishScanResult, publishScanStatus } from './publishers';
 import { buildEc2FsxRelationship } from '../cloud-manager/tagging-service-operations';
 import {
@@ -17,7 +19,7 @@ import {
     AggregateHeadroomData,
     WadSnapcenterData
 } from '../continuous-optimization/ontap-proxy-collector';
-import { StorageAssessment as MssqlStorageAssessment } from '../../utils/common-types';
+import { StorageAssessment as MssqlStorageAssessment, TrackerTaskStatus } from '../../utils/common-types';
 import { StorageAssessment as OracleStorageAssessment } from '../continuous-optimization/oracle/common-types';
 import { getMssqlStorageResourceScan } from '../continuous-optimization/mssql/assessment-operations';
 import { getOracleStorageResourceScan } from '../continuous-optimization/oracle/assessment-operations';
@@ -67,12 +69,38 @@ const WORKLOAD_SCAN_FNS: Record<string, WorkloadScanFn> = {
  * collects ONTAP inventory, and publishes per-(parentResource × configurationId) results.
  */
 async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
-    const { taskId, requestId, accountId, regions, credentialsIds, configurationIds } = req;
+    const {
+        taskId,
+        requestId,
+        accountId,
+        regions,
+        credentialsIds,
+        configurationIds,
+        triggerMode,
+        trackerParentTaskId
+    } = req;
     const baseStatus = { taskId, requestId, accountId, serviceId: WAD_SERVICE_ID };
+
+    const actionName =
+        triggerMode === ScanTrigger.MANUAL ? 'Manual well-architected analysis' : 'Scheduled well-architected analysis';
 
     logger.info('WAD: handling scan request', { taskId, accountId, regions, credentialsIds, configurationIds });
 
+    const scanTask = trackerParentTaskId
+        ? await createTrackerTask(accountId, {
+              parentTaskId: trackerParentTaskId,
+              status: TrackerTaskStatus.PENDING,
+              actionName,
+              resourceId: accountId,
+              resourceName: accountId
+          })
+        : undefined;
+    const scanTaskId = scanTask?.id ?? '';
+    let status: TaskStatus = TaskStatus.COMPLETED;
+    let errorMessage = '';
     try {
+        logger.info('WAD: handling scan request', { taskId, accountId, regions, credentialsIds, configurationIds });
+
         const baseCtx = { ...baseStatus, configurationIds };
         const pairs = credentialsIds.flatMap(credentialsId => regions.map(region => ({ credentialsId, region })));
 
@@ -80,7 +108,7 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
             pairs.map(({ credentialsId, region }) =>
                 throat(3, async () => {
                     const relationship = await buildEc2FsxRelationship(accountId, credentialsId, region);
-                    const storageAssessments = await collectOntapAssessmentData(accountId, relationship);
+                    const storageAssessments = await collectOntapAssessmentData(accountId, relationship, scanTaskId);
                     const pairConfigs: WadConfigurationEntry[] = [];
 
                     for (const {
@@ -115,8 +143,8 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
         );
 
         // Log + collect every failed pair individually; none of them are silently dropped.
-        const allConfigurations: WadConfigurationEntry[] = [];
         const errors: string[] = [];
+        const allConfigurations: WadConfigurationEntry[] = [];
         for (const [i, result] of settled.entries()) {
             if (result.status === 'rejected') {
                 const { credentialsId, region } = pairs[i];
@@ -146,23 +174,22 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
             publishScanResult(scanRecord);
         }
 
-        publishScanStatus({
-            ...baseStatus,
-            updatedAt: Date.now(),
-            ...(errors.length === 0
-                ? { status: TaskStatus.COMPLETED }
-                : {
-                      status: TaskStatus.FAILED,
-                      errorMessage: `${errors.length}/${pairs.length} pair(s) failed: ${errors.join('; ')}`
-                  })
-        });
+        status = errors.length === 0 ? TaskStatus.COMPLETED : TaskStatus.FAILED;
+        errorMessage = `${errors.length}/${pairs.length} pair(s) failed: ${errors.join('; ')}`;
     } catch (err) {
         logger.error('WAD: scan request failed', { taskId, err });
+        status = TaskStatus.FAILED;
+        errorMessage = err instanceof Error ? err.message : String(err);
+    } finally {
         publishScanStatus({
             ...baseStatus,
             updatedAt: Date.now(),
-            status: TaskStatus.FAILED,
-            errorMessage: err instanceof Error ? err.message : String(err)
+            status,
+            errorMessage
+        });
+        updateTrackerTaskStatus(accountId, scanTaskId, {
+            status: status === TaskStatus.COMPLETED ? TrackerTaskStatus.SUCCESS : TrackerTaskStatus.FAILURE,
+            ...(status === TaskStatus.FAILED && { failureReason: [errorMessage] })
         });
     }
 }
@@ -172,7 +199,7 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
  * Applies per-resource fix logic then publishes result + final status.
  */
 async function handleFixRequest(req: FixRequestMessage): Promise<void> {
-    const { taskId, requestId, accountId, configurationId, parentResource, resourceIds } = req;
+    const { taskId, requestId, accountId, configurationId, parentResource, resourceIds, trackerParentTaskId } = req;
     const baseResult = {
         taskId,
         requestId,
@@ -184,6 +211,30 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
 
     logger.info('WAD: handling fix request', { taskId, configurationId, resourceCount: resourceIds.length });
 
+    const { status: existingStatus } =
+        (trackerParentTaskId ? await getTrackerTask(accountId, trackerParentTaskId) : undefined) ?? {};
+
+    if (existingStatus === TrackerTaskStatus.SUCCESS || existingStatus === TrackerTaskStatus.FAILURE) {
+        logger.info('WAD: fix request already resolved, skipping', { taskId, status: existingStatus });
+        publishFixStatus({
+            ...baseResult,
+            updatedAt: Date.now(),
+            status: existingStatus === TrackerTaskStatus.SUCCESS ? TaskStatus.COMPLETED : TaskStatus.FAILED
+        });
+        return;
+    }
+
+    const fixTask = await createTrackerTask(accountId, {
+        parentTaskId: trackerParentTaskId,
+        status: TrackerTaskStatus.PENDING,
+        actionName: `Well-architected fix for ${configurationId}`,
+        actionDescription: `Fixing ${resourceIds.length} resource(s)`,
+        resourceId: resourceIds.join(','),
+        resourceName: resourceIds.join(',')
+    });
+
+    let status = TrackerTaskStatus.SUCCESS;
+    let errorMessage = '';
     try {
         const resourceResults = await applyOntapStorageFix({
             accountId,
@@ -196,14 +247,29 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
         });
 
         publishFixResult({ ...baseResult, resourceResults, reportedAt: Date.now() });
-        publishFixStatus({ ...baseResult, updatedAt: Date.now(), status: TaskStatus.COMPLETED });
+
+        const failedResults = resourceResults.filter(({ success }) => !success);
+        if (failedResults.length > 0) {
+            status = TrackerTaskStatus.FAILURE;
+            errorMessage = failedResults
+                .map(({ resourceId, failureReason: reason }) => `${resourceId}: ${reason ?? 'Unknown error'}`)
+                .join('; ');
+        }
     } catch (err) {
         logger.error('WAD: fix request failed', { taskId, configurationId, err });
+        errorMessage = err instanceof Error ? err.message : String(err);
+        status = TrackerTaskStatus.FAILURE;
+    } finally {
         publishFixStatus({
             ...baseResult,
             updatedAt: Date.now(),
-            status: TaskStatus.FAILED,
-            errorMessage: err instanceof Error ? err.message : String(err)
+            ...(status === TrackerTaskStatus.SUCCESS
+                ? { status: TaskStatus.COMPLETED }
+                : { status: TaskStatus.FAILED, errorMessage })
+        });
+        updateTrackerTaskStatus(accountId, fixTask?.id ?? '', {
+            status,
+            ...(status === TrackerTaskStatus.FAILURE && { failureReason: [errorMessage] })
         });
     }
 }
