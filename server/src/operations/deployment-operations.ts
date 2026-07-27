@@ -602,9 +602,30 @@ async function getCloudformationTemplate(
         region,
         networkConfiguration,
         ec2Configuration,
-        adConfiguration,
-        fsxConfiguration,
-        sqlConfiguration,
+        adConfiguration: {
+            adScenarioType: adConfiguration.adScenarioType,
+            domainDnsname: adConfiguration.domainDnsname,
+            dnsIpaddress: adConfiguration.dnsIpaddress,
+            securityGroupId: adConfiguration.securityGroupId,
+            ssmParameterArn: adConfiguration.ssmParameterArn
+        },
+        fsxConfiguration: {
+            fsxFileSystemId: fsxConfiguration.fsxFileSystemId,
+            fsxDeploymentMode: fsxConfiguration.fsxDeploymentMode,
+            databaseSize: fsxConfiguration.databaseSize,
+            fsxVolThroughput: fsxConfiguration.fsxVolThroughput,
+            fsxIOPS: fsxConfiguration.fsxIOPS,
+            snapshotPolicy: fsxConfiguration.snapshotPolicy,
+            ssmParameterArn: fsxConfiguration.ssmParameterArn
+        },
+        sqlConfiguration: {
+            sqlDeploymentMode: sqlConfiguration.sqlDeploymentMode,
+            sqlServerName: sqlConfiguration.sqlServerName,
+            sqlAmiName: sqlConfiguration.sqlAmiName,
+            sqlCollation: sqlConfiguration.sqlCollation,
+            sqlVersion: sqlConfiguration.sqlVersion,
+            ssmParameterArn: sqlConfiguration.ssmParameterArn
+        },
         triggeredFrom,
         tags
     });
@@ -960,9 +981,30 @@ async function getTerraformSetup(
         region,
         networkConfiguration,
         ec2Configuration,
-        adConfiguration,
-        fsxConfiguration,
-        sqlConfiguration,
+        adConfiguration: {
+            adScenarioType: adConfiguration.adScenarioType,
+            domainDnsname: adConfiguration.domainDnsname,
+            dnsIpaddress: adConfiguration.dnsIpaddress,
+            securityGroupId: adConfiguration.securityGroupId,
+            ssmParameterArn: adConfiguration.ssmParameterArn
+        },
+        fsxConfiguration: {
+            fsxFileSystemId: fsxConfiguration.fsxFileSystemId,
+            fsxDeploymentMode: fsxConfiguration.fsxDeploymentMode,
+            databaseSize: fsxConfiguration.databaseSize,
+            fsxVolThroughput: fsxConfiguration.fsxVolThroughput,
+            fsxIOPS: fsxConfiguration.fsxIOPS,
+            snapshotPolicy: fsxConfiguration.snapshotPolicy,
+            ssmParameterArn: fsxConfiguration.ssmParameterArn
+        },
+        sqlConfiguration: {
+            sqlDeploymentMode: sqlConfiguration.sqlDeploymentMode,
+            sqlServerName: sqlConfiguration.sqlServerName,
+            sqlAmiName: sqlConfiguration.sqlAmiName,
+            sqlCollation: sqlConfiguration.sqlCollation,
+            sqlVersion: sqlConfiguration.sqlVersion,
+            ssmParameterArn: sqlConfiguration.ssmParameterArn
+        },
         triggeredFrom,
         tags,
         enableCloudWatch,
@@ -1100,8 +1142,21 @@ async function getPGSQLTerraformSetup(
     logger.info('Get PGSQL terraform setup', {
         networkConfiguration,
         ec2Configuration,
-        fsxConfiguration,
-        sqlConfiguration,
+        fsxConfiguration: {
+            fsxFileSystemId: fsxConfiguration.fsxFileSystemId,
+            fsxDeploymentMode: fsxConfiguration.fsxDeploymentMode,
+            databaseSize: fsxConfiguration.databaseSize,
+            fsxVolThroughput: fsxConfiguration.fsxVolThroughput,
+            fsxIOPS: fsxConfiguration.fsxIOPS,
+            snapshotPolicy: fsxConfiguration.snapshotPolicy,
+            ssmParameterArn: fsxConfiguration.ssmParameterArn
+        },
+        sqlConfiguration: {
+            sqlDeploymentMode: sqlConfiguration.sqlDeploymentMode,
+            sqlServerName: sqlConfiguration.sqlServerName,
+            sqlVersion: sqlConfiguration.sqlVersion,
+            ssmParameterArn: sqlConfiguration.ssmParameterArn
+        },
         triggeredFrom,
         tags,
         enableCloudWatch,
@@ -1233,9 +1288,30 @@ async function deployStackOrCreateTemplateURL(
         region,
         networkConfiguration,
         ec2Configuration,
-        adConfiguration,
-        fsxConfiguration,
-        sqlConfiguration,
+        adConfiguration: {
+            adScenarioType: adConfiguration.adScenarioType,
+            domainDnsname: adConfiguration.domainDnsname,
+            dnsIpaddress: adConfiguration.dnsIpaddress,
+            securityGroupId: adConfiguration.securityGroupId,
+            ssmParameterArn: adConfiguration.ssmParameterArn
+        },
+        fsxConfiguration: {
+            fsxFileSystemId: fsxConfiguration.fsxFileSystemId,
+            fsxDeploymentMode: fsxConfiguration.fsxDeploymentMode,
+            databaseSize: fsxConfiguration.databaseSize,
+            fsxVolThroughput: fsxConfiguration.fsxVolThroughput,
+            fsxIOPS: fsxConfiguration.fsxIOPS,
+            snapshotPolicy: fsxConfiguration.snapshotPolicy,
+            ssmParameterArn: fsxConfiguration.ssmParameterArn
+        },
+        sqlConfiguration: {
+            sqlDeploymentMode: sqlConfiguration.sqlDeploymentMode,
+            sqlServerName: sqlConfiguration.sqlServerName,
+            sqlAmiName: sqlConfiguration.sqlAmiName,
+            sqlCollation: sqlConfiguration.sqlCollation,
+            sqlVersion: sqlConfiguration.sqlVersion,
+            ssmParameterArn: sqlConfiguration.ssmParameterArn
+        },
         tags,
         triggeredFrom
     });
@@ -1393,9 +1469,30 @@ async function createCloudFormationTemplateForUserDeployment(
         region,
         networkConfiguration,
         ec2Configuration,
-        adConfiguration,
-        fsxConfiguration,
-        sqlConfiguration,
+        adConfiguration: {
+            adScenarioType: adConfiguration.adScenarioType,
+            domainDnsname: adConfiguration.domainDnsname,
+            dnsIpaddress: adConfiguration.dnsIpaddress,
+            securityGroupId: adConfiguration.securityGroupId,
+            ssmParameterArn: adConfiguration.ssmParameterArn
+        },
+        fsxConfiguration: {
+            fsxFileSystemId: fsxConfiguration.fsxFileSystemId,
+            fsxDeploymentMode: fsxConfiguration.fsxDeploymentMode,
+            databaseSize: fsxConfiguration.databaseSize,
+            fsxVolThroughput: fsxConfiguration.fsxVolThroughput,
+            fsxIOPS: fsxConfiguration.fsxIOPS,
+            snapshotPolicy: fsxConfiguration.snapshotPolicy,
+            ssmParameterArn: fsxConfiguration.ssmParameterArn
+        },
+        sqlConfiguration: {
+            sqlDeploymentMode: sqlConfiguration.sqlDeploymentMode,
+            sqlServerName: sqlConfiguration.sqlServerName,
+            sqlAmiName: sqlConfiguration.sqlAmiName,
+            sqlCollation: sqlConfiguration.sqlCollation,
+            sqlVersion: sqlConfiguration.sqlVersion,
+            ssmParameterArn: sqlConfiguration.ssmParameterArn
+        },
         metrics,
         tags
     });
@@ -1620,9 +1717,30 @@ async function deployCloudFormationTemplate(
         region,
         networkConfiguration,
         ec2Configuration,
-        adConfiguration,
-        fsxConfiguration,
-        sqlConfiguration,
+        adConfiguration: {
+            adScenarioType: adConfiguration.adScenarioType,
+            domainDnsname: adConfiguration.domainDnsname,
+            dnsIpaddress: adConfiguration.dnsIpaddress,
+            securityGroupId: adConfiguration.securityGroupId,
+            ssmParameterArn: adConfiguration.ssmParameterArn
+        },
+        fsxConfiguration: {
+            fsxFileSystemId: fsxConfiguration.fsxFileSystemId,
+            fsxDeploymentMode: fsxConfiguration.fsxDeploymentMode,
+            databaseSize: fsxConfiguration.databaseSize,
+            fsxVolThroughput: fsxConfiguration.fsxVolThroughput,
+            fsxIOPS: fsxConfiguration.fsxIOPS,
+            snapshotPolicy: fsxConfiguration.snapshotPolicy,
+            ssmParameterArn: fsxConfiguration.ssmParameterArn
+        },
+        sqlConfiguration: {
+            sqlDeploymentMode: sqlConfiguration.sqlDeploymentMode,
+            sqlServerName: sqlConfiguration.sqlServerName,
+            sqlAmiName: sqlConfiguration.sqlAmiName,
+            sqlCollation: sqlConfiguration.sqlCollation,
+            sqlVersion: sqlConfiguration.sqlVersion,
+            ssmParameterArn: sqlConfiguration.ssmParameterArn
+        },
         tags,
         metrics
     });
@@ -2350,8 +2468,21 @@ async function createCfTemplateForPgsqlDeployment(
         region,
         networkConfiguration,
         ec2Configuration,
-        fsxConfiguration,
-        sqlConfiguration,
+        fsxConfiguration: {
+            fsxFileSystemId: fsxConfiguration.fsxFileSystemId,
+            fsxDeploymentMode: fsxConfiguration.fsxDeploymentMode,
+            databaseSize: fsxConfiguration.databaseSize,
+            fsxVolThroughput: fsxConfiguration.fsxVolThroughput,
+            fsxIOPS: fsxConfiguration.fsxIOPS,
+            snapshotPolicy: fsxConfiguration.snapshotPolicy,
+            ssmParameterArn: fsxConfiguration.ssmParameterArn
+        },
+        sqlConfiguration: {
+            sqlDeploymentMode: sqlConfiguration.sqlDeploymentMode,
+            sqlServerName: sqlConfiguration.sqlServerName,
+            sqlVersion: sqlConfiguration.sqlVersion,
+            ssmParameterArn: sqlConfiguration.ssmParameterArn
+        },
         topicArn,
         enableCloudWatch,
         metrics,

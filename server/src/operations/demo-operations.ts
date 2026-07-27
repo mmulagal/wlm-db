@@ -312,9 +312,9 @@ async function createFileSystemForDemo(
     fsxConfiguration: FSXConfigurationType,
     defaultFsx: boolean
 ) {
-    logger.info('Creating fsx for demo', credentialsId, region, fsxConfiguration);
-    const fsxName = defaultFsx ? 'fsx-wlmdb-DEFAULT' : `fsx-wlmdb-${randomize('A', 5)}`;
     const { fsxDeploymentMode } = fsxConfiguration;
+    logger.info('Creating fsx for demo', { credentialsId, region, fsxDeploymentMode, defaultFsx });
+    const fsxName = defaultFsx ? 'fsx-wlmdb-DEFAULT' : `fsx-wlmdb-${randomize('A', 5)}`;
     const mode = fsxDeploymentMode.replace(/_\d+$/, '');
 
     const requestBody = {
