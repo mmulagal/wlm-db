@@ -1480,10 +1480,16 @@
                     "value": "2",
                     "objectType": "iSCSI target",
                     "recommended": "4"
+                },
+                {
+                    "objectName": "iqn.2005-03.com.target:storage2",
+                    "value": "2",
+                    "objectType": "iSCSI target",
+                    "recommended": "4"
                 }
             ],
-            "totalObjectsAssessed": 1,
-            "totalObjectsInViolation": 1,
+            "totalObjectsAssessed": 2,
+            "totalObjectsInViolation": 2,
             "focusWidgetName": "Operating system"
         },
         {

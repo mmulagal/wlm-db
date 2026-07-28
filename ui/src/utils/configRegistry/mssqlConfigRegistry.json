@@ -1962,8 +1962,8 @@
             "postPatchSections": [
                 {
                     "heading": "databases.well-architect.mssql-patch-action-required",
-                    "type": "bullets",
-                    "items": ["databases.well-architect.mssql-patch-line1"]
+                    "type": "text",
+                    "content": "databases.well-architect.mssql-patch-line1"
                 },
                 {
                     "type": "numberedList",

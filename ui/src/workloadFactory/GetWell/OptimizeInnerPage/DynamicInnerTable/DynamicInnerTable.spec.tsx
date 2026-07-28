@@ -55,7 +55,9 @@ vi.mock('../../../../utils/consts', () => ({
         RSS_CONFIGURATION: 'rss-configuration',
         DRIVE_LETTER: 'drive-letter',
         CRR: 'crr',
-        OPERATING_SYSTEM_PATCH: 'host-os-patch'
+        OPERATING_SYSTEM_PATCH: 'host-os-patch',
+        MULTIPATH_IO_SESSIONS: 'multipath-io-sessions',
+        MULTIPATH_CONFIGURATION: 'multipath-configuration'
     },
     DBType: { MSSQL: 'mssql', ORACLE: 'oracle' },
     GETWELL_STATUS: { OPTIMIZED: 'Optimized', NOT_OPTIMIZED: 'Not Optimized' },
@@ -672,9 +674,37 @@ describe('DynamicInnerTable', () => {
         expect(screen.getByTestId('table')).toBeTruthy();
     });
 
-    // ── useEffect / checkBoxHandle ─────────────────────────────────────────────
+    it('does not add per-row action column for multipath-io-sessions Oracle (bulk-only)', () => {
+        render(
+            <DynamicInnerTable
+                {...defaultProps}
+                configId="multipath-io-sessions"
+                engineType="oracle"
+                canOptimize
+                handleRowFix={vi.fn()}
+                data={normalData}
+            />
+        );
+        const actionCol = capturedTableCols.find((c: any) => c.accessor === 'action');
+        expect(actionCol).toBeUndefined();
+    });
 
-    it('triggers checkBoxHandle when inProgressOptimizationData has rows for configId', async () => {
+    it('does not add per-row action column for multipath-configuration Oracle (bulk-only)', () => {
+        render(
+            <DynamicInnerTable
+                {...defaultProps}
+                configId="multipath-configuration"
+                engineType="oracle"
+                canOptimize
+                handleRowFix={vi.fn()}
+                data={normalData}
+            />
+        );
+        const actionCol = capturedTableCols.find((c: any) => c.accessor === 'action');
+        expect(actionCol).toBeUndefined();
+    });
+
+    it('calls checkBoxHandle when selection changes', async () => {
         const utilityFunctions = await import('../../../../utils/utilityFunctions');
         // Make getSelectedFromSelectionState return a non-empty array so checkBoxHandle is reached
         (utilityFunctions.getSelectedFromSelectionState as any).mockReturnValueOnce([{ id: '0' }]);
@@ -914,6 +944,189 @@ describe('DynamicInnerTable', () => {
             expect(actionCol).toBeDefined();
             const result = actionCol.renderCell(undefined, { id: '0' });
             expect(result).toBeTruthy();
+        });
+    });
+
+    // ── Oracle multipath-io-sessions bulk fix ──────────────────────────────────
+
+    describe('Oracle multipath-io-sessions bulk fix', () => {
+        const multipathColumnConfig = {
+            columns: [
+                { key: 'objectName', label: 'Target portal address', accessor: 'objectName' },
+                { key: 'value', label: 'Current sessions', accessor: 'value' },
+                { key: 'recommended', label: 'Recommended sessions', accessor: 'recommended' }
+            ],
+            resourceTypeLabel: 'Session Configuration'
+        };
+        const multipathData = {
+            violationDetails: [
+                { objectName: '10.0.0.1:3260', value: '1', recommended: '4' },
+                { objectName: '10.0.0.2:3260', value: '2', recommended: '4' }
+            ]
+        };
+
+        it('renders table for multipath-io-sessions Oracle inner page', () => {
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="multipath-io-sessions"
+                    engineType="oracle"
+                    data={multipathData}
+                    columnConfig={multipathColumnConfig}
+                    canOptimize
+                />
+            );
+            expect(screen.getByTestId('table')).toBeTruthy();
+        });
+
+        it('shows BulkActionContainer for multipath-io-sessions Oracle with canOptimize and selected rows', () => {
+            mockUseAppSelector.mockImplementation((selector: any) =>
+                selector({
+                    databaseHome: { selectedRowsForOptimizeInnerPage: [{ id: '0' }, { id: '1' }] },
+                    getWellOptimize: {
+                        inProgressOptimizationData: {},
+                        selectedResourceId: 'r1',
+                        selectedGwInstanceCredId: 'c1',
+                        selectedGwInstanceRegionId: 'reg1',
+                        selectedDatabaseInstance: 'db1'
+                    }
+                })
+            );
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="multipath-io-sessions"
+                    engineType="oracle"
+                    data={multipathData}
+                    columnConfig={multipathColumnConfig}
+                    canOptimize
+                />
+            );
+            expect(screen.getByTestId('bulk-action-container')).toBeTruthy();
+        });
+
+        it('disables checkboxes on rows for multipath-io-sessions Oracle (isDisabled: true in cellProps)', () => {
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="multipath-io-sessions"
+                    engineType="oracle"
+                    data={multipathData}
+                    columnConfig={multipathColumnConfig}
+                    canOptimize
+                />
+            );
+            // All rows should have isDisabled set so they cannot be deselected
+            capturedTableRows.forEach((row: any) => {
+                expect(row.cellProps?.isDisabled).toBe(true);
+            });
+        });
+
+        it('does not disable checkboxes for multipath-io-sessions on non-Oracle engine', () => {
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="multipath-io-sessions"
+                    engineType="mssql"
+                    data={multipathData}
+                    columnConfig={multipathColumnConfig}
+                    canOptimize
+                />
+            );
+            capturedTableRows.forEach((row: any) => {
+                expect(row.cellProps?.isDisabled).toBeFalsy();
+            });
+        });
+    });
+
+    // ── Oracle multipath-configuration bulk fix ────────────────────────────────
+
+    describe('Oracle multipath-configuration bulk fix', () => {
+        const multipathConfigColumnConfig = {
+            columns: [
+                { key: 'objectName', label: 'Configuration name', accessor: 'objectName' },
+                { key: 'value', label: 'Current value', accessor: 'value' },
+                { key: 'recommended', label: 'Recommended value', accessor: 'recommended' }
+            ],
+            resourceTypeLabel: 'Configuration'
+        };
+        const multipathConfigData = {
+            violationDetails: [
+                { objectName: 'path_grouping_policy', value: 'multibus', recommended: 'group_by_prio' },
+                { objectName: 'polling_interval', value: '10', recommended: '5' }
+            ]
+        };
+
+        it('renders table for multipath-configuration Oracle inner page', () => {
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="multipath-configuration"
+                    engineType="oracle"
+                    data={multipathConfigData}
+                    columnConfig={multipathConfigColumnConfig}
+                    canOptimize
+                />
+            );
+            expect(screen.getByTestId('table')).toBeTruthy();
+        });
+
+        it('shows BulkActionContainer for multipath-configuration Oracle with canOptimize and selected rows', () => {
+            mockUseAppSelector.mockImplementation((selector: any) =>
+                selector({
+                    databaseHome: { selectedRowsForOptimizeInnerPage: [{ id: '0' }, { id: '1' }] },
+                    getWellOptimize: {
+                        inProgressOptimizationData: {},
+                        selectedResourceId: 'r1',
+                        selectedGwInstanceCredId: 'c1',
+                        selectedGwInstanceRegionId: 'reg1',
+                        selectedDatabaseInstance: 'db1'
+                    }
+                })
+            );
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="multipath-configuration"
+                    engineType="oracle"
+                    data={multipathConfigData}
+                    columnConfig={multipathConfigColumnConfig}
+                    canOptimize
+                />
+            );
+            expect(screen.getByTestId('bulk-action-container')).toBeTruthy();
+        });
+
+        it('disables checkboxes on rows for multipath-configuration Oracle (isDisabled: true in cellProps)', () => {
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="multipath-configuration"
+                    engineType="oracle"
+                    data={multipathConfigData}
+                    columnConfig={multipathConfigColumnConfig}
+                    canOptimize
+                />
+            );
+            capturedTableRows.forEach((row: any) => {
+                expect(row.cellProps?.isDisabled).toBe(true);
+            });
+        });
+
+        it('does not disable checkboxes for multipath-configuration on non-Oracle engine', () => {
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="multipath-configuration"
+                    engineType="mssql"
+                    data={multipathConfigData}
+                    columnConfig={multipathConfigColumnConfig}
+                    canOptimize
+                />
+            );
+            capturedTableRows.forEach((row: any) => {
+                expect(row.cellProps?.isDisabled).toBeFalsy();
+            });
         });
     });
 });

@@ -82,6 +82,12 @@ const DynamicInnerTable = ({
 
     const isPatchConfig = configEntry?.dialogContent?.features?.showPatchTable ?? false;
 
+    // Bulk-only configs: rows are pre-selected, checkboxes locked, and fixed via bulk action only (no per-row Fix button)
+    const isBulkOnlyConfig =
+        (configId === ASSESSMENT_CONFIG_IDS.MULTIPATH_IO_SESSIONS ||
+            configId === ASSESSMENT_CONFIG_IDS.MULTIPATH_CONFIGURATION) &&
+        engineType === DBType.ORACLE;
+
     const patchField = useMemo(() => {
         if (!configEntry?.dialogContent?.features?.showPatchTable) return '';
         return (configEntry?.dialogContent?.features as any)?.patchField || '';
@@ -165,6 +171,14 @@ const DynamicInnerTable = ({
         let id = 0;
         const addRowMeta = (row: any) => {
             const baseProps = { ...row, id: String(id++), cellProps: getWadCellProps(isWad, t) };
+
+            // For Oracle multipath-io-sessions / multipath-configuration: disable checkboxes so they remain checked and cannot be deselected
+            if (isBulkOnlyConfig) {
+                baseProps.cellProps = {
+                    ...baseProps.cellProps,
+                    isDisabled: true
+                };
+            }
 
             // For log-drive-size and tempdb-drive-size: disable checkboxes for over-provisioned and shared/ignored drives
             if (
@@ -407,8 +421,8 @@ const DynamicInnerTable = ({
         const isCrrMssql = configId === ASSESSMENT_CONFIG_IDS.CRR && engineType === DBType.MSSQL;
         // CRR for Oracle: show enabled Fix button (special case for inner page)
         const isCrrOracle = configId === ASSESSMENT_CONFIG_IDS.CRR && engineType === DBType.ORACLE;
-
-        if ((showFixButton || showViewButton || isCrrMssql || isCrrOracle) && handleRowFix) {
+        // Bulk-only configs: no per-row fix button (rows are pre-selected and fixed via bulk action)
+        if (!isBulkOnlyConfig && (showFixButton || showViewButton || isCrrMssql || isCrrOracle) && handleRowFix) {
             const buttonLabel = t('databases.well-architect.fix');
 
             const actionColumn = {
@@ -565,7 +579,7 @@ const DynamicInnerTable = ({
         rows: tableData || [],
         pageSize: 50,
         selectionType: isPatchConfig ? 'none' : canOptimize ? 'multiple' : 'none',
-        defaultSelectedRows: [],
+        defaultSelectedRows: isBulkOnlyConfig ? tableData.map(row => row.id) : [],
         isLazyLoading: isPatchConfig ? isPatchDataLoading : undefined
     });
 

@@ -1663,7 +1663,7 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Mount options",
+                    "label": "NFS Mount",
                     "accessor": "objectName"
                 },
                 {
@@ -1729,7 +1729,7 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Mount options",
+                    "label": "NFS Mount",
                     "accessor": "objectName"
                 },
                 {
@@ -1908,7 +1908,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Current value",
+                    "label": "Svm dns name",
                     "accessor": "value"
                 },
                 {
@@ -2648,21 +2648,21 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Configuration name",
+                    "label": "Target portal address",
                     "accessor": "objectName"
                 },
                 {
                     "key": "value",
-                    "label": "Current value",
+                    "label": "Current sessions",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended value",
+                    "label": "Recommended sessions",
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Configuration"
+            "resourceTypeLabel": "Session Configuration"
         },
         "cardHeights": {
             "recommendationSection": "170px",
@@ -2717,7 +2717,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Current value",
+                    "label": "Current iSCSI replacement timeout",
                     "accessor": "value"
                 },
                 {
