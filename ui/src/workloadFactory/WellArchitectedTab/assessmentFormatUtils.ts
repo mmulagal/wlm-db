@@ -1,4 +1,11 @@
-import { ASSESSMENT_METADATA_SOURCE, DBType, GETWELL_STATUS, CONFIG_NAMES } from '../../utils/consts';
+import {
+    ASSESSMENT_METADATA_SOURCE,
+    DBType,
+    GETWELL_DISPLAY,
+    GETWELL_STATUS,
+    CONFIG_NAMES,
+    WELL_ARCHITECTED_STATUS
+} from '../../utils/consts';
 import {
     AssessmentMetadata,
     AssessmentResponseInterface,
@@ -165,6 +172,7 @@ export type ConfigStatsBucket = {
     dismissed: number;
     activating: number;
     total: number;
+    nonScoring?: number;
     partiallyDismissed?: number;
 };
 
@@ -295,4 +303,63 @@ export const normalizeImpactedResourceDialogData = <T extends ImpactedResourceDi
         // once at the config-item level rather than repeating it per violationDetails row.
         recommended: (data.recommended as string | undefined) ?? extendedItem.recommended
     };
+};
+
+/** Backend status values that should not affect optimization score denominators. */
+export const isNonScoringAssessmentStatus = (status?: string): boolean => {
+    if (!status) {
+        return false;
+    }
+    const normalized = status.toLowerCase();
+    return (
+        normalized === WELL_ARCHITECTED_STATUS.NOT_APPLICABLE || normalized === WELL_ARCHITECTED_STATUS.NOT_AVAILABLE
+    );
+};
+
+/** Backend key or display label for not-applicable assessment status. */
+export const isNotApplicableStatus = (statusValue: string | undefined): boolean => {
+    if (!statusValue) {
+        return false;
+    }
+    return isNonScoringAssessmentStatus(statusValue) || statusValue === GETWELL_DISPLAY.NOT_APPLICABLE;
+};
+
+/** Well-architected status column values that must not offer Fix on the dashboard inner page. */
+export const isFixDisabledAssessmentStatus = (assessmentStatus?: string): boolean =>
+    !assessmentStatus || isNotApplicableStatus(assessmentStatus) || assessmentStatus === GETWELL_DISPLAY.UNAVAILABLE;
+
+/** Card shows Unavailable (errorMessage or missing assessment data). */
+export const isUnavailableForOptimizationCount = (cardItem?: {
+    block_two?: { value?: string };
+    errorMessage?: string;
+}): boolean => {
+    if (!cardItem) {
+        return false;
+    }
+    if (cardItem.errorMessage) {
+        return true;
+    }
+    const statusValue = cardItem.block_two?.value;
+    return statusValue === GETWELL_DISPLAY.UNAVAILABLE;
+};
+
+/** Skip not-applicable and unavailable configs from optimization score denominators. */
+export const isExcludedFromOptimizationCountForCard = (cardItem: {
+    block_two?: { value?: string };
+    errorMessage?: string;
+}): boolean => isNotApplicableStatus(cardItem?.block_two?.value) || isUnavailableForOptimizationCount(cardItem);
+
+/** Raw flat assessment item excluded from optimization counts. */
+export const isExcludedFromOptimizationCountForAssessment = (item: {
+    id?: string;
+    status?: string;
+    errorMessage?: string;
+}): boolean => {
+    if (item.errorMessage) {
+        return true;
+    }
+    if (!item.status?.trim()) {
+        return true;
+    }
+    return isNonScoringAssessmentStatus(item.status);
 };

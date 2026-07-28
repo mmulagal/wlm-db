@@ -643,6 +643,36 @@ describe('OracleWellArchitectedUtils', () => {
             expect(result.compute.notOptimized).toBe(1);
         });
 
+        it('excludes not-applicable and unavailable cards from notOptimized counts', () => {
+            const cardsData = {
+                isWad: true,
+                na: {
+                    category: 'storage',
+                    block_two: { value: 'Not applicable' },
+                    block_four: { value: 'Critical' },
+                    id: 'thin-provisioning',
+                    configurationId: 'thin-provisioning'
+                },
+                unavail: {
+                    category: 'compute',
+                    block_two: { value: 'Unavailable' },
+                    block_four: { value: 'Warning' },
+                    id: 'compute-rightsizing',
+                    configurationId: 'compute-rightsizing',
+                    errorMessage: 'WAD excluded'
+                },
+                real: {
+                    category: 'storage',
+                    block_two: { value: 'Not optimized' },
+                    block_four: { value: 'Critical' },
+                    id: 'autosize'
+                }
+            };
+            const result = formatOracleOptimizationBreakDown(cardsData);
+            expect(result.total.notOptimized).toBe(1);
+            expect(result.total.total).toBe(1);
+        });
+
         it('counts all five categories independently', () => {
             const make = (category: string, optimized: boolean) => ({
                 category,

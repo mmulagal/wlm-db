@@ -65,6 +65,7 @@ import { getAssessmentGroupedByConfigurations } from '../../DatabaseHomePage/Dat
 import {
     findFlatConfigItem,
     hasConfigStats,
+    isFixDisabledAssessmentStatus,
     resolveConfigTypeId
 } from '../../WellArchitectedTab/assessmentFormatUtils';
 import { getOptimizeApiConfig, hasFixSupport } from '../../../utils/configRegistry';
@@ -787,7 +788,10 @@ const DashboardInnerPage = () => {
                         isThin
                         variant="secondary"
                         isDisabled={
-                            isDisabled || rowData?.assessmentStatus === GETWELL_STATUS.OPTIMIZED || !isFixEnabled
+                            isDisabled ||
+                            rowData?.assessmentStatus === GETWELL_STATUS.OPTIMIZED ||
+                            !isFixEnabled ||
+                            isFixDisabledAssessmentStatus(rowData?.assessmentStatus)
                         }
                         onClick={() => {
                             optimizeAction(rowData);

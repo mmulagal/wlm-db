@@ -295,12 +295,14 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 dbType === DBType.ORACLE ? ASSESSMENT_CONFIG_CATALOG_KEYS.ORACLE : ASSESSMENT_CONFIG_CATALOG_KEYS.MSSQL
             ]?.[configId] || configData?.[ASSESSMENT_CONFIG_CATALOG_KEYS.COMBINED]?.[configId];
         const configStats = getConfigStatsBucket(configData, configId, dbType);
+        const nonScoringCount = configStats?.nonScoring || 0;
+        const scorableTotal = Math.max((configStats?.total || 0) - nonScoringCount, 0);
         const optimizedCount =
             (configStats?.optimized || 0) + (configStats?.dismissed || 0) + (configStats?.activating || 0);
         const configStateKey = getConfigStateList(configData, configId, dbType);
         const dismissedOrPostponedText = hasDismissedOrPosponed(configStateKey);
-        const total = configStats?.total || 1;
-        const afterOutOfTotal = configStats?.total;
+        const total = scorableTotal || 1;
+        const afterOutOfTotal = scorableTotal;
         let optimizePercentage = 0;
         let runningConfigType: string | undefined;
         let optimizeLoading = false;
@@ -340,6 +342,8 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
         let perTypeCheck = false;
         if (naCheck) {
+            perTypeCheck = true;
+        } else if (scorableTotal === 0) {
             perTypeCheck = true;
         } else if (dbType === DBType.ORACLE && configData?.oracleTotal === 0) {
             perTypeCheck = true;

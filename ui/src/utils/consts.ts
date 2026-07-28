@@ -961,7 +961,8 @@ export const GETWELL_STATUS = {
 
 // Display text constants for UI labels (maps backend keys to user-friendly text)
 export const GETWELL_DISPLAY = {
-    NOT_APPLICABLE: 'Not applicable' // Display format for 'not-applicable' status
+    NOT_APPLICABLE: 'Not applicable', // Display format for 'not-applicable' status
+    UNAVAILABLE: 'Unavailable'
 };
 
 export const WELL_ARCHITECTED_TABS = {
@@ -977,6 +978,7 @@ export const GETWELL_VALUES: Record<string, string> = {
     optimized: 'Optimized',
     optimizing: 'Optimizing',
     'not-applicable': 'Not applicable',
+    'not-available': 'Not applicable',
     'not-optimized': 'Not optimized',
     analyzing: 'Analyzing',
     'under-provisioned': 'Under-provisioned',
@@ -1381,25 +1383,6 @@ export const UNDER_PROVISIONED_UNSUPPORTED_FIX_TYPES: Set<string> = new Set([
  */
 export const WAD_SORT_STATUS = 'WAD';
 
-/** Flat assessment config ids excluded from WAD (offline) instance scoring. */
-// TODO: Remove once backend handles WAD exclusions server-side.
-export const WAD_EXCLUDED_FLAT_CONFIG_IDS_MSSQL = new Set<string>([
-    ASSESSMENT_CONFIG_IDS.COMPUTE_RIGHTSIZING,
-    ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH,
-    ASSESSMENT_CONFIG_IDS.MTU,
-    ASSESSMENT_CONFIG_IDS.LICENSE,
-    ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH,
-    ASSESSMENT_CONFIG_IDS.CRR,
-    ASSESSMENT_CONFIG_IDS.SCHEDULED_FSX_FOR_ONTAP_BACKUPS
-]);
-
-export const WAD_EXCLUDED_FLAT_CONFIG_IDS_ORACLE = new Set<string>([
-    ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH,
-    ASSESSMENT_CONFIG_IDS.CRR,
-    ASSESSMENT_CONFIG_IDS.SCHEDULED_FSX_FOR_ONTAP_BACKUPS,
-    ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH
-]);
-
 /** Well-Architected configuration category discriminator (from config catalog `type`). */
 export type WellArchitectedCategory = 'storage' | 'compute' | 'application' | 'resiliency' | 'cloning';
 
@@ -1438,6 +1421,7 @@ export const WELL_ARCHITECTED_STATUS = {
     OVER_PROVISIONED: 'over-provisioned',
     OPTIMIZING: 'optimizing',
     NOT_APPLICABLE: 'not-applicable',
+    NOT_AVAILABLE: 'not-available',
     ANALYZING: 'analyzing'
 };
 

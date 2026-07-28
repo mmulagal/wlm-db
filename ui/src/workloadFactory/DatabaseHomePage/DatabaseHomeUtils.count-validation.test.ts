@@ -192,9 +192,8 @@ describe('Well-Architected Count Cross-Validation', () => {
 
             expect(sumCategories(category, 'total')).toBe(summary.totalConfigurations);
             expect(sumCategories(category, 'optimized')).toBe(summary.optimizedConfigurations);
-            // WAD should have fewer configs than non-WAD
-            const normalSummary = getManagedOptimizationSummary([wrapMssqlHost([buildMssqlAssessment()])], []);
-            expect(summary.totalConfigurations).toBeLessThan(normalSummary.totalConfigurations);
+            const normalSummary = getManagedOptimizationSummary(wadData, []);
+            expect(summary.totalConfigurations).toBe(normalSummary.totalConfigurations);
         });
 
         it('totals match for Oracle WAD instance', () => {
@@ -210,9 +209,8 @@ describe('Well-Architected Count Cross-Validation', () => {
 
             expect(sumCategories(category, 'total')).toBe(summary.totalConfigurations);
             expect(sumCategories(category, 'optimized')).toBe(summary.optimizedConfigurations);
-            // WAD should have fewer configs than non-WAD
             const normalSummary = getManagedOptimizationSummary([], [wrapOracleHost([buildOracleAssessment()])]);
-            expect(summary.totalConfigurations).toBeLessThan(normalSummary.totalConfigurations);
+            expect(summary.totalConfigurations).toBe(normalSummary.totalConfigurations);
         });
 
         it('totals match for mixed WAD + non-WAD across MSSQL and Oracle', () => {

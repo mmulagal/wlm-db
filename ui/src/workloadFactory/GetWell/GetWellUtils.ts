@@ -68,6 +68,8 @@ import {
     getConfigStateList,
     getConfigStatsBucket,
     hasConfigStats,
+    isExcludedFromOptimizationCountForCard,
+    isFixDisabledAssessmentStatus,
     resolveConfigDisplayName
 } from '../WellArchitectedTab/assessmentFormatUtils';
 import { sortConfigsByPriority } from '../../utils/configRegistry';
@@ -128,6 +130,10 @@ export const formatOptimizationBreakDown = (cardsData: any, assessmentData?: any
 
     Object.keys(cardsData).forEach(key => {
         const nestedObject = cardsData[key];
+
+        if (WA_FLAG_SKIP.includes(key) || isExcludedFromOptimizationCountForCard(nestedObject)) {
+            return;
+        }
 
         const dismissedState = nestedObject?.dismissedObj?.configState;
         const isDismissed = dismissedState === CONFIG_STATES.DISMISSED;
@@ -498,13 +504,6 @@ export const applyFilter = (
             return; // Skip deploymentType as it is not a card
         }
         // WAD excluded configs already filtered by backend, no frontend filtering needed
-        const isWadExcluded = false;
-        if (isWadExcluded) {
-            filteredCardData[key] = { ...cardData[key], isWadExcluded: true };
-            // Do NOT count WAD excluded configs as they are not part of the assessment
-            return;
-        }
-
         const checkCategory =
             !filters['all-catagories'] || filters['all-catagories']?.includes(cardData[key]?.category);
 
@@ -1715,10 +1714,7 @@ export const checkIfDisableForOptimize = (
     } else if (rowData?.configState && rowData?.configState === CONFIG_STATES.ACTIVATING) {
         isDisabled = true;
         errorMessage = '';
-    } else if (
-        !rowData?.assessmentStatus ||
-        rowData?.assessmentStatus?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase()
-    ) {
+    } else if (isFixDisabledAssessmentStatus(rowData?.assessmentStatus)) {
         isDisabled = true;
         errorMessage = `${name} ${translation('databases.well-architect.assessment-not-available')}`;
     } else if (
@@ -1982,6 +1978,7 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
     }
 
     const totalInstances = configStats?.total || 0;
+    const nonScoringInstances = configStats?.nonScoring ?? 0;
     dispatch(
         setSelectedConfigSummary({
             totalInstances,
@@ -1989,8 +1986,11 @@ export const setOptimizeInnerpageSummary = (type: string, configData: any, dispa
             dismissedInstances,
             activatingInstances,
             partialDismissInstances,
-            notOptimizedInstances: totalInstances - (optimizedInstances + dismissedInstances + activatingInstances),
-            optimizationScore: `${Math.round((optimizedInstances / (totalInstances || 1)) * 100)}%`,
+            notOptimizedInstances:
+                totalInstances - (optimizedInstances + dismissedInstances + activatingInstances + nonScoringInstances),
+            optimizationScore: `${Math.round(
+                (optimizedInstances / (totalInstances - nonScoringInstances || 1)) * 100
+            )}%`,
             severity: getConfigSeverity(configData, configKey, dbType),
             configState: configStateValue,
             tooltipText

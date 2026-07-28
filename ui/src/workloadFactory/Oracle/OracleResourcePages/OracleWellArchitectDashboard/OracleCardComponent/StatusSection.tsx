@@ -2,8 +2,7 @@ import { DsFlashingDotsLoader, DsTypography } from '@tlveng/wlm-ds';
 import { useTranslation } from 'react-i18next';
 import { DsPopover, Popover } from '@netapp/design-system';
 import { CONFIG_STATES, GETWELL_STATUS, GETWELL_VALUES, GETWELL_DISPLAY } from '../../../../../utils/consts';
-import { GENERAL } from '../../../../../utils/appConstants';
-import { isNotApplicableStatus } from '../OracleWellArchitectedUtils';
+import { isNotApplicableStatus } from '../../../../WellArchitectedTab/assessmentFormatUtils';
 import styles from './OracleCardComponent.module.scss';
 import { ReactComponent as NotActive } from '../../../../../assets/ic_not_active.svg';
 import { ReactComponent as Optimized } from '../../../../../assets/optimized.svg';
@@ -75,27 +74,6 @@ const StatusSection = ({ cardData, loading, disableText }: any) => {
         );
     }
 
-    // WAD excluded configurations show Unavailable with tooltip
-    if (cardData?.isWadExcluded) {
-        return (
-            <span className={styles.overProvisioned}>
-                <span className={styles.tooltipLevel}>
-                    <DsPopover
-                        title={t('databases.wad.tab-disabled-message-oracle')}
-                        trigger="hover"
-                        placement="bottom"
-                    >
-                        <TooltipIcon />
-                    </DsPopover>
-                </span>
-                <span style={{ marginLeft: '8px' }}>
-                    <DsTypography variant="Semibold_14" isDisabled>
-                        {t('databases.well-architect.unavailable')}
-                    </DsTypography>
-                </span>
-            </span>
-        );
-    }
     return (
         <DsTypography
             variant="Semibold_14"
@@ -108,7 +86,7 @@ const StatusSection = ({ cardData, loading, disableText }: any) => {
                 whiteSpace: cardData?.errorMessage ? 'unset' : 'nowrap'
             }}
         >
-            {cardData?.block_two?.value && cardData?.block_two?.value !== GENERAL.UNAVAILABLE ? (
+            {cardData?.block_two?.value && cardData?.block_two?.value !== GETWELL_DISPLAY.UNAVAILABLE ? (
                 <>
                     <span
                         className={styles.svgSection}

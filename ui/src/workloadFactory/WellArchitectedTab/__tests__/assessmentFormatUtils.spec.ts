@@ -17,13 +17,27 @@ import {
     hasConfigStats,
     getConfigStatsBucket,
     getConfigStateList,
-    resolveConfigDisplayName
+    resolveConfigDisplayName,
+    isNotApplicableStatus,
+    isFixDisabledAssessmentStatus,
+    isExcludedFromOptimizationCountForCard,
+    isExcludedFromOptimizationCountForAssessment
 } from '../assessmentFormatUtils';
+import { GETWELL_DISPLAY, DBType } from '../../../utils/consts';
 
 vi.mock('../../../utils/consts', () => ({
     GETWELL_STATUS: {
         CRITICAL: 'Critical',
-        WARNING: 'Warning'
+        WARNING: 'Warning',
+        NOT_APPLICABLE: 'not-applicable'
+    },
+    GETWELL_DISPLAY: {
+        NOT_APPLICABLE: 'Not applicable',
+        UNAVAILABLE: 'Unavailable'
+    },
+    WELL_ARCHITECTED_STATUS: {
+        NOT_APPLICABLE: 'not-applicable',
+        NOT_AVAILABLE: 'not-available'
     },
     ASSESSMENT_METADATA_SOURCE: {
         OFFLINE: 'offline',
@@ -594,6 +608,71 @@ describe('assessmentFormatUtils', () => {
             const result = resolveConfigDisplayName('Thin Provisioning');
             // Since 'Thin Provisioning' isn't a key in CONFIG_NAMES, it returns as-is
             expect(result).toBe('Thin Provisioning');
+        });
+    });
+
+    describe('optimization count exclusions', () => {
+        it('detects not-applicable status in backend and display formats', () => {
+            expect(isNotApplicableStatus('not-applicable')).toBe(true);
+            expect(isNotApplicableStatus('Not applicable')).toBe(true);
+            expect(isNotApplicableStatus('Not optimized')).toBe(false);
+        });
+
+        it('disables fix for not-applicable and unavailable well-architected statuses', () => {
+            expect(isFixDisabledAssessmentStatus('Not applicable')).toBe(true);
+            expect(isFixDisabledAssessmentStatus(GETWELL_DISPLAY.UNAVAILABLE)).toBe(true);
+            expect(isFixDisabledAssessmentStatus('Not optimized')).toBe(false);
+            expect(isFixDisabledAssessmentStatus(undefined)).toBe(true);
+        });
+
+        it('excludes unavailable and not-applicable cards from optimization counts', () => {
+            expect(
+                isExcludedFromOptimizationCountForCard({
+                    block_two: { value: 'Not applicable' },
+                    id: 'thin-provision'
+                })
+            ).toBe(true);
+            expect(
+                isExcludedFromOptimizationCountForCard({
+                    block_two: { value: 'Unavailable' },
+                    id: 'compute-rightsizing',
+                    errorMessage: 'Insufficient metrics'
+                })
+            ).toBe(true);
+            expect(
+                isExcludedFromOptimizationCountForCard({
+                    block_two: { value: 'Not optimized' },
+                    id: 'autosize'
+                })
+            ).toBe(false);
+
+            expect(
+                isExcludedFromOptimizationCountForAssessment({
+                    id: 'thin-provision',
+                    status: 'not-applicable',
+                    severity: 'critical'
+                })
+            ).toBe(true);
+            expect(
+                isExcludedFromOptimizationCountForAssessment({
+                    id: 'thin-provision',
+                    status: 'not-available',
+                    severity: 'critical'
+                })
+            ).toBe(true);
+            expect(
+                isExcludedFromOptimizationCountForAssessment({
+                    id: 'compute-rightsizing',
+                    status: 'not-optimized',
+                    errorMessage: 'CloudWatch is not authorized'
+                })
+            ).toBe(true);
+            expect(
+                isExcludedFromOptimizationCountForAssessment({
+                    id: 'autosize',
+                    severity: 'critical'
+                })
+            ).toBe(true);
         });
     });
 });

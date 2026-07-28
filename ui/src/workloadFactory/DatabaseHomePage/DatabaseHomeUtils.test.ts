@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { getManagedOptimizationSummary, getAssessmentGroupedByCategory } from './DatabaseHomeUtils';
+import {
+    getManagedOptimizationSummary,
+    getAssessmentGroupedByCategory,
+    getAssessmentGroupedByConfigurations
+} from './DatabaseHomeUtils';
 import { buildMssqlAssessment, buildOracleAssessment } from './testHelpers/assessmentTestBuilders';
 
 vi.mock('../../store/store', () => ({
@@ -268,7 +272,7 @@ describe('getManagedOptimizationSummary (configuration-based)', () => {
         expect(result.notOptimizedConfigurations).toBe(1);
     });
 
-    it('skips WAD-excluded Oracle configs (hostOsPatch, crr, oracleSecurityPatch) for isWad instances', () => {
+    it('counts all Oracle configs returned by the API for WAD instances', () => {
         const oracleData = [
             {
                 credentialId: 'cred-1',
@@ -293,13 +297,11 @@ describe('getManagedOptimizationSummary (configuration-based)', () => {
         const result = getManagedOptimizationSummary([], oracleData);
 
         expect(result.totalInstances).toBe(1);
-        // WAD-excluded configs are skipped; remaining flat Oracle storage configs are counted
-        expect(result.totalConfigurations).toBe(4);
-        expect(result.optimizedConfigurations).toBe(4);
-        expect(result.notOptimizedConfigurations).toBe(0);
+        expect(result.totalConfigurations).toBe(7);
+        expect(result.notOptimizedConfigurations).toBe(2);
     });
 
-    it('skips WAD-excluded MSSQL configs for isWad instances', () => {
+    it('counts the same MSSQL configs for WAD and registered instances', () => {
         const wadData = [
             {
                 credentialId: 'cred-1',
@@ -314,7 +316,75 @@ describe('getManagedOptimizationSummary (configuration-based)', () => {
         const wadResult = getManagedOptimizationSummary(wadData, []);
         const normalResult = getManagedOptimizationSummary(normalData, []);
 
-        expect(wadResult.totalConfigurations).toBeLessThan(normalResult.totalConfigurations);
+        expect(wadResult.totalConfigurations).toBe(normalResult.totalConfigurations);
+    });
+
+    it('excludes not-applicable and unavailable configs from not-optimized counts', () => {
+        const allOptimized = getManagedOptimizationSummary(wrapInHost([buildMssqlAssessment()]), []);
+
+        const assessment = buildMssqlAssessment({
+            'thin-provision': { status: 'not-applicable', severity: 'critical' },
+            compute: {
+                status: 'not-optimized',
+                severity: 'warning',
+                errorMessage: 'CloudWatch is not authorized for this account'
+            }
+        });
+        const result = getManagedOptimizationSummary(wrapInHost([assessment]), []);
+
+        expect(result.notOptimizedConfigurations).toBe(0);
+        expect(result.totalConfigurations).toBe(allOptimized.totalConfigurations - 2);
+        expect(result.optimizedPercent).toBe(100);
+    });
+
+    it('excludes not-available account-level configs from not-optimized counts', () => {
+        const assessment = buildMssqlAssessment({
+            'thin-provision': { status: 'not-available', severity: 'critical' },
+            clone: { status: 'not-optimized', severity: 'warning' }
+        });
+        const result = getManagedOptimizationSummary(wrapInHost([assessment]), []);
+
+        expect(result.notOptimizedConfigurations).toBe(1);
+        expect(result.warningConfigurations).toBe(1);
+    });
+
+    it('excludes configs with missing status from not-optimized counts', () => {
+        const assessment = {
+            metadata: { lastAssessmentTimestamp: '1730074791000', deploymentType: 'Standalone' },
+            dismissedConfigurations: [],
+            assessments: [
+                { id: 'autosize', type: 'storage', severity: 'critical' },
+                { id: 'clone-management', type: 'cloning', status: 'not-optimized', severity: 'warning' }
+            ]
+        };
+        const result = getManagedOptimizationSummary(wrapInHost([assessment]), []);
+
+        expect(result.notOptimizedConfigurations).toBe(1);
+        expect(result.warningConfigurations).toBe(1);
+    });
+});
+
+describe('getAssessmentGroupedByConfigurations (inner-page summary)', () => {
+    it('treats missing status as non-scoring for per-config instance counts', () => {
+        const oracleAssessment = {
+            metadata: { lastAssessmentTimestamp: '1730074791000' },
+            dismissedConfigurations: [],
+            assessments: [{ id: 'autosize', type: 'storage', severity: 'critical' }]
+        };
+        const oracleHost = [
+            {
+                credentialId: 'cred-1',
+                regionId: 'us-east-1',
+                databaseHostId: 'host-1',
+                instancesAssessment: [{ databaseInstanceId: 'oradb1', assessments: oracleAssessment }]
+            }
+        ];
+        const grouped = getAssessmentGroupedByConfigurations([], oracleHost);
+        const autosizeStats = grouped.oracleStats.autosize;
+
+        expect(autosizeStats.total).toBe(1);
+        expect(autosizeStats.nonScoring).toBe(1);
+        expect(autosizeStats.optimized).toBe(0);
     });
 });
 
@@ -403,7 +473,8 @@ describe('getAssessmentGroupedByCategory (configuration-based)', () => {
         expect(result.compute.total).toBe(0);
         expect(result.storage.total).toBe(4);
         expect(result.storage.optimized).toBe(3);
-        expect(result.resiliency.total).toBe(0);
+        expect(result.resiliency.total).toBe(1);
+        expect(result.resiliency.optimized).toBe(1);
         expect(result.cloning.total).toBe(0);
     });
 
@@ -440,7 +511,7 @@ describe('getAssessmentGroupedByCategory (configuration-based)', () => {
         expect(result.storage.optimized).toBe(4);
     });
 
-    it('skips WAD-excluded configs in category counts', () => {
+    it('includes all configs returned by the API in category counts for WAD instances', () => {
         const oracleWadData = [
             {
                 credentialId: 'cred-1',
@@ -464,11 +535,8 @@ describe('getAssessmentGroupedByCategory (configuration-based)', () => {
         ];
         const result = getAssessmentGroupedByCategory([], oracleWadData);
 
-        // hostOsPatch, crr, and oracleSecurityPatch are all WAD-excluded
-        expect(result.compute.total).toBe(0);
-        expect(result.resiliency.total).toBe(0);
-        expect(result.application.total).toBe(0);
-        expect(result.application.optimized).toBe(0);
+        expect(result.application.total).toBe(2);
+        expect(result.resiliency.total).toBe(1);
         expect(result.storage.total).toBe(4);
     });
 

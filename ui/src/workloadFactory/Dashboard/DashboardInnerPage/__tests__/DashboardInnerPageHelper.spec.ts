@@ -136,7 +136,15 @@ vi.mock('../../../../utils/consts', () => ({
         NOT_OPTIMIZED: 'Not optimized',
         OPTIMIZED: 'Optimized',
         OVER_PROVISIONED: 'Over provisioned',
-        UNDER_PROVISIONED: 'Under provisioned'
+        UNDER_PROVISIONED: 'Under provisioned',
+        NOT_APPLICABLE: 'not-applicable'
+    },
+    GETWELL_DISPLAY: {
+        NOT_APPLICABLE: 'Not applicable'
+    },
+    WELL_ARCHITECTED_STATUS: {
+        NOT_APPLICABLE: 'not-applicable',
+        NOT_AVAILABLE: 'not-available'
     },
     INVENTORY_STATUS: {
         CASE_SENSITIVE_UP: 'Up',
@@ -147,6 +155,12 @@ vi.mock('../../../../utils/consts', () => ({
     },
     WLF_TABS: {
         DASHBOARD: 'dashboard'
+    }
+}));
+
+vi.mock('../../../../utils/appConstants', () => ({
+    GENERAL: {
+        UNAVAILABLE: 'Unavailable'
     }
 }));
 
@@ -368,8 +382,18 @@ describe('DashboardInnerPageHelper', () => {
             expect(checkSingleRowFix({}, 'Storage tier', rowData)).toBe(true);
         });
 
-        it('returns true when assessmentStatus is NOT_APPLICABLE', () => {
-            const rowData = { databaseHostId: 'host1', status: 'up', assessmentStatus: 'NOT_APPLICABLE' };
+        it('returns true when assessmentStatus is Not applicable display value', () => {
+            const rowData = { databaseHostId: 'host1', status: 'up', assessmentStatus: 'Not applicable' };
+            expect(checkSingleRowFix({}, 'Storage tier', rowData)).toBe(true);
+        });
+
+        it('returns true when assessmentStatus is Unavailable', () => {
+            const rowData = { databaseHostId: 'host1', status: 'up', assessmentStatus: 'Unavailable' };
+            expect(checkSingleRowFix({}, 'Storage tier', rowData)).toBe(true);
+        });
+
+        it('returns true when assessmentStatus is not-applicable backend value', () => {
+            const rowData = { databaseHostId: 'host1', status: 'up', assessmentStatus: 'not-applicable' };
             expect(checkSingleRowFix({}, 'Storage tier', rowData)).toBe(true);
         });
 
@@ -561,7 +585,7 @@ describe('DashboardInnerPageHelper', () => {
         it('returns isFixDisabled=true when all rows have no assessment status', () => {
             const rows = [
                 { assessmentStatus: null, status: 'Up' },
-                { assessmentStatus: 'NOT_APPLICABLE', status: 'Up' }
+                { assessmentStatus: 'Not applicable', status: 'Up' }
             ];
             const result = bulkFixDisableCheck('Storage tier', false, rows, mockT);
             expect(result.isFixDisabled).toBe(true);

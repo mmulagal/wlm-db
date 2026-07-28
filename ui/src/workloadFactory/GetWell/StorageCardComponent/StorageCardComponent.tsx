@@ -106,12 +106,10 @@ const StorageCardComponent = ({
 
     // Function to determine if dismissed style should be applied
     const shouldApplyDismissedStyle = () => {
-        // WAD excluded configs should have disabled/dismissed style
         // Not applicable configs should have disabled/dismissed style
         // If the configuration data is not available, show the disabled/dismissed style
         if (
-            cardData?.isWadExcluded ||
-            cardData?.block_two?.value === GENERAL.UNAVAILABLE ||
+            cardData?.block_two?.value === GETWELL_DISPLAY.UNAVAILABLE ||
             cardData?.block_two?.value === GETWELL_DISPLAY.NOT_APPLICABLE ||
             cardData?.errorMessage ||
             !cardData?.block_four?.value
@@ -125,9 +123,8 @@ const StorageCardComponent = ({
 
     // Function to determine if pointer should be removed (non-clickable)
     const shouldRemoveActivatingPointer = () => {
-        // WAD excluded configs should not be clickable
         // Not applicable configs should not be clickable
-        if (cardData?.isWadExcluded || cardData?.block_two?.value === GETWELL_DISPLAY.NOT_APPLICABLE) {
+        if (cardData?.block_two?.value === GETWELL_DISPLAY.NOT_APPLICABLE) {
             return true;
         }
 
@@ -304,23 +301,6 @@ const StorageCardComponent = ({
             );
         }
 
-        // WAD excluded configurations show Unavailable with tooltip
-        if (cardData?.isWadExcluded) {
-            return (
-                <span className={styles.overProvisioned}>
-                    <span className={styles.tooltipLevel}>
-                        <DsPopover title={t('databases.wad.tab-disabled-message')} trigger="hover" placement="bottom">
-                            <TooltipIcon />
-                        </DsPopover>
-                    </span>
-                    <span style={{ marginLeft: '8px' }}>
-                        <DsTypography variant="Semibold_14" isDisabled>
-                            {t('databases.well-architect.unavailable')}
-                        </DsTypography>
-                    </span>
-                </span>
-            );
-        }
         if (cardData?.dismissedObj?.configState && cardData?.dismissedObj?.configState !== CONFIG_STATES.ACTIVE) {
             // Condition to show n/a if state is not active
             return (
@@ -346,7 +326,7 @@ const StorageCardComponent = ({
                             : 'nowrap'
                 }}
             >
-                {cardData?.block_two?.value && cardData?.block_two?.value !== GENERAL.UNAVAILABLE ? (
+                {cardData?.block_two?.value && cardData?.block_two?.value !== GETWELL_DISPLAY.UNAVAILABLE ? (
                     <>
                         <span
                             className={styles.svgSection}
@@ -358,10 +338,13 @@ const StorageCardComponent = ({
                                         : '8px'
                             }}
                         >
-                            {setImage(cardData?.block_two?.value || GENERAL.UNAVAILABLE)}
+                            {setImage(cardData?.block_two?.value || GETWELL_DISPLAY.UNAVAILABLE)}
                         </span>
-                        <span className={styles.valueSection} title={cardData?.block_two?.value || GENERAL.UNAVAILABLE}>
-                            {cardData?.block_two?.value || GENERAL.UNAVAILABLE}
+                        <span
+                            className={styles.valueSection}
+                            title={cardData?.block_two?.value || GETWELL_DISPLAY.UNAVAILABLE}
+                        >
+                            {cardData?.block_two?.value || GETWELL_DISPLAY.UNAVAILABLE}
                         </span>
                     </>
                 ) : (
@@ -384,7 +367,7 @@ const StorageCardComponent = ({
 
                                 <span style={{ marginLeft: '8px' }}>
                                     <DsTypography variant="Semibold_14" isDisabled={disableText}>
-                                        {GENERAL.UNAVAILABLE}
+                                        {GETWELL_DISPLAY.UNAVAILABLE}
                                     </DsTypography>
                                 </span>
                             </span>
@@ -420,14 +403,6 @@ const StorageCardComponent = ({
                 <div style={{ height: '24px', display: 'flex', alignItems: 'center' }}>
                     <DsFlashingDotsLoader />
                 </div>
-            );
-        }
-        // WAD excluded configurations show n/a
-        if (cardData?.isWadExcluded) {
-            return (
-                <DsTypography variant="Semibold_14" isDisabled>
-                    {t('databases.general.not-available-table-columns')}
-                </DsTypography>
             );
         }
         if (cardData?.block_five?.count) {
@@ -1074,10 +1049,6 @@ const StorageCardComponent = ({
     };
 
     const dismissDisableButton = () => {
-        // Disable dismiss for WAD excluded configurations
-        if (cardData?.isWadExcluded) {
-            return true;
-        }
         if (
             cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
             cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||

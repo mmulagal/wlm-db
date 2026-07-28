@@ -13,7 +13,10 @@ import {
     STATUS_CONST
 } from '../../../utils/consts';
 import { categorizeStateInstances } from '../../DatabaseHomePage/DatabaseHomeUtils';
-import { resolveConfigDisplayName } from '../../WellArchitectedTab/assessmentFormatUtils';
+import {
+    resolveConfigDisplayName,
+    isFixDisabledAssessmentStatus
+} from '../../WellArchitectedTab/assessmentFormatUtils';
 import { updateConfigStateStatus } from '../../GetWell/GetWellUtils';
 import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
 import { updateConfigStateStatusOracle } from '../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
@@ -459,10 +462,7 @@ export const checkSingleRowFix = (inProgressHostData: any, name: string, rowData
         isDisabled = true;
     } else if (rowData?.assessmentStatus && rowData?.assessmentStatus === GETWELL_STATUS.OPTIMIZED) {
         isDisabled = true;
-    } else if (
-        !rowData?.assessmentStatus ||
-        rowData?.assessmentStatus?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase()
-    ) {
+    } else if (isFixDisabledAssessmentStatus(rowData?.assessmentStatus)) {
         isDisabled = true;
     } else if (driveSizeConfigs.includes(name) && isOverProvisionedWithoutUnderProvisioned()) {
         isDisabled = true;
@@ -491,10 +491,7 @@ export const bulkFixDisableCheck = (
         selectedRows.some((row: any) => row?.assessmentStatus !== GETWELL_STATUS.OPTIMIZED);
 
     const checkIfAnyRowNotFound = (selectedRows: any[]) =>
-        selectedRows.every(
-            (row: any) =>
-                !row?.assessmentStatus || row?.assessmentStatus?.toLowerCase() === FINDINGS.NOT_APPLICABLE.toLowerCase()
-        );
+        selectedRows.every((row: any) => isFixDisabledAssessmentStatus(row?.assessmentStatus));
 
     const checkIfAllRowNotOnline = (selectedRows: any[]) =>
         selectedRows.every((row: any) => row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP);
@@ -661,10 +658,11 @@ export const sortOptimizeDashboardInnerTable = (data: any) => {
 export const filterNotOptimizedRows = (data: any[]) =>
     data.filter(
         row =>
-            !row?.isWad && // Exclude WAD (offline assessment) rows
+            !row?.isWad &&
             row?.status === INVENTORY_STATUS.CASE_SENSITIVE_UP &&
             row.assessmentStatus &&
-            row.assessmentStatus !== GETWELL_STATUS.OPTIMIZED
+            row.assessmentStatus !== GETWELL_STATUS.OPTIMIZED &&
+            !isFixDisabledAssessmentStatus(row.assessmentStatus)
     );
 
 // Check if all rowData entries have the same assessment status

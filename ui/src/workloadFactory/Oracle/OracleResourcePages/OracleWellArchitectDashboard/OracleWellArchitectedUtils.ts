@@ -21,7 +21,6 @@ import {
     CONFIG_STATES,
     CONFIG_STATE_ACTIONS,
     DBType,
-    GETWELL_DISPLAY,
     GETWELL_STATUS,
     GETWELL_VALUES,
     isConfigIdMatch,
@@ -45,6 +44,7 @@ import {
     getCurrentDateTime
 } from '../../../../utils/utilityFunctions';
 import { handleOptimizeStorageJob } from '../../../GetWell/GetWellUtils';
+import { isExcludedFromOptimizationCountForCard } from '../../../WellArchitectedTab/assessmentFormatUtils';
 import { createFailedOptimizationMessage, fixingProcessNotification } from './OracleCardComponent/OracleCardComponent';
 import { getOptimizeApiConfig, sortConfigsByPriority } from '../../../../utils/configRegistry';
 
@@ -521,6 +521,10 @@ export const formatOracleOptimizationBreakDown = (
     Object.values(cardsData).forEach((cardItem: any) => {
         if (WA_FLAG_SKIP.includes(cardItem)) {
             return; // Skip WA_FLAG_SKIP as they are not cards
+        }
+
+        if (isExcludedFromOptimizationCountForCard(cardItem)) {
+            return;
         }
 
         if (cardItem?.category === 'storage') {
@@ -1267,17 +1271,4 @@ export const callOptimizeOracleApi = ({
             DBType.ORACLE
         );
     });
-};
-
-/**
- * Helper to check if a status value represents "not applicable" state.
- * Handles both backend key ('not-applicable') and display label ('Not applicable').
- *
- * @param statusValue - The status value to check (from cardData.block_two.value)
- * @returns true if the status is not-applicable in either format
- */
-export const isNotApplicableStatus = (statusValue: string | undefined): boolean => {
-    if (!statusValue) return false;
-    // Check both backend format and display format for backwards compatibility
-    return statusValue === GETWELL_STATUS.NOT_APPLICABLE || statusValue === GETWELL_DISPLAY.NOT_APPLICABLE;
 };

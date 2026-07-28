@@ -13,8 +13,6 @@ import {
     INVENTORY_STATUS,
     ORACLE_DATABASES_COMPONENTS,
     STATUS_CONST,
-    WAD_EXCLUDED_FLAT_CONFIG_IDS_MSSQL,
-    WAD_EXCLUDED_FLAT_CONFIG_IDS_ORACLE,
     WellArchitectedCategory,
     ASSESSMENT_CONFIG_CATALOG_KEYS,
     ASSESSMENT_GROUPED_CONFIG_KEYS,
@@ -37,7 +35,8 @@ import {
 import {
     getAssessmentItems,
     getDismissedConfig,
-    hasAssessmentTimestamp
+    hasAssessmentTimestamp,
+    isExcludedFromOptimizationCountForAssessment
 } from '../WellArchitectedTab/assessmentFormatUtils';
 import { getCategoryPriority } from '../../utils/configRegistry';
 
@@ -736,7 +735,6 @@ const countSingleConfig = (
 
 /**
  * Counts all individual flat-format assessment configs for an instance into the provided counters.
- * Respects WAD exclusion lists and tracks per-category counts.
  */
 const countInstanceAssessmentConfigs = (
     instanceAssessment: any,
@@ -744,12 +742,9 @@ const countInstanceAssessmentConfigs = (
     isWad: boolean,
     dbType: string
 ) => {
-    const excludedIds =
-        dbType === DBType.ORACLE ? WAD_EXCLUDED_FLAT_CONFIG_IDS_ORACLE : WAD_EXCLUDED_FLAT_CONFIG_IDS_MSSQL;
-
     getAssessmentItems(instanceAssessment).forEach(item => {
         const configId = item.id;
-        if (!configId || (isWad && excludedIds.has(configId))) {
+        if (!configId || isExcludedFromOptimizationCountForAssessment(item)) {
             return;
         }
 
@@ -1094,6 +1089,7 @@ const ensureConfigStatsBucket = (result: Record<string, any>, configId: string) 
             optimized: 0,
             dismissed: 0,
             activating: 0,
+            nonScoring: 0,
             total: 0
         };
     }
@@ -1105,8 +1101,6 @@ const processInstanceForGroupedConfigs = (
     dbType: string,
     isWad: boolean
 ) => {
-    const excludedIds =
-        dbType === DBType.ORACLE ? WAD_EXCLUDED_FLAT_CONFIG_IDS_ORACLE : WAD_EXCLUDED_FLAT_CONFIG_IDS_MSSQL;
     const configIdsKey =
         dbType === DBType.ORACLE
             ? ASSESSMENT_GROUPED_CONFIG_KEYS.CONFIG_IDS.ORACLE
@@ -1143,23 +1137,22 @@ const processInstanceForGroupedConfigs = (
         if (!configId) {
             return;
         }
-        // WAD-excluded configs are still present in the flat assessment with n/a status.
-        // Count them in the total but never as optimized so they appear as "not optimized".
-        const isWadExcluded = isWad && excludedIds.has(configId);
-
         ensureConfigStatsBucket(statsMap, configId);
         statsMap[configId].total += 1;
 
         const dismissState = getDismissedConfig(instanceAssessment, configId)?.configState;
         setConfigState(configStateMap, configId, dismissState ?? '');
 
-        if (!isWadExcluded && isOptimizedDashInner(item.status, dismissState)) {
+        const isNonScoring = isExcludedFromOptimizationCountForAssessment(item);
+        if (isNonScoring) {
+            statsMap[configId].nonScoring += 1;
+        } else if (isOptimizedDashInner(item.status, dismissState)) {
             statsMap[configId].optimized += 1;
         }
-        if (isDismissed(dismissState)) {
+        if (!isNonScoring && isDismissed(dismissState)) {
             statsMap[configId].dismissed += 1;
         }
-        if (isActivating(dismissState)) {
+        if (!isNonScoring && isActivating(dismissState)) {
             statsMap[configId].activating += 1;
         }
 
