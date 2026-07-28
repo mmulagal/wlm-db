@@ -3,10 +3,12 @@ import { Ec2FsxRelationship, Ec2WithStorage } from '../cloud-manager/tagging-ser
 import { trackSubtask } from '../cloud-manager/tracker-operations';
 import {
     buildOntapProxyBase,
+    collectAllOntapRecords,
     collectOntapRecordsBatched,
     unwrapOntapSettled,
     OntapLunRecord,
-    OntapVolumeRecord
+    OntapVolumeRecord,
+    ProxyOperationBaseOpts
 } from '../../lib/ontap/ontap-gateway';
 import { StorageAssessment as MssqlStorageAssessment } from '../../utils/common-types';
 import { StorageAssessment as OracleStorageAssessment } from './oracle/common-types';
@@ -31,7 +33,8 @@ const VOLUME_FIELDS =
 const LUN_FIELDS = 'name,uuid,os_type,space.guarantee.requested,space.scsi_thin_provisioning_support_enabled';
 
 interface OntapSnapshotRecord {
-    volume?: { uuid?: string };
+    uuid?: string;
+    comment?: string;
 }
 
 interface WadSnapcenterVolumeResult {
@@ -154,17 +157,19 @@ function buildWadSnapcenterData(
     inventory: FsxOntapInventory
 ): WadSnapcenterData {
     const { volumeUuids } = getAttachedUuids(ec2, fileSystemId);
-    const volumes: WadSnapcenterVolumeResult[] = [...volumeUuids].map(uuid => {
-        const { name = '', svm } = inventory.volumesByUuid[uuid] ?? {};
-        return {
-            svmId: svm?.uuid ?? '',
-            svmName: svm?.name ?? '',
-            volumeId: uuid,
-            volumeName: name,
-            hasSnapcenterSnapshot: inventory.snapcenterProtectedVolumeUuids.has(uuid),
-            foundInSnapcenterLogs: false
-        };
-    });
+    const volumes: WadSnapcenterVolumeResult[] = [...volumeUuids]
+        .filter(uuid => inventory.volumesByUuid[uuid])
+        .map(uuid => {
+            const { name = '', svm } = inventory.volumesByUuid[uuid] ?? {};
+            return {
+                svmId: svm?.uuid ?? '',
+                svmName: svm?.name ?? '',
+                volumeId: uuid,
+                volumeName: name,
+                hasSnapcenterSnapshot: inventory.snapcenterProtectedVolumeUuids.has(uuid),
+                foundInSnapcenterLogs: false
+            };
+        });
     return {
         volumes,
         standaloneCheck: { pluginServiceRunning: false, sidFoundInLogs: false },
@@ -179,6 +184,36 @@ function getAttachedUuids(ec2: Ec2WithStorage, fileSystemId: string) {
         volumeUuids: new Set(volumes.map(v => v.volumeUuid)),
         lunUuids: new Set(volumes.flatMap(({ luns }) => luns.map(l => l.lunUuid)))
     };
+}
+
+async function collectVolumeSnapshots(base: ProxyOperationBaseOpts, volumeUuids: string[]) {
+    logger.info('FSx: collecting volume snapshots', { volumeUuids });
+    if (volumeUuids.length === 0) {
+        return [];
+    }
+
+    const settled = await Promise.allSettled(
+        volumeUuids.map(
+            throat(3, uuid =>
+                collectAllOntapRecords<OntapSnapshotRecord>(base, `api/storage/volumes/${uuid}/snapshots`, {
+                    comment: 'creator=snapcenter',
+                    max_records: 1
+                }).then(records => ({ uuid, hasSnapshots: records.length > 0 }))
+            )
+        )
+    );
+
+    return settled.flatMap((result, i) => {
+        if (result.status === 'fulfilled') {
+            return result.value.hasSnapshots ? [result.value.uuid] : [];
+        }
+        logger.warn('Failed to fetch ONTAP snapshots for volume, skipping', {
+            targetId: base.targetId,
+            volumeUuid: volumeUuids[i],
+            err: result.reason
+        });
+        return [];
+    });
 }
 
 async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Promise<FsxOntapInventory> {
@@ -212,15 +247,7 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
         collectOntapRecordsBatched<OntapAggregateRecord>(base, 'api/storage/aggregates', 'uuid', [], {
             fields: AGGREGATE_FIELDS
         }),
-        volumeUuids.length === 0
-            ? Promise.resolve<OntapSnapshotRecord[]>([])
-            : collectOntapRecordsBatched<OntapSnapshotRecord>(
-                  base,
-                  'api/storage/volumes/*/snapshots',
-                  'volume.uuid',
-                  volumeUuids,
-                  { comment: 'creator%3Dsnapcenter', fields: 'volume' }
-              )
+        collectVolumeSnapshots(base, volumeUuids)
     ]);
 
     const { data: volumes, error: volumesError } = unwrapOntapSettled(volumesRes, 'volumes', fileSystemId);
@@ -231,7 +258,7 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
         fileSystemId
     );
     const { data: aggregates, error: aggregatesError } = unwrapOntapSettled(aggregatesRes, 'aggregates', fileSystemId);
-    const { data: snapshots, error: snapshotsError } = unwrapOntapSettled(
+    const { data: snapcenterProtectedVolumeUuids, error: snapshotsError } = unwrapOntapSettled(
         snapshotsRes,
         'SnapCenter snapshots',
         fileSystemId
@@ -241,16 +268,12 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
         logger.debug('FSx: fetched aggregates', { fileSystemId, aggregateCount: aggregates.length });
     }
 
-    const snapcenterProtectedVolumeUuids = new Set(
-        snapshots.map(s => s.volume?.uuid).filter((uuid): uuid is string => Boolean(uuid))
-    );
-
     return {
         fileSystemId,
         volumesByUuid: Object.fromEntries(volumes.map(v => [v.uuid, v])),
         lunsByUuid: Object.fromEntries(luns.map(l => [l.uuid, l])),
         spaceMgmtTryFirstByName: Object.fromEntries(privateCli.map(p => [p.volume, p.space_mgmt_try_first])),
-        snapcenterProtectedVolumeUuids,
+        snapcenterProtectedVolumeUuids: new Set(snapcenterProtectedVolumeUuids),
         headroomData: computeHeadroomData(aggregates),
         errors: {
             volumes: volumesError,
