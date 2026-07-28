@@ -782,6 +782,23 @@ Write-Log "StorageManagementAddress: $StorageManagementAddress"
 Write-Log "SqlInstanceName: $SqlInstanceName"
 Write-Log "=========================================="
 
+# ========================================
+# Prerequisite Check: sqlcmd utility
+# ========================================
+Write-Log "Checking for required prerequisite: sqlcmd utility..."
+$sqlcmdCommand = Get-Command -Name "sqlcmd" -ErrorAction SilentlyContinue
+if (-not $sqlcmdCommand) {
+    $errorMessage = "Prerequisite check failed: 'sqlcmd' utility was not found on this host. " +
+        "The MSSQL assessment script requires sqlcmd to connect to and query the SQL Server instance. " +
+        "Install the SQL Server Command Line Utilities (sqlcmd) by running 'winget install sqlcmd' " +
+        "or downloading the 'Microsoft Command Line Utilities for SQL Server' package from " +
+        "https://learn.microsoft.com/sql/tools/sqlcmd/sqlcmd-utility, ensure the installation path is " +
+        "added to the system PATH environment variable, then re-run this script."
+    Write-Log -Level "ERROR" -Message $errorMessage
+    throw $errorMessage
+}
+Write-Log "sqlcmd utility found at: $($sqlcmdCommand.Source)"
+
 # Initialize script-level global variable for FCI name
 $script:FciName = ''
 
