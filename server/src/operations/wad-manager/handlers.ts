@@ -33,21 +33,34 @@ const logger = getLogger();
  * entries with the same (configurationId + parentResource.id) causes a full overwrite of the
  * earlier entry. Merge all resources under a single entry per key before publishing to avoid
  * silently losing data.
+ *
+ * Within a merged entry, the same underlying resource can be reported more than once (e.g. an
+ * EC2 shared across scan pairs, or a resource re-scanned for the same workload). Dedupe on
+ * (filesystemId, configurationId, workloadType, resourceId) so each resource appears once.
  */
 function mergeConfigurations(configs: WadConfigurationEntry[]): WadConfigurationEntry[] {
-    const map = new Map<string, WadConfigurationEntry>();
+    const merged = new Map<string, { entry: WadConfigurationEntry; resourceKeys: Set<string> }>();
+
     for (const entry of configs) {
-        const key = `${entry.parentResource.accountId}:${entry.parentResource.credentialsIds.join(',')}:${
+        const entryKey = `${entry.parentResource.accountId}:${entry.parentResource.credentialsIds.join(',')}:${
             entry.parentResource.region
         }:${entry.parentResource.id}:${entry.configurationId}`;
-        const existing = map.get(key);
-        if (existing) {
-            existing.resources.push(...entry.resources);
-        } else {
-            map.set(key, { ...entry, resources: [...entry.resources] });
+
+        if (!merged.has(entryKey)) {
+            merged.set(entryKey, { entry: { ...entry, resources: [] }, resourceKeys: new Set() });
+        }
+        const { entry: mergedEntry, resourceKeys } = merged.get(entryKey)!;
+
+        for (const resourceEntry of entry.resources) {
+            const resourceKey = `${resourceEntry.resource.metadata?.workload ?? ''}:${resourceEntry.resource.id}`;
+            if (!resourceKeys.has(resourceKey)) {
+                resourceKeys.add(resourceKey);
+                mergedEntry.resources.push(resourceEntry);
+            }
         }
     }
-    return [...map.values()];
+
+    return [...merged.values()].map(({ entry }) => entry);
 }
 
 type WorkloadScanFn = (
@@ -64,11 +77,6 @@ const WORKLOAD_SCAN_FNS: Record<string, WorkloadScanFn> = {
         getOracleStorageResourceScan(ctx, storageAssessment as OracleStorageAssessment, headroomData, snapcenterData)
 };
 
-/**
- * Handles an inbound ScanRequestMessage from WAD Manager.
- * For each credentialsId × region pair, discovers FSx filesystems via callWlmHosts,
- * collects ONTAP inventory, and publishes per-(parentResource × configurationId) results.
- */
 async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
     const {
         taskId,
@@ -150,11 +158,7 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
             pairs.map(({ credentialsId, region }) =>
                 throat(3, async () => {
                     const relationship = await buildEc2FsxRelationship(accountId, credentialsId, region);
-                    const allAssessments = await collectOntapAssessmentData(accountId, relationship, scanTaskId);
-                    // One scan per filesystem+workload, even if multiple EC2s share the same FSx.
-                    const storageAssessments = [
-                        ...new Map(allAssessments.map(a => [`${a.fileSystemId}:${a.workloadType}`, a])).values()
-                    ];
+                    const storageAssessments = await collectOntapAssessmentData(accountId, relationship, scanTaskId);
                     const pairConfigs: WadConfigurationEntry[] = [];
 
                     for (const {
