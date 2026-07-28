@@ -127,7 +127,7 @@ describe('handlers — tracker wiring', () => {
                         accountId,
                         parentTaskId!,
                         {
-                            actionName: 'Fetch ONTAP inventory for fs-001',
+                            actionName: 'Databases well-architected analysis for FSx for ONTAP file system',
                             resourceId: 'fs-001',
                             resourceName: 'fs-001'
                         },
@@ -164,13 +164,16 @@ describe('handlers — tracker wiring', () => {
             });
             const bodies = getCapturedTrackerRequests().map(({ body }) => body);
             expect(
-                bodies.find(({ task }) => task.actionName === 'Manual well-architected analysis')?.task
+                bodies.find(({ task }) => task.actionName === 'Manual well-architected analysis for databases')?.task
             ).toMatchObject({
                 parentTaskId: 'root-001',
                 resourceId: 'account-001'
             });
             expect(
-                bodies.find(({ task }) => task.actionName === 'Fetch ONTAP inventory for fs-001')?.task
+                bodies.find(
+                    ({ task }) =>
+                        task.actionName === 'Databases well-architected analysis for FSx for ONTAP file system'
+                )?.task
             ).toMatchObject({
                 parentTaskId: 'parent-001',
                 resourceId: 'fs-001',
@@ -192,7 +195,7 @@ describe('handlers — tracker wiring', () => {
                         accountId,
                         parentTaskId!,
                         {
-                            actionName: 'Fetch ONTAP inventory for fs-001',
+                            actionName: 'Databases well-architected analysis for FSx for ONTAP file system',
                             resourceId: 'fs-001',
                             resourceName: 'fs-001'
                         },
@@ -229,6 +232,43 @@ describe('handlers — tracker wiring', () => {
 
             const statusMessages = getPublishedMessages(WAD_SCAN_STATUS_QUEUE).map(b => JSON.parse(b.toString()));
             expect(statusMessages.find(m => m.status === TaskStatus.FAILED)).toBeDefined();
+        });
+
+        it('should create and complete tracker tasks for a simulated scan request', async () => {
+            queueTrackerCreateIds('sim-scan-001');
+
+            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
+            await startWadSubscriber();
+
+            const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
+            await handler(
+                Buffer.from(
+                    JSON.stringify(
+                        makeScanRequest({
+                            accountId: 'account-sim-scan',
+                            isSimulated: true,
+                            trackerParentTaskId: 'root-sim-001'
+                        })
+                    )
+                ),
+                vi.fn(),
+                vi.fn()
+            );
+
+            await vi.waitFor(() => {
+                const requests = getCapturedTrackerRequests().filter(
+                    ({ accountId }) => accountId === 'account-sim-scan'
+                );
+                expect(requests).toHaveLength(2);
+            });
+            const bodies = getCapturedTrackerRequests()
+                .filter(({ accountId }) => accountId === 'account-sim-scan')
+                .map(({ body }) => body.task);
+            expect(bodies.find(task => task.id === undefined)).toMatchObject({ parentTaskId: 'root-sim-001' });
+            expect(bodies.find(task => task.id === 'sim-scan-001')).toMatchObject({ status: 'success' });
+
+            const statusMessages = getPublishedMessages(WAD_SCAN_STATUS_QUEUE).map(b => JSON.parse(b.toString()));
+            expect(statusMessages.find(m => m.status === TaskStatus.COMPLETED)).toBeDefined();
         });
 
         it('should publish successful FSx configurations when a sibling pair assessment fails', async () => {
@@ -329,7 +369,7 @@ describe('handlers — tracker wiring', () => {
             );
             const bodies = getCapturedTrackerRequests().map(({ body }) => body);
             const fixTask = bodies.find(
-                ({ task }) => task.actionName === 'Well-architected fix for wlmdb-storage-tiering'
+                ({ task }) => task.actionName === 'Databases well-architected fix for wlmdb-storage-tiering'
             );
             expect(fixTask?.task.parentTaskId).toBe('root-002');
             expect(fixTask?.task.actionDescription).toBe('Fixing 1 resource(s)');
@@ -377,6 +417,43 @@ describe('handlers — tracker wiring', () => {
 
             const fixStatuses = getPublishedMessages(WAD_FIX_STATUS_QUEUE).map(b => JSON.parse(b.toString()));
             expect(fixStatuses.length).toBeGreaterThanOrEqual(1);
+        });
+
+        it('should create and complete a tracker task for a simulated fix request', async () => {
+            queueTrackerCreateIds('sim-fix-001');
+
+            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
+            await startWadSubscriber();
+
+            const handler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE)!;
+            await handler(
+                Buffer.from(
+                    JSON.stringify(
+                        makeFixRequest({
+                            accountId: 'account-sim-fix',
+                            isSimulated: true,
+                            trackerParentTaskId: 'root-sim-002'
+                        })
+                    )
+                ),
+                vi.fn(),
+                vi.fn()
+            );
+
+            await vi.waitFor(() => {
+                const requests = getCapturedTrackerRequests().filter(
+                    ({ accountId }) => accountId === 'account-sim-fix'
+                );
+                expect(requests).toHaveLength(2);
+            });
+            const bodies = getCapturedTrackerRequests()
+                .filter(({ accountId }) => accountId === 'account-sim-fix')
+                .map(({ body }) => body.task);
+            expect(bodies.find(task => task.id === undefined)).toMatchObject({ parentTaskId: 'root-sim-002' });
+            expect(bodies.find(task => task.id === 'sim-fix-001')).toMatchObject({ status: 'success' });
+
+            const fixStatuses = getPublishedMessages(WAD_FIX_STATUS_QUEUE).map(b => JSON.parse(b.toString()));
+            expect(fixStatuses.find(m => m.status === TaskStatus.COMPLETED)).toBeDefined();
         });
 
         it('should complete the fix and publish WAD messages even when tracker HTTP calls fail', async () => {

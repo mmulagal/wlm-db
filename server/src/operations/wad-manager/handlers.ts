@@ -10,6 +10,7 @@ import {
     WadScanContext,
     WadScanResultRecord
 } from '../../utils/wad-consts';
+import { buildSimulatedWadScanConfigurations } from '../../utils/demo-utils/demoMockdata';
 import { createTrackerTask, getTrackerTask, updateTrackerTaskStatus } from '../../lib/cloud-manager/tracker';
 import { publishFixResult, publishFixStatus, publishScanResult, publishScanStatus } from './publishers';
 import { buildEc2FsxRelationship } from '../cloud-manager/tagging-service-operations';
@@ -77,14 +78,55 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
         credentialsIds,
         configurationIds,
         triggerMode,
-        trackerParentTaskId
+        trackerParentTaskId,
+        isSimulated
     } = req;
     const baseStatus = { taskId, requestId, accountId, serviceId: WAD_SERVICE_ID };
 
     const actionName =
-        triggerMode === ScanTrigger.MANUAL ? 'Manual well-architected analysis' : 'Scheduled well-architected analysis';
+        triggerMode === ScanTrigger.MANUAL
+            ? 'Manual well-architected analysis for databases'
+            : 'Scheduled well-architected analysis for Databases';
 
-    logger.info('WAD: handling scan request', { taskId, accountId, regions, credentialsIds, configurationIds });
+    logger.info('WAD: handling scan request', {
+        taskId,
+        accountId,
+        regions,
+        credentialsIds,
+        configurationIds,
+        triggerMode,
+        isSimulated
+    });
+
+    if (isSimulated) {
+        logger.info('WAD: handling simulated scan request', {
+            taskId,
+            accountId,
+            regions,
+            credentialsIds,
+            configurationIds
+        });
+        const scanTask = trackerParentTaskId
+            ? await createTrackerTask(accountId, {
+                  parentTaskId: trackerParentTaskId,
+                  status: TrackerTaskStatus.PENDING,
+                  actionName,
+                  resourceId: accountId,
+                  resourceName: accountId
+              })
+            : undefined;
+        const configurations = buildSimulatedWadScanConfigurations(req);
+        if (configurations.length > 0) {
+            publishScanResult({
+                ...baseStatus,
+                completedAt: Date.now(),
+                configurations
+            });
+        }
+        publishScanStatus({ ...baseStatus, updatedAt: Date.now(), status: TaskStatus.COMPLETED });
+        updateTrackerTaskStatus(accountId, scanTask?.id ?? '', { status: TrackerTaskStatus.SUCCESS });
+        return;
+    }
 
     const scanTask = trackerParentTaskId
         ? await createTrackerTask(accountId, {
@@ -203,7 +245,17 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
  * Applies per-resource fix logic then publishes result + final status.
  */
 async function handleFixRequest(req: FixRequestMessage): Promise<void> {
-    const { taskId, requestId, accountId, configurationId, parentResource, resourceIds, trackerParentTaskId } = req;
+    const {
+        taskId,
+        requestId,
+        accountId,
+        configurationId,
+        parentResource,
+        resourceIds,
+        trackerParentTaskId,
+        isSimulated,
+        metadata
+    } = req;
     const baseResult = {
         taskId,
         requestId,
@@ -213,7 +265,34 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
         parentResourceId: parentResource.id
     };
 
-    logger.info('WAD: handling fix request', { taskId, configurationId, resourceCount: resourceIds.length });
+    logger.info('WAD: handling fix request', {
+        taskId,
+        configurationId,
+        resourceCount: resourceIds?.length,
+        isSimulated
+    });
+    const actionName = `Databases well-architected fix for ${configurationId}`;
+    const actionDescription = `Fixing ${resourceIds?.length} resource(s)`;
+    if (req.isSimulated) {
+        const fixTask = trackerParentTaskId
+            ? await createTrackerTask(accountId, {
+                  parentTaskId: trackerParentTaskId,
+                  status: TrackerTaskStatus.PENDING,
+                  actionName,
+                  actionDescription,
+                  resourceId: resourceIds.join(','),
+                  resourceName: resourceIds.join(',')
+              })
+            : undefined;
+        publishFixResult({
+            ...baseResult,
+            resourceResults: (resourceIds ?? []).map(resourceId => ({ resourceId, success: true })),
+            reportedAt: Date.now()
+        });
+        publishFixStatus({ ...baseResult, updatedAt: Date.now(), status: TaskStatus.COMPLETED });
+        updateTrackerTaskStatus(accountId, fixTask?.id ?? '', { status: TrackerTaskStatus.SUCCESS });
+        return;
+    }
 
     const { status: existingStatus } =
         (trackerParentTaskId ? await getTrackerTask(accountId, trackerParentTaskId) : undefined) ?? {};
@@ -231,8 +310,8 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
     const fixTask = await createTrackerTask(accountId, {
         parentTaskId: trackerParentTaskId,
         status: TrackerTaskStatus.PENDING,
-        actionName: `Well-architected fix for ${configurationId}`,
-        actionDescription: `Fixing ${resourceIds.length} resource(s)`,
+        actionName,
+        actionDescription,
         resourceId: resourceIds.join(','),
         resourceName: resourceIds.join(',')
     });
@@ -244,10 +323,10 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
             accountId,
             fsxId: parentResource.id,
             region: parentResource.region,
-            svmName: (req.metadata?.svmName as string | undefined) ?? '',
+            svmName: (metadata?.svmName as string | undefined) ?? '',
             configurationId: configurationId.replace(`${WAD_SERVICE_ID}-`, ''),
             resourceIds,
-            value: req.metadata?.value as string | undefined
+            value: metadata?.value as string | undefined
         });
 
         publishFixResult({ ...baseResult, resourceResults, reportedAt: Date.now() });

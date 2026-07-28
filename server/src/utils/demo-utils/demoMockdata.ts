@@ -28,6 +28,12 @@ import {
     SEVERITY
 } from '../continous-optimization-consts';
 import {
+    ResourceOptimizationStatus,
+    ScanRequestMessage,
+    WadConfigurationEntry,
+    WAD_FILESYSTEM_RESOURCE_TYPE
+} from '../wad-consts';
+import {
     createDatabaseInstanceConfigData,
     listDatabaseInstanceConfigData
 } from '../../lib/database/database-instance-config';
@@ -3399,6 +3405,223 @@ const DEMO_REGISTER_RESPONSE = {
 };
 
 const demoFsxId = 'fs-0d5efc3057c4f12cb';
+const SIMULATED_WAD_SVM_NAME = 'wlmdb_sqlsvm_1735809893269';
+const SIMULATED_MSSQL_VOLUME = { id: 'a6b1c2d3-4768-11f1-b4d1-93fa8828fb10', name: 'wlmdb_sqldata_1735809893269' };
+const SIMULATED_MSSQL_LUN_PATH = '/vol/wlmdb_sqldata_1735809893269/sqldata';
+const SIMULATED_ORACLE_VOLUME = { id: 'e5f6a7b8-4767-11f1-b4d1-93fa8828fb10', name: 'wlmdb_oradata_1735809893269' };
+const SIMULATED_ORACLE_LUN_PATH = '/vol/wlmdb_oradata_1735809893269/lun1';
+
+// Each configuration returns only the Volume/Lun resources it assesses.
+const SIMULATED_WAD_RESOURCES_BY_CONFIG: Record<string, WadConfigurationEntry['resources']> = {
+    'wlmdb-thin-provision': [
+        {
+            resource: {
+                id: SIMULATED_MSSQL_VOLUME.id,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                name: SIMULATED_MSSQL_VOLUME.name,
+                metadata: {
+                    workload: 'mssql',
+                    components: [
+                        { parameter: 'thin-provision', current: 'enabled', recommended: 'enabled', status: 'optimized' }
+                    ],
+                    svmName: SIMULATED_WAD_SVM_NAME
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        },
+        {
+            resource: {
+                id: SIMULATED_ORACLE_VOLUME.id,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                name: SIMULATED_ORACLE_VOLUME.name,
+                metadata: {
+                    workload: 'oracle',
+                    components: [
+                        { parameter: 'thin-provision', current: 'enabled', recommended: 'enabled', status: 'optimized' }
+                    ],
+                    svmName: SIMULATED_WAD_SVM_NAME
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        }
+    ],
+    'wlmdb-os-type': [
+        {
+            resource: {
+                id: '',
+                type: ASSESSMENT_RESOURCE_TYPE.LUN,
+                name: SIMULATED_MSSQL_LUN_PATH,
+                metadata: {
+                    workload: 'mssql',
+                    components: [
+                        {
+                            parameter: 'os-type',
+                            current: 'windows_2008',
+                            recommended: 'windows_2008',
+                            status: 'optimized'
+                        }
+                    ]
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        }
+    ],
+    'wlmdb-block-device-space-management': [
+        {
+            resource: {
+                id: SIMULATED_MSSQL_LUN_PATH,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME_OR_LUN,
+                name: SIMULATED_MSSQL_LUN_PATH,
+                metadata: {
+                    workload: 'mssql',
+                    components: [
+                        {
+                            parameter: 'space-reservation-enabled',
+                            current: 'true',
+                            recommended: 'true',
+                            status: 'optimized'
+                        },
+                        {
+                            parameter: 'space-allocation-allocated',
+                            current: 'true',
+                            recommended: 'true',
+                            status: 'optimized'
+                        }
+                    ]
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        },
+        {
+            resource: {
+                id: SIMULATED_MSSQL_VOLUME.id,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME_OR_LUN,
+                name: SIMULATED_MSSQL_VOLUME.name,
+                metadata: {
+                    workload: 'mssql',
+                    components: [
+                        { parameter: 'fractional-reserve', current: '0', recommended: '0', status: 'optimized' }
+                    ],
+                    svmName: SIMULATED_WAD_SVM_NAME
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        },
+        {
+            resource: {
+                id: SIMULATED_ORACLE_LUN_PATH,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME_OR_LUN,
+                name: SIMULATED_ORACLE_LUN_PATH,
+                metadata: {
+                    workload: 'oracle',
+                    components: [
+                        {
+                            parameter: 'space-reservation-enabled',
+                            current: 'true',
+                            recommended: 'true',
+                            status: 'optimized'
+                        },
+                        {
+                            parameter: 'space-allocation-allocated',
+                            current: 'true',
+                            recommended: 'true',
+                            status: 'optimized'
+                        }
+                    ]
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        },
+        {
+            resource: {
+                id: SIMULATED_ORACLE_VOLUME.id,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME_OR_LUN,
+                name: SIMULATED_ORACLE_VOLUME.name,
+                metadata: {
+                    workload: 'oracle',
+                    components: [
+                        { parameter: 'fractional-reserve', current: '0', recommended: '0', status: 'optimized' }
+                    ],
+                    svmName: SIMULATED_WAD_SVM_NAME
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        }
+    ],
+    'wlmdb-snapcenter-snapshot': [
+        {
+            resource: {
+                id: SIMULATED_MSSQL_VOLUME.id,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                name: SIMULATED_MSSQL_VOLUME.name,
+                metadata: {
+                    workload: 'mssql',
+                    components: [
+                        {
+                            parameter: 'snapcenter-protection',
+                            current: 'configured',
+                            recommended: 'configured',
+                            status: 'optimized'
+                        }
+                    ],
+                    svmName: SIMULATED_WAD_SVM_NAME
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        },
+        {
+            resource: {
+                id: SIMULATED_ORACLE_VOLUME.id,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                name: SIMULATED_ORACLE_VOLUME.name,
+                metadata: {
+                    workload: 'oracle',
+                    components: [
+                        {
+                            parameter: 'snapcenter-protection',
+                            current: 'configured',
+                            recommended: 'configured',
+                            status: 'optimized'
+                        }
+                    ],
+                    svmName: SIMULATED_WAD_SVM_NAME
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        }
+    ]
+};
+
+function buildSimulatedWadScanConfigurations(req: ScanRequestMessage): WadConfigurationEntry[] {
+    logger.info('Building simulated wad scan configurations', { req });
+    const {
+        accountId,
+        regions: [region],
+        credentialsIds,
+        configurationIds
+    } = req;
+    return (configurationIds ?? Object.keys(SIMULATED_WAD_RESOURCES_BY_CONFIG))
+        .map(configurationId => {
+            const resources = SIMULATED_WAD_RESOURCES_BY_CONFIG[configurationId];
+            if (!resources) {
+                logger.warn('No simulated wad resources found for configuration', { configurationId });
+                return undefined;
+            }
+            return {
+                configurationId,
+                parentResource: {
+                    id: demoFsxId,
+                    name: demoFsxId,
+                    type: WAD_FILESYSTEM_RESOURCE_TYPE,
+                    accountId,
+                    region,
+                    credentialsIds
+                },
+                resources
+            };
+        })
+        .filter((entry): entry is WadConfigurationEntry => entry !== undefined);
+}
 
 const MAPPED_ONTAP_VOLUMES_DATA = {
     SQL1: {
@@ -6894,8 +7117,8 @@ function buildOracleSecurityPatchAssessmentData(databaseInstanceName: string) {
         id: 'oracle-security-patch',
         name: 'Oracle critical security patch',
         categories: [AwsWellArchitecturedPillars.SECURITY, AwsWellArchitecturedPillars.RELIABILITY],
-        type: 'compute',
-        subType: 'compute',
+        type: 'application',
+        subType: 'application',
         focusWidgetName: 'Oracle security patch',
         severity: SEVERITY.CRITICAL,
         resourceType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
@@ -7174,6 +7397,7 @@ export {
     offlineAssessmentDemoOracleISCSI,
     DEMO_REGISTER_RESPONSE,
     demoFsxId,
+    buildSimulatedWadScanConfigurations,
     ASSESMENT_CONFIG_DATA,
     ASSESSMENT_CRR_CONFIG_DATA,
     MSSQL_ASSESSMENT_CRR_CONFIG_DATA,

@@ -457,7 +457,7 @@ async function collectOntapAssessmentData(
                           accountId,
                           parentTaskId,
                           {
-                              actionName: `Fetch ONTAP inventory for ${query.fileSystemId}`,
+                              actionName: 'Databases well-architected analysis for FSx for ONTAP file system',
                               resourceId: query.fileSystemId,
                               resourceName: query.fileSystemId
                           },
