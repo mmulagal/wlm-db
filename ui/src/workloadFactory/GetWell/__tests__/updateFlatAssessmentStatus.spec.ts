@@ -130,6 +130,34 @@ describe('updateFlatAssessmentStatus', () => {
         expect(updatedItem.status).toBe('optimized');
     });
 
+    it('resets totalObjectsInViolation and objectsInViolation to 0/[] when marking as optimized', () => {
+        const dispatch = vi.fn();
+        mockGetState.mockReturnValue({
+            inventoryV2: {
+                allmssqlHostAssessmentData: makeHostData([
+                    {
+                        id: 'maxdop',
+                        status: 'not-optimized',
+                        totalObjectsInViolation: 3,
+                        totalObjectsAssessed: 3,
+                        objectsInViolation: ['vol1', 'vol2', 'vol3']
+                    }
+                ])
+            },
+            getWellOptimize: {}
+        });
+
+        updateFlatAssessmentStatus(baseRow, dispatch, DBType.MSSQL);
+
+        const { payload } = dispatch.mock.calls[0][0];
+        const updatedItem = payload[0].instancesAssessment[0].assessments.assessments[0];
+        expect(updatedItem.status).toBe('optimized');
+        expect(updatedItem.totalObjectsInViolation).toBe(0);
+        expect(updatedItem.objectsInViolation).toEqual([]);
+        // totalObjectsAssessed is preserved so the "0 out of N" display is correct
+        expect(updatedItem.totalObjectsAssessed).toBe(3);
+    });
+
     it('only updates the row matching hostId/credentialId/regionId/instanceId, leaving others untouched', () => {
         const dispatch = vi.fn();
         const otherHost = {

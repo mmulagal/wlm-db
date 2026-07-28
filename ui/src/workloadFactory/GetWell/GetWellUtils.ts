@@ -1483,9 +1483,17 @@ export const updateFlatAssessmentStatus = (rowData: any, dispatch: any, engineTy
                 ...instance,
                 assessments: {
                     ...instance.assessments,
-                    assessments: flatAssessments.map((item: any) =>
-                        item?.id === matchId ? { ...item, status: newStatus } : item
-                    )
+                    assessments: flatAssessments.map((item: any) => {
+                        if (item?.id !== matchId) return item;
+                        return {
+                            ...item,
+                            status: newStatus,
+                            ...(newStatus === WELL_ARCHITECTED_STATUS.OPTIMIZED && {
+                                totalObjectsInViolation: 0,
+                                objectsInViolation: []
+                            })
+                        };
+                    })
                 }
             };
         });
