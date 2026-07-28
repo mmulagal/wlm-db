@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
+import { NotificationType } from '@tlveng/workload-factory-components';
 import {
     DismissConfirmDialog,
     FixRowActionLabel,
-    NotificationType,
     OptimizationStatus,
     ResourceColumnId,
     TableScope,
@@ -13,7 +13,7 @@ import {
     type ResourceScanRecord,
     type TableColumn,
     type WadApi
-} from '@tlveng/workload-factory-components';
+} from '@tlveng/workload-factory-components/wad';
 import {
     createFixBulkAction,
     filterNeedsOptimizationResources,

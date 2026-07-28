@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { OptimizationStatus } from '@tlveng/workload-factory-components';
+import { OptimizationStatus } from '@tlveng/workload-factory-components/wad';
 
 import {
     BulkActionId,

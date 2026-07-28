@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { TableScope } from '@tlveng/workload-factory-components';
+import { TableScope } from '@tlveng/workload-factory-components/wad';
 
 import { blockDeviceNameColumn, DEFAULT_LUN_COLUMNS_BY_SCOPE } from '@wad/tables/lun/columns';
 

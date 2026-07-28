@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { FixMetadata, WadElementProps } from '@tlveng/workload-factory-components';
+import type { FixMetadata, WadElementProps } from '@tlveng/workload-factory-components/wad';
 import { PlaceholderFixModal, UnsupportedConfigurationNotice } from '../../shared/fixModalShared';
 import { resolveVolumeConfiguration } from '../../tables/volume/configurations';
 import { buildVolumeFixTargets } from '../shared/modalUtils';

@@ -1,4 +1,4 @@
-import type { WadElementProps } from '@tlveng/workload-factory-components';
+import type { WadElementProps } from '@tlveng/workload-factory-components/wad';
 import { FileSystemFixModalWrapper } from './fix-modals/wad/FileSystemFixModalWrapper';
 import { LunFixModalWrapper } from './fix-modals/wad/LunFixModalWrapper';
 import { VolumeFixModalWrapper } from './fix-modals/wad/VolumeFixModalWrapper';

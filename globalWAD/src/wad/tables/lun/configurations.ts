@@ -3,7 +3,7 @@ import type {
     FixRowHandler,
     ResourceScanRecord,
     TableColumn
-} from '@tlveng/workload-factory-components';
+} from '@tlveng/workload-factory-components/wad';
 import { multiComponentLunColumns } from './columns';
 
 interface LunConfiguration {

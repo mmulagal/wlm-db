@@ -1,4 +1,4 @@
-import { OptimizationStatus, type BulkAction, type ResourceScanRecord } from '@tlveng/workload-factory-components';
+import { OptimizationStatus, type BulkAction, type ResourceScanRecord } from '@tlveng/workload-factory-components/wad';
 
 export enum BulkActionId {
     FIX = 'fix'

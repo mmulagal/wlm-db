@@ -1,4 +1,4 @@
-import { resourceRowActionColumn, type TableColumn } from '@tlveng/workload-factory-components';
+import { resourceRowActionColumn, type TableColumn } from '@tlveng/workload-factory-components/wad';
 
 type ResourceRowActionColumnOptions = Parameters<typeof resourceRowActionColumn>[0];
 

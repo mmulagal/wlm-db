@@ -17,9 +17,9 @@
     },
     "dependencies": {
         "@emotion/styled": "^11.14.0",
-        "@netapp/bxp-design-system-react": "npm:@tlveng/bxp-design-system-react@2.1.13",
+        "@netapp/bxp-design-system-react": "npm:@tlveng/bxp-design-system-react@2.1.15",
         "@netapp/bxp-style": "npm:@tlveng/bxp-style@1.0.14",
-        "@tlveng/workload-factory-components": "0.0.2",
+        "@tlveng/workload-factory-components": "0.0.16",
         "react": "^19.2.7",
         "react-dom": "^19.2.7",
         "react-inlinesvg": "^4.2.0",

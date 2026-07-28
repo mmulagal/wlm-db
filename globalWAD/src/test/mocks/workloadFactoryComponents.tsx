@@ -23,8 +23,11 @@ export const FixRowActionLabel = {
 } as const;
 
 export const OptimizationStatus = {
-    OPTIMIZED: 'optimized',
-    NOT_OPTIMIZED: 'notOptimized'
+    OPTIMIZED: 'OPTIMIZED',
+    NOT_OPTIMIZED: 'NOT_OPTIMIZED',
+    FIX_IN_PROGRESS: 'FIX_IN_PROGRESS',
+    NOT_SCANNED: 'NOT_SCANNED',
+    NOT_AVAILABLE: 'NOT_AVAILABLE'
 } as const;
 
 export const fileSystemColumn = columnStub('fileSystem', 'File system');

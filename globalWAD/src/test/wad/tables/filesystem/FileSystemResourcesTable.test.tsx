@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
-import { TableScope } from '@tlveng/workload-factory-components';
+import { TableScope } from '@tlveng/workload-factory-components/wad';
 
 import { FileSystemResourcesTable } from '@wad/tables/filesystem/FileSystemResourcesTable';
 import { createMockWadApi } from '@test/helpers/testUtils';

@@ -16,7 +16,11 @@ export default defineConfig({
             '@netapp/bxp-style/react-icons/General': resolve(wadProjectRootDir, 'src/test/mocks/bxpStyleIcons.tsx'),
             '@tlveng/workload-factory-components': resolve(
                 wadProjectRootDir,
-                'src/test/mocks/workloadFactoryComponents.tsx'
+                'src/test/mocks/workloadFactoryComponentsMain.ts'
+            ),
+            '@tlveng/workload-factory-components/wad': resolve(
+                wadProjectRootDir,
+                'src/test/mocks/workloadFactoryComponentsWad.ts'
             )
         }
     },

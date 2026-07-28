@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { TableScope } from '@tlveng/workload-factory-components';
+import { TableScope } from '@tlveng/workload-factory-components/wad';
 
 import {
     DEFAULT_VOLUME_COLUMNS_BY_SCOPE,

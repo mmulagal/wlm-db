@@ -3,8 +3,8 @@ import type {
     FixRowHandler,
     ResourceScanRecord,
     TableColumn
-} from '@tlveng/workload-factory-components';
-import { fileSystemColumn, lastAnalyzedColumn, optimizationStatusColumn } from '@tlveng/workload-factory-components';
+} from '@tlveng/workload-factory-components/wad';
+import { fileSystemColumn, lastAnalyzedColumn, optimizationStatusColumn } from '@tlveng/workload-factory-components/wad';
 import {
     currentSnapcenterSnapshotColumn,
     multiComponentVolumeColumns,
