@@ -264,9 +264,21 @@ registerDefaultProxyGetResponse({
                     parent_volume: { name: 'wlmdb_sqllog_1714098400', uuid: '5ace31ea-03a0-11ef-a514-55070fbfcab1' },
                     split_estimate: 10737418240
                 }
+            },
+            // createVolumeClone's getVolumeByName call (demo mode) resolves the uuid of the source
+            // volumes below by exact name before creating the pre-clone snapshot.
+            {
+                name: 'wlmdb_sqldata_1714098400',
+                uuid: '5c1075d2-03a0-11ef-a514-55070fbfcab1',
+                svm: { name: 'wlmdb_sqlsvm_1714090636810' }
+            },
+            {
+                name: 'wlmdb_sqllog_1714098400',
+                uuid: '5ace31ea-03a0-11ef-a514-55070fbfcab1',
+                svm: { name: 'wlmdb_sqlsvm_1714090636810' }
             }
         ],
-        num_records: 2
+        num_records: 4
     }
 });
 
