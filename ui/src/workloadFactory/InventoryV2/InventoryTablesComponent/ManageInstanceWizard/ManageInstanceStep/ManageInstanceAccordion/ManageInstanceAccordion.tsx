@@ -233,7 +233,11 @@ export const ManageInstanceAccordion: React.FC<AccordionProps> = ({
                                                     </DsTypography>
                                                 </div>
                                             </div>
-                                            <div className={styles['accordion-status']}>
+                                            <div
+                                                className={`${styles['accordion-status']} ${
+                                                    isAiAnalysisDisabledRow ? styles.disabledAccordionStatus : ''
+                                                }`}
+                                            >
                                                 {type !== 'log-analyzer' && (
                                                     <DsTypography className={styles.text} variant="Semibold_14">
                                                         {t('databases.register-flow.view-prerequisites-list')}
