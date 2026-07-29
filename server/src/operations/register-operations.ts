@@ -78,11 +78,7 @@ import {
 } from '../utils/common-types';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { getParameter, deleteParameters } from '../lib/aws/ssm';
-import {
-    registerFsxOntapCredentials,
-    listFsxOntapCredentials,
-    checkFsxLinkExists
-} from '../lib/cloud-manager/fsx-core';
+import { registerFsxOntapCredentials, listFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
 import {
     MultiInstanceManageMsSqlRequestBodyType,
     MultiInstanceManageResponseBodyType,
@@ -2699,12 +2695,10 @@ async function validateCredentials(
     }
 }
 
-async function checkFsxConnectivity(
-    target: FsxConnectivityTarget
-): Promise<{ ontapconnectivity: true } | { ontapconnectivity: false; ontaperror: string }> {
+async function checkFsxConnectivity(target: FsxConnectivityTarget) {
     try {
         await getClusterInfo(target);
-        return { ontapconnectivity: true };
+        return { ontapconnectivity: true, ontaperror: '' };
     } catch (error) {
         return { ontapconnectivity: false, ontaperror: error instanceof Error ? error.message : String(error) };
     }
@@ -3558,11 +3552,14 @@ async function validateFsxLink(
     let status: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
 
     try {
-        const { exists } = await checkFsxLinkExists(credentialsId, region, fsId);
-        if (!exists) {
-            throw new Error(
-                `FSx for NetApp ONTAP file system '${fsId}' does not have an active link. Create a link before registering the instance.`
-            );
+        const { ontapconnectivity, ontaperror = '' } = await checkFsxConnectivity({
+            accountId,
+            credentialsId,
+            region,
+            fsxId: fsId
+        });
+        if (!ontapconnectivity) {
+            throw new Error(`Unable to connect to FSx for NetApp ONTAP file system '${fsId}'. Reason: ${ontaperror}`);
         }
         status = JOBSTATUS.COMPLETED;
     } catch (error: any) {
