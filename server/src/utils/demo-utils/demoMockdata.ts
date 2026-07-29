@@ -3456,14 +3456,14 @@ const SIMULATED_WAD_RESOURCES_BY_CONFIG: Record<string, WadConfigurationEntry['r
                     components: [
                         {
                             parameter: 'os-type',
-                            current: 'windows_2008',
+                            current: 'windows',
                             recommended: 'windows_2008',
-                            status: 'optimized'
+                            status: 'not-optimized'
                         }
                     ]
                 }
             },
-            status: ResourceOptimizationStatus.OPTIMIZED
+            status: ResourceOptimizationStatus.NOT_OPTIMIZED
         }
     ],
     'wlmdb-block-device-space-management': [
@@ -3559,15 +3559,15 @@ const SIMULATED_WAD_RESOURCES_BY_CONFIG: Record<string, WadConfigurationEntry['r
                     components: [
                         {
                             parameter: 'snapcenter-protection',
-                            current: 'configured',
+                            current: 'not-configured',
                             recommended: 'configured',
-                            status: 'optimized'
+                            status: 'not-optimized'
                         }
                     ],
                     svmName: SIMULATED_WAD_SVM_NAME
                 }
             },
-            status: ResourceOptimizationStatus.OPTIMIZED
+            status: ResourceOptimizationStatus.NOT_OPTIMIZED
         },
         {
             resource: {
@@ -3579,15 +3579,15 @@ const SIMULATED_WAD_RESOURCES_BY_CONFIG: Record<string, WadConfigurationEntry['r
                     components: [
                         {
                             parameter: 'snapcenter-protection',
-                            current: 'configured',
+                            current: 'not-configured',
                             recommended: 'configured',
-                            status: 'optimized'
+                            status: 'not-optimized'
                         }
                     ],
                     svmName: SIMULATED_WAD_SVM_NAME
                 }
             },
-            status: ResourceOptimizationStatus.OPTIMIZED
+            status: ResourceOptimizationStatus.NOT_OPTIMIZED
         }
     ]
 };

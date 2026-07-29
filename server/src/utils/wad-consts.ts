@@ -152,6 +152,7 @@ interface ScanStatusMessage {
     status: TaskStatus;
     errorMessage?: string;
     parentResources?: ResourceRef[];
+    hasFailedTasks: boolean;
 }
 
 interface FixStatusMessage {
@@ -164,6 +165,7 @@ interface FixStatusMessage {
     updatedAt: number;
     status: TaskStatus;
     errorMessage?: string;
+    hasFailedTasks: boolean;
 }
 
 interface FixResultMessage {

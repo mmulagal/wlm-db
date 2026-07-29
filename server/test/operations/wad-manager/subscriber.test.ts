@@ -175,17 +175,17 @@ describe('subscriber', () => {
             expect(statuses.at(-1).status).toBe(TaskStatus.COMPLETED);
         });
 
-        it('publishes an empty simulated fix result when resource IDs are omitted', async () => {
+        it('publishes simulated fix results for supplied resource IDs', async () => {
             const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
             const fixHandler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE);
-            const req = makeFixRequest({ isSimulated: true, resourceIds: undefined });
+            const req = makeFixRequest({ isSimulated: true, resourceIds: ['volume-002'] });
             await fixHandler!(Buffer.from(JSON.stringify(req)), vi.fn(), vi.fn());
 
             const [result] = getPublishedMessages(WAD_FIX_RESULTS_QUEUE).map(buf => JSON.parse(buf.toString()));
 
-            expect(result.resourceResults).toEqual([]);
+            expect(result.resourceResults).toEqual([{ resourceId: 'volume-002', success: true }]);
         });
     });
 

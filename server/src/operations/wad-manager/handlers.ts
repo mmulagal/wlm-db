@@ -131,7 +131,12 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                 configurations
             });
         }
-        publishScanStatus({ ...baseStatus, updatedAt: Date.now(), status: TaskStatus.COMPLETED });
+        publishScanStatus({
+            ...baseStatus,
+            updatedAt: Date.now(),
+            status: TaskStatus.COMPLETED,
+            hasFailedTasks: false
+        });
         updateTrackerTaskStatus(accountId, scanTask?.id ?? '', { status: TrackerTaskStatus.SUCCESS });
         return;
     }
@@ -235,7 +240,8 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
             ...baseStatus,
             updatedAt: Date.now(),
             status,
-            errorMessage
+            errorMessage,
+            hasFailedTasks: status === TaskStatus.FAILED
         });
         updateTrackerTaskStatus(accountId, scanTaskId, {
             status: status === TaskStatus.COMPLETED ? TrackerTaskStatus.SUCCESS : TrackerTaskStatus.FAILURE,
@@ -293,7 +299,7 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
             resourceResults: (resourceIds ?? []).map(resourceId => ({ resourceId, success: true })),
             reportedAt: Date.now()
         });
-        publishFixStatus({ ...baseResult, updatedAt: Date.now(), status: TaskStatus.COMPLETED });
+        publishFixStatus({ ...baseResult, updatedAt: Date.now(), status: TaskStatus.COMPLETED, hasFailedTasks: false });
         updateTrackerTaskStatus(accountId, fixTask?.id ?? '', { status: TrackerTaskStatus.SUCCESS });
         return;
     }
@@ -306,7 +312,8 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
         publishFixStatus({
             ...baseResult,
             updatedAt: Date.now(),
-            status: existingStatus === TrackerTaskStatus.SUCCESS ? TaskStatus.COMPLETED : TaskStatus.FAILED
+            status: existingStatus === TrackerTaskStatus.SUCCESS ? TaskStatus.COMPLETED : TaskStatus.FAILED,
+            hasFailedTasks: existingStatus === TrackerTaskStatus.FAILURE
         });
         return;
     }
@@ -353,7 +360,8 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
             updatedAt: Date.now(),
             ...(status === TrackerTaskStatus.SUCCESS
                 ? { status: TaskStatus.COMPLETED }
-                : { status: TaskStatus.FAILED, errorMessage })
+                : { status: TaskStatus.FAILED, errorMessage }),
+            hasFailedTasks: status === TrackerTaskStatus.FAILURE
         });
         updateTrackerTaskStatus(accountId, fixTask?.id ?? '', {
             status,

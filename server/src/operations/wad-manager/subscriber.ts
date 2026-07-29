@@ -34,7 +34,8 @@ async function onScanMessage(content: Buffer, ack: () => void, nack: () => void)
         accountId,
         serviceId: WAD_SERVICE_ID,
         updatedAt: Date.now(),
-        status: TaskStatus.IN_PROGRESS
+        status: TaskStatus.IN_PROGRESS,
+        hasFailedTasks: false
     });
     ack();
     logger.debug('WAD: scan request acked', { taskId });
@@ -72,7 +73,8 @@ async function onFixMessage(content: Buffer, ack: () => void, nack: () => void):
         configurationId,
         parentResourceId,
         updatedAt: Date.now(),
-        status: TaskStatus.IN_PROGRESS
+        status: TaskStatus.IN_PROGRESS,
+        hasFailedTasks: false
     });
     ack();
     logger.debug('WAD: fix request acked', { taskId, configurationId });

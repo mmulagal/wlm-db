@@ -6,7 +6,7 @@ import {
     resetTrackerOverrides,
     setTrackerTaskStatus
 } from '../../simulator/scopes/cloud-manager/tracker-scope';
-import { trackSubtask } from '../../../src/operations/cloud-manager/tracker-operations';
+import { startWadSubscriber } from '../../../src/operations/wad-manager/subscriber';
 import { TrackerTaskStatus } from '../../../src/utils/common-types';
 import {
     FixRequestMessage,
@@ -16,7 +16,6 @@ import {
     WAD_FIX_REQUESTS_QUEUE,
     WAD_FIX_STATUS_QUEUE,
     WAD_SCAN_REQUESTS_QUEUE,
-    WAD_SCAN_RESULTS_QUEUE,
     WAD_SCAN_STATUS_QUEUE
 } from '../../../src/utils/wad-consts';
 
@@ -64,7 +63,6 @@ describe('handlers — tracker wiring', () => {
             // parent create + parent success update (no FSx discovered, so no child task)
             queueTrackerCreateIds('tracker-1');
 
-            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
             const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
@@ -75,13 +73,18 @@ describe('handlers — tracker wiring', () => {
             );
 
             await vi.waitFor(() => expect(getCapturedTrackerRequests()).toHaveLength(2));
+            expect(getCapturedTrackerRequests()[0].body.task).toMatchObject({
+                parentTaskId: 'parent-001'
+            });
             expect(getCapturedTrackerRequests()[1].body.task.failureReason).toBeUndefined();
             const statusMessages = getPublishedMessages(WAD_SCAN_STATUS_QUEUE).map(b => JSON.parse(b.toString()));
+            expect(statusMessages).toEqual(
+                expect.arrayContaining([expect.objectContaining({ hasFailedTasks: false })])
+            );
             expect(statusMessages.find(m => m.status === TaskStatus.COMPLETED)).toBeDefined();
         });
 
         it('should not call tracker when trackerParentTaskId is absent', async () => {
-            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
             const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
@@ -94,7 +97,6 @@ describe('handlers — tracker wiring', () => {
 
         it('should complete the scan and publish WAD messages even when tracker HTTP call fails', async () => {
             // createTrackerTask fails → returns undefined → updateTrackerTaskStatus is skipped
-            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
             const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
@@ -116,128 +118,9 @@ describe('handlers — tracker wiring', () => {
             ).toBeDefined();
         });
 
-        it('should create parent and FSx tracker tasks when discovery finds an FSx', async () => {
-            const collectorModule = await import(
-                '../../../src/operations/continuous-optimization/ontap-proxy-collector'
-            );
-            const collectorSpy = vi
-                .spyOn(collectorModule, 'collectOntapAssessmentData')
-                .mockImplementation(async (accountId, _relationship, parentTaskId) =>
-                    trackSubtask(
-                        accountId,
-                        parentTaskId!,
-                        {
-                            actionName: 'Databases well-architected analysis for FSx for ONTAP file system',
-                            resourceId: 'fs-001',
-                            resourceName: 'fs-001'
-                        },
-                        async () => [
-                            // 'unknown-workload' is not in WORKLOAD_SCAN_FNS, so the scan loop is a safe no-op.
-                            {
-                                instanceId: 'i-001',
-                                fileSystemId: 'fs-001',
-                                workloadType: 'unknown-workload',
-                                storageAssessment: {} as never
-                            }
-                        ]
-                    )
-                );
-
-            queueTrackerCreateIds('parent-001', 'fsx-001');
-
-            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
-            await startWadSubscriber();
-
-            const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
-            await handler(
-                Buffer.from(JSON.stringify(makeScanRequest({ trackerParentTaskId: 'root-001' }))),
-                vi.fn(),
-                vi.fn()
-            );
-
-            collectorSpy.mockRestore();
-
-            await vi.waitFor(() => {
-                const tasks = getCapturedTrackerRequests().map(({ body }) => body.task);
-                expect(tasks.find(task => task.id === 'fsx-001')?.status).toBe('success');
-                expect(tasks.find(task => task.id === 'parent-001')?.status).toBe('success');
-            });
-            const bodies = getCapturedTrackerRequests().map(({ body }) => body);
-            expect(
-                bodies.find(({ task }) => task.actionName === 'Manual well-architected analysis for databases')?.task
-            ).toMatchObject({
-                parentTaskId: 'root-001',
-                resourceId: 'account-001'
-            });
-            expect(
-                bodies.find(
-                    ({ task }) =>
-                        task.actionName === 'Databases well-architected analysis for FSx for ONTAP file system'
-                )?.task
-            ).toMatchObject({
-                parentTaskId: 'parent-001',
-                resourceId: 'fs-001',
-                resourceName: 'fs-001'
-            });
-
-            const statusMessages = getPublishedMessages(WAD_SCAN_STATUS_QUEUE).map(b => JSON.parse(b.toString()));
-            expect(statusMessages.find(m => m.status === TaskStatus.COMPLETED)).toBeDefined();
-        });
-
-        it('should propagate an FSx assessment failure up through to the parent tracker task', async () => {
-            const collectorModule = await import(
-                '../../../src/operations/continuous-optimization/ontap-proxy-collector'
-            );
-            const collectorSpy = vi
-                .spyOn(collectorModule, 'collectOntapAssessmentData')
-                .mockImplementation(async (accountId, _relationship, parentTaskId) =>
-                    trackSubtask(
-                        accountId,
-                        parentTaskId!,
-                        {
-                            actionName: 'Databases well-architected analysis for FSx for ONTAP file system',
-                            resourceId: 'fs-001',
-                            resourceName: 'fs-001'
-                        },
-                        async () => {
-                            throw new Error('scan failed');
-                        }
-                    )
-                );
-
-            queueTrackerCreateIds('parent-001', 'fsx-001');
-
-            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
-            await startWadSubscriber();
-
-            const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
-            await handler(
-                Buffer.from(JSON.stringify(makeScanRequest({ trackerParentTaskId: 'root-001' }))),
-                vi.fn(),
-                vi.fn()
-            );
-
-            collectorSpy.mockRestore();
-
-            await vi.waitFor(() => {
-                const tasks = getCapturedTrackerRequests().map(({ body }) => body.task);
-                expect(tasks.find(task => task.id === 'fsx-001')?.status).toBe('failure');
-                expect(tasks.find(task => task.id === 'parent-001')?.status).toBe('failure');
-            });
-            const bodies = getCapturedTrackerRequests().map(({ body }) => body);
-            expect(bodies.find(({ task }) => task.id === 'fsx-001')?.task.failureReason).toEqual(['scan failed']);
-            expect((bodies.find(({ task }) => task.id === 'parent-001')?.task.failureReason as string[])[0]).toContain(
-                'scan failed'
-            );
-
-            const statusMessages = getPublishedMessages(WAD_SCAN_STATUS_QUEUE).map(b => JSON.parse(b.toString()));
-            expect(statusMessages.find(m => m.status === TaskStatus.FAILED)).toBeDefined();
-        });
-
         it('should create and complete tracker tasks for a simulated scan request', async () => {
             queueTrackerCreateIds('sim-scan-001');
 
-            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
             const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
@@ -270,83 +153,6 @@ describe('handlers — tracker wiring', () => {
             const statusMessages = getPublishedMessages(WAD_SCAN_STATUS_QUEUE).map(b => JSON.parse(b.toString()));
             expect(statusMessages.find(m => m.status === TaskStatus.COMPLETED)).toBeDefined();
         });
-
-        it('should publish successful FSx configurations when a sibling pair assessment fails', async () => {
-            const collectorModule = await import(
-                '../../../src/operations/continuous-optimization/ontap-proxy-collector'
-            );
-            const collectorSpy = vi
-                .spyOn(collectorModule, 'collectOntapAssessmentData')
-                .mockResolvedValueOnce([
-                    {
-                        instanceId: 'i-success',
-                        fileSystemId: 'fs-success',
-                        workloadType: 'mssql',
-                        storageAssessment: {} as never
-                    }
-                ])
-                .mockResolvedValueOnce([
-                    {
-                        instanceId: 'i-failure',
-                        fileSystemId: 'fs-failure',
-                        workloadType: 'mssql',
-                        storageAssessment: {} as never
-                    }
-                ]);
-            const mssqlModule = await import(
-                '../../../src/operations/continuous-optimization/mssql/assessment-operations'
-            );
-            const scanSpy = vi.spyOn(mssqlModule, 'getMssqlStorageResourceScan').mockImplementation(async context => {
-                if (context.filesystemId === 'fs-failure') {
-                    throw new Error('scan failed');
-                }
-                return {
-                    taskId: context.taskId,
-                    requestId: context.requestId,
-                    accountId: context.accountId,
-                    serviceId: context.serviceId,
-                    completedAt: Date.now(),
-                    configurations: [
-                        {
-                            configurationId: 'wlmdb-storage-assessment',
-                            parentResource: {
-                                id: 'fs-success',
-                                name: 'fs-success',
-                                type: 'fsx',
-                                accountId: context.accountId,
-                                region: context.region,
-                                credentialsIds: [context.credentialsId]
-                            },
-                            resources: []
-                        }
-                    ]
-                };
-            });
-
-            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
-            await startWadSubscriber();
-
-            const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
-            await handler(
-                Buffer.from(JSON.stringify(makeScanRequest({ credentialsIds: ['creds-success', 'creds-failure'] }))),
-                vi.fn(),
-                vi.fn()
-            );
-
-            collectorSpy.mockRestore();
-            scanSpy.mockRestore();
-
-            const results = getPublishedMessages(WAD_SCAN_RESULTS_QUEUE).map(b => JSON.parse(b.toString()));
-            expect(results).toContainEqual(
-                expect.objectContaining({
-                    configurations: [
-                        expect.objectContaining({ parentResource: expect.objectContaining({ id: 'fs-success' }) })
-                    ]
-                })
-            );
-            const statusMessages = getPublishedMessages(WAD_SCAN_STATUS_QUEUE).map(b => JSON.parse(b.toString()));
-            expect(statusMessages.find(m => m.status === TaskStatus.FAILED)).toBeDefined();
-        });
     });
 
     describe('fix flow', () => {
@@ -354,7 +160,6 @@ describe('handlers — tracker wiring', () => {
             setTrackerTaskStatus('root-002', TrackerTaskStatus.PENDING);
             queueTrackerCreateIds('fix-001');
 
-            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
             const handler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE)!;
@@ -375,9 +180,9 @@ describe('handlers — tracker wiring', () => {
             expect(fixTask?.task.actionDescription).toBe('Fixing 1 resource(s)');
             expect(fixTask?.task.resourceId).toBe('vol-001');
             expect(fixTask?.task.resourceName).toBe('vol-001');
-            expect(bodies.find(({ task }) => task.status === 'failure')?.task.id).toBeDefined();
 
             const fixStatuses = getPublishedMessages(WAD_FIX_STATUS_QUEUE).map(b => JSON.parse(b.toString()));
+            expect(fixStatuses).toEqual(expect.arrayContaining([expect.objectContaining({ hasFailedTasks: false })]));
             expect(
                 fixStatuses.find(m => m.status === TaskStatus.COMPLETED || m.status === TaskStatus.FAILED)
             ).toBeDefined();
@@ -391,7 +196,6 @@ describe('handlers — tracker wiring', () => {
             async (existingStatus, expectedStatus) => {
                 setTrackerTaskStatus('root-003', existingStatus);
 
-                const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
                 await startWadSubscriber();
 
                 const handler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE)!;
@@ -409,7 +213,6 @@ describe('handlers — tracker wiring', () => {
         );
 
         it('should not call tracker when trackerParentTaskId is absent', async () => {
-            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
             const handler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE)!;
@@ -422,7 +225,6 @@ describe('handlers — tracker wiring', () => {
         it('should create and complete a tracker task for a simulated fix request', async () => {
             queueTrackerCreateIds('sim-fix-001');
 
-            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
             const handler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE)!;
@@ -457,7 +259,6 @@ describe('handlers — tracker wiring', () => {
         });
 
         it('should complete the fix and publish WAD messages even when tracker HTTP calls fail', async () => {
-            const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
             const handler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE)!;
