@@ -15,14 +15,13 @@ import {
     getMultipathConfig,
     calculateRegistryStorageLayoutDrift,
     calculateRegistryMpioDrift,
+    getClusterQuorumConfig,
+    calculateRegistryClusterQuorumDrift,
     SqlInstanceAssessment,
-    MultipathConfig
+    MultipathConfig,
+    ClusterQuorumConfig
 } from './ssm-doc-storage-assessment';
-import {
-    AssessmentItemType,
-    AssessmentErrorItemType,
-    GenericViolationResponseType
-} from '../../../routes/types/continuous-optimization.types';
+import { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import { calculateStorageDrift } from './storage-assessment-operations';
 import { calculateRssConfigDrift } from './rssConfig-assessment-operations';
 import { calculateMaxDOPDrift } from './maxdop-assessment-operations';
@@ -43,7 +42,8 @@ import {
     HttpErrorCodes,
     MSSQL_DATABASE_TYPES,
     MSSQL_SYSTEM_DATABASES,
-    RESOURCESTYPE
+    RESOURCESTYPE,
+    SqlServerDeploymentModel
 } from '../../../utils/consts';
 import { AssessmentStatus, OptimizeStorageConfigs } from '../../../utils/continous-optimization-consts';
 import {
@@ -58,7 +58,8 @@ import {
     VolumeRecord,
     VolumeDBMapEntry,
     LunRecord,
-    MtuAlignmentAssessment
+    MtuAlignmentAssessment,
+    OneTimeWADHeadroomData
 } from '../../../utils/common-types';
 import { registerJob, updateJobDetails, updateParentJobStatus } from '../../database/job-operations';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
@@ -74,13 +75,16 @@ import {
     resolveAssessmentTypes,
     GOLDEN_CONFIG_LOOKUP,
     mssqlVolumeConfigData,
-    mssqlLunConfigData
+    mssqlLunConfigData,
+    OFFLINE_ASSESSMENT_SOURCE,
+    mergeStorageDriftItemsById,
+    filterToVolumeLunDriftItems,
+    runScopedOntapSubAssessment,
+    ScopedOntapStorageResult
 } from '../assessment-utils';
 import { OfflineAssessmentListResponseType } from '../../../routes/types/offline-assessment.types';
 import { ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE } from '../one-time-assessment-consts';
-import { buildEc2FsxRelationship } from '../../cloud-manager/tagging-service-operations';
-import { collectOntapAssessmentData } from '../ontap-proxy-collector';
-import { OneTimeWADHeadroomData, calculateWADHeadroomDrift } from '../wad-headroom-utils';
+import { calculateWADHeadroomDrift } from '../wad-headroom-utils';
 import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 
 const logger = getLogger();
@@ -89,13 +93,11 @@ const VOLUME_LUN_DRIFT_IDS = new Set<string>([
     ...mssqlVolumeConfigData.map(({ id }) => id),
     ...mssqlLunConfigData.map(({ id }) => id),
     OptimizeStorageConfigs.TIERING_TCO_OPTIMIZATION,
-    OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT
+    OptimizeStorageConfigs.BLOCK_DEVICE_SPACE_MANAGEMENT,
+    'performance-tier'
 ]);
 
-const OFFLINE_ASSESSMENT_SOURCE = {
-    OFFLINE: 'offline',
-    UNREGISTERED: 'unregistered'
-} as const;
+const NO_DISMISSED_CONFIG_IDS = new Set<string>();
 
 /**
  * Interface for database instance data from MSSQL offline assessment
@@ -239,10 +241,10 @@ interface MSSQLInstanceLevelAssessment {
     highAvailability?: HighAvailabilityAssessment;
 }
 
-interface MssqlUnregisteredAssessmentRawData {
+interface MssqlUnregisteredAssessmentRawData extends Partial<ScopedOntapStorageResult<StorageAssessment>> {
     layoutAssessment?: Omit<SqlInstanceAssessment, 'mpio'>;
     mpioAssessment?: MultipathConfig;
-    ontapStorageAssessments?: StorageAssessment[];
+    quorumAssessment?: ClusterQuorumConfig;
 }
 
 /**
@@ -599,7 +601,14 @@ async function fetchMssqlOfflineAssessment(
     }
 
     if ((record.metadata as { source?: string })?.source === OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED) {
-        return fetchMssqlAwsDocAssessment(accountId, resourceId, databaseInstanceId, credentialsId, region, record);
+        return fetchMssqlUnregisteredInstanceAssessment(
+            accountId,
+            resourceId,
+            databaseInstanceId,
+            credentialsId,
+            region,
+            record
+        );
     }
 
     const rawdata = (record.rawdata as MSSQLOfflineAssessmentRawData) || {};
@@ -747,7 +756,7 @@ async function fetchMssqlOfflineAssessment(
         DatabaseTypes.MS_SQL_SERVER,
         undefined,
         { deploymentType },
-        new Set()
+        NO_DISMISSED_CONFIG_IDS
     );
     const mssqlLookup = GOLDEN_CONFIG_LOOKUP[DatabaseTypes.MS_SQL_SERVER];
     const assessedIds = new Set(assessments.map(a => a.id));
@@ -772,7 +781,8 @@ async function fetchMssqlOfflineAssessment(
             ec2InstanceId,
             databaseHostName: fciName && fciName.trim() !== '' ? fciName : hostname,
             deploymentType,
-            baseDeploymentType: baseDeploymentType ?? ''
+            baseDeploymentType: baseDeploymentType ?? '',
+            source: OFFLINE_ASSESSMENT_SOURCE.OFFLINE
         }
     };
 
@@ -795,7 +805,7 @@ async function fetchMssqlOfflineAssessment(
     return assessmentResponse;
 }
 
-async function fetchMssqlAwsDocAssessment(
+async function fetchMssqlUnregisteredInstanceAssessment(
     accountId: string,
     resourceId: string,
     databaseInstanceId: string,
@@ -822,15 +832,16 @@ async function fetchMssqlAwsDocAssessment(
         );
     }
 
-    const { layoutAssessment, mpioAssessment, ontapStorageAssessments } =
+    const { layoutAssessment, mpioAssessment, quorumAssessment, ontapStorageAssessments, headroomData } =
         (record.rawdata as MssqlUnregisteredAssessmentRawData) || {};
     const { databaseInstanceName, ec2InstanceId, assessmentTimestamp } =
         (record.metadata as unknown as MssqlUnregisteredAssessmentMetadata) || {};
 
+    const { credentials_id: recordCredentialsId, region: recordRegion } = record;
     // The stored record carries the credentialsId/region used at collection time; fall back to
     // that when the caller doesn't supply them (e.g. a plain GET after the async collection job).
-    const effectiveCredentialsId = credentialsId ?? record.credentials_id ?? undefined;
-    const effectiveRegion = region ?? record.region ?? undefined;
+    const effectiveCredentialsId = credentialsId ?? recordCredentialsId ?? undefined;
+    const effectiveRegion = region ?? recordRegion ?? undefined;
 
     const assessments: (AssessmentItemType | AssessmentErrorItemType)[] = [];
     if (layoutAssessment) {
@@ -840,6 +851,9 @@ async function fetchMssqlAwsDocAssessment(
     }
     if (mpioAssessment) {
         assessments.push(...calculateRegistryMpioDrift([{ mpio: mpioAssessment } as unknown as SqlInstanceAssessment]));
+    }
+    if (layoutAssessment?.deploymentType === 'FCI') {
+        assessments.push(...calculateRegistryClusterQuorumDrift(quorumAssessment, ec2InstanceId));
     }
 
     if (ontapStorageAssessments && ontapStorageAssessments.length > 0) {
@@ -863,11 +877,31 @@ async function fetchMssqlAwsDocAssessment(
         );
     }
 
+    const filesystemId = ontapStorageAssessments?.[0]?.filesystemId;
+    if (headroomData && filesystemId) {
+        const headroomItem = calculateWADHeadroomDrift(
+            filesystemId,
+            headroomData,
+            MSSQL_GOLDEN_CONFIG.find(e => e.id === 'headroom'),
+            RESOURCESTYPE.MSSQL
+        );
+        if (headroomItem) {
+            assessments.push(headroomItem);
+        }
+    }
+
+    // Fail closed to Standalone when the deployment type couldn't be determined (registry layout
+    // sub-assessment missing or its Cluster-key probe failed), so HA/FCI-only findings never leak
+    // onto a standalone instance.
+    const deploymentType =
+        layoutAssessment?.deploymentType === 'FCI'
+            ? SqlServerDeploymentModel.SQL_FCI_SHORT
+            : SqlServerDeploymentModel.SQL_STANDALONE_SHORT;
     const { configIds: eligibleConfigIds } = resolveAssessmentTypes(
         DatabaseTypes.MS_SQL_SERVER,
         undefined,
-        {},
-        new Set()
+        { deploymentType },
+        NO_DISMISSED_CONFIG_IDS
     );
     const mssqlLookup = GOLDEN_CONFIG_LOOKUP[DatabaseTypes.MS_SQL_SERVER];
     const assessedIds = new Set(assessments.map(a => a.id));
@@ -890,7 +924,12 @@ async function fetchMssqlAwsDocAssessment(
                 ? parsedAssessmentTimestamp
                 : record.created_time.getTime(),
             databaseInstanceName,
-            ec2InstanceId
+            ec2InstanceId,
+            deploymentType,
+            source: OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED,
+            // Not stored on the record; UI filters by these, so surface the values used to fetch it.
+            ...(effectiveCredentialsId && { credentialsId: effectiveCredentialsId }),
+            ...(effectiveRegion && { region: effectiveRegion })
         }
     };
 
@@ -912,77 +951,6 @@ async function fetchMssqlAwsDocAssessment(
     return assessmentResponse;
 }
 
-async function collectScopedOntapStorageAssessment(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    ec2InstanceId: string
-): Promise<StorageAssessment[] | undefined> {
-    const relationship = await buildEc2FsxRelationship(accountId, credentialsId, region);
-    const scopedEc2s = relationship.ec2s.filter(ec2 => ec2.instanceId === ec2InstanceId);
-    if (scopedEc2s.length === 0) {
-        return undefined;
-    }
-
-    const results = await collectOntapAssessmentData(accountId, { ec2s: scopedEc2s });
-    const mssqlAssessments = results
-        .filter(result => result.workloadType === DATABASE_TYPE.mssql)
-        .map(result => result.storageAssessment as unknown as StorageAssessment);
-
-    return mssqlAssessments.length > 0 ? mssqlAssessments : undefined;
-}
-
-function filterToVolumeLunDriftItems(
-    items: (AssessmentItemType | AssessmentErrorItemType)[]
-): (AssessmentItemType | AssessmentErrorItemType)[] {
-    return items.filter(item => VOLUME_LUN_DRIFT_IDS.has(item.id));
-}
-
-function dedupeViolationDetails(violationDetails: GenericViolationResponseType[]): GenericViolationResponseType[] {
-    const seenKeys = new Set<string>();
-    return violationDetails.filter(({ objectName, objectType, value }) => {
-        const key = `${objectName}|${objectType}|${value}`;
-        const isDuplicate = seenKeys.has(key);
-        seenKeys.add(key);
-        return !isDuplicate;
-    });
-}
-
-function mergeStorageDriftItemsById(
-    driftResultsPerFilesystem: (AssessmentItemType | AssessmentErrorItemType)[][]
-): (AssessmentItemType | AssessmentErrorItemType)[] {
-    const entriesById = new Map<string, (AssessmentItemType | AssessmentErrorItemType)[]>();
-    driftResultsPerFilesystem.flat().forEach(item => {
-        entriesById.set(item.id, [...(entriesById.get(item.id) ?? []), item]);
-    });
-
-    return [...entriesById.values()].map(entries => {
-        const successfulEntries = entries.filter((entry): entry is AssessmentItemType => !('errorMessage' in entry));
-        if (successfulEntries.length === 0) {
-            return entries[0];
-        }
-        return successfulEntries.reduce((merged, entry) => {
-            const violationDetails = dedupeViolationDetails([
-                ...(merged.violationDetails ?? []),
-                ...(entry.violationDetails ?? [])
-            ]);
-            return {
-                ...entry,
-                status:
-                    merged.status === AssessmentStatus.NOT_OPTIMIZED || entry.status === AssessmentStatus.NOT_OPTIMIZED
-                        ? AssessmentStatus.NOT_OPTIMIZED
-                        : AssessmentStatus.OPTIMIZED,
-                objectsInViolation: [
-                    ...new Set([...(merged.objectsInViolation ?? []), ...(entry.objectsInViolation ?? [])])
-                ],
-                violationDetails,
-                totalObjectsAssessed: merged.totalObjectsAssessed + entry.totalObjectsAssessed,
-                totalObjectsInViolation: violationDetails.length
-            };
-        });
-    });
-}
-
 async function computeVolumeLunDrift(
     accountId: string,
     credentialsId: string,
@@ -993,10 +961,19 @@ async function computeVolumeLunDrift(
 ): Promise<(AssessmentItemType | AssessmentErrorItemType)[]> {
     const perFilesystemDrift = await Promise.all(
         ontapStorageAssessments.map(storageAssessment =>
-            calculateStorageDrift(accountId, credentialsId, region, resourceId, databaseInstanceId, storageAssessment)
+            calculateStorageDrift(
+                accountId,
+                credentialsId,
+                region,
+                resourceId,
+                databaseInstanceId,
+                storageAssessment,
+                undefined,
+                /* skipHeadroom */ true
+            )
         )
     );
-    return filterToVolumeLunDriftItems(mergeStorageDriftItemsById(perFilesystemDrift));
+    return filterToVolumeLunDriftItems(mergeStorageDriftItemsById(perFilesystemDrift), VOLUME_LUN_DRIFT_IDS);
 }
 
 async function runLayoutSubAssessment(
@@ -1016,12 +993,13 @@ async function runLayoutSubAssessment(
         type: JOBTYPE.ASSESSMENT,
         parentJobId: jobId
     });
+    let status: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage: string | undefined;
     try {
-        const result = await runLayoutAssessment(credentialsId, region, ec2InstanceId, instanceName, accountId);
-        await updateJobDetails(accountId, subJobId, { status: JOBSTATUS.COMPLETED, endTime: Date.now() });
-        return result;
+        return await runLayoutAssessment(credentialsId, region, ec2InstanceId, instanceName, accountId);
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Registry layout assessment failed';
+        status = JOBSTATUS.FAILED;
+        errorMessage = error instanceof Error ? error.message : 'Registry layout assessment failed';
         logger.error('Failed to run registry-based storage layout assessment for unregistered MSSQL instance', {
             accountId,
             credentialsId,
@@ -1030,12 +1008,13 @@ async function runLayoutSubAssessment(
             instanceName,
             error
         });
-        await updateJobDetails(accountId, subJobId, {
-            status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
-            error: errorMessage
-        });
         return undefined;
+    } finally {
+        await updateJobDetails(accountId, subJobId, {
+            status,
+            endTime: Date.now(),
+            ...(errorMessage && { error: errorMessage })
+        });
     }
 }
 
@@ -1056,12 +1035,13 @@ async function runMpioSubAssessment(
         type: JOBTYPE.ASSESSMENT,
         parentJobId: jobId
     });
+    let status: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage: string | undefined;
     try {
-        const result = await getMultipathConfig(credentialsId, region, ec2InstanceId, accountId);
-        await updateJobDetails(accountId, subJobId, { status: JOBSTATUS.COMPLETED, endTime: Date.now() });
-        return result;
+        return await getMultipathConfig(credentialsId, region, ec2InstanceId, accountId);
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Registry MPIO assessment failed';
+        status = JOBSTATUS.FAILED;
+        errorMessage = error instanceof Error ? error.message : 'Registry MPIO assessment failed';
         logger.error('Failed to run registry-based MPIO assessment for unregistered MSSQL instance', {
             accountId,
             credentialsId,
@@ -1070,74 +1050,104 @@ async function runMpioSubAssessment(
             instanceName,
             error
         });
-        await updateJobDetails(accountId, subJobId, {
-            status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
-            error: errorMessage
-        });
         return undefined;
+    } finally {
+        await updateJobDetails(accountId, subJobId, {
+            status,
+            endTime: Date.now(),
+            ...(errorMessage && { error: errorMessage })
+        });
     }
 }
 
-async function runOntapSubAssessment(
+async function runClusterQuorumSubAssessment(
     accountId: string,
     credentialsId: string,
     region: string,
     ec2InstanceId: string,
     instanceName: string,
     jobId: string
-): Promise<StorageAssessment[] | undefined> {
+): Promise<ClusterQuorumConfig | undefined> {
     const { id: subJobId } = await registerJob(accountId, credentialsId, region, {
-        name: 'ONTAP volume/LUN storage assessment',
-        description: `ONTAP volume/LUN storage assessment for ${ec2InstanceId}/${instanceName}`,
+        name: 'Registry cluster quorum assessment',
+        description: `Registry-based cluster quorum assessment for ${ec2InstanceId}/${instanceName}`,
         resourceName: `${ec2InstanceId}/${instanceName}`,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
         type: JOBTYPE.ASSESSMENT,
         parentJobId: jobId
     });
+    let status: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage: string | undefined;
     try {
-        const result = await collectScopedOntapStorageAssessment(accountId, credentialsId, region, ec2InstanceId);
-        await updateJobDetails(accountId, subJobId, { status: JOBSTATUS.COMPLETED, endTime: Date.now() });
-        return result;
+        return await getClusterQuorumConfig(credentialsId, region, ec2InstanceId, accountId);
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'ONTAP storage assessment failed';
-        logger.warn(
-            'Failed to collect ONTAP storage assessment for unregistered instance; continuing with other findings',
-            { accountId, credentialsId, region, ec2InstanceId, error: errorMessage }
-        );
-        await updateJobDetails(accountId, subJobId, {
-            status: JOBSTATUS.FAILED,
-            endTime: Date.now(),
-            error: errorMessage
+        status = JOBSTATUS.FAILED;
+        errorMessage = error instanceof Error ? error.message : 'Registry cluster quorum assessment failed';
+        logger.error('Failed to run registry-based cluster quorum assessment for unregistered MSSQL instance', {
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            instanceName,
+            error
         });
         return undefined;
+    } finally {
+        await updateJobDetails(accountId, subJobId, {
+            status,
+            endTime: Date.now(),
+            ...(errorMessage && { error: errorMessage })
+        });
     }
 }
 
 async function processMssqlUnregisteredAssessment(
     accountId: string,
-    jobId: string,
     credentialsId: string,
     region: string,
     ec2InstanceId: string,
-    instanceName: string
+    instanceName: string,
+    jobId: string
 ) {
     let unexpectedError: string | undefined;
     try {
         const resourceId = ec2InstanceId;
 
-        const [layoutAssessment, mpioAssessment, ontapStorageAssessments] = await Promise.all([
+        const [layoutAssessment, mpioAssessment, ontapStorageResult] = await Promise.all([
             runLayoutSubAssessment(accountId, credentialsId, region, ec2InstanceId, instanceName, jobId),
             runMpioSubAssessment(accountId, credentialsId, region, ec2InstanceId, instanceName, jobId),
-            runOntapSubAssessment(accountId, credentialsId, region, ec2InstanceId, instanceName, jobId)
+            runScopedOntapSubAssessment<StorageAssessment>(
+                accountId,
+                credentialsId,
+                region,
+                ec2InstanceId,
+                instanceName,
+                jobId,
+                DATABASE_TYPE.mssql,
+                'MSSQL'
+            )
         ]);
+        const { ontapStorageAssessments, headroomData } = ontapStorageResult ?? {};
+        const quorumAssessment =
+            layoutAssessment?.deploymentType === 'FCI'
+                ? await runClusterQuorumSubAssessment(
+                      accountId,
+                      credentialsId,
+                      region,
+                      ec2InstanceId,
+                      instanceName,
+                      jobId
+                  )
+                : undefined;
 
         if (layoutAssessment || mpioAssessment || (ontapStorageAssessments && ontapStorageAssessments.length > 0)) {
             const rawdata: MssqlUnregisteredAssessmentRawData = {
                 ...(layoutAssessment && { layoutAssessment }),
                 ...(mpioAssessment && { mpioAssessment }),
-                ...(ontapStorageAssessments ? { ontapStorageAssessments } : {})
+                ...(quorumAssessment && { quorumAssessment }),
+                ...(ontapStorageAssessments ? { ontapStorageAssessments } : {}),
+                ...(headroomData && { headroomData })
             };
             const metadata: MssqlUnregisteredAssessmentMetadata = {
                 source: OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED,
@@ -1146,7 +1156,7 @@ async function processMssqlUnregisteredAssessment(
                 assessmentTimestamp: new Date().toISOString()
             };
 
-            const assessmentResults = await fetchMssqlAwsDocAssessment(
+            const assessmentResults = await fetchMssqlUnregisteredInstanceAssessment(
                 accountId,
                 resourceId,
                 instanceName,
@@ -1170,8 +1180,8 @@ async function processMssqlUnregisteredAssessment(
             ]);
         } else {
             unexpectedError =
-                'No assessable data collected: instance is not clustered, has no MPIO configuration, ' +
-                'and has no EC2-FSx relationship';
+                'No assessable data collected: registry layout, MPIO, and ONTAP volume/LUN assessments ' +
+                'all returned no data for this instance';
         }
     } catch (error: unknown) {
         unexpectedError = error instanceof Error ? error.message : 'Assessment failed';
@@ -1184,8 +1194,6 @@ async function processMssqlUnregisteredAssessment(
         });
     } finally {
         if (unexpectedError) {
-            // Something broke outside the 3 subjobs themselves (e.g. bulkUpsert failing) — force
-            // FAILED rather than letting it be derived from (already-successful) subjob statuses.
             await updateJobDetails(accountId, jobId, {
                 status: JOBSTATUS.FAILED,
                 endTime: Date.now(),
@@ -1198,8 +1206,6 @@ async function processMssqlUnregisteredAssessment(
                 })
             );
         } else {
-            // Derive main job status from the 3 subjobs: COMPLETED if all succeeded, WARNING if
-            // some failed, FAILED if all failed (existing updateParentJobStatus aggregation semantics).
             await updateParentJobStatus(accountId, jobId).catch(updateError =>
                 logger.error('Failed to update parent job status for MSSQL unregistered-instance assessment', {
                     accountId,
@@ -1226,8 +1232,13 @@ async function triggerMssqlUnregisteredAssessment(
         status: JOBSTATUS.IN_PROGRESS,
         type: JOBTYPE.ASSESSMENT
     });
-
-    processMssqlUnregisteredAssessment(accountId, jobId, credentialsId, region, ec2InstanceId, instanceName).catch(
+    logger.info('Initiating MSSQL unregistered-instance assessment', {
+        accountId,
+        jobId,
+        ec2InstanceId,
+        instanceName
+    });
+    processMssqlUnregisteredAssessment(accountId, credentialsId, region, ec2InstanceId, instanceName, jobId).catch(
         error =>
             logger.error('Unhandled error in MSSQL unregistered-instance assessment', {
                 accountId,
@@ -1268,12 +1279,8 @@ async function fetchMssqlOfflineAssessmentPerAccount(
         return { items: [], count: 0 };
     }
 
-    const fileUploadItems = items.filter(
-        item => (item.metadata as { source?: string })?.source !== OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED
-    );
-
     const assessmentItems = await Promise.all(
-        fileUploadItems.map(
+        items.map(
             throat(3, async item => {
                 const {
                     resource_id: resourceId,
@@ -1457,7 +1464,6 @@ async function listMssqlOfflineAssessmentDatabasesPerAccount(
         return { items: [], count: 0 };
     }
 
-    // Exclude AWS-doc/unregistered-instance rows, same as fetchMssqlOfflineAssessmentPerAccount.
     const items = records
         .filter(record => (record.metadata as { source?: string })?.source !== OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED)
         .map(mapOfflineAssessmentRecord);
@@ -1586,6 +1592,6 @@ export {
     listMssqlOfflineAssessmentDatabasesPerAccount,
     listMssqlOfflineAssessmentDatabases,
     deleteOfflineAssessmentRecord,
-    fetchMssqlAwsDocAssessment,
+    fetchMssqlUnregisteredInstanceAssessment,
     triggerMssqlUnregisteredAssessment
 };

@@ -32,6 +32,8 @@ const VOLUME_FIELDS =
 
 const LUN_FIELDS = 'name,uuid,os_type,space.guarantee.requested,space.scsi_thin_provisioning_support_enabled';
 
+const FOOTPRINT_FIELDS = 'volume-blocks-footprint-bin0-percent';
+
 interface OntapSnapshotRecord {
     uuid?: string;
     comment?: string;
@@ -79,17 +81,24 @@ interface OntapPrivateCliVolumeRecord {
     space_mgmt_try_first?: string;
 }
 
+interface OntapFootprintRecord {
+    volume: string;
+    volume_blocks_footprint_bin0_percent?: number;
+}
+
 interface FsxOntapInventory {
     fileSystemId: string;
     volumesByUuid: Record<string, OntapVolumeRecord>;
     lunsByUuid: Record<string, OntapLunRecord>;
     spaceMgmtTryFirstByName: Record<string, string | undefined>;
+    performanceTierPercentByName: Record<string, number | undefined>;
     snapcenterProtectedVolumeUuids: Set<string>;
     headroomData?: AggregateHeadroomData;
     errors: {
         volumes?: string;
         luns?: string;
         privateCliVolumes?: string;
+        footprint?: string;
         aggregates?: string;
         snapshots?: string;
     };
@@ -222,7 +231,7 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
 
     const base = buildOntapProxyBase(accountId, fileSystemId, region);
 
-    const [volumesRes, lunsRes, privateCliRes, aggregatesRes, snapshotsRes] = await Promise.allSettled([
+    const [volumesRes, lunsRes, privateCliRes, footprintRes, aggregatesRes, snapshotsRes] = await Promise.allSettled([
         volumeUuids.length === 0
             ? Promise.resolve<OntapVolumeRecord[]>([])
             : collectOntapRecordsBatched<OntapVolumeRecord>(base, 'api/storage/volumes', 'uuid', volumeUuids, {
@@ -244,6 +253,15 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
                       fields: 'space-mgmt-try-first'
                   }
               ),
+        volumeNames.length === 0
+            ? Promise.resolve<OntapFootprintRecord[]>([])
+            : collectOntapRecordsBatched<OntapFootprintRecord>(
+                  base,
+                  'api/private/cli/volume/show-footprint',
+                  'volume',
+                  volumeNames,
+                  { fields: FOOTPRINT_FIELDS }
+              ),
         collectOntapRecordsBatched<OntapAggregateRecord>(base, 'api/storage/aggregates', 'uuid', [], {
             fields: AGGREGATE_FIELDS
         }),
@@ -255,6 +273,11 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
     const { data: privateCli, error: privateCliError } = unwrapOntapSettled(
         privateCliRes,
         'private CLI volumes',
+        fileSystemId
+    );
+    const { data: footprint, error: footprintError } = unwrapOntapSettled(
+        footprintRes,
+        'volume footprint',
         fileSystemId
     );
     const { data: aggregates, error: aggregatesError } = unwrapOntapSettled(aggregatesRes, 'aggregates', fileSystemId);
@@ -273,12 +296,19 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
         volumesByUuid: Object.fromEntries(volumes.map(v => [v.uuid, v])),
         lunsByUuid: Object.fromEntries(luns.map(l => [l.uuid, l])),
         spaceMgmtTryFirstByName: Object.fromEntries(privateCli.map(p => [p.volume, p.space_mgmt_try_first])),
+        // ONTAP's "bin0" footprint bin is the performance tier of the aggregate (bin1+ is the
+        // FabricPool capacity tier), so volume_blocks_footprint_bin0_percent is the performance-tier
+        // footprint percentage: https://docs.netapp.com/us-en/ontap-cli/volume-show-footprint.html
+        performanceTierPercentByName: Object.fromEntries(
+            footprint.map(f => [f.volume, f.volume_blocks_footprint_bin0_percent])
+        ),
         snapcenterProtectedVolumeUuids: new Set(snapcenterProtectedVolumeUuids),
         headroomData: computeHeadroomData(aggregates),
         errors: {
             volumes: volumesError,
             luns: lunsError,
             privateCliVolumes: privateCliError,
+            footprint: footprintError,
             aggregates: aggregatesError,
             snapshots: snapshotsError
         }
@@ -316,7 +346,8 @@ function toMssqlStorageAssessment(
                     compressionType: efficiency?.compression_type,
                     compaction: efficiency?.compaction,
                     deduplication: efficiency?.dedupe,
-                    'efficiency-type': efficiency?.storage_efficiency_mode
+                    'efficiency-type': efficiency?.storage_efficiency_mode,
+                    'space-mgmt-try-first': inventory.spaceMgmtTryFirstByName[name]
                 };
             }
         );
@@ -330,19 +361,26 @@ function toMssqlStorageAssessment(
             'space-allocation-allocated': space?.scsi_thin_provisioning_support_enabled
         }));
 
+    // performanceTierPercentByName is keyed from volume_blocks_footprint_bin0_percent (see fetchOntapInventory),
+    // ONTAP's performance-tier footprint percentage.
+    const performanceTier = volumes.map(({ name }) => ({
+        volumeName: name,
+        performanceTierPercent: inventory.performanceTierPercentByName[name]
+    }));
+
     return {
         filesystemId: fileSystemId,
         volumes: volumes as unknown as MssqlStorageAssessment['volumes'],
         luns: luns as unknown as MssqlStorageAssessment['luns'],
         os: [] as unknown as MssqlStorageAssessment['os'],
         layout: undefined as unknown as MssqlStorageAssessment['layout'],
-        sizing: undefined as unknown as MssqlStorageAssessment['sizing'],
+        sizing: { 'performance-tier': performanceTier } as unknown as MssqlStorageAssessment['sizing'],
         errors: {
             volumes: inventory.errors.volumes ?? '',
             luns: inventory.errors.luns ?? '',
-            'volumes-footprint': HOST_SIDE_NOT_COLLECTED,
+            'volumes-footprint': inventory.errors.footprint ?? '',
             layout: HOST_SIDE_NOT_COLLECTED,
-            sizing: HOST_SIDE_NOT_COLLECTED,
+            sizing: inventory.errors.footprint ?? '',
             'mpio-policy': HOST_SIDE_NOT_COLLECTED,
             'iscsi-sessions': HOST_SIDE_NOT_COLLECTED,
             'ntfs-allocation': HOST_SIDE_NOT_COLLECTED,
@@ -350,7 +388,7 @@ function toMssqlStorageAssessment(
             'default-log-files-location': HOST_SIDE_NOT_COLLECTED,
             'default-data-files-location': HOST_SIDE_NOT_COLLECTED,
             'data-tempdb-drive-details': HOST_SIDE_NOT_COLLECTED,
-            spaceMgmtTryFirst: HOST_SIDE_NOT_COLLECTED
+            spaceMgmtTryFirst: inventory.errors.privateCliVolumes ?? ''
         }
     };
 }

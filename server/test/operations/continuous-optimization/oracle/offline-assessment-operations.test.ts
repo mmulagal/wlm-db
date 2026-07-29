@@ -1,13 +1,27 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { DATABASE_TYPE } from '@prisma/client';
 
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
 import { ORACLE_STORAGE_ASSESSMENT_DATA } from '../../../../src/utils/demo-utils/demoMockdata';
 import { createResource, deleteResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
-import { bulkUpsertOfflineAssessments } from '../../../../src/lib/database/offline-assessment';
-import { fetchOracleOfflineAssessment } from '../../../../src/operations/continuous-optimization/oracle/offline-assessment-operations';
+import { bulkUpsertOfflineAssessments, getOfflineAssessment } from '../../../../src/lib/database/offline-assessment';
+import {
+    fetchOracleOfflineAssessment,
+    fetchOracleOfflineAssessmentPerAccount,
+    triggerOracleUnregisteredAssessment
+} from '../../../../src/operations/continuous-optimization/oracle/offline-assessment-operations';
+import * as taggingServiceOperations from '../../../../src/operations/cloud-manager/tagging-service-operations';
+import { Ec2FsxRelationship } from '../../../../src/operations/cloud-manager/tagging-service-operations';
 import { OracleGenericParameterDriftResponseType } from '../../../../src/routes/types/oracle-continuous-optimization.types';
 import { AssessmentStatus, AwsWellArchitecturedPillars } from '../../../../src/utils/continous-optimization-consts';
+import { OFFLINE_ASSESSMENT_SOURCE } from '../../../../src/operations/continuous-optimization/assessment-utils';
+import { ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE } from '../../../../src/operations/continuous-optimization/one-time-assessment-consts';
+import { prisma } from '../../../../src/utils/prisma-utils';
+import {
+    registerProxyGetResponse,
+    resetProxyOverrides
+} from '../../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
+import waitForJobCompletion from '../../../utils/utils';
 
 const resourceId = 'offline-oracle-resource';
 const fsxId = 'fs-offline-oracle-1';
@@ -317,5 +331,179 @@ describe('fetchOracleOfflineAssessment', () => {
         expect(ids).not.toContain('fractional-reserve');
         expect(ids).not.toContain('space-reservation-enabled');
         expect(ids).not.toContain('compression');
+    });
+});
+
+function ontapPage<T>(records: T[]) {
+    return { records, num_records: records.length };
+}
+
+function buildRelationship(ec2s: Ec2FsxRelationship['ec2s']): Ec2FsxRelationship {
+    return { ec2s };
+}
+
+describe('triggerOracleUnregisteredAssessment', () => {
+    beforeAll(() => {
+        resetProxyOverrides();
+    });
+
+    afterAll(() => {
+        vi.restoreAllMocks();
+        resetProxyOverrides();
+    });
+
+    it('should register a job, persist a filtered unregistered record, and serve it back via the GET dispatch', async () => {
+        const unregisteredEc2InstanceId = 'i-unregistered-oracle';
+        const instanceName = 'ORAUNREG';
+        const fsxFileSystemId = 'fs-unregistered-oracle';
+
+        registerProxyGetResponse({
+            targetId: fsxFileSystemId,
+            ontapPath: 'api/storage/volumes',
+            body: ontapPage([{ name: 'oradata_unreg', uuid: 'uuid-unreg-1', nas: { path: '/oradata_unreg' } }])
+        });
+
+        const relationship = buildRelationship([
+            {
+                instanceId: unregisteredEc2InstanceId,
+                workloadTypes: [DATABASE_TYPE.oracle],
+                workloads: [],
+                fsxs: [
+                    {
+                        id: fsxFileSystemId,
+                        fileSystemId: fsxFileSystemId,
+                        region: DEFAULT_AWS_REGION,
+                        volumes: [
+                            {
+                                id: 'vol-unreg-1',
+                                fsxVolumeId: 'fsvol-unreg-1',
+                                volumeUuid: 'uuid-unreg-1',
+                                volumeName: 'oradata_unreg',
+                                luns: []
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]);
+        vi.spyOn(taggingServiceOperations, 'buildEc2FsxRelationship').mockResolvedValue(relationship);
+
+        const { jobId } = await triggerOracleUnregisteredAssessment(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            unregisteredEc2InstanceId,
+            instanceName
+        );
+        await waitForJobCompletion(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, jobId);
+
+        const job = await prisma.client.job.findUnique({ where: { id: jobId } });
+        expect(job?.status).toBe('COMPLETED');
+
+        const subJobs = await prisma.client.job.findMany({ where: { parent_job_id: jobId } });
+        expect(subJobs).toHaveLength(1);
+        expect(subJobs[0].name).toBe('ONTAP volume/LUN storage assessment');
+        expect(subJobs[0].status).toBe('COMPLETED');
+
+        const record = await getOfflineAssessment(ACCOUNT_ID, unregisteredEc2InstanceId, instanceName);
+        expect((record?.metadata as any)?.source).toBe('unregistered');
+        expect((record?.rawdata as any)?.ontapStorageAssessments).toHaveLength(1);
+
+        // Fetching via the standard GET path confirms fetchOracleOfflineAssessment dispatches to
+        // the unregistered-instance branch and that drift is filtered to volume/LUN/layout ids
+        // only — sizing/OS-config ids (e.g. headroom) come back as not-applicable stubs instead.
+        const response = await fetchOracleOfflineAssessment(
+            ACCOUNT_ID,
+            unregisteredEc2InstanceId,
+            instanceName,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION
+        );
+        const byId = new Map(response.assessments.map(a => [a.id, a as { errorMessage?: string }] as const));
+        expect(byId.get('thin-provision')).toBeDefined();
+        expect(byId.get('thin-provision')?.errorMessage).not.toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
+        expect(byId.get('headroom')?.errorMessage).toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
+
+        // Volume-placement checks fabricate a file-type->volume mapping in the unregistered flow
+        // (no real host/SQL data), so they must be skipped and fall back to not-applicable stubs
+        // instead of reporting bogus violations.
+        for (const id of [
+            'archive-placement',
+            'datafiles-placement',
+            'controlfiles-placement',
+            'redologs-placement',
+            'templogs-placement',
+            'oracle-binary-placement'
+        ]) {
+            expect(byId.get(id)?.errorMessage).toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
+        }
+    }, 15000);
+
+    it('should fail the job with no-data message when there is no EC2-FSx relationship for the instance', async () => {
+        const unregisteredEc2InstanceId = 'i-unregistered-oracle-no-relationship';
+        const instanceName = 'ORANOREL';
+
+        vi.spyOn(taggingServiceOperations, 'buildEc2FsxRelationship').mockResolvedValue(buildRelationship([]));
+
+        const { jobId } = await triggerOracleUnregisteredAssessment(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            unregisteredEc2InstanceId,
+            instanceName
+        );
+
+        await waitForJobCompletion(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, jobId);
+
+        const job = await prisma.client.job.findUnique({ where: { id: jobId } });
+        expect(job?.status).toBe('FAILED');
+        expect(job?.error).toContain('No assessable data collected');
+    }, 15000);
+});
+
+describe('fetchOracleOfflineAssessmentPerAccount', () => {
+    const unregisteredEc2InstanceId = 'i-unregistered-oracle-list';
+    const unregisteredInstanceName = 'ORAUNREGLIST';
+
+    beforeAll(async () => {
+        // Seed an unregistered-instance record directly (bypassing the job flow) alongside the
+        // file-upload records already seeded in the outer beforeAll.
+        await bulkUpsertOfflineAssessments([
+            {
+                accountId: ACCOUNT_ID,
+                credentialsId: DEFAULT_AWS_CREDENTIALS_ID,
+                region: DEFAULT_AWS_REGION,
+                resourceId: unregisteredEc2InstanceId,
+                databaseInstanceId: unregisteredInstanceName,
+                databaseType: DATABASE_TYPE.oracle,
+                rawdata: { ontapStorageAssessments: [] },
+                metadata: {
+                    source: OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED,
+                    databaseInstanceName: unregisteredInstanceName,
+                    ec2InstanceId: unregisteredEc2InstanceId,
+                    assessmentTimestamp: new Date().toISOString()
+                }
+            }
+        ]);
+    });
+
+    it('should include unregistered-instance rows alongside file-upload rows and report a count matching all items', async () => {
+        const response = await fetchOracleOfflineAssessmentPerAccount(
+            ACCOUNT_ID,
+            50,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION
+        );
+
+        expect(response.items.map(item => item.databaseInstanceId)).toContain(unregisteredInstanceName);
+        expect(response.items.map(item => item.databaseInstanceId)).toContain(iscsiInstanceId);
+        expect(response.items.map(item => item.databaseInstanceId)).toContain(nfsInstanceId);
+        expect(response.count).toBe(response.items.length);
+
+        const unregisteredItem = response.items.find(item => item.databaseInstanceId === unregisteredInstanceName);
+        expect(unregisteredItem && 'assessments' in unregisteredItem).toBe(true);
+        expect(
+            (unregisteredItem as { assessments?: { metadata: { source?: string } } })?.assessments?.metadata.source
+        ).toBe(OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED);
     });
 });

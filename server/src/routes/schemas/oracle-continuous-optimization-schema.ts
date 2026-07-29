@@ -153,6 +153,26 @@ const BulkDismissOracleConfigurationSchema = {
     tags: [RouteTags.ORACLE_ASSESSMENT]
 };
 
+const OracleUnregisteredAssessmentParams = Type.Intersect([
+    CredentialsIdParams,
+    Type.Object({
+        ec2InstanceId: Type.String({ minLength: 1, description: 'EC2 instance ID hosting the Oracle instance.' }),
+        instanceName: Type.String({ minLength: 1, description: 'Oracle SID, e.g. ORCL.' })
+    })
+]);
+
+const TriggerOracleUnregisteredAssessmentSchema = {
+    tags: [RouteTags.ORACLE_ASSESSMENT],
+    summary: 'Trigger a one-time storage assessment for an unregistered Oracle instance',
+    description:
+        'Collects ONTAP volume/LUN storage drift where an EC2-FSx for ONTAP relationship exists, for an Oracle ' +
+        'instance that is not registered with Workload Factory.',
+    params: OracleUnregisteredAssessmentParams,
+    response: {
+        202: JobIdResponse
+    }
+};
+
 export {
     DriftAssessmentDataCollection,
     DriftAssessmentDataCollectionV1,
@@ -164,5 +184,6 @@ export {
     OracleOptimizeStorageLayoutSchema,
     OracleOptimizeSchema,
     FetchOraclePatchScanSchema,
-    BulkDismissOracleConfigurationSchema
+    BulkDismissOracleConfigurationSchema,
+    TriggerOracleUnregisteredAssessmentSchema
 };

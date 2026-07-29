@@ -361,8 +361,9 @@ const TriggerMssqlUnregisteredAssessmentSchema = {
     tags: [RouteTags.MSSQL_ASSESSMENT],
     summary: 'Trigger a one-time storage assessment for an unregistered MSSQL instance',
     description:
-        'Collects registry-based storage layout and MPIO configuration via AWS Fleet Manager for a SQL Server ' +
-        'instance that is not registered with Workload Factory (e.g. when the credential only has AWS-doc permission).',
+        'Collects registry-based storage layout and MPIO configuration via AWS Fleet Manager, and ONTAP volume/LUN ' +
+        'storage drift where an EC2-FSx for ONTAP relationship exists, for a SQL Server instance that is not ' +
+        'registered with Workload Factory (e.g. when the credential only has AWS-doc permission).',
     params: MssqlUnregisteredAssessmentParams,
     response: {
         202: JobIdResponse

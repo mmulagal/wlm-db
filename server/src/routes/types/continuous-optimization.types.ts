@@ -329,7 +329,10 @@ const AssessmentMetadata = Type.Object({
     replicaRole: Type.Optional(Type.String()),
     databaseHostName: Type.Optional(Type.String()),
     storageProtocol: Type.Optional(Type.String()),
-    isASMManaged: Type.Optional(Type.Boolean())
+    isASMManaged: Type.Optional(Type.Boolean()),
+    credentialsId: Type.Optional(Type.String()),
+    region: Type.Optional(Type.String()),
+    source: Type.Optional(Type.String())
 });
 type AssessmentMetadataType = Static<typeof AssessmentMetadata>;
 

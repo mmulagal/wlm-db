@@ -1,10 +1,12 @@
 import { isEmpty } from 'lodash-es';
-import { JOBSTATUS } from '@prisma/client';
+import { DATABASE_TYPE, JOBSTATUS, JOBTYPE } from '@prisma/client';
 import createError from 'http-errors';
 import { CommandFilterKey } from '@aws-sdk/client-ssm';
-import { getJobs, registerJob } from '../database/job-operations';
+import { getJobs, registerJob, updateJobDetails } from '../database/job-operations';
 import { getServerNameWithHostname, getTimeDifferenceInMinutes } from '../../utils/utils';
 import { updateLongRunningAuditGroup } from '../cloud-manager/audit-operations';
+import { buildEc2FsxRelationship } from '../cloud-manager/tagging-service-operations';
+import { collectOntapAssessmentData, FsxStorageCollectionResult } from './ontap-proxy-collector';
 import {
     AssessmentCategories,
     ASSESSMENT_RESOURCE_TYPE,
@@ -26,7 +28,8 @@ import type {
     Metadata,
     ResourceAssessmentData,
     ResourceDetails,
-    DismissConfig
+    DismissConfig,
+    OneTimeWADHeadroomData
 } from '../../utils/common-types';
 import { OracleJobMetadata } from './oracle/consts';
 import { OracleMappedOntapVolumeRecordType } from '../workloads/oracle/common-types';
@@ -97,6 +100,11 @@ interface UnOptimizedDiskGroups {
     lunSerials?: string[];
     asmDisks?: string[];
     iscsiIp?: string;
+}
+
+interface ScopedOntapStorageResult<T> {
+    ontapStorageAssessments: T[];
+    headroomData?: OneTimeWADHeadroomData;
 }
 
 function getMatchingAssessmentStatus(finding: string) {
@@ -399,6 +407,150 @@ const mssqlOsConfigData = MSSQL_GOLDEN_CONFIG.filter(
 );
 const mssqlLayoutConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'layout');
 const mssqlSizingConfigData = MSSQL_GOLDEN_CONFIG.filter(e => e.type === 'storage' && e.subType === 'sizing');
+
+/** Flags an offline_assessment record as either a file-upload WAD or a background-collected unregistered-instance assessment. */
+const OFFLINE_ASSESSMENT_SOURCE = {
+    OFFLINE: 'offline',
+    UNREGISTERED: 'unregistered'
+} as const;
+
+function dedupeViolationDetails(violationDetails: GenericViolationResponseType[]): GenericViolationResponseType[] {
+    const seenKeys = new Set<string>();
+    return violationDetails.filter(({ objectName, objectType, value }) => {
+        const key = `${objectName}|${objectType}|${value}`;
+        const isDuplicate = seenKeys.has(key);
+        seenKeys.add(key);
+        return !isDuplicate;
+    });
+}
+
+function mergeStorageDriftItemsById(
+    driftResultsPerFilesystem: (AssessmentItemType | AssessmentErrorItemType)[][]
+): (AssessmentItemType | AssessmentErrorItemType)[] {
+    const entriesById = new Map<string, (AssessmentItemType | AssessmentErrorItemType)[]>();
+    driftResultsPerFilesystem.flat().forEach(item => {
+        entriesById.set(item.id, [...(entriesById.get(item.id) ?? []), item]);
+    });
+    logger.info('Merging per-filesystem storage drift items by id', {
+        filesystemCount: driftResultsPerFilesystem.length,
+        ids: [...entriesById.keys()]
+    });
+
+    const mergedItems = [...entriesById.values()].map(entries => {
+        const successfulEntries = entries.filter((entry): entry is AssessmentItemType => !('errorMessage' in entry));
+        if (successfulEntries.length === 0) {
+            return entries[0];
+        }
+        return successfulEntries.reduce((merged, entry) => {
+            const violationDetails = dedupeViolationDetails([
+                ...(merged.violationDetails ?? []),
+                ...(entry.violationDetails ?? [])
+            ]);
+            return {
+                ...entry,
+                status:
+                    merged.status === AssessmentStatus.NOT_OPTIMIZED || entry.status === AssessmentStatus.NOT_OPTIMIZED
+                        ? AssessmentStatus.NOT_OPTIMIZED
+                        : AssessmentStatus.OPTIMIZED,
+                objectsInViolation: [
+                    ...new Set([...(merged.objectsInViolation ?? []), ...(entry.objectsInViolation ?? [])])
+                ],
+                violationDetails,
+                totalObjectsAssessed: merged.totalObjectsAssessed + entry.totalObjectsAssessed,
+                totalObjectsInViolation: violationDetails.length
+            };
+        });
+    });
+    logger.info('Merged per-filesystem storage drift items', { mergedItemCount: mergedItems.length });
+    return mergedItems;
+}
+
+function filterToVolumeLunDriftItems(
+    items: (AssessmentItemType | AssessmentErrorItemType)[],
+    driftIds: Set<string>
+): (AssessmentItemType | AssessmentErrorItemType)[] {
+    return items.filter(item => driftIds.has(item.id));
+}
+
+async function collectScopedOntapAssessment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    workloadType: DATABASE_TYPE
+): Promise<FsxStorageCollectionResult[]> {
+    logger.info('Collecting scoped ONTAP assessment', {
+        accountId,
+        credentialsId,
+        region,
+        ec2InstanceId,
+        workloadType
+    });
+
+    const relationship = await buildEc2FsxRelationship(accountId, credentialsId, region);
+    const scopedEc2s = relationship.ec2s.filter(ec2 => ec2.instanceId === ec2InstanceId);
+    if (scopedEc2s.length === 0) {
+        throw new Error('No ONTAP volumes found for this instance: no EC2-FSx relationship detected');
+    }
+
+    const results = await collectOntapAssessmentData(accountId, { ec2s: scopedEc2s });
+    return results.filter(result => result.workloadType === workloadType);
+}
+
+async function runScopedOntapSubAssessment<T>(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    instanceName: string,
+    jobId: string,
+    workloadType: DATABASE_TYPE,
+    workloadLabel: string
+): Promise<ScopedOntapStorageResult<T> | undefined> {
+    const { id: subJobId } = await registerJob(accountId, credentialsId, region, {
+        name: 'ONTAP volume/LUN storage assessment',
+        description: `ONTAP volume/LUN storage assessment for ${ec2InstanceId}/${instanceName}`,
+        resourceName: `${ec2InstanceId}/${instanceName}`,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.ASSESSMENT,
+        parentJobId: jobId
+    });
+    let status: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage: string | undefined;
+    try {
+        const results = await collectScopedOntapAssessment(
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            workloadType
+        );
+        const ontapStorageAssessments = results.map(result => result.storageAssessment as unknown as T);
+
+        if (ontapStorageAssessments.length === 0) {
+            status = JOBSTATUS.FAILED;
+            errorMessage = `No ONTAP volumes found for this instance: no ${workloadLabel} workload tag detected`;
+            return undefined;
+        }
+
+        return { ontapStorageAssessments, headroomData: results[0]?.headroomData };
+    } catch (error) {
+        status = JOBSTATUS.FAILED;
+        errorMessage = error instanceof Error ? error.message : 'ONTAP storage assessment failed';
+        logger.warn(
+            `Failed to collect ONTAP storage assessment for unregistered ${workloadLabel} instance; continuing with other findings`,
+            { accountId, credentialsId, region, ec2InstanceId, error: errorMessage }
+        );
+        return undefined;
+    } finally {
+        await updateJobDetails(accountId, subJobId, {
+            status,
+            endTime: Date.now(),
+            ...(errorMessage && { error: errorMessage })
+        });
+    }
+}
 
 function getGoldenConfigEntryById(configData: GoldenConfigEntry[], id: string): GoldenConfigEntry {
     const entry = configData.find(data => data.id === id);
@@ -1019,7 +1171,19 @@ export {
     mssqlOsConfigData,
     mssqlLayoutConfigData,
     mssqlSizingConfigData,
-    getGoldenConfigEntryById
+    getGoldenConfigEntryById,
+    OFFLINE_ASSESSMENT_SOURCE,
+    dedupeViolationDetails,
+    mergeStorageDriftItemsById,
+    filterToVolumeLunDriftItems,
+    collectScopedOntapAssessment,
+    runScopedOntapSubAssessment
 };
 
-export type { GoldenConfigEntry, GoldenConfigComponent, MapAssessmentToV1Config, UnOptimizedDiskGroups };
+export type {
+    GoldenConfigEntry,
+    GoldenConfigComponent,
+    MapAssessmentToV1Config,
+    UnOptimizedDiskGroups,
+    ScopedOntapStorageResult
+};

@@ -28,18 +28,32 @@ import getLogger from '../../../utils/logger';
 import { AWS_REGIONS, DatabaseTypes, HttpErrorCodes, RESOURCESTYPE, STORAGE_PROTOCOLS } from '../../../utils/consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
-import { CloneAssessment, DatabaseInstance } from '../../../utils/common-types';
+import { CloneAssessment, DatabaseInstance, OneTimeWADHeadroomData } from '../../../utils/common-types';
 import {
     OracleMappedOntapVolumesResponse,
     OracleMappedOntapVolumeRecord,
     OracleSysFileTypes
 } from '../../workloads/oracle/common-types';
-import { calculateStorageDrift } from './storage-assessment-operations';
+import {
+    calculateStorageDrift,
+    volumeConfigData,
+    volumeNfsConfigData,
+    lunConfigData,
+    blockDeviceConfig
+} from './storage-assessment-operations';
 import calculateOneTimeWADCloneDrift from '../clone-assessment-utils';
 import { calculateComputeHostOsDrift } from './compute-assessment-operations';
 import { calculateSnapCenterDrift, SnapcenterAssessmentData } from './snapcenter-assessment-operations';
 import { getOntapVolumeIdsByFileType, ORACLE_V1_MAP_CONFIG } from './assessment-operations';
-import { mapAssessmentToV1, resolveAssessmentTypes, GOLDEN_CONFIG_LOOKUP } from '../assessment-utils';
+import {
+    mapAssessmentToV1,
+    resolveAssessmentTypes,
+    GOLDEN_CONFIG_LOOKUP,
+    OFFLINE_ASSESSMENT_SOURCE,
+    mergeStorageDriftItemsById,
+    filterToVolumeLunDriftItems,
+    runScopedOntapSubAssessment
+} from '../assessment-utils';
 import { ISCIOSAssessment, NFSOSAssessment, StorageAssessment } from './common-types';
 import { loadAndModifyDemoOracleISCSIData } from '../../demo-operations';
 import {
@@ -48,10 +62,18 @@ import {
     OracleDriftAssessmentResponseType
 } from '../../../routes/types/oracle-continuous-optimization.types';
 import { ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE } from '../one-time-assessment-consts';
-import { OneTimeWADHeadroomData, calculateWADHeadroomDrift } from '../wad-headroom-utils';
+import { calculateWADHeadroomDrift } from '../wad-headroom-utils';
 import ORACLE_GOLDEN_CONFIG from './golden-config';
 
 const logger = getLogger();
+
+const ORACLE_VOLUME_LUN_DRIFT_IDS = new Set<string>([
+    ...volumeConfigData.map(({ id }) => id),
+    ...volumeNfsConfigData.map(({ id }) => id),
+    ...lunConfigData.map(({ id }) => id),
+    ...(blockDeviceConfig ? [blockDeviceConfig.id] : []),
+    ...ORACLE_GOLDEN_CONFIG.filter(e => e.subType === 'layout').map(({ id }) => id)
+]);
 
 /** Top-level `metadata` block from the one-time WAD assessment JSON produced by the Oracle Python script. */
 interface OracleOfflineAssessmentMetadataType {
@@ -136,6 +158,18 @@ interface OracleOfflineAssessmentRawData {
     hostLevelDetails?: Record<string, unknown>;
     instanceLevelDetails?: Record<string, OracleOfflineAssessmentInstanceData>;
     errors?: string[];
+}
+
+interface OracleUnregisteredAssessmentRawData {
+    ontapStorageAssessments?: StorageAssessment[];
+}
+
+interface OracleUnregisteredAssessmentMetadata {
+    source: typeof OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED;
+    databaseInstanceName: string;
+    ec2InstanceId: string;
+    assessmentTimestamp: string;
+    [key: string]: unknown;
 }
 
 async function processOracleOfflineAssessmentUpload(
@@ -434,6 +468,17 @@ async function fetchOracleOfflineAssessment(
         );
     }
 
+    if ((record.metadata as { source?: string })?.source === OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED) {
+        return fetchOracleUnregisteredInstanceAssessment(
+            accountId,
+            resourceId,
+            databaseInstanceId,
+            credentialsId,
+            region,
+            record
+        );
+    }
+
     const rawdata = (record.rawdata as OracleStoredRawData) || {};
     const metadata = (record.metadata as unknown as OracleOfflineAssessmentMetadataType) || {};
     const mappedOntapVolumesData = (record.mapped_ontap_volumes as OracleMappedOntapVolumesResponse) || {};
@@ -579,7 +624,8 @@ async function fetchOracleOfflineAssessment(
             databaseHostName: hostname || '',
             deploymentType,
             storageProtocol: protocol,
-            isASMManaged
+            isASMManaged,
+            source: OFFLINE_ASSESSMENT_SOURCE.OFFLINE
         }
     };
 
@@ -599,6 +645,275 @@ async function fetchOracleOfflineAssessment(
     }
 
     return assessmentResponse;
+}
+
+async function fetchOracleUnregisteredInstanceAssessment(
+    accountId: string,
+    resourceId: string,
+    databaseInstanceId: string,
+    credentialsId?: string,
+    region?: string,
+    databaseRecord?: OfflineAssessmentDBSchema
+): Promise<OracleAssessmentResponseType> {
+    logger.info('Fetching Oracle unregistered-instance assessment', {
+        accountId,
+        resourceId,
+        databaseInstanceId,
+        credentialsId,
+        region
+    });
+
+    const record = isEmpty(databaseRecord)
+        ? await getOfflineAssessment(accountId, resourceId, databaseInstanceId)
+        : databaseRecord;
+
+    if (!record) {
+        throw createError(
+            HttpErrorCodes.NOT_FOUND,
+            `Assessment not found for resource ${resourceId} and instance ${databaseInstanceId}`
+        );
+    }
+
+    const { ontapStorageAssessments } = (record.rawdata as OracleUnregisteredAssessmentRawData) || {};
+    const { databaseInstanceName, ec2InstanceId, assessmentTimestamp } =
+        (record.metadata as unknown as OracleUnregisteredAssessmentMetadata) || {};
+
+    const { credentials_id: recordCredentialsId, region: recordRegion } = record;
+    const effectiveCredentialsId = credentialsId ?? recordCredentialsId ?? undefined;
+    const effectiveRegion = region ?? recordRegion ?? undefined;
+
+    const assessments: (AssessmentItemType | AssessmentErrorItemType)[] = [];
+    if (ontapStorageAssessments && ontapStorageAssessments.length > 0) {
+        if (!effectiveCredentialsId || !effectiveRegion) {
+            logger.warn('Computing volume/LUN drift without credentialsId/region on unregistered Oracle instance', {
+                accountId,
+                resourceId,
+                databaseInstanceId
+            });
+        }
+        assessments.push(
+            ...(await computeOracleVolumeLunDrift(
+                accountId,
+                effectiveCredentialsId ?? '',
+                effectiveRegion ?? '',
+                resourceId,
+                ec2InstanceId ?? '',
+                databaseInstanceId,
+                ontapStorageAssessments
+            ))
+        );
+    }
+
+    const { configIds: eligibleConfigIds } = resolveAssessmentTypes(DatabaseTypes.ORACLE, undefined, {}, new Set());
+    const oracleLookup = GOLDEN_CONFIG_LOOKUP[DatabaseTypes.ORACLE];
+    const assessedIds = new Set(assessments.map(a => a.id));
+    eligibleConfigIds
+        .filter(id => !assessedIds.has(id))
+        .forEach(id => {
+            const entry = oracleLookup.get(id);
+            if (entry) {
+                assessments.push({ ...entry, errorMessage: ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE });
+            }
+        });
+
+    const parsedAssessmentTimestamp = assessmentTimestamp ? new Date(assessmentTimestamp).getTime() : NaN;
+
+    const assessmentResponse = {
+        assessments,
+        dismissedConfigurations: [],
+        metadata: {
+            lastAssessmentTimestamp: Number.isFinite(parsedAssessmentTimestamp)
+                ? parsedAssessmentTimestamp
+                : record.created_time.getTime(),
+            databaseInstanceName,
+            ec2InstanceId,
+            source: OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED,
+            // Not stored on the record; UI filters by these, so surface the values used to fetch it.
+            ...(effectiveCredentialsId && { credentialsId: effectiveCredentialsId }),
+            ...(effectiveRegion && { region: effectiveRegion })
+        }
+    };
+
+    const { isValid, errors } = validateWithSchema(OracleAssessmentResponse, assessmentResponse);
+    if (!isValid) {
+        logger.error('Invalid Oracle unregistered-instance assessment response', {
+            accountId,
+            resourceId,
+            databaseInstanceId,
+            errors
+        });
+        return { assessments: [], dismissedConfigurations: [], metadata: {} };
+    }
+
+    updateOfflineAssessmentResults(accountId, resourceId, databaseInstanceId, assessmentResponse).catch(err =>
+        logger.warn('Failed to persist Oracle unregistered-instance assessment results', {
+            accountId,
+            resourceId,
+            databaseInstanceId,
+            error: err
+        })
+    );
+
+    return assessmentResponse;
+}
+
+async function computeOracleVolumeLunDrift(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    resourceId: string,
+    ec2InstanceId: string,
+    databaseInstanceId: string,
+    ontapStorageAssessments: StorageAssessment[]
+): Promise<(AssessmentItemType | AssessmentErrorItemType)[]> {
+    logger.info('Computing Oracle volume/LUN drift for unregistered instance', {
+        accountId,
+        resourceId,
+        ec2InstanceId,
+        databaseInstanceId
+    });
+    const perFilesystemDrift = await Promise.all(
+        ontapStorageAssessments.map(storageAssessment =>
+            calculateStorageDrift(
+                accountId,
+                credentialsId,
+                region,
+                resourceId,
+                ec2InstanceId,
+                databaseInstanceId,
+                '',
+                '',
+                storageAssessment.volumes.filesystemId,
+                storageAssessment.mappedOntapVolumes ?? {},
+                storageAssessment,
+                true,
+                true
+            )
+        )
+    );
+    return filterToVolumeLunDriftItems(mergeStorageDriftItemsById(perFilesystemDrift), ORACLE_VOLUME_LUN_DRIFT_IDS);
+}
+
+async function processOracleUnregisteredAssessment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    instanceName: string,
+    jobId: string
+) {
+    let status: JOBSTATUS = JOBSTATUS.COMPLETED;
+    let errorMessage: string | undefined;
+    try {
+        const resourceId = ec2InstanceId;
+
+        const ontapStorageResult = await runScopedOntapSubAssessment<StorageAssessment>(
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            instanceName,
+            jobId,
+            DATABASE_TYPE.oracle,
+            'Oracle'
+        );
+        const { ontapStorageAssessments } = ontapStorageResult ?? {};
+
+        if (ontapStorageAssessments && ontapStorageAssessments.length > 0) {
+            const rawdata: OracleUnregisteredAssessmentRawData = { ontapStorageAssessments };
+            const metadata: OracleUnregisteredAssessmentMetadata = {
+                source: OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED,
+                databaseInstanceName: instanceName,
+                ec2InstanceId,
+                assessmentTimestamp: new Date().toISOString()
+            };
+
+            const assessmentResults = await fetchOracleUnregisteredInstanceAssessment(
+                accountId,
+                resourceId,
+                instanceName,
+                credentialsId,
+                region,
+                { rawdata, metadata, created_time: new Date() } as unknown as OfflineAssessmentDBSchema
+            );
+
+            await bulkUpsertOfflineAssessments([
+                {
+                    accountId,
+                    credentialsId,
+                    region,
+                    resourceId,
+                    databaseInstanceId: instanceName,
+                    databaseType: DATABASE_TYPE.oracle,
+                    rawdata,
+                    metadata,
+                    assessmentResults
+                }
+            ]);
+        } else {
+            status = JOBSTATUS.FAILED;
+            errorMessage =
+                'No assessable data collected: ONTAP volume/LUN assessment returned no data for this instance';
+        }
+    } catch (error: unknown) {
+        status = JOBSTATUS.FAILED;
+        errorMessage = error instanceof Error ? error.message : 'Assessment failed';
+        logger.error('Failed to process Oracle unregistered-instance assessment', {
+            accountId,
+            jobId,
+            ec2InstanceId,
+            instanceName,
+            error
+        });
+    } finally {
+        await updateJobDetails(accountId, jobId, {
+            status,
+            endTime: Date.now(),
+            ...(errorMessage && { error: errorMessage })
+        }).catch(updateError =>
+            logger.error('Failed to update job details for Oracle unregistered-instance assessment', {
+                accountId,
+                jobId,
+                error: updateError
+            })
+        );
+    }
+}
+
+async function triggerOracleUnregisteredAssessment(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    instanceName: string
+) {
+    const { id: jobId } = await registerJob(accountId, credentialsId, region, {
+        name: `Oracle storage assessment for ${ec2InstanceId}/${instanceName}`,
+        description: `One-time storage assessment for unregistered Oracle instance ${instanceName} on ${ec2InstanceId}`,
+        resourceName: `${ec2InstanceId}/${instanceName}`,
+        startTime: Date.now(),
+        status: JOBSTATUS.IN_PROGRESS,
+        type: JOBTYPE.ASSESSMENT
+    });
+    logger.info('Initiating Oracle unregistered-instance assessment', {
+        accountId,
+        jobId,
+        ec2InstanceId,
+        instanceName
+    });
+
+    processOracleUnregisteredAssessment(accountId, credentialsId, region, ec2InstanceId, instanceName, jobId).catch(
+        error =>
+            logger.error('Unhandled error in Oracle unregistered-instance assessment', {
+                accountId,
+                jobId,
+                ec2InstanceId,
+                instanceName,
+                error
+            })
+    );
+
+    return { jobId };
 }
 
 async function fetchOracleOfflineAssessmentPerAccount(
@@ -796,5 +1111,7 @@ export {
     fetchOracleOfflineAssessmentV1,
     fetchOracleOfflineAssessmentPerAccount,
     fetchOracleOfflineAssessmentPerAccountV1,
-    deleteOracleOfflineAssessmentRecord
+    deleteOracleOfflineAssessmentRecord,
+    fetchOracleUnregisteredInstanceAssessment,
+    triggerOracleUnregisteredAssessment
 };

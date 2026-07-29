@@ -25,18 +25,24 @@ import {
     mssqlOsConfigData as osConfigData,
     type GoldenConfigEntry
 } from '../assessment-utils';
+import { MSSQL_GOLDEN_CONFIG } from './golden-config';
 
 const logger = getLogger();
 
 const SQL_INSTANCE_NAMES_PATH = 'HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\Instance Names\\SQL';
 const MPIO_PARAMETERS_PATH = 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\mpio\\Parameters';
 const DISK_TIMEOUT_PATH = 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Disk';
+const CLUSTER_QUORUM_REGISTRY_PATH = 'HKLM:\\Cluster\\Quorum';
+const CLUSTER_QUORUM_RECOMMENDED_TYPE = 'Physical Disk';
 const DRIVE_LETTER_PATTERN = /^[A-Za-z]:/;
 const SYSTEM_DATABASE_FILE_PATTERN = /^(master|mastlog|model|tempdb|templog|msdb)/i;
+const clusterResourceRegistryPath = (resourceId: string): string => `HKLM:\\Cluster\\Resources\\${resourceId}`;
 const mssqlInstanceRegistryPath = (registryInstanceId: string, suffix = ''): string =>
     `HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\${registryInstanceId}\\MSSQLServer${suffix}`;
 const mssqlInstanceSetupRegistryPath = (registryInstanceId: string): string =>
     `HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\${registryInstanceId}\\Setup`;
+const mssqlInstanceClusterRegistryPath = (registryInstanceId: string): string =>
+    `HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Server\\${registryInstanceId}\\Cluster`;
 
 const findRegistryValue = (entries: RegistryEntry[], name: string): string | undefined =>
     entries.find(entry => entry.name === name && entry.type !== 'Key')?.value;
@@ -63,6 +69,12 @@ interface MultipathConfig {
     diskTimeoutValue?: string;
 }
 
+interface ClusterQuorumConfig {
+    weight?: string;
+    resourceType?: string;
+    error?: string;
+}
+
 interface DirectoryLayoutCheck {
     path?: string;
     mdfCount: number;
@@ -85,6 +97,7 @@ interface SqlInstanceAssessment {
     layout: LayoutBySection;
     mpio: MultipathConfig;
     activeOnThisHost?: boolean;
+    deploymentType?: 'FCI' | 'Standalone';
 }
 
 function classifyDirectoryListing(fileNames: string[]): Omit<DirectoryLayoutCheck, 'path' | 'error'> {
@@ -217,6 +230,44 @@ async function getMultipathConfig(
     };
 }
 
+async function getClusterQuorumConfig(
+    credentialsId: string,
+    region: string,
+    ec2InstanceId: string,
+    accountId?: string
+): Promise<ClusterQuorumConfig> {
+    logger.info('Reading cluster quorum configuration via registry read', { credentialsId, accountId, ec2InstanceId });
+
+    const { found, entries, error } = await getWindowsRegistryContent(
+        credentialsId,
+        region,
+        ec2InstanceId,
+        CLUSTER_QUORUM_REGISTRY_PATH,
+        accountId
+    );
+
+    if (!found) {
+        return { error: error ?? NO_CLUSTER_QUORUM_DATA_ERROR };
+    }
+
+    const weight = findRegistryValue(entries, 'Weight');
+    const resourceId = findRegistryValue(entries, 'Resource');
+    if (!resourceId) {
+        return { weight };
+    }
+
+    const resourceResult = await getWindowsRegistryContent(
+        credentialsId,
+        region,
+        ec2InstanceId,
+        clusterResourceRegistryPath(resourceId),
+        accountId
+    );
+
+    const resourceType = resourceResult.found ? findRegistryValue(resourceResult.entries, 'Type') : undefined;
+    return { weight, resourceType };
+}
+
 async function getDirectoryLayoutCheck(
     credentialsId: string,
     region: string,
@@ -291,23 +342,26 @@ async function assessSqlInstance(
         instanceName: instance.instanceName
     });
 
-    const paths = await getSqlDefaultPaths(
-        credentialsId,
-        region,
-        ec2InstanceId,
-        instance.registryInstanceId,
-        accountId
-    );
+    const [paths, clusterKeyResult] = await Promise.all([
+        getSqlDefaultPaths(credentialsId, region, ec2InstanceId, instance.registryInstanceId, accountId),
+        getWindowsRegistryContent(
+            credentialsId,
+            region,
+            ec2InstanceId,
+            mssqlInstanceClusterRegistryPath(instance.registryInstanceId),
+            accountId
+        )
+    ]);
+
+    const deploymentType: SqlInstanceAssessment['deploymentType'] = clusterKeyResult.found ? 'FCI' : 'Standalone';
+
     const layout = await getLayoutViolations(credentialsId, region, ec2InstanceId, paths, accountId);
-    // Registry paths resolve on both the active and standby cluster nodes, so `paths` alone
-    // can't tell which node is active. The file-system read only succeeds on the node with the
-    // shared disk mounted, so a failed listing (path attempted but errored) marks a standby node.
     const attemptedLayouts = [layout['default-data-files-location'], layout['default-log-files-location']].filter(
         (entry): entry is DirectoryLayoutCheck => Boolean(entry.path)
     );
     const activeOnThisHost = attemptedLayouts.length > 0 ? attemptedLayouts.every(entry => !entry.error) : undefined;
 
-    return { ...instance, paths, layout, activeOnThisHost };
+    return { ...instance, paths, layout, activeOnThisHost, deploymentType };
 }
 
 async function runLayoutAssessment(
@@ -339,6 +393,9 @@ const NO_ASSESSABLE_PATH_ERROR =
     'No SQL instance on this host has a registry path that resolves to a drive letter for this location.';
 const NO_MPIO_DATA_ERROR = 'The MPIO Parameters registry key was not found on this host.';
 const MPIO_DISABLED_TIMEOUT_ERROR = 'MPIO is disabled on this host; the path verification timeout is not applicable.';
+const NO_CLUSTER_QUORUM_DATA_ERROR = 'The Cluster Quorum registry key was not found on this host.';
+const INCOMPLETE_CLUSTER_QUORUM_DATA_ERROR =
+    'The Cluster Quorum weight and/or resource type could not be determined from the registry.';
 
 interface LayoutViolationEntry {
     instanceName: string;
@@ -528,6 +585,57 @@ function calculateRegistryMpioDrift(
     return [mpioEnabledFinding, mpioTimeoutFinding];
 }
 
+function calculateRegistryClusterQuorumDrift(
+    quorum: ClusterQuorumConfig | undefined,
+    ec2InstanceId: string
+): (MssqlAssessmentItemType | AssessmentErrorItemType)[] {
+    logger.info('Calculating registry-based cluster quorum drift', { hasQuorumData: Boolean(quorum) });
+
+    const goldenData = getGoldenConfigEntryById(MSSQL_GOLDEN_CONFIG, 'cluster-quorum');
+
+    if (!quorum || quorum.error) {
+        return [{ ...goldenData, errorMessage: quorum?.error ?? NO_CLUSTER_QUORUM_DATA_ERROR }];
+    }
+
+    if (!quorum.weight || !quorum.resourceType) {
+        return [{ ...goldenData, errorMessage: INCOMPLETE_CLUSTER_QUORUM_DATA_ERROR }];
+    }
+
+    const status =
+        Number(quorum.weight) === 1 && quorum.resourceType === CLUSTER_QUORUM_RECOMMENDED_TYPE
+            ? AssessmentStatus.OPTIMIZED
+            : AssessmentStatus.NOT_OPTIMIZED;
+    const isViolation = status === AssessmentStatus.NOT_OPTIMIZED;
+
+    return [
+        {
+            ...goldenData,
+            recommended: goldenData.recommended ?? '',
+            status,
+            current: `Weight=${quorum.weight ?? 'Unknown'}, Type=${quorum.resourceType ?? 'Unknown'}`,
+            objectsInViolation: isViolation ? [ec2InstanceId] : [],
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: isViolation ? 1 : 0,
+            violationDetails: isViolation
+                ? [
+                      {
+                          objectName: 'weight',
+                          value: quorum.weight ?? 'Unknown',
+                          objectType: ASSESSMENT_RESOURCE_TYPE.WINDOWS_CLUSTER,
+                          recommended: '1'
+                      },
+                      {
+                          objectName: 'resourceType',
+                          value: quorum.resourceType ?? 'Unknown',
+                          objectType: ASSESSMENT_RESOURCE_TYPE.WINDOWS_CLUSTER,
+                          recommended: CLUSTER_QUORUM_RECOMMENDED_TYPE
+                      }
+                  ]
+                : undefined
+        } as unknown as MssqlAssessmentItemType
+    ];
+}
+
 export {
     discoverSqlInstances,
     getSqlDefaultPaths,
@@ -536,6 +644,7 @@ export {
     runLayoutAssessment,
     extractDriveLetter,
     mssqlInstanceRegistryPath,
+    mssqlInstanceClusterRegistryPath,
     SQL_INSTANCE_NAMES_PATH,
     MPIO_PARAMETERS_PATH,
     getInstanceDriveLetters,
@@ -543,7 +652,9 @@ export {
     buildRegistryLayoutFinding,
     calculateRegistryStorageLayoutDrift,
     buildRegistryBooleanFinding,
-    calculateRegistryMpioDrift
+    calculateRegistryMpioDrift,
+    getClusterQuorumConfig,
+    calculateRegistryClusterQuorumDrift
 };
 export type {
     DiscoveredSqlInstance,
@@ -553,5 +664,6 @@ export type {
     LayoutBySection,
     SqlInstanceAssessment,
     LayoutViolationEntry,
-    InstanceDriveLetters
+    InstanceDriveLetters,
+    ClusterQuorumConfig
 };

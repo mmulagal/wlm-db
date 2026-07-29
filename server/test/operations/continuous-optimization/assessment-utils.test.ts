@@ -1,8 +1,11 @@
+import { vi } from 'vitest';
+import { DATABASE_TYPE } from '@prisma/client';
 import {
     buildBlockDeviceSpaceManagementEntry,
     buildVolumeCombinedEntry,
     enrichWithGoldenConfig,
-    isCombinedViolationDetail
+    isCombinedViolationDetail,
+    collectScopedOntapAssessment
 } from '../../../src/operations/continuous-optimization/assessment-utils';
 import { MSSQL_GOLDEN_CONFIG } from '../../../src/operations/continuous-optimization/mssql/golden-config';
 import {
@@ -12,6 +15,12 @@ import {
 } from '../../../src/utils/continous-optimization-consts';
 import { DatabaseTypes } from '../../../src/utils/consts';
 import { DismissConfig } from '../../../src/utils/common-types';
+import * as taggingServiceOperations from '../../../src/operations/cloud-manager/tagging-service-operations';
+import { Ec2FsxRelationship } from '../../../src/operations/cloud-manager/tagging-service-operations';
+import {
+    registerProxyGetResponse,
+    resetProxyOverrides
+} from '../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
 
 // ---------------------------------------------------------------------------
 // buildVolumeCombinedEntry / buildBlockDeviceSpaceManagementEntry
@@ -151,5 +160,79 @@ describe('enrichWithGoldenConfig', () => {
 
         expect(result[0].startTime).toBe(100);
         expect(result[0].endTime).toBe(200);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// collectScopedOntapAssessment
+// ---------------------------------------------------------------------------
+function ontapPage<T>(records: T[]) {
+    return { records, num_records: records.length };
+}
+
+function buildRelationship(ec2s: Ec2FsxRelationship['ec2s']): Ec2FsxRelationship {
+    return { ec2s };
+}
+
+describe('collectScopedOntapAssessment', () => {
+    beforeEach(() => {
+        resetProxyOverrides();
+    });
+
+    it('scopes to the requested EC2 instance, filters by workload type, and throws with no relationship', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-scoped',
+            ontapPath: 'api/storage/volumes',
+            body: ontapPage([{ name: 'oradata', uuid: 'uuid-scoped' }])
+        });
+
+        // Two EC2s share the FSx: the requested instance runs Oracle, the other runs MSSQL.
+        const relationship = buildRelationship([
+            {
+                instanceId: 'i-scoped',
+                workloadTypes: [DATABASE_TYPE.oracle],
+                workloads: [],
+                fsxs: [
+                    {
+                        id: 'fs-scoped',
+                        fileSystemId: 'fs-scoped',
+                        region: 'us-east-1',
+                        volumes: [
+                            {
+                                id: 'v-scoped',
+                                fsxVolumeId: 'fsvol-scoped',
+                                volumeUuid: 'uuid-scoped',
+                                volumeName: 'oradata',
+                                luns: []
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                instanceId: 'i-other',
+                workloadTypes: [DATABASE_TYPE.mssql],
+                workloads: [],
+                fsxs: [{ id: 'fs-scoped', fileSystemId: 'fs-scoped', region: 'us-east-1', volumes: [] }]
+            }
+        ]);
+        vi.spyOn(taggingServiceOperations, 'buildEc2FsxRelationship').mockResolvedValueOnce(relationship);
+
+        // Requesting the scoped instance's own workload type returns its result, ignoring i-other.
+        const scoped = await collectScopedOntapAssessment('acct-1', 'cred-1', 'us-east-1', 'i-scoped', 'oracle');
+        expect(scoped).toHaveLength(1);
+        expect(scoped[0].instanceId).toBe('i-scoped');
+        expect(scoped[0].workloadType).toBe('oracle');
+
+        // Requesting a workload type that doesn't match the scoped instance filters it out.
+        vi.spyOn(taggingServiceOperations, 'buildEc2FsxRelationship').mockResolvedValueOnce(relationship);
+        const wrongWorkload = await collectScopedOntapAssessment('acct-1', 'cred-1', 'us-east-1', 'i-scoped', 'mssql');
+        expect(wrongWorkload).toEqual([]);
+
+        // No relationship at all for the requested EC2 instance.
+        vi.spyOn(taggingServiceOperations, 'buildEc2FsxRelationship').mockResolvedValueOnce(buildRelationship([]));
+        await expect(
+            collectScopedOntapAssessment('acct-1', 'cred-1', 'us-east-1', 'i-missing', 'mssql')
+        ).rejects.toThrow('No ONTAP volumes found for this instance: no EC2-FSx relationship detected');
     });
 });

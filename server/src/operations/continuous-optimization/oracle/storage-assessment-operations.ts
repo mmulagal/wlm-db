@@ -2447,7 +2447,8 @@ async function calculateStorageDrift(
     fsxFileSystemId: string,
     mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse>,
     storageAssessmentData: StorageAssessment,
-    skipHeadroom: boolean = false
+    skipHeadroom: boolean = false,
+    skipVolumeLayout: boolean = false
 ): Promise<(AssessmentItemType | AssessmentErrorItemType)[]> {
     logger.info('Calculating storage drift', {
         accountId,
@@ -2504,7 +2505,9 @@ async function calculateStorageDrift(
         ))
     );
 
-    items.push(...getVolumeLayoutDrift(volumeTypeMap, storageAssessmentData));
+    if (!skipVolumeLayout) {
+        items.push(...getVolumeLayoutDrift(volumeTypeMap, storageAssessmentData));
+    }
     if (protocol === STORAGE_PROTOCOLS.ISCSI && isASMManaged) {
         items.push(...getLunLayoutDrift(volumeTypeMap, storageAssessmentData));
     }
@@ -2720,5 +2723,9 @@ export {
     getBaseVolume,
     createAssessment,
     createViolationDetail,
-    GoldenConfigEntry
+    GoldenConfigEntry,
+    volumeConfigData,
+    volumeNfsConfigData,
+    lunConfigData,
+    blockDeviceConfig
 };

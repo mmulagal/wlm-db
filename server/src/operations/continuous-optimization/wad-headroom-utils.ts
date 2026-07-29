@@ -4,17 +4,10 @@ import { DriftAssessmentDetail } from '../../utils/wad-consts';
 import { calculateFsxStorageCapacityForHeadroomOptimization } from '../../utils/utils';
 import { RESOURCESTYPE } from '../../utils/consts';
 import { GoldenConfigEntry } from './assessment-utils';
+import type { OneTimeWADHeadroomData } from '../../utils/common-types';
 import getLogger from '../../utils/logger';
 
 const logger = getLogger();
-
-interface OneTimeWADHeadroomData {
-    ssdStorageCapacityInBytes?: number;
-    storageUsedInBytes?: number;
-    storageAvailableInBytes?: number;
-    headroomPercent?: number;
-    aggregateCount?: number;
-}
 
 type HeadroomDriftResult = AssessmentItemType & { assessmentDetails: DriftAssessmentDetail[] };
 
@@ -101,4 +94,4 @@ function calculateWADHeadroomDrift(
     return result;
 }
 
-export { OneTimeWADHeadroomData, calculateWADHeadroomDrift };
+export { calculateWADHeadroomDrift };

@@ -22,7 +22,8 @@ import {
     FetchOraclePatchScanSchema,
     OracleOptimizeSchema,
     OracleOptimizeStorageConfigurationSchema,
-    OracleOptimizeStorageLayoutSchema
+    OracleOptimizeStorageLayoutSchema,
+    TriggerOracleUnregisteredAssessmentSchema
 } from './schemas/oracle-continuous-optimization-schema';
 import { optimizeStorage } from '../operations/cont-opt-optimize-operations';
 import { updateDismissConfigurations } from '../operations/continuous-optimization/assessment-dismiss-operations';
@@ -38,7 +39,8 @@ import {
     fetchOracleOfflineAssessmentV1,
     fetchOracleOfflineAssessmentPerAccount,
     fetchOracleOfflineAssessmentPerAccountV1,
-    deleteOracleOfflineAssessmentRecord
+    deleteOracleOfflineAssessmentRecord,
+    triggerOracleUnregisteredAssessment
 } from '../operations/continuous-optimization/oracle/offline-assessment-operations';
 import {
     OfflineAssessmentDownloadSchema,
@@ -80,6 +82,23 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
                     fields
                 );
                 return reply.send(response);
+            }
+        )
+        .post(
+            `${API_PREFIX_PATH}/ec2-instances/:ec2InstanceId/database-instances/:instanceName/assessment`,
+            { schema: TriggerOracleUnregisteredAssessmentSchema },
+            async (request, reply) => {
+                const {
+                    params: { accountId, credentialsId, region, ec2InstanceId, instanceName }
+                } = castRequest(request);
+                const response = await triggerOracleUnregisteredAssessment(
+                    accountId,
+                    credentialsId,
+                    region,
+                    ec2InstanceId,
+                    instanceName
+                );
+                return reply.code(202).send(response);
             }
         )
         .get(

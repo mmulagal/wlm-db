@@ -7,8 +7,11 @@ import {
     getSqlDefaultPaths,
     getMultipathConfig,
     getLayoutViolations,
-    runLayoutAssessment
+    runLayoutAssessment,
+    getClusterQuorumConfig,
+    calculateRegistryClusterQuorumDrift
 } from '../../../../src/operations/continuous-optimization/mssql/ssm-doc-storage-assessment';
+import { AssessmentStatus } from '../../../../src/utils/continous-optimization-consts';
 import { DEFAULT_AWS_REGION, TEST_STOPPED_EC2_INSTANCE_ID } from '../../../utils/consts';
 
 const credentialsId = `${faker.string.alpha(20)}`;
@@ -267,6 +270,7 @@ describe('ssm-doc-storage-assessment', () => {
                     registryResult(true, [{ name: 'MSSQLSERVER', type: 'String', value: 'MSSQL13.MSSQLSERVER' }])
                 )
                 .mockResolvedValueOnce(registryResult(false, [], 'The specified registry key does not exist.'))
+                .mockResolvedValueOnce(registryResult(false, []))
                 .mockResolvedValueOnce(registryResult(false, []));
 
             const result = await runLayoutAssessment(
@@ -282,6 +286,27 @@ describe('ssm-doc-storage-assessment', () => {
             expect(result.paths).toEqual({ error: 'The specified registry key does not exist.' });
         });
 
+        it('should detect deploymentType FCI when the Cluster registry key is found', async () => {
+            registrySpy
+                .mockResolvedValueOnce(
+                    registryResult(true, [{ name: 'MSSQLSERVER', type: 'String', value: 'MSSQL13.MSSQLSERVER' }])
+                )
+                .mockResolvedValueOnce(registryResult(false, [], 'The specified registry key does not exist.'))
+                .mockResolvedValueOnce(registryResult(false, []))
+                .mockResolvedValueOnce(
+                    registryResult(true, [{ name: 'ClusterName', type: 'String', value: 'MYCLUSTER' }])
+                );
+
+            const result = await runLayoutAssessment(
+                credentialsId,
+                DEFAULT_AWS_REGION,
+                TEST_STOPPED_EC2_INSTANCE_ID,
+                'MSSQLSERVER'
+            );
+
+            expect(result.deploymentType).toBe('FCI');
+        });
+
         it('should reject when the requested instanceName is not found on the host', async () => {
             registrySpy
                 .mockResolvedValueOnce(
@@ -293,6 +318,76 @@ describe('ssm-doc-storage-assessment', () => {
             await expect(
                 runLayoutAssessment(credentialsId, DEFAULT_AWS_REGION, TEST_STOPPED_EC2_INSTANCE_ID, 'DOESNOTEXIST')
             ).rejects.toThrow('SQL instance DOESNOTEXIST not found');
+        });
+    });
+
+    describe('getClusterQuorumConfig', () => {
+        it('should return weight and resourceType when the quorum resource is a physical disk', async () => {
+            registrySpy
+                .mockResolvedValueOnce(
+                    registryResult(true, [
+                        { name: 'Weight', type: 'DWord', value: '1' },
+                        { name: 'Resource', type: 'String', value: '{resource-guid}' }
+                    ])
+                )
+                .mockResolvedValueOnce(
+                    registryResult(true, [{ name: 'Type', type: 'String', value: 'Physical Disk' }])
+                );
+
+            const result = await getClusterQuorumConfig(
+                credentialsId,
+                DEFAULT_AWS_REGION,
+                TEST_STOPPED_EC2_INSTANCE_ID
+            );
+
+            expect(result).toEqual({ weight: '1', resourceType: 'Physical Disk' });
+        });
+
+        it('should return weight and resourceType when the quorum resource is not a physical disk', async () => {
+            registrySpy
+                .mockResolvedValueOnce(
+                    registryResult(true, [
+                        { name: 'Weight', type: 'DWord', value: '0' },
+                        { name: 'Resource', type: 'String', value: '{resource-guid}' }
+                    ])
+                )
+                .mockResolvedValueOnce(
+                    registryResult(true, [{ name: 'Type', type: 'String', value: 'File Share Witness' }])
+                );
+
+            const result = await getClusterQuorumConfig(
+                credentialsId,
+                DEFAULT_AWS_REGION,
+                TEST_STOPPED_EC2_INSTANCE_ID
+            );
+
+            expect(result).toEqual({ weight: '0', resourceType: 'File Share Witness' });
+        });
+    });
+
+    describe('calculateRegistryClusterQuorumDrift', () => {
+        it('should mark as optimized when weight is 1 and resource type is Physical Disk', () => {
+            const [finding] = calculateRegistryClusterQuorumDrift(
+                { weight: '1', resourceType: 'Physical Disk' },
+                TEST_STOPPED_EC2_INSTANCE_ID
+            ) as any[];
+
+            expect(finding.id).toBe('cluster-quorum');
+            expect(finding.errorMessage).toBeUndefined();
+            expect(finding.status).toBe(AssessmentStatus.OPTIMIZED);
+            expect(finding.totalObjectsInViolation).toBe(0);
+        });
+
+        it('should mark as not optimized when weight is not 1 or resource type is not Physical Disk', () => {
+            const [finding] = calculateRegistryClusterQuorumDrift(
+                { weight: '0', resourceType: 'File Share Witness' },
+                TEST_STOPPED_EC2_INSTANCE_ID
+            ) as any[];
+
+            expect(finding.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(finding.totalObjectsInViolation).toBe(1);
+            expect(finding.objectsInViolation).toEqual([TEST_STOPPED_EC2_INSTANCE_ID]);
+            expect(finding.violationDetails).toHaveLength(2);
         });
     });
 });

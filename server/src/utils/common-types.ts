@@ -1036,12 +1036,20 @@ interface SsmTargetsInfo {
         cidrBlock?: string;
     };
 }
+interface OneTimeWADHeadroomData {
+    ssdStorageCapacityInBytes?: number;
+    storageUsedInBytes?: number;
+    storageAvailableInBytes?: number;
+    headroomPercent?: number;
+    aggregateCount?: number;
+}
 
 export {
     BulkDismissConfigurationType,
     Metadata,
     NodeDetails,
     ResourceDetails,
+    OneTimeWADHeadroomData,
     DeploymentDetails,
     NetworkViolation,
     SecurityGroup,
