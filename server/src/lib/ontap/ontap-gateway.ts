@@ -50,8 +50,7 @@ interface OntapJob {
     code?: number;
 }
 
-interface GetClusterJobStatusOptions extends OntapGatewayTarget {
-    jobUuid: string;
+interface OntapJobPollOptions {
     /** Overall time budget for polling before giving up. Defaults to {@link ONTAP_JOB_POLL_DEFAULT_TIMEOUT_MS}. */
     timeoutMs?: number;
     /** Delay between polls. Defaults to {@link ONTAP_JOB_POLL_DEFAULT_INTERVAL_MS}. */
@@ -203,26 +202,33 @@ async function getClusterInfo(target: OntapGatewayTarget): Promise<OntapClusterI
     });
 }
 
-async function getClusterJobStatus(opts: GetClusterJobStatusOptions): Promise<OntapJob> {
-    const {
-        jobUuid,
-        timeoutMs = ONTAP_JOB_POLL_DEFAULT_TIMEOUT_MS,
-        intervalMs = ONTAP_JOB_POLL_DEFAULT_INTERVAL_MS,
-        ...target
-    } = opts;
+async function getClusterJobStatus(
+    target: OntapGatewayTarget,
+    jobUuid: string,
+    pollOpts?: OntapJobPollOptions
+): Promise<OntapJob> {
+    const timeoutMs = pollOpts?.timeoutMs ?? ONTAP_JOB_POLL_DEFAULT_TIMEOUT_MS;
+    const intervalMs = pollOpts?.intervalMs ?? ONTAP_JOB_POLL_DEFAULT_INTERVAL_MS;
     const deadline = Date.now() + timeoutMs;
+    const { accountId, credentialsId, region, fsxId } = target;
+    const endpoint = await resolveFsxManagementEndpoint(credentialsId, region, fsxId, accountId);
     let job: OntapJob;
 
     do {
         // eslint-disable-next-line no-await-in-loop
-        job = await callOntapApi<OntapJob>({ ...target, path: `api/cluster/jobs/${jobUuid}` });
+        job = await callProxyForwarder<OntapJob>({
+            accountId,
+            targetId: fsxId,
+            ontapPath: `api/cluster/jobs/${jobUuid}`,
+            endpoint
+        });
 
         if (job.state === 'success') {
             return job;
         }
         if (job.state === 'failure') {
             const errorMessage = `ONTAP job ${jobUuid} failed: ${job.message ?? JSON.stringify(job)}`;
-            logger.error(errorMessage, { fsxId: target.fsxId, jobUuid, job });
+            logger.error(errorMessage, { fsxId, jobUuid, job });
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
 
@@ -231,8 +237,22 @@ async function getClusterJobStatus(opts: GetClusterJobStatusOptions): Promise<On
     } while (Date.now() < deadline);
 
     const errorMessage = `Timed out waiting for ONTAP job ${jobUuid} to complete after ${timeoutMs}ms (last state: ${job.state})`;
-    logger.error(errorMessage, { fsxId: target.fsxId, jobUuid });
+    logger.error(errorMessage, { fsxId, jobUuid });
     throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+}
+
+async function callOntapAndPollJob<T = unknown>(opts: CallOntapApiOptions): Promise<T> {
+    const { accountId, credentialsId, region, fsxId, path, method } = opts;
+    const resolvedMethod = method ?? 'PATCH';
+    logger.info('Calling ONTAP mutation', { accountId, fsxId, path, method: resolvedMethod });
+
+    const response = await callOntapApi<T>({ ...opts, method: resolvedMethod });
+    const jobUuid = (response as { job?: { uuid?: string } } | null | undefined)?.job?.uuid;
+    if (jobUuid) {
+        logger.info('Polling ONTAP cluster job', { accountId, fsxId, path, jobUuid });
+        await getClusterJobStatus({ accountId, credentialsId, region, fsxId }, jobUuid);
+    }
+    return response;
 }
 
 function isOntapPagedResponse<T>(value: unknown): value is OntapPage<T> {
@@ -648,15 +668,32 @@ async function getCifsShareVolumes(target: OntapGatewayTarget, shareNames: strin
     });
 }
 
+/**
+ * Batch-add initiators to a SAN igroup. ONTAP returns 409 Conflict when an initiator is already present.
+ */
+async function addInitiatorsToIgroup(target: OntapGatewayTarget, igroupUuid: string, initiatorNames: string[]) {
+    if (initiatorNames.length === 0) {
+        return;
+    }
+    await callOntapApi({
+        ...target,
+        path: `api/protocols/san/igroups/${igroupUuid}/initiators`,
+        method: 'POST',
+        body: { records: initiatorNames.map(name => ({ name })) }
+    });
+}
+
 export {
     callOntapApi,
     getClusterInfo,
     getClusterJobStatus,
+    callOntapAndPollJob,
     collectAllOntapRecords,
     collectOntapRecordsBatched,
     getLunBySerialNumber,
     getVolumeByName,
     getCifsShareVolumes,
+    addInitiatorsToIgroup,
     buildOntapProxyBase,
     extractErrorMessage,
     unwrapOntapSettled,

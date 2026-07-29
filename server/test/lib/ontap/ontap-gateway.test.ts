@@ -5,16 +5,20 @@ import {
     callOntapApi,
     getClusterInfo,
     getClusterJobStatus,
+    callOntapAndPollJob,
     collectAllOntapRecords,
     collectOntapRecordsBatched,
     getLunBySerialNumber,
     getVolumeByName,
-    getCifsShareVolumes
+    getCifsShareVolumes,
+    addInitiatorsToIgroup
 } from '../../../src/lib/ontap/ontap-gateway';
 import {
     registerProxyGetResponse,
     registerProxyGetResponseSequence,
-    resetProxyOverrides
+    registerProxyPatchResponse,
+    resetProxyOverrides,
+    getCapturedProxyGetUris
 } from '../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
 
@@ -28,13 +32,13 @@ const GATEWAY_TARGET = {
 };
 
 /**
- * Mocks the endpoint-resolution lookup. Pass `persist: true` for tests that call `callOntapApi`
- * (and thus re-resolve the endpoint) more than once, e.g. `getClusterJobStatus` polling loops.
+ * Mocks the endpoint-resolution lookup. Pass `persist: true` for tests that resolve the endpoint
+ * more than once (e.g. `callOntapAndPollJob` = mutation + poll).
  */
 function mockManagementEndpoint(
     management: { dnsName?: string; ipAddresses?: string[] } = { dnsName: MANAGEMENT_DNS_NAME },
     persist = false
-): void {
+) {
     const resolvedValue: DescribeFileSystemsCommandOutput = {
         $metadata: {},
         FileSystems: [
@@ -55,6 +59,7 @@ function mockManagementEndpoint(
     } else {
         spy.mockResolvedValueOnce(resolvedValue);
     }
+    return spy;
 }
 
 describe('ONTAP gateway', () => {
@@ -130,20 +135,21 @@ describe('ONTAP gateway', () => {
         const JOB_PATH = `api/cluster/jobs/${JOB_UUID}`;
 
         it('should resolve immediately when the job is already in a terminal success state', async () => {
-            mockManagementEndpoint(undefined, true);
+            const describeSpy = mockManagementEndpoint();
             registerProxyGetResponse({
                 targetId: TEST_FSX_ID,
                 ontapPath: JOB_PATH,
                 body: { uuid: JOB_UUID, state: 'success' }
             });
 
-            const job = await getClusterJobStatus({ ...GATEWAY_TARGET, jobUuid: JOB_UUID });
+            const job = await getClusterJobStatus(GATEWAY_TARGET, JOB_UUID);
 
             expect(job).toEqual({ uuid: JOB_UUID, state: 'success' });
+            expect(describeSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should keep polling until the job reaches a terminal success state', async () => {
-            mockManagementEndpoint(undefined, true);
+            const describeSpy = mockManagementEndpoint();
             registerProxyGetResponseSequence({
                 targetId: TEST_FSX_ID,
                 ontapPath: JOB_PATH,
@@ -154,30 +160,27 @@ describe('ONTAP gateway', () => {
                 ]
             });
 
-            const job = await getClusterJobStatus({
-                ...GATEWAY_TARGET,
-                jobUuid: JOB_UUID,
-                intervalMs: 1
-            });
+            const job = await getClusterJobStatus(GATEWAY_TARGET, JOB_UUID, { intervalMs: 1 });
 
             expect(job).toEqual({ uuid: JOB_UUID, state: 'success', message: 'done' });
+            expect(describeSpy).toHaveBeenCalledTimes(1);
         });
 
         it('should reject when the job reaches a terminal failure state', async () => {
-            mockManagementEndpoint(undefined, true);
+            mockManagementEndpoint();
             registerProxyGetResponse({
                 targetId: TEST_FSX_ID,
                 ontapPath: JOB_PATH,
                 body: { uuid: JOB_UUID, state: 'failure', message: 'volume creation failed' }
             });
 
-            await expect(getClusterJobStatus({ ...GATEWAY_TARGET, jobUuid: JOB_UUID, intervalMs: 1 })).rejects.toThrow(
+            await expect(getClusterJobStatus(GATEWAY_TARGET, JOB_UUID, { intervalMs: 1 })).rejects.toThrow(
                 `ONTAP job ${JOB_UUID} failed: volume creation failed`
             );
         });
 
         it('should reject once timeoutMs elapses without reaching a terminal state', async () => {
-            mockManagementEndpoint(undefined, true);
+            const describeSpy = mockManagementEndpoint();
             registerProxyGetResponse({
                 targetId: TEST_FSX_ID,
                 ontapPath: JOB_PATH,
@@ -185,13 +188,60 @@ describe('ONTAP gateway', () => {
             });
 
             await expect(
-                getClusterJobStatus({
-                    ...GATEWAY_TARGET,
-                    jobUuid: JOB_UUID,
+                getClusterJobStatus(GATEWAY_TARGET, JOB_UUID, {
                     timeoutMs: 150,
                     intervalMs: 1
                 })
             ).rejects.toThrow(`Timed out waiting for ONTAP job ${JOB_UUID}`);
+            expect(describeSpy).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('callOntapAndPollJob', () => {
+        const JOB_UUID = 'b2c3d4e5-f6a7-8901-bcde-f01234567890';
+        const PATCH_PATH = 'api/storage/volumes';
+        const JOB_PATH = `api/cluster/jobs/${JOB_UUID}`;
+
+        it('should poll the cluster job when PATCH returns a job uuid', async () => {
+            mockManagementEndpoint(undefined, true);
+            registerProxyPatchResponse({
+                targetId: TEST_FSX_ID,
+                ontapPath: PATCH_PATH,
+                body: { job: { uuid: JOB_UUID }, num_records: 1 }
+            });
+            registerProxyGetResponse({
+                targetId: TEST_FSX_ID,
+                ontapPath: JOB_PATH,
+                body: { uuid: JOB_UUID, state: 'success' }
+            });
+
+            const response = await callOntapAndPollJob<{ job?: { uuid?: string }; num_records?: number }>({
+                ...GATEWAY_TARGET,
+                path: PATCH_PATH,
+                method: 'PATCH',
+                body: { guarantee: { type: 'none' } }
+            });
+
+            expect(response).toEqual({ job: { uuid: JOB_UUID }, num_records: 1 });
+            expect(getCapturedProxyGetUris().some(uri => uri.includes(JOB_PATH))).toBe(true);
+        });
+
+        it('should skip polling when PATCH has no job uuid', async () => {
+            mockManagementEndpoint();
+            registerProxyPatchResponse({
+                targetId: TEST_FSX_ID,
+                ontapPath: PATCH_PATH,
+                body: { num_records: 2 }
+            });
+
+            const response = await callOntapAndPollJob<{ num_records?: number }>({
+                ...GATEWAY_TARGET,
+                path: PATCH_PATH,
+                body: { guarantee: { type: 'none' } }
+            });
+
+            expect(response).toEqual({ num_records: 2 });
+            expect(getCapturedProxyGetUris().some(uri => uri.includes('api/cluster/jobs/'))).toBe(false);
         });
     });
 
@@ -307,6 +357,20 @@ describe('ONTAP gateway', () => {
             const records = await getCifsShareVolumes(GATEWAY_TARGET, []);
 
             expect(records).toEqual([]);
+        });
+    });
+
+    describe('addInitiatorsToIgroup', () => {
+        it('should POST initiator records to the igroup initiators endpoint', async () => {
+            mockManagementEndpoint();
+
+            await expect(
+                addInitiatorsToIgroup(GATEWAY_TARGET, 'igroup-uuid-1', ['iqn.1991-05.com.microsoft:host1'])
+            ).resolves.toBeUndefined();
+        });
+
+        it('should no-op without calling the proxy when initiatorNames is empty', async () => {
+            await expect(addInitiatorsToIgroup(GATEWAY_TARGET, 'igroup-uuid-1', [])).resolves.toBeUndefined();
         });
     });
 });

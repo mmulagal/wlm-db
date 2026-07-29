@@ -92,7 +92,6 @@ import {
     invokeVirtualMountScript
 } from '../../../../src/operations/workloads/mssql/sandbox-scripts';
 import { DEFAULT_INSTANCE_NAME, DEFAULT_MSSQL_INSTANCE_NAME } from '../../../../src/utils/consts';
-import { OPTIMIZE_STORAGE_PARAMS_SCRIPT } from '../../../../src/operations/workloads/mssql/drift-assessment-scripts';
 import {
     CHECK_MPIO_POLICY,
     REMEDIATE_MPIO_POLICY,
@@ -112,7 +111,6 @@ import {
 } from '../../../../src/operations/workloads/mssql/assessment-scripts';
 import {
     CHECK_RUNNING_STATUS_WITH_RESTART,
-    OPTIMIZE_STORAGE_PARAMS_SCRIPT,
     SET_MAXDOP
 } from '../../../../src/operations/workloads/mssql/optimization-scripts';
 import { clone, cloneDeep } from 'lodash-es';

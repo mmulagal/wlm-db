@@ -1,9 +1,13 @@
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createResource, upsertDatabaseInstance } from '../../../../src/lib/database/db';
+import * as ontapGateway from '../../../../src/lib/ontap/ontap-gateway';
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
+import * as assessmentUtils from '../../../../src/operations/continuous-optimization/assessment-utils';
 import {
     getAvailableSnapshotPolicyList,
     handleSharedStorageOptimize,
+    optimizeHASharedStorageData,
     optimizeHighAvailabilityConfiguration,
     optimizeSqlServerService
 } from '../../../../src/operations/continuous-optimization/mssql/resilience-optimize-operations';
@@ -324,5 +328,141 @@ describe('Handle Shared Storage Optimize', () => {
         ];
 
         await expect(handleSharedStorageOptimize(ACCOUNT_ID, hostsToOptimize, parentJobId)).resolves.not.toThrow();
+    });
+});
+
+describe('optimizeHASharedStorageData', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should use the first FSx id when fsxFileSystem is comma-separated', async () => {
+        vi.spyOn(assessmentUtils, 'activeSqlNodeDetails').mockResolvedValue({
+            sqlAuthEnabled: false,
+            activeNodeInstanceId: 'i-07e76a4b916548dc0',
+            fsxId: 'fs-a,fs-b',
+            instanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
+            instanceName: 'MSSQLSERVER',
+            databaseType: 'MSSQL',
+            awsAccountId: 'test-aws-account',
+            serverNameWithHostName: 'test-resource\\MSSQLSERVER',
+            svmDetails: {},
+            instanceMetadata: {},
+            databaseDeploymentType: 'FCI'
+        } as Awaited<ReturnType<typeof assessmentUtils.activeSqlNodeDetails>>);
+
+        const addInitiatorsSpy = vi.spyOn(ontapGateway, 'addInitiatorsToIgroup').mockResolvedValue(undefined);
+
+        const { result, error } = await optimizeHASharedStorageData(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            [
+                {
+                    igroupName: 'igroup-1',
+                    igroupUuid: 'igroup-uuid-1',
+                    missingIqns: ['iqn.1991-05.com.microsoft:host1']
+                }
+            ]
+        );
+
+        expect(result).toBe('success');
+        expect(error).toBe('');
+        expect(addInitiatorsSpy).toHaveBeenCalledWith(expect.objectContaining({ fsxId: 'fs-a' }), 'igroup-uuid-1', [
+            'iqn.1991-05.com.microsoft:host1'
+        ]);
+        expect(addInitiatorsSpy).not.toHaveBeenCalledWith(
+            expect.objectContaining({ fsxId: 'fs-a,fs-b' }),
+            expect.anything(),
+            expect.anything()
+        );
+    });
+
+    it('should return partial when only conflicts occur', async () => {
+        vi.spyOn(assessmentUtils, 'activeSqlNodeDetails').mockResolvedValue({
+            sqlAuthEnabled: false,
+            activeNodeInstanceId: 'i-07e76a4b916548dc0',
+            fsxId: 'fs-a',
+            instanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
+            instanceName: 'MSSQLSERVER',
+            databaseType: 'MSSQL',
+            awsAccountId: 'test-aws-account',
+            serverNameWithHostName: 'test-resource\\MSSQLSERVER',
+            svmDetails: {},
+            instanceMetadata: {},
+            databaseDeploymentType: 'FCI'
+        } as Awaited<ReturnType<typeof assessmentUtils.activeSqlNodeDetails>>);
+
+        vi.spyOn(ontapGateway, 'addInitiatorsToIgroup')
+            .mockResolvedValueOnce(undefined)
+            .mockRejectedValueOnce(new Error('409 Conflict'));
+
+        const { result, error } = await optimizeHASharedStorageData(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            [
+                {
+                    igroupName: 'igroup-ok',
+                    igroupUuid: 'igroup-uuid-ok',
+                    missingIqns: ['iqn.1991-05.com.microsoft:host1']
+                },
+                {
+                    igroupName: 'ig1',
+                    igroupUuid: 'igroup-uuid-conflict',
+                    missingIqns: ['iqn.1991-05.com.microsoft:host2']
+                }
+            ]
+        );
+
+        expect(result).toBe('partial');
+        expect(error).toBe('Initiator already exists in igroup ig1 (409 Conflict)');
+    });
+
+    it('should delimit multiple failed outcomes with a semicolon', async () => {
+        vi.spyOn(assessmentUtils, 'activeSqlNodeDetails').mockResolvedValue({
+            sqlAuthEnabled: false,
+            activeNodeInstanceId: 'i-07e76a4b916548dc0',
+            fsxId: 'fs-a',
+            instanceId: 'f4b7c5d3-e1f6-4g2a-9b5d',
+            instanceName: 'MSSQLSERVER',
+            databaseType: 'MSSQL',
+            awsAccountId: 'test-aws-account',
+            serverNameWithHostName: 'test-resource\\MSSQLSERVER',
+            svmDetails: {},
+            instanceMetadata: {},
+            databaseDeploymentType: 'FCI'
+        } as Awaited<ReturnType<typeof assessmentUtils.activeSqlNodeDetails>>);
+
+        vi.spyOn(ontapGateway, 'addInitiatorsToIgroup')
+            .mockRejectedValueOnce(new Error('first failure'))
+            .mockRejectedValueOnce(new Error('second failure'));
+
+        const { result, error } = await optimizeHASharedStorageData(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            RESOURCE_ID,
+            'f4b7c5d3-e1f6-4g2a-9b5d',
+            [
+                {
+                    igroupName: 'igroup-1',
+                    igroupUuid: 'igroup-uuid-1',
+                    missingIqns: ['iqn.1991-05.com.microsoft:host1']
+                },
+                {
+                    igroupName: 'igroup-2',
+                    igroupUuid: 'igroup-uuid-2',
+                    missingIqns: ['iqn.1991-05.com.microsoft:host2']
+                }
+            ]
+        );
+
+        expect(result).toBe('failed');
+        expect(error).toBe('first failure; second failure');
     });
 });

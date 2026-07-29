@@ -325,6 +325,7 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
     try {
         const resourceResults = await applyOntapStorageFix({
             accountId,
+            credentialsId: parentResource.credentialsIds[0],
             fsxId: parentResource.id,
             region: parentResource.region,
             svmName: (metadata?.svmName as string | undefined) ?? '',

@@ -1,6 +1,6 @@
 import { flatten, map } from 'lodash-es';
 import throat from 'throat';
-import { callProxyForwarder } from '../../lib/cloud-manager/proxy-forwarder';
+import { callOntapAndPollJob } from '../../lib/ontap/ontap-gateway';
 import getLogger from '../../utils/logger';
 import {
     COMBINED_OPTIMIZE_DESCRIPTORS,
@@ -27,6 +27,7 @@ const REST_FIX_CONFIG_KEYS = new Set([
 
 interface OntapStorageFixParams {
     accountId: string;
+    credentialsId: string;
     fsxId: string;
     region: string;
     svmName: string;
@@ -69,17 +70,15 @@ function buildOntapFixSearchParams(
 }
 
 async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<OntapStorageFixResult[]> {
-    const { accountId, fsxId, region, svmName, configurationId, resourceIds, value = '' } = params;
+    const { accountId, credentialsId, fsxId, region, svmName, configurationId, resourceIds, value = '' } = params;
+    const normalizedFsxId = fsxId.split(',')[0].trim();
 
-    logger.info('Applying ONTAP storage fix via proxy', {
+    logger.info('Applying ONTAP storage fix via gateway', {
         accountId,
-        fsxId,
+        fsxId: normalizedFsxId,
         configurationId,
         resourceCount: resourceIds.length
     });
-
-    const endpoint = `management.${fsxId}.fsx.${region}.amazonaws.com`;
-    const base = { accountId, targetId: fsxId, endpoint };
 
     const configs = isCombinedOptimizeConfig(configurationId)
         ? COMBINED_OPTIMIZE_DESCRIPTORS[configurationId].components
@@ -107,20 +106,29 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<Onta
                 const apiKey = usesRestFix ? `${configKey}_REST` : configKey;
                 const apiFn = OptimizeStorageApiData[apiKey as keyof typeof OptimizeStorageApiData];
                 const { api, body, type } = apiFn(value || undefined);
-                const ontapPath = `api${api}`;
+                const path = `api${api}`;
 
                 try {
-                    await callProxyForwarder({
-                        ...base,
-                        ontapPath,
+                    await callOntapAndPollJob({
+                        accountId,
+                        credentialsId,
+                        region,
+                        fsxId: normalizedFsxId,
+                        path,
                         method: 'PATCH',
-                        body,
-                        searchParams: buildOntapFixSearchParams(type, svmName, ids, configKey, value, usesRestFix)
+                        query: buildOntapFixSearchParams(type, svmName, ids, configKey, value, usesRestFix),
+                        body
                     });
                     return map(ids, id => ({ resourceId: id, success: true }));
                 } catch (err) {
                     const failureReason = err instanceof Error ? err.message : String(err);
-                    logger.error('ONTAP PATCH failed', { cfgId, fsxId, failureReason });
+                    logger.error('ONTAP PATCH failed', {
+                        accountId,
+                        cfgId,
+                        fsxId: normalizedFsxId,
+                        failureReason,
+                        err
+                    });
                     return map(ids, id => ({ resourceId: id, success: false, failureReason }));
                 }
             })

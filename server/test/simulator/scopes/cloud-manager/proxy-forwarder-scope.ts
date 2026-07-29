@@ -33,6 +33,12 @@ const overrides = new Map<string, ProxyGetOverride[]>();
 /** Captured GET request URIs (path + query) for assertions; cleared by `resetProxyOverrides`. */
 const capturedProxyGetUris: string[] = [];
 
+/** Per-test PATCH body overrides keyed the same way as GET overrides. */
+const patchOverrides = new Map<string, ProxyGetOverride>();
+
+/** Captured PATCH proxy URIs for targetId/path assertions; cleared by `resetProxyOverrides`. */
+const capturedProxyPatchUris: string[] = [];
+
 function overrideKey({ targetId, ontapPath }: { targetId: string; ontapPath: string }): string {
     return `${targetId}|${ontapPath.replace(/^\/+/, '')}`;
 }
@@ -59,13 +65,29 @@ function registerProxyGetResponseSequence(opts: {
     );
 }
 
+function registerProxyPatchResponse(opts: {
+    targetId: string;
+    ontapPath: string;
+    status?: number;
+    body: unknown;
+}): void {
+    const { targetId, ontapPath, status = 200, body } = opts;
+    patchOverrides.set(overrideKey({ targetId, ontapPath }), { status, body });
+}
+
 function resetProxyOverrides(): void {
     overrides.clear();
     capturedProxyGetUris.length = 0;
+    patchOverrides.clear();
+    capturedProxyPatchUris.length = 0;
 }
 
 function getCapturedProxyGetUris(): readonly string[] {
     return capturedProxyGetUris;
+}
+
+function getCapturedProxyPatchUris(): readonly string[] {
+    return capturedProxyPatchUris;
 }
 
 nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
@@ -88,7 +110,20 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
     .post(PROXY_PATH_REGEX)
     .reply(uri => mutationReply(uri, { job: { uuid: faker.string.uuid() } }))
     .patch(PROXY_PATH_REGEX)
-    .reply(uri => mutationReply(uri))
+    .reply(uri => {
+        capturedProxyPatchUris.push(uri);
+        if (isErrorTarget(uri)) {
+            return [500, { errorMessage: 'Internal server error' }];
+        }
+        const parsed = parseProxyUri(uri);
+        if (parsed) {
+            const override = patchOverrides.get(overrideKey(parsed));
+            if (override) {
+                return [override.status, override.body];
+            }
+        }
+        return [200, {}];
+    })
     .put(PROXY_PATH_REGEX)
     .reply(uri => mutationReply(uri))
     .delete(PROXY_PATH_REGEX)
@@ -96,4 +131,11 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
     .head(PROXY_PATH_REGEX)
     .reply(uri => (isErrorTarget(uri) ? [500, {}] : [200, {}]));
 
-export { registerProxyGetResponse, registerProxyGetResponseSequence, resetProxyOverrides, getCapturedProxyGetUris };
+export {
+    registerProxyGetResponse,
+    registerProxyGetResponseSequence,
+    registerProxyPatchResponse,
+    resetProxyOverrides,
+    getCapturedProxyGetUris,
+    getCapturedProxyPatchUris
+};

@@ -42,12 +42,12 @@ import { updateOptimizedConfigNameInInstanceTable } from '../../demo-operations'
 import { onDemandTriggerMssqlDriftAssessment } from './assessment-operations';
 
 import {
-    ADD_INITIATOR_TO_IGROUP,
     REMEDIATE_CLUSTER_QUORUM_SETTINGS,
     REMEDIATE_HEARTBEAT_SETTINGS,
     REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE
 } from '../../workloads/mssql/high-availability-scripts';
 import { paginateListInstanceConfigData } from '../../database/instance-config-operations';
+import { addInitiatorsToIgroup } from '../../../lib/ontap/ontap-gateway';
 import {
     getPaginatedDatabaseInstances,
     getResources,
@@ -282,7 +282,7 @@ async function optimizeHASharedStorageData(
         databaseInstanceId
     );
 
-    const { fsxFileSystem, activeNodeInstanceid } = instanceRecord;
+    const { fsxFileSystem } = instanceRecord;
     if (!fsxFileSystem) {
         errorMessage = 'FSx file system is not defined. Cannot add initiators to igroup.';
         logger.error('Optimizing shared storage failed', {
@@ -296,18 +296,28 @@ async function optimizeHASharedStorageData(
         throw createError(HttpErrorCodes.PRECONDITION_FAILED, errorMessage);
     }
 
-    const response = await callSsmExecution({
-        credentialsId,
-        region,
-        commands: [ADD_INITIATOR_TO_IGROUP(fsxFileSystem, region, igroupMissingIqnsMap)],
-        ec2InstanceId: activeNodeInstanceid,
-        comment: `Add initiators to igroup on instance ${activeNodeInstanceid}`,
-        accountId
-    });
-
-    const parsedResponse = sqlResponseParsing(response);
-
-    return parsedResponse;
+    const target = { accountId, credentialsId, region, fsxId: fsxFileSystem.split(',')[0].trim() };
+    const conflicts: string[] = [];
+    const failures: string[] = [];
+    await Promise.all(
+        igroupMissingIqnsMap.map(
+            throat(3, async ({ igroupName, igroupUuid, missingIqns }) => {
+                try {
+                    await addInitiatorsToIgroup(target, igroupUuid, missingIqns);
+                } catch (err) {
+                    const message = err instanceof Error ? err.message : String(err);
+                    if (/409|Conflict/i.test(message)) {
+                        conflicts.push(`Initiator already exists in igroup ${igroupName} (409 Conflict)`);
+                    } else {
+                        failures.push(message);
+                    }
+                }
+            })
+        )
+    );
+    const result = failures.length ? 'failed' : conflicts.length ? 'partial' : 'success';
+    const error = [...conflicts, ...failures].join('; ');
+    return { result, error };
 }
 
 function extractInstancesToOptimize(hostsToOptimize: BulkOptimizeHASharedStorageRequestBodyType[]) {
@@ -1133,6 +1143,7 @@ export {
     getAvailableSnapshotPolicyList,
     handleResiliecyOptimize,
     handleSharedStorageOptimize,
+    optimizeHASharedStorageData,
     optimizeHighAvailabilityConfiguration,
     optimizeSqlServerService
 };

@@ -40,11 +40,13 @@ import {
 import { callSsmExecution } from './aws/ssm-operations';
 import { getInstanceInfo, getResources } from './database/database-operations';
 import { GET_ONTAP_LUN_DETAILS, RESCAN_EXTEND_LUN } from './workloads/mssql/storage-scripts';
-import { OPTIMIZE_STORAGE_PARAMS_SCRIPT, SET_MAXDOP } from './workloads/mssql/optimization-scripts';
+import { SET_MAXDOP } from './workloads/mssql/optimization-scripts';
 import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
+import { callOntapAndPollJob } from '../lib/ontap/ontap-gateway';
+import { applyOntapStorageFix } from './continuous-optimization/ontap-storage-fix-operations';
 import {
     OptimizeStorageParams,
     QUERY_PARAMS,
@@ -104,7 +106,6 @@ import {
     onDemandTriggerMssqlDriftAssessment,
     triggerMssqlAssessmentAfterOptimization
 } from './continuous-optimization/mssql/assessment-operations';
-import { SSM_RUN_POWERSHELL_SCRIPT_DOC, SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION } from './workloads/mssql/const';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
 import { triggerOracleAssessmentAfterOptimization } from './continuous-optimization/oracle/assessment-operations';
 import { getOracleStorageConfigRecommendationMap } from './continuous-optimization/oracle/storage-optimize-operations';
@@ -804,6 +805,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams & SSM
                                     credentialsId,
                                     activeNodeInstanceId,
                                     jobDescription,
+                                    accountId,
                                     value
                                 );
                                 if (requestKey && result.parsedResp?.num_records === volumesLunsToOptimize.length) {
@@ -939,6 +941,7 @@ async function callOntapApi(
     credentialsId: string,
     activeNodeInstanceId: string,
     jobDescription: string,
+    accountId: string,
     value?: string
 ) {
     const apiData = buildOntapApiData(apiRequestData, configKey, resourceType, value);
@@ -946,52 +949,52 @@ async function callOntapApi(
     if (!Array.isArray(objectsToOptimize) || objectsToOptimize.some(obj => !obj)) {
         throw new Error('objectsToOptimize must be an array with non-empty string elements.');
     }
-    const apiBody = JSON.stringify(apiData.body);
     const optimizeType = apiData.type;
     const queryParamKey = QUERY_PARAMS[optimizeType as keyof typeof QUERY_PARAMS];
     const jobParamKey = STORAGE_OPTIMIZE_JOB_PARAM[optimizeType as keyof typeof STORAGE_OPTIMIZE_JOB_PARAM];
+
+    if (resourceType === RESOURCESTYPE.MSSQL) {
+        const configurationId = OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs];
+        const results = await applyOntapStorageFix({
+            accountId,
+            credentialsId,
+            fsxId,
+            region,
+            svmName,
+            configurationId,
+            resourceIds: objectsToOptimize,
+            value
+        });
+        const successIds = results.filter(r => r.success).map(r => r.resourceId);
+        const failureReason = results.find(r => !r.success)?.failureReason;
+        if (successIds.length === 0 && failureReason) {
+            throw new Error(failureReason);
+        }
+        return {
+            parsedResp: {
+                num_records: successIds.length,
+                cli_output: successIds.join(',')
+            },
+            jobParamKey
+        };
+    }
+
+    if (resourceType !== RESOURCESTYPE.ORACLE) {
+        throw new Error(`Unsupported resourceType for ONTAP optimize: ${resourceType}`);
+    }
+
+    const apiBody = JSON.stringify(apiData.body);
     const apiQueryFilter = getApiQueryFilter(svmName, objectsToOptimize, configKey, value || '', queryParamKey);
     const apiEndpoint = apiData.api;
-
-    let commands: string[] = [];
-    let ssmDocument: string;
-    let ssmVersion: string;
-
-    switch (resourceType) {
-        case RESOURCESTYPE.MSSQL:
-            commands = [
-                OPTIMIZE_STORAGE_PARAMS_SCRIPT({
-                    fsxId,
-                    region,
-                    apiEndpoint,
-                    apiQueryFilter,
-                    apiBody
-                })
-            ];
-            ssmDocument = SSM_RUN_POWERSHELL_SCRIPT_DOC;
-            ssmVersion = SSM_RUN_POWERSHELL_SCRIPT_DOC_VERSION;
-            break;
-        case RESOURCESTYPE.ORACLE:
-            commands = [
-                optimizeStorageConfigParamsOracle({
-                    fsxId,
-                    region,
-                    apiEndpoint,
-                    apiQueryFilter,
-                    apiBody
-                })
-            ];
-            ssmDocument = SSM_RUN_SHELL_SCRIPT_DOC;
-            ssmVersion = SSM_RUN_SHELL_SCRIPT_DOC_VERSION;
-            break;
-        default:
-            throw new Error(`Unsupported resourceType for SSM command: ${resourceType}`);
-    }
-
-    if (commands.length === 0 || !ssmDocument || !ssmVersion) {
-        logger.error('Invalid SSM command configuration', commands, ssmDocument, ssmVersion);
-        throw new Error('Invalid SSM command configuration');
-    }
+    const commands = [
+        optimizeStorageConfigParamsOracle({
+            fsxId,
+            region,
+            apiEndpoint,
+            apiQueryFilter,
+            apiBody
+        })
+    ];
 
     const resp = await retryWithDelay(
         callSsmExecution.bind(null, {
@@ -1000,8 +1003,8 @@ async function callOntapApi(
             commands,
             ec2InstanceId: activeNodeInstanceId,
             comment: jobDescription,
-            documentName: ssmDocument,
-            documentVersion: ssmVersion
+            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
+            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         })
     );
 
@@ -1302,6 +1305,7 @@ async function modifySizingAttributes(
 }
 
 async function resizeLun(
+    accountId: string,
     credentialsId: string,
     region: string,
     fileSystemId: string,
@@ -1311,6 +1315,7 @@ async function resizeLun(
     activeNodeInstanceId: string
 ) {
     logger.info('Resizing LUN ', {
+        accountId,
         credentialsId,
         region,
         fileSystemId,
@@ -1320,43 +1325,33 @@ async function resizeLun(
         activeNodeInstanceId
     });
 
-    const apiEndpoint = `/storage/luns/${lunUuid}`;
-
-    const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
-        fsxId: fileSystemId,
-        region,
-        apiEndpoint,
-        apiQueryFilter: '',
-        apiBody: JSON.stringify({ space: { size: requiredLunSizeBytes } })
-    });
-    const rescanExtendLunSsmCommand = RESCAN_EXTEND_LUN(diskSerialNumber);
     try {
+        await callOntapAndPollJob({
+            accountId,
+            credentialsId,
+            region,
+            fsxId: fileSystemId,
+            path: `api/storage/luns/${lunUuid}`,
+            method: 'PATCH',
+            body: { space: { size: requiredLunSizeBytes } }
+        });
+
+        const rescanExtendLunSsmCommand = RESCAN_EXTEND_LUN(diskSerialNumber);
         const response = await retryWithDelay(
             callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                commands: [ssmCommand, rescanExtendLunSsmCommand],
+                commands: [rescanExtendLunSsmCommand],
                 ec2InstanceId: activeNodeInstanceId,
-                comment: 'Optimizing storage'
+                comment: 'Rescan and extend LUN after ONTAP resize'
             })
         );
 
-        const [
-            { error: optimiseStorageParamsCommandError } = {} as { error?: unknown },
-            { error: rescanExtendLunSsmCommandError } = {} as { error?: unknown }
-        ] = parseMultipleCommandResponse(response);
-        const errorMessages = [];
-
-        if (optimiseStorageParamsCommandError) {
-            errorMessages.push(`Optimise Storage Params Command Error: ${optimiseStorageParamsCommandError}`);
-        }
+        const [{ error: rescanExtendLunSsmCommandError } = {} as { error?: unknown }] =
+            parseMultipleCommandResponse(response);
 
         if (rescanExtendLunSsmCommandError) {
-            errorMessages.push(`Rescan Extend LUN SSM Command Error: ${rescanExtendLunSsmCommandError}`);
-        }
-
-        if (errorMessages.length > 0) {
-            throw new Error(errorMessages.join(' | '));
+            throw new Error(`Rescan Extend LUN SSM Command Error: ${rescanExtendLunSsmCommandError}`);
         }
     } catch (error) {
         throw createError(400, `Error while resizing LUN ${error}`);
@@ -1577,6 +1572,7 @@ async function resizeVolumeAndLunSize(
     } = parsedResp || {};
     if (existingLogLunSizeBytes < requiredLunSizeBytes) {
         await resizeLun(
+            accountId,
             credentialsId,
             region,
             fileSystemId,
@@ -3065,34 +3061,32 @@ async function handleStorageTierRemediation(storageTierParams: StorageTierParams
             });
         }
         if (!isEmpty(volumeNames)) {
-            const apiQueryFilter = `vserver=${svmName}&volume=${volumeNames.join(',')}`;
-            const apiEndpoint = '/private/cli/volume';
-
-            const ssmCommand = OPTIMIZE_STORAGE_PARAMS_SCRIPT({
-                fsxId,
+            const parsedResp = await callOntapAndPollJob<{
+                num_records?: number;
+                cli_output?: string;
+                job?: { uuid?: string };
+            }>({
+                accountId,
+                credentialsId,
                 region,
-                apiEndpoint,
-                apiQueryFilter,
-                apiBody: JSON.stringify({ 'tiering-policy': 'snapshot-only', 'cloud-retrieval-policy': 'promote' })
+                fsxId,
+                path: 'api/private/cli/volume',
+                method: 'PATCH',
+                query: { vserver: svmName, volume: volumeNames.join(',') },
+                body: { 'tiering-policy': 'snapshot-only', 'cloud-retrieval-policy': 'promote' }
             });
-            const resp = await retryWithDelay(
-                callSsmExecution.bind(null, {
-                    credentialsId,
-                    region,
-                    commands: [ssmCommand],
-                    ec2InstanceId: activeNodeInstanceId!,
-                    comment: jobDescription
-                })
-            );
-            const parsedResp = sqlResponseParsing(resp);
-            const objectsOptimized = parsedResp.num_records || 0;
+            const objectsOptimized = IS_DEMO_FLOW
+                ? volumeNames.length
+                : parsedResp.num_records ?? (parsedResp.job ? volumeNames.length : 0);
             if (objectsOptimized !== volumeNames.length && !IS_DEMO_FLOW) {
                 if (objectsOptimized === 0) {
                     jobError = `Failed to fix storage-tier ${volumeNames.length} objects, ${volumeNames} for ${serverNameWithHostName}`;
-                    logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
+                    logger.error(`Optimization failed for ${serverNameWithHostName}`, { parsedResp });
                     jobStatus = JOBSTATUS.FAILED;
                 } else {
-                    const unOptimizedObjects = volumeNames.filter(obj => !parsedResp.cli_output.includes(obj));
+                    const unOptimizedObjects = parsedResp.cli_output
+                        ? volumeNames.filter(obj => !parsedResp.cli_output!.includes(obj))
+                        : volumeNames.slice(objectsOptimized);
                     jobError = `Failed to fix storage-tier ${unOptimizedObjects.length} objects, ${unOptimizedObjects} for ${serverNameWithHostName}.`;
                     jobStatus = JOBSTATUS.WARNING;
                 }

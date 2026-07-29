@@ -1,37 +1,7 @@
 import { BulkOptimizeSnapshotPolicyParamsType } from '../../../routes/types/mssql-continuous-optimisation.types';
-import { OptimizeStorageParams } from '../../../utils/common-types';
 import { ontapRestRequest } from './common-templates';
-import {
-    COMPUTE_OPTIMIZE_LOG_PATH,
-    RSS_OPTIMIZE_LOG_PATH,
-    SIZING_OPERATIONS_LOG_PATH,
-    RESILIENCY_OPTIMIZE_LOG_PATH
-} from './const';
+import { COMPUTE_OPTIMIZE_LOG_PATH, RSS_OPTIMIZE_LOG_PATH, RESILIENCY_OPTIMIZE_LOG_PATH } from './const';
 import { compressResponse, readSsmParameter, slqcmdExecutionTemplate, GET_FCI_NAME } from './ssm-script-utils';
-
-const OPTIMIZE_STORAGE_PARAMS_SCRIPT = (params: OptimizeStorageParams) => `
-    #Storage Optimization Script
-    Start-Transcript -Path ${SIZING_OPERATIONS_LOG_PATH} -Append | Out-Null
-
-    $WarningPreference = 'SilentlyContinue';
-    $FSxID = '${params.fsxId}'
-    $FSxRegion = '${params.region}'
-    $apiEndpoint = '${params.apiEndpoint}'
-    $apiQueryFilter = '${params.apiQueryFilter}'
-    $apiBody = '${params.apiBody}'
-    Write-Information "Fixing storage for FSx ID: $FSxID FSX region: $FSxRegion"
-    ${ontapRestRequest}
-
-    $newBody = $apiBody | ConvertFrom-Json
-
-    $body =   $newBody | ConvertTo-Json
-
-    $ontapResponse = Invoke-ONTAPRequest -ApiEndpoint $ApiEndpoint -ApiQueryFilter $apiQueryFilter -body $body -method "PATCH"
-
-    $ontapResponse | ConvertTo-Json
-    
-    Stop-Transcript | Out-Null
-`;
 
 const MOVE_ALL_CLUSTER_GROUPS = (nodeName: string) => `
 #Move Cluster Groups
@@ -333,7 +303,6 @@ const SET_MAXDOP = (instanceName: string, sqlAuthEnabled: boolean, maxDopValue: 
 `;
 
 export {
-    OPTIMIZE_STORAGE_PARAMS_SCRIPT,
     MOVE_ALL_CLUSTER_GROUPS,
     OPTIMIZE_NETWORK_ADAPTERS,
     CHECK_RUNNING_STATUS_WITH_RESTART,

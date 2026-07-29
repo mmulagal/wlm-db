@@ -1,6 +1,4 @@
-import { IgroupMissingInitiators } from '../../../utils/common-types';
 import { MSSQL_HEARTBEAT_SETTINGS } from '../../continuous-optimization/mssql/golden-config';
-import { ontapRestRequest } from './common-templates';
 import { HIGH_AVAILABILITY_LOG_PATH } from './const';
 import { readSsmParameter, slqcmdExecutionTemplate } from './ssm-script-utils';
 
@@ -86,65 +84,6 @@ $response = [PSCustomObject]@{
 }
 
 $response | ConvertTo-Json -Depth 5 -Compress
-Stop-Transcript | Out-Null
-`;
-
-const ADD_INITIATOR_TO_IGROUP = (fsxId: string, region: string, igroupMissingIqnsList: IgroupMissingInitiators[]) => `
-# Add initiator to igroup Script
-Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
-
-$WarningPreference = 'SilentlyContinue'
-$FSxID = '${fsxId}'
-$FSxRegion = '${region}'
-$IgroupMissingIqnsList = '${JSON.stringify(igroupMissingIqnsList)}' | ConvertFrom-Json
-
-${ontapRestRequest}
-
-$response = @{
-    error = ''
-    result = 'success'
-}
-
-try {
-    $FSxNDetails = Get-FSxNDetails -fsxId $FSxID
-    $FSxCredentials = $FSxNDetails.FSxCredentials
-    $FSxHostName = $FSxNDetails.FSxHostName
-
-    foreach ($IgroupMissingIqn in $IgroupMissingIqnsList) {
-        $IgroupName = $IgroupMissingIqn.igroupName
-        $IgroupUuid = $IgroupMissingIqn.igroupUuid
-        $Initiators = $IgroupMissingIqn.missingIqns
-
-        # Create array of initiator objects for batch addition
-        $initiatorsArray = @()
-        foreach ($Initiator in $Initiators) {
-            $initiatorsArray += @{ name = $Initiator }
-        }
-        
-        $body = @{ records = $initiatorsArray } | ConvertTo-Json -Depth 3
-        $addUri = "/protocols/san/igroups/$IgroupUuid/initiators"
-        try {
-            Invoke-ONTAPRequest -ApiEndpoint $addUri -Method POST -Body $body
-        } catch {
-            $errorMessage = $_.Exception.Message
-            # Check if it's a 409 Conflict (initiator already exists)
-            if ($errorMessage -match "409|Conflict") {
-                if ($response.result -eq 'success') {
-                    $response.result = 'partial'
-                }
-                $response.error += "Initiator already exists in igroup $IgroupName (409 Conflict); "
-            } else {
-                $response.result = 'failed'
-                $response.error += $errorMessage; 
-            }
-        }
-    }
-} catch {
-    $response.result = 'failed'
-    $response.error += $($_.Exception.Message)
-}
-
-$response | ConvertTo-Json -Compress
 Stop-Transcript | Out-Null
 `;
 
@@ -437,7 +376,6 @@ export {
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS,
     GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN,
-    ADD_INITIATOR_TO_IGROUP,
     REMEDIATE_HEARTBEAT_SETTINGS,
     REMEDIATE_CLUSTER_QUORUM_SETTINGS,
     REMEDIATE_SQLSERVER_SERVICE_STARTUPTYPE,
