@@ -1,9 +1,7 @@
-import { memo } from 'react';
-import {
-    ResourceTextCellRenderer,
-    type ResourceScanRecord,
-    type TableColumn
-} from '@tlveng/workload-factory-components/wad';
+import { memo, useState, type MouseEvent } from 'react';
+import { Text } from '@netapp/bxp-design-system-react';
+import { type ResourceScanRecord, type TableColumn } from '@tlveng/workload-factory-components/wad';
+
 
 type MetadataField = 'current' | 'recommended' | 'workload';
 
@@ -105,9 +103,65 @@ interface CreateMetadataFieldColumnOptions {
     filter: { enabled: boolean };
 }
 
-const MetadataFieldCellRenderer = memo(({ field, row }: { field: MetadataField; row: ResourceScanRecord }) => (
-    <ResourceTextCellRenderer value={getMetadataFieldDisplayValue(row, field) ?? ''} row={row} />
-));
+const truncatedCellStyle = {
+    display: 'block',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    minWidth: 0,
+    width: '100%'
+} as const;
+
+const metadataTooltipStyle = {
+    position: 'fixed',
+    zIndex: 10000,
+    padding: '8px 16px',
+    maxWidth: 480,
+    fontSize: 12,
+    lineHeight: 1.67,
+    color: 'var(--text-primary)',
+    borderRadius: 2,
+    boxShadow: '2px 2px 6px 0 var(--border-drop-shadow)',
+    backgroundColor: 'var(--tooltip-info-bg)',
+    pointerEvents: 'none'
+} as const;
+
+const MetadataFieldCellRenderer = memo(({ field, row }: { field: MetadataField; row: ResourceScanRecord }) => {
+    const value = getMetadataFieldDisplayValue(row, field) ?? '';
+    const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+
+    if (!value) {
+        return null;
+    }
+
+    return (
+        <>
+            <Text
+                style={{
+                    ...truncatedCellStyle,
+                    ...(row.isDismissed ? { color: 'var(--text-disabled)' } : {})
+                }}
+                onMouseMove={(event: MouseEvent<HTMLParagraphElement>) =>
+                    setTooltipPosition({ x: event.clientX, y: event.clientY })
+                }
+                onMouseLeave={() => setTooltipPosition(null)}
+            >
+                {value}
+            </Text>
+            {tooltipPosition && (
+                <div
+                    style={{
+                        ...metadataTooltipStyle,
+                        left: tooltipPosition.x + 12,
+                        top: tooltipPosition.y + 12
+                    }}
+                >
+                    {value}
+                </div>
+            )}
+        </>
+    );
+});
 MetadataFieldCellRenderer.displayName = 'MetadataFieldCellRenderer';
 
 export const createMetadataFieldColumn = ({
