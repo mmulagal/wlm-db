@@ -83,24 +83,32 @@ async function listDatabaseInstanceConfigData({
         ...filters
     };
 
-    // Build optimized query options
-    const queryOptions = {
+    // Two-step approach: order/paginate on id only first (cheap), then hydrate full
+    // records by primary key. This guarantees the DB applies `orderBy` before `take`,
+    // so pagination (e.g. pageSize: 1) always returns the most recent record(s).
+
+    // Step 1: Get IDs only, ordered by creation_time descending, then paginated
+    const idResults = await prisma.client.database_instance_config_data.findMany({
         where: whereClause,
-        ...(finalSelect && { select: finalSelect }),
+        select: { id: true },
+        orderBy: { creation_time: 'desc' },
         ...(pageSize && pageSize > 0 && { take: pageSize }),
         ...(nextToken && {
             cursor: { id: nextToken },
             skip: 1
         })
-    };
+    });
 
-    const results = await prisma.client.database_instance_config_data.findMany(queryOptions);
+    if (idResults.length === 0) {
+        return [];
+    }
 
-    // Optimized sorting using a comparison function
-    return results.sort((a, b) => {
-        const dateA = new Date(a.creation_time).getTime();
-        const dateB = new Date(b.creation_time).getTime();
-        return dateB - dateA; // Sort by creation_time in descending order
+    // Step 2: Fetch full records for those IDs, preserving creation_time descending order
+    const ids = idResults.map(({ id }) => id);
+    return prisma.client.database_instance_config_data.findMany({
+        where: { id: { in: ids } },
+        ...(finalSelect && { select: finalSelect }),
+        orderBy: { creation_time: 'desc' }
     });
 }
 
