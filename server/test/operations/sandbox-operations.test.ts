@@ -21,8 +21,6 @@ import {
 import sandboxResponse from '../simulator/responses/workload/sandbox-response.json';
 import { registerProxyGetResponse, resetProxyOverrides } from '../simulator/scopes/cloud-manager/proxy-forwarder-scope';
 
-const MAPPED_VOLUMES_FSX_ID = 'fs-0f53fbecdd3d85fb2';
-
 beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
         resourceId: '36E53042-04E8-40C9-AE69-26E56CB0D216',
@@ -278,8 +276,10 @@ describe('sandbox operations ', () => {
     });
 
     it('Fails instead of continuing with unmapped volumes when ONTAP returns no LUNs for the serial numbers', async () => {
+        // getMappedOntapVolumes targets the shared demo FSx ('test-fsx') under IS_DEMO_FLOW
+        // (which NODE_ENV=simulator enables for this whole test run), not the resource's real fsxId.
         registerProxyGetResponse({
-            targetId: MAPPED_VOLUMES_FSX_ID,
+            targetId: 'test-fsx',
             ontapPath: 'api/storage/luns',
             body: { records: [], num_records: 0 }
         });

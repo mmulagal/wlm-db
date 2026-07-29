@@ -999,7 +999,9 @@ async function getMappedOntapVolumes(
         dbName,
         logPrefix
     });
-    const { fsxId, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } = srcDetails;
+    const { fsxId: srcFsxId, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } = srcDetails;
+    const fsxId = IS_DEMO_FLOW ? 'test-fsx' : srcFsxId;
+    const fsxRegion = IS_DEMO_FLOW ? 'us-east-1' : region;
 
     const response = await callSsmExecution({
         credentialsId,
@@ -1024,7 +1026,7 @@ async function getMappedOntapVolumes(
     }
 
     const { data, log } = parsedResponse;
-    const target = { accountId, credentialsId, region, fsxId };
+    const target = { accountId, credentialsId, region: fsxRegion, fsxId };
 
     const luns = await getLunBySerialNumber(
         target,

@@ -225,6 +225,45 @@ registerDefaultProxyGetResponse({
                 name: '/vol/wlmdb_sqllog_1714098400_clone_test/sqllog',
                 serial_number: 'wlmdb-log-clone-serial-test',
                 location: { volume: { name: 'wlmdb_sqllog_1714098400_clone_test', uuid: 'test-fsx-log-clone-uuid' } }
+            },
+            // getDbMappedOntapVolumes/getMappedOntapVolumes targets 'test-fsx' under IS_DEMO_FLOW; match
+            // the serial numbers returned by the getDbVolumeLunMapping SSM fixture above.
+            {
+                serial_number: 'wlmdb-data-serial-1714098400',
+                name: '/vol/wlmdb_sqldata_1714098400/sqldata',
+                svm: { name: 'wlmdb_sqlsvm_1714090636810' },
+                location: { volume: { name: 'wlmdb_sqldata_clone_1714098400', uuid: 'vol-uuid-data-clone' } }
+            },
+            {
+                serial_number: 'wlmdb-log-serial-1714098400',
+                name: '/vol/wlmdb_sqllog_1714098400/sqllog',
+                svm: { name: 'wlmdb_sqlsvm_1714090636810' },
+                location: { volume: { name: 'wlmdb_sqllog_clone_1714098400', uuid: 'vol-uuid-log-clone' } }
+            }
+        ],
+        num_records: 4
+    }
+});
+registerDefaultProxyGetResponse({
+    targetId: 'test-fsx',
+    ontapPath: 'api/storage/volumes',
+    body: {
+        records: [
+            {
+                name: 'wlmdb_sqldata_clone_1714098400',
+                clone: {
+                    is_flexclone: true,
+                    parent_volume: { name: 'wlmdb_sqldata_1714098400', uuid: '5c1075d2-03a0-11ef-a514-55070fbfcab1' },
+                    split_estimate: 10737418240
+                }
+            },
+            {
+                name: 'wlmdb_sqllog_clone_1714098400',
+                clone: {
+                    is_flexclone: true,
+                    parent_volume: { name: 'wlmdb_sqllog_1714098400', uuid: '5ace31ea-03a0-11ef-a514-55070fbfcab1' },
+                    split_estimate: 10737418240
+                }
             }
         ],
         num_records: 2
