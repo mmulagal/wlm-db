@@ -78,7 +78,11 @@ import {
 } from '../utils/common-types';
 import { getInstanceDetailsByPrivateIp } from './aws/ec2-operations';
 import { getParameter, deleteParameters } from '../lib/aws/ssm';
-import { registerFsxOntapCredentials, listFsxOntapCredentials } from '../lib/cloud-manager/fsx-core';
+import {
+    registerFsxOntapCredentials,
+    listFsxOntapCredentials,
+    checkFsxLinkExists
+} from '../lib/cloud-manager/fsx-core';
 import {
     MultiInstanceManageMsSqlRequestBodyType,
     MultiInstanceManageResponseBodyType,
@@ -447,7 +451,7 @@ async function registerSqlInstance(
 
     let resourceId: string = '';
     try {
-        const ssmStatus = await getSSMConnectionStatus(credentialsId, region, ec2InstanceId);
+        const ssmStatus = await getSSMConnectionStatus(credentialsId, region, ec2InstanceId, accountId);
         if (ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
             throw createError(HttpErrorCodes.VALIDATION_ERROR, 'No SSM connectivity.');
         }
@@ -641,6 +645,8 @@ async function registerSqlInstance(
                         if (!storageInfo) {
                             throw new Error('Storage information is missing for the SQL Server instance.');
                         }
+
+                        await validateFsxLink(accountId, credentialsId, region, storageInfo.id, hostJobId);
 
                         // It could be that fsx credentials are already registered with storage services. Check and create ssm parameters if not already created.
                         try {
@@ -1441,6 +1447,8 @@ async function registerOracleInstancesData(
         }
 
         if (storageInfo) {
+            await validateFsxLink(accountId, credentialsId, region, storageInfo.id, hostJobId);
+
             // It could be that fsx credentials are already registered with storage services. Check and create ssm parameters if not already created.
             try {
                 await verifyAndAddFSxOntapCredentials(accountId, credentialsId, region, storageInfo.id);
@@ -3524,6 +3532,49 @@ async function deleteSSMParameter(credentialsId: string, region: string, ssmPara
         if (filteredSSMParameters?.length) {
             await deleteParameters(credentialsId, region, filteredSSMParameters);
         }
+    }
+}
+
+async function validateFsxLink(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    fsId: string,
+    parentJobId: string
+) {
+    logger.info('Validate FSx link', { accountId, credentialsId, region, fsId });
+
+    const { id: childJobId } = await registerJob(accountId, credentialsId, region, {
+        type: JOBTYPE.REGISTER_RESOURCE,
+        status: JOBSTATUS.IN_PROGRESS,
+        resourceName: accountId,
+        parentJobId,
+        name: `Validate FSx link for file system ${fsId}`,
+        startTime: Date.now(),
+        description: `Validate FSx link for file system ${fsId}`
+    });
+
+    let errorMessage = '';
+    let status: JOBSTATUS = JOBSTATUS.IN_PROGRESS;
+
+    try {
+        const { exists } = await checkFsxLinkExists(credentialsId, region, fsId);
+        if (!exists) {
+            throw new Error(
+                `FSx for NetApp ONTAP file system '${fsId}' does not have an active link. Create a link before registering the instance.`
+            );
+        }
+        status = JOBSTATUS.COMPLETED;
+    } catch (error: any) {
+        status = JOBSTATUS.FAILED;
+        errorMessage = error.message;
+        throw error;
+    } finally {
+        await updateJobDetails(accountId, childJobId, {
+            status,
+            endTime: Date.now(),
+            ...(errorMessage && { error: errorMessage })
+        });
     }
 }
 
