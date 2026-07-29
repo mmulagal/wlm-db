@@ -164,6 +164,19 @@ export interface ColumnConfig {
     useNestedExpandable?: boolean;
 
     /**
+     * When true, all violationDetails rows are aggregated into a single table row.
+     * The current value column displays "name=value, ..." pairs from each violation detail,
+     * and recommended displays "name=recommended, ..." pairs.
+     * The objectName column is taken from objectsInViolation[0].
+     *
+     * Used for configs like tcp-advanced-options where the API returns flat rows
+     * per parameter but the UI should show them combined on one row.
+     *
+     * @default false
+     */
+    combineRows?: boolean;
+
+    /**
      * Indicates this configuration has nested sub-configurations.
      * Used for findings with multiple levels of impacted resources
      * (e.g., storage efficiencies with LUNs that have volumes).

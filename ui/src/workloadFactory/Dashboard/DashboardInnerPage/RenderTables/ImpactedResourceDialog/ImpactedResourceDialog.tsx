@@ -421,6 +421,35 @@ const mapGenericConfigFromRegistry = (
         return mapSubConfigViolations(data, columns, na);
     }
 
+    // Aggregate all violationDetails into a single row (e.g. heartbeat-settings, tcp-advanced-options)
+    if (columnConfig.combineRows) {
+        const details: ViolationDetail[] = data?.violationDetails || [];
+        if (details.length > 0) {
+            const violations = data?.objectsInViolation;
+            let objectName = na;
+            if (Array.isArray(violations) && violations.length > 0) {
+                const first = violations[0];
+                if (typeof first === 'string') {
+                    objectName = first;
+                }
+            }
+            const current = details.map((r: ViolationDetail) => `${r.objectName}=${r.value ?? ''}`).join(', ');
+            const recommended = details
+                .map((r: ViolationDetail) => `${r.objectName}=${r.recommended ?? ''}`)
+                .join(', ');
+            const columns = columnConfig.columns.map(col => t(col.label) || col.label);
+            const row = columnConfig.columns.map(col => {
+                const accessor = col.accessor || col.key;
+                if (accessor === 'objectName') return objectName || na;
+                if (accessor === 'current') return current || na;
+                if (accessor === 'value') return current || na;
+                if (accessor === 'recommended') return recommended || na;
+                return na;
+            });
+            return ensureRows(columns, [row], na);
+        }
+    }
+
     // Generic mapping for standard configs
     const details: ViolationDetail[] = data?.violationDetails || [];
     const objects: ObjectInViolation[] = data?.objectsInViolation || [];
@@ -686,13 +715,6 @@ const getOracleImpactedResources = (
             const rows = objects.map((item: ObjectInViolation) => [
                 typeof item === 'string' ? item : (item as ViolationVolume)?.ontapVolumeName || item?.objectName || na
             ]);
-            return ensureRows(columns, rows, na);
-        }
-
-        // === INSTANCE-ONLY CONFIGS ===
-        case ASSESSMENT_CONFIG_IDS.TCP_ADVANCED_OPTIONS: {
-            const columns = [t('databases.well-architect.instance-id')];
-            const rows = objects.map((item: ObjectInViolation) => [typeof item === 'string' ? item : na]);
             return ensureRows(columns, rows, na);
         }
 

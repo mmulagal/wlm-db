@@ -2,8 +2,6 @@ import { TFunction } from 'i18next';
 import { getCardMetadata } from '../../../../../utils/configRegistry/configRegistryHelper';
 
 const DEFAULT_IMPACTED_I18N_HEADER = 'databases.well-architect.dashboard-table-headers.impacted-resources';
-const DEFAULT_REGISTRY_IMPACTED_LABEL = 'Impacted objects';
-
 export type ImpactedColumnHeader = {
     header: string;
     headerIsI18nKey: boolean;
@@ -12,7 +10,7 @@ export type ImpactedColumnHeader = {
 /** cardMetadata.impactedLabel from config registry — same source as GetWell DynamicInnerTable. */
 export const resolveImpactedColumnHeader = (configId: string, engineType: string): ImpactedColumnHeader => {
     const { impactedLabel } = getCardMetadata(configId, engineType);
-    if (impactedLabel && impactedLabel !== DEFAULT_REGISTRY_IMPACTED_LABEL) {
+    if (impactedLabel) {
         return { header: impactedLabel, headerIsI18nKey: false };
     }
     return { header: DEFAULT_IMPACTED_I18N_HEADER, headerIsI18nKey: true };

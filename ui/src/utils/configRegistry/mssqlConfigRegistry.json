@@ -2339,13 +2339,13 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Configuration name",
+                    "label": "EC2 instance name",
                     "accessor": "objectName"
                 },
                 {
-                    "key": "value",
+                    "key": "current",
                     "label": "Current heartbeat setting",
-                    "accessor": "value"
+                    "accessor": "current"
                 },
                 {
                     "key": "recommended",
@@ -2353,7 +2353,8 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "heartbeat setting"
+            "resourceTypeLabel": "heartbeat setting",
+            "combineRows": true
         },
         "resiliencyPriority": 9,
         "viewLink": true

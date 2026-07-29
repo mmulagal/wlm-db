@@ -1140,13 +1140,33 @@ describe('ImpactedResourceDialog', () => {
 
         // --- TCP ADVANCED OPTIONS ---
         describe('tcp-advanced-options', () => {
-            it('renders instance-id column with string objects in violation', () => {
+            it('renders 3 columns (EC2 instance, Current value, Recommended value) with violationDetails', () => {
+                const data = {
+                    configurationName: 'tcp-advanced-options',
+                    objectsInViolation: ['i-0abc123'],
+                    violationDetails: [
+                        { objectName: 'net.ipv4.tcp_timestamps', value: '0', recommended: '1' },
+                        { objectName: 'net.ipv4.tcp_sack', value: '0', recommended: '1' }
+                    ]
+                };
+                render(<ImpactedResourceDialog data={data as any} />);
+                expect(screen.getByText('databases.well-architect.ec2-instance')).toBeTruthy();
+                expect(screen.getByText('databases.well-architect.current-value')).toBeTruthy();
+                expect(screen.getByText('databases.well-architect.recommended-value')).toBeTruthy();
+                expect(screen.getByText('i-0abc123')).toBeTruthy();
+                expect(screen.getByText('net.ipv4.tcp_timestamps=0, net.ipv4.tcp_sack=0')).toBeTruthy();
+                expect(screen.getByText('net.ipv4.tcp_timestamps=1, net.ipv4.tcp_sack=1')).toBeTruthy();
+            });
+
+            it('renders 3 columns with fallback when only objectsInViolation is provided', () => {
                 const data = {
                     configurationName: 'tcp-advanced-options',
                     objectsInViolation: ['i-0abc123', 'i-0def456']
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('databases.well-architect.instance-id')).toBeTruthy();
+                expect(screen.getByText('databases.well-architect.ec2-instance')).toBeTruthy();
+                expect(screen.getByText('databases.well-architect.current-value')).toBeTruthy();
+                expect(screen.getByText('databases.well-architect.recommended-value')).toBeTruthy();
                 expect(screen.getByText('i-0abc123')).toBeTruthy();
                 expect(screen.getByText('i-0def456')).toBeTruthy();
             });
@@ -1157,7 +1177,9 @@ describe('ImpactedResourceDialog', () => {
                     objectsInViolation: []
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('databases.well-architect.instance-id')).toBeTruthy();
+                expect(screen.getByText('databases.well-architect.ec2-instance')).toBeTruthy();
+                expect(screen.getByText('databases.well-architect.current-value')).toBeTruthy();
+                expect(screen.getByText('databases.well-architect.recommended-value')).toBeTruthy();
                 expect(screen.getAllByText('databases.general.unavailable').length).toBeGreaterThan(0);
             });
         });

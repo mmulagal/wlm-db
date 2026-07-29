@@ -1554,9 +1554,34 @@
         "viewLink": true
     },
     "tcp-advanced-options": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted objects",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "EC2 instance",
+                    "accessor": "objectName"
+                },
+                {
+                    "key": "current",
+                    "label": "Current value",
+                    "accessor": "current"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "object",
+            "combineRows": true
+        },
         "optimizeApi": {
             "mutation": "optimizeOracleOperatingSystem",
             "payloadScope": "bulk",
@@ -1591,7 +1616,7 @@
             ]
         },
         "storagePriority": 32,
-        "viewLink": false
+        "viewLink": true
     },
     "nfs-mount-options-databasefiles": {
         "hasInnerPage": true,
@@ -1602,7 +1627,7 @@
             "tagSection": "266px"
         },
         "cardMetadata": {
-            "impactedLabel": "Impacted EC2 instances",
+            "impactedLabel": "Impacted NFS mounts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
@@ -1623,7 +1648,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "EC2 instance"
+            "resourceTypeLabel": "NFS mount"
         },
         "dialogContent": {
             "sections": [
@@ -2535,20 +2560,20 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted configurations",
+            "impactedLabel": "Impacted objects",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Configuration name",
+                    "label": "EC2 instance",
                     "accessor": "objectName"
                 },
                 {
-                    "key": "value",
+                    "key": "current",
                     "label": "Current value",
-                    "accessor": "value"
+                    "accessor": "current"
                 },
                 {
                     "key": "recommended",
@@ -2556,7 +2581,8 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Configuration"
+            "resourceTypeLabel": "Object",
+            "combineRows": true
         },
         "cardHeights": {
             "recommendationSection": "170px",

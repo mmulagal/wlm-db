@@ -232,6 +232,21 @@ const DynamicInnerTable = ({
             });
         }
 
+        // Aggregate all violationDetails into a single row (e.g. tcp-advanced-options)
+        // Used when the API returns one row per parameter but UI should show them combined
+        if (columnConfig?.combineRows && data?.violationDetails?.length) {
+            const firstViolation =
+                Array.isArray(data?.objectsInViolation) && data.objectsInViolation.length > 0
+                    ? data.objectsInViolation[0]
+                    : '';
+            const objectName = typeof firstViolation === 'string' ? firstViolation : '';
+            const current = data.violationDetails.map((r: any) => `${r.objectName}=${r.value ?? ''}`).join(', ');
+            const recommended = data.violationDetails
+                .map((r: any) => `${r.objectName}=${r.recommended ?? ''}`)
+                .join(', ');
+            return [addRowMeta({ objectName, value: current, current, recommended })];
+        }
+
         // Default: violationDetails
         if (data?.violationDetails?.length) {
             // Top-level recommended and current values are the same for all rows in many configs
