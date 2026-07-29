@@ -2,6 +2,7 @@ import { isEmpty } from 'lodash-es';
 import { STORAGE_TYPE } from '@prisma/client';
 import { describeSubnets } from '../lib/aws/ec2';
 import { describeFSx } from '../lib/aws/fsx';
+import { getFsxFileSystemActiveLinks } from '../lib/cloud-manager/fsx-core';
 import { DatabaseTypes, FileSystemTypes, NOT_AVAILABLE } from './consts';
 import getLogger from './logger';
 import { DatabaseInstance, MappedOnTapVolumeResponse } from './common-types';
@@ -61,6 +62,15 @@ async function getDatabaseInstanceTopology(
         let availabilityZones: Array<string> | undefined;
         let fileSystemTags;
         let fileSystemStorageType;
+
+        const fsxLinkReadinessPromise: Promise<{ exists: boolean; count: number } | undefined> =
+            storageType === STORAGE_TYPE.FSXN && fileSystemId
+                ? getFsxFileSystemActiveLinks(credentialsId, region, fileSystemId).then(activeLinks => ({
+                      exists: activeLinks.length > 0,
+                      count: activeLinks.length
+                  }))
+                : Promise.resolve(undefined);
+
         try {
             if (fileSystemId || fsxwId) {
                 const fsxInfo = await describeFSx(
@@ -116,6 +126,20 @@ async function getDatabaseInstanceTopology(
             dbEngine
         );
 
+        let fsxLinkReadiness: { exists: boolean; count: number } | undefined;
+        try {
+            fsxLinkReadiness = await fsxLinkReadinessPromise;
+        } catch (error) {
+            logger.error('Error while checking FSx link readiness', {
+                accountId,
+                credentialsId,
+                resourceId,
+                databaseInstanceId,
+                fileSystemId,
+                error
+            });
+        }
+
         topologyData = {
             ...topologyData,
             ...(fileSystemName && { fileSystemName }),
@@ -131,6 +155,10 @@ async function getDatabaseInstanceTopology(
                     totalVolumes: combinedOntapVolumes?.length || 0,
                     totalLuns: luns?.length || 0
                 }
+            }),
+            ...(fsxLinkReadiness && {
+                fsxLinkExists: fsxLinkReadiness.exists,
+                fsxLinksCount: fsxLinkReadiness.count
             })
         };
     }

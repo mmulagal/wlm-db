@@ -54,7 +54,7 @@ import {
     sleep,
     IS_DEMO_FLOW
 } from '../../utils/utils';
-import { listFSXFileSystem } from '../../lib/cloud-manager/fsx-core';
+import { listFSXFileSystem, checkFsxLinkExists } from '../../lib/cloud-manager/fsx-core';
 import { callSsmExecution } from './ssm-operations';
 import { getMappedVolumesHostDataScript } from '../workloads/mssql/ssm-script-utils';
 import { demoGetFsxnVolIdsFromOntapVolIds } from '../demo-operations';
@@ -264,6 +264,21 @@ async function getFSxFileSystemsList(credentialsId: string, region: string, vpcI
     // );
 
     return { filesystems: ontapFSxFilesystems };
+}
+
+async function getFsxLinkReadinessByFsId(
+    credentialsId: string,
+    region: string,
+    fsIds: string[]
+): Promise<Map<string, { exists: boolean; count: number }>> {
+    const uniqueFsIds = [...new Set(fsIds)];
+    return new Map(
+        await Promise.all(
+            uniqueFsIds.map(
+                throat(10, async fsId => [fsId, await checkFsxLinkExists(credentialsId, region, fsId)] as const)
+            )
+        )
+    );
 }
 
 async function getFSXFileSystemListForDemo(credentialsId: string, region: string, vpcId: string) {
@@ -1486,6 +1501,7 @@ export {
     getCostAllocationTagFsxResource,
     getFsxStorageCapacity,
     getFSXFileSystemListForDemo,
+    getFsxLinkReadinessByFsId,
     getFSXDetails,
     getFsxStorageDetails,
     getFsxVolumeDetails,

@@ -83,6 +83,21 @@ type JobIdResponseType = Static<typeof JobIdResponse>;
 
 const HttpErrorResponse = Type.Object({ message: Type.String() });
 
+const FsxLinkReadinessResponse = Type.Object({
+    fsxLinkExists: Type.Optional(
+        Type.Boolean({
+            description: 'Whether the FSx file system associated with this host has at least one active link'
+        })
+    ),
+    fsxLinksCount: Type.Optional(
+        Type.Integer({
+            minimum: 0,
+            description: 'Number of active links on the FSx file system associated with this host'
+        })
+    )
+});
+type FsxLinkReadinessResponseType = Static<typeof FsxLinkReadinessResponse>;
+
 export {
     GenericHeaders,
     GenericHeadersType,
@@ -99,5 +114,7 @@ export {
     CredentialsIdParamsType,
     JobIdResponse,
     JobIdResponseType,
-    HttpErrorResponse
+    HttpErrorResponse,
+    FsxLinkReadinessResponse,
+    FsxLinkReadinessResponseType
 };

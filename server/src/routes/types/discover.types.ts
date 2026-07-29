@@ -1,6 +1,6 @@
 import { Static, Type } from '@fastify/type-provider-typebox';
 import { DatabaseHostsQueryFields, PGSQL_DEFAULT_INSTANCE_NAME, SqlServerDeploymentModel } from '../../utils/consts';
-import { CredentialsIdParams } from './generic.types';
+import { CredentialsIdParams, FsxLinkReadinessResponse } from './generic.types';
 import { OracleDataguardDiscoveryDetails } from '../../operations/workloads/oracle/common-types';
 import { DiscoverySource } from '../../utils/common-types';
 
@@ -234,16 +234,7 @@ const DiscoverResponseInfo = Type.Object({
                         'Whether the credentials have ssm:GetInventory and ssm:ListInventoryEntries permissions on this instance'
                 })
             ),
-            fsxLinkExists: Type.Optional(
-                Type.Boolean({
-                    description: 'Whether the FSx file system associated with this host has at least one active link'
-                })
-            ),
-            fsxLinksCount: Type.Optional(
-                Type.Number({
-                    description: 'Number of active links on the FSx file system associated with this host'
-                })
-            )
+            ...FsxLinkReadinessResponse.properties
         })
     ),
     sqlServerInstances: Type.Optional(Type.Array(SqlServerInstanceInfo))

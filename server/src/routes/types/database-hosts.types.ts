@@ -11,7 +11,7 @@ import {
     ServerState,
     UNKNOWN
 } from '../../utils/consts';
-import { CredentialsIdParams } from './generic.types';
+import { CredentialsIdParams, FsxLinkReadinessResponse } from './generic.types';
 import { API_DESCRIPTION, API_DESCRIPTION_EXAMPLES } from '../../utils/schema-description-consts';
 import {
     DataguardDetailsResponse,
@@ -603,7 +603,8 @@ const DatabaseInstanceTopology = Type.Object({
             totalVolumes: Type.Optional(Type.Number()),
             totalLuns: Type.Optional(Type.Number())
         })
-    )
+    ),
+    ...FsxLinkReadinessResponse.properties
 });
 
 type DatabaseInstanceTopologyType = Static<typeof DatabaseInstanceTopology>;

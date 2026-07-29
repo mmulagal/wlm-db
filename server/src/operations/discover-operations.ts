@@ -126,6 +126,7 @@ import {
     Ec2WithStorage
 } from './cloud-manager/tagging-service-operations';
 import { checkFsxLinkExists } from '../lib/cloud-manager/fsx-core';
+import { getFsxLinkReadinessByFsId } from './aws/fsx-operations';
 
 const { getPreSignedUrl } = preSignedUrl;
 const logger = getLogger();
@@ -169,13 +170,10 @@ async function applyFsxLinkReadiness(
     region: string,
     itemsWithFsxId: { item: DiscoverResponseInfoType; fsId: string }[]
 ) {
-    const uniqueFsIds = [...new Set(itemsWithFsxId.map(({ fsId }) => fsId))];
-    const fsxLinksByFsId = new Map(
-        await Promise.all(
-            uniqueFsIds.map(
-                throat(10, async fsId => [fsId, await checkFsxLinkExists(credentialsId, region, fsId)] as const)
-            )
-        )
+    const fsxLinksByFsId = await getFsxLinkReadinessByFsId(
+        credentialsId,
+        region,
+        itemsWithFsxId.map(({ fsId }) => fsId)
     );
 
     itemsWithFsxId.forEach(({ item, fsId }) => {
