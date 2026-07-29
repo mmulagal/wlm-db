@@ -17,6 +17,10 @@ function isErrorTarget(uri: string): boolean {
     return parseProxyUri(uri)?.targetId === 'error-target';
 }
 
+function isClusterJobPath(ontapPath: string): boolean {
+    return ontapPath.startsWith('api/cluster/jobs/');
+}
+
 /** Standard error-target-aware reply for mutating methods (POST/PATCH/PUT/DELETE). */
 function mutationReply(uri: string, okBody: unknown = {}): [number, unknown] {
     return isErrorTarget(uri) ? [500, { errorMessage: 'Internal server error' }] : [200, okBody];
@@ -29,6 +33,8 @@ function mutationReply(uri: string, okBody: unknown = {}): [number, unknown] {
 // them via resetProxyOverrides().
 type ProxyGetOverride = { status: number; body: unknown };
 const overrides = new Map<string, ProxyGetOverride[]>();
+
+const defaults = new Map<string, ProxyGetOverride>();
 
 /** Captured GET request URIs (path + query) for assertions; cleared by `resetProxyOverrides`. */
 const capturedProxyGetUris: string[] = [];
@@ -46,6 +52,16 @@ function overrideKey({ targetId, ontapPath }: { targetId: string; ontapPath: str
 function registerProxyGetResponse(opts: { targetId: string; ontapPath: string; status?: number; body: unknown }): void {
     const { targetId, ontapPath, status = 200, body } = opts;
     overrides.set(overrideKey({ targetId, ontapPath }), [{ status, body }]);
+}
+
+function registerDefaultProxyGetResponse(opts: {
+    targetId: string;
+    ontapPath: string;
+    status?: number;
+    body: unknown;
+}): void {
+    const { targetId, ontapPath, status = 200, body } = opts;
+    defaults.set(overrideKey({ targetId, ontapPath }), { status, body });
 }
 
 /**
@@ -103,9 +119,21 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
             const next = queue.length > 1 ? queue.shift()! : queue[0];
             return [next.status, next.body];
         }
-        return isErrorTarget(uri)
-            ? [500, { errorMessage: 'Internal server error' }]
-            : [200, { records: [], num_records: 0 }];
+        const fixture = parsed && defaults.get(overrideKey(parsed));
+        if (fixture) {
+            return [fixture.status, fixture.body];
+        }
+        if (isErrorTarget(uri)) {
+            return [500, { errorMessage: 'Internal server error' }];
+        }
+        // Job UUIDs returned by the default POST reply below are random, so callers polling
+        // `api/cluster/jobs/{uuid}` can't pre-register an override by UUID — default to an
+        // immediate success so job-polling gateway helpers don't hang for 900s in tests unless a
+        // test explicitly registers a (failure/pending) override for the specific job path.
+        if (parsed && isClusterJobPath(parsed.ontapPath)) {
+            return [200, { state: 'success' }];
+        }
+        return [200, { records: [], num_records: 0 }];
     })
     .post(PROXY_PATH_REGEX)
     .reply(uri => mutationReply(uri, { job: { uuid: faker.string.uuid() } }))
@@ -133,6 +161,7 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
 
 export {
     registerProxyGetResponse,
+    registerDefaultProxyGetResponse,
     registerProxyGetResponseSequence,
     registerProxyPatchResponse,
     resetProxyOverrides,

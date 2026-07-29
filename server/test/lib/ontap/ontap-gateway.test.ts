@@ -11,7 +11,10 @@ import {
     getLunBySerialNumber,
     getVolumeByName,
     getCifsShareVolumes,
-    addInitiatorsToIgroup
+    addInitiatorsToIgroup,
+    getOntapJobStatusForBase,
+    deleteOntapVolumeByUuid,
+    patchOntapVolumeTags
 } from '../../../src/lib/ontap/ontap-gateway';
 import {
     registerProxyGetResponse,
@@ -336,6 +339,51 @@ describe('ONTAP gateway', () => {
             const records = await getVolumeByName(GATEWAY_TARGET, []);
 
             expect(records).toEqual([]);
+        });
+    });
+
+    describe('getOntapJobStatusForBase', () => {
+        const BASE = { accountId: ACCOUNT_ID, targetId: TEST_FSX_ID, endpoint: MANAGEMENT_DNS_NAME };
+        const JOB_UUID = 'b2c3d4e5-f6a7-8901-bcde-f01234567890';
+
+        it('should poll the job via the pre-resolved base without re-resolving the FSx endpoint', async () => {
+            registerProxyGetResponse({
+                targetId: TEST_FSX_ID,
+                ontapPath: `api/cluster/jobs/${JOB_UUID}`,
+                body: { uuid: JOB_UUID, state: 'success' }
+            });
+
+            const job = await getOntapJobStatusForBase(BASE, JOB_UUID);
+
+            expect(job).toEqual({ uuid: JOB_UUID, state: 'success' });
+        });
+    });
+
+    describe('deleteOntapVolumeByUuid', () => {
+        const BASE = { accountId: ACCOUNT_ID, targetId: TEST_FSX_ID, endpoint: MANAGEMENT_DNS_NAME };
+
+        it('should delete the volume and resolve without polling when no job is returned', async () => {
+            await expect(deleteOntapVolumeByUuid(BASE, 'vol-uuid-1')).resolves.toBeUndefined();
+        });
+
+        it('should reject when the proxy-forwarder DELETE call fails', async () => {
+            const errorBase = { ...BASE, targetId: 'error-target' };
+
+            await expect(deleteOntapVolumeByUuid(errorBase, 'vol-uuid-1')).rejects.toThrow('Proxy-forwarder DELETE');
+        });
+    });
+
+    describe('patchOntapVolumeTags', () => {
+        const BASE = { accountId: ACCOUNT_ID, targetId: TEST_FSX_ID, endpoint: MANAGEMENT_DNS_NAME };
+
+        it('should patch the volume tags and resolve without polling when no job is returned', async () => {
+            await expect(patchOntapVolumeTags(BASE, 'vol-uuid-1', ['cloned_by=test'])).resolves.toBeUndefined();
+        });
+
+        it('should reject when the proxy-forwarder PATCH call fails', async () => {
+            const errorBase = { ...BASE, targetId: 'error-target' };
+
+            await expect(patchOntapVolumeTags(errorBase, 'vol-uuid-1', [])).rejects.toThrow('Proxy-forwarder PATCH');
         });
     });
 

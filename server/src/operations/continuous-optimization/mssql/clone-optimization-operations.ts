@@ -12,7 +12,7 @@ import {
     CLONE_ACTION,
     HttpErrorCodes,
     SANDBOX_EXTENDED_PROPERTY_FLAG_VALUE,
-    SandboxLifecycleAction,
+    SANDBOX_LIFECYCLE_REFRESH,
     SSM_COMMAND_CACHE_TYPE
 } from '../../../utils/consts';
 import getLogger from '../../../utils/logger';
@@ -503,7 +503,7 @@ async function refreshClone(
             );
         }
         const latestSnapshot = snapshots.reduce(
-            (latest: { name: string; created: number }, current: { name: string; created: string }) => {
+            (latest: { name: string; created: number }, current: { name: string; created: number }) => {
                 const currentCreated = new Date(current.created).getTime();
                 return currentCreated > latest.created ? { ...current, created: currentCreated } : latest;
             },
@@ -519,7 +519,7 @@ async function refreshClone(
             region,
             jobId,
             srcDetails,
-            SandboxLifecycleAction.REFRESH,
+            SANDBOX_LIFECYCLE_REFRESH,
             latestSnapshot.name,
             isSandboxOptimizeFlow
         );

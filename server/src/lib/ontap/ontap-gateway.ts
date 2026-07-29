@@ -202,33 +202,27 @@ async function getClusterInfo(target: OntapGatewayTarget): Promise<OntapClusterI
     });
 }
 
-async function getClusterJobStatus(
-    target: OntapGatewayTarget,
+/** Shared poll loop backing both {@link getClusterJobStatus} and {@link getOntapJobStatusForBase}. */
+async function pollOntapJob(
+    fetchJob: () => Promise<OntapJob>,
     jobUuid: string,
-    pollOpts?: OntapJobPollOptions
+    targetId: string,
+    opts: OntapJobPollOptions = {}
 ): Promise<OntapJob> {
-    const timeoutMs = pollOpts?.timeoutMs ?? ONTAP_JOB_POLL_DEFAULT_TIMEOUT_MS;
-    const intervalMs = pollOpts?.intervalMs ?? ONTAP_JOB_POLL_DEFAULT_INTERVAL_MS;
+    const { timeoutMs = ONTAP_JOB_POLL_DEFAULT_TIMEOUT_MS, intervalMs = ONTAP_JOB_POLL_DEFAULT_INTERVAL_MS } = opts;
     const deadline = Date.now() + timeoutMs;
-    const { accountId, credentialsId, region, fsxId } = target;
-    const endpoint = await resolveFsxManagementEndpoint(credentialsId, region, fsxId, accountId);
     let job: OntapJob;
 
     do {
         // eslint-disable-next-line no-await-in-loop
-        job = await callProxyForwarder<OntapJob>({
-            accountId,
-            targetId: fsxId,
-            ontapPath: `api/cluster/jobs/${jobUuid}`,
-            endpoint
-        });
+        job = await fetchJob();
 
         if (job.state === 'success') {
             return job;
         }
         if (job.state === 'failure') {
             const errorMessage = `ONTAP job ${jobUuid} failed: ${job.message ?? JSON.stringify(job)}`;
-            logger.error(errorMessage, { fsxId, jobUuid, job });
+            logger.error(errorMessage, { targetId, jobUuid, job });
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
 
@@ -237,8 +231,30 @@ async function getClusterJobStatus(
     } while (Date.now() < deadline);
 
     const errorMessage = `Timed out waiting for ONTAP job ${jobUuid} to complete after ${timeoutMs}ms (last state: ${job.state})`;
-    logger.error(errorMessage, { fsxId, jobUuid });
+    logger.error(errorMessage, { targetId, jobUuid });
     throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+}
+
+async function getClusterJobStatus(
+    target: OntapGatewayTarget,
+    jobUuid: string,
+    pollOpts?: OntapJobPollOptions
+): Promise<OntapJob> {
+    const { accountId, credentialsId, region, fsxId } = target;
+    const endpoint = await resolveFsxManagementEndpoint(credentialsId, region, fsxId, accountId);
+
+    return pollOntapJob(
+        () =>
+            callProxyForwarder<OntapJob>({
+                accountId,
+                targetId: fsxId,
+                ontapPath: `api/cluster/jobs/${jobUuid}`,
+                endpoint
+            }),
+        jobUuid,
+        fsxId,
+        pollOpts
+    );
 }
 
 async function callOntapAndPollJob<T = unknown>(opts: CallOntapApiOptions): Promise<T> {
@@ -253,6 +269,19 @@ async function callOntapAndPollJob<T = unknown>(opts: CallOntapApiOptions): Prom
         await getClusterJobStatus({ accountId, credentialsId, region, fsxId }, jobUuid);
     }
     return response;
+}
+
+async function getOntapJobStatusForBase(
+    base: ProxyOperationBaseOpts,
+    jobUuid: string,
+    opts?: OntapJobPollOptions
+): Promise<OntapJob> {
+    return pollOntapJob(
+        () => callProxyForwarder<OntapJob>({ ...base, ontapPath: `api/cluster/jobs/${jobUuid}` }),
+        jobUuid,
+        base.targetId,
+        opts
+    );
 }
 
 function isOntapPagedResponse<T>(value: unknown): value is OntapPage<T> {
@@ -507,12 +536,15 @@ async function createOntapLun(base: ProxyOperationBaseOpts, lunPath: string, bod
 async function createOntapLunMapping(base: ProxyOperationBaseOpts, body: Record<string, unknown>) {
     logger.info('Starting createOntapLunMapping', { targetId: base.targetId, body });
 
-    await callProxyForwarder({
+    const { job } = await callProxyForwarder<{ job?: { uuid?: string } }>({
         ...base,
         ontapPath: 'api/protocols/san/lun-maps',
         method: 'POST',
         body
     });
+    if (job?.uuid) {
+        await getOntapJobStatusForBase(base, job.uuid);
+    }
 
     logger.info('Completed createOntapLunMapping', { targetId: base.targetId });
 }
@@ -610,6 +642,39 @@ async function deleteOntapVolumes(base: ProxyOperationBaseOpts, volumeNames: str
 
     logger.info('Completed deleteOntapVolumes', { targetId: base.targetId, volumeNames });
 }
+
+async function deleteOntapVolumeByUuid(base: ProxyOperationBaseOpts, volumeUuid: string): Promise<void> {
+    logger.info('Starting deleteOntapVolumeByUuid', { targetId: base.targetId, volumeUuid });
+
+    const { job } = await callProxyForwarder<{ job?: { uuid?: string } }>({
+        ...base,
+        ontapPath: `api/storage/volumes/${volumeUuid}`,
+        method: 'DELETE'
+    });
+
+    if (job?.uuid) {
+        await getOntapJobStatusForBase(base, job.uuid);
+    }
+
+    logger.info('Completed deleteOntapVolumeByUuid', { targetId: base.targetId, volumeUuid });
+}
+
+async function patchOntapVolumeTags(base: ProxyOperationBaseOpts, volumeUuid: string, tags: string[]): Promise<void> {
+    logger.info('Starting patchOntapVolumeTags', { targetId: base.targetId, volumeUuid, tags });
+
+    const { job } = await callProxyForwarder<{ job?: { uuid?: string } }>({
+        ...base,
+        ontapPath: `api/storage/volumes/${volumeUuid}`,
+        method: 'PATCH',
+        body: { 'tiering.object_tags': tags }
+    });
+
+    if (job?.uuid) {
+        await getOntapJobStatusForBase(base, job.uuid);
+    }
+
+    logger.info('Completed patchOntapVolumeTags', { targetId: base.targetId, volumeUuid });
+}
 /**
  * Looks up ONTAP LUNs by serial number, batching the `serial_number` filter across requests of up
  * to {@link ONTAP_FILTER_BATCH_SIZE} values. Returns `[]` without making a request when
@@ -688,6 +753,7 @@ export {
     getClusterInfo,
     getClusterJobStatus,
     callOntapAndPollJob,
+    getOntapJobStatusForBase,
     collectAllOntapRecords,
     collectOntapRecordsBatched,
     getLunBySerialNumber,
@@ -709,6 +775,8 @@ export {
     deleteOntapLunMappings,
     deleteOntapLuns,
     deleteOntapVolumes,
+    deleteOntapVolumeByUuid,
+    patchOntapVolumeTags,
     type OntapGatewayTarget,
     type OntapLunRecord,
     type OntapVolumeRecord,

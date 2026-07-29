@@ -1,4 +1,3 @@
-import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import throat from 'throat';
 import { compact, isEmpty, uniq, uniqBy } from 'lodash-es';
 import createError from 'http-errors';
@@ -22,22 +21,33 @@ import {
 } from '../utils/consts';
 import { IS_DEMO_FLOW, getDatabaseInstanceName, retryWithDelay, sleep, sqlResponseParsing } from '../utils/utils';
 import {
-    createVolumeClone as CreateVolumeCloneScript,
+    setLunSignature as setLunSignatureScript,
     getDbMappedOntapVolumes,
-    cleanUpOntapResources,
+    releaseSandboxClusterResources,
+    dropSandboxDatabaseFiles,
     addExtendedProperties,
     createClonedDb as createCloneDbScript,
     mountPointQuery,
-    getStorageSavingsFromOntap,
     detachDbAndRemoveAccessPath,
     addAccessPathAndAttachDb,
-    splitFlexCloneVolumes,
     deleteExtendedPropertiesScript,
     checkDatabaseIntegrityScript,
-    getSnapshotsToClone,
     getConnectionInfo,
     invokeVirtualMountScript
 } from './workloads/mssql/sandbox-scripts';
+import {
+    buildOntapProxyBase,
+    collectAllOntapRecords,
+    getLunBySerialNumber,
+    getVolumeByName,
+    deleteOntapVolumeByUuid,
+    patchOntapVolumeTags,
+    getOntapJobStatusForBase,
+    findIgroupForInitiators,
+    createOntapLunMapping,
+    type ProxyOperationBaseOpts
+} from '../lib/ontap/ontap-gateway';
+import { callProxyForwarder } from '../lib/cloud-manager/proxy-forwarder';
 import { DatabaseInstance, Metadata, ResourceDetails, Sandbox, DatabaseInstanceMetadata } from '../utils/common-types';
 import {
     ActiveSqlNodeDetails,
@@ -45,7 +55,7 @@ import {
     getActiveSqlNode,
     getSqlServerVersion
 } from './workloads/mssql/mssql-operations';
-import { callSsmExecution, getSSMConnectionStatus } from './aws/ssm-operations';
+import { callSsmExecution } from './aws/ssm-operations';
 import { DatabaseMountPointResponseType, SandboxInfoResponseType } from '../routes/types/sandbox.types';
 import {
     getPaginatedDatabaseInstances,
@@ -76,6 +86,30 @@ interface SandboxObject {
 }
 
 type sandboxType = SandboxObject & { database_name: string };
+
+interface OntapCloneVolumeRecord {
+    name?: string;
+    clone?: {
+        is_flexclone?: boolean;
+        split_estimate?: number;
+        parent_svm?: { name?: string };
+        parent_volume?: { name?: string; uuid?: string };
+        parent_snapshot?: { name?: string };
+    };
+    space?: { physical_used?: number };
+}
+
+interface OntapLunLookupRecord {
+    serial_number?: string;
+    name?: string;
+    svm?: { name?: string };
+    location?: { volume?: { name?: string; uuid?: string } };
+}
+
+interface OntapSnapshotRecord {
+    name: string;
+    create_time: string;
+}
 
 function getProperty(item: SandboxObject, propertyName: string) {
     const property = item.sandbox_properties.find((prop: { name: string }) => prop.name === propertyName);
@@ -364,6 +398,19 @@ async function getSandboxInfoByInstanceId(
     };
 }
 
+function sumFlexcloneSavings(volumes: OntapCloneVolumeRecord[]) {
+    return volumes.reduce(
+        (totals, volume) =>
+            volume.clone?.is_flexclone
+                ? {
+                      savedStorage: totals.savedStorage + (volume.clone.split_estimate || 0),
+                      consumedStorage: totals.consumedStorage + (volume.space?.physical_used || 0)
+                  }
+                : totals,
+        { savedStorage: 0, consumedStorage: 0 }
+    );
+}
+
 async function getSandboxSavings(accountId: string, credentialsId: string, region: string) {
     try {
         logger.info('Get sandbox savings', { accountId, credentialsId, region });
@@ -408,75 +455,46 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
         await Promise.all(
             Object.keys(fsxGroups).map(
                 throat(10, async fsxId => {
-                    for await (const resourceDetail of fsxGroups[fsxId]) {
-                        const { metadata } = resourceDetail;
-                        const { node1InstanceId, node2InstanceId, sandboxes } = metadata as unknown as Metadata;
+                    const [{ metadata }] = fsxGroups[fsxId];
+                    const { sandboxes } = metadata as unknown as Metadata;
 
-                        try {
-                            const [ssmStatus1, ssmStatus2] = await Promise.all([
-                                getSSMConnectionStatus(credentialsId, region, node1InstanceId),
-                                node2InstanceId
-                                    ? getSSMConnectionStatus(credentialsId, region, node1InstanceId)
-                                    : Promise.resolve({ Status: ConnectionStatus.NOT_CONNECTED })
-                            ]);
+                    try {
+                        const targetFsxId = IS_DEMO_FLOW ? 'test-fsx' : fsxId;
+                        const targetRegion = IS_DEMO_FLOW ? 'us-east-1' : region;
+                        const clonedByTagValue = IS_DEMO_FLOW
+                            ? 'netapp_wf_test_account_test_cred'
+                            : getClonedByTagValue(accountId, credentialsId);
 
-                            if (
-                                ssmStatus1.Status === ConnectionStatus.CONNECTED ||
-                                ssmStatus2.Status === ConnectionStatus.CONNECTED
-                            ) {
-                                let command = [
-                                    getStorageSavingsFromOntap(
-                                        fsxId,
-                                        region,
-                                        getClonedByTagValue(accountId, credentialsId)
-                                    )
-                                ];
-
-                                // DEMO FSX ID AND REGION
-                                if (IS_DEMO_FLOW) {
-                                    command = [
-                                        getStorageSavingsFromOntap(
-                                            'test-fsx',
-                                            'us-east-1',
-                                            'netapp_wf_test_account_test_cred'
-                                        )
-                                    ];
-                                }
-
-                                const response = await callSsmExecution({
-                                    credentialsId,
-                                    region,
-                                    commands: command,
-                                    ec2InstanceId: (ssmStatus1.Status === ConnectionStatus.CONNECTED
-                                        ? node1InstanceId
-                                        : node2InstanceId) as string,
-                                    comment: 'Get storage savings',
-                                    accountId,
-                                    cacheData: true
-                                });
-
-                                if (response && !response.includes('error')) {
-                                    let { savedStorage, consumedStorage } = sqlResponseParsing(response);
-
-                                    // Increase storage savings per sandbox for demo
-                                    if (IS_DEMO_FLOW) {
-                                        savedStorage *= sandboxes?.length || 0;
-                                        consumedStorage *= sandboxes?.length || 0;
-                                    }
-
-                                    savingsData.consumedStorage +=
-                                        typeof consumedStorage === 'number' ? consumedStorage : 0;
-                                    savingsData.savedStorage += typeof savedStorage === 'number' ? savedStorage : 0;
-
-                                    const totalStorage = savingsData.consumedStorage + savingsData.savedStorage;
-                                    savingsData.sandboxSavingsPercentage =
-                                        totalStorage > 0 ? (savingsData.savedStorage * 100) / totalStorage : 0;
-                                }
-                                break;
+                        const base = buildOntapProxyBase(accountId, targetFsxId, targetRegion);
+                        const volumes = await collectAllOntapRecords<OntapCloneVolumeRecord>(
+                            base,
+                            'api/storage/volumes',
+                            {
+                                'tiering.object_tags': `cloned_by=${clonedByTagValue}`,
+                                fields: 'space.used_by_afs,space.physical_used,clone.*'
                             }
-                        } catch (e) {
-                            logger.error(`Falied to fetch storage saving for fsx: ${fsxId}`, e);
+                        );
+
+                        let { savedStorage, consumedStorage } = sumFlexcloneSavings(volumes);
+
+                        // Increase storage savings per sandbox for demo
+                        if (IS_DEMO_FLOW) {
+                            savedStorage *= sandboxes?.length || 0;
+                            consumedStorage *= sandboxes?.length || 0;
                         }
+
+                        savingsData.consumedStorage += consumedStorage;
+                        savingsData.savedStorage += savedStorage;
+
+                        const totalStorage = savingsData.consumedStorage + savingsData.savedStorage;
+                        savingsData.sandboxSavingsPercentage =
+                            totalStorage > 0 ? (savingsData.savedStorage * 100) / totalStorage : 0;
+                    } catch (e) {
+                        logger.error(`Failed to fetch storage saving for fsx: ${fsxId}`, {
+                            accountId,
+                            fsxId,
+                            error: e
+                        });
                     }
                 })
             )
@@ -484,11 +502,8 @@ async function getSandboxSavings(accountId: string, credentialsId: string, regio
 
         return savingsData;
     } catch (e) {
-        logger.error('Error while fetching storage savings', e);
-        throw createError(
-            HttpErrorCodes.INTERNAL_SERVER_ERROR,
-            `Error while fetching storage savings ${accountId}, ${e}`
-        );
+        logger.error('Error while fetching storage savings', { accountId, error: e });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, `Error while fetching storage savings ${accountId}`);
     }
 }
 
@@ -931,6 +946,117 @@ async function validateCloneParams(
     }
 }
 
+function withLunDetails(
+    volume: VolumeLunMap,
+    lunsBySerial: Map<string | undefined, OntapLunLookupRecord>
+): VolumeLunMap {
+    logger.info('With lun details', {
+        volume,
+        lunsBySerial
+    });
+    const lun = lunsBySerial.get(volume.lunSerialNumber);
+    return lun
+        ? {
+              ...volume,
+              lunPath: lun.name as string,
+              volumeName: lun.location?.volume?.name as string,
+              volumeUuid: lun.location?.volume?.uuid as string,
+              svm: lun.svm?.name as string
+          }
+        : volume;
+}
+
+function withParentVolumeDetails(
+    volume: VolumeLunMap,
+    flexcloneByVolumeName: Map<string, OntapCloneVolumeRecord['clone']>
+): VolumeLunMap {
+    const clone = volume.volumeName ? flexcloneByVolumeName.get(volume.volumeName) : undefined;
+    return clone
+        ? {
+              ...volume,
+              parentSvm: clone.parent_svm?.name,
+              parentVolume: clone.parent_volume?.name,
+              parentVolumeUuid: clone.parent_volume?.uuid,
+              parentSnapshot: clone.parent_snapshot?.name,
+              splitEstimate: clone.split_estimate
+          }
+        : volume;
+}
+
+async function getMappedOntapVolumes(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    srcDetails: HostAndDbInfo,
+    dbName: string,
+    logPrefix: string
+): Promise<VolumeLunMapping> {
+    logger.info('Get mapped ONTAP volumes', {
+        accountId,
+        credentialsId,
+        region,
+        srcDetails,
+        dbName,
+        logPrefix
+    });
+    const { fsxId, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } = srcDetails;
+
+    const response = await callSsmExecution({
+        credentialsId,
+        region,
+        commands: [getDbMappedOntapVolumes(dbName, databaseInstanceName, instanceName, logPrefix, sqlAuthEnabled)],
+        ec2InstanceId: activeNodeInstanceId,
+        comment: 'Get volume mappings',
+        accountId,
+        executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+    });
+
+    if (!response) {
+        const errorMessage = 'Failed to get volume lun mapping for the database';
+        logger.error(errorMessage, { accountId, fsxId, dbName });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    const parsedResponse = sqlResponseParsing(response) as VolumeLunMapping & { error?: string };
+
+    if (parsedResponse.error) {
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResponse.error);
+    }
+
+    const { data, log } = parsedResponse;
+    const target = { accountId, credentialsId, region, fsxId };
+
+    const luns = await getLunBySerialNumber(
+        target,
+        [...data, ...log].map(volume => volume.lunSerialNumber),
+        { fields: 'svm.name,location.volume.name,location.volume.uuid' }
+    );
+
+    if (luns.length === 0) {
+        const errorMessage = 'Could not get lun names from serial numbers';
+        logger.error(errorMessage, { accountId, fsxId, dbName });
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    const lunsBySerial = new Map(luns.map(lun => [lun.serial_number, lun as OntapLunLookupRecord]));
+
+    const dataWithLuns = data.map(volume => withLunDetails(volume, lunsBySerial));
+    const logWithLuns = log.map(volume => withLunDetails(volume, lunsBySerial));
+
+    const volumeNames = uniq(compact([...dataWithLuns, ...logWithLuns].map(volume => volume.volumeName)));
+    const ontapVolumes = (await getVolumeByName(target, volumeNames, {
+        fields: 'clone.*'
+    })) as OntapCloneVolumeRecord[];
+    const flexcloneByVolumeName = new Map(
+        ontapVolumes.filter(volume => volume.clone?.is_flexclone).map(volume => [volume.name as string, volume.clone])
+    );
+
+    return {
+        data: dataWithLuns.map(volume => withParentVolumeDetails(volume, flexcloneByVolumeName)),
+        log: logWithLuns.map(volume => withParentVolumeDetails(volume, flexcloneByVolumeName))
+    };
+}
+
 async function getMappings(
     accountId: string,
     credentialsId: string,
@@ -963,44 +1089,16 @@ async function getMappings(
     });
 
     try {
-        const { fsxId, database, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } =
-            srcDetails;
-
-        const command = [
-            getDbMappedOntapVolumes(
-                fsxId,
-                region,
-                database,
-                databaseInstanceName,
-                instanceName,
-                `Sandbox:${sandboxName}:`,
-                sqlAuthEnabled
-            )
-        ];
-
-        const mappings = await callSsmExecution({
+        const parsedResp = await getMappedOntapVolumes(
+            accountId,
             credentialsId,
             region,
-            commands: command,
-            ec2InstanceId: activeNodeInstanceId,
-            comment: 'Get volume mappings',
-            accountId,
-            executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
-        });
-
-        if (!mappings) {
-            throw createError(
-                HttpErrorCodes.INTERNAL_SERVER_ERROR,
-                'Failed to get volume lun mapping for the database'
-            );
-        }
+            srcDetails,
+            srcDetails.database,
+            `Sandbox:${sandboxName}:`
+        );
 
         status = JOBSTATUS.COMPLETED;
-        const parsedResp = sqlResponseParsing(mappings);
-
-        if (parsedResp.error) {
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
-        }
         return parsedResp;
     } catch (e: any) {
         logger.error(e);
@@ -1014,6 +1112,68 @@ async function getMappings(
             status,
             endTime: Date.now()
         });
+    }
+}
+
+interface CloneVolumeInput {
+    volumeName: string;
+    svm: string;
+}
+
+async function createOntapVolumeSnapshot(
+    base: ProxyOperationBaseOpts,
+    volumeUuid: string,
+    snapshotName: string
+): Promise<void> {
+    logger.info('Create ONTAP volume snapshot', {
+        base,
+        volumeUuid,
+        snapshotName
+    });
+    const { job } = await callProxyForwarder<{ job?: { uuid?: string } }>({
+        ...base,
+        ontapPath: `api/storage/volumes/${volumeUuid}/snapshots`,
+        method: 'POST',
+        body: { name: snapshotName }
+    });
+    if (job?.uuid) {
+        await getOntapJobStatusForBase(base, job.uuid);
+    }
+}
+
+async function createOntapVolumeClone(
+    base: ProxyOperationBaseOpts,
+    targetSvm: string,
+    cloneVolumeName: string,
+    parentVolumeName: string,
+    parentSvm: string,
+    parentSnapshot: string
+): Promise<void> {
+    logger.info('Create ONTAP volume clone', {
+        base,
+        targetSvm,
+        cloneVolumeName,
+        parentVolumeName,
+        parentSvm,
+        parentSnapshot
+    });
+    const { job } = await callProxyForwarder<{ job?: { uuid?: string } }>({
+        ...base,
+        ontapPath: 'api/storage/volumes',
+        method: 'POST',
+        body: {
+            name: cloneVolumeName,
+            svm: { name: targetSvm },
+            clone: {
+                is_flexclone: true,
+                parent_volume: { name: parentVolumeName },
+                parent_svm: { name: parentSvm },
+                parent_snapshot: { name: parentSnapshot }
+            }
+        }
+    });
+    if (job?.uuid) {
+        await getOntapJobStatusForBase(base, job.uuid);
     }
 }
 
@@ -1061,64 +1221,188 @@ async function createVolumeClone(
         const svmList = fsxSVMs?.filter(svm => svm.StorageVirtualMachineId === destDetails.svm) || [];
         const sqlVMName = svmList[0]?.Name;
 
-        let command = [
-            CreateVolumeCloneScript(
-                srcDetails.fsxId,
-                region,
-                JSON.stringify({
-                    volumes: uniqBy(mapping.data, 'volumeUuid').map(({ volumeName, svm }) => ({ volumeName, svm })),
-                    ...(snapshot && { snapshot })
-                }),
-                JSON.stringify({
-                    volumes: uniqBy(mapping.log, 'volumeUuid').map(({ volumeName, svm }) => ({ volumeName, svm })),
-                    ...(snapshot && { snapshot })
-                }),
-                [
-                    `cloned_by=${getClonedByTagValue(accountId, credentialsId)}`,
-                    `source=${destDetails.host}_${destDetails.instance}`.replace(/-/g, '_')
-                ],
-                sqlVMName!,
-                destDetails.database,
-                `Sandbox:${destDetails.database}:`
-            )
-        ];
-        if (IS_DEMO_FLOW) {
-            command = [
-                CreateVolumeCloneScript(
-                    'test-fsx',
-                    'us-east-1',
-                    JSON.stringify({ volumeName: 'wlmdb_sqldata_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
-                    JSON.stringify({ volumeName: 'wlmdb_sqllog_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
-                    ['source=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred'],
-                    'target-svm',
-                    'testdb'
-                )
-            ];
+        // Clones must live on the same ONTAP cluster as their source volumes (`srcDetails.fsxId`),
+        // even though the target SVM (`sqlVMName`, resolved above from `destDetails.svm`) may differ.
+        const fsxId = IS_DEMO_FLOW ? 'test-fsx' : srcDetails.fsxId;
+        const fsxRegion = IS_DEMO_FLOW ? 'us-east-1' : region;
+        const targetSvm = IS_DEMO_FLOW ? 'target-svm' : sqlVMName;
+        const tags = IS_DEMO_FLOW
+            ? ['source=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred']
+            : [
+                  `cloned_by=${getClonedByTagValue(accountId, credentialsId)}`,
+                  `source=${destDetails.host}_${destDetails.instance}`.replace(/-/g, '_')
+              ];
+        const dataVolumes: CloneVolumeInput[] = IS_DEMO_FLOW
+            ? [{ volumeName: 'wlmdb_sqldata_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }]
+            : uniqBy(mapping.data, 'volumeUuid').map(({ volumeName, svm }) => ({ volumeName, svm }));
+        const logVolumes: CloneVolumeInput[] = IS_DEMO_FLOW
+            ? [{ volumeName: 'wlmdb_sqllog_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }]
+            : uniqBy(mapping.log, 'volumeUuid').map(({ volumeName, svm }) => ({ volumeName, svm }));
+
+        if (!targetSvm) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Could not resolve the target SVM for the clone.');
         }
 
-        const clonedVolumes = await retryWithDelay(
+        const nodeIqnResponse = await retryWithDelay(
             callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                commands: command,
+                commands: ['(Get-InitiatorPort).NodeAddress'],
                 ec2InstanceId: destDetails.activeNodeInstanceId,
-                comment: 'SandBox: Create Volume Clone',
+                comment: 'Sandbox: Get IQN for active node',
                 accountId,
                 executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
             })
         );
-
-        if (!clonedVolumes) {
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to create clone volume');
+        const nodeIqn = nodeIqnResponse ? nodeIqnResponse.replaceAll('\r\n', '') : undefined;
+        if (!nodeIqn) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                'Unable to fetch initiator IQN for the active node'
+            );
         }
+
+        const ontapBase = buildOntapProxyBase(accountId, fsxId, fsxRegion);
+        const igroup = await findIgroupForInitiators(ontapBase, targetSvm, nodeIqn);
+
+        const epoch = Math.floor(Date.now() / 1000);
+        const defaultSnapshot = `netapp_wf_clone_${epoch}`;
+        const snapshotName = snapshot || defaultSnapshot;
+
+        let volumeUuidByName = new Map<string, string>();
+        if (!snapshot) {
+            const uniqueVolumeNames = uniq([...dataVolumes, ...logVolumes].map(({ volumeName }) => volumeName));
+            const volumeRecords = await getVolumeByName(
+                { accountId, credentialsId, region: fsxRegion, fsxId },
+                uniqueVolumeNames
+            );
+            volumeUuidByName = new Map(volumeRecords.map(({ name, uuid }) => [name, uuid]));
+        }
+
+        const createdSnapshots = new Set<string>();
+        const createdClones = new Set<string>();
+
+        for (const group of [dataVolumes, logVolumes]) {
+            if (!snapshot) {
+                for (const vol of group) {
+                    if (!createdSnapshots.has(vol.volumeName)) {
+                        createdSnapshots.add(vol.volumeName);
+                        const volumeUuid = volumeUuidByName.get(vol.volumeName);
+                        if (!volumeUuid) {
+                            throw createError(
+                                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                                `Could not find the volume ${vol.volumeName} to create snapshot.`
+                            );
+                        }
+                        // eslint-disable-next-line no-await-in-loop
+                        await createOntapVolumeSnapshot(ontapBase, volumeUuid, defaultSnapshot);
+                    }
+                }
+            }
+            for (const vol of group) {
+                if (!createdClones.has(vol.volumeName)) {
+                    createdClones.add(vol.volumeName);
+                    const cloneVolumeName = `${vol.volumeName}_clone_${epoch}`;
+                    // eslint-disable-next-line no-await-in-loop
+                    await createOntapVolumeClone(
+                        ontapBase,
+                        targetSvm,
+                        cloneVolumeName,
+                        vol.volumeName,
+                        vol.svm,
+                        snapshotName
+                    );
+                }
+            }
+        }
+
+        const cloneVolumeNames = [...dataVolumes, ...logVolumes].map(
+            ({ volumeName }) => `${volumeName}_clone_${epoch}`
+        );
+        const cloneLuns = await collectAllOntapRecords<{
+            name: string;
+            serial_number?: string;
+            location?: { volume?: { uuid?: string; name?: string } };
+        }>(ontapBase, 'api/storage/luns', {
+            'location.volume.name': cloneVolumeNames.join('|'),
+            fields: 'location.volume.uuid,location.volume.name,serial_number'
+        });
+
+        if (cloneLuns.length === 0) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                'Could not find the cloned volumes to create tags.'
+            );
+        }
+
+        const buildClonedVolumes = (volumes: CloneVolumeInput[]) =>
+            cloneLuns
+                .filter(lun => volumes.some(({ volumeName }) => lun.location?.volume?.name?.includes(volumeName)))
+                .map(lun => ({
+                    volumeId: lun.location!.volume!.uuid as string,
+                    lunSerialNumber: lun.serial_number as string,
+                    volumeName: lun.location!.volume!.name as string,
+                    lunPath: lun.name
+                }));
+
+        const clonedData = buildClonedVolumes(dataVolumes);
+        const clonedLog = buildClonedVolumes(logVolumes);
+
+        for (const { volumeId } of uniqBy([...clonedData, ...clonedLog], 'volumeId')) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await patchOntapVolumeTags(ontapBase, volumeId, tags);
+            } catch (err: any) {
+                throw createError(
+                    HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                    `Could not add tags to the cloned volumes. Ontap error: ${err?.message}`
+                );
+            }
+        }
+
+        // `Set-NcLunSignature` has no ONTAP REST equivalent; run it host-side against the freshly
+        // cloned LUNs before mapping them to the igroup.
+        const lunPaths = uniq([...clonedData, ...clonedLog].map(({ lunPath }) => lunPath));
+        const setLunSignatureResponse = await retryWithDelay(
+            callSsmExecution.bind(null, {
+                credentialsId,
+                region,
+                commands: [
+                    setLunSignatureScript(
+                        fsxId,
+                        fsxRegion,
+                        targetSvm,
+                        JSON.stringify(lunPaths),
+                        destDetails.database,
+                        `Sandbox:${destDetails.database}:`
+                    )
+                ],
+                ec2InstanceId: destDetails.activeNodeInstanceId,
+                comment: 'Sandbox: Set LUN signature',
+                accountId,
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+            })
+        );
+        const signatureResult = sqlResponseParsing(setLunSignatureResponse);
+        if (signatureResult?.error) {
+            throw createError(
+                HttpErrorCodes.INTERNAL_SERVER_ERROR,
+                `Could not set LUN signature. ${signatureResult.error}`
+            );
+        }
+
+        await Promise.all(
+            lunPaths.map(lunPath =>
+                createOntapLunMapping(ontapBase, {
+                    svm: { name: targetSvm },
+                    lun: { name: lunPath },
+                    igroup: { name: igroup }
+                })
+            )
+        );
 
         status = JOBSTATUS.COMPLETED;
-        const parsedResp = sqlResponseParsing(clonedVolumes);
-
-        if (parsedResp.error) {
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
-        }
-        return parsedResp;
+        return { data: clonedData, log: clonedLog };
     } catch (e: any) {
         status = JOBSTATUS.FAILED;
         errorMsg = e.message || 'Internal Server Error';
@@ -1583,11 +1867,8 @@ async function startCleanup(
     });
 
     try {
-        let command = [
-            cleanUpOntapResources(
-                destDetails.fsxId,
-                region,
-                JSON.stringify(volumeIds),
+        let releaseCommand = [
+            releaseSandboxClusterResources(
                 JSON.stringify(filePaths),
                 destDetails.database,
                 destDetails.instanceName,
@@ -1597,17 +1878,36 @@ async function startCleanup(
                 isFciDeployment(destDetails.metadata)
             )
         ];
+        let dropCommand = [
+            dropSandboxDatabaseFiles(
+                JSON.stringify(filePaths),
+                destDetails.database,
+                destDetails.instanceName,
+                destDetails.databaseInstanceName,
+                `SandBox:${destDetails.database}:`,
+                destDetails.sqlAuthEnabled || false
+            )
+        ];
 
         if (IS_DEMO_FLOW) {
-            command = [
-                cleanUpOntapResources(
-                    'test-fsx',
-                    'us-east-1',
-                    JSON.stringify(['5c1075d2-03a0-11ef-a514-55070fbfcab1', '5ace31ea-03a0-11ef-a514-55070fbfcab1']),
-                    JSON.stringify([
-                        'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
-                        'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
-                    ]),
+            const demoFilePaths = [
+                'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
+                'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
+            ];
+            releaseCommand = [
+                releaseSandboxClusterResources(
+                    JSON.stringify(demoFilePaths),
+                    'testdb',
+                    DEFAULT_MSSQL_INSTANCE_NAME,
+                    DEFAULT_INSTANCE_NAME,
+                    '',
+                    false,
+                    false
+                )
+            ];
+            dropCommand = [
+                dropSandboxDatabaseFiles(
+                    JSON.stringify(demoFilePaths),
                     'testdb',
                     DEFAULT_MSSQL_INSTANCE_NAME,
                     DEFAULT_INSTANCE_NAME,
@@ -1617,11 +1917,38 @@ async function startCleanup(
             ];
         }
 
-        const resp = await retryWithDelay(
+        const releaseResp = await retryWithDelay(
             callSsmExecution.bind(null, {
                 credentialsId,
                 region,
-                commands: command,
+                commands: releaseCommand,
+                ec2InstanceId: destDetails.activeNodeInstanceId,
+                comment: `Release cluster resources for ${name}`,
+                accountId,
+                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
+            })
+        );
+
+        if (!releaseResp) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to cleanup');
+        }
+
+        const releaseJsonResp = sqlResponseParsing(releaseResp);
+
+        if (releaseJsonResp.error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, releaseJsonResp.error);
+        }
+
+        const fsxId = IS_DEMO_FLOW ? 'test-fsx' : destDetails.fsxId;
+        const fsxRegion = IS_DEMO_FLOW ? 'us-east-1' : region;
+        const ontapBase = buildOntapProxyBase(accountId, fsxId, fsxRegion);
+        await Promise.all(volumeIds.map(volumeId => deleteOntapVolumeByUuid(ontapBase, volumeId)));
+
+        const dropResp = await retryWithDelay(
+            callSsmExecution.bind(null, {
+                credentialsId,
+                region,
+                commands: dropCommand,
                 ec2InstanceId: destDetails.activeNodeInstanceId,
                 comment: `Cleanup ${name} resources`,
                 accountId,
@@ -1629,18 +1956,18 @@ async function startCleanup(
             })
         );
 
-        if (!resp) {
+        if (!dropResp) {
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to cleanup');
         }
 
-        const jsonResp = sqlResponseParsing(resp);
+        const dropJsonResp = sqlResponseParsing(dropResp);
 
-        if (jsonResp.error) {
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, jsonResp.error);
+        if (dropJsonResp.error) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, dropJsonResp.error);
         }
 
         status = JOBSTATUS.COMPLETED;
-        return jsonResp;
+        return dropJsonResp;
     } catch (e: any) {
         logger.error(`Failed to perform cleanup for ${name} ${destDetails.database}`);
         status = JOBSTATUS.FAILED;
@@ -2108,39 +2435,14 @@ async function getSandboxSplitEstimate(
     };
     const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, src, src);
 
-    const { fsxId, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } = srcDetails;
-
-    const command = [
-        getDbMappedOntapVolumes(
-            fsxId,
-            region,
-            sandboxName,
-            databaseInstanceName,
-            instanceName,
-            `Sandbox:${sandboxName}:`,
-            sqlAuthEnabled
-        )
-    ];
-
-    const mappings = await callSsmExecution({
+    const parsedResp = await getMappedOntapVolumes(
+        accountId,
         credentialsId,
         region,
-        commands: command,
-        ec2InstanceId: activeNodeInstanceId,
-        comment: 'Get volume mappings',
-        accountId
-    });
-
-    if (!mappings) {
-        logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume lun mapping for the database');
-    }
-
-    const parsedResp = sqlResponseParsing(mappings);
-
-    if (parsedResp?.error) {
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
-    }
+        srcDetails,
+        sandboxName,
+        `Sandbox:${sandboxName}:`
+    );
 
     const mappingData = [...parsedResp.data, ...parsedResp.log];
 
@@ -2151,7 +2453,7 @@ async function getSandboxSplitEstimate(
         );
     }
 
-    return mappingData.map((record: { volumeName: string; splitEstimate: number }) => ({
+    return mappingData.map(record => ({
         name: record.volumeName,
         splitEstimate: record.splitEstimate || 0
     }));
@@ -2945,6 +3247,35 @@ async function validateSplitParams(
     }
 }
 
+async function initiateFlexcloneSplit(
+    base: ProxyOperationBaseOpts,
+    volumeId: string,
+    volumeName: string
+): Promise<string | undefined> {
+    try {
+        const { job } = await callProxyForwarder<{ job?: { uuid?: string } }>({
+            ...base,
+            ontapPath: `api/storage/volumes/${volumeId}`,
+            method: 'PATCH',
+            body: { clone: { split_initiated: true } }
+        });
+
+        if (job?.uuid) {
+            await getOntapJobStatusForBase(base, job.uuid);
+        }
+        return undefined;
+    } catch (err: any) {
+        const message: string = err?.message || '';
+        if (message.includes('Volume is not a clone')) {
+            return `Volume ${volumeName} is not a clone`;
+        }
+        if (message.includes('Volume has locked snapshots')) {
+            return `Volume ${volumeName} has locked snapshots`;
+        }
+        return `Could not split volume ${volumeName}. Ontap error: ${message}`;
+    }
+}
+
 async function splitVolumes(
     accountId: string,
     credentialsId: string,
@@ -2966,38 +3297,36 @@ async function splitVolumes(
         startTime: Date.now(),
         parentJobId
     });
+    const logPrefix = `Sandbox:${resourceDetail.database}:`;
 
     try {
-        const command = [
-            splitFlexCloneVolumes(
-                resourceDetail.fsxId,
-                region,
-                JSON.stringify(uniqBy(volumes, 'volumeId')),
-                resourceDetail.instanceName,
-                `Sandbox:${resourceDetail.database}:`
-            )
-        ];
+        const ontapBase = buildOntapProxyBase(accountId, resourceDetail.fsxId, region);
+        const uniqueVolumes = uniqBy(volumes, 'volumeId');
+        let lastError: string | undefined;
 
-        const resp = await retryWithDelay(
-            callSsmExecution.bind(null, {
-                credentialsId,
-                region,
-                commands: command,
-                ec2InstanceId: resourceDetail.activeNodeInstanceId,
-                comment: 'Split volume for creating sandbox',
-                accountId,
-                executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT
-            })
-        );
-
-        if (!resp) {
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to split the volumes');
+        // Best-effort per volume, matching the previous script: keep going on failure and surface
+        // the last error encountered (if any) once every volume has been attempted.
+        for (const { volumeId, volumeName } of uniqueVolumes) {
+            // eslint-disable-next-line no-await-in-loop
+            const splitError = await initiateFlexcloneSplit(ontapBase, volumeId, volumeName);
+            if (splitError) {
+                logger.info(`${logPrefix} ${splitError}`);
+                lastError = splitError;
+            }
         }
 
-        const parsedResp = sqlResponseParsing(resp);
+        for (const { volumeId, volumeName } of uniqueVolumes) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                await patchOntapVolumeTags(ontapBase, volumeId, []);
+            } catch (err: any) {
+                lastError = `Could not remove tags from volume ${volumeName}. Ontap error: ${err?.message}`;
+                logger.info(`${logPrefix} ${lastError}`);
+            }
+        }
 
-        if (parsedResp.error) {
-            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedResp.error);
+        if (lastError) {
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, lastError);
         }
 
         status = JOBSTATUS.COMPLETED;
@@ -3239,39 +3568,14 @@ async function getSandboxSnapshots(
     const source = { host: databaseHostId, instance: databaseInstanceId, database: sandboxName };
     const { srcDetails } = await runSandboxPreValidations(accountId, credentialsId, region, source, source);
 
-    const { fsxId, activeNodeInstanceId, databaseInstanceName, instanceName, sqlAuthEnabled } = srcDetails;
-
-    const mappingsCommand = [
-        getDbMappedOntapVolumes(
-            fsxId,
-            region,
-            sandboxName,
-            databaseInstanceName,
-            instanceName,
-            `Sandbox:${sandboxName}:`,
-            sqlAuthEnabled
-        )
-    ];
-
-    const mappings = await callSsmExecution({
+    const parsedMappingResponse = await getMappedOntapVolumes(
+        accountId,
         credentialsId,
         region,
-        commands: mappingsCommand,
-        ec2InstanceId: activeNodeInstanceId,
-        comment: 'Get volume mappings'
-    });
-
-    if (!mappings) {
-        logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume lun mapping for the database');
-    }
-
-    const parsedMappingResponse = sqlResponseParsing(mappings);
-
-    if (parsedMappingResponse.error) {
-        logger.error(parsedMappingResponse.error);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedMappingResponse.error);
-    }
+        srcDetails,
+        sandboxName,
+        `Sandbox:${sandboxName}:`
+    );
 
     const mappingData = [...parsedMappingResponse.data, ...parsedMappingResponse.log];
 
@@ -3281,42 +3585,47 @@ async function getSandboxSnapshots(
         throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
     }
 
-    const snapshotsCommand = [
-        getSnapshotsToClone(
-            srcDetails.fsxId,
-            region,
-            JSON.stringify(mappingData.map(vol => vol.parentVolumeUuid)),
-            mappingData[0].parentVolumeUuid,
-            sandboxName,
-            TIME_WINDOW
-        )
-    ];
+    const dataVolumeUuid = mappingData[0].parentVolumeUuid as string;
+    const base = buildOntapProxyBase(accountId, srcDetails.fsxId, region);
 
-    const snapshotResponse = await callSsmExecution({
-        credentialsId,
-        region,
-        commands: snapshotsCommand,
-        ec2InstanceId: srcDetails.activeNodeInstanceId,
-        comment: 'Get snapshots to clone for sandbox',
-        accountId
+    const volumeSnapshots = await Promise.all(
+        mappingData.map(async vol => ({
+            isPrimary: vol.parentVolumeUuid === dataVolumeUuid,
+            records: await collectAllOntapRecords<OntapSnapshotRecord>(
+                base,
+                `api/storage/volumes/${vol.parentVolumeUuid}/snapshots`,
+                { fields: 'create_time' }
+            )
+        }))
+    );
+
+    if (volumeSnapshots.some(vol => vol.records.length === 0)) {
+        const errorMessage = 'No snapshots found for one or more volumes.';
+        logger.error(errorMessage);
+        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+    }
+
+    const primarySnapshots = volumeSnapshots.filter(vol => vol.isPrimary).flatMap(vol => vol.records);
+    const secondaryVolumeSnapshots = volumeSnapshots.filter(vol => !vol.isPrimary);
+
+    const snapshots: { name: string; created: string }[] = [];
+    secondaryVolumeSnapshots.forEach(({ records: secondarySnapshots }) => {
+        primarySnapshots.forEach(primarySnapshot => {
+            const secondarySnapshot = secondarySnapshots.find(record => record.name === primarySnapshot.name);
+            if (!secondarySnapshot) {
+                return;
+            }
+            const primaryTime = Math.floor(new Date(primarySnapshot.create_time).getTime() / 1000);
+            const secondaryTime = Math.floor(new Date(secondarySnapshot.create_time).getTime() / 1000);
+            if (Math.abs(secondaryTime - primaryTime) <= TIME_WINDOW) {
+                snapshots.push({ name: primarySnapshot.name, created: primarySnapshot.create_time });
+            }
+        });
     });
-    if (!snapshotResponse) {
-        logger.error('Failed to get volume lun mapping for the database', { databaseHostId, sandboxName });
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, 'Failed to get volume lun mapping for the database');
-    }
-
-    const parsedSnapshotResponse = sqlResponseParsing(snapshotResponse);
-
-    if (parsedSnapshotResponse.error) {
-        logger.error(parsedSnapshotResponse.error);
-        throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, parsedSnapshotResponse.error);
-    }
-
-    const { snapshots } = parsedSnapshotResponse;
 
     logger.debug('Snapshots eligible for clone', snapshots);
 
-    return snapshots.map((snapshot: { name: string; created: string }) => ({
+    return snapshots.map(snapshot => ({
         name: snapshot.name,
         created: new Date(snapshot.created).valueOf()
     }));

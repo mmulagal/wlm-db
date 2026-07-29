@@ -19,6 +19,9 @@ import {
     getSandboxSplitEstimate
 } from '../../src/operations/sandbox-operations';
 import sandboxResponse from '../simulator/responses/workload/sandbox-response.json';
+import { registerProxyGetResponse, resetProxyOverrides } from '../simulator/scopes/cloud-manager/proxy-forwarder-scope';
+
+const MAPPED_VOLUMES_FSX_ID = 'fs-0f53fbecdd3d85fb2';
 
 beforeAll(async () => {
     await createResource(ACCOUNT_ID, {
@@ -272,5 +275,26 @@ describe('sandbox operations ', () => {
             'testdb1'
         );
         expect(resp).toBeDefined();
+    });
+
+    it('Fails instead of continuing with unmapped volumes when ONTAP returns no LUNs for the serial numbers', async () => {
+        registerProxyGetResponse({
+            targetId: MAPPED_VOLUMES_FSX_ID,
+            ontapPath: 'api/storage/luns',
+            body: { records: [], num_records: 0 }
+        });
+
+        await expect(
+            getSandboxSplitEstimate(
+                ACCOUNT_ID,
+                'f6082f35-c1db-4619-bb5c-84bcb5bf3286',
+                'ap-southeast-1',
+                '36E53042-04E8-40C9-AE69-26E56CB0D216',
+                'default',
+                'testdb1'
+            )
+        ).rejects.toThrow('Could not get lun names from serial numbers');
+
+        resetProxyOverrides();
     });
 });

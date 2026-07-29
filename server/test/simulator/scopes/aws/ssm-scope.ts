@@ -76,17 +76,15 @@ import {
     SQL_BACKUPS
 } from '../../../../src/operations/workloads/mssql/queries';
 import {
-    createVolumeClone,
     getDbMappedOntapVolumes,
     createClonedDb,
     addExtendedProperties,
-    cleanUpOntapResources,
+    releaseSandboxClusterResources,
+    dropSandboxDatabaseFiles,
     mountPointQuery,
-    getStorageSavingsFromOntap,
     detachDbAndRemoveAccessPath,
     deleteExtendedPropertiesScript,
     checkDatabaseIntegrityScript,
-    getSnapshotsToClone,
     readExtendedPropertiesOfSandbox,
     getConnectionInfo,
     invokeVirtualMountScript
@@ -127,8 +125,111 @@ import {
     DRIVE_LETTER,
     HEARTBEAT_SETTINGS
 } from '../../../../src/operations/workloads/mssql/high-availability-scripts';
+import { registerDefaultProxyGetResponse } from '../cloud-manager/proxy-forwarder-scope';
 
 const ssmMock = mockClient(SSMClient);
+
+// getDbMappedOntapVolumes only returns SQL-side serial numbers (see getDbVolumeLunMapping below);
+// the ONTAP LUN/volume lookup that resolves lunPath/volumeName/parent* fields now runs through the
+// proxy-forwarder in Node, so the simulator needs matching ONTAP fixtures for the shared test fsxId.
+// Registered as defaults (not plain overrides) since these are set once at module load and must
+// survive resetProxyOverrides() calls made by unrelated test files sharing this worker.
+const MAPPED_VOLUMES_FSX_ID = 'fs-0f53fbecdd3d85fb2';
+registerDefaultProxyGetResponse({
+    targetId: MAPPED_VOLUMES_FSX_ID,
+    ontapPath: 'api/storage/luns',
+    body: {
+        records: [
+            {
+                serial_number: 'wlmdb-data-serial-1714098400',
+                name: '/vol/wlmdb_sqldata_1714098400/sqldata',
+                svm: { name: 'wlmdb_sqlsvm_1714090636810' },
+                location: { volume: { name: 'wlmdb_sqldata_clone_1714098400', uuid: 'vol-uuid-data-clone' } }
+            },
+            {
+                serial_number: 'wlmdb-log-serial-1714098400',
+                name: '/vol/wlmdb_sqllog_1714098400/sqllog',
+                svm: { name: 'wlmdb_sqlsvm_1714090636810' },
+                location: { volume: { name: 'wlmdb_sqllog_clone_1714098400', uuid: 'vol-uuid-log-clone' } }
+            }
+        ],
+        num_records: 2
+    }
+});
+registerDefaultProxyGetResponse({
+    targetId: MAPPED_VOLUMES_FSX_ID,
+    ontapPath: 'api/storage/volumes',
+    body: {
+        records: [
+            {
+                name: 'wlmdb_sqldata_clone_1714098400',
+                clone: {
+                    is_flexclone: true,
+                    parent_volume: { name: 'wlmdb_sqldata_1714098400', uuid: '5c1075d2-03a0-11ef-a514-55070fbfcab1' },
+                    split_estimate: 10737418240
+                }
+            },
+            {
+                name: 'wlmdb_sqllog_clone_1714098400',
+                clone: {
+                    is_flexclone: true,
+                    parent_volume: { name: 'wlmdb_sqllog_1714098400', uuid: '5ace31ea-03a0-11ef-a514-55070fbfcab1' },
+                    split_estimate: 10737418240
+                }
+            }
+        ],
+        num_records: 2
+    }
+});
+// Parent volume snapshots for getSandboxSnapshots (matched by name within the sandbox time window).
+registerDefaultProxyGetResponse({
+    targetId: MAPPED_VOLUMES_FSX_ID,
+    ontapPath: 'api/storage/volumes/5c1075d2-03a0-11ef-a514-55070fbfcab1/snapshots',
+    body: {
+        records: [{ name: 'netapp_wf_clone_1718155095', create_time: '2024-06-12T01:18:23+00:00' }],
+        num_records: 1
+    }
+});
+registerDefaultProxyGetResponse({
+    targetId: MAPPED_VOLUMES_FSX_ID,
+    ontapPath: 'api/storage/volumes/5ace31ea-03a0-11ef-a514-55070fbfcab1/snapshots',
+    body: {
+        records: [{ name: 'netapp_wf_clone_1718155095', create_time: '2024-06-12T01:18:23+00:00' }],
+        num_records: 1
+    }
+});
+// Igroup lookup for createVolumeClone's Node-side igroup resolution (findIgroupForInitiators).
+registerDefaultProxyGetResponse({
+    targetId: MAPPED_VOLUMES_FSX_ID,
+    ontapPath: 'api/protocols/san/igroups',
+    body: { records: [{ name: 'test-igroup' }], num_records: 1 }
+});
+
+registerDefaultProxyGetResponse({
+    targetId: 'test-fsx',
+    ontapPath: 'api/protocols/san/igroups',
+    body: { records: [{ name: 'test-igroup' }], num_records: 1 }
+});
+
+registerDefaultProxyGetResponse({
+    targetId: 'test-fsx',
+    ontapPath: 'api/storage/luns',
+    body: {
+        records: [
+            {
+                name: '/vol/wlmdb_sqldata_1714098400_clone_test/sqldata',
+                serial_number: 'wlmdb-data-clone-serial-test',
+                location: { volume: { name: 'wlmdb_sqldata_1714098400_clone_test', uuid: 'test-fsx-data-clone-uuid' } }
+            },
+            {
+                name: '/vol/wlmdb_sqllog_1714098400_clone_test/sqllog',
+                serial_number: 'wlmdb-log-clone-serial-test',
+                location: { volume: { name: 'wlmdb_sqllog_1714098400_clone_test', uuid: 'test-fsx-log-clone-uuid' } }
+            }
+        ],
+        num_records: 2
+    }
+});
 
 const cpuParams = {
     commands: [
@@ -339,10 +440,6 @@ const getCollationDetails = {
     commands: [GET_DEFAULT_COLLATION('MSSQLSERVER', '$env:computername', false)]
 };
 
-const getOntapSandboxVolumeSavingsParams = {
-    commands: [getStorageSavingsFromOntap('test-fsx', 'us-east-1', 'netapp_wf_test_account_test_cred')]
-};
-
 const getSandboxDetails = {
     commands: [sqlQueryExecutionWithAuth([DEFAULT_INSTANCE_NAME], GET_SANDBOXES, false)]
 };
@@ -353,20 +450,6 @@ const instanceDetails = {
 
 const instanceDetailsWithFqdnAndIp = {
     commands: [INSTANCE_DETAILS, GET_FQDN, GET_NODE_IP_ADDRESS, GET_CLUSTER_NAME_AND_FCI_INSTANCES]
-};
-
-const cloneVolumeCommand = {
-    commands: [
-        createVolumeClone(
-            'test-fsx',
-            'us-east-1',
-            JSON.stringify({ volumeName: 'wlmdb_sqldata_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
-            JSON.stringify({ volumeName: 'wlmdb_sqllog_1714098400', svm: 'wlmdb_sqlsvm_1714090636810' }),
-            ['source=test-res-id', 'cloned_by=netapp_wf_test_account_test_cred'],
-            'target-svm',
-            'testdb'
-        )
-    ]
 };
 
 const invokeVirtualMountCommand = {
@@ -423,17 +506,34 @@ const addExtendedPropertiesCommand = {
     ]
 };
 
-const cleanUpOntapResourcesCommand = {
+const demoCleanupFilePaths = JSON.stringify([
+    'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
+    'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
+]);
+
+const releaseSandboxClusterResourcesCommand = {
     commands: [
-        cleanUpOntapResources(
-            'test-fsx',
-            'us-east-1',
-            JSON.stringify(['5c1075d2-03a0-11ef-a514-55070fbfcab1', '5ace31ea-03a0-11ef-a514-55070fbfcab1']),
-            JSON.stringify([
-                'S:\\testdb_clone-Data\\mssql\\data\\testdb.mdf',
-                'L:\\testdb_clone-Log\\mssql\\log\\testdb_log.ldf'
-            ]),
-            'testdb'
+        releaseSandboxClusterResources(
+            demoCleanupFilePaths,
+            'testdb',
+            DEFAULT_MSSQL_INSTANCE_NAME,
+            DEFAULT_INSTANCE_NAME,
+            '',
+            false,
+            false
+        )
+    ]
+};
+
+const dropSandboxDatabaseFilesCommand = {
+    commands: [
+        dropSandboxDatabaseFiles(
+            demoCleanupFilePaths,
+            'testdb',
+            DEFAULT_MSSQL_INSTANCE_NAME,
+            DEFAULT_INSTANCE_NAME,
+            '',
+            false
         )
     ]
 };
@@ -694,8 +794,6 @@ ssmMock
     .resolves(listSendCommandCommandResponse.getCollationDetailsResponse)
     .on(SendCommandCommand, { Parameters: clusterNetwokIpInfo })
     .resolves(listSendCommandCommandResponse.clusterNetwokIpInfo)
-    .on(SendCommandCommand, { Parameters: getOntapSandboxVolumeSavingsParams })
-    .resolves(listSendCommandCommandResponse.ontapSandboxVolumesSavings)
     .on(SendCommandCommand, ({ Comment }) => Comment === 'Get sandbox details')
     .resolves(listSendCommandCommandResponse.getSandboxDetails)
     .on(SendCommandCommand, { Parameters: instanceDetails })
@@ -705,15 +803,22 @@ ssmMock
         return commandRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.getDbVolumeLunMapping)
-    .on(SendCommandCommand, { Parameters: cloneVolumeCommand })
-    .resolves(listSendCommandCommandResponse.createCloneVolume)
+    .on(SendCommandCommand, params => params.Parameters?.commands?.[0] === '(Get-InitiatorPort).NodeAddress')
+    .resolves(getSampleCommandResponse('getNodeIqn'))
+    .on(SendCommandCommand, params => {
+        const commandRegex = /Set-NcLunSignature/;
+        return commandRegex.test(params.Parameters?.commands?.[0] ?? '');
+    })
+    .resolves(getSampleCommandResponse('setLunSignature'))
     .on(SendCommandCommand, { Parameters: invokeVirtualMountCommand })
     .resolves(listSendCommandCommandResponse.invokeVirtualMount)
     .on(SendCommandCommand, { Parameters: createCloneDbCommand })
     .resolves(listSendCommandCommandResponse.createCloneDb)
     .on(SendCommandCommand, { Parameters: addExtendedPropertiesCommand })
     .resolves(listSendCommandCommandResponse.addExtendedProperties)
-    .on(SendCommandCommand, { Parameters: cleanUpOntapResourcesCommand })
+    .on(SendCommandCommand, { Parameters: releaseSandboxClusterResourcesCommand })
+    .resolves(listSendCommandCommandResponse.cleanupOntapResource)
+    .on(SendCommandCommand, { Parameters: dropSandboxDatabaseFilesCommand })
     .resolves(listSendCommandCommandResponse.cleanupOntapResource)
     .on(SendCommandCommand, { Parameters: mountPointQueryCommand })
     .resolves(listSendCommandCommandResponse.mountPointQuery)
@@ -735,11 +840,6 @@ ssmMock
     .resolves(listSendCommandCommandResponse.dbCountParamasV2Command)
     .on(SendCommandCommand, { Parameters: checkDatabaseIntegirty })
     .resolves(listSendCommandCommandResponse.checkDatabaseIntegrity)
-    .on(SendCommandCommand, params => {
-        const commandRegex = /#Get snapshots to clone script/;
-        return commandRegex.test(params.Parameters.commands?.[0]);
-    })
-    .resolves(listSendCommandCommandResponse.getSnapshotsToCloneCommand)
     .on(SendCommandCommand, { Parameters: readExtendedPropertiesCommand })
     .resolves(listSendCommandCommandResponse.readExtendedPropertiesCommand)
     .on(SendCommandCommand, { Parameters: getConnectionInforCommand })
@@ -1171,16 +1271,16 @@ ssmMock
     .resolves(getCommandInvocationResponse.collationDetailsInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-clusterNetwokIpInfo' })
     .resolves(getCommandInvocationResponse.clusterNetwokIpInfoInvocationResponse)
-    .on(GetCommandInvocationCommand, { CommandId: 'a271a4a7-3693-41bb-8c31-ontapSandboxVolumesSavings' })
-    .resolves(getCommandInvocationResponse.ontapSandboxVolumesSavingsResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-getSandboxDetailsInfo' })
     .resolves(getCommandInvocationResponse.getSandboxDetailsInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: 'f3cb24b5-725a-475c-bc46-instanceDetails' })
     .resolves(getCommandInvocationResponse.instanceDetailsInvocationResponse)
     .on(GetCommandInvocationCommand, { CommandId: '551b3294-d372-4335-85df-b95a28de6f79-getDbVolumeLunMapping' })
     .resolves(getCommandInvocationResponse.getDbVolumeLunMapping)
-    .on(GetCommandInvocationCommand, { CommandId: '585f55b2-3bea-474a-a29e-15532e59a314-createCloneVolume' })
-    .resolves(getCommandInvocationResponse.createVolumeCloneResponse)
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getNodeIqn' })
+    .resolves(getSampleCommandResponseWithOutput('getNodeIqn', 'iqn.1991-05.com.microsoft:test-node\r\n'))
+    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-setLunSignature' })
+    .resolves(getSampleCommandResponseWithOutput('setLunSignature', '{}'))
     .on(GetCommandInvocationCommand, { CommandId: '7a5f55b2-3bea-174a-a29e-15532e59a314-invokeVirtualMount' })
     .resolves(getCommandInvocationResponse.invokeVirtualMountResponse)
     .on(GetCommandInvocationCommand, { CommandId: '0b2f55b2-3bea-174a-a29e-15532e59a112-createCloneDb' })
@@ -1207,8 +1307,6 @@ ssmMock
     .resolves(getCommandInvocationResponse.getDbCount)
     .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-checkDatabaseIntegrity' })
     .resolves(getCommandInvocationResponse.checkDatabaseIntegrityResponse)
-    .on(GetCommandInvocationCommand, { CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-getSnapshotsToCloneCommand' })
-    .resolves(getCommandInvocationResponse.getSnapshotsToCloneResponse)
     .on(GetCommandInvocationCommand, {
         CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-readExtendedPropertiesCommand'
     })
