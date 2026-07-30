@@ -23,7 +23,12 @@ async function buildAndPublishWlmdbDescriptor() {
                     name,
                     description: recommendation,
                     severity: severity.toLocaleUpperCase(),
-                    resourceType,
+                    resourceType:
+                        resourceType === 'Volume/Block device'
+                            ? 'BLOCK_DEVICE'
+                            : resourceType
+                            ? resourceType?.replace(/\s+/g, '_').toLocaleUpperCase()
+                            : '',
                     categories: categories.map(c => c.replace(/\s+/g, '_').toLocaleUpperCase()),
                     ...(metadata && { metadata })
                 }
