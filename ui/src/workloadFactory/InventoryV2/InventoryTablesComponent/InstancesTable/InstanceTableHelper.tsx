@@ -50,7 +50,8 @@ import {
     canTriggerUnregisteredAssessment,
     getFsxLinkRequiredMessageKey,
     getRegistrationRequiresFullPermissionMessageKey,
-    getInstanceFsxLinkExists
+    getInstanceFsxLinkExists,
+    isRegisteredInstanceMissingFsxLinkFromRow
 } from '../../InventoryUtilsV2';
 import { formatOfflineDataToAssessmentFormat } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import store from '../../../../store/store';
@@ -150,6 +151,9 @@ export const getInstanceTableMenuOptions = (
     const isAiAnalysisDisabledForRow = (row: any) =>
         !aiAnalysisEnabled && row?.logAnalyzer?.status !== ERROR_ANALYZER_STATUS.ACTIVE;
 
+    const fsxMissing = isRegisteredInstanceMissingFsxLinkFromRow(rowData);
+    const fsxMsg = t('databases.wad.registered-missing-fs-link-disabled-message');
+
     switch (rowData.hostType) {
         case DBType.POSTGRESQL:
             return [
@@ -170,8 +174,14 @@ export const getInstanceTableMenuOptions = (
                     id: 'oracle-investigateErrors',
                     displayName: t('databases.databases-table.oracle.menu-options.investigate-errors'),
                     disabled:
-                        !isBedRockAvailable || isGovAccount || disableOption || isAiAnalysisDisabledForRow(rowData),
-                    infoText: isGovAccount
+                        fsxMissing ||
+                        !isBedRockAvailable ||
+                        isGovAccount ||
+                        disableOption ||
+                        isAiAnalysisDisabledForRow(rowData),
+                    infoText: fsxMissing
+                        ? fsxMsg
+                        : isGovAccount
                         ? t('databases.general.not-supported-in-govcloud')
                         : !isBedRockAvailable
                         ? t('databases.log-analyzer.bedrock-in-region-not-supported')
@@ -182,14 +192,14 @@ export const getInstanceTableMenuOptions = (
                 {
                     id: 'oracle-viewDatabaseDashboard',
                     displayName: t('databases.databases-table.oracle.menu-options.manage-database'),
-                    disabled: disableOption,
-                    infoText: disableMessage,
+                    disabled: fsxMissing || disableOption,
+                    infoText: fsxMissing ? fsxMsg : disableMessage,
                     subMenu: [
                         {
                             id: 'oracle-viewDatabaseDashboard',
                             displayName: t('databases.databases-table.oracle.menu-options.database-dashboard'),
-                            disabled: disableOption,
-                            infoText: disableMessage
+                            disabled: fsxMissing || disableOption,
+                            infoText: fsxMissing ? fsxMsg : disableMessage
                         }
                     ]
                 },
@@ -210,8 +220,14 @@ export const getInstanceTableMenuOptions = (
                     id: 'mssql-investigateErrors',
                     displayName: t('databases.instance-table.menu-options.investigate-errors'),
                     disabled:
-                        !isBedRockAvailable || isGovAccount || disableOption || isAiAnalysisDisabledForRow(rowData),
-                    infoText: isGovAccount
+                        fsxMissing ||
+                        !isBedRockAvailable ||
+                        isGovAccount ||
+                        disableOption ||
+                        isAiAnalysisDisabledForRow(rowData),
+                    infoText: fsxMissing
+                        ? fsxMsg
+                        : isGovAccount
                         ? t('databases.general.not-supported-in-govcloud')
                         : !isBedRockAvailable
                         ? t('databases.log-analyzer.bedrock-in-region-not-supported')
@@ -222,32 +238,32 @@ export const getInstanceTableMenuOptions = (
                 {
                     id: 'mssql-viewInstance',
                     displayName: t('databases.instance-table.menu-options.manage-instance'),
-                    disabled: disableOption,
-                    infoText: disableMessage,
+                    disabled: fsxMissing || disableOption,
+                    infoText: fsxMissing ? fsxMsg : disableMessage,
                     subMenu: [
                         {
                             id: 'mssql-viewInstance',
                             displayName: t('databases.instance-table.menu-options.instance-dashboard'),
-                            disabled: disableOption,
-                            infoText: disableMessage
+                            disabled: fsxMissing || disableOption,
+                            infoText: fsxMissing ? fsxMsg : disableMessage
                         },
                         {
                             id: 'mssql-viewDatabases',
                             displayName: t('databases.instance-table.menu-options.view-databases'),
-                            disabled: disableOption,
-                            infoText: disableMessage
+                            disabled: fsxMissing || disableOption,
+                            infoText: fsxMissing ? fsxMsg : disableMessage
                         },
                         {
                             id: 'mssql-createUserDb',
                             displayName: t('databases.instance-table.menu-options.create-database'),
-                            disabled: disableOption || disableCreateDb,
-                            infoText: disableMessage || disableCreateDbMsg
+                            disabled: fsxMissing || disableOption || disableCreateDb,
+                            infoText: fsxMissing ? fsxMsg : disableMessage || disableCreateDbMsg
                         },
                         {
                             id: 'mssql-createSandbox',
                             displayName: t('databases.instance-table.menu-options.create-sandbox'),
-                            disabled: disableOption,
-                            infoText: disableMessage
+                            disabled: fsxMissing || disableOption,
+                            infoText: fsxMissing ? fsxMsg : disableMessage
                         }
                     ]
                 },

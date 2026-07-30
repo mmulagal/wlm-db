@@ -11,6 +11,7 @@ import { setLogAnalyzerState } from '../../../../store/workloadFactory/agenticAI
 import {
     resolveUnregisteredDatabasesAndPasswordRestriction,
     resolveWellArchitectTabRestriction,
+    resolveRegisteredInstanceMissingFsxLink,
     uniqueHostRow
 } from '../../../InventoryV2/InventoryUtilsV2';
 
@@ -23,6 +24,7 @@ const WellArchitectTabs = () => {
         isWad,
         isUnregistered,
         hostManageReadiness,
+        fsxLinkExists,
         selectedGwInstanceRegionId,
         selectedGwInstanceCredId,
         selectedResourceId,
@@ -37,12 +39,14 @@ const WellArchitectTabs = () => {
     const wadDisabledMessage = t('databases.wad.tab-disabled-message');
     // Unregistered tooltip message for disabled tabs
     const unregisteredDisabledMessage = t('databases.wad.unregistered-tab-disabled-message');
+    const registeredMissingFsxLinkMessage = t('databases.wad.registered-missing-fs-link-disabled-message');
 
     const tabGateInput = useMemo(
         () => ({
             isWad,
             isUnregistered,
             hostManageReadinessFromStore: hostManageReadiness,
+            fsxLinkExistsFromStore: fsxLinkExists,
             inventoryTableData,
             resourceId: selectedResourceId,
             credId: selectedGwInstanceCredId,
@@ -54,6 +58,7 @@ const WellArchitectTabs = () => {
             isWad,
             isUnregistered,
             hostManageReadiness,
+            fsxLinkExists,
             inventoryTableData,
             selectedResourceId,
             selectedGwInstanceCredId,
@@ -67,6 +72,15 @@ const WellArchitectTabs = () => {
         () => resolveUnregisteredDatabasesAndPasswordRestriction(tabGateInput),
         [tabGateInput]
     );
+    const registeredMissingFsxLink = useMemo(
+        () => resolveRegisteredInstanceMissingFsxLink(tabGateInput),
+        [tabGateInput]
+    );
+    const restrictedTabMessage = registeredMissingFsxLink
+        ? registeredMissingFsxLinkMessage
+        : isWad
+        ? wadDisabledMessage
+        : unregisteredDisabledMessage;
 
     const isBedrockSupportedForRegion = useMemo(() => {
         let isBedRockAvailable = true;
@@ -111,11 +125,7 @@ const WellArchitectTabs = () => {
         <div className={styles['well-architect-tabs']}>
             {/* Overview Tab - disabled for WAD, unregistered, or missing extensive run permission */}
             {restrictTabs ? (
-                <TooltipComponent
-                    placement="bottom"
-                    title={isWad ? wadDisabledMessage : unregisteredDisabledMessage}
-                    width={300}
-                >
+                <TooltipComponent placement="bottom" title={restrictedTabMessage} width={300}>
                     <div className={`${styles.headers} ${styles.headerWidthFirst}`}>
                         <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
                             {t('databases.general.overview')}
@@ -173,9 +183,7 @@ const WellArchitectTabs = () => {
                         isGovAccount
                             ? t('databases.general.not-supported-in-govcloud')
                             : restrictTabs
-                            ? isWad
-                                ? wadDisabledMessage
-                                : unregisteredDisabledMessage
+                            ? restrictedTabMessage
                             : t('databases.log-analyzer.bedrock-in-region-not-supported')
                     }
                     width={300}
@@ -221,7 +229,7 @@ const WellArchitectTabs = () => {
 
             {/* Databases Tab - enabled for WAD; non-registered requires assessment permissions */}
             {restrictDatabasesAndPassword ? (
-                <TooltipComponent placement="bottom" title={unregisteredDisabledMessage} width={300}>
+                <TooltipComponent placement="bottom" title={restrictedTabMessage} width={300}>
                     <div className={`${styles.headers} ${styles.headerWidthThird}`}>
                         <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
                             {t('databases.general.databases')}
@@ -253,11 +261,7 @@ const WellArchitectTabs = () => {
 
             {/* Sandboxes Tab - disabled for WAD, unregistered, or missing extensive run permission */}
             {restrictTabs ? (
-                <TooltipComponent
-                    placement="bottom"
-                    title={isWad ? wadDisabledMessage : unregisteredDisabledMessage}
-                    width={300}
-                >
+                <TooltipComponent placement="bottom" title={restrictedTabMessage} width={300}>
                     <div className={`${styles.headers} ${styles.headerWidthThird}`}>
                         <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
                             {t('databases.general.sandboxes')}

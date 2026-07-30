@@ -713,8 +713,9 @@ const countSingleConfig = (
         return;
     }
     counters.totalConfigurations++;
-    if (category) {
-        counters.categories[category].total++;
+    const categoryBucket = category ? counters.categories[category] : undefined;
+    if (categoryBucket) {
+        categoryBucket.total++;
     }
     if (
         dismissState === CONFIG_STATES.ACTIVATING ||
@@ -722,8 +723,8 @@ const countSingleConfig = (
         status?.toLowerCase() === FINDINGS.ANALYZING.toLowerCase()
     ) {
         counters.optimizedConfigurations++;
-        if (category) {
-            counters.categories[category].optimized++;
+        if (categoryBucket) {
+            categoryBucket.optimized++;
         }
         if (dismissState === CONFIG_STATES.ACTIVATING) counters.hasDismissedOrPostponed = true;
     } else if (severity?.toLowerCase() === 'critical') {
@@ -748,7 +749,7 @@ const countInstanceAssessmentConfigs = (
             return;
         }
 
-        const category = item.type as WellArchitectedCategory;
+        const category = item.type?.toLowerCase() as WellArchitectedCategory;
         countSingleConfig(
             counters,
             item.status,

@@ -106,19 +106,23 @@ export const canTriggerUnregisteredAssessment = (hostManageReadiness?: HostManag
 export const hasPartialRunPermission = (hostManageReadiness?: HostManageReadiness): boolean =>
     hostManageReadiness?.canReadAWSSSMDocuments === true && hostManageReadiness?.extensiveRunPermission !== true;
 
-/** Inner-page tabs stay on Well-architected + Databases until registered with extensive run permission. */
+/** Inner-page tabs stay on Well-architected until registered with extensive run permission or FSx link. */
 export const shouldRestrictWellArchitectTabs = ({
     isWad,
     isUnregistered,
     hostManageReadiness,
-    isRegisteredInstance
+    isRegisteredInstance,
+    fsxLinkExists
 }: {
     isWad?: boolean;
     isUnregistered?: boolean;
     hostManageReadiness?: HostManageReadiness;
     isRegisteredInstance?: boolean;
+    fsxLinkExists?: boolean;
 }): boolean => {
-    if (isRegisteredInstance) return false;
+    if (isRegisteredInstance) {
+        return fsxLinkExists === false;
+    }
     return (
         !!isWad ||
         !!isUnregistered ||
@@ -165,27 +169,32 @@ const isRegisteredInventoryInstance = (host?: any, instance?: any): boolean =>
         host?.managementStatus === INVENTORY_STATUS.REGISTERED
     );
 
-/** Resolve registration + readiness from store/inventory, then apply tab gate (single call site for tab components). */
-export const resolveWellArchitectTabRestriction = ({
-    isWad,
-    isUnregistered,
-    hostManageReadinessFromStore,
-    inventoryTableData,
-    resourceId,
-    credId,
-    regionId,
-    instanceId,
-    instanceName
-}: {
-    isWad?: boolean;
-    isUnregistered?: boolean;
-    hostManageReadinessFromStore?: HostManageReadiness;
+type InventoryInstanceGateInput = {
+    fsxLinkExistsFromStore?: boolean;
     inventoryTableData?: Record<string, any> | null;
     resourceId?: string;
     credId?: string;
     regionId?: string;
     instanceId?: string;
     instanceName?: string;
+};
+
+/** Resolve registration + readiness from store/inventory, then apply tab gate (single call site for tab components). */
+export const resolveWellArchitectTabRestriction = ({
+    isWad,
+    isUnregistered,
+    hostManageReadinessFromStore,
+    fsxLinkExistsFromStore,
+    inventoryTableData,
+    resourceId,
+    credId,
+    regionId,
+    instanceId,
+    instanceName
+}: InventoryInstanceGateInput & {
+    isWad?: boolean;
+    isUnregistered?: boolean;
+    hostManageReadinessFromStore?: HostManageReadiness;
 }): boolean => {
     const { host, instance } = resolveInventoryHostAndInstance({
         inventoryTableData,
@@ -195,26 +204,43 @@ export const resolveWellArchitectTabRestriction = ({
         instanceId,
         instanceName
     });
+    const isRegisteredInstance = isRegisteredInventoryInstance(host, instance);
     return shouldRestrictWellArchitectTabs({
         isWad,
         isUnregistered,
         hostManageReadiness: hostManageReadinessFromStore ?? instance?.hostManageReadiness ?? host?.hostManageReadiness,
-        isRegisteredInstance: isRegisteredInventoryInstance(host, instance)
+        isRegisteredInstance,
+        fsxLinkExists: isRegisteredInstance
+            ? resolveInstanceFsxLinkExists({
+                  fsxLinkExistsFromStore,
+                  inventoryTableData,
+                  resourceId,
+                  credId,
+                  regionId,
+                  instanceId,
+                  instanceName
+              })
+            : undefined
     });
 };
 
-/** Non-registered Databases tab and Update password stay disabled until the instance is registered. */
+/** Non-registered Databases tab and Update password stay disabled until the instance is registered and linked. */
 export const shouldDisableUnregisteredDatabasesAndPassword = ({
     isWad,
     isUnregistered,
-    isRegisteredInstance
+    isRegisteredInstance,
+    fsxLinkExists
 }: {
     isWad?: boolean;
     isUnregistered?: boolean;
     hostManageReadiness?: HostManageReadiness;
     isRegisteredInstance?: boolean;
+    fsxLinkExists?: boolean;
 }): boolean => {
-    if (isWad || isRegisteredInstance) return false;
+    if (isWad) return false;
+    if (isRegisteredInstance) {
+        return fsxLinkExists === false;
+    }
     return !!isUnregistered || isRegisteredInstance === false;
 };
 
@@ -223,22 +249,17 @@ export const resolveUnregisteredDatabasesAndPasswordRestriction = ({
     isWad,
     isUnregistered,
     hostManageReadinessFromStore,
+    fsxLinkExistsFromStore,
     inventoryTableData,
     resourceId,
     credId,
     regionId,
     instanceId,
     instanceName
-}: {
+}: InventoryInstanceGateInput & {
     isWad?: boolean;
     isUnregistered?: boolean;
     hostManageReadinessFromStore?: HostManageReadiness;
-    inventoryTableData?: Record<string, any> | null;
-    resourceId?: string;
-    credId?: string;
-    regionId?: string;
-    instanceId?: string;
-    instanceName?: string;
 }): boolean => {
     const { host, instance } = resolveInventoryHostAndInstance({
         inventoryTableData,
@@ -248,11 +269,23 @@ export const resolveUnregisteredDatabasesAndPasswordRestriction = ({
         instanceId,
         instanceName
     });
+    const isRegisteredInstance = isRegisteredInventoryInstance(host, instance);
     return shouldDisableUnregisteredDatabasesAndPassword({
         isWad,
         isUnregistered,
         hostManageReadiness: hostManageReadinessFromStore ?? instance?.hostManageReadiness ?? host?.hostManageReadiness,
-        isRegisteredInstance: isRegisteredInventoryInstance(host, instance)
+        isRegisteredInstance,
+        fsxLinkExists: isRegisteredInstance
+            ? resolveInstanceFsxLinkExists({
+                  fsxLinkExistsFromStore,
+                  inventoryTableData,
+                  resourceId,
+                  credId,
+                  regionId,
+                  instanceId,
+                  instanceName
+              })
+            : undefined
     });
 };
 
@@ -306,6 +339,30 @@ export const getFsxLinkRequiredMessageKey = (engineType?: string): string =>
     engineType === DBType.ORACLE
         ? 'databases.register-flow.fsx-link-required-message-oracle'
         : 'databases.register-flow.fsx-link-required-message';
+
+/** Registered + fsxLinkExists=false: View and fix stays enabled; gate other actions/tabs. */
+export const isRegisteredInstanceMissingFsxLink = (host?: any, instance?: any): boolean => {
+    if (!isRegisteredInventoryInstance(host, instance)) {
+        return false;
+    }
+    const fsxLinkExists =
+        getInstanceFsxLinkExists(instance ?? {}) ??
+        getInstanceFsxLinkExists({ hostManageReadiness: host?.hostManageReadiness });
+    return fsxLinkExists === false;
+};
+
+/** Inventory table row (instance row or database row with hostRow/instanceRow). */
+export const isRegisteredInstanceMissingFsxLinkFromRow = (rowData: { hostRow?: any; instanceRow?: any }): boolean =>
+    isRegisteredInstanceMissingFsxLink(rowData.hostRow, rowData.instanceRow ?? rowData);
+
+/** Inner-page tooltip: registered instance missing FSx link (inventory-first, store fallback). */
+export const resolveRegisteredInstanceMissingFsxLink = (input: InventoryInstanceGateInput): boolean => {
+    const { host, instance } = resolveInventoryHostAndInstance(input);
+    if (!isRegisteredInventoryInstance(host, instance)) {
+        return false;
+    }
+    return resolveInstanceFsxLinkExists(input) === false;
+};
 
 export const getRegistrationRequiresFullPermissionMessageKey = (engineType?: string): string =>
     engineType === DBType.ORACLE
@@ -6126,12 +6183,14 @@ export const mssqlDatabaseMenuOptions = (
         disableOption = true;
         disableMessage = 'Create sandbox option is not available for system database.';
     }
+    const fsxMissing = isRegisteredInstanceMissingFsxLinkFromRow(rowData);
+    const fsxMsg = t('databases.wad.registered-missing-fs-link-disabled-message');
     return [
         {
             id: 'createSandbox',
             displayName: t('databases.instance-table.menu-options.create-sandbox'),
-            disabled: disableOption,
-            infoText: disableMessage
+            disabled: disableOption || fsxMissing,
+            infoText: fsxMissing ? fsxMsg : disableMessage
         },
         {
             id: isProtected ? 'editProtection' : 'protect',

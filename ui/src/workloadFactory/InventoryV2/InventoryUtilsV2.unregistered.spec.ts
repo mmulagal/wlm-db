@@ -90,15 +90,27 @@ describe('shouldRestrictWellArchitectTabs', () => {
         expect(shouldRestrictWellArchitectTabs({ isWad: false, isUnregistered: false })).toBe(false);
     });
 
-    it('returns false when inventory marks instance as registered', () => {
+    it('returns false when inventory marks instance as registered with FSx link', () => {
         expect(
             shouldRestrictWellArchitectTabs({
                 isWad: false,
                 isUnregistered: false,
                 isRegisteredInstance: true,
+                fsxLinkExists: true,
                 hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true }
             })
         ).toBe(false);
+    });
+
+    it('returns true when inventory marks instance as registered without FSx link', () => {
+        expect(
+            shouldRestrictWellArchitectTabs({
+                isWad: false,
+                isUnregistered: false,
+                isRegisteredInstance: true,
+                fsxLinkExists: false
+            })
+        ).toBe(true);
     });
 
     it('returns true for discover instances that are not registered', () => {
@@ -122,14 +134,26 @@ describe('shouldDisableUnregisteredDatabasesAndPassword', () => {
         ).toBe(false);
     });
 
-    it('returns false for registered instances', () => {
+    it('returns false for registered instances with FSx link', () => {
         expect(
             shouldDisableUnregisteredDatabasesAndPassword({
                 isWad: false,
                 isUnregistered: false,
-                isRegisteredInstance: true
+                isRegisteredInstance: true,
+                fsxLinkExists: true
             })
         ).toBe(false);
+    });
+
+    it('returns true for registered instances without FSx link', () => {
+        expect(
+            shouldDisableUnregisteredDatabasesAndPassword({
+                isWad: false,
+                isUnregistered: false,
+                isRegisteredInstance: true,
+                fsxLinkExists: false
+            })
+        ).toBe(true);
     });
 
     it('returns true for unregistered instances regardless of assessment permissions', () => {

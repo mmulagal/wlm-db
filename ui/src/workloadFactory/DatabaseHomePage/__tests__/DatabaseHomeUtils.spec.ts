@@ -1736,6 +1736,32 @@ describe('getManagedOptimizationSummary (extended)', () => {
         expect(result.totalInstances).toBeGreaterThanOrEqual(1);
     });
 
+    it('counts Oracle flat assessment items with capitalized category type', () => {
+        const flatOracleAssessment = {
+            metadata: { lastAssessmentTimestamp: '2024-01-01T00:00:00Z' },
+            assessments: [
+                {
+                    id: 'oracle-security-patch',
+                    type: 'Application',
+                    status: 'not-optimized',
+                    severity: 'critical'
+                },
+                {
+                    id: 'thin-provision',
+                    type: 'storage',
+                    status: 'optimized',
+                    severity: 'warning'
+                }
+            ]
+        };
+        const oracleData = [makeOracleHost('oh1', flatOracleAssessment)];
+        const result = getManagedOptimizationSummary([], oracleData);
+        expect(result.totalInstances).toBe(1);
+        expect(result.totalConfigurations).toBe(2);
+        expect(result.criticalConfigurations).toBe(1);
+        expect(result.optimizedConfigurations).toBe(1);
+    });
+
     it('calculates optimizedPercent correctly for multiple instances', () => {
         const host1 = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const host2 = makeMssqlHost('h2', makeNotOptimizedMssqlAssessment());

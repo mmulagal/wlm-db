@@ -2382,6 +2382,7 @@
             "unregistered-dialog-banner-message": "Register this instance to allow Workload Factory to fix configurations.",
             "partial-data-displayed-title": "Partial data is displayed.",
             "partial-data-missing-link-prefix": "Some data isn't shown because this file system doesn't have an associated link.",
+            "registered-missing-fs-link-disabled-message": "Associate a link with the file system to unlock more features.",
             "partial-data-missing-extensive-run-permission-message-instance": "Some data isn't displayed because the instance isn't registered.",
             "partial-data-missing-extensive-run-permission-message-database": "Some data isn't displayed because the database isn't registered.",
             "partial-data-missing-permissions-title": "Warning: Partial data displayed due to missing permissions",
