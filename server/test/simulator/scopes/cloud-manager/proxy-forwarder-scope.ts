@@ -133,6 +133,10 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
         if (parsed && isClusterJobPath(parsed.ontapPath)) {
             return [200, { state: 'success' }];
         }
+
+        if (parsed && parsed.ontapPath === 'api/protocols/san/igroups') {
+            return [200, { records: [{ name: 'wf-demo-igroup' }], num_records: 1 }];
+        }
         return [200, { records: [], num_records: 0 }];
     })
     .post(PROXY_PATH_REGEX)
