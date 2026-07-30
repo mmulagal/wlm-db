@@ -17,7 +17,7 @@ import useOracleWellArchitectApi from './OracleWellArchitectApi';
 import OracleExportPDF from './ExportPDFComponent/OracleExportPDF';
 import OracleWellArchitectBanner from './OracleWellArchitectBanner';
 import PartialDataContainer from '../../../GetWell/PartialDataContainer/PartialDataContainer';
-import { hasPartialRunPermission } from '../../../InventoryV2/InventoryUtilsV2';
+import { hasPartialRunPermission, resolveInstanceFsxLinkExists } from '../../../InventoryV2/InventoryUtilsV2';
 import { checkHasDismissedConfigurations } from '../../../GetWell/GetWellHelper';
 import { getCategoryTranslationKey } from '../../../GetWell/GetWellUtils';
 import {
@@ -56,14 +56,43 @@ const OracleWellArchitectDashboard = () => {
         selectedDatabaseStorageType,
         isWad: isWadFromStore,
         isUnregistered: isUnregisteredFromStore,
-        hostManageReadiness
+        hostManageReadiness,
+        fsxLinkExists: fsxLinkExistsFromStore,
+        selectedResourceId,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId,
+        selectedDatabaseInstance,
+        selectedDatabaseInstanceName
     } = useAppSelector(state => state.getWellOptimize);
+    const { inventoryTableData } = useAppSelector(state => state.inventoryV2);
 
     // Check if this is a WAD (offline assessment) instance
     // Use Redux store flag which is set when navigating to WAD assessment
     const isWad = isWadFromStore || cardData?.isWad || false;
     const isUnregistered = isUnregisteredFromStore || !!cardData?.isUnregistered;
+    const fsxLinkExists = useMemo(
+        () =>
+            resolveInstanceFsxLinkExists({
+                fsxLinkExistsFromStore,
+                inventoryTableData,
+                resourceId: selectedResourceId,
+                credId: selectedGwInstanceCredId,
+                regionId: selectedGwInstanceRegionId,
+                instanceId: selectedDatabaseInstance,
+                instanceName: selectedDatabaseInstanceName
+            }),
+        [
+            fsxLinkExistsFromStore,
+            inventoryTableData,
+            selectedResourceId,
+            selectedGwInstanceCredId,
+            selectedGwInstanceRegionId,
+            selectedDatabaseInstance,
+            selectedDatabaseInstanceName
+        ]
+    );
     const showPartialPermissionBanner = isUnregistered && hasPartialRunPermission(hostManageReadiness);
+    const showMissingLinkBanner = !isWad && !isUnregistered && fsxLinkExists === false;
 
     const [showChartArea, setShowChartArea] = useState(true);
 
@@ -255,6 +284,9 @@ const OracleWellArchitectDashboard = () => {
                 </>
             )}
             <div className={styles['well-architected']} id="export-oracle-optimize-pdf">
+                {showMissingLinkBanner && (
+                    <PartialDataContainer variant="missingAssociatedLink" resourceType="database" />
+                )}
                 {showPartialPermissionBanner && (
                     <PartialDataContainer variant="missingExtensiveRunPermission" resourceType="database" />
                 )}

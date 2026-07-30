@@ -14,6 +14,8 @@ export interface HostManageReadiness {
     canQuerySSMInventory?: boolean;
     /** FSx link status: true/false/absent. Absent means EBS-only (not in inventory discovery) */
     fsxLinkExists?: boolean;
+    /** Number of FSx for ONTAP links associated with the host */
+    fsxLinksCount?: number;
 }
 
 /** Discovery source type derived from DISCOVERY_SOURCE constant */
@@ -281,6 +283,8 @@ export interface InventoryTableInstanceDatInterface {
     fileSystemType?: string;
     fsxId?: string;
     fileSystemName?: string;
+    fsxLinkExists?: boolean;
+    fsxLinksCount?: number;
     statusColText?: string;
     storageSavingsText?: string;
     protection?: {
@@ -415,6 +419,8 @@ export interface DatabaseInstancesSummaryInterface {
         fileSystemStorageCapacity?: number;
         fileSystemThroughputCapacity?: number;
         availabilityZones?: Array<string>;
+        fsxLinkExists?: boolean;
+        fsxLinksCount?: number;
     };
     protection?: {
         isSqlNativeEnabled?: boolean;

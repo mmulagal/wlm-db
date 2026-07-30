@@ -8,11 +8,9 @@ import { useNavigate } from 'react-router-dom';
 import {
     ACTION_CTA,
     DATABASE_DEPLOYMENT_MODE,
-    DBType,
     INVENTORY_STATUS,
     INVENTORY_TABLE_STATUS,
     PROTECTION_COLUMN_TEXT_STATUS,
-    REGISTER_INSTANCE_STATE,
     WELL_ARCHITECTED_TABS,
     WLF_TABS
 } from '../../../../utils/consts';
@@ -25,13 +23,7 @@ import DotComponent from '../../../../common/DotComponent/DotComponent';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
-import {
-    setBreadCrumbSelectedFrom,
-    setManageSingleInstanceData,
-    setRegisterHostType,
-    setSelectedHeaderTab,
-    setWizardOperationType
-} from '../../../../store/workloadFactory/inventoryV2Slice';
+import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 import { setFSXId } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import {
@@ -44,6 +36,7 @@ import {
 } from './InstanceTableHelper';
 import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { getFsxIdsForTooltip, getInstanceFsxLinkExists, getInstanceFsxLinksCount } from '../../InventoryUtilsV2';
 
 export function getOracleDatabaseColumnsList({
     t,
@@ -506,12 +499,20 @@ export function getOracleDatabaseColumnsList({
                     loading = true;
                 }
 
-                const fsxList = rowData?.fsxList || [];
-                const hasManyFsx = fsxList.length > 1;
+                const fsxLinksCount = getInstanceFsxLinksCount(rowData);
+                const fsxLinkExists = getInstanceFsxLinkExists(rowData);
+                const showFsxLinksCount = fsxLinksCount != null && fsxLinksCount > 0;
+                const fsxIdsForTooltip = showFsxLinksCount ? getFsxIdsForTooltip(rowData) : [];
+                const linkStatusText =
+                    fsxLinkExists === true
+                        ? t('databases.general.link-associated')
+                        : fsxLinkExists === false
+                        ? t('databases.general.link-not-associated')
+                        : null;
 
                 return (
                     <>
-                        {!loading && hasManyFsx && (
+                        {!loading && showFsxLinksCount && (
                             <div className={styles.fsxNameContainer}>
                                 <div className={styles.ssmOffline}>
                                     <Popover
@@ -520,23 +521,9 @@ export function getOracleDatabaseColumnsList({
                                             <div
                                                 className={`${styles.tooltipContainer} ${styles.tooltipContainerMulti} ${styles.fsxNamePopOver}`}
                                             >
-                                                {fsxList.map((fsx: any, index: number) => (
-                                                    <div
-                                                        key={index}
-                                                        style={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '8px',
-                                                            marginBottom: index < fsxList.length - 1 ? '8px' : '0'
-                                                        }}
-                                                    >
-                                                        <DsTypography variant="Regular_13">
-                                                            {fsx?.fileSystemName ||
-                                                                t('databases.general.not-available-table-columns')}{' '}
-                                                            | ID:{' '}
-                                                            {fsx?.id ||
-                                                                t('databases.general.not-available-table-columns')}
-                                                        </DsTypography>
+                                                {fsxIdsForTooltip.map((fsx: any, index: number) => (
+                                                    <div key={fsx?.id || index} className={styles.fsxTooltipRow}>
+                                                        <DsTypography variant="Regular_13">{`ID: ${fsx?.id}`}</DsTypography>
                                                         <Popover
                                                             popoverClass={styles['copy-popover']}
                                                             children="Copied"
@@ -549,6 +536,14 @@ export function getOracleDatabaseColumnsList({
                                                         />
                                                     </div>
                                                 ))}
+                                                {linkStatusText && (
+                                                    <DsTypography
+                                                        variant="Regular_13"
+                                                        style={{ marginTop: fsxIdsForTooltip.length ? '8px' : '0' }}
+                                                    >
+                                                        {linkStatusText}
+                                                    </DsTypography>
+                                                )}
                                             </div>
                                         }
                                         trigger="hover"
@@ -562,14 +557,14 @@ export function getOracleDatabaseColumnsList({
                                     <DsTypography
                                         className={styles.fsxNameText}
                                         variant="Regular_13"
-                                        title={`${fsxList.length} ${t('databases.general.fsx-for-ontap')}`}
+                                        title={`${fsxLinksCount} ${t('databases.general.fsx-for-ontap')}`}
                                     >
-                                        {`${fsxList.length} ${t('databases.general.fsx-for-ontap')}`}
+                                        {`${fsxLinksCount} ${t('databases.general.fsx-for-ontap')}`}
                                     </DsTypography>
                                 </div>
                             </div>
                         )}
-                        {!loading && !hasManyFsx && rowData?.fsxId && (
+                        {!loading && !showFsxLinksCount && rowData?.fsxId && (
                             <div className={styles.fsxNameContainer}>
                                 <div className={styles.ssmOffline}>
                                     <Popover
@@ -608,7 +603,7 @@ export function getOracleDatabaseColumnsList({
                             </div>
                         )}
                         {loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && !rowData?.fsxId && !hasManyFsx && (
+                        {!cellData && !loading && !rowData?.fsxId && !showFsxLinksCount && (
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {t('databases.general.not-available-table-columns')}
                             </DsTypography>

@@ -40,9 +40,7 @@ import {
     setOfflineMssqlHostAssessmentLoading,
     setOfflineOracleHostAssessmentLoading,
     setRegisterHostType,
-    setSelectedFilterValue,
     setSelectedHeaderTab,
-    setSelectedInventoryTab,
     setWizardOperationType
 } from '../../../../store/workloadFactory/inventoryV2Slice';
 import {
@@ -51,7 +49,8 @@ import {
     hasFullPermission,
     canTriggerUnregisteredAssessment,
     getFsxLinkRequiredMessageKey,
-    getRegistrationRequiresFullPermissionMessageKey
+    getRegistrationRequiresFullPermissionMessageKey,
+    getInstanceFsxLinkExists
 } from '../../InventoryUtilsV2';
 import { formatOfflineDataToAssessmentFormat } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import store from '../../../../store/store';
@@ -1551,7 +1550,8 @@ const dispatchWadWellArchitectedFromInventoryRow = (
             storageType: rowData?.sqlServerDeploymentType,
             isWad: isWadFlow,
             isUnregistered: isUnregisteredFlow,
-            hostManageReadiness: rowData?.hostManageReadiness
+            hostManageReadiness: rowData?.hostManageReadiness || rowData?.hostRow?.hostManageReadiness,
+            fsxLinkExists: getInstanceFsxLinkExists(rowData)
         })
     );
 
@@ -1705,7 +1705,8 @@ export const handleUnregisteredOracleOptimizeAction = (rowData: any, dispatch: D
             regionId,
             isWad: false,
             isUnregistered: true,
-            hostManageReadiness: rowData?.hostManageReadiness
+            hostManageReadiness: rowData?.hostManageReadiness || rowData?.hostRow?.hostManageReadiness,
+            fsxLinkExists: getInstanceFsxLinkExists(rowData)
         })
     );
 

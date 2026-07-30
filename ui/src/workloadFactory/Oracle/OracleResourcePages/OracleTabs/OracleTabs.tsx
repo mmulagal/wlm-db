@@ -7,7 +7,7 @@ import { useAppSelector } from '../../../../store/storeHooks';
 import { WELL_ARCHITECTED_TABS, ORACLE_DATABASES_COMPONENTS, ERROR_ANALYZER_STATUS } from '../../../../utils/consts';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
-import { uniqueHostRow } from '../../../InventoryV2/InventoryUtilsV2';
+import { resolveWellArchitectTabRestriction, uniqueHostRow } from '../../../InventoryV2/InventoryUtilsV2';
 import { resetEiData, setLogAnalyzerState } from '../../../../store/workloadFactory/agenticAISlice';
 
 const OracleTabs = () => {
@@ -25,31 +25,60 @@ const OracleTabs = () => {
         selectedDatabaseInstance,
         selectedResourceId: waSelectedResourceId,
         isWad,
-        isUnregistered
+        isUnregistered,
+        hostManageReadiness
     } = useAppSelector(state => state.getWellOptimize);
     const { allLogAnalysisData } = useAppSelector(state => state.inventoryV2);
+
+    const { isSingleTenant, hasWadPdbData, restrictTabs, restrictPdbTab } = useMemo(() => {
+        const gateInput = {
+            isWad,
+            isUnregistered,
+            hostManageReadinessFromStore: hostManageReadiness,
+            inventoryTableData,
+            resourceId: selectedResourceId,
+            credId: selectedGwInstanceCredId,
+            regionId: selectedGwInstanceRegionId,
+            instanceId: selectedDatabaseInstance,
+            instanceName: selectedDatabaseInstanceName
+        };
+        let isSingleTenantResult = false;
+        let hasWadPdbDataResult = false;
+        if (selectedResourceId && selectedDatabaseInstanceName && inventoryTableData) {
+            const hostData = Object.values(inventoryTableData).find(host => host?.resourceId === selectedResourceId);
+            const instanceData = hostData?.sqlServerInstances?.find(
+                instance =>
+                    instance?.databaseInstanceName?.toLowerCase() === selectedDatabaseInstanceName?.toLowerCase()
+            );
+            isSingleTenantResult = instanceData?.instanceType === ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT;
+            hasWadPdbDataResult =
+                !!instanceData?.isWad &&
+                Array.isArray(instanceData?.databases) &&
+                instanceData.databases.some(db => db?.type === ORACLE_DATABASES_COMPONENTS.PDB);
+        }
+        const pdbGate = resolveWellArchitectTabRestriction({ ...gateInput, isWad: false });
+        return {
+            isSingleTenant: isSingleTenantResult,
+            hasWadPdbData: hasWadPdbDataResult,
+            restrictTabs: resolveWellArchitectTabRestriction(gateInput),
+            restrictPdbTab: (isWad && !hasWadPdbDataResult) || pdbGate
+        };
+    }, [
+        isWad,
+        isUnregistered,
+        hostManageReadiness,
+        inventoryTableData,
+        selectedResourceId,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId,
+        selectedDatabaseInstance,
+        selectedDatabaseInstanceName
+    ]);
 
     // WAD tooltip message for disabled tabs (Oracle specific)
     const wadDisabledMessage = t('databases.wad.tab-disabled-message-oracle');
     // Unregistered tooltip message for disabled tabs (Oracle specific)
     const unregisteredDisabledMessage = t('databases.wad.unregistered-tab-disabled-message-oracle');
-
-    const { isSingleTenant, hasWadPdbData } = useMemo(() => {
-        if (!selectedResourceId || !selectedDatabaseInstanceName || !inventoryTableData) {
-            return { isSingleTenant: false, hasWadPdbData: false };
-        }
-        const hostData = Object.values(inventoryTableData).find(host => host?.resourceId === selectedResourceId);
-        const instanceData = hostData?.sqlServerInstances?.find(
-            instance => instance?.databaseInstanceName?.toLowerCase() === selectedDatabaseInstanceName?.toLowerCase()
-        );
-        return {
-            isSingleTenant: instanceData?.instanceType === ORACLE_DATABASES_COMPONENTS.SINGLE_TENANT,
-            hasWadPdbData:
-                !!instanceData?.isWad &&
-                Array.isArray(instanceData?.databases) &&
-                instanceData.databases.some(db => db?.type === ORACLE_DATABASES_COMPONENTS.PDB)
-        };
-    }, [selectedResourceId, selectedDatabaseInstanceName, inventoryTableData]);
 
     useEffect(() => {
         setSelectedTab(selectedOracleInnerPageTab);
@@ -89,11 +118,11 @@ const OracleTabs = () => {
 
     return (
         <div className={styles['oracle-tabs']}>
-            {/* Overview Tab - disabled for WAD or unregistered instances */}
-            {isWad || isUnregistered ? (
+            {/* Overview Tab - disabled for WAD, unregistered, or missing extensive run permission */}
+            {restrictTabs ? (
                 <TooltipComponent
                     placement="bottom"
-                    title={isUnregistered ? unregisteredDisabledMessage : wadDisabledMessage}
+                    title={isWad ? wadDisabledMessage : unregisteredDisabledMessage}
                     width={300}
                 >
                     <div className={`${styles.headers} ${styles.headerWidthFirst}`}>
@@ -145,8 +174,8 @@ const OracleTabs = () => {
                 </DsTypography>
             </div>
 
-            {/* Error Investigation Tab - disabled for WAD, unregistered, GovCloud, or when Bedrock not supported */}
-            {(isWad || isUnregistered || isGovAccount || !isBedrockSupportedForRegion) && (
+            {/* Error Investigation Tab - disabled for WAD, unregistered, missing extensive run permission, GovCloud, or when Bedrock not supported */}
+            {(restrictTabs || isGovAccount || !isBedrockSupportedForRegion) && (
                 <TooltipComponent
                     placement="bottom"
                     title={
@@ -170,7 +199,7 @@ const OracleTabs = () => {
                     </div>
                 </TooltipComponent>
             )}
-            {!isWad && !isUnregistered && !isGovAccount && isBedrockSupportedForRegion && (
+            {!restrictTabs && !isGovAccount && isBedrockSupportedForRegion && (
                 <div
                     className={
                         selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION
@@ -199,11 +228,11 @@ const OracleTabs = () => {
                 </div>
             )}
 
-            {/* PDB Tab - disabled for WAD without PDB data, unregistered, or Single Tenant */}
-            {(isWad && !hasWadPdbData) || isUnregistered ? (
+            {/* PDB Tab - disabled for WAD without PDB data, unregistered, missing extensive run permission, or Single Tenant */}
+            {restrictPdbTab ? (
                 <TooltipComponent
                     placement="bottom"
-                    title={isUnregistered ? unregisteredDisabledMessage : wadDisabledMessage}
+                    title={isWad && !hasWadPdbData ? wadDisabledMessage : unregisteredDisabledMessage}
                     width={300}
                 >
                     <div className={`${styles.headers} ${styles.headerWidthThird}`}>

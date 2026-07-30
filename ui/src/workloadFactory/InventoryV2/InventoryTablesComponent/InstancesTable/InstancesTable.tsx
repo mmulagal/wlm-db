@@ -30,7 +30,8 @@ import {
     hasFullPermission,
     isUnregisteredInventoryRow,
     getFsxLinkRequiredMessageKey,
-    getRegistrationRequiresFullPermissionMessageKey
+    getRegistrationRequiresFullPermissionMessageKey,
+    getInstanceFsxLinkExists
 } from '../../InventoryUtilsV2';
 import { isSmbProtocol } from '../../../../utils/utilityFunctions';
 import { ACTION_CTA, DBType, INVENTORY_STATUS, JOB_MONITORING_STATUS, WLF_TABS } from '../../../../utils/consts';
@@ -518,7 +519,9 @@ const InstancesTable = () => {
                 regionId: targettedHost?.regionId,
                 storageType: targettedDbInstance?.sqlServerDeploymentType,
                 isWad: !!rowData?.isWad && !isUnregisteredFlow,
-                isUnregistered: isUnregisteredFlow
+                isUnregistered: isUnregisteredFlow,
+                hostManageReadiness: rowData?.hostManageReadiness || targettedHost?.hostManageReadiness,
+                fsxLinkExists: getInstanceFsxLinkExists(rowData)
             })
         );
 

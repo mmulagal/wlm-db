@@ -53,7 +53,6 @@ import { NOTIFICATION_TYPES, addNotification } from '../../store/notificationSli
 import { GENERAL } from '../../utils/appConstants';
 import DialogComponent from '../../common/Dialog/DialogComponent';
 import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection/LearnHowDialog/LearnHowDialog';
-import downloadPdf from '../../common/pdfGenerator';
 import {
     useLazyGetSubTaskListQuery,
     useTriggerInstanceAssessmentMutation,
@@ -61,7 +60,7 @@ import {
 } from '../../utils/apiService';
 import AssessmentContainer from '../../common/AssessmentContainer/AssessmentContainer';
 import PartialDataContainer from './PartialDataContainer/PartialDataContainer';
-import { hasPartialRunPermission } from '../InventoryV2/InventoryUtilsV2';
+import { hasPartialRunPermission, resolveInstanceFsxLinkExists } from '../InventoryV2/InventoryUtilsV2';
 import {
     handleSelectForFilter,
     removeEntry,
@@ -103,10 +102,34 @@ const GetWell = () => {
         driftAssessmentData,
         isWad: isWadFromStore,
         isUnregistered: isUnregisteredFromStore,
-        hostManageReadiness
+        hostManageReadiness,
+        fsxLinkExists: fsxLinkExistsFromStore
     } = useAppSelector(state => state.getWellOptimize);
+    const { inventoryTableData } = useAppSelector(state => state.inventoryV2);
     const isUnregistered = isUnregisteredFromStore || !!cardData?.isUnregistered;
+    const fsxLinkExists = useMemo(
+        () =>
+            resolveInstanceFsxLinkExists({
+                fsxLinkExistsFromStore,
+                inventoryTableData,
+                resourceId: selectedResourceId,
+                credId: selectedGwInstanceCredId,
+                regionId: selectedGwInstanceRegionId,
+                instanceId: selectedDatabaseInstance,
+                instanceName: selectedDatabaseInstanceName
+            }),
+        [
+            fsxLinkExistsFromStore,
+            inventoryTableData,
+            selectedResourceId,
+            selectedGwInstanceCredId,
+            selectedGwInstanceRegionId,
+            selectedDatabaseInstance,
+            selectedDatabaseInstanceName
+        ]
+    );
     const showPartialPermissionBanner = isUnregistered && hasPartialRunPermission(hostManageReadiness);
+    const showMissingLinkBanner = !isWadFromStore && !cardData?.isWad && !isUnregistered && fsxLinkExists === false;
     const [isAccordionOpen, setsAccordionOpen] = useState(false);
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
@@ -447,6 +470,10 @@ const GetWell = () => {
             )}
             <div className={styles.getWell} id="export-optimize-pdf">
                 {/* Partial data warning here - based on condition */}
+
+                {showMissingLinkBanner && (
+                    <PartialDataContainer variant="missingAssociatedLink" resourceType="instance" />
+                )}
 
                 {cardData?.compute_rightsizing?.isMissingPermissions && <PartialDataContainer />}
 

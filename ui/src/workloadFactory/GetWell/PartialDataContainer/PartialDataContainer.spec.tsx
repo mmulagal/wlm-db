@@ -2,12 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import PartialDataContainer from './PartialDataContainer';
 
-const mockDispatch = vi.fn();
-
-vi.mock('react-redux', () => ({
-    useDispatch: () => mockDispatch
-}));
-
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({
         t: (key: string) =>
@@ -21,15 +15,11 @@ vi.mock('react-i18next', () => ({
                 'databases.wad.partial-data-displayed-title': 'Partial data is displayed.',
                 'databases.wad.partial-data-missing-link-prefix':
                     "Some data isn't shown because this file system doesn't have an associated link.",
-                'databases.wad.associate-and-authenticate-link': 'Associate and authenticate link.',
                 'databases.wad.learn-more-about-links-prefix': 'Learn more about',
-                'databases.wad.learn-more-about-links': 'links'
+                'databases.wad.learn-more-about-links': 'links',
+                'databases.general.close': 'Close'
             }[key] ?? key)
     })
-}));
-
-vi.mock('../../../store/workloadFactory/databaseHomeSlice', () => ({
-    selectedTabSelection: vi.fn((tab: string) => ({ type: 'selectedTabSelection', payload: tab }))
 }));
 
 describe('PartialDataContainer', () => {
@@ -50,7 +40,6 @@ describe('PartialDataContainer', () => {
         expect(
             screen.getByText("Some data isn't shown because the instances don't have full extensive run permission.")
         ).toBeDefined();
-        expect(screen.queryByText('Associate and authenticate link.')).toBeNull();
     });
 
     it('renders missingExtensiveRunPermission variant copy for databases', () => {
@@ -76,7 +65,6 @@ describe('PartialDataContainer', () => {
         expect(
             screen.getByText("Some data isn't shown because this file system doesn't have an associated link.")
         ).toBeDefined();
-        expect(screen.getByText('Associate and authenticate link.')).toBeDefined();
         expect(screen.getByText('links')).toBeDefined();
     });
 

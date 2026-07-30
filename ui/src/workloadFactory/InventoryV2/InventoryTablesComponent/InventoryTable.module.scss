@@ -116,6 +116,16 @@
         flex-direction: column;
     }
 
+    .fsxTooltipRow {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        &:not(:last-child) {
+            margin-bottom: 8px;
+        }
+    }
+
     .ec2Separator {
         border-bottom: 1px solid var(--border);
     }

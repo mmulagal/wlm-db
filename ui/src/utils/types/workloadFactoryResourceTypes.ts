@@ -16,6 +16,8 @@ export interface DatabaseInstanceTopology {
     fileSystemStorageCapacity: number;
     fileSystemThroughputCapacity: number;
     fileSystemStorageType: string;
+    fsxLinkExists?: boolean;
+    fsxLinksCount?: number;
     storageSummary: {
         volumes: Array<{
             id: string;

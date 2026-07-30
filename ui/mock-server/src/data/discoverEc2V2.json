@@ -33,7 +33,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -105,7 +107,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -141,7 +144,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -349,7 +354,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -504,7 +511,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -576,7 +585,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -640,7 +650,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -705,7 +717,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -741,7 +755,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -864,7 +880,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -987,7 +1004,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1023,7 +1041,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1059,7 +1079,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1095,7 +1117,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1131,7 +1155,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1185,7 +1211,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1239,7 +1267,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1293,7 +1323,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1329,7 +1361,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1365,7 +1399,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1437,7 +1473,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1562,7 +1599,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1634,7 +1673,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1670,7 +1710,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1742,7 +1784,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1778,7 +1821,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1813,7 +1858,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1889,7 +1936,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1925,7 +1973,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -1997,7 +2047,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -2069,7 +2120,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover"
         },
@@ -2275,7 +2327,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 3
             },
             "source": "discover"
         },
@@ -2307,7 +2360,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover",
             "sqlServerInstances": [
@@ -2376,7 +2430,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover",
             "sqlServerInstances": [
@@ -2445,7 +2500,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": false
+                "fsxLinkExists": false,
+                "fsxLinksCount": 1
             },
             "source": "discover",
             "sqlServerInstances": [
@@ -2513,7 +2569,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover",
             "sqlServerInstances": [
@@ -2584,7 +2642,8 @@
                 "extensiveRunPermission": false,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "tagging-service",
             "sqlServerInstances": [
@@ -2634,7 +2693,8 @@
                 "extensiveRunPermission": false,
                 "canReadAWSSSMDocuments": false,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "tagging-service",
             "sqlServerInstances": [
@@ -2684,7 +2744,8 @@
                 "extensiveRunPermission": false,
                 "canReadAWSSSMDocuments": false,
                 "canQuerySSMInventory": false,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "tagging-service",
             "sqlServerInstances": [
@@ -2733,7 +2794,9 @@
             "hostManageReadiness": {
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
-                "canQuerySSMInventory": true
+                "canQuerySSMInventory": true,
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover",
             "sqlServerInstances": []
@@ -2753,7 +2816,8 @@
                 "extensiveRunPermission": true,
                 "canReadAWSSSMDocuments": true,
                 "canQuerySSMInventory": true,
-                "fsxLinkExists": true
+                "fsxLinkExists": true,
+                "fsxLinksCount": 1
             },
             "source": "discover",
             "sqlServerInstances": [

@@ -59,7 +59,8 @@ const initialState: GetWellSliceInterface = {
     isWad: false,
     isUnregistered: false,
     instanceStatus: '',
-    hostManageReadiness: undefined
+    hostManageReadiness: undefined,
+    fsxLinkExists: undefined
 };
 
 const getWellOptimizeSlice = createSlice({
@@ -169,6 +170,7 @@ const getWellOptimizeSlice = createSlice({
             state.gwRefreshTimestamp = '';
             state.gwTimestamp = '0';
             state.hostManageReadiness = undefined;
+            state.fsxLinkExists = undefined;
         },
         setOptimizingData: (state, action: PayloadAction<any>) => {
             state.optimizingData = action.payload;
@@ -222,6 +224,7 @@ const getWellOptimizeSlice = createSlice({
             state.isUnregistered = action.payload.isUnregistered || false;
             state.instanceStatus = action.payload.instanceStatus || '';
             state.hostManageReadiness = action.payload.hostManageReadiness;
+            state.fsxLinkExists = action.payload.fsxLinkExists;
         },
         setLandingFromInnerPage: (state, action: PayloadAction<any>) => {
             state.landingFromInnerPage = action.payload;

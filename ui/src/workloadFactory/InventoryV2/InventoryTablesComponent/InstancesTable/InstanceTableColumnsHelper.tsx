@@ -16,7 +16,7 @@ import {
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import styles from '../InventoryTable.module.scss';
 import store from '../../../../store/store';
-import { uniqueHostRow, isUnregisteredInventoryRow } from '../../InventoryUtilsV2';
+import { uniqueHostRow, isUnregisteredInventoryRow, getInstanceFsxLinkExists } from '../../InventoryUtilsV2';
 import {
     resetWorkloadFactoryResourceData,
     setSelectedHostname,
@@ -105,7 +105,8 @@ export const optimizeAction = (rowData: any, dispatch: any) => {
             storageType: targettedDbInstance?.sqlServerDeploymentType,
             isWad: !!rowData?.isWad && !isUnregisteredFlow,
             isUnregistered: isUnregisteredFlow,
-            hostManageReadiness: rowData?.hostManageReadiness || targettedHost?.hostManageReadiness
+            hostManageReadiness: rowData?.hostManageReadiness || targettedHost?.hostManageReadiness,
+            fsxLinkExists: getInstanceFsxLinkExists(rowData)
         })
     );
 

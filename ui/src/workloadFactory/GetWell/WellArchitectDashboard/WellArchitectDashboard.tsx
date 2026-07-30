@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ButtonWithDropdown, Popover, useDialog } from '@netapp/design-system';
 import styles from './WellArchitectDashboard.module.scss';
@@ -15,7 +15,7 @@ import {
     WELL_ARCHITECTED_TABS
 } from '../../../utils/consts';
 import { setDefaultFilterOptions, setOptimizeFilterTags } from '../../../store/workloadFactory/inventoryV2Slice';
-import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
+import { uniqueHostRow, resolveUnregisteredDatabasesAndPasswordRestriction } from '../../InventoryV2/InventoryUtilsV2';
 import {
     resetGwData,
     resetVisitedTabs,
@@ -69,8 +69,42 @@ const WellArchitectDashboard = () => {
         gwRefreshTimestamp,
         innerPageDetails,
         isWad,
-        isAssessmentAvailable
+        isAssessmentAvailable,
+        isUnregistered,
+        hostManageReadiness,
+        selectedResourceId,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId,
+        selectedDatabaseInstance
     } = useAppSelector(state => state.getWellOptimize);
+
+    const { inventoryTableData } = useAppSelector(state => state.inventoryV2);
+
+    const restrictDatabasesAndPassword = useMemo(
+        () =>
+            resolveUnregisteredDatabasesAndPasswordRestriction({
+                isWad,
+                isUnregistered,
+                hostManageReadinessFromStore: hostManageReadiness,
+                inventoryTableData,
+                resourceId: selectedResourceId,
+                credId: selectedGwInstanceCredId,
+                regionId: selectedGwInstanceRegionId,
+                instanceId: selectedDatabaseInstance,
+                instanceName: selectedDatabaseInstanceName
+            }),
+        [
+            isWad,
+            isUnregistered,
+            hostManageReadiness,
+            inventoryTableData,
+            selectedResourceId,
+            selectedGwInstanceCredId,
+            selectedGwInstanceRegionId,
+            selectedDatabaseInstance,
+            selectedDatabaseInstanceName
+        ]
+    );
 
     const { refreshTime } = useAppSelector(state => state.headers);
     const { eiRefreshTimestamp } = useAppSelector(state => state.agenticAI);
@@ -355,23 +389,25 @@ const WellArchitectDashboard = () => {
                         </div>
                     )}
 
-                    {selectedWellArchitectTab !== WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && !isWad && (
-                        <div className={styles.buttonContainer}>
-                            <ButtonWithDropdown
-                                variant="icon"
-                                className={styles.buttonWithDropdownContainer}
-                                items={[
-                                    {
-                                        id: 'resetSQLServerPassword',
-                                        children: GENERAL.UPDATE_SQL_SERVER_PASSWORD,
-                                        onClick: handleSqlServerPassword
-                                    }
-                                ]}
-                            >
-                                <MenuIcon />
-                            </ButtonWithDropdown>
-                        </div>
-                    )}
+                    {selectedWellArchitectTab !== WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION &&
+                        !isWad &&
+                        !restrictDatabasesAndPassword && (
+                            <div className={styles.buttonContainer}>
+                                <ButtonWithDropdown
+                                    variant="icon"
+                                    className={styles.buttonWithDropdownContainer}
+                                    items={[
+                                        {
+                                            id: 'resetSQLServerPassword',
+                                            children: GENERAL.UPDATE_SQL_SERVER_PASSWORD,
+                                            onClick: handleSqlServerPassword
+                                        }
+                                    ]}
+                                >
+                                    <MenuIcon />
+                                </ButtonWithDropdown>
+                            </div>
+                        )}
                 </div>
             </div>
 
@@ -381,7 +417,7 @@ const WellArchitectDashboard = () => {
                 {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.OVERVIEW && <ResourceMSSQLOverview />}
                 {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS && <GetWell />}
                 {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && <ErrorInvestigationTab />}
-                {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES && (
+                {selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES && !restrictDatabasesAndPassword && (
                     <div className={styles.databaseListTable}>
                         <DatabaseListTable />
                     </div>

@@ -29,13 +29,7 @@ import DotComponent from '../../../../common/DotComponent/DotComponent';
 import commonStyles from '../../../../utils/CommonStyles.module.scss';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
-import {
-    setBreadCrumbSelectedFrom,
-    setManageSingleInstanceData,
-    setRegisterHostType,
-    setSelectedHeaderTab,
-    setWizardOperationType
-} from '../../../../store/workloadFactory/inventoryV2Slice';
+import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
 import { selectedTabSelection } from '../../../../store/workloadFactory/databaseHomeSlice';
 import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import {
@@ -48,6 +42,7 @@ import {
 } from './InstanceTableHelper';
 import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 import { useAppSelector } from '../../../../store/storeHooks';
+import { getFsxIdsForTooltip, getInstanceFsxLinkExists, getInstanceFsxLinksCount } from '../../InventoryUtilsV2';
 
 export function getMssqlInstanceTableColumns({
     t,
@@ -428,9 +423,73 @@ export function getMssqlInstanceTableColumns({
                 if (rowData?.fullManagedInstanceLoading && rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
                     loading = true;
                 }
+
+                const fsxLinksCount = getInstanceFsxLinksCount(rowData);
+                const fsxLinkExists = getInstanceFsxLinkExists(rowData);
+                const showFsxLinksCount = fsxLinksCount != null && fsxLinksCount > 0;
+                const fsxIdsForTooltip = showFsxLinksCount ? getFsxIdsForTooltip(rowData) : [];
+                const linkStatusText =
+                    fsxLinkExists === true
+                        ? t('databases.general.link-associated')
+                        : fsxLinkExists === false
+                        ? t('databases.general.link-not-associated')
+                        : null;
+
                 return (
                     <>
-                        {!loading && rowData?.fsxId && (
+                        {!loading && showFsxLinksCount && (
+                            <div className={styles.fsxNameContainer}>
+                                <div className={styles.ssmOffline}>
+                                    <Popover
+                                        popoverClass=""
+                                        children={
+                                            <div
+                                                className={`${styles.tooltipContainer} ${styles.tooltipContainerMulti} ${styles.fsxNamePopOver}`}
+                                            >
+                                                {fsxIdsForTooltip.map((fsx: any, index: number) => (
+                                                    <div key={fsx?.id || index} className={styles.fsxTooltipRow}>
+                                                        <DsTypography variant="Regular_13">{`ID: ${fsx?.id}`}</DsTypography>
+                                                        <Popover
+                                                            popoverClass={styles['copy-popover']}
+                                                            children="Copied"
+                                                            container={
+                                                                <CopyToClipboardCommon
+                                                                    value={fsx?.id}
+                                                                    iconProvided={<CopyIcon fill="#A7A7A7" />}
+                                                                />
+                                                            }
+                                                        />
+                                                    </div>
+                                                ))}
+                                                {linkStatusText && (
+                                                    <DsTypography
+                                                        variant="Regular_13"
+                                                        style={{ marginTop: fsxIdsForTooltip.length ? '8px' : '0' }}
+                                                    >
+                                                        {linkStatusText}
+                                                    </DsTypography>
+                                                )}
+                                            </div>
+                                        }
+                                        trigger="hover"
+                                        delayHide={200}
+                                        interactive
+                                        isAppendedToBody={false}
+                                        container={<TooltipIcon />}
+                                    />
+                                </div>
+                                <div className={styles.fsxName}>
+                                    <DsTypography
+                                        className={styles.fsxNameText}
+                                        variant="Regular_13"
+                                        title={`${fsxLinksCount} ${t('databases.general.fsx-for-ontap')}`}
+                                    >
+                                        {`${fsxLinksCount} ${t('databases.general.fsx-for-ontap')}`}
+                                    </DsTypography>
+                                </div>
+                            </div>
+                        )}
+                        {!loading && !showFsxLinksCount && rowData?.fsxId && (
                             <div className={styles.fsxNameContainer}>
                                 <div className={styles.ssmOffline}>
                                     <Popover
@@ -469,7 +528,7 @@ export function getMssqlInstanceTableColumns({
                             </div>
                         )}
                         {loading && <DsFlashingDotsLoader />}
-                        {!cellData && !loading && !rowData?.fsxId && (
+                        {!cellData && !loading && !rowData?.fsxId && !showFsxLinksCount && (
                             <DsTypography variant="Regular_13" className={styles.colText}>
                                 {t('databases.general.not-available-table-columns')}
                             </DsTypography>

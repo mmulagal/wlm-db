@@ -8,23 +8,65 @@ import { setSelectedWellArchitectTab } from '../../../../store/workloadFactory/g
 import { ERROR_ANALYZER_STATUS, WELL_ARCHITECTED_TABS } from '../../../../utils/consts';
 import TooltipComponent from '../../../../common/TooltipComponent/TooltipComponent';
 import { setLogAnalyzerState } from '../../../../store/workloadFactory/agenticAISlice';
-import { uniqueHostRow } from '../../../InventoryV2/InventoryUtilsV2';
+import {
+    resolveUnregisteredDatabasesAndPasswordRestriction,
+    resolveWellArchitectTabRestriction,
+    uniqueHostRow
+} from '../../../InventoryV2/InventoryUtilsV2';
 
 const WellArchitectTabs = () => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [selectedTab, setSelectedTab] = useState<any>();
-    const { selectedWellArchitectTab, isWad, isUnregistered } = useAppSelector(state => state.getWellOptimize);
+    const {
+        selectedWellArchitectTab,
+        isWad,
+        isUnregistered,
+        hostManageReadiness,
+        selectedGwInstanceRegionId,
+        selectedGwInstanceCredId,
+        selectedResourceId,
+        selectedDatabaseInstance,
+        selectedDatabaseInstanceName
+    } = useAppSelector(state => state.getWellOptimize);
+    const { allLogAnalysisData, inventoryTableData } = useAppSelector(state => state.inventoryV2);
     const { isGovAccount } = useAppSelector(state => state.auth);
     const { regionMapping } = useAppSelector(state => state.headers);
-    const { selectedGwInstanceRegionId, selectedGwInstanceCredId, selectedResourceId, selectedDatabaseInstance } =
-        useAppSelector(state => state.getWellOptimize);
-    const { allLogAnalysisData } = useAppSelector(state => state.inventoryV2);
 
     // WAD tooltip message for disabled tabs
     const wadDisabledMessage = t('databases.wad.tab-disabled-message');
     // Unregistered tooltip message for disabled tabs
     const unregisteredDisabledMessage = t('databases.wad.unregistered-tab-disabled-message');
+
+    const tabGateInput = useMemo(
+        () => ({
+            isWad,
+            isUnregistered,
+            hostManageReadinessFromStore: hostManageReadiness,
+            inventoryTableData,
+            resourceId: selectedResourceId,
+            credId: selectedGwInstanceCredId,
+            regionId: selectedGwInstanceRegionId,
+            instanceId: selectedDatabaseInstance,
+            instanceName: selectedDatabaseInstanceName
+        }),
+        [
+            isWad,
+            isUnregistered,
+            hostManageReadiness,
+            inventoryTableData,
+            selectedResourceId,
+            selectedGwInstanceCredId,
+            selectedGwInstanceRegionId,
+            selectedDatabaseInstance,
+            selectedDatabaseInstanceName
+        ]
+    );
+    const restrictTabs = useMemo(() => resolveWellArchitectTabRestriction(tabGateInput), [tabGateInput]);
+    const restrictDatabasesAndPassword = useMemo(
+        () => resolveUnregisteredDatabasesAndPasswordRestriction(tabGateInput),
+        [tabGateInput]
+    );
 
     const isBedrockSupportedForRegion = useMemo(() => {
         let isBedRockAvailable = true;
@@ -44,6 +86,12 @@ const WellArchitectTabs = () => {
         setSelectedTab(selectedWellArchitectTab);
     }, [selectedWellArchitectTab]);
 
+    useEffect(() => {
+        if (restrictDatabasesAndPassword && selectedWellArchitectTab === WELL_ARCHITECTED_TABS.DATABASES) {
+            dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+        }
+    }, [restrictDatabasesAndPassword, selectedWellArchitectTab, dispatch]);
+
     const handleClick = (value: string) => {
         setSelectedTab(value);
         dispatch(setSelectedWellArchitectTab(value));
@@ -61,11 +109,11 @@ const WellArchitectTabs = () => {
 
     return (
         <div className={styles['well-architect-tabs']}>
-            {/* Overview Tab - disabled for WAD or unregistered instances */}
-            {isWad || isUnregistered ? (
+            {/* Overview Tab - disabled for WAD, unregistered, or missing extensive run permission */}
+            {restrictTabs ? (
                 <TooltipComponent
                     placement="bottom"
-                    title={isUnregistered ? unregisteredDisabledMessage : wadDisabledMessage}
+                    title={isWad ? wadDisabledMessage : unregisteredDisabledMessage}
                     width={300}
                 >
                     <div className={`${styles.headers} ${styles.headerWidthFirst}`}>
@@ -117,17 +165,17 @@ const WellArchitectTabs = () => {
                 </DsTypography>
             </div>
 
-            {/* Error Investigation Tab - disabled for WAD, unregistered, GovCloud, or when Bedrock not supported */}
-            {(isWad || isUnregistered || isGovAccount || !isBedrockSupportedForRegion) && (
+            {/* Error Investigation Tab - disabled for WAD, unregistered, missing extensive run permission, GovCloud, or when Bedrock not supported */}
+            {(restrictTabs || isGovAccount || !isBedrockSupportedForRegion) && (
                 <TooltipComponent
                     placement="bottom"
                     title={
                         isGovAccount
                             ? t('databases.general.not-supported-in-govcloud')
-                            : isUnregistered
-                            ? unregisteredDisabledMessage
-                            : isWad
-                            ? wadDisabledMessage
+                            : restrictTabs
+                            ? isWad
+                                ? wadDisabledMessage
+                                : unregisteredDisabledMessage
                             : t('databases.log-analyzer.bedrock-in-region-not-supported')
                     }
                     width={300}
@@ -142,7 +190,7 @@ const WellArchitectTabs = () => {
                     </div>
                 </TooltipComponent>
             )}
-            {!isWad && !isUnregistered && !isGovAccount && isBedrockSupportedForRegion && (
+            {!restrictTabs && !isGovAccount && isBedrockSupportedForRegion && (
                 <div
                     className={
                         selectedTab === WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION
@@ -171,33 +219,43 @@ const WellArchitectTabs = () => {
                 </div>
             )}
 
-            {/* Databases Tab - enabled for WAD (MSSQL) using the offline-assessment databases API */}
-            <div
-                className={
-                    selectedTab === WELL_ARCHITECTED_TABS.DATABASES
-                        ? `${styles.headers} ${styles.headerWidthThird} ${styles.active}`
-                        : `${styles.headers} ${styles.headerWidthThird}`
-                }
-            >
-                <DsTypography
-                    variant="Semibold_14"
+            {/* Databases Tab - enabled for WAD; non-registered requires assessment permissions */}
+            {restrictDatabasesAndPassword ? (
+                <TooltipComponent placement="bottom" title={unregisteredDisabledMessage} width={300}>
+                    <div className={`${styles.headers} ${styles.headerWidthThird}`}>
+                        <DsTypography variant="Semibold_14" className={styles.headerDisabled}>
+                            {t('databases.general.databases')}
+                        </DsTypography>
+                    </div>
+                </TooltipComponent>
+            ) : (
+                <div
                     className={
                         selectedTab === WELL_ARCHITECTED_TABS.DATABASES
-                            ? `${styles.headerPart1} ${styles.activeText}`
-                            : `${styles.headerPart1}`
+                            ? `${styles.headers} ${styles.headerWidthThird} ${styles.active}`
+                            : `${styles.headers} ${styles.headerWidthThird}`
                     }
-                    onClick={() => handleClick(WELL_ARCHITECTED_TABS.DATABASES)}
-                    data-testid="wlm-db-mssql-databases-tab"
                 >
-                    {t('databases.general.databases')}
-                </DsTypography>
-            </div>
+                    <DsTypography
+                        variant="Semibold_14"
+                        className={
+                            selectedTab === WELL_ARCHITECTED_TABS.DATABASES
+                                ? `${styles.headerPart1} ${styles.activeText}`
+                                : `${styles.headerPart1}`
+                        }
+                        onClick={() => handleClick(WELL_ARCHITECTED_TABS.DATABASES)}
+                        data-testid="wlm-db-mssql-databases-tab"
+                    >
+                        {t('databases.general.databases')}
+                    </DsTypography>
+                </div>
+            )}
 
-            {/* Sandboxes Tab - disabled for WAD or unregistered instances */}
-            {isWad || isUnregistered ? (
+            {/* Sandboxes Tab - disabled for WAD, unregistered, or missing extensive run permission */}
+            {restrictTabs ? (
                 <TooltipComponent
                     placement="bottom"
-                    title={isUnregistered ? unregisteredDisabledMessage : wadDisabledMessage}
+                    title={isWad ? wadDisabledMessage : unregisteredDisabledMessage}
                     width={300}
                 >
                     <div className={`${styles.headers} ${styles.headerWidthThird}`}>

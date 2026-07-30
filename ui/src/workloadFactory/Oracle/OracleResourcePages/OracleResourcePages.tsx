@@ -1,11 +1,10 @@
 import { useDispatch } from 'react-redux';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { ButtonWithDropdown, Popover, useDialog } from '@netapp/design-system';
 import { ReactComponent as RefreshIcon } from '@netapp/icons/ic_refresh.svg';
 import { ReactComponent as MenuIcon } from '../../../assets/ic_actions_menu_circle.svg';
 import commonStyles from '../../../utils/CommonStyles.module.scss';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
 import { resetAllPasswords } from '../../../store/workloadFactory/workloadFactoryResourceSlice';
 import styles from './OracleResourcePages.module.scss';
 import { WELL_ARCHITECTED_TABS, WLF_TABS, RESET_PASSWORD_TYPE, FROM_DIALOG, DBType } from '../../../utils/consts';
@@ -31,6 +30,7 @@ import { getCurrentDateTime } from '../../../utils/utilityFunctions';
 import { instanceBreadCrumbSelectedFrom, selectHeaderTabFromBreadCrumb } from '../../GetWell/GetWellUtils';
 import OracleErrorInvestigationTab from './OracleErrorInvestigation/OracleErrorInvestigationTab';
 import { resetEiData, setEiRefreshPage, setEiRefreshTimestamp } from '../../../store/workloadFactory/agenticAISlice';
+import { resolveUnregisteredDatabasesAndPasswordRestriction } from '../../InventoryV2/InventoryUtilsV2';
 
 const OracleResourcePages = () => {
     const dispatch = useDispatch();
@@ -46,14 +46,47 @@ const OracleResourcePages = () => {
         innerPageDetails,
         isWad,
         gwRefreshTimestamp,
-        isAssessmentAvailable
+        isAssessmentAvailable,
+        isUnregistered,
+        hostManageReadiness,
+        selectedResourceId: gwSelectedResourceId,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId,
+        selectedDatabaseInstance
     } = useAppSelector(state => state.getWellOptimize);
+    const { inventoryTableData } = useAppSelector(state => state.inventoryV2);
     const { selectedResourceCredId, selectedResourceRegionId, selectedResourceId } = useAppSelector(
         state => state.workloadFactoryResource
     );
 
     const { eiRefreshTimestamp } = useAppSelector(state => state.agenticAI);
     const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
+
+    const restrictDatabasesAndPassword = useMemo(
+        () =>
+            resolveUnregisteredDatabasesAndPasswordRestriction({
+                isWad,
+                isUnregistered,
+                hostManageReadinessFromStore: hostManageReadiness,
+                inventoryTableData,
+                resourceId: gwSelectedResourceId,
+                credId: selectedGwInstanceCredId,
+                regionId: selectedGwInstanceRegionId,
+                instanceId: selectedDatabaseInstance,
+                instanceName: selectedDatabaseInstanceName
+            }),
+        [
+            isWad,
+            isUnregistered,
+            hostManageReadiness,
+            inventoryTableData,
+            gwSelectedResourceId,
+            selectedGwInstanceCredId,
+            selectedGwInstanceRegionId,
+            selectedDatabaseInstance,
+            selectedDatabaseInstanceName
+        ]
+    );
 
     // Reset visited tabs when leaving the dashboard
     useEffect(
@@ -178,23 +211,25 @@ const OracleResourcePages = () => {
                         </div>
                     )}
 
-                    {selectedOracleInnerPageTab !== WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION && !isWad && (
-                        <div className={styles.buttonContainer}>
-                            <ButtonWithDropdown
-                                variant="icon"
-                                className={styles.buttonWithDropdownContainer}
-                                items={[
-                                    {
-                                        id: 'updateOracleServerPassword',
-                                        children: GENERAL.UPDATE_ORACLE_SERVER_PASSWORD,
-                                        onClick: handleUpdatePassword
-                                    }
-                                ]}
-                            >
-                                <MenuIcon />
-                            </ButtonWithDropdown>
-                        </div>
-                    )}
+                    {selectedOracleInnerPageTab !== WELL_ARCHITECTED_TABS.ERROR_INVESTIGATION &&
+                        !isWad &&
+                        !restrictDatabasesAndPassword && (
+                            <div className={styles.buttonContainer}>
+                                <ButtonWithDropdown
+                                    variant="icon"
+                                    className={styles.buttonWithDropdownContainer}
+                                    items={[
+                                        {
+                                            id: 'updateOracleServerPassword',
+                                            children: GENERAL.UPDATE_ORACLE_SERVER_PASSWORD,
+                                            onClick: handleUpdatePassword
+                                        }
+                                    ]}
+                                >
+                                    <MenuIcon />
+                                </ButtonWithDropdown>
+                            </div>
+                        )}
                 </div>
             </div>
 

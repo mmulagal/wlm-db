@@ -88,9 +88,6 @@ const PartialDataContainer = ({ variant = 'default', resourceType = 'instance' }
                     <DsTypography variant="Regular_14">
                         {t('databases.wad.partial-data-missing-link-prefix')}
                     </DsTypography>
-                    <Button variant="link" onClick={handleAssociateLink}>
-                        {t('databases.wad.associate-and-authenticate-link')}
-                    </Button>
                     <DsTypography variant="Regular_14">{t('databases.wad.learn-more-about-links-prefix')}</DsTypography>
                     <Button variant="link" className={styles.externalLinkButton} onClick={handleLearnMoreLinks}>
                         {t('databases.wad.learn-more-about-links')}

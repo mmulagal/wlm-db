@@ -106,6 +106,194 @@ export const canTriggerUnregisteredAssessment = (hostManageReadiness?: HostManag
 export const hasPartialRunPermission = (hostManageReadiness?: HostManageReadiness): boolean =>
     hostManageReadiness?.canReadAWSSSMDocuments === true && hostManageReadiness?.extensiveRunPermission !== true;
 
+/** Inner-page tabs stay on Well-architected + Databases until registered with extensive run permission. */
+export const shouldRestrictWellArchitectTabs = ({
+    isWad,
+    isUnregistered,
+    hostManageReadiness,
+    isRegisteredInstance
+}: {
+    isWad?: boolean;
+    isUnregistered?: boolean;
+    hostManageReadiness?: HostManageReadiness;
+    isRegisteredInstance?: boolean;
+}): boolean => {
+    if (isRegisteredInstance) return false;
+    return (
+        !!isWad ||
+        !!isUnregistered ||
+        (hostManageReadiness != null && !hasFullPermission(hostManageReadiness)) ||
+        isRegisteredInstance === false
+    );
+};
+
+const matchesInventoryInstance = (instanceRow: any, instanceId?: string, instanceName?: string): boolean =>
+    instanceRow?.databaseInstanceId === instanceId ||
+    instanceRow?.databaseInstanceName?.toLowerCase() === (instanceName || instanceId || '').toLowerCase();
+
+/** Resolve host + instance rows from inventory for inner-page gates and FSx lookups. */
+export const resolveInventoryHostAndInstance = ({
+    inventoryTableData,
+    resourceId,
+    credId,
+    regionId,
+    instanceId,
+    instanceName
+}: {
+    inventoryTableData?: Record<string, any> | null;
+    resourceId?: string;
+    credId?: string;
+    regionId?: string;
+    instanceId?: string;
+    instanceName?: string;
+}): { host?: any; instance?: any } => {
+    const host =
+        inventoryTableData?.[uniqueHostRow(resourceId || '', credId || '', regionId || '')] ??
+        Object.values(inventoryTableData ?? {}).find(
+            (hostRow: any) => hostRow?.ec2InstanceId === resourceId || hostRow?.resourceId === resourceId
+        );
+    const instance = host?.sqlServerInstances?.find((instanceRow: any) =>
+        matchesInventoryInstance(instanceRow, instanceId, instanceName)
+    );
+    return { host, instance };
+};
+
+const isRegisteredInventoryInstance = (host?: any, instance?: any): boolean =>
+    !!(
+        instance?.resourceId ||
+        instance?.statusColText === INVENTORY_STATUS.MANAGED ||
+        host?.managementStatus === INVENTORY_STATUS.REGISTERED
+    );
+
+/** Resolve registration + readiness from store/inventory, then apply tab gate (single call site for tab components). */
+export const resolveWellArchitectTabRestriction = ({
+    isWad,
+    isUnregistered,
+    hostManageReadinessFromStore,
+    inventoryTableData,
+    resourceId,
+    credId,
+    regionId,
+    instanceId,
+    instanceName
+}: {
+    isWad?: boolean;
+    isUnregistered?: boolean;
+    hostManageReadinessFromStore?: HostManageReadiness;
+    inventoryTableData?: Record<string, any> | null;
+    resourceId?: string;
+    credId?: string;
+    regionId?: string;
+    instanceId?: string;
+    instanceName?: string;
+}): boolean => {
+    const { host, instance } = resolveInventoryHostAndInstance({
+        inventoryTableData,
+        resourceId,
+        credId,
+        regionId,
+        instanceId,
+        instanceName
+    });
+    return shouldRestrictWellArchitectTabs({
+        isWad,
+        isUnregistered,
+        hostManageReadiness: hostManageReadinessFromStore ?? instance?.hostManageReadiness ?? host?.hostManageReadiness,
+        isRegisteredInstance: isRegisteredInventoryInstance(host, instance)
+    });
+};
+
+/** Non-registered Databases tab and Update password stay disabled until the instance is registered. */
+export const shouldDisableUnregisteredDatabasesAndPassword = ({
+    isWad,
+    isUnregistered,
+    isRegisteredInstance
+}: {
+    isWad?: boolean;
+    isUnregistered?: boolean;
+    hostManageReadiness?: HostManageReadiness;
+    isRegisteredInstance?: boolean;
+}): boolean => {
+    if (isWad || isRegisteredInstance) return false;
+    return !!isUnregistered || isRegisteredInstance === false;
+};
+
+/** Resolve registration + readiness from store/inventory, then apply Databases/password gate. */
+export const resolveUnregisteredDatabasesAndPasswordRestriction = ({
+    isWad,
+    isUnregistered,
+    hostManageReadinessFromStore,
+    inventoryTableData,
+    resourceId,
+    credId,
+    regionId,
+    instanceId,
+    instanceName
+}: {
+    isWad?: boolean;
+    isUnregistered?: boolean;
+    hostManageReadinessFromStore?: HostManageReadiness;
+    inventoryTableData?: Record<string, any> | null;
+    resourceId?: string;
+    credId?: string;
+    regionId?: string;
+    instanceId?: string;
+    instanceName?: string;
+}): boolean => {
+    const { host, instance } = resolveInventoryHostAndInstance({
+        inventoryTableData,
+        resourceId,
+        credId,
+        regionId,
+        instanceId,
+        instanceName
+    });
+    return shouldDisableUnregisteredDatabasesAndPassword({
+        isWad,
+        isUnregistered,
+        hostManageReadiness: hostManageReadinessFromStore ?? instance?.hostManageReadiness ?? host?.hostManageReadiness,
+        isRegisteredInstance: isRegisteredInventoryInstance(host, instance)
+    });
+};
+
+/** Resolve fsxLinkExists for WAD from store payload or inventory instance row. */
+export const resolveInstanceFsxLinkExists = ({
+    fsxLinkExistsFromStore,
+    inventoryTableData,
+    resourceId,
+    credId,
+    regionId,
+    instanceId,
+    instanceName
+}: {
+    fsxLinkExistsFromStore?: boolean;
+    inventoryTableData?: Record<string, any> | null;
+    resourceId?: string;
+    credId?: string;
+    regionId?: string;
+    instanceId?: string;
+    instanceName?: string;
+}): boolean | undefined => {
+    const { host, instance } = resolveInventoryHostAndInstance({
+        inventoryTableData,
+        resourceId,
+        credId,
+        regionId,
+        instanceId,
+        instanceName
+    });
+    if (instance) {
+        const fsxLinkExistsFromInstance = getInstanceFsxLinkExists(instance);
+        if (fsxLinkExistsFromInstance !== undefined) {
+            return fsxLinkExistsFromInstance;
+        }
+    }
+    if (fsxLinkExistsFromStore !== undefined) {
+        return fsxLinkExistsFromStore;
+    }
+    return getInstanceFsxLinkExists({ hostManageReadiness: host?.hostManageReadiness });
+};
+
 /** Discover/unmerged rows: permissions + not managed + no registered resource id. */
 export const isUnregisteredInventoryRow = (rowData: any, managedDbInstance?: { resourceId?: string }): boolean =>
     !!rowData?.isUnregistered ||
@@ -1000,6 +1188,8 @@ export const formatInstanceData = (row: ManagedHostsRowInterface) => {
                     fileSystemName: perRow?.databaseInstanceTopology?.fileSystemName
                         ? perRow?.databaseInstanceTopology?.fileSystemName
                         : GENERAL.NOT_AVAILABLE,
+                    fsxLinksCount: perRow?.databaseInstanceTopology?.fsxLinksCount,
+                    fsxLinkExists: perRow?.databaseInstanceTopology?.fsxLinkExists,
                     protection: perRow?.protection,
                     performance: perRow?.performance,
                     storage: perRow?.storage,
@@ -2267,6 +2457,8 @@ export const formatDiscoverInstanceData = (
             manageReadiness: perRow?.manageReadiness,
             // Copy host-level permission data to instance
             hostManageReadiness: row?.hostManageReadiness,
+            fsxLinksCount: row?.hostManageReadiness?.fsxLinksCount,
+            fsxLinkExists: row?.hostManageReadiness?.fsxLinkExists,
             source: row?.source
             // protection: {},
             // performance: {},
@@ -2307,6 +2499,8 @@ export const formatPgsqlDiscoverInstanceData = (
             detectOptionDisableMsg: statusObj?.[0]?.detectOptionDisableMsg,
             // Copy host-level permission data to instance
             hostManageReadiness: row?.hostManageReadiness,
+            fsxLinksCount: row?.hostManageReadiness?.fsxLinksCount,
+            fsxLinkExists: row?.hostManageReadiness?.fsxLinkExists,
             source: row?.source
             // protection: {},
             // performance: {},
@@ -2346,6 +2540,8 @@ export const formatOracleDiscoverInstanceData = (
             fileSystemType: getDiscoverFileSystemType(perRow),
             // Copy host-level permission data to instance
             hostManageReadiness: row?.hostManageReadiness,
+            fsxLinksCount: row?.hostManageReadiness?.fsxLinksCount,
+            fsxLinkExists: row?.hostManageReadiness?.fsxLinkExists,
             source: row?.source,
             storage: perRow?.storage,
             fsxId: statusObj?.[0]?.fsxId,
@@ -3096,6 +3292,8 @@ export const updateSqlServerInstancesForBothNodes = (
                 fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
                 fsxId: perRow?.databaseInstanceTopology?.fileSystemId || instRow?.fsxId,
                 fileSystemName: perRow?.databaseInstanceTopology?.fileSystemName || instRow?.fileSystemName,
+                fsxLinksCount: perRow?.databaseInstanceTopology?.fsxLinksCount ?? instRow?.fsxLinksCount,
+                fsxLinkExists: perRow?.databaseInstanceTopology?.fsxLinkExists ?? instRow?.fsxLinkExists,
                 protection: perfData?.protection || instRow?.protection || perRow?.protection,
                 performance: perfData?.performance || instRow?.performance || perRow?.performance,
                 storage: instRow?.storage || perRow?.storage,
@@ -3182,6 +3380,8 @@ export const updateSqlServerInstancesForUnmanaged = (
                     fileSystemType: perRow?.databaseInstanceTopology?.fileSystemType || instRow?.fileSystemType,
                     fsxId: perRow?.databaseInstanceTopology?.fileSystemId || instRow?.fsxId,
                     fileSystemName: perRow?.databaseInstanceTopology?.fileSystemName || instRow?.fileSystemName,
+                    fsxLinksCount: perRow?.databaseInstanceTopology?.fsxLinksCount ?? instRow?.fsxLinksCount,
+                    fsxLinkExists: perRow?.databaseInstanceTopology?.fsxLinkExists ?? instRow?.fsxLinkExists,
                     loading: perfData?.loading,
                     protection: instRow?.protection || perfData?.protection,
                     performance: instRow?.performance || perfData?.performance,
@@ -5341,6 +5541,56 @@ export const getFsxList = (data: any) => {
     }
     // Filter to return only FSXN type storage objects
     return data.storage.filter((storageItem: any) => storageItem?.type === STORAGE_TYPES.FSXN);
+};
+
+/** FSx link count: instance row, then topology, then discover hostManageReadiness. */
+export const getInstanceFsxLinksCount = (rowData: {
+    fsxLinksCount?: number;
+    databaseInstanceTopology?: { fsxLinksCount?: number };
+    hostManageReadiness?: { fsxLinksCount?: number };
+}): number | undefined =>
+    rowData?.fsxLinksCount ??
+    rowData?.databaseInstanceTopology?.fsxLinksCount ??
+    rowData?.hostManageReadiness?.fsxLinksCount;
+
+/** FSx link status: instance row, then topology, then discover hostManageReadiness. */
+export const getInstanceFsxLinkExists = (rowData: {
+    fsxLinkExists?: boolean;
+    databaseInstanceTopology?: { fsxLinkExists?: boolean };
+    hostManageReadiness?: { fsxLinkExists?: boolean };
+}): boolean | undefined =>
+    rowData?.fsxLinkExists ??
+    rowData?.databaseInstanceTopology?.fsxLinkExists ??
+    rowData?.hostManageReadiness?.fsxLinkExists;
+
+/** Unique FSx storage items for instance-table tooltips (host instances first, then row fallbacks). */
+export const getFsxIdsForTooltip = (rowData: {
+    hostRow?: { sqlServerInstances?: Array<{ storage?: Array<{ id?: string; type?: string }> }> };
+    fsxList?: Array<{ id?: string; fileSystemName?: string }>;
+    fsxId?: string;
+    fileSystemName?: string;
+}) => {
+    const seen = new Set<string>();
+    const unique: Array<{ id?: string; fileSystemName?: string }> = [];
+    const addFsx = (fsx: { id?: string; fileSystemName?: string }) => {
+        if (!fsx?.id || seen.has(fsx.id)) {
+            return;
+        }
+        seen.add(fsx.id);
+        unique.push(fsx);
+    };
+
+    rowData?.hostRow?.sqlServerInstances?.forEach(inst => {
+        getFsxList(inst).forEach(addFsx);
+    });
+    if (unique.length > 0) {
+        return unique;
+    }
+    (rowData?.fsxList || []).forEach(addFsx);
+    if (rowData?.fsxId) {
+        addFsx({ id: rowData.fsxId, fileSystemName: rowData.fileSystemName });
+    }
+    return unique;
 };
 
 /**

@@ -321,4 +321,5 @@ export interface GetWellSliceInterface {
     isUnregistered?: boolean; // Flag to indicate on-demand assessment for unregistered instances
     instanceStatus?: string;
     hostManageReadiness?: HostManageReadiness;
+    fsxLinkExists?: boolean;
 }
