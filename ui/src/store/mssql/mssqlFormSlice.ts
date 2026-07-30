@@ -89,7 +89,7 @@ export const initialMssqlState: any = {
         snsARN: ''
     },
     cloudWatch: true,
-    snapshotPolicyToggle: true,
+    snapshotPolicyToggle: false,
     encryption: {
         encryptionType: GENERAL.ENCRYPTION_SELECT_FROM_ACCOUNT,
         selectedRow: null,

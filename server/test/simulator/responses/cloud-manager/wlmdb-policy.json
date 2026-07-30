@@ -4,7 +4,7 @@
     "packages": [
         {
             "name": "View, planning, and analysis",
-            "description": "View the inventory of database resources, learn about the health of your resources, review the well-architected analysis of your database configurations.",
+            "description": "View the inventory of database resources, learn about the health of your resources, and review the well-architected analysis of your database configurations.",
             "immutable": true,
             "isDefault": true,
             "permissions": {
@@ -63,21 +63,16 @@
                         "Action": "ssm:SendCommand",
                         "Resource": [
                             "arn:aws:ssm:*::document/AWSFleetManager-GetWindowsRegistryContent",
-                            "arn:aws:ssm:*::document/AWSFleetManager-GetFileSystemContent"
+                            "arn:aws:ssm:*::document/AWSFleetManager-GetFileSystemContent",
+                            "arn:aws:ec2:*:*:instance/*"
                         ]
-                    },
-                    {
-                        "Sid": "AllowAllEC2InstancesForSendCommand",
-                        "Effect": "Allow",
-                        "Action": "ssm:SendCommand",
-                        "Resource": ["arn:aws:ec2:*:*:instance/*"]
                     }
                 ]
             }
         },
         {
             "name": "Operations and remediation",
-            "description": "Perform operational tasks for your database resources, get error log analysis, explore savings and fix issues for database configurations and the underlying FSx for ONTAP filesystem storage.",
+            "description": "Perform operational tasks for your database resources, get error log analysis, explore savings, and fix issues for database configurations and the underlying FSx for ONTAP file system storage.",
             "immutable": false,
             "isDefault": false,
             "permissions": {

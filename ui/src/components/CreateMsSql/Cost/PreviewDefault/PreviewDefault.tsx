@@ -117,7 +117,7 @@ const PreviewDefault = () => {
             dispatch(setSNSState(false));
             dispatch(setSNSARN(''));
             dispatch(setCloudWatch(true));
-            dispatch(setSnapshotPolicyToggle(true));
+            dispatch(setSnapshotPolicyToggle(false));
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedConfig]);
@@ -186,7 +186,7 @@ const PreviewDefault = () => {
             editable: GENERAL.NO,
             id: '9'
         },
-        { accordionName: GENERAL.SNAPSHOT_POLICY, defaultValue: GENERAL.DAILY_RETENTION, editable: 'Yes', id: '18' },
+        { accordionName: GENERAL.SNAPSHOT_POLICY, defaultValue: GENERAL.NONE, editable: 'Yes', id: '18' },
         {
             accordionName: GENERAL.PROVISIONED_IOPS,
             defaultValue: iopsValue || GENERAL.AUTOMATIC,
