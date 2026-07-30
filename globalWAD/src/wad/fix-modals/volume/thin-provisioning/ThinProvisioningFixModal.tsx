@@ -80,7 +80,7 @@ export const ThinProvisioningFixModal = memo(
                             onClick={close}
                             dataTestId={ThinProvisioningFixModalTestIds.cancelButton}
                         >
-                            Cancel
+                            Close
                         </Button>
                     </ButtonsGroup>
                 </ModalFooter>

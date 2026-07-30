@@ -103,7 +103,7 @@ export const TieringTcoOptimizationFixModal = memo(
                             onClick={close}
                             dataTestId={TieringTcoOptimizationFixModalTestIds.cancelButton}
                         >
-                            Cancel
+                            Close
                         </Button>
                     </ButtonsGroup>
                 </ModalFooter>

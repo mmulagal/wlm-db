@@ -99,7 +99,7 @@ export const SnapshotPolicyFixModal = memo(
                             onClick={close}
                             dataTestId={SnapshotPolicyFixModalTestIds.cancelButton}
                         >
-                            Cancel
+                            Close
                         </Button>
                     </ButtonsGroup>
                 </ModalFooter>

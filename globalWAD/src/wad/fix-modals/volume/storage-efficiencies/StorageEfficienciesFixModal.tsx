@@ -101,7 +101,7 @@ export const StorageEfficienciesFixModal = memo(
                             onClick={close}
                             dataTestId={StorageEfficienciesFixModalTestIds.cancelButton}
                         >
-                            Cancel
+                            Close
                         </Button>
                     </ButtonsGroup>
                 </ModalFooter>

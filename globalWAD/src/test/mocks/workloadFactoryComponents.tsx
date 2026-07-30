@@ -18,7 +18,7 @@ export const NotificationType = {
 } as const;
 
 export const FixRowActionLabel = {
-    FIX: 'Fix',
+    FIX: 'View and fix',
     REACTIVATE: 'Reactivate'
 } as const;
 
