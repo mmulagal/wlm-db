@@ -42,7 +42,7 @@ const SNAPSHOT_POLICY_COPY: Record<
 const NOTE_NO_DISRUPTION = 'No disruption to your services are expected during this process.';
 
 const NOTE_AUTHORIZATION =
-    'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.';
+    'Click fix to authorize Workload Factory to automatically perform these actions on your behalf.';
 
 export const SnapshotPolicyFixModal = memo(
     ({ recommendationName, resources, close, fix, isFixing, onFixSuccess }: VolumeFixModalProps) => {
@@ -92,7 +92,7 @@ export const SnapshotPolicyFixModal = memo(
                             isSubmitting={isFixing}
                             dataTestId={SnapshotPolicyFixModalTestIds.continueButton}
                         >
-                            Continue
+                            Fix
                         </Button>
                         <Button
                             color="secondary"

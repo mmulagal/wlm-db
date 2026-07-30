@@ -44,7 +44,7 @@ const TIERING_COPY: Record<
 const NOTE_NO_DISRUPTION = 'No disruption to your services are expected during this process.';
 
 const NOTE_AUTHORIZATION =
-    'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.';
+    'Click fix to authorize Workload Factory to automatically perform these actions on your behalf.';
 
 export const TieringTcoOptimizationFixModal = memo(
     ({ recommendationName, resources, close, fix, isFixing, onFixSuccess }: VolumeFixModalProps) => {
@@ -96,7 +96,7 @@ export const TieringTcoOptimizationFixModal = memo(
                             isSubmitting={isFixing}
                             dataTestId={TieringTcoOptimizationFixModalTestIds.continueButton}
                         >
-                            Continue
+                            Fix
                         </Button>
                         <Button
                             color="secondary"

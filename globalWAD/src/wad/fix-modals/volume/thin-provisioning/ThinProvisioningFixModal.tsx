@@ -28,7 +28,7 @@ const WHAT_WILL_HAPPEN_TEXT =
 const NOTE_NO_DISRUPTION = 'No disruption to your services are expected during this process.';
 
 const NOTE_AUTHORIZATION =
-    'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.';
+    'Click fix to authorize Workload Factory to automatically perform these actions on your behalf.';
 
 export const ThinProvisioningFixModal = memo(
     ({ recommendationName, resources, close, fix, isFixing, onFixSuccess }: VolumeFixModalProps) => {
@@ -73,7 +73,7 @@ export const ThinProvisioningFixModal = memo(
                             isSubmitting={isFixing}
                             dataTestId={ThinProvisioningFixModalTestIds.continueButton}
                         >
-                            Continue
+                            Fix
                         </Button>
                         <Button
                             color="secondary"

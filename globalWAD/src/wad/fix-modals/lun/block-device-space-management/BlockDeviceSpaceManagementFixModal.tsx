@@ -37,7 +37,7 @@ const WHAT_WILL_HAPPEN_TEXT =
 const NOTE_NO_DISRUPTION = 'No disruption to your services are expected during this process.';
 
 const NOTE_AUTHORIZATION =
-    'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.';
+    'Click fix to authorize Workload Factory to automatically perform these actions on your behalf.';
 
 export const BlockDeviceSpaceManagementFixModal = memo(
     ({ recommendationName, resources, close, fix, isFixing, onFixSuccess }: LunFixModalProps) => {
@@ -95,7 +95,7 @@ export const BlockDeviceSpaceManagementFixModal = memo(
                             isSubmitting={isFixing}
                             dataTestId={BlockDeviceSpaceManagementFixModalTestIds.continueButton}
                         >
-                            Continue
+                            Fix
                         </Button>
                         <Button
                             color="secondary"
