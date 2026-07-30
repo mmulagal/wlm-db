@@ -605,8 +605,8 @@ const DashboardInnerPage = () => {
                         />
                     }
                     dialogFrom={FROM_DIALOG.OPTIMIZE}
-                    primaryButton={t('databases.general.continue')}
-                    secondaryButton={t('databases.general.cancel')}
+                    primaryButton={t('databases.general.fix')}
+                    secondaryButton={t('databases.general.close')}
                     callback={() => {
                         if (configEngineType === DBType.ORACLE && checkLinkedConfigAcknowledge()) {
                             return;

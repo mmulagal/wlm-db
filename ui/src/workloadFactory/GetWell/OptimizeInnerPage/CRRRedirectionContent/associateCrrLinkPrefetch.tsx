@@ -160,7 +160,7 @@ export function useAssociateCrrLinkPrefetch(
                                 header={dialogHeader}
                                 content={<CRRDataDiaolgContent isWad={isWad} />}
                                 primaryButton={t('databases.general.continue')}
-                                secondaryButton={t('databases.general.cancel')}
+                                secondaryButton={t('databases.general.close')}
                                 callback={() => {
                                     handleNavigation();
                                 }}

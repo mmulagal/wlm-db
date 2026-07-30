@@ -65,8 +65,8 @@ export const handleDialog = (
                         isUnregistered={isUnregistered}
                     />
                 }
-                primaryButton={i18next.t('databases.general.continue')}
-                secondaryButton={i18next.t('databases.general.cancel')}
+                primaryButton={i18next.t('databases.general.fix')}
+                secondaryButton={i18next.t('databases.general.close')}
                 callback={() => {
                     callOptimizeApi(type, operation, singleRowData);
                 }}
@@ -121,8 +121,8 @@ export const handleDialog = (
                         isUnregistered={isUnregistered}
                     />
                 }
-                primaryButton={i18next.t('databases.general.continue')}
-                secondaryButton={i18next.t('databases.general.cancel')}
+                primaryButton={i18next.t('databases.general.fix')}
+                secondaryButton={i18next.t('databases.general.close')}
                 dialogFrom={FROM_DIALOG.OPTIMIZE}
                 callback={() => {
                     if (engineType === DBType.ORACLE && checkLinkedConfigAcknowledge()) {
@@ -202,8 +202,11 @@ export const handleConfigDialog = (
                         skipFixNotSupportedBanner={forceEnableInnerPage}
                     />
                 }
-                primaryButton={i18next.t('databases.general.continue')}
-                secondaryButton={i18next.t('databases.general.cancel')}
+                // For Oracle CRR it is continue button, for other engines it is fix button
+                primaryButton={
+                    forceEnableInnerPage ? i18next.t('databases.general.continue') : i18next.t('databases.general.fix')
+                }
+                secondaryButton={i18next.t('databases.general.close')}
                 dialogFrom={FROM_DIALOG.OPTIMIZE}
                 callback={() => {
                     if (checkLinkedConfigAcknowledge()) {

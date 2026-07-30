@@ -444,8 +444,8 @@ const CloneTabs = ({ fromPage = '', engineType = DBType.MSSQL }: any) => {
                         isUnregistered={isUnregistered}
                     />
                 }
-                primaryButton={isFixDisabled ? GENERAL.CLOSE : GENERAL.CONTINUE}
-                secondaryButton={!isFixDisabled ? GENERAL.CANCEL : undefined}
+                primaryButton={isFixDisabled ? t('databases.general.close') : t('databases.general.fix')}
+                secondaryButton={!isFixDisabled ? t('databases.general.close') : undefined}
                 callback={() => {
                     if (isFixDisabled) {
                         closeDialog();

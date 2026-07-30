@@ -1274,12 +1274,11 @@ export const GENERAL = {
     CREATE_SANDBOX_SOURCE_DB_NOT_ISCSI: 'Source database is not hosted on a NetApp iSCSI drive',
     COMING_SOON: 'Coming soon',
     NOTE_PONT_ONE: 'No disruption to your services are expected during this process.',
-    NOTE_PONT_TWO:
-        'Click continue to authorize Workload Factory to automatically perform these actions on your behalf.',
+    NOTE_PONT_TWO: 'Click fix to authorize Workload Factory to automatically perform these actions on your behalf.',
     OS_NOTE_POINT_ONE:
         'This process will require a temporary downtime of your SQL Server services. Perform necessary backups and notify affected users, to avoid any unintended downtime or data loss.',
     OS_NOTE_POINT_TWO:
-        'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and acknowledge the required downtime.',
+        'Click fix to authorize Workload Factory to automatically perform these actions on your behalf and acknowledge the required downtime.',
     NOTE: 'Note',
     SQL_COLLATION_NOTE:
         'If the selected collation is not supported, Workload Factory will automatically apply the default collation.',
@@ -1353,33 +1352,4 @@ export const CODE_VIEWER = {
     DEPLOYMENT: 'Deployment:',
     CREATE_DATABASE: 'Create database',
     TERRAFORM: 'Terraform'
-};
-
-export const GETWELL_DIALOG_CONTENT = {
-    ACTION_SUMMARY: 'Action summary',
-    USER_ACTION_REQUIRED: 'User action required',
-    WHAT_WILL_HAPPEN: 'What will happen',
-    DOWNTIME_WARNING: 'Downtime Warning',
-    SELECT_INSTANCE: 'Select one of the recommended instance types.',
-    COMPUTE_RS_AS_DESC:
-        'Workload Factory is ready to migrate your SQL Server EC2 instance from the current instance type to the recommended instance type',
-    COMPUTE_RS_WWH_DESC_FCI: [
-        'Instance type change: Workload Factory will change the instance type for your Amazon EC2 instance from the current instance type to the recommended instance type on both SQL Server Always On Failover Cluster Instances (FCI) nodes.',
-        'Failover and Failback: The migration will involve failing over and falling back from the primary node in your SQL Server Always On Failover Cluster Instances (FCI) to ensure a smooth transition.'
-    ],
-    COMPUTE_RS_WWH_DESC_STANDALONE:
-        'Workload Factory will change the instance type for your Amazon EC2 instance from the current instance type to the recommended instance type.',
-    COMPUTE_RS_DTW_NOTES_FCI: [
-        'You can expect slower performance during failover and failback from the primary node in your SQL Server Always on FCI.',
-        'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf.'
-    ],
-    COMPUTE_RS_DTW_NOTES_STANDALONE: [
-        'This process will require a temporary downtime of your SQL Server EC2 instance. Perform necessary backups and notify affected users, to avoid any unintended downtime or data loss.',
-        'Click Continue to authorize Workload Factory to automatically perform these actions on your behalf and to acknowledge the required downtime.'
-    ],
-    COMPUTE_RS_LAST_POINT: [
-        'Compute rightsizing fixing involves an instance type change and impacts all SQL Server instances and any other applications running on the host. Make sure that your applications are compatible with the new instance type. Refer to ',
-        'AWS resize limitations',
-        ' for limitations on changing instance types.'
-    ]
 };

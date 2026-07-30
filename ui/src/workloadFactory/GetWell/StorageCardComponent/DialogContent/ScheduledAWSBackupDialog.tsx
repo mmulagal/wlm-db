@@ -4,7 +4,7 @@ import { DsTypography, TextField } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { optionType, SelectField } from '@netapp/design-system/dist/components/Select';
 import styles from './DialogContent.module.scss';
-import { GENERAL, GETWELL_DIALOG_CONTENT } from '../../../../utils/appConstants';
+import { GENERAL } from '../../../../utils/appConstants';
 import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import { useAppSelector } from '../../../../store/storeHooks';
 import { setSelectedAWSBackup } from '../../../../store/workloadFactory/getWellOptimizeSlice';
@@ -71,7 +71,7 @@ const ScheduledAWSBackupDialog = ({ type, engineType = DBType.MSSQL }: any) => {
 
             <div className={styles['first-section']}>
                 <DsTypography variant="Semibold_14" style={{ width: '712px' }}>
-                    {GETWELL_DIALOG_CONTENT.USER_ACTION_REQUIRED}
+                    {t('databases.well-architect.user-action-required')}
                 </DsTypography>
                 <div className={styles.content}>
                     <div className={styles.row}>
