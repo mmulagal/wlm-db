@@ -6,6 +6,31 @@ import { configureStore, createSlice } from '@reduxjs/toolkit';
 import CalculateSavingCard from './CalculateSavingCard';
 import { SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 
+const TRANSLATIONS: Record<string, string> = {
+    'databases.explore-savings.calculate-savings-card-heading': 'Calculate savings on your existing SQL Servers',
+    'databases.explore-savings.calculate-savings-card-oracle-heading':
+        'Calculate savings on your existing Oracle databases',
+    'databases.explore-savings.calculate-savings-card-maybe-later': 'Maybe later',
+    'databases.explore-savings.calculate-savings-card-try-it': 'Try it',
+    'databases.explore-savings.calculate-savings-card-add-credentials': 'Add credentials',
+    'databases.explore-savings.calculate-savings-card-ebs-description':
+        'We can calculate how much you\'ll save by comparing the cost of your existing SQL Servers using EBS resources with FSx for ONTAP. Click "Try it" to select specific EBS database hosts to compare with FSx for ONTAP in the calculator.',
+    'databases.explore-savings.calculate-savings-card-oracle-ebs-description':
+        'We can calculate how much you\'ll save by comparing the cost of your existing Oracle databases using EBS resources with FSx for ONTAP. Click "Try it" to select specific EBS database hosts to compare with FSx for ONTAP in the calculator.',
+    'databases.explore-savings.calculate-savings-card-fsxw-description':
+        'We can calculate how much you\'ll save by comparing the cost of your existing SQL Servers using FSx for Windows File Server resources with FSx for ONTAP. Click "Try it" to select specific FSx for Windows database hosts to compare with FSx for ONTAP in the calculator.',
+    'databases.explore-savings.calculate-savings-card-ebs-no-account-description':
+        "We can calculate how much you'll save by comparing the cost of your existing SQL Servers using EBS resources with FSx for ONTAP. Add your credentials, go back to Explore savings, and select the Microsoft SQL Server host you'd like to compare.",
+    'databases.explore-savings.calculate-savings-card-oracle-ebs-no-account-description':
+        "We can calculate how much you'll save by comparing the cost of your existing Oracle databases using EBS resources with FSx for ONTAP. Add your credentials, go back to Explore savings, and select the Oracle database host you'd like to compare.",
+    'databases.explore-savings.calculate-savings-card-fsxw-no-account-description':
+        "We can calculate how much you'll save by comparing the cost of your existing SQL Servers using FSx for Windows resources with FSx for ONTAP. Add your credentials, go back to Explore savings, and select the Microsoft SQL Server host you'd like to compare."
+};
+
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({ t: (key: string) => TRANSLATIONS[key] || key })
+}));
+
 const mockPostBlueXPMessage = vi.fn();
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, className, variant }: any) => (

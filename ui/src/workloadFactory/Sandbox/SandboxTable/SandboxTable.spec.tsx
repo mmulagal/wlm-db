@@ -33,13 +33,13 @@ const {
     mockSetDialog: vi.fn(),
     mockCloseDialog: vi.fn(),
     mockPostBlueXPMessage: vi.fn(),
-    mockDeleteSandboxApi: vi.fn().mockResolvedValue({ data: { jobId: 'job123' } }),
-    mockGetJobDetailApi: vi.fn().mockResolvedValue({ data: { status: 'COMPLETED' } }),
-    mockGetSandboxSavingsApi: vi
-        .fn()
-        .mockResolvedValue({ data: { consumedStorage: 100, savedStorage: 50, sandboxSavingsPercentage: 33 } }),
-    mockGetSplitEstimateApi: vi.fn().mockResolvedValue({ data: { volumes: [] } }),
-    mockUpdateSandboxApi: vi.fn().mockResolvedValue({ data: { jobId: 'job456' } }),
+    mockGetJobDetailApi: vi.fn(() => Promise.resolve({ data: { status: 'COMPLETED' } })),
+    mockGetSandboxSavingsApi: vi.fn(() =>
+        Promise.resolve({ data: { consumedStorage: 100, savedStorage: 50, sandboxSavingsPercentage: 33 } })
+    ),
+    mockGetSplitEstimateApi: vi.fn(() => Promise.resolve({ data: { volumes: [] } })),
+    mockUpdateSandboxApi: vi.fn(() => Promise.resolve({ data: { jobId: 'job456' } })),
+    mockDeleteSandboxApi: vi.fn(() => Promise.resolve({ data: { jobId: 'job123' } })),
     mockSplitSandboxApi: vi.fn().mockResolvedValue({ data: { jobId: 'job789' } }),
     mockCheckIntegrityApi: vi.fn().mockResolvedValue({ data: { jobId: 'job101' } }),
     mockGetConnectionInfoApi: vi.fn().mockResolvedValue({ data: { host: 'localhost', port: 5432 } }),
@@ -402,6 +402,8 @@ describe('SandboxTable', () => {
     });
 
     afterEach(() => {
+        // Job-polling intervals may still be pending from real-timer tests; clear under fake timers.
+        vi.useFakeTimers();
         vi.clearAllTimers();
         vi.useRealTimers();
     });
@@ -1143,6 +1145,7 @@ describe('SandboxTable', () => {
                 }
             }
 
+            vi.clearAllTimers();
             vi.useRealTimers();
         });
 
@@ -1180,6 +1183,7 @@ describe('SandboxTable', () => {
                 }
             }
 
+            vi.clearAllTimers();
             vi.useRealTimers();
         });
 
@@ -1214,6 +1218,7 @@ describe('SandboxTable', () => {
                 }
             }
 
+            vi.clearAllTimers();
             vi.useRealTimers();
         });
 
@@ -1273,6 +1278,7 @@ describe('SandboxTable', () => {
                 }
             }
 
+            vi.clearAllTimers();
             vi.useRealTimers();
         });
     });

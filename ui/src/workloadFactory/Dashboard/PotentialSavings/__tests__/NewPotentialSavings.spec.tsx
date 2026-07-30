@@ -158,8 +158,7 @@ describe('NewPotentialSavings', () => {
                 <NewPotentialSavings />
             </Provider>
         );
-        // GENERAL.POTENTIAL_SAVINGS
-        expect(screen.getAllByText(/Potential Savings|POTENTIAL_SAVINGS/i).length).toBeGreaterThanOrEqual(0);
+        expect(screen.getAllByText('databases.dashboard.potential-savings').length).toBeGreaterThan(0);
     });
 
     it('renders explore savings button', () => {
@@ -336,7 +335,7 @@ describe('NewPotentialSavings', () => {
             expect(values).toContain('2'); // fsxw count
         });
 
-        it('excludes non-MSSQL hosts from esCount totals', () => {
+        it('counts Oracle hosts separately for EBS and alongside MSSQL for FSxW', () => {
             render(
                 <Provider
                     store={makeStore({
@@ -352,12 +351,11 @@ describe('NewPotentialSavings', () => {
                     <NewPotentialSavings />
                 </Provider>
             );
-            // Non-MSSQL hosts must not be counted → ebs = 0, fsxw = 0
+            // Oracle EBS host → oracleEbs = 1; Oracle FSxW host → fsxw = 1 (rolled into sql-server-hosts card)
             const semiboldTypography = screen.getAllByTestId('typography-Semibold_20');
             const values = semiboldTypography.map(el => el.textContent);
-            expect(values).not.toContain('1');
-            expect(values).not.toContain('2');
-            expect(values.every(v => v === '0')).toBe(true);
+            expect(values).toContain('1'); // oracle-hosts card (oracleEbs)
+            expect(values).toContain('1'); // sql-server-hosts card (mssqlEbs + fsxw)
         });
 
         it('counts only MSSQL hosts when mixed with non-MSSQL hosts', () => {

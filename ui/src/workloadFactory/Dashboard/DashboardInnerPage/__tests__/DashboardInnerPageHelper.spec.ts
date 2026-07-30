@@ -140,7 +140,8 @@ vi.mock('../../../../utils/consts', () => ({
         NOT_APPLICABLE: 'not-applicable'
     },
     GETWELL_DISPLAY: {
-        NOT_APPLICABLE: 'Not applicable'
+        NOT_APPLICABLE: 'Not applicable',
+        UNAVAILABLE: 'Unavailable'
     },
     WELL_ARCHITECTED_STATUS: {
         NOT_APPLICABLE: 'not-applicable',

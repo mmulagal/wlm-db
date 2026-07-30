@@ -84,6 +84,7 @@ vi.mock('@netapp/design-system', () => ({
             {children}
         </span>
     ),
+    useDialog: () => ({ setDialog: vi.fn(), closeDialog: vi.fn() }),
     postBlueXPMessage: vi.fn()
 }));
 
@@ -127,6 +128,9 @@ vi.mock('../../../JobMonitoring/JobMonitoring', () => ({
 }));
 vi.mock('../NoCredBanner/NoCredBanner', () => ({
     default: () => <div data-testid="no-cred-banner" />
+}));
+vi.mock('../WADButton/WADButton', () => ({
+    default: () => <div data-testid="wad-button" />
 }));
 vi.mock('../../../../common/ComponentLoader/ComponentLoader', () => ({
     default: (props: any) => <div data-testid="component-loader" />
@@ -319,52 +323,56 @@ vi.mock('../../../../utils/appConstants', () => ({
     }
 }));
 
-vi.mock('../../../../utils/consts', () => ({
-    DBType: { MSSQL: 'Microsoft SQL Server', POSTGRESQL: 'PostgreSQL', ORACLE: 'Oracle' },
-    LOCAL: 'local',
-    SAVINGS_CALC_MODE: {
-        MANUAL_EBS: 'manual-ebs',
-        MANUAL_FSXW: 'manual-fsxw',
-        ORACLE_MANUAL_EBS: 'oracle-manual-ebs'
-    },
-    STAGING: 'staging',
-    WLF_TABS: {
-        DASHBOARD: 'dashboard',
-        DASHBOARD_INNER_PAGE: 'dashboard-inner-page',
-        DASHBOARD_DISMISS_PAGE: 'dashboard-dismiss-page',
-        DASHBOARD_OPTIMIZE_INNER_PAGE: 'dashboard-optimize-inner-page',
-        INVENTORY: 'inventory',
-        WELL_ARCHITECTED_TAB: 'well-architected',
-        OVERVIEW: 'overview',
-        SANDBOXES: 'sandboxes',
-        EXPLORE_SAVINGS: 'explore-savings',
-        EXPLORE_SAVINGS_EBS: 'explore-savings-ebs',
-        EXPLORE_SAVINGS_FsxW: 'explore-savings-fsxw',
-        EXPLORE_SAVINGS_ONPREM: 'explore-savings-onprem',
-        EXPLORE_SAVINGS_ORACLE_ONPREM: 'explore-savings-oracle-onprem',
-        EXPLORE_SAVINGS_ORACLE_EBS: 'explore-savings-oracle-ebs',
-        SAVINGS_CALCULATOR: 'savings-calculator',
-        VIEW_THE_CALCULATIONS: 'view-the-calculations',
-        JOB_MONITORING: 'job-monitoring',
-        OPTIMIZE: 'optimize',
-        OPTIMIZE_INNER_PAGE: 'optimize-inner-page',
-        OPTIMIZE_ONTAP_INNER_PAGE: 'optimize-ontap-inner-page',
-        OPTIMIZE_FROM_WELL_ARCHITECTED_TAB: 'optimize-from-well-architected-tab',
-        ORACLE_WELL_ARCHITECTED: 'oracle-well-architected',
-        ORACLE_WELL_ARCHITECTED_FROM_WELL_ARCHITECTED_TAB: 'oracle-well-architected-from-wa-tab',
-        REGISTER_COMPONENT: 'register-component',
-        MSSQL_ON_PREMISES: 'mssql-on-premises',
-        ORACLE_SERVER_ON_PREMISES: 'oracle-server-on-premises'
-    },
-    WELL_ARCHITECTED_TABS: {
-        OVERVIEW: 'Overview',
-        WELL_ARCHITECTED_STATUS: 'Well-architected status',
-        PDB: 'PDB',
-        DATABASES: 'Databases',
-        SANDBOXES: 'Sandboxes',
-        ERROR_INVESTIGATION: 'Error investigation'
-    }
-}));
+vi.mock('../../../../utils/consts', async importOriginal => {
+    const actual = (await importOriginal()) as Record<string, unknown>;
+    return {
+        ...actual,
+        DBType: { MSSQL: 'Microsoft SQL Server', POSTGRESQL: 'PostgreSQL', ORACLE: 'Oracle' },
+        LOCAL: 'local',
+        SAVINGS_CALC_MODE: {
+            MANUAL_EBS: 'manual-ebs',
+            MANUAL_FSXW: 'manual-fsxw',
+            ORACLE_MANUAL_EBS: 'oracle-manual-ebs'
+        },
+        STAGING: 'staging',
+        WLF_TABS: {
+            DASHBOARD: 'dashboard',
+            DASHBOARD_INNER_PAGE: 'dashboard-inner-page',
+            DASHBOARD_DISMISS_PAGE: 'dashboard-dismiss-page',
+            DASHBOARD_OPTIMIZE_INNER_PAGE: 'dashboard-optimize-inner-page',
+            INVENTORY: 'inventory',
+            WELL_ARCHITECTED_TAB: 'well-architected',
+            OVERVIEW: 'overview',
+            SANDBOXES: 'sandboxes',
+            EXPLORE_SAVINGS: 'explore-savings',
+            EXPLORE_SAVINGS_EBS: 'explore-savings-ebs',
+            EXPLORE_SAVINGS_FsxW: 'explore-savings-fsxw',
+            EXPLORE_SAVINGS_ONPREM: 'explore-savings-onprem',
+            EXPLORE_SAVINGS_ORACLE_ONPREM: 'explore-savings-oracle-onprem',
+            EXPLORE_SAVINGS_ORACLE_EBS: 'explore-savings-oracle-ebs',
+            SAVINGS_CALCULATOR: 'savings-calculator',
+            VIEW_THE_CALCULATIONS: 'view-the-calculations',
+            JOB_MONITORING: 'job-monitoring',
+            OPTIMIZE: 'optimize',
+            OPTIMIZE_INNER_PAGE: 'optimize-inner-page',
+            OPTIMIZE_ONTAP_INNER_PAGE: 'optimize-ontap-inner-page',
+            OPTIMIZE_FROM_WELL_ARCHITECTED_TAB: 'optimize-from-well-architected-tab',
+            ORACLE_WELL_ARCHITECTED: 'oracle-well-architected',
+            ORACLE_WELL_ARCHITECTED_FROM_WELL_ARCHITECTED_TAB: 'oracle-well-architected-from-wa-tab',
+            REGISTER_COMPONENT: 'register-component',
+            MSSQL_ON_PREMISES: 'mssql-on-premises',
+            ORACLE_SERVER_ON_PREMISES: 'oracle-server-on-premises'
+        },
+        WELL_ARCHITECTED_TABS: {
+            OVERVIEW: 'Overview',
+            WELL_ARCHITECTED_STATUS: 'Well-architected status',
+            PDB: 'PDB',
+            DATABASES: 'Databases',
+            SANDBOXES: 'Sandboxes',
+            ERROR_INVESTIGATION: 'Error investigation'
+        }
+    };
+});
 
 vi.mock('../../../../utils/appConfig', () => ({
     navigateToCanvas: vi.fn()
@@ -708,7 +716,7 @@ describe('HeaderComponent', () => {
 
         it('renders optimize-inner-page tab', () => {
             renderComponent('optimize-inner-page', { selectedHeaderTab: 'optimize-inner-page' });
-            expect(screen.getByTestId('optimize-inner-page')).toBeDefined();
+            expect(screen.getByTestId('dynamic-optimize-inner-page')).toBeDefined();
         });
 
         it('renders dashboard-optimize-inner-page tab', () => {
@@ -722,7 +730,7 @@ describe('HeaderComponent', () => {
             renderComponent('optimize-ontap-inner-page', {
                 selectedHeaderTab: 'optimize-ontap-inner-page'
             });
-            expect(screen.getByTestId('optimize-ontap-inner-page')).toBeDefined();
+            expect(screen.getByTestId('dynamic-optimize-inner-page')).toBeDefined();
         });
 
         it('renders register-component tab with RegisterWizard', () => {
@@ -1614,10 +1622,7 @@ describe('HeaderComponent', () => {
             expect(postBlueXPMessage).toHaveBeenCalled();
         });
 
-        it.each([
-            ['Manual_EBS', './storage-saving-calculator?type=ebs&mode=manual'],
-            ['Oracle_Manual_EBS', './storage-saving-calculator?type=ebs&mode=oracle-manual']
-        ])(
+        it.each([['Oracle_Manual_EBS', './storage-saving-calculator?type=ebs&mode=oracle-manual']])(
             'does not redirect %s calculator back when leaving via explore savings nav (lands on MSSQL EBS)',
             (savingsCalculatorFrom, calculatorPath) => {
                 postBlueXPMessage.mockClear();

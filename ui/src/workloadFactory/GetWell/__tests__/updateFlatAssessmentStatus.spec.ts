@@ -65,7 +65,8 @@ vi.mock('../../WellArchitectedTab/assessmentFormatUtils', () => ({
     getConfigStateList: vi.fn(),
     getConfigStatsBucket: vi.fn(),
     hasConfigStats: vi.fn(),
-    resolveConfigDisplayName: vi.fn()
+    resolveConfigDisplayName: vi.fn(),
+    isExcludedFromOptimizationCountForCard: vi.fn(() => false)
 }));
 
 vi.mock('../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils', () => ({

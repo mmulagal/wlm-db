@@ -54,29 +54,40 @@ vi.mock('../../../WellArchitectedTab/WellArchitectedTabUtils', () => ({
     engineTypeBasedResourceStr: (_type: any, mssql: string, oracle: string) => mssql
 }));
 
+vi.mock('../../../WellArchitectedTab/assessmentFormatUtils', () => ({
+    findFlatConfigItem: (_hosts: any, configId: string) => {
+        const names: Record<string, string> = {
+            'clone-management': 'Clone management',
+            crr: 'Cross-Region Replication (CRR)',
+            'performance-tier': 'Storage tier'
+        };
+        return configId ? { id: configId, name: names[configId] ?? configId, categories: [] } : undefined;
+    }
+}));
+
 vi.mock('../../../../store/workloadFactory/inventoryV2Slice', () => ({
     setSelectedHeaderTab: vi.fn((val: any) => ({ type: 'setSelectedHeaderTab', payload: val }))
 }));
 
-vi.mock('../../../../utils/consts', () => ({
-    ASSESSMENT_CONFIG_NAMES: {
-        CRR: 'CRR',
-        CLONE_MANAGEMENT: 'Clone management'
-    },
-    WLF_TABS: {
-        DASHBOARD: 'dashboard',
-        DASHBOARD_INNER_PAGE: 'dashboardInnerPage',
-        DASHBOARD_OPTIMIZE_INNER_PAGE: 'dashboardOptimizeInnerPage',
-        WELL_ARCHITECTED_TAB: 'wellArchitectedTab'
-    }
-}));
+vi.mock('../../../../utils/consts', async importOriginal => {
+    const actual = (await importOriginal()) as Record<string, unknown>;
+    return {
+        ...actual,
+        WLF_TABS: {
+            DASHBOARD: 'dashboard',
+            DASHBOARD_INNER_PAGE: 'dashboardInnerPage',
+            DASHBOARD_OPTIMIZE_INNER_PAGE: 'dashboardOptimizeInnerPage',
+            WELL_ARCHITECTED_TAB: 'wellArchitectedTab'
+        }
+    };
+});
 
 const createMockStore = (overrides: any = {}) =>
     configureStore({
         reducer: {
             databaseHome: (
                 state = {
-                    selectedConfig: 'Clone management',
+                    selectedConfig: 'clone-management',
                     ...overrides.databaseHome
                 }
             ) => state,
@@ -84,6 +95,13 @@ const createMockStore = (overrides: any = {}) =>
                 state = {
                     configEngineType: 'MSSQL',
                     ...overrides.getWellOptimize
+                }
+            ) => state,
+            inventoryV2: (
+                state = {
+                    allmssqlHostAssessmentData: [],
+                    allOracleHostAssessmentData: [],
+                    ...overrides.inventoryV2
                 }
             ) => state
         }
@@ -131,7 +149,7 @@ describe('DashboardOptimizeInnerPage', () => {
     });
 
     it('renders CloneTabs for Clone management config', () => {
-        const store = createMockStore({ databaseHome: { selectedConfig: 'Clone management' } });
+        const store = createMockStore({ databaseHome: { selectedConfig: 'clone-management' } });
         render(
             <Provider store={store}>
                 <DashboardOptimizeInnerPage />
@@ -141,7 +159,7 @@ describe('DashboardOptimizeInnerPage', () => {
     });
 
     it('does NOT render CloneTabs for non-clone config', () => {
-        const store = createMockStore({ databaseHome: { selectedConfig: 'Storage tier' } });
+        const store = createMockStore({ databaseHome: { selectedConfig: 'performance-tier' } });
         render(
             <Provider store={store}>
                 <DashboardOptimizeInnerPage />
@@ -151,7 +169,7 @@ describe('DashboardOptimizeInnerPage', () => {
     });
 
     it('shows CRR as Cross-Region Replication', () => {
-        const store = createMockStore({ databaseHome: { selectedConfig: 'Cross-Region Replication (CRR)' } });
+        const store = createMockStore({ databaseHome: { selectedConfig: 'crr' } });
         render(
             <Provider store={store}>
                 <DashboardOptimizeInnerPage />

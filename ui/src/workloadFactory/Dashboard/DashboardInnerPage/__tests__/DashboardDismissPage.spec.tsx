@@ -237,6 +237,7 @@ vi.mock('../../../InventoryV2/InventoryUtilsV2', () => ({
 }));
 
 vi.mock('../../../../utils/consts', () => ({
+    DBType: { MSSQL: 'Microsoft SQL Server', POSTGRESQL: 'PostgreSQL', ORACLE: 'Oracle' },
     ASSESSMENT_CONFIG_NAMES: {
         STORAGE_TIER: 'Storage tier',
         FILE_SYSTEM_HEADROOM: 'File system headroom',
@@ -657,14 +658,8 @@ describe('DashboardDismissPage', () => {
                                 databaseInstanceName: 'Instance1',
                                 error: null,
                                 assessments: {
-                                    lastAssessmentTimestamp: '2026-01-01',
-                                    dismissedConfigurations: {
-                                        storage: {
-                                            sizing: [
-                                                { configurationName: 'performance-tier', configState: 'DISMISSED' }
-                                            ]
-                                        }
-                                    }
+                                    metadata: { lastAssessmentTimestamp: '2026-01-01' },
+                                    dismissedConfigurations: [{ id: 'performance-tier', configState: 'DISMISSED' }]
                                 }
                             }
                         ]
@@ -733,42 +728,27 @@ describe('DashboardDismissPage', () => {
                                     databaseInstanceName: 'Inst1',
                                     error: null,
                                     assessments: {
-                                        lastAssessmentTimestamp: '2026-01-01',
-                                        dismissedConfigurations: {
-                                            storage: {
-                                                sizing: [
-                                                    { configurationName: 'performance-tier', configState: 'DISMISSED' },
-                                                    { configurationName: 'headroom', configState: 'DISMISSED' },
-                                                    { configurationName: 'log-drive-size', configState: 'DISMISSED' },
-                                                    { configurationName: 'tempdb-drive-size', configState: 'DISMISSED' }
-                                                ],
-                                                layout: [
-                                                    {
-                                                        configurationName: 'data-files-location',
-                                                        configState: 'DISMISSED'
-                                                    },
-                                                    {
-                                                        configurationName: 'log-files-location',
-                                                        configState: 'DISMISSED'
-                                                    },
-                                                    {
-                                                        configurationName: 'tempdb-files-location',
-                                                        configState: 'DISMISSED'
-                                                    }
-                                                ]
-                                            },
-                                            compute: { configState: 'ACTIVE' },
-                                            maxDOP: { configState: 'ACTIVE' },
-                                            mssqlPatch: { configState: 'ACTIVE' },
-                                            license: { configState: 'ACTIVE' },
-                                            rssConfig: { configState: 'ACTIVE' },
-                                            hostOsPatch: { configState: 'ACTIVE' },
-                                            snapshotPolicy: { configState: 'ACTIVE' },
-                                            awsBackup: { configState: 'ACTIVE' },
-                                            clone: { configState: 'ACTIVE' },
-                                            crr: { configState: 'ACTIVE' },
-                                            mtuAlignment: { configState: 'ACTIVE' }
-                                        }
+                                        metadata: { lastAssessmentTimestamp: '2026-01-01' },
+                                        dismissedConfigurations: [
+                                            { id: 'performance-tier', configState: 'DISMISSED' },
+                                            { id: 'headroom', configState: 'DISMISSED' },
+                                            { id: 'log-drive-size', configState: 'DISMISSED' },
+                                            { id: 'tempdb-drive-size', configState: 'DISMISSED' },
+                                            { id: 'data-files-location', configState: 'DISMISSED' },
+                                            { id: 'log-files-location', configState: 'DISMISSED' },
+                                            { id: 'tempdb-files-location', configState: 'DISMISSED' },
+                                            { id: 'compute-rightsizing', configState: 'ACTIVE' },
+                                            { id: 'maxdop', configState: 'ACTIVE' },
+                                            { id: 'mssql-patch', configState: 'ACTIVE' },
+                                            { id: 'sql-license', configState: 'ACTIVE' },
+                                            { id: 'rss-config', configState: 'ACTIVE' },
+                                            { id: 'host-os-patch', configState: 'ACTIVE' },
+                                            { id: 'snapshot-policy', configState: 'ACTIVE' },
+                                            { id: 'backup-configuration', configState: 'ACTIVE' },
+                                            { id: 'clone-management', configState: 'ACTIVE' },
+                                            { id: 'crr', configState: 'ACTIVE' },
+                                            { id: 'mtu-alignment', configState: 'ACTIVE' }
+                                        ]
                                     }
                                 }
                             ]
@@ -819,19 +799,19 @@ describe('DashboardDismissPage', () => {
                                     databaseInstanceName: 'Inst1',
                                     error: null,
                                     assessments: {
-                                        dismissedConfigurations: {
-                                            compute: { configState: 'ACTIVE' },
-                                            maxDOP: { configState: 'ACTIVE' },
-                                            mssqlPatch: { configState: 'ACTIVE' },
-                                            license: { configState: 'ACTIVE' },
-                                            rssConfig: { configState: 'ACTIVE' },
-                                            hostOsPatch: { configState: 'ACTIVE' },
-                                            snapshotPolicy: { configState: 'ACTIVE' },
-                                            awsBackup: { configState: 'ACTIVE' },
-                                            clone: { configState: 'ACTIVE' },
-                                            crr: { configState: 'ACTIVE' },
-                                            mtuAlignment: { configState: 'ACTIVE' }
-                                        }
+                                        dismissedConfigurations: [
+                                            { id: 'compute-rightsizing', configState: 'ACTIVE' },
+                                            { id: 'maxdop', configState: 'ACTIVE' },
+                                            { id: 'mssql-patch', configState: 'ACTIVE' },
+                                            { id: 'sql-license', configState: 'ACTIVE' },
+                                            { id: 'rss-config', configState: 'ACTIVE' },
+                                            { id: 'host-os-patch', configState: 'ACTIVE' },
+                                            { id: 'snapshot-policy', configState: 'ACTIVE' },
+                                            { id: 'backup-configuration', configState: 'ACTIVE' },
+                                            { id: 'clone-management', configState: 'ACTIVE' },
+                                            { id: 'crr', configState: 'ACTIVE' },
+                                            { id: 'mtu-alignment', configState: 'ACTIVE' }
+                                        ]
                                     }
                                 }
                             ]

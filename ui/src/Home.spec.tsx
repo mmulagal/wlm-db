@@ -216,7 +216,7 @@ describe('Home', () => {
 
         it('should render explore savings EBS route', () => {
             render(
-                <MemoryRouter initialEntries={['/databases/explore-savings']}>
+                <MemoryRouter initialEntries={['/databases/explore-savings/explore-savings-ebs']}>
                     <Home />
                 </MemoryRouter>
             );

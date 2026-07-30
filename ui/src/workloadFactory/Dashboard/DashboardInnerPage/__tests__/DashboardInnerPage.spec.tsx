@@ -186,7 +186,9 @@ vi.mock('../DashboardInnerPageHelper', () => ({
     getAssessmentStatusConsistency: vi.fn(() => false)
 }));
 
-const optimizeMutation = () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))];
+const { optimizeMutation } = vi.hoisted(() => ({
+    optimizeMutation: () => [vi.fn(() => Promise.resolve({ data: { jobId: 'j1' } }))]
+}));
 
 vi.mock('../../../../utils/apiService', () => ({
     useLazyGetSubTaskListQuery: () => [vi.fn()],

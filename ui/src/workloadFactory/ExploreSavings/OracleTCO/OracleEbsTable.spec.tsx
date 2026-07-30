@@ -131,6 +131,7 @@ const makeOracleEbsHost = (id: number, overrides: any = {}) => ({
     allocatedCapacityText: '500 GiB',
     azType: 'Single AZ',
     action: 'EXPLORE_SAVINGS',
+    hostManageReadiness: { extensiveRunPermission: true },
     ...overrides
 });
 

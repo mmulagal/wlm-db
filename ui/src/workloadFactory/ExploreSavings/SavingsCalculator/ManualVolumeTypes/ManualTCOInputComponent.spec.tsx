@@ -36,8 +36,19 @@ vi.mock('./ManualTCOInputComponent.module.scss', () => ({
     default: { mainSection: 'mainSection', row: 'row', deploymentModelWidth: 'deploymentModelWidth' }
 }));
 
+const TRANSLATIONS: Record<string, string> = {
+    'databases.explore-savings.number-of-volumes': 'Number of volumes',
+    'databases.explore-savings.storage-amount-per-volume': 'Storage amount per volume (GiB)',
+    'databases.explore-savings.storage-max-capacity-io2': 'Maximum capacity allowed: 64 TiB.',
+    'databases.explore-savings.storage-max-capacity-default': 'Maximum capacity allowed: 16 TiB.',
+    'databases.explore-savings.provisioned-iops-per-volume': 'Provisioned IOPS per volume',
+    'databases.explore-savings.iops-disabled-tooltip': "IOPS doesn't apply to this disk type volumes.",
+    'databases.explore-savings.throughput-mbs-label': 'Throughput (MB/s)',
+    'databases.explore-savings.throughput-disabled-tooltip': "Throughput doesn't apply to this disk type volumes."
+};
+
 vi.mock('react-i18next', () => ({
-    useTranslation: () => ({ t: (key: string) => key })
+    useTranslation: () => ({ t: (key: string) => TRANSLATIONS[key] || key })
 }));
 
 vi.mock('../../../../store/workloadFactory/exploreSavingsSlice', () => ({

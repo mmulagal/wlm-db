@@ -46,7 +46,8 @@ const createMockStore = (
 ) =>
     configureStore({
         reducer: {
-            exploreSavings: () => ({ selectedTCOHostType, selectedOracleExploreSavingsTab })
+            exploreSavings: () => ({ selectedTCOHostType, selectedOracleExploreSavingsTab }),
+            auth: () => ({ isWorkloadFactory: false })
         }
     });
 
@@ -318,7 +319,7 @@ describe('TCOBanner', () => {
 
     describe('Auto-Rotation (useEffect with setInterval)', () => {
         it('should auto-rotate from slide 0 to slide 1 after 20 seconds', () => {
-            renderComponent();
+            renderComponent(DBType.ORACLE);
             // Initially on slide 0
             expect(screen.getByTestId('oracle-tco-svg')).toBeTruthy();
 
@@ -332,7 +333,7 @@ describe('TCOBanner', () => {
         });
 
         it('should auto-rotate from slide 1 back to slide 0 after another 20 seconds', () => {
-            renderComponent();
+            renderComponent(DBType.ORACLE);
 
             // Advance to slide 1
             act(() => {
@@ -349,7 +350,7 @@ describe('TCOBanner', () => {
 
         it('should clear interval on unmount', () => {
             const clearIntervalSpy = vi.spyOn(global, 'clearInterval');
-            const { unmount } = renderComponent();
+            const { unmount } = renderComponent(DBType.ORACLE);
 
             unmount();
             expect(clearIntervalSpy).toHaveBeenCalled();
@@ -369,7 +370,7 @@ describe('TCOBanner', () => {
         });
 
         it('should swap fill colors when on slide 1', () => {
-            const { container } = renderComponent();
+            const { container } = renderComponent(DBType.ORACLE);
 
             // Navigate to slide 1
             act(() => {

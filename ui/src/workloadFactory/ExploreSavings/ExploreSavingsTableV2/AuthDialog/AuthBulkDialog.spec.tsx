@@ -140,12 +140,14 @@ const createMockStore = (opts: BulkStoreOptions = {}) => {
         rowsRequiringAuthBulk,
         bulkAuthStatus
     };
+    const authState = { isGovAccount: false };
 
     return configureStore({
         reducer: {
             exploreSavings: (state = exploreSavingsState) => state,
             dialogComponent: (state = dialogComponentState) => state,
-            exploreSavingsBulk: (state = exploreSavingsBulkState) => state
+            exploreSavingsBulk: (state = exploreSavingsBulkState) => state,
+            auth: (state = authState) => state
         }
     });
 };
@@ -947,11 +949,13 @@ describe('AuthBulkDialog', () => {
                 rowsRequiringAuthBulk: [],
                 bulkAuthStatus: undefined
             };
+            const authState = { isGovAccount: false };
             const store = configureStore({
                 reducer: {
                     exploreSavings: (state = exploreSavingsState) => state,
                     dialogComponent: (state = dialogComponentState) => state,
-                    exploreSavingsBulk: (state = exploreSavingsBulkState) => state
+                    exploreSavingsBulk: (state = exploreSavingsBulkState) => state,
+                    auth: (state = authState) => state
                 }
             });
 

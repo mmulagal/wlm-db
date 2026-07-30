@@ -681,7 +681,9 @@ describe('ExploreSavingsTableV2', () => {
             mockShouldAuthDialogOpen.mockReturnValue(false);
             renderComponent();
             const col = capturedUseTableOpts.columns.find((c: any) => c.id === '11');
-            const { container } = render(col.renderCell(null, { name: 'TestHost' }));
+            const { container } = render(
+                col.renderCell(null, { name: 'TestHost', hostManageReadiness: { extensiveRunPermission: true } })
+            );
 
             fireEvent.click(container.firstChild as HTMLElement);
             expect(mockOnClickESHost).toHaveBeenCalled();
@@ -691,7 +693,9 @@ describe('ExploreSavingsTableV2', () => {
             mockShouldAuthDialogOpen.mockReturnValue(true);
             renderComponent();
             const col = capturedUseTableOpts.columns.find((c: any) => c.id === '11');
-            const { container } = render(col.renderCell(null, { name: 'AuthHost' }));
+            const { container } = render(
+                col.renderCell(null, { name: 'AuthHost', hostManageReadiness: { extensiveRunPermission: true } })
+            );
 
             fireEvent.click(container.firstChild as HTMLElement);
             expect(mockSetDialog).toHaveBeenCalledTimes(1);
@@ -719,7 +723,9 @@ describe('ExploreSavingsTableV2', () => {
             mockShouldAuthDialogOpen.mockReturnValue(true);
             renderComponent();
             const col = capturedUseTableOpts.columns.find((c: any) => c.id === '11');
-            const { container } = render(col.renderCell(null, { name: 'H1' }));
+            const { container } = render(
+                col.renderCell(null, { name: 'H1', hostManageReadiness: { extensiveRunPermission: true } })
+            );
             fireEvent.click(container.firstChild as HTMLElement);
 
             const { getByTestId } = renderCapturedDialog();
@@ -734,7 +740,9 @@ describe('ExploreSavingsTableV2', () => {
             mockShouldAuthDialogOpen.mockReturnValue(true);
             renderComponent();
             const col = capturedUseTableOpts.columns.find((c: any) => c.id === '11');
-            const { container } = render(col.renderCell(null, { name: 'H1' }));
+            const { container } = render(
+                col.renderCell(null, { name: 'H1', hostManageReadiness: { extensiveRunPermission: true } })
+            );
             fireEvent.click(container.firstChild as HTMLElement);
 
             const { getByTestId } = renderCapturedDialog();
@@ -791,7 +799,9 @@ describe('ExploreSavingsTableV2', () => {
             mockShouldAuthDialogOpen.mockReturnValue(true);
             renderComponent({ selectedExploreSavingsTab: WLF_TABS.MSSQL_FSX_FOR_WINDOWS });
             const col = capturedUseTableOpts.columns.find((c: any) => c.id === '11');
-            const { container } = render(col.renderCell(null, { name: 'H1' }));
+            const { container } = render(
+                col.renderCell(null, { name: 'H1', hostManageReadiness: { extensiveRunPermission: true } })
+            );
             fireEvent.click(container.firstChild as HTMLElement);
 
             const { getByTestId } = renderCapturedDialog();

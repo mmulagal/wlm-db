@@ -93,12 +93,33 @@ vi.mock('../../../../utils/appConstants', () => ({
 }));
 
 vi.mock('../../../../utils/consts', () => ({
-    SAVINGS_CALC_MODE: { MANUAL_EBS: 'Manual_EBS', MANUAL_FSXW: 'Manual_FSXW' },
+    SAVINGS_CALC_MODE: { MANUAL_EBS: 'Manual_EBS', MANUAL_FSXW: 'Manual_FSXW', ORACLE_MANUAL_EBS: 'Oracle_Manual_EBS' },
+    SQL_SERVER_EDITIONS: ['SQL server Standard', 'SQL server Enterprise', 'SQL server Web', 'SQL server Developer'],
+    ORACLE_EDITIONS: ['Enterprise Edition', 'Standard Edition 2'],
+    DATABASE_DEPLOYMENT_MODE: {
+        FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
+        STANDALONE: 'Standalone',
+        AOAG: 'Always on availability group',
+        DATAGUARD: 'Data Guard'
+    },
+    SQL_DEPLOYMENT_MODE: { FAILOVER_CLUSTER_VALUE_CAPS: 'FCI' },
     SNAPSHOT_FREQUENCY: [
         { label: 'No snapshot storage', value: 'NoSnapShotStorage' },
         { label: 'Hourly', value: 'Hourly' },
         { label: 'Daily', value: 'Daily' }
     ]
+}));
+
+const TRANSLATIONS: Record<string, string> = {
+    'databases.explore-savings.sql-server-edition': 'SQL server edition',
+    'databases.explore-savings.oracle-edition-label': 'Database edition',
+    'databases.explore-savings.oracle-manual-ebs-description':
+        'Estimate the cost of your Oracle databases on FSx for ONTAP by configuring the details of your current EBS environment.',
+    'databases.explore-savings.monthly-oracle-cost': 'Monthly Oracle license cost'
+};
+
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({ t: (key: string) => TRANSLATIONS[key] || key })
 }));
 
 const makeStore = (overrides: any = {}) => {

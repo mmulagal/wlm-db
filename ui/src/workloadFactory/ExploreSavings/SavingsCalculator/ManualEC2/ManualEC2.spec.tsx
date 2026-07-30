@@ -7,6 +7,15 @@ import ManualEC2 from './ManualEC2';
 import { GENERAL } from '../../../../utils/appConstants';
 import { DEAFULT_INSTANCE_VALUE } from '../../../../utils/consts';
 
+const TRANSLATIONS: Record<string, string> = {
+    'databases.explore-savings.manual-machine-description': 'Machine description',
+    'databases.explore-savings.manual-instance-type': 'Instance type'
+};
+
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({ t: (key: string) => TRANSLATIONS[key] || key })
+}));
+
 vi.mock('@netapp/design-system', () => ({
     DsTypography: ({ children, variant }: any) => <span data-variant={variant}>{children}</span>,
     TextField: ({ label, onChange, value, className, isOptional }: any) => (

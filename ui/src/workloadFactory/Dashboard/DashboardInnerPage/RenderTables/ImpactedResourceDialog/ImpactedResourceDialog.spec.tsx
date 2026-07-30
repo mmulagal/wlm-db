@@ -502,12 +502,9 @@ describe('ImpactedResourceDialog', () => {
                 ]
             };
             render(<ImpactedResourceDialog data={data as any} />);
-            expect(screen.getByText('CrossSubnetDelay')).toBeTruthy();
-            expect(screen.getByText('500')).toBeTruthy();
-            expect(screen.getByText('2000')).toBeTruthy();
-            expect(screen.getByText('CrossSubnetThreshold')).toBeTruthy();
-            expect(screen.getByText('5')).toBeTruthy();
-            expect(screen.getByText('20')).toBeTruthy();
+            // heartbeat-settings uses combineRows: all violationDetails aggregate into a single objectName=value row
+            expect(screen.getByText('CrossSubnetDelay=500, CrossSubnetThreshold=5')).toBeTruthy();
+            expect(screen.getByText('CrossSubnetDelay=2000, CrossSubnetThreshold=20')).toBeTruthy();
         });
 
         it('renders cluster-quorum with configuration-name / current / recommended columns', () => {
@@ -853,9 +850,9 @@ describe('ImpactedResourceDialog', () => {
                     violationDetails: [{ objectName: 'vm.swappiness', value: '60', recommended: '1' }]
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('vm.swappiness')).toBeTruthy();
-                expect(screen.getByText('60')).toBeTruthy();
-                expect(screen.getByText('1')).toBeTruthy();
+                // kernel-parameters uses combineRows: aggregates violationDetails into a single objectName=value row
+                expect(screen.getByText('vm.swappiness=60')).toBeTruthy();
+                expect(screen.getByText('vm.swappiness=1')).toBeTruthy();
             });
         });
 
@@ -1150,9 +1147,10 @@ describe('ImpactedResourceDialog', () => {
                     ]
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('databases.well-architect.ec2-instance')).toBeTruthy();
-                expect(screen.getByText('databases.well-architect.current-value')).toBeTruthy();
-                expect(screen.getByText('databases.well-architect.recommended-value')).toBeTruthy();
+                // Headers come from registry labels (English), not i18n keys
+                expect(screen.getByText('EC2 instance')).toBeTruthy();
+                expect(screen.getByText('Current value')).toBeTruthy();
+                expect(screen.getByText('Recommended value')).toBeTruthy();
                 expect(screen.getByText('i-0abc123')).toBeTruthy();
                 expect(screen.getByText('net.ipv4.tcp_timestamps=0, net.ipv4.tcp_sack=0')).toBeTruthy();
                 expect(screen.getByText('net.ipv4.tcp_timestamps=1, net.ipv4.tcp_sack=1')).toBeTruthy();
@@ -1164,9 +1162,9 @@ describe('ImpactedResourceDialog', () => {
                     objectsInViolation: ['i-0abc123', 'i-0def456']
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('databases.well-architect.ec2-instance')).toBeTruthy();
-                expect(screen.getByText('databases.well-architect.current-value')).toBeTruthy();
-                expect(screen.getByText('databases.well-architect.recommended-value')).toBeTruthy();
+                expect(screen.getByText('EC2 instance')).toBeTruthy();
+                expect(screen.getByText('Current value')).toBeTruthy();
+                expect(screen.getByText('Recommended value')).toBeTruthy();
                 expect(screen.getByText('i-0abc123')).toBeTruthy();
                 expect(screen.getByText('i-0def456')).toBeTruthy();
             });
@@ -1177,9 +1175,9 @@ describe('ImpactedResourceDialog', () => {
                     objectsInViolation: []
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('databases.well-architect.ec2-instance')).toBeTruthy();
-                expect(screen.getByText('databases.well-architect.current-value')).toBeTruthy();
-                expect(screen.getByText('databases.well-architect.recommended-value')).toBeTruthy();
+                expect(screen.getByText('EC2 instance')).toBeTruthy();
+                expect(screen.getByText('Current value')).toBeTruthy();
+                expect(screen.getByText('Recommended value')).toBeTruthy();
                 expect(screen.getAllByText('databases.general.unavailable').length).toBeGreaterThan(0);
             });
         });

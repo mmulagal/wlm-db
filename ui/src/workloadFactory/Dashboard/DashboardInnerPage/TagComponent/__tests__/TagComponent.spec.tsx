@@ -31,7 +31,7 @@ vi.mock('../../../../../assets/severity-icon.svg', () => ({
     ReactComponent: (props: any) => <svg data-testid="severity-icon" {...props} />
 }));
 
-vi.mock('./TagComponent.module.scss', () => ({
+vi.mock('../TagComponent.module.scss', () => ({
     default: {
         tagComponent: 'tagComponent',
         topSection: 'topSection',
@@ -137,14 +137,14 @@ describe('TagComponent', () => {
     describe('Custom heights', () => {
         it('applies custom tagHeight', () => {
             const { container } = render(<TagComponent categories={['Security']} tagHeight="200px" />);
-            const tagComponent = container.querySelector('.tagComponent');
-            expect(tagComponent).toHaveStyle({ height: '200px' });
+            const tagComponent = container.querySelector('.tagComponent') as HTMLElement;
+            expect(tagComponent.style.height).toBe('200px');
         });
 
         it('defaults to auto height when not specified', () => {
             const { container } = render(<TagComponent categories={['Reliability']} />);
-            const tagComponent = container.querySelector('.tagComponent');
-            expect(tagComponent).toHaveStyle({ height: 'auto' });
+            const tagComponent = container.querySelector('.tagComponent') as HTMLElement;
+            expect(tagComponent.style.height).toBe('auto');
         });
     });
 });

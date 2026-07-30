@@ -29,11 +29,6 @@ import {
     getAssessmentHostListGroupedByCategory
 } from '../DatabaseHomeUtils';
 
-import {
-    isAoagDeployment as mockIsAoagDeployment,
-    isMssqlHaDeployment as mockIsMssqlHaDeployment
-} from '../../GetWell/GetWellUtils';
-
 // ── Mock store & dependencies before importing utils ────────────────────────
 const { mockGetState } = vi.hoisted(() => ({
     mockGetState: vi.fn(() => ({
@@ -1161,55 +1156,142 @@ describe('getAssessmentHostListGroupedByCategory', () => {
     });
 });
 
-// ─── Shared test data factories ───────────────────────────────────────────────
+// ─── Shared test data factories (flat assessment model) ───────────────────────
+// Factories accept the legacy nested override shape (compute, storage.sizing/layout,
+// dismissedConfigurations as a map, highAvailability array) for test readability and
+// convert it into the flat `assessments`/`metadata`/`dismissedConfigurations` shape
+// that getAssessmentGroupedByConfigurations (and friends) consume in production.
 
-const makeOptimizedMssqlAssessment = (overrides: any = {}) => ({
-    lastAssessmentTimestamp: '2024-01-01T00:00:00Z',
-    deploymentType: 'STANDALONE',
-    compute: { status: 'OPTIMIZED', severity: 'warning' },
-    rssConfig: { status: 'OPTIMIZED', severity: 'warning' },
-    hostOsPatch: { status: 'OPTIMIZED', severity: 'critical' },
-    mtuAlignment: { status: 'OPTIMIZED', severity: 'critical' },
-    license: { status: 'OPTIMIZED', severity: 'warning' },
-    mssqlPatch: { status: 'OPTIMIZED', severity: 'warning' },
-    maxDOP: { status: 'OPTIMIZED', severity: 'warning' },
-    clone: { status: 'OPTIMIZED', severity: 'warning' },
-    snapshotPolicy: { status: 'OPTIMIZED', severity: 'warning' },
-    awsBackup: { status: 'OPTIMIZED', severity: 'warning' },
-    crr: { status: 'OPTIMIZED', severity: 'warning' },
-    storage: {
-        sizing: [
-            { name: 'performance-tier', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'headroom', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'log-drive-size', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'tempdb-drive-size', status: 'OPTIMIZED', severity: 'warning' }
-        ],
-        layout: [
-            { name: 'data-files-location', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'log-files-location', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'tempdb-files-location', status: 'OPTIMIZED', severity: 'warning' }
-        ],
-        configuration: {
-            luns: [{ name: 'lun1', status: 'OPTIMIZED' }],
-            volumes: [{ name: 'vol1', status: 'OPTIMIZED' }],
-            os: [{ name: 'os1', status: 'OPTIMIZED' }]
+const MSSQL_PATCH_KEY_TO_ID: Record<string, string> = {
+    compute: 'compute-rightsizing',
+    rssConfig: 'rss-config',
+    hostOsPatch: 'host-os-patch',
+    mtuAlignment: 'mtu-alignment',
+    license: 'sql-license',
+    mssqlPatch: 'mssql-patch',
+    maxDOP: 'maxdop',
+    clone: 'clone-management',
+    snapshotPolicy: 'snapshot-policy',
+    awsBackup: 'backup-configuration',
+    crr: 'crr'
+};
+
+const MSSQL_DEFAULT_ITEMS: Array<{ id: string; type: string; severity: string }> = [
+    { id: 'compute-rightsizing', type: 'compute', severity: 'warning' },
+    { id: 'rss-config', type: 'compute', severity: 'warning' },
+    { id: 'host-os-patch', type: 'compute', severity: 'critical' },
+    { id: 'mtu-alignment', type: 'compute', severity: 'critical' },
+    { id: 'sql-license', type: 'application', severity: 'warning' },
+    { id: 'mssql-patch', type: 'application', severity: 'warning' },
+    { id: 'maxdop', type: 'application', severity: 'warning' },
+    { id: 'clone-management', type: 'cloning', severity: 'warning' },
+    { id: 'snapshot-policy', type: 'resiliency', severity: 'warning' },
+    { id: 'backup-configuration', type: 'resiliency', severity: 'warning' },
+    { id: 'crr', type: 'resiliency', severity: 'warning' },
+    { id: 'performance-tier', type: 'storage', severity: 'warning' },
+    { id: 'headroom', type: 'storage', severity: 'warning' },
+    { id: 'log-drive-size', type: 'storage', severity: 'warning' },
+    { id: 'tempdb-drive-size', type: 'storage', severity: 'warning' },
+    { id: 'data-files-location', type: 'storage', severity: 'warning' },
+    { id: 'log-files-location', type: 'storage', severity: 'warning' },
+    { id: 'tempdb-files-location', type: 'storage', severity: 'warning' }
+];
+
+/** Converts a nested `dismissedConfigurations` override (direct key or `storage.sizing/layout` entries) to the flat array. */
+const normalizeDismissedConfigurations = (dismissed: any): any[] => {
+    if (Array.isArray(dismissed)) {
+        return dismissed;
+    }
+    if (!dismissed || typeof dismissed !== 'object') {
+        return [];
+    }
+    const entries: any[] = [];
+    Object.entries(dismissed).forEach(([key, value]: [string, any]) => {
+        if (key === 'storage' && value && typeof value === 'object') {
+            [...(value.sizing ?? []), ...(value.layout ?? [])].forEach((item: any) => {
+                entries.push({ id: item.configurationName, configState: item.configState });
+            });
+            return;
         }
-    },
-    dismissedConfigurations: {},
-    ...overrides
-});
+        if (value && typeof value === 'object' && 'configState' in value) {
+            entries.push({ id: MSSQL_PATCH_KEY_TO_ID[key] ?? key, configState: value.configState });
+        }
+    });
+    return entries;
+};
 
-const makeNotOptimizedMssqlAssessment = (overrides: any = {}) => ({
-    ...makeOptimizedMssqlAssessment(),
-    compute: { status: 'NOT_OPTIMIZED', severity: 'warning' },
-    hostOsPatch: { status: 'NOT_OPTIMIZED', severity: 'critical' },
-    storage: {
-        sizing: [{ name: 'performance-tier', status: 'NOT_OPTIMIZED', severity: 'warning' }],
-        layout: [],
-        configuration: {}
-    },
-    ...overrides
-});
+/** Applies `storage.sizing`/`storage.layout` name-matched overrides onto the flat assessment items. */
+const applyStoragePatches = (assessments: any[], storage: any) => {
+    if (!storage) {
+        return;
+    }
+    [...(storage.sizing ?? []), ...(storage.layout ?? [])].forEach((patch: any) => {
+        const idx = assessments.findIndex(item => item.id === patch.name);
+        if (idx >= 0) {
+            assessments[idx] = {
+                ...assessments[idx],
+                status: patch.status,
+                severity: patch.severity ?? assessments[idx].severity
+            };
+        }
+    });
+};
+
+const makeOptimizedMssqlAssessment = (overrides: any = {}) => {
+    const {
+        lastAssessmentTimestamp = 'lastAssessmentTimestamp' in overrides
+            ? overrides.lastAssessmentTimestamp
+            : '2024-01-01T00:00:00Z',
+        deploymentType = 'STANDALONE',
+        dismissedConfigurations = {},
+        highAvailability,
+        storage,
+        excludeIds = [],
+        extraItems = [],
+        ...configOverrides
+    } = overrides;
+
+    const assessments = MSSQL_DEFAULT_ITEMS.filter(item => !excludeIds.includes(item.id)).map(item => ({
+        ...item,
+        status: 'OPTIMIZED'
+    }));
+
+    Object.entries(configOverrides).forEach(([key, value]: [string, any]) => {
+        const id = MSSQL_PATCH_KEY_TO_ID[key];
+        const idx = id ? assessments.findIndex(item => item.id === id) : -1;
+        if (idx >= 0 && value && typeof value === 'object') {
+            assessments[idx] = { ...assessments[idx], ...value };
+        }
+    });
+
+    applyStoragePatches(assessments, storage);
+
+    if (Array.isArray(highAvailability)) {
+        highAvailability.forEach((item: any) => {
+            assessments.push({
+                id: item.name,
+                type: 'resiliency',
+                status: item.status ?? 'OPTIMIZED',
+                severity: item.severity ?? 'critical'
+            });
+        });
+    }
+
+    extraItems.forEach((item: any) => assessments.push({ status: 'OPTIMIZED', ...item }));
+
+    return {
+        metadata: { lastAssessmentTimestamp, deploymentType },
+        assessments,
+        dismissedConfigurations: normalizeDismissedConfigurations(dismissedConfigurations)
+    };
+};
+
+const makeNotOptimizedMssqlAssessment = () =>
+    makeOptimizedMssqlAssessment({
+        compute: { status: 'NOT_OPTIMIZED', severity: 'warning' },
+        hostOsPatch: { status: 'NOT_OPTIMIZED', severity: 'critical' },
+        storage: { sizing: [{ name: 'performance-tier', status: 'NOT_OPTIMIZED', severity: 'warning' }] }
+    });
 
 const makeMssqlHost = (hostId: string, assessment: any, credentialId = 'cred1', regionId = 'us-east-1') => ({
     credentialId,
@@ -1221,49 +1303,63 @@ const makeMssqlHost = (hostId: string, assessment: any, credentialId = 'cred1', 
     ]
 });
 
-const makeOracleAssessment = (overrides: any = {}) => ({
-    lastAssessmentTimestamp: '2024-01-01T00:00:00Z',
-    storageProtocol: 'NFS',
-    hostOsPatch: { status: 'OPTIMIZED', severity: 'critical' },
-    storage: {
-        sizing: [
-            { name: 'headroom', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'swap-space', status: 'OPTIMIZED', severity: 'warning' }
-        ],
-        layout: [
-            { name: 'oracle-binary-placement', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'datafiles-placement', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'controlfiles-placement', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'redologs-placement', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'templogs-placement', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'archive-placement', status: 'OPTIMIZED', severity: 'warning' }
-        ],
-        configuration: { luns: [], volumes: [], os: [] }
-    },
-    dismissedConfigurations: {},
-    ...overrides
-});
+const ORACLE_PATCH_KEY_TO_ID: Record<string, string> = {
+    hostOsPatch: 'host-os-patch'
+};
 
-const makeAsmOracleAssessment = (overrides: any = {}) => ({
-    ...makeOracleAssessment(),
-    storageProtocol: 'iSCSI',
-    storage: {
-        ...makeOracleAssessment().storage,
-        layout: [
-            { name: 'oracle-binary-placement', status: 'OPTIMIZED' },
-            { name: 'datafiles-placement', status: 'OPTIMIZED' },
-            { name: 'controlfiles-placement', status: 'OPTIMIZED' },
-            { name: 'redologs-placement', status: 'OPTIMIZED' },
-            { name: 'templogs-placement', status: 'OPTIMIZED' },
-            { name: 'archive-placement', status: 'OPTIMIZED' },
-            { name: 'data-dg-lun-layout', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'redolog-dg-lun-layout', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'fra-dg-lun-layout', status: 'OPTIMIZED', severity: 'warning' },
-            { name: 'archivelog-dg-lun-layout', status: 'OPTIMIZED', severity: 'warning' }
-        ]
-    },
-    ...overrides
-});
+const ORACLE_DEFAULT_ITEMS: Array<{ id: string; type: string; severity: string }> = [
+    { id: 'host-os-patch', type: 'compute', severity: 'critical' },
+    { id: 'headroom', type: 'storage', severity: 'warning' },
+    { id: 'swap-space', type: 'storage', severity: 'warning' },
+    { id: 'oracle-binary-placement', type: 'storage', severity: 'warning' },
+    { id: 'datafiles-placement', type: 'storage', severity: 'warning' },
+    { id: 'controlfiles-placement', type: 'storage', severity: 'warning' },
+    { id: 'redologs-placement', type: 'storage', severity: 'warning' },
+    { id: 'templogs-placement', type: 'storage', severity: 'warning' },
+    { id: 'archive-placement', type: 'storage', severity: 'warning' }
+];
+
+const ORACLE_ASM_ITEMS: Array<{ id: string; type: string; severity: string }> = [
+    { id: 'data-dg-lun-layout', type: 'storage', severity: 'warning' },
+    { id: 'redolog-dg-lun-layout', type: 'storage', severity: 'warning' },
+    { id: 'fra-dg-lun-layout', type: 'storage', severity: 'warning' },
+    { id: 'archivelog-dg-lun-layout', type: 'storage', severity: 'warning' }
+];
+
+const makeOracleAssessment = (overrides: any = {}) => {
+    const {
+        lastAssessmentTimestamp = '2024-01-01T00:00:00Z',
+        dismissedConfigurations = {},
+        storage,
+        ...configOverrides
+    } = overrides;
+
+    const assessments = ORACLE_DEFAULT_ITEMS.map(item => ({ ...item, status: 'OPTIMIZED' }));
+
+    Object.entries(configOverrides).forEach(([key, value]: [string, any]) => {
+        const id = ORACLE_PATCH_KEY_TO_ID[key];
+        const idx = id ? assessments.findIndex(item => item.id === id) : -1;
+        if (idx >= 0 && value && typeof value === 'object') {
+            assessments[idx] = { ...assessments[idx], ...value };
+        }
+    });
+
+    applyStoragePatches(assessments, storage);
+
+    return {
+        metadata: { lastAssessmentTimestamp },
+        assessments,
+        dismissedConfigurations: normalizeDismissedConfigurations(dismissedConfigurations)
+    };
+};
+
+const makeAsmOracleAssessment = (overrides: any = {}) => {
+    const base = makeOracleAssessment(overrides);
+    return {
+        ...base,
+        assessments: [...base.assessments, ...ORACLE_ASM_ITEMS.map(item => ({ ...item, status: 'OPTIMIZED' }))]
+    };
+};
 
 const makeOracleHost = (hostId: string, assessment: any, credentialId = 'cred1', regionId = 'us-east-1') => ({
     credentialId,
@@ -1291,7 +1387,7 @@ describe('getAssessmentGroupedByConfigurations', () => {
         const result = getAssessmentGroupedByConfigurations([], []);
         expect(result.total).toBe(0);
         expect(result.oracleTotal).toBe(0);
-        expect(result.storageTier.optimized).toBe(0);
+        expect(result.mssqlStats).toEqual({});
     });
 
     it('skips MSSQL hosts not matching selected cred/region', () => {
@@ -1314,7 +1410,7 @@ describe('getAssessmentGroupedByConfigurations', () => {
     });
 
     it('skips MSSQL instances without lastAssessmentTimestamp', () => {
-        const assess = { ...makeOptimizedMssqlAssessment(), lastAssessmentTimestamp: undefined };
+        const assess = makeOptimizedMssqlAssessment({ lastAssessmentTimestamp: undefined });
         const host = makeMssqlHost('h1', assess);
         const result = getAssessmentGroupedByConfigurations([host], []);
         expect(result.total).toBe(0);
@@ -1332,174 +1428,150 @@ describe('getAssessmentGroupedByConfigurations', () => {
         expect(result.total).toBe(1);
     });
 
-    it('increments storageTier.optimized for OPTIMIZED performance-tier', () => {
+    it('increments mssqlStats[performance-tier].optimized for OPTIMIZED performance-tier', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.storageTier.optimized).toBe(1);
+        expect(result.mssqlStats['performance-tier'].optimized).toBe(1);
     });
 
-    it('does not increment storageTier.optimized for NOT_OPTIMIZED performance-tier', () => {
+    it('does not increment mssqlStats[performance-tier].optimized for NOT_OPTIMIZED performance-tier', () => {
         const assess = makeOptimizedMssqlAssessment({
-            storage: {
-                ...makeOptimizedMssqlAssessment().storage,
-                sizing: [{ name: 'performance-tier', status: 'NOT_OPTIMIZED', severity: 'warning' }]
-            }
+            storage: { sizing: [{ name: 'performance-tier', status: 'NOT_OPTIMIZED', severity: 'warning' }] }
         });
         const host = makeMssqlHost('h1', assess);
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.storageTier.optimized).toBe(0);
+        expect(result.mssqlStats['performance-tier'].optimized).toBe(0);
     });
 
-    it('increments storageTier.dismissed when configState is DISMISSED', () => {
+    it('increments mssqlStats[performance-tier].dismissed when configState is DISMISSED', () => {
         const assess = makeOptimizedMssqlAssessment({
             dismissedConfigurations: {
-                storage: {
-                    sizing: [{ configurationName: 'performance-tier', configState: 'DISMISSED' }]
-                }
+                storage: { sizing: [{ configurationName: 'performance-tier', configState: 'DISMISSED' }] }
             }
         });
         const host = makeMssqlHost('h1', assess);
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.storageTier.dismissed).toBe(1);
+        expect(result.mssqlStats['performance-tier'].dismissed).toBe(1);
     });
 
-    it('increments storageTier.activating when configState is ACTIVATING', () => {
+    it('increments mssqlStats[performance-tier].activating when configState is ACTIVATING', () => {
         const assess = makeOptimizedMssqlAssessment({
             dismissedConfigurations: {
-                storage: {
-                    sizing: [{ configurationName: 'performance-tier', configState: 'ACTIVATING' }]
-                }
+                storage: { sizing: [{ configurationName: 'performance-tier', configState: 'ACTIVATING' }] }
             }
         });
         const host = makeMssqlHost('h1', assess);
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.storageTier.activating).toBe(1);
+        expect(result.mssqlStats['performance-tier'].activating).toBe(1);
     });
 
-    it('increments fileSystemHeadroom.optimized for headroom OPTIMIZED', () => {
+    it('increments mssqlStats[headroom].optimized for headroom OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.fileSystemHeadroom.optimized).toBe(1);
+        expect(result.mssqlStats.headroom.optimized).toBe(1);
     });
 
-    it('increments logDriveSize.optimized for log-drive-size OPTIMIZED', () => {
+    it('increments mssqlStats[log-drive-size].optimized for log-drive-size OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.logDriveSize.optimized).toBe(1);
+        expect(result.mssqlStats['log-drive-size'].optimized).toBe(1);
     });
 
-    it('increments tempdbDriveSize.optimized for tempdb-drive-size OPTIMIZED', () => {
+    it('increments mssqlStats[tempdb-drive-size].optimized for tempdb-drive-size OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.tempdbDriveSize.optimized).toBe(1);
+        expect(result.mssqlStats['tempdb-drive-size'].optimized).toBe(1);
     });
 
-    it('increments userDataFiles.optimized for data-files-location OPTIMIZED', () => {
+    it('increments mssqlStats[data-files-location].optimized for data-files-location OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.userDataFiles.optimized).toBe(1);
+        expect(result.mssqlStats['data-files-location'].optimized).toBe(1);
     });
 
-    it('increments logFiles.optimized for log-files-location OPTIMIZED', () => {
+    it('increments mssqlStats[log-files-location].optimized for log-files-location OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.logFiles.optimized).toBe(1);
+        expect(result.mssqlStats['log-files-location'].optimized).toBe(1);
     });
 
-    it('increments tempdbPlacement.optimized for tempdb-files-location OPTIMIZED', () => {
+    it('increments mssqlStats[tempdb-files-location].optimized for tempdb-files-location OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.tempdbPlacement.optimized).toBe(1);
+        expect(result.mssqlStats['tempdb-files-location'].optimized).toBe(1);
     });
 
-    it('increments computeRightsizing.optimized for compute OPTIMIZED', () => {
+    it('increments mssqlStats[compute-rightsizing].optimized for compute OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.computeRightsizing.optimized).toBe(1);
+        expect(result.mssqlStats['compute-rightsizing'].optimized).toBe(1);
     });
 
-    it('increments computeRightsizing.dismissed for dismissed compute', () => {
+    it('increments mssqlStats[compute-rightsizing].dismissed for dismissed compute', () => {
         const assess = makeOptimizedMssqlAssessment({
             compute: { status: 'NOT_OPTIMIZED', severity: 'warning' },
             dismissedConfigurations: { compute: { configState: 'DISMISSED' } }
         });
         const host = makeMssqlHost('h1', assess);
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.computeRightsizing.dismissed).toBe(1);
+        expect(result.mssqlStats['compute-rightsizing'].dismissed).toBe(1);
     });
 
-    it('increments operatingSystemPatch.optimized for hostOsPatch OPTIMIZED', () => {
+    it('increments mssqlStats[host-os-patch].optimized for hostOsPatch OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.operatingSystemPatch.optimized).toBe(1);
+        expect(result.mssqlStats['host-os-patch'].optimized).toBe(1);
     });
 
-    it('increments rssConfiguration.optimized for rssConfig OPTIMIZED', () => {
+    it('increments mssqlStats[rss-config].optimized for rssConfig OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.rssConfiguration.optimized).toBe(1);
+        expect(result.mssqlStats['rss-config'].optimized).toBe(1);
     });
 
-    it('increments mtuConfiguration.optimized for mtuAlignment OPTIMIZED', () => {
+    it('increments mssqlStats[mtu-alignment].optimized for mtuAlignment OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.mtuConfiguration.optimized).toBe(1);
+        expect(result.mssqlStats['mtu-alignment'].optimized).toBe(1);
     });
 
-    it('increments applicationSqlServer.total for non-AOAG deployment', () => {
-        const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment({ deploymentType: 'STANDALONE' }));
-        const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.applicationSqlServer.total).toBe(1);
-        expect(result.applicationSqlServer.optimized).toBe(1);
-    });
-
-    it('does NOT increment applicationSqlServer for AOAG deployment', () => {
-        vi.mocked(mockIsAoagDeployment).mockReturnValueOnce(true);
-        const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment({ deploymentType: 'AOAG' }));
-        const result = getAssessmentGroupedByConfigurations([host], []);
-        // applicationSqlServer.total should not be incremented for AOAG
-        expect(result.applicationSqlServer.total).toBe(0);
-        vi.mocked(mockIsAoagDeployment).mockReturnValue(false);
-    });
-
-    it('increments mssqlPatch.optimized for mssqlPatch OPTIMIZED', () => {
+    it('increments mssqlStats[mssql-patch].optimized for mssqlPatch OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.mssqlPatch.optimized).toBe(1);
+        expect(result.mssqlStats['mssql-patch'].optimized).toBe(1);
     });
 
-    it('increments maxdopPatch.optimized for maxDOP OPTIMIZED', () => {
+    it('increments mssqlStats[maxdop].optimized for maxDOP OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.maxdopPatch.optimized).toBe(1);
+        expect(result.mssqlStats.maxdop.optimized).toBe(1);
     });
 
-    it('increments scheduledLocalSnapshot.optimized for snapshotPolicy OPTIMIZED', () => {
+    it('increments mssqlStats[snapshot-policy].optimized for snapshotPolicy OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.scheduledLocalSnapshot.optimized).toBe(1);
+        expect(result.mssqlStats['snapshot-policy'].optimized).toBe(1);
     });
 
-    it('increments scheduledawsBackup.optimized for awsBackup OPTIMIZED', () => {
+    it('increments mssqlStats[backup-configuration].optimized for awsBackup OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.scheduledawsBackup.optimized).toBe(1);
+        expect(result.mssqlStats['backup-configuration'].optimized).toBe(1);
     });
 
-    it('increments clone.optimized for clone OPTIMIZED', () => {
+    it('increments mssqlStats[clone-management].optimized for clone OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.clone.optimized).toBe(1);
+        expect(result.mssqlStats['clone-management'].optimized).toBe(1);
     });
 
-    it('increments crr.optimized for crr OPTIMIZED', () => {
+    it('increments mssqlStats[crr].optimized for crr OPTIMIZED', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.crr.optimized).toBe(1);
+        expect(result.mssqlStats.crr.optimized).toBe(1);
     });
 
-    it('sets isHaMssqlEnable=true and increments mssqlhighAvailability.total for HA deployment', () => {
-        vi.mocked(mockIsMssqlHaDeployment).mockReturnValue(true);
+    it('increments mssqlStats total for HA config items present in the assessment', () => {
         const assess = makeOptimizedMssqlAssessment({
             highAvailability: [
                 { name: 'shared-storage', status: 'OPTIMIZED' },
@@ -1511,9 +1583,8 @@ describe('getAssessmentGroupedByConfigurations', () => {
         });
         const host = makeMssqlHost('h1', assess);
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.isHaMssqlEnable).toBe(true);
-        expect(result.mssqlhighAvailability.total).toBe(1);
-        vi.mocked(mockIsMssqlHaDeployment).mockReturnValue(false);
+        expect(result.mssqlStats['shared-storage'].total).toBe(1);
+        expect(result.mssqlConfigIds).toContain('shared-storage');
     });
 
     it('processes multiple MSSQL hosts correctly', () => {
@@ -1521,49 +1592,34 @@ describe('getAssessmentGroupedByConfigurations', () => {
         const host2 = makeMssqlHost('h2', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host1, host2], []);
         expect(result.total).toBe(2);
-        expect(result.storageTier.optimized).toBe(2);
-        expect(result.computeRightsizing.optimized).toBe(2);
-    });
-
-    it('handles ontapConfiguration with luns and volumes', () => {
-        const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
-        const result = getAssessmentGroupedByConfigurations([host], []);
-        // lun1 and vol1 are both OPTIMIZED so ontapConfiguration.optimized = 1
-        expect(result.ontapConfiguration.optimized).toBe(1);
-    });
-
-    it('handles operatingSystem with OS config', () => {
-        const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
-        const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.operatingSystem.optimized).toBe(1);
+        expect(result.mssqlStats['performance-tier'].optimized).toBe(2);
+        expect(result.mssqlStats['compute-rightsizing'].optimized).toBe(2);
     });
 
     it('handles empty storage.sizing gracefully', () => {
-        const assess = makeOptimizedMssqlAssessment({
-            storage: { ...makeOptimizedMssqlAssessment().storage, sizing: [] }
-        });
+        const assess = makeOptimizedMssqlAssessment({ excludeIds: ['performance-tier'] });
         const host = makeMssqlHost('h1', assess);
         const result = getAssessmentGroupedByConfigurations([host], []);
         expect(result.total).toBe(1);
-        expect(result.storageTier.optimized).toBe(0);
+        expect(result.mssqlStats['performance-tier']).toBeUndefined();
     });
 
     it('handles empty storage.layout gracefully', () => {
         const assess = makeOptimizedMssqlAssessment({
-            storage: { ...makeOptimizedMssqlAssessment().storage, layout: [] }
+            excludeIds: ['data-files-location', 'log-files-location']
         });
         const host = makeMssqlHost('h1', assess);
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.userDataFiles.optimized).toBe(0);
-        expect(result.logFiles.optimized).toBe(0);
+        expect(result.mssqlStats['data-files-location']).toBeUndefined();
+        expect(result.mssqlStats['log-files-location']).toBeUndefined();
     });
 
-    it('returns configState object with arrays', () => {
+    it('returns mssqlConfigState object with arrays', () => {
         const host = makeMssqlHost('h1', makeOptimizedMssqlAssessment());
         const result = getAssessmentGroupedByConfigurations([host], []);
-        expect(result.configState).toBeDefined();
-        expect(Array.isArray(result.configState.storageTier)).toBe(true);
-        expect(Array.isArray(result.configState.computeRightsizing)).toBe(true);
+        expect(result.mssqlConfigState).toBeDefined();
+        expect(Array.isArray(result.mssqlConfigState['performance-tier'])).toBe(true);
+        expect(Array.isArray(result.mssqlConfigState['compute-rightsizing'])).toBe(true);
     });
 
     // ── Oracle paths ─────────────────────────────────────────────────────────
@@ -1581,67 +1637,67 @@ describe('getAssessmentGroupedByConfigurations', () => {
         expect(result.oracleTotal).toBe(0);
     });
 
-    it('increments oracleBinaryPlacement.optimized for oracle-binary-placement OPTIMIZED', () => {
+    it('increments oracleStats[oracle-binary-placement].optimized for oracle-binary-placement OPTIMIZED', () => {
         const host = makeOracleHost('oh1', makeOracleAssessment());
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.oracleBinaryPlacement.optimized).toBe(1);
+        expect(result.oracleStats['oracle-binary-placement'].optimized).toBe(1);
     });
 
-    it('increments datafilesPlacement.optimized for datafiles-placement OPTIMIZED', () => {
+    it('increments oracleStats[datafiles-placement].optimized for datafiles-placement OPTIMIZED', () => {
         const host = makeOracleHost('oh1', makeOracleAssessment());
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.datafilesPlacement.optimized).toBe(1);
+        expect(result.oracleStats['datafiles-placement'].optimized).toBe(1);
     });
 
-    it('increments controlfilesPlacement.optimized for controlfiles-placement OPTIMIZED', () => {
+    it('increments oracleStats[controlfiles-placement].optimized for controlfiles-placement OPTIMIZED', () => {
         const host = makeOracleHost('oh1', makeOracleAssessment());
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.controlfilesPlacement.optimized).toBe(1);
+        expect(result.oracleStats['controlfiles-placement'].optimized).toBe(1);
     });
 
-    it('increments redoLogsPlacement.optimized for redologs-placement OPTIMIZED', () => {
+    it('increments oracleStats[redologs-placement].optimized for redologs-placement OPTIMIZED', () => {
         const host = makeOracleHost('oh1', makeOracleAssessment());
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.redoLogsPlacement.optimized).toBe(1);
+        expect(result.oracleStats['redologs-placement'].optimized).toBe(1);
     });
 
-    it('increments oracleFileSystemHeadroom.optimized for headroom OPTIMIZED', () => {
+    it('increments oracleStats[headroom].optimized for headroom OPTIMIZED', () => {
         const host = makeOracleHost('oh1', makeOracleAssessment());
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.oracleFileSystemHeadroom.optimized).toBe(1);
+        expect(result.oracleStats.headroom.optimized).toBe(1);
     });
 
-    it('increments oracleSwapSpace.optimized for swap-space OPTIMIZED', () => {
+    it('increments oracleStats[swap-space].optimized for swap-space OPTIMIZED', () => {
         const host = makeOracleHost('oh1', makeOracleAssessment());
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.oracleSwapSpace.optimized).toBe(1);
+        expect(result.oracleStats['swap-space'].optimized).toBe(1);
     });
 
-    it('increments oracleOperatingSystemPatch.optimized for hostOsPatch OPTIMIZED', () => {
+    it('increments oracleStats[host-os-patch].optimized for hostOsPatch OPTIMIZED', () => {
         const host = makeOracleHost('oh1', makeOracleAssessment());
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.oracleOperatingSystemPatch.optimized).toBe(1);
+        expect(result.oracleStats['host-os-patch'].optimized).toBe(1);
     });
 
-    it('increments dataDgLunLayout.total when ASM LUN configs are in assessment', () => {
+    it('increments oracleStats total when ASM LUN configs are in assessment', () => {
         const host = makeOracleHost('oh1', makeAsmOracleAssessment());
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.dataDgLunLayout.total).toBe(1);
-        expect(result.logDgLunLayout.total).toBe(1);
+        expect(result.oracleStats['data-dg-lun-layout'].total).toBe(1);
+        expect(result.oracleStats['redolog-dg-lun-layout'].total).toBe(1);
     });
 
-    it('sets isFraEnable=true and increments fraDgLunLayout.total for ASM with fra', () => {
+    it('increments oracleStats[fra-dg-lun-layout].total for ASM with fra', () => {
         const host = makeOracleHost('oh1', makeAsmOracleAssessment());
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.isFraEnable).toBe(true);
-        expect(result.fraDgLunLayout.total).toBe(1);
+        expect(result.oracleStats['fra-dg-lun-layout'].total).toBe(1);
+        expect(result.oracleConfigIds).toContain('fra-dg-lun-layout');
     });
 
-    it('sets isArchiveEnable=true and increments archiveLogDgLunLayout.total for ASM with archive', () => {
+    it('increments oracleStats[archivelog-dg-lun-layout].total for ASM with archive', () => {
         const host = makeOracleHost('oh1', makeAsmOracleAssessment());
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.isArchiveEnable).toBe(true);
-        expect(result.archiveLogDgLunLayout.total).toBe(1);
+        expect(result.oracleStats['archivelog-dg-lun-layout'].total).toBe(1);
+        expect(result.oracleConfigIds).toContain('archivelog-dg-lun-layout');
     });
 
     it('processes both MSSQL and Oracle hosts correctly', () => {
@@ -1652,30 +1708,26 @@ describe('getAssessmentGroupedByConfigurations', () => {
         expect(result.oracleTotal).toBe(1);
     });
 
-    it('handles dismissed oracleFileSystemHeadroom', () => {
+    it('handles dismissed oracleStats[headroom]', () => {
         const assess = makeOracleAssessment({
             dismissedConfigurations: {
-                storage: {
-                    sizing: [{ configurationName: 'headroom', configState: 'DISMISSED' }]
-                }
+                storage: { sizing: [{ configurationName: 'headroom', configState: 'DISMISSED' }] }
             }
         });
         const host = makeOracleHost('oh1', assess);
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.oracleFileSystemHeadroom.dismissed).toBe(1);
+        expect(result.oracleStats.headroom.dismissed).toBe(1);
     });
 
-    it('handles activating oracleSwapSpace', () => {
+    it('handles activating oracleStats[swap-space]', () => {
         const assess = makeOracleAssessment({
             dismissedConfigurations: {
-                storage: {
-                    sizing: [{ configurationName: 'swap-space', configState: 'ACTIVATING' }]
-                }
+                storage: { sizing: [{ configurationName: 'swap-space', configState: 'ACTIVATING' }] }
             }
         });
         const host = makeOracleHost('oh1', assess);
         const result = getAssessmentGroupedByConfigurations([], [host]);
-        expect(result.oracleSwapSpace.activating).toBe(1);
+        expect(result.oracleStats['swap-space'].activating).toBe(1);
     });
 
     it('skips duplicate Oracle hosts', () => {
@@ -1684,12 +1736,10 @@ describe('getAssessmentGroupedByConfigurations', () => {
         expect(result.oracleTotal).toBe(1);
     });
 
-    it('initial isAsmEnable, isFraEnable, isArchiveEnable, isHaMssqlEnable are false', () => {
+    it('returns empty mssqlConfigIds/oracleConfigIds for empty input', () => {
         const result = getAssessmentGroupedByConfigurations([], []);
-        expect(result.isAsmEnable).toBe(false);
-        expect(result.isFraEnable).toBe(false);
-        expect(result.isArchiveEnable).toBe(false);
-        expect(result.isHaMssqlEnable).toBe(false);
+        expect(result.mssqlConfigIds).toEqual([]);
+        expect(result.oracleConfigIds).toEqual([]);
     });
 });
 

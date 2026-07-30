@@ -50,6 +50,11 @@ vi.mock('../../../../utils/apiService', () => ({
         data: { isActive: true },
         isFetching: false,
         isError: false
+    })),
+    useGetAccountInfoQuery: vi.fn(() => ({
+        data: undefined,
+        isFetching: false,
+        isError: false
     }))
 }));
 

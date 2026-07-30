@@ -108,7 +108,8 @@ const createMockStore = (
                 selectedAuthenticationType,
                 serverDetails: { userName, password }
             }),
-            dialogComponent: () => ({ actionsDisabled })
+            dialogComponent: () => ({ actionsDisabled }),
+            auth: () => ({ isGovAccount: false })
         }
     });
 

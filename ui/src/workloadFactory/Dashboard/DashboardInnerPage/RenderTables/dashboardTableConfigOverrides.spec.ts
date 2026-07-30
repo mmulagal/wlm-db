@@ -1,7 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { resolveDashboardTableConfig } from './dashboardTableConfigOverrides';
+
 const { mockGetConfigEntry } = vi.hoisted(() => ({
     mockGetConfigEntry: vi.fn(() => undefined)
+}));
+
+vi.mock('@netapp/design-system', () => ({
+    Button: ({ children }: { children?: unknown }) => children ?? null,
+    Popover: ({ children }: { children?: unknown }) => children ?? null
 }));
 
 vi.mock('../../../../utils/consts', async importOriginal => ({
@@ -39,11 +46,11 @@ vi.mock('../../../../utils/configRegistry/configRegistryHelper', () => ({
     getConfigEntry: (...args: unknown[]) => mockGetConfigEntry(...args)
 }));
 
-vi.mock('../../../../workloadFactory/WellArchitectedTab/assessmentFormatUtils', () => ({
+vi.mock('../../../WellArchitectedTab/assessmentFormatUtils', () => ({
     createDashboardTableConfig: (id: string) => ({
         id,
         isFixSupported: true,
-        dataMapping: (item: any, instanceData?: any) => item
+        dataMapping: (item: any) => item
     }),
     resolveConfigTypeId: (id: string) => id
 }));
@@ -66,11 +73,9 @@ vi.mock('../../../../utils/configRegistry', () => ({
     pluralizeResourceType: (s: string) => s
 }));
 
-// Import after mocks
-const getModule = async () => {
-    const mod = await import('./dashboardTableConfigOverrides');
-    return mod.resolveDashboardTableConfig;
-};
+vi.mock('../../../../utils/CommonStyles.module.scss', () => ({
+    default: { popover: 'popover' }
+}));
 
 describe('dashboardTableConfigOverrides - dataMapping', () => {
     beforeEach(() => {
@@ -78,16 +83,14 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
     });
 
     describe('resolveDashboardTableConfig - fixSupported from registry', () => {
-        it('disables Fix when registry fixSupported is false', async () => {
+        it('disables Fix when registry fixSupported is false', () => {
             mockGetConfigEntry.mockReturnValue({ fixSupported: false });
-            const resolveDashboardTableConfig = await getModule();
             expect(resolveDashboardTableConfig('snapcenter-snapshot', 'MSSQL').isFixSupported).toBe(false);
             expect(resolveDashboardTableConfig('headroom', 'MSSQL').isFixSupported).toBe(false);
         });
     });
     describe('FILE_SYSTEM_HEADROOM (MSSQL) - totalObjectsInViolation fallback', () => {
-        it('uses totalObjectsInViolation when present', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('uses totalObjectsInViolation when present', () => {
             const config = resolveDashboardTableConfig('headroom', 'MSSQL');
             const mapped = config.dataMapping!(
                 {
@@ -101,8 +104,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
             expect(mapped.totalObjectsInViolation).toBe(2);
         });
 
-        it('falls back to objectsInViolation.length when totalObjectsInViolation is absent', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('falls back to objectsInViolation.length when totalObjectsInViolation is absent', () => {
             const config = resolveDashboardTableConfig('headroom', 'MSSQL');
             const mapped = config.dataMapping!(
                 {
@@ -116,8 +118,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
             expect(mapped.totalObjectsInViolation).toBe(1);
         });
 
-        it('returns 0 when both totalObjectsInViolation and objectsInViolation are absent', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('returns 0 when both totalObjectsInViolation and objectsInViolation are absent', () => {
             const config = resolveDashboardTableConfig('headroom', 'MSSQL');
             const mapped = config.dataMapping!(
                 {
@@ -130,8 +131,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
             expect(mapped.totalObjectsInViolation).toBe(0);
         });
 
-        it('maps current and recommended correctly', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('maps current and recommended correctly', () => {
             const config = resolveDashboardTableConfig('headroom', 'MSSQL');
             const mapped = config.dataMapping!(
                 {
@@ -148,8 +148,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
     });
 
     describe('MAXDOP - dataMapping', () => {
-        it('maps current and totalObjectsInViolation', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('maps current and totalObjectsInViolation', () => {
             const config = resolveDashboardTableConfig('maxdop', 'MSSQL');
             const mapped = config.dataMapping!(
                 {
@@ -166,8 +165,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
             expect(mapped.configurationName).toBe('maxdop');
         });
 
-        it('returns 0 totalObjectsInViolation when absent (view button hidden)', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('returns 0 totalObjectsInViolation when absent (view button hidden)', () => {
             const config = resolveDashboardTableConfig('maxdop', 'MSSQL');
             const mapped = config.dataMapping!(
                 {
@@ -182,8 +180,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
     });
 
     describe('OPERATING_SYSTEM_PATCH - dataMapping', () => {
-        it('computes current from ec2InstancesToPatch patch counts', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('computes current from ec2InstancesToPatch patch counts', () => {
             const config = resolveDashboardTableConfig('host-os-patch', 'MSSQL');
             const mapped = config.dataMapping!(
                 {
@@ -200,8 +197,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
             expect(mapped.totalObjectsInViolation).toBe(1);
         });
 
-        it('returns "0" current when ec2InstancesToPatch is absent', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('returns "0" current when ec2InstancesToPatch is absent', () => {
             const config = resolveDashboardTableConfig('host-os-patch', 'MSSQL');
             const mapped = config.dataMapping!({ id: 'host-os-patch' }, undefined);
             expect(mapped.current).toBe('0');
@@ -209,8 +205,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
     });
 
     describe('MICROSOFT_SQL_SERVER_PATCH - dataMapping', () => {
-        it('computes current from missingPatchesInEc2Instances counts', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('computes current from missingPatchesInEc2Instances counts', () => {
             const config = resolveDashboardTableConfig('mssql-patch', 'MSSQL');
             const mapped = config.dataMapping!(
                 {
@@ -224,8 +219,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
             expect(mapped.configurationName).toBe('mssql-patch');
         });
 
-        it('returns 0 current when missingPatchesInEc2Instances is absent', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('returns 0 current when missingPatchesInEc2Instances is absent', () => {
             const config = resolveDashboardTableConfig('mssql-patch', 'MSSQL');
             const mapped = config.dataMapping!({ id: 'mssql-patch' }, undefined);
             expect(mapped.current).toBe(0);
@@ -233,8 +227,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
     });
 
     describe('ORACLE_SECURITY_PATCH - dataMapping', () => {
-        it('maps current from missingPatchesCount', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('maps current from missingPatchesCount', () => {
             const config = resolveDashboardTableConfig('oracle-security-patch', 'ORACLE');
             const mapped = config.dataMapping!(
                 { id: 'oracle-security-patch', missingPatchesCount: 5, totalObjectsInViolation: 2 },
@@ -245,8 +238,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
             expect(mapped.totalObjectsInViolation).toBe(2);
         });
 
-        it('defaults current to "0" when missingPatchesCount is absent', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('defaults current to "0" when missingPatchesCount is absent', () => {
             const config = resolveDashboardTableConfig('oracle-security-patch', 'ORACLE');
             const mapped = config.dataMapping!({ id: 'oracle-security-patch' }, undefined);
             expect(mapped.current).toBe('0');
@@ -254,8 +246,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
     });
 
     describe('LICENSE - dataMapping', () => {
-        it('maps license edition label from matching sql instance', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('maps license edition label from matching sql instance', () => {
             const config = resolveDashboardTableConfig('sql-license', 'MSSQL');
             const mapped = config.dataMapping!(
                 {
@@ -267,8 +258,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
             expect(mapped.configurationName).toBe('sql-license');
         });
 
-        it('returns empty string when no matching instance found', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('returns empty string when no matching instance found', () => {
             const config = resolveDashboardTableConfig('sql-license', 'MSSQL');
             const mapped = config.dataMapping!({ sqlServerInstances: [] }, { databaseInstanceName: 'OTHER' });
             expect(mapped.current).toBe('');
@@ -276,16 +266,14 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
     });
 
     describe('COMPUTE_RIGHTSIZING - dataMapping', () => {
-        it('formats findingReasons from objectsInViolation length', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('formats findingReasons from objectsInViolation length', () => {
             const config = resolveDashboardTableConfig('compute-rightsizing', 'MSSQL');
             const mapped = config.dataMapping!({ objectsInViolation: ['finding1', 'finding2', 'finding3'] }, undefined);
             expect(mapped.findingReasons).toBe('3 Findings');
             expect(mapped.configurationName).toBe('compute-rightsizing');
         });
 
-        it('returns "0 Findings" when objectsInViolation is absent', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('returns "0 Findings" when objectsInViolation is absent', () => {
             const config = resolveDashboardTableConfig('compute-rightsizing', 'MSSQL');
             const mapped = config.dataMapping!({}, undefined);
             expect(mapped.findingReasons).toBe('0 Findings');
@@ -293,8 +281,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
     });
 
     describe('MTU - dataMapping', () => {
-        it('maps totalObjectsInViolation and configurationName', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('maps totalObjectsInViolation and configurationName', () => {
             const config = resolveDashboardTableConfig('mtu-alignment', 'MSSQL');
             const mapped = config.dataMapping!(
                 { current: '9001', totalObjectsInViolation: 3, objectsInViolation: ['eth0', 'eth1', 'eth2'] },
@@ -305,8 +292,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
             expect(mapped.configurationName).toBe('mtu-alignment');
         });
 
-        it('defaults totalObjectsInViolation to 0 when absent', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('defaults totalObjectsInViolation to 0 when absent', () => {
             const config = resolveDashboardTableConfig('mtu-alignment', 'MSSQL');
             const mapped = config.dataMapping!({}, undefined);
             expect(mapped.totalObjectsInViolation).toBe(0);
@@ -314,8 +300,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
     });
 
     describe('SWAP_SPACE - dataMapping', () => {
-        it('maps current, recommended and totalObjectsInViolation', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('maps current, recommended and totalObjectsInViolation', () => {
             const config = resolveDashboardTableConfig('swap-space', 'ORACLE');
             const mapped = config.dataMapping!(
                 { current: '2 GB', recommended: '8 GB', totalObjectsInViolation: 1, objectsInViolation: ['i-0abc'] },
@@ -327,8 +312,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
             expect(mapped.configurationName).toBe('swap-space');
         });
 
-        it('defaults totalObjectsInViolation to 0 when absent', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('defaults totalObjectsInViolation to 0 when absent', () => {
             const config = resolveDashboardTableConfig('swap-space', 'ORACLE');
             const mapped = config.dataMapping!({}, undefined);
             expect(mapped.totalObjectsInViolation).toBe(0);
@@ -343,8 +327,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
         ];
 
         cases.forEach(({ configId, label }) => {
-            it(`maps totalObjectsInViolation and configurationName for ${label}`, async () => {
-                const resolveDashboardTableConfig = await getModule();
+            it(`maps totalObjectsInViolation and configurationName for ${label}`, () => {
                 const config = resolveDashboardTableConfig(configId, 'MSSQL');
                 const mapped = config.dataMapping!(
                     { totalObjectsInViolation: 2, objectsInViolation: ['db1', 'db2'] },
@@ -354,8 +337,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
                 expect(mapped.configurationName).toBe(configId);
             });
 
-            it(`defaults totalObjectsInViolation to 0 when absent for ${label}`, async () => {
-                const resolveDashboardTableConfig = await getModule();
+            it(`defaults totalObjectsInViolation to 0 when absent for ${label}`, () => {
                 const config = resolveDashboardTableConfig(configId, 'MSSQL');
                 const mapped = config.dataMapping!({}, undefined);
                 expect(mapped.totalObjectsInViolation).toBe(0);
@@ -364,8 +346,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
     });
 
     describe('CLONE_MANAGEMENT - dataMapping', () => {
-        it('maps totalObjectsInViolation, cloneDetails and configurationName', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('maps totalObjectsInViolation, cloneDetails and configurationName', () => {
             const config = resolveDashboardTableConfig('clone-management', 'MSSQL');
             const mapped = config.dataMapping!(
                 {
@@ -381,8 +362,7 @@ describe('dashboardTableConfigOverrides - dataMapping', () => {
             expect(mapped.cloneDetails).toEqual([{ name: 'clone1' }]);
         });
 
-        it('defaults totalObjectsInViolation to 0 when absent', async () => {
-            const resolveDashboardTableConfig = await getModule();
+        it('defaults totalObjectsInViolation to 0 when absent', () => {
             const config = resolveDashboardTableConfig('clone-management', 'MSSQL');
             const mapped = config.dataMapping!({}, undefined);
             expect(mapped.totalObjectsInViolation).toBe(0);
