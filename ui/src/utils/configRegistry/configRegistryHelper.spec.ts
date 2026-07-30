@@ -18,7 +18,9 @@ describe('getButtonText', () => {
         );
     });
 
-    it('returns view for Oracle snapcenter-snapshot (view-only)', () => {
-        expect(getButtonText(ASSESSMENT_CONFIG_IDS.SNAPCENTER_SNAPSHOT, DBType.ORACLE)).toBe('databases.general.view');
+    it('returns view-and-fix for Oracle snapcenter-snapshot (view-only)', () => {
+        expect(getButtonText(ASSESSMENT_CONFIG_IDS.SNAPCENTER_SNAPSHOT, DBType.ORACLE)).toBe(
+            'databases.general.view-and-fix'
+        );
     });
 });

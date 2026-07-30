@@ -723,7 +723,7 @@ export const getButtonText = (configId: string, dbType: string, status?: string)
             configId === ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM_MSSQL) &&
         normalizedStatus
     ) {
-        if (normalizedStatus === WELL_ARCHITECTED_STATUS.OVER_PROVISIONED) return t('databases.general.view');
+        if (normalizedStatus === WELL_ARCHITECTED_STATUS.OVER_PROVISIONED) return t('databases.general.view-and-fix');
         if (normalizedStatus === WELL_ARCHITECTED_STATUS.UNDER_PROVISIONED) return t('databases.general.view-and-fix');
     }
 
@@ -732,8 +732,7 @@ export const getButtonText = (configId: string, dbType: string, status?: string)
         return t('databases.general.view-and-fix');
     }
 
-    const entry = getRegistry(dbType)[configId];
-    return entry?.viewOnly ? t('databases.general.view') : t('databases.general.view-and-fix');
+    return t('databases.general.view-and-fix');
 };
 
 /** True when a config's button should say "View" (read-only, no fix). */
