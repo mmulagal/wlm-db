@@ -310,7 +310,7 @@ describe('ssm-doc-storage-assessment', () => {
         it('should reject when the requested instanceName is not found on the host', async () => {
             registrySpy
                 .mockResolvedValueOnce(
-                    registryResult(true, [{ name: 'MSSQLSERVER', type: 'String', value: 'MSSQL13.MSSQLSERVER' }])
+                    registryResult(true, [{ name: 'NAMEDINSTANCE', type: 'String', value: 'MSSQL13.NAMEDINSTANCE' }])
                 )
                 .mockResolvedValueOnce(registryResult(false, []))
                 .mockResolvedValueOnce(registryResult(false, []));

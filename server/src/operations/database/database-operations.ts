@@ -574,9 +574,14 @@ async function upsertDatabaseInstance(accountId: string, record: DatabaseInstanc
         if (checkOfflineAssessment) {
             try {
                 // Get offline assessment, selecting only metadata column
-                const offlineAssessment = await getOfflineAssessment(accountId, resourceId, databaseInstanceId, [
-                    'metadata'
-                ]);
+                const offlineAssessment = await getOfflineAssessment(
+                    accountId,
+                    resourceId,
+                    databaseInstanceId,
+                    undefined,
+                    undefined,
+                    ['metadata']
+                );
 
                 if (offlineAssessment?.metadata) {
                     numberOfTimesAssessedOffline = (offlineAssessment.metadata as Record<string, unknown>)

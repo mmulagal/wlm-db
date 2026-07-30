@@ -262,9 +262,7 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
                   volumeNames,
                   { fields: FOOTPRINT_FIELDS }
               ),
-        collectOntapRecordsBatched<OntapAggregateRecord>(base, 'api/storage/aggregates', 'uuid', [], {
-            fields: AGGREGATE_FIELDS
-        }),
+        collectAllOntapRecords<OntapAggregateRecord>(base, 'api/storage/aggregates', { fields: AGGREGATE_FIELDS }),
         collectVolumeSnapshots(base, volumeUuids)
     ]);
 

@@ -11,7 +11,8 @@ import {
     ASSESSMENT_RESOURCE_TYPE,
     DEFAULT_MPIO_TIMEOUT
 } from '../../../utils/continous-optimization-consts';
-import { HttpErrorCodes } from '../../../utils/consts';
+import { DEFAULT_INSTANCE_NAME, HttpErrorCodes } from '../../../utils/consts';
+import { IS_DEMO_FLOW } from '../../../utils/utils';
 import getLogger from '../../../utils/logger';
 
 import type {
@@ -380,7 +381,8 @@ async function runLayoutAssessment(
     });
 
     const discoveredInstances = await discoverSqlInstances(credentialsId, region, ec2InstanceId, accountId);
-    const matchedInstance = discoveredInstances.find(instance => instance.instanceName === instanceName);
+    const lookupInstanceName = IS_DEMO_FLOW ? DEFAULT_INSTANCE_NAME : instanceName;
+    const matchedInstance = discoveredInstances.find(instance => instance.instanceName === lookupInstanceName);
     if (!matchedInstance) {
         const errorMessage = `SQL instance ${instanceName} not found on host ${ec2InstanceId}`;
         logger.error(errorMessage, { ec2InstanceId, instanceName });

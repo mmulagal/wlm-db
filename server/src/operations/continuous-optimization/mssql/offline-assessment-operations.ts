@@ -590,7 +590,7 @@ async function fetchMssqlOfflineAssessment(
     });
 
     const record = isEmpty(databaseRecord)
-        ? await getOfflineAssessment(accountId, resourceId, databaseInstanceId)
+        ? await getOfflineAssessment(accountId, resourceId, databaseInstanceId, region, credentialsId)
         : databaseRecord;
 
     if (!record) {
@@ -822,7 +822,7 @@ async function fetchMssqlUnregisteredInstanceAssessment(
     });
 
     const record = isEmpty(databaseRecord)
-        ? await getOfflineAssessment(accountId, resourceId, databaseInstanceId)
+        ? await getOfflineAssessment(accountId, resourceId, databaseInstanceId, region, credentialsId)
         : databaseRecord;
 
     if (!record) {

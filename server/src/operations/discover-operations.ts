@@ -2175,7 +2175,7 @@ function createFallbackOracleInstance(): DiscoverOracleInstanceType {
     return {
         instanceName: 'oracle',
         instanceId: 'oracle',
-        instanceState: ORACLE_INSTANCE_STATE.STARTED,
+        instanceState: ORACLE_INSTANCE_STATE.OPEN,
         version: '',
         instanceType: OracleDeploymentTenacy.SINGLE_TENANT,
         databaseCount: 0,

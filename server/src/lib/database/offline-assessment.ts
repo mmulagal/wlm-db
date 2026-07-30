@@ -185,12 +185,16 @@ async function getOfflineAssessment(
     accountId: string,
     resourceId: string,
     databaseInstanceId: string,
+    region?: string,
+    credentialsId?: string,
     selectKeys?: string[]
 ) {
     logger.info('Getting offline assessment', {
         accountId,
         resourceId,
         databaseInstanceId,
+        region,
+        credentialsId,
         selectKeys
     });
 
@@ -204,7 +208,9 @@ async function getOfflineAssessment(
                 account_id: checkedAccountId,
                 resource_id: resourceId,
                 database_instance_id: databaseInstanceId
-            }
+            },
+            ...(region && { region }),
+            ...(credentialsId && { credentials_id: credentialsId })
         },
         ...(select && { select })
     });

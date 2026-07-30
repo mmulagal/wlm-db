@@ -54,6 +54,8 @@ import ORACLE_GOLDEN_CONFIG from './oracle/golden-config';
 
 const logger = getLogger();
 
+const FSX_LINK_INACTIVE_HINT = 'Register the instance or verify that the FSx link is active.';
+
 interface GoldenConfigComponent {
     parameter: string;
     value: string | number | boolean;
@@ -490,7 +492,7 @@ async function collectScopedOntapAssessment(
     const relationship = await buildEc2FsxRelationship(accountId, credentialsId, region);
     const scopedEc2s = relationship.ec2s.filter(ec2 => ec2.instanceId === ec2InstanceId);
     if (scopedEc2s.length === 0) {
-        throw new Error('No ONTAP volumes found for this instance: no EC2-FSx relationship detected');
+        throw new Error(`No ONTAP volumes found for this instance. ${FSX_LINK_INACTIVE_HINT}`);
     }
 
     const results = await collectOntapAssessmentData(accountId, { ec2s: scopedEc2s });
@@ -1177,7 +1179,8 @@ export {
     mergeStorageDriftItemsById,
     filterToVolumeLunDriftItems,
     collectScopedOntapAssessment,
-    runScopedOntapSubAssessment
+    runScopedOntapSubAssessment,
+    FSX_LINK_INACTIVE_HINT
 };
 
 export type {

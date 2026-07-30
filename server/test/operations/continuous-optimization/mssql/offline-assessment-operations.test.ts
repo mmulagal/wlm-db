@@ -332,6 +332,8 @@ describe('MSSQL Offline Assessment Operations', () => {
                     accountId: ACCOUNT_ID,
                     resourceId: 'fetch-test-resource',
                     databaseInstanceId: 'fetch-test-instance',
+                    credentialsId: 'cred-123',
+                    region: 'us-east-1',
                     databaseType: DATABASE_TYPE.mssql,
                     rawdata: {
                         instanceLevelAssessment: {},
@@ -627,7 +629,6 @@ describe('MSSQL Offline Assessment Operations', () => {
                 ACCOUNT_ID,
                 'fetch-test-resource',
                 'fetch-test-instance',
-                undefined,
                 'cred-123',
                 'us-east-1'
             );

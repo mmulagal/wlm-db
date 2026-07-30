@@ -233,6 +233,8 @@ describe('collectScopedOntapAssessment', () => {
         vi.spyOn(taggingServiceOperations, 'buildEc2FsxRelationship').mockResolvedValueOnce(buildRelationship([]));
         await expect(
             collectScopedOntapAssessment('acct-1', 'cred-1', 'us-east-1', 'i-missing', 'mssql')
-        ).rejects.toThrow('No ONTAP volumes found for this instance: no EC2-FSx relationship detected');
+        ).rejects.toThrow(
+            'No ONTAP volumes found for this instance. Register the instance or verify that the FSx link is active.'
+        );
     });
 });

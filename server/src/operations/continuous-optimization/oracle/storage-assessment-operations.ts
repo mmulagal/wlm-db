@@ -56,6 +56,7 @@ import { ORACLE_STORAGE_SIZING_ASSESSMENT, VOLUME_LUN_CONFIGURATION } from './ss
 import { getHeadroomDrift } from '../headroom-assessment';
 import {
     buildBlockDeviceSpaceManagementEntry,
+    FSX_LINK_INACTIVE_HINT,
     isPdbGroupedVolumes,
     normalizeNfsVersion,
     type GoldenConfigEntry
@@ -2478,7 +2479,7 @@ async function calculateStorageDrift(
     }
 
     if (!mappedOntapVolumes || isEmpty(mappedOntapVolumes)) {
-        const errorMessage = `No mapped ONTAP volumes found for file system ${fsxFileSystemId}. Please ensure the instance has been properly discovered and configured.`;
+        const errorMessage = `No mapped ONTAP volumes found for file system ${fsxFileSystemId}. ${FSX_LINK_INACTIVE_HINT}`;
         return [...storageConfigData].map(config => ({
             ...config,
             errorMessage

@@ -128,6 +128,11 @@ async function listFSXFileSystem(credentialsId: string, region: string) {
 
 async function getFsxFileSystemActiveLinks(credentialsId: string, region: string, fsId: string): Promise<unknown[]> {
     logger.info('Get FSx file system active links', { credentialsId, region, fsId });
+
+    if (IS_DEMO_FLOW) {
+        return [{ fsId, status: 'AVAILABLE' }];
+    }
+
     const token = getAsyncLocalStorageResource(USER_TOKEN) as string;
     const accountId = getAsyncLocalStorageResource(ACCOUNT_ID);
 
@@ -136,7 +141,7 @@ async function getFsxFileSystemActiveLinks(credentialsId: string, region: string
             `${WORKLOAD_FACTORY_ENDPOINT}/accounts/${accountId}/fsx/v2/credentials/${credentialsId}/regions/${region}/file-systems/${fsId}`,
             {
                 searchParams: { include: 'activeLinks' },
-                headers: { [HEADERS.AUTHORIZATION]: token, ...(IS_DEMO_FLOW && { [HEADERS.SIMULATOR]: 'true' }) }
+                headers: { [HEADERS.AUTHORIZATION]: token }
             }
         )
         .json<{ activeLinks?: unknown[] }>();

@@ -458,7 +458,7 @@ async function fetchOracleOfflineAssessment(
     });
 
     const record = isEmpty(databaseRecord)
-        ? await getOfflineAssessment(accountId, resourceId, databaseInstanceId)
+        ? await getOfflineAssessment(accountId, resourceId, databaseInstanceId, region, credentialsId)
         : databaseRecord;
 
     if (!record) {
@@ -664,7 +664,7 @@ async function fetchOracleUnregisteredInstanceAssessment(
     });
 
     const record = isEmpty(databaseRecord)
-        ? await getOfflineAssessment(accountId, resourceId, databaseInstanceId)
+        ? await getOfflineAssessment(accountId, resourceId, databaseInstanceId, region, credentialsId)
         : databaseRecord;
 
     if (!record) {

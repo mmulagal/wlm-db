@@ -250,8 +250,8 @@ describe('checkFsxLinkExists', () => {
         expect(typeof result.count).toBe('number');
     });
 
-    it('returns { exists: false, count: 0 } when the simulator returns no active links', async () => {
+    it('returns { exists: true, count: 1 } when the simulator has active links', async () => {
         const result = await checkFsxLinkExists(CREDENTIALS_ID, DEFAULT_AWS_REGION, 'fs-no-active-links');
-        expect(result).toEqual({ exists: false, count: 0 });
+        expect(result).toEqual({ exists: true, count: 1 });
     });
 });
