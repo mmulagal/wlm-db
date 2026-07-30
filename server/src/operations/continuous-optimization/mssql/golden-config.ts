@@ -545,7 +545,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.LUN,
         recommendation:
             'All shared disks (iSCSI block devices) must be accessible by both nodes in the FCI deployment model to allow failover.',
-        recommended: '',
+        recommended: 'Shared storage is accessible',
         configLevel: 'database'
     },
     {

@@ -38,6 +38,7 @@ import {
     listDatabaseInstanceConfigData
 } from '../../lib/database/database-instance-config';
 import { DatabaseInstanceConfigData } from '../../lib/database/db-types';
+import type { OracleMappedOntapVolumesResponse } from '../../operations/workloads/oracle/common-types';
 import getLogger from '../logger';
 
 const logger = getLogger();
@@ -3422,12 +3423,17 @@ const SIMULATED_WAD_RESOURCES_BY_CONFIG: Record<string, WadConfigurationEntry['r
                 metadata: {
                     workload: 'mssql',
                     components: [
-                        { parameter: 'thin-provision', current: 'enabled', recommended: 'enabled', status: 'optimized' }
+                        {
+                            parameter: 'thin-provision',
+                            current: 'disabled',
+                            recommended: 'enabled',
+                            status: 'not-optimized'
+                        }
                     ],
                     svmName: SIMULATED_WAD_SVM_NAME
                 }
             },
-            status: ResourceOptimizationStatus.OPTIMIZED
+            status: ResourceOptimizationStatus.NOT_OPTIMIZED
         },
         {
             resource: {
@@ -3437,12 +3443,17 @@ const SIMULATED_WAD_RESOURCES_BY_CONFIG: Record<string, WadConfigurationEntry['r
                 metadata: {
                     workload: 'oracle',
                     components: [
-                        { parameter: 'thin-provision', current: 'enabled', recommended: 'enabled', status: 'optimized' }
+                        {
+                            parameter: 'thin-provision',
+                            current: 'disabled',
+                            recommended: 'enabled',
+                            status: 'not-optimized'
+                        }
                     ],
                     svmName: SIMULATED_WAD_SVM_NAME
                 }
             },
-            status: ResourceOptimizationStatus.OPTIMIZED
+            status: ResourceOptimizationStatus.NOT_OPTIMIZED
         }
     ],
     'wlmdb-os-type': [
@@ -3737,7 +3748,7 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
         oracleSid = 'PDB1';
     }
 
-    const mappedVolData = {
+    const mappedVolData: Record<string, OracleMappedOntapVolumesResponse> = {
         [fsxId]: {
             protocol,
             lunRecords: [],
@@ -3758,9 +3769,9 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
             {
                 svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
                 svmName: 'wlmdb_sqlsvm_1735809893269',
-                volumeId: 'cc802ccc-eee7-11ef-8fbb-837e18df6f7a',
-                volumeName: 'oraclearch2',
-                lunName: '/vol/wlmdb_oraclearch_1735809893269/lun4',
+                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                volumeName: 'oracleredo2',
+                lunName: '/vol/wlmdb_oracleredo_1735809893269/lun4',
                 lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7d',
                 diskGroup: 'DISK4',
                 diskName: 'DISK1',
@@ -3821,9 +3832,9 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
             {
                 svmId: '4a56fd34-c8ec-11ef-a881-1fbfd81226d0',
                 svmName: 'wlmdb_sqlsvm_1735809893269',
-                volumeId: 'cc802ccc-eee7-11ef-8fbb-837e18df6f7a',
-                volumeName: 'oraclearch2',
-                lunName: '/vol/wlmdb_oraclearch_1735809893269/lun4',
+                volumeId: 'db3ed9f2-eee7-11ef-8fbb-837e18df6f7a',
+                volumeName: 'oracleredo2',
+                lunName: '/vol/wlmdb_oracleredo_1735809893269/lun4',
                 lunId: '1b1ed9f2-eee7-11ef-8fbb-837e18df6f7d',
                 diskGroup: 'DISK4',
                 diskName: 'DISK1',
@@ -3833,11 +3844,11 @@ const ORACLE_MAPPED_ONTAP_VOLUMES_DATA = (fsxId: string, protocol: string, oracl
     };
 
     if (isCDB) {
-        mappedVolData[fsxId].volumeMappings[0][oracleSid].ontapVolumes = {
+        mappedVolData[fsxId]!.volumeMappings![0][oracleSid]!.ontapVolumes = {
             PDB1: volData
         };
     } else {
-        mappedVolData[fsxId].volumeMappings[0][oracleSid].ontapVolumes = volData;
+        mappedVolData[fsxId]!.volumeMappings![0][oracleSid]!.ontapVolumes = volData;
     }
 
     return mappedVolData;

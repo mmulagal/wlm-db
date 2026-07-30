@@ -73,6 +73,7 @@ const GET_LUN_IGROUP_INITIATOR_NAMES_AND_HOSTIQN = (lunMappings: LunIgroupMappin
 # Get LUN, igroup, initiator names and host IQN Script
 Start-Transcript -Path ${HIGH_AVAILABILITY_LOG_PATH} -Append | Out-Null
 $WarningPreference = 'SilentlyContinue'
+Remove-TypeData -ErrorAction SilentlyContinue System.Array
 # Pre-fetched server-side via proxy-forwarder (identical for every node, so wrap in @() to
 # guard against ConvertFrom-Json collapsing a single-element JSON array to a scalar object).
 $lunMappings = @('${JSON.stringify(lunMappings)}' | ConvertFrom-Json)

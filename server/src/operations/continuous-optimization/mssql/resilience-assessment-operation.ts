@@ -1,5 +1,5 @@
 import createError from 'http-errors';
-import { isEmpty } from 'lodash-es';
+import { flatten, isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import getLogger from '../../../utils/logger';
@@ -671,7 +671,7 @@ interface LunMapping {
 }
 interface LunIqnDetails {
     hostIqns: string;
-    lunMappings: [LunMapping];
+    lunMappings: LunMapping[][];
 }
 
 async function getSharedStorageAssessment(
@@ -762,7 +762,7 @@ async function getSharedStorageAssessment(
         const standbyHostIqns = standbyNodeParsedResponse?.hostIqns?.split(',').map((iqn: string) => iqn.trim()) || [];
         const allHostIqns = [...new Set([...primaryHostIqns, ...standbyHostIqns])];
 
-        const primaryNodeLunMappings = primaryNodeParsedResponse?.lunMappings || [];
+        const primaryNodeLunMappings = flatten(primaryNodeParsedResponse.lunMappings);
 
         const lunDetails = primaryNodeLunMappings.map(lunMapping => ({
             ...lunMapping,
@@ -1367,7 +1367,7 @@ async function getHighAvailabilityDriftData(
     }
 
     try {
-        const { highAvailability: { clusterQuorum, heartbeat, windowsClusterName } = {} } = resourceAssessmentData;
+        const { highAvailability: { clusterQuorum, heartbeat } = {} } = resourceAssessmentData;
 
         const { sharedStorage, driveLetter, sqlServerServices } = highAvailabilityAssessmentData;
 
@@ -1463,8 +1463,7 @@ async function getHighAvailabilityDriftData(
                       ...clusterQuorumConfig,
                       recommended: clusterQuorumConfig.recommended ?? '',
                       status: clusterQuorum.status as AssessmentStatus,
-                      objectsInViolation:
-                          clusterQuorum.status === AssessmentStatus.OPTIMIZED ? [] : [windowsClusterName ?? ''],
+                      objectsInViolation: clusterQuorum.status === AssessmentStatus.OPTIMIZED ? [] : [resourceName],
                       violationDetails:
                           clusterQuorum.status !== AssessmentStatus.OPTIMIZED
                               ? [

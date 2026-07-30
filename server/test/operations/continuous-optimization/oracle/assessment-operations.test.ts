@@ -242,6 +242,7 @@ describe('Oracle assessment operations', () => {
         expect(iscsiTimeout.status).toBe('not-optimized');
         expect(iscsiTimeout.recommended).toBe('5');
         expect(iscsiTimeout.severity).toBe('critical');
+        expect(iscsiTimeout.violationDetails?.[0]?.objectName).toBe('iscsi-replacement-timeout');
         expect(iscsiTimeout.violationDetails?.[0]?.value).toBe('120');
 
         const friendlyNames = osAssessment.find(

@@ -5,7 +5,8 @@ import {
     getSharedFileTypeLabels,
     getVolumeLayoutDrift,
     getNfsOSConfigDrift,
-    getVolumeConfigDrift
+    getVolumeConfigDrift,
+    mapVolumeTypesToIdName
 } from '../../../../src/operations/continuous-optimization/oracle/storage-assessment-operations';
 import {
     StorageAssessment,
@@ -13,6 +14,10 @@ import {
 } from '../../../../src/operations/continuous-optimization/oracle/common-types';
 import { OracleSysFileTypes, OracleVolumeRecord } from '../../../../src/operations/workloads/oracle/common-types';
 import { AssessmentStatus } from '../../../../src/utils/continous-optimization-consts';
+import {
+    ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
+    ORACLE_STORAGE_ASSESSMENT_DATA
+} from '../../../../src/utils/demo-utils/demoMockdata';
 
 type LayoutAssessment = {
     name: string;
@@ -1083,6 +1088,25 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             expect(detail?.violatedConfigs).toEqual([
                 { id: 'tiering-min-cooling-days', current: '30', recommended: '2' }
             ]);
+        });
+
+        it('should include tiering-min-cooling-days for the Oracle demo archive volume', () => {
+            const fsxId = 'fs-test';
+            const mappedVolumes = ORACLE_MAPPED_ONTAP_VOLUMES_DATA(fsxId, 'iSCSI', 'ORCL', false);
+            const volumeTypeMap = mapVolumeTypesToIdName('ORCL', fsxId, mappedVolumes);
+            const drift = getVolumeConfigDrift(
+                volumeTypeMap,
+                ORACLE_STORAGE_ASSESSMENT_DATA as unknown as StorageAssessment,
+                'iSCSI'
+            );
+
+            const entry = findById(drift, 'tiering-tco-optimization');
+            const archiveViolation = entry.violationDetails?.find(detail => detail.objectName === 'oraclearch2');
+            expect(archiveViolation?.violatedConfigs).toContainEqual({
+                id: 'tiering-min-cooling-days',
+                current: '4',
+                recommended: '2'
+            });
         });
 
         it('does not flag tiering-min-cooling-days on a data-files volume even when value differs', () => {

@@ -494,6 +494,41 @@ const volumeDetailsAssessmentTemplate = `
             $Response = Invoke-ONTAPRequest @VolumeParams
             $Volumes = $Response.records
 
+            $spaceMgmtTryFirstByVolumeName = @{}
+            $volumeNamesForSpaceManagement = @(
+                $Volumes |
+                    ForEach-Object { $_.name } |
+                    Where-Object { -not [string]::IsNullOrEmpty($_) } |
+                    Select-Object -Unique
+            )
+
+            if ($volumeNamesForSpaceManagement.Count -gt 0) {
+                try {
+                    $SpaceMgmtParams = @{
+                        "ApiEndPoint" = '/private/cli/volume'
+                        "ApiQueryFilter" = "volume=" + ($volumeNamesForSpaceManagement -join '|')
+                        "ApiQueryFields" = "fields=space-mgmt-try-first"
+                        "FSxCredentialsInBase64" = $($visitedFileSystems.$instanceLevelFsxnId.FSxCredentialsInBase64)
+                        "FSxHostName" = $($visitedFileSystems.$instanceLevelFsxnId.FSxHostName)
+                    }
+                    $SpaceMgmtResponse = Invoke-ONTAPRequest @SpaceMgmtParams
+                    foreach ($spaceMgmtRecord in $SpaceMgmtResponse.records) {
+                        $spaceMgmtVolumeName = $spaceMgmtRecord.volume
+                        if (-not [string]::IsNullOrEmpty($spaceMgmtVolumeName)) {
+                            $spaceMgmtTryFirstValue = $spaceMgmtRecord.space_mgmt_try_first
+                            if ($null -eq $spaceMgmtTryFirstValue) {
+                                $spaceMgmtTryFirstValue = $spaceMgmtRecord.'space-mgmt-try-first'
+                            }
+                            $spaceMgmtTryFirstByVolumeName[$spaceMgmtVolumeName] = $spaceMgmtTryFirstValue
+                        }
+                    }
+                } catch {
+                    $DriftAssessmentData['errors']['spaceMgmtTryFirst'] = $_.Exception.Message
+                }
+            } else {
+                $DriftAssessmentData['errors']['spaceMgmtTryFirst'] = "Unable to fetch ONTAP space-mgmt-try-first details as the mapped volume names are either null or empty."
+            }
+
             $VolumeList = @()
             $SvmNames = @()
             foreach ($perVolumeData in $Volumes) {
@@ -513,6 +548,7 @@ const volumeDetailsAssessmentTemplate = `
                     'compressionType' = $perVolumeData.efficiency.compression_type
                     'deduplication' = $perVolumeData.efficiency.dedupe
                     'compaction' = $perVolumeData.efficiency.compaction
+                    'space-mgmt-try-first' = $spaceMgmtTryFirstByVolumeName[$perVolumeData.name]
                 }
                 if($perVolumeData.autosize.mode -ne 'off') {
                     $perVolRow | Add-Member -Name 'autosize' -Type NoteProperty -Value "on"
