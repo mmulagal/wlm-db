@@ -4,8 +4,10 @@ export enum BulkActionId {
     FIX = 'fix'
 }
 
+export const VIEW_AND_FIX_LABEL = 'View and fix';
+
 export enum BulkActionLabel {
-    FIX = 'View and fix'
+    FIX = VIEW_AND_FIX_LABEL
 }
 
 export const NO_NEEDS_OPTIMIZATION_BULK_FIX_ERROR =

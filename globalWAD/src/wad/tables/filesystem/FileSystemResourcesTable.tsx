@@ -17,7 +17,8 @@ import {
 import {
     createFixBulkAction,
     filterNeedsOptimizationResources,
-    NO_NEEDS_OPTIMIZATION_BULK_FIX_ERROR
+    NO_NEEDS_OPTIMIZATION_BULK_FIX_ERROR,
+    VIEW_AND_FIX_LABEL
 } from '../shared/bulkActions';
 import { spliceExtras, stickyResourceRowActionColumn } from '../shared/columns';
 import {
@@ -135,7 +136,7 @@ export const FileSystemResourcesTable = ({ wadApi, tableScope }: FileSystemResou
         return [
             ...spliceExtras(baseColumns, [], ResourceColumnId.LAST_ANALYZED),
             stickyResourceRowActionColumn({
-                label: FixRowActionLabel.FIX,
+                label: VIEW_AND_FIX_LABEL,
                 onClick: handleFixRow,
                 isDisabled: isFixDisabled
             })
