@@ -589,6 +589,10 @@ export const mergeUnregisteredAssessmentIntoInventory = (
                 if (inst?.databaseInstanceName?.toLowerCase() !== instanceName) {
                     return inst;
                 }
+                // v2/offline-assessment rows return data even after registring; so return if the instance is registered wins
+                if (inst?.statusColText === INVENTORY_STATUS.MANAGED || inst?.isManaged || inst?.resourceId) {
+                    return inst;
+                }
                 if (
                     inst?.isUnregistered &&
                     inst?.isWad === false &&

@@ -42,7 +42,12 @@ import {
 } from './InstanceTableHelper';
 import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 import { useAppSelector } from '../../../../store/storeHooks';
-import { getFsxIdsForTooltip, getInstanceFsxLinkExists, getInstanceFsxLinksCount } from '../../InventoryUtilsV2';
+import {
+    getFsxIdsForTooltip,
+    getInstanceFsxLinkExists,
+    getInstanceFsxLinksCount,
+    isUnregisteredInventoryRow
+} from '../../InventoryUtilsV2';
 
 export function getMssqlInstanceTableColumns({
     t,
@@ -633,11 +638,11 @@ export function getMssqlInstanceTableColumns({
                                     isThin
                                     data-testid="wlm-db-mssql-view-and-fix"
                                     onClick={() => {
-                                        if (rowData?.isWad) {
+                                        if (rowData?.isWad && !isRegisteredOrManaged) {
                                             // For WAD instances, use offline assessment handler
                                             handleWadOptimizeAction(rowData, dispatch);
                                         } else if (
-                                            rowData?.isUnregistered ||
+                                            isUnregisteredInventoryRow(rowData) ||
                                             (hasUnregisteredPermissions && !isRegisteredOrManaged)
                                         ) {
                                             // For unregistered instances with permissions, trigger on-demand assessment

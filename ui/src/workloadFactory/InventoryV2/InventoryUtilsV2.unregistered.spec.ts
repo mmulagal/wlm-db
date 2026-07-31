@@ -4,9 +4,10 @@ import {
     isUnregisteredInventoryRow,
     hasPartialRunPermission,
     shouldDisableUnregisteredDatabasesAndPassword,
-    shouldRestrictWellArchitectTabs
+    shouldRestrictWellArchitectTabs,
+    mergeUnregisteredAssessmentIntoInventory
 } from './InventoryUtilsV2';
-import { INVENTORY_STATUS } from '../../utils/consts';
+import { DBType, INVENTORY_STATUS } from '../../utils/consts';
 
 describe('canTriggerUnregisteredAssessment', () => {
     it('returns true when extensiveRunPermission is true', () => {
@@ -181,6 +182,59 @@ describe('shouldDisableUnregisteredDatabasesAndPassword', () => {
                 isRegisteredInstance: false
             })
         ).toBe(true);
+    });
+});
+
+describe('mergeUnregisteredAssessmentIntoInventory', () => {
+    const unregisteredAssessment = {
+        vmInstanceId: 'i-25694686',
+        databaseInstanceName: 'oracleasm',
+        assessments: { metadata: { source: 'unregistered', lastAssessmentTimestamp: 1785488870082 } }
+    };
+
+    it('does not re-apply isUnregistered onto a registered managed instance after refresh', () => {
+        const inventory = {
+            host_key: {
+                hostType: DBType.ORACLE,
+                ec2InstanceId: 'i-25694686',
+                sqlServerInstances: [
+                    {
+                        databaseInstanceName: 'oracleasm',
+                        statusColText: INVENTORY_STATUS.MANAGED,
+                        isUnregistered: false,
+                        isWad: false
+                    }
+                ]
+            }
+        };
+
+        const merged = mergeUnregisteredAssessmentIntoInventory(inventory, [unregisteredAssessment], DBType.ORACLE);
+
+        expect(merged).toBe(inventory);
+        expect(merged.host_key.sqlServerInstances[0].isUnregistered).toBe(false);
+    });
+
+    it('still merges unregistered assessment onto discover/unmanaged instances', () => {
+        const inventory = {
+            host_key: {
+                hostType: DBType.ORACLE,
+                ec2InstanceId: 'i-25694686',
+                sqlServerInstances: [
+                    {
+                        databaseInstanceName: 'oracleasm',
+                        statusColText: INVENTORY_STATUS.UNMANAGED,
+                        isUnregistered: false,
+                        isWad: false
+                    }
+                ]
+            }
+        };
+
+        const merged = mergeUnregisteredAssessmentIntoInventory(inventory, [unregisteredAssessment], DBType.ORACLE);
+
+        expect(merged).not.toBe(inventory);
+        expect(merged.host_key.sqlServerInstances[0].isUnregistered).toBe(true);
+        expect(merged.host_key.sqlServerInstances[0].wadAssessmentData).toBe(unregisteredAssessment.assessments);
     });
 });
 

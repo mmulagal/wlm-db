@@ -270,6 +270,8 @@ export interface InventoryTableInstanceDatInterface {
     databaseInstanceId?: string;
     databaseInstanceName?: string;
     databaseHostId?: string;
+    /** Set after register/manage; used to distinguish registered instances from discover-only rows */
+    resourceId?: string;
     status?: string;
     aoagDetails?: {
         baseDeploymentType?: string;
