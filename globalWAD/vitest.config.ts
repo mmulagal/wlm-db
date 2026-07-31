@@ -8,21 +8,38 @@ export default defineConfig({
     plugins: [react()],
     resolve: {
         ...wadBuildResolve,
-        alias: {
-            ...wadBuildResolve.alias,
-            '@wad': resolve(wadProjectRootDir, 'src/wad'),
-            '@test': resolve(wadProjectRootDir, 'src/test'),
-            '@netapp/bxp-design-system-react': resolve(wadProjectRootDir, 'src/test/mocks/bxpDesignSystemReact.tsx'),
-            '@netapp/bxp-style/react-icons/General': resolve(wadProjectRootDir, 'src/test/mocks/bxpStyleIcons.tsx'),
-            '@tlveng/workload-factory-components': resolve(
-                wadProjectRootDir,
-                'src/test/mocks/workloadFactoryComponentsMain.ts'
-            ),
-            '@tlveng/workload-factory-components/wad': resolve(
-                wadProjectRootDir,
-                'src/test/mocks/workloadFactoryComponentsWad.ts'
-            )
-        }
+        // Array form: more-specific / exact finds must come before package-root
+        // prefixes, or Vite rewrites `@pkg/wad` → `<main-mock>.ts/wad`.
+        alias: [
+            {
+                find: '@tlveng/workload-factory-components/wad',
+                replacement: resolve(wadProjectRootDir, 'src/test/mocks/workloadFactoryComponentsWad.ts')
+            },
+            {
+                find: /^@tlveng\/workload-factory-components$/,
+                replacement: resolve(wadProjectRootDir, 'src/test/mocks/workloadFactoryComponentsMain.ts')
+            },
+            {
+                find: '@wad',
+                replacement: resolve(wadProjectRootDir, 'src/wad')
+            },
+            {
+                find: '@test',
+                replacement: resolve(wadProjectRootDir, 'src/test')
+            },
+            {
+                find: '@netapp/bxp-style/react-icons/General',
+                replacement: resolve(wadProjectRootDir, 'src/test/mocks/bxpStyleIcons.tsx')
+            },
+            {
+                find: '@netapp/bxp-design-system-react',
+                replacement: resolve(wadProjectRootDir, 'src/test/mocks/bxpDesignSystemReact.tsx')
+            },
+            {
+                find: '@netapp/bxp-style',
+                replacement: resolve(wadProjectRootDir, 'node_modules/@netapp/bxp-style')
+            }
+        ]
     },
     test: {
         globals: true,

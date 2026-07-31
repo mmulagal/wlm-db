@@ -2,7 +2,6 @@ import { memo, useState, type MouseEvent } from 'react';
 import { Text } from '@netapp/bxp-design-system-react';
 import { type ResourceScanRecord, type TableColumn } from '@tlveng/workload-factory-components/wad';
 
-
 type MetadataField = 'current' | 'recommended' | 'workload';
 
 /** Row keys used as accessor and display fallback when metadata has no value. */

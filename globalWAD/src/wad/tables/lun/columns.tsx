@@ -33,7 +33,7 @@ export const blockDeviceNameColumn: TableColumn<ResourceScanRecord> = {
 };
 
 export const currentOsTypeColumn = createMetadataFieldColumn({
-    header: 'OS type',
+    header: 'Current value',
     field: LunEnrichmentField.CURRENT,
     id: LunColumnId.CURRENT_OS_TYPE,
     width: 140,

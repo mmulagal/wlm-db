@@ -30,6 +30,23 @@ export const OptimizationStatus = {
     NOT_AVAILABLE: 'NOT_AVAILABLE'
 } as const;
 
+export const ResourceType = {
+    VOLUME: 'VOLUME',
+    FILESYSTEM: 'FILESYSTEM',
+    BLOCK_DEVICE: 'BLOCK_DEVICE',
+    CACHE_RELATIONSHIP: 'CACHE_RELATIONSHIP',
+    SVM: 'SVM',
+    BACKUP: 'BACKUP',
+    SNAPSHOT: 'SNAPSHOT',
+    ISCSI_CONNECTION: 'ISCSI_CONNECTION'
+} as const;
+
+export const ServiceType = {
+    FSX_FOR_ONTAP: 'FSX_FOR_ONTAP',
+    CLOUD_VOLUMES_ONTAP: 'CLOUD_VOLUMES_ONTAP',
+    GCNV: 'GCNV'
+} as const;
+
 export const fileSystemColumn = columnStub('fileSystem', 'File system');
 export const lastAnalyzedColumn = columnStub('lastAnalyzed', 'Last analyzed');
 export const optimizationStatusColumn = columnStub('optimizationStatus', 'Status');
@@ -66,6 +83,8 @@ export const createWadMount = <P extends object>(Component: ComponentType<P>) =>
 
 export type ResourceScanRecord = {
     id: string;
+    type?: string;
+    name?: string;
     workload?: string;
     metadata?: Record<string, unknown>;
     optimizationStatus?: string;
@@ -84,17 +103,36 @@ export type WadElementProps = {
 };
 
 export type WadApi = {
-    context: { configurationId: string; configurationName?: string };
-    fixModalPayload: { resources: ResourceScanRecord[] };
-    closeFixModal: () => void;
-    fix: (targets: unknown[], metadata: unknown) => Promise<void>;
-    fetchResources: () => Promise<void>;
-    navigate: (target: { pathname: string }) => void;
-    getLocation: () => string;
-    notify: (payload: { type: string; message: string }) => void;
-    openFixModal: (resources: ResourceScanRecord[]) => void;
+    subscribe: (listener: () => void) => () => void;
+    getResources: () => ResourceScanRecord[];
     getResource: (id: string) => ResourceScanRecord | undefined;
-    updateResource: (payload: { id: string; metadata: Record<string, unknown> }) => void;
+    getFilters: () => Record<string, unknown>;
+    isLoading: () => boolean;
+    getTotalCount: () => number;
+    getPageInfo: () => { page: number; pageSize: number; pageCount: number; hasNext: boolean; hasPrev: boolean };
+    getLocation: () => string;
+    updateResource: (payload: { id: string } & Partial<ResourceScanRecord>) => void;
+    setFilters: (filters: Record<string, unknown>) => void;
+    fetchResources: () => Promise<void>;
+    dismiss: (ids: string[]) => Promise<void>;
+    reactivate: (ids: string[]) => Promise<void>;
+    fix: (targets: unknown[], metadata?: unknown) => Promise<unknown>;
+    openFixModal: (resources: ResourceScanRecord[], extra?: unknown) => void;
+    closeFixModal: () => void;
+    fixModalPayload: { resources: ResourceScanRecord[]; extra?: unknown };
+    notify: (payload: { type: string; message: string }) => void;
+    navigate: (target: { pathname: string } | string) => void;
+    apiRequest: (config: unknown) => Promise<unknown>;
+    context: {
+        accountId?: string;
+        configurationId: string;
+        configurationName?: string;
+        scope?: {
+            serviceType: string;
+            credentialsIds: string[];
+            regions: string[];
+        };
+    };
 };
 
 export type BulkAction = {

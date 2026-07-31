@@ -50,7 +50,7 @@ export const volumeRecommendedColumn = createMetadataFieldColumn({
 });
 
 export const currentSnapcenterSnapshotColumn = createMetadataFieldColumn({
-    header: 'Snapshot status',
+    header: 'Current value',
     field: VolumeEnrichmentField.CURRENT,
     id: VolumeColumnId.SNAPCENTER_CURRENT,
     width: 200,
