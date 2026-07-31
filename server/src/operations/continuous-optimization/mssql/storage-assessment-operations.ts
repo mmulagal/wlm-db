@@ -280,7 +280,6 @@ function expandVolumeDataPerDatabaseForLayoutAssessment(data: DatabaseVolumeReco
     });
     return expandedData;
 }
-
 function expandDatabaseDetailForSizingAssessment(data: LogDriveDetails[]) {
     const expandedData: LogDriveDetails[] = [];
     data.forEach((volume: LogDriveDetails) => {
@@ -368,7 +367,12 @@ function getLogVolumeDrift(
             dataAccessPath: dataAccessPath ? [...new Set(dataAccessPath.split(','))] : [],
             databases: [...new Set(drive.databaseName.split(','))],
             sizePercentToDataDrive: Number.isNaN(sizePercentToDataDrive) ? 0 : sizePercentToDataDrive,
-            lunPath: drive.lunUuid && lunUuidToLunPathMap ? lunUuidToLunPathMap.get(drive.lunUuid) : undefined
+            lunPath: drive.lunUuid && lunUuidToLunPathMap ? lunUuidToLunPathMap.get(drive.lunUuid) : undefined,
+            svmName: drive.svmName ?? undefined,
+            ontapVolumeName: drive.ontapVolumeName ?? undefined,
+            ontapVolumeUuid: drive.ontapVolumeUuid ?? undefined,
+            lunUuid: drive.lunUuid ?? undefined,
+            diskSerialNumber: drive.diskSerialNumber ?? undefined
         };
         if (!dataAccessPath || !logAccessPath || !dataDriveTotalSizeMB || !logDriveTotalSizeMB) {
             ignoredDrives.push(formattedDriveInfo as SizingViolationResponseType);
@@ -465,7 +469,12 @@ function getTempDbVolumeDrift(
         sizePercentToDataDrive: Number.isNaN(tempdbPercent) ? 0 : tempdbPercent,
         lunPath: lunUuid && lunUuidToLunPathMap ? lunUuidToLunPathMap.get(lunUuid) : undefined,
         tempdbAccessPath: tempdbDriveLetter,
-        databases: ['tempdb']
+        databases: ['tempdb'],
+        svmName: value.svmName ?? undefined,
+        ontapVolumeName: value.ontapVolumeName ?? undefined,
+        ontapVolumeUuid: ontapVolumeUuid ?? undefined,
+        lunUuid: lunUuid ?? undefined,
+        diskSerialNumber: value.diskSerialNumber ?? undefined
     };
 
     if (defaultDataDriveLetter === tempdbDriveLetter) {
@@ -961,8 +970,8 @@ async function calculateStorageDrift(
                               value: 'tempdb',
                               objectType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
                               additionalInfo: {
-                                  lunPath: tempDbRecord.lunPath,
-                                  driveLetter: tempDbRecord.driveLetter
+                                  lunPath: tempDbRecord.lunPath ?? '',
+                                  driveLetter: tempDbRecord.driveLetter ?? ''
                               }
                           }
                       ]
@@ -1132,7 +1141,7 @@ async function calculateStorageDrift(
                     objectName: 'placement',
                     value: dbName,
                     objectType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
-                    additionalInfo: { lunPath: db.lunPath, driveLetter: db.driveLetter }
+                    additionalInfo: { lunPath: db.lunPath ?? '', driveLetter: db.driveLetter ?? '' }
                 }));
         });
 
@@ -1143,8 +1152,8 @@ async function calculateStorageDrift(
                 value: dbName,
                 objectType: ASSESSMENT_RESOURCE_TYPE.DATABASE,
                 additionalInfo: {
-                    lunPath: db?.logLunPath,
-                    driveLetter: db?.logDriveLetter
+                    lunPath: db?.logLunPath ?? '',
+                    driveLetter: db?.logDriveLetter ?? ''
                 }
             };
         });

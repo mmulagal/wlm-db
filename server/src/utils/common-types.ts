@@ -624,6 +624,7 @@ interface LogDriveDetails {
     logDriveTotalSizeMB: number;
     dataDriveTotalSizeMB: number;
     diskNumber: number;
+    diskSerialNumber?: string;
     sizePercentToDataDrive: number;
 }
 
@@ -637,6 +638,7 @@ interface TempDbDriveDetails {
     dataDriveTotalSizeMB: number;
     defaultDataDriveLetter: string;
     tempdbDriveTotalSizeMB: number;
+    diskSerialNumber?: string;
     sizePercentToDataDrive: number;
 }
 
