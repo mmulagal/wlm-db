@@ -119,12 +119,7 @@ import { discoverPgsqlHosts } from './workloads/pgsql/pgsql-discover-scripts';
 import { discoverOracleHosts } from './workloads/oracle/oracle-discover-scripts';
 import { OracleDeploymentTenacy, SSM_RUN_SHELL_SCRIPT_DOC } from './workloads/oracle/consts';
 import { OracleDataguardDiscoveryDetailsType } from './workloads/oracle/common-types';
-import {
-    fetchTaggingServiceEc2Hosts,
-    buildEc2FsxRelationship,
-    TaggingServiceEc2Host,
-    Ec2WithStorage
-} from './cloud-manager/tagging-service-operations';
+import { buildEc2FsxRelationship, Ec2WithStorage } from './cloud-manager/tagging-service-operations';
 import { checkFsxLinkExists } from '../lib/cloud-manager/fsx-core';
 import { getFsxLinkReadinessByFsId } from './aws/fsx-operations';
 
@@ -424,7 +419,7 @@ async function getHostAndSqlServerInfo(
             });
         }
 
-        // Fallback for tagging-service-only instances that couldn't run the PowerShell script
+        // Fallback for EC2-describe instances that couldn't run the PowerShell script
         // (extensiveRunPermission=false) but do have narrower Fleet Manager document read permission.
         const alreadyReportedInstanceIds = new Set(
             ssmConnectedEc2ResponseInfo.map(({ ec2InstanceId }) => ec2InstanceId)
@@ -1560,58 +1555,6 @@ async function preparePsModulesForManage(
     return jobStatusRecord.status;
 }
 
-function isTaggingServiceHostForDatabaseType(host: TaggingServiceEc2Host, databaseType?: DatabaseTypes): boolean {
-    if (host.state && host.state.toLowerCase() !== 'running') {
-        return false;
-    }
-    const platform = (host.platformDetails ?? host.platform ?? '').toLowerCase();
-    switch (databaseType) {
-        case DatabaseTypes.MS_SQL_SERVER:
-            return platform === 'windows';
-        case DatabaseTypes.ORACLE:
-            return platform.startsWith('red hat enterprise linux') || platform.startsWith('suse linux');
-        case DatabaseTypes.PG_SQL:
-            return platform === 'linux/unix';
-        default:
-            return true;
-    }
-}
-
-function mapTaggingServiceHost(
-    {
-        instanceId,
-        instanceType,
-        platform,
-        platformDetails,
-        privateIp,
-        privateDnsName,
-        vpcId,
-        tags,
-        blockDeviceMappings
-    }: TaggingServiceEc2Host,
-    vpcNames: Map<string | undefined, string | undefined>,
-    vpcCidrs: Map<string | undefined, string | undefined>
-) {
-    return {
-        ec2InstanceId: instanceId,
-        ec2InstanceType: instanceType || '',
-        ec2InstanceName: getResourceNameFromTags(tags) || '',
-        ...(privateIp ? { ec2InstancePrivateIpAddress: privateIp } : {}),
-        ec2HostName: privateDnsName || '',
-        ec2UsageOperation: '',
-        ebsVolumeIDs: blockDeviceMappings?.map(({ ebs }) => ebs?.volumeId),
-        ebsVolumes: [] as InstanceBlockDeviceMapping[],
-        vpc: {
-            ...(vpcId && { id: vpcId }),
-            ...(vpcNames.has(vpcId) && { name: vpcNames.get(vpcId) }),
-            ...(vpcCidrs.has(vpcId) && { cidrBlock: vpcCidrs.get(vpcId) })
-        },
-        error: undefined,
-        platform: platformDetails || platform || '',
-        source: DiscoverySource.TAGGING_SERVICE
-    };
-}
-
 async function discoverEc2Instances(
     accountId: string,
     credentialsId: string,
@@ -1640,14 +1583,11 @@ async function discoverEc2Instances(
         describeInstanceParams.Filters?.push({ Name: 'instance-id', Values: ec2InstanceIds });
     }
 
-    const [[reservations, NextToken], vpcs, taggingServiceHosts] = await Promise.all([
+    const [[reservations, NextToken], vpcs] = await Promise.all([
         describeInstancesWithPagination(credentialsId, region, describeInstanceParams, pageSize, nextToken, {
             useCache: true
         }),
-        paginatedDescribeVpcs(credentialsId, region, {}, { useCache: true }),
-        IS_DEMO_FLOW
-            ? Promise.resolve<TaggingServiceEc2Host[]>([])
-            : fetchTaggingServiceEc2Hosts(accountId, credentialsId, region)
+        paginatedDescribeVpcs(credentialsId, region, {}, { useCache: true })
     ]);
 
     const vpcNames = new Map(vpcs?.map(({ Tags, VpcId }: Vpc) => [VpcId, getResourceNameFromTags(Tags)]));
@@ -1657,14 +1597,10 @@ async function discoverEc2Instances(
         Array.isArray(reservations) ? reservations.flatMap(({ Instances }) => Instances ?? []) : []
     ).filter(Boolean);
 
-    // Resolved by real AWS/tagging-service instance IDs (never the demo-mode randomized display ID below).
     let ssmConnectionMap = new Map();
     try {
         ssmConnectionMap = await getSSMConnectionStatusByInstanceIds(credentialsId, region, [
-            ...new Set([
-                ...ec2InstanceList.map(({ InstanceId }) => InstanceId!),
-                ...taggingServiceHosts.map(({ instanceId }) => instanceId)
-            ])
+            ...new Set(ec2InstanceList.map(({ InstanceId }) => InstanceId!))
         ]);
     } catch (error) {
         logger.error('Failed to get SSM connection status by instance ids', { error });
@@ -1693,16 +1629,7 @@ async function discoverEc2Instances(
         };
     });
 
-    const ec2InstanceIdSet = new Set(ec2InstanceList.map(({ InstanceId }) => InstanceId));
-    const taggingServiceOnlyInstances = taggingServiceHosts
-        .filter(host => isTaggingServiceHostForDatabaseType(host, discoveryDbType))
-        .filter(({ instanceId }) => !ec2InstanceIdSet.has(instanceId))
-        .map(host => ({
-            ...mapTaggingServiceHost(host, vpcNames, vpcCidrs),
-            ssmState: ssmConnectionMap.get(host.instanceId) || ConnectionStatus.NOT_CONNECTED
-        }));
-
-    let ec2Instances: SsmTargetsInfo[] = [...ssmRunCommandInstances, ...taggingServiceOnlyInstances];
+    let ec2Instances: SsmTargetsInfo[] = [...ssmRunCommandInstances];
 
     if (!ec2Instances.length) {
         return { ec2Instances: [], NextToken };

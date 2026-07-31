@@ -195,7 +195,7 @@ async function executeSSMDocumentMultipleInstances(
     });
     const { InstanceIds: instanceIds } = params;
     if (instanceIds && !isEmpty(instanceIds)) {
-        const cacheHashKey = generateHash(instanceIds.join('') + JSON.stringify(params));
+        const cacheHashKey = generateHash(JSON.stringify({ credentialsId, region, accountId, instanceIds, params }));
         if (createCache && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
             logger.info('Reading from cache', instanceIds.join(), cacheHashKey);
             return readFromCacheByKey(SSM_COMMAND_CACHE_TYPE, cacheHashKey) as MultipleCommandSsmResponse[];
@@ -303,7 +303,7 @@ async function callSsmExecution({
         documentName,
         documentVersion
     );
-    const cacheHashKey = generateHash(ec2InstanceId + commands);
+    const cacheHashKey = generateHash(JSON.stringify({ credentialsId, region, accountId, ec2InstanceId, commands }));
 
     if (cacheData && !process.env.TEST && hasCache(SSM_COMMAND_CACHE_TYPE, cacheHashKey)) {
         logger.info('Reading from cache', ec2InstanceId, cacheHashKey);
@@ -800,7 +800,7 @@ async function canReadFleetManagerResource({
     logger.info('Checking Fleet Manager read permission', { instanceIds, region, platform });
 
     const isWindows = platform === 'windows';
-    const path = isWindows ? 'HKLM:\\SOFTWARE' : '/etc/fstab';
+    const path = isWindows ? 'HKLM:\\SOFTWARE' : '/etc';
     const canRead = await probeSendCommand({
         credentialsId,
         region,
