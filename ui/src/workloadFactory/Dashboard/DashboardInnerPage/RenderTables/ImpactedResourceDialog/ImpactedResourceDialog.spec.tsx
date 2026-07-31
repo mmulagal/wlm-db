@@ -69,11 +69,29 @@ vi.mock('../../../../../common/Lib/Table/useTable', () => ({
     })
 }));
 
-const engineTypeMock = vi.hoisted(() => ({ type: 'MSSQL' as string }));
+const engineTypeMock = vi.hoisted(() => ({
+    type: 'MSSQL' as string,
+    driftAssessmentData: null as { metadata?: Record<string, unknown> } | null,
+    selectedHostname: '' as string
+}));
 
 vi.mock('../../../../../store/storeHooks', () => ({
-    useAppSelector: (selector: (state: { getWellOptimize: { configEngineType: string } }) => unknown) =>
-        selector({ getWellOptimize: { configEngineType: engineTypeMock.type } })
+    useAppSelector: (
+        selector: (state: {
+            getWellOptimize: {
+                configEngineType: string;
+                driftAssessmentData: { metadata?: Record<string, unknown> } | null;
+                selectedHostname: string;
+            };
+        }) => unknown
+    ) =>
+        selector({
+            getWellOptimize: {
+                configEngineType: engineTypeMock.type,
+                driftAssessmentData: engineTypeMock.driftAssessmentData,
+                selectedHostname: engineTypeMock.selectedHostname
+            }
+        })
 }));
 
 vi.mock('../../../../../utils/resourceUtils', () => ({
@@ -493,30 +511,88 @@ describe('ImpactedResourceDialog', () => {
 
     // === HEARTBEAT SETTINGS (registry-based fallback) ===
     describe('HEARTBEAT SETTINGS (heartbeat-settings)', () => {
-        it('renders configuration name, current and recommended from violationDetails', () => {
+        afterEach(() => {
+            engineTypeMock.driftAssessmentData = null;
+            engineTypeMock.selectedHostname = '';
+        });
+
+        it('renders Host name / Current value / Recommended value columns with combineRows', () => {
             const data = {
                 configurationName: 'heartbeat-settings',
+                objectsInViolation: ['i-0a1f31a39bd2d9362'],
                 violationDetails: [
                     { objectName: 'CrossSubnetDelay', value: '500', recommended: '2000' },
                     { objectName: 'CrossSubnetThreshold', value: '5', recommended: '20' }
-                ]
+                ],
+                hostName: 'my-db-host.example.com'
             };
             render(<ImpactedResourceDialog data={data as any} />);
-            // heartbeat-settings uses combineRows: all violationDetails aggregate into a single objectName=value row
+            expect(screen.getByText('Host name')).toBeTruthy();
+            expect(screen.getByText('Current heartbeat setting')).toBeTruthy();
+            expect(screen.getByText('Recommended heartbeat setting')).toBeTruthy();
+            // Combined rows: name=value pairs
             expect(screen.getByText('CrossSubnetDelay=500, CrossSubnetThreshold=5')).toBeTruthy();
             expect(screen.getByText('CrossSubnetDelay=2000, CrossSubnetThreshold=20')).toBeTruthy();
+        });
+
+        it('shows hostname from data.hostName (Dashboard row fallback)', () => {
+            const data = {
+                configurationName: 'heartbeat-settings',
+                objectsInViolation: ['i-0a1f31a39bd2d9362'],
+                violationDetails: [{ objectName: 'SameSubnetDelay', value: '2000', recommended: '1000' }],
+                hostName: 'host-from-row.example.com'
+            };
+            render(<ImpactedResourceDialog data={data as any} />);
+            expect(screen.getByText('host-from-row.example.com')).toBeTruthy();
+        });
+
+        it('shows hostname from selectedHostname store fallback when data.hostName is absent', () => {
+            engineTypeMock.selectedHostname = 'host-from-store.example.com';
+            const data = {
+                configurationName: 'heartbeat-settings',
+                objectsInViolation: ['i-0a1f31a39bd2d9362'],
+                violationDetails: [{ objectName: 'SameSubnetDelay', value: '2000', recommended: '1000' }]
+            };
+            render(<ImpactedResourceDialog data={data as any} />);
+            expect(screen.getByText('host-from-store.example.com')).toBeTruthy();
+        });
+
+        it('shows hostname from driftAssessmentData.metadata (GetWell page context)', () => {
+            // In GetWell context data.hostName is undefined; metadata is the authoritative source.
+            engineTypeMock.driftAssessmentData = { metadata: { databaseHostName: 'host-from-metadata.example.com' } };
+            const data = {
+                configurationName: 'heartbeat-settings',
+                objectsInViolation: ['i-0a1f31a39bd2d9362'],
+                violationDetails: [{ objectName: 'SameSubnetDelay', value: '2000', recommended: '1000' }]
+                // hostName intentionally absent — simulates GetWell inner page context
+            };
+            render(<ImpactedResourceDialog data={data as any} />);
+            expect(screen.getByText('host-from-metadata.example.com')).toBeTruthy();
+        });
+
+        it('shows unavailable when no hostname source is available', () => {
+            const data = {
+                configurationName: 'heartbeat-settings',
+                objectsInViolation: ['i-0a1f31a39bd2d9362'],
+                violationDetails: [{ objectName: 'SameSubnetDelay', value: '2000', recommended: '1000' }]
+            };
+            render(<ImpactedResourceDialog data={data as any} />);
+            expect(screen.getByText('Host name')).toBeTruthy();
+            expect(screen.getAllByText('databases.general.unavailable').length).toBeGreaterThan(0);
         });
 
         it('renders cluster-quorum with configuration-name / current / recommended columns', () => {
             const data = {
                 configurationName: 'cluster-quorum',
                 recommended: 'NodeMajority',
+                objectsInViolation: ['SQL-DEV-FCI-CLUSTER'],
                 violationDetails: [{ objectName: 'QuorumType', value: 'NodeAndDiskMajority' }]
             };
             render(<ImpactedResourceDialog data={data as any} />);
-            expect(screen.getByText('EC2 instance name')).toBeTruthy();
+            expect(screen.getByText('Cluster name')).toBeTruthy();
             expect(screen.getByText('Current value')).toBeTruthy();
             expect(screen.getByText('Recommended value')).toBeTruthy();
+            expect(screen.getByText('SQL-DEV-FCI-CLUSTER')).toBeTruthy();
             expect(screen.getByText('QuorumType')).toBeTruthy();
             expect(screen.getByText('NodeAndDiskMajority')).toBeTruthy();
             expect(screen.getByText('NodeMajority')).toBeTruthy();
@@ -830,15 +906,43 @@ describe('ImpactedResourceDialog', () => {
 
         // --- ISCSI REPLACEMENT TIMEOUT ---
         describe('iscsi-replacement-timeout', () => {
-            it('renders configuration name, current value and recommended value from violationDetails', () => {
+            afterEach(() => {
+                engineTypeMock.driftAssessmentData = null;
+                engineTypeMock.selectedHostname = '';
+            });
+
+            it('renders Host name, Configuration name, current and recommended columns', () => {
+                engineTypeMock.driftAssessmentData = { metadata: { databaseHostName: 'oracle-host-01' } };
                 const data = {
                     configurationName: 'iscsi-replacement-timeout',
                     violationDetails: [{ objectName: 'replacement_timeout', value: '120', recommended: '5' }]
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('replacement_timeout')).toBeTruthy();
+                expect(screen.getByText('Host name')).toBeTruthy();
+                expect(screen.getByText('Current iSCSI replacement timeout')).toBeTruthy();
+                expect(screen.getByText('oracle-host-01')).toBeTruthy();
                 expect(screen.getByText('120')).toBeTruthy();
                 expect(screen.getByText('5')).toBeTruthy();
+            });
+
+            it('shows hostname from data.hostName when metadata is absent', () => {
+                const data = {
+                    configurationName: 'iscsi-replacement-timeout',
+                    violationDetails: [{ objectName: 'replacement_timeout', value: '120', recommended: '5' }],
+                    hostName: 'oracle-host-from-row'
+                };
+                render(<ImpactedResourceDialog data={data as any} />);
+                expect(screen.getByText('oracle-host-from-row')).toBeTruthy();
+            });
+
+            it('shows unavailable for Host name when no hostname source', () => {
+                const data = {
+                    configurationName: 'iscsi-replacement-timeout',
+                    violationDetails: [{ objectName: 'replacement_timeout', value: '120', recommended: '5' }]
+                };
+                render(<ImpactedResourceDialog data={data as any} />);
+                expect(screen.getByText('Host name')).toBeTruthy();
+                expect(screen.getAllByText('databases.general.unavailable').length).toBeGreaterThan(0);
             });
         });
 
@@ -850,6 +954,7 @@ describe('ImpactedResourceDialog', () => {
                     violationDetails: [{ objectName: 'vm.swappiness', value: '60', recommended: '1' }]
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
+                // combineRows: true — violationDetails collapsed into name=value pairs
                 // kernel-parameters uses combineRows: aggregates violationDetails into a single objectName=value row
                 expect(screen.getByText('vm.swappiness=60')).toBeTruthy();
                 expect(screen.getByText('vm.swappiness=1')).toBeTruthy();
@@ -874,15 +979,33 @@ describe('ImpactedResourceDialog', () => {
 
         // --- MULTIPATH FRIENDLY NAMES ---
         describe('multipath-friendly-names', () => {
-            it('renders configuration name, current value and recommended value from violationDetails', () => {
+            afterEach(() => {
+                engineTypeMock.driftAssessmentData = null;
+                engineTypeMock.selectedHostname = '';
+            });
+
+            it('renders Host name, Configuration name, current and recommended columns', () => {
+                engineTypeMock.driftAssessmentData = { metadata: { databaseHostName: 'oracle-host-02' } };
                 const data = {
                     configurationName: 'multipath-friendly-names',
                     violationDetails: [{ objectName: 'use_friendly_names', value: 'yes', recommended: 'no' }]
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('use_friendly_names')).toBeTruthy();
+                expect(screen.getByText('Host name')).toBeTruthy();
+                expect(screen.getByText('Current value')).toBeTruthy();
+                expect(screen.getByText('oracle-host-02')).toBeTruthy();
                 expect(screen.getByText('yes')).toBeTruthy();
                 expect(screen.getByText('no')).toBeTruthy();
+            });
+
+            it('shows hostname from data.hostName when metadata is absent', () => {
+                const data = {
+                    configurationName: 'multipath-friendly-names',
+                    violationDetails: [{ objectName: 'use_friendly_names', value: 'yes', recommended: 'no' }],
+                    hostName: 'oracle-row-host'
+                };
+                render(<ImpactedResourceDialog data={data as any} />);
+                expect(screen.getByText('oracle-row-host')).toBeTruthy();
             });
         });
 

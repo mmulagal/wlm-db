@@ -10,6 +10,7 @@
 
 import { t } from 'i18next';
 import {
+    ASSESSMENT_COLUMN_KEYS,
     ASSESSMENT_CONFIG_IDS,
     DBType,
     OPTIMIZE_PAYLOAD_TYPES,
@@ -175,6 +176,26 @@ export interface ColumnConfig {
      * @default false
      */
     combineRows?: boolean;
+
+    /**
+     * When set to "objectsInViolation", the objectName for each violationDetails row
+     * is taken from data.objectsInViolation[rowIndex] instead of violationDetails[].objectName.
+     *
+     * Used when the API returns parameter names in violationDetails.objectName (e.g., "DynamicQuorum")
+     * but the UI should display the resource identifier from objectsInViolation (e.g., cluster name).
+     */
+    objectNameSource?: typeof ASSESSMENT_COLUMN_KEYS.OBJECT_NAME_SOURCE_OBJECTS_IN_VIOLATION;
+
+    /**
+     * When true, fields from the top-level assessment metadata (databaseHostName, etc.) are
+     * injected into each table row so they can be referenced directly by column accessors.
+     *
+     * Used when the API metadata (host name, instance name) needs to appear as a table column
+     * alongside per-row violationDetails values.
+     *
+     * @default false
+     */
+    injectMetadataFields?: boolean;
 
     /**
      * Indicates this configuration has nested sub-configurations.

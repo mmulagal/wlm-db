@@ -2735,11 +2735,12 @@
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
-                    "key": "objectName",
-                    "label": "Configuration name",
-                    "accessor": "objectName"
+                    "key": "hostName",
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "value",
@@ -2882,11 +2883,12 @@
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
-                    "key": "objectName",
-                    "label": "Configuration name",
-                    "accessor": "objectName"
+                    "key": "hostName",
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "value",

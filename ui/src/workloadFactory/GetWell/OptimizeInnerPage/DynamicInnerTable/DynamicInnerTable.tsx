@@ -25,6 +25,7 @@ import {
     getConfigEntry
 } from '../../../../utils/configRegistry';
 import {
+    ASSESSMENT_COLUMN_KEYS,
     ASSESSMENT_CONFIG_IDS,
     DBType,
     GETWELL_STATUS,
@@ -71,7 +72,8 @@ const DynamicInnerTable = ({
         selectedResourceId,
         selectedGwInstanceCredId,
         selectedGwInstanceRegionId,
-        selectedDatabaseInstance
+        selectedDatabaseInstance,
+        driftAssessmentData
     } = useAppSelector((state: any) => state.getWellOptimize);
 
     // Check if this is a patch config and get patch field/columns from registry
@@ -244,7 +246,10 @@ const DynamicInnerTable = ({
             const recommended = data.violationDetails
                 .map((r: any) => `${r.objectName}=${r.recommended ?? ''}`)
                 .join(', ');
-            return [addRowMeta({ objectName, value: current, current, recommended })];
+            const combineMetadataFields = columnConfig?.injectMetadataFields
+                ? (driftAssessmentData as any)?.metadata ?? {}
+                : {};
+            return [addRowMeta({ objectName, value: current, current, recommended, ...combineMetadataFields })];
         }
 
         // Default: violationDetails
@@ -252,10 +257,32 @@ const DynamicInnerTable = ({
             // Top-level recommended and current values are the same for all rows in many configs
             const topRecommended = data?.recommended;
             const topCurrent = data?.current;
+            // cluster-quorum: API returns parameter names (e.g. "DynamicQuorum") in violationDetails.objectName
+            // but the UI should display the cluster name from objectsInViolation[rowIndex] instead.
+            // objectsInViolation is only read for cluster-quorum to avoid unnecessary array access for other configs.
+            const isClusterQuorum = configId === ASSESSMENT_CONFIG_IDS.CLUSTER_QUORUM;
+            const objectsInViolation: any[] = isClusterQuorum ? data?.objectsInViolation || [] : [];
+            const overrideObjectNameFromViolations =
+                isClusterQuorum &&
+                columnConfig?.objectNameSource === ASSESSMENT_COLUMN_KEYS.OBJECT_NAME_SOURCE_OBJECTS_IN_VIOLATION;
+            // Metadata fields (e.g. databaseHostName) injected per-row when the registry requests it
+            const metadataFields = columnConfig?.injectMetadataFields
+                ? (driftAssessmentData as any)?.metadata ?? {}
+                : {};
 
-            return data.violationDetails.map((row: any) =>
+            return data.violationDetails.map((row: any, index: number) =>
                 addRowMeta({
                     ...row,
+                    // Inject top-level metadata fields (e.g. databaseHostName) when configured
+                    ...metadataFields,
+                    // cluster-quorum: replace objectName with cluster name from objectsInViolation[index];
+                    // configName preserves the original violationDetails objectName (e.g. "DynamicQuorum")
+                    // for the Configuration name column. Only applied when objectsInViolation[index] is a string.
+                    ...(overrideObjectNameFromViolations &&
+                        typeof objectsInViolation[index] === 'string' && {
+                            objectName: objectsInViolation[index],
+                            configName: row.objectName
+                        }),
                     // Inject top-level current value if the row doesn't have value or current
                     ...(!row.value &&
                         !row.current &&
@@ -301,7 +328,8 @@ const DynamicInnerTable = ({
         missingPatchResponse,
         patchField,
         engineType,
-        isPatchDataLoading
+        isPatchDataLoading,
+        driftAssessmentData
     ]);
 
     // Build column definitions dynamically from registry

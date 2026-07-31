@@ -2168,14 +2168,15 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted EC2 instances",
+            "impactedLabel": "Impacted clusters",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "objectNameSource": "objectsInViolation",
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "EC2 instance name",
+                    "label": "Cluster name",
                     "accessor": "objectName"
                 },
                 {
@@ -2187,9 +2188,14 @@
                     "key": "recommended",
                     "label": "Recommended value",
                     "accessor": "recommended"
+                },
+                {
+                    "key": "configName",
+                    "label": "Configuration name",
+                    "accessor": "configName"
                 }
             ],
-            "resourceTypeLabel": "EC2 instance"
+            "resourceTypeLabel": "Cluster"
         },
         "optimizeApi": {
             "mutation": "optimizeHAMssql",
@@ -2336,11 +2342,12 @@
             }
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
-                    "key": "objectName",
-                    "label": "EC2 instance name",
-                    "accessor": "objectName"
+                    "key": "hostName",
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "current",

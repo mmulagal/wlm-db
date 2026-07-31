@@ -4,7 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { ColumnProps, Table } from '@netapp/design-system/dist/components/Table';
 import styles from './ImpactedResourceDialog.module.scss';
 import commonStyles from '../../../../../utils/CommonStyles.module.scss';
-import { ASSESSMENT_CONFIG_IDS, DBType, PATCH_SCAN_FIELD, WIZARD_TYPE } from '../../../../../utils/consts';
+import {
+    ASSESSMENT_COLUMN_KEYS,
+    ASSESSMENT_CONFIG_IDS,
+    DBType,
+    PATCH_SCAN_FIELD,
+    WIZARD_TYPE
+} from '../../../../../utils/consts';
 import { useAppSelector } from '../../../../../store/storeHooks';
 import { useGetMissingPatchAssessmentDataQuery } from '../../../../../utils/apiService';
 import { getTableLazyLoadingComponentProps } from '../../../../../common/Lib/Table/tableLazyLoadingProps';
@@ -20,6 +26,7 @@ import CopyToClipboardCommon from '../../../../../common/CopyToClipboard/copyToC
 import { ReactComponent as CopyIcon } from '../../../../../assets/ic_copy.svg';
 import { normalizeImpactedResourceDialogData } from '../../../../WellArchitectedTab/assessmentFormatUtils';
 import { buildSubConfigValues, getColumnConfig } from '../../../../../utils/configRegistry';
+import { AssessmentMetadata } from '../../../../../utils/types/getWellTypes';
 
 interface ViolationDetail {
     objectName?: string;
@@ -112,6 +119,8 @@ interface AssessmentData {
     recommendedAdapterSettings?: RecommendedAdapterSettings;
     tcpOffloadState?: string;
     ec2InterfacesToFix?: Ec2InterfaceToFix[];
+    /** Set to hostData.databaseHostName in Dashboard table rows; used as hostname fallback */
+    hostName?: string;
 }
 
 interface RssAdapter {
@@ -410,7 +419,8 @@ const mapGenericConfigFromRegistry = (
     data: AssessmentData,
     na: string,
     t: (key: string) => string,
-    engineType?: string
+    engineType?: string,
+    metadata?: AssessmentMetadata
 ): ImpactedResourcesResult | null => {
     const columnConfig = getColumnConfig(configId, engineType);
     if (!columnConfig) return null;
@@ -437,6 +447,7 @@ const mapGenericConfigFromRegistry = (
             const recommended = details
                 .map((r: ViolationDetail) => `${r.objectName}=${r.recommended ?? ''}`)
                 .join(', ');
+            const combineMetadataFields: AssessmentMetadata = columnConfig.injectMetadataFields ? metadata ?? {} : {};
             const columns = columnConfig.columns.map(col => t(col.label) || col.label);
             const row = columnConfig.columns.map(col => {
                 const accessor = col.accessor || col.key;
@@ -444,6 +455,8 @@ const mapGenericConfigFromRegistry = (
                 if (accessor === 'current') return current || na;
                 if (accessor === 'value') return current || na;
                 if (accessor === 'recommended') return recommended || na;
+                if (accessor in combineMetadataFields)
+                    return String(combineMetadataFields[accessor as keyof AssessmentMetadata] ?? na);
                 return na;
             });
             return ensureRows(columns, [row], na);
@@ -458,18 +471,41 @@ const mapGenericConfigFromRegistry = (
     const topRecommended = data?.recommended;
     const topCurrent = data?.current;
 
-    const getDetailValue = (detail: ViolationDetail, accessor: string): string | number | undefined => {
+    // Fields injected from top-level metadata when registry sets injectMetadataFields: true
+    const metadataFields: AssessmentMetadata = columnConfig.injectMetadataFields ? metadata ?? {} : {};
+
+    const getDetailValue = (detail: ViolationDetail, accessor: string): string | number | boolean | undefined => {
         if (accessor === 'recommended') return detail?.recommended || topRecommended;
         if (accessor === 'objectName') return detail?.objectName || detail?.nfsMount;
         if (accessor === 'value' || accessor === 'current') {
             return (detail?.[accessor as keyof ViolationDetail] as string | number | undefined) ?? topCurrent;
         }
+        // Metadata accessor (e.g. databaseHostName injected via injectMetadataFields)
+        if (accessor in metadataFields) return metadataFields[accessor as keyof AssessmentMetadata];
         return detail?.[accessor as keyof ViolationDetail] as string | number | undefined;
     };
 
-    const mapDetailRow = (detail: ViolationDetail) =>
+    const mapDetailRow = (detail: ViolationDetail, index: number) =>
         columnConfig.columns.map(col => {
             const accessor = col.accessor || col.key;
+
+            // objectNameSource: 'objectsInViolation' — use objects[index] instead of detail.objectName
+            // Falls back to detail.objectName (same as DynamicInnerTable) when entry is missing or non-string
+            if (
+                configId === ASSESSMENT_CONFIG_IDS.CLUSTER_QUORUM &&
+                accessor === ASSESSMENT_COLUMN_KEYS.OBJECT_NAME &&
+                columnConfig.objectNameSource === ASSESSMENT_COLUMN_KEYS.OBJECT_NAME_SOURCE_OBJECTS_IN_VIOLATION
+            ) {
+                const oiv = objects[index];
+                if (typeof oiv === 'string') return oiv;
+                return detail?.objectName ? String(detail.objectName) : na;
+            }
+
+            // configName accessor — maps back to the original violationDetails objectName
+            if (accessor === 'configName') {
+                return detail?.objectName ? String(detail.objectName) : na;
+            }
+
             const value = getDetailValue(detail, accessor);
 
             // Special formatting based on column key
@@ -525,7 +561,8 @@ const getMssqlImpactedResources = (
     configName: string,
     data: AssessmentData,
     na: string,
-    t: (key: string) => string
+    t: (key: string) => string,
+    metadata?: AssessmentMetadata
 ): ImpactedResourcesResult => {
     const details: ViolationDetail[] = data?.violationDetails || [];
     const objects: ObjectInViolation[] = data?.objectsInViolation || [];
@@ -632,7 +669,7 @@ const getMssqlImpactedResources = (
 
         // === GENERIC FALLBACK: Try registry-based mapping ===
         default: {
-            const registryResult = mapGenericConfigFromRegistry(configName, data, na, t, DBType.MSSQL);
+            const registryResult = mapGenericConfigFromRegistry(configName, data, na, t, DBType.MSSQL, metadata);
             if (registryResult) {
                 return registryResult;
             }
@@ -649,7 +686,8 @@ const getOracleImpactedResources = (
     configName: string,
     data: AssessmentData,
     na: string,
-    t: (key: string) => string
+    t: (key: string) => string,
+    metadata?: AssessmentMetadata
 ): ImpactedResourcesResult => {
     const details: ViolationDetail[] = data?.violationDetails || [];
     const objects: ObjectInViolation[] = data?.objectsInViolation || [];
@@ -725,7 +763,8 @@ const getOracleImpactedResources = (
                 data,
                 na,
                 (key: string) => key,
-                DBType.ORACLE
+                DBType.ORACLE,
+                metadata
             );
             if (registryResult) {
                 return registryResult;
@@ -769,12 +808,13 @@ const resolveImpactedResources = (
     data: AssessmentData,
     na: string,
     t: (key: string) => string,
-    engineType?: string
+    engineType?: string,
+    metadata?: AssessmentMetadata
 ): ImpactedResourcesResult => {
     const resolver =
         engineType === DBType.MSSQL
-            ? (name: string) => getMssqlImpactedResources(name, data, na, t)
-            : (name: string) => getOracleImpactedResources(name, data, na, t);
+            ? (name: string) => getMssqlImpactedResources(name, data, na, t, metadata)
+            : (name: string) => getOracleImpactedResources(name, data, na, t, metadata);
 
     const result = resolver(configName);
     if (result.columns.length > 0) {
@@ -786,7 +826,21 @@ const resolveImpactedResources = (
 
 const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
     const { t } = useTranslation();
-    const { configEngineType } = useAppSelector(state => state.getWellOptimize);
+    const { configEngineType, driftAssessmentData, selectedHostname } = useAppSelector(state => state.getWellOptimize);
+    // databaseHostName priority:
+    // 1. data.hostName — always set per-row in Dashboard context; overrides store metadata to prevent
+    //    a stale GetWell session's hostname from leaking into unrelated Dashboard dialog rows.
+    // 2. driftAssessmentData.metadata — authoritative in GetWell inner page context (data.hostName is undefined there).
+    // 3. selectedHostname — set via setGwPageLoadInstanceData when navigating from Dashboard to GetWell.
+    const rowHostName = data?.hostName;
+    let assessmentMetadata: AssessmentMetadata | undefined = driftAssessmentData?.metadata;
+    if (rowHostName) {
+        // Row-specific hostName always wins — prevents stale store metadata from a previous GetWell
+        // session labelling Dashboard rows with the wrong hostname.
+        assessmentMetadata = { ...(assessmentMetadata ?? {}), databaseHostName: rowHostName };
+    } else if (!assessmentMetadata && selectedHostname) {
+        assessmentMetadata = { databaseHostName: selectedHostname };
+    }
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
     const na = t('databases.general.unavailable');
@@ -834,7 +888,8 @@ const ImpactedResourceDialog = ({ data }: { data: AssessmentData }) => {
         dialogData,
         na,
         t,
-        configEngineType
+        configEngineType,
+        assessmentMetadata
     );
 
     const isLoading = isPatchConfig && isMissingPatchLoading;

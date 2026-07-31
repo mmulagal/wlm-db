@@ -1120,6 +1120,17 @@ export const ASSESSMENT_CONFIG_NAMES = {
     MICROSOFT_SQL_SERVER_PATCH_SHORT: 'Microsoft SQL Server patch'
 };
 
+/**
+ * Column accessor keys and objectNameSource values used in the assessment table registry.
+ * Grouping related string constants in one place avoids scattered magic strings.
+ */
+export const ASSESSMENT_COLUMN_KEYS = {
+    /** Accessor key for the object / resource name column */
+    OBJECT_NAME: 'objectName',
+    /** objectNameSource value — instructs the table to use objectsInViolation[index] as the display name */
+    OBJECT_NAME_SOURCE_OBJECTS_IN_VIOLATION: 'objectsInViolation'
+} as const;
+
 export const ASSESSMENT_CONFIG_IDS = {
     AFD_LOGICAL_BLOCK_SIZE: 'afd-logical-block-size',
     ARCHIVELOG_DG_LUN_LAYOUT: 'archivelog-dg-lun-layout',

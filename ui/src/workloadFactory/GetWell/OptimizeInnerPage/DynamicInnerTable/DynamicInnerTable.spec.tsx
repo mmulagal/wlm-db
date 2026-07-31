@@ -49,6 +49,7 @@ vi.mock('../../../../utils/resourceUtils', () => ({
 
 vi.mock('../../../../utils/consts', () => ({
     ASSESSMENT_CONFIG_IDS: {
+        CLUSTER_QUORUM: 'cluster-quorum',
         SNAPSHOT_COPY_RESERVE: 'snapshot-copy-reserve',
         LOG_DRIVE_SIZE: 'log-drive-size',
         TEMPDB_DRIVE_SIZE: 'tempdb-drive-size',
@@ -61,6 +62,10 @@ vi.mock('../../../../utils/consts', () => ({
     },
     DBType: { MSSQL: 'mssql', ORACLE: 'oracle' },
     GETWELL_STATUS: { OPTIMIZED: 'Optimized', NOT_OPTIMIZED: 'Not Optimized' },
+    ASSESSMENT_COLUMN_KEYS: {
+        OBJECT_NAME: 'objectName',
+        OBJECT_NAME_SOURCE_OBJECTS_IN_VIOLATION: 'objectsInViolation'
+    },
     RSS_COLUMN_KEYS: {},
     PATCH_SCAN_FIELD: {
         HOST_OS_PATCH: 'HOST_OS_PATCH',
@@ -167,7 +172,8 @@ describe('DynamicInnerTable', () => {
                     selectedResourceId: 'r1',
                     selectedGwInstanceCredId: 'c1',
                     selectedGwInstanceRegionId: 'reg1',
-                    selectedDatabaseInstance: 'db1'
+                    selectedDatabaseInstance: 'db1',
+                    driftAssessmentData: null
                 }
             })
         );
@@ -1127,6 +1133,285 @@ describe('DynamicInnerTable', () => {
             capturedTableRows.forEach((row: any) => {
                 expect(row.cellProps?.isDisabled).toBeFalsy();
             });
+        });
+    });
+
+    // ── combineRows ────────────────────────────────────────────────────────────
+
+    describe('combineRows', () => {
+        const combineRowsConfig = {
+            columns: [
+                { key: 'objectName', label: 'EC2 instance name', accessor: 'objectName' },
+                { key: 'current', label: 'Current value', accessor: 'current' },
+                { key: 'recommended', label: 'Recommended value', accessor: 'recommended' }
+            ],
+            resourceTypeLabel: 'Setting',
+            combineRows: true
+        };
+
+        it('collapses violationDetails into a single row with name=value pairs', () => {
+            const data = {
+                objectsInViolation: ['i-0abc123'],
+                violationDetails: [
+                    { objectName: 'SameSubnetDelay', value: '2000', recommended: '1000' },
+                    { objectName: 'SameSubnetThreshold', value: '10', recommended: '5' }
+                ]
+            };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={combineRowsConfig as any} />);
+            expect(capturedTableRows).toHaveLength(1);
+            expect(capturedTableRows[0].objectName).toBe('i-0abc123');
+            expect(capturedTableRows[0].current).toBe('SameSubnetDelay=2000, SameSubnetThreshold=10');
+            expect(capturedTableRows[0].recommended).toBe('SameSubnetDelay=1000, SameSubnetThreshold=5');
+        });
+
+        it('uses first string from objectsInViolation as objectName', () => {
+            const data = {
+                objectsInViolation: ['i-first', 'i-second'],
+                violationDetails: [{ objectName: 'param', value: '1', recommended: '2' }]
+            };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={combineRowsConfig as any} />);
+            expect(capturedTableRows[0].objectName).toBe('i-first');
+        });
+
+        it('sets objectName to empty string when objectsInViolation is empty', () => {
+            const data = {
+                objectsInViolation: [],
+                violationDetails: [{ objectName: 'param', value: '1', recommended: '2' }]
+            };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={combineRowsConfig as any} />);
+            expect(capturedTableRows[0].objectName).toBe('');
+        });
+
+        it('does not use combineRows path when violationDetails is empty', () => {
+            const data = {
+                objectsInViolation: ['i-0abc123'],
+                violationDetails: []
+            };
+            render(<DynamicInnerTable {...defaultProps} data={data} columnConfig={combineRowsConfig as any} />);
+            // Falls through to objectsInViolation path — one row per item, not combined
+            expect(capturedTableRows).toHaveLength(1);
+            expect(capturedTableRows[0].objectName).toBe('i-0abc123');
+        });
+    });
+
+    // ── combineRows + injectMetadataFields ─────────────────────────────────────
+
+    describe('combineRows + injectMetadataFields (heartbeat-settings)', () => {
+        const heartbeatColumnConfig = {
+            columns: [
+                { key: 'hostName', label: 'Host name', accessor: 'databaseHostName' },
+                { key: 'current', label: 'Current value', accessor: 'current' },
+                { key: 'recommended', label: 'Recommended value', accessor: 'recommended' }
+            ],
+            resourceTypeLabel: 'Setting',
+            combineRows: true,
+            injectMetadataFields: true
+        };
+        const heartbeatData = {
+            objectsInViolation: ['i-0a1f31a39bd2d9362'],
+            violationDetails: [
+                { objectName: 'SameSubnetDelay', value: '2000', recommended: '1000' },
+                { objectName: 'CrossSubnetDelay', value: '500', recommended: '2000' }
+            ]
+        };
+
+        it('injects databaseHostName from driftAssessmentData.metadata into combined row', () => {
+            mockUseAppSelector.mockImplementation((selector: any) =>
+                selector({
+                    databaseHome: { selectedRowsForOptimizeInnerPage: [] },
+                    getWellOptimize: {
+                        inProgressOptimizationData: {},
+                        selectedResourceId: 'r1',
+                        selectedGwInstanceCredId: 'c1',
+                        selectedGwInstanceRegionId: 'reg1',
+                        selectedDatabaseInstance: 'db1',
+                        driftAssessmentData: { metadata: { databaseHostName: 'my-db-host.example.com' } }
+                    }
+                })
+            );
+            render(
+                <DynamicInnerTable {...defaultProps} data={heartbeatData} columnConfig={heartbeatColumnConfig as any} />
+            );
+            expect(capturedTableRows).toHaveLength(1);
+            expect(capturedTableRows[0].databaseHostName).toBe('my-db-host.example.com');
+        });
+
+        it('leaves databaseHostName undefined when driftAssessmentData is null', () => {
+            mockUseAppSelector.mockImplementation((selector: any) =>
+                selector({
+                    databaseHome: { selectedRowsForOptimizeInnerPage: [] },
+                    getWellOptimize: {
+                        inProgressOptimizationData: {},
+                        selectedResourceId: 'r1',
+                        selectedGwInstanceCredId: 'c1',
+                        selectedGwInstanceRegionId: 'reg1',
+                        selectedDatabaseInstance: 'db1',
+                        driftAssessmentData: null
+                    }
+                })
+            );
+            render(
+                <DynamicInnerTable {...defaultProps} data={heartbeatData} columnConfig={heartbeatColumnConfig as any} />
+            );
+            expect(capturedTableRows[0].databaseHostName).toBeUndefined();
+        });
+
+        it('does not inject metadata when injectMetadataFields is false', () => {
+            mockUseAppSelector.mockImplementation((selector: any) =>
+                selector({
+                    databaseHome: { selectedRowsForOptimizeInnerPage: [] },
+                    getWellOptimize: {
+                        inProgressOptimizationData: {},
+                        selectedResourceId: 'r1',
+                        selectedGwInstanceCredId: 'c1',
+                        selectedGwInstanceRegionId: 'reg1',
+                        selectedDatabaseInstance: 'db1',
+                        driftAssessmentData: { metadata: { databaseHostName: 'should-not-appear' } }
+                    }
+                })
+            );
+            const configWithoutInject = { ...heartbeatColumnConfig, injectMetadataFields: false };
+            render(
+                <DynamicInnerTable {...defaultProps} data={heartbeatData} columnConfig={configWithoutInject as any} />
+            );
+            expect(capturedTableRows[0].databaseHostName).toBeUndefined();
+        });
+    });
+
+    // ── objectNameSource: 'objectsInViolation' (cluster-quorum) ────────────────
+
+    describe('objectNameSource: objectsInViolation', () => {
+        const clusterQuorumConfig = {
+            columns: [
+                { key: 'objectName', label: 'Cluster name', accessor: 'objectName' },
+                { key: 'value', label: 'Current value', accessor: 'value' },
+                { key: 'recommended', label: 'Recommended value', accessor: 'recommended' },
+                { key: 'configName', label: 'Configuration name', accessor: 'configName' }
+            ],
+            resourceTypeLabel: 'Cluster',
+            objectNameSource: 'objectsInViolation'
+        };
+        const clusterData = {
+            objectsInViolation: ['SQL-DEV-FCI-CLUSTER'],
+            violationDetails: [{ objectName: 'DynamicQuorum', value: 'false', recommended: 'true' }]
+        };
+
+        it('overrides objectName from objectsInViolation[index]', () => {
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="cluster-quorum"
+                    data={clusterData}
+                    columnConfig={clusterQuorumConfig as any}
+                />
+            );
+            expect(capturedTableRows[0].objectName).toBe('SQL-DEV-FCI-CLUSTER');
+        });
+
+        it('preserves original violationDetails objectName under configName key', () => {
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    configId="cluster-quorum"
+                    data={clusterData}
+                    columnConfig={clusterQuorumConfig as any}
+                />
+            );
+            expect(capturedTableRows[0].configName).toBe('DynamicQuorum');
+        });
+
+        it('does not override objectName when objectsInViolation item is not a string', () => {
+            const dataWithObjectItem = {
+                objectsInViolation: [{ ontapVolumeName: 'vol-a' }],
+                violationDetails: [{ objectName: 'OriginalName', value: 'v', recommended: 'r' }]
+            };
+            render(
+                <DynamicInnerTable
+                    {...defaultProps}
+                    data={dataWithObjectItem}
+                    columnConfig={clusterQuorumConfig as any}
+                />
+            );
+            // Not overridden — original objectName preserved
+            expect(capturedTableRows[0].objectName).toBe('OriginalName');
+            expect(capturedTableRows[0].configName).toBeUndefined();
+        });
+    });
+
+    // ── injectMetadataFields (non-combineRows, e.g. iscsi-replacement-timeout) ──
+
+    describe('injectMetadataFields in standard violationDetails path', () => {
+        const oracleHostColumnConfig = {
+            columns: [
+                { key: 'hostName', label: 'Host name', accessor: 'databaseHostName' },
+                { key: 'objectName', label: 'Configuration name', accessor: 'objectName' },
+                { key: 'value', label: 'Current value', accessor: 'value' },
+                { key: 'recommended', label: 'Recommended value', accessor: 'recommended' }
+            ],
+            resourceTypeLabel: 'Configuration',
+            injectMetadataFields: true
+        };
+        const iscsiData = {
+            violationDetails: [{ objectName: 'replacement_timeout', value: '120', recommended: '5' }]
+        };
+
+        it('injects databaseHostName from driftAssessmentData.metadata into each row', () => {
+            mockUseAppSelector.mockImplementation((selector: any) =>
+                selector({
+                    databaseHome: { selectedRowsForOptimizeInnerPage: [] },
+                    getWellOptimize: {
+                        inProgressOptimizationData: {},
+                        selectedResourceId: 'r1',
+                        selectedGwInstanceCredId: 'c1',
+                        selectedGwInstanceRegionId: 'reg1',
+                        selectedDatabaseInstance: 'db1',
+                        driftAssessmentData: { metadata: { databaseHostName: 'oracle-host-01' } }
+                    }
+                })
+            );
+            render(
+                <DynamicInnerTable {...defaultProps} data={iscsiData} columnConfig={oracleHostColumnConfig as any} />
+            );
+            expect(capturedTableRows[0].databaseHostName).toBe('oracle-host-01');
+        });
+
+        it('does not inject metadata when driftAssessmentData is null', () => {
+            mockUseAppSelector.mockImplementation((selector: any) =>
+                selector({
+                    databaseHome: { selectedRowsForOptimizeInnerPage: [] },
+                    getWellOptimize: {
+                        inProgressOptimizationData: {},
+                        selectedResourceId: 'r1',
+                        selectedGwInstanceCredId: 'c1',
+                        selectedGwInstanceRegionId: 'reg1',
+                        selectedDatabaseInstance: 'db1',
+                        driftAssessmentData: null
+                    }
+                })
+            );
+            render(
+                <DynamicInnerTable {...defaultProps} data={iscsiData} columnConfig={oracleHostColumnConfig as any} />
+            );
+            expect(capturedTableRows[0].databaseHostName).toBeUndefined();
+        });
+
+        it('does not inject metadata fields when injectMetadataFields is false', () => {
+            mockUseAppSelector.mockImplementation((selector: any) =>
+                selector({
+                    databaseHome: { selectedRowsForOptimizeInnerPage: [] },
+                    getWellOptimize: {
+                        inProgressOptimizationData: {},
+                        selectedResourceId: 'r1',
+                        selectedGwInstanceCredId: 'c1',
+                        selectedGwInstanceRegionId: 'reg1',
+                        selectedDatabaseInstance: 'db1',
+                        driftAssessmentData: { metadata: { databaseHostName: 'should-not-appear' } }
+                    }
+                })
+            );
+            const configWithoutInject = { ...oracleHostColumnConfig, injectMetadataFields: false };
+            render(<DynamicInnerTable {...defaultProps} data={iscsiData} columnConfig={configWithoutInject as any} />);
+            expect(capturedTableRows[0].databaseHostName).toBeUndefined();
         });
     });
 });
