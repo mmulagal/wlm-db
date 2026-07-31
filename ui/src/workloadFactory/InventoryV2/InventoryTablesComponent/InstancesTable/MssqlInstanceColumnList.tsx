@@ -38,7 +38,8 @@ import {
     handleUnregisteredOptimizeAction,
     notAvailableWithTooltip,
     getCanViewAndFix,
-    getViewAndFixDisableMsg
+    getViewAndFixDisableMsg,
+    shouldUseOfflineWadHandler
 } from './InstanceTableHelper';
 import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -638,8 +639,7 @@ export function getMssqlInstanceTableColumns({
                                     isThin
                                     data-testid="wlm-db-mssql-view-and-fix"
                                     onClick={() => {
-                                        if (rowData?.isWad && !isRegisteredOrManaged) {
-                                            // For WAD instances, use offline assessment handler
+                                        if (shouldUseOfflineWadHandler(rowData)) {
                                             handleWadOptimizeAction(rowData, dispatch);
                                         } else if (
                                             isUnregisteredInventoryRow(rowData) ||

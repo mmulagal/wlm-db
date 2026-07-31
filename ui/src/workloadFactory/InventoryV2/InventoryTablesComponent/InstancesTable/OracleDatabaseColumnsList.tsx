@@ -32,7 +32,8 @@ import {
     handleUnregisteredOracleOptimizeAction,
     notAvailableWithTooltip,
     getCanViewAndFix,
-    getViewAndFixDisableMsg
+    getViewAndFixDisableMsg,
+    shouldUseOfflineWadHandler
 } from './InstanceTableHelper';
 import InventoryStatusIndicator from '../../../../common/InventoryStatusIndicator/InventoryStatusIndicator';
 import { useAppSelector } from '../../../../store/storeHooks';
@@ -713,8 +714,7 @@ export function getOracleDatabaseColumnsList({
                                     isThin
                                     data-testid="wlm-db-oracle-view-and-fix"
                                     onClick={() => {
-                                        if (rowData?.isWad && !isRegisteredOrManaged) {
-                                            // For WAD instances, use offline assessment handler
+                                        if (shouldUseOfflineWadHandler(rowData)) {
                                             handleOracleWadOptimizeAction(rowData, dispatch);
                                         } else if (
                                             isUnregisteredInventoryRow(rowData) ||

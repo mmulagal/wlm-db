@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { DBType, INVENTORY_STATUS, ACTION_CTA, DETECT_HOST_VAR } from '../../../../utils/consts';
-import { getCanViewAndFix, getViewAndFixDisableMsg } from './InstanceTableHelper';
+import { getCanViewAndFix, getViewAndFixDisableMsg, shouldUseOfflineWadHandler } from './InstanceTableHelper';
 
 const t = (key: string) => key;
 
@@ -9,6 +9,39 @@ const t = (key: string) => key;
  * in MssqlInstanceColumnList.tsx and OracleDatabaseColumnsList.tsx
  */
 describe('View and Fix Button Logic', () => {
+    describe('shouldUseOfflineWadHandler', () => {
+        it('routes pure one-time WAD rows to offline assessment even when resourceId is set', () => {
+            expect(
+                shouldUseOfflineWadHandler({
+                    isWad: true,
+                    statusColText: INVENTORY_STATUS.UNMANAGED,
+                    resourceId: '621434730f59a48b'
+                })
+            ).toBe(true);
+        });
+
+        it('routes registered managed rows with stale isWad to regular assessment (GH-11692)', () => {
+            expect(
+                shouldUseOfflineWadHandler({
+                    isWad: true,
+                    statusColText: INVENTORY_STATUS.MANAGED,
+                    resourceId: 'registered-host-id'
+                })
+            ).toBe(false);
+        });
+
+        it('routes isManaged rows with stale isWad to regular assessment', () => {
+            expect(
+                shouldUseOfflineWadHandler({
+                    isWad: true,
+                    isManaged: true,
+                    statusColText: INVENTORY_STATUS.UNMANAGED,
+                    resourceId: 'registered-host-id'
+                })
+            ).toBe(false);
+        });
+    });
+
     describe('getViewAndFixDisableMsg', () => {
         it('disables with detectOption message when storage could not be identified', () => {
             const rowData = {

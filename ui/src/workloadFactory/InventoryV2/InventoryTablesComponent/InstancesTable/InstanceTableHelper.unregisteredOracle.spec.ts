@@ -3,7 +3,7 @@ import { WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../utils/consts';
 
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 import { setSelectedHeaderTab } from '../../../../store/workloadFactory/inventoryV2Slice';
-import { handleUnregisteredOracleOptimizeAction } from './InstanceTableHelper';
+import { handleOracleWadOptimizeAction, handleUnregisteredOracleOptimizeAction } from './InstanceTableHelper';
 
 const mockSetGwPageLoadInstanceData = vi.fn((payload: unknown) => ({
     type: 'setGwPageLoadInstanceData',
@@ -135,6 +135,65 @@ describe('handleUnregisteredOracleOptimizeAction', () => {
                 credId: 'cred-2',
                 regionId: 'ap-southeast-1',
                 isUnregistered: true
+            })
+        );
+    });
+});
+
+describe('handleOracleWadOptimizeAction', () => {
+    const dispatch = vi.fn((action: any) => action);
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('uses offline-assessment host/instance ids even when row has resourceId', () => {
+        handleOracleWadOptimizeAction(
+            {
+                name: 'oracle-wad-host',
+                resourceId: '621434730f59a48b',
+                databaseHostId: '621434730f59a48b',
+                databaseInstanceId: 'oracle-prod-iscsi-001',
+                databaseInstanceName: 'oracle-prod-iscsi-001',
+                credentialId: 'cred-1',
+                regionId: 'us-east-1',
+                isWad: true
+            },
+            dispatch
+        );
+
+        expect(setSelectedHeaderTab).toHaveBeenCalledWith(WLF_TABS.ORACLE_WELL_ARCHITECTED);
+        expect(setSelectedOracleInnerPageTab).toHaveBeenCalledWith(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS);
+        expect(mockSetGwPageLoadInstanceData).toHaveBeenCalledWith(
+            expect.objectContaining({
+                resourceId: '621434730f59a48b',
+                instanceId: 'oracle-prod-iscsi-001',
+                isWad: true,
+                isUnregistered: false
+            })
+        );
+    });
+
+    it('falls back to hostRow and databaseInstanceName when top-level ids are missing', () => {
+        handleOracleWadOptimizeAction(
+            {
+                hostRow: {
+                    id: 'host-wad-id',
+                    name: 'nested-wad-host',
+                    credentialId: 'cred-2',
+                    regionId: 'ap-southeast-1'
+                },
+                databaseInstanceName: 'ORCLWAD',
+                isWad: true
+            },
+            dispatch
+        );
+
+        expect(mockSetGwPageLoadInstanceData).toHaveBeenCalledWith(
+            expect.objectContaining({
+                resourceId: 'host-wad-id',
+                instanceId: 'ORCLWAD',
+                isWad: true
             })
         );
     });

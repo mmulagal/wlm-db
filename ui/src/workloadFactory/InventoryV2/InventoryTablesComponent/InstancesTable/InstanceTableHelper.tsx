@@ -843,6 +843,10 @@ export const isInstanceActionDisabled = (
     };
 };
 
+/** Offline WAD API for unmanaged WAD rows only; registered/managed wins if isWad is stale. */
+export const shouldUseOfflineWadHandler = (rowData: any): boolean =>
+    !!rowData?.isWad && rowData?.statusColText !== INVENTORY_STATUS.MANAGED && !rowData?.isManaged;
+
 export const getCanViewAndFix = (rowData: any): boolean => {
     const isRegisteredOrManaged = rowData?.statusColText === INVENTORY_STATUS.MANAGED || rowData?.resourceId;
 
@@ -1643,9 +1647,9 @@ export const handleUnregisteredOptimizeAction = (rowData: any, dispatch: Dispatc
  * @param dispatch - Redux dispatch function
  */
 export const handleOracleWadOptimizeAction = (rowData: any, dispatch: Dispatch) => {
-    // Get databaseHostId and instanceId from rowData
-    const databaseHostId = rowData?.databaseHostId || rowData?.hostRow?.id || rowData?.hostRow?.resourceId;
-    const instanceId = rowData?.databaseInstanceId;
+    const hostRow = rowData?.hostRow;
+    const databaseHostId = rowData?.databaseHostId || hostRow?.id || hostRow?.resourceId || rowData?.resourceId;
+    const instanceId = rowData?.databaseInstanceId || rowData?.databaseInstanceName;
     const credentialId = rowData?.credentialId || rowData?.hostRow?.credentialId;
     const regionId = rowData?.regionId || rowData?.hostRow?.regionId;
 
