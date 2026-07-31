@@ -231,8 +231,10 @@ async function getHostAndSqlServerInfo(
                 await Promise.all(
                     instances.map(async instance => {
                         const cacheKey = generateHash(stringify({ instance, region, credentialsId }));
+                        logger.info(`Checking cache for instance: ${instance} with key: ${cacheKey}`);
                         const cachedResponse = await redisClient.get(cacheKey);
                         if (cachedResponse) {
+                            logger.info(`Cache hit for instance: ${instance} with key: ${cacheKey}`);
                             return parse(cachedResponse);
                         }
                     })
@@ -483,9 +485,12 @@ async function getHostAndSqlServerInfo(
             await Promise.all(
                 ssmConnectedEc2ResponseInfo.map(async item => {
                     const cacheKey = generateHash(stringify({ instance: item.ec2InstanceId, region, credentialsId }));
+                    logger.info(`Caching item: ${item.ec2InstanceId} with key: ${cacheKey}`);
                     if (!isEmpty(item?.sqlServerInstances)) {
                         // only cache if sqlServerInstances is present
-                        await redisClient.set(cacheKey, stringify(item), 'PX', TEN_MINUTES); // Cache for 10 minutes
+                        await redisClient.set(cacheKey, stringify(item), 'PX', TEN_MINUTES);
+                        logger.info(`Cached item: ${item.ec2InstanceId} with key: ${cacheKey}`);
+                        // Cache for 10 minutes
                     }
                 })
             );
