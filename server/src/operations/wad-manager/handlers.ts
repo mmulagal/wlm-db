@@ -115,13 +115,17 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
             configurationIds
         });
         const scanTask = trackerParentTaskId
-            ? await createTrackerTask(accountId, {
-                  parentTaskId: trackerParentTaskId,
-                  status: TrackerTaskStatus.PENDING,
-                  actionName,
-                  resourceId: accountId,
-                  resourceName: accountId
-              })
+            ? await createTrackerTask(
+                  accountId,
+                  {
+                      parentTaskId: trackerParentTaskId,
+                      status: TrackerTaskStatus.PENDING,
+                      actionName,
+                      resourceId: accountId,
+                      resourceName: accountId
+                  },
+                  isSimulated
+              )
             : undefined;
         const configurations = buildSimulatedWadScanConfigurations(req);
         if (configurations.length > 0) {
@@ -137,7 +141,7 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
             status: TaskStatus.COMPLETED,
             hasFailedTasks: false
         });
-        updateTrackerTaskStatus(accountId, scanTask?.id ?? '', { status: TrackerTaskStatus.SUCCESS });
+        updateTrackerTaskStatus(accountId, scanTask?.id ?? '', { status: TrackerTaskStatus.SUCCESS }, isSimulated);
         return;
     }
 
@@ -283,16 +287,20 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
     });
     const actionName = `Databases well-architected fix for ${configurationId}`;
     const actionDescription = `Fixing ${resourceIds?.length} resource(s)`;
-    if (req.isSimulated) {
+    if (isSimulated) {
         const fixTask = trackerParentTaskId
-            ? await createTrackerTask(accountId, {
-                  parentTaskId: trackerParentTaskId,
-                  status: TrackerTaskStatus.PENDING,
-                  actionName,
-                  actionDescription,
-                  resourceId: resourceIds.join(','),
-                  resourceName: resourceIds.join(',')
-              })
+            ? await createTrackerTask(
+                  accountId,
+                  {
+                      parentTaskId: trackerParentTaskId,
+                      status: TrackerTaskStatus.PENDING,
+                      actionName,
+                      actionDescription,
+                      resourceId: resourceIds.join(','),
+                      resourceName: resourceIds.join(',')
+                  },
+                  isSimulated
+              )
             : undefined;
         publishFixResult({
             ...baseResult,
@@ -300,7 +308,7 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
             reportedAt: Date.now()
         });
         publishFixStatus({ ...baseResult, updatedAt: Date.now(), status: TaskStatus.COMPLETED, hasFailedTasks: false });
-        updateTrackerTaskStatus(accountId, fixTask?.id ?? '', { status: TrackerTaskStatus.SUCCESS });
+        updateTrackerTaskStatus(accountId, fixTask?.id ?? '', { status: TrackerTaskStatus.SUCCESS }, isSimulated);
         return;
     }
 

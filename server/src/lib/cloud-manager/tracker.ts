@@ -1,7 +1,6 @@
 import { HEADERS, TIMELINE_SERVICE_NAME, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
 import { gotInstanceForInternalRequest } from '../../utils/got';
 import getLogger from '../../utils/logger';
-import { IS_DEMO_FLOW } from '../../utils/utils';
 import { TaskCreate, TaskUpdateParams, TrackerTaskStatus } from '../../utils/common-types';
 import { getWfServiceToken } from './auth';
 
@@ -9,7 +8,8 @@ const logger = getLogger();
 
 async function getTrackerTask(
     accountId: string,
-    taskId: string
+    taskId: string,
+    isSimulated: boolean = false
 ): Promise<{ id: string; status: TrackerTaskStatus } | undefined> {
     logger.info('Fetching tracker task', { accountId, taskId });
     try {
@@ -19,7 +19,7 @@ async function getTrackerTask(
                 prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
                 headers: {
                     [HEADERS.AUTHORIZATION]: token,
-                    ...(IS_DEMO_FLOW && { [HEADERS.SIMULATOR]: 'true' })
+                    ...(isSimulated && { [HEADERS.SIMULATOR]: 'true' })
                 }
             })
             .json<{ id: string; status: TrackerTaskStatus }>();
@@ -28,7 +28,11 @@ async function getTrackerTask(
     }
 }
 
-async function createTrackerTask(accountId: string, task: TaskCreate): Promise<{ id: string } | undefined> {
+async function createTrackerTask(
+    accountId: string,
+    task: TaskCreate,
+    isSimulated: boolean = false
+): Promise<{ id: string } | undefined> {
     logger.info('Creating tracker task', { accountId, actionName: task.actionName, resourceId: task.resourceId });
     try {
         const { token } = await getWfServiceToken();
@@ -36,7 +40,7 @@ async function createTrackerTask(accountId: string, task: TaskCreate): Promise<{
             .post(`accounts/${accountId}/tracker/v1/tasks`, {
                 prefixUrl: WORKLOAD_FACTORY_ENDPOINT,
                 json: { task: { ...task, workload: TIMELINE_SERVICE_NAME } },
-                headers: { [HEADERS.AUTHORIZATION]: token, ...(IS_DEMO_FLOW && { [HEADERS.SIMULATOR]: 'true' }) }
+                headers: { [HEADERS.AUTHORIZATION]: token, ...(isSimulated && { [HEADERS.SIMULATOR]: 'true' }) }
             })
             .json<{ id: string }>();
     } catch (error: unknown) {
@@ -44,7 +48,12 @@ async function createTrackerTask(accountId: string, task: TaskCreate): Promise<{
     }
 }
 
-async function updateTrackerTaskStatus(accountId: string, taskId: string, params: TaskUpdateParams): Promise<void> {
+async function updateTrackerTaskStatus(
+    accountId: string,
+    taskId: string,
+    params: TaskUpdateParams,
+    isSimulated: boolean = false
+): Promise<void> {
     logger.info('Updating tracker task status', { accountId, taskId, status: params.status });
 
     try {
@@ -55,7 +64,7 @@ async function updateTrackerTaskStatus(accountId: string, taskId: string, params
                 json: { task: { id: taskId, ...params, actionName: '', workload: TIMELINE_SERVICE_NAME } },
                 headers: {
                     [HEADERS.AUTHORIZATION]: token,
-                    ...(IS_DEMO_FLOW && { [HEADERS.SIMULATOR]: 'true' })
+                    ...(isSimulated && { [HEADERS.SIMULATOR]: 'true' })
                 }
             })
             .json();
