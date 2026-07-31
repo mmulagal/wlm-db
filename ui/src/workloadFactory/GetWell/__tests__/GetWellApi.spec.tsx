@@ -12,6 +12,7 @@ const {
     mockAssessmentDetailsApi,
     mockResetGwValuesOnRefresh,
     mockFormatGetWellDataFlat,
+    mockSyncUnregisteredAssessmentToInventory,
     mockUpdateAccountLevelAssessmentData
 } = vi.hoisted(() => ({
     mockDispatch: vi.fn(),
@@ -20,6 +21,7 @@ const {
     mockAssessmentDetailsApi: vi.fn(),
     mockResetGwValuesOnRefresh: vi.fn(),
     mockFormatGetWellDataFlat: vi.fn(),
+    mockSyncUnregisteredAssessmentToInventory: vi.fn(),
     mockUpdateAccountLevelAssessmentData: vi.fn()
 }));
 
@@ -50,6 +52,7 @@ vi.mock('../../../utils/apiService', () => ({
 vi.mock('../GetWellUtils', () => ({
     formatGetWellDataFlat: (...args: unknown[]) => mockFormatGetWellDataFlat(...args),
     resetGwValuesOnRefresh: (...args: unknown[]) => mockResetGwValuesOnRefresh(...args),
+    syncUnregisteredAssessmentToInventory: (...args: unknown[]) => mockSyncUnregisteredAssessmentToInventory(...args),
     updateAccountLevelAssessmentData: (...args: unknown[]) => mockUpdateAccountLevelAssessmentData(...args)
 }));
 
@@ -122,6 +125,17 @@ describe('GetWellApi page-load routing', () => {
         });
         expect(mockGetOfflineMssqlAssessmentData).not.toHaveBeenCalled();
         expect(mockAssessmentDetailsApi).not.toHaveBeenCalled();
+        expect(mockSyncUnregisteredAssessmentToInventory).toHaveBeenCalledWith(
+            mockDispatch,
+            { metadata: {} },
+            {
+                ec2InstanceId: 'i-case2',
+                instanceName: 'CASE2SQL',
+                credentialId: 'cred-1',
+                regionId: 'ap-southeast-1'
+            }
+        );
+        expect(mockUpdateAccountLevelAssessmentData).not.toHaveBeenCalled();
     });
 
     it('calls offline-assessment GET on page load when isWad is true', async () => {

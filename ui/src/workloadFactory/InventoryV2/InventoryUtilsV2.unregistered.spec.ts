@@ -185,10 +185,22 @@ describe('shouldDisableUnregisteredDatabasesAndPassword', () => {
 });
 
 describe('isUnregisteredInventoryRow', () => {
-    it('returns true when row is already marked unregistered', () => {
+    it('returns false when instance is managed even if isUnregistered flag is stale', () => {
         expect(isUnregisteredInventoryRow({ isUnregistered: true, statusColText: INVENTORY_STATUS.MANAGED }, {})).toBe(
-            true
+            false
         );
+        expect(
+            isUnregisteredInventoryRow(
+                { isUnregistered: true, statusColText: INVENTORY_STATUS.UNMANAGED },
+                { resourceId: 'res-1' }
+            )
+        ).toBe(false);
+    });
+
+    it('returns true when row is marked unregistered and not yet managed', () => {
+        expect(
+            isUnregisteredInventoryRow({ isUnregistered: true, statusColText: INVENTORY_STATUS.UNMANAGED }, {})
+        ).toBe(true);
     });
 
     it('returns true for discover row with permissions and no registered resource id', () => {
@@ -198,7 +210,7 @@ describe('isUnregisteredInventoryRow', () => {
                     statusColText: INVENTORY_STATUS.UNMANAGED,
                     hostManageReadiness: { extensiveRunPermission: true, canReadAWSSSMDocuments: true }
                 },
-                { resourceId: undefined }
+                { resourceId: undefined, databaseInstanceId: 'discover-server-guid' } as any
             )
         ).toBe(true);
     });

@@ -36,7 +36,8 @@ import {
     getAssessmentItems,
     getDismissedConfig,
     hasAssessmentTimestamp,
-    isExcludedFromOptimizationCountForAssessment
+    isExcludedFromOptimizationCountForAssessment,
+    shouldSkipDashboardAssessmentItem
 } from '../WellArchitectedTab/assessmentFormatUtils';
 import { getCategoryPriority } from '../../utils/configRegistry';
 
@@ -662,6 +663,11 @@ export const shouldSkipDatabaseHost = (
     headerSelectedMultiRegionIdsList: string[],
     uniqueResourceList: string[]
 ): boolean => {
+    // on-demand unregistered assessments stay in inventory only until next sprint
+    if (databaseHost?.isUnregistered) {
+        return true;
+    }
+
     // Include isWad so a WAD offline entry and a continuous registered entry for the
     // same host are never treated as duplicates and one deduped away.
     const uniqueKey = `${databaseHost?.databaseHostId}_${databaseHost?.regionId}_${!!databaseHost?.isWad}`;
@@ -791,6 +797,9 @@ const processMSSQLAssessmentData = (assessmentData: any, headerFilters: any, uni
         }
 
         databaseHost?.instancesAssessment?.forEach((instance: any) => {
+            if (shouldSkipDashboardAssessmentItem(instance)) {
+                return;
+            }
             if (!instance?.error && hasAssessmentTimestamp(instance?.assessments)) {
                 totalInstances++;
                 mssqlTotal++;
@@ -829,6 +838,9 @@ const processOracleAssessmentData = (
         }
 
         databaseHost?.instancesAssessment?.forEach((instance: any) => {
+            if (shouldSkipDashboardAssessmentItem(instance)) {
+                return;
+            }
             if (!instance?.error && hasAssessmentTimestamp(instance?.assessments)) {
                 totalInstances++;
                 oracleTotal++;
@@ -1269,6 +1281,9 @@ const buildAssessmentGroupedByConfigurations = (assessmentData: any, oracleAsses
         }
 
         databaseHost?.instancesAssessment?.forEach((instance: any) => {
+            if (shouldSkipDashboardAssessmentItem(instance)) {
+                return;
+            }
             if (!instance?.error && hasAssessmentTimestamp(instance?.assessments)) {
                 result.total += 1;
                 processInstanceForGroupedConfigs(instance.assessments, result, DBType.MSSQL, !!databaseHost?.isWad);
@@ -1290,6 +1305,9 @@ const buildAssessmentGroupedByConfigurations = (assessmentData: any, oracleAsses
         }
 
         databaseHost?.instancesAssessment?.forEach((instance: any) => {
+            if (shouldSkipDashboardAssessmentItem(instance)) {
+                return;
+            }
             if (!instance?.error && hasAssessmentTimestamp(instance?.assessments)) {
                 result.oracleTotal += 1;
                 processInstanceForGroupedConfigs(instance.assessments, result, DBType.ORACLE, !!databaseHost?.isWad);
@@ -1356,6 +1374,9 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, orac
         }
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
+            if (shouldSkipDashboardAssessmentItem(instance)) {
+                return;
+            }
             if (!instance?.error && instance?.assessments?.metadata?.lastAssessmentTimestamp) {
                 const { cardsData } = getCardsData(instance?.assessments, {});
                 const optBreakDown = formatOptimizationBreakDown(cardsData, instance?.assessments);
@@ -1394,6 +1415,9 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, orac
         }
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
+            if (shouldSkipDashboardAssessmentItem(instance)) {
+                return;
+            }
             if (!instance?.error && instance?.assessments?.metadata?.lastAssessmentTimestamp) {
                 const { cardsData } = getOracleCardsData(instance?.assessments, {});
                 const optBreakDown = formatOracleOptimizationBreakDown(cardsData, instance?.assessments);

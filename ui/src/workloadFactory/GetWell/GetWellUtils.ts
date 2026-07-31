@@ -23,8 +23,24 @@ import { setRefreshOracleWellArchitect } from '../../store/workloadFactory/oracl
 import {
     addAllMssqlHostAssessmentData,
     addAllOracleHostAssessmentData,
+    addUnregisteredMssqlAssessmentData,
+    addUnregisteredOracleAssessmentData,
+    setInventoryTableData,
     setSelectedHeaderTab
 } from '../../store/workloadFactory/inventoryV2Slice';
+import {
+    getAssessmentItemSource,
+    getConfigSeverity,
+    getConfigStateList,
+    getConfigStatsBucket,
+    hasConfigStats,
+    isExcludedFromOptimizationCountForCard,
+    isFixDisabledAssessmentStatus,
+    isUnregisteredAssessmentItem,
+    resolveConfigDisplayName
+} from '../WellArchitectedTab/assessmentFormatUtils';
+import { isOptimized } from '../DatabaseHomePage/DatabaseHomeUtils';
+import { mergeUnregisteredAssessmentIntoInventory } from '../InventoryV2/InventoryUtilsV2';
 import { setInstanceDetailsData } from '../../store/workloadFactory/workloadFactoryResourceSlice';
 import { GENERAL } from '../../utils/appConstants';
 import {
@@ -62,16 +78,6 @@ import {
     formatNumberWithCustomComma,
     getCurrentDateTime
 } from '../../utils/utilityFunctions';
-import { isOptimized } from '../DatabaseHomePage/DatabaseHomeUtils';
-import {
-    getConfigSeverity,
-    getConfigStateList,
-    getConfigStatsBucket,
-    hasConfigStats,
-    isExcludedFromOptimizationCountForCard,
-    isFixDisabledAssessmentStatus,
-    resolveConfigDisplayName
-} from '../WellArchitectedTab/assessmentFormatUtils';
 import { sortConfigsByPriority } from '../../utils/configRegistry';
 
 /**
@@ -1599,6 +1605,126 @@ export const updateConfigStateStatus = (rowList: any, dispatch: any, action: any
     }
 };
 
+/** Keeps inventory well-architected status in sync after on-demand (unregistered) assessment on the inner page. */
+export const syncUnregisteredAssessmentToInventory = (
+    dispatch: any,
+    freshAssessmentData: any,
+    identifiers: {
+        ec2InstanceId: string;
+        instanceName: string;
+        credentialId: string;
+        regionId: string;
+    },
+    engineType?: string
+) => {
+    const isOracle = engineType === DBType.ORACLE;
+    const dbType = isOracle ? DBType.ORACLE : DBType.MSSQL;
+    const state = store.getState();
+    const instanceNameLower = identifiers.instanceName?.toLowerCase();
+
+    const assessmentItem = {
+        resourceId: identifiers.ec2InstanceId,
+        vmInstanceId: identifiers.ec2InstanceId,
+        databaseInstanceName: identifiers.instanceName,
+        credentialId: identifiers.credentialId,
+        regionId: identifiers.regionId,
+        assessments: freshAssessmentData,
+        isUnregistered: true
+    };
+
+    const existingUnregistered = isOracle
+        ? state.inventoryV2.unregisteredOracleAssessmentData || []
+        : state.inventoryV2.unregisteredMssqlAssessmentData || [];
+
+    const updatedUnregistered = [
+        ...existingUnregistered.filter(
+            (item: any) =>
+                (item?.vmInstanceId || item?.resourceId) !== identifiers.ec2InstanceId ||
+                item?.databaseInstanceName?.toLowerCase() !== instanceNameLower
+        ),
+        assessmentItem
+    ];
+
+    if (isOracle) {
+        dispatch(addUnregisteredOracleAssessmentData(updatedUnregistered));
+    } else {
+        dispatch(addUnregisteredMssqlAssessmentData(updatedUnregistered));
+    }
+
+    const currentInventoryTableData = state.inventoryV2.inventoryTableData || {};
+    const mergedInventoryData = mergeUnregisteredAssessmentIntoInventory(
+        currentInventoryTableData,
+        updatedUnregistered,
+        dbType
+    );
+    if (mergedInventoryData !== currentInventoryTableData) {
+        dispatch(setInventoryTableData(mergedInventoryData));
+    }
+};
+
+const matchesRegisteredHostAssessment = (
+    hostData: any,
+    identifiers: { databaseHostId: string; credentialId: string; regionId: string }
+) =>
+    hostData?.databaseHostId === identifiers.databaseHostId &&
+    hostData?.credentialId === identifiers.credentialId &&
+    hostData?.regionId === identifiers.regionId;
+
+const findRegisteredInventoryInstance = (identifiers: {
+    databaseHostId: string;
+    databaseInstanceId: string;
+    credentialId: string;
+    regionId: string;
+}) => {
+    const { inventoryTableData } = store.getState().inventoryV2;
+    const instanceLookup = identifiers.databaseInstanceId?.toLowerCase();
+    for (const host of Object.values(inventoryTableData || {}) as any[]) {
+        if (host?.credentialId !== identifiers.credentialId || host?.regionId !== identifiers.regionId) {
+            continue;
+        }
+        const instance = host?.sqlServerInstances?.find(
+            (row: any) =>
+                row?.databaseInstanceId === identifiers.databaseInstanceId ||
+                (!!instanceLookup && row?.databaseInstanceName?.toLowerCase() === instanceLookup)
+        );
+        if (instance) {
+            return {
+                databaseHostId: host?.id || host?.resourceId || identifiers.databaseHostId,
+                databaseInstanceId: instance?.databaseInstanceId || identifiers.databaseInstanceId,
+                databaseInstanceName: instance?.databaseInstanceName
+            };
+        }
+    }
+    return null;
+};
+
+/** Inventory keys use host.id; inner page may pass resourceId — resolve before patching bulk store */
+const resolveRegisteredDatabaseHostId = (identifiers: {
+    databaseHostId: string;
+    databaseInstanceId: string;
+    credentialId: string;
+    regionId: string;
+}) => findRegisteredInventoryInstance(identifiers)?.databaseHostId ?? identifiers.databaseHostId;
+
+const resolveRegisteredDatabaseInstanceId = (identifiers: {
+    databaseHostId: string;
+    databaseInstanceId: string;
+    credentialId: string;
+    regionId: string;
+}) => findRegisteredInventoryInstance(identifiers)?.databaseInstanceId ?? identifiers.databaseInstanceId;
+
+const resolveRegisteredInstanceDisplayName = (
+    identifiers: {
+        databaseHostId: string;
+        databaseInstanceId: string;
+        credentialId: string;
+        regionId: string;
+    },
+    freshAssessmentData: any
+) =>
+    findRegisteredInventoryInstance(identifiers)?.databaseInstanceName ??
+    freshAssessmentData?.metadata?.databaseInstanceName;
+
 export const updateAccountLevelAssessmentData = (
     dispatch: any,
     freshAssessmentData: any,
@@ -1610,38 +1736,105 @@ export const updateAccountLevelAssessmentData = (
     },
     engineType?: string
 ) => {
+    if (
+        getAssessmentItemSource({ assessments: freshAssessmentData }) === ASSESSMENT_METADATA_SOURCE.UNREGISTERED ||
+        isUnregisteredAssessmentItem({ assessments: freshAssessmentData })
+    ) {
+        return;
+    }
+
     const state = store.getState();
     const isOracle = engineType === DBType.ORACLE;
     const assessmentData = isOracle
-        ? state.inventoryV2.allOracleHostAssessmentData
-        : state.inventoryV2.allmssqlHostAssessmentData;
+        ? state.inventoryV2.allOracleHostAssessmentData || []
+        : state.inventoryV2.allmssqlHostAssessmentData || [];
 
-    if (!assessmentData?.length) return;
+    const resolvedIdentifiers = {
+        ...identifiers,
+        databaseHostId: resolveRegisteredDatabaseHostId(identifiers),
+        databaseInstanceId: resolveRegisteredDatabaseInstanceId(identifiers)
+    };
+    const resolvedInstanceName = resolveRegisteredInstanceDisplayName(identifiers, freshAssessmentData);
 
+    let hostMatched = false;
     const updatedData = assessmentData.map((hostData: any) => {
-        if (
-            hostData?.databaseHostId === identifiers.databaseHostId &&
-            hostData?.credentialId === identifiers.credentialId &&
-            hostData?.regionId === identifiers.regionId
-        ) {
-            const updatedInstances = hostData?.instancesAssessment?.map((instance: any) => {
-                if (instance?.databaseInstanceId === identifiers.databaseInstanceId) {
-                    return {
-                        ...instance,
-                        assessments: freshAssessmentData
-                    };
-                }
-                return instance;
-            });
-            return { ...hostData, instancesAssessment: updatedInstances };
+        if (!matchesRegisteredHostAssessment(hostData, resolvedIdentifiers)) {
+            return hostData;
         }
-        return hostData;
+
+        hostMatched = true;
+        const instances = hostData?.instancesAssessment ?? [];
+        const instanceIndex = instances.findIndex(
+            (instance: any) => instance?.databaseInstanceId === resolvedIdentifiers.databaseInstanceId
+        );
+
+        if (instanceIndex >= 0) {
+            return {
+                ...hostData,
+                instancesAssessment: instances.map((instance: any, index: number) =>
+                    index === instanceIndex ? { ...instance, assessments: freshAssessmentData } : instance
+                )
+            };
+        }
+
+        // Not analyzed: host exists in bulk store but this instance was never assessed
+        return {
+            ...hostData,
+            instancesAssessment: [
+                ...instances,
+                {
+                    databaseInstanceId: resolvedIdentifiers.databaseInstanceId,
+                    databaseInstanceName: resolvedInstanceName,
+                    assessments: freshAssessmentData,
+                    error: null,
+                    inventoryOnly: true
+                }
+            ]
+        };
+    });
+
+    if (!hostMatched) {
+        updatedData.push({
+            databaseHostId: resolvedIdentifiers.databaseHostId,
+            databaseHostName: freshAssessmentData?.metadata?.databaseHostName ?? '',
+            credentialId: resolvedIdentifiers.credentialId,
+            regionId: resolvedIdentifiers.regionId,
+            isWad: !!freshAssessmentData?.isWad,
+            isUnregistered: false,
+            instancesAssessment: [
+                {
+                    databaseInstanceId: resolvedIdentifiers.databaseInstanceId,
+                    databaseInstanceName: resolvedInstanceName,
+                    assessments: freshAssessmentData,
+                    error: null,
+                    inventoryOnly: true
+                }
+            ]
+        });
+    }
+
+    // Drop stale wrong-key host row (resourceId) when the same instance was patched under host.id
+    const dedupedData = updatedData.filter((hostData: any) => {
+        if (hostData?.databaseHostId === resolvedIdentifiers.databaseHostId) {
+            return true;
+        }
+        const hasSameInstance = hostData?.instancesAssessment?.some(
+            (instance: any) =>
+                instance?.databaseInstanceId === resolvedIdentifiers.databaseInstanceId ||
+                (!!resolvedInstanceName &&
+                    instance?.databaseInstanceName?.toLowerCase() === resolvedInstanceName.toLowerCase())
+        );
+        return !(
+            hasSameInstance &&
+            hostData?.credentialId === resolvedIdentifiers.credentialId &&
+            hostData?.regionId === resolvedIdentifiers.regionId
+        );
     });
 
     if (isOracle) {
-        dispatch(addAllOracleHostAssessmentData(updatedData));
+        dispatch(addAllOracleHostAssessmentData(dedupedData));
     } else {
-        dispatch(addAllMssqlHostAssessmentData(updatedData));
+        dispatch(addAllMssqlHostAssessmentData(dedupedData));
     }
 };
 

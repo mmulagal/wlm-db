@@ -220,32 +220,22 @@ const WADApis = () => {
         dbType: typeof DBType.MSSQL | typeof DBType.ORACLE
     ) => {
         const state = store.getState();
-        // Transform flat offline and unregistered data to hierarchical assessment format
+        // Transform flat offline data to hierarchical assessment format
         const formattedOfflineData = formatOfflineDataToAssessmentFormat(offlineData, dbType);
-        const formattedUnregisteredData = formatOfflineDataToAssessmentFormat(unregisteredData, dbType);
 
         if (dbType === DBType.MSSQL) {
             const existingAllData = state.inventoryV2.allmssqlHostAssessmentData || [];
-            // Filter out any existing WAD and unregistered data to avoid duplicates, then add new formatted data
-            const registeredOnlyData = existingAllData.filter((item: any) => !item?.isWad && !item?.isUnregistered);
-            dispatch(
-                addAllMssqlHostAssessmentData([
-                    ...registeredOnlyData,
-                    ...formattedOfflineData,
-                    ...formattedUnregisteredData
-                ])
+            // unregistered on-demand data is inventory-only this sprint
+            const registeredAndOfflineData = existingAllData.filter(
+                (item: any) => !item?.isWad && !item?.isUnregistered
             );
+            dispatch(addAllMssqlHostAssessmentData([...registeredAndOfflineData, ...formattedOfflineData]));
         } else {
             const existingAllData = state.inventoryV2.allOracleHostAssessmentData || [];
-            // Filter out any existing WAD and unregistered data to avoid duplicates, then add new formatted data
-            const registeredOnlyData = existingAllData.filter((item: any) => !item?.isWad && !item?.isUnregistered);
-            dispatch(
-                addAllOracleHostAssessmentData([
-                    ...registeredOnlyData,
-                    ...formattedOfflineData,
-                    ...formattedUnregisteredData
-                ])
+            const registeredAndOfflineData = existingAllData.filter(
+                (item: any) => !item?.isWad && !item?.isUnregistered
             );
+            dispatch(addAllOracleHostAssessmentData([...registeredAndOfflineData, ...formattedOfflineData]));
         }
     };
 

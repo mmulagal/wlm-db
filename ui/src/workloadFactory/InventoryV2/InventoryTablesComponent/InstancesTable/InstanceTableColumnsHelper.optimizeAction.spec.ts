@@ -72,7 +72,7 @@ describe('optimizeAction', () => {
                         sqlServerInstances: [
                             {
                                 databaseInstanceName: 'CASE2SQL',
-                                databaseInstanceId: 'guid-123',
+                                databaseInstanceId: 'discover-server-guid',
                                 sqlServerDeploymentType: 'Standalone'
                             }
                         ]

@@ -17,7 +17,12 @@ import {
     useLazyGetOfflineMssqlAssessmentDataQuery,
     useLazyGetUnregisteredMssqlAssessmentQuery
 } from '../../utils/apiService';
-import { formatGetWellDataFlat, resetGwValuesOnRefresh, updateAccountLevelAssessmentData } from './GetWellUtils';
+import {
+    formatGetWellDataFlat,
+    resetGwValuesOnRefresh,
+    syncUnregisteredAssessmentToInventory,
+    updateAccountLevelAssessmentData
+} from './GetWellUtils';
 import { WLF_TABS } from '../../utils/consts';
 
 const GetWellApi = () => {
@@ -74,7 +79,7 @@ const GetWellApi = () => {
                 regionId: selectedGwInstanceRegionId || null
             });
             if (result && !result?.error && result?.data) {
-                const assessmentData = result.data;
+                const assessmentData = { ...result.data, isWad: true };
 
                 dispatch(setDriftAssessmentData(assessmentData));
                 formatGetWellDataFlat(dispatch, assessmentData, false, isRefresh, false, t);
@@ -120,9 +125,9 @@ const GetWellApi = () => {
                 formatGetWellDataFlat(dispatch, assessmentData, false, isRefresh, false, t);
                 dispatch(setGwSelectedRowFsxId(assessmentData.metadata?.fileSystemId));
 
-                updateAccountLevelAssessmentData(dispatch, assessmentData, {
-                    databaseHostId: selectedResourceId,
-                    databaseInstanceId: selectedDatabaseInstance,
+                syncUnregisteredAssessmentToInventory(dispatch, assessmentData, {
+                    ec2InstanceId: selectedResourceId,
+                    instanceName: selectedDatabaseInstance,
                     credentialId: selectedGwInstanceCredId || '',
                     regionId: selectedGwInstanceRegionId || ''
                 });

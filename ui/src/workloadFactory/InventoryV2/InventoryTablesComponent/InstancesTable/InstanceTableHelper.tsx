@@ -858,6 +858,19 @@ export const getCanViewAndFix = (rowData: any): boolean => {
 };
 
 export const getViewAndFixDisableMsg = (rowData: any, canViewAndFix: boolean, t: TFunction): string => {
+    // Match InstancesTable overflow menu: block primary CTA when host/instance is unavailable
+    if (rowData?.status === INVENTORY_STATUS.OFFLINE) {
+        return t('databases.register-flow.host-down');
+    }
+    if (rowData?.ssmState === INVENTORY_STATUS.OFFLINE) {
+        return t('databases.register-flow.ssm-down');
+    }
+    if (rowData?.status?.toLowerCase() === INVENTORY_STATUS.DOWN) {
+        return rowData?.hostType === DBType.ORACLE
+            ? t('databases.register-flow.oracle-server-instance-down')
+            : t('databases.register-flow.sql-server-instance-down');
+    }
+
     if (
         (rowData?.detectOption === DETECT_HOST_VAR.DISABLE || rowData?.detectOption === DETECT_HOST_VAR.HIDE) &&
         rowData?.detectOptionDisableMsg

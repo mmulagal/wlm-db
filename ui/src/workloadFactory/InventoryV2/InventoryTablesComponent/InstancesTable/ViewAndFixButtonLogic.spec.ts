@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { INVENTORY_STATUS, ACTION_CTA, DETECT_HOST_VAR } from '../../../../utils/consts';
+import { DBType, INVENTORY_STATUS, ACTION_CTA, DETECT_HOST_VAR } from '../../../../utils/consts';
 import { getCanViewAndFix, getViewAndFixDisableMsg } from './InstanceTableHelper';
 
 const t = (key: string) => key;
@@ -57,6 +57,42 @@ describe('View and Fix Button Logic', () => {
             };
 
             expect(getCanViewAndFix(rowData)).toBe(true);
+        });
+
+        it('disables with sql-server-instance-down for managed instance when SQL Server is down', () => {
+            const rowData = {
+                statusColText: INVENTORY_STATUS.MANAGED,
+                resourceId: 'res-123',
+                status: INVENTORY_STATUS.CASE_SENSITIVE_DOWN,
+                hostType: DBType.MSSQL
+            };
+
+            expect(getCanViewAndFix(rowData)).toBe(true);
+            expect(getViewAndFixDisableMsg(rowData, true, t)).toBe('databases.register-flow.sql-server-instance-down');
+        });
+
+        it('disables with oracle-server-instance-down for managed Oracle instance when down', () => {
+            const rowData = {
+                statusColText: INVENTORY_STATUS.MANAGED,
+                resourceId: 'res-456',
+                status: INVENTORY_STATUS.CASE_SENSITIVE_DOWN,
+                hostType: DBType.ORACLE
+            };
+
+            expect(getViewAndFixDisableMsg(rowData, true, t)).toBe(
+                'databases.register-flow.oracle-server-instance-down'
+            );
+        });
+
+        it('disables with host-down when EC2 host is offline', () => {
+            const rowData = {
+                statusColText: INVENTORY_STATUS.MANAGED,
+                resourceId: 'res-789',
+                status: INVENTORY_STATUS.OFFLINE,
+                hostType: DBType.MSSQL
+            };
+
+            expect(getViewAndFixDisableMsg(rowData, true, t)).toBe('databases.register-flow.host-down');
         });
     });
 

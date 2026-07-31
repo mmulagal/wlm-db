@@ -205,9 +205,10 @@ export const resolveWellArchitectTabRestriction = ({
         instanceName
     });
     const isRegisteredInstance = isRegisteredInventoryInstance(host, instance);
+    const effectiveIsUnregistered = isRegisteredInstance ? false : !!isUnregistered;
     return shouldRestrictWellArchitectTabs({
         isWad,
-        isUnregistered,
+        isUnregistered: effectiveIsUnregistered,
         hostManageReadiness: hostManageReadinessFromStore ?? instance?.hostManageReadiness ?? host?.hostManageReadiness,
         isRegisteredInstance,
         fsxLinkExists: isRegisteredInstance
@@ -270,9 +271,10 @@ export const resolveUnregisteredDatabasesAndPasswordRestriction = ({
         instanceName
     });
     const isRegisteredInstance = isRegisteredInventoryInstance(host, instance);
+    const effectiveIsUnregistered = isRegisteredInstance ? false : !!isUnregistered;
     return shouldDisableUnregisteredDatabasesAndPassword({
         isWad,
-        isUnregistered,
+        isUnregistered: effectiveIsUnregistered,
         hostManageReadiness: hostManageReadinessFromStore ?? instance?.hostManageReadiness ?? host?.hostManageReadiness,
         isRegisteredInstance,
         fsxLinkExists: isRegisteredInstance
@@ -328,11 +330,17 @@ export const resolveInstanceFsxLinkExists = ({
 };
 
 /** Discover/unmerged rows: permissions + not managed + no registered resource id. */
-export const isUnregisteredInventoryRow = (rowData: any, managedDbInstance?: { resourceId?: string }): boolean =>
-    !!rowData?.isUnregistered ||
-    (canTriggerUnregisteredAssessment(rowData?.hostManageReadiness) &&
-        rowData?.statusColText !== INVENTORY_STATUS.MANAGED &&
-        !managedDbInstance?.resourceId);
+export const isUnregisteredInventoryRow = (rowData: any, managedDbInstance?: { resourceId?: string }): boolean => {
+    if (rowData?.statusColText === INVENTORY_STATUS.MANAGED || managedDbInstance?.resourceId) {
+        return false;
+    }
+    return (
+        !!rowData?.isUnregistered ||
+        (canTriggerUnregisteredAssessment(rowData?.hostManageReadiness) &&
+            rowData?.statusColText !== INVENTORY_STATUS.MANAGED &&
+            !managedDbInstance?.resourceId)
+    );
+};
 
 /** i18n key for register disabled when FSx link is missing (engine-specific). */
 export const getFsxLinkRequiredMessageKey = (engineType?: string): string =>
@@ -3834,7 +3842,9 @@ export const updateInstanceStatus = (
                         ...instanceItem,
                         resourceId,
                         databaseInstanceId: instanceInRes.databaseInstanceGuid,
-                        statusColText: INVENTORY_STATUS.MANAGED
+                        statusColText: INVENTORY_STATUS.MANAGED,
+                        isUnregistered: false,
+                        isWad: false
                     };
                 }
                 return instanceItem;

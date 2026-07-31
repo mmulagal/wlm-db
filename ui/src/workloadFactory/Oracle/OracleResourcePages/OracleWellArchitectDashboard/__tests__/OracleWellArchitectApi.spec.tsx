@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, act } from '@testing-library/react';
 import React from 'react';
+import { DBType } from '../../../../../utils/consts';
 
 import useOracleWellArchitectApi from '../OracleWellArchitectApi';
 
@@ -10,6 +11,7 @@ const {
     mockGetOfflineOracleAssessmentData,
     mockGetOracleAssessmentDataApi,
     mockFormatOracleWellArchitectedData,
+    mockSyncUnregisteredAssessmentToInventory,
     mockUpdateAccountLevelAssessmentData,
     mockResetGwValuesOnRefresh
 } = vi.hoisted(() => ({
@@ -18,6 +20,7 @@ const {
     mockGetOfflineOracleAssessmentData: vi.fn(),
     mockGetOracleAssessmentDataApi: vi.fn(),
     mockFormatOracleWellArchitectedData: vi.fn(),
+    mockSyncUnregisteredAssessmentToInventory: vi.fn(),
     mockUpdateAccountLevelAssessmentData: vi.fn(),
     mockResetGwValuesOnRefresh: vi.fn()
 }));
@@ -51,6 +54,7 @@ vi.mock('../OracleWellArchitectedUtils', () => ({
 }));
 
 vi.mock('../../../../GetWell/GetWellUtils', () => ({
+    syncUnregisteredAssessmentToInventory: (...args: unknown[]) => mockSyncUnregisteredAssessmentToInventory(...args),
     updateAccountLevelAssessmentData: (...args: unknown[]) => mockUpdateAccountLevelAssessmentData(...args),
     resetGwValuesOnRefresh: (...args: unknown[]) => mockResetGwValuesOnRefresh(...args)
 }));
@@ -124,6 +128,18 @@ describe('OracleWellArchitectApi page-load routing', () => {
         });
         expect(mockGetOfflineOracleAssessmentData).not.toHaveBeenCalled();
         expect(mockGetOracleAssessmentDataApi).not.toHaveBeenCalled();
+        expect(mockSyncUnregisteredAssessmentToInventory).toHaveBeenCalledWith(
+            mockDispatch,
+            { isUnregistered: true, metadata: {} },
+            {
+                ec2InstanceId: 'i-oracle-ec2',
+                instanceName: 'ORCL1',
+                credentialId: 'cred-1',
+                regionId: 'ap-southeast-1'
+            },
+            DBType.ORACLE
+        );
+        expect(mockUpdateAccountLevelAssessmentData).not.toHaveBeenCalled();
     });
 
     it('calls offline-assessment GET on page load when isWad is true', async () => {

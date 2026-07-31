@@ -19,7 +19,11 @@ import {
     setOptimizePageLoading
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import { setRefreshOracleWellArchitect } from '../../../../store/workloadFactory/oracleSlice';
-import { updateAccountLevelAssessmentData, resetGwValuesOnRefresh } from '../../../GetWell/GetWellUtils';
+import {
+    resetGwValuesOnRefresh,
+    syncUnregisteredAssessmentToInventory,
+    updateAccountLevelAssessmentData
+} from '../../../GetWell/GetWellUtils';
 
 const useOracleWellArchitectApi = () => {
     const dispatch = useDispatch();
@@ -162,12 +166,12 @@ const useOracleWellArchitectApi = () => {
                 };
                 dispatch(setDriftAssessmentData(assessmentData));
                 formatOracleWellArchitectedData(dispatch, assessmentData, false, true);
-                updateAccountLevelAssessmentData(
+                syncUnregisteredAssessmentToInventory(
                     dispatch,
                     assessmentData,
                     {
-                        databaseHostId: selectedResourceId || getWellResourceId,
-                        databaseInstanceId: selectedDatabaseInstance || getWellSelectedDatabaseInstance,
+                        ec2InstanceId: selectedResourceId || getWellResourceId,
+                        instanceName: selectedDatabaseInstance || getWellSelectedDatabaseInstance,
                         credentialId: selectedResourceCredId || credIdFromJM || '',
                         regionId: selectedResourceRegionId || regionFromJM || ''
                     },

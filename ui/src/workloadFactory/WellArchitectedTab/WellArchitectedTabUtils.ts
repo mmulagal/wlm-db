@@ -21,7 +21,11 @@ import {
     getInstanceOptimizationBreakdown
 } from '../DatabaseHomePage/DatabaseHomeUtils';
 import { sortAnalyzedResourceData } from '../InventoryV2/InventoryUtilsV2';
-import { getLastAssessmentTimestamp, hasAssessmentTimestamp } from './assessmentFormatUtils';
+import {
+    getLastAssessmentTimestamp,
+    hasAssessmentTimestamp,
+    shouldSkipDashboardAssessmentItem
+} from './assessmentFormatUtils';
 
 /**
  * Returns the unique, non-empty LUN path names across a database's dataFiles and logFiles,
@@ -74,6 +78,9 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
         }
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
+            if (shouldSkipDashboardAssessmentItem(instance)) {
+                return;
+            }
             if (!instance?.error && hasAssessmentTimestamp(instance?.assessments)) {
                 const optimizationBreakdown = getInstanceOptimizationBreakdown(
                     instance?.assessments,
@@ -115,6 +122,9 @@ export const getAllAssessmentResources = (assessmentData: any, oracleAssessmentD
         }
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
+            if (shouldSkipDashboardAssessmentItem(instance)) {
+                return;
+            }
             if (!instance?.error && hasAssessmentTimestamp(instance?.assessments)) {
                 const optimizationBreakdown = getInstanceOptimizationBreakdown(
                     instance?.assessments,
