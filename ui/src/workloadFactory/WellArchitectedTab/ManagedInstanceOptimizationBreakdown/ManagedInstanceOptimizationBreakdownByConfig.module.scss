@@ -64,6 +64,17 @@
         margin-top: 24px;
         margin-bottom: 24px;
 
+        .noDataSection {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            height: 100%;
+            min-height: 300px;
+            color: var(--text-secondary);
+        }
+
         &.withScrollbar {
             width: calc(100% - 16px);
 

@@ -1944,6 +1944,7 @@
             "select-explore-savings-to-review-the-cost-breakdown": "Select Explore savings to review the cost breakdown.",
             "category-dialog-component": "Select the resource to view and then select 'Continue' to be redirected to the well-architected dashboard for the resource.",
             "well-architected-breakdown-by-configurations": "Score breakdown by configurations",
+            "score-breakdown-no-data": "No data",
             "total-registered-instances": "Total registered instances",
             "well-architected-instances": "Well-architected instances",
             "not-optimized-instances": "Not optimized instances",

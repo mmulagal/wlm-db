@@ -1,4 +1,5 @@
 import { DsButton, DsTypography, FlashingDotsLoader, RadioButton } from '@netapp/design-system';
+import { ReactComponent as NoDataIcon } from '@netapp/icons/ic_file.svg';
 import { useDispatch } from 'react-redux';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -439,6 +440,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 : `(${mssqlFilteredConfigurations}/${mssqlTotalConfigurations})`
                         }`}
                         className=""
+                        isDisabled={naCheck}
                     />
                     <RadioButton
                         id="select-config-oracle"
@@ -452,13 +454,17 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 : `(${oracleFilteredConfigurations}/${oracleTotalConfigurations})`
                         }`}
                         className=""
+                        isDisabled={naCheck}
                     />
                 </div>
 
                 <div className={styles.rightSide}>
-                    <div className={`${styles.imageFilter} ${loading ? styles.loading : ''}`} ref={buttonRef}>
+                    <div
+                        className={`${styles.imageFilter} ${loading || naCheck ? styles.loading : ''}`}
+                        ref={buttonRef}
+                    >
                         <Filter />
-                        <DsButton isDisabled={loading} type="text" onClick={() => setIsOpen(!isOpen)}>
+                        <DsButton isDisabled={loading || naCheck} type="text" onClick={() => setIsOpen(!isOpen)}>
                             {t('databases.well-architected-tab.filter-configuration')}
                         </DsButton>
                         {isOpen && (
@@ -527,7 +533,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                     <SeparatorComponent variant="vertical" height="24px" />
 
-                    <DsButton onClick={handleReset} type="text" isDisabled={isResetDisabled}>
+                    <DsButton onClick={handleReset} type="text" isDisabled={isResetDisabled || naCheck}>
                         {t('databases.well-architected-tab.reset-to-default')}
                     </DsButton>
                 </div>
@@ -537,8 +543,17 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 ref={mainSectionRef}
                 className={`${styles.mainSection} ${hasScrollbar ? styles.withScrollbar : styles.withoutScrollbar}`}
             >
-                {currentConfigIds.map((configId: string, index: number) =>
-                    renderConfigTile(configId, index, configEngineType)
+                {naCheck ? (
+                    <div className={styles.noDataSection}>
+                        <NoDataIcon />
+                        <DsTypography variant="Semibold_14" color="var(--text-secondary)">
+                            {t('databases.dashboard.score-breakdown-no-data')}
+                        </DsTypography>
+                    </div>
+                ) : (
+                    currentConfigIds.map((configId: string, index: number) =>
+                        renderConfigTile(configId, index, configEngineType)
+                    )
                 )}
             </div>
         </div>
