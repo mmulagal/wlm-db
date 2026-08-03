@@ -48,8 +48,6 @@
         "ssm:DescribeInstancePatchStates",
         "ssm:DescribeAvailablePatches",
         "ssm:ListCommands",
-        "ssm:GetInventory",
-        "ssm:ListInventoryEntries",
         "ssm:DescribeInstanceInformation",
         "fsx:ListTagsForResource",
         "logs:DescribeLogGroups"

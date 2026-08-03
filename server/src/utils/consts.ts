@@ -1988,6 +1988,9 @@ enum TAGGING_SERVICE_API_TYPES {
     EC2S = 'ec2s'
 }
 
+interface TaggingServiceCacheParams {
+    useCache?: boolean;
+}
 const SECRET_ARN_CACHE_TTL = '6h';
 
 export {
@@ -2394,5 +2397,6 @@ export {
     SUPPORTED_EBS_VOLUME_TYPES,
     AI_LIMITER_MODE,
     TAGGING_SERVICE_API_TYPES,
+    TaggingServiceCacheParams,
     SECRET_ARN_CACHE_TTL
 };

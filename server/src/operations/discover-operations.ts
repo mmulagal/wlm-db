@@ -440,12 +440,12 @@ async function getHostAndSqlServerInfo(
         );
         if (taggingServiceItemsNeedingStorage.length) {
             const ssmConnectedNodesById = new Map(ssmConnectedNodes.map(node => [node.ec2InstanceId, node]));
-            const { ec2s: ec2FsxRelationships } = await buildEc2FsxRelationship(accountId, credentialsId, region).catch(
-                (error): { ec2s: Ec2WithStorage[] } => {
-                    logger.warn('Failed to build EC2-FSx relationship for storage enrichment', { region, error });
-                    return { ec2s: [] };
-                }
-            );
+            const { ec2s: ec2FsxRelationships } = await buildEc2FsxRelationship(accountId, credentialsId, region, {
+                useCache: true
+            }).catch((error): { ec2s: Ec2WithStorage[] } => {
+                logger.warn('Failed to build EC2-FSx relationship for storage enrichment', { region, error });
+                return { ec2s: [] };
+            });
             const fsxNameById = new Map(
                 fsxList.map(({ FileSystemId, Tags }) => [FileSystemId, getFsxNameFromTags(Tags)])
             );
@@ -2185,12 +2185,9 @@ async function discoverOracleResources(
     let fsIdWithFsxInfo: Map<string, FsxServerConfig> = new Map();
     let ec2FsxRelationships: Ec2WithStorage[] = [];
 
-    const ec2FsxRelationshipsPromise = buildEc2FsxRelationship(accountId, credentialsId, region).catch(
-        (error): { ec2s: Ec2WithStorage[] } => {
-            logger.warn('Failed to build EC2-FSx relationship for Oracle storage enrichment', { region, error });
-            return { ec2s: [] };
-        }
-    );
+    const ec2FsxRelationshipsPromise = await buildEc2FsxRelationship(accountId, credentialsId, region, {
+        useCache: true
+    });
 
     try {
         const [fetchResult, { ec2s: fetchedEc2FsxRelationships }] = await Promise.all([

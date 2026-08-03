@@ -1,4 +1,5 @@
 import { callWlmHosts } from '../../../src/lib/cloud-manager/tagging-service';
+import { TAGGING_SERVICE_API_TYPES } from '../../../src/utils/consts';
 import { ACCOUNT_ID } from '../../utils/consts';
 
 describe('Tagging service lib', () => {
@@ -7,12 +8,12 @@ describe('Tagging service lib', () => {
 
     describe('callWlmHosts', () => {
         it('Returns parsed JSON for fsxs via the generic caller', async () => {
-            const response = await callWlmHosts(ACCOUNT_ID, credentialsId, region, 'fsxs');
+            const response = await callWlmHosts(ACCOUNT_ID, credentialsId, region, TAGGING_SERVICE_API_TYPES.FSXS);
             expect(response).toBeDefined();
         });
 
         it('Returns parsed JSON for ec2s via the generic caller', async () => {
-            const response = await callWlmHosts(ACCOUNT_ID, credentialsId, region, 'ec2s');
+            const response = await callWlmHosts(ACCOUNT_ID, credentialsId, region, TAGGING_SERVICE_API_TYPES.EC2S);
             expect(response).toBeDefined();
         });
     });

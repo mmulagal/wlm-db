@@ -1,18 +1,16 @@
 import createError from 'http-errors';
-import { HEADERS, HttpErrorCodes, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
+import { HEADERS, HttpErrorCodes, TAGGING_SERVICE_API_TYPES, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
 import { gotInstanceForInternalRequest, isHTTPError } from '../../utils/got';
 import getLogger from '../../utils/logger';
 import { getWfServiceToken } from './auth';
 
 const logger = getLogger();
 
-type WlmHostResourceKind = 'fsxs' | 'ec2s';
-
 async function callWlmHosts<T>(
     accountId: string,
     credentialsId: string,
     region: string,
-    kind: WlmHostResourceKind
+    kind: TAGGING_SERVICE_API_TYPES
 ): Promise<T> {
     logger.info('Fetching wlm-hosts resources', { accountId, credentialsId, region, kind });
 

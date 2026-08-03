@@ -2,9 +2,12 @@ import { DATABASE_TYPE } from '@prisma/client';
 import { groupBy, isEqual, uniqBy, uniqWith } from 'lodash-es';
 import { callWlmHosts } from '../../lib/cloud-manager/tagging-service';
 import getLogger from '../../utils/logger';
-import { TAGGING_SERVICE_API_TYPES } from '../../utils/consts';
+import { TAGGING_SERVICE_API_TYPES, TaggingServiceCacheParams } from '../../utils/consts';
+import { getRedisConnection, isRedisConnected } from '../../utils/utils';
 
 const logger = getLogger();
+
+const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
 interface WorkloadEntry {
     workload: string;
@@ -144,6 +147,58 @@ function collectDatabaseWorkloads(items: Attachment[]): WorkloadEntry[] {
     );
 }
 
+async function withTaggingServiceCache<T>(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    kind: TAGGING_SERVICE_API_TYPES,
+    cacheParams?: TaggingServiceCacheParams
+): Promise<T> {
+    logger.info('Looking up tagging service cache', { accountId, credentialsId, region, kind, cacheParams });
+
+    const cacheKey = `tagging-service:${kind}:${accountId}:${credentialsId}:${region}`;
+    const redisClient = getRedisConnection();
+    const canUseRedis = isRedisConnected(redisClient);
+
+    if (cacheParams?.useCache && canUseRedis) {
+        try {
+            const cached = await redisClient.get(cacheKey);
+            if (cached) {
+                logger.info('Tagging service cache hit', { cacheKey });
+                return JSON.parse(cached) as T;
+            }
+        } catch (error) {
+            logger.warn('Error reading tagging service cache', {
+                accountId,
+                credentialsId,
+                region,
+                kind,
+                cacheKey,
+                error
+            });
+        }
+    }
+
+    const response = await callWlmHosts<T>(accountId, credentialsId, region, kind);
+
+    if (canUseRedis) {
+        try {
+            await redisClient.set(cacheKey, JSON.stringify(response), 'PX', FOUR_HOURS_MS);
+        } catch (error) {
+            logger.warn('Error writing tagging service cache', {
+                accountId,
+                credentialsId,
+                region,
+                kind,
+                cacheKey,
+                error
+            });
+        }
+    }
+
+    return response;
+}
+
 /**
  * Inverts the FSx-centric tagging-service model into an EC2-centric view,
  * keeping only EC2 instances that run a recognized database workload (SQL Server
@@ -207,15 +262,17 @@ function collectDatabaseWorkloads(items: Attachment[]): WorkloadEntry[] {
 async function buildEc2FsxRelationship(
     accountId: string,
     credentialsId: string,
-    region: string
+    region: string,
+    cacheParams?: TaggingServiceCacheParams
 ): Promise<Ec2FsxRelationship> {
-    logger.info('Building EC2-FSx relationship using tagging service apis ', { accountId, region });
+    logger.info('Building EC2-FSx relationship using tagging service apis ', { accountId, region, cacheParams });
 
-    const { fsxs = [] } = await callWlmHosts<{ fsxs?: FsxItem[] }>(
+    const { fsxs = [] } = await withTaggingServiceCache<{ fsxs?: FsxItem[] }>(
         accountId,
         credentialsId,
         region,
-        TAGGING_SERVICE_API_TYPES.FSXS
+        TAGGING_SERVICE_API_TYPES.FSXS,
+        cacheParams
     );
     logger.debug('Retrieved FSx entries from tagging service', { accountId, region, fsxCount: fsxs.length });
 
@@ -262,14 +319,16 @@ async function buildEc2FsxRelationship(
 async function fetchTaggingServiceEc2Hosts(
     accountId: string,
     credentialsId: string,
-    region: string
+    region: string,
+    cacheParams?: TaggingServiceCacheParams
 ): Promise<TaggingServiceEc2Host[]> {
-    logger.info('Fetching EC2 hosts from tagging service', { accountId, credentialsId, region });
-    const { hosts = [] } = await callWlmHosts<{ hosts?: TaggingServiceEc2Host[] }>(
+    logger.info('Fetching EC2 hosts from tagging service', { accountId, credentialsId, region, cacheParams });
+    const { hosts = [] } = await withTaggingServiceCache<{ hosts?: TaggingServiceEc2Host[] }>(
         accountId,
         credentialsId,
         region,
-        'ec2s'
+        TAGGING_SERVICE_API_TYPES.EC2S,
+        cacheParams
     );
     const databaseHosts = hosts.filter(({ workloads }) =>
         workloads?.some(({ workload }) => {
