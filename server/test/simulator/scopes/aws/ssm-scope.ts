@@ -1040,8 +1040,12 @@ ssmMock
         return crrAssessmentDataRegex.test(params.Parameters.commands?.[0]);
     })
     .resolves(listSendCommandCommandResponse.getCRRAssessmentDataCommand)
+    .on(SendCommandCommand, params => params.Comment === 'Get Cross Region Replication Assessment for Oracle')
+    .resolves(getSampleCommandResponse('oracleCrrAssessment'))
     .on(SendCommandCommand, params => params.Comment === 'SnapCenter snapshot assessment for MSSQL instance')
     .resolves(getSampleCommandResponse('mssqlSnapcenterAssessment'))
+    .on(SendCommandCommand, params => params.Comment === 'SnapCenter snapshot assessment for Oracle instance')
+    .resolves(getSampleCommandResponse('oracleSnapcenterAssessment'))
     .on(SendCommandCommand, params => {
         return pgsqlProtectionRegex.test(params.Parameters.commands?.[0]);
     })
@@ -1527,6 +1531,24 @@ ssmMock
         getSampleCommandResponseWithOutput(
             'mssqlSnapcenterAssessment',
             JSON.stringify(getCommandInvocationResponse.mssqlSnapcenterAssessmentOutput)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-oracleCrrAssessment'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'oracleCrrAssessment',
+            JSON.stringify(getCommandInvocationResponse.oracleCrrAssessmentOutput)
+        )
+    )
+    .on(GetCommandInvocationCommand, {
+        CommandId: 'a11b873a-3bea-174a-a29e-15532e59a1b4-oracleSnapcenterAssessment'
+    })
+    .resolves(
+        getSampleCommandResponseWithOutput(
+            'oracleSnapcenterAssessment',
+            JSON.stringify(getCommandInvocationResponse.oracleSnapcenterAssessmentOutput)
         )
     )
     .on(GetCommandInvocationCommand, {
