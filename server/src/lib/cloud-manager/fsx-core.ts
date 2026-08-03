@@ -80,6 +80,8 @@ interface listCredentialsResponse {
         ip: string;
         userName: string;
         password: string;
+        /** When `true`, `password` is actually a Secrets Manager ARN (GovCloud accounts). */
+        isSecret?: boolean;
     };
 }
 async function listFsxOntapCredentials(accountId: string, fsxId: string) {

@@ -1,10 +1,46 @@
 import createError from 'http-errors';
-import { HEADERS, HttpErrorCodes, WORKLOAD_FACTORY_ENDPOINT } from '../../utils/consts';
+import {
+    AWS_SECRET_ARN_TYPE,
+    GOV_ACCOUNT,
+    HEADERS,
+    HttpErrorCodes,
+    USER_TOKEN,
+    WORKLOAD_FACTORY_ENDPOINT,
+    SECRET_ARN_CACHE_TTL
+} from '../../utils/consts';
+import { getAsyncLocalStorageResource } from '../../utils/async-local-storage';
+import { hasCache, readFromCacheByKey, writeToCache } from '../../utils/cache';
 import { gotInstanceForInternalRequest, isHTTPError } from '../../utils/got';
 import getLogger from '../../utils/logger';
 import { getWfServiceToken } from './auth';
+import { listFsxOntapCredentials } from './fsx-core';
 
 const logger = getLogger();
+
+async function resolveGovCloudSecretArn(accountId: string, targetId: string) {
+    logger.info('Resolving GovCloud secret ARN', { accountId, targetId });
+
+    if (!getAsyncLocalStorageResource(USER_TOKEN)) {
+        logger.warn('Skipping x-aws-secret-arn resolution — no user token in context', { accountId, targetId });
+        return undefined;
+    }
+
+    const cacheKey = `${accountId}:${targetId}`;
+    if (hasCache(AWS_SECRET_ARN_TYPE, cacheKey)) {
+        return readFromCacheByKey(AWS_SECRET_ARN_TYPE, cacheKey) as string;
+    }
+
+    const { credentials: { password, isSecret } = {} } = await listFsxOntapCredentials(accountId, targetId);
+    if (!isSecret || !password) {
+        throw createError(
+            HttpErrorCodes.INTERNAL_SERVER_ERROR,
+            `GovCloud FSx ONTAP credentials for target ${targetId} did not return a secret ARN`
+        );
+    }
+
+    writeToCache(AWS_SECRET_ARN_TYPE, cacheKey, password, SECRET_ARN_CACHE_TTL);
+    return password;
+}
 
 function extractUpstreamErrorDetail(body: unknown): string | undefined {
     if (!body) {
@@ -77,9 +113,14 @@ async function callProxyForwarder<T>(opts: CallProxyForwarderOptions): Promise<T
     try {
         const { token } = await getWfServiceToken();
 
+        const secretArn = getAsyncLocalStorageResource(GOV_ACCOUNT)
+            ? await resolveGovCloudSecretArn(accountId, targetId)
+            : undefined;
+
         const headers: Record<string, string> = {
             [HEADERS.AUTHORIZATION]: token,
-            [HEADERS.ENDPOINT]: endpoint
+            [HEADERS.ENDPOINT]: endpoint,
+            ...(secretArn && { [HEADERS.AWS_SECRET_ARN]: secretArn })
         };
 
         const requestOptions = {

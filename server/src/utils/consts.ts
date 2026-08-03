@@ -74,7 +74,8 @@ enum HEADERS {
     X_AGENT_ID = 'x-agent-id',
     X_ACCOUNT_ID = 'x-account-id',
     NETAPP_WORKSPACE_ID = 'x-netapp-workspace-id',
-    IS_GOV_ACCOUNT = 'x-is-gov-account'
+    IS_GOV_ACCOUNT = 'x-is-gov-account',
+    AWS_SECRET_ARN = 'x-aws-secret-arn'
 }
 
 const API_PATH_HEALTH: string = '/health';
@@ -1380,6 +1381,7 @@ const REQUEST_IN_PROGRESS_TYPE = 'REQUEST_IN_PROGRESS';
 const AWS_PRICING_TYPE = 'AWS_PRICING';
 const AWS_FSX_TYPE = 'AWS_FSX';
 const AWS_SSM_PARAMETER = 'AWS_SSM_PARAMETER';
+const AWS_SECRET_ARN_TYPE = 'AWS_SECRET_ARN';
 const AWS_CE_TYPE = 'AWS_CE';
 const AWS_CO_TYPE = 'AWS_CO';
 const MARKETING_API_TCO = 'MARKETING_API_TCO';
@@ -1986,6 +1988,8 @@ enum TAGGING_SERVICE_API_TYPES {
     EC2S = 'ec2s'
 }
 
+const SECRET_ARN_CACHE_TTL = '6h';
+
 export {
     TEMP_DIRECTORY,
     WLMDB,
@@ -2284,6 +2288,7 @@ export {
     TCO_FEATURE,
     CONTINUOUS_ASSESSMENT_FEATURE,
     AWS_SSM_PARAMETER,
+    AWS_SECRET_ARN_TYPE,
     TIMELINE_SERVICE_NAME,
     AuditStatus,
     PREPARE_PSMODULES_RELATIVE_PATH,
@@ -2388,5 +2393,6 @@ export {
     DATABASE_LABEL,
     SUPPORTED_EBS_VOLUME_TYPES,
     AI_LIMITER_MODE,
-    TAGGING_SERVICE_API_TYPES
+    TAGGING_SERVICE_API_TYPES,
+    SECRET_ARN_CACHE_TTL
 };
