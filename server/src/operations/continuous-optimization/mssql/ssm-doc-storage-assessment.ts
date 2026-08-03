@@ -4,6 +4,7 @@ import { isEmpty } from 'lodash-es';
 import {
     getWindowsRegistryContent,
     getFileSystemContent,
+    isFleetManagerCollectionFailure,
     type RegistryEntry
 } from '../../aws/ssm-fleet-manager-operations';
 import {
@@ -64,10 +65,11 @@ interface SqlDefaultPaths {
 }
 
 interface MultipathConfig {
-    mpioEnabled: boolean;
+    mpioEnabled?: boolean;
     pathVerifyEnabled?: string;
     pathVerificationPeriod?: string;
     diskTimeoutValue?: string;
+    error?: string;
 }
 
 interface ClusterQuorumConfig {
@@ -154,7 +156,11 @@ async function discoverSqlInstances(
     );
 
     if (!found) {
-        logger.error('Failed to discover SQL instances via registry read', { ec2InstanceId, error });
+        if (isFleetManagerCollectionFailure(error)) {
+            logger.error('SQL instance discovery failed due to collection error', { ec2InstanceId, error });
+            throw createError(HttpErrorCodes.FAILED_DEPENDENCY, error!);
+        }
+        logger.debug('No SQL instances registry key on host', { ec2InstanceId, error });
         return [];
     }
 
@@ -220,6 +226,9 @@ async function getMultipathConfig(
     ]);
 
     if (!mpioParameters.found) {
+        if (isFleetManagerCollectionFailure(mpioParameters.error)) {
+            return { error: mpioParameters.error };
+        }
         return { mpioEnabled: false };
     }
 

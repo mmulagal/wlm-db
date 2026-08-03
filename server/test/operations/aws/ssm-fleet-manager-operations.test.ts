@@ -4,7 +4,9 @@ import { faker } from '@faker-js/faker';
 import * as ssmOperations from '../../../src/operations/aws/ssm-operations';
 import {
     getWindowsRegistryContent,
-    getFileSystemContent
+    getFileSystemContent,
+    FLEET_MANAGER_REGISTRY_KEY_NOT_FOUND,
+    isFleetManagerCollectionFailure
 } from '../../../src/operations/aws/ssm-fleet-manager-operations';
 import {
     SQL_INSTANCE_NAMES_PATH,
@@ -264,5 +266,22 @@ describe('ssm-fleet-manager-operations', () => {
             undefined,
             undefined
         );
+    });
+
+    describe('isFleetManagerCollectionFailure', () => {
+        it('should treat registry key not found as a benign data miss', () => {
+            expect(isFleetManagerCollectionFailure(FLEET_MANAGER_REGISTRY_KEY_NOT_FOUND)).toBe(false);
+            expect(isFleetManagerCollectionFailure(undefined)).toBe(false);
+        });
+
+        it('should treat credential, SSM, and pagination errors as collection failures', () => {
+            expect(isFleetManagerCollectionFailure('Failed to fetch credentials. Not Found')).toBe(true);
+            expect(isFleetManagerCollectionFailure('Simulated page failure')).toBe(true);
+            expect(
+                isFleetManagerCollectionFailure(
+                    'Output from AWSFleetManager-GetWindowsRegistryContent was truncated or malformed'
+                )
+            ).toBe(true);
+        });
     });
 });

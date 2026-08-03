@@ -1549,6 +1549,30 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect((record?.rawdata as any)?.layoutAssessment).toBeUndefined();
             expect((record?.rawdata as any)?.mpioAssessment).toBeDefined();
         }, 15000);
+
+        it('should mark the MPIO subjob FAILED and omit mpioAssessment when collection fails', async () => {
+            const failingEc2InstanceId = 'i-unregistered-mpio-failure';
+            const collectionError = 'Failed to fetch credentials. Not Found';
+            vi.spyOn(ssmDocStorageAssessment, 'getMultipathConfig').mockResolvedValueOnce({ error: collectionError });
+
+            const { jobId } = await triggerMssqlUnregisteredAssessment(
+                ACCOUNT_ID,
+                AWSDOC_TEST_CREDENTIALS_ID,
+                DEFAULT_AWS_REGION,
+                failingEc2InstanceId,
+                AWSDOC_INSTANCE_NAME
+            );
+
+            await waitForJobCompletion(ACCOUNT_ID, AWSDOC_TEST_CREDENTIALS_ID, DEFAULT_AWS_REGION, jobId);
+
+            const subJobs = await prisma.client.job.findMany({ where: { parent_job_id: jobId } });
+            const mpioSubJob = subJobs.find(subJob => subJob.name === 'Registry MPIO assessment');
+            expect(mpioSubJob?.status).toBe('FAILED');
+            expect(mpioSubJob?.error).toBe(collectionError);
+
+            const record = await getOfflineAssessment(ACCOUNT_ID, failingEc2InstanceId, AWSDOC_INSTANCE_NAME);
+            expect((record?.rawdata as any)?.mpioAssessment).toBeUndefined();
+        }, 15000);
     });
 });
 

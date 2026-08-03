@@ -10,6 +10,7 @@ const GET_FILE_SYSTEM_CONTENT_DOCUMENT = 'AWSFleetManager-GetFileSystemContent';
 const FLEET_MANAGER_DOCUMENT_VERSION = '$DEFAULT';
 const INVOKE_WINDOWS_SCRIPT_PLUGIN = 'InvokeWindowsScript';
 const FLEET_MANAGER_MAX_PAGES = 50;
+const FLEET_MANAGER_REGISTRY_KEY_NOT_FOUND = 'The specified registry key does not exist.';
 
 interface RegistryEntry {
     name: string;
@@ -194,5 +195,14 @@ async function getFileSystemContent(
     return { found, entries: results.map(toFileSystemEntry), error };
 }
 
-export { getWindowsRegistryContent, getFileSystemContent };
+function isFleetManagerCollectionFailure(error?: string): boolean {
+    return Boolean(error && error !== FLEET_MANAGER_REGISTRY_KEY_NOT_FOUND);
+}
+
+export {
+    getWindowsRegistryContent,
+    getFileSystemContent,
+    FLEET_MANAGER_REGISTRY_KEY_NOT_FOUND,
+    isFleetManagerCollectionFailure
+};
 export type { RegistryEntry, FileSystemEntry, FleetManagerContentResult };

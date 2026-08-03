@@ -59,6 +59,14 @@ describe('ssm-doc-storage-assessment', () => {
 
             expect(result).toEqual([]);
         });
+
+        it('should throw when registry read fails due to a collection error', async () => {
+            registrySpy.mockResolvedValueOnce(registryResult(false, [], 'Failed to fetch credentials. Not Found'));
+
+            await expect(
+                discoverSqlInstances(credentialsId, DEFAULT_AWS_REGION, TEST_STOPPED_EC2_INSTANCE_ID)
+            ).rejects.toThrow('Failed to fetch credentials. Not Found');
+        });
     });
 
     describe('getSqlDefaultPaths', () => {
@@ -166,6 +174,14 @@ describe('ssm-doc-storage-assessment', () => {
             const result = await getMultipathConfig(credentialsId, DEFAULT_AWS_REGION, TEST_STOPPED_EC2_INSTANCE_ID);
 
             expect(result).toEqual({ mpioEnabled: false });
+        });
+
+        it('should return an error when MPIO registry read fails due to a collection error', async () => {
+            registrySpy.mockResolvedValueOnce(registryResult(false, [], 'Failed to fetch credentials. Not Found'));
+
+            const result = await getMultipathConfig(credentialsId, DEFAULT_AWS_REGION, TEST_STOPPED_EC2_INSTANCE_ID);
+
+            expect(result).toEqual({ error: 'Failed to fetch credentials. Not Found' });
         });
     });
 

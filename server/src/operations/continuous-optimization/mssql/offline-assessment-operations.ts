@@ -21,6 +21,7 @@ import {
     MultipathConfig,
     ClusterQuorumConfig
 } from './ssm-doc-storage-assessment';
+import { isFleetManagerCollectionFailure } from '../../aws/ssm-fleet-manager-operations';
 import { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import { calculateStorageDrift } from './storage-assessment-operations';
 import { calculateRssConfigDrift } from './rssConfig-assessment-operations';
@@ -980,6 +981,18 @@ async function computeVolumeLunDrift(
     return filterToVolumeLunDriftItems(mergeStorageDriftItemsById(perFilesystemDrift), VOLUME_LUN_DRIFT_IDS);
 }
 
+function failSubJobOnCollectionError(
+    result: { error?: string },
+    jobState: { status: JOBSTATUS; errorMessage?: string }
+): boolean {
+    if (result.error && isFleetManagerCollectionFailure(result.error)) {
+        jobState.status = JOBSTATUS.FAILED;
+        jobState.errorMessage = result.error;
+        return true;
+    }
+    return false;
+}
+
 async function runLayoutSubAssessment(
     accountId: string,
     credentialsId: string,
@@ -1042,7 +1055,14 @@ async function runMpioSubAssessment(
     let status: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage: string | undefined;
     try {
-        return await getMultipathConfig(credentialsId, region, ec2InstanceId, accountId);
+        const result = await getMultipathConfig(credentialsId, region, ec2InstanceId, accountId);
+        const jobState = { status, errorMessage };
+        if (failSubJobOnCollectionError(result, jobState)) {
+            status = jobState.status;
+            errorMessage = jobState.errorMessage;
+            return undefined;
+        }
+        return result;
     } catch (error) {
         status = JOBSTATUS.FAILED;
         errorMessage = error instanceof Error ? error.message : 'Registry MPIO assessment failed';
@@ -1084,7 +1104,14 @@ async function runClusterQuorumSubAssessment(
     let status: JOBSTATUS = JOBSTATUS.COMPLETED;
     let errorMessage: string | undefined;
     try {
-        return await getClusterQuorumConfig(credentialsId, region, ec2InstanceId, accountId);
+        const result = await getClusterQuorumConfig(credentialsId, region, ec2InstanceId, accountId);
+        const jobState = { status, errorMessage };
+        if (failSubJobOnCollectionError(result, jobState)) {
+            status = jobState.status;
+            errorMessage = jobState.errorMessage;
+            return undefined;
+        }
+        return result;
     } catch (error) {
         status = JOBSTATUS.FAILED;
         errorMessage = error instanceof Error ? error.message : 'Registry cluster quorum assessment failed';
