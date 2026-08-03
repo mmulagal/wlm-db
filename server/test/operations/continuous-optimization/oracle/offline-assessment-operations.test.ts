@@ -439,6 +439,71 @@ describe('triggerOracleUnregisteredAssessment', () => {
         }
     }, 15000);
 
+    it('should include a headroom item computed from collected ONTAP aggregates', async () => {
+        const unregisteredEc2InstanceId = 'i-unregistered-oracle-headroom-asm';
+        const instanceName = 'ORAUNREGHA';
+        const fsxFileSystemId = 'fs-unregistered-oracle-ha';
+
+        registerProxyGetResponse({
+            targetId: fsxFileSystemId,
+            ontapPath: 'api/storage/volumes',
+            body: ontapPage([{ name: 'oradata_unreg_ha', uuid: 'uuid-unreg-ha-1', nas: { path: '/oradata_unreg_ha' } }])
+        });
+        registerProxyGetResponse({
+            targetId: fsxFileSystemId,
+            ontapPath: 'api/storage/aggregates',
+            body: ontapPage([
+                { space: { block_storage: { size: 1_000_000_000, used: 400_000_000, available: 600_000_000 } } }
+            ])
+        });
+
+        const relationship = buildRelationship([
+            {
+                instanceId: unregisteredEc2InstanceId,
+                workloadTypes: [DATABASE_TYPE.oracle],
+                workloads: [],
+                fsxs: [
+                    {
+                        id: fsxFileSystemId,
+                        fileSystemId: fsxFileSystemId,
+                        region: DEFAULT_AWS_REGION,
+                        volumes: [
+                            {
+                                id: 'vol-unreg-ha-1',
+                                fsxVolumeId: 'fsvol-unreg-ha-1',
+                                volumeUuid: 'uuid-unreg-ha-1',
+                                volumeName: 'oradata_unreg_ha',
+                                luns: []
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]);
+        vi.spyOn(taggingServiceOperations, 'buildEc2FsxRelationship').mockResolvedValue(relationship);
+
+        const { jobId } = await triggerOracleUnregisteredAssessment(
+            ACCOUNT_ID,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            unregisteredEc2InstanceId,
+            instanceName
+        );
+        await waitForJobCompletion(ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION, jobId);
+
+        const response = await fetchOracleOfflineAssessment(
+            ACCOUNT_ID,
+            unregisteredEc2InstanceId,
+            instanceName,
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION
+        );
+
+        const headroom = response.assessments.find(a => a.id === 'headroom') as { errorMessage?: string };
+        expect(headroom).toBeDefined();
+        expect(headroom.errorMessage).not.toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
+    }, 15000);
+
     it('should fail the job with no-data message when there is no EC2-FSx relationship for the instance', async () => {
         const unregisteredEc2InstanceId = 'i-unregistered-oracle-no-relationship';
         const instanceName = 'ORANOREL';

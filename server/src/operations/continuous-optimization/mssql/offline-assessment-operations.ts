@@ -594,10 +594,12 @@ async function fetchMssqlOfflineAssessment(
         : databaseRecord;
 
     if (!record) {
-        throw createError(
-            HttpErrorCodes.NOT_FOUND,
-            `WAD assessment not found for resource ${resourceId} and instance ${databaseInstanceId}`
-        );
+        logger.info('No offline assessment record found, returning empty result', {
+            accountId,
+            resourceId,
+            databaseInstanceId
+        });
+        return { assessments: [], dismissedConfigurations: [], metadata: {} };
     }
 
     if ((record.metadata as { source?: string })?.source === OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED) {
@@ -826,10 +828,12 @@ async function fetchMssqlUnregisteredInstanceAssessment(
         : databaseRecord;
 
     if (!record) {
-        throw createError(
-            HttpErrorCodes.NOT_FOUND,
-            `Assessment not found for resource ${resourceId} and instance ${databaseInstanceId}`
-        );
+        logger.info('No offline assessment record found', {
+            accountId,
+            resourceId,
+            databaseInstanceId
+        });
+        return { assessments: [], dismissedConfigurations: [], metadata: {} };
     }
 
     const { layoutAssessment, mpioAssessment, quorumAssessment, ontapStorageAssessments, headroomData } =

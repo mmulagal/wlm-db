@@ -582,10 +582,14 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(ids).not.toContain('compression');
         });
 
-        it('should throw error for non-existent assessment', async () => {
-            await expect(
-                fetchMssqlOfflineAssessment(ACCOUNT_ID, 'non-existent-resource', 'non-existent-instance')
-            ).rejects.toThrow('WAD assessment not found');
+        it('should return an empty result for non-existent assessment', async () => {
+            const result = await fetchMssqlOfflineAssessment(
+                ACCOUNT_ID,
+                'non-existent-resource',
+                'non-existent-instance'
+            );
+
+            expect(result).toEqual({ assessments: [], dismissedConfigurations: [], metadata: {} });
         });
 
         it('should delegate to fetchMssqlUnregisteredInstanceAssessment for a record with metadata.source === unregistered', async () => {
@@ -1277,14 +1281,14 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(autosizeFinding.objectsInViolation).toContain('data_vol');
         });
 
-        it('should throw NOT_FOUND when no record exists', async () => {
-            await expect(
-                fetchMssqlUnregisteredInstanceAssessment(
-                    ACCOUNT_ID,
-                    'non-existent-awsdoc-resource',
-                    AWSDOC_INSTANCE_NAME
-                )
-            ).rejects.toThrow('Assessment not found');
+        it('should return an empty result when no record exists', async () => {
+            const result = await fetchMssqlUnregisteredInstanceAssessment(
+                ACCOUNT_ID,
+                'non-existent-awsdoc-resource',
+                AWSDOC_INSTANCE_NAME
+            );
+
+            expect(result).toEqual({ assessments: [], dismissedConfigurations: [], metadata: {} });
         });
 
         it('should exclude HA ids when layoutAssessment.deploymentType is Standalone (or absent)', async () => {

@@ -162,6 +162,7 @@ interface OracleOfflineAssessmentRawData {
 
 interface OracleUnregisteredAssessmentRawData {
     ontapStorageAssessments?: StorageAssessment[];
+    headroomData?: OneTimeWADHeadroomData;
 }
 
 interface OracleUnregisteredAssessmentMetadata {
@@ -462,10 +463,12 @@ async function fetchOracleOfflineAssessment(
         : databaseRecord;
 
     if (!record) {
-        throw createError(
-            HttpErrorCodes.NOT_FOUND,
-            `WAD assessment not found for resource ${resourceId} and instance ${databaseInstanceId}`
-        );
+        logger.info('No offline assessment record found, returning empty result', {
+            accountId,
+            resourceId,
+            databaseInstanceId
+        });
+        return { assessments: [], dismissedConfigurations: [], metadata: {} };
     }
 
     if ((record.metadata as { source?: string })?.source === OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED) {
@@ -668,13 +671,15 @@ async function fetchOracleUnregisteredInstanceAssessment(
         : databaseRecord;
 
     if (!record) {
-        throw createError(
-            HttpErrorCodes.NOT_FOUND,
-            `Assessment not found for resource ${resourceId} and instance ${databaseInstanceId}`
-        );
+        logger.info('No offline assessment record found', {
+            accountId,
+            resourceId,
+            databaseInstanceId
+        });
+        return { assessments: [], dismissedConfigurations: [], metadata: {} };
     }
 
-    const { ontapStorageAssessments } = (record.rawdata as OracleUnregisteredAssessmentRawData) || {};
+    const { ontapStorageAssessments, headroomData } = (record.rawdata as OracleUnregisteredAssessmentRawData) || {};
     const { databaseInstanceName, ec2InstanceId, assessmentTimestamp } =
         (record.metadata as unknown as OracleUnregisteredAssessmentMetadata) || {};
 
@@ -704,16 +709,47 @@ async function fetchOracleUnregisteredInstanceAssessment(
         );
     }
 
-    const { configIds: eligibleConfigIds } = resolveAssessmentTypes(DatabaseTypes.ORACLE, undefined, {}, new Set());
+    const filesystemId = ontapStorageAssessments?.[0]?.volumes?.filesystemId;
+    if (headroomData && filesystemId) {
+        const headroomItem = calculateWADHeadroomDrift(
+            filesystemId,
+            headroomData,
+            ORACLE_GOLDEN_CONFIG.find(e => e.id === 'headroom'),
+            RESOURCESTYPE.ORACLE
+        );
+        if (headroomItem) {
+            assessments.push(headroomItem);
+        }
+    }
+
+    const { protocol: storageProtocol, isASMManaged: isAsmManaged = false } =
+        (filesystemId ? ontapStorageAssessments?.[0]?.mappedOntapVolumes?.[filesystemId] : undefined) ?? {};
+    const { configIds: eligibleConfigIds } = resolveAssessmentTypes(
+        DatabaseTypes.ORACLE,
+        undefined,
+        { storageProtocol, isAsmManaged },
+        new Set()
+    );
     const oracleLookup = GOLDEN_CONFIG_LOOKUP[DatabaseTypes.ORACLE];
     const assessedIds = new Set(assessments.map(a => a.id));
     eligibleConfigIds
         .filter(id => !assessedIds.has(id))
         .forEach(id => {
             const entry = oracleLookup.get(id);
-            if (entry) {
-                assessments.push({ ...entry, errorMessage: ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE });
+            if (!entry) {
+                return;
             }
+            // `resolveAssessmentTypes`'s STORAGE category lumps all storage golden-config entries
+            // into one mixed-protocol bucket, so its applicableTo exclusion never fires here; this
+            // scoped ONTAP-only collector can never determine ASM (always false) and knows the
+            // protocol, so drop those entries outright instead of showing them as not-applicable.
+            if (entry.applicableTo === 'asm' && !isAsmManaged) {
+                return;
+            }
+            if (entry.applicableTo === 'iscsi' && storageProtocol && storageProtocol !== STORAGE_PROTOCOLS.ISCSI) {
+                return;
+            }
+            assessments.push({ ...entry, errorMessage: ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE });
         });
 
     const parsedAssessmentTimestamp = assessmentTimestamp ? new Date(assessmentTimestamp).getTime() : NaN;
@@ -817,10 +853,13 @@ async function processOracleUnregisteredAssessment(
             DATABASE_TYPE.oracle,
             'Oracle'
         );
-        const { ontapStorageAssessments } = ontapStorageResult ?? {};
+        const { ontapStorageAssessments, headroomData } = ontapStorageResult ?? {};
 
         if (ontapStorageAssessments && ontapStorageAssessments.length > 0) {
-            const rawdata: OracleUnregisteredAssessmentRawData = { ontapStorageAssessments };
+            const rawdata: OracleUnregisteredAssessmentRawData = {
+                ontapStorageAssessments,
+                ...(headroomData && { headroomData })
+            };
             const metadata: OracleUnregisteredAssessmentMetadata = {
                 source: OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED,
                 databaseInstanceName: instanceName,
