@@ -832,8 +832,20 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams & SSM
 
                     if (objectsOptimized !== objectsToOptimize.length) {
                         if (objectsOptimized === 0) {
-                            const optimizeErrorMessage = `Failed to fix ${objectsToOptimize.length} objects, ${objectsToOptimize} for ${serverNameWithHostName}`;
-                            logger.error(`Optimization failed for ${serverNameWithHostName}, ${parsedResp}`);
+                            const ssmErrorDetail =
+                                parsedResp?.error?.message ??
+                                parsedResp?.error?.status ??
+                                parsedResp?.error ??
+                                (typeof parsedResp === 'string' ? parsedResp : undefined);
+                            const ssmErrorSuffix = ssmErrorDetail
+                                ? `: ${
+                                      typeof ssmErrorDetail === 'string'
+                                          ? ssmErrorDetail
+                                          : JSON.stringify(ssmErrorDetail)
+                                  }`
+                                : '';
+                            const optimizeErrorMessage = `Failed to fix ${objectsToOptimize.length} objects, ${objectsToOptimize} for ${serverNameWithHostName}${ssmErrorSuffix}`;
+                            logger.error(`Optimization failed for ${serverNameWithHostName}`, { parsedResp });
                             newJobStatus = JOBSTATUS.FAILED;
                             newJobError = optimizeErrorMessage;
                         } else {
