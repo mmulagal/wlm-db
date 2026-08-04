@@ -3600,6 +3600,208 @@ const SIMULATED_WAD_RESOURCES_BY_CONFIG: Record<string, WadConfigurationEntry['r
             },
             status: ResourceOptimizationStatus.NOT_OPTIMIZED
         }
+    ],
+    'wlmdb-tiering-tco-optimization': [
+        {
+            resource: {
+                id: SIMULATED_MSSQL_VOLUME.id,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                name: SIMULATED_MSSQL_VOLUME.name,
+                metadata: {
+                    workload: 'mssql',
+                    components: [
+                        {
+                            parameter: 'tiering-policy',
+                            current: 'snapshot_only',
+                            recommended: 'snapshot_only',
+                            status: 'optimized'
+                        },
+                        {
+                            parameter: 'tiering-min-cooling-days',
+                            current: '7',
+                            recommended: '7',
+                            status: 'optimized'
+                        }
+                    ],
+                    svmName: SIMULATED_WAD_SVM_NAME
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        },
+        {
+            resource: {
+                id: SIMULATED_ORACLE_VOLUME.id,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                name: SIMULATED_ORACLE_VOLUME.name,
+                metadata: {
+                    workload: 'oracle',
+                    components: [
+                        {
+                            parameter: 'tiering-policy',
+                            current: 'auto',
+                            recommended: 'none',
+                            status: 'not-optimized'
+                        },
+                        {
+                            parameter: 'tiering-min-cooling-days',
+                            current: '7',
+                            recommended: '14',
+                            status: 'not-optimized'
+                        }
+                    ],
+                    svmName: SIMULATED_WAD_SVM_NAME
+                }
+            },
+            status: ResourceOptimizationStatus.NOT_OPTIMIZED
+        }
+    ],
+    'wlmdb-storage-efficiencies': [
+        {
+            resource: {
+                id: SIMULATED_MSSQL_VOLUME.id,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                name: SIMULATED_MSSQL_VOLUME.name,
+                metadata: {
+                    workload: 'mssql',
+                    components: [
+                        {
+                            parameter: 'compression',
+                            current: 'adaptive',
+                            recommended: 'adaptive',
+                            status: 'optimized'
+                        },
+                        {
+                            parameter: 'deduplication',
+                            current: 'inline',
+                            recommended: 'inline',
+                            status: 'optimized'
+                        },
+                        {
+                            parameter: 'compaction',
+                            current: 'enabled',
+                            recommended: 'enabled',
+                            status: 'optimized'
+                        }
+                    ],
+                    svmName: SIMULATED_WAD_SVM_NAME
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        },
+        {
+            resource: {
+                id: SIMULATED_ORACLE_VOLUME.id,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                name: SIMULATED_ORACLE_VOLUME.name,
+                metadata: {
+                    workload: 'oracle',
+                    components: [
+                        {
+                            parameter: 'compression',
+                            current: 'adaptive',
+                            recommended: 'none',
+                            status: 'not-optimized'
+                        },
+                        {
+                            parameter: 'deduplication',
+                            current: 'both',
+                            recommended: 'none',
+                            status: 'not-optimized'
+                        },
+                        {
+                            parameter: 'compaction',
+                            current: 'enabled',
+                            recommended: 'none',
+                            status: 'not-optimized'
+                        }
+                    ],
+                    svmName: SIMULATED_WAD_SVM_NAME
+                }
+            },
+            status: ResourceOptimizationStatus.NOT_OPTIMIZED
+        }
+    ],
+    'wlmdb-snapshot-policy': [
+        {
+            resource: {
+                id: SIMULATED_MSSQL_VOLUME.id,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                name: SIMULATED_MSSQL_VOLUME.name,
+                metadata: {
+                    workload: 'mssql',
+                    components: [
+                        {
+                            parameter: 'snapshot-policy',
+                            current: 'none',
+                            recommended: 'none',
+                            status: 'optimized'
+                        }
+                    ],
+                    svmName: SIMULATED_WAD_SVM_NAME
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        },
+        {
+            resource: {
+                id: SIMULATED_ORACLE_VOLUME.id,
+                type: ASSESSMENT_RESOURCE_TYPE.VOLUME,
+                name: SIMULATED_ORACLE_VOLUME.name,
+                metadata: {
+                    workload: 'oracle',
+                    components: [
+                        {
+                            parameter: 'snapshot-policy',
+                            current: 'daily_weekly',
+                            recommended: 'none',
+                            status: 'not-optimized'
+                        }
+                    ],
+                    svmName: SIMULATED_WAD_SVM_NAME
+                }
+            },
+            status: ResourceOptimizationStatus.NOT_OPTIMIZED
+        }
+    ],
+    'wlmdb-headroom': [
+        {
+            resource: {
+                id: demoFsxId,
+                type: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
+                name: demoFsxId,
+                metadata: {
+                    workload: 'mssql',
+                    components: [
+                        {
+                            parameter: 'headroom',
+                            current: '35%',
+                            recommended: '35%',
+                            status: 'optimized'
+                        }
+                    ]
+                }
+            },
+            status: ResourceOptimizationStatus.OPTIMIZED
+        },
+        {
+            resource: {
+                id: demoFsxId,
+                type: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
+                name: demoFsxId,
+                metadata: {
+                    workload: 'oracle',
+                    components: [
+                        {
+                            parameter: 'headroom',
+                            current: '10%',
+                            recommended: '20%',
+                            status: 'not-optimized'
+                        }
+                    ]
+                }
+            },
+            status: ResourceOptimizationStatus.NOT_OPTIMIZED
+        }
     ]
 };
 

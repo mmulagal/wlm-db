@@ -137,14 +137,18 @@ describe('subscriber', () => {
 
             const [result] = getPublishedMessages(WAD_SCAN_RESULTS_QUEUE).map(buf => JSON.parse(buf.toString()));
 
-            expect(result.configurations).toHaveLength(4);
+            expect(result.configurations).toHaveLength(8);
             expect(
                 result.configurations.map((configuration: { configurationId: string }) => configuration.configurationId)
             ).toEqual([
                 'wlmdb-thin-provision',
                 'wlmdb-os-type',
                 'wlmdb-block-device-space-management',
-                'wlmdb-snapcenter-snapshot'
+                'wlmdb-snapcenter-snapshot',
+                'wlmdb-tiering-tco-optimization',
+                'wlmdb-storage-efficiencies',
+                'wlmdb-snapshot-policy',
+                'wlmdb-headroom'
             ]);
             expect(result.configurations[0].parentResource).toMatchObject({
                 region: 'us-east-1',
