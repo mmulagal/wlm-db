@@ -124,7 +124,10 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
         recommendation:
             'Workload Factory recommends disabling snapshots for FSx for ONTAP volumes for MS SQL Server instances to save space and lower costs. MS SQL Server snapshots should be managed externally via tools like SnapCenter, which creates application-consistent snapshots, preventing corruption during restoration.',
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
+        disabled: process.env.NODE_ENV === 'production'
     },
     {
         id: 'space-mgmt-try-first',
@@ -156,7 +159,10 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             { parameter: 'tiering-policy', value: 'snapshot_only', source: 'volume' },
             { parameter: 'tiering-min-cooling-days', value: 7, source: 'volume' }
         ],
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
+        disabled: process.env.NODE_ENV === 'production'
     },
     {
         id: 'storage-efficiencies',
@@ -193,7 +199,10 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
                 objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
             }
         ],
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
+        disabled: process.env.NODE_ENV === 'production'
     },
 
     // ── configuration / lun ─────────────────────────────────────────────────
@@ -400,7 +409,10 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             'To optimize storage performance, provision file system capacity as 1.35 times of total size of provisioned volume.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
+        disabled: process.env.NODE_ENV === 'production'
     },
     {
         id: 'log-drive-size',

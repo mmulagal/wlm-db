@@ -84,7 +84,10 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY
         ],
         resourceType: ASSESSMENT_RESOURCE_TYPE.VOLUME,
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
+        disabled: process.env.NODE_ENV === 'production'
     },
     {
         parameter: 'snapshotCopyReserve',
@@ -178,7 +181,10 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
                 objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
             }
         ],
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
+        disabled: process.env.NODE_ENV === 'production'
     },
     {
         id: 'tiering-tco-optimization',
@@ -209,7 +215,10 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
                 objectType: ASSESSMENT_RESOURCE_TYPE.VOLUME
             }
         ],
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
+        disabled: process.env.NODE_ENV === 'production'
     },
 
     // ── configuration / volume_nfs (applicableTo: nfs) ──────────────────────
@@ -877,7 +886,10 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
             'To optimize storage performance, provision file system capacity as 1.2 times of total size of provisioned volume.',
         categories: [AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.FILE_SYSTEM,
-        configLevel: 'database'
+        configLevel: 'database',
+        globalWadApplicable: true,
+        metadata: { linkRequired: true, schedulingSupported: true, bulkFixSupported: true },
+        disabled: process.env.NODE_ENV === 'production'
     },
 
     // ── resiliency ───────────────────────────────────────────────────────────

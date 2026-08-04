@@ -91,6 +91,7 @@ interface GoldenConfigEntry {
         schedulingSupported?: boolean;
         bulkFixSupported?: boolean;
     };
+    disabled?: boolean;
 }
 
 interface UnOptimizedDiskGroups {
