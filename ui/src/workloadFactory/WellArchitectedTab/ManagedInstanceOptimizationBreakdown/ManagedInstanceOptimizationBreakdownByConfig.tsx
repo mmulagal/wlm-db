@@ -196,6 +196,13 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
 
     const oracleTotalConfigurations = useMemo(() => configData.oracleConfigIds?.length || 0, [configData]);
 
+    // Shared "no configurations" flags per engine, reused by radio-disable, selected-engine check, and auto-switch effect below.
+    const mssqlHasNoConfigurations = mssqlTotalConfigurations === 0;
+    const oracleHasNoConfigurations = oracleTotalConfigurations === 0;
+
+    const selectedEngineHasNoConfigurations =
+        !loading && (configEngineType === DBType.ORACLE ? oracleHasNoConfigurations : mssqlHasNoConfigurations);
+
     const oracleFilteredConfigurations = useMemo(
         () =>
             (configData.oracleConfigIds || []).filter((configId: string) => {
@@ -277,10 +284,10 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         return '';
     };
 
+    // naCheck = globally no data (both engines empty). The showNA branch intentionally ignores
+    // `loading`: it reflects "no credentials/regions selected" (headers state), a case where no
+    // fetch is in flight, so waiting on `loading` would never resolve.
     const naCheck = useMemo(() => {
-        if (configData?.total === 0 && configData?.oracleTotal !== 0) {
-            dispatch(setSelectedConfigEngineType(DBType.ORACLE));
-        }
         if (showNA && configData?.oracleTotal + configData?.total === 0) {
             return true;
         }
@@ -289,6 +296,36 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
         }
         return false;
     }, [configData, showNA, loading]);
+
+    // Radio isDisabled blocks manually selecting an empty engine; the effect below additionally
+    // steers away from an engine that becomes empty while it's already selected (e.g. after a
+    // data refresh). Both are needed since disabling a radio doesn't change the current selection.
+    const isMssqlRadioDisabled = loading || mssqlHasNoConfigurations;
+    const isOracleRadioDisabled = loading || oracleHasNoConfigurations;
+
+    useEffect(() => {
+        if (loading) {
+            return;
+        }
+
+        if (mssqlHasNoConfigurations && oracleHasNoConfigurations) {
+            if (configEngineType !== DBType.MSSQL) {
+                dispatch(setSelectedConfigEngineType(DBType.MSSQL));
+            }
+            return;
+        }
+
+        if (configEngineType === DBType.MSSQL && mssqlHasNoConfigurations && !oracleHasNoConfigurations) {
+            dispatch(setSelectedConfigEngineType(DBType.ORACLE));
+        } else if (configEngineType === DBType.ORACLE && oracleHasNoConfigurations && !mssqlHasNoConfigurations) {
+            dispatch(setSelectedConfigEngineType(DBType.MSSQL));
+        }
+    }, [loading, mssqlHasNoConfigurations, oracleHasNoConfigurations, configEngineType, dispatch]);
+
+    // showNoDataSection covers both the global case (naCheck) and the case where only the
+    // currently selected engine has no configurations (selectedEngineHasNoConfigurations);
+    // it drives the main content area plus the filter/reset controls below.
+    const showNoDataSection = naCheck || selectedEngineHasNoConfigurations;
 
     const renderConfigOptimizationBar = (configId: string, dbType: string = DBType.MSSQL) => {
         const catalogEntry =
@@ -440,7 +477,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 : `(${mssqlFilteredConfigurations}/${mssqlTotalConfigurations})`
                         }`}
                         className=""
-                        isDisabled={naCheck}
+                        isDisabled={isMssqlRadioDisabled}
                     />
                     <RadioButton
                         id="select-config-oracle"
@@ -454,17 +491,21 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                                 : `(${oracleFilteredConfigurations}/${oracleTotalConfigurations})`
                         }`}
                         className=""
-                        isDisabled={naCheck}
+                        isDisabled={isOracleRadioDisabled}
                     />
                 </div>
 
                 <div className={styles.rightSide}>
                     <div
-                        className={`${styles.imageFilter} ${loading || naCheck ? styles.loading : ''}`}
+                        className={`${styles.imageFilter} ${loading || showNoDataSection ? styles.loading : ''}`}
                         ref={buttonRef}
                     >
                         <Filter />
-                        <DsButton isDisabled={loading || naCheck} type="text" onClick={() => setIsOpen(!isOpen)}>
+                        <DsButton
+                            isDisabled={loading || showNoDataSection}
+                            type="text"
+                            onClick={() => setIsOpen(!isOpen)}
+                        >
                             {t('databases.well-architected-tab.filter-configuration')}
                         </DsButton>
                         {isOpen && (
@@ -533,7 +574,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                     </div>
                     <SeparatorComponent variant="vertical" height="24px" />
 
-                    <DsButton onClick={handleReset} type="text" isDisabled={isResetDisabled || naCheck}>
+                    <DsButton onClick={handleReset} type="text" isDisabled={isResetDisabled || showNoDataSection}>
                         {t('databases.well-architected-tab.reset-to-default')}
                     </DsButton>
                 </div>
@@ -543,7 +584,7 @@ const ManagedInstanceOptimizationBreakdownByConfig = ({ openAccordion }: boolean
                 ref={mainSectionRef}
                 className={`${styles.mainSection} ${hasScrollbar ? styles.withScrollbar : styles.withoutScrollbar}`}
             >
-                {naCheck ? (
+                {showNoDataSection ? (
                     <div className={styles.noDataSection}>
                         <NoDataIcon />
                         <DsTypography variant="Semibold_14" color="var(--text-secondary)">

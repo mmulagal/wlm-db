@@ -271,6 +271,16 @@ describe('ManagedInstanceOptimizationBreakdownByConfig', () => {
             expect(screen.getByText('databases.well-architected-tab.reset-to-default')).toBeDisabled();
         });
 
+        it('keeps mssql selected when both engines have no data', () => {
+            renderComponent({ getWellOptimize: { configEngineType: DBType.ORACLE } });
+            expect(mockDispatch).toHaveBeenCalledWith(setSelectedConfigEngineType(DBType.MSSQL));
+        });
+
+        it('shows mssql radio checked when both engines have no data', () => {
+            renderComponent({ getWellOptimize: { configEngineType: DBType.MSSQL } });
+            expect(screen.getByLabelText(`${DBType.MSSQL} (0)`)).toBeChecked();
+        });
+
         it('returns naCheck true when showNA is set', () => {
             renderComponent({ headers: { showNA: true } });
             expect(screen.getByTestId('no-data-icon')).toBeTruthy();
@@ -278,10 +288,50 @@ describe('ManagedInstanceOptimizationBreakdownByConfig', () => {
 
         it('auto-selects Oracle when only Oracle data exists', () => {
             vi.mocked(getAssessmentGroupedByConfigurations).mockReturnValue(
-                makeConfigData({ total: 0, oracleTotal: 1 }) as any
+                makeConfigData({ total: 0, oracleTotal: 1, mssqlConfigIds: [] }) as any
             );
             renderComponent();
             expect(mockDispatch).toHaveBeenCalledWith(setSelectedConfigEngineType(DBType.ORACLE));
+        });
+    });
+
+    describe('selected engine with no configurations', () => {
+        beforeEach(() => {
+            vi.mocked(getAssessmentGroupedByConfigurations).mockReturnValue(
+                makeConfigData({ total: 1, oracleTotal: 0, oracleConfigIds: [] }) as any
+            );
+        });
+
+        it('disables oracle radio and selects mssql when oracle has no configurations', () => {
+            renderComponent({ getWellOptimize: { configEngineType: DBType.ORACLE } });
+            expect(mockDispatch).toHaveBeenCalledWith(setSelectedConfigEngineType(DBType.MSSQL));
+            expect(screen.getByLabelText(`${DBType.ORACLE} (0)`)).toBeDisabled();
+            expect(screen.getByLabelText(`${DBType.MSSQL} (1)`)).not.toBeDisabled();
+        });
+
+        it('shows mssql tiles when oracle is empty and mssql is selected', () => {
+            renderComponent({ getWellOptimize: { configEngineType: DBType.MSSQL } });
+            expect(screen.getByLabelText(`${DBType.MSSQL} (1)`)).toBeChecked();
+            expect(screen.getByTestId('bar-component')).toBeTruthy();
+        });
+
+        it('disables mssql radio and selects oracle when mssql has no configurations', () => {
+            vi.mocked(getAssessmentGroupedByConfigurations).mockReturnValue(
+                makeConfigData({ total: 0, oracleTotal: 1, mssqlConfigIds: [] }) as any
+            );
+            renderComponent({ getWellOptimize: { configEngineType: DBType.MSSQL } });
+            expect(mockDispatch).toHaveBeenCalledWith(setSelectedConfigEngineType(DBType.ORACLE));
+            expect(screen.getByLabelText(`${DBType.MSSQL} (0)`)).toBeDisabled();
+            expect(screen.getByLabelText(`${DBType.ORACLE} (1)`)).not.toBeDisabled();
+        });
+
+        it('shows oracle tiles when mssql is empty and oracle is selected', () => {
+            vi.mocked(getAssessmentGroupedByConfigurations).mockReturnValue(
+                makeConfigData({ total: 0, oracleTotal: 1, mssqlConfigIds: [] }) as any
+            );
+            renderComponent({ getWellOptimize: { configEngineType: DBType.ORACLE } });
+            expect(screen.getByLabelText(`${DBType.ORACLE} (1)`)).toBeChecked();
+            expect(screen.getByTestId('bar-component')).toBeTruthy();
         });
     });
 
@@ -813,7 +863,7 @@ describe('ManagedInstanceOptimizationBreakdownByConfig', () => {
 
         it('filters oracle configs by severity only when categories are cleared', () => {
             vi.mocked(getAssessmentGroupedByConfigurations).mockReturnValue(
-                makeConfigData({ total: 0, oracleTotal: 1, oracleConfigIds: undefined }) as any
+                makeConfigData({ total: 0, oracleTotal: 1 }) as any
             );
             renderComponent({ getWellOptimize: { configEngineType: DBType.ORACLE } });
             openFilterPopup();
@@ -822,7 +872,7 @@ describe('ManagedInstanceOptimizationBreakdownByConfig', () => {
             });
             fireEvent.click(screen.getByText('databases.well-architected-tab.apply'));
             expect(screen.queryAllByTestId('bar-component')).toHaveLength(0);
-            expect(screen.getByLabelText(`${DBType.ORACLE} (0/0)`)).toBeTruthy();
+            expect(screen.getByLabelText(`${DBType.ORACLE} (0/1)`)).toBeTruthy();
         });
     });
 });
