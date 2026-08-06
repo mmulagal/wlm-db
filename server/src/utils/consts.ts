@@ -109,6 +109,9 @@ const AGENTS_MANAGEMENT_ENDPOINT: string = `${CLOUD_MANAGER_ENDPOINT}/agents-mgm
 const SIGNOZ_ENDPOINT: string = process.env.SIGNOZ_ENDPOINT
     ? `http://${process.env.SIGNOZ_ENDPOINT}`
     : config.get<string>('urls.signoz');
+
+// Pyroscope continuous profiling.
+const { PYROSCOPE_SERVER_ADDRESS } = process.env;
 const WORKLOAD_FACTORY_ENDPOINT: string = process.env.WORKLOAD_FACTORY_ENDPOINT
     ? `https://${process.env.WORKLOAD_FACTORY_ENDPOINT}`
     : config.get<string>('urls.workload-factory');
@@ -2037,6 +2040,7 @@ export {
     CLOUD_MANAGER_GET_CVO_WE_PREFIX,
     CREDENTIALS_ENDPOINT,
     SIGNOZ_ENDPOINT,
+    PYROSCOPE_SERVER_ADDRESS,
     AGENTS_MANAGEMENT_ENDPOINT,
     TENANCY_ENDPOINT,
     CLOUD_MANAGER_ENDPOINT,

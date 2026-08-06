@@ -29,6 +29,7 @@ import {
     GOV_ACCOUNT
 } from './utils/consts';
 import jwtOperation from './utils/jwt';
+import pyroscopePlugin from './plugins/pyroscope';
 import {
     getAsyncLocalStorageResource,
     getLocalStorage,
@@ -154,6 +155,7 @@ const app = fastify({
     })
     .register(compress)
     .register(sensible) // disable sensible error handler and use fastify native
+    .register(pyroscopePlugin)
     .register(helmet, {
         contentSecurityPolicy: false
     })
