@@ -7,10 +7,10 @@
     "dependencies": {
         "@emotion/css": "^11.11.2",
         "@tlveng/fsxpert-widget": "1.0.8",
-        "@netapp/design-system": "file:netapp-design-system-1.5.40.tgz",        
+        "@netapp/design-system": "file:netapp-design-system-1.5.40.tgz",
         "@netapp/icons": "file:netapp-icons-1.0.8.tgz",
         "@reduxjs/toolkit": "2.11.2",
-        "@tlveng/wlm-ds": "^1.0.60",        
+        "@tlveng/wlm-ds": "^1.0.60",
         "@svgr/plugin-jsx": "^8.1.0",
         "@svgr/rollup": "^8.1.0",
         "@vitejs/plugin-react-swc": "^4.2.3",
@@ -35,10 +35,10 @@
         "react-i18next": "^16.5.4",
         "react-measure": "^2.5.2",
         "react-redux": "^9.2.0",
-        "react-router-dom": "^7.14.0",
+        "react-router-dom": "^7.18.2",
         "react-syntax-highlighter": "^16.1.0",
         "redux-mock-store": "^1.5.5",
-        "sanitize-html": "^2.17.0",
+        "sanitize-html": "^2.17.6",
         "style-inject": "^0.3.0",
         "uuid": "^13.0.2",
         "vite": "^7.3.2",
@@ -108,6 +108,6 @@
         "transformIgnorePatterns": []
     },
     "overrides": {
-        "dompurify": "^3.4.0"
+        "dompurify": "^3.4.11"
     }
 }
