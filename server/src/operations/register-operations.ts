@@ -1573,6 +1573,7 @@ async function registerOracleInstance(
     }[] = [];
 
     let resourceId: string = '';
+    let alreadyRegisteredDatabaseInstances: DatabaseInstance[] = [];
     try {
         const ssmStatus = await getSSMConnectionStatus(credentialsId, region, ec2InstanceId);
         if (ssmStatus.Status === ConnectionStatus.NOT_CONNECTED) {
@@ -1593,7 +1594,6 @@ async function registerOracleInstance(
             IS_DEMO_FLOW && databaseHostId ? databaseHostId : generateSqlResourceId(node1InstanceId, undefined);
 
         let isResourceToBeCreated = !(IS_DEMO_FLOW && databaseHostId);
-        let alreadyRegisteredDatabaseInstances: DatabaseInstance[] = [];
 
         if (!IS_DEMO_FLOW || !databaseHostId) {
             const {
@@ -1694,6 +1694,29 @@ async function registerOracleInstance(
             resourceId
         };
         await updateParentJobStatus(accountId, hostJobId, false, errorMessage, jobMetadata);
+
+        // If registering all the Oracle databases failed and the resource has no
+        // previously registered database instances, remove the resource from wlmdb.resource table.
+        const allInstancesFailed =
+            instanceManagementStatus.length > 0 &&
+            instanceManagementStatus.every(elem => elem.status === JOBSTATUS.FAILED);
+        if (resourceId && allInstancesFailed) {
+            try {
+                const { items: currentDatabaseInstances } = await getPaginatedDatabaseInstances(accountId, {
+                    resourceId,
+                    credentialsId
+                });
+                if (currentDatabaseInstances.length === 0) {
+                    await deleteResource(accountId, resourceId, credentialsId);
+                }
+            } catch (error: any) {
+                logger.error('Error while checking existing database instances before deleting resource', {
+                    accountId,
+                    resourceId,
+                    error: error.message
+                });
+            }
+        }
     }
 }
 

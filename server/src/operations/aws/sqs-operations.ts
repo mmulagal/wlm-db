@@ -41,7 +41,8 @@ import {
     getQueueUrl,
     parsePgSqlInstanceInfo,
     generateSqlResourceId,
-    sanitizeSnsSubject
+    sanitizeSnsSubject,
+    retryWithDelay
 } from '../../utils/utils';
 import getLogger from '../../utils/logger';
 import { transformStackEventMessage } from './sns-operations';
@@ -49,6 +50,7 @@ import {
     createDeployment,
     createEvent,
     createResource,
+    deleteResource,
     listEvents,
     updateDeployment,
     upsertDeployment,
@@ -710,11 +712,16 @@ async function processCloudFormationMessages() {
                                                     try {
                                                         const deployedInstances =
                                                             resourceType === RESOURCESTYPE.MSSQL
-                                                                ? await getAllInstanceDetails(
-                                                                      credentialsId,
-                                                                      region,
-                                                                      nodeIds,
-                                                                      accountId
+                                                                ? await retryWithDelay(
+                                                                      getAllInstanceDetails.bind(
+                                                                          null,
+                                                                          credentialsId,
+                                                                          region,
+                                                                          nodeIds,
+                                                                          accountId
+                                                                      ),
+                                                                      2,
+                                                                      5000
                                                                   )
                                                                 : [{ instanceName: 'postgresql' }];
 
@@ -752,15 +759,20 @@ async function processCloudFormationMessages() {
                                                                         ? instanceName.replace(/^.+\$/, '')
                                                                         : instanceName;
 
-                                                                    const sqlInstanceGuid = await getMssqlInstanceGuid(
-                                                                        accountId,
-                                                                        credentialsId,
-                                                                        region,
-                                                                        getDatabaseInstanceName(
-                                                                            instanceName,
-                                                                            isDefaultInstance
+                                                                    const sqlInstanceGuid = await retryWithDelay(
+                                                                        getMssqlInstanceGuid.bind(
+                                                                            null,
+                                                                            accountId,
+                                                                            credentialsId,
+                                                                            region,
+                                                                            getDatabaseInstanceName(
+                                                                                instanceName,
+                                                                                isDefaultInstance
+                                                                            ),
+                                                                            nodeIds
                                                                         ),
-                                                                        nodeIds
+                                                                        2,
+                                                                        5000
                                                                     );
 
                                                                     instanceDetails.databaseInstanceId =
@@ -769,11 +781,16 @@ async function processCloudFormationMessages() {
                                                                         modifiedInstanceName;
                                                                     instanceDetails.isDefault = isDefaultInstance;
                                                                 } else if (resourceType === RESOURCESTYPE.PGSQL) {
-                                                                    const instanceInfo = await getPgSqlInstanceInfo(
-                                                                        accountId,
-                                                                        credentialsId,
-                                                                        region,
-                                                                        nodeIds
+                                                                    const instanceInfo = await retryWithDelay(
+                                                                        getPgSqlInstanceInfo.bind(
+                                                                            null,
+                                                                            accountId,
+                                                                            credentialsId,
+                                                                            region,
+                                                                            nodeIds
+                                                                        ),
+                                                                        2,
+                                                                        5000
                                                                     );
                                                                     const { dbInstanceId } = parsePgSqlInstanceInfo(
                                                                         instanceInfo!
@@ -801,6 +818,22 @@ async function processCloudFormationMessages() {
                                                             node1InstanceId,
                                                             node2InstanceId
                                                         );
+
+                                                        try {
+                                                            await deleteResource(accountId, resourceId, credentialsId);
+                                                            logger.info(
+                                                                'Rolled back resource after instance-detail failure',
+                                                                resourceId,
+                                                                accountId
+                                                            );
+                                                        } catch (cleanupError) {
+                                                            logger.error(
+                                                                'Failed to roll back resource after instance-detail failure',
+                                                                cleanupError,
+                                                                resourceId,
+                                                                accountId
+                                                            );
+                                                        }
                                                     }
 
                                                     try {
