@@ -2,6 +2,7 @@ import { vi } from 'vitest';
 import { DATABASE_TYPE } from '@prisma/client';
 import {
     buildBlockDeviceSpaceManagementEntry,
+    buildAssessmentJobDescriptionWithDashboardLink,
     buildVolumeCombinedEntry,
     enrichWithGoldenConfig,
     isCombinedViolationDetail,
@@ -13,7 +14,7 @@ import {
     AssessmentStatus,
     OptimizeStorageConfigs
 } from '../../../src/utils/continous-optimization-consts';
-import { DatabaseTypes } from '../../../src/utils/consts';
+import { DatabaseTypes, RESOURCESTYPE } from '../../../src/utils/consts';
 import { DismissConfig } from '../../../src/utils/common-types';
 import * as taggingServiceOperations from '../../../src/operations/cloud-manager/tagging-service-operations';
 import { Ec2FsxRelationship } from '../../../src/operations/cloud-manager/tagging-service-operations';
@@ -21,6 +22,29 @@ import {
     registerProxyGetResponse,
     resetProxyOverrides
 } from '../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
+
+describe('buildAssessmentJobDescriptionWithDashboardLink', () => {
+    it('should append dashboard navigation metadata to sub-job descriptions', () => {
+        const description = buildAssessmentJobDescriptionWithDashboardLink(
+            'ONTAP volume/LUN storage assessment for i-abc/SQL1',
+            'i-abc',
+            'SQL1',
+            RESOURCESTYPE.MSSQL,
+            true
+        );
+
+        expect(description).toContain('ONTAP volume/LUN storage assessment for i-abc/SQL1');
+        expect(description).toContain('Review detailed findings and recommendations in.;');
+        expect(JSON.parse(description.split(';')[1])).toEqual({
+            hostName: 'i-abc',
+            resourceId: 'i-abc',
+            databaseInstanceId: 'SQL1',
+            databaseInstanceName: 'SQL1',
+            sqlServerDeploymentType: RESOURCESTYPE.MSSQL,
+            isUnregistered: true
+        });
+    });
+});
 
 // ---------------------------------------------------------------------------
 // buildVolumeCombinedEntry / buildBlockDeviceSpaceManagementEntry

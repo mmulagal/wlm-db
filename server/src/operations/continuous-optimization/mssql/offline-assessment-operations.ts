@@ -1255,10 +1255,12 @@ async function triggerMssqlUnregisteredAssessment(
     ec2InstanceId: string,
     instanceName: string
 ) {
+    const resourceName = `${ec2InstanceId}/${instanceName}`;
+    const jobName = `Microsoft SQL Server storage assessment for instance ${resourceName}`;
     const { id: jobId } = await registerJob(accountId, credentialsId, region, {
-        name: `Microsoft SQL Server storage assessment for ${ec2InstanceId}/${instanceName}`,
+        name: jobName,
         description: `One-time storage assessment for unregistered SQL Server instance ${instanceName} on ${ec2InstanceId}`,
-        resourceName: `${ec2InstanceId}/${instanceName}`,
+        resourceName,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
         type: JOBTYPE.ASSESSMENT

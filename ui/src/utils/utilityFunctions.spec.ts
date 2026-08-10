@@ -32,6 +32,9 @@ import {
     databaseTableSort,
     delay,
     jobMonitoringStatusMapping,
+    getJobMonitoringDescriptionPrefix,
+    isOracleJobMonitoringNavigation,
+    parseJobMonitoringNavigationPayload,
     addBlankCell,
     createJobMonitorCSV,
     cfDownloadName,
@@ -978,6 +981,41 @@ describe('jobMonitoringStatusMapping', () => {
     it('Return failed', () => {
         const result = jobMonitoringStatusMapping('FAILED');
         expect(result).toEqual('Failed');
+    });
+});
+
+describe('parseJobMonitoringNavigationPayload', () => {
+    const mssqlPayload =
+        'ONTAP volume/LUN storage assessment for i-abc/SQL1. Review detailed findings and recommendations in.;{"hostName":"i-abc","resourceId":"i-abc","databaseInstanceId":"SQL1","databaseInstanceName":"SQL1","sqlServerDeploymentType":"MSSQL","isUnregistered":true}';
+
+    it('should parse navigation payload from job description', () => {
+        expect(parseJobMonitoringNavigationPayload(mssqlPayload)).toEqual({
+            hostName: 'i-abc',
+            resourceId: 'i-abc',
+            databaseInstanceId: 'SQL1',
+            databaseInstanceName: 'SQL1',
+            sqlServerDeploymentType: 'MSSQL',
+            isUnregistered: true
+        });
+    });
+
+    it('should detect Oracle jobs from sqlServerDeploymentType', () => {
+        const payload = parseJobMonitoringNavigationPayload(
+            'Oracle storage assessment for instance i-oracle/ORA1. Review detailed findings and recommendations in.;{"hostName":"i-oracle","resourceId":"i-oracle","databaseInstanceId":"ORA1","databaseInstanceName":"ORA1","sqlServerDeploymentType":"Oracle","isUnregistered":true}'
+        );
+
+        expect(payload).toBeTruthy();
+        expect(isOracleJobMonitoringNavigation(payload!)).toBe(true);
+    });
+
+    it('should strip trailing period from description prefix', () => {
+        expect(getJobMonitoringDescriptionPrefix(mssqlPayload)).toBe(
+            'ONTAP volume/LUN storage assessment for i-abc/SQL1. Review detailed findings and recommendations in'
+        );
+    });
+
+    it('should return null for descriptions without navigation metadata', () => {
+        expect(parseJobMonitoringNavigationPayload('Simple task description')).toBeNull();
     });
 });
 

@@ -1481,6 +1481,12 @@ describe('MSSQL Offline Assessment Operations', () => {
             );
             expect(jobId).toBeDefined();
 
+            const registeredJob = await prisma.client.job.findUnique({ where: { id: jobId } });
+            expect(registeredJob?.description).toBe(
+                `One-time storage assessment for unregistered SQL Server instance ${AWSDOC_INSTANCE_NAME} on ${TEST_STOPPED_EC2_INSTANCE_ID}`
+            );
+            expect(registeredJob?.description).not.toContain('Review detailed findings and recommendations in.;');
+
             // The registry-based collection makes several sequential, polled SSM calls
             // (discover instances, MPIO config, default paths, layout checks), so poll for
             // completion rather than sleeping a fixed duration.
@@ -1508,6 +1514,13 @@ describe('MSSQL Offline Assessment Operations', () => {
             ]);
             const ontapSubJob = subJobs.find(subJob => subJob.name === 'ONTAP volume/LUN storage assessment');
             expect(ontapSubJob?.status).toBe('FAILED');
+            expect(ontapSubJob?.description).toContain('Review detailed findings and recommendations in.;');
+            expect(JSON.parse(ontapSubJob!.description!.split(';')[1]).isUnregistered).toBe(true);
+            subJobs
+                .filter(subJob => subJob.name !== ontapSubJob?.name)
+                .forEach(subJob => {
+                    expect(subJob.description).not.toContain('Review detailed findings and recommendations in.;');
+                });
             expect(
                 subJobs.filter(subJob => subJob.name !== ontapSubJob?.name).every(s => s.status === 'COMPLETED')
             ).toBe(true);

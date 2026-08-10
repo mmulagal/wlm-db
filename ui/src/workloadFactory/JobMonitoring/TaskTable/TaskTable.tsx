@@ -8,14 +8,15 @@ import { ReactComponent as Success } from '../../../assets/success.svg';
 import { ReactComponent as ErrorIcon } from '../../../assets/error-icon.svg';
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
+import { JOB_MONITORING_STATUS, JOB_MONITORING_TYPE, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../utils/consts';
 import {
-    DBType,
-    JOB_MONITORING_STATUS,
-    JOB_MONITORING_TYPE,
-    WELL_ARCHITECTED_TABS,
-    WLF_TABS
-} from '../../../utils/consts';
-import { formatDateWithTime, jobMonitoringStatusMapping, navigateToInventory } from '../../../utils/utilityFunctions';
+    formatDateWithTime,
+    getJobMonitoringDescriptionPrefix,
+    isOracleJobMonitoringNavigation,
+    jobMonitoringStatusMapping,
+    navigateToInventory,
+    parseJobMonitoringNavigationPayload
+} from '../../../utils/utilityFunctions';
 import { ReactComponent as NoDataIcon } from '../../../assets/ic_file.svg';
 import { GENERAL } from '../../../utils/appConstants';
 import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
@@ -36,22 +37,22 @@ const TaskTable = ({ taskList = [] }: any) => {
     const { isWorkloadFactory } = useAppSelector(state => state?.auth);
 
     const navigateToContinuosOptimization = (message: string, rowData: any) => {
-        const splitMessage = message.split(';');
+        const jsonObject = parseJobMonitoringNavigationPayload(message);
+        if (!jsonObject) {
+            return;
+        }
 
-        // Extract the JSON part of the split message
-        const jsonString = splitMessage[1];
+        const {
+            resourceId,
+            databaseInstanceId,
+            databaseInstanceName,
+            sqlServerDeploymentType,
+            hostName,
+            isUnregistered
+        } = jsonObject;
+        const isUnregisteredFlow = isUnregistered === true;
 
-        // Parse the JSON string into an object
-        const jsonObject = JSON.parse(jsonString);
-
-        // Extract the required properties
-        const resourceId = jsonObject?.resourceId;
-        const databaseInstanceId = jsonObject?.databaseInstanceId; // Assuming you want the first ID in the array
-        const databaseInstanceName = jsonObject?.databaseInstanceName;
-        const sqlServerDeploymentType = jsonObject?.sqlServerDeploymentType;
-        const hostName = jsonObject?.hostName;
-
-        if (sqlServerDeploymentType.toLowerCase() === DBType.ORACLE.toLowerCase()) {
+        if (isOracleJobMonitoringNavigation(jsonObject)) {
             dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
             dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
             navigateToInventory('oracle', isWorkloadFactory);
@@ -81,21 +82,17 @@ const TaskTable = ({ taskList = [] }: any) => {
                 instanceName: databaseInstanceName,
                 credId: rowData?.credentialsId,
                 regionId: rowData?.region?.code,
-                storageType: sqlServerDeploymentType
+                storageType: sqlServerDeploymentType,
+                isWad: isUnregisteredFlow ? false : undefined,
+                isUnregistered: isUnregisteredFlow
             })
         );
     };
     const taskDesc = (desc: string, rowData: any) => {
-        if (desc && desc.includes('databaseInstanceId') && desc.includes('resourceId')) {
-            const splitMessage = desc.split(';');
-
-            // Extract the first part of the split message
-            let extractedMessage = splitMessage[0];
-
-            // Remove the trailing period if it exists
-            if (extractedMessage.endsWith('.')) {
-                extractedMessage = extractedMessage.slice(0, -1);
-            }
+        const navigationPayload = parseJobMonitoringNavigationPayload(desc);
+        if (navigationPayload) {
+            const extractedMessage = getJobMonitoringDescriptionPrefix(desc);
+            const isOracle = isOracleJobMonitoringNavigation(navigationPayload);
             return (
                 <div className={styles.linkMessage} title={extractedMessage}>
                     <span className={styles.textSection}>{extractedMessage}</span>
@@ -107,7 +104,7 @@ const TaskTable = ({ taskList = [] }: any) => {
                                 navigateToContinuosOptimization(desc, rowData);
                             }}
                         >
-                            {desc.includes('Oracle assessment')
+                            {isOracle
                                 ? t('databases.general.database-well-architected-dashboard-for-oracle')
                                 : t('databases.general.instance-well-architected-dashboard')}
                         </Button>

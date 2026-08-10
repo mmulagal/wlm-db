@@ -399,11 +399,17 @@ describe('triggerOracleUnregisteredAssessment', () => {
 
         const job = await prisma.client.job.findUnique({ where: { id: jobId } });
         expect(job?.status).toBe('COMPLETED');
+        expect(job?.description).toBe(
+            `One-time storage assessment for unregistered Oracle instance ${instanceName} on ${unregisteredEc2InstanceId}`
+        );
+        expect(job?.description).not.toContain('Review detailed findings and recommendations in.;');
 
         const subJobs = await prisma.client.job.findMany({ where: { parent_job_id: jobId } });
         expect(subJobs).toHaveLength(1);
         expect(subJobs[0].name).toBe('ONTAP volume/LUN storage assessment');
         expect(subJobs[0].status).toBe('COMPLETED');
+        expect(subJobs[0].description).toContain('Review detailed findings and recommendations in.;');
+        expect(JSON.parse(subJobs[0].description!.split(';')[1]).isUnregistered).toBe(true);
 
         const record = await getOfflineAssessment(ACCOUNT_ID, unregisteredEc2InstanceId, instanceName);
         expect((record?.metadata as any)?.source).toBe('unregistered');

@@ -1600,6 +1600,43 @@ export const jobMonitoringTypeMapping = (val: string, t: any) => {
     return typeValue;
 };
 
+export interface JobMonitoringNavigationPayload {
+    hostName: string;
+    resourceId: string;
+    databaseInstanceId: string;
+    databaseInstanceName: string;
+    sqlServerDeploymentType: string;
+    isUnregistered?: boolean;
+}
+
+export const parseJobMonitoringNavigationPayload = (message: string): JobMonitoringNavigationPayload | null => {
+    if (!message?.includes('databaseInstanceId') || !message?.includes('resourceId')) {
+        return null;
+    }
+
+    try {
+        const jsonString = message.split(';')[1];
+        if (!jsonString) {
+            return null;
+        }
+
+        return JSON.parse(jsonString) as JobMonitoringNavigationPayload;
+    } catch {
+        return null;
+    }
+};
+
+export const isOracleJobMonitoringNavigation = (payload: JobMonitoringNavigationPayload): boolean =>
+    payload.sqlServerDeploymentType?.toLowerCase() === DBType.ORACLE.toLowerCase();
+
+export const getJobMonitoringDescriptionPrefix = (message: string): string => {
+    let extractedMessage = message.split(';')[0] ?? '';
+    if (extractedMessage.endsWith('.')) {
+        extractedMessage = extractedMessage.slice(0, -1);
+    }
+    return extractedMessage;
+};
+
 export const downloadCsv = (data: any) => {
     const csv = `data:text/csv;charset=utf-8,${data}`;
     const excel = encodeURI(csv); // Links to CSV

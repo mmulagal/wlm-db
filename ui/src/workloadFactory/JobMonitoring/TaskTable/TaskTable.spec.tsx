@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import TaskTable from './TaskTable';
 import { JOB_MONITORING_STATUS, JOB_MONITORING_TYPE } from '../../../utils/consts';
+import { setGwPageLoadInstanceData } from '../../../store/workloadFactory/getWellOptimizeSlice';
 
 // Mock react-i18next
 vi.mock('react-i18next', () => ({
@@ -93,14 +94,57 @@ vi.mock('../../../utils/appConstants', () => ({
 }));
 
 // Mock utility functions
-const mockFormatDateWithTime = vi.fn(date => `Formatted: ${date}`);
-const mockJobMonitoringStatusMapping = vi.fn(status => status.toUpperCase());
-const mockNavigateToInventory = vi.fn();
+const {
+    mockFormatDateWithTime,
+    mockJobMonitoringStatusMapping,
+    mockNavigateToInventory,
+    parseJobMonitoringNavigationPayload,
+    isOracleJobMonitoringNavigation,
+    getJobMonitoringDescriptionPrefix
+} = vi.hoisted(() => {
+    const formatDateWithTimeMock = vi.fn(date => `Formatted: ${date}`);
+    const jobMonitoringStatusMappingMock = vi.fn(status => status.toUpperCase());
+    const navigateToInventoryMock = vi.fn();
+
+    const parsePayload = (message: string) => {
+        if (!message?.includes('databaseInstanceId') || !message?.includes('resourceId')) {
+            return null;
+        }
+        try {
+            const jsonString = message.split(';')[1];
+            if (!jsonString) {
+                return null;
+            }
+            return JSON.parse(jsonString);
+        } catch {
+            return null;
+        }
+    };
+
+    return {
+        mockFormatDateWithTime: formatDateWithTimeMock,
+        mockJobMonitoringStatusMapping: jobMonitoringStatusMappingMock,
+        mockNavigateToInventory: navigateToInventoryMock,
+        parseJobMonitoringNavigationPayload: parsePayload,
+        isOracleJobMonitoringNavigation: (payload: { sqlServerDeploymentType?: string }) =>
+            payload.sqlServerDeploymentType?.toLowerCase() === 'oracle',
+        getJobMonitoringDescriptionPrefix: (message: string) => {
+            let extractedMessage = message.split(';')[0] ?? '';
+            if (extractedMessage.endsWith('.')) {
+                extractedMessage = extractedMessage.slice(0, -1);
+            }
+            return extractedMessage;
+        }
+    };
+});
 
 vi.mock('../../../utils/utilityFunctions', () => ({
     formatDateWithTime: (...args: any[]) => mockFormatDateWithTime(...args),
     jobMonitoringStatusMapping: (...args: any[]) => mockJobMonitoringStatusMapping(...args),
-    navigateToInventory: (...args: any[]) => mockNavigateToInventory(...args)
+    navigateToInventory: (...args: any[]) => mockNavigateToInventory(...args),
+    parseJobMonitoringNavigationPayload,
+    isOracleJobMonitoringNavigation,
+    getJobMonitoringDescriptionPrefix
 }));
 
 // Mock @tlveng/wlm-ds
@@ -559,6 +603,34 @@ describe('TaskTable', () => {
             expect(dispatchSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
                     type: expect.stringContaining('setCredIdFromJM')
+                })
+            );
+        });
+
+        it('should dispatch unregistered instance data for storage assessment jobs', () => {
+            const store = createMockStore();
+            const task = {
+                ...createNavigationTask('MSSQL'),
+                description:
+                    'Microsoft SQL Server storage assessment for instance i-abc/SQL1. Review detailed findings and recommendations in.;{"hostName":"i-abc","resourceId":"i-abc","databaseInstanceId":"SQL1","databaseInstanceName":"SQL1","sqlServerDeploymentType":"MSSQL","isUnregistered":true}',
+                credentialsId: 'cred123',
+                region: { code: 'us-east-1' }
+            };
+
+            render(
+                <Provider store={store}>
+                    <TaskTable taskList={[task]} />
+                </Provider>
+            );
+
+            fireEvent.click(screen.getByTestId('button'));
+
+            expect(setGwPageLoadInstanceData).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    resourceId: 'i-abc',
+                    instanceId: 'SQL1',
+                    isUnregistered: true,
+                    isWad: false
                 })
             );
         });

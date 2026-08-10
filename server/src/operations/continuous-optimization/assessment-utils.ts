@@ -34,7 +34,13 @@ import type {
 import { OracleJobMetadata } from './oracle/consts';
 import { OracleMappedOntapVolumeRecordType } from '../workloads/oracle/common-types';
 import getMissingPermissionsList from '../aws/iam-operations';
-import { DatabaseTypes, HttpErrorCodes, SqlServerDeploymentModel, STORAGE_PROTOCOLS } from '../../utils/consts';
+import {
+    DatabaseTypes,
+    HttpErrorCodes,
+    RESOURCESTYPE,
+    SqlServerDeploymentModel,
+    STORAGE_PROTOCOLS
+} from '../../utils/consts';
 import { getInstanceInfo, updateDatabaseHostAssessmentData } from '../database/database-operations';
 import { getActiveSqlNode } from '../workloads/mssql/mssql-operations';
 import { listSsmCommands } from '../../lib/aws/ssm';
@@ -500,6 +506,25 @@ async function collectScopedOntapAssessment(
     return results.filter(result => result.workloadType === workloadType);
 }
 
+function buildAssessmentJobDescriptionWithDashboardLink(
+    descriptionPrefix: string,
+    ec2InstanceId: string,
+    instanceName: string,
+    sqlServerDeploymentType: string,
+    isUnregistered = false
+): string {
+    const instanceDetailsForJob = JSON.stringify({
+        hostName: ec2InstanceId,
+        resourceId: ec2InstanceId,
+        databaseInstanceId: instanceName,
+        databaseInstanceName: instanceName,
+        sqlServerDeploymentType,
+        ...(isUnregistered && { isUnregistered: true })
+    });
+
+    return `${descriptionPrefix}. Review detailed findings and recommendations in.;${instanceDetailsForJob}`;
+}
+
 async function runScopedOntapSubAssessment<T>(
     accountId: string,
     credentialsId: string,
@@ -510,9 +535,16 @@ async function runScopedOntapSubAssessment<T>(
     workloadType: DATABASE_TYPE,
     workloadLabel: string
 ): Promise<ScopedOntapStorageResult<T> | undefined> {
+    const sqlServerDeploymentType = workloadType === DATABASE_TYPE.oracle ? RESOURCESTYPE.ORACLE : RESOURCESTYPE.MSSQL;
     const { id: subJobId } = await registerJob(accountId, credentialsId, region, {
         name: 'ONTAP volume/LUN storage assessment',
-        description: `ONTAP volume/LUN storage assessment for ${ec2InstanceId}/${instanceName}`,
+        description: buildAssessmentJobDescriptionWithDashboardLink(
+            `ONTAP volume/LUN storage assessment for ${ec2InstanceId}/${instanceName}`,
+            ec2InstanceId,
+            instanceName,
+            sqlServerDeploymentType,
+            true
+        ),
         resourceName: `${ec2InstanceId}/${instanceName}`,
         startTime: Date.now(),
         status: JOBSTATUS.IN_PROGRESS,
@@ -1181,7 +1213,8 @@ export {
     filterToVolumeLunDriftItems,
     collectScopedOntapAssessment,
     runScopedOntapSubAssessment,
-    FSX_LINK_INACTIVE_HINT
+    FSX_LINK_INACTIVE_HINT,
+    buildAssessmentJobDescriptionWithDashboardLink
 };
 
 export type {

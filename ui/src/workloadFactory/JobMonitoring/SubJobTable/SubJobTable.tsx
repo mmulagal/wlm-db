@@ -15,7 +15,6 @@ import TaskTable from '../TaskTable/TaskTable';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import {
     CREATE_RESOURCE,
-    DBType,
     JOB_MONITORING_STATUS,
     JOB_MONITORING_TYPE,
     WELL_ARCHITECTED_TABS,
@@ -24,8 +23,11 @@ import {
 import {
     expandTableRow,
     formatDateWithTime,
+    getJobMonitoringDescriptionPrefix,
+    isOracleJobMonitoringNavigation,
     jobMonitoringStatusMapping,
     navigateToInventory,
+    parseJobMonitoringNavigationPayload,
     sortListOfDict
 } from '../../../utils/utilityFunctions';
 import { GENERAL } from '../../../utils/appConstants';
@@ -64,22 +66,22 @@ const SubJobTable = ({ jobId, statusType }: any) => {
     const ExpandedRow = useCallback(({ rowData }: any) => <TaskTable taskList={rowData?.subJobs || []} />, []);
 
     const navigateToContinuosOptimization = (message: string, rowData: any) => {
-        const splitMessage = message.split(';');
+        const jsonObject = parseJobMonitoringNavigationPayload(message);
+        if (!jsonObject) {
+            return;
+        }
 
-        // Extract the JSON part of the split message
-        const jsonString = splitMessage[1];
+        const {
+            resourceId,
+            databaseInstanceId,
+            databaseInstanceName,
+            sqlServerDeploymentType,
+            hostName,
+            isUnregistered
+        } = jsonObject;
+        const isUnregisteredFlow = isUnregistered === true;
 
-        // Parse the JSON string into an object
-        const jsonObject = JSON.parse(jsonString);
-
-        // Extract the required properties
-        const resourceId = jsonObject?.resourceId;
-        const databaseInstanceId = jsonObject?.databaseInstanceId; // Assuming you want the first ID in the array
-        const databaseInstanceName = jsonObject?.databaseInstanceName;
-        const sqlServerDeploymentType = jsonObject?.sqlServerDeploymentType;
-        const hostName = jsonObject?.hostName;
-
-        if (sqlServerDeploymentType.toLowerCase() === DBType.ORACLE.toLowerCase()) {
+        if (isOracleJobMonitoringNavigation(jsonObject)) {
             dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
             dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
             navigateToInventory('oracle', isWorkloadFactory);
@@ -120,7 +122,9 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                 instanceName: databaseInstanceName,
                 credId: rowData?.credentialsId,
                 regionId: rowData?.region?.code,
-                storageType: sqlServerDeploymentType
+                storageType: sqlServerDeploymentType,
+                isWad: isUnregisteredFlow ? false : undefined,
+                isUnregistered: isUnregisteredFlow
             })
         );
     };
@@ -165,16 +169,10 @@ const SubJobTable = ({ jobId, statusType }: any) => {
             width: windowSize.width >= 1920 ? '45.12%' : '676px',
             isSticky: true,
             renderCell: (cellData: any, rowData: any) => {
-                if (cellData.includes('databaseInstanceId') && cellData.includes('resourceId')) {
-                    const splitMessage = cellData.split(';');
-
-                    // Extract the first part of the split message
-                    let extractedMessage = splitMessage[0];
-
-                    // Remove the trailing period if it exists
-                    if (extractedMessage.endsWith('.')) {
-                        extractedMessage = extractedMessage.slice(0, -1);
-                    }
+                const navigationPayload = parseJobMonitoringNavigationPayload(cellData);
+                if (navigationPayload) {
+                    const extractedMessage = getJobMonitoringDescriptionPrefix(cellData);
+                    const isOracle = isOracleJobMonitoringNavigation(navigationPayload);
                     return (
                         <div className={styles.linkMessage} title={extractedMessage}>
                             <span>{extractedMessage}</span>&nbsp;
@@ -185,7 +183,7 @@ const SubJobTable = ({ jobId, statusType }: any) => {
                                         navigateToContinuosOptimization(cellData, rowData);
                                     }}
                                 >
-                                    {cellData.includes('Oracle assessment')
+                                    {isOracle
                                         ? t('databases.general.database-well-architected-dashboard-for-oracle')
                                         : t('databases.general.instance-well-architected-dashboard')}
                                 </Button>

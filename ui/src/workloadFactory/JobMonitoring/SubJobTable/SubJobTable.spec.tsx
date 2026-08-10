@@ -119,18 +119,59 @@ vi.mock('../../../utils/appConstants', () => ({
 }));
 
 // Mock utility functions
-const mockExpandTableRow = vi.fn();
-const mockFormatDateWithTime = vi.fn(date => `Formatted: ${date}`);
-const mockJobMonitoringStatusMapping = vi.fn(status => status?.toUpperCase());
-const mockNavigateToInventory = vi.fn();
-const mockSortListOfDict = vi.fn(list => list);
+const {
+    mockExpandTableRow,
+    mockFormatDateWithTime,
+    mockJobMonitoringStatusMapping,
+    mockNavigateToInventory,
+    mockSortListOfDict,
+    parseJobMonitoringNavigationPayload,
+    isOracleJobMonitoringNavigation,
+    getJobMonitoringDescriptionPrefix
+} = vi.hoisted(() => {
+    const parsePayload = (message: string) => {
+        if (!message?.includes('databaseInstanceId') || !message?.includes('resourceId')) {
+            return null;
+        }
+        try {
+            const jsonString = message.split(';')[1];
+            if (!jsonString) {
+                return null;
+            }
+            return JSON.parse(jsonString);
+        } catch {
+            return null;
+        }
+    };
+
+    return {
+        mockExpandTableRow: vi.fn(),
+        mockFormatDateWithTime: vi.fn(date => `Formatted: ${date}`),
+        mockJobMonitoringStatusMapping: vi.fn(status => status?.toUpperCase()),
+        mockNavigateToInventory: vi.fn(),
+        mockSortListOfDict: vi.fn(list => list),
+        parseJobMonitoringNavigationPayload: parsePayload,
+        isOracleJobMonitoringNavigation: (payload: { sqlServerDeploymentType?: string }) =>
+            payload.sqlServerDeploymentType?.toLowerCase() === 'oracle',
+        getJobMonitoringDescriptionPrefix: (message: string) => {
+            let extractedMessage = message.split(';')[0] ?? '';
+            if (extractedMessage.endsWith('.')) {
+                extractedMessage = extractedMessage.slice(0, -1);
+            }
+            return extractedMessage;
+        }
+    };
+});
 
 vi.mock('../../../utils/utilityFunctions', () => ({
     expandTableRow: (...args: any[]) => mockExpandTableRow(...args),
     formatDateWithTime: (...args: any[]) => mockFormatDateWithTime(...args),
     jobMonitoringStatusMapping: (...args: any[]) => mockJobMonitoringStatusMapping(...args),
     navigateToInventory: (...args: any[]) => mockNavigateToInventory(...args),
-    sortListOfDict: (...args: any[]) => mockSortListOfDict(...args)
+    sortListOfDict: (...args: any[]) => mockSortListOfDict(...args),
+    parseJobMonitoringNavigationPayload,
+    isOracleJobMonitoringNavigation,
+    getJobMonitoringDescriptionPrefix
 }));
 
 // Mock @tlveng/wlm-ds
