@@ -686,7 +686,7 @@ export default function mssqlContinuousOptimizationRoutes(fastify: FastifyInstan
                     credentialsId,
                     region
                 );
-                return reply.send(response);
+                return reply.code(202).send(response);
             }
         )
         // Get specific offline assessment by resource ID and database instance ID (v1 - deprecated)

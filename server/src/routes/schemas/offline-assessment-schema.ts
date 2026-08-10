@@ -41,7 +41,7 @@ const OfflineAssessmentUploadSchema = (databaseType?: string) => ({
     querystring: OfflineAssessmentUploadQueryParams,
     body: UploadOfflineAssessmentFileBody,
     response: {
-        201: OfflineAssessmentUploadResponse,
+        202: OfflineAssessmentUploadResponse,
         400: Type.Object({
             message: Type.String()
         })

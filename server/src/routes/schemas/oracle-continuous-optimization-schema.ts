@@ -4,7 +4,6 @@ import { RouteTags } from '../../utils/consts';
 import { DatabaseHostOptionalInstanceSummaryParams, DatabaseHostSummaryParams } from '../types/database-hosts.types';
 
 import {
-    ErrorResponse,
     OracleAssessmentQueryStringPerAccount,
     OracleContinuousOptimizationQueryString
 } from '../types/continuous-optimization.types';
@@ -12,12 +11,11 @@ import {
     DriftAssessmentResponsePerAccount,
     DriftAssessmentResponsePerAccountV1,
     DriftAssessmentResponsePerHost,
-    HostOsPatchScanResponse,
+    OraclePatchScanField,
+    OraclePatchScanDocResponse,
     OptimizeRequestBody,
     OptimizeStorageConfigurationRequestBody,
     OptimizeStorageLayoutRequestBody,
-    OraclePatchScanField,
-    OracleSecurityPatchScanResponse,
     OracleAssessmentResponse,
     OracleDriftAssessmentResponse
 } from '../types/oracle-continuous-optimization.types';
@@ -77,7 +75,7 @@ const FetchOraclePatchScanSchema = {
     querystring: OraclePatchScanQueryString,
     tags: [RouteTags.ORACLE_ASSESSMENT],
     response: {
-        200: Type.Union([HostOsPatchScanResponse, OracleSecurityPatchScanResponse, ErrorResponse]),
+        200: OraclePatchScanDocResponse,
         400: HttpErrorResponse,
         404: HttpErrorResponse,
         500: HttpErrorResponse

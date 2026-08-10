@@ -232,10 +232,39 @@ type MSSQLPatchScanResponseType = Static<typeof MSSQLPatchScanResponse>;
 
 const MssqlPatchScanFields = [AssessmentCategories.MSSQL_PATCH, AssessmentCategories.HOST_OS_PATCH];
 
-const MssqlPatchScanField = Type.Enum(MssqlPatchScanFields, {
+const MssqlPatchScanField = Type.String({
+    enum: MssqlPatchScanFields,
     description: `Assessment category to calculate on demand. Allowed values: ${MssqlPatchScanFields.join(', ')}.`
 });
 type MssqlPatchScanFieldType = Static<typeof MssqlPatchScanField>;
+
+const MssqlPatchScanDocResponse = Type.Object({
+    status: Type.Optional(Type.String({ enum: Object.values(AssessmentStatus) })),
+    ec2InstancesToPatch: Type.Optional(
+        Type.Array(
+            Type.Object({
+                ec2InstanceId: Type.String(),
+                missingPatchDetails: Type.Optional(
+                    Type.Array(
+                        Type.Object({
+                            classification: Type.Optional(Type.String()),
+                            kbId: Type.Optional(Type.String()),
+                            severity: Type.Optional(Type.String()),
+                            state: Type.Optional(Type.String()),
+                            title: Type.Optional(Type.String()),
+                            releaseDate: Type.Optional(Type.String())
+                        })
+                    )
+                )
+            })
+        )
+    ),
+    id: Type.Optional(Type.String()),
+    name: Type.Optional(Type.String()),
+    errorMessage: Type.Optional(Type.String())
+});
+
+type MssqlPatchScanDocResponseType = Static<typeof MssqlPatchScanDocResponse>;
 
 const MSSQLPatchDriftResponse = Type.Intersect([
     GenericParameterDriftResponse,
@@ -895,6 +924,8 @@ export {
     BulkOptimizeBackupPerHostRequestBodyType,
     MssqlPatchScanField,
     MssqlPatchScanFieldType,
+    MssqlPatchScanDocResponse,
+    MssqlPatchScanDocResponseType,
     MssqlAssessmentItemsResponseSchema,
     MssqlAssessmentResponseV1,
     MssqlAssessmentResponseV1Type

@@ -126,10 +126,44 @@ const OraclePatchScanFields = [
     AssessmentCategoriesOracle.HOST_OS_PATCH,
     AssessmentCategoriesOracle.ORACLE_SECURITY_PATCH
 ];
-const OraclePatchScanField = Type.Enum(OraclePatchScanFields, {
+const OraclePatchScanField = Type.String({
+    enum: OraclePatchScanFields,
     description: `Assessment category to calculate on demand. Allowed values: ${OraclePatchScanFields.join(', ')}.`
 });
 type OraclePatchScanFieldType = Static<typeof OraclePatchScanField>;
+
+const OraclePatchScanDocResponse = Type.Object({
+    status: Type.Optional(Type.String({ enum: Object.values(AssessmentStatus) })),
+    ec2InstancesToPatch: Type.Optional(
+        Type.Array(
+            Type.Object({
+                ec2InstanceId: Type.String(),
+                database: Type.Optional(Type.String()),
+                missingPatchDetails: Type.Optional(
+                    Type.Array(
+                        Type.Object({
+                            classification: Type.Optional(Type.String()),
+                            cveIds: Type.Optional(Type.String()),
+                            state: Type.Optional(Type.String()),
+                            title: Type.Optional(Type.String()),
+                            severity: Type.Optional(Type.String()),
+                            cveId: Type.Optional(Type.String()),
+                            component: Type.Optional(Type.String()),
+                            description: Type.Optional(Type.String()),
+                            releaseDate: Type.Optional(Type.String()),
+                            releaseName: Type.Optional(Type.String())
+                        })
+                    )
+                )
+            })
+        )
+    ),
+    id: Type.Optional(Type.String()),
+    name: Type.Optional(Type.String()),
+    errorMessage: Type.Optional(Type.String())
+});
+
+type OraclePatchScanDocResponseType = Static<typeof OraclePatchScanDocResponse>;
 
 const OracleSecurityPatchMissingPatch = Type.Object({
     cveId: Type.String(),
@@ -399,6 +433,8 @@ export {
     HostOsPatchScanResponseType,
     OraclePatchScanField,
     OraclePatchScanFieldType,
+    OraclePatchScanDocResponse,
+    OraclePatchScanDocResponseType,
     OracleSecurityPatchScanResponse,
     OracleSecurityPatchScanResponseType,
     OracleSecurityPatchMissingPatchType,

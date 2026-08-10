@@ -11,8 +11,7 @@ import {
 import {
     ContinuousOptimizationQueryString,
     OracleContinuousOptimizationQueryString,
-    AssessmentQueryStringPerAccount,
-    ErrorResponse
+    AssessmentQueryStringPerAccount
 } from '../types/continuous-optimization.types';
 import {
     OptimizeStorageRequestBody,
@@ -30,9 +29,8 @@ import {
     BulkOptimizeCloneBody,
     BulkOptimizeHASharedStorageBody,
     BulkOptimizeBackupRequestBody,
-    HostOsPatchScanResponse,
-    MSSQLPatchScanResponse,
     MssqlPatchScanField,
+    MssqlPatchScanDocResponse,
     MssqlAssessmentResponse,
     MssqlAssessmentResponseV1
 } from '../types/mssql-continuous-optimisation.types';
@@ -342,7 +340,7 @@ const FetchMssqlPatchScanSchema = {
     querystring: MssqlPatchScanQueryString,
     tags: [RouteTags.MSSQL_ASSESSMENT],
     response: {
-        200: Type.Union([HostOsPatchScanResponse, MSSQLPatchScanResponse, ErrorResponse]),
+        200: MssqlPatchScanDocResponse,
         400: HttpErrorResponse,
         404: HttpErrorResponse,
         500: HttpErrorResponse

@@ -302,7 +302,7 @@ export default function oracleContinuousOptimizationRoutes(fastify: FastifyInsta
                     credentialsId,
                     region
                 );
-                return reply.status(201).send(response);
+                return reply.code(202).send(response);
             }
         )
         // Download offline assessment script as zip
