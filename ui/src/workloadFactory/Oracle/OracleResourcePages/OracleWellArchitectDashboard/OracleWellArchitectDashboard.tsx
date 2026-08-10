@@ -37,8 +37,7 @@ const OracleWellArchitectDashboard = () => {
     const dispatch = useAppDispatch();
     const [optimizePrintState, setOptimizePrintState] = useState(false);
     const isDarkTheme = useAppSelector(state => state?.auth?.features?.active['Platform.BlueXP/DarkTheme']);
-    const [expandedValue, setExpandedValue] = useState(undefined);
-    const [clickedAccordionId, setClickedAccordionId] = useState<string | undefined>(undefined);
+    const [expandedAccordionId, setExpandedAccordionId] = useState<string | undefined>(undefined);
     const [filteredCardData, setFilteredCardData] = useState<any>({});
     const [showDismissedConfigurations, setShowDismissedConfigurations] = useState(false);
     const [configCount, setConfigCount] = useState(0);
@@ -103,11 +102,11 @@ const OracleWellArchitectDashboard = () => {
             return true;
         }
 
-        return clickedAccordionId === expandedValue && expandedValue === id;
+        return expandedAccordionId === id;
     };
 
-    const handleAccordionExpanded = (id: any, isExpanded: boolean) => {
-        isExpanded && clickedAccordionId === id && setExpandedValue(id);
+    const toggleAccordion = (id: string) => {
+        setExpandedAccordionId(previousId => (previousId === id ? undefined : id));
     };
 
     useEffect(() => {
@@ -206,10 +205,7 @@ const OracleWellArchitectDashboard = () => {
                         variant="Default"
                         isDisabled={loading || showDismissedConfigurations}
                         isExpanded={isAccordionExpanded(accordionId, optimizePrintState)}
-                        onExpandChange={(isExpanded: boolean) => {
-                            handleAccordionExpanded(accordionId, isExpanded);
-                        }}
-                        onClick={() => setClickedAccordionId(accordionId)}
+                        onClick={() => toggleAccordion(accordionId)}
                         title={
                             <div className={styles.tagPlacement}>
                                 {config?.tags?.map((perTag: string, tagIndex: number) => (
@@ -225,18 +221,30 @@ const OracleWellArchitectDashboard = () => {
                         headerActions={[
                             <div className={styles.headerAction}>
                                 {renderPostponeActivatingInfo(configKey, showDismissedConfigurations)}
-                                <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                    {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
-                                </div>
+                                {/* DsAccordion blocks header-action clicks from reaching the header, so toggle here */}
                                 <div
-                                    style={{
-                                        color:
-                                            loading || showDismissedConfigurations
-                                                ? 'var(--text-disabled)'
-                                                : 'var(--text-button-primary)'
+                                    className={`${styles.viewRecommendation} ${
+                                        loading || showDismissedConfigurations ? styles.viewRecommendationDisabled : ''
+                                    }`}
+                                    onClick={() => {
+                                        if (!loading && !showDismissedConfigurations) {
+                                            toggleAccordion(accordionId);
+                                        }
                                     }}
                                 >
-                                    {t('databases.oracle-inner-page.view-recommendation')}
+                                    <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                        {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
+                                    </div>
+                                    <div
+                                        style={{
+                                            color:
+                                                loading || showDismissedConfigurations
+                                                    ? 'var(--text-disabled)'
+                                                    : 'var(--text-button-primary)'
+                                        }}
+                                    >
+                                        {t('databases.oracle-inner-page.view-recommendation')}
+                                    </div>
                                 </div>
                             </div>
                         ]}
@@ -253,7 +261,7 @@ const OracleWellArchitectDashboard = () => {
             isDarkTheme,
             renderPostponeActivatingInfo,
             isAccordionExpanded,
-            handleAccordionExpanded,
+            toggleAccordion,
             t
         ]
     );

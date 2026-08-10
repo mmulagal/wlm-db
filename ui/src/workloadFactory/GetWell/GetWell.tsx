@@ -342,19 +342,18 @@ const GetWell = () => {
         );
     };
 
-    const [expandedValue, setExpandedValue] = useState(undefined);
-    const [clickedAccordionId, setClickedAccordionId] = useState<string | undefined>(undefined);
+    const [expandedAccordionId, setExpandedAccordionId] = useState<string | undefined>(undefined);
 
     const isAccordionExpanded = (id: string, optimizePrintState: any): boolean | undefined => {
         if (optimizePrintState) {
             return true;
         }
 
-        return clickedAccordionId === expandedValue && expandedValue === id;
+        return expandedAccordionId === id;
     };
 
-    const handleAccordionExpanded = (id: any, isExpanded: boolean) => {
-        isExpanded && clickedAccordionId === id && setExpandedValue(id);
+    const toggleAccordion = (id: string) => {
+        setExpandedAccordionId(previousId => (previousId === id ? undefined : id));
     };
 
     // Helper function to render a configuration card dynamically
@@ -375,10 +374,7 @@ const GetWell = () => {
                     variant="Default"
                     isDisabled={loading || showDismissedConfigurations}
                     isExpanded={isAccordionExpanded(accordionId, optimizePrintState)}
-                    onExpandChange={isExpanded => {
-                        handleAccordionExpanded(accordionId, isExpanded);
-                    }}
-                    onClick={() => setClickedAccordionId(accordionId)}
+                    onClick={() => toggleAccordion(accordionId)}
                     title={
                         config?.isMissingPermissions && config?.errorMessage ? (
                             <div className={styles.missingPermissionText}>
@@ -418,18 +414,30 @@ const GetWell = () => {
                     headerActions={[
                         <div className={styles.headerAction}>
                             {renderPostponeActivatingInfo(configKey)}
-                            <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
-                            </div>
+                            {/* DsAccordion blocks header-action clicks from reaching the header, so toggle here */}
                             <div
-                                style={{
-                                    color:
-                                        loading || showDismissedConfigurations
-                                            ? 'var(--text-disabled)'
-                                            : 'var(--text-button-primary)'
+                                className={`${styles.viewRecommendation} ${
+                                    loading || showDismissedConfigurations ? styles.viewRecommendationDisabled : ''
+                                }`}
+                                onClick={() => {
+                                    if (!loading && !showDismissedConfigurations) {
+                                        toggleAccordion(accordionId);
+                                    }
                                 }}
                             >
-                                {t('databases.well-architect.actions.view-recommendation')}
+                                <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
+                                    {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
+                                </div>
+                                <div
+                                    style={{
+                                        color:
+                                            loading || showDismissedConfigurations
+                                                ? 'var(--text-disabled)'
+                                                : 'var(--text-button-primary)'
+                                    }}
+                                >
+                                    {t('databases.well-architect.actions.view-recommendation')}
+                                </div>
                             </div>
                         </div>
                     ]}
