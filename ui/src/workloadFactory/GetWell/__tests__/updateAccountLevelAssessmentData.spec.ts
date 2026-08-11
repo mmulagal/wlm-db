@@ -68,7 +68,6 @@ describe('updateAccountLevelAssessmentData', () => {
                             expect.objectContaining({
                                 databaseInstanceId: 'inst-1',
                                 databaseInstanceName: 'ALLALLOWED',
-                                inventoryOnly: true,
                                 assessments: freshAssessment
                             })
                         ]
@@ -188,7 +187,6 @@ describe('updateAccountLevelAssessmentData', () => {
                         instancesAssessment: [
                             expect.objectContaining({
                                 databaseInstanceId: 'inst-1',
-                                inventoryOnly: true,
                                 assessments: freshAssessment
                             })
                         ]
@@ -262,7 +260,38 @@ describe('updateAccountLevelAssessmentData', () => {
         );
     });
 
-    it('prefers inventory host.id over resourceId for bulk store key', () => {
+    it('prefers managed instance resourceId for bulk store key', () => {
+        mockGetState.mockReturnValue({
+            inventoryV2: {
+                allmssqlHostAssessmentData: [],
+                inventoryTableData: {
+                    'inventory-host-id_cred-1_us-east-1': {
+                        id: 'inventory-host-id',
+                        resourceId: 'registered-resource-id',
+                        credentialId: 'cred-1',
+                        regionId: 'us-east-1',
+                        sqlServerInstances: [
+                            {
+                                databaseInstanceId: 'inst-1',
+                                databaseInstanceName: 'ALLALLOWED',
+                                resourceId: 'managed-host-resource-id'
+                            }
+                        ]
+                    }
+                }
+            }
+        });
+
+        updateAccountLevelAssessmentData(mockDispatch, freshAssessment, identifiers);
+
+        expect(mockDispatch).toHaveBeenCalledWith(
+            expect.objectContaining({
+                payload: [expect.objectContaining({ databaseHostId: 'managed-host-resource-id' })]
+            })
+        );
+    });
+
+    it('falls back to host resourceId when instance has no resourceId', () => {
         mockGetState.mockReturnValue({
             inventoryV2: {
                 allmssqlHostAssessmentData: [],
@@ -282,7 +311,7 @@ describe('updateAccountLevelAssessmentData', () => {
 
         expect(mockDispatch).toHaveBeenCalledWith(
             expect.objectContaining({
-                payload: [expect.objectContaining({ databaseHostId: 'inventory-host-id' })]
+                payload: [expect.objectContaining({ databaseHostId: 'registered-resource-id' })]
             })
         );
     });
@@ -324,7 +353,7 @@ describe('updateAccountLevelAssessmentData', () => {
         );
     });
 
-    it('removes stale bulk row keyed by resourceId when inventory uses host id', () => {
+    it('updates bulk row keyed by host resourceId when inventory host id differs', () => {
         mockGetState.mockReturnValue({
             inventoryV2: {
                 allmssqlHostAssessmentData: [
@@ -362,7 +391,7 @@ describe('updateAccountLevelAssessmentData', () => {
             expect.objectContaining({
                 payload: [
                     expect.objectContaining({
-                        databaseHostId: 'inventory-host-id',
+                        databaseHostId: 'registered-resource-id',
                         instancesAssessment: [expect.objectContaining({ databaseInstanceId: 'inst-1' })]
                     })
                 ]
@@ -371,7 +400,7 @@ describe('updateAccountLevelAssessmentData', () => {
         expect(mockDispatch.mock.calls[0][0].payload).toHaveLength(1);
     });
 
-    it('does not set inventoryOnly when updating an instance already in bulk store', () => {
+    it('does not mark new instances as inventory-only when updating bulk store', () => {
         mockGetState.mockReturnValue({
             inventoryV2: {
                 allmssqlHostAssessmentData: [

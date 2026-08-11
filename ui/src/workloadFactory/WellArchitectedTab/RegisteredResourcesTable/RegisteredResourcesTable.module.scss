@@ -11,6 +11,27 @@
         height: 100%;
     }
 
+    .progressFull {
+        width: 100%;
+        background-color: var(--chart-disabled);
+    }
+
+    .progressFilled {
+        width: var(--progress-width);
+        background-color: var(--chart-4);
+    }
+
+    .progressRemainder {
+        width: var(--progress-width);
+        background-color: var(--chart-disabled);
+    }
+
+    .separator {
+        width: 1px;
+        height: 100%;
+        background-color: var(--content-background);
+    }
+
     .leftCurveBar {
         border-top-left-radius: 8px;
         border-bottom-left-radius: 8px;

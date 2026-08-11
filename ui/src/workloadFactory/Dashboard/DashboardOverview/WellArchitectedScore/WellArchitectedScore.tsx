@@ -30,10 +30,20 @@ import {
 } from '../../../../store/workloadFactory/getWellOptimizeSlice';
 import store from '../../../../store/store';
 import {
+    resolveRegisteredAssessmentHostId,
+    resolveWellArchAssessmentFlow
+} from '../../../InventoryV2/InventoryUtilsV2';
+import {
     setSelectedHostname,
     setSelectedResourcePageHostData
 } from '../../../../store/workloadFactory/workloadFactoryResourceSlice';
-import { DBType, INVENTORY_STATUS, WELL_ARCHITECTED_TABS, WLF_TABS } from '../../../../utils/consts';
+import {
+    DBType,
+    INVENTORY_STATUS,
+    WELL_ARCHITECTED_TABS,
+    WELL_ARCH_ASSESSMENT_FLOW,
+    WLF_TABS
+} from '../../../../utils/consts';
 import { setSelectedOracleInnerPageTab } from '../../../../store/workloadFactory/oracleSlice';
 
 const WellArchitectedScore = () => {
@@ -98,6 +108,29 @@ const WellArchitectedScore = () => {
     const redirectToGetWellPage = () => {
         const updatedState = store.getState();
         const { selectedAssessmentRow }: any = updatedState.databaseHome;
+        const { inventoryTableData } = updatedState.inventoryV2;
+        const flow = resolveWellArchAssessmentFlow({
+            rowData: selectedAssessmentRow,
+            inventoryTableData,
+            resourceId: selectedAssessmentRow?.databaseHostId,
+            credId: selectedAssessmentRow?.credentialId,
+            regionId: selectedAssessmentRow?.regionId,
+            instanceId: selectedAssessmentRow?.instanceId,
+            instanceName: selectedAssessmentRow?.databaseInstanceName
+        });
+        const isWad = flow === WELL_ARCH_ASSESSMENT_FLOW.WAD;
+        const isUnregistered = flow === WELL_ARCH_ASSESSMENT_FLOW.UNREGISTERED;
+        const resourceId =
+            isUnregistered && selectedAssessmentRow?.ec2InstanceId
+                ? selectedAssessmentRow.ec2InstanceId
+                : resolveRegisteredAssessmentHostId({
+                      inventoryTableData,
+                      databaseHostId: selectedAssessmentRow?.databaseHostId,
+                      credentialId: selectedAssessmentRow?.credentialId,
+                      regionId: selectedAssessmentRow?.regionId,
+                      instanceId: selectedAssessmentRow?.instanceId,
+                      instanceName: selectedAssessmentRow?.databaseInstanceName
+                  });
         dashboardRedirection();
         if (selectedAssessmentRow?.type === DBType.ORACLE) {
             dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED));
@@ -114,12 +147,16 @@ const WellArchitectedScore = () => {
         dispatch(
             setGwPageLoadInstanceData({
                 hostname: selectedAssessmentRow?.hostName,
-                resourceId: selectedAssessmentRow?.databaseHostId,
+                resourceId,
                 instanceId: selectedAssessmentRow?.instanceId,
                 instanceName: selectedAssessmentRow?.databaseInstanceName,
                 credId: selectedAssessmentRow?.credentialId,
                 regionId: selectedAssessmentRow?.regionId,
-                storageType: selectedAssessmentRow?.sqlServerDeploymentType
+                storageType: selectedAssessmentRow?.sqlServerDeploymentType,
+                isWad,
+                isUnregistered,
+                hostManageReadiness: selectedAssessmentRow?.hostManageReadiness,
+                instanceStatus: selectedAssessmentRow?.status
             })
         );
 
@@ -127,7 +164,7 @@ const WellArchitectedScore = () => {
 
         dispatch(
             setSelectedResourcePageHostData({
-                resourceId: selectedAssessmentRow?.databaseHostId,
+                resourceId,
                 databaseInstanceId: selectedAssessmentRow?.instanceId,
                 databaseInstanceName: selectedAssessmentRow?.databaseInstanceName,
                 credentialId: selectedAssessmentRow?.credentialId,

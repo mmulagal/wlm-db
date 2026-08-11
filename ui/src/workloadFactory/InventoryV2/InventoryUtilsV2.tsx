@@ -33,7 +33,9 @@ import {
     STATUS_CONST,
     STORAGE_TYPES,
     WAD_SORT_STATUS,
-    WLF_TABS
+    WLF_TABS,
+    ASSESSMENT_METADATA_SOURCE,
+    WELL_ARCH_ASSESSMENT_FLOW
 } from '../../utils/consts';
 import {
     DatabaseInstanceDetailsInterface,
@@ -71,6 +73,7 @@ import EstimatedCostPopover from './EstimatedCostPopover/EstimatedCostPopover';
 import { formatOptimizationBreakDown, getCardsData } from '../GetWell/GetWellUtils';
 import { HostAssessmentResponseInterface } from '../../utils/types/getWellTypes';
 import { getAssessmentMetadata, hasAssessmentTimestamp } from '../WellArchitectedTab/assessmentFormatUtils';
+import { removeUnregisteredInstanceAssessmentOnRegister } from '../DatabaseHomePage/DatabaseHomeUtils';
 import CopyToClipboardCommon from '../../common/CopyToClipboard/copyToClipboard';
 import {
     completeProtectionStep1,
@@ -160,6 +163,33 @@ export const resolveInventoryHostAndInstance = ({
         matchesInventoryInstance(instanceRow, instanceId, instanceName)
     );
     return { host, instance };
+};
+
+/** Registered assessment API database-host id: managed instance resourceId, then host resourceId. */
+export const resolveRegisteredAssessmentHostId = ({
+    inventoryTableData,
+    databaseHostId,
+    credentialId,
+    regionId,
+    instanceId,
+    instanceName
+}: {
+    inventoryTableData?: Record<string, any> | null;
+    databaseHostId?: string;
+    credentialId?: string;
+    regionId?: string;
+    instanceId?: string;
+    instanceName?: string;
+}): string | undefined => {
+    const { host, instance } = resolveInventoryHostAndInstance({
+        inventoryTableData,
+        resourceId: databaseHostId,
+        credId: credentialId,
+        regionId,
+        instanceId,
+        instanceName
+    });
+    return instance?.resourceId || host?.resourceId || host?.id || databaseHostId;
 };
 
 const isRegisteredInventoryInstance = (host?: any, instance?: any): boolean =>
@@ -342,6 +372,290 @@ export const isUnregisteredInventoryRow = (rowData: any, managedDbInstance?: { r
     );
 };
 
+/**
+ * Whether a discovered (unmanaged) inventory instance may appear in Well-architected UI and receive
+ * on-demand unregistered assessments. Excludes WAD rows, registered/managed instances, hosts without
+ * an FSx link, and hosts where storage could not be identified (detect disabled/hidden).
+ * Shared by inventory tables, Well-architected tab, and dashboard assessment filtering.
+ */
+export const isEligibleUnregisteredForWellArch = (rowData: any): boolean => {
+    if (!rowData || rowData?.isWad) {
+        return false;
+    }
+    if (rowData?.resourceId || rowData?.statusColText === INVENTORY_STATUS.MANAGED) {
+        return false;
+    }
+    if (rowData?.hostManageReadiness?.fsxLinkExists === false) {
+        return false;
+    }
+    if (rowData?.detectOption === DETECT_HOST_VAR.DISABLE || rowData?.detectOption === DETECT_HOST_VAR.HIDE) {
+        return false;
+    }
+    return canTriggerUnregisteredAssessment(rowData?.hostManageReadiness);
+};
+
+/**
+ * Flatten host + instance inventory nodes into a single row shape used for eligibility checks and
+ * Well-architected navigation (hostType, credentialId, hostManageReadiness, registration flags, etc.).
+ */
+export const buildInventoryRowFromHostInstance = (host?: any, instance?: any): any | null => {
+    if (!host || !instance) {
+        return null;
+    }
+    return {
+        ...instance,
+        hostType: host?.hostType,
+        credentialId: host?.credentialId,
+        regionId: host?.regionId,
+        ec2InstanceId: host?.ec2InstanceId,
+        hostName: host?.name,
+        hostManageReadiness: instance?.hostManageReadiness ?? host?.hostManageReadiness,
+        statusColText: instance?.statusColText,
+        resourceId: instance?.resourceId,
+        isWad: instance?.isWad ?? host?.isWad,
+        isUnregistered: instance?.isUnregistered
+    };
+};
+
+/**
+ * Discover inventory lookup for unregistered assessments: EC2 + instance name (+ region),
+ * without requiring assessment credential to match the discover host credential.
+ */
+const findInventoryHostInstanceByEc2AndName = (
+    inventoryTableData: Record<string, any> | null | undefined,
+    ec2Id: string | undefined,
+    instanceName: string | undefined,
+    regionId?: string
+): { host?: any; instance?: any } => {
+    const instanceLookup = instanceName?.toLowerCase();
+    if (!ec2Id || !instanceLookup) {
+        return {};
+    }
+    for (const candidate of Object.values(inventoryTableData ?? {})) {
+        const hostEc2Id = candidate?.ec2InstanceId || candidate?.resourceId;
+        if (hostEc2Id !== ec2Id) {
+            continue;
+        }
+        if (regionId && candidate?.regionId !== regionId) {
+            continue;
+        }
+        const matchedInstance = candidate?.sqlServerInstances?.find(
+            (inst: any) => inst?.databaseInstanceName?.toLowerCase() === instanceLookup
+        );
+        if (matchedInstance) {
+            return { host: candidate, instance: matchedInstance };
+        }
+    }
+    return {};
+};
+
+/**
+ * Map an assessment API host/instance pair back to its matching inventory row. Used when building
+ * Well-architected tab rows and when filtering unregistered assessment payloads against discover
+ * inventory. Falls back to EC2 host lookup when resourceId-based host resolution misses.
+ */
+export const resolveInventoryRowForAssessmentInstance = (
+    databaseHost: any,
+    instance: any,
+    inventoryTableData?: Record<string, any> | null
+): any | null => {
+    const { host, instance: inventoryInstance } = resolveInventoryHostAndInstance({
+        inventoryTableData,
+        resourceId: databaseHost?.databaseHostId,
+        credId: databaseHost?.credentialId,
+        regionId: databaseHost?.regionId,
+        instanceId: instance?.databaseInstanceId,
+        instanceName: instance?.databaseInstanceName
+    });
+    if (host && inventoryInstance) {
+        return buildInventoryRowFromHostInstance(host, inventoryInstance);
+    }
+
+    const ec2Id = databaseHost?.vmInstanceId || databaseHost?.databaseHostId;
+    const isUnregistered =
+        databaseHost?.isUnregistered ||
+        instance?.assessments?.metadata?.source === ASSESSMENT_METADATA_SOURCE.UNREGISTERED;
+
+    if (isUnregistered) {
+        const byEc2 = findInventoryHostInstanceByEc2AndName(
+            inventoryTableData,
+            ec2Id,
+            instance?.databaseInstanceName,
+            databaseHost?.regionId
+        );
+        if (byEc2.host && byEc2.instance) {
+            return buildInventoryRowFromHostInstance(byEc2.host, byEc2.instance);
+        }
+        return null;
+    }
+
+    if (databaseHost?.vmInstanceId) {
+        const byEc2 = findInventoryHostInstanceByEc2AndName(
+            inventoryTableData,
+            databaseHost.vmInstanceId,
+            instance?.databaseInstanceName,
+            databaseHost?.regionId
+        );
+        if (byEc2.host && byEc2.instance) {
+            return buildInventoryRowFromHostInstance(byEc2.host, byEc2.instance);
+        }
+    }
+
+    const hostByEc2 = Object.values(inventoryTableData ?? {}).find(
+        (candidate: any) =>
+            (candidate?.ec2InstanceId || candidate?.resourceId) === ec2Id &&
+            candidate?.credentialId === databaseHost?.credentialId &&
+            candidate?.regionId === databaseHost?.regionId
+    );
+    if (!hostByEc2) {
+        return null;
+    }
+
+    const matchedInstance = hostByEc2?.sqlServerInstances?.find(
+        (inst: any) =>
+            inst?.databaseInstanceId === instance?.databaseInstanceId ||
+            inst?.databaseInstanceName?.toLowerCase() === instance?.databaseInstanceName?.toLowerCase()
+    );
+    return matchedInstance ? buildInventoryRowFromHostInstance(hostByEc2, matchedInstance) : null;
+};
+
+/** EC2 + instance name; dedupes multi-credential links to the same physical instance in dashboard/Well-arch aggregates. */
+export const getAssessmentInstanceDedupKey = (databaseHost: any, instance: any, inventoryRow?: any | null): string => {
+    const ec2Id = (
+        inventoryRow?.ec2InstanceId ||
+        databaseHost?.vmInstanceId ||
+        databaseHost?.databaseHostId ||
+        ''
+    ).toLowerCase();
+    const instanceName = (instance?.databaseInstanceName || '').toLowerCase();
+    if (!ec2Id || !instanceName) {
+        return '';
+    }
+    return `${ec2Id}_${instanceName}`;
+};
+
+/** True when this instance was already counted in the current Well-arch/dashboard aggregate pass. */
+export const shouldSkipDuplicateAssessmentInstance = (
+    databaseHost: any,
+    instance: any,
+    inventoryTableData: Record<string, any> | null | undefined,
+    uniqueInstanceList: string[]
+): boolean => {
+    const inventoryRow = resolveInventoryRowForAssessmentInstance(databaseHost, instance, inventoryTableData);
+    const key = getAssessmentInstanceDedupKey(databaseHost, instance, inventoryRow);
+    if (!key) {
+        return false;
+    }
+    if (uniqueInstanceList.includes(key)) {
+        return true;
+    }
+    uniqueInstanceList.push(key);
+    return false;
+};
+
+/**
+ * Classify which Well-architected experience applies for a resource: one-time WAD upload, registered
+ * drift assessment, on-demand unregistered assessment, or none. Inventory table data takes precedence
+ * over row flags so a discover row that was later registered is treated as registered.
+ * Returns a {@link WELL_ARCH_ASSESSMENT_FLOW} value for tab gating and navigation.
+ */
+export const resolveWellArchAssessmentFlow = ({
+    rowData,
+    inventoryTableData,
+    resourceId,
+    credId,
+    regionId,
+    instanceId,
+    instanceName
+}: {
+    rowData?: any;
+    inventoryTableData?: Record<string, any> | null;
+    resourceId?: string;
+    credId?: string;
+    regionId?: string;
+    instanceId?: string;
+    instanceName?: string;
+}) => {
+    if (rowData?.isWad) {
+        return WELL_ARCH_ASSESSMENT_FLOW.WAD;
+    }
+
+    const { host, instance } = resolveInventoryHostAndInstance({
+        inventoryTableData,
+        resourceId: resourceId ?? rowData?.databaseHostId ?? rowData?.resourceId,
+        credId: credId ?? rowData?.credentialId,
+        regionId: regionId ?? rowData?.regionId,
+        instanceId: instanceId ?? rowData?.instanceId ?? rowData?.databaseInstanceId,
+        instanceName: instanceName ?? rowData?.serverInstanceName ?? rowData?.databaseInstanceName
+    });
+
+    if (isRegisteredInventoryInstance(host, instance)) {
+        return WELL_ARCH_ASSESSMENT_FLOW.REGISTERED;
+    }
+
+    const inventoryRow = buildInventoryRowFromHostInstance(host, instance) ?? rowData;
+    if (isEligibleUnregisteredForWellArch(inventoryRow)) {
+        return WELL_ARCH_ASSESSMENT_FLOW.UNREGISTERED;
+    }
+
+    if (rowData?.isUnregistered) {
+        return WELL_ARCH_ASSESSMENT_FLOW.UNREGISTERED;
+    }
+
+    return rowData?.resourceId || rowData?.statusColText === INVENTORY_STATUS.MANAGED
+        ? WELL_ARCH_ASSESSMENT_FLOW.REGISTERED
+        : WELL_ARCH_ASSESSMENT_FLOW.NONE;
+};
+
+/**
+ * Whether to omit an assessment instance from Well-architected tab/dashboard aggregates.
+ * Registered/offline assessments are always included. Unregistered on-demand rows are included
+ * when assessment data exists for a matching discover inventory row — same rule the instances
+ * table uses via wadAssessmentData merge or optimizationStatusList lookup.
+ */
+export const shouldSkipWellArchAssessmentItem = (
+    instance?: { assessments?: { metadata?: { source?: string } } | null } | null,
+    databaseHost?: any,
+    inventoryTableData?: Record<string, any> | null
+): boolean => {
+    const isUnregisteredAssessment =
+        databaseHost?.isUnregistered ||
+        instance?.assessments?.metadata?.source === ASSESSMENT_METADATA_SOURCE.UNREGISTERED;
+
+    if (!isUnregisteredAssessment) {
+        if (databaseHost?.isWad) {
+            return false;
+        }
+        const inventoryRow = resolveInventoryRowForAssessmentInstance(databaseHost, instance, inventoryTableData);
+        if (inventoryRow && inventoryRow.statusColText !== INVENTORY_STATUS.MANAGED && !inventoryRow.resourceId) {
+            return true;
+        }
+        return false;
+    }
+
+    const inventoryRow = resolveInventoryRowForAssessmentInstance(databaseHost, instance, inventoryTableData);
+    if (!inventoryRow) {
+        return true;
+    }
+
+    const isDiscoverInventoryRow =
+        !inventoryRow?.resourceId && inventoryRow?.statusColText !== INVENTORY_STATUS.MANAGED;
+
+    if (isDiscoverInventoryRow && hasAssessmentTimestamp(instance?.assessments)) {
+        return false;
+    }
+
+    if (
+        isDiscoverInventoryRow &&
+        inventoryRow?.wadAssessmentData &&
+        hasAssessmentTimestamp(inventoryRow.wadAssessmentData)
+    ) {
+        return false;
+    }
+
+    return !isEligibleUnregisteredForWellArch(inventoryRow);
+};
+
 /** i18n key for register disabled when FSx link is missing (engine-specific). */
 export const getFsxLinkRequiredMessageKey = (engineType?: string): string =>
     engineType === DBType.ORACLE
@@ -378,6 +692,52 @@ export const getRegistrationRequiresFullPermissionMessageKey = (engineType?: str
         : 'databases.inventory.registration-requires-full-permission';
 
 export const uniqueHostRow = (id: string, cred: string, region: string) => `${id}_${cred}_${region}`;
+
+/** Resolve bulk assessment host rows when inventory keys use EC2 id but registered assessments use host.id. */
+export const findAssessmentHostForInventoryKey = (
+    assessmentHosts: any[] | undefined,
+    inventoryKey: string,
+    inventoryHost: any,
+    options?: { registeredOnly?: boolean }
+): any | undefined => {
+    if (!assessmentHosts?.length) {
+        return undefined;
+    }
+
+    const ec2Id = inventoryHost?.ec2InstanceId;
+    const managedHostId = inventoryHost?.resourceId || inventoryHost?.id;
+    const credId = inventoryHost?.credentialId;
+    const regionId = inventoryHost?.regionId;
+
+    const matchesInventoryHost = (host: any) => {
+        if (host?.credentialId !== credId || host?.regionId !== regionId) {
+            return false;
+        }
+        const hostKey = uniqueHostRow(host?.databaseHostId, host?.credentialId, host?.regionId);
+        if (hostKey === inventoryKey) {
+            return true;
+        }
+        const assessmentHostIds = [host?.databaseHostId, host?.vmInstanceId].filter(Boolean);
+        return (
+            (ec2Id && assessmentHostIds.includes(ec2Id)) || (managedHostId && assessmentHostIds.includes(managedHostId))
+        );
+    };
+
+    const candidates = assessmentHosts.filter(matchesInventoryHost);
+    if (!candidates.length) {
+        return undefined;
+    }
+
+    if (options?.registeredOnly) {
+        return candidates.find((host: any) => !host?.isUnregistered && !host?.isWad);
+    }
+
+    return (
+        candidates.find((host: any) => host?.isUnregistered) ??
+        candidates.find((host: any) => !host?.isWad) ??
+        candidates[0]
+    );
+};
 
 export const formatInventoryTableData = (managedData: { [key: string]: ManagedHostsRowInterface } | null) => {
     let result = {};
@@ -589,8 +949,8 @@ export const mergeUnregisteredAssessmentIntoInventory = (
                 if (inst?.databaseInstanceName?.toLowerCase() !== instanceName) {
                     return inst;
                 }
-                // v2/offline-assessment rows return data even after registring; so return if the instance is registered wins
-                if (inst?.statusColText === INVENTORY_STATUS.MANAGED || inst?.isManaged || inst?.resourceId) {
+                // Registered inventory wins; deregister clears resourceId so merge can resume.
+                if (inst?.statusColText === INVENTORY_STATUS.MANAGED || inst?.isManaged) {
                     return inst;
                 }
                 if (
@@ -3822,7 +4182,15 @@ export const updateInstanceStatus = (
                 : inventoryTableData[targettedHostId].actionDisable,
             sqlServerInstances: inventoryTableData[targettedHostId].sqlServerInstances.map((instanceItem: any) => {
                 if (instanceItem?.databaseInstanceName === instanceData?.databaseInstanceName) {
-                    return { ...instanceItem, statusColText: INVENTORY_STATUS.UNMANAGED };
+                    return {
+                        ...instanceItem,
+                        statusColText: INVENTORY_STATUS.UNMANAGED,
+                        resourceId: undefined,
+                        isUnregistered: false,
+                        isWad: false,
+                        wadAssessmentData: undefined,
+                        databaseInstanceId: instanceItem?.databaseInstanceName
+                    };
                 }
                 return instanceItem;
             })
@@ -3848,12 +4216,28 @@ export const updateInstanceStatus = (
                         databaseInstanceId: instanceInRes.databaseInstanceGuid,
                         statusColText: INVENTORY_STATUS.MANAGED,
                         isUnregistered: false,
-                        isWad: false
+                        isWad: false,
+                        wadAssessmentData: undefined
                     };
                 }
                 return instanceItem;
             })
         };
+        responseData?.forEach((instanceInRes: any) => {
+            if (!instanceInRes?.databaseInstanceName) {
+                return;
+            }
+            removeUnregisteredInstanceAssessmentOnRegister(
+                store.dispatch,
+                {
+                    instanceName: instanceInRes.databaseInstanceName,
+                    credentialId: hostData?.credentialId,
+                    regionId: hostData?.regionId,
+                    ec2InstanceId: inventoryTableData[targettedHostId]?.ec2InstanceId || hostData?.ec2InstanceId
+                },
+                inventoryTableData[targettedHostId]?.hostType
+            );
+        });
     }
     if (action === 'detect') {
         updatedInventoryTableData[targettedHostId] = {
@@ -4281,12 +4665,18 @@ export const getOracleWadOptimizationStatus = (wadAssessmentData: any) => {
 export const getOptimizationStatus = (
     databaseInstanceId: string,
     optimizationStatusList: Array<HostAssessmentResponseInterface>,
-    hostType: string
+    hostType: string,
+    databaseInstanceName?: string
 ) => {
     if (!optimizationStatusList) {
         return '';
     }
-    const instanceRow = optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId);
+    const instanceLookup = databaseInstanceName?.toLowerCase();
+    const instanceRow =
+        optimizationStatusList?.find(per => per?.databaseInstanceId === databaseInstanceId) ??
+        (instanceLookup
+            ? optimizationStatusList?.find(per => per?.databaseInstanceName?.toLowerCase() === instanceLookup)
+            : undefined);
     let optimizationStatus = '';
     if (instanceRow && hasAssessmentTimestamp(instanceRow?.assessments)) {
         if (hostType === DBType.ORACLE) {

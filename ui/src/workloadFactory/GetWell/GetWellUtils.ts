@@ -39,7 +39,11 @@ import {
     isUnregisteredAssessmentItem,
     resolveConfigDisplayName
 } from '../WellArchitectedTab/assessmentFormatUtils';
-import { isOptimized } from '../DatabaseHomePage/DatabaseHomeUtils';
+import {
+    isOptimized,
+    mergeUnregisteredIntoAllAssessmentData,
+    removeRegisteredInstanceAssessmentFromBulkStore
+} from '../DatabaseHomePage/DatabaseHomeUtils';
 import { mergeUnregisteredAssessmentIntoInventory } from '../InventoryV2/InventoryUtilsV2';
 import { setInstanceDetailsData } from '../../store/workloadFactory/workloadFactoryResourceSlice';
 import { GENERAL } from '../../utils/appConstants';
@@ -1651,7 +1655,26 @@ export const syncUnregisteredAssessmentToInventory = (
         dispatch(addUnregisteredMssqlAssessmentData(updatedUnregistered));
     }
 
-    const currentInventoryTableData = state.inventoryV2.inventoryTableData || {};
+    const inventoryHost = Object.values(state.inventoryV2.inventoryTableData || {}).find(
+        (host: any) =>
+            (host?.ec2InstanceId === identifiers.ec2InstanceId || host?.resourceId === identifiers.ec2InstanceId) &&
+            host?.credentialId === identifiers.credentialId &&
+            host?.regionId === identifiers.regionId
+    ) as any;
+    removeRegisteredInstanceAssessmentFromBulkStore(
+        dispatch,
+        {
+            instanceName: identifiers.instanceName,
+            credentialId: identifiers.credentialId,
+            regionId: identifiers.regionId,
+            ec2InstanceId: identifiers.ec2InstanceId,
+            managedHostId: inventoryHost?.resourceId || inventoryHost?.id
+        },
+        engineType
+    );
+
+    const postRemoveState = store.getState();
+    const currentInventoryTableData = postRemoveState.inventoryV2.inventoryTableData || {};
     const mergedInventoryData = mergeUnregisteredAssessmentIntoInventory(
         currentInventoryTableData,
         updatedUnregistered,
@@ -1659,6 +1682,20 @@ export const syncUnregisteredAssessmentToInventory = (
     );
     if (mergedInventoryData !== currentInventoryTableData) {
         dispatch(setInventoryTableData(mergedInventoryData));
+    }
+
+    const existingAllData = isOracle
+        ? postRemoveState.inventoryV2.allOracleHostAssessmentData || []
+        : postRemoveState.inventoryV2.allmssqlHostAssessmentData || [];
+    const mergedAllAssessmentData = mergeUnregisteredIntoAllAssessmentData(
+        existingAllData,
+        updatedUnregistered,
+        dbType
+    );
+    if (isOracle) {
+        dispatch(addAllOracleHostAssessmentData(mergedAllAssessmentData));
+    } else {
+        dispatch(addAllMssqlHostAssessmentData(mergedAllAssessmentData));
     }
 };
 
@@ -1689,7 +1726,7 @@ const findRegisteredInventoryInstance = (identifiers: {
         );
         if (instance) {
             return {
-                databaseHostId: host?.id || host?.resourceId || identifiers.databaseHostId,
+                databaseHostId: instance?.resourceId || host?.resourceId || host?.id || identifiers.databaseHostId,
                 databaseInstanceId: instance?.databaseInstanceId || identifiers.databaseInstanceId,
                 databaseInstanceName: instance?.databaseInstanceName
             };
@@ -1786,8 +1823,7 @@ export const updateAccountLevelAssessmentData = (
                     databaseInstanceId: resolvedIdentifiers.databaseInstanceId,
                     databaseInstanceName: resolvedInstanceName,
                     assessments: freshAssessmentData,
-                    error: null,
-                    inventoryOnly: true
+                    error: null
                 }
             ]
         };
@@ -1806,8 +1842,7 @@ export const updateAccountLevelAssessmentData = (
                     databaseInstanceId: resolvedIdentifiers.databaseInstanceId,
                     databaseInstanceName: resolvedInstanceName,
                     assessments: freshAssessmentData,
-                    error: null,
-                    inventoryOnly: true
+                    error: null
                 }
             ]
         });
@@ -1879,6 +1914,32 @@ export const updateConfigStatePerInstance = (setAction: any, configId: string, e
         dismissedConfigurations: updatedDismissedConfigs
     };
 };
+export const getConfigDrillDownFixDisableState = (
+    rowData: any,
+    dbType: string,
+    translation: TFunction
+): { isDisabled: boolean; errorMessage: string } => {
+    if (rowData?.isWad) {
+        return {
+            isDisabled: true,
+            errorMessage:
+                dbType === DBType.ORACLE
+                    ? translation('databases.wad.tab-disabled-message-oracle')
+                    : translation('databases.wad.tab-disabled-message')
+        };
+    }
+    if (rowData?.isUnregistered && rowData?.statusColText !== INVENTORY_STATUS.MANAGED && !rowData?.resourceId) {
+        return {
+            isDisabled: true,
+            errorMessage:
+                dbType === DBType.ORACLE
+                    ? translation('databases.wad.unregistered-tab-disabled-message-oracle')
+                    : translation('databases.wad.unregistered-tab-disabled-message')
+        };
+    }
+    return { isDisabled: false, errorMessage: '' };
+};
+
 export const checkIfDisableForOptimize = (
     inProgressHostData: any,
     name: string,
@@ -1890,12 +1951,15 @@ export const checkIfDisableForOptimize = (
     name = resolveConfigDisplayName(name);
     let isDisabled = false;
     let errorMessage = '';
+    const drillDownState = getConfigDrillDownFixDisableState(rowData, dbType || DBType.MSSQL, translation);
+    if (drillDownState.isDisabled) {
+        return drillDownState;
+    }
     if (inProgressHostData?.[name]?.includes(rowData?.databaseHostId)) {
         isDisabled = true;
         errorMessage = translation('databases.well-architect.optimization-in-progress-for-host');
     } else if (rowData?.status?.toLowerCase() !== STATUS_CONST.UP.toLowerCase()) {
         isDisabled = true;
-        // Use specific WAD message if this is a WAD (offline assessment) row
         if (rowData?.isWad) {
             errorMessage =
                 dbType === DBType.ORACLE
@@ -1973,13 +2037,10 @@ export const disableOptimizeCheckBoxForErrCase = (tableData: any, type: string, 
     return tableData.map((row: any) => {
         let { isDisabled, errorMessage } = checkIfDisableFullRow(inProgressHostData, type, row, translation);
 
-        // Disable checkbox for WAD (offline assessment) rows
-        if (!isDisabled && row?.isWad) {
-            isDisabled = true;
-            errorMessage =
-                configEngineType === DBType.ORACLE
-                    ? translation('databases.wad.tab-disabled-message-oracle')
-                    : translation('databases.wad.tab-disabled-message');
+        if (!isDisabled) {
+            const drillDownState = getConfigDrillDownFixDisableState(row, configEngineType, translation);
+            isDisabled = drillDownState.isDisabled;
+            errorMessage = drillDownState.errorMessage;
         }
 
         return {
@@ -2080,13 +2141,10 @@ export const disableOptimizeCheckBoxForOptimizeCase = (
             ({ isDisabled, errorMessage } = checkIfDisableFullRow(inProgressHostData, type, row, translation));
         }
 
-        // Disable checkbox for WAD (offline assessment) rows
-        if (!isDisabled && row?.isWad) {
-            isDisabled = true;
-            errorMessage =
-                configEngineType === DBType.ORACLE
-                    ? translation('databases.wad.tab-disabled-message-oracle')
-                    : translation('databases.wad.tab-disabled-message');
+        if (!isDisabled) {
+            const drillDownState = getConfigDrillDownFixDisableState(row, configEngineType, translation);
+            isDisabled = drillDownState.isDisabled;
+            errorMessage = drillDownState.errorMessage;
         }
 
         return {

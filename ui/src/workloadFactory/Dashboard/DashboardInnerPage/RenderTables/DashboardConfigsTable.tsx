@@ -20,7 +20,8 @@ import {
     CONFIG_STATES,
     DBType,
     GETWELL_STATUS,
-    GETWELL_VALUES
+    GETWELL_VALUES,
+    INVENTORY_STATUS
 } from '../../../../utils/consts';
 import {
     disableOptimizeCheckBoxForErrCase,
@@ -49,6 +50,10 @@ import {
     getLastAssessmentTimestamp,
     hasAssessmentTimestamp
 } from '../../../WellArchitectedTab/assessmentFormatUtils';
+import {
+    shouldSkipDuplicateAssessmentInstance,
+    shouldSkipWellArchAssessmentItem
+} from '../../../InventoryV2/InventoryUtilsV2';
 import { resolveDashboardTableConfig, HandleImpactedResourceDialog } from './dashboardTableConfigOverrides';
 import { formatImpactedColumnHeader } from './ImpactedResourceDialog/impactedResourceHeaderUtils';
 import { getOptimizeApiConfig } from '../../../../utils/configRegistry';
@@ -95,6 +100,7 @@ const DashboardConfigsTable = ({
     const tableData = useMemo(() => {
         let assessmentData: any = [];
         const uniqueResourceList: Array<string> = [];
+        const uniqueInstanceList: Array<string> = [];
 
         const engineTypeAssessmentData =
             configEngineType === DBType.ORACLE ? allOracleHostAssessmentData : allmssqlHostAssessmentData;
@@ -105,13 +111,28 @@ const DashboardConfigsTable = ({
                     hostData,
                     headerSelectedMultiCredIdsList,
                     headerSelectedMultiRegionIdsList,
-                    uniqueResourceList
+                    uniqueResourceList,
+                    inventoryTableData
                 )
             ) {
                 return;
             }
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
+                if (shouldSkipWellArchAssessmentItem(instanceData, hostData, inventoryTableData)) {
+                    return;
+                }
+                if (
+                    shouldSkipDuplicateAssessmentInstance(
+                        hostData,
+                        instanceData,
+                        inventoryTableData,
+                        uniqueInstanceList
+                    )
+                ) {
+                    return;
+                }
+
                 const instanceAssessments = instanceData?.assessments;
                 if (instanceData?.error || !hasAssessmentTimestamp(instanceAssessments)) {
                     return;
@@ -147,6 +168,7 @@ const DashboardConfigsTable = ({
                     regionName: matchingRegionEntry?.regionName,
                     accountId: matchingCredEntry?.providerAccountId,
                     isWad: hostData?.isWad,
+                    isUnregistered: !!hostData?.isUnregistered,
                     ...customData
                 });
             });
@@ -544,20 +566,29 @@ const DashboardConfigsTable = ({
                 }
 
                 const isWadRow = rowData?.isWad === true;
+                const isUnregisteredRow =
+                    rowData?.isUnregistered === true &&
+                    rowData?.statusColText !== INVENTORY_STATUS.MANAGED &&
+                    !rowData?.resourceId;
                 const wadDisabledMessage =
                     configEngineType === DBType.ORACLE
                         ? t('databases.wad.tab-disabled-message-oracle')
                         : t('databases.wad.tab-disabled-message');
+                const unregisteredDisabledMessage =
+                    configEngineType === DBType.ORACLE
+                        ? t('databases.wad.unregistered-tab-disabled-message-oracle')
+                        : t('databases.wad.unregistered-tab-disabled-message');
+                const menuBlocked = isWadRow || isUnregisteredRow;
+                const menuTooltip = isWadRow
+                    ? wadDisabledMessage
+                    : isUnregisteredRow
+                    ? unregisteredDisabledMessage
+                    : '';
 
                 return (
                     <>
-                        {selectedRowsForOptimize?.length > 0 || isWadRow ? (
-                            <TooltipComponent
-                                placement="left"
-                                title={isWadRow ? wadDisabledMessage : ''}
-                                width="280px"
-                                height="auto"
-                            >
+                        {selectedRowsForOptimize?.length > 0 || menuBlocked ? (
+                            <TooltipComponent placement="left" title={menuTooltip} width="280px" height="auto">
                                 <div className={styles.menuPointerDisabled}>
                                     <span className={styles.menuPointer}>...</span>
                                 </div>

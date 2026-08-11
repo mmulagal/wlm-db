@@ -37,7 +37,14 @@ vi.mock('../GetWell/GetWellUtils', () => ({
     formatOptimizationBreakDown: vi.fn(),
     getCardsData: vi.fn()
 }));
-vi.mock('../InventoryV2/InventoryUtilsV2', () => ({ sortAnalyzedResourceData: vi.fn() }));
+vi.mock('../InventoryV2/InventoryUtilsV2', () => ({
+    sortAnalyzedResourceData: vi.fn(),
+    shouldSkipWellArchAssessmentItem: vi.fn(() => false),
+    isEligibleUnregisteredForWellArch: vi.fn(() => false),
+    buildInventoryRowFromHostInstance: vi.fn(),
+    resolveInventoryRowForAssessmentInstance: vi.fn(),
+    resolveWellArchAssessmentFlow: vi.fn(() => 'registered')
+}));
 vi.mock('../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils', () => ({
     formatOracleOptimizationBreakDown: vi.fn(),
     getOracleCardsData: vi.fn()

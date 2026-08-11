@@ -25,7 +25,11 @@ import {
 import { findFlatConfigItem, hasConfigStats } from '../../WellArchitectedTab/assessmentFormatUtils';
 import DismissTable from './DismissTables/DismissTable';
 import { useDismissMssqlAssessmentMutation } from '../../../utils/apiService';
-import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
+import {
+    shouldSkipDuplicateAssessmentInstance,
+    shouldSkipWellArchAssessmentItem,
+    uniqueHostRow
+} from '../../InventoryV2/InventoryUtilsV2';
 import { setInProgressStateData } from '../../../store/workloadFactory/getWellOptimizeSlice';
 import store from '../../../store/store';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
@@ -309,13 +313,15 @@ const DashboardDismissPage = () => {
     const getTableData = (type: string) => {
         const newAssessmentData: any = [];
         const uniqueResourceList: Array<string> = [];
+        const uniqueInstanceList: Array<string> = [];
         allmssqlHostAssessmentData?.map((hostData: any) => {
             if (
                 shouldSkipDatabaseHost(
                     hostData,
                     headerSelectedMultiCredIdsList,
                     headerSelectedMultiRegionIdsList,
-                    uniqueResourceList
+                    uniqueResourceList,
+                    inventoryTableData
                 )
             ) {
                 return;
@@ -328,6 +334,20 @@ const DashboardDismissPage = () => {
                 regionsData && regionsData?.regions?.find(entry => entry.regionCode === hostData?.regionId);
 
             hostData?.instancesAssessment?.map((instanceData: any) => {
+                if (shouldSkipWellArchAssessmentItem(instanceData, hostData, inventoryTableData)) {
+                    return;
+                }
+                if (
+                    shouldSkipDuplicateAssessmentInstance(
+                        hostData,
+                        instanceData,
+                        inventoryTableData,
+                        uniqueInstanceList
+                    )
+                ) {
+                    return;
+                }
+
                 if (!instanceData?.error) {
                     // Backend now filters WAD-excluded configs - removed frontend check
 

@@ -4,8 +4,6 @@ import {
     getAssessmentItemSource,
     isOfflineAssessmentItem,
     isUnregisteredAssessmentItem,
-    isInventoryOnlyAssessmentItem,
-    shouldSkipDashboardAssessmentItem,
     getLastAssessmentTimestamp,
     hasAssessmentTimestamp,
     getAssessmentItems,
@@ -66,7 +64,6 @@ describe('assessmentFormatUtils', () => {
                 })
             ).toBe('unregistered');
         });
-
         it('returns empty string when metadata is missing', () => {
             expect(getAssessmentItemSource({ assessments: {} })).toBe('');
         });
@@ -83,20 +80,6 @@ describe('assessmentFormatUtils', () => {
             expect(isOfflineAssessmentItem(unregistered)).toBe(false);
             expect(isUnregisteredAssessmentItem(unregistered)).toBe(true);
             expect(isOfflineAssessmentItem(missing)).toBe(true);
-        });
-    });
-
-    describe('shouldSkipDashboardAssessmentItem', () => {
-        it('skips unregistered and inventory-only inner-page patches', () => {
-            expect(
-                shouldSkipDashboardAssessmentItem({
-                    assessments: { metadata: { source: 'unregistered' } }
-                })
-            ).toBe(true);
-            expect(shouldSkipDashboardAssessmentItem({ inventoryOnly: true, assessments: {} })).toBe(true);
-            expect(shouldSkipDashboardAssessmentItem({ assessments: { metadata: { source: 'continuous' } } })).toBe(
-                false
-            );
         });
     });
 

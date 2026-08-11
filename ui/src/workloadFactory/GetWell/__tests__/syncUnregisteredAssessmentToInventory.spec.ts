@@ -96,7 +96,7 @@ describe('syncUnregisteredAssessmentToInventory', () => {
         expect(instance.wadAssessmentData).toBe(freshAssessment);
     });
 
-    it('does not merge unregistered data into allmssqlHostAssessmentData (dashboard store)', () => {
+    it('merges unregistered data into allmssqlHostAssessmentData for Well-arch tab widgets', () => {
         syncUnregisteredAssessmentToInventory(mockDispatch, freshAssessment, {
             ec2InstanceId: 'i-host-1',
             instanceName: 'ALLALLOWED',
@@ -104,10 +104,102 @@ describe('syncUnregisteredAssessmentToInventory', () => {
             regionId: 'us-east-1'
         });
 
-        expect(
-            mockDispatch.mock.calls.some(
-                ([action]: [{ type: string }]) => action.type === 'addAllMssqlHostAssessmentData'
-            )
-        ).toBe(false);
+        const allAssessmentDispatch = mockDispatch.mock.calls.find(
+            ([action]: [{ type: string }]) => action.type === 'addAllMssqlHostAssessmentData'
+        );
+        expect(allAssessmentDispatch).toBeDefined();
+        expect(allAssessmentDispatch![0].payload).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    databaseHostId: 'i-host-1',
+                    isUnregistered: true,
+                    instancesAssessment: expect.arrayContaining([
+                        expect.objectContaining({ databaseInstanceName: 'ALLALLOWED' })
+                    ])
+                })
+            ])
+        );
+    });
+
+    it('does not restore registered bulk rows removed during sync', () => {
+        const registeredHost = {
+            databaseHostId: 'managed-host',
+            credentialId: 'cred-1',
+            regionId: 'us-east-1',
+            isWad: false,
+            isUnregistered: false,
+            instancesAssessment: [{ databaseInstanceName: 'ALLALLOWED' }]
+        };
+        const postRemoveBulkData: any[] = [];
+
+        mockGetState
+            .mockReturnValueOnce({
+                inventoryV2: {
+                    unregisteredMssqlAssessmentData: [],
+                    allmssqlHostAssessmentData: [registeredHost],
+                    inventoryTableData: {
+                        [hostKey]: {
+                            resourceId: 'managed-host',
+                            ec2InstanceId: 'i-host-1',
+                            credentialId: 'cred-1',
+                            regionId: 'us-east-1',
+                            sqlServerInstances: [{ databaseInstanceName: 'ALLALLOWED', resourceId: 'managed-host' }]
+                        }
+                    }
+                }
+            })
+            .mockReturnValueOnce({
+                inventoryV2: {
+                    unregisteredMssqlAssessmentData: [],
+                    allmssqlHostAssessmentData: [registeredHost],
+                    inventoryTableData: {
+                        [hostKey]: {
+                            resourceId: 'managed-host',
+                            ec2InstanceId: 'i-host-1',
+                            credentialId: 'cred-1',
+                            regionId: 'us-east-1',
+                            sqlServerInstances: [{ databaseInstanceName: 'ALLALLOWED', resourceId: 'managed-host' }]
+                        }
+                    }
+                }
+            })
+            .mockReturnValue({
+                inventoryV2: {
+                    unregisteredMssqlAssessmentData: [],
+                    allmssqlHostAssessmentData: postRemoveBulkData,
+                    inventoryTableData: {
+                        [hostKey]: {
+                            resourceId: 'managed-host',
+                            ec2InstanceId: 'i-host-1',
+                            credentialId: 'cred-1',
+                            regionId: 'us-east-1',
+                            sqlServerInstances: [{ databaseInstanceName: 'ALLALLOWED', resourceId: 'managed-host' }]
+                        }
+                    }
+                }
+            });
+
+        syncUnregisteredAssessmentToInventory(mockDispatch, freshAssessment, {
+            ec2InstanceId: 'i-host-1',
+            instanceName: 'ALLALLOWED',
+            credentialId: 'cred-1',
+            regionId: 'us-east-1'
+        });
+
+        const finalBulkDispatch = mockDispatch.mock.calls
+            .filter(([action]: [{ type: string }]) => action.type === 'addAllMssqlHostAssessmentData')
+            .at(-1);
+        expect(finalBulkDispatch).toBeDefined();
+        expect(finalBulkDispatch![0].payload).not.toEqual(
+            expect.arrayContaining([expect.objectContaining({ databaseHostId: 'managed-host' })])
+        );
+        expect(finalBulkDispatch![0].payload).toEqual(
+            expect.arrayContaining([
+                expect.objectContaining({
+                    databaseHostId: 'i-host-1',
+                    isUnregistered: true
+                })
+            ])
+        );
     });
 });

@@ -17,6 +17,7 @@ import {
     PROTECTION_TEXT_STATUS
 } from '../../utils/consts';
 import { GENERAL } from '../../utils/appConstants';
+import { hasAssessmentTimestamp } from '../WellArchitectedTab/assessmentFormatUtils';
 import { categorizeStorageSize, formatSize, formatSizeTwoPrecision } from '../../utils/utilityFunctions';
 import {
     enrichInstancesWithDataGuardFlags,
@@ -32,6 +33,7 @@ import {
     sortDatabaseTableData,
     sortInstanceTableData,
     sortInventoryTableData,
+    findAssessmentHostForInventoryKey,
     uniqueHostRow,
     getDiscoveredHostDeploymentAtHostLevel,
     getAvailabilityGroupListForAoag,
@@ -202,22 +204,26 @@ const InventoryV2 = () => {
                     let optimizationStatusLoading = false;
                     let optimizationStatusList: any = [];
                     if (inventoryTableData?.[key]?.hostType === DBType.MSSQL) {
-                        const assessRow = allmssqlHostAssessmentDataLatest?.filter(
-                            (perRow: any) =>
-                                uniqueHostRow(perRow?.databaseHostId, perRow?.credentialId, perRow?.regionId) === key
+                        const registeredAssessHost = findAssessmentHostForInventoryKey(
+                            allmssqlHostAssessmentDataLatest,
+                            key,
+                            inventoryTableData?.[key],
+                            { registeredOnly: true }
                         );
-                        if (assessRow.length > 0) {
+                        if (registeredAssessHost) {
                             optimizationStatusLoading = allmssqlHostAssessmentLoading;
-                            optimizationStatusList = assessRow?.[0]?.instancesAssessment;
+                            optimizationStatusList = registeredAssessHost?.instancesAssessment;
                         }
                     } else if (inventoryTableData?.[key]?.hostType === DBType.ORACLE) {
-                        const assessRow = allOracleHostAssessmentDataLatest?.filter(
-                            (perRow: any) =>
-                                uniqueHostRow(perRow?.databaseHostId, perRow?.credentialId, perRow?.regionId) === key
+                        const registeredAssessHost = findAssessmentHostForInventoryKey(
+                            allOracleHostAssessmentDataLatest,
+                            key,
+                            inventoryTableData?.[key],
+                            { registeredOnly: true }
                         );
-                        if (assessRow.length > 0) {
+                        if (registeredAssessHost) {
                             optimizationStatusLoading = allOracleHostAssessmentLoading;
-                            optimizationStatusList = assessRow?.[0]?.instancesAssessment;
+                            optimizationStatusList = registeredAssessHost?.instancesAssessment;
                         }
                     }
 
@@ -245,11 +251,26 @@ const InventoryV2 = () => {
                         ) {
                             optimizationStatus = getOracleWadOptimizationStatus(perRow?.wadAssessmentData);
                             optimizationLastTimestamp = perRow?.wadAssessmentData?.metadata?.lastAssessmentTimestamp;
-                        } else {
+                        } else if (
+                            perRow?.wadAssessmentData &&
+                            hasAssessmentTimestamp(perRow?.wadAssessmentData) &&
+                            inventoryTableData?.[key]?.hostType === DBType.MSSQL
+                        ) {
+                            optimizationStatus = getWadOptimizationStatus(perRow?.wadAssessmentData);
+                            optimizationLastTimestamp = perRow?.wadAssessmentData?.metadata?.lastAssessmentTimestamp;
+                        } else if (
+                            perRow?.wadAssessmentData &&
+                            hasAssessmentTimestamp(perRow?.wadAssessmentData) &&
+                            inventoryTableData?.[key]?.hostType === DBType.ORACLE
+                        ) {
+                            optimizationStatus = getOracleWadOptimizationStatus(perRow?.wadAssessmentData);
+                            optimizationLastTimestamp = perRow?.wadAssessmentData?.metadata?.lastAssessmentTimestamp;
+                        } else if (perRow?.statusColText === INVENTORY_STATUS.MANAGED) {
                             optimizationStatus = getOptimizationStatus(
                                 perRow?.databaseInstanceId,
                                 optimizationStatusList,
-                                inventoryTableData?.[key]?.hostType || ''
+                                inventoryTableData?.[key]?.hostType || '',
+                                perRow?.databaseInstanceName
                             );
                         }
 

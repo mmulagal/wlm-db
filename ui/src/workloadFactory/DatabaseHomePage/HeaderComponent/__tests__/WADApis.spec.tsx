@@ -26,7 +26,9 @@ const {
     mockSetUnregisteredAssessmentLoading,
     mockFormatOfflineAssessmentToInventoryData,
     mockFormatOracleOfflineAssessmentToInventoryData,
-    mockFormatOfflineDataToAssessmentFormat
+    mockFormatOfflineDataToAssessmentFormat,
+    mockMergeUnregisteredIntoAllAssessmentData,
+    mockMergeUnregisteredFlatAssessmentData
 } = vi.hoisted(() => ({
     mockDispatch: vi.fn(),
     mockGetAllOfflineAssessmentAPI: vi.fn(),
@@ -79,7 +81,9 @@ const {
     })),
     mockFormatOfflineAssessmentToInventoryData: vi.fn(() => ({})),
     mockFormatOracleOfflineAssessmentToInventoryData: vi.fn(() => ({})),
-    mockFormatOfflineDataToAssessmentFormat: vi.fn(() => [])
+    mockFormatOfflineDataToAssessmentFormat: vi.fn(() => []),
+    mockMergeUnregisteredIntoAllAssessmentData: vi.fn((existingAllData: any[]) => existingAllData),
+    mockMergeUnregisteredFlatAssessmentData: vi.fn((existing: any[], incoming: any[]) => [...existing, ...incoming])
 }));
 
 vi.mock('react-redux', async importOriginal => {
@@ -122,7 +126,9 @@ vi.mock('../../../InventoryV2/InventoryUtilsV2', () => ({
 }));
 
 vi.mock('../../DatabaseHomeUtils', () => ({
-    formatOfflineDataToAssessmentFormat: mockFormatOfflineDataToAssessmentFormat
+    formatOfflineDataToAssessmentFormat: mockFormatOfflineDataToAssessmentFormat,
+    mergeUnregisteredIntoAllAssessmentData: mockMergeUnregisteredIntoAllAssessmentData,
+    mergeUnregisteredFlatAssessmentData: mockMergeUnregisteredFlatAssessmentData
 }));
 
 vi.mock('../../../../utils/consts', () => ({
@@ -132,7 +138,14 @@ vi.mock('../../../../utils/consts', () => ({
 vi.mock('../../../../store/store', () => ({
     default: {
         getState: vi.fn(() => ({
-            inventoryV2: { inventoryTableData: {}, offlineMssqlDatabasesData: [] }
+            inventoryV2: {
+                inventoryTableData: {},
+                offlineMssqlDatabasesData: [],
+                unregisteredMssqlAssessmentData: [],
+                unregisteredOracleAssessmentData: [],
+                allmssqlHostAssessmentData: [],
+                allOracleHostAssessmentData: []
+            }
         }))
     }
 }));
@@ -311,7 +324,14 @@ describe('WADApis', () => {
 
         const { default: storeModule } = await import('../../../../store/store');
         (storeModule.getState as any).mockReturnValue({
-            inventoryV2: { inventoryTableData: existingData }
+            inventoryV2: {
+                inventoryTableData: existingData,
+                offlineMssqlDatabasesData: [],
+                unregisteredMssqlAssessmentData: [],
+                unregisteredOracleAssessmentData: [],
+                allmssqlHostAssessmentData: [],
+                allOracleHostAssessmentData: []
+            }
         });
 
         await act(async () => render(<Wrapper store={makeStore({ inventoryTableData: existingData })} />));

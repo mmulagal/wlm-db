@@ -33,6 +33,7 @@ import {
     getRegistrationRequiresFullPermissionMessageKey,
     getInstanceFsxLinkExists
 } from '../../InventoryUtilsV2';
+import { removeRegisteredInstanceAssessmentFromBulkStore } from '../../../DatabaseHomePage/DatabaseHomeUtils';
 import { isSmbProtocol } from '../../../../utils/utilityFunctions';
 import { ACTION_CTA, DBType, INVENTORY_STATUS, JOB_MONITORING_STATUS, WLF_TABS } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
@@ -445,6 +446,17 @@ const InstancesTable = () => {
                 } else {
                     const updatedInventoryTableData = updateInstanceStatus('unmanage', rowData, rowData);
                     dispatch(setInventoryTableData(updatedInventoryTableData));
+                    removeRegisteredInstanceAssessmentFromBulkStore(
+                        dispatch,
+                        {
+                            instanceName: rowData?.databaseInstanceName,
+                            credentialId: targettedHost?.credentialId || rowData?.credentialId,
+                            regionId: targettedHost?.regionId || rowData?.regionId,
+                            ec2InstanceId: targettedHost?.ec2InstanceId || rowData?.ec2InstanceId,
+                            managedHostId: targettedHost?.resourceId || rowData?.resourceId
+                        },
+                        rowData?.hostType
+                    );
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.SUCCESS,

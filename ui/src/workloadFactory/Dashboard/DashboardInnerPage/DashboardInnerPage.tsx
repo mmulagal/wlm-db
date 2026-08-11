@@ -69,7 +69,7 @@ import {
     resolveConfigTypeId
 } from '../../WellArchitectedTab/assessmentFormatUtils';
 import { getOptimizeApiConfig, hasFixSupport } from '../../../utils/configRegistry';
-import { uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
+import { resolveInventoryHostAndInstance, resolveRegisteredAssessmentHostId } from '../../InventoryV2/InventoryUtilsV2';
 import {
     calculatePostponeInfo,
     callDashboardDismissApi,
@@ -380,20 +380,32 @@ const DashboardInnerPage = () => {
     const optimizeAction = (rowData: any) => {
         const updatedState = store.getState();
         const { inventoryTableData }: any = updatedState.inventoryV2;
-        const targettedHost =
-            inventoryTableData[uniqueHostRow(rowData?.databaseHostId, rowData?.credentialId, rowData?.regionId)];
-        const targettedDbInstance = targettedHost?.sqlServerInstances?.find(
-            (instanceItem: any) => instanceItem.databaseInstanceName === rowData?.data?.databaseInstanceName
-        );
+        const instanceName = rowData?.data?.databaseInstanceName ?? rowData?.serverInstanceName;
+        const { host: targettedHost, instance: targettedDbInstance } = resolveInventoryHostAndInstance({
+            inventoryTableData,
+            resourceId: rowData?.databaseHostId,
+            credId: rowData?.credentialId,
+            regionId: rowData?.regionId,
+            instanceId: rowData?.instanceId,
+            instanceName
+        });
+        const resourceId = resolveRegisteredAssessmentHostId({
+            inventoryTableData,
+            databaseHostId: rowData?.databaseHostId,
+            credentialId: rowData?.credentialId,
+            regionId: rowData?.regionId,
+            instanceId: rowData?.instanceId,
+            instanceName
+        });
         dispatch(setLandingFrom(WLF_TABS.INVENTORY));
         dispatch(
             setGwPageLoadInstanceData({
                 hostname: rowData?.hostName,
-                resourceId: targettedHost?.resourceId,
-                instanceId: targettedDbInstance?.databaseInstanceId,
-                instanceName: targettedDbInstance?.databaseInstanceName,
-                credId: targettedHost?.credentialId,
-                regionId: targettedHost?.regionId,
+                resourceId,
+                instanceId: targettedDbInstance?.databaseInstanceId ?? rowData?.instanceId,
+                instanceName: targettedDbInstance?.databaseInstanceName ?? instanceName,
+                credId: targettedHost?.credentialId ?? rowData?.credentialId,
+                regionId: targettedHost?.regionId ?? rowData?.regionId,
                 storageType: targettedDbInstance?.sqlServerDeploymentType
             })
         );
@@ -584,9 +596,25 @@ const DashboardInnerPage = () => {
             const assessmentStatusConsistent = getAssessmentStatusConsistency(rowData);
             // Check if ALL rows are WAD (offline assessment) instances - only disable if there are no fixable rows
             // A row is fixable if it's online (!isWad, status='Up') and not already optimized
-            const allRowsAreWad = Array.isArray(rowData)
-                ? rowData.every((row: any) => row?.isWad || row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP)
-                : rowData?.isWad || rowData?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP;
+            const isFixBlockedRow = (row: any) =>
+                row?.isWad ||
+                (row?.isUnregistered && row?.statusColText !== INVENTORY_STATUS.MANAGED && !row?.resourceId) ||
+                row?.status !== INVENTORY_STATUS.CASE_SENSITIVE_UP;
+            const allRowsAreFixBlocked = Array.isArray(rowData)
+                ? rowData.every(isFixBlockedRow)
+                : isFixBlockedRow(rowData);
+            const isUnregisteredFixBlockedRow = (row: any) =>
+                row?.isUnregistered && row?.statusColText !== INVENTORY_STATUS.MANAGED && !row?.resourceId;
+            const fixBlockedRows = Array.isArray(rowData) ? rowData : [rowData];
+            const fixBlockedTooltip = fixBlockedRows.some((row: any) => row?.isWad)
+                ? configEngineType === DBType.ORACLE
+                    ? t('databases.wad.tab-disabled-message-oracle')
+                    : t('databases.wad.tab-disabled-message')
+                : fixBlockedRows.some(isUnregisteredFixBlockedRow)
+                ? configEngineType === DBType.ORACLE
+                    ? t('databases.wad.unregistered-tab-disabled-message-oracle')
+                    : t('databases.wad.unregistered-tab-disabled-message')
+                : t('databases.well-architect.only-online-resource-fix');
 
             setDialog(
                 <DialogComponent
@@ -617,8 +645,8 @@ const DashboardInnerPage = () => {
                         closeDialog();
                     }}
                     customClass={configId !== ASSESSMENT_CONFIG_IDS.MAXDOP ? 'innerPage' : ''}
-                    primaryButtonDisabled={allRowsAreWad}
-                    primaryButtonTooltip={allRowsAreWad ? t('databases.wad.tab-disabled-message') : ''}
+                    primaryButtonDisabled={allRowsAreFixBlocked}
+                    primaryButtonTooltip={allRowsAreFixBlocked ? fixBlockedTooltip : ''}
                     hidePrimaryButton={
                         !hasFixSupport(configId, configEngineType, rowData?.status, rowData?.missingPermissions)
                     }
@@ -817,7 +845,7 @@ const DashboardInnerPage = () => {
         // Filter out WAD (offline assessment) rows for dismiss and postpone operations
         const filteredRowData =
             operationType === CONFIG_STATE_ACTIONS.DISMISS || operationType === CONFIG_STATE_ACTIONS.POSTPONED
-                ? rowData?.filter((row: any) => row?.isWad !== true)
+                ? rowData?.filter((row: any) => row?.isWad !== true && !row?.isUnregistered)
                 : rowData;
 
         // If no rows left after filtering, don't proceed

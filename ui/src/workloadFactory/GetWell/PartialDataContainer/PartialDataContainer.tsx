@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { Button, DsTypography } from '@netapp/design-system';
+import { Button, DsTypography, useDialog } from '@netapp/design-system';
 import { ReactComponent as Warning } from '../../../assets/warning.svg';
 import { ReactComponent as Close } from '../../../assets/close-icon.svg';
-import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
-import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
-import { WLF_TABS } from '../../../utils/consts';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import FetchingDialog from '../../InventoryV2/InventoryTablesComponent/ProtectionDialogs/FetchingDIalog';
+import { useAppSelector } from '../../../store/storeHooks';
+import { FROM_DIALOG } from '../../../utils/consts';
+import { useAssociateCrrLinkPrefetch } from '../OptimizeInnerPage/CRRRedirectionContent/associateCrrLinkPrefetch';
+import crrStyles from '../OptimizeInnerPage/CRRRedirectionContent/CRRRedirectionContent.module.scss';
 import styles from './PartialDataContainer.module.scss';
 
 const LINKS_OVERVIEW_URL = 'https://docs.netapp.com/us-en/workload-fsx-ontap/links-overview.html';
@@ -18,12 +20,29 @@ type PartialDataContainerProps = {
 
 const PartialDataContainer = ({ variant = 'default', resourceType = 'instance' }: PartialDataContainerProps) => {
     const [isVisible, setIsVisible] = useState(true);
-    const dispatch = useDispatch();
     const { t } = useTranslation();
+    const { setDialog, closeDialog } = useDialog();
+    const { runAssociateLinkPrefetch } = useAssociateCrrLinkPrefetch(setDialog, closeDialog);
+    const crrPrefetchLoading = useAppSelector(state => state.crrRedirection.crrPrefetchLoading);
 
     const handleAssociateLink = () => {
-        dispatch(setSelectedHeaderTab(WLF_TABS.INVENTORY));
-        dispatch(selectedTabSelection(WLF_TABS.INVENTORY));
+        const associateLinkHeader = (
+            <DsTypography variant="Regular_14">{t('databases.well-architect.associate-link')}</DsTypography>
+        );
+
+        setDialog(
+            <DialogComponent
+                header={associateLinkHeader}
+                content={<FetchingDialog />}
+                hidePrimaryButton
+                secondaryButton={t('databases.general.close')}
+                closeCallback={() => closeDialog()}
+                customClass={crrStyles.crrDataDialog}
+                dialogFrom={FROM_DIALOG.LOADER}
+            />
+        );
+
+        runAssociateLinkPrefetch({ volumeName: '', volumeId: '' }, associateLinkHeader, false);
     };
 
     const handleLearnMoreLinks = () => {
@@ -88,6 +107,9 @@ const PartialDataContainer = ({ variant = 'default', resourceType = 'instance' }
                     <DsTypography variant="Regular_14">
                         {t('databases.wad.partial-data-missing-link-prefix')}
                     </DsTypography>
+                    <Button variant="link" onClick={handleAssociateLink} isDisabled={crrPrefetchLoading}>
+                        {t('databases.wad.associate-and-authenticate-link')}
+                    </Button>
                     <DsTypography variant="Regular_14">{t('databases.wad.learn-more-about-links-prefix')}</DsTypography>
                     <Button variant="link" className={styles.externalLinkButton} onClick={handleLearnMoreLinks}>
                         {t('databases.wad.learn-more-about-links')}

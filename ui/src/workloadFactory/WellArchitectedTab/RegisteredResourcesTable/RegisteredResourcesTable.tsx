@@ -1,7 +1,7 @@
 import { DsTypography, Popover } from '@netapp/design-system';
 import { useTranslation } from 'react-i18next';
 import { DsButton } from '@tlveng/wlm-ds';
-import { useMemo } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 import { useDispatch } from 'react-redux';
 import { ColumnProps, Table } from '../../../common/Lib/Table/Table';
 import { TableTopBar } from '../../../common/Lib/Table/TableTopBar';
@@ -10,8 +10,27 @@ import styles from './RegisteredResourcesTable.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { getAllAssessmentResources, redirectToGetWellPage } from '../WellArchitectedTabUtils';
 import FirstColumnComponent from '../../Dashboard/DashboardInnerPage/RenderTables/FirstColumnComponent';
-import { INVENTORY_STATUS } from '../../../utils/consts';
+import {
+    DBType,
+    INVENTORY_STATUS,
+    WELL_ARCHITECTED_TABS,
+    WELL_ARCH_ASSESSMENT_FLOW,
+    WLF_TABS
+} from '../../../utils/consts';
 import { formatDateWithTime } from '../../../utils/utilityFunctions';
+import {
+    getCanViewAndFix,
+    getViewAndFixDisableMsg,
+    handleOracleWadOptimizeAction,
+    handleUnregisteredOracleOptimizeAction,
+    handleUnregisteredOptimizeAction,
+    handleWadOptimizeAction
+} from '../../InventoryV2/InventoryTablesComponent/InstancesTable/InstanceTableHelper';
+import { resolveWellArchAssessmentFlow } from '../../InventoryV2/InventoryUtilsV2';
+import { setBreadCrumbSelectedFrom, setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2Slice';
+import { setSelectedWellArchitectTab } from '../../../store/workloadFactory/getWellOptimizeSlice';
+import { setSelectedOracleInnerPageTab } from '../../../store/workloadFactory/oracleSlice';
+import { selectedTabSelection } from '../../../store/workloadFactory/databaseHomeSlice';
 
 const RegisteredResourcesTable = () => {
     const dispatch = useDispatch();
@@ -22,9 +41,7 @@ const RegisteredResourcesTable = () => {
         allOracleHostAssessmentData,
         allOracleHostAssessmentLoading
     } = useAppSelector(state => state.inventoryV2);
-    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, showNA } = useAppSelector(
-        state => state.headers
-    );
+    const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = useAppSelector(state => state.headers);
     const { inventoryTableData, getDatabaseHosts, getOracleDatabaseHosts } = useAppSelector(state => state.inventoryV2);
 
     const assessmentResourceData: any = useMemo(
@@ -45,59 +62,110 @@ const RegisteredResourcesTable = () => {
         [allmssqlHostAssessmentLoading, allOracleHostAssessmentLoading]
     );
 
+    const setWellArchHeaderFromTab = (rowData: any) => {
+        dispatch(selectedTabSelection(WLF_TABS.OPTIMIZE));
+        dispatch(setBreadCrumbSelectedFrom(WLF_TABS.WELL_ARCHITECTED_TAB));
+        if (rowData?.type === DBType.ORACLE) {
+            dispatch(setSelectedHeaderTab(WLF_TABS.ORACLE_WELL_ARCHITECTED_FROM_WELL_ARCHITECTED_TAB));
+            dispatch(setSelectedOracleInnerPageTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+        } else {
+            dispatch(setSelectedHeaderTab(WLF_TABS.OPTIMIZE_FROM_WELL_ARCHITECTED_TAB));
+            dispatch(setSelectedWellArchitectTab(WELL_ARCHITECTED_TABS.WELL_ARCHITECTED_STATUS));
+        }
+    };
+
+    const handleViewAndFixClick = (rowData: any) => {
+        const flow = resolveWellArchAssessmentFlow({ rowData, inventoryTableData });
+
+        if (flow === WELL_ARCH_ASSESSMENT_FLOW.WAD) {
+            if (rowData?.type === DBType.ORACLE) {
+                handleOracleWadOptimizeAction(
+                    {
+                        ...rowData,
+                        databaseInstanceId: rowData?.instanceId,
+                        databaseInstanceName: rowData?.serverInstanceName,
+                        name: rowData?.hostName
+                    },
+                    dispatch
+                );
+            } else {
+                handleWadOptimizeAction(
+                    {
+                        ...rowData,
+                        databaseInstanceId: rowData?.instanceId,
+                        databaseInstanceName: rowData?.serverInstanceName,
+                        sqlServerInstance: rowData?.serverInstanceName
+                    },
+                    dispatch
+                );
+            }
+            setWellArchHeaderFromTab(rowData);
+            return;
+        }
+
+        if (flow === WELL_ARCH_ASSESSMENT_FLOW.UNREGISTERED) {
+            if (rowData?.type === DBType.ORACLE) {
+                handleUnregisteredOracleOptimizeAction(
+                    {
+                        ...rowData,
+                        databaseInstanceName: rowData?.serverInstanceName,
+                        oracleInstance: rowData?.serverInstanceName,
+                        ec2InstanceId: rowData?.ec2InstanceId || rowData?.databaseHostId
+                    },
+                    dispatch
+                );
+            } else {
+                handleUnregisteredOptimizeAction(
+                    {
+                        ...rowData,
+                        databaseInstanceName: rowData?.serverInstanceName,
+                        sqlServerInstance: rowData?.serverInstanceName,
+                        ec2InstanceId: rowData?.ec2InstanceId || rowData?.databaseHostId
+                    },
+                    dispatch
+                );
+            }
+            setWellArchHeaderFromTab(rowData);
+            return;
+        }
+
+        redirectToGetWellPage(dispatch, rowData);
+    };
+
+    const progressWidthStyle = (width: number | string): CSSProperties =>
+        ({ '--progress-width': `${width}%` } as CSSProperties);
+
     const handleProgressBar = (cellData: number | string) => {
-        if (
-            cellData !== 0 &&
-            // @ts-ignore
-            cellData <= 1
-        ) {
+        if (cellData !== 0 && (cellData as number) <= 1) {
             return (
                 <div className={styles.progressBar}>
                     <div
-                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
-                        style={{
-                            width: `${100}%`,
-                            backgroundColor: 'var(--chart-disabled)'
-                        }}
+                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar} ${styles.progressFull}`}
                     />
                 </div>
             );
         }
-        if (
-            cellData !== 0 &&
-            // @ts-ignore
-            cellData >= 1
-        ) {
+        if (cellData !== 0 && (cellData as number) >= 1) {
+            const score = Number(cellData) || 0;
             return (
                 <div className={styles.progressBar}>
                     <div
-                        className={`${styles.progress} ${styles.leftCurveBar}`}
-                        style={{
-                            width: `${cellData}%`,
-                            backgroundColor: 'var(--chart-4)'
-                        }}
+                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.progressFilled}`}
+                        style={progressWidthStyle(score)}
                     />
                     <div className={styles.separator} />
                     <div
-                        className={`${styles.progress} ${styles.rightCurveBar}`}
-                        style={{
-                            width: `${100 - (Number(cellData) || 0)}%`,
-                            backgroundColor: 'var(--chart-disabled)'
-                        }}
+                        className={`${styles.progress} ${styles.rightCurveBar} ${styles.progressRemainder}`}
+                        style={progressWidthStyle(100 - score)}
                     />
                 </div>
             );
         }
-
         if (cellData === 0) {
             return (
                 <div className={styles.progressBar}>
                     <div
-                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar}`}
-                        style={{
-                            width: `${100}%`,
-                            backgroundColor: 'var(--chart-disabled)'
-                        }}
+                        className={`${styles.progress} ${styles.leftCurveBar} ${styles.rightCurveBar} ${styles.progressFull}`}
                     />
                 </div>
             );
@@ -115,7 +183,6 @@ const RegisteredResourcesTable = () => {
                 <FirstColumnComponent rowData={rowData} showDismissed={false} />
             )
         },
-
         {
             Header: t('databases.well-architected-tab.engine-type'),
             accessor: 'type',
@@ -170,14 +237,13 @@ const RegisteredResourcesTable = () => {
             width: '248px',
             isSortable: false,
             renderCell: (_: any, rowData: any) => {
-                let isOffline = false;
-                if (
+                const isOffline =
                     rowData?.loadingStatus ||
                     rowData?.status === INVENTORY_STATUS.STOPPED ||
-                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN
-                ) {
-                    isOffline = true;
-                }
+                    rowData?.status === INVENTORY_STATUS.CASE_SENSITIVE_DOWN;
+                const canViewAndFix = getCanViewAndFix(rowData);
+                const viewAndFixDisableMsg = getViewAndFixDisableMsg(rowData, canViewAndFix, t);
+                const isDisabled = isOffline || !!viewAndFixDisableMsg;
 
                 return (
                     <div className={styles.buttonContainer}>
@@ -188,7 +254,8 @@ const RegisteredResourcesTable = () => {
                                 <DsTypography variant="Regular_14">
                                     {isOffline
                                         ? t('databases.well-architect.only-online-instances')
-                                        : t('databases.well-architected-tab.resource-view-fix-hover-msg')}
+                                        : viewAndFixDisableMsg ||
+                                          t('databases.well-architected-tab.resource-view-fix-hover-msg')}
                                 </DsTypography>
                             }
                             trigger="hover"
@@ -197,9 +264,11 @@ const RegisteredResourcesTable = () => {
                                     variant="secondary"
                                     isThin
                                     onClick={() => {
-                                        redirectToGetWellPage(dispatch, rowData);
+                                        if (!isDisabled) {
+                                            handleViewAndFixClick(rowData);
+                                        }
                                     }}
-                                    isDisabled={isOffline}
+                                    isDisabled={isDisabled}
                                 >
                                     {t('databases.general.view-and-fix')}
                                 </DsButton>
@@ -230,7 +299,6 @@ const RegisteredResourcesTable = () => {
                 pluralTitle={t('databases.well-architected-tab.registered-resources')}
                 singularTitle={t('databases.well-architected-tab.registered-resource')}
             />
-
             <Table
                 // @ts-ignore
                 tableProps={tableProps}

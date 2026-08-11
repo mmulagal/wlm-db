@@ -233,7 +233,9 @@ vi.mock('../../../DatabaseHomePage/DatabaseHomeUtils', () => ({
 }));
 
 vi.mock('../../../InventoryV2/InventoryUtilsV2', () => ({
-    uniqueHostRow: vi.fn((a: string, b: string, c: string) => `${a}_${b}_${c}`)
+    uniqueHostRow: vi.fn((a: string, b: string, c: string) => `${a}_${b}_${c}`),
+    shouldSkipWellArchAssessmentItem: vi.fn(() => false),
+    shouldSkipDuplicateAssessmentInstance: vi.fn(() => false)
 }));
 
 vi.mock('../../../../utils/consts', () => ({

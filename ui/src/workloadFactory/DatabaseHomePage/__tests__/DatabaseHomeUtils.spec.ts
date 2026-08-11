@@ -60,7 +60,9 @@ vi.mock('../../GetWell/GetWellUtils', () => ({
 }));
 
 vi.mock('../../InventoryV2/InventoryUtilsV2', () => ({
-    uniqueHostRow: vi.fn(() => [])
+    uniqueHostRow: vi.fn(() => []),
+    shouldSkipWellArchAssessmentItem: vi.fn(() => false),
+    shouldSkipDuplicateAssessmentInstance: vi.fn(() => false)
 }));
 
 vi.mock('../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils', () => ({

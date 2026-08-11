@@ -47,14 +47,6 @@ export const isUnregisteredAssessmentItem = (
     item?: { assessments?: AssessmentResponseInterface | null } | null
 ): boolean => getAssessmentItemSource(item) === ASSESSMENT_METADATA_SOURCE.UNREGISTERED;
 
-/** Patched from inner page before bulk refresh; inventory reads it, dashboard does not. */
-export const isInventoryOnlyAssessmentItem = (item?: { inventoryOnly?: boolean } | null): boolean =>
-    !!item?.inventoryOnly;
-
-export const shouldSkipDashboardAssessmentItem = (
-    item?: { assessments?: AssessmentResponseInterface | null; inventoryOnly?: boolean } | null
-): boolean => isUnregisteredAssessmentItem(item) || isInventoryOnlyAssessmentItem(item);
-
 export const getLastAssessmentTimestamp = (
     instanceAssessments?: AssessmentResponseInterface | null
 ): number | string | undefined => getAssessmentMetadata(instanceAssessments).lastAssessmentTimestamp;

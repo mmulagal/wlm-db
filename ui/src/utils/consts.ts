@@ -1017,6 +1017,13 @@ export const ASSESSMENT_METADATA_SOURCE = {
     UNREGISTERED: 'unregistered'
 } as const;
 
+export const WELL_ARCH_ASSESSMENT_FLOW = {
+    WAD: 'wad',
+    UNREGISTERED: 'unregistered',
+    REGISTERED: 'registered',
+    NONE: 'none'
+} as const;
+
 export const ASSESSMENT_CONFIG_OTHER = {
     STORAGE: 'Storage',
     COMPUTE: 'Compute',

@@ -1,6 +1,12 @@
 // eslint-disable-next-line import/no-cycle
 import store from '../../store/store';
-import { setManagedHostInstanceLoading } from '../../store/workloadFactory/inventoryV2Slice';
+import {
+    setManagedHostInstanceLoading,
+    addAllMssqlHostAssessmentData,
+    addAllOracleHostAssessmentData,
+    addUnregisteredMssqlAssessmentData,
+    addUnregisteredOracleAssessmentData
+} from '../../store/workloadFactory/inventoryV2Slice';
 import { GENERAL } from '../../utils/appConstants';
 import {
     CONFIG_STATES,
@@ -8,7 +14,6 @@ import {
     DBType,
     ERROR_ANALYZER_STATUS,
     FINDINGS,
-    GETWELL_STATUS,
     GETWELL_VALUES,
     INVENTORY_STATUS,
     ORACLE_DATABASES_COMPONENTS,
@@ -17,7 +22,8 @@ import {
     ASSESSMENT_CONFIG_CATALOG_KEYS,
     ASSESSMENT_GROUPED_CONFIG_KEYS,
     WIZARD_TYPE,
-    WELL_ARCHITECTED_CATEGORIES
+    WELL_ARCHITECTED_CATEGORIES,
+    WELL_ARCH_ASSESSMENT_FLOW
 } from '../../utils/consts';
 import {
     formatFractionalNumber,
@@ -27,7 +33,12 @@ import {
     sortListOfDict
 } from '../../utils/utilityFunctions';
 import { formatOptimizationBreakDown, getCardsData, isAoagDeployment } from '../GetWell/GetWellUtils';
-import { uniqueHostRow } from '../InventoryV2/InventoryUtilsV2';
+import {
+    uniqueHostRow,
+    shouldSkipWellArchAssessmentItem,
+    resolveInventoryRowForAssessmentInstance,
+    shouldSkipDuplicateAssessmentInstance
+} from '../InventoryV2/InventoryUtilsV2';
 import {
     formatOracleOptimizationBreakDown,
     getOracleCardsData
@@ -36,8 +47,7 @@ import {
     getAssessmentItems,
     getDismissedConfig,
     hasAssessmentTimestamp,
-    isExcludedFromOptimizationCountForAssessment,
-    shouldSkipDashboardAssessmentItem
+    isExcludedFromOptimizationCountForAssessment
 } from '../WellArchitectedTab/assessmentFormatUtils';
 import { getCategoryPriority } from '../../utils/configRegistry';
 
@@ -630,10 +640,40 @@ export const isDismissed = (dismissState?: string) =>
  * Non-WAD hosts are strictly filtered by both credential and region.
  */
 export const shouldSkipByHeaderFilters = (
-    host: { isWad?: boolean; credentialId?: string; regionId?: string },
+    host: {
+        isWad?: boolean;
+        isUnregistered?: boolean;
+        credentialId?: string;
+        regionId?: string;
+        instancesAssessment?: any[];
+    },
     headerSelectedMultiCredIdsList: string[],
-    headerSelectedMultiRegionIdsList: string[]
+    headerSelectedMultiRegionIdsList: string[],
+    inventoryTableData?: Record<string, any> | null
 ): boolean => {
+    if (host?.isUnregistered && inventoryTableData) {
+        let hasInventoryMatch = false;
+        const hasVisibleInstance = (host.instancesAssessment ?? []).some((instance: any) => {
+            const row = resolveInventoryRowForAssessmentInstance(host, instance, inventoryTableData);
+            if (!row) {
+                return false;
+            }
+            hasInventoryMatch = true;
+            return (
+                headerSelectedMultiCredIdsList.includes(row.credentialId || '') &&
+                (headerSelectedMultiRegionIdsList.length === 0 ||
+                    headerSelectedMultiRegionIdsList.includes(row.regionId || ''))
+            );
+        });
+        if (hasVisibleInstance) {
+            return false;
+        }
+        // Discover row exists but its cred/region is not selected — skip (don't fall through on assessment cred)
+        if (hasInventoryMatch) {
+            return true;
+        }
+    }
+
     if (host?.isWad) {
         if (
             (host?.credentialId && !headerSelectedMultiCredIdsList.includes(host.credentialId)) ||
@@ -661,21 +701,29 @@ export const shouldSkipDatabaseHost = (
     databaseHost: any,
     headerSelectedMultiCredIdsList: string[],
     headerSelectedMultiRegionIdsList: string[],
-    uniqueResourceList: string[]
+    uniqueResourceList: string[],
+    inventoryTableData?: Record<string, any> | null
 ): boolean => {
-    // on-demand unregistered assessments stay in inventory only until next sprint
-    if (databaseHost?.isUnregistered) {
-        return true;
-    }
-
-    // Include isWad so a WAD offline entry and a continuous registered entry for the
-    // same host are never treated as duplicates and one deduped away.
-    const uniqueKey = `${databaseHost?.databaseHostId}_${databaseHost?.regionId}_${!!databaseHost?.isWad}`;
+    const inventory = inventoryTableData ?? store.getState().inventoryV2?.inventoryTableData;
+    // Continuous (registered/unregistered): include credentialId so same EC2 under different
+    // assessment creds are not deduped away. WAD often has no credential — key host+region+isWad only.
+    const uniqueKey = databaseHost?.isWad
+        ? `${databaseHost?.databaseHostId}_${databaseHost?.regionId}_${!!databaseHost?.isWad}`
+        : `${databaseHost?.databaseHostId}_${databaseHost?.credentialId}_${
+              databaseHost?.regionId
+          }_${!!databaseHost?.isWad}`;
     if (uniqueResourceList.includes(uniqueKey)) {
         return true;
     }
 
-    if (shouldSkipByHeaderFilters(databaseHost, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList)) {
+    if (
+        shouldSkipByHeaderFilters(
+            databaseHost,
+            headerSelectedMultiCredIdsList,
+            headerSelectedMultiRegionIdsList,
+            inventory
+        )
+    ) {
         return true;
     }
 
@@ -777,12 +825,19 @@ const countOracleInstanceConfigs = (instanceAssessment: any, counters: ConfigCou
 /**
  * Process MSSQL assessment data counting individual configurations (not instances).
  */
-const processMSSQLAssessmentData = (assessmentData: any, headerFilters: any, uniqueResourceList: Array<string>) => {
+const processMSSQLAssessmentData = (
+    assessmentData: any,
+    headerFilters: any,
+    uniqueResourceList: Array<string>,
+    uniqueInstanceList: Array<string>
+) => {
+    const state = store.getState();
     const counters = createEmptyCounters();
     let totalInstances = 0;
     let mssqlTotal = 0;
 
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = headerFilters;
+    const inventoryTableData = state.inventoryV2?.inventoryTableData;
 
     assessmentData?.forEach((databaseHost: any) => {
         if (
@@ -790,14 +845,18 @@ const processMSSQLAssessmentData = (assessmentData: any, headerFilters: any, uni
                 databaseHost,
                 headerSelectedMultiCredIdsList,
                 headerSelectedMultiRegionIdsList,
-                uniqueResourceList
+                uniqueResourceList,
+                inventoryTableData
             )
         ) {
             return;
         }
 
         databaseHost?.instancesAssessment?.forEach((instance: any) => {
-            if (shouldSkipDashboardAssessmentItem(instance)) {
+            if (shouldSkipWellArchAssessmentItem(instance, databaseHost, inventoryTableData)) {
+                return;
+            }
+            if (shouldSkipDuplicateAssessmentInstance(databaseHost, instance, inventoryTableData, uniqueInstanceList)) {
                 return;
             }
             if (!instance?.error && hasAssessmentTimestamp(instance?.assessments)) {
@@ -817,13 +876,16 @@ const processMSSQLAssessmentData = (assessmentData: any, headerFilters: any, uni
 const processOracleAssessmentData = (
     oracleAssessmentData: any,
     headerFilters: any,
-    uniqueResourceList: Array<string>
+    uniqueResourceList: Array<string>,
+    uniqueInstanceList: Array<string>
 ) => {
+    const state = store.getState();
     const counters = createEmptyCounters();
     let totalInstances = 0;
     let oracleTotal = 0;
 
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = headerFilters;
+    const inventoryTableData = state.inventoryV2?.inventoryTableData;
 
     oracleAssessmentData?.forEach((databaseHost: any) => {
         if (
@@ -831,14 +893,18 @@ const processOracleAssessmentData = (
                 databaseHost,
                 headerSelectedMultiCredIdsList,
                 headerSelectedMultiRegionIdsList,
-                uniqueResourceList
+                uniqueResourceList,
+                inventoryTableData
             )
         ) {
             return;
         }
 
         databaseHost?.instancesAssessment?.forEach((instance: any) => {
-            if (shouldSkipDashboardAssessmentItem(instance)) {
+            if (shouldSkipWellArchAssessmentItem(instance, databaseHost, inventoryTableData)) {
+                return;
+            }
+            if (shouldSkipDuplicateAssessmentInstance(databaseHost, instance, inventoryTableData, uniqueInstanceList)) {
                 return;
             }
             if (!instance?.error && hasAssessmentTimestamp(instance?.assessments)) {
@@ -864,9 +930,20 @@ export const getManagedOptimizationSummary = (assessmentData: any, oracleAssessm
         headerSelectedMultiRegionIdsList: state.headers.headerSelectedMultiRegionIdsList
     };
     const uniqueResourceList: Array<string> = [];
+    const uniqueInstanceList: Array<string> = [];
 
-    const mssqlResults = processMSSQLAssessmentData(assessmentData, headerFilters, uniqueResourceList);
-    const oracleResults = processOracleAssessmentData(oracleAssessmentData, headerFilters, uniqueResourceList);
+    const mssqlResults = processMSSQLAssessmentData(
+        assessmentData,
+        headerFilters,
+        uniqueResourceList,
+        uniqueInstanceList
+    );
+    const oracleResults = processOracleAssessmentData(
+        oracleAssessmentData,
+        headerFilters,
+        uniqueResourceList,
+        uniqueInstanceList
+    );
 
     const totalConfigurations = mssqlResults.totalConfigurations + oracleResults.totalConfigurations;
     const optimizedConfigurations = mssqlResults.optimizedConfigurations + oracleResults.optimizedConfigurations;
@@ -984,9 +1061,20 @@ export const getAssessmentGroupedByCategory = (assessmentData: any, oracleAssess
         headerSelectedMultiRegionIdsList: state.headers.headerSelectedMultiRegionIdsList
     };
     const uniqueResourceList: Array<string> = [];
+    const uniqueInstanceList: Array<string> = [];
 
-    const mssqlResults = processMSSQLAssessmentData(assessmentData, headerFilters, uniqueResourceList);
-    const oracleResults = processOracleAssessmentData(oracleAssessmentData, headerFilters, uniqueResourceList);
+    const mssqlResults = processMSSQLAssessmentData(
+        assessmentData,
+        headerFilters,
+        uniqueResourceList,
+        uniqueInstanceList
+    );
+    const oracleResults = processOracleAssessmentData(
+        oracleAssessmentData,
+        headerFilters,
+        uniqueResourceList,
+        uniqueInstanceList
+    );
 
     return {
         storage: {
@@ -1248,7 +1336,9 @@ const sortConfigIdsByPriority = (configIds: string[], dbType: string, catalog: R
 const buildAssessmentGroupedByConfigurations = (assessmentData: any, oracleAssessmentData?: any) => {
     const state = store.getState();
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
+    const inventoryTableData = state.inventoryV2?.inventoryTableData;
     const uniqueResourceList: Array<string> = [];
+    const uniqueInstanceList: Array<string> = [];
 
     const result: Record<string, any> = {
         total: 0,
@@ -1274,14 +1364,18 @@ const buildAssessmentGroupedByConfigurations = (assessmentData: any, oracleAsses
                 databaseHost,
                 headerSelectedMultiCredIdsList,
                 headerSelectedMultiRegionIdsList,
-                uniqueResourceList
+                uniqueResourceList,
+                inventoryTableData
             )
         ) {
             return;
         }
 
         databaseHost?.instancesAssessment?.forEach((instance: any) => {
-            if (shouldSkipDashboardAssessmentItem(instance)) {
+            if (shouldSkipWellArchAssessmentItem(instance, databaseHost, inventoryTableData)) {
+                return;
+            }
+            if (shouldSkipDuplicateAssessmentInstance(databaseHost, instance, inventoryTableData, uniqueInstanceList)) {
                 return;
             }
             if (!instance?.error && hasAssessmentTimestamp(instance?.assessments)) {
@@ -1298,14 +1392,18 @@ const buildAssessmentGroupedByConfigurations = (assessmentData: any, oracleAsses
                 databaseHost,
                 headerSelectedMultiCredIdsList,
                 headerSelectedMultiRegionIdsList,
-                oracleUniqueResourceList
+                oracleUniqueResourceList,
+                inventoryTableData
             )
         ) {
             return;
         }
 
         databaseHost?.instancesAssessment?.forEach((instance: any) => {
-            if (shouldSkipDashboardAssessmentItem(instance)) {
+            if (shouldSkipWellArchAssessmentItem(instance, databaseHost, inventoryTableData)) {
+                return;
+            }
+            if (shouldSkipDuplicateAssessmentInstance(databaseHost, instance, inventoryTableData, uniqueInstanceList)) {
                 return;
             }
             if (!instance?.error && hasAssessmentTimestamp(instance?.assessments)) {
@@ -1360,6 +1458,7 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, orac
     const { inventoryTableData, getDatabaseHosts, getOracleDatabaseHosts } = state.inventoryV2;
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList } = state.headers;
     const uniqueResourceList: Array<string> = [];
+    const uniqueInstanceList: Array<string> = [];
 
     assessmentData.map((databaseHost: any) => {
         if (
@@ -1367,14 +1466,18 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, orac
                 databaseHost,
                 headerSelectedMultiCredIdsList,
                 headerSelectedMultiRegionIdsList,
-                uniqueResourceList
+                uniqueResourceList,
+                inventoryTableData
             )
         ) {
             return;
         }
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
-            if (shouldSkipDashboardAssessmentItem(instance)) {
+            if (shouldSkipWellArchAssessmentItem(instance, databaseHost, inventoryTableData)) {
+                return;
+            }
+            if (shouldSkipDuplicateAssessmentInstance(databaseHost, instance, inventoryTableData, uniqueInstanceList)) {
                 return;
             }
             if (!instance?.error && instance?.assessments?.metadata?.lastAssessmentTimestamp) {
@@ -1408,14 +1511,18 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, orac
                 databaseHost,
                 headerSelectedMultiCredIdsList,
                 headerSelectedMultiRegionIdsList,
-                uniqueResourceList
+                uniqueResourceList,
+                inventoryTableData
             )
         ) {
             return;
         }
 
         databaseHost?.instancesAssessment?.map((instance: any) => {
-            if (shouldSkipDashboardAssessmentItem(instance)) {
+            if (shouldSkipWellArchAssessmentItem(instance, databaseHost, inventoryTableData)) {
+                return;
+            }
+            if (shouldSkipDuplicateAssessmentInstance(databaseHost, instance, inventoryTableData, uniqueInstanceList)) {
                 return;
             }
             if (!instance?.error && instance?.assessments?.metadata?.lastAssessmentTimestamp) {
@@ -1495,24 +1602,68 @@ export const disableOfflineRows = (data: any) =>
 export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any, isLoading: boolean) => {
     const result = assessmentData.map((instanceData: any) => {
         const updatedAssessmentData = { ...instanceData };
-        const host =
+        let host =
             hostData?.[uniqueHostRow(instanceData.databaseHostId, instanceData?.credentialId, instanceData.regionId)];
-        if (!host) {
-            updatedAssessmentData.loadingStatus = isLoading;
-        } else {
-            const instance = host?.sqlServerInstances?.find(
-                (instance: any) => instance.databaseInstanceId === instanceData.instanceId
+        if (!host && instanceData?.ec2InstanceId) {
+            host = Object.values(hostData ?? {}).find(
+                (candidate: any) =>
+                    candidate?.ec2InstanceId === instanceData.ec2InstanceId &&
+                    candidate?.credentialId === instanceData?.credentialId &&
+                    candidate?.regionId === instanceData?.regionId
             );
-            if (!instance) {
-                updatedAssessmentData.loadingStatus = isLoading;
-            } else {
-                updatedAssessmentData.status = instance.status;
-                updatedAssessmentData.ec2InstanceId = host?.ec2InstanceId;
-                updatedAssessmentData.fsxId = instance?.fsxId;
-                updatedAssessmentData.sqlServerId = instance?.sqlServerId;
-                updatedAssessmentData.loadingStatus = false;
-            }
         }
+        const instance = host?.sqlServerInstances?.find(
+            (inst: any) =>
+                inst.databaseInstanceId === instanceData.instanceId ||
+                inst.databaseInstanceName?.toLowerCase() === instanceData.serverInstanceName?.toLowerCase()
+        );
+
+        if (!host || !instance) {
+            const inventoryRow = resolveInventoryRowForAssessmentInstance(
+                {
+                    databaseHostId: instanceData.databaseHostId,
+                    credentialId: instanceData.credentialId,
+                    regionId: instanceData.regionId,
+                    isUnregistered: instanceData.isUnregistered,
+                    vmInstanceId: instanceData.ec2InstanceId || instanceData.databaseHostId
+                },
+                {
+                    databaseInstanceId: instanceData.instanceId,
+                    databaseInstanceName: instanceData.serverInstanceName
+                },
+                hostData
+            );
+            if (inventoryRow) {
+                updatedAssessmentData.status = inventoryRow.status;
+                updatedAssessmentData.ec2InstanceId = inventoryRow.ec2InstanceId;
+                updatedAssessmentData.fsxId = inventoryRow.fsxId;
+                updatedAssessmentData.sqlServerId = inventoryRow.sqlServerId;
+                updatedAssessmentData.hostManageReadiness =
+                    inventoryRow.hostManageReadiness ?? updatedAssessmentData.hostManageReadiness;
+                updatedAssessmentData.isUnregistered =
+                    updatedAssessmentData.isUnregistered ??
+                    inventoryRow.isUnregistered ??
+                    !!instanceData?.isUnregistered;
+                updatedAssessmentData.statusColText = inventoryRow.statusColText;
+                updatedAssessmentData.resourceId = inventoryRow.resourceId;
+                updatedAssessmentData.loadingStatus = false;
+                return updatedAssessmentData;
+            }
+            updatedAssessmentData.loadingStatus = isLoading;
+            return updatedAssessmentData;
+        }
+
+        updatedAssessmentData.status = instance.status;
+        updatedAssessmentData.ec2InstanceId = host?.ec2InstanceId;
+        updatedAssessmentData.fsxId = instance?.fsxId;
+        updatedAssessmentData.sqlServerId = instance?.sqlServerId;
+        updatedAssessmentData.hostManageReadiness =
+            instance?.hostManageReadiness ?? host?.hostManageReadiness ?? updatedAssessmentData.hostManageReadiness;
+        updatedAssessmentData.isUnregistered =
+            updatedAssessmentData.isUnregistered ?? instance?.isUnregistered ?? !!instanceData?.isUnregistered;
+        updatedAssessmentData.statusColText = instance?.statusColText;
+        updatedAssessmentData.resourceId = instance?.resourceId;
+        updatedAssessmentData.loadingStatus = false;
         return updatedAssessmentData;
     });
     return sortListOfDict(result, 'status', false);
@@ -1837,6 +1988,182 @@ export const createLogAnalyzerActiveInstance = (tableData: any[]) => {
  * @param dbType - The database type ('mssql' or 'oracle')
  * @returns Formatted assessment data array matching the hierarchical structure
  */
+
+/** Remove one instance from bulk (and flat unregistered) assessment stores on register/deregister transitions. */
+export const removeInstanceAssessmentFromBulkStore = (
+    dispatch: any,
+    {
+        instanceName,
+        credentialId,
+        regionId,
+        ec2InstanceId,
+        managedHostId
+    }: {
+        instanceName: string;
+        credentialId: string;
+        regionId: string;
+        ec2InstanceId?: string;
+        managedHostId?: string;
+    },
+    engineType?: string,
+    source:
+        | typeof WELL_ARCH_ASSESSMENT_FLOW.REGISTERED
+        | typeof WELL_ARCH_ASSESSMENT_FLOW.UNREGISTERED = WELL_ARCH_ASSESSMENT_FLOW.REGISTERED
+) => {
+    const instanceLookup = instanceName?.toLowerCase();
+    if (!instanceLookup || (source === WELL_ARCH_ASSESSMENT_FLOW.UNREGISTERED && !ec2InstanceId)) {
+        return;
+    }
+
+    const isOracle = engineType === DBType.ORACLE;
+    const state = store.getState();
+
+    if (source === WELL_ARCH_ASSESSMENT_FLOW.UNREGISTERED) {
+        const existingFlat = isOracle
+            ? state.inventoryV2.unregisteredOracleAssessmentData || []
+            : state.inventoryV2.unregisteredMssqlAssessmentData || [];
+        const nextFlat = existingFlat.filter(
+            (item: any) =>
+                !(
+                    (item?.vmInstanceId || item?.resourceId) === ec2InstanceId &&
+                    item?.databaseInstanceName?.toLowerCase() === instanceLookup
+                )
+        );
+        if (nextFlat.length !== existingFlat.length) {
+            dispatch(
+                isOracle ? addUnregisteredOracleAssessmentData(nextFlat) : addUnregisteredMssqlAssessmentData(nextFlat)
+            );
+        }
+    }
+
+    const assessmentData = isOracle
+        ? state.inventoryV2.allOracleHostAssessmentData || []
+        : state.inventoryV2.allmssqlHostAssessmentData || [];
+
+    const shouldRemoveFromHost = (hostData: any) => {
+        if (hostData?.credentialId !== credentialId || hostData?.regionId !== regionId) {
+            return false;
+        }
+        const hostIds = [hostData?.databaseHostId, hostData?.vmInstanceId].filter(Boolean);
+        if (source === WELL_ARCH_ASSESSMENT_FLOW.REGISTERED) {
+            if (hostData?.isWad || hostData?.isUnregistered) {
+                return false;
+            }
+            return (
+                (!!managedHostId && hostIds.includes(managedHostId)) ||
+                (!!ec2InstanceId && hostIds.includes(ec2InstanceId))
+            );
+        }
+        return !!hostData?.isUnregistered && !!ec2InstanceId && hostIds.includes(ec2InstanceId);
+    };
+
+    let changed = false;
+    const updated: any[] = [];
+
+    assessmentData.forEach((hostData: any) => {
+        if (!shouldRemoveFromHost(hostData)) {
+            updated.push(hostData);
+            return;
+        }
+
+        const instances = hostData?.instancesAssessment ?? [];
+        const nextInstances = instances.filter(
+            (inst: any) => inst?.databaseInstanceName?.toLowerCase() !== instanceLookup
+        );
+        if (nextInstances.length === instances.length) {
+            updated.push(hostData);
+            return;
+        }
+
+        changed = true;
+        if (nextInstances.length > 0) {
+            updated.push({ ...hostData, instancesAssessment: nextInstances });
+        }
+    });
+
+    if (!changed) {
+        return;
+    }
+    dispatch(isOracle ? addAllOracleHostAssessmentData(updated) : addAllMssqlHostAssessmentData(updated));
+};
+
+export const removeRegisteredInstanceAssessmentFromBulkStore = (
+    dispatch: any,
+    identifiers: {
+        instanceName: string;
+        credentialId: string;
+        regionId: string;
+        ec2InstanceId?: string;
+        managedHostId?: string;
+    },
+    engineType?: string
+) => removeInstanceAssessmentFromBulkStore(dispatch, identifiers, engineType, WELL_ARCH_ASSESSMENT_FLOW.REGISTERED);
+
+export const removeUnregisteredInstanceAssessmentOnRegister = (
+    dispatch: any,
+    identifiers: {
+        instanceName: string;
+        credentialId: string;
+        regionId: string;
+        ec2InstanceId?: string;
+    },
+    engineType?: string
+) => removeInstanceAssessmentFromBulkStore(dispatch, identifiers, engineType, WELL_ARCH_ASSESSMENT_FLOW.UNREGISTERED);
+
+const sameAssessmentHostKey = (left: any, right: any) =>
+    left?.databaseHostId === right?.databaseHostId &&
+    left?.credentialId === right?.credentialId &&
+    left?.regionId === right?.regionId;
+
+const unregisteredFlatAssessmentKey = (item: any) => {
+    const ec2Id = (item?.vmInstanceId || item?.resourceId || '').toLowerCase();
+    const instanceName = (item?.databaseInstanceName || '').toLowerCase();
+    if (!ec2Id || !instanceName) {
+        return '';
+    }
+    return `${ec2Id}_${instanceName}`;
+};
+
+/** Keeps locally synced on-demand assessments when bulk API refresh has not caught up yet. */
+export const mergeUnregisteredFlatAssessmentData = (existing: any[], incoming: any[]): any[] => {
+    const byKey = new Map<string, any>();
+    const upsert = (item: any) => {
+        const key = unregisteredFlatAssessmentKey(item);
+        if (!key) {
+            return;
+        }
+        const previous = byKey.get(key);
+        if (!previous) {
+            byKey.set(key, item);
+            return;
+        }
+        const previousTimestamp = previous?.assessments?.metadata?.lastAssessmentTimestamp ?? 0;
+        const incomingTimestamp = item?.assessments?.metadata?.lastAssessmentTimestamp ?? 0;
+        byKey.set(key, incomingTimestamp >= previousTimestamp ? item : previous);
+    };
+    (existing || []).forEach(upsert);
+    (incoming || []).forEach(upsert);
+    return Array.from(byKey.values());
+};
+
+/** Replaces matching unregistered host rows in the Well-arch bulk assessment store. */
+export const mergeUnregisteredIntoAllAssessmentData = (
+    existingAllData: any[],
+    unregisteredFlatData: any[],
+    dbType: typeof DBType.MSSQL | typeof DBType.ORACLE
+) => {
+    const formattedUnregistered = formatOfflineDataToAssessmentFormat(unregisteredFlatData, dbType);
+    if (!formattedUnregistered.length) {
+        return existingAllData;
+    }
+    const withoutReplaced = (existingAllData || []).filter(
+        (host: any) =>
+            !host?.isUnregistered ||
+            !formattedUnregistered.some((candidate: any) => sameAssessmentHostKey(candidate, host))
+    );
+    return [...withoutReplaced, ...formattedUnregistered];
+};
+
 export const formatOfflineDataToAssessmentFormat = (
     offlineData: any[],
     dbType: typeof DBType.MSSQL | typeof DBType.ORACLE

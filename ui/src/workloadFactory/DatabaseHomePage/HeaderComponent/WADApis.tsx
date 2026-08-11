@@ -24,7 +24,11 @@ import {
     formatOracleOfflineAssessmentToInventoryData,
     mergeUnregisteredAssessmentIntoInventory
 } from '../../InventoryV2/InventoryUtilsV2';
-import { formatOfflineDataToAssessmentFormat } from '../DatabaseHomeUtils';
+import {
+    formatOfflineDataToAssessmentFormat,
+    mergeUnregisteredFlatAssessmentData,
+    mergeUnregisteredIntoAllAssessmentData
+} from '../DatabaseHomeUtils';
 import store from '../../../store/store';
 import { DBType } from '../../../utils/consts';
 import { isOfflineAssessmentItem, isUnregisteredAssessmentItem } from '../../WellArchitectedTab/assessmentFormatUtils';
@@ -200,10 +204,16 @@ const WADApis = () => {
         { syncInventory = true }: { syncInventory?: boolean } = {}
     ) => {
         clearHostAssessmentFetchLoading(dbType);
-        storeFetchedAssessmentData(offlineData, unregisteredData, dbType);
-        addOfflineDataToAllAssessment(offlineData, unregisteredData, dbType);
+        const state = store.getState();
+        const existingUnregistered =
+            dbType === DBType.MSSQL
+                ? state.inventoryV2.unregisteredMssqlAssessmentData || []
+                : state.inventoryV2.unregisteredOracleAssessmentData || [];
+        const mergedUnregistered = mergeUnregisteredFlatAssessmentData(existingUnregistered, unregisteredData);
+        storeFetchedAssessmentData(offlineData, mergedUnregistered, dbType);
+        addOfflineDataToAllAssessment(offlineData, mergedUnregistered, dbType);
         if (syncInventory) {
-            updateInventoryWithAssessmentData(offlineData, unregisteredData, dbType);
+            updateInventoryWithAssessmentData(offlineData, mergedUnregistered, dbType);
         }
     };
 
@@ -225,17 +235,26 @@ const WADApis = () => {
 
         if (dbType === DBType.MSSQL) {
             const existingAllData = state.inventoryV2.allmssqlHostAssessmentData || [];
-            // unregistered on-demand data is inventory-only this sprint
             const registeredAndOfflineData = existingAllData.filter(
                 (item: any) => !item?.isWad && !item?.isUnregistered
             );
-            dispatch(addAllMssqlHostAssessmentData([...registeredAndOfflineData, ...formattedOfflineData]));
+            const merged = mergeUnregisteredIntoAllAssessmentData(
+                [...registeredAndOfflineData, ...formattedOfflineData],
+                unregisteredData,
+                dbType
+            );
+            dispatch(addAllMssqlHostAssessmentData(merged));
         } else {
             const existingAllData = state.inventoryV2.allOracleHostAssessmentData || [];
             const registeredAndOfflineData = existingAllData.filter(
                 (item: any) => !item?.isWad && !item?.isUnregistered
             );
-            dispatch(addAllOracleHostAssessmentData([...registeredAndOfflineData, ...formattedOfflineData]));
+            const merged = mergeUnregisteredIntoAllAssessmentData(
+                [...registeredAndOfflineData, ...formattedOfflineData],
+                unregisteredData,
+                dbType
+            );
+            dispatch(addAllOracleHostAssessmentData(merged));
         }
     };
 

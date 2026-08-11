@@ -5,7 +5,8 @@ import {
     hasPartialRunPermission,
     shouldDisableUnregisteredDatabasesAndPassword,
     shouldRestrictWellArchitectTabs,
-    mergeUnregisteredAssessmentIntoInventory
+    mergeUnregisteredAssessmentIntoInventory,
+    resolveInventoryRowForAssessmentInstance
 } from './InventoryUtilsV2';
 import { DBType, INVENTORY_STATUS } from '../../utils/consts';
 
@@ -236,6 +237,38 @@ describe('mergeUnregisteredAssessmentIntoInventory', () => {
         expect(merged.host_key.sqlServerInstances[0].isUnregistered).toBe(true);
         expect(merged.host_key.sqlServerInstances[0].wadAssessmentData).toBe(unregisteredAssessment.assessments);
     });
+
+    it('merges after deregister even when stale resourceId remains on row', () => {
+        const inventory = {
+            host_key: {
+                hostType: DBType.MSSQL,
+                ec2InstanceId: 'i-ec2',
+                sqlServerInstances: [
+                    {
+                        databaseInstanceName: 'ALLALLOWED',
+                        statusColText: INVENTORY_STATUS.UNMANAGED,
+                        resourceId: 'stale-res',
+                        isUnregistered: false
+                    }
+                ]
+            }
+        };
+
+        const merged = mergeUnregisteredAssessmentIntoInventory(
+            inventory,
+            [
+                {
+                    vmInstanceId: 'i-ec2',
+                    databaseInstanceName: 'ALLALLOWED',
+                    assessments: { metadata: { lastAssessmentTimestamp: 1, source: 'unregistered' } }
+                }
+            ],
+            DBType.MSSQL
+        );
+
+        expect(merged.host_key.sqlServerInstances[0].wadAssessmentData).toBeDefined();
+        expect(merged.host_key.sqlServerInstances[0].isUnregistered).toBe(true);
+    });
 });
 
 describe('isUnregisteredInventoryRow', () => {
@@ -291,5 +324,45 @@ describe('isUnregisteredInventoryRow', () => {
                 {}
             )
         ).toBe(false);
+    });
+});
+
+describe('resolveInventoryRowForAssessmentInstance unregistered cred mismatch', () => {
+    const inventoryTableData = {
+        'host_selected-cred_ap-southeast-1': {
+            hostType: DBType.MSSQL,
+            ec2InstanceId: 'i-07a29eb681ba37679',
+            credentialId: '385165a2-a194-4088-8b74-c3cb8a504a33',
+            regionId: 'ap-southeast-1',
+            name: 'adwlmcom',
+            sqlServerInstances: [
+                {
+                    databaseInstanceId: 'SQLLOGIN1',
+                    databaseInstanceName: 'SQLLOGIN1',
+                    statusColText: INVENTORY_STATUS.UNMANAGED,
+                    hostManageReadiness: { extensiveRunPermission: true }
+                }
+            ]
+        }
+    };
+
+    const databaseHost = {
+        databaseHostId: 'i-07a29eb681ba37679',
+        credentialId: '92978933-14fe-4c1c-9cd0-85364b5c380f',
+        regionId: 'ap-southeast-1',
+        isUnregistered: true
+    };
+
+    const instance = {
+        databaseInstanceId: 'SQLLOGIN1',
+        databaseInstanceName: 'SQLLOGIN1',
+        assessments: { metadata: { source: 'unregistered', lastAssessmentTimestamp: 1 } }
+    };
+
+    it('resolves discover inventory row when assessment credential differs', () => {
+        const row = resolveInventoryRowForAssessmentInstance(databaseHost, instance, inventoryTableData);
+        expect(row?.databaseInstanceName).toBe('SQLLOGIN1');
+        expect(row?.credentialId).toBe('385165a2-a194-4088-8b74-c3cb8a504a33');
+        expect(row?.hostName).toBe('adwlmcom');
     });
 });
