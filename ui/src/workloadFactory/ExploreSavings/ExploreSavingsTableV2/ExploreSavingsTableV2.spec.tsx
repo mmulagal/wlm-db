@@ -110,7 +110,8 @@ vi.mock('../ExploreSavingsUtils', () => ({
     handleAuthenticate: (...args: any[]) => mockHandleAuthenticate(...args),
     onClickESHost: (...args: any[]) => mockOnClickESHost(...args),
     shouldAuthDialogOpen: (...args: any[]) => mockShouldAuthDialogOpen(...args),
-    shouldAuthDialogOpenBulk: (...args: any[]) => mockShouldAuthDialogOpenBulk(...args)
+    shouldAuthDialogOpenBulk: (...args: any[]) => mockShouldAuthDialogOpenBulk(...args),
+    getExploreSavingsDeploymentDisplay: (row: any) => row?.serverInstallationMode || ''
 }));
 
 vi.mock('../../InventoryV2/InventoryUtilsV2', () => ({

@@ -1,4 +1,5 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { DATABASE_DEPLOYMENT_MODE, SQL_DEPLOYMENT_MODE } from '../../utils/consts';
 
 // ---- import module under test AFTER mocks ----
 import {
@@ -24,7 +25,11 @@ import {
     handleAuthenticate,
     isMissingSqlPermissions,
     shouldAuthDialogOpen,
-    shouldAuthDialogOpenBulk
+    shouldAuthDialogOpenBulk,
+    getExploreSavingsDeploymentDisplay,
+    hasExploreSavingsAoagDeployment,
+    isExploreSavingsAoagHost,
+    getExploreSavingsDeploymentModel
 } from './ExploreSavingsUtils';
 
 // Import mocked modules at the top level for assertions
@@ -161,6 +166,14 @@ vi.mock('../../utils/consts', () => ({
         AOAG: 'aoag',
         HA: 'ha',
         FAILOVER_CLUSTER_VALUE_CAPS: 'FCI'
+    },
+    DATABASE_DEPLOYMENT_MODE: {
+        FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
+        STANDALONE: 'Standalone',
+        AOAG: 'Always on availability group',
+        DATAGUARD: 'Data Guard',
+        AOAG_CAPS: 'AOAG',
+        AOAG_FULL: 'ALWAYS ON AVAILABILITY GROUP'
     },
     WLF_TABS: {
         SAVINGS_CALCULATOR: 'Savings Calculator'
@@ -3857,6 +3870,129 @@ describe('ExploreSavingsUtils', () => {
             const rows = [makeRowData({ id: '1', isDetected: false }), makeRowData({ id: '2', isDetected: false })];
             const result = shouldAuthDialogOpenBulk(rows);
             expect(result).toHaveLength(2);
+        });
+    });
+
+    describe('getExploreSavingsDeploymentDisplay', () => {
+        const t = (key: string) => {
+            const labels: Record<string, string> = {
+                'databases.general.standalone': 'Standalone',
+                'databases.general.aoag': 'Always on availability group'
+            };
+            return labels[key] || key;
+        };
+
+        it('should show (AOAG) Standalone for mixed hosts, not plain AOAG label', () => {
+            const row = {
+                sqlServerInstances: [
+                    { sqlServerDeploymentType: 'Standalone' },
+                    {
+                        sqlServerDeploymentType: 'AOAG',
+                        aoagDetails: { baseDeploymentType: 'Standalone' }
+                    }
+                ]
+            };
+            expect(getExploreSavingsDeploymentDisplay(row, t)).toBe('(Always on availability group) Standalone');
+        });
+
+        it('should show Standalone for standalone-only hosts', () => {
+            const row = { sqlServerInstances: [{ sqlServerDeploymentType: 'Standalone' }] };
+            expect(getExploreSavingsDeploymentDisplay(row, t)).toBe('Standalone');
+        });
+    });
+
+    describe('hasExploreSavingsAoagDeployment', () => {
+        it('should detect AOAG from mixed-case serverInstallationMode variants', () => {
+            expect(hasExploreSavingsAoagDeployment({ serverInstallationMode: DATABASE_DEPLOYMENT_MODE.AOAG })).toBe(
+                true
+            );
+            expect(
+                hasExploreSavingsAoagDeployment({ serverInstallationMode: DATABASE_DEPLOYMENT_MODE.AOAG_FULL })
+            ).toBe(true);
+            expect(
+                hasExploreSavingsAoagDeployment({ serverInstallationMode: DATABASE_DEPLOYMENT_MODE.AOAG_CAPS })
+            ).toBe(true);
+        });
+
+        it('should detect AOAG from mixed Standalone + AOAG instances', () => {
+            const row = {
+                sqlServerInstances: [{ sqlServerDeploymentType: 'Standalone' }, { sqlServerDeploymentType: 'AOAG' }]
+            };
+            expect(hasExploreSavingsAoagDeployment(row)).toBe(true);
+        });
+
+        it('should detect AOAG from serverAllInstallationMode', () => {
+            expect(
+                hasExploreSavingsAoagDeployment({
+                    serverAllInstallationMode: ['Standalone', DATABASE_DEPLOYMENT_MODE.AOAG_FULL]
+                })
+            ).toBe(true);
+        });
+
+        it('should return false for standalone-only hosts', () => {
+            expect(
+                hasExploreSavingsAoagDeployment({
+                    sqlServerInstances: [{ sqlServerDeploymentType: 'Standalone' }],
+                    serverInstallationMode: 'Standalone'
+                })
+            ).toBe(false);
+        });
+    });
+
+    describe('isExploreSavingsAoagHost', () => {
+        it('should be true only for AOAG hosts with exactly two cluster nodes', () => {
+            const twoNodeRow = {
+                sqlServerInstances: [{ sqlServerDeploymentType: 'AOAG' }],
+                clusterNodeDetails: [{ ec2InstanceId: 'i-1' }, { ec2InstanceId: 'i-2' }]
+            };
+            const threeNodeRow = {
+                ...twoNodeRow,
+                clusterNodeDetails: [{ ec2InstanceId: 'i-1' }, { ec2InstanceId: 'i-2' }, { ec2InstanceId: 'i-3' }]
+            };
+
+            expect(isExploreSavingsAoagHost(twoNodeRow)).toBe(true);
+            expect(isExploreSavingsAoagHost(threeNodeRow)).toBe(false);
+        });
+
+        it('should treat ec2Details length as a two-node fallback', () => {
+            const row = {
+                sqlServerInstances: [{ sqlServerDeploymentType: 'AOAG' }],
+                ec2Details: [{ id: 'i-1' }, { id: 'i-2' }]
+            };
+            expect(isExploreSavingsAoagHost(row)).toBe(true);
+        });
+
+        it('should not treat ec2Details as two-node when clusterNodeDetails lists more nodes', () => {
+            const row = {
+                sqlServerInstances: [{ sqlServerDeploymentType: 'AOAG' }],
+                clusterNodeDetails: [{ ec2InstanceId: 'i-1' }, { ec2InstanceId: 'i-2' }, { ec2InstanceId: 'i-3' }],
+                ec2Details: [{ id: 'i-1' }, { id: 'i-2' }]
+            };
+            expect(isExploreSavingsAoagHost(row)).toBe(false);
+        });
+    });
+
+    describe('getExploreSavingsDeploymentModel', () => {
+        it('should return AOAG for mixed Standalone + AOAG hosts regardless of node count', () => {
+            const mixedHost = {
+                sqlServerInstances: [{ sqlServerDeploymentType: 'Standalone' }, { sqlServerDeploymentType: 'AOAG' }],
+                clusterNodeDetails: [{ ec2InstanceId: 'i-1' }, { ec2InstanceId: 'i-2' }, { ec2InstanceId: 'i-3' }]
+            };
+            expect(getExploreSavingsDeploymentModel(mixedHost)).toBe(SQL_DEPLOYMENT_MODE.AOAG);
+        });
+
+        it('should return AOAG from mixed-case serverInstallationMode when instances are absent', () => {
+            expect(
+                getExploreSavingsDeploymentModel({ serverInstallationMode: DATABASE_DEPLOYMENT_MODE.AOAG_FULL })
+            ).toBe(SQL_DEPLOYMENT_MODE.AOAG);
+        });
+
+        it('should return first instance type for non-AOAG hosts', () => {
+            expect(
+                getExploreSavingsDeploymentModel({
+                    sqlServerInstances: [{ sqlServerDeploymentType: 'Standalone' }]
+                })
+            ).toBe(SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE);
         });
     });
 

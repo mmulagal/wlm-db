@@ -5,6 +5,12 @@ import { Provider } from 'react-redux';
 import { configureStore, createSlice } from '@reduxjs/toolkit';
 import InstanceInformation from './InstanceInformation';
 
+const mockHasExploreSavingsAoagDeployment = vi.fn().mockReturnValue(false);
+
+vi.mock('../../ExploreSavingsUtils', () => ({
+    hasExploreSavingsAoagDeployment: (...args: any[]) => mockHasExploreSavingsAoagDeployment(...args)
+}));
+
 vi.mock('react-i18next', () => ({
     useTranslation: () => ({
         t: (key: string) =>
@@ -118,7 +124,10 @@ const makeStore = (overrides: any = {}) => {
 };
 
 describe('InstanceInformation', () => {
-    beforeEach(() => vi.clearAllMocks());
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockHasExploreSavingsAoagDeployment.mockReturnValue(false);
+    });
 
     it('renders Instance information heading', () => {
         const { container } = render(
@@ -319,6 +328,7 @@ describe('InstanceInformation', () => {
     });
 
     it('shows AOAG as NOT_OPTIMIZED finding', () => {
+        mockHasExploreSavingsAoagDeployment.mockReturnValue(true);
         const store = makeStore({
             selectedHostDetails: {
                 name: 'host1',

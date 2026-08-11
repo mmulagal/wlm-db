@@ -38,7 +38,12 @@ import {
 import { setTriggerBulkDataFetch } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import store from '../../../store/store';
 import { setMssqlInstancesData as setMssqlInstancesDataV2 } from '../../../store/workloadFactory/inventoryV2Slice';
-import { formatStorageSavingsRecommendedData, formatViewCalcData, setESInstanceData } from '../ExploreSavingsUtils';
+import {
+    formatStorageSavingsRecommendedData,
+    formatViewCalcData,
+    isExploreSavingsAoagHost,
+    setESInstanceData
+} from '../ExploreSavingsUtils';
 import { GENERAL } from '../../../utils/appConstants';
 import {
     EBS_PROTECTED_OPTIONS,
@@ -144,11 +149,7 @@ const SavingsCalculatorApi = () => {
                 uniqueHostRow(selectedInstanceId, selectedExCredId, selectedExRegionId)
         );
         if (selectedRow && selectedRow?.length > 0) {
-            if (
-                selectedRow[0]?.serverInstallationMode === GENERAL.AOAG &&
-                selectedRow[0]?.clusterNodeDetails &&
-                selectedRow[0]?.clusterNodeDetails?.length === 2
-            ) {
+            if (isExploreSavingsAoagHost(selectedRow[0])) {
                 const partnerInstanceRow = selectedRow[0]?.clusterNodeDetails?.filter(
                     (perRow: any) => perRow?.ec2InstanceId !== selectedInstanceId
                 );

@@ -12,7 +12,8 @@ import {
     handleAuthenticate,
     onClickESHost,
     shouldAuthDialogOpen,
-    shouldAuthDialogOpenBulk
+    shouldAuthDialogOpenBulk,
+    getExploreSavingsDeploymentDisplay
 } from '../ExploreSavingsUtils';
 import { DBType, FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
 import {
@@ -109,12 +110,14 @@ const ExploreSavingsTableV2 = () => {
                         instanceList.push(`${GENERAL.NOT_AVAILABLE} | ID: ${row?.id}`);
                     }
                 });
+                const serverAllInstallationModeText = getExploreSavingsDeploymentDisplay(perRow, t);
                 const rowData = {
                     ...perRow,
                     id: uniqueHostRow(perRow?.id, perRow?.credentialId, perRow?.regionId),
                     instanceListText: instanceList.join(','),
                     instanceNameListText: instanceNameList.join(', '),
-                    nameForSorting: perRow?.name?.toLowerCase()
+                    nameForSorting: perRow?.name?.toLowerCase(),
+                    serverAllInstallationModeText
                 };
                 result.push(rowData);
             });
@@ -330,12 +333,12 @@ const ExploreSavingsTableV2 = () => {
         },
         {
             Header: GENERAL.DB_HOST_DEPLOYMENT_MODEL,
-            accessor: 'serverInstallationMode',
+            accessor: 'serverAllInstallationModeText',
             id: '2',
             width: windowSize.width >= 1920 ? '14.18%' : '228px',
             filterOptions: getFilterOptions(
                 selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? updatedTableData : fsxWTableData,
-                'serverInstallationMode'
+                'serverAllInstallationModeText'
             ),
             renderCell: (cellData: string) => cellData || GENERAL.NOT_AVAILABLE
         },

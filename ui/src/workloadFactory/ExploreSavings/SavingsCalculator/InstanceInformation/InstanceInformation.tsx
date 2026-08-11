@@ -10,6 +10,7 @@ import {
     setOracleLicenseCostUpdating
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
+import { hasExploreSavingsAoagDeployment } from '../../ExploreSavingsUtils';
 import { getOracleColDefs, getInstanceColDefs, getInstanceClassName } from './InstanceInformationUtils';
 
 const InstanceInformation = ({ host }: { host?: any }) => {
@@ -160,11 +161,9 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                 }
                 return storageSavingsResponse && (storageSavingsResponse?.license?.existing?.finding || '-');
             })();
-            const findingsDbModel =
-                currentHost?.serverInstallationMode?.length &&
-                currentHost?.serverInstallationMode.includes(t('databases.general.always-on-availability-group'))
-                    ? FINDINGS.NOT_OPTIMIZED
-                    : FINDINGS.OPTIMIZED;
+            const findingsDbModel = hasExploreSavingsAoagDeployment(currentHost)
+                ? FINDINGS.NOT_OPTIMIZED
+                : FINDINGS.OPTIMIZED;
 
             setNoOfInstances(
                 isOracleEbs ? currentHost?.databaseInstanceDetails?.length || 0 : currentHost?.totalInstance || 0

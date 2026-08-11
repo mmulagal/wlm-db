@@ -25,6 +25,7 @@ import {
     GIB_IN_BYTE,
     READINESS_TYPES,
     REQUIRED_SQL_PERMISSIONS,
+    DATABASE_DEPLOYMENT_MODE,
     SAVINGS_CALC_MODE,
     SNAPSHOT_FREQUENCY,
     SQL_DEPLOYMENT_MODE,
@@ -322,6 +323,99 @@ export const onClickESHostOnPrem = (
     setESInstanceOnPremData(rowData, dispatch);
 };
 
+const isExploreSavingsAoagHostMode = (mode?: string): boolean => {
+    const normalized = mode?.toLowerCase().trim() ?? '';
+    return normalized === SQL_DEPLOYMENT_MODE.AOAG || normalized === DATABASE_DEPLOYMENT_MODE.AOAG.toLowerCase();
+};
+
+/** True when any discovered SQL instance on the host is AOAG (including mixed Standalone + AOAG). */
+export const hasExploreSavingsAoagDeployment = (rowData: any): boolean => {
+    if (
+        rowData?.sqlServerInstances?.some(
+            (item: any) => item?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
+        )
+    ) {
+        return true;
+    }
+    if (rowData?.serverAllInstallationMode?.some((mode: string) => isExploreSavingsAoagHostMode(mode))) {
+        return true;
+    }
+    return isExploreSavingsAoagHostMode(rowData?.serverInstallationMode);
+};
+
+/** AOAG hosts with a two-node cluster use dual-node TCO pricing in Explore Savings. */
+export const isExploreSavingsAoagHost = (rowData: any): boolean => {
+    if (!hasExploreSavingsAoagDeployment(rowData)) {
+        return false;
+    }
+    const clusterNodeCount = rowData?.clusterNodeDetails?.length;
+    if (clusterNodeCount != null && clusterNodeCount > 0) {
+        return clusterNodeCount === 2;
+    }
+    return rowData?.ec2Details?.length === 2;
+};
+
+/** Per-instance deployment label — mirrors Inventory instance/host AOAG formatting. */
+const formatExploreSavingsSqlDeployment = (val: any, t: TFunction): string => {
+    const deploymentType = val?.sqlServerDeploymentType || '';
+    if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE) {
+        return t('databases.general.failover-cluster-instances');
+    }
+    if (
+        deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
+        val?.aoagDetails?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.FAILOVER_CLUSTER_VALUE
+    ) {
+        return `(${t('databases.general.aoag')}) ${t('databases.general.failover-cluster-instances')}`;
+    }
+    if (
+        deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG &&
+        val?.aoagDetails?.baseDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE
+    ) {
+        return `(${t('databases.general.aoag')}) ${t('databases.general.standalone')}`;
+    }
+    if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG) {
+        return t('databases.general.aoag');
+    }
+    if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE) {
+        return t('databases.general.standalone');
+    }
+    if (deploymentType.toLowerCase() === SQL_DEPLOYMENT_MODE.HA) {
+        return t('databases.general.high-availability');
+    }
+    return deploymentType;
+};
+
+/** ES table deployment label; mixed Standalone + AOAG shows "(AOAG) Standalone" like Inventory. */
+export const getExploreSavingsDeploymentDisplay = (rowData: any, t: TFunction = i18next.t): string => {
+    const instances = rowData?.sqlServerInstances;
+    if (instances?.length) {
+        const aoagInstance = instances.find(
+            (val: any) => val?.sqlServerDeploymentType?.toLowerCase() === SQL_DEPLOYMENT_MODE.AOAG
+        );
+        if (aoagInstance) {
+            return formatExploreSavingsSqlDeployment(aoagInstance, t);
+        }
+        return formatExploreSavingsSqlDeployment(instances[0], t);
+    }
+    return rowData?.serverInstallationMode || '';
+};
+
+/** Deployment model passed to TCO APIs; AOAG wins over first-instance Standalone on mixed hosts. */
+export const getExploreSavingsDeploymentModel = (rowData: any): string => {
+    if (hasExploreSavingsAoagDeployment(rowData)) {
+        return SQL_DEPLOYMENT_MODE.AOAG;
+    }
+    const firstInstanceType = rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType;
+    if (firstInstanceType) {
+        return firstInstanceType.toLowerCase();
+    }
+    const hostMode = rowData?.serverInstallationMode;
+    if (hostMode) {
+        return hostMode.toLowerCase();
+    }
+    return SQL_DEPLOYMENT_MODE.SINGLE_INSTANCE_VALUE;
+};
+
 export const onClickESHost = (
     dispatch: any,
     rowData: any,
@@ -330,7 +424,7 @@ export const onClickESHost = (
     isBulk?: boolean,
     bulkServerName?: string
 ) => {
-    const deploymentModel = (() => rowData?.sqlServerInstances?.[0]?.sqlServerDeploymentType?.toLowerCase())();
+    const deploymentModel = getExploreSavingsDeploymentModel(rowData);
 
     if (rowData?.storageType === GENERAL.EBS) {
         if (navigate && isWorkloadFactory) {
@@ -569,8 +663,9 @@ export const handleDeleteOnPremTco = ({
 };
 
 export const setESInstanceData = (data: any, dispatch: any) => {
+    const esDeploymentModel = getExploreSavingsDeploymentModel(data);
     let serverInstallationMode = data?.serverInstallationMode;
-    if (data?.serverInstallationMode === GENERAL.AOAG) {
+    if (esDeploymentModel === SQL_DEPLOYMENT_MODE.AOAG) {
         serverInstallationMode = GENERAL.FAILOVER_CLUSTER_INSTANCES;
     }
 
