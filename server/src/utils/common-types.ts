@@ -670,6 +670,9 @@ interface StorageLayout {
 interface OSAssessment {
     'mpio-enabled': boolean;
     'mpio-iscsi-count': number;
+    'iscsi-targets-sessions'?: {
+        'iscsi-sessions-per-target'?: Record<string, number | string>;
+    };
     'ntfs-allocation-details': Array<{ Key?: string; Value?: string }>;
     'mpio-load-balance-policy': string;
     'ntfs-allocation-unit-size': number;

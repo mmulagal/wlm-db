@@ -86,15 +86,27 @@ const TEST_ISCSI_SESSIONS = `
 function Test-IscsiSessions {
     # Retrieve all active iSCSI sessions
     $iscsiSessions = Get-IscsiSession
+
+
+    $allTargetPortalAddresses = @(Get-IscsiTargetPortal -ErrorAction SilentlyContinue | ForEach-Object { $_.TargetPortalAddress } | Where-Object { -not [string]::IsNullOrEmpty($_) })
+
     if (-not $iscsiSessions) {
-        return 0
+        $sessionCountPerTargetPortalAddress = @{}
+        foreach ($portalAddress in $allTargetPortalAddresses) {
+            $sessionCountPerTargetPortalAddress[$portalAddress] = 0
+        }
+        return @{
+            HighestSessionCount = 0
+            SessionsPerTargetPortalAddress = $sessionCountPerTargetPortalAddress
+        }
     }
-    
+
     $highestSessionCount = 0
+    $sessionCountPerTargetPortalAddress = @{}
 
     # Initialize a hashtable to track details for each target
     $detailsByTargetAndInitiator = @{}
-    
+
     # Collect info for each initiator found
     foreach ($session in $iscsiSessions) {
         $targetAddress = $session.TargetNodeAddress
@@ -121,6 +133,13 @@ function Test-IscsiSessions {
             if([string]::IsNullOrEmpty($targetPortalAddress)) {
                 continue
             }
+
+            if ($sessionCountPerTargetPortalAddress.ContainsKey($targetPortalAddress)) {
+                $sessionCountPerTargetPortalAddress[$targetPortalAddress]++
+            } else {
+                $sessionCountPerTargetPortalAddress[$targetPortalAddress] = 1
+            }
+
             $targetPortalAddressCounts = $detailsByTargetAndInitiator[$key].TargetPortalAddressCounts
             if ($targetPortalAddressCounts.ContainsKey($targetPortalAddress)) {
                 $targetPortalAddressCounts[$targetPortalAddress]++
@@ -147,10 +166,20 @@ function Test-IscsiSessions {
                 $highestSessionCount = $highestSessionCountOnANode
             }
         }
-        
     }
-    return $highestSessionCount
 
+    # Include any configured portal that never accumulated an active/persistent session (e.g. a
+    # down or unconfigured interface) so it isn't missed by drift assessment.
+    foreach ($portalAddress in $allTargetPortalAddresses) {
+        if (-not $sessionCountPerTargetPortalAddress.ContainsKey($portalAddress)) {
+            $sessionCountPerTargetPortalAddress[$portalAddress] = 0
+        }
+    }
+
+    return @{
+        HighestSessionCount = $highestSessionCount
+        SessionsPerTargetPortalAddress = $sessionCountPerTargetPortalAddress
+    }
 }
 
 `;
@@ -347,8 +376,12 @@ const STORAGE_CONFIGURATION_ASSESSMENT = (
     ${TEST_ISCSI_SESSIONS}
     
     try{
-        $SessionCount = Test-IscsiSessions
+        $SessionSummary = Test-IscsiSessions
+        $SessionCount = $SessionSummary.HighestSessionCount
         $DriftAssessmentData['os']['mpio-iscsi-count'] = "$SessionCount"
+        $DriftAssessmentData['os']['iscsi-targets-sessions'] = @{
+            'iscsi-sessions-per-target' = $SessionSummary.SessionsPerTargetPortalAddress
+        }
         } catch {$DriftAssessmentData['errors']['iscsi-sessions'] = $_.Exception.Message}
     
     try{

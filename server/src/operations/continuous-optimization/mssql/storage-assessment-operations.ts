@@ -65,6 +65,10 @@ interface WadManagerMssqlAssessmentItemType extends MssqlAssessmentItemType {
     assessmentDetails?: DriftAssessmentDetail[];
 }
 
+interface IscsiSessionSummary {
+    'iscsi-sessions-per-target'?: Record<string, number | string>;
+}
+
 const logger = getLogger();
 
 interface DatabaseRecord {
@@ -851,6 +855,9 @@ async function calculateStorageDrift(
         });
     }
 
+    const iscsiSessionSummary = (os?.['iscsi-targets-sessions'] || {}) as IscsiSessionSummary;
+    const sessionCountPerTarget = iscsiSessionSummary['iscsi-sessions-per-target'] || {};
+
     Object.entries(os).forEach(([key, value]) => {
         const goldenData = osConfigData.find(data => data.parameter === key);
         if (!isEmpty(goldenData)) {
@@ -897,8 +904,32 @@ async function calculateStorageDrift(
                         objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
                     }));
                 value = Number(value);
+            } else if (key === 'mpio-iscsi-count') {
+                const sessionDetails = Object.entries(sessionCountPerTarget).map(([address, count]) => ({
+                    address,
+                    count: Number(count)
+                }));
+                assessmentDetails = sessionDetails;
+                objectsInViolation = sessionDetails
+                    .filter(
+                        ({ count }: { count: number }) => Number.isFinite(count) && count !== Number(goldenData.value)
+                    )
+                    .map(({ address, count }: { address: string; count: number }) => ({
+                        objectName: address,
+                        value: String(count),
+                        objectType: 'iscsi target',
+                        recommended: (goldenData.value ?? '').toString()
+                    }));
             }
-            const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
+
+            const status =
+                key === 'mpio-iscsi-count' && !isEmpty(assessmentDetails)
+                    ? objectsInViolation.length === 0
+                        ? AssessmentStatus.OPTIMIZED
+                        : AssessmentStatus.NOT_OPTIMIZED
+                    : goldenData?.value === value
+                    ? AssessmentStatus.OPTIMIZED
+                    : AssessmentStatus.NOT_OPTIMIZED;
             const entryRecommended = (goldenData.value ?? '').toString();
             // Boolean OS configs (mpio-enabled, mpio-iscsi-count) have no per-object detail loop above;
             // emit a single synthetic entry so consumers always get violationDetails when NOT_OPTIMIZED.
@@ -919,7 +950,10 @@ async function calculateStorageDrift(
             //   == 4 or > 5 → warning (close to or above recommendation)
             let dynamicSeverity: string | undefined;
             if (key === 'mpio-iscsi-count' && status === AssessmentStatus.NOT_OPTIMIZED) {
-                const sessionCount = Number(value);
+                const perTargetCounts = Object.values(sessionCountPerTarget)
+                    .map(count => Number(count))
+                    .filter(count => Number.isFinite(count));
+                const sessionCount = !isEmpty(perTargetCounts) ? Math.min(...perTargetCounts) : Number(value);
                 if (Number.isFinite(sessionCount)) {
                     dynamicSeverity = sessionCount < 4 ? 'critical' : 'warning';
                 }

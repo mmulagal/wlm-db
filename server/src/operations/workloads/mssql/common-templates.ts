@@ -749,8 +749,12 @@ const osConfigAssessmentTemplate = `
 
     # iSCSI session count
     try {
-        $SessionCount = Test-IscsiSessions
+        $SessionSummary = Test-IscsiSessions
+        $SessionCount = $SessionSummary.HighestSessionCount
         $DriftAssessmentData['os']['mpio-iscsi-count'] = "$SessionCount"
+        $DriftAssessmentData['os']['iscsi-targets-sessions'] = @{
+            'iscsi-sessions-per-target' = $SessionSummary.SessionsPerTargetPortalAddress
+        }
     } catch {
         $DriftAssessmentData['errors']['iscsi-sessions'] = $_.Exception.Message
     }
