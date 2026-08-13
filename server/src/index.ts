@@ -417,7 +417,7 @@ try {
 } catch (error) {
     logger.error('Failed to build and publish wlmdb.json to s3', error);
 }
-if (isActiveInstance()) {
+if (process.env.NODE_ENV !== 'demo' && process.env.NODE_ENV !== 'simulator' && isActiveInstance()) {
     startWadSubscriber().catch(error => {
         logger.error('Failed to start WAD Manager subscriber', error);
     });
