@@ -1,12 +1,15 @@
 import { connect, subscribeExternalQueue } from '../../lib/amqp/broker';
 import getLogger from '../../utils/logger';
+import { isDemoFlow } from '../../utils/utils';
 import {
     FixRequestMessage,
     ScanRequestMessage,
     TaskStatus,
     WAD_FIX_REQUESTS_QUEUE,
     WAD_SCAN_REQUESTS_QUEUE,
-    WAD_SERVICE_ID
+    WAD_SERVICE_ID,
+    WAD_SIM_FIX_REQUESTS_QUEUE,
+    WAD_SIM_SCAN_REQUESTS_QUEUE
 } from '../../utils/wad-consts';
 import { handleFixRequest, handleScanRequest } from './handlers';
 import { publishFixStatus, publishScanStatus } from './publishers';
@@ -89,13 +92,16 @@ async function onFixMessage(content: Buffer, ack: () => void, nack: () => void):
  * Reconnect and re-subscribe on broker restart is handled inside lib/amqp/broker.ts.
  */
 async function startWadSubscriber(): Promise<void> {
+    const scanQueue = isDemoFlow() ? WAD_SIM_SCAN_REQUESTS_QUEUE : WAD_SCAN_REQUESTS_QUEUE;
+    const fixQueue = isDemoFlow() ? WAD_SIM_FIX_REQUESTS_QUEUE : WAD_FIX_REQUESTS_QUEUE;
+
     await connect();
     logger.info('WAD: AMQP connected', { serviceId: WAD_SERVICE_ID });
 
-    await subscribeExternalQueue(WAD_SCAN_REQUESTS_QUEUE, onScanMessage);
-    await subscribeExternalQueue(WAD_FIX_REQUESTS_QUEUE, onFixMessage);
+    await subscribeExternalQueue(scanQueue, onScanMessage);
+    await subscribeExternalQueue(fixQueue, onFixMessage);
 
-    logger.info('WAD: subscriber ready', { scanQueue: WAD_SCAN_REQUESTS_QUEUE, fixQueue: WAD_FIX_REQUESTS_QUEUE });
+    logger.info('WAD: subscriber ready', { scanQueue, fixQueue });
 }
 
 export { startWadSubscriber };

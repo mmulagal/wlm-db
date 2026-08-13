@@ -6,12 +6,12 @@ import {
     ScanRequestMessage,
     ScanTrigger,
     TaskStatus,
-    WAD_FIX_REQUESTS_QUEUE,
     WAD_FIX_RESULTS_QUEUE,
     WAD_FIX_STATUS_QUEUE,
-    WAD_SCAN_REQUESTS_QUEUE,
     WAD_SCAN_RESULTS_QUEUE,
-    WAD_SCAN_STATUS_QUEUE
+    WAD_SCAN_STATUS_QUEUE,
+    WAD_SIM_FIX_REQUESTS_QUEUE,
+    WAD_SIM_SCAN_REQUESTS_QUEUE
 } from '../../../src/utils/wad-consts';
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
@@ -61,8 +61,8 @@ describe('subscriber', () => {
             const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
-            expect(getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)).toBeDefined();
-            expect(getSubscribedHandler('wad.wlmdb.fix.requests')).toBeDefined();
+            expect(getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE)).toBeDefined();
+            expect(getSubscribedHandler(WAD_SIM_FIX_REQUESTS_QUEUE)).toBeDefined();
         });
     });
 
@@ -71,7 +71,7 @@ describe('subscriber', () => {
             const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
-            const scanHandler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE);
+            const scanHandler = getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE);
             expect(scanHandler).toBeDefined();
 
             const req = makeScanRequest();
@@ -92,7 +92,7 @@ describe('subscriber', () => {
             const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
-            const scanHandler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE);
+            const scanHandler = getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE);
 
             const ack = vi.fn();
             const nack = vi.fn();
@@ -106,7 +106,7 @@ describe('subscriber', () => {
             const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
-            const scanHandler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE);
+            const scanHandler = getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE);
             const req = makeScanRequest({
                 isSimulated: true,
                 configurationIds: ['wlmdb-thin-provision']
@@ -128,7 +128,7 @@ describe('subscriber', () => {
             const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
-            const scanHandler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE);
+            const scanHandler = getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE);
             const req = makeScanRequest({
                 isSimulated: true,
                 configurationIds: undefined
@@ -162,7 +162,7 @@ describe('subscriber', () => {
             const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
-            const fixHandler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE);
+            const fixHandler = getSubscribedHandler(WAD_SIM_FIX_REQUESTS_QUEUE);
             const req = makeFixRequest({
                 isSimulated: true,
                 resourceIds: ['mssql-instance-sqlnode1', 'oracle-instance-ordbsdl']
@@ -183,7 +183,7 @@ describe('subscriber', () => {
             const { startWadSubscriber } = await import('../../../src/operations/wad-manager/subscriber');
             await startWadSubscriber();
 
-            const fixHandler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE);
+            const fixHandler = getSubscribedHandler(WAD_SIM_FIX_REQUESTS_QUEUE);
             const req = makeFixRequest({ isSimulated: true, resourceIds: ['volume-002'] });
             await fixHandler!(Buffer.from(JSON.stringify(req)), vi.fn(), vi.fn());
 

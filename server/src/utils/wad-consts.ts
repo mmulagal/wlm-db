@@ -187,6 +187,8 @@ const WAD_SERVICE_ID = process.env.WAD_SERVICE_ID || 'wlmdb';
 
 const WAD_SCAN_REQUESTS_QUEUE = `wad.${WAD_SERVICE_ID}.scan.requests`;
 const WAD_FIX_REQUESTS_QUEUE = `wad.${WAD_SERVICE_ID}.fix.requests`;
+const WAD_SIM_SCAN_REQUESTS_QUEUE = `wad.${WAD_SERVICE_ID}.sim.scan.requests`;
+const WAD_SIM_FIX_REQUESTS_QUEUE = `wad.${WAD_SERVICE_ID}.sim.fix.requests`;
 const WAD_SCAN_RESULTS_QUEUE = 'wad.scan.results';
 const WAD_SCAN_STATUS_QUEUE = 'wad.scan.status';
 const WAD_FIX_RESULTS_QUEUE = 'wad.fix.results';
@@ -213,6 +215,8 @@ export {
     WAD_SERVICE_ID,
     WAD_SCAN_REQUESTS_QUEUE,
     WAD_FIX_REQUESTS_QUEUE,
+    WAD_SIM_SCAN_REQUESTS_QUEUE,
+    WAD_SIM_FIX_REQUESTS_QUEUE,
     WAD_SCAN_RESULTS_QUEUE,
     WAD_SCAN_STATUS_QUEUE,
     WAD_FIX_RESULTS_QUEUE,

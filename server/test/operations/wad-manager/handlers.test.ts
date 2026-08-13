@@ -15,11 +15,11 @@ import {
     ScanRequestMessage,
     ScanTrigger,
     TaskStatus,
-    WAD_FIX_REQUESTS_QUEUE,
     WAD_FIX_STATUS_QUEUE,
-    WAD_SCAN_REQUESTS_QUEUE,
     WAD_SCAN_RESULTS_QUEUE,
-    WAD_SCAN_STATUS_QUEUE
+    WAD_SCAN_STATUS_QUEUE,
+    WAD_SIM_FIX_REQUESTS_QUEUE,
+    WAD_SIM_SCAN_REQUESTS_QUEUE
 } from '../../../src/utils/wad-consts';
 import { trackSubtask } from '../../../src/operations/cloud-manager/tracker-operations';
 
@@ -69,7 +69,7 @@ describe('handlers — tracker wiring', () => {
 
             await startWadSubscriber();
 
-            const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
+            const handler = getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE)!;
             await handler(
                 Buffer.from(JSON.stringify(makeScanRequest({ trackerParentTaskId: 'parent-001' }))),
                 vi.fn(),
@@ -91,7 +91,7 @@ describe('handlers — tracker wiring', () => {
         it('should not call tracker when trackerParentTaskId is absent', async () => {
             await startWadSubscriber();
 
-            const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
+            const handler = getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE)!;
             await handler(Buffer.from(JSON.stringify(makeScanRequest())), vi.fn(), vi.fn());
 
             // No trackerParentTaskId → no tracker HTTP calls; assert only via WAD status messages.
@@ -104,7 +104,7 @@ describe('handlers — tracker wiring', () => {
 
             await startWadSubscriber();
 
-            const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
+            const handler = getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE)!;
             await expect(
                 handler(
                     Buffer.from(
@@ -151,7 +151,7 @@ describe('handlers — tracker wiring', () => {
 
             await startWadSubscriber();
 
-            const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
+            const handler = getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE)!;
             await handler(
                 Buffer.from(JSON.stringify(makeScanRequest({ trackerParentTaskId: 'root-001' }))),
                 vi.fn(),
@@ -209,7 +209,7 @@ describe('handlers — tracker wiring', () => {
 
             await startWadSubscriber();
 
-            const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
+            const handler = getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE)!;
             await handler(
                 Buffer.from(JSON.stringify(makeScanRequest({ trackerParentTaskId: 'root-001' }))),
                 vi.fn(),
@@ -238,7 +238,7 @@ describe('handlers — tracker wiring', () => {
 
             await startWadSubscriber();
 
-            const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
+            const handler = getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE)!;
             await handler(
                 Buffer.from(
                     JSON.stringify(
@@ -317,7 +317,7 @@ describe('handlers — tracker wiring', () => {
 
             await startWadSubscriber();
 
-            const handler = getSubscribedHandler(WAD_SCAN_REQUESTS_QUEUE)!;
+            const handler = getSubscribedHandler(WAD_SIM_SCAN_REQUESTS_QUEUE)!;
             await handler(
                 Buffer.from(JSON.stringify(makeScanRequest({ credentialsIds: ['creds-success', 'creds-failure'] }))),
                 vi.fn(),
@@ -347,7 +347,7 @@ describe('handlers — tracker wiring', () => {
 
             await startWadSubscriber();
 
-            const handler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE)!;
+            const handler = getSubscribedHandler(WAD_SIM_FIX_REQUESTS_QUEUE)!;
             await handler(
                 Buffer.from(JSON.stringify(makeFixRequest({ trackerParentTaskId: 'root-002' }))),
                 vi.fn(),
@@ -383,7 +383,7 @@ describe('handlers — tracker wiring', () => {
 
                 await startWadSubscriber();
 
-                const handler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE)!;
+                const handler = getSubscribedHandler(WAD_SIM_FIX_REQUESTS_QUEUE)!;
                 await handler(
                     Buffer.from(JSON.stringify(makeFixRequest({ trackerParentTaskId: 'root-003' }))),
                     vi.fn(),
@@ -400,7 +400,7 @@ describe('handlers — tracker wiring', () => {
         it('should not call tracker when trackerParentTaskId is absent', async () => {
             await startWadSubscriber();
 
-            const handler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE)!;
+            const handler = getSubscribedHandler(WAD_SIM_FIX_REQUESTS_QUEUE)!;
             await handler(Buffer.from(JSON.stringify(makeFixRequest())), vi.fn(), vi.fn());
 
             const fixStatuses = getPublishedMessages(WAD_FIX_STATUS_QUEUE).map(b => JSON.parse(b.toString()));
@@ -412,7 +412,7 @@ describe('handlers — tracker wiring', () => {
 
             await startWadSubscriber();
 
-            const handler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE)!;
+            const handler = getSubscribedHandler(WAD_SIM_FIX_REQUESTS_QUEUE)!;
             await handler(
                 Buffer.from(
                     JSON.stringify(
@@ -446,7 +446,7 @@ describe('handlers — tracker wiring', () => {
         it('should complete the fix and publish WAD messages even when tracker HTTP calls fail', async () => {
             await startWadSubscriber();
 
-            const handler = getSubscribedHandler(WAD_FIX_REQUESTS_QUEUE)!;
+            const handler = getSubscribedHandler(WAD_SIM_FIX_REQUESTS_QUEUE)!;
             await expect(
                 handler(
                     Buffer.from(

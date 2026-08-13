@@ -40,6 +40,7 @@ async function buildAndPublishWlmdbDescriptor() {
         serviceId: SERVICE_ID,
         serviceType: 'FSX_FOR_ONTAP',
         scheduledScanCronJob: '0 2 * * *',
+        requiresSimIsolation: true,
         configurations
     };
 
