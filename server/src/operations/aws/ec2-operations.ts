@@ -319,17 +319,24 @@ async function getAmiList(
     let amis;
     if (customAmi) {
         const { providerAccountId } = await getRoleDetails(credentialsId);
-        amis = await getAmis(credentialsId, region, {
-            Owners: [providerAccountId],
-            Filters: [
-                { Name: 'state', Values: [ImageState.available] },
-                { Name: 'platform', Values: [PlatformValues.Windows.toLowerCase()] }
-            ]
-        });
-        if (!amis?.Images || isEmpty(amis?.Images)) {
-            logger.info(`AWS account ${providerAccountId} does not own any amis in region ${region}.`);
+        const commonFilters = [
+            { Name: 'state', Values: [ImageState.available] },
+            { Name: 'platform', Values: [PlatformValues.Windows.toLowerCase()] }
+        ];
+        const [ownedAmis, sharedAmis] = await Promise.all([
+            getAmis(credentialsId, region, { Owners: [providerAccountId], Filters: commonFilters }),
+            getAmis(credentialsId, region, {
+                ExecutableUsers: [providerAccountId],
+                Filters: [...commonFilters, { Name: 'is-public', Values: ['false'] }]
+            })
+        ]);
+        const allImages = [...(ownedAmis?.Images ?? []), ...(sharedAmis?.Images ?? [])];
+        const uniqueImages = [...new Map(allImages.map(img => [img.ImageId, img])).values()];
+        if (isEmpty(uniqueImages)) {
+            logger.info('No owned or shared AMIs found in region', { providerAccountId, region, credentialsId });
             return { amis: [] };
         }
+        amis = { ...ownedAmis, Images: uniqueImages };
     } else {
         const amiFilter =
             osType === 'windows'
@@ -370,33 +377,35 @@ async function getAmiList(
     }
     const excludedVersions = ['2023.11.15'];
     // https://jira.ngage.netapp.com/browse/DBS-1403 - Temp fix to exclude 2023.11.15 since FCI installations are failing
-    const response = amis.Images.filter(image => !excludedVersions.some(version => image.Name?.includes(version))).map(
-        ({
-            Name,
-            Description,
-            Architecture,
-            ImageId,
-            ImageLocation,
-            Public,
-            Platform,
-            PlatformDetails,
-            State,
-            Hypervisor,
-            BlockDeviceMappings: [{ Ebs: { VolumeSize: amiVolumeSize = EBS_DEFAULT_VOLUME_SIZE } = {} } = {}] = []
-        }) => ({
-            name: Name as string,
-            description: Description,
-            architecture: Architecture,
-            imageId: ImageId,
-            imageLocation: ImageLocation,
-            public: Public,
-            platform: Platform,
-            platformDetails: PlatformDetails,
-            state: State,
-            hypervisor: Hypervisor,
-            ebsVolumeSize: amiVolumeSize
-        })
-    );
+    const response = (amis.Images ?? [])
+        .filter(image => !excludedVersions.some(version => image.Name?.includes(version)))
+        .map(
+            ({
+                Name,
+                Description,
+                Architecture,
+                ImageId,
+                ImageLocation,
+                Public,
+                Platform,
+                PlatformDetails,
+                State,
+                Hypervisor,
+                BlockDeviceMappings: [{ Ebs: { VolumeSize: amiVolumeSize = EBS_DEFAULT_VOLUME_SIZE } = {} } = {}] = []
+            }) => ({
+                name: Name as string,
+                description: Description,
+                architecture: Architecture,
+                imageId: ImageId,
+                imageLocation: ImageLocation,
+                public: Public,
+                platform: Platform,
+                platformDetails: PlatformDetails,
+                state: State,
+                hypervisor: Hypervisor,
+                ebsVolumeSize: amiVolumeSize
+            })
+        );
     if (!customAmi) {
         response
             .sort(
