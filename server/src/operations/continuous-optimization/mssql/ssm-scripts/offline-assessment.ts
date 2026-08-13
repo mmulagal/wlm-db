@@ -29,7 +29,7 @@ import { INSTANCE_GUID, SERVER_DETAILS, ENTERPRISE_CHECK_QUERY } from '../../../
 /**
  * Version of the offline assessment script.
  */
-const OFFLINE_ASSESSMENT_SCRIPT_VERSION = '1.1.0';
+const OFFLINE_ASSESSMENT_SCRIPT_VERSION = '1.2.0';
 
 const MSSQL_ONE_TIME_WAD = `
 #=====================================================================================

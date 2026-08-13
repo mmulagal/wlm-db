@@ -369,7 +369,9 @@ async function fetchMssqlDriftAssessment(
                   assessmentDataMap[AssessmentCategories.STORAGE] as StorageAssessment,
                   isAoagDeployment && storedAoagDetails?.databaseRoles
                       ? { databaseRoles: storedAoagDetails.databaseRoles }
-                      : undefined
+                      : undefined,
+                  false,
+                  (resourceMetadata as Metadata)?.node1InstanceId ?? ''
               )
             : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([]),
         assessmentFlags.resilience

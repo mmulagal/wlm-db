@@ -638,7 +638,8 @@ async function calculateStorageDrift(
     databaseInstanceId: string,
     storageAssessmentData: StorageAssessment,
     aoagContext?: { databaseRoles: Array<{ databaseName: string; agName: string; replicaRole: string }> },
-    skipHeadroom: boolean = false
+    skipHeadroom: boolean = false,
+    ec2InstanceId: string = ''
 ) {
     logger.info('Calculating storage drift', { accountId, credentialsId, region, databaseHostId });
 
@@ -858,7 +859,69 @@ async function calculateStorageDrift(
     const iscsiSessionSummary = (os?.['iscsi-targets-sessions'] || {}) as IscsiSessionSummary;
     const sessionCountPerTarget = iscsiSessionSummary['iscsi-sessions-per-target'] || {};
 
+    // ── mpio-iscsi-count: handled separately — per-target iSCSI session assessment ──
+    const mpioIscsiGoldenData = osConfigData.find(d => d.parameter === 'mpio-iscsi-count');
+    if (mpioIscsiGoldenData && 'mpio-iscsi-count' in os) {
+        const rawValue = os['mpio-iscsi-count'];
+        const entryRecommended = (mpioIscsiGoldenData.value ?? '').toString();
+        const sessionDetails = Object.entries(sessionCountPerTarget).map(([address, count]) => ({
+            address,
+            count: Number(count)
+        }));
+        let iscsiViolations: GenericViolationResponseType[] = sessionDetails
+            .filter(({ count }) => Number.isFinite(count) && count !== Number(mpioIscsiGoldenData.value))
+            .map(({ address, count }) => ({
+                objectName: address,
+                value: String(count),
+                objectType: 'iscsi target',
+                recommended: entryRecommended
+            }));
+        const iscsiStatus = !isEmpty(sessionDetails)
+            ? iscsiViolations.length === 0
+                ? AssessmentStatus.OPTIMIZED
+                : AssessmentStatus.NOT_OPTIMIZED
+            : mpioIscsiGoldenData.value === rawValue
+            ? AssessmentStatus.OPTIMIZED
+            : AssessmentStatus.NOT_OPTIMIZED;
+        // Synthetic fallback when no per-target data is available but status is NOT_OPTIMIZED.
+        if (iscsiViolations.length === 0 && iscsiStatus === AssessmentStatus.NOT_OPTIMIZED) {
+            iscsiViolations = [
+                {
+                    objectName: 'mpio-iscsi-count',
+                    objectType: 'configuration',
+                    value: String(rawValue),
+                    recommended: entryRecommended
+                }
+            ];
+        }
+        // Dynamic severity: < 4 → critical, ≥ 4 but ≠ 5 → warning.
+        let dynamicSeverity: string | undefined;
+        if (iscsiStatus === AssessmentStatus.NOT_OPTIMIZED) {
+            const perTargetCounts = Object.values(sessionCountPerTarget)
+                .map(count => Number(count))
+                .filter(count => Number.isFinite(count));
+            const worstCount = !isEmpty(perTargetCounts) ? Math.min(...perTargetCounts) : Number(rawValue);
+            if (Number.isFinite(worstCount)) {
+                dynamicSeverity = worstCount < 4 ? 'critical' : 'warning';
+            }
+        }
+        const hasViolations = iscsiViolations.length > 0;
+        driftAssessmentData.push({
+            ...mpioIscsiGoldenData,
+            ...(dynamicSeverity !== undefined ? { severity: dynamicSeverity } : {}),
+            recommended: entryRecommended,
+            status: iscsiStatus,
+            objectsInViolation: hasViolations ? [ec2InstanceId] : [],
+            violationDetails: iscsiViolations,
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: hasViolations ? 1 : 0
+        });
+    }
+
     Object.entries(os).forEach(([key, value]) => {
+        if (key === 'mpio-iscsi-count') {
+            return; // handled above
+        }
         const goldenData = osConfigData.find(data => data.parameter === key);
         if (!isEmpty(goldenData)) {
             let assessmentDetails: unknown[] = [];
@@ -904,35 +967,12 @@ async function calculateStorageDrift(
                         objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
                     }));
                 value = Number(value);
-            } else if (key === 'mpio-iscsi-count') {
-                const sessionDetails = Object.entries(sessionCountPerTarget).map(([address, count]) => ({
-                    address,
-                    count: Number(count)
-                }));
-                assessmentDetails = sessionDetails;
-                objectsInViolation = sessionDetails
-                    .filter(
-                        ({ count }: { count: number }) => Number.isFinite(count) && count !== Number(goldenData.value)
-                    )
-                    .map(({ address, count }: { address: string; count: number }) => ({
-                        objectName: address,
-                        value: String(count),
-                        objectType: 'iscsi target',
-                        recommended: (goldenData.value ?? '').toString()
-                    }));
             }
 
-            const status =
-                key === 'mpio-iscsi-count' && !isEmpty(assessmentDetails)
-                    ? objectsInViolation.length === 0
-                        ? AssessmentStatus.OPTIMIZED
-                        : AssessmentStatus.NOT_OPTIMIZED
-                    : goldenData?.value === value
-                    ? AssessmentStatus.OPTIMIZED
-                    : AssessmentStatus.NOT_OPTIMIZED;
+            const status = goldenData?.value === value ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
             const entryRecommended = (goldenData.value ?? '').toString();
-            // Boolean OS configs (mpio-enabled, mpio-iscsi-count) have no per-object detail loop above;
-            // emit a single synthetic entry so consumers always get violationDetails when NOT_OPTIMIZED.
+            // Boolean OS configs have no per-object detail loop above; emit a single synthetic entry
+            // so consumers always get violationDetails when NOT_OPTIMIZED.
             if (objectsInViolation.length === 0 && status === AssessmentStatus.NOT_OPTIMIZED) {
                 const toEnabledDisabled = (v: unknown) => (v === true || v === 'true' ? 'Enabled' : 'Disabled');
                 const isBoolean = typeof goldenData.value === 'boolean';
@@ -945,28 +985,15 @@ async function calculateStorageDrift(
                     }
                 ];
             }
-            // Dynamic severity for mpio-iscsi-count:
-            //   < 4  → critical (significant shortfall)
-            //   == 4 or > 5 → warning (close to or above recommendation)
-            let dynamicSeverity: string | undefined;
-            if (key === 'mpio-iscsi-count' && status === AssessmentStatus.NOT_OPTIMIZED) {
-                const perTargetCounts = Object.values(sessionCountPerTarget)
-                    .map(count => Number(count))
-                    .filter(count => Number.isFinite(count));
-                const sessionCount = !isEmpty(perTargetCounts) ? Math.min(...perTargetCounts) : Number(value);
-                if (Number.isFinite(sessionCount)) {
-                    dynamicSeverity = sessionCount < 4 ? 'critical' : 'warning';
-                }
-            }
+            const hasViolations = objectsInViolation.length > 0;
             driftAssessmentData.push({
                 ...goldenData,
-                ...(dynamicSeverity !== undefined ? { severity: dynamicSeverity } : {}),
                 recommended: entryRecommended,
                 status,
                 objectsInViolation: objectsInViolation.map(v => v.objectName),
                 violationDetails: objectsInViolation,
                 totalObjectsAssessed: assessmentDetails.length || 1,
-                totalObjectsInViolation: objectsInViolation.length
+                totalObjectsInViolation: hasViolations ? objectsInViolation.length : 0
             });
         }
     });

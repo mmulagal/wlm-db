@@ -670,7 +670,10 @@ async function fetchMssqlOfflineAssessment(
                   '',
                   resourceId,
                   databaseInstanceId,
-                  instanceLevelAssessment as unknown as StorageAssessment
+                  instanceLevelAssessment as unknown as StorageAssessment,
+                  undefined,
+                  false,
+                  ec2InstanceId ?? ''
               )
             : Promise.resolve<(AssessmentItemType | AssessmentErrorItemType)[]>([]),
         (deploymentType === 'FCI' || deploymentType === 'AOAG') && hasHAData
