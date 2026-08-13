@@ -1,5 +1,4 @@
 import Pyroscope from '@pyroscope/nodejs';
-import fp from 'fastify-plugin';
 import type { FastifyPluginAsync } from 'fastify';
 import { PYROSCOPE_SERVER_ADDRESS, WLMDB } from '../utils/consts';
 import getLogger from '../utils/logger';
@@ -42,4 +41,4 @@ const pyroscopePlugin: FastifyPluginAsync = async fastify => {
     }
 };
 
-export default fp(pyroscopePlugin, { name: 'pyroscope' });
+export default pyroscopePlugin;
