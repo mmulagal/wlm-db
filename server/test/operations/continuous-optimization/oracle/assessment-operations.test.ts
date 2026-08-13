@@ -420,7 +420,7 @@ describe('Oracle assessment operations', () => {
         expect(nfsMountOptions.severity).toBe('warning');
         expect(nfsMountOptions.totalObjectsAssessed).toBeGreaterThanOrEqual(0);
         expect(nfsMountOptions.totalObjectsInViolation).toBeGreaterThanOrEqual(0);
-        expect((nfsMountOptions as Record<string, unknown>).resourceType).toBe('NFS Mounts');
+        expect((nfsMountOptions as Record<string, unknown>).resourceType).toBe('NFS Mount');
 
         const kernelParams = osAssessment?.find(
             item => item.id === 'kernel-parameters'
@@ -456,7 +456,7 @@ describe('Oracle assessment operations', () => {
         expect(nfsCachingOptions.severity).toBe('warning');
         expect(nfsCachingOptions.totalObjectsAssessed).toBe(3);
         expect(nfsCachingOptions.totalObjectsInViolation).toBe(3);
-        expect((nfsCachingOptions as Record<string, unknown>).resourceType).toBe('NFS Mounts');
+        expect((nfsCachingOptions as Record<string, unknown>).resourceType).toBe('NFS Mount');
     });
     it('should return nfs/iscsi drift assessment data', async () => {
         const assessmentData = await fetchOracleDriftAssessment(

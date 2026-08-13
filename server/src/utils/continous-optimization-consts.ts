@@ -521,7 +521,7 @@ const ASSESSMENT_RESOURCE_TYPE = {
     // block-device-space-management whose offending objects span both sources.
     VOLUME_OR_LUN: 'Volume/Block device',
     WINDOWS_CLUSTER: 'Windows Cluster',
-    NFS_MOUNTS: 'NFS Mounts'
+    NFS_MOUNTS: 'NFS Mount'
 };
 
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
