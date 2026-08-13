@@ -539,7 +539,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         subType: 'configuration',
         focusWidgetName: 'Operating system',
         severity: SEVERITY.WARNING,
-        resourceType: 'EC2 Instance',
+        resourceType: ASSESSMENT_RESOURCE_TYPE.NFS_MOUNTS,
         recommendation:
             'Workload Factory recommends using optimized NFS mount options for database files: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144,nointr. This configuration is designed to improve database performance and resilience, particularly in high-throughput environments.',
         categories: [
@@ -559,7 +559,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         subType: 'configuration',
         focusWidgetName: 'Operating system',
         severity: SEVERITY.WARNING,
-        resourceType: 'EC2 Instance',
+        resourceType: ASSESSMENT_RESOURCE_TYPE.NFS_MOUNTS,
         recommendation:
             'Workload Factory recommends using optimized NFS mount options for ADR home: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144 ',
         categories: [
@@ -595,7 +595,7 @@ const ORACLE_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         subType: 'configuration',
         focusWidgetName: 'Operating system',
         severity: SEVERITY.WARNING,
-        resourceType: 'EC2 Instance',
+        resourceType: ASSESSMENT_RESOURCE_TYPE.NFS_MOUNTS,
         recommendation:
             'Workload Factory recommends avoiding the use of the following mount options in standalone deployments to prevent disabling cache: "cio", "actimeo=0", "noac", and "forcedirectio".',
         categories: [AwsWellArchitecturedPillars.RELIABILITY, AwsWellArchitecturedPillars.PERFORMANCE_EFFICIENCY],

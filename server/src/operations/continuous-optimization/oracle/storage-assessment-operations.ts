@@ -685,7 +685,14 @@ function getNfsOSConfigDrift(
                         );
                     }
                 });
-                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
+                osDrift.push(
+                    createAssessment(
+                        config,
+                        dbMountsResult.mounts.length,
+                        violationDetails.map(d => d.objectName),
+                        violationDetails
+                    )
+                );
                 break;
             }
             case 'nfs-caching-options': {
@@ -722,7 +729,14 @@ function getNfsOSConfigDrift(
                         );
                     }
                 });
-                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
+                osDrift.push(
+                    createAssessment(
+                        config,
+                        dbMountsResult.mounts.length,
+                        violationDetails.map(d => d.objectName),
+                        violationDetails
+                    )
+                );
                 break;
             }
             case 'nfs-mount-options-adrhome': {
@@ -781,7 +795,14 @@ function getNfsOSConfigDrift(
                         );
                     }
                 }
-                osDrift.push(createAssessment(config, 1, [ec2InstanceId], violationDetails));
+                osDrift.push(
+                    createAssessment(
+                        config,
+                        1,
+                        violationDetails.map(d => d.objectName),
+                        violationDetails
+                    )
+                );
                 break;
             }
             case 'nfsv4-domain-name': {

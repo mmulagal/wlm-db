@@ -520,7 +520,8 @@ const ASSESSMENT_RESOURCE_TYPE = {
     // Combined LUN+Volume resource type used by aggregate configs like
     // block-device-space-management whose offending objects span both sources.
     VOLUME_OR_LUN: 'Volume/Block device',
-    WINDOWS_CLUSTER: 'Windows Cluster'
+    WINDOWS_CLUSTER: 'Windows Cluster',
+    NFS_MOUNTS: 'NFS Mounts'
 };
 
 const VALID_MPIO_LB_POLICIES = ['RR', 'RRWS'];
