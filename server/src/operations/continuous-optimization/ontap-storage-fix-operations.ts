@@ -3,6 +3,7 @@ import throat from 'throat';
 import { callOntapAndPollJob } from '../../lib/ontap/ontap-gateway';
 import getLogger from '../../utils/logger';
 import {
+    AssessmentStatus,
     COMBINED_OPTIMIZE_DESCRIPTORS,
     LUN,
     LUN_PATH_PATTERN,
@@ -11,6 +12,9 @@ import {
     QUERY_PARAMS,
     isCombinedOptimizeConfig
 } from '../../utils/continous-optimization-consts';
+import { FixResourceResult, WAD_SERVICE_ID } from '../../utils/wad-consts';
+import { MSSQL_GOLDEN_CONFIG } from './mssql/golden-config';
+import ORACLE_GOLDEN_CONFIG from './oracle/golden-config';
 
 const logger = getLogger();
 
@@ -34,12 +38,39 @@ interface OntapStorageFixParams {
     configurationId: string;
     resourceIds: string[];
     value?: string;
+    workload?: string;
+    isSimulated?: boolean;
 }
 
-interface OntapStorageFixResult {
-    resourceId: string;
-    success: boolean;
-    failureReason?: string;
+function populateFixResultMetadata(
+    resourceResults: FixResourceResult[],
+    configurationId: string,
+    workload: string
+): FixResourceResult[] {
+    const goldenConfig =
+        workload === 'mssql' ? MSSQL_GOLDEN_CONFIG : workload === 'oracle' ? ORACLE_GOLDEN_CONFIG : undefined;
+    const configuration = goldenConfig?.find(({ id }) => id === configurationId.replace(`${WAD_SERVICE_ID}-`, ''));
+    if (!configuration) {
+        return resourceResults;
+    }
+
+    const isThinProvision = configuration.id === OptimizeStorageConfigs.THIN_PROVISIONING;
+
+    const components = (
+        configuration.components ?? [
+            { parameter: configuration.id, value: configuration.value ?? configuration.recommended ?? '' }
+        ]
+    ).map(({ parameter, name, value }) => {
+        const optimizedValue = isThinProvision ? 'enabled' : String(value);
+        return {
+            parameter: name ?? parameter,
+            current: optimizedValue,
+            recommended: optimizedValue,
+            status: AssessmentStatus.OPTIMIZED
+        };
+    });
+
+    return resourceResults.map(result => (result.success ? { ...result, metadata: { components } } : result));
 }
 
 function buildOntapFixSearchParams(
@@ -69,16 +100,37 @@ function buildOntapFixSearchParams(
     return { vserver: svmName, [queryParamKey]: resourceIds.join(',') };
 }
 
-async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<OntapStorageFixResult[]> {
-    const { accountId, credentialsId, fsxId, region, svmName, configurationId, resourceIds, value = '' } = params;
+async function applyOntapStorageFix(params: OntapStorageFixParams) {
+    const {
+        accountId,
+        credentialsId,
+        fsxId,
+        region,
+        svmName,
+        configurationId,
+        resourceIds,
+        value = '',
+        workload,
+        isSimulated
+    } = params;
     const normalizedFsxId = fsxId.split(',')[0].trim();
 
     logger.info('Applying ONTAP storage fix via gateway', {
         accountId,
         fsxId: normalizedFsxId,
         configurationId,
-        resourceCount: resourceIds.length
+        resourceCount: resourceIds.length,
+        workload,
+        isSimulated
     });
+
+    if (isSimulated) {
+        return populateFixResultMetadata(
+            map(resourceIds, id => ({ resourceId: id, success: true })),
+            configurationId,
+            workload as string
+        );
+    }
 
     const configs = isCombinedOptimizeConfig(configurationId)
         ? COMBINED_OPTIMIZE_DESCRIPTORS[configurationId].components
@@ -119,7 +171,11 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<Onta
                         query: buildOntapFixSearchParams(type, svmName, ids, configKey, value, usesRestFix),
                         body
                     });
-                    return map(ids, id => ({ resourceId: id, success: true }));
+                    return populateFixResultMetadata(
+                        map(ids, id => ({ resourceId: id, success: true })),
+                        configurationId,
+                        workload as string
+                    );
                 } catch (err) {
                     const failureReason = err instanceof Error ? err.message : String(err);
                     logger.error('ONTAP PATCH failed', {

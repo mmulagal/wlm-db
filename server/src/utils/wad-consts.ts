@@ -97,6 +97,9 @@ interface FixResourceResult {
     resourceId: string;
     success: boolean;
     failureReason?: string;
+    metadata?: {
+        components: WadResourceComponent[];
+    };
 }
 
 // ─── Message types ────────────────────────────────────────────────────────────
