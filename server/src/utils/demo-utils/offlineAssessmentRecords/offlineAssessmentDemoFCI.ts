@@ -365,6 +365,12 @@ export const offlineAssessmentDemoFCI = {
                         'mpio-iscsi-count': '5',
                         'mpio-enabled': true,
                         'mpio-timeout': '60',
+                        'iscsi-targets-sessions': {
+                            'iscsi-sessions-per-target': {
+                                '198.19.255.101': 5,
+                                '198.19.255.102': 5
+                            }
+                        },
                         'ntfs-allocation-details': [
                             {
                                 DriveLetter: 'S:',

@@ -4085,7 +4085,7 @@ function buildOracleDemoAwsBackupAssessmentSeed(fsxId: string) {
 const ASSESMENT_CONFIG_DATA = {
     os: {
         'mpio-enabled': false,
-        'mpio-iscsi-count': '50',
+        'mpio-iscsi-count': '3',
         'ntfs-allocation-details': [
             { DriveLetter: 'S', BlockSize: 6553 },
             { DriveLetter: 'T', BlockSize: 6553 },
@@ -4110,7 +4110,13 @@ const ASSESMENT_CONFIG_DATA = {
                 policy: 'LB'
             }
         ],
-        'mpio-timeout': 40
+        'mpio-timeout': 40,
+        'iscsi-targets-sessions': {
+            'iscsi-sessions-per-target': {
+                '198.19.255.101': 3,
+                '198.19.255.102': 3
+            }
+        }
     },
     luns: [
         {
@@ -6157,7 +6163,13 @@ const MSSQL_ASSESMENT_CONFIG_DATA = {
                 policy: 'RRWS',
                 accessPath: 'S:\\'
             }
-        ]
+        ],
+        'iscsi-targets-sessions': {
+            'iscsi-sessions-per-target': {
+                '198.19.255.101': 5,
+                '198.19.255.102': 5
+            }
+        }
     },
     luns: [
         {
