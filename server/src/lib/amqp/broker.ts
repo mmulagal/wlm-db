@@ -71,6 +71,34 @@ function wrapHandler(queue: string, ch: Channel, handler: MessageHandler) {
     };
 }
 
+async function teardown() {
+    const { channel, connection } = state;
+    state.channel = null;
+    state.connection = null;
+
+    if (channel) {
+        channel.removeAllListeners('error');
+        channel.removeAllListeners('close');
+        try {
+            logger.debug('AMQP: teardown — closing channel');
+            await channel.close();
+        } catch (err) {
+            logger.debug('AMQP: teardown — channel close failed', { err });
+        }
+    }
+
+    if (connection) {
+        connection.removeAllListeners('error');
+        connection.removeAllListeners('close');
+        try {
+            logger.debug('AMQP: teardown — closing connection');
+            await connection.close();
+        } catch (err) {
+            logger.debug('AMQP: teardown — connection close failed', { err });
+        }
+    }
+}
+
 /**
  * Guards against concurrent reconnect attempts and no-ops if the broker is
  * shutting down. On each attempt: opens a connection, creates a channel with
@@ -91,6 +119,9 @@ async function connectLoop(): Promise<void> {
     try {
         while (!state.shuttingDown) {
             try {
+                // eslint-disable-next-line no-await-in-loop
+                await teardown();
+
                 logger.info('AMQP: connecting', { host: AMQP_HOST, port: AMQP_PORT });
                 // eslint-disable-next-line no-await-in-loop
                 const conn = await amqpConnect(buildAmqpUrl(), { clientProperties: { connection_name: 'wlm-db' } });
