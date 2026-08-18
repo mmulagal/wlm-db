@@ -638,6 +638,7 @@ const MSSQL = 'mssql';
 const ORACLE = 'oracle';
 const PGSQL = 'pgsql';
 const WINDOWS = 'windows';
+const LINUX = 'linux';
 
 const ARTIFACT_BUCKET_NAME = process.env.ARTIFACT_BUCKET_NAME || config.get<string>('bucket.artifacts');
 const SIGNED_TEMPLATES_BUCKET_NAME = process.env.TEMPLATE_BUCKET_NAME || config.get<string>('bucket.signedTemplates');
@@ -1986,11 +1987,6 @@ enum AI_LIMITER_MODE {
     USER_MODEL = 'USER_MODEL'
 }
 
-enum TAGGING_SERVICE_API_TYPES {
-    FSXS = 'fsxs',
-    EC2S = 'ec2s'
-}
-
 interface TaggingServiceCacheParams {
     useCache?: boolean;
 }
@@ -2343,6 +2339,7 @@ export {
     CLOUDFORMATION_TO_TERRAFORM_PGSQL_VARIABLE_MAPPING,
     PGSQL,
     WINDOWS,
+    LINUX,
     GERERIC_JOB_ERROR_MESSAGE,
     STORAGE_ASSESSMENT_JOB_TRIGGER_TYPES,
     ASSESSMENT_MAPPED_ONTAP_SSM_EXECUTION_TIMEOUT,
@@ -2400,7 +2397,6 @@ export {
     DATABASE_LABEL,
     SUPPORTED_EBS_VOLUME_TYPES,
     AI_LIMITER_MODE,
-    TAGGING_SERVICE_API_TYPES,
     TaggingServiceCacheParams,
     SECRET_ARN_CACHE_TTL
 };

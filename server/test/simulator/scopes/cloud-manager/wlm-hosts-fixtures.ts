@@ -1,5 +1,4 @@
 import { createHash } from 'crypto';
-import { FsxItem, FsxVolume } from '../../../../src/operations/cloud-manager/tagging-service-operations';
 import { registerDefaultProxyGetResponse } from './proxy-forwarder-scope';
 
 // Reuse the general-purpose "canonical demo FSx id" already used by other FSx-related mocks
@@ -19,7 +18,7 @@ interface FsxnHost {
 
 // The 13 FSXN-backed hosts from `demoInventoryData.ts` (8 MSSQL, 5 Oracle) - every host whose
 // `storage` entries use `type: 'FSXN'`. Adding a row here automatically gets ONTAP fixtures via
-// buildFsxItemForRegion()/ALL_ONTAP_VOLUME_RECORDS/ALL_ONTAP_LUN_RECORDS below.
+// ALL_ONTAP_VOLUME_RECORDS/ALL_ONTAP_LUN_RECORDS below.
 const FSXN_HOSTS: FsxnHost[] = [
     {
         ec2InstanceId: 'i-b0a57935835ddfce4',
@@ -164,40 +163,115 @@ function buildInstanceVolumes(): InstanceVolume[] {
 
 const INSTANCE_VOLUMES = buildInstanceVolumes();
 
-function buildFsxItemForRegion(region: string): FsxItem {
-    const hostByInstanceId = new Map(FSXN_HOSTS.map(host => [host.ec2InstanceId, host]));
-    const volumes: FsxVolume[] = INSTANCE_VOLUMES.map(
-        ({ ec2InstanceId, fsxVolumeId, volumeUuid, volumeName, lunUuid, lunName }) => {
-            const host = hostByInstanceId.get(ec2InstanceId)!;
-            const ec2 = [
-                {
-                    instanceId: ec2InstanceId,
-                    region,
-                    vpcId: host.vpcId,
-                    operatingSystem: host.operatingSystem,
-                    workloads: [
-                        {
-                            workload: host.workloadType === 'mssql' ? 'SQL Server' : 'Oracle',
-                            category: 'Database',
-                            confidence: 92
-                        }
-                    ]
-                }
-            ];
-            return {
-                id: fsxVolumeId,
-                fsxVolumeId,
-                volumeUuid,
-                volumeName,
-                luns: [{ id: lunUuid, lunUuid, lunName, ec2 }]
-            };
-        }
-    );
-    return { id: FILE_SYSTEM_ID, fileSystemId: FILE_SYSTEM_ID, region, volumes };
-}
-
 function osTypeFor(ec2InstanceId: string): string {
     return FSXN_HOSTS.find(h => h.ec2InstanceId === ec2InstanceId)?.workloadType === 'mssql' ? 'windows' : 'linux';
+}
+
+// wlm-hosts GraphQL (`Ec2StorageOracleMssql`) response `data`.
+function buildEc2StorageGraphDataForRegion(region: string) {
+    const ec2Instances = FSXN_HOSTS.map(({ ec2InstanceId, vpcId, workloadType, operatingSystem }) => ({
+        instanceId: ec2InstanceId,
+        region,
+        vpcId,
+        platform: operatingSystem === 'windows' ? 'windows' : null,
+        workloads: [
+            {
+                workload: workloadType === 'mssql' ? 'Microsoft SQL Server' : 'Oracle Database',
+                category: 'Database',
+                confidence: 92,
+                isPrimary: true
+            }
+        ]
+    }));
+
+    const fsxVolumes = INSTANCE_VOLUMES.map(({ fsxVolumeId, volumeUuid, volumeName }) => ({
+        region,
+        volumeId: fsxVolumeId,
+        fileSystemId: FILE_SYSTEM_ID,
+        ontapUuid: volumeUuid,
+        name: volumeName,
+        lifecycle: 'CREATED',
+        storageVirtualMachineId: 'svm-0363a8c7d5524c67f',
+        ontapConfiguration: { sizeInMegabytes: 1024 },
+        workloads: []
+    }));
+
+    const ontapVolumes = INSTANCE_VOLUMES.map(({ volumeUuid, volumeName }) => ({
+        region,
+        uuid: volumeUuid,
+        name: volumeName,
+        fileSystemId: FILE_SYSTEM_ID,
+        svmName: 'wlmdb_svm',
+        state: 'online',
+        size: 21223178240,
+        workloads: []
+    }));
+
+    const ontapLuns = INSTANCE_VOLUMES.map(({ ec2InstanceId, lunUuid, lunName, volumeName }) => ({
+        region,
+        uuid: lunUuid,
+        name: lunName,
+        fileSystemId: FILE_SYSTEM_ID,
+        volumeName,
+        osType: osTypeFor(ec2InstanceId),
+        workloads: []
+    }));
+
+    const relationships = INSTANCE_VOLUMES.map(({ ec2InstanceId, lunUuid }) => ({
+        computeId: ec2InstanceId,
+        storageId: lunUuid,
+        storageType: 'ontap_luns'
+    }));
+
+    return { relationships, ec2Instances, fsxVolumes, ontapVolumes, ontapLuns };
+}
+
+function buildEc2DatabaseInstancesForRegion(region: string) {
+    const ec2Instances = FSXN_HOSTS.map(({ ec2InstanceId, vpcId, workloadType, operatingSystem }) => ({
+        instanceId: ec2InstanceId,
+        instanceType: 'm5.xlarge',
+        platform: operatingSystem === 'windows' ? 'windows' : null,
+        platformDetails: workloadType === 'mssql' ? 'Windows with SQL Server Standard' : 'Linux/UNIX',
+        usageOperation: workloadType === 'mssql' ? 'RunInstances:0006' : 'RunInstances',
+        privateIpAddress: '10.0.0.10',
+        privateDnsName: `ip-10-0-0-10.${region}.compute.internal`,
+        vpcId,
+        subnetId: 'subnet-1234567890',
+        rootDeviceName: '/dev/sda1',
+        rootDeviceType: 'ebs',
+        placement: { availabilityZone: `${region}a`, tenancy: 'default' },
+        iamInstanceProfile: { arn: 'arn:aws:iam::123456789012:instance-profile/wlmdb', id: 'AIPAEXAMPLE' },
+        blockDeviceMappings: [{ deviceName: '/dev/sda1', ebs: { volumeId: 'vol-1234567890' } }],
+        workloads: [
+            {
+                workload: workloadType === 'mssql' ? 'Microsoft SQL Server' : 'Oracle Database',
+                category: 'Database',
+                confidence: 92,
+                reasoning: 'Simulator fixture',
+                isPrimary: true
+            }
+        ]
+    }));
+
+    ec2Instances.push({
+        instanceId: 'i-non-database',
+        instanceType: 'm5.large',
+        platform: null,
+        platformDetails: 'Linux/UNIX',
+        usageOperation: 'RunInstances',
+        privateIpAddress: '10.0.0.11',
+        privateDnsName: `ip-10-0-0-11.${region}.compute.internal`,
+        vpcId: 'vpc-84b3afe6',
+        subnetId: 'subnet-1234567890',
+        rootDeviceName: '/dev/sda1',
+        rootDeviceType: 'ebs',
+        placement: { availabilityZone: `${region}a`, tenancy: 'default' },
+        iamInstanceProfile: { arn: 'arn:aws:iam::123456789012:instance-profile/wlmdb', id: 'AIPAEXAMPLE' },
+        blockDeviceMappings: [{ deviceName: '/dev/sda1', ebs: { volumeId: 'vol-0987654321' } }],
+        workloads: []
+    });
+
+    return { ec2Instances };
 }
 
 // Shaped for the ONTAP REST mock: field selections match VOLUME_FIELDS/LUN_FIELDS in
@@ -277,4 +351,10 @@ function registerOntapDefaults(): void {
 
 registerOntapDefaults();
 
-export { FILE_SYSTEM_ID, buildFsxItemForRegion, ALL_ONTAP_VOLUME_RECORDS, ALL_ONTAP_LUN_RECORDS };
+export {
+    FILE_SYSTEM_ID,
+    buildEc2StorageGraphDataForRegion,
+    buildEc2DatabaseInstancesForRegion,
+    ALL_ONTAP_VOLUME_RECORDS,
+    ALL_ONTAP_LUN_RECORDS
+};

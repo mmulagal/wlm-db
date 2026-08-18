@@ -191,7 +191,7 @@ function getAttachedUuids(ec2: Ec2WithStorage, fileSystemId: string) {
     const volumes = ec2.fsxs.find(fsx => fsx.fileSystemId === fileSystemId)?.volumes ?? [];
     return {
         volumeUuids: new Set(volumes.map(v => v.volumeUuid)),
-        lunUuids: new Set(volumes.flatMap(({ luns }) => luns.map(l => l.lunUuid)))
+        lunUuids: new Set(volumes.flatMap(({ luns = [] }) => luns.map(l => l.lunUuid)))
     };
 }
 
@@ -453,7 +453,7 @@ function toOracleStorageAssessment(
 
     const volumeRecords: OracleVolumeRecord[] = (
         ec2.fsxs.find(({ fileSystemId: id }) => id === fileSystemId)?.volumes ?? []
-    ).flatMap(({ volumeUuid, volumeName, luns }) => {
+    ).flatMap(({ volumeUuid, volumeName, luns = [] }) => {
         const { svm } = inventory.volumesByUuid[volumeUuid] ?? {};
         const base = { volumeId: volumeUuid, volumeName, svmId: svm?.uuid, svmName: svm?.name };
         return luns.length > 0 ? luns.map(({ lunUuid: lunId, lunName }) => ({ ...base, lunId, lunName })) : [base];
@@ -504,7 +504,7 @@ async function collectOntapAssessmentData(
             region,
             volumeUuids: [...new Set(volumes.map(v => v.volumeUuid).filter(Boolean))],
             volumeNames: [...new Set(volumes.map(v => v.volumeName).filter(Boolean))],
-            lunUuids: [...new Set(volumes.flatMap(({ luns }) => luns.map(l => l.lunUuid)).filter(Boolean))]
+            lunUuids: [...new Set(volumes.flatMap(({ luns = [] }) => luns.map(l => l.lunUuid)).filter(Boolean))]
         };
     });
 
