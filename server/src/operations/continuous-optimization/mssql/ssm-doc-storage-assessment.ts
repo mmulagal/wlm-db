@@ -432,34 +432,30 @@ function buildDriveSharingViolations(entries: LayoutViolationEntry[]): {
     objectsInViolation: string[];
     violationDetails: GenericViolationResponseType[];
 } {
-    const instanceNamesByDrive = new Map<string, string[]>();
-    const misplacedPathByInstance = new Map<string, string>();
-    entries.forEach(({ instanceName, sharedDriveLetter, misplacedFilesPath }) => {
+    const violationsByDrive = new Map<string, { objectName: string; driveLetter: string }>();
+    const addViolation = (objectName: string, driveLetter: string): void => {
+        violationsByDrive.set(objectName, { objectName, driveLetter });
+    };
+
+    entries.forEach(({ sharedDriveLetter, misplacedFilesPath }) => {
         if (sharedDriveLetter) {
-            instanceNamesByDrive.set(sharedDriveLetter, [
-                ...(instanceNamesByDrive.get(sharedDriveLetter) ?? []),
-                instanceName
-            ]);
+            addViolation(sharedDriveLetter, sharedDriveLetter);
         }
         if (misplacedFilesPath) {
-            misplacedPathByInstance.set(instanceName, misplacedFilesPath);
+            const driveLetter = extractDriveLetter(misplacedFilesPath);
+            addViolation(driveLetter ?? misplacedFilesPath, driveLetter ?? '');
         }
     });
 
-    const violationDetails: GenericViolationResponseType[] = [
-        ...[...instanceNamesByDrive.entries()].map(([driveLetter, instanceNames]) => ({
-            objectName: driveLetter,
-            value: instanceNames.join(', '),
-            objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
-        })),
-        ...[...misplacedPathByInstance.entries()].map(([instanceName, path]) => ({
-            objectName: path,
-            value: instanceName,
-            objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE
-        }))
-    ];
-    const objectsInViolation = [...new Set([...instanceNamesByDrive.keys(), ...misplacedPathByInstance.values()])];
-    return { objectsInViolation, violationDetails };
+    const rows = [...violationsByDrive.values()];
+    // No database name is obtainable at this privilege level, so identify it by its drive.
+    const violationDetails: GenericViolationResponseType[] = rows.map(({ objectName, driveLetter }) => ({
+        objectName,
+        value: `Database on ${driveLetter || objectName}`,
+        objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
+        additionalInfo: { driveLetter }
+    }));
+    return { objectsInViolation: rows.map(row => row.objectName), violationDetails };
 }
 
 function buildRegistryLayoutFinding(

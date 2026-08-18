@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { calculateStorageDrift } from '../../../../src/operations/continuous-optimization/mssql/storage-assessment-operations';
 import {
+    buildDriveSharingViolations,
     calculateRegistryStorageLayoutDrift,
     calculateRegistryMpioDrift,
     type SqlInstanceAssessment
@@ -869,17 +870,21 @@ describe('calculateRegistryStorageLayoutDrift', () => {
             })
         ]);
 
-        [
-            { id: 'data-files-location', name: 'MSSQLSERVER' },
-            { id: 'log-files-location', name: 'MSSQLSERVER' }
-        ].forEach(({ id, name }) => {
+        ['data-files-location', 'log-files-location'].forEach(id => {
             expect(findFinding(drift, id)).toMatchObject({
                 status: AssessmentStatus.NOT_OPTIMIZED,
                 current: 'Shared drive with log/data files',
                 objectsInViolation: ['D:'],
                 totalObjectsAssessed: 1,
                 totalObjectsInViolation: 1,
-                violationDetails: [{ objectName: 'D:', value: name, objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE }]
+                violationDetails: [
+                    {
+                        objectName: 'D:',
+                        value: 'Database on D:',
+                        objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
+                        additionalInfo: { driveLetter: 'D:' }
+                    }
+                ]
             });
         });
     });
@@ -901,7 +906,14 @@ describe('calculateRegistryStorageLayoutDrift', () => {
             objectsInViolation: ['E:'],
             totalObjectsAssessed: 2,
             totalObjectsInViolation: 1,
-            violationDetails: [{ objectName: 'E:', value: 'NIKE', objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE }]
+            violationDetails: [
+                {
+                    objectName: 'E:',
+                    value: 'Database on E:',
+                    objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
+                    additionalInfo: { driveLetter: 'E:' }
+                }
+            ]
         });
     });
 
@@ -953,11 +965,72 @@ describe('calculateRegistryStorageLayoutDrift', () => {
         expect(findFinding(drift, 'log-files-location')).toMatchObject({
             status: AssessmentStatus.NOT_OPTIMIZED,
             current: 'Log/data files co-located in same directory',
-            objectsInViolation: ['L:\\MSSQL\\Log'],
+            objectsInViolation: ['L:'],
             violationDetails: [
-                { objectName: 'L:\\MSSQL\\Log', value: 'MSSQLSERVER', objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE }
+                {
+                    objectName: 'L:',
+                    value: 'Database on L:',
+                    objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
+                    additionalInfo: { driveLetter: 'L:' }
+                }
             ]
         });
+    });
+});
+
+describe('buildDriveSharingViolations', () => {
+    it('should populate additionalInfo on both shared-drive and misplaced-path violations', () => {
+        const { objectsInViolation, violationDetails } = buildDriveSharingViolations([
+            { instanceName: 'MSSQLSERVER', sharedDriveLetter: 'D:', misplacedFilesPath: 'H:\\MSSQL\\Log' }
+        ]);
+
+        expect(objectsInViolation).toEqual(['D:', 'H:']);
+        expect(violationDetails).toEqual([
+            {
+                objectName: 'D:',
+                value: 'Database on D:',
+                objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
+                additionalInfo: { driveLetter: 'D:' }
+            },
+            {
+                objectName: 'H:',
+                value: 'Database on H:',
+                objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
+                additionalInfo: { driveLetter: 'H:' }
+            }
+        ]);
+    });
+
+    it('should report a drive once when the same instance shares it and keeps misplaced files on it', () => {
+        const { objectsInViolation, violationDetails } = buildDriveSharingViolations([
+            { instanceName: 'MSSQLSERVER', sharedDriveLetter: 'D:', misplacedFilesPath: 'D:\\MSSQL\\Data' }
+        ]);
+
+        expect(objectsInViolation).toEqual(['D:']);
+        expect(violationDetails).toEqual([
+            {
+                objectName: 'D:',
+                value: 'Database on D:',
+                objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
+                additionalInfo: { driveLetter: 'D:' }
+            }
+        ]);
+    });
+
+    it('should identify the object by path and fall back to an empty drive letter for a UNC misplaced path', () => {
+        const { objectsInViolation, violationDetails } = buildDriveSharingViolations([
+            { instanceName: 'MSSQLSERVER', misplacedFilesPath: '\\\\share\\MSSQL\\Log' }
+        ]);
+
+        expect(objectsInViolation).toEqual(['\\\\share\\MSSQL\\Log']);
+        expect(violationDetails).toEqual([
+            {
+                objectName: '\\\\share\\MSSQL\\Log',
+                value: 'Database on \\\\share\\MSSQL\\Log',
+                objectType: ASSESSMENT_RESOURCE_TYPE.DRIVE,
+                additionalInfo: { driveLetter: '' }
+            }
+        ]);
     });
 });
 
