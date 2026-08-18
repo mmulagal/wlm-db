@@ -67,6 +67,7 @@ resource "aws_iam_role_policy" "ec2_iam_role_policy" {
           "ssm:ListAssociations",
           "ssm:ListInstanceAssociations",
           "ssm:GetCommandInvocation",
+          "ssm:ListCommandInvocations",
           "ec2messages:GetEndpoint",
           "ec2messages:GetMessages"
         ]

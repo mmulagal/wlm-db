@@ -159,10 +159,11 @@ function Install-SSMAgent {
         $progressPreference = "silentlyContinue"
         $SSMAgentUrl = "https://amazon-ssm-$Region.s3.$Region.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe"
         Write-Output "Downloading SSM Agent from $SSMAgentUrl"
-        Invoke-WebRequest $SSMAgentUrl -OutFile "$env:USERPROFILE\Desktop\SSMAgent_latest.exe"
+        # ponytail: UserData runs as SYSTEM, which has no Desktop folder; download to C:\ instead.
+        Invoke-WebRequest $SSMAgentUrl -OutFile "C:\SSMAgent_latest.exe"
       
         Write-Output "Installing SSM Agent"
-        Start-Process -FilePath "$env:USERPROFILE\Desktop\SSMAgent_latest.exe" -ArgumentList '/S'
+        Start-Process -FilePath "C:\SSMAgent_latest.exe" -ArgumentList '/S'
         Start-Sleep -Seconds 60
   
         Write-Output "Setting SSM Agent service to start automatically"

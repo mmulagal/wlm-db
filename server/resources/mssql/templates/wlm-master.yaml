@@ -489,6 +489,7 @@ Resources:
                   - ssm:ListAssociations
                   - ssm:ListInstanceAssociations
                   - ssm:GetCommandInvocation
+                  - ssm:ListCommandInvocations
                   - ec2messages:GetEndpoint
                   - ec2messages:GetMessages
                 Resource: '*'

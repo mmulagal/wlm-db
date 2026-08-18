@@ -184,86 +184,66 @@ function Remove-ScheduledTask {
 # Invoke the function with a different user
 #New-ScheduledTask -taskName "wlmdbsqlsetup2" -argument "$second_setup_command" -userName "$DomainAdminFullUser" -password "$DomainSecurePassword"
 
-$ConfigFilePath = "C:\Program Files\Amazon\SSM\Plugins\awsCloudWatch\AWS.EC2.Windows.CloudWatch.json"
-if (Test-Path -Path $ConfigFilePath) {
-    Write-Output "The CloudWatch Logs agent is already configured. Skipping configuration."
+# The legacy AWS.EC2.Windows.CloudWatch SSM plugin was removed in SSM Agent 3.x, so
+# CloudWatch Logs is configured via the unified CloudWatch Agent instead, installed
+# on-demand through the AWS-ConfigureAWSPackage SSM document.
+$LogFeatureEnabled = $LogFeatureEnabled -eq "true"
+if (-not $LogFeatureEnabled) {
+    Write-Output "CloudWatch Logs feature is disabled. Skipping configuration."
 }
 else {
+    # ponytail: do not treat amazon-cloudwatch-agent.json as "already configured" — it is
+    # written before install/fetch-config; a failed first attempt must be retriable on re-run.
+    $cwConfigPath = "C:\cfn\config\amazon-cloudwatch-agent.json"
     Write-Output "Configuring the CloudWatch Logs agent"
-    # Define the JSON configuration
     try {
-        $LogFeatureEnabled = $LogFeatureEnabled -eq "true"
-        if ($LogFeatureEnabled) {
-            $config = @{
-                "IsEnabled"           = $true
-                "EngineConfiguration" = @{
-                    "PollInterval" = "00:00:05"
-                    "Components"   = @(
-                        @{
-                            "Id"         = "ApplicationEventLog"
-                            "FullName"   = "AWS.EC2.Windows.CloudWatch.EventLog.EventLogInputComponent,AWS.EC2.Windows.CloudWatch"
-                            "Parameters" = @{
-                                "LogName" = "Application"
-                                "Levels"  = "7"
+        $cwConfigDir = Split-Path -Path $cwConfigPath -Parent
+        if (!(Test-Path -Path $cwConfigDir)) {
+            New-Item -ItemType Directory -Path $cwConfigDir | Out-Null
+        }
+        $config = @{
+            agent = @{ region = "$Region" }
+            logs  = @{
+                logs_collected = @{
+                    files = @{
+                        collect_list = @(
+                            @{
+                                file_path         = "C:\cfn\log\*.txt"
+                                log_group_name    = "$DeploymentName"
+                                log_stream_name   = "{instance_id}"
+                                timestamp_format  = "%Y-%m-%d %H:%M:%S,%f"
                             }
-                        },
-                        @{
-                            "Id"         = "CfnInitLog"
-                            "FullName"   = "AWS.EC2.Windows.CloudWatch.CustomLog.CustomLogInputComponent,AWS.EC2.Windows.CloudWatch"
-                            "Parameters" = @{
-                                "LogDirectoryPath" = "C:\cfn\log"
-                                "LogName"          = "CfnInit"
-                                "Levels"           = "7"
-                                "TimestampFormat"  = "yyyy-MM-dd HH:mm:ss,fff"
-                                "Encoding"         = "ASCII"
-                                "CultureName"      = "en-US"
-                                "TimeZoneKind"     = "Local"
-                            }
-                        },
-                        @{
-                            "Id"         = "CloudWatchCfnInitLog"
-                            "FullName"   = "AWS.EC2.Windows.CloudWatch.CloudWatchLogsOutput,AWS.EC2.Windows.CloudWatch"
-                            "Parameters" = @{
-                                "AccessKey" = ""
-                                "SecretKey" = ""
-                                "Region"    = "$Region"
-                                "LogGroup"  = "$DeploymentName"
-                                "LogStream" = "{instance_id}"
-                            }
-                        },
-                        @{
-                            "Id"         = "CloudWatch"
-                            "FullName"   = "AWS.EC2.Windows.CloudWatch.CloudWatch.CloudWatchOutputComponent,AWS.EC2.Windows.CloudWatch"
-                            "Parameters" = @{
-                                "AccessKey" = ""
-                                "SecretKey" = ""
-                                "Region"    = "$Region"
-                                "NameSpace" = "Windows/Default"
-                            }
-                        }
-                    )
-                    "Flows"        = @{
-                        "Flows" = @(
-                            "CfnInitLog,CloudWatchCfnInitLog"
                         )
                     }
                 }
             }
         }
-        else {
-            $config = @{
-                "IsEnabled" = $false
+        ($config | ConvertTo-Json -Depth 10) | Out-File -FilePath $cwConfigPath -Encoding ascii
+
+        $agentCtl = "C:\Program Files\Amazon\AmazonCloudWatchAgent\amazon-cloudwatch-agent-ctl.ps1"
+        if (-not (Test-Path $agentCtl)) {
+            Write-Output "AmazonCloudWatchAgent not found. Installing via AWS-ConfigureAWSPackage..."
+            if (-not (Get-Command Send-SSMCommand -ErrorAction SilentlyContinue)) {
+                Import-Module AWSPowerShell -ErrorAction SilentlyContinue
+            }
+            $commandId = (Send-SSMCommand -DocumentName 'AWS-ConfigureAWSPackage' -InstanceId $InstanceId -Region $Region -Parameter @{ action = 'Install'; name = 'AmazonCloudWatchAgent' }).CommandId
+            # ponytail: bounded 5-minute poll instead of an SSM waiter; if the install runs
+            # long this just moves on and CW Logs picks up on the next setup re-run.
+            $deadline = (Get-Date).AddMinutes(5)
+            do {
+                Start-Sleep -Seconds 10
+                $invocationStatus = (Get-SSMCommandInvocation -CommandId $commandId -InstanceId $InstanceId -Region $Region -ErrorAction SilentlyContinue).Status
+            } while ($invocationStatus -in @('Pending', 'InProgress', 'Delayed', $null) -and (Get-Date) -lt $deadline)
+            if ($invocationStatus -ne 'Success') {
+                Write-Warning "AmazonCloudWatchAgent install did not confirm success (status: $invocationStatus)."
             }
         }
-    
-        # Convert the configuration to JSON
-        $json = $config | ConvertTo-Json -Depth 10
-    
-        # Write the JSON to the configuration file
-        $json | Out-File -FilePath $ConfigFilePath -Encoding ascii
-        Start-Sleep -Seconds 30
-        Restart-Service AmazonSSMAgent -Force -ErrorAction Continue
-        Start-Sleep -Seconds 30
+        if (Test-Path $agentCtl) {
+            & $agentCtl -a fetch-config -m ec2 -s -c file:$cwConfigPath
+        }
+        else {
+            Write-Warning "AmazonCloudWatchAgent is not installed; skipping CloudWatch Logs configuration."
+        }
     }
     catch {
         Write-Output "An error occurred while configuring the CloudWatch Logs agent: $($_.Exception.Message)"
