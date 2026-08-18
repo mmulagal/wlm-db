@@ -11,7 +11,7 @@ import {
     renderInstanceListText,
     renderUnmanagedAZ,
     uniqueHostRow,
-    hasFullPermission
+    canTriggerUnregisteredAssessment
 } from '../../InventoryV2/InventoryUtilsV2';
 import { getSelectedFromSelectionState } from '../../../utils/utilityFunctions';
 import { onClickESHostOracleEbs } from '../ExploreSavingsUtils';
@@ -95,12 +95,13 @@ const OracleEbsTable = () => {
 
                 const limitReached = selectedRowsForExploreSavingsOracleEbsBulk.length >= 5;
                 const shouldDisableDueToLimit = limitReached && !isSelected;
-                const lacksFullPermission = !hasFullPermission(item?.hostManageReadiness);
+                const lacksExploreSavingsPermission = !canTriggerUnregisteredAssessment(item?.hostManageReadiness);
 
-                const isDisabled = !sharesGroupWithSelection || shouldDisableDueToLimit || lacksFullPermission;
+                const isDisabled =
+                    !sharesGroupWithSelection || shouldDisableDueToLimit || lacksExploreSavingsPermission;
 
                 let tooltipTitle = '';
-                if (lacksFullPermission) {
+                if (lacksExploreSavingsPermission) {
                     tooltipTitle = t('databases.inventory.full-permission-required-explore-savings');
                 } else if (!sharesGroupWithSelection) {
                     tooltipTitle = t('databases.explore-savings.disabled-tooltip');
@@ -164,11 +165,11 @@ const OracleEbsTable = () => {
         width: windowSize.width >= 1920 ? '15.37%' : '247px',
         renderCell: (_cellData: any, rowData: any) => {
             const isBulkSelectionActive = selectedRowsForExploreSavingsOracleEbsBulk.length > 0;
-            const lacksFullPermission = !hasFullPermission(rowData?.hostManageReadiness);
-            const isDisabled = isBulkSelectionActive || lacksFullPermission;
+            const lacksExploreSavingsPermission = !canTriggerUnregisteredAssessment(rowData?.hostManageReadiness);
+            const isDisabled = isBulkSelectionActive || lacksExploreSavingsPermission;
 
             let tooltipMessage = '';
-            if (lacksFullPermission) {
+            if (lacksExploreSavingsPermission) {
                 tooltipMessage = t('databases.inventory.full-permission-required-explore-savings');
             } else if (isBulkSelectionActive) {
                 tooltipMessage = t('databases.explore-savings.disabled-tooltip-bulk-selection');

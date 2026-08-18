@@ -86,8 +86,10 @@ vi.mock('../../InventoryV2/InventoryUtilsV2', () => ({
     renderCellData: vi.fn((_cellData: any, _rowData: any) => <span>cell</span>),
     renderUnmanagedAZ: vi.fn(() => <span>az</span>),
     uniqueHostRow: vi.fn((id: string, credId: string, regionId: string) => `${id}_${credId}_${regionId}`),
-    hasFullPermission: (hostManageReadiness?: { extensiveRunPermission?: boolean }) =>
-        hostManageReadiness?.extensiveRunPermission === true
+    canTriggerUnregisteredAssessment: (hostManageReadiness?: {
+        extensiveRunPermission?: boolean;
+        canReadAWSSSMDocuments?: boolean;
+    }) => hostManageReadiness?.extensiveRunPermission === true || hostManageReadiness?.canReadAWSSSMDocuments === true
 }));
 
 vi.mock('../../../utils/utilityFunctions', () => ({

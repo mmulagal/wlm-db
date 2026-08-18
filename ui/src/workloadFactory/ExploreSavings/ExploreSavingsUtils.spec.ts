@@ -26,6 +26,15 @@ import {
     isMissingSqlPermissions,
     shouldAuthDialogOpen,
     shouldAuthDialogOpenBulk,
+    isFsxOntapExploreSavingsMode,
+    canEnableExploreSavingsWithoutRegistration,
+    getExploreSavingsFileSystemType,
+    getExploreSavingsSelectedHostsForPartialData,
+    shouldShowExploreSavingsPartialDataBanner,
+    shouldShowExploreSavingsAuthLink,
+    shouldAuthDialogOpenOracle,
+    shouldAuthDialogOpenBulkForExploreSavings,
+    getPartialDataBannerAuthHosts,
     getExploreSavingsDeploymentDisplay,
     hasExploreSavingsAoagDeployment,
     isExploreSavingsAoagHost,
@@ -51,7 +60,9 @@ import {
     setSelectedRowsForExploreSavingsEBSBulk,
     resetBulkAuthCredentialsAndStatus,
     resetRowsRequiringAuthBulk,
-    setTriggerBulkDataFetch
+    setRowsRequiringAuthBulk,
+    setTriggerBulkDataFetch,
+    addPartialDataBannerAuthedHostKeys
 } from '../../store/workloadFactory/exploreSavingsBulkSlice';
 
 import { addNotification } from '../../store/notificationSlice';
@@ -77,6 +88,10 @@ vi.mock('react-router-dom', () => ({
 
 vi.mock('@reduxjs/toolkit', () => ({
     Dispatch: undefined
+}));
+
+vi.mock('../InventoryV2/InventoryUtilsV2', () => ({
+    getExploreSavingsEc2InstanceId: (row: any) => row?.ec2InstanceId || row?.ec2Details?.[0]?.id || ''
 }));
 
 vi.mock('i18next', () => ({
@@ -109,17 +124,21 @@ vi.mock('../../store/workloadFactory/exploreSavingsSlice', () => ({
     setSelectedOnPremHostDetails: vi.fn((val: any) => ({ type: 'setSelectedOnPremHostDetails', payload: val })),
     setSelectedOnPremHostId: vi.fn((val: any) => ({ type: 'setSelectedOnPremHostId', payload: val })),
     setSelectedServerName: vi.fn((val: any) => ({ type: 'setSelectedServerName', payload: val })),
-    setSelectedSnapshotFrequency: vi.fn((val: any) => ({ type: 'setSelectedSnapshotFrequency', payload: val }))
+    setSelectedSnapshotFrequency: vi.fn((val: any) => ({ type: 'setSelectedSnapshotFrequency', payload: val })),
+    setInstanceDataUpdatedTrigger: vi.fn((val: any) => ({ type: 'setInstanceDataUpdatedTrigger', payload: val }))
 }));
 
 vi.mock('../../store/workloadFactory/inventoryV2Slice', () => ({
     setInventoryTableData: vi.fn((val: any) => ({ type: 'setInventoryTableData', payload: val })),
+    setMssqlInstancesData: vi.fn((val: any) => ({ type: 'setMssqlInstancesData', payload: val })),
+    setUnManagedInstanceIdsList: vi.fn((val: any) => ({ type: 'setUnManagedInstanceIdsList', payload: val })),
     setSelectedHeaderTab: vi.fn((val: any) => ({ type: 'setSelectedHeaderTab', payload: val }))
 }));
 
 vi.mock('../../utils/appConstants', () => ({
     GENERAL: {
         EBS: 'EBS',
+        FSX_FOR_WINDOWS: 'FSx for Windows',
         AOAG: 'Always on availability group',
         FAILOVER_CLUSTER_INSTANCES: 'Failover Cluster Instances',
         ES_SERVER_NAME: 'Server name',
@@ -134,7 +153,16 @@ vi.mock('../../utils/consts', () => ({
     },
     DETECT_HOST_VAR: {
         MSSQL: 'MSSQL',
-        WINDOWS: 'WINDOWS_USER'
+        WINDOWS: 'WINDOWS_USER',
+        EBS: 'EBS',
+        ORACLE: 'ORACLE'
+    },
+    DBType: {
+        ORACLE: 'Oracle',
+        MSSQL: 'Microsoft SQL Server'
+    },
+    STORAGE_TYPES: {
+        FSX_FOR_WINDOWS: 'FSx for Windows'
     },
     FSX_AZ_TYPE: {
         SINGLE: 'single',
@@ -228,7 +256,12 @@ vi.mock('../../store/workloadFactory/exploreSavingsBulkSlice', () => ({
         type: 'setSelectedRowsForExploreSavingsOracleEbsBulk',
         payload: val
     })),
-    setTriggerBulkDataFetch: vi.fn((val: any) => ({ type: 'setTriggerBulkDataFetch', payload: val }))
+    setTriggerBulkDataFetch: vi.fn((val: any) => ({ type: 'setTriggerBulkDataFetch', payload: val })),
+    setRowsRequiringAuthBulk: vi.fn((val: any) => ({ type: 'setRowsRequiringAuthBulk', payload: val })),
+    addPartialDataBannerAuthedHostKeys: vi.fn((val: any) => ({
+        type: 'addPartialDataBannerAuthedHostKeys',
+        payload: val
+    }))
 }));
 
 // ---- local constants for test usage (after mocks) ----
@@ -303,7 +336,8 @@ const resetMockState = () => {
             selectedRowsForExploreSavingsEBSBulk: [],
             selectedRowsForExploreSavingsOnPremBulk: [],
             bulkAuthCredentials: {},
-            rowsRequiringAuthBulk: []
+            rowsRequiringAuthBulk: [],
+            partialDataBannerAuthedHostKeys: []
         },
         inventoryV2: {
             inventoryTableData: {}
@@ -2688,6 +2722,286 @@ describe('ExploreSavingsUtils', () => {
                 expect(mockDispatch).toHaveBeenCalled();
             });
         });
+
+        describe('partial data banner auth flow', () => {
+            const callBannerAuth = (rowsToAuthenticate: any[]) =>
+                handleAuthenticate(
+                    rowsToAuthenticate[0],
+                    mockDispatch,
+                    'EBS',
+                    true,
+                    mockNavigate,
+                    mockCloseDialogCallback,
+                    mockT,
+                    mockRegisterResourceCredBulk,
+                    false,
+                    { fromPartialDataBanner: true, rowsToAuthenticate }
+                );
+
+            beforeEach(() => {
+                mockStoreState.exploreSavingsBulk.selectedRowsForExploreSavingsEBSBulk = [];
+                mockStoreState.exploreSavingsBulk.partialDataBannerAuthedHostKeys = [];
+            });
+
+            it('sends register-credentials for all banner auth hosts including partial-permission-only', async () => {
+                const partialHost = makeRowData({
+                    name: 'es-ebs-not-registered',
+                    id: 'row-not-reg',
+                    ec2InstanceId: 'i-es-ebs-not-registered',
+                    credentialId: 'cred-not-reg',
+                    hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true },
+                    isDetected: true,
+                    sqlServerInstances: [
+                        {
+                            databaseInstanceName: 'CASEESNOTREG',
+                            sqlServerAuthentication: true,
+                            windowsAuthentication: true,
+                            windowsDomainUserAuthentication: true,
+                            manageReadiness: { assessment: { missingSqlPermissions: [] } }
+                        }
+                    ]
+                });
+                const missingPermissionHost = makeRowData({
+                    name: 'es-ebs-missing-permission',
+                    id: 'row-missing',
+                    ec2InstanceId: 'i-es-ebs-missing-permission',
+                    credentialId: 'cred-missing',
+                    sqlServerInstances: [
+                        {
+                            fileSystemType: 'EBS',
+                            databaseInstanceName: 'CASEESMISSINGPERM',
+                            sqlServerAuthentication: true,
+                            windowsAuthentication: true,
+                            windowsDomainUserAuthentication: true,
+                            manageReadiness: {
+                                assessment: { missingSqlPermissions: ['VIEW SERVER STATE'] }
+                            }
+                        }
+                    ]
+                });
+
+                mockRegisterResourceCredBulk.mockResolvedValue({
+                    data: {
+                        items: [
+                            {
+                                ec2InstanceId: 'i-es-ebs-not-registered',
+                                region: 'us-east-1',
+                                credentialsId: 'cred-not-reg',
+                                registerDetails: [{ databaseServerError: null, fsxnError: null, manageReadiness: {} }]
+                            },
+                            {
+                                ec2InstanceId: 'i-es-ebs-missing-permission',
+                                region: 'us-east-1',
+                                credentialsId: 'cred-missing',
+                                registerDetails: [{ databaseServerError: null, fsxnError: null, manageReadiness: {} }]
+                            }
+                        ]
+                    }
+                });
+
+                await callBannerAuth([partialHost, missingPermissionHost]);
+
+                expect(mockRegisterResourceCredBulk).toHaveBeenCalledWith({
+                    payload: {
+                        items: expect.arrayContaining([
+                            expect.objectContaining({ ec2InstanceId: 'i-es-ebs-not-registered' }),
+                            expect.objectContaining({ ec2InstanceId: 'i-es-ebs-missing-permission' })
+                        ])
+                    }
+                });
+                expect(mockRegisterResourceCredBulk.mock.calls[0][0].payload.items).toHaveLength(2);
+                expect(addPartialDataBannerAuthedHostKeys).toHaveBeenCalled();
+                expect(resetRowsRequiringAuthBulk).toHaveBeenCalled();
+                expect(mockCloseDialogCallback).toHaveBeenCalled();
+            });
+
+            it('registers all instances only for ssmDoc-only hosts in mixed banner batch', async () => {
+                const partialHost = makeRowData({
+                    name: 'partial-host',
+                    id: 'row-partial',
+                    ec2InstanceId: 'i-partial',
+                    credentialId: 'cred-partial',
+                    hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true },
+                    isDetected: true,
+                    sqlServerInstances: [
+                        {
+                            fileSystemType: 'EBS',
+                            databaseInstanceName: 'DB-PARTIAL-1',
+                            sqlServerAuthentication: true,
+                            windowsAuthentication: true,
+                            windowsDomainUserAuthentication: true,
+                            manageReadiness: { assessment: { missingSqlPermissions: [] } }
+                        },
+                        {
+                            fileSystemType: 'EBS',
+                            databaseInstanceName: 'DB-PARTIAL-2',
+                            sqlServerAuthentication: true,
+                            windowsAuthentication: true,
+                            windowsDomainUserAuthentication: true,
+                            manageReadiness: { assessment: { missingSqlPermissions: [] } }
+                        }
+                    ]
+                });
+                const missingPermissionHost = makeRowData({
+                    name: 'missing-perm-host',
+                    id: 'row-missing',
+                    ec2InstanceId: 'i-missing',
+                    credentialId: 'cred-missing',
+                    hostManageReadiness: { extensiveRunPermission: true, canReadAWSSSMDocuments: true },
+                    sqlServerInstances: [
+                        {
+                            fileSystemType: 'EBS',
+                            databaseInstanceName: 'DB-READY',
+                            sqlServerAuthentication: true,
+                            windowsAuthentication: true,
+                            windowsDomainUserAuthentication: true,
+                            manageReadiness: { assessment: { missingSqlPermissions: [] } }
+                        },
+                        {
+                            fileSystemType: 'EBS',
+                            databaseInstanceName: 'DB-MISSING',
+                            sqlServerAuthentication: true,
+                            windowsAuthentication: true,
+                            windowsDomainUserAuthentication: true,
+                            manageReadiness: {
+                                assessment: { missingSqlPermissions: ['VIEW SERVER STATE'] }
+                            }
+                        }
+                    ]
+                });
+
+                mockRegisterResourceCredBulk.mockResolvedValue({
+                    data: {
+                        items: [
+                            {
+                                ec2InstanceId: 'i-partial',
+                                region: 'us-east-1',
+                                credentialsId: 'cred-partial',
+                                registerDetails: [{ databaseServerError: null, fsxnError: null, manageReadiness: {} }]
+                            },
+                            {
+                                ec2InstanceId: 'i-missing',
+                                region: 'us-east-1',
+                                credentialsId: 'cred-missing',
+                                registerDetails: [{ databaseServerError: null, fsxnError: null, manageReadiness: {} }]
+                            }
+                        ]
+                    }
+                });
+
+                await callBannerAuth([partialHost, missingPermissionHost]);
+
+                const { items } = mockRegisterResourceCredBulk.mock.calls[0][0].payload;
+                const partialItem = items.find((item: any) => item.ec2InstanceId === 'i-partial');
+                const missingItem = items.find((item: any) => item.ec2InstanceId === 'i-missing');
+
+                expect(partialItem.credentials).toHaveLength(2);
+                expect(missingItem.credentials).toHaveLength(1);
+                expect(missingItem.credentials[0].resourceId).toBe('DB-MISSING');
+            });
+
+            it('uses ec2Details fallback for Oracle banner auth payload and success matching', async () => {
+                const oracleHost = {
+                    name: 'oracle-host',
+                    id: 'oracle-row',
+                    ec2Details: [{ id: 'i-oracle-from-details', name: 'ec2-oracle' }],
+                    credentialId: 'cred-oracle',
+                    regionId: 'us-east-1',
+                    hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true },
+                    isDetected: true,
+                    databaseInstanceDetails: [
+                        {
+                            databaseInstanceName: 'ORCL',
+                            oracleServerAuthentication: true,
+                            manageReadiness: { assessment: { missingSqlPermissions: [] } }
+                        }
+                    ]
+                };
+
+                mockRegisterResourceCredBulk.mockResolvedValue({
+                    data: {
+                        items: [
+                            {
+                                ec2InstanceId: 'i-oracle-from-details',
+                                region: 'us-east-1',
+                                credentialsId: 'cred-oracle',
+                                registerDetails: [{ databaseServerError: null, fsxnError: null, manageReadiness: {} }]
+                            }
+                        ]
+                    }
+                });
+
+                await handleAuthenticate(
+                    oracleHost,
+                    mockDispatch,
+                    'EBS',
+                    true,
+                    mockNavigate,
+                    mockCloseDialogCallback,
+                    mockT,
+                    mockRegisterResourceCredBulk,
+                    false,
+                    { fromPartialDataBanner: true, rowsToAuthenticate: [oracleHost], isOracle: true }
+                );
+
+                expect(mockRegisterResourceCredBulk).toHaveBeenCalledWith({
+                    payload: {
+                        items: [
+                            expect.objectContaining({
+                                ec2InstanceId: 'i-oracle-from-details',
+                                credentialsId: 'cred-oracle',
+                                credentials: expect.arrayContaining([expect.objectContaining({ resourceId: 'ORCL' })])
+                            })
+                        ]
+                    }
+                });
+                expect(addPartialDataBannerAuthedHostKeys).toHaveBeenCalledWith([
+                    'i-oracle-from-details_cred-oracle_us-east-1'
+                ]);
+                expect(mockCloseDialogCallback).toHaveBeenCalled();
+            });
+
+            it('closes dialog on partial success and keeps only failed hosts in redux', async () => {
+                const successHost = makeRowData({
+                    name: 'host-success',
+                    ec2InstanceId: 'i-success',
+                    credentialId: 'cred-success',
+                    id: 'row-success'
+                });
+                const failedHost = makeRowData({
+                    name: 'host-failed',
+                    ec2InstanceId: 'i-failed',
+                    credentialId: 'cred-failed',
+                    id: 'row-failed'
+                });
+
+                mockRegisterResourceCredBulk.mockResolvedValue({
+                    data: {
+                        items: [
+                            {
+                                ec2InstanceId: 'i-success',
+                                region: 'us-east-1',
+                                credentialsId: 'cred-success',
+                                registerDetails: [{ databaseServerError: null, fsxnError: null, manageReadiness: {} }]
+                            },
+                            {
+                                ec2InstanceId: 'i-failed',
+                                region: 'us-east-1',
+                                credentialsId: 'cred-failed',
+                                registerDetails: [{ databaseServerError: 'Connection failed', fsxnError: null }]
+                            }
+                        ]
+                    }
+                });
+
+                await callBannerAuth([successHost, failedHost]);
+
+                expect(setRowsRequiringAuthBulk).toHaveBeenCalledWith([failedHost]);
+                expect(addPartialDataBannerAuthedHostKeys).toHaveBeenCalledWith(['i-success_cred-success_us-east-1']);
+                expect(mockCloseDialogCallback).toHaveBeenCalled();
+                expect(setDialogErrorWithTooltip).not.toHaveBeenCalled();
+            });
+        });
     });
 
     // =========================================================================
@@ -3815,9 +4129,29 @@ describe('ExploreSavingsUtils', () => {
         it('should return false if detected and no missing permissions', () => {
             const rowData = makeRowData({
                 isDetected: true,
-                sqlServerInstances: [{ manageReadiness: { assessment: { missingSqlPermissions: [] } } }]
+                sqlServerInstances: [
+                    {
+                        sqlServerAuthentication: true,
+                        manageReadiness: { assessment: { missingSqlPermissions: [] } }
+                    }
+                ]
             });
             expect(shouldAuthDialogOpen(rowData)).toBe(false);
+        });
+
+        it('should return true if detected but instance credentials are missing', () => {
+            const rowData = makeRowData({
+                isDetected: true,
+                sqlServerInstances: [
+                    {
+                        sqlServerAuthentication: false,
+                        windowsAuthentication: false,
+                        windowsDomainUserAuthentication: false,
+                        manageReadiness: { assessment: { missingSqlPermissions: [] } }
+                    }
+                ]
+            });
+            expect(shouldAuthDialogOpen(rowData)).toBe(true);
         });
 
         it('should return true if detected but has missing required permissions', () => {
@@ -3858,7 +4192,14 @@ describe('ExploreSavingsUtils', () => {
                 makeRowData({
                     id: '2',
                     isDetected: true,
-                    sqlServerInstances: [{ manageReadiness: { assessment: { missingSqlPermissions: [] } } }]
+                    sqlServerInstances: [
+                        {
+                            sqlServerAuthentication: true,
+                            windowsAuthentication: true,
+                            windowsDomainUserAuthentication: true,
+                            manageReadiness: { assessment: { missingSqlPermissions: [] } }
+                        }
+                    ]
                 })
             ];
             const result = shouldAuthDialogOpenBulk(rows);
@@ -3870,6 +4211,275 @@ describe('ExploreSavingsUtils', () => {
             const rows = [makeRowData({ id: '1', isDetected: false }), makeRowData({ id: '2', isDetected: false })];
             const result = shouldAuthDialogOpenBulk(rows);
             expect(result).toHaveLength(2);
+        });
+    });
+
+    describe('FSx ONTAP explore savings partial data helpers', () => {
+        it('isFsxOntapExploreSavingsMode covers auto EBS, FSxW, and Oracle EBS modes only', () => {
+            expect(isFsxOntapExploreSavingsMode(SAVINGS_CALC_MODE.AUTO_EBS)).toBe(true);
+            expect(isFsxOntapExploreSavingsMode(SAVINGS_CALC_MODE.AUTO_FSXW)).toBe(true);
+            expect(isFsxOntapExploreSavingsMode(SAVINGS_CALC_MODE.ORACLE_AUTO_EBS)).toBe(true);
+            expect(isFsxOntapExploreSavingsMode(SAVINGS_CALC_MODE.ONPREM)).toBe(false);
+        });
+
+        it('canEnableExploreSavingsWithoutRegistration mirrors canTriggerUnregisteredAssessment', () => {
+            expect(
+                canEnableExploreSavingsWithoutRegistration({
+                    extensiveRunPermission: false,
+                    canReadAWSSSMDocuments: true
+                })
+            ).toBe(true);
+            expect(
+                canEnableExploreSavingsWithoutRegistration({
+                    extensiveRunPermission: false,
+                    canReadAWSSSMDocuments: false
+                })
+            ).toBe(false);
+        });
+
+        it('getExploreSavingsSelectedHostsForPartialData resolves hosts by mode', () => {
+            const ebsHost = makeRowData({ id: 'ebs' });
+            const oracleHost = { id: 'oracle' };
+            const fsxHost = { id: 'fsx' };
+
+            expect(
+                getExploreSavingsSelectedHostsForPartialData({
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.AUTO_EBS,
+                    selectedRowsForExploreSavingsEBSBulk: [ebsHost]
+                })
+            ).toEqual([ebsHost]);
+
+            expect(
+                getExploreSavingsSelectedHostsForPartialData({
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.ORACLE_AUTO_EBS,
+                    selectedRowsForExploreSavingsOracleEbsBulk: [oracleHost]
+                })
+            ).toEqual([oracleHost]);
+
+            expect(
+                getExploreSavingsSelectedHostsForPartialData({
+                    savingsCalculatorFrom: SAVINGS_CALC_MODE.AUTO_FSXW,
+                    selectedHostDetails: fsxHost
+                })
+            ).toEqual([fsxHost]);
+        });
+
+        it('shouldShowExploreSavingsPartialDataBanner handles partial permission and auth', () => {
+            const partialHost = makeRowData({
+                hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true }
+            });
+            const fullPermissionHost = makeRowData({
+                hostManageReadiness: { extensiveRunPermission: true, canReadAWSSSMDocuments: true },
+                isDetected: true,
+                sqlServerInstances: [
+                    {
+                        sqlServerAuthentication: true,
+                        windowsAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        manageReadiness: { assessment: { missingSqlPermissions: [] } }
+                    }
+                ]
+            });
+            const authHost = makeRowData({ isDetected: false });
+            const oracleAuthHost = {
+                id: 'oracle-auth',
+                isDetected: true,
+                databaseInstanceDetails: [
+                    { databaseInstanceName: 'ORCL', isDefaultAuthentication: false, oracleServerAuthentication: false }
+                ]
+            };
+
+            expect(shouldShowExploreSavingsPartialDataBanner([partialHost], SAVINGS_CALC_MODE.AUTO_EBS)).toBe(true);
+            expect(shouldShowExploreSavingsPartialDataBanner([fullPermissionHost], SAVINGS_CALC_MODE.AUTO_EBS)).toBe(
+                false
+            );
+            expect(shouldShowExploreSavingsPartialDataBanner([authHost], SAVINGS_CALC_MODE.AUTO_EBS)).toBe(true);
+            expect(shouldShowExploreSavingsPartialDataBanner([partialHost], SAVINGS_CALC_MODE.ORACLE_AUTO_EBS)).toBe(
+                true
+            );
+            expect(shouldShowExploreSavingsPartialDataBanner([oracleAuthHost], SAVINGS_CALC_MODE.ORACLE_AUTO_EBS)).toBe(
+                true
+            );
+        });
+
+        it('shouldShowExploreSavingsAuthLink shows for MSSQL auth and Oracle auth or partial permission', () => {
+            const partialHost = makeRowData({
+                hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true }
+            });
+            const authHost = makeRowData({ isDetected: false });
+            const oracleAuthHost = {
+                id: 'oracle-auth',
+                isDetected: true,
+                databaseInstanceDetails: [
+                    { databaseInstanceName: 'ORCL', isDefaultAuthentication: false, oracleServerAuthentication: false }
+                ]
+            };
+
+            expect(shouldShowExploreSavingsAuthLink([authHost], SAVINGS_CALC_MODE.AUTO_EBS)).toBe(true);
+            expect(shouldShowExploreSavingsAuthLink([partialHost], SAVINGS_CALC_MODE.AUTO_EBS)).toBe(true);
+            expect(shouldShowExploreSavingsAuthLink([partialHost], SAVINGS_CALC_MODE.ORACLE_AUTO_EBS)).toBe(true);
+            expect(shouldShowExploreSavingsAuthLink([oracleAuthHost], SAVINGS_CALC_MODE.ORACLE_AUTO_EBS)).toBe(true);
+        });
+
+        it('getPartialDataBannerAuthHosts includes partial-permission and auth-required hosts', () => {
+            const partialHost = makeRowData({
+                name: 'partial-host',
+                id: 'partial-1',
+                ec2InstanceId: 'i-partial',
+                credentialId: 'cred-partial',
+                hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true },
+                isDetected: true,
+                sqlServerInstances: [
+                    {
+                        fileSystemType: 'EBS',
+                        databaseInstanceName: 'db-partial',
+                        sqlServerAuthentication: true,
+                        windowsAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        manageReadiness: { assessment: { missingSqlPermissions: [] } }
+                    }
+                ]
+            });
+            const missingPermissionHost = makeRowData({
+                name: 'missing-perm-host',
+                id: 'missing-1',
+                ec2InstanceId: 'i-missing',
+                credentialId: 'cred-missing',
+                hostManageReadiness: { extensiveRunPermission: true, canReadAWSSSMDocuments: true },
+                sqlServerInstances: [
+                    {
+                        fileSystemType: 'EBS',
+                        databaseInstanceName: 'db-missing',
+                        sqlServerAuthentication: true,
+                        windowsAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        manageReadiness: {
+                            assessment: { missingSqlPermissions: ['VIEW SERVER STATE'] }
+                        }
+                    }
+                ]
+            });
+            const readyHost = makeRowData({
+                name: 'ready-host',
+                id: 'ready-1',
+                hostManageReadiness: { extensiveRunPermission: true, canReadAWSSSMDocuments: true },
+                sqlServerInstances: [
+                    {
+                        fileSystemType: 'EBS',
+                        databaseInstanceName: 'db-ready',
+                        sqlServerAuthentication: true,
+                        windowsAuthentication: true,
+                        windowsDomainUserAuthentication: true,
+                        manageReadiness: { assessment: { missingSqlPermissions: [] } }
+                    }
+                ]
+            });
+
+            const authHosts = getPartialDataBannerAuthHosts(
+                [partialHost, missingPermissionHost, readyHost],
+                SAVINGS_CALC_MODE.AUTO_EBS
+            );
+
+            expect(authHosts.map((row: any) => row.name)).toEqual(['partial-host', 'missing-perm-host']);
+            expect(
+                shouldAuthDialogOpenBulk([partialHost, missingPermissionHost, readyHost]).map((r: any) => r.name)
+            ).toEqual(['missing-perm-host']);
+        });
+
+        it('getPartialDataBannerAuthHosts excludes hosts already authed via banner', () => {
+            const partialHost = makeRowData({
+                name: 'partial-host',
+                id: 'partial-1',
+                ec2InstanceId: 'i-partial',
+                credentialId: 'cred-partial',
+                regionId: 'us-east-1',
+                hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true }
+            });
+            mockStoreState.exploreSavingsBulk.partialDataBannerAuthedHostKeys = ['i-partial_cred-partial_us-east-1'];
+
+            expect(getPartialDataBannerAuthHosts([partialHost], SAVINGS_CALC_MODE.AUTO_EBS)).toEqual([]);
+            expect(shouldShowExploreSavingsPartialDataBanner([partialHost], SAVINGS_CALC_MODE.AUTO_EBS)).toBe(false);
+        });
+
+        it('shouldAuthDialogOpenOracle detects missing oracle auth and SQL permissions', () => {
+            expect(
+                shouldAuthDialogOpenOracle({
+                    isDetected: true,
+                    databaseInstanceDetails: [
+                        {
+                            databaseInstanceName: 'ORCL',
+                            isDefaultAuthentication: true,
+                            oracleServerAuthentication: true
+                        }
+                    ]
+                })
+            ).toBe(false);
+            expect(
+                shouldAuthDialogOpenOracle({
+                    isDetected: false,
+                    databaseInstanceDetails: [
+                        {
+                            databaseInstanceName: 'ORCL',
+                            isDefaultAuthentication: true,
+                            oracleServerAuthentication: true
+                        }
+                    ]
+                })
+            ).toBe(true);
+            expect(
+                shouldAuthDialogOpenOracle({
+                    isDetected: true,
+                    databaseInstanceDetails: [
+                        {
+                            databaseInstanceName: 'ORCL',
+                            isDefaultAuthentication: false,
+                            oracleServerAuthentication: false
+                        }
+                    ]
+                })
+            ).toBe(true);
+            expect(
+                shouldAuthDialogOpenOracle({
+                    isDetected: true,
+                    databaseInstanceDetails: [
+                        {
+                            databaseInstanceName: 'ORCL',
+                            isDefaultAuthentication: true,
+                            oracleServerAuthentication: true,
+                            manageReadiness: {
+                                assessment: { missingSqlPermissions: ['VIEW ANY DEFINITION'] }
+                            }
+                        }
+                    ]
+                })
+            ).toBe(true);
+        });
+
+        it('shouldAuthDialogOpenBulkForExploreSavings filters Oracle rows', () => {
+            const oracleAuthHost = {
+                id: 'oracle-auth',
+                isDetected: true,
+                databaseInstanceDetails: [
+                    { databaseInstanceName: 'ORCL', isDefaultAuthentication: false, oracleServerAuthentication: false }
+                ]
+            };
+            const oracleReadyHost = {
+                id: 'oracle-ready',
+                isDetected: true,
+                databaseInstanceDetails: [
+                    { databaseInstanceName: 'ORCL2', isDefaultAuthentication: true, oracleServerAuthentication: true }
+                ]
+            };
+
+            expect(shouldAuthDialogOpenBulkForExploreSavings([oracleAuthHost, oracleReadyHost], true)).toEqual([
+                oracleAuthHost
+            ]);
+        });
+
+        it('getExploreSavingsFileSystemType returns FSx for Windows for AUTO_FSXW', () => {
+            expect(getExploreSavingsFileSystemType(SAVINGS_CALC_MODE.AUTO_FSXW)).toBe('FSx for Windows');
+            expect(getExploreSavingsFileSystemType(SAVINGS_CALC_MODE.AUTO_EBS)).toBe('EBS');
+            expect(getExploreSavingsFileSystemType(SAVINGS_CALC_MODE.ORACLE_AUTO_EBS)).toBe('EBS');
         });
     });
 

@@ -10,6 +10,7 @@ import {
     setSavingsCalculatorFrom,
     setSelectedCloneRefresh,
     setSelectedEsPageInstance,
+    setInstanceDataUpdatedTrigger,
     setSelectedHostDetails,
     setSelectedOnPremHostDetails,
     setSelectedOnPremHostId,
@@ -20,6 +21,7 @@ import { setInventoryTableData, setSelectedHeaderTab } from '../../store/workloa
 import { GENERAL } from '../../utils/appConstants';
 import {
     AUTHENTICATION_TYPE,
+    DBType,
     DETECT_HOST_VAR,
     FSX_AZ_TYPE,
     GIB_IN_BYTE,
@@ -29,8 +31,11 @@ import {
     SAVINGS_CALC_MODE,
     SNAPSHOT_FREQUENCY,
     SQL_DEPLOYMENT_MODE,
+    STORAGE_TYPES,
     WLF_TABS
 } from '../../utils/consts';
+import { isAuthRequiredForInstance } from '../InventoryV2/InventoryTablesComponent/ManageInstanceWizard/DetectInstanceStep/DetectContent/DetectContentHelper';
+import { getExploreSavingsEc2InstanceId } from '../InventoryV2/InventoryUtilsV2';
 import {
     EBSCalculation,
     StorageSavingsInterface,
@@ -46,12 +51,14 @@ import {
     setActionsDisabled,
     setDialogErrorWithTooltip
 } from '../../store/workloadFactory/dialogComponentSlice';
-import { DiscoverHostInterface } from '../../utils/types/inventoryV2Types';
+import { DiscoverHostInterface, HostManageReadiness } from '../../utils/types/inventoryV2Types';
 import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSlice';
 import {
+    addPartialDataBannerAuthedHostKeys,
     resetBulkAuthCredentialsAndStatus,
     resetRowsRequiringAuthBulk,
     setBulkAuthStatus,
+    setRowsRequiringAuthBulk,
     setSelectedRowsForExploreSavingsEBSBulk,
     setSelectedRowsForExploreSavingsOnPremBulk,
     setSelectedRowsForExploreSavingsOracleOnPremBulk,
@@ -2052,6 +2059,114 @@ export const generateLabel2ForInstanceType = (options: any, option: any, existin
     return '';
 };
 
+const getRegisterItemForAuthRow = (result: any, row: any) => {
+    const ec2InstanceId = getExploreSavingsEc2InstanceId(row);
+    return result?.data?.items?.find(
+        (item: any) =>
+            item.ec2InstanceId === ec2InstanceId &&
+            item.region === row?.regionId &&
+            item.credentialsId === row?.credentialId
+    );
+};
+
+const isRegisterItemAuthSuccess = (registerItem: any): boolean => {
+    if (!registerItem?.registerDetails?.length) {
+        return false;
+    }
+    if (isMissingSqlPermissions(registerItem.registerDetails)) {
+        return false;
+    }
+    return !registerItem.registerDetails.some((detail: any) => detail?.databaseServerError || detail?.fsxnError);
+};
+
+const buildMssqlBannerAuthPayloadItems = (
+    rowsToAuthenticate: any[],
+    selectedExploreSavingsTabFileSystemType: string,
+    selectedAuthenticationType: string | null,
+    userName: string,
+    password: string,
+    ssmParameterArn: string,
+    isGovAccount: boolean,
+    includeAllInstancesForRow: (row: any) => boolean = () => false
+) =>
+    rowsToAuthenticate
+        .map((row: any) => {
+            const includeAllInstances = includeAllInstancesForRow(row);
+            const credentialList: any[] = [];
+
+            row?.sqlServerInstances?.forEach((instance: any) => {
+                const needsAuth =
+                    includeAllInstances ||
+                    isAuthRequiredForInstance(instance, DBType.MSSQL) ||
+                    isMissingSqlPermissions([instance]);
+
+                if (!needsAuth) {
+                    return;
+                }
+
+                // When not registering every instance, skip ones explicitly tied to another storage tab
+                if (
+                    !includeAllInstances &&
+                    instance?.fileSystemType &&
+                    instance.fileSystemType !== selectedExploreSavingsTabFileSystemType
+                ) {
+                    return;
+                }
+
+                const resourceType =
+                    selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
+                        ? DETECT_HOST_VAR.MSSQL
+                        : DETECT_HOST_VAR.WINDOWS;
+
+                if (isGovAccount) {
+                    credentialList.push({
+                        resourceId: instance?.databaseInstanceName,
+                        resourceType,
+                        ssmParameterArn
+                    });
+                } else {
+                    credentialList.push({
+                        resourceId: instance?.databaseInstanceName,
+                        resourceType,
+                        username: userName,
+                        password
+                    });
+                }
+            });
+
+            if (credentialList.length === 0) {
+                return null;
+            }
+
+            return {
+                credentials: credentialList,
+                checkManageReadiness: true,
+                ec2InstanceId: getExploreSavingsEc2InstanceId(row),
+                region: row?.regionId,
+                credentialsId: row?.credentialId
+            };
+        })
+        .filter(Boolean);
+
+const exploreSavingsHostKey = (row: any): string =>
+    `${getExploreSavingsEc2InstanceId(row)}_${row?.credentialId}_${row?.regionId}`;
+
+const closePartialDataBannerAuthDialog = (dispatch: Dispatch, closeDialogCallback: () => void) => {
+    dispatch(resetDialogComponent());
+    dispatch(resetServerDetailsCredentials());
+    dispatch(resetBulkAuthCredentialsAndStatus());
+    closeDialogCallback();
+};
+
+const refreshExploreSavingsAfterBannerAuth = (dispatch: Dispatch, successfulRows: any[]) => {
+    if (successfulRows.length === 0) {
+        return;
+    }
+
+    dispatch(setInstanceDataUpdatedTrigger(exploreSavingsHostKey(successfulRows[0])));
+    dispatch(setTriggerBulkDataFetch(true));
+};
+
 export const handleAuthenticate = async (
     rowData: any,
     dispatch: Dispatch,
@@ -2061,7 +2176,8 @@ export const handleAuthenticate = async (
     closeDialogCallback: () => void,
     t: TFunction,
     registerResourceCredBulk: (args: any) => Promise<any>,
-    isFromAddHosts: boolean = false
+    isFromAddHosts: boolean = false,
+    authOptions?: { isOracle?: boolean; fromPartialDataBanner?: boolean; rowsToAuthenticate?: any[] }
 ) => {
     try {
         dispatch(setActionsDisabled(true));
@@ -2074,8 +2190,156 @@ export const handleAuthenticate = async (
         const { selectedRowsForExploreSavingsEBSBulk, bulkAuthCredentials, rowsRequiringAuthBulk } =
             state.exploreSavingsBulk;
 
+        if (authOptions?.fromPartialDataBanner) {
+            // Partial-data banner path: single-cred AuthDialog, not bulk-per-host AuthBulkDialog.
+            const isOracle = !!authOptions?.isOracle;
+            // Banner may pass multiple hosts; fall back to the row that opened the dialog.
+            const rowsToAuthenticate =
+                authOptions.rowsToAuthenticate && authOptions.rowsToAuthenticate.length > 0
+                    ? authOptions.rowsToAuthenticate
+                    : [rowData];
+            // ssmDoc-only hosts need every instance registered; other hosts only send instances that need auth.
+            const includeAllInstancesForBannerRow = (row: any) => shouldIncludeAllInstancesForBannerRow(row, isOracle);
+            // Build per-host bulk-register payload; Oracle and MSSQL use different instance/credential shapes.
+            const payloadItems = isOracle
+                ? rowsToAuthenticate
+                      .map((row: any) => {
+                          const credentialList = buildOracleCredentialListForRow(
+                              row,
+                              userName,
+                              password,
+                              ssmParameterArn,
+                              isGovAccount,
+                              includeAllInstancesForBannerRow(row)
+                          );
+                          if (credentialList.length === 0) {
+                              return null;
+                          }
+                          return {
+                              credentials: credentialList,
+                              checkManageReadiness: true,
+                              ec2InstanceId: getExploreSavingsEc2InstanceId(row),
+                              region: row?.regionId,
+                              credentialsId: row?.credentialId
+                          };
+                      })
+                      .filter(Boolean)
+                : buildMssqlBannerAuthPayloadItems(
+                      rowsToAuthenticate,
+                      selectedExploreSavingsTabFileSystemType,
+                      selectedAuthenticationType,
+                      userName,
+                      password,
+                      ssmParameterArn,
+                      isGovAccount,
+                      includeAllInstancesForBannerRow
+                  );
+
+            if (payloadItems.length === 0) {
+                dispatch(
+                    setDialogErrorWithTooltip({
+                        showDialogError: true,
+                        errorMessage: t('databases.explore-savings.authentication-failed'),
+                        showTooltipInfo: true,
+                        tooltipText: t('databases.general.action-required')
+                    })
+                );
+                return;
+            }
+
+            const result = await registerResourceCredBulk({ payload: { items: payloadItems } });
+            if (result && !result?.error && result?.data) {
+                const successfulRows: any[] = [];
+                const failedRows: any[] = [];
+
+                // Match each submitted host to its register response item by ec2/region/credential.
+                rowsToAuthenticate.forEach((row: any) => {
+                    const registerItem = getRegisterItemForAuthRow(result, row);
+
+                    if (isRegisterItemAuthSuccess(registerItem)) {
+                        updateInventoryTable(
+                            row,
+                            selectedExploreSavingsTabFileSystemType,
+                            dispatch,
+                            { data: { items: [registerItem] } },
+                            isOracle
+                        );
+                        successfulRows.push(row);
+                    } else {
+                        failedRows.push(row);
+                    }
+                });
+
+                // Re-fetch instance data + TCO for hosts that cleared auth (MSSQL or Oracle API components pick this up).
+                if (successfulRows.length > 0) {
+                    refreshExploreSavingsAfterBannerAuth(dispatch, successfulRows);
+                }
+
+                if (failedRows.length === 0) {
+                    dispatch(addPartialDataBannerAuthedHostKeys(successfulRows.map(exploreSavingsHostKey)));
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message:
+                                rowsToAuthenticate.length > 1
+                                    ? t('databases.explore-savings.partial-data-banner-auth-success-multiple', {
+                                          count: rowsToAuthenticate.length
+                                      })
+                                    : t('databases.explore-savings.partial-data-banner-auth-success-single', {
+                                          hostName: rowData?.name
+                                      })
+                        })
+                    );
+                    dispatch(resetRowsRequiringAuthBulk());
+                    closePartialDataBannerAuthDialog(dispatch, closeDialogCallback);
+                    return;
+                }
+
+                // Partial success: remember failed hosts so retry can target only those.
+                dispatch(addPartialDataBannerAuthedHostKeys(successfulRows.map(exploreSavingsHostKey)));
+                dispatch(setRowsRequiringAuthBulk(failedRows));
+
+                if (successfulRows.length > 0) {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.SUCCESS,
+                            message: t('databases.explore-savings.partial-data-banner-auth-partial-success', {
+                                authenticated: successfulRows.length,
+                                total: rowsToAuthenticate.length
+                            })
+                        })
+                    );
+                } else {
+                    dispatch(
+                        addNotification({
+                            notificationType: NOTIFICATION_TYPES.ERROR,
+                            message: t('databases.explore-savings.authentication-failed')
+                        })
+                    );
+                }
+
+                closePartialDataBannerAuthDialog(dispatch, closeDialogCallback);
+                return;
+            }
+            // Bulk register API failed entirely — surface server message in the dialog.
+            dispatch(
+                setDialogErrorWithTooltip({
+                    showDialogError: true,
+                    errorMessage: t('databases.explore-savings.authentication-failed'),
+                    showTooltipInfo: true,
+                    // @ts-ignore
+                    tooltipText: result?.error?.data?.message || t('databases.explore-savings.authentication-failed')
+                })
+            );
+
+            return;
+        }
+
         // Determine if this is a bulk operation
-        const isBulkOperation = selectedRowsForExploreSavingsEBSBulk && selectedRowsForExploreSavingsEBSBulk.length > 0;
+        const isBulkOperation =
+            !authOptions?.fromPartialDataBanner &&
+            selectedRowsForExploreSavingsEBSBulk &&
+            selectedRowsForExploreSavingsEBSBulk.length > 0;
 
         if (isBulkOperation) {
             // Bulk authentication flow
@@ -2125,7 +2389,7 @@ export const handleAuthenticate = async (
                     payloadItems.push({
                         credentials: credentialList,
                         checkManageReadiness: true,
-                        ec2InstanceId: row?.ec2InstanceId,
+                        ec2InstanceId: getExploreSavingsEc2InstanceId(row),
                         region: row?.regionId,
                         credentialsId: row?.credentialId
                     });
@@ -2141,12 +2405,7 @@ export const handleAuthenticate = async (
                 let anySuccess = false;
 
                 rowsToAuthenticate.forEach((row: any) => {
-                    const registerItem = result?.data?.items?.find(
-                        (item: any) =>
-                            item.ec2InstanceId === row?.ec2InstanceId &&
-                            item.region === row?.regionId &&
-                            item.credentialsId === row?.credentialId
-                    );
+                    const registerItem = getRegisterItemForAuthRow(result, row);
 
                     const registerItemExists = registerItem && registerItem?.registerDetails?.length > 0;
 
@@ -2317,7 +2576,7 @@ export const handleAuthenticate = async (
                 items: [
                     {
                         ...credList,
-                        ec2InstanceId: rowData?.ec2InstanceId,
+                        ec2InstanceId: getExploreSavingsEc2InstanceId(rowData),
                         region: rowData?.regionId,
                         credentialsId: rowData?.credentialId
                     }
@@ -2342,8 +2601,9 @@ export const handleAuthenticate = async (
                     !result?.data?.items?.[0]?.registerDetails?.[0]?.fsxnError
                 ) {
                     updateInventoryTable(rowData, selectedExploreSavingsTabFileSystemType, dispatch, result);
-                    // Navigate to the Explore Savings page
-                    onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
+                    if (!authOptions?.fromPartialDataBanner) {
+                        onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
+                    }
                     dispatch(
                         addNotification({
                             notificationType: NOTIFICATION_TYPES.SUCCESS,
@@ -2398,15 +2658,40 @@ const updateInventoryTable = (
     rowData: any,
     selectedExploreSavingsTabFileSystemType: string,
     dispatch: Dispatch,
-    result: any
+    result: any,
+    isOracle = false
 ) => {
     const state = store.getState();
     const { inventoryTableData } = state.inventoryV2;
     const { selectedAuthenticationType } = state.exploreSavings;
-    // Clone the inventoryTableData
     const updatedInventoryTableData: Record<string, DiscoverHostInterface> = {
         ...inventoryTableData
     } as Record<string, DiscoverHostInterface>;
+
+    if (isOracle) {
+        const registerDetails = result?.data?.items?.[0]?.registerDetails || [];
+        updatedInventoryTableData[rowData.id] = {
+            ...(updatedInventoryTableData[rowData.id] as DiscoverHostInterface),
+            isDetected: true,
+            databaseInstanceDetails:
+                updatedInventoryTableData[rowData.id]?.databaseInstanceDetails?.map(instance => {
+                    const instanceId = getOracleInstanceId(instance);
+                    const registerDetail = registerDetails.find(
+                        (detail: any) => detail?.databaseInstanceName === instanceId
+                    );
+
+                    return {
+                        ...instance,
+                        oracleServerAuthentication: true,
+                        asmAuthentication:
+                            instance?.isInstanceStorageAsmManaged === true ? true : instance?.asmAuthentication,
+                        manageReadiness: registerDetail?.manageReadiness || (instance as any)?.manageReadiness
+                    };
+                }) ?? []
+        };
+        dispatch(setInventoryTableData(updatedInventoryTableData));
+        return;
+    }
 
     // Clone the sqlServerInstances array and update the correct instance
     updatedInventoryTableData[rowData.id] = {
@@ -2452,16 +2737,163 @@ export const isMissingSqlPermissions = (sqlServerInstances: any) =>
     });
 
 export const shouldAuthDialogOpen = (rowData: any) => {
-    if (rowData?.isDetected) {
-        // Check all sqlServerInstances for missing permissions in manageReadiness
-        return isMissingSqlPermissions(rowData.sqlServerInstances || []);
+    if (!rowData?.isDetected) {
+        return true;
     }
-    // If not detected, open dialog
-    return true;
+
+    const instances = rowData.sqlServerInstances || [];
+    if (instances.length === 0) {
+        return false;
+    }
+
+    return instances.some(
+        (instance: any) => isAuthRequiredForInstance(instance, DBType.MSSQL) || isMissingSqlPermissions([instance])
+    );
 };
 
 // For bulk actions: evaluate an array of rowData and return an array of rows that require auth
 export const shouldAuthDialogOpenBulk = (rows: any[] = []) => {
     if (!Array.isArray(rows) || rows.length === 0) return [];
     return rows.filter(row => shouldAuthDialogOpen(row));
+};
+
+const getOracleDatabaseInstancesFromRow = (rowData: any): any[] => rowData?.databaseInstanceDetails || [];
+
+const getOracleInstanceId = (instance: any): string => instance?.databaseInstanceName || instance?.instanceName || '';
+
+const buildOracleCredentialListForRow = (
+    row: any,
+    userName: string,
+    password: string,
+    ssmParameterArn: string,
+    isGovAccount: boolean,
+    includeAllInstances = false
+): any[] => {
+    const credentialList: any[] = [];
+
+    getOracleDatabaseInstancesFromRow(row).forEach((instance: any) => {
+        const instanceId = getOracleInstanceId(instance);
+        if (!instanceId) {
+            return;
+        }
+
+        const needsAuth =
+            includeAllInstances ||
+            isAuthRequiredForInstance(instance, DBType.ORACLE) ||
+            isMissingSqlPermissions([instance]);
+
+        if (!needsAuth) {
+            return;
+        }
+
+        credentialList.push(
+            isGovAccount
+                ? { resourceId: instanceId, resourceType: DETECT_HOST_VAR.ORACLE, ssmParameterArn }
+                : { resourceId: instanceId, resourceType: DETECT_HOST_VAR.ORACLE, username: userName, password }
+        );
+    });
+
+    return credentialList;
+};
+
+export const shouldAuthDialogOpenOracle = (rowData: any) => {
+    if (!rowData?.isDetected) {
+        return true;
+    }
+
+    const instances = getOracleDatabaseInstancesFromRow(rowData);
+    if (instances.length === 0) {
+        return false;
+    }
+
+    return instances.some(
+        (instance: any) => isAuthRequiredForInstance(instance, DBType.ORACLE) || isMissingSqlPermissions([instance])
+    );
+};
+
+export const shouldAuthDialogOpenForExploreSavings = (rowData: any, isOracle = false) =>
+    isOracle ? shouldAuthDialogOpenOracle(rowData) : shouldAuthDialogOpen(rowData);
+
+export const shouldAuthDialogOpenBulkForExploreSavings = (rows: any[] = [], isOracle = false) => {
+    if (!Array.isArray(rows) || rows.length === 0) return [];
+    return rows.filter(row => shouldAuthDialogOpenForExploreSavings(row, isOracle));
+};
+
+const hasPartialExploreSavingsPermission = (hostManageReadiness?: HostManageReadiness): boolean =>
+    canEnableExploreSavingsWithoutRegistration(hostManageReadiness) &&
+    hostManageReadiness?.extensiveRunPermission !== true;
+
+const shouldIncludeAllInstancesForBannerRow = (row: any, isOracle: boolean): boolean =>
+    hasPartialExploreSavingsPermission(row?.hostManageReadiness) &&
+    !(isOracle ? shouldAuthDialogOpenOracle(row) : shouldAuthDialogOpen(row));
+
+const needsExploreSavingsAuthFromBanner = (host: any, savingsCalculatorFrom?: string | null): boolean => {
+    const authedKeys = store.getState().exploreSavingsBulk.partialDataBannerAuthedHostKeys || [];
+    if (authedKeys.includes(exploreSavingsHostKey(host))) {
+        return false;
+    }
+    if (hasPartialExploreSavingsPermission(host?.hostManageReadiness)) {
+        return true;
+    }
+    const isOracle = savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+    return isOracle ? shouldAuthDialogOpenOracle(host) : shouldAuthDialogOpen(host);
+};
+
+export const getPartialDataBannerAuthHosts = (hosts: any[] = [], savingsCalculatorFrom?: string | null): any[] => {
+    if (!Array.isArray(hosts) || hosts.length === 0) {
+        return [];
+    }
+    return hosts.filter(host => needsExploreSavingsAuthFromBanner(host, savingsCalculatorFrom));
+};
+
+/** Auto TCO modes that may show the partial-data banner (MSSQL EBS, FSx for Windows, Oracle EBS). */
+export const isFsxOntapExploreSavingsMode = (savingsCalculatorFrom?: string | null): boolean =>
+    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS ||
+    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ||
+    savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS;
+
+export const canEnableExploreSavingsWithoutRegistration = (hostManageReadiness?: HostManageReadiness): boolean =>
+    hostManageReadiness?.extensiveRunPermission === true || hostManageReadiness?.canReadAWSSSMDocuments === true;
+
+export const getExploreSavingsFileSystemType = (savingsCalculatorFrom?: string | null): string =>
+    savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW ? STORAGE_TYPES.FSX_FOR_WINDOWS : DETECT_HOST_VAR.EBS;
+
+export const getExploreSavingsSelectedHostsForPartialData = ({
+    savingsCalculatorFrom,
+    selectedRowsForExploreSavingsEBSBulk,
+    selectedRowsForExploreSavingsOracleEbsBulk,
+    selectedHostDetails
+}: {
+    savingsCalculatorFrom?: string | null;
+    selectedRowsForExploreSavingsEBSBulk?: any[];
+    selectedRowsForExploreSavingsOracleEbsBulk?: any[];
+    selectedHostDetails?: any;
+}): any[] => {
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.ORACLE_AUTO_EBS) {
+        return selectedRowsForExploreSavingsOracleEbsBulk || [];
+    }
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
+        return selectedRowsForExploreSavingsEBSBulk || [];
+    }
+    if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW) {
+        return selectedHostDetails ? [selectedHostDetails] : [];
+    }
+    return [];
+};
+
+export const shouldShowExploreSavingsPartialDataBanner = (
+    hosts: any[],
+    savingsCalculatorFrom?: string | null
+): boolean => {
+    if (!isFsxOntapExploreSavingsMode(savingsCalculatorFrom) || hosts.length === 0) {
+        return false;
+    }
+    return hosts.some(host => needsExploreSavingsAuthFromBanner(host, savingsCalculatorFrom));
+};
+
+export const shouldShowExploreSavingsAuthLink = (hosts: any[], savingsCalculatorFrom?: string | null): boolean => {
+    if (!isFsxOntapExploreSavingsMode(savingsCalculatorFrom) || hosts.length === 0) {
+        return false;
+    }
+    return hosts.some(host => needsExploreSavingsAuthFromBanner(host, savingsCalculatorFrom));
 };

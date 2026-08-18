@@ -14,6 +14,7 @@ import {
 } from '../../../../common/AccordionCard/AccordionCard';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
+import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import {
     resetServerDetailsCredentials,
     setCredentials,
@@ -22,9 +23,11 @@ import {
 
 interface AuthDialogProps {
     databaseHostName: string;
+    databaseHostNames?: string[];
+    isOracle?: boolean;
 }
 
-const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
+const AuthDialog = ({ databaseHostName, databaseHostNames, isOracle = false }: AuthDialogProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [userNameTouched, setUserNameTouched] = useState(false);
@@ -39,10 +42,10 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
     const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
 
     useEffect(() => {
-        if (!selectedAuthenticationType) {
+        if (!isOracle && !selectedAuthenticationType) {
             dispatch(setSelectedAuthenticationType(AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION));
         }
-    }, []);
+    }, [dispatch, isOracle, selectedAuthenticationType]);
 
     const handleAuthTypeChange = (authType: string) => {
         dispatch(setSelectedAuthenticationType(authType));
@@ -66,17 +69,30 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
         </div>
     );
 
-    const mssqlInputFields = () => {
+    const credentialInputFields = () => {
         const { selectedAuthenticationType } = useAppSelector(state => state.exploreSavings);
+        const isSqlAuth = !isOracle && selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION;
+        const userNameTitle = isOracle
+            ? t('databases.register-flow.detect-oracle-username')
+            : isSqlAuth
+            ? t('databases.register-flow.detect-mssql-username')
+            : t('databases.register-flow.detect-windows-username');
+        const passwordTitle = isOracle
+            ? t('databases.register-flow.detect-oracle-password')
+            : isSqlAuth
+            ? t('databases.register-flow.detect-mssql-password')
+            : t('databases.register-flow.detect-windows-password');
+        const userNamePlaceholder = isOracle
+            ? `${t('databases.general.enter')} ${t('databases.register-flow.detect-oracle-username')}`
+            : isSqlAuth
+            ? `${t('databases.general.enter')} ${t('databases.register-flow.detect-mssql-username')}`
+            : t('databases.register-flow.detect-windows-username');
+
         return (
             <div className={styles.firstSection}>
                 <div className={styles.textFieldContainer}>
                     <DsTextField
-                        title={
-                            selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
-                                ? t('databases.register-flow.detect-mssql-username')
-                                : t('databases.register-flow.detect-windows-username')
-                        }
+                        title={userNameTitle}
                         value={userName}
                         onChange={(event?: ChangeEvent<HTMLInputElement>) => {
                             dispatch(setCredentials({ userName: event?.target?.value }));
@@ -92,21 +108,11 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
                                   }
                               }
                             : {})}
-                        placeholder={
-                            selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
-                                ? `${t('databases.general.enter')} ${t(
-                                      'databases.register-flow.detect-mssql-username'
-                                  )}`
-                                : t('databases.register-flow.detect-windows-username')
-                        }
+                        placeholder={userNamePlaceholder}
                     />
 
                     <DsTextField
-                        title={
-                            selectedAuthenticationType === AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION
-                                ? t('databases.register-flow.detect-mssql-password')
-                                : t('databases.register-flow.detect-windows-password')
-                        }
+                        title={passwordTitle}
                         value={password}
                         isPassword
                         onChange={(event?: ChangeEvent<HTMLInputElement>) => {
@@ -135,9 +141,21 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
             <DsTypography variant="Regular_14">
                 {t('databases.explore-savings.auth-heading')} <span className={styles.dbName}>{databaseHostName}</span>
             </DsTypography>
+            {databaseHostNames && databaseHostNames.length > 0 && (
+                <div className={styles.hostNameList}>
+                    {databaseHostNames.map(hostName => (
+                        <div key={hostName} className={styles.hostNameItem}>
+                            <Bullet />
+                            <DsTypography variant="Regular_14">{hostName}</DsTypography>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {isGovAccount ? (
                 <div className={styles.textFieldContainer}>{ssmArnInputField()}</div>
+            ) : isOracle ? (
+                <div className={styles.textFieldContainer}>{credentialInputFields()}</div>
             ) : (
                 <>
                     <div className={styles.radioContainer}>
@@ -159,62 +177,64 @@ const AuthDialog = ({ databaseHostName }: AuthDialogProps) => {
                             onClick={() => handleAuthTypeChange(AUTHENTICATION_TYPE.WINDOWS_AUTHENTICATION)}
                         />
                     </div>
-                    <div className={styles.textFieldContainer}>{mssqlInputFields()}</div>
+                    <div className={styles.textFieldContainer}>{credentialInputFields()}</div>
                 </>
             )}
-            <div className={styles.accordionContainer}>
-                <AccordionController isGrouped={false}>
-                    <AccordionCard
-                        id="1"
-                        title={
-                            <DsTypography variant="Semibold_14">
-                                {t('databases.explore-savings.permissions-required-heading')}
-                            </DsTypography>
-                        }
-                    >
-                        <AccordionCardContent>
-                            <DsTypography variant="Regular_14">
-                                <DsTypography variant="Regular_14" className={styles.text}>
-                                    {' '}
-                                    {t('databases.explore-savings.permissions-required-content')}
+            {!isOracle && (
+                <div className={styles.accordionContainer}>
+                    <AccordionController isGrouped={false}>
+                        <AccordionCard
+                            id="1"
+                            title={
+                                <DsTypography variant="Semibold_14">
+                                    {t('databases.explore-savings.permissions-required-heading')}
                                 </DsTypography>
+                            }
+                        >
+                            <AccordionCardContent>
+                                <DsTypography variant="Regular_14">
+                                    <DsTypography variant="Regular_14" className={styles.text}>
+                                        {' '}
+                                        {t('databases.explore-savings.permissions-required-content')}
+                                    </DsTypography>
 
-                                <div className={styles['dialog-body']}>
-                                    <div className={styles['code-box']}>
-                                        <div className={styles.code}>
-                                            <DsTypography variant="Regular_13">
-                                                - {t('databases.explore-savings.view-any-definition')}
-                                            </DsTypography>
-                                            <DsTypography variant="Regular_13">
-                                                - {t('databases.explore-savings.view-server-state')}
-                                            </DsTypography>
-                                            <DsTypography variant="Regular_13">
-                                                - {t('databases.explore-savings.connect-sql')}
-                                            </DsTypography>
-                                        </div>
-                                        <div className={styles.copy}>
-                                            <Popover
-                                                popoverClass={styles['copy-popover']}
-                                                children="Permissions copied"
-                                                container={
-                                                    <CopyToClipboardCommon
-                                                        value={`${t(
-                                                            'databases.explore-savings.view-any-definition'
-                                                        )}, ${t('databases.explore-savings.view-server-state')}, ${t(
-                                                            'databases.explore-savings.connect-sql'
-                                                        )}`}
-                                                        iconProvided={<CopyIcon fill="#404040" />}
-                                                    />
-                                                }
-                                            />
+                                    <div className={styles['dialog-body']}>
+                                        <div className={styles['code-box']}>
+                                            <div className={styles.code}>
+                                                <DsTypography variant="Regular_13">
+                                                    - {t('databases.explore-savings.view-any-definition')}
+                                                </DsTypography>
+                                                <DsTypography variant="Regular_13">
+                                                    - {t('databases.explore-savings.view-server-state')}
+                                                </DsTypography>
+                                                <DsTypography variant="Regular_13">
+                                                    - {t('databases.explore-savings.connect-sql')}
+                                                </DsTypography>
+                                            </div>
+                                            <div className={styles.copy}>
+                                                <Popover
+                                                    popoverClass={styles['copy-popover']}
+                                                    children="Permissions copied"
+                                                    container={
+                                                        <CopyToClipboardCommon
+                                                            value={`${t(
+                                                                'databases.explore-savings.view-any-definition'
+                                                            )}, ${t(
+                                                                'databases.explore-savings.view-server-state'
+                                                            )}, ${t('databases.explore-savings.connect-sql')}`}
+                                                            iconProvided={<CopyIcon fill="#404040" />}
+                                                        />
+                                                    }
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </DsTypography>
-                        </AccordionCardContent>
-                    </AccordionCard>
-                </AccordionController>
-            </div>
+                                </DsTypography>
+                            </AccordionCardContent>
+                        </AccordionCard>
+                    </AccordionController>
+                </div>
+            )}
         </div>
     );
 };

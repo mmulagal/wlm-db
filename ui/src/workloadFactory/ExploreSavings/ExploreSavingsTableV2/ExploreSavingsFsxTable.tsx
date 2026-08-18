@@ -1,4 +1,4 @@
-import { Table, useTable, Typography, TableTopBar, Popover, useDialog } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
 import { useEffect, useState } from 'react';
@@ -8,67 +8,35 @@ import styles from './ExploreSavingsTableV2.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import { handleAuthenticate, onClickESHost, shouldAuthDialogOpen } from '../ExploreSavingsUtils';
-import { DBType, FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
+import { onClickESHost } from '../ExploreSavingsUtils';
+import { DBType, WLF_TABS } from '../../../utils/consts';
 import {
     renderAllocatedCapacity,
     renderCellData,
     renderInstanceListText,
     renderUnmanagedAZ,
-    uniqueHostRow
+    uniqueHostRow,
+    canTriggerUnregisteredAssessment
 } from '../../InventoryV2/InventoryUtilsV2';
 import { getFilterOptions } from '../../../utils/utilityFunctions';
 import useResize from '../../../common/hooks/useResize';
-import DialogComponent from '../../../common/Dialog/DialogComponent';
-import AuthDialog from './AuthDialog/AuthDialog';
-import { useRegisterResourceCredentialsBulkMutation } from '../../../utils/apiService';
-import {
-    resetOptimizedStorage,
-    resetServerDetailsCredentials
-} from '../../../store/workloadFactory/exploreSavingsSlice';
-import { resetDialogComponent } from '../../../store/workloadFactory/dialogComponentSlice';
+import { resetOptimizedStorage } from '../../../store/workloadFactory/exploreSavingsSlice';
+import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const ExploreSavingsFsxTable = () => {
     const dispatch = useDispatch();
     const windowSize = useResize();
-    const { setDialog, closeDialog } = useDialog();
-    const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     const navigate = useNavigate();
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
     const unManagedHostFormatedList = useAppSelector(state => state.exploreSavings.unmanagedExploreSavingsHost);
     const [ebsTableData, setEBSTableData] = useState<any>([]);
     const [fsxWTableData, setFSXWTableData] = useState<any>([]);
-    // const selectedHeaderTab = useAppSelector(state => state.inventoryV2.selectedHeaderTab);
     const selectedExploreSavingsTab = useAppSelector(state => state.exploreSavings.selectedExploreSavingsTab);
     const { isWorkloadFactory } = useAppSelector(state => state.auth);
     const { headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList, multiDataLoading } = useAppSelector(
         state => state.headers
     );
-    const selectedExploreSavingsTabFileSystemType =
-        selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? GENERAL.EBS : GENERAL.FSX_FOR_WINDOWS;
-
-    // const getInitialFilter = () => {
-    //     if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-    //         return {
-    //             textFilter: '',
-    //             count: 1,
-    //             columns: {
-    //                 '3': {
-    //                     activeCount: 1,
-    //                     values: {
-    //                         [selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS
-    //                             ? GENERAL.EBS
-    //                             : GENERAL.FSX_FOR_WINDOWS]: true
-    //                     },
-    //                     valuesArray: [true]
-    //                 }
-    //             }
-    //         };
-    //     } else {
-    //         return undefined;
-    //     }
-    // };
 
     useEffect(() => {
         if (unManagedHostFormatedList) {
@@ -101,11 +69,9 @@ const ExploreSavingsFsxTable = () => {
                 };
                 result.push(rowData);
             });
-            // Initialize two empty arrays
             const ebsArray: any = [];
             const fsxArray: any = [];
             result.forEach((item: any) => {
-                // currently filtering for MSSQL hosts only
                 if (item?.hostType !== DBType.MSSQL) {
                     return;
                 }
@@ -123,58 +89,46 @@ const ExploreSavingsFsxTable = () => {
         }
     }, [unManagedHostFormatedList, headerSelectedMultiCredIdsList, headerSelectedMultiRegionIdsList]);
 
-    const handleDialog = (rowData: any) => {
-        setDialog(
-            <DialogComponent
-                header={t('databases.explore-savings.authentication-required')}
-                content={<AuthDialog databaseHostName={rowData?.name} />}
-                primaryButton={t('databases.explore-savings.authenticate')}
-                secondaryButton={t('databases.explore-savings.close')}
-                closeCallback={() => {
-                    dispatch(resetDialogComponent());
-                    dispatch(resetServerDetailsCredentials());
-                    closeDialog();
-                }}
-                dialogFrom={FROM_DIALOG.EXPLORE_SAVINGS}
-                callback={() => {
-                    handleAuthenticate(
-                        rowData,
-                        dispatch,
-                        selectedExploreSavingsTabFileSystemType,
-                        isWorkloadFactory,
-                        navigate,
-                        () => closeDialog(),
-                        t,
-                        registerResourceCredBulk
-                    );
-                }}
-                customClass={styles.protectionDialog}
-            />
-        );
-    };
-
     const lastColDetails = () => ({
         id: '11',
         Header: '',
         accessor: '',
         isSticky: true,
         width: windowSize.width >= 1920 ? '15.37%' : '247px',
-        renderCell: (cellData: any, rowData: any) => (
-            <div
-                className={CommonStyles.detectManage}
-                onClick={() => {
-                    dispatch(resetOptimizedStorage());
-                    shouldAuthDialogOpen(rowData)
-                        ? handleDialog(rowData)
-                        : onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
-                }}
-                id="wlm-db-fsxw-explore-savings-table-button"
-            >
-                <Typography variant="Regular_14" className={CommonStyles.textStyle}>
-                    {GENERAL.ES_SAVINGS}
-                </Typography>
-            </div>
-        )
+        renderCell: (cellData: any, rowData: any) => {
+            const lacksExploreSavingsPermission = !canTriggerUnregisteredAssessment(rowData?.hostManageReadiness);
+            const tooltipMessage = lacksExploreSavingsPermission
+                ? t('databases.inventory.full-permission-required-explore-savings')
+                : '';
+
+            const exploreSavingsButton = (
+                <div
+                    className={
+                        lacksExploreSavingsPermission ? CommonStyles.detectManageDisable : CommonStyles.detectManage
+                    }
+                    onClick={() => {
+                        if (lacksExploreSavingsPermission) {
+                            return;
+                        }
+                        dispatch(resetOptimizedStorage());
+                        onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
+                    }}
+                    id="wlm-db-fsxw-explore-savings-table-button"
+                >
+                    <Typography variant="Regular_14" className={CommonStyles.textStyle}>
+                        {GENERAL.ES_SAVINGS}
+                    </Typography>
+                </div>
+            );
+
+            return lacksExploreSavingsPermission ? (
+                <TooltipComponent title={tooltipMessage} placement="bottom" width="380px" height="50px">
+                    {exploreSavingsButton}
+                </TooltipComponent>
+            ) : (
+                exploreSavingsButton
+            );
+        }
     });
 
     const ExploreSavingsColDefs: ColumnProps[] = [
@@ -205,19 +159,6 @@ const ExploreSavingsFsxTable = () => {
             ),
             renderCell: (cellData: string) => cellData || GENERAL.NOT_AVAILABLE
         },
-        // {
-        //     Header: GENERAL.DB_HOST_FILE_SYSTEM_TYPE,
-        //     accessor: 'storageType',
-        //     id: '3',
-        //     width: '170px',
-        //     filterOptions: [
-        //         { label: GENERAL.EBS, value: GENERAL.EBS },
-        //         { label: GENERAL.FSX_FOR_WINDOWS, value: GENERAL.FSX_FOR_WINDOWS }
-        //     ],
-        //     renderCell: (cellData: string) => {
-        //         return cellData === 'EBS' ? 'Elastic Block Store (EBS)' : cellData || GENERAL.NOT_AVAILABLE;
-        //     }
-        // },
         {
             Header: 'SQL server instances',
             accessor: 'totalInstance',

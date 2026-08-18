@@ -35,7 +35,10 @@ import {
     setRequestedPayload,
     setRequestedRegion
 } from '../../../store/workloadFactory/exploreSavingsSlice';
-import { setTriggerBulkDataFetch } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
+import {
+    setSelectedRowsForExploreSavingsEBSBulk,
+    setTriggerBulkDataFetch
+} from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import store from '../../../store/store';
 import { setMssqlInstancesData as setMssqlInstancesDataV2 } from '../../../store/workloadFactory/inventoryV2Slice';
 import {
@@ -44,7 +47,6 @@ import {
     isExploreSavingsAoagHost,
     setESInstanceData
 } from '../ExploreSavingsUtils';
-import { GENERAL } from '../../../utils/appConstants';
 import {
     EBS_PROTECTED_OPTIONS,
     GIB_IN_BYTE,
@@ -55,7 +57,11 @@ import {
     SAVINGS_CALC_MODE,
     SNAPSHOT_FREQUENCY
 } from '../../../utils/consts';
-import { addInstanceIdToGetPerf, addInstanceIdToGetInstance, uniqueHostRow } from '../../InventoryV2/InventoryUtilsV2';
+import {
+    addInstanceIdToGetInstance,
+    getExploreSavingsEc2InstanceId,
+    uniqueHostRow
+} from '../../InventoryV2/InventoryUtilsV2';
 import { checkIfEbsProtected, prepareStorageSavingsData, prepareViewCalcData } from './savingsUtil';
 
 interface ONPREM_PAYLOAD {
@@ -78,6 +84,8 @@ interface ONPREM_PAYLOAD {
         monthlyChangeRatePercentage?: number;
     };
 }
+
+const bulkMssqlInstanceFields = [...INSTANCE_API_FIELDS.UNMANAGED_DEFAULT, ...INSTANCE_API_FIELDS.SUB_TABLE_FIELDS];
 
 const SavingsCalculatorApi = () => {
     const dispatch = useAppDispatch();
@@ -122,6 +130,104 @@ const SavingsCalculatorApi = () => {
     const [getBulkViewCalculationsApi] = useGetBulkViewCalculationsMutation();
     const [getMssqlInstanceDataApiV2] = useGetMssqlInstanceDataV2Mutation();
     const [getStorageSavingsOnPremDataApi] = useGetOnPremCalculationsMutation();
+
+    // Fetch per-host instance data (incl. protection/performance) for AUTO_EBS bulk selection.
+    // Triggered via triggerBulkDataFetch on initial bulk select or after partial-data banner auth.
+    // Results go into mssqlInstancesData; the sync effect below merges them into selectedRowsForExploreSavingsEBSBulk.
+    const fetchBulkMssqlInstanceData = async (hosts: any[]) => {
+        if (!hosts?.length) {
+            return;
+        }
+
+        const instanceFieldsCsv = bulkMssqlInstanceFields.join(',');
+        // One request per host; cacheKey uses uniqueHostRow so it matches Explore Savings row ids elsewhere.
+        const requests = hosts
+            .map((host: any) => {
+                const ec2InstanceId = getExploreSavingsEc2InstanceId(host);
+                const credentialId = host?.credentialId || selectedExCredId;
+                const regionId = host?.regionId || selectedExRegionId;
+                if (!ec2InstanceId || !credentialId || !regionId) {
+                    return null;
+                }
+
+                return {
+                    cacheKey: uniqueHostRow(ec2InstanceId, credentialId, regionId),
+                    ec2InstanceId,
+                    credentialId,
+                    regionId
+                };
+            })
+            .filter(Boolean) as Array<{
+            cacheKey: string;
+            ec2InstanceId: string;
+            credentialId: string;
+            regionId: string;
+        }>;
+
+        if (requests.length === 0) {
+            return;
+        }
+
+        // Set loading flags up front so bulk accordion / banner can show in-flight state per host.
+        const loadingState = { ...store.getState().inventoryV2.mssqlInstancesData };
+        requests.forEach(({ cacheKey }) => {
+            loadingState[cacheKey] = {
+                isManagedHost: false,
+                loading: true,
+                data: null,
+                error: null,
+                fields: bulkMssqlInstanceFields
+            };
+        });
+        dispatch(setMssqlInstancesDataV2(loadingState));
+
+        // Parallel per-host calls; SUB_TABLE_FIELDS return protection/performance needed after ssmDoc-level auth.
+        await Promise.all(
+            requests.map(async ({ cacheKey, ec2InstanceId, credentialId, regionId }) => {
+                try {
+                    const result: any = await getMssqlInstanceDataApiV2({
+                        credentialId,
+                        regionId,
+                        instances: ec2InstanceId,
+                        fields: instanceFieldsCsv,
+                        nextToken: ''
+                    });
+
+                    // Patch cache per response; sync effect picks up enriched rows for TCO refresh.
+                    const nextData = { ...store.getState().inventoryV2.mssqlInstancesData };
+                    if (result && !result?.error) {
+                        const hostData = result?.data?.items?.[0];
+                        nextData[cacheKey] = {
+                            isManagedHost: false,
+                            loading: false,
+                            data: hostData || null,
+                            error: hostData?.errors || null,
+                            fields: bulkMssqlInstanceFields
+                        };
+                    } else {
+                        nextData[cacheKey] = {
+                            isManagedHost: false,
+                            loading: false,
+                            data: null,
+                            error: result?.error?.data?.message || null,
+                            fields: bulkMssqlInstanceFields
+                        };
+                    }
+                    dispatch(setMssqlInstancesDataV2(nextData));
+                } catch (error) {
+                    const nextData = { ...store.getState().inventoryV2.mssqlInstancesData };
+                    nextData[cacheKey] = {
+                        isManagedHost: false,
+                        loading: false,
+                        data: null,
+                        error,
+                        fields: bulkMssqlInstanceFields
+                    };
+                    dispatch(setMssqlInstancesDataV2(nextData));
+                }
+            })
+        );
+    };
 
     const [getRegionsWithoutCred] = useLazyGetRegionsWithoutCredQuery();
 
@@ -605,7 +711,13 @@ const SavingsCalculatorApi = () => {
             // own API components and must see triggerBulkDataFetch === true.
             if (savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS) {
                 dispatch(setTriggerBulkDataFetch(false));
-                if (selectedHostDetails && Object.keys(selectedHostDetails).length !== 0) {
+                if (selectedRowsForExploreSavingsEBSBulk && selectedRowsForExploreSavingsEBSBulk.length > 0) {
+                    void fetchBulkMssqlInstanceData(selectedRowsForExploreSavingsEBSBulk);
+                    dispatch(setDisableState(false));
+                    if (ebsTCOAction === 'bulk') {
+                        triggerRefreshApi();
+                    }
+                } else if (selectedHostDetails && Object.keys(selectedHostDetails).length !== 0) {
                     // Check if instance API has already been called for this host
                     const uniqueHostId = uniqueHostRow(
                         selectedHostDetails?.ec2InstanceId,
@@ -650,6 +762,49 @@ const SavingsCalculatorApi = () => {
             }
         }
     }, [triggerBulkDataFetch]);
+
+    // Keep bulk selected hosts in sync with enriched inventory rows after instance API completes
+    useEffect(() => {
+        if (
+            savingsCalculatorFrom !== SAVINGS_CALC_MODE.AUTO_EBS ||
+            ebsTCOAction !== 'bulk' ||
+            !selectedRowsForExploreSavingsEBSBulk?.length ||
+            !unManagedHostFormatedList?.length
+        ) {
+            return;
+        }
+
+        // Inventory rows use plain ec2 id; bulk selection uses uniqueHostRow composite id — match on composite key.
+        const enrichedById = new Map(
+            unManagedHostFormatedList.map((row: any) => [uniqueHostRow(row.id, row.credentialId, row.regionId), row])
+        );
+        let changed = false;
+        const updatedRows = selectedRowsForExploreSavingsEBSBulk.map((host: any) => {
+            const enriched = enrichedById.get(host.id);
+            if (!enriched) {
+                return host;
+            }
+            const merged = {
+                ...enriched,
+                id: host.id,
+                monthlySqlByolCost: host.monthlySqlByolCost
+            };
+            if (!isEqual(merged, host)) {
+                changed = true;
+            }
+            return merged;
+        });
+
+        if (changed) {
+            dispatch(setSelectedRowsForExploreSavingsEBSBulk(updatedRows));
+        }
+    }, [
+        unManagedHostFormatedList,
+        savingsCalculatorFrom,
+        ebsTCOAction,
+        selectedRowsForExploreSavingsEBSBulk,
+        dispatch
+    ]);
 
     useEffect(() => {
         if (savingsCalculatorRefresh) {

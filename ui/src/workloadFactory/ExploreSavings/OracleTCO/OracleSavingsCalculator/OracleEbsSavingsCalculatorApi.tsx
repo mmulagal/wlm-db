@@ -321,6 +321,7 @@ const OracleEbsSavingsCalculatorApi = () => {
             selectedRowsForExploreSavingsOracleEbsBulk.length > 0
         ) {
             dispatch(setTriggerBulkDataFetch(false));
+            resourceDetailsFetchedRef.current = null;
             fetchOracleResourceDetails();
             triggerRefreshApi();
         }

@@ -1,4 +1,4 @@
-import { Table, useTable, Typography, TableTopBar, useDialog } from '@netapp/design-system';
+import { Table, useTable, Typography, TableTopBar } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { useDispatch } from 'react-redux';
 import { useEffect, useMemo, useState } from 'react';
@@ -8,48 +8,29 @@ import styles from './ExploreSavingsTableV2.module.scss';
 import CommonStyles from '../../../utils/CommonStyles.module.scss';
 import { GENERAL } from '../../../utils/appConstants';
 import { useAppSelector } from '../../../store/storeHooks';
-import {
-    handleAuthenticate,
-    onClickESHost,
-    shouldAuthDialogOpen,
-    shouldAuthDialogOpenBulk,
-    getExploreSavingsDeploymentDisplay
-} from '../ExploreSavingsUtils';
-import { DBType, FROM_DIALOG, WLF_TABS } from '../../../utils/consts';
+import { onClickESHost, getExploreSavingsDeploymentDisplay } from '../ExploreSavingsUtils';
+import { DBType, WLF_TABS } from '../../../utils/consts';
 import {
     renderAllocatedCapacity,
     renderCellData,
     renderInstanceListText,
     renderUnmanagedAZ,
     uniqueHostRow,
-    hasFullPermission
+    canTriggerUnregisteredAssessment
 } from '../../InventoryV2/InventoryUtilsV2';
 import { getFilterOptions, getSelectedFromSelectionState } from '../../../utils/utilityFunctions';
 import useResize from '../../../common/hooks/useResize';
-import DialogComponent from '../../../common/Dialog/DialogComponent';
-import AuthDialog from './AuthDialog/AuthDialog';
-import { useRegisterResourceCredentialsBulkMutation } from '../../../utils/apiService';
-import {
-    resetOptimizedStorage,
-    resetServerDetailsCredentials
-} from '../../../store/workloadFactory/exploreSavingsSlice';
-import { resetDialogComponent } from '../../../store/workloadFactory/dialogComponentSlice';
+import { resetOptimizedStorage } from '../../../store/workloadFactory/exploreSavingsSlice';
 import {
     setEbsTCOAction,
-    setSelectedRowsForExploreSavingsEBSBulk,
-    setRowsRequiringAuthBulk,
-    resetRowsRequiringAuthBulk,
-    resetBulkAuthCredentialsAndStatus
+    setSelectedRowsForExploreSavingsEBSBulk
 } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import BulkActionContainer from '../../../common/BulkAction/BulkActionContainer';
-import AuthBulkDialog from './AuthDialog/AuthBulkDialog';
 import TooltipComponent from '../../../common/TooltipComponent/TooltipComponent';
 
 const ExploreSavingsTableV2 = () => {
     const dispatch = useDispatch();
     const windowSize = useResize();
-    const { setDialog, closeDialog } = useDialog();
-    const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     const navigate = useNavigate();
     const isDiscoverInProgress = useAppSelector(state => state.inventoryV2.discoveredHosts.discoverHostLoading);
     const isManagedHostListLoading = useAppSelector(state => state.inventoryV2.isManagedHostListLoading);
@@ -65,28 +46,6 @@ const ExploreSavingsTableV2 = () => {
     const { selectedRowsForExploreSavingsEBSBulk } = useAppSelector(state => state.exploreSavingsBulk);
     const selectedExploreSavingsTabFileSystemType =
         selectedExploreSavingsTab === WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE ? GENERAL.EBS : GENERAL.FSX_FOR_WINDOWS;
-
-    // const getInitialFilter = () => {
-    //     if (selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS || selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_FsxW) {
-    //         return {
-    //             textFilter: '',
-    //             count: 1,
-    //             columns: {
-    //                 '3': {
-    //                     activeCount: 1,
-    //                     values: {
-    //                         [selectedHeaderTab === WLF_TABS.EXPLORE_SAVINGS_EBS
-    //                             ? GENERAL.EBS
-    //                             : GENERAL.FSX_FOR_WINDOWS]: true
-    //                     },
-    //                     valuesArray: [true]
-    //                 }
-    //             }
-    //         };
-    //     } else {
-    //         return undefined;
-    //     }
-    // };
 
     useEffect(() => {
         if (unManagedHostFormatedList) {
@@ -160,12 +119,13 @@ const ExploreSavingsTableV2 = () => {
 
                 const limitReached = selectedRowsForExploreSavingsEBSBulk.length >= 5;
                 const shouldDisableDueToLimit = limitReached && !isSelected;
-                const lacksFullPermission = !hasFullPermission(item?.hostManageReadiness);
+                const lacksExploreSavingsPermission = !canTriggerUnregisteredAssessment(item?.hostManageReadiness);
 
-                const isDisabled = !sharesGroupWithSelection || shouldDisableDueToLimit || lacksFullPermission;
+                const isDisabled =
+                    !sharesGroupWithSelection || shouldDisableDueToLimit || lacksExploreSavingsPermission;
 
                 let tooltipTitle = '';
-                if (lacksFullPermission) {
+                if (lacksExploreSavingsPermission) {
                     tooltipTitle = t('databases.inventory.full-permission-required-explore-savings');
                 } else if (!sharesGroupWithSelection) {
                     tooltipTitle = t('databases.explore-savings.disabled-tooltip');
@@ -202,68 +162,6 @@ const ExploreSavingsTableV2 = () => {
         [ebsTableData, selectedRowsForExploreSavingsEBSBulk]
     );
 
-    const handleBulkDialog = (rowData: any) => {
-        setDialog(
-            <DialogComponent
-                header={t('databases.explore-savings.authentication-required')}
-                content={<AuthBulkDialog />}
-                primaryButton={t('databases.explore-savings.apply')}
-                secondaryButton={t('databases.explore-savings.close')}
-                closeCallback={() => {
-                    dispatch(resetDialogComponent());
-                    dispatch(resetBulkAuthCredentialsAndStatus());
-                    dispatch(resetRowsRequiringAuthBulk());
-                    closeDialog();
-                }}
-                dialogFrom={FROM_DIALOG.EXPLORE_SAVINGS}
-                callback={() => {
-                    handleAuthenticate(
-                        rowData,
-                        dispatch,
-                        selectedExploreSavingsTabFileSystemType,
-                        isWorkloadFactory,
-                        navigate,
-                        () => closeDialog(),
-                        t,
-                        registerResourceCredBulk,
-                        false
-                    );
-                }}
-            />
-        );
-    };
-
-    const handleDialog = (rowData: any) => {
-        setDialog(
-            <DialogComponent
-                header={t('databases.explore-savings.authentication-required')}
-                content={<AuthDialog databaseHostName={rowData?.name} />}
-                primaryButton={t('databases.explore-savings.authenticate')}
-                secondaryButton={t('databases.explore-savings.close')}
-                closeCallback={() => {
-                    dispatch(resetDialogComponent());
-                    dispatch(resetServerDetailsCredentials());
-                    closeDialog();
-                }}
-                dialogFrom={FROM_DIALOG.EXPLORE_SAVINGS}
-                callback={() => {
-                    handleAuthenticate(
-                        rowData,
-                        dispatch,
-                        selectedExploreSavingsTabFileSystemType,
-                        isWorkloadFactory,
-                        navigate,
-                        () => closeDialog(),
-                        t,
-                        registerResourceCredBulk,
-                        false
-                    );
-                }}
-                customClass={styles.protectionDialog}
-            />
-        );
-    };
-
     const lastColDetails = () => ({
         id: '11',
         Header: '',
@@ -272,11 +170,11 @@ const ExploreSavingsTableV2 = () => {
         width: windowSize.width >= 1920 ? '15.37%' : '247px',
         renderCell: (cellData: any, rowData: any) => {
             const isBulkSelectionActive = selectedRowsForExploreSavingsEBSBulk.length > 0;
-            const lacksFullPermission = !hasFullPermission(rowData?.hostManageReadiness);
-            const isDisabled = isBulkSelectionActive || lacksFullPermission;
+            const lacksExploreSavingsPermission = !canTriggerUnregisteredAssessment(rowData?.hostManageReadiness);
+            const isDisabled = isBulkSelectionActive || lacksExploreSavingsPermission;
 
             let tooltipMessage = '';
-            if (lacksFullPermission) {
+            if (lacksExploreSavingsPermission) {
                 tooltipMessage = t('databases.inventory.full-permission-required-explore-savings');
             } else if (isBulkSelectionActive) {
                 tooltipMessage = t('databases.explore-savings.disabled-tooltip-bulk-selection');
@@ -291,9 +189,7 @@ const ExploreSavingsTableV2 = () => {
                             : () => {
                                   dispatch(setEbsTCOAction('bulk'));
                                   dispatch(resetOptimizedStorage());
-                                  shouldAuthDialogOpen(rowData)
-                                      ? handleDialog(rowData)
-                                      : onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
+                                  onClickESHost(dispatch, rowData, isWorkloadFactory, navigate);
                               }
                     }
                     id="wlm-db-ebs-explore-savings-table-button"
@@ -496,22 +392,11 @@ const ExploreSavingsTableV2 = () => {
         dispatch(setEbsTCOAction('bulk'));
         dispatch(resetOptimizedStorage());
 
-        // Check if any of the selected hosts need authentication
+        const firstHost = selectedRowsForExploreSavingsEBSBulk[0];
+        const isBulk = selectedRowsForExploreSavingsEBSBulk.length > 1;
+        const bulkServerName = isBulk ? `${selectedRowsForExploreSavingsEBSBulk.length} hosts selected` : undefined;
 
-        const rowsNeedingAuth = shouldAuthDialogOpenBulk(selectedRowsForExploreSavingsEBSBulk || []);
-
-        dispatch(setRowsRequiringAuthBulk(rowsNeedingAuth));
-
-        if (rowsNeedingAuth && rowsNeedingAuth.length > 0) {
-            handleBulkDialog(rowsNeedingAuth[0]);
-        } else {
-            // Use the first host for both single and multiple selections
-            const firstHost = selectedRowsForExploreSavingsEBSBulk[0];
-            const isBulk = selectedRowsForExploreSavingsEBSBulk.length > 1;
-            const bulkServerName = isBulk ? `${selectedRowsForExploreSavingsEBSBulk.length} hosts selected` : undefined;
-
-            onClickESHost(dispatch, firstHost, isWorkloadFactory, navigate, isBulk, bulkServerName);
-        }
+        onClickESHost(dispatch, firstHost, isWorkloadFactory, navigate, isBulk, bulkServerName);
     };
 
     return (

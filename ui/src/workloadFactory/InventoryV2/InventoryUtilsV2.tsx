@@ -4743,14 +4743,18 @@ export const addInstanceIdToGetPerf = (rowData: any, dispatch: any) => {
     }
 };
 
+export const getExploreSavingsEc2InstanceId = (rowData: any): string =>
+    rowData?.ec2InstanceId || rowData?.ec2Details?.[0]?.id || '';
+
 export const addInstanceIdToGetInstance = (rowData: any, dispatch: any) => {
     const state = store.getState();
     const { unManagedInstanceIdsList, mssqlInstancesData } = state.inventoryV2;
 
-    const uniqueHostId = uniqueHostRow(rowData?.ec2InstanceId, rowData?.credentialId, rowData?.regionId);
+    const ec2InstanceId = getExploreSavingsEc2InstanceId(rowData);
+    const uniqueHostId = uniqueHostRow(ec2InstanceId, rowData?.credentialId, rowData?.regionId);
 
     // Skip if no ec2InstanceId
-    if (!rowData?.ec2InstanceId) {
+    if (!ec2InstanceId) {
         return;
     }
 

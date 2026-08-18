@@ -97,9 +97,7 @@ const DialogComponent = ({
     const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const { username: scUsername, password: scPassword } = useAppSelector(state => state.snapCenter.credentials);
     const { authVerification } = useAppSelector(state => state.snapCenter);
-    const { bulkAuthCredentials, rowsRequiringAuthBulk, selectedRowsForExploreSavingsEBSBulk } = useAppSelector(
-        state => state.exploreSavingsBulk
-    );
+    const { bulkAuthCredentials, rowsRequiringAuthBulk } = useAppSelector(state => state.exploreSavingsBulk);
 
     // Track if this is a bulk explore savings case
     const isBulkExploreSavings = useRef(false);
@@ -120,14 +118,9 @@ const DialogComponent = ({
         });
 
     const checkExploreSavingsDisabled = () => {
-        const rowsToCheck =
-            rowsRequiringAuthBulk && rowsRequiringAuthBulk.length > 0
-                ? rowsRequiringAuthBulk
-                : selectedRowsForExploreSavingsEBSBulk;
-
-        if (rowsToCheck && rowsToCheck.length > 0) {
+        if (rowsRequiringAuthBulk && rowsRequiringAuthBulk.length > 0) {
             isBulkExploreSavings.current = true;
-            return !checkBulkCredentialsFilled(rowsToCheck);
+            return !checkBulkCredentialsFilled(rowsRequiringAuthBulk);
         }
 
         isBulkExploreSavings.current = false;

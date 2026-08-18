@@ -1,10 +1,18 @@
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage } from '@netapp/design-system';
+import { BlueXPListeners, DsButton, DsTypography, postBlueXPMessage, useDialog } from '@netapp/design-system';
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import BreadCrumbs from '../../../common/BreadCrumbs/BreadCrumbs';
 import styles from './SavingsCalculator.module.scss';
-import { DATABASE_DEPLOYMENT_MODE, DBType, DETECT_HOST_VAR, SAVINGS_CALC_MODE, WLF_TABS } from '../../../utils/consts';
+import {
+    DATABASE_DEPLOYMENT_MODE,
+    DBType,
+    DETECT_HOST_VAR,
+    FROM_DIALOG,
+    SAVINGS_CALC_MODE,
+    WLF_TABS
+} from '../../../utils/consts';
 import CostSavings from './CostSavings/CostSavings';
 import TotalMonthlyCost from '../TotalMonthlyCost/TotalMonthlyCost';
 import SavingsHeader from './SavingsHeader/SavingsHeader';
@@ -22,6 +30,7 @@ import ExportPDF from './ExportPDF/ExportPDF';
 import downloadPdf from '../../../common/pdfGenerator';
 import {
     addExploreSavingsInitialData,
+    resetServerDetailsCredentials,
     setShowOptimizeModal,
     setStorageSavingsResponse,
     setViewCalculationsResponse
@@ -30,8 +39,17 @@ import {
     setSelectedRowsForExploreSavingsEBSBulk,
     setSelectedRowsForExploreSavingsOnPremBulk,
     setSelectedRowsForExploreSavingsOracleOnPremBulk,
-    setSelectedRowsForExploreSavingsOracleEbsBulk
+    setSelectedRowsForExploreSavingsOracleEbsBulk,
+    resetBulkAuthCredentialsAndStatus,
+    resetRowsRequiringAuthBulk
 } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
+import store from '../../../store/store';
+import { useGetSendEmailMutation, useRegisterResourceCredentialsBulkMutation } from '../../../utils/apiService';
+import DialogComponent from '../../../common/Dialog/DialogComponent';
+import { resetDialogComponent } from '../../../store/workloadFactory/dialogComponentSlice';
+import AuthDialog from '../ExploreSavingsTableV2/AuthDialog/AuthDialog';
+import ExploreSavingsPartialDataBanner from '../ExploreSavingsPartialDataBanner/ExploreSavingsPartialDataBanner';
+import exploreSavingsTableStyles from '../ExploreSavingsTableV2/ExploreSavingsTableV2.module.scss';
 import { useAppSelector } from '../../../store/storeHooks';
 import { NOTIFICATION_TYPES, addNotification } from '../../../store/notificationSlice';
 import ManualTCOFields from './ManualTCOFields/ManualTCOFields';
@@ -39,7 +57,15 @@ import ManualEC2 from './ManualEC2/ManualEC2';
 import ManualVolumeTypes from './ManualVolumeTypes/ManualVolumeTypes';
 import ManualTCOAccordion from './ManualTCOAccordion/ManualTCOAccordion';
 
-import { formatStorageSavingsRecommendedData } from '../ExploreSavingsUtils';
+import {
+    formatStorageSavingsRecommendedData,
+    getExploreSavingsFileSystemType,
+    getExploreSavingsSelectedHostsForPartialData,
+    getPartialDataBannerAuthHosts,
+    handleAuthenticate,
+    shouldShowExploreSavingsAuthLink,
+    shouldShowExploreSavingsPartialDataBanner
+} from '../ExploreSavingsUtils';
 import ManualTCOFSXFields from './ManualTCOFSXFields/ManualTCOFSXFields';
 import ManualFSXEC2 from './ManualFSXEC2/ManualFSXEC2';
 import WindowFileServer from './WindowFileServer/WindowFileServer';
@@ -47,7 +73,6 @@ import { setSelectedHeaderTab } from '../../../store/workloadFactory/inventoryV2
 import OnPremRegion from './OnPremRegion/OnPremRegion';
 import downloadPdfEmail from '../../../common/emailPDF';
 import CalculateSavingCard from './CalculateSavingCard/CalculateSavingCard';
-import { useGetSendEmailMutation } from '../../../utils/apiService';
 import OptimizedModel from './OptimizedModel/OptimizedModel';
 import CalculatorMode from './CalculatorMode/CalculatorMode';
 import { prepareViewCalcData } from './savingsUtil';
@@ -60,6 +85,9 @@ import OracleEbsSavingsCalculatorApi from '../OracleTCO/OracleSavingsCalculator/
 const SavingsCalculator = ({ statusCheck }: any) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const { setDialog, closeDialog } = useDialog();
+    const [registerResourceCredBulk] = useRegisterResourceCredentialsBulkMutation();
     const [pdfCaptureMode, setPdfCaptureMode] = useState(false);
     const [isMutliFsx, setIsMutliFsx] = useState(false);
     const buttonRef: any = useRef(null);
@@ -87,7 +115,8 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         showOptimizeMode,
         selectedCalculatorMode,
         selectedOnPremHostDetails,
-        selectedTCOHostType
+        selectedTCOHostType,
+        selectedHostDetails
     } = useAppSelector(state => state.exploreSavings);
 
     // Helper to check if in Oracle on-prem mode
@@ -354,6 +383,75 @@ const SavingsCalculator = ({ statusCheck }: any) => {
     const handleOptimizeLinkButton = () => {
         dispatch(setShowOptimizeModal(true));
     };
+
+    const partialDataHosts = getExploreSavingsSelectedHostsForPartialData({
+        savingsCalculatorFrom,
+        selectedRowsForExploreSavingsEBSBulk,
+        selectedRowsForExploreSavingsOracleEbsBulk,
+        selectedHostDetails
+    });
+    const showPartialDataBanner = shouldShowExploreSavingsPartialDataBanner(partialDataHosts, savingsCalculatorFrom);
+    const showPartialDataAuthLink = shouldShowExploreSavingsAuthLink(partialDataHosts, savingsCalculatorFrom);
+    const selectedExploreSavingsFileSystemType = getExploreSavingsFileSystemType(savingsCalculatorFrom);
+
+    const openPartialDataAuthDialog = () => {
+        const { rowsRequiringAuthBulk } = store.getState().exploreSavingsBulk;
+        const bannerAuthHosts = getPartialDataBannerAuthHosts(partialDataHosts, savingsCalculatorFrom);
+        const rowsToAuth = rowsRequiringAuthBulk?.length > 0 ? rowsRequiringAuthBulk : bannerAuthHosts;
+
+        if (rowsToAuth.length === 0) {
+            return;
+        }
+
+        dispatch(resetBulkAuthCredentialsAndStatus());
+        // Partial-data banner uses single-cred AuthDialog; clear bulk state so DialogComponent enables Authenticate.
+        dispatch(resetRowsRequiringAuthBulk());
+
+        const hostNames = rowsToAuth.map((row: any) => row?.name).filter(Boolean);
+        const databaseHostName = hostNames.length === 1 ? hostNames[0] : `${hostNames.length} hosts`;
+
+        setDialog(
+            <DialogComponent
+                header={t('databases.explore-savings.authentication-required')}
+                content={
+                    <AuthDialog
+                        databaseHostName={databaseHostName}
+                        databaseHostNames={hostNames.length > 1 ? hostNames : undefined}
+                        isOracle={isOracleEbs}
+                    />
+                }
+                primaryButton={t('databases.explore-savings.authenticate')}
+                secondaryButton={t('databases.explore-savings.close')}
+                closeCallback={() => {
+                    dispatch(resetDialogComponent());
+                    dispatch(resetServerDetailsCredentials());
+                    dispatch(resetBulkAuthCredentialsAndStatus());
+                    closeDialog();
+                }}
+                dialogFrom={FROM_DIALOG.EXPLORE_SAVINGS}
+                callback={() => {
+                    handleAuthenticate(
+                        rowsToAuth[0],
+                        dispatch,
+                        selectedExploreSavingsFileSystemType,
+                        isWorkloadFactory,
+                        navigate,
+                        () => closeDialog(),
+                        t,
+                        registerResourceCredBulk,
+                        false,
+                        {
+                            isOracle: isOracleEbs,
+                            fromPartialDataBanner: true,
+                            rowsToAuthenticate: rowsToAuth
+                        }
+                    );
+                }}
+                customClass={exploreSavingsTableStyles.protectionDialog}
+            />
+        );
+    };
+
     return (
         <div
             style={{
@@ -401,6 +499,15 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         </div>
                     ) : (
                         <div style={{ marginBottom: '40px' }} />
+                    )}
+
+                    {showPartialDataBanner && (
+                        <div className={styles.partialDataBannerContainer}>
+                            <ExploreSavingsPartialDataBanner
+                                showAuthLink={showPartialDataAuthLink}
+                                onAuthenticate={openPartialDataAuthDialog}
+                            />
+                        </div>
                     )}
 
                     <div

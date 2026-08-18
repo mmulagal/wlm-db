@@ -12,7 +12,8 @@ const initialHeaderState: ExploreSavingsBulkSliceEntities = {
     // rows that require auth when doing a bulk action
     rowsRequiringAuthBulk: [],
     bulkAuthStatus: {},
-    triggerBulkDataFetch: false
+    triggerBulkDataFetch: false,
+    partialDataBannerAuthedHostKeys: []
 };
 
 const exploreSavingsBulkSlice = createSlice({
@@ -64,6 +65,14 @@ const exploreSavingsBulkSlice = createSlice({
         },
         setTriggerBulkDataFetch: (state, action: PayloadAction<boolean>) => {
             state.triggerBulkDataFetch = action.payload;
+        },
+        addPartialDataBannerAuthedHostKeys: (state, action: PayloadAction<string[]>) => {
+            const nextKeys = new Set(state.partialDataBannerAuthedHostKeys || []);
+            action.payload.forEach(key => nextKeys.add(key));
+            state.partialDataBannerAuthedHostKeys = [...nextKeys];
+        },
+        resetPartialDataBannerAuthedHostKeys: state => {
+            state.partialDataBannerAuthedHostKeys = [];
         }
     }
 });
@@ -81,7 +90,9 @@ export const {
     setBulkAuthStatus,
     resetBulkAuthStatus,
     resetBulkAuthCredentialsAndStatus,
-    setTriggerBulkDataFetch
+    setTriggerBulkDataFetch,
+    addPartialDataBannerAuthedHostKeys,
+    resetPartialDataBannerAuthedHostKeys
 } = exploreSavingsBulkSlice.actions;
 
 export default exploreSavingsBulkSlice;

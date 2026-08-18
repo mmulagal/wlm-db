@@ -20,4 +20,6 @@ export interface ExploreSavingsBulkSliceEntities {
     rowsRequiringAuthBulk?: Array<any> | any;
     bulkAuthStatus?: BulkAuthStatus;
     triggerBulkDataFetch?: boolean;
+    /** Host keys cleared from partial-data banner after successful banner auth (see exploreSavingsHostKey). */
+    partialDataBannerAuthedHostKeys?: string[];
 }

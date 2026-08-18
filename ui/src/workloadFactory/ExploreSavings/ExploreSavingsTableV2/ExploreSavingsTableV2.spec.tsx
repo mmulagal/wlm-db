@@ -120,8 +120,10 @@ vi.mock('../../InventoryV2/InventoryUtilsV2', () => ({
     renderAllocatedCapacity: (cellData: any) => <span data-testid="render-capacity">{cellData}</span>,
     renderUnmanagedAZ: (cellData: any) => <span data-testid="render-az">{cellData}</span>,
     renderCellData: (cellData: any) => <span data-testid="render-cell">{cellData}</span>,
-    hasFullPermission: (hostManageReadPermission?: { extensiveRunPermission?: boolean }) =>
-        hostManageReadPermission?.extensiveRunPermission === true
+    canTriggerUnregisteredAssessment: (hostManageReadiness?: {
+        extensiveRunPermission?: boolean;
+        canReadAWSSSMDocuments?: boolean;
+    }) => hostManageReadiness?.extensiveRunPermission === true || hostManageReadiness?.canReadAWSSSMDocuments === true
 }));
 
 vi.mock('../../../utils/utilityFunctions', () => ({
@@ -527,62 +529,6 @@ describe('ExploreSavingsTableV2', () => {
                 '3 hosts selected'
             );
         });
-
-        it('should open bulk dialog when rows need auth', () => {
-            const authRow = { id: 'h1', name: 'Host1' };
-            mockShouldAuthDialogOpenBulk.mockReturnValue([authRow]);
-            renderComponent({ selectedRowsForExploreSavingsEBSBulk: [authRow] });
-
-            fireEvent.click(screen.getByTestId('bulk-action-container'));
-
-            expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'bulk/setRowsRequiringAuth' }));
-            expect(mockSetDialog).toHaveBeenCalledTimes(1);
-        });
-    });
-
-    // ---- handleBulkDialog callbacks ----
-
-    describe('handleBulkDialog callbacks', () => {
-        it('should dispatch correct actions on closeCallback', () => {
-            const authRow = { id: 'h1', name: 'Host1' };
-            mockShouldAuthDialogOpenBulk.mockReturnValue([authRow]);
-            renderComponent({ selectedRowsForExploreSavingsEBSBulk: [authRow] });
-            fireEvent.click(screen.getByTestId('bulk-action-container'));
-
-            const { getByTestId } = renderCapturedDialog();
-            fireEvent.click(getByTestId('dialog-close-callback'));
-
-            expect(mockDispatch).toHaveBeenCalledWith({ type: 'dialogComponent/resetDialogComponent' });
-            expect(mockDispatch).toHaveBeenCalledWith({ type: 'bulk/resetBulkAuthCreds' });
-            expect(mockDispatch).toHaveBeenCalledWith({ type: 'bulk/resetRowsRequiringAuth' });
-            expect(mockCloseDialog).toHaveBeenCalled();
-        });
-
-        it('should call handleAuthenticate on callback', () => {
-            const authRow = { id: 'h1', name: 'Host1' };
-            mockShouldAuthDialogOpenBulk.mockReturnValue([authRow]);
-            renderComponent({
-                selectedRowsForExploreSavingsEBSBulk: [authRow],
-                selectedExploreSavingsTab: WLF_TABS.MSSQL_ELASTIC_BLOCK_STORE
-            });
-            fireEvent.click(screen.getByTestId('bulk-action-container'));
-
-            const { getByTestId } = renderCapturedDialog();
-            fireEvent.click(getByTestId('dialog-callback'));
-
-            expect(mockHandleAuthenticate).toHaveBeenCalledTimes(1);
-            expect(mockHandleAuthenticate).toHaveBeenCalledWith(
-                authRow,
-                mockDispatch,
-                GENERAL.EBS,
-                true,
-                mockNavigate,
-                expect.any(Function),
-                expect.any(Function),
-                mockRegisterResourceCredBulk,
-                false
-            );
-        });
     });
 
     // ---- Column renderCell via capturedUseTableOpts ----
@@ -678,28 +624,19 @@ describe('ExploreSavingsTableV2', () => {
             expect(container.textContent).toContain(GENERAL.ES_SAVINGS);
         });
 
-        it('col 11: click calls onClickESHost when shouldAuthDialogOpen is false', () => {
-            mockShouldAuthDialogOpen.mockReturnValue(false);
+        it('col 11: click always calls onClickESHost', () => {
             renderComponent();
             const col = capturedUseTableOpts.columns.find((c: any) => c.id === '11');
             const { container } = render(
-                col.renderCell(null, { name: 'TestHost', hostManageReadiness: { extensiveRunPermission: true } })
+                col.renderCell(null, {
+                    name: 'TestHost',
+                    hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true }
+                })
             );
 
             fireEvent.click(container.firstChild as HTMLElement);
             expect(mockOnClickESHost).toHaveBeenCalled();
-        });
-
-        it('col 11: click opens dialog when shouldAuthDialogOpen is true', () => {
-            mockShouldAuthDialogOpen.mockReturnValue(true);
-            renderComponent();
-            const col = capturedUseTableOpts.columns.find((c: any) => c.id === '11');
-            const { container } = render(
-                col.renderCell(null, { name: 'AuthHost', hostManageReadiness: { extensiveRunPermission: true } })
-            );
-
-            fireEvent.click(container.firstChild as HTMLElement);
-            expect(mockSetDialog).toHaveBeenCalledTimes(1);
+            expect(mockSetDialog).not.toHaveBeenCalled();
         });
 
         it('col 11: click is noop when bulk rows selected', () => {
@@ -714,41 +651,6 @@ describe('ExploreSavingsTableV2', () => {
             fireEvent.click(container.firstChild as HTMLElement);
             expect(mockOnClickESHost).not.toHaveBeenCalled();
             expect(mockSetDialog).not.toHaveBeenCalled();
-        });
-    });
-
-    // ---- handleDialog (single) callbacks ----
-
-    describe('handleDialog (single) callbacks', () => {
-        it('should dispatch correct actions on single dialog closeCallback', () => {
-            mockShouldAuthDialogOpen.mockReturnValue(true);
-            renderComponent();
-            const col = capturedUseTableOpts.columns.find((c: any) => c.id === '11');
-            const { container } = render(
-                col.renderCell(null, { name: 'H1', hostManageReadiness: { extensiveRunPermission: true } })
-            );
-            fireEvent.click(container.firstChild as HTMLElement);
-
-            const { getByTestId } = renderCapturedDialog();
-            fireEvent.click(getByTestId('dialog-close-callback'));
-
-            expect(mockDispatch).toHaveBeenCalledWith({ type: 'dialogComponent/resetDialogComponent' });
-            expect(mockDispatch).toHaveBeenCalledWith({ type: 'exploreSavings/resetServerDetailsCredentials' });
-            expect(mockCloseDialog).toHaveBeenCalled();
-        });
-
-        it('should call handleAuthenticate on single dialog callback', () => {
-            mockShouldAuthDialogOpen.mockReturnValue(true);
-            renderComponent();
-            const col = capturedUseTableOpts.columns.find((c: any) => c.id === '11');
-            const { container } = render(
-                col.renderCell(null, { name: 'H1', hostManageReadiness: { extensiveRunPermission: true } })
-            );
-            fireEvent.click(container.firstChild as HTMLElement);
-
-            const { getByTestId } = renderCapturedDialog();
-            fireEvent.click(getByTestId('dialog-callback'));
-            expect(mockHandleAuthenticate).toHaveBeenCalled();
         });
     });
 
@@ -794,31 +696,6 @@ describe('ExploreSavingsTableV2', () => {
             });
             // useEffect #2 and #3 should use fsxWTableData path
             expect(screen.getByTestId('ds-table')).toBeTruthy();
-        });
-
-        it('should pass correct fileSystemType (FSx for Windows) to handleAuthenticate', () => {
-            mockShouldAuthDialogOpen.mockReturnValue(true);
-            renderComponent({ selectedExploreSavingsTab: WLF_TABS.MSSQL_FSX_FOR_WINDOWS });
-            const col = capturedUseTableOpts.columns.find((c: any) => c.id === '11');
-            const { container } = render(
-                col.renderCell(null, { name: 'H1', hostManageReadiness: { extensiveRunPermission: true } })
-            );
-            fireEvent.click(container.firstChild as HTMLElement);
-
-            const { getByTestId } = renderCapturedDialog();
-            fireEvent.click(getByTestId('dialog-callback'));
-
-            expect(mockHandleAuthenticate).toHaveBeenCalledWith(
-                expect.anything(),
-                mockDispatch,
-                GENERAL.FSX_FOR_WINDOWS,
-                expect.anything(),
-                mockNavigate,
-                expect.any(Function),
-                expect.any(Function),
-                mockRegisterResourceCredBulk,
-                false
-            );
         });
     });
 

@@ -29,6 +29,9 @@ vi.mock('./AuthDialog.module.scss', () => ({
 vi.mock('../../../../assets/ic_copy.svg', () => ({
     ReactComponent: (props: any) => <svg data-testid="copy-icon" {...props} />
 }));
+vi.mock('../../../../assets/ic_bullet.svg', () => ({
+    ReactComponent: (props: any) => <svg data-testid="bullet-icon" {...props} />
+}));
 
 // Mock CopyToClipboard component
 vi.mock('../../../../common/CopyToClipboard/copyToClipboard', () => ({
@@ -118,14 +121,15 @@ const renderComponent = (
     selectedAuthenticationType: string | null | undefined = AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
     userName = '',
     password = '',
-    actionsDisabled = false
+    actionsDisabled = false,
+    isOracle = false
 ) => {
     const store = createMockStore(selectedAuthenticationType, userName, password, actionsDisabled);
     return {
         store,
         ...render(
             <Provider store={store}>
-                <AuthDialog databaseHostName={databaseHostName} />
+                <AuthDialog databaseHostName={databaseHostName} isOracle={isOracle} />
             </Provider>
         )
     };
@@ -548,6 +552,19 @@ describe('AuthDialog', () => {
 
             expect(usernameInput.disabled).toBe(false);
             expect(passwordInput.disabled).toBe(false);
+        });
+    });
+
+    describe('Oracle mode', () => {
+        it('should render Oracle credential fields without MSSQL auth mode controls', () => {
+            renderComponent('oracle-host', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', '', false, true);
+
+            expect(
+                screen.getByPlaceholderText('databases.general.enter databases.register-flow.detect-oracle-username')
+            ).toBeTruthy();
+            expect(screen.queryByText('databases.explore-savings.select-auth-mode')).toBeNull();
+            expect(screen.queryByTestId('select-sql-authentication')).toBeNull();
+            expect(screen.queryByTestId('accordion-controller')).toBeNull();
         });
     });
 

@@ -14,6 +14,12 @@
         }
     }
 
+    .partialDataBannerContainer {
+        width: 100%;
+        max-width: 1336px;
+        margin: 0 auto;
+    }
+
     .savingsHeading {
         margin: 0 auto;
         margin-top: 12px;
@@ -138,6 +144,10 @@
 
 @media screen and (max-width: 1500px) {
     .savingsCalculator {
+        .partialDataBannerContainer {
+            max-width: 1128px;
+        }
+
         .savingsHeading {
             max-width: 1128px;
         }
@@ -192,6 +202,11 @@
 
 @media screen and (min-width: 1920px) {
     .savingsCalculator {
+        .partialDataBannerContainer {
+            max-width: 95%;
+            padding: 0 120px;
+        }
+
         .savingsHeading {
             max-width: 95%;
             padding: 0px 120px 0px;
