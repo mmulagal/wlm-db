@@ -6,14 +6,20 @@ import {
     getVolumeLayoutDrift,
     getNfsOSConfigDrift,
     getVolumeConfigDrift,
-    mapVolumeTypesToIdName
+    mapVolumeTypesToIdName,
+    calculateStorageDrift
 } from '../../../../src/operations/continuous-optimization/oracle/storage-assessment-operations';
 import {
     StorageAssessment,
     StorageNfsAssessment
 } from '../../../../src/operations/continuous-optimization/oracle/common-types';
-import { OracleSysFileTypes, OracleVolumeRecord } from '../../../../src/operations/workloads/oracle/common-types';
+import {
+    OracleMappedOntapVolumesResponse,
+    OracleSysFileTypes,
+    OracleVolumeRecord
+} from '../../../../src/operations/workloads/oracle/common-types';
 import { AssessmentStatus } from '../../../../src/utils/continous-optimization-consts';
+import { STORAGE_PROTOCOLS } from '../../../../src/utils/consts';
 import {
     ORACLE_MAPPED_ONTAP_VOLUMES_DATA,
     ORACLE_STORAGE_ASSESSMENT_DATA
@@ -1323,5 +1329,64 @@ describe('getVolumeConfigDrift - combined configs and snapshot rename', () => {
             expect(findById(drift, 'tiering-min-cooling-days')).toBeUndefined();
             expect(findById(drift, 'fractional-reserve')).toBeUndefined();
         });
+    });
+});
+
+type DriftItemWithApplicableTo = { applicableTo?: 'iscsi' | 'nfs' | 'asm' };
+
+describe('calculateStorageDrift protocol filtering', () => {
+    const runWithEmptyAssessmentData = async (fsxFileSystemId: string, protocol: string, isASMManaged: boolean) => {
+        const mappedOntapVolumes: Record<string, OracleMappedOntapVolumesResponse> = {
+            [fsxFileSystemId]: { protocol, isASMManaged }
+        };
+        const drift = await calculateStorageDrift(
+            'account-1',
+            'creds-1',
+            'us-east-1',
+            'host-1',
+            'i-1234567890abcdef0',
+            'db-1',
+            'ORCL',
+            'Standalone',
+            fsxFileSystemId,
+            mappedOntapVolumes,
+            {} as StorageAssessment
+        );
+        return drift as unknown as DriftItemWithApplicableTo[];
+    };
+
+    it('should only include protocol-applicable stub entries when no storage assessment data exists', async () => {
+        const nfsDrift = await runWithEmptyAssessmentData('fs-nfs', STORAGE_PROTOCOLS.NFS, false);
+        expect(nfsDrift.length).toBeGreaterThan(0);
+        expect(nfsDrift.some(entry => entry.applicableTo === 'iscsi')).toBe(false);
+        expect(nfsDrift.some(entry => entry.applicableTo === 'asm')).toBe(false);
+        expect(nfsDrift.some(entry => entry.applicableTo === 'nfs')).toBe(true);
+
+        const iscsiDrift = await runWithEmptyAssessmentData('fs-iscsi', STORAGE_PROTOCOLS.ISCSI, true);
+        expect(iscsiDrift.length).toBeGreaterThan(0);
+        expect(iscsiDrift.some(entry => entry.applicableTo === 'nfs')).toBe(false);
+        expect(iscsiDrift.some(entry => entry.applicableTo === 'iscsi')).toBe(true);
+        expect(iscsiDrift.some(entry => entry.applicableTo === 'asm')).toBe(true);
+    });
+
+    it('should only include protocol-agnostic stub entries when no mapped ONTAP volumes exist', async () => {
+        const drift = (await calculateStorageDrift(
+            'account-1',
+            'creds-1',
+            'us-east-1',
+            'host-1',
+            'i-1234567890abcdef0',
+            'db-1',
+            'ORCL',
+            'Standalone',
+            'fs-unmapped',
+            {},
+            ORACLE_STORAGE_ASSESSMENT_DATA as unknown as StorageAssessment
+        )) as unknown as DriftItemWithApplicableTo[];
+
+        expect(drift.length).toBeGreaterThan(0);
+        expect(drift.some(entry => entry.applicableTo === 'nfs')).toBe(false);
+        expect(drift.some(entry => entry.applicableTo === 'iscsi')).toBe(false);
+        expect(drift.some(entry => entry.applicableTo === 'asm')).toBe(false);
     });
 });

@@ -5,8 +5,10 @@ import {
     buildAssessmentJobDescriptionWithDashboardLink,
     buildVolumeCombinedEntry,
     enrichWithGoldenConfig,
+    isApplicableToStorageProtocol,
     isCombinedViolationDetail,
-    collectScopedOntapAssessment
+    collectScopedOntapAssessment,
+    type GoldenConfigEntry
 } from '../../../src/operations/continuous-optimization/assessment-utils';
 import { MSSQL_GOLDEN_CONFIG } from '../../../src/operations/continuous-optimization/mssql/golden-config';
 import {
@@ -14,7 +16,7 @@ import {
     AssessmentStatus,
     OptimizeStorageConfigs
 } from '../../../src/utils/continous-optimization-consts';
-import { DatabaseTypes, RESOURCESTYPE } from '../../../src/utils/consts';
+import { DatabaseTypes, RESOURCESTYPE, STORAGE_PROTOCOLS } from '../../../src/utils/consts';
 import { DismissConfig } from '../../../src/utils/common-types';
 import * as taggingServiceOperations from '../../../src/operations/cloud-manager/tagging-service-operations';
 import { Ec2FsxRelationship } from '../../../src/operations/cloud-manager/tagging-service-operations';
@@ -43,6 +45,25 @@ describe('buildAssessmentJobDescriptionWithDashboardLink', () => {
             sqlServerDeploymentType: RESOURCESTYPE.MSSQL,
             isUnregistered: true
         });
+    });
+});
+
+// ---------------------------------------------------------------------------
+// isApplicableToStorageProtocol
+// ---------------------------------------------------------------------------
+describe('isApplicableToStorageProtocol', () => {
+    const nfsEntry = { applicableTo: 'nfs' } as GoldenConfigEntry;
+
+    it('should apply nfs-only entries to NFS protocol', () => {
+        expect(isApplicableToStorageProtocol(nfsEntry, STORAGE_PROTOCOLS.NFS, undefined)).toBe(true);
+    });
+
+    it('should not apply nfs-only entries to SMB protocol', () => {
+        expect(isApplicableToStorageProtocol(nfsEntry, STORAGE_PROTOCOLS.SMB, undefined)).toBe(false);
+    });
+
+    it('should not apply nfs-only entries to iSCSI protocol', () => {
+        expect(isApplicableToStorageProtocol(nfsEntry, STORAGE_PROTOCOLS.ISCSI, undefined)).toBe(false);
     });
 });
 

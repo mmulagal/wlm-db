@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { DATABASE_TYPE } from '@prisma/client';
+import { DATABASE_TYPE, offline_assessment as OfflineAssessmentDBSchema } from '@prisma/client';
 
 import { ACCOUNT_ID, DEFAULT_AWS_CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../../utils/consts';
 import { ORACLE_STORAGE_ASSESSMENT_DATA } from '../../../../src/utils/demo-utils/demoMockdata';
@@ -8,6 +8,7 @@ import { bulkUpsertOfflineAssessments, getOfflineAssessment } from '../../../../
 import {
     fetchOracleOfflineAssessment,
     fetchOracleOfflineAssessmentPerAccount,
+    fetchOracleUnregisteredInstanceAssessment,
     triggerOracleUnregisteredAssessment
 } from '../../../../src/operations/continuous-optimization/oracle/offline-assessment-operations';
 import * as taggingServiceOperations from '../../../../src/operations/cloud-manager/tagging-service-operations';
@@ -207,6 +208,11 @@ describe('fetchOracleOfflineAssessment', () => {
         expect(response.metadata.storageProtocol).toBe('iSCSI');
         expect(response.metadata.fileSystemId).toBe(fsxId);
 
+        // NFS-only golden-config entries must not leak into an iSCSI instance's not-applicable stubs.
+        const ids = response.assessments.map(assessment => assessment.id);
+        expect(ids).not.toContain('nfs-rootonly');
+        expect(ids).not.toContain('export-policy');
+
         const thp = response.assessments.find(
             i => i.id === 'transparent-hugepages'
         ) as OracleGenericParameterDriftResponseType;
@@ -247,6 +253,14 @@ describe('fetchOracleOfflineAssessment', () => {
         expect(response.assessments.find(i => i.id === 'tcp-advanced-options')).toBeUndefined();
         expect(response.assessments.find(i => i.id === 'filesystems-io-options')).toBeUndefined();
         expect(response.assessments.find(i => i.id === 'multiblock-readcount')).toBeUndefined();
+
+        // iSCSI-only and ASM-only golden-config entries must not leak into an NFS instance's
+        // not-applicable stubs (GH-11848).
+        const ids = response.assessments.map(assessment => assessment.id);
+        expect(ids).not.toContain('multipath-io');
+        expect(ids).not.toContain('iscsi-replacement-timeout');
+        expect(ids).not.toContain('asm-setup');
+        expect(ids).not.toContain('data-dg-lun-layout');
     });
 
     it('should include snapcenterSnapshot drift when rawdata.snapcenter is present', async () => {
@@ -425,6 +439,8 @@ describe('triggerOracleUnregisteredAssessment', () => {
             DEFAULT_AWS_CREDENTIALS_ID,
             DEFAULT_AWS_REGION
         );
+        expect(response.metadata.storageProtocol).toBe('NFS');
+
         const byId = new Map(response.assessments.map(a => [a.id, a as { errorMessage?: string }] as const));
         expect(byId.get('thin-provision')).toBeDefined();
         expect(byId.get('thin-provision')?.errorMessage).not.toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
@@ -509,6 +525,34 @@ describe('triggerOracleUnregisteredAssessment', () => {
         expect(headroom).toBeDefined();
         expect(headroom.errorMessage).not.toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
     }, 15000);
+
+    it('should not leak iSCSI/ASM not-applicable stubs when ONTAP collection yields no filesystem/protocol data', async () => {
+        // No filesystemId and no mappedOntapVolumes entry means storageProtocol/isASMManaged
+        // can't be resolved, mirroring a collection that ran with limited permissions.
+        const record = {
+            rawdata: {
+                ontapStorageAssessments: [{ volumes: { error: '', data: [], filesystemId: undefined } }]
+            },
+            metadata: { databaseInstanceName: 'ORAUNREGNOPROTO', ec2InstanceId: 'i-unregistered-oracle-no-protocol' },
+            created_time: new Date()
+        } as unknown as OfflineAssessmentDBSchema;
+
+        const response = await fetchOracleUnregisteredInstanceAssessment(
+            ACCOUNT_ID,
+            'i-unregistered-oracle-no-protocol',
+            'ORAUNREGNOPROTO',
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            record
+        );
+
+        const notApplicableIds = response.assessments
+            .filter(a => (a as { errorMessage?: string }).errorMessage === ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE)
+            .map(a => a.id);
+        expect(notApplicableIds).not.toContain('multipath-io');
+        expect(notApplicableIds).not.toContain('asm-setup');
+        expect(notApplicableIds).not.toContain('nfs-rootonly');
+    });
 
     it('should fail the job with no-data message when there is no EC2-FSx relationship for the instance', async () => {
         const unregisteredEc2InstanceId = 'i-unregistered-oracle-no-relationship';

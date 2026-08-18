@@ -57,6 +57,7 @@ import { getHeadroomDrift } from '../headroom-assessment';
 import {
     buildBlockDeviceSpaceManagementEntry,
     FSX_LINK_INACTIVE_HINT,
+    isApplicableToStorageProtocol,
     isPdbGroupedVolumes,
     normalizeNfsVersion,
     type GoldenConfigEntry
@@ -2486,14 +2487,21 @@ async function calculateStorageDrift(
     )?.[databaseInstanceName]?.error;
 
     if (isEmpty(storageAssessmentData)) {
+        const applicableStorageConfigData = storageConfigData.filter(config =>
+            isApplicableToStorageProtocol(
+                config,
+                mappedOntapVolumes?.[fsxFileSystemId]?.protocol,
+                mappedOntapVolumes?.[fsxFileSystemId]?.isASMManaged
+            )
+        );
         if (mappedVolumeError) {
-            return [...storageConfigData].map(config => ({
+            return applicableStorageConfigData.map(config => ({
                 ...config,
                 errorMessage: `Mapped ONTAP volume discovery failed for ${databaseInstanceName}: ${mappedVolumeError}`
             }));
         }
         const errorMessage = `No ${AssessmentCategories.STORAGE} assessment data found. Assessment is scheduled to run every 24hours and may not have run on the instance. Please try again later.`;
-        return [...storageConfigData].map(config => ({
+        return applicableStorageConfigData.map(config => ({
             ...config,
             errorMessage
         }));
@@ -2501,10 +2509,12 @@ async function calculateStorageDrift(
 
     if (!mappedOntapVolumes || isEmpty(mappedOntapVolumes)) {
         const errorMessage = `No mapped ONTAP volumes found for file system ${fsxFileSystemId}. ${FSX_LINK_INACTIVE_HINT}`;
-        return [...storageConfigData].map(config => ({
-            ...config,
-            errorMessage
-        }));
+        return storageConfigData
+            .filter(config => isApplicableToStorageProtocol(config, undefined, undefined))
+            .map(config => ({
+                ...config,
+                errorMessage
+            }));
     }
 
     const protocol = mappedOntapVolumes[fsxFileSystemId]?.protocol;

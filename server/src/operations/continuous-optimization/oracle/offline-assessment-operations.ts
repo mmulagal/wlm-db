@@ -52,7 +52,8 @@ import {
     OFFLINE_ASSESSMENT_SOURCE,
     mergeStorageDriftItemsById,
     filterToVolumeLunDriftItems,
-    runScopedOntapSubAssessment
+    runScopedOntapSubAssessment,
+    isApplicableToStorageProtocol
 } from '../assessment-utils';
 import { ISCIOSAssessment, NFSOSAssessment, StorageAssessment } from './common-types';
 import { loadAndModifyDemoOracleISCSIData } from '../../demo-operations';
@@ -609,7 +610,7 @@ async function fetchOracleOfflineAssessment(
         .filter(id => !assessedIds.has(id))
         .forEach(id => {
             const entry = oracleLookup.get(id);
-            if (entry) {
+            if (entry && isApplicableToStorageProtocol(entry, protocol, isASMManaged ?? undefined)) {
                 assessments.push({ ...entry, errorMessage: ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE });
             }
         });
@@ -736,20 +737,9 @@ async function fetchOracleUnregisteredInstanceAssessment(
         .filter(id => !assessedIds.has(id))
         .forEach(id => {
             const entry = oracleLookup.get(id);
-            if (!entry) {
-                return;
+            if (entry && isApplicableToStorageProtocol(entry, storageProtocol, isAsmManaged)) {
+                assessments.push({ ...entry, errorMessage: ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE });
             }
-            // `resolveAssessmentTypes`'s STORAGE category lumps all storage golden-config entries
-            // into one mixed-protocol bucket, so its applicableTo exclusion never fires here; this
-            // scoped ONTAP-only collector can never determine ASM (always false) and knows the
-            // protocol, so drop those entries outright instead of showing them as not-applicable.
-            if (entry.applicableTo === 'asm' && !isAsmManaged) {
-                return;
-            }
-            if (entry.applicableTo === 'iscsi' && storageProtocol && storageProtocol !== STORAGE_PROTOCOLS.ISCSI) {
-                return;
-            }
-            assessments.push({ ...entry, errorMessage: ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE });
         });
 
     const parsedAssessmentTimestamp = assessmentTimestamp ? new Date(assessmentTimestamp).getTime() : NaN;
@@ -763,6 +753,7 @@ async function fetchOracleUnregisteredInstanceAssessment(
                 : record.created_time.getTime(),
             databaseInstanceName,
             ec2InstanceId,
+            storageProtocol,
             source: OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED,
             // Not stored on the record; UI filters by these, so surface the values used to fetch it.
             ...(effectiveCredentialsId && { credentialsId: effectiveCredentialsId }),

@@ -802,6 +802,23 @@ function shouldKeepGoldenConfigEntries(
     );
 }
 
+function isApplicableToStorageProtocol(
+    entry: GoldenConfigEntry,
+    protocol: string | undefined,
+    isAsmManaged: boolean | undefined
+): boolean {
+    if (entry.applicableTo === 'iscsi') {
+        return protocol === STORAGE_PROTOCOLS.ISCSI;
+    }
+    if (entry.applicableTo === 'nfs') {
+        return protocol === STORAGE_PROTOCOLS.NFS;
+    }
+    if (entry.applicableTo === 'asm') {
+        return !!isAsmManaged;
+    }
+    return true;
+}
+
 function resolveAssessmentTypes(
     databaseType: DatabaseTypes,
     fields: string | string[] | undefined,
@@ -1214,7 +1231,8 @@ export {
     collectScopedOntapAssessment,
     runScopedOntapSubAssessment,
     FSX_LINK_INACTIVE_HINT,
-    buildAssessmentJobDescriptionWithDashboardLink
+    buildAssessmentJobDescriptionWithDashboardLink,
+    isApplicableToStorageProtocol
 };
 
 export type {
