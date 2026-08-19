@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { ClonedVolumeDetail } from '../../../../src/utils/common-types';
 import {
@@ -8,9 +8,28 @@ import {
 import {
     validateAndExtractClonedVolumeUuids,
     buildVolumeMaps,
-    extractInstancesToOptimize
+    extractInstancesToOptimize,
+    deleteClone
 } from '../../../../src/operations/continuous-optimization/oracle/clone-optimization-operations';
 import { buildCloneCleanupScript } from '../../../../src/operations/continuous-optimization/oracle/ssm-scripts/clone-cleanup-scripts';
+import { createResource, deleteResource } from '../../../../src/lib/database/db';
+import { createDatabaseInstanceConfigData } from '../../../../src/lib/database/database-instance-config';
+import { AssessmentCategoriesOracle } from '../../../../src/utils/continous-optimization-consts';
+import * as ssmOperations from '../../../../src/operations/aws/ssm-operations';
+import {
+    registerProxyGetResponse,
+    registerProxyDeleteResponse,
+    resetProxyOverrides,
+    getCapturedProxyGetUris,
+    getCapturedProxyPatchUris,
+    getCapturedProxyDeleteUris
+} from '../../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
+import { ACCOUNT_ID } from '../../../utils/consts';
+
+vi.mock('../../../../src/utils/utils', async importOriginal => {
+    const actual = await importOriginal<typeof import('../../../../src/utils/utils')>();
+    return { ...actual, IS_DEMO_FLOW: false };
+});
 
 const CREDENTIALS_ID = 'test-credentials-id';
 const REGION = 'us-east-1';
@@ -26,9 +45,7 @@ function buildVolumeRecord(overrides: Partial<OracleVolumeRecord> = {}): OracleV
 
 describe('buildCloneCleanupScript', () => {
     const baseParams = {
-        fsxId: FSX_ID,
-        region: REGION,
-        volumeUuids: ['vol-uuid-1'],
+        junctionPaths: ['/clone_vol_1'],
         protocol: 'NFS',
         cloneDatabaseName: 'CLONE_DB'
     };
@@ -38,19 +55,19 @@ describe('buildCloneCleanupScript', () => {
 
         expect(script).toContain('#!/bin/bash');
         expect(script).toContain('set -euo pipefail');
-        expect(script).toContain(FSX_ID);
-        expect(script).toContain(REGION);
-        expect(script).toContain('vol-uuid-1');
+        expect(script).toContain('/clone_vol_1');
         expect(script).toContain('CLONE_DB');
         expect(script).toContain('Clone Cleanup started');
     });
 
-    it('should include ONTAP REST call to fetch clone junction paths', () => {
+    it('should take junction paths as an input instead of fetching them from ONTAP', () => {
         const script = buildCloneCleanupScript(baseParams);
 
-        expect(script).toContain('Fetching junction paths for clone volumes from ONTAP');
-        expect(script).toContain('fields=nas.path,name');
-        expect(script).toContain('clone_junction_paths');
+        expect(script).toContain('clone_junction_paths = ["/clone_vol_1"]');
+        expect(script).not.toContain('ontapRestApiScript');
+        expect(script).not.toContain('ontapRestApiRequest');
+        expect(script).not.toContain('getFsxCredentials');
+        expect(script).not.toContain('fields=nas.path,name');
     });
 
     it('should use clone database name for Oracle shutdown instead of parent SID', () => {
@@ -78,12 +95,12 @@ describe('buildCloneCleanupScript', () => {
         expect(script).toContain('protocol = "iSCSI"');
     });
 
-    it('should embed all volume UUIDs in the script', () => {
-        const volumeUuids = ['uuid-aaa', 'uuid-bbb', 'uuid-ccc'];
-        const script = buildCloneCleanupScript({ ...baseParams, volumeUuids });
+    it('should embed all junction paths in the script', () => {
+        const junctionPaths = ['/vol/aaa', '/vol/bbb', '/vol/ccc'];
+        const script = buildCloneCleanupScript({ ...baseParams, junctionPaths });
 
-        for (const uuid of volumeUuids) {
-            expect(script).toContain(uuid);
+        for (const junctionPath of junctionPaths) {
+            expect(script).toContain(junctionPath);
         }
     });
 
@@ -93,11 +110,13 @@ describe('buildCloneCleanupScript', () => {
         expect(script).not.toContain('oracle_sid');
     });
 
-    it('should include cleanedPaths in final output', () => {
+    it('should include cleanedPaths and unmountedPaths in final output, but not deletedVolumes', () => {
         const script = buildCloneCleanupScript(baseParams);
 
         expect(script).toContain('cleanedPaths');
         expect(script).toContain('cleaned_paths');
+        expect(script).toContain('unmountedPaths');
+        expect(script).not.toContain('deletedVolumes');
     });
 
     it('should resolve mount points from /proc/mounts instead of using junction paths directly', () => {
@@ -392,5 +411,341 @@ describe('extractInstancesToOptimize', () => {
         expect(result).toHaveLength(4);
         const instanceIds = result.map(r => r.instanceId);
         expect(instanceIds).toEqual(['inst-1', 'inst-2', 'inst-3', 'inst-4']);
+    });
+});
+
+describe('deleteClone (Node-side ONTAP cleanup)', () => {
+    const NFS_HOST_ID = 'host-clone-nfs';
+    const NFS_INSTANCE_ID = 'inst-clone-nfs';
+    const NFS_FSX_ID = 'fs-clonecleanup0001';
+    const NFS_NODE_INSTANCE_ID = 'i-clonecleanupnfs01';
+
+    const ISCSI_HOST_ID = 'host-clone-iscsi';
+    const ISCSI_INSTANCE_ID = 'inst-clone-iscsi';
+    const ISCSI_FSX_ID = 'fs-clonecleanup0002';
+    const ISCSI_NODE_INSTANCE_ID = 'i-clonecleanupiscsi1';
+
+    const MULTI_HOST_ID = 'host-clone-multi';
+    const MULTI_INSTANCE_ID = 'inst-clone-multi';
+    const MULTI_FSX_ID = 'fs-clonecleanup0003';
+    const MULTI_NODE_INSTANCE_ID = 'i-clonecleanupmulti1';
+
+    const SUCCESSFUL_SSM_RESPONSE = JSON.stringify({
+        status: 'success',
+        unmountedPaths: ['/mnt/clone_vol'],
+        cleanedPaths: ['/mnt/clone_vol']
+    });
+
+    async function seedCloneHost(
+        hostId: string,
+        instanceId: string,
+        fsxId: string,
+        nodeInstanceId: string,
+        protocol: string
+    ) {
+        await createResource(ACCOUNT_ID, {
+            resourceId: hostId,
+            resourceName: hostId,
+            resourceType: 'ORACLE',
+            coRelationId: fsxId,
+            cloudProviderAccountId: 'test-aws-account',
+            cloudProviderName: 'AWS',
+            region: REGION,
+            credentialsId: CREDENTIALS_ID,
+            storageType: 'FSXN',
+            metadata: { node1InstanceId: nodeInstanceId }
+        });
+        await createDatabaseInstanceConfigData([
+            {
+                account_id: ACCOUNT_ID,
+                credentials_id: CREDENTIALS_ID,
+                region: REGION,
+                resource_id: hostId,
+                database_instance_id: instanceId,
+                creation_time: new Date(),
+                last_updated: new Date(),
+                config_data: { [fsxId]: { protocol } },
+                config_data_type: AssessmentCategoriesOracle.MAPPED_ONTAP_VOLUMES
+            }
+        ]);
+    }
+
+    beforeAll(async () => {
+        await Promise.all([
+            seedCloneHost(NFS_HOST_ID, NFS_INSTANCE_ID, NFS_FSX_ID, NFS_NODE_INSTANCE_ID, 'NFS'),
+            seedCloneHost(ISCSI_HOST_ID, ISCSI_INSTANCE_ID, ISCSI_FSX_ID, ISCSI_NODE_INSTANCE_ID, 'iSCSI'),
+            seedCloneHost(MULTI_HOST_ID, MULTI_INSTANCE_ID, MULTI_FSX_ID, MULTI_NODE_INSTANCE_ID, 'NFS')
+        ]);
+    });
+
+    afterAll(async () => {
+        await Promise.all([
+            deleteResource(ACCOUNT_ID, NFS_HOST_ID),
+            deleteResource(ACCOUNT_ID, ISCSI_HOST_ID),
+            deleteResource(ACCOUNT_ID, MULTI_HOST_ID)
+        ]);
+    });
+
+    afterEach(() => {
+        resetProxyOverrides();
+        vi.restoreAllMocks();
+    });
+
+    it('happy path (NFS): resolves the junction path, clears nas.path, then deletes the volume', async () => {
+        vi.spyOn(ssmOperations, 'callSsmExecution').mockResolvedValueOnce(SUCCESSFUL_SSM_RESPONSE);
+        registerProxyGetResponse({
+            targetId: NFS_FSX_ID,
+            ontapPath: 'api/storage/volumes',
+            body: { records: [{ uuid: 'vol-nfs-1', name: 'clone_vol', nas: { path: '/clone_vol' } }], num_records: 1 }
+        });
+
+        await deleteClone(
+            ACCOUNT_ID,
+            CREDENTIALS_ID,
+            REGION,
+            NFS_HOST_ID,
+            NFS_INSTANCE_ID,
+            'CLONE_DB',
+            undefined,
+            'parent-job-1',
+            ['vol-nfs-1']
+        );
+
+        expect(
+            getCapturedProxyGetUris().some(uri => uri.includes('api/storage/volumes') && uri.includes('uuid=vol-nfs-1'))
+        ).toBe(true);
+        expect(getCapturedProxyPatchUris().some(uri => uri.includes('api/storage/volumes/vol-nfs-1'))).toBe(true);
+        expect(getCapturedProxyDeleteUris().some(uri => uri.includes('api/storage/volumes/vol-nfs-1'))).toBe(true);
+    });
+
+    it('iSCSI path: skips the junction-path GET and the nas.path PATCH, deletes the volume directly', async () => {
+        vi.spyOn(ssmOperations, 'callSsmExecution').mockResolvedValueOnce(SUCCESSFUL_SSM_RESPONSE);
+
+        await deleteClone(
+            ACCOUNT_ID,
+            CREDENTIALS_ID,
+            REGION,
+            ISCSI_HOST_ID,
+            ISCSI_INSTANCE_ID,
+            'CLONE_DB',
+            undefined,
+            'parent-job-2',
+            ['vol-iscsi-1']
+        );
+
+        expect(getCapturedProxyGetUris().some(uri => uri.includes('api/storage/volumes'))).toBe(false);
+        expect(getCapturedProxyPatchUris().some(uri => uri.includes('api/storage/volumes/vol-iscsi-1'))).toBe(false);
+        expect(getCapturedProxyDeleteUris().some(uri => uri.includes('api/storage/volumes/vol-iscsi-1'))).toBe(true);
+    });
+
+    it('does not call ONTAP delete when the SSM host-side cleanup fails', async () => {
+        vi.spyOn(ssmOperations, 'callSsmExecution').mockRejectedValueOnce(new Error('SSM execution failed'));
+        registerProxyGetResponse({
+            targetId: NFS_FSX_ID,
+            ontapPath: 'api/storage/volumes',
+            body: {
+                records: [{ uuid: 'vol-nfs-2', name: 'clone_vol_2', nas: { path: '/clone_vol_2' } }],
+                num_records: 1
+            }
+        });
+
+        await expect(
+            deleteClone(
+                ACCOUNT_ID,
+                CREDENTIALS_ID,
+                REGION,
+                NFS_HOST_ID,
+                NFS_INSTANCE_ID,
+                'CLONE_DB',
+                undefined,
+                'parent-job-3',
+                ['vol-nfs-2']
+            )
+        ).rejects.toThrow(/Failed to delete Oracle clone/);
+
+        expect(getCapturedProxyDeleteUris()).toEqual([]);
+        expect(getCapturedProxyPatchUris().some(uri => uri.includes('api/storage/volumes/vol-nfs-2'))).toBe(false);
+    });
+
+    it('isolates per-volume ONTAP delete failures: a sibling volume in the same clone still gets deleted', async () => {
+        vi.spyOn(ssmOperations, 'callSsmExecution').mockResolvedValueOnce(SUCCESSFUL_SSM_RESPONSE);
+        registerProxyGetResponse({
+            targetId: MULTI_FSX_ID,
+            ontapPath: 'api/storage/volumes',
+            body: {
+                records: [
+                    { uuid: 'vol-multi-a', name: 'clone_vol_a', nas: { path: '/clone_vol_a' } },
+                    { uuid: 'vol-multi-b', name: 'clone_vol_b', nas: { path: '/clone_vol_b' } }
+                ],
+                num_records: 2
+            }
+        });
+        registerProxyDeleteResponse({
+            targetId: MULTI_FSX_ID,
+            ontapPath: 'api/storage/volumes/vol-multi-a',
+            status: 500,
+            body: { error: { message: 'internal error' } }
+        });
+
+        await expect(
+            deleteClone(
+                ACCOUNT_ID,
+                CREDENTIALS_ID,
+                REGION,
+                MULTI_HOST_ID,
+                MULTI_INSTANCE_ID,
+                'CLONE_DB',
+                undefined,
+                'parent-job-4',
+                ['vol-multi-a', 'vol-multi-b']
+            )
+        ).rejects.toThrow(/Failed to delete Oracle clone/);
+
+        const deleteUris = getCapturedProxyDeleteUris();
+        expect(deleteUris.some(uri => uri.includes('api/storage/volumes/vol-multi-a'))).toBe(true);
+        expect(deleteUris.some(uri => uri.includes('api/storage/volumes/vol-multi-b'))).toBe(true);
+    });
+
+    describe('junction path resolution (fetchCloneJunctionPaths, inlined)', () => {
+        it('does not call the ONTAP volumes GET when there are no clone volume UUIDs', async () => {
+            const ssmSpy = vi.spyOn(ssmOperations, 'callSsmExecution').mockResolvedValueOnce(SUCCESSFUL_SSM_RESPONSE);
+
+            await deleteClone(
+                ACCOUNT_ID,
+                CREDENTIALS_ID,
+                REGION,
+                NFS_HOST_ID,
+                NFS_INSTANCE_ID,
+                'CLONE_DB',
+                undefined,
+                'parent-job-5',
+                []
+            );
+
+            expect(getCapturedProxyGetUris().some(uri => uri.includes('api/storage/volumes'))).toBe(false);
+            const [{ commands }] = ssmSpy.mock.calls[0];
+            expect(commands[0]).toContain('clone_junction_paths = []');
+        });
+
+        it('resolves the junction path for each cloned volume from the ONTAP response', async () => {
+            const ssmSpy = vi.spyOn(ssmOperations, 'callSsmExecution').mockResolvedValueOnce(SUCCESSFUL_SSM_RESPONSE);
+            registerProxyGetResponse({
+                targetId: NFS_FSX_ID,
+                ontapPath: 'api/storage/volumes',
+                body: {
+                    records: [
+                        { uuid: 'vol-nfs-3', name: 'clone_vol_3', nas: { path: '/clone_vol_3' } },
+                        { uuid: 'vol-nfs-4', name: 'clone_vol_4', nas: { path: '/clone_vol_4' } }
+                    ],
+                    num_records: 2
+                }
+            });
+
+            await deleteClone(
+                ACCOUNT_ID,
+                CREDENTIALS_ID,
+                REGION,
+                NFS_HOST_ID,
+                NFS_INSTANCE_ID,
+                'CLONE_DB',
+                undefined,
+                'parent-job-6',
+                ['vol-nfs-3', 'vol-nfs-4']
+            );
+
+            const [{ commands }] = ssmSpy.mock.calls[0];
+            expect(commands[0]).toContain('clone_junction_paths = ["/clone_vol_3","/clone_vol_4"]');
+        });
+
+        it('omits a volume with no junction path from the cleanup script without blocking its deletion', async () => {
+            const ssmSpy = vi.spyOn(ssmOperations, 'callSsmExecution').mockResolvedValueOnce(SUCCESSFUL_SSM_RESPONSE);
+            registerProxyGetResponse({
+                targetId: NFS_FSX_ID,
+                ontapPath: 'api/storage/volumes',
+                body: {
+                    records: [
+                        { uuid: 'vol-nfs-5', name: 'clone_vol_5', nas: { path: '/clone_vol_5' } },
+                        { uuid: 'vol-nfs-6', name: 'clone_vol_6' }
+                    ],
+                    num_records: 2
+                }
+            });
+
+            await deleteClone(
+                ACCOUNT_ID,
+                CREDENTIALS_ID,
+                REGION,
+                NFS_HOST_ID,
+                NFS_INSTANCE_ID,
+                'CLONE_DB',
+                undefined,
+                'parent-job-7',
+                ['vol-nfs-5', 'vol-nfs-6']
+            );
+
+            const [{ commands }] = ssmSpy.mock.calls[0];
+            expect(commands[0]).toContain('clone_junction_paths = ["/clone_vol_5"]');
+            const deleteUris = getCapturedProxyDeleteUris();
+            expect(deleteUris.some(uri => uri.includes('api/storage/volumes/vol-nfs-5'))).toBe(true);
+            expect(deleteUris.some(uri => uri.includes('api/storage/volumes/vol-nfs-6'))).toBe(true);
+        });
+
+        it('omits a volume missing from the ONTAP response (e.g. a bad/unknown UUID) without blocking its deletion', async () => {
+            const ssmSpy = vi.spyOn(ssmOperations, 'callSsmExecution').mockResolvedValueOnce(SUCCESSFUL_SSM_RESPONSE);
+            registerProxyGetResponse({
+                targetId: NFS_FSX_ID,
+                ontapPath: 'api/storage/volumes',
+                body: {
+                    records: [{ uuid: 'vol-nfs-7', name: 'clone_vol_7', nas: { path: '/clone_vol_7' } }],
+                    num_records: 1
+                }
+            });
+
+            await deleteClone(
+                ACCOUNT_ID,
+                CREDENTIALS_ID,
+                REGION,
+                NFS_HOST_ID,
+                NFS_INSTANCE_ID,
+                'CLONE_DB',
+                undefined,
+                'parent-job-8',
+                ['vol-nfs-7', 'vol-nfs-missing']
+            );
+
+            const [{ commands }] = ssmSpy.mock.calls[0];
+            expect(commands[0]).toContain('clone_junction_paths = ["/clone_vol_7"]');
+            const deleteUris = getCapturedProxyDeleteUris();
+            expect(deleteUris.some(uri => uri.includes('api/storage/volumes/vol-nfs-7'))).toBe(true);
+            expect(deleteUris.some(uri => uri.includes('api/storage/volumes/vol-nfs-missing'))).toBe(true);
+        });
+
+        it('aborts clone deletion (no SSM command, no ONTAP delete) when the ONTAP volumes GET fails', async () => {
+            const ssmSpy = vi.spyOn(ssmOperations, 'callSsmExecution').mockResolvedValueOnce(SUCCESSFUL_SSM_RESPONSE);
+            registerProxyGetResponse({
+                targetId: NFS_FSX_ID,
+                ontapPath: 'api/storage/volumes',
+                status: 500,
+                body: { errorMessage: 'Internal server error' }
+            });
+
+            await expect(
+                deleteClone(
+                    ACCOUNT_ID,
+                    CREDENTIALS_ID,
+                    REGION,
+                    NFS_HOST_ID,
+                    NFS_INSTANCE_ID,
+                    'CLONE_DB',
+                    undefined,
+                    'parent-job-9',
+                    ['vol-nfs-8']
+                )
+            ).rejects.toThrow(/Failed to delete Oracle clone/);
+
+            expect(ssmSpy).not.toHaveBeenCalled();
+            expect(getCapturedProxyDeleteUris().some(uri => uri.includes('api/storage/volumes/vol-nfs-8'))).toBe(false);
+            expect(getCapturedProxyPatchUris().some(uri => uri.includes('api/storage/volumes/vol-nfs-8'))).toBe(false);
+        });
     });
 });

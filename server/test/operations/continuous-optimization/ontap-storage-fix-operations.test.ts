@@ -3,11 +3,14 @@ import type { DescribeFileSystemsCommandOutput } from '@aws-sdk/client-fsx';
 import * as fsxLib from '../../../src/lib/aws/fsx';
 import { applyOntapStorageFix } from '../../../src/operations/continuous-optimization/ontap-storage-fix-operations';
 import { OptimizeStorageConfigs } from '../../../src/utils/continous-optimization-consts';
+import { RESOURCESTYPE } from '../../../src/utils/consts';
+import * as utilsLib from '../../../src/utils/utils';
 import {
     getCapturedProxyGetUris,
     getCapturedProxyPatchUris,
     registerProxyGetResponse,
     registerProxyPatchResponse,
+    registerProxyPatchResponseSequence,
     resetProxyOverrides
 } from '../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
 import { ACCOUNT_ID, CREDENTIALS_ID, DEFAULT_AWS_REGION } from '../../utils/consts';
@@ -65,12 +68,229 @@ describe('applyOntapStorageFix', () => {
             region: DEFAULT_AWS_REGION,
             svmName: 'svm1',
             configurationId: OptimizeStorageConfigs.THIN_PROVISIONING,
-            resourceIds: [volumeUuid]
+            resourceIds: [volumeUuid],
+            resourceType: RESOURCESTYPE.MSSQL
         });
 
         expect(results).toEqual([{ resourceId: volumeUuid, success: true }]);
         expect(getCapturedProxyPatchUris().some(uri => uri.includes(`/targets/${FIRST_FSX_ID}/`))).toBe(true);
         expect(getCapturedProxyPatchUris().some(uri => uri.includes(`/targets/${SECOND_FSX_ID}/`))).toBe(false);
         expect(getCapturedProxyGetUris().some(uri => uri.includes(JOB_PATH))).toBe(true);
+    });
+
+    describe('Oracle name-based identifiers for THIN_PROVISIONING/FRACTIONAL_RESERVE', () => {
+        it('should query by volume name (not uuid) for Oracle, via the private-CLI path, so a name-based match is found', async () => {
+            const volumeName = 'oracle_data_vol_1';
+
+            mockManagementEndpoint();
+            registerProxyPatchResponse({
+                targetId: FIRST_FSX_ID,
+                ontapPath: 'api/private/cli/volume',
+                body: { num_records: 1 }
+            });
+
+            const results = await applyOntapStorageFix({
+                accountId: ACCOUNT_ID,
+                credentialsId: CREDENTIALS_ID,
+                fsxId: FIRST_FSX_ID,
+                region: DEFAULT_AWS_REGION,
+                svmName: 'svm1',
+                configurationId: OptimizeStorageConfigs.THIN_PROVISIONING,
+                resourceIds: [volumeName],
+                resourceType: RESOURCESTYPE.ORACLE
+            });
+
+            expect(results).toEqual([{ resourceId: volumeName, success: true }]);
+            const patchUri = getCapturedProxyPatchUris().find(uri => uri.includes('api/private/cli/volume'));
+            expect(patchUri).toBeDefined();
+            const decodedPatchUri = decodeURIComponent(patchUri as string);
+            expect(decodedPatchUri).toContain(`volume=${volumeName}`);
+            expect(decodedPatchUri).not.toContain('uuid=');
+            expect(getCapturedProxyPatchUris().some(uri => uri.includes('api/storage/volumes'))).toBe(false);
+        });
+
+        it('should still query by uuid via the REST path for MSSQL', async () => {
+            const volumeUuid = 'mssql-vol-uuid-1';
+
+            mockManagementEndpoint();
+            registerProxyPatchResponse({
+                targetId: FIRST_FSX_ID,
+                ontapPath: 'api/storage/volumes',
+                body: { num_records: 1 }
+            });
+
+            const results = await applyOntapStorageFix({
+                accountId: ACCOUNT_ID,
+                credentialsId: CREDENTIALS_ID,
+                fsxId: FIRST_FSX_ID,
+                region: DEFAULT_AWS_REGION,
+                svmName: 'svm1',
+                configurationId: OptimizeStorageConfigs.FRACTIONAL_RESERVE,
+                resourceIds: [volumeUuid],
+                resourceType: RESOURCESTYPE.MSSQL
+            });
+
+            expect(results).toEqual([{ resourceId: volumeUuid, success: true }]);
+            const patchUri = getCapturedProxyPatchUris().find(uri => uri.includes('api/storage/volumes'));
+            expect(patchUri).toBeDefined();
+            const decodedPatchUri = decodeURIComponent(patchUri as string);
+            expect(decodedPatchUri).toContain(`uuid=${volumeUuid}`);
+        });
+    });
+
+    describe('efficiency target-state pre-check', () => {
+        const EFFICIENCY_PATH = 'api/storage/volumes';
+
+        it('should only PATCH the volume not already at the target efficiency state', async () => {
+            const compliantVolume = 'vol-already-disabled';
+            const nonCompliantVolume = 'vol-still-enabled';
+
+            mockManagementEndpoint();
+            registerProxyGetResponse({
+                targetId: FIRST_FSX_ID,
+                ontapPath: EFFICIENCY_PATH,
+                body: {
+                    records: [
+                        { name: compliantVolume, uuid: 'uuid-1', efficiency: { state: 'disabled' } },
+                        { name: nonCompliantVolume, uuid: 'uuid-2', efficiency: { state: 'enabled' } }
+                    ],
+                    num_records: 2
+                }
+            });
+            registerProxyPatchResponse({ targetId: FIRST_FSX_ID, ontapPath: EFFICIENCY_PATH, body: {} });
+
+            const results = await applyOntapStorageFix({
+                accountId: ACCOUNT_ID,
+                credentialsId: CREDENTIALS_ID,
+                fsxId: FIRST_FSX_ID,
+                region: DEFAULT_AWS_REGION,
+                svmName: 'svm1',
+                configurationId: OptimizeStorageConfigs.DEDUPLICATION,
+                resourceIds: [compliantVolume, nonCompliantVolume],
+                value: 'none'
+            });
+
+            expect(results).toEqual(
+                expect.arrayContaining([
+                    { resourceId: compliantVolume, success: true },
+                    { resourceId: nonCompliantVolume, success: true }
+                ])
+            );
+            expect(results).toHaveLength(2);
+
+            const patchUri = getCapturedProxyPatchUris().find(uri => uri.includes(EFFICIENCY_PATH));
+            expect(patchUri).toBeDefined();
+            const decodedPatchUri = decodeURIComponent(patchUri as string);
+            expect(decodedPatchUri).toContain(nonCompliantVolume);
+            expect(decodedPatchUri).not.toContain(compliantVolume);
+        });
+
+        it('should skip the ONTAP PATCH entirely as a no-op success when all target volumes already have efficiency disabled', async () => {
+            const firstVolume = 'vol-disabled-1';
+            const secondVolume = 'vol-disabled-2';
+
+            mockManagementEndpoint();
+            registerProxyGetResponse({
+                targetId: FIRST_FSX_ID,
+                ontapPath: EFFICIENCY_PATH,
+                body: {
+                    records: [
+                        { name: firstVolume, uuid: 'uuid-1', efficiency: { state: 'disabled' } },
+                        { name: secondVolume, uuid: 'uuid-2', efficiency: { state: 'disabled' } }
+                    ],
+                    num_records: 2
+                }
+            });
+
+            const results = await applyOntapStorageFix({
+                accountId: ACCOUNT_ID,
+                credentialsId: CREDENTIALS_ID,
+                fsxId: FIRST_FSX_ID,
+                region: DEFAULT_AWS_REGION,
+                svmName: 'svm1',
+                configurationId: OptimizeStorageConfigs.COMPACTION,
+                resourceIds: [firstVolume, secondVolume],
+                value: 'none'
+            });
+
+            expect(results).toEqual([
+                { resourceId: firstVolume, success: true },
+                { resourceId: secondVolume, success: true }
+            ]);
+            expect(getCapturedProxyPatchUris().some(uri => uri.includes(EFFICIENCY_PATH))).toBe(false);
+        });
+    });
+
+    describe('pending ONTAP operation retry', () => {
+        const EFFICIENCY_PATH = 'api/storage/volumes';
+
+        it('should wait and retry when ONTAP reports a pending operation, succeeding once it clears', async () => {
+            const volumeName = 'vol-pending-then-clear';
+            const sleepSpy = vi.spyOn(utilsLib, 'sleep').mockResolvedValue(undefined);
+
+            mockManagementEndpoint();
+            registerProxyPatchResponseSequence({
+                targetId: FIRST_FSX_ID,
+                ontapPath: EFFICIENCY_PATH,
+                responses: [
+                    {
+                        status: 500,
+                        body: {
+                            message: `Failed to disable efficiency on volume "${volumeName}": Operation is currently pending.`
+                        }
+                    },
+                    { status: 200, body: {} }
+                ]
+            });
+
+            const results = await applyOntapStorageFix({
+                accountId: ACCOUNT_ID,
+                credentialsId: CREDENTIALS_ID,
+                fsxId: FIRST_FSX_ID,
+                region: DEFAULT_AWS_REGION,
+                svmName: 'svm1',
+                configurationId: OptimizeStorageConfigs.DEDUPLICATION,
+                resourceIds: [volumeName],
+                value: 'inline'
+            });
+
+            expect(results).toEqual([{ resourceId: volumeName, success: true }]);
+            expect(sleepSpy).toHaveBeenCalledTimes(1);
+        });
+
+        it('should fail with a clear message when a pending ONTAP operation never clears within the bounded wait', async () => {
+            const volumeName = 'vol-pending-forever';
+            const sleepSpy = vi.spyOn(utilsLib, 'sleep').mockResolvedValue(undefined);
+
+            mockManagementEndpoint();
+            registerProxyPatchResponse({
+                targetId: FIRST_FSX_ID,
+                ontapPath: EFFICIENCY_PATH,
+                status: 500,
+                body: {
+                    message: `Failed to disable efficiency on volume "${volumeName}": Operation is currently pending.`
+                }
+            });
+
+            const results = await applyOntapStorageFix({
+                accountId: ACCOUNT_ID,
+                credentialsId: CREDENTIALS_ID,
+                fsxId: FIRST_FSX_ID,
+                region: DEFAULT_AWS_REGION,
+                svmName: 'svm1',
+                configurationId: OptimizeStorageConfigs.DEDUPLICATION,
+                resourceIds: [volumeName],
+                value: 'inline'
+            });
+
+            expect(results).toEqual([
+                {
+                    resourceId: volumeName,
+                    success: false,
+                    failureReason: expect.stringContaining('Pending ONTAP operation')
+                }
+            ]);
+            expect(sleepSpy).toHaveBeenCalledTimes(2);
+        });
     });
 });

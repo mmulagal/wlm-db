@@ -94,6 +94,7 @@ interface OntapVolumeRecord {
     tiering?: { policy?: string; min_cooling_days?: number };
     guarantee?: { honored?: boolean; type?: string };
     efficiency?: {
+        state?: string;
         compression?: string;
         compression_type?: string;
         compaction?: string;

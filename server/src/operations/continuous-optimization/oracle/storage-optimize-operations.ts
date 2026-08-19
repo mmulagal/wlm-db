@@ -50,12 +50,13 @@ import { getOracleDatabaseMappedVolumes } from '../../workloads/oracle/oracle-op
 import {
     optimizeAfdDriftConfigParam,
     optimizeAsmLibDriftConfigParam,
-    createAndMapLunsForDiskGroups,
+    readIscsiInitiatorIqn,
     mountLunsToDisks,
     addDiskToDiskGroups
 } from './ssm-scripts/storage-optimize-scripts';
 import { OracleJobMetadata, oracleSpecialStorageConfigNames } from './consts';
 import { headroomOptimization } from '../headroom-assessment';
+import { createAndMapLunsForDiskGroups } from './storage-layout-provision';
 
 const logger = getLogger();
 
@@ -321,37 +322,52 @@ async function handleDiskgroupOptimization(
         });
 
         if (unOptimizedDiskGroups.length > 0) {
-            const createVolsCommand = createAndMapLunsForDiskGroups(unOptimizedDiskGroups, lunIds, fsxId, region);
-            const createVolsComment = 'Create Volumes for Oracle Diskgroups';
-            const response = await callSsmExecution({
+            const readInitiatorCommand = readIscsiInitiatorIqn();
+            const initiatorResponse = await callSsmExecution({
                 credentialsId,
                 region,
-                commands: [createVolsCommand],
+                commands: [readInitiatorCommand],
                 ec2InstanceId: node1InstanceId,
-                comment: createVolsComment,
+                comment: 'Read Oracle iSCSI initiator IQN',
                 accountId,
                 executionTimeout: CUSTOM_SSM_EXECUTION_TIMEOUT,
                 documentName: SSM_RUN_SHELL_SCRIPT_DOC,
                 documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
             });
-            if (response) {
-                const parsedResponse = sqlResponseParsing(response);
-                const diskGrps = Object.keys(parsedResponse);
-                if (parsedResponse && diskGrps.length === unOptimizedDiskGroups.length) {
-                    diskGrps.forEach(dgName => {
-                        if (parsedResponse[dgName].error) {
-                            throw Error(`Error creating LUNs for Diskgroup ${dgName}: ${parsedResponse[dgName].error}`);
-                        } else {
-                            const dg = unOptimizedDiskGroups.find(d => d.diskGroupName === dgName);
-                            if (dg) {
-                                dg.lunSerials = parsedResponse[dgName].luns;
-                                dg.iscsiIp = parsedResponse[dgName].iscsi_ip;
-                            }
+            const initiatorIqn = sqlResponseParsing(initiatorResponse);
+            if (typeof initiatorIqn !== 'string' || isEmpty(initiatorIqn)) {
+                const errorMessage = `Failed to read Oracle iSCSI initiator IQN for node ${node1InstanceId}${
+                    initiatorIqn && typeof initiatorIqn === 'object' && 'error' in initiatorIqn
+                        ? `: ${initiatorIqn.error}`
+                        : ''
+                }`;
+                logger.error(errorMessage, { accountId, databaseInstanceId, node1InstanceId });
+                throw Error(errorMessage);
+            }
+
+            const lunCreateResult = await createAndMapLunsForDiskGroups(
+                { accountId, credentialsId, region, fsxId },
+                unOptimizedDiskGroups,
+                lunIds,
+                initiatorIqn
+            );
+            const lunCreateDiskGrps = Object.keys(lunCreateResult);
+            if (lunCreateDiskGrps.length === unOptimizedDiskGroups.length) {
+                lunCreateDiskGrps.forEach(dgName => {
+                    if (lunCreateResult[dgName].error) {
+                        throw Error(`Error creating LUNs for Diskgroup ${dgName}: ${lunCreateResult[dgName].error}`);
+                    } else {
+                        const dg = unOptimizedDiskGroups.find(d => d.diskGroupName === dgName);
+                        if (dg) {
+                            dg.lunSerials = lunCreateResult[dgName].luns;
+                            dg.iscsiIp = lunCreateResult[dgName].iscsi_ip;
                         }
-                    });
-                } else {
-                    throw Error(`Error creating LUNs for Diskgroups. diskgroups in response: ${diskGrps.join(', ')}`);
-                }
+                    }
+                });
+            } else {
+                throw Error(
+                    `Error creating LUNs for Diskgroups. diskgroups in response: ${lunCreateDiskGrps.join(', ')}`
+                );
             }
             logger.info('Mounting LUNs to Oracle ASM disks');
             const addToDiskgroupCommand = mountLunsToDisks(unOptimizedDiskGroups);
@@ -732,9 +748,9 @@ async function getOracleStorageConfigRecommendationMap(
         }
 
         volumes
-            .filter(({ name }) => name && oracleSpecialStorageConfigNames.includes(name as OptimizeStorageConfigs))
+            .filter(({ id }) => id && oracleSpecialStorageConfigNames.includes(id as OptimizeStorageConfigs))
             .forEach(volume => {
-                const { name: configKey, violationDetails } = volume as OracleGenericParameterDriftResponseType;
+                const { id: configKey, violationDetails } = volume as OracleGenericParameterDriftResponseType;
                 if (!violationDetails) {
                     return;
                 }

@@ -2,15 +2,7 @@
 // ************ PYTHON TEMPLATES BEGIN ************* //
 // ************************************************* //
 
-import { OptimizeStorageParams } from '../../../../utils/common-types';
-import {
-    getFsxCredentials,
-    ontapRestApiScript,
-    ontapJobPollerScript,
-    ontapEfficiencyRecoveryScript,
-    logFileCheck,
-    pythonScriptInit
-} from '../../../workloads/oracle/oracle-ssm-script-utils';
+import { logFileCheck, pythonScriptInit } from '../../../workloads/oracle/oracle-ssm-script-utils';
 import { UnOptimizedDiskGroups } from '../../assessment-utils';
 
 const DETECT_ASM_TOOL_PY = `
@@ -30,244 +22,6 @@ def detect_asm_tool():
     except Exception:
         pass
     return "asmlib"
-`;
-
-const oracleStorageConfigurationPythonTemplate = (params: OptimizeStorageParams) => `
-${getFsxCredentials}
-${ontapRestApiScript}
-${ontapJobPollerScript}
-${ontapEfficiencyRecoveryScript}
-
-# Optimize Oracle storage configuration using ONTAP REST API
-fsxId = '${params.fsxId}'
-region = '${params.region}'
-apiPath = '${params.apiEndpoint}'[1:]
-query = '${params.apiQueryFilter}'
-body = '${params.apiBody}'
-method = '${params.apiType || 'PATCH'}'
-url = apiPath
-
-if query:
-    url = f"{apiPath}?{query}"
-
-log(f"Sending {method} request to: {url} with body: {body}")
-sendBody = None if method in ["GET"] else body
-response, error = ontapRestApiRequest(fsxId, region, method, url, sendBody)
-
-# Storage-efficiency PATCH on /storage/volumes is async: wait for the dispatched
-# job so a later failure (e.g. deprioritized-volume code 6881332) is visible to
-# the recovery check below. Scoped to PATCH on /storage/volumes only.
-def waitForFinalJob(resp):
-    if not (method == 'PATCH' and apiPath.startswith('storage/volumes')) or not isinstance(resp, dict):
-        return None
-    jobsArr = resp.get("jobs")
-    finalJob = jobsArr[0] if isinstance(jobsArr, list) and jobsArr else resp.get("job")
-    jobUuid = finalJob.get("uuid") if isinstance(finalJob, dict) else None
-    if not jobUuid:
-        return None
-    log(f"Waiting for terminal state of ONTAP job {jobUuid}")
-    ok, jobInfo = waitForOntapJob(fsxId, region, jobUuid)
-    log(f"Final job {jobUuid} terminated: ok={ok} info={jobInfo}")
-    return None if ok else {"error": {"status": "ONTAP job failed", "job_uuid": jobUuid, "job": jobInfo}}
-
-error = error or waitForFinalJob(response)
-
-# Deprioritized volume: efficiency PATCH may fail with 6881332 ("...deprioritized volume").
-# Fix: run (advanced) "volume efficiency promote" on the target SVM/volume, then retry PATCH once.
-# Detect both immediate HTTP failures and async job failures returning 6881332.
-# Note: promote volume uses /private/cli/volume/efficiency with vserver+volume keys (not svm+name).
-if error and isDeprioritizedEfficiencyError(error):
-    log(f"Detected deprioritized-volume efficiency error; attempting recovery: {error}")
-    parsedQuery = parse_qs(query) if query else {}
-    svm = (parsedQuery.get('svm') or parsedQuery.get('svm.name') or parsedQuery.get('vserver') or [''])[0]
-    rawNames = (parsedQuery.get('name') or parsedQuery.get('volume') or [''])[0]
-    volNames = [n for n in rawNames.split('|') if n] if rawNames else []
-    if not svm or not volNames:
-        log(f"Cannot recover: unable to derive svm/name from query={query}")
-    else:
-        promotedAll = True
-        for v in volNames:
-            if not promoteEfficiencyAndVerify(fsxId, region, svm, v):
-                promotedAll = False
-                break
-        if promotedAll:
-            log("Promote succeeded; retrying the original request.")
-            response, error = ontapRestApiRequest(fsxId, region, method, url, sendBody)
-            error = error or waitForFinalJob(response)
-        else:
-            log("Promote/verify failed; not retrying original request.")
-
-if error:
-    log(f"Error occurred: {error}")
-    print(json.dumps(error))
-    exit()
-
-log(f"Response: {json.dumps(response)}")
-print(json.dumps(response))
-`;
-
-const createOntapVols = (
-    unOptimizedDiskGroups: UnOptimizedDiskGroups[],
-    lunUuids: string[],
-    fsxId: string,
-    region: string
-) => `
-${getFsxCredentials}
-${ontapRestApiScript}
-unOptimizedDiskGroups = json.loads('${JSON.stringify(unOptimizedDiskGroups)}')
-lunUuidString = '${lunUuids.join()}'
-region = '${region}'
-fsxId = '${fsxId}'
-
-response, error = ontapRestApiRequest(fsxId, region, 'GET', f"/storage/luns?uuid={lunUuidString}&fields=space")
-if error:
-    log(f"Error fetching LUN sizes: {error}")
-else:
-    log(f"LUN sizes response: {response}")
-    smallest_size = min(rec["space"]["size"] for rec in response["records"])
-lunSize = smallest_size
-volSize = lunSize * 1.1
-
-# ONTAP may return 409 / "still being created" briefly after flexvol create; bounded retries with backoff.
-MAX_LUN_CREATE_ATTEMPTS = 6
-
-def retry_with_backoff(call_fn, max_attempts, sleep_for_attempt, should_retry, label=""):
-    """call_fn: () -> (result, error). sleep_for_attempt(attempt_index) for attempt_index >= 1. should_retry(err_str) -> continue retrying."""
-    last_res, last_err = None, None
-    for attempt in range(max_attempts):
-        if attempt > 0:
-            wait_secs = sleep_for_attempt(attempt)
-            suffix = f" {label}" if label else ""
-            log(f"Waiting {wait_secs}s for{suffix} to be ready (attempt {attempt + 1}/{max_attempts})")
-            time.sleep(wait_secs)
-        last_res, last_err = call_fn()
-        if not last_err:
-            return last_res, None
-        err_str = str(last_err)
-        if not should_retry(err_str):
-            break
-        log(f"Transient ONTAP error, will retry{(' ' + label) if label else ''}: {err_str}")
-    return last_res, last_err
-
-initiator = None
-with open('/etc/iscsi/initiatorname.iscsi') as f:
-    for line in f:
-        if 'InitiatorName' in line:
-            parts = line.strip().split('=', 1)
-            if len(parts) == 2:
-                initiator = parts[1]
-                break
-
-result = {}
-failedLuns = []
-successfulLuns = []
-for diskGrp in unOptimizedDiskGroups:
-    payload = {}
-    payload['size'] = str(volSize) + 'b'
-    payload['type'] = 'RW'
-    payload['svm'] = {'name': diskGrp['svmName']}
-    payload['nas'] = {'security_style': 'UNIX'}
-    payload['style'] = 'flexvol'
-    payload['aggregates'] = [{'name': 'aggr1'}]
-    
-    result.setdefault(diskGrp['diskGroupName'], {})
-    result[diskGrp['diskGroupName']]['error'] = ""
-    result[diskGrp['diskGroupName']]['luns'] = []
-
-    lunPayload = {
-        "location": {"volume": {"name": ""}, "logical_unit": "lun1"},
-        "space": {"size": str(lunSize) + 'b', "guarantee": {"requested": "true"}},
-        "os_type": "linux",
-        "svm": {"name": diskGrp['svmName']},
-
-    }
-    igrpName = ""
-    iGrpResponse, iGrpError = ontapRestApiRequest(fsxId, region, 'GET', '/protocols/san/igroups?protocol=iscsi&svm.name='+diskGrp['svmName']+'&initiators.name='+initiator)
-    if(iGrpError):
-        log(f"Error fetching igroups for SVM {diskGrp['svmName']}: {iGrpError}")
-        result[diskGrp['diskGroupName']]['error'] += str(iGrpError)
-        continue
-    elif iGrpResponse['num_records'] > 0:
-        log(f"Found existing igroup for SVM {diskGrp['svmName']}: {iGrpResponse['records'][0]['name']}")
-        igrpName = iGrpResponse['records'][0]['name']
-    else:
-        iGrpPayload = {
-            "svm": {"name": diskGrp['svmName']},
-            "name": initiator,
-            "protocol": "iscsi",
-            "initiators": [{"name": initiator}],
-            "os_type": "linux"
-        }
-        iGrpResponse, iGrpError = ontapRestApiRequest(fsxId, region, 'POST', '/protocols/san/igroups', iGrpPayload)
-        if(iGrpError):
-            log(f"Error creating igroup for SVM {diskGrp['svmName']}: {iGrpError}")
-            result[diskGrp['diskGroupName']]['error'] += str(iGrpError)
-            continue
-        else:
-            log(f"Successfully created igroup {iGrpResponse['name']} for SVM {diskGrp['svmName']}")
-            igrpName = initiator
-
-    iscsiSessionResponse, iscsiSessionError = ontapRestApiRequest(fsxId, region, 'GET', f"network/ip/interfaces?svm.name={diskGrp['svmName']}&services=*iscsi*&fields=ip.address")
-    if iscsiSessionError or iscsiSessionResponse['num_records'] == 0:
-        log(f"Error fetching iSCSI session information: {iscsiSessionError}")
-        result[diskGrp['diskGroupName']]['error'] += str(iscsiSessionError)
-        continue
-    else:
-        log(f"Successfully fetched iSCSI session information: {iscsiSessionResponse}")
-        iscsi_ip = iscsiSessionResponse['records'][0]['ip']['address']
-        result[diskGrp['diskGroupName']]['iscsi_ip'] = iscsi_ip
-
-    for volName in diskGrp['volumeNames']:
-        log(f"Creating volume {volName} of size {volSize}B in SVM {diskGrp['svmName']}")
-        payload['name'] = volName;
-        response, error = ontapRestApiRequest(fsxId, region, 'POST', 'storage/volumes', payload)
-        
-        if error:
-            log(f"Error creating volume {volName}: {error}")
-            result[diskGrp['diskGroupName']]['error'] += str(error)
-        else:
-            log(f"Successfully created volume {volName}: {response}")
-            lunPayload['location']['volume']['name'] = volName
-            response, lun_error = retry_with_backoff(
-                lambda: ontapRestApiRequest(fsxId, region, 'POST', '/storage/luns', lunPayload),
-                MAX_LUN_CREATE_ATTEMPTS,
-                lambda attempt_idx: 10 * attempt_idx,
-                lambda err_str: '409' in err_str or 'still being created' in err_str,
-                label=f"volume {volName} in SVM {diskGrp['svmName']}"
-            )
-            error = lun_error
-            
-            if error:
-                log(f"Error creating LUN in volume {volName}: {error}")
-                result[diskGrp['diskGroupName']]['error'] += str(error)
-            else:
-                log(f"Successfully created LUN in volume {volName}: response: {response}")
-                lunMapPayload = {
-                    "svm": {"name": diskGrp['svmName']},
-                    "lun": {"name": '/vol/' + volName + '/lun1'},
-                    "igroup": {"name": igrpName}
-                }
-                lunMapResponse, lunMapError = ontapRestApiRequest(fsxId, region, 'POST', '/protocols/san/lun-maps', lunMapPayload)
-                if lunMapError:
-                    log(f"Error mapping LUN in volume {volName} to igroup {igrpName}: {lunMapError}")
-                    result[diskGrp['diskGroupName']]['error'] += str(lunMapError)
-                    failedLuns.append(volName)
-                else:
-                    log(f"Successfully mapped LUN in volume {volName} to igroup {igrpName}: response: {lunMapResponse}")
-                    log(f"Fetching LUN serial for /vol/{volName}/lun1")
-                    lunSerialResponse, lunSerialError = ontapRestApiRequest(fsxId, region, 'GET', f"storage/luns?svm.name={diskGrp['svmName']}&name=/vol/{volName}/lun1&fields=serial_number")
-                    if lunSerialError or lunSerialResponse['num_records'] == 0:
-                        errStr = f"Error fetching LUN serial for /vol/{volName}/lun1: {lunSerialError}"
-                        log(errStr)
-                        result[diskGrp['diskGroupName']]['error'] += str(errStr)
-                    else:
-                        log(f"Successfully fetched LUN serial for /vol/{volName}/lun1: {lunSerialResponse}")
-                        result[diskGrp['diskGroupName']]['luns'].append(lunSerialResponse['records'][0]['serial_number'])
-                        successfulLuns.append(lunSerialResponse['records'][0]['serial_number'])
-
-log(f"Successfully created and mapped LUNs: {successfulLuns}")
-log(f"Failed to create or map LUNs: {failedLuns}")
-print(json.dumps(result))
 `;
 
 const mountLunsToDisksScript = (diskGroups: UnOptimizedDiskGroups[]) => `
@@ -844,27 +598,16 @@ print(json.dumps(result))
 // *********************************************** //
 // ************ PYTHON TEMPLATES END ************* //
 // *********************************************** //
-const optimizeStorageConfigParamsOracle = (params: OptimizeStorageParams) => `
-#!/bin/bash
-${logFileCheck(true)}
-
-sudo -i -u oracle bash <<'ORACLE_SHELL'
-${pythonScriptInit(oracleStorageConfigurationPythonTemplate(params), 'wlmdb-oracle-storage-configuration')}
-ORACLE_SHELL
-`;
-
-const createAndMapLunsForDiskGroups = (
-    unOptimizedDiskGroups: UnOptimizedDiskGroups[],
-    lunUuids: string[],
-    fsxId: string,
-    region: string
-) => `
+/** Reads the host's iSCSI initiator IQN so the Node-side ONTAP provisioning can find/create its igroup. */
+const readIscsiInitiatorIqn = () => `
 #!/bin/bash
 ${logFileCheck()}
-${pythonScriptInit(
-    createOntapVols(unOptimizedDiskGroups, lunUuids, fsxId, region),
-    'wlmdb-oracle-storage-layout-fix-create-and-map-luns'
-)}
+INITIATOR=$(grep InitiatorName /etc/iscsi/initiatorname.iscsi | cut -d '=' -f2)
+if [ -z "$INITIATOR" ]; then
+    echo "{\\"error\\": \\"No InitiatorName found in /etc/iscsi/initiatorname.iscsi\\"}"
+    exit 1
+fi
+echo "\\"$INITIATOR\\""
 `;
 
 const mountLunsToDisks = (diskGroups: UnOptimizedDiskGroups[]) => `
@@ -896,8 +639,7 @@ ${pythonScriptInit(oracleAfdOptimizeScript, 'wlmdb-oracle-afd-drift-optimization
 `;
 
 export {
-    optimizeStorageConfigParamsOracle,
-    createAndMapLunsForDiskGroups,
+    readIscsiInitiatorIqn,
     mountLunsToDisks,
     addDiskToDiskGroups,
     optimizeAsmLibDriftConfigParam,

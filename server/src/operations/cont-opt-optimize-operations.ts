@@ -45,11 +45,15 @@ import { getActiveSqlNode } from './workloads/mssql/mssql-operations';
 import { registerJob, updateJobDetails, updateParentJobStatus } from './database/job-operations';
 import { describeFSxStorageVirtualMachines } from '../lib/aws/fsx';
 import { updateLongRunningAuditGroup } from './cloud-manager/audit-operations';
-import { callOntapAndPollJob } from '../lib/ontap/ontap-gateway';
+import { buildOntapProxyBase, callOntapAndPollJob } from '../lib/ontap/ontap-gateway';
+import {
+    createOntapExportPolicy,
+    getOntapExportPolicyRules,
+    type OntapExportPolicyRule
+} from './continuous-optimization/ontap-operations';
 import { applyOntapStorageFix } from './continuous-optimization/ontap-storage-fix-operations';
 import {
     OptimizeStorageParams,
-    QUERY_PARAMS,
     OptimizeStorageConfigs,
     OptimizeStorageApiData,
     AssessmentCategories,
@@ -106,10 +110,8 @@ import {
     onDemandTriggerMssqlDriftAssessment,
     triggerMssqlAssessmentAfterOptimization
 } from './continuous-optimization/mssql/assessment-operations';
-import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/oracle/consts';
 import { triggerOracleAssessmentAfterOptimization } from './continuous-optimization/oracle/assessment-operations';
 import { getOracleStorageConfigRecommendationMap } from './continuous-optimization/oracle/storage-optimize-operations';
-import { optimizeStorageConfigParamsOracle } from './continuous-optimization/oracle/ssm-scripts/storage-optimize-scripts';
 import { headroomOptimization } from './continuous-optimization/headroom-assessment';
 import { oracleSpecialStorageConfigNames } from './continuous-optimization/oracle/consts';
 import { listDatabaseInstanceConfigData } from '../lib/database/database-instance-config';
@@ -215,78 +217,27 @@ interface OptimizeStorageOperationParams {
     volumeTypeMap?: Map<string, string[]>;
 }
 
-function getApiQueryFilter(
-    svmName: string,
-    objectsToOptimize: string[],
-    configKey: string,
-    value: string,
-    queryParamKey: string
-) {
-    return ['DEDUPLICATION', 'COMPACTION', 'EXPORT_POLICY'].includes(configKey) ||
-        (value === 'none' && configKey === 'COMPRESSION')
-        ? `svm=${svmName}&name=${objectsToOptimize.join('|')}`
-        : ['NFS_ROOTONLY'].includes(configKey)
-        ? `vserver=${svmName}`
-        : `vserver=${svmName}&${queryParamKey}=${objectsToOptimize.join(',')}`;
-}
-
 async function getExportPolicyRules(
-    credentialsId: string,
+    accountId: string,
     region: string,
     fsxId: string,
-    activeNodeInstanceId: string,
     svmName: string,
-    existingPolicyName: string,
-    documentName: string,
-    documentVersion: string
+    existingPolicyName: string
 ) {
     logger.info(`Getting export policy rules for policy ${existingPolicyName} in SVM ${svmName}`);
-
-    const commandToFetchExistingPolicyDetails = [
-        optimizeStorageConfigParamsOracle({
-            fsxId,
-            region,
-            apiEndpoint: '/protocols/nfs/export-policies',
-            apiQueryFilter: `svm=${svmName}&name=${existingPolicyName}&fields=rules`,
-            apiBody: '',
-            apiType: 'GET'
-        })
-    ];
-
-    const existingPolicyResponse = await retryWithDelay(
-        callSsmExecution.bind(null, {
-            credentialsId,
-            region,
-            commands: commandToFetchExistingPolicyDetails,
-            ec2InstanceId: activeNodeInstanceId,
-            comment: 'Fetch existing export policy details',
-            documentName,
-            documentVersion
-        })
-    );
-
-    const parsedExistingPolicyResponse = sqlResponseParsing(existingPolicyResponse);
-
-    let existingRules = [];
-    if (parsedExistingPolicyResponse?.records?.[0]?.rules) {
-        existingRules = parsedExistingPolicyResponse.records[0].rules;
-    }
-
-    return existingRules;
+    const base = buildOntapProxyBase(accountId, fsxId, region);
+    return getOntapExportPolicyRules(base, svmName, existingPolicyName);
 }
 
 async function createExportPolicy(
     accountId: string,
-    region: string,
     credentialsId: string,
+    region: string,
     fsxId: string,
-    activeNodeInstanceId: string,
     svmName: string,
     clients: string[],
     existingPolicyName: string,
     policyName: string,
-    documentName: string,
-    documentVersion: string,
     parentJobId?: string
 ) {
     logger.info(`Creating new export policy in SVM ${svmName} for FSx ${fsxId} `);
@@ -304,21 +255,11 @@ async function createExportPolicy(
     });
 
     try {
-        const existingRules = await getExportPolicyRules(
-            credentialsId,
-            region,
-            fsxId,
-            activeNodeInstanceId,
-            svmName,
-            existingPolicyName,
-            documentName,
-            documentVersion
-        );
+        const existingRules = await getExportPolicyRules(accountId, region, fsxId, svmName, existingPolicyName);
 
-        let newRules = [];
-        newRules = clients.map(client => {
+        const newRules = clients.map(client => {
             const existingRule = existingRules.find(
-                (rule: any) => rule.clients && rule.clients.some((c: any) => c.match === client)
+                (rule: OntapExportPolicyRule) => rule.clients && rule.clients.some(c => c.match === client)
             );
 
             if (existingRule) {
@@ -339,44 +280,14 @@ async function createExportPolicy(
             };
         });
 
-        const commands = [
-            optimizeStorageConfigParamsOracle({
-                fsxId,
-                region,
-                apiEndpoint: '/protocols/nfs/export-policies',
-                apiQueryFilter: '',
-                apiBody: JSON.stringify({
-                    name: policyName,
-                    svm: { name: svmName },
-                    rules: newRules
-                }),
-                apiType: 'POST'
-            })
-        ];
-
-        const resp = await retryWithDelay(
-            callSsmExecution.bind(null, {
-                credentialsId,
-                region,
-                commands,
-                ec2InstanceId: activeNodeInstanceId,
-                comment: jobDescription,
-                documentName,
-                documentVersion
-            })
-        );
-
-        const parsedResp = sqlResponseParsing(resp);
-        // Check if parsedResp is empty object
-        if (!parsedResp.hasOwnProperty('error')) {
-            jobStatus = JOBSTATUS.COMPLETED;
-            logger.info(`Export policy ${policyName} created successfully in SVM ${svmName}`);
-        } else {
-            jobStatus = JOBSTATUS.FAILED;
-            jobError = `Failed to create export policy: ${
-                parsedResp.hasOwnProperty('error') ? JSON.stringify(parsedResp.error) : 'unknown error'
-            }`;
-        }
+        const base = buildOntapProxyBase(accountId, fsxId, region);
+        await createOntapExportPolicy(base, {
+            name: policyName,
+            svm: { name: svmName },
+            rules: newRules
+        });
+        jobStatus = JOBSTATUS.COMPLETED;
+        logger.info(`Export policy ${policyName} created successfully in SVM ${svmName}`);
     } catch (error) {
         jobError = `Error while creating export policy: ${error}`;
         logger.error(jobError);
@@ -660,7 +571,6 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams & SSM
         region,
         credentialsId,
         fsxId,
-        activeNodeInstanceId,
         parentJobId,
         optimizationTargets,
         optimizationConfigs,
@@ -668,9 +578,7 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams & SSM
         svmName,
         serverNameWithHostName,
         resourceType,
-        recommendationMap,
-        documentName,
-        documentVersion
+        recommendationMap
     } = params;
     logger.info(
         `Optimizing ONTAP storage for ${accountId} in ${region} for configuration ${JSON.stringify(
@@ -760,16 +668,13 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams & SSM
                                     value = `wlmdb_export_policy_${Date.now()}`;
                                     await createExportPolicy(
                                         accountId,
-                                        region,
                                         credentialsId,
+                                        region,
                                         fsxId,
-                                        activeNodeInstanceId,
                                         vserverName as string,
                                         clients as string[],
                                         existingPolicyName as string,
                                         value,
-                                        documentName,
-                                        documentVersion,
                                         jobId
                                     );
                                 }
@@ -803,8 +708,6 @@ async function optimizeOntapStorage(params: OptimizeStorageAttributeParams & SSM
                                     fsxId,
                                     region,
                                     credentialsId,
-                                    activeNodeInstanceId,
-                                    jobDescription,
                                     accountId,
                                     value
                                 );
@@ -951,8 +854,6 @@ async function callOntapApi(
     fsxId: string,
     region: string,
     credentialsId: string,
-    activeNodeInstanceId: string,
-    jobDescription: string,
     accountId: string,
     value?: string
 ) {
@@ -962,66 +863,36 @@ async function callOntapApi(
         throw new Error('objectsToOptimize must be an array with non-empty string elements.');
     }
     const optimizeType = apiData.type;
-    const queryParamKey = QUERY_PARAMS[optimizeType as keyof typeof QUERY_PARAMS];
     const jobParamKey = STORAGE_OPTIMIZE_JOB_PARAM[optimizeType as keyof typeof STORAGE_OPTIMIZE_JOB_PARAM];
 
-    if (resourceType === RESOURCESTYPE.MSSQL) {
-        const configurationId = OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs];
-        const results = await applyOntapStorageFix({
-            accountId,
-            credentialsId,
-            fsxId,
-            region,
-            svmName,
-            configurationId,
-            resourceIds: objectsToOptimize,
-            value
-        });
-        const successIds = results.filter(r => r.success).map(r => r.resourceId);
-        const failureReason = results.find(r => !r.success)?.failureReason;
-        if (successIds.length === 0 && failureReason) {
-            throw new Error(failureReason);
-        }
-        return {
-            parsedResp: {
-                num_records: successIds.length,
-                cli_output: successIds.join(',')
-            },
-            jobParamKey
-        };
-    }
-
-    if (resourceType !== RESOURCESTYPE.ORACLE) {
+    if (resourceType !== RESOURCESTYPE.MSSQL && resourceType !== RESOURCESTYPE.ORACLE) {
         throw new Error(`Unsupported resourceType for ONTAP optimize: ${resourceType}`);
     }
 
-    const apiBody = JSON.stringify(apiData.body);
-    const apiQueryFilter = getApiQueryFilter(svmName, objectsToOptimize, configKey, value || '', queryParamKey);
-    const apiEndpoint = apiData.api;
-    const commands = [
-        optimizeStorageConfigParamsOracle({
-            fsxId,
-            region,
-            apiEndpoint,
-            apiQueryFilter,
-            apiBody
-        })
-    ];
-
-    const resp = await retryWithDelay(
-        callSsmExecution.bind(null, {
-            credentialsId,
-            region,
-            commands,
-            ec2InstanceId: activeNodeInstanceId,
-            comment: jobDescription,
-            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
-            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        })
-    );
-
-    const parsedResp = sqlResponseParsing(resp);
-    return { parsedResp, jobParamKey };
+    const configurationId = OptimizeStorageConfigs[configKey as keyof typeof OptimizeStorageConfigs];
+    const results = await applyOntapStorageFix({
+        accountId,
+        credentialsId,
+        fsxId,
+        region,
+        svmName,
+        configurationId,
+        resourceIds: objectsToOptimize,
+        value,
+        resourceType
+    });
+    const successIds = results.filter(r => r.success).map(r => r.resourceId);
+    const failureReason = results.find(r => !r.success)?.failureReason;
+    if (successIds.length === 0 && failureReason) {
+        throw new Error(failureReason);
+    }
+    return {
+        parsedResp: {
+            num_records: successIds.length,
+            cli_output: successIds.join(',')
+        },
+        jobParamKey
+    };
 }
 
 async function getSvmNameFromId(credentialsId: string, region: string, fsxId: string, svmId: string) {

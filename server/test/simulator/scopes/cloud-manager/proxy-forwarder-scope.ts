@@ -39,11 +39,16 @@ const defaults = new Map<string, ProxyGetOverride>();
 /** Captured GET request URIs (path + query) for assertions; cleared by `resetProxyOverrides`. */
 const capturedProxyGetUris: string[] = [];
 
-/** Per-test PATCH body overrides keyed the same way as GET overrides. */
-const patchOverrides = new Map<string, ProxyGetOverride>();
+/** Per-test PATCH response (status/body) overrides keyed the same way as GET overrides; request bodies are captured separately below. */
+const patchOverrides = new Map<string, ProxyGetOverride[]>();
 
-/** Captured PATCH proxy URIs for targetId/path assertions; cleared by `resetProxyOverrides`. */
 const capturedProxyPatchUris: string[] = [];
+const capturedProxyPatchBodies: unknown[] = [];
+const postOverrides = new Map<string, ProxyGetOverride[]>();
+const capturedProxyPostUris: string[] = [];
+const capturedProxyPostBodies: unknown[] = [];
+const deleteOverrides = new Map<string, ProxyGetOverride[]>();
+const capturedProxyDeleteUris: string[] = [];
 
 function overrideKey({ targetId, ontapPath }: { targetId: string; ontapPath: string }): string {
     return `${targetId}|${ontapPath.replace(/^\/+/, '')}`;
@@ -88,7 +93,41 @@ function registerProxyPatchResponse(opts: {
     body: unknown;
 }): void {
     const { targetId, ontapPath, status = 200, body } = opts;
-    patchOverrides.set(overrideKey({ targetId, ontapPath }), { status, body });
+    patchOverrides.set(overrideKey({ targetId, ontapPath }), [{ status, body }]);
+}
+
+function registerProxyPatchResponseSequence(opts: {
+    targetId: string;
+    ontapPath: string;
+    responses: Array<{ status?: number; body: unknown }>;
+}): void {
+    const { targetId, ontapPath, responses } = opts;
+    patchOverrides.set(
+        overrideKey({ targetId, ontapPath }),
+        responses.map(({ status = 200, body }) => ({ status, body }))
+    );
+}
+
+function registerProxyPostResponseSequence(opts: {
+    targetId: string;
+    ontapPath: string;
+    responses: Array<{ status?: number; body: unknown }>;
+}): void {
+    const { targetId, ontapPath, responses } = opts;
+    postOverrides.set(
+        overrideKey({ targetId, ontapPath }),
+        responses.map(({ status = 200, body }) => ({ status, body }))
+    );
+}
+
+function registerProxyDeleteResponse(opts: {
+    targetId: string;
+    ontapPath: string;
+    status?: number;
+    body: unknown;
+}): void {
+    const { targetId, ontapPath, status = 200, body } = opts;
+    deleteOverrides.set(overrideKey({ targetId, ontapPath }), [{ status, body }]);
 }
 
 function resetProxyOverrides(): void {
@@ -96,6 +135,12 @@ function resetProxyOverrides(): void {
     capturedProxyGetUris.length = 0;
     patchOverrides.clear();
     capturedProxyPatchUris.length = 0;
+    capturedProxyPatchBodies.length = 0;
+    postOverrides.clear();
+    capturedProxyPostUris.length = 0;
+    capturedProxyPostBodies.length = 0;
+    deleteOverrides.clear();
+    capturedProxyDeleteUris.length = 0;
 }
 
 function getCapturedProxyGetUris(): readonly string[] {
@@ -104,6 +149,22 @@ function getCapturedProxyGetUris(): readonly string[] {
 
 function getCapturedProxyPatchUris(): readonly string[] {
     return capturedProxyPatchUris;
+}
+
+function getCapturedProxyPatchBodies(): readonly unknown[] {
+    return capturedProxyPatchBodies;
+}
+
+function getCapturedProxyPostUris(): readonly string[] {
+    return capturedProxyPostUris;
+}
+
+function getCapturedProxyPostBodies(): readonly unknown[] {
+    return capturedProxyPostBodies;
+}
+
+function getCapturedProxyDeleteUris(): readonly string[] {
+    return capturedProxyDeleteUris;
 }
 
 nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
@@ -140,26 +201,45 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
         return [200, { records: [], num_records: 0 }];
     })
     .post(PROXY_PATH_REGEX)
-    .reply(uri => mutationReply(uri, { job: { uuid: faker.string.uuid() } }))
+    .reply((uri, requestBody) => {
+        capturedProxyPostUris.push(uri);
+        capturedProxyPostBodies.push(requestBody);
+        const parsed = parseProxyUri(uri);
+        const queue = parsed && postOverrides.get(overrideKey(parsed));
+        if (queue?.length) {
+            const next = queue.length > 1 ? queue.shift()! : queue[0];
+            return [next.status, next.body];
+        }
+        return mutationReply(uri, { job: { uuid: faker.string.uuid() } });
+    })
     .patch(PROXY_PATH_REGEX)
-    .reply(uri => {
+    .reply((uri, requestBody) => {
         capturedProxyPatchUris.push(uri);
+        capturedProxyPatchBodies.push(requestBody);
         if (isErrorTarget(uri)) {
             return [500, { errorMessage: 'Internal server error' }];
         }
         const parsed = parseProxyUri(uri);
-        if (parsed) {
-            const override = patchOverrides.get(overrideKey(parsed));
-            if (override) {
-                return [override.status, override.body];
-            }
+        const queue = parsed && patchOverrides.get(overrideKey(parsed));
+        if (queue?.length) {
+            const next = queue.length > 1 ? queue.shift()! : queue[0];
+            return [next.status, next.body];
         }
         return [200, {}];
     })
     .put(PROXY_PATH_REGEX)
     .reply(uri => mutationReply(uri))
     .delete(PROXY_PATH_REGEX)
-    .reply(uri => mutationReply(uri))
+    .reply(uri => {
+        capturedProxyDeleteUris.push(uri);
+        const parsed = parseProxyUri(uri);
+        const queue = parsed && deleteOverrides.get(overrideKey(parsed));
+        if (queue?.length) {
+            const next = queue.length > 1 ? queue.shift()! : queue[0];
+            return [next.status, next.body];
+        }
+        return mutationReply(uri);
+    })
     .head(PROXY_PATH_REGEX)
     .reply(uri => (isErrorTarget(uri) ? [500, {}] : [200, {}]));
 
@@ -168,7 +248,14 @@ export {
     registerDefaultProxyGetResponse,
     registerProxyGetResponseSequence,
     registerProxyPatchResponse,
+    registerProxyPatchResponseSequence,
+    registerProxyPostResponseSequence,
+    registerProxyDeleteResponse,
     resetProxyOverrides,
     getCapturedProxyGetUris,
-    getCapturedProxyPatchUris
+    getCapturedProxyPatchUris,
+    getCapturedProxyPatchBodies,
+    getCapturedProxyPostUris,
+    getCapturedProxyPostBodies,
+    getCapturedProxyDeleteUris
 };

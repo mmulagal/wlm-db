@@ -15,6 +15,15 @@ import { listResources } from '../../../lib/database/db';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import {
+    buildOntapProxyBase,
+    collectOntapRecordsBatched,
+    deleteOntapVolumeByUuid,
+    getOntapJobStatusForBase,
+    OntapVolumeRecord,
+    ProxyOperationBaseOpts
+} from '../../../lib/ontap/ontap-gateway';
+import { callProxyForwarder } from '../../../lib/cloud-manager/proxy-forwarder';
+import {
     OracleMappedOntapVolumeRecord,
     OracleMappedOntapVolumesResponse,
     OracleVolumeRecord
@@ -29,6 +38,8 @@ import { triggerOracleAssessmentAfterOptimization } from './assessment-operation
 import { buildCloneCleanupScript } from './ssm-scripts/clone-cleanup-scripts';
 
 const logger = getLogger();
+
+const JUNCTION_PATH_FIELDS = 'nas.path,name';
 
 interface OracleClonePreValidationResult {
     fsxId: string;
@@ -353,6 +364,55 @@ async function runOracleClonePreValidations(
     };
 }
 
+/**
+ * Resolves the NFS junction path for each clone volume UUID. Propagates a lookup failure to the
+ * caller so a transient read failure aborts clone deletion instead of proceeding to unmount/delete
+ * volumes with no resolved junction path. A volume that the lookup itself returned with no
+ * `nas.path` is simply omitted from the returned map; that should only skip that volume's unmount,
+ * not block deletion.
+ */
+async function fetchCloneJunctionPaths(
+    base: ProxyOperationBaseOpts,
+    volumeUuids: string[]
+): Promise<Record<string, string>> {
+    if (volumeUuids.length === 0) {
+        return {};
+    }
+
+    logger.info('Fetching clone junction paths', { targetId: base.targetId, volumeUuids });
+
+    const records = await collectOntapRecordsBatched<OntapVolumeRecord>(
+        base,
+        'api/storage/volumes',
+        'uuid',
+        volumeUuids,
+        {
+            fields: JUNCTION_PATH_FIELDS
+        }
+    );
+
+    const junctionPathsByUuid: Record<string, string> = {};
+    records.forEach(record => {
+        const nasPath = record.nas?.path;
+        if (nasPath) {
+            junctionPathsByUuid[record.uuid] = nasPath;
+        } else {
+            logger.warn('No junction path found for clone volume', {
+                targetId: base.targetId,
+                volumeUuid: record.uuid
+            });
+        }
+    });
+
+    logger.info('Completed fetching clone junction paths', {
+        targetId: base.targetId,
+        volumeUuids,
+        junctionPathsByUuid
+    });
+
+    return junctionPathsByUuid;
+}
+
 async function deleteClone(
     accountId: string,
     credentialsId: string,
@@ -391,11 +451,13 @@ async function deleteClone(
 
         const effectiveFsxId = IS_DEMO_FLOW ? 'test-fsx' : fsxId;
         const effectiveVolumeUuids = IS_DEMO_FLOW ? ['test-volume-uuid'] : volumeUuids;
+        const isIscsi = protocol === 'iSCSI';
+
+        const ontapBase = buildOntapProxyBase(accountId, effectiveFsxId, region);
+        const junctionPathsByUuid = isIscsi ? {} : await fetchCloneJunctionPaths(ontapBase, effectiveVolumeUuids);
 
         const script = buildCloneCleanupScript({
-            fsxId: effectiveFsxId,
-            region,
-            volumeUuids: effectiveVolumeUuids,
+            junctionPaths: Object.values(junctionPathsByUuid),
             protocol,
             cloneDatabaseName
         });
@@ -427,12 +489,63 @@ async function deleteClone(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
         }
 
-        logger.info('Successfully deleted Oracle clone', {
+        logger.info('Host-side clone cleanup completed, proceeding to delete ONTAP volumes', {
             accountId,
             databaseHostId,
             databaseInstanceId,
             cloneDatabaseName,
             response: parsed
+        });
+
+        const deletedVolumes: string[] = [];
+        const volumeErrorsByUuid: Record<string, string> = {};
+
+        await Promise.all(
+            effectiveVolumeUuids.map(
+                throat(3, async volumeUuid => {
+                    try {
+                        if (!isIscsi) {
+                            const { job } = await callProxyForwarder<{ job?: { uuid?: string } }>({
+                                ...ontapBase,
+                                ontapPath: `api/storage/volumes/${volumeUuid}`,
+                                method: 'PATCH',
+                                body: { nas: { path: '' } }
+                            });
+                            if (job?.uuid) {
+                                await getOntapJobStatusForBase(ontapBase, job.uuid);
+                            }
+                        }
+                        await deleteOntapVolumeByUuid(ontapBase, volumeUuid);
+                        deletedVolumes.push(volumeUuid);
+                    } catch (error: unknown) {
+                        logger.error(`Failed to delete ONTAP volume ${volumeUuid} for clone ${cloneDatabaseName}`, {
+                            accountId,
+                            databaseHostId,
+                            databaseInstanceId,
+                            volumeUuid,
+                            error
+                        });
+                        volumeErrorsByUuid[volumeUuid] = error instanceof Error ? error.message : String(error);
+                    }
+                })
+            )
+        );
+
+        if (Object.keys(volumeErrorsByUuid).length > 0) {
+            const errorMessage = `Host-side cleanup succeeded for clone ${cloneDatabaseName} (instance already shut down) but ONTAP volume deletion failed for: ${JSON.stringify(
+                volumeErrorsByUuid
+            )}`;
+            logger.error(errorMessage, { accountId, databaseHostId, databaseInstanceId, deletedVolumes });
+            throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessage);
+        }
+
+        logger.info('Successfully deleted Oracle clone', {
+            accountId,
+            databaseHostId,
+            databaseInstanceId,
+            cloneDatabaseName,
+            deletedVolumes,
+            cleanedPaths: parsed?.cleanedPaths
         });
     } catch (error: unknown) {
         const errorMessage = `Failed to delete Oracle clone ${cloneDatabaseName} in host ${databaseHostId}`;
@@ -670,5 +783,6 @@ export {
     handleCloneOptimizationForInstance,
     validateAndExtractClonedVolumeUuids,
     buildVolumeMaps,
-    extractInstancesToOptimize
+    extractInstancesToOptimize,
+    deleteClone
 };
