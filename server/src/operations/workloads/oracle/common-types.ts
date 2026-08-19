@@ -4,15 +4,18 @@ import { OracleDeployment, OracleDeploymentTenacy } from './consts';
 interface OracleInstanceMountpointResponse {
     isCDB?: boolean;
     isASMManaged?: boolean;
+    error?: string;
     mountDetails?: Record<string, MountPointDetails[]>;
     pdbMountDetails?: Record<string, Record<string, MountPointDetails[]>>;
 }
 interface MountPointDetails {
-    isAsmManaged?: boolean;
+    isAsmManaged?: boolean | 'true' | 'false';
     mountIP?: string;
     mountPoint?: string;
     protocol?: string;
     diskName?: string;
+    diskGroup?: string;
+    copiesCount?: number;
 }
 enum OracleSysFileTypes {
     REDO_LOGS = 'REDO_LOGS',
@@ -60,10 +63,15 @@ interface OracleMappedOntapVolumeRecord {
 
 type OracleMappedOntapVolumeRecordType = OracleMappedOntapVolumeRecord;
 
+interface OracleLunRecord {
+    name: string;
+    serial: string;
+}
+
 interface OracleMappedOntapVolumesResponse {
     isASMManaged?: boolean;
     protocol?: string;
-    lunRecords?: any[];
+    lunRecords?: OracleLunRecord[];
     volumeMappings?: [Record<string, OracleMappedOntapVolumeRecord>];
 }
 
@@ -139,6 +147,7 @@ export {
     OracleSysFileTypes,
     OracleMappedOntapVolumesResponse,
     OracleMappedOntapVolumeRecord,
+    OracleLunRecord,
     OracleVolumeRecord,
     OracleDeploymentType,
     OracleDeploymentTenacyType,

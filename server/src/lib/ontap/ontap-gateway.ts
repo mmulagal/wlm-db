@@ -14,6 +14,7 @@ const logger = getLogger();
 const ONTAP_JOB_POLL_DEFAULT_TIMEOUT_MS = 900_000;
 const ONTAP_JOB_POLL_DEFAULT_INTERVAL_MS = 10_000;
 const ONTAP_FILTER_BATCH_SIZE = 25;
+const NFS_MANAGEMENT_INTERFACE_NAME = 'nfs_smb_management_1';
 
 interface OntapGatewayTarget {
     accountId: string;
@@ -130,6 +131,37 @@ interface OntapVolumeRecord {
 
 interface OntapCifsShareRecord {
     volume?: { uuid: string; name?: string };
+}
+
+/** Shared `space.*` shape for ONTAP volume sizing (used by both MSSQL and Oracle storage assessments). */
+interface OntapVolumeSpace {
+    size?: number;
+    used?: number;
+    physical_used?: number;
+    performance_tier_footprint?: number;
+    capacity_tier_footprint?: number;
+    snapshot?: { used?: number };
+}
+
+interface OntapSvmRecord {
+    uuid?: string;
+    name?: string;
+    ip_interfaces?: Array<{ name?: string; ip?: { address?: string } }>;
+}
+
+interface ResolvedSvm {
+    name?: string;
+    uuid?: string;
+}
+
+interface OntapVolumeByJunctionRecord {
+    uuid?: string;
+    name?: string;
+}
+
+interface ResolvedVolume {
+    uuid?: string;
+    name?: string;
 }
 
 /**
@@ -733,6 +765,56 @@ async function getCifsShareVolumes(target: OntapGatewayTarget, shareNames: strin
     });
 }
 
+function junctionKey(svmName: string, junctionPath: string): string {
+    return `${svmName}::${junctionPath}`;
+}
+
+async function resolveVolumesByJunction(
+    base: ProxyOperationBaseOpts,
+    pairs: Array<{ svmName: string; junctionPath: string }>
+): Promise<Map<string, ResolvedVolume>> {
+    logger.info('Resolving volumes by junction', { pairs });
+    if (pairs.length === 0) {
+        return new Map();
+    }
+
+    const resolved = await Promise.all(
+        pairs.map(
+            throat(3, async ({ svmName, junctionPath }) => {
+                const records = await collectAllOntapRecords<OntapVolumeByJunctionRecord>(
+                    base,
+                    'api/storage/volumes',
+                    { 'svm.name': svmName, 'nas.path': junctionPath },
+                    1
+                );
+                return { key: junctionKey(svmName, junctionPath), volume: records[0] };
+            })
+        )
+    );
+    return new Map(resolved.map(({ key, volume }) => [key, { uuid: volume?.uuid, name: volume?.name }]));
+}
+
+async function resolveSvmsByIp(base: ProxyOperationBaseOpts, ips: string[]): Promise<Map<string, ResolvedSvm>> {
+    logger.debug('Resolving SVMs by IP', { ips: ips?.length });
+    if (ips.length === 0) {
+        return new Map();
+    }
+
+    const svmRecords = await collectAllOntapRecords<OntapSvmRecord>(base, 'api/svm/svms', { fields: 'ip_interfaces' });
+    const lookup = new Map<string, ResolvedSvm>();
+    ips.forEach(ip => {
+        const svm = svmRecords.find(({ ip_interfaces: ipInterfaces }) =>
+            ipInterfaces?.some(
+                ({ name, ip: ipInfo }) => name === NFS_MANAGEMENT_INTERFACE_NAME && ipInfo?.address === ip
+            )
+        );
+        if (svm) {
+            lookup.set(ip, { name: svm.name, uuid: svm.uuid });
+        }
+    });
+    return lookup;
+}
+
 /**
  * Batch-add initiators to a SAN igroup. ONTAP returns 409 Conflict when an initiator is already present.
  */
@@ -759,6 +841,9 @@ export {
     getLunBySerialNumber,
     getVolumeByName,
     getCifsShareVolumes,
+    resolveSvmsByIp,
+    junctionKey,
+    resolveVolumesByJunction,
     addInitiatorsToIgroup,
     buildOntapProxyBase,
     extractErrorMessage,
@@ -781,5 +866,8 @@ export {
     type OntapLunRecord,
     type OntapVolumeRecord,
     type OntapCifsShareRecord,
+    type OntapVolumeSpace,
+    type ResolvedSvm,
+    type ResolvedVolume,
     type ProxyOperationBaseOpts
 };

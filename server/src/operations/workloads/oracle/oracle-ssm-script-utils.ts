@@ -1,20 +1,6 @@
 import { CLOUDFLARE_DNS_IP } from '../../../utils/consts';
 import { LINUX_LOG_DIRECTORY } from '../../continuous-optimization/oracle/consts';
 
-type ontapRequestParams = {
-    fsxId?: string;
-    region: string;
-    apiEndpoint: string;
-    apiQueryFields?: string;
-    apiQueryFilter?: string;
-    apiBody?: string;
-    instances?: {
-        name: string;
-        fsxId: string;
-        volumes?: string[];
-    }[];
-};
-
 // Bash decompression script template - decompresses gzipped base64 payload and executes
 const BASH_DECOMPRESS_TEMPLATE = (compressedBase64: string) => `#!/bin/bash
 d='${compressedBase64}'
@@ -2564,65 +2550,6 @@ sudo mkdir -p "${LINUX_LOG_DIRECTORY}"
 ${changeOwner ? `sudo chown ${user}:${group} "${LINUX_LOG_DIRECTORY}"` : ''}
 `;
 
-const oracleStorageInfoFromOntapPythonTemplate = (params: ontapRequestParams) => `
-
-${getFsxCredentials}
-${ontapRestApiScript}
-region = '${params.region}'
-apiPath = '${params.apiEndpoint}'
-query = '${params.apiQueryFields}'
-instances = json.loads('${JSON.stringify(params.instances)}')
-visited = {}
-final_results = {}
-
-for instance in instances:
-    fsx_id = instance.get("fsxId")
-    volumes = instance.get("volumes", [])
-    name = instance.get("name")
-    if not fsx_id or not name:
-        continue
-
-    # Build query_filter as uuid=<comma separated volumes>
-    query_filter = ""
-    if volumes and isinstance(volumes, list) and len(volumes) > 0:
-        joined_uuids = ",".join(volumes)
-        query_filter = f"uuid={joined_uuids}"
-
-    # Compose full query string
-    full_query = query
-    if query_filter:
-        if full_query:
-            full_query = f"{query_filter}&{full_query}"
-        else:
-            full_query = query_filter
-
-    if fsx_id in visited:
-        result = visited[fsx_id]
-    else:
-        # Fetch credentials and make ONTAP API request
-        creds, error = getFsxCredentials(fsx_id)
-        if error:
-            result = {"error": error}
-        else:
-            url = f"{apiPath}?{full_query}" if full_query else apiPath
-            response, error = ontapRestApiRequest(fsx_id, region, 'GET', url)
-            if error:
-                result = {"error": error}
-            else:
-                result = response
-        visited[fsx_id] = result
-
-    final_results[name] = result
-
-print(json.dumps(final_results))
-`;
-
-const oracleStorageInfoFromOntap = (params: ontapRequestParams) => `
-#!/bin/bash
-${logFileCheck()}
-${pythonScriptInit(oracleStorageInfoFromOntapPythonTemplate(params), 'wlmdb-oracle-storage-information')}
-`;
-
 export {
     getFsxCredentials,
     getOracleProtectionData,
@@ -2654,7 +2581,6 @@ export {
     ontapEfficiencyRecoveryScript,
     logFileCheck,
     getOracleHomePath,
-    oracleStorageInfoFromOntap,
     isASMManagedCheck,
     isStorageASMmanaged,
     parseSqlplusOutput,

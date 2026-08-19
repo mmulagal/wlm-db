@@ -1,5 +1,6 @@
 import createError from 'http-errors';
 import { compact, isEmpty, omit, uniq } from 'lodash-es';
+import throat from 'throat';
 import { ConnectionStatus } from '@aws-sdk/client-ssm';
 import {
     DatabaseHostsQueryFields,
@@ -24,6 +25,7 @@ import {
     SSM_RUN_SHELL_SCRIPT_DOC_VERSION
 } from './consts';
 import {
+    coerceBooleanFromLooseTrue,
     parseMultipleCommandResponse,
     sqlResponseParsing,
     IS_DEMO_FLOW,
@@ -45,18 +47,23 @@ import {
     GET_ORACLE_SERVER_DETAILS,
     getOracleInstanceData,
     getOracleProtectionData,
-    ORACLE_PERFORMANCE_METRICS,
-    oracleStorageInfoFromOntap
+    ORACLE_PERFORMANCE_METRICS
 } from './oracle-ssm-script-utils';
 import { getDatabaseInstanceTopology, parseMappedVolumeData } from '../../../utils/sql-utils';
 import { isFsxnAwsBackupEnabled } from '../../aws/fsx-operations';
 import {
     fetchOracleDatabasesCount,
     fetchOracleDatabasesDetails,
-    getMappedOntapDataVolumeForInstance,
+    getOracleMountDetailsForInstance,
     getStorageDetailsForRegisteredInstances,
     GET_DATAGUARD_DETAILS_FOR_ALL_SIDS
 } from './oracle-discover-scripts';
+import { resolveOracleMappedOntapVolumes } from './oracle-ontap-merge';
+import {
+    buildOntapProxyBase,
+    collectOntapRecordsBatched,
+    type OntapVolumeSpace
+} from '../../../lib/ontap/ontap-gateway';
 import { getSqlInstanceUtilizationAndPerformance } from '../../aws/cloud-watch-operations';
 import { getInstanceDetailsByPrivateIp } from '../../aws/ec2-operations';
 import { listResources } from '../../../lib/database/db';
@@ -65,7 +72,7 @@ import {
     listDatabaseInstanceConfigData
 } from '../../../lib/database/database-instance-config';
 import { AssessmentCategories } from '../../../utils/continous-optimization-consts';
-import { MountPointDetails, OracleInstanceMountpointResponse } from './common-types';
+import { MountPointDetails, OracleInstanceMountpointResponse, OracleMappedOntapVolumesResponse } from './common-types';
 import { getPaginatedDatabaseInstances } from '../../database/database-operations';
 import { getNodeTopology, getStorageData } from '../../database-hosts-util';
 import { PDB_DETAILS } from '../../../utils/demo-utils/demoMockdata';
@@ -82,6 +89,11 @@ type ontapStorageSummary = {
     capacityPoolUsed: number;
     snapshotUsed: number;
 };
+
+interface OntapVolumeSpaceRecord {
+    uuid?: string;
+    space?: OntapVolumeSpace;
+}
 
 type OracleNodeDetails = {
     prettyName: string;
@@ -723,7 +735,7 @@ async function getOracleDatabaseInstancesSummary(
 
     // Run getOracleStorageInfoFromOntap concurrently with databaseInstances.map
     const [storageInfoFromOntap, hostInfo, dataguardInfo, results] = await Promise.all([
-        getStorage ? getOracleStorageInfoFromOntap(activeNodeInstanceId, databaseInstances) : Promise.resolve(),
+        getStorage ? getOracleStorageInfoFromOntap(databaseInstances) : Promise.resolve(),
         getOracleHostSummary
             ? getOracleInstanceDetails(accountId, credentialsId, region, activeNodeInstanceId, {
                   fetchServerDetails: true,
@@ -784,7 +796,9 @@ async function getOracleDatabaseInstancesSummary(
                         isCDB = storageDetails.isCDB;
                         pdbNames = storageDetails.pdbNames;
                         isASMManaged =
-                            storageDetails?.mountPointDetails?.some((m: MountPointDetails) => m.isAsmManaged) ?? false;
+                            storageDetails?.mountPointDetails?.some((m: MountPointDetails) =>
+                                coerceBooleanFromLooseTrue(m.isAsmManaged)
+                            ) ?? false;
                     }
                 }
 
@@ -1194,37 +1208,37 @@ async function getOracleDatabaseMappedVolumes(
             Array.from(fsxnToDatabaseInstancesMap.entries()).map(async ([fsxId, mappedDatabaseInstances]) => {
                 try {
                     const oracleSids = mappedDatabaseInstances.map(di => di.database_instance_id);
-                    const mappedVolCommand = getMappedOntapDataVolumeForInstance(
-                        node1InstanceId,
-                        oracleSids,
-                        fsxId,
-                        region
-                    );
+                    const mountDetailsCommand = getOracleMountDetailsForInstance(node1InstanceId, oracleSids);
                     const ssmResponse = await callSsmExecution({
                         credentialsId,
                         region,
-                        commands: [mappedVolCommand],
+                        commands: [mountDetailsCommand],
                         ec2InstanceId: node1InstanceId,
-                        comment: 'Get mapped volume details for Oracle db',
+                        comment: 'Get mount details for Oracle db',
                         accountId,
                         executionTimeout: '300', // the more the # of pdbs in the setup the longer it takes to fetch the details
                         shouldReadFromCloudWatchLogs: true,
                         documentName: SSM_RUN_SHELL_SCRIPT_DOC,
                         documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
                     });
-                    let parsedMappedVolRes: OracleInstanceMountpointResponse = sqlResponseParsing(ssmResponse);
-                    const instanceToFsxnMap = new Map<string, Map<string, OracleInstanceMountpointResponse>>();
+                    const mountPointDataBySid: Record<string, OracleInstanceMountpointResponse> =
+                        sqlResponseParsing(ssmResponse);
+                    let parsedMappedVolRes: OracleMappedOntapVolumesResponse = await resolveOracleMappedOntapVolumes(
+                        { accountId, credentialsId, region, fsxId },
+                        mountPointDataBySid
+                    );
+                    const instanceToFsxnMap = new Map<string, Map<string, OracleMappedOntapVolumesResponse>>();
                     mappedDatabaseInstances.forEach(instance => {
                         const instanceId = instance.database_instance_id;
                         if (!instanceToFsxnMap.has(instanceId)) {
-                            instanceToFsxnMap.set(instanceId, new Map<string, OracleInstanceMountpointResponse>());
+                            instanceToFsxnMap.set(instanceId, new Map<string, OracleMappedOntapVolumesResponse>());
                         }
                         if (IS_DEMO_FLOW) {
                             parsedMappedVolRes = {
                                 ...parsedMappedVolRes,
                                 protocol: instance.storage_protocol,
                                 isASMManaged: instance.storage_protocol === STORAGE_PROTOCOLS.ISCSI
-                            } as OracleInstanceMountpointResponse;
+                            } as OracleMappedOntapVolumesResponse;
                         }
                         instanceToFsxnMap.get(instanceId)!.set(fsxId, parsedMappedVolRes);
                     });
@@ -1265,9 +1279,8 @@ async function getOracleDatabaseMappedVolumes(
     }
 }
 
-async function getOracleStorageInfoFromOntap(activeNodeInstanceId: string, instanceDetails: DatabaseInstance[]) {
-    const ssmComment = 'Get Oracle storage data from ONTAP';
-    logger.info(ssmComment, ':', { activeNodeInstanceId, instancesLength: instanceDetails.length });
+async function getOracleStorageInfoFromOntap(instanceDetails: DatabaseInstance[]) {
+    logger.info('Get Oracle storage data from ONTAP', { instancesLength: instanceDetails.length });
 
     try {
         const [
@@ -1278,6 +1291,14 @@ async function getOracleStorageInfoFromOntap(activeNodeInstanceId: string, insta
                 resource: { resource_id: resourceId }
             }
         ] = instanceDetails;
+        if (!accountId) {
+            logger.warn('Missing account id while fetching Oracle storage data from ONTAP', {
+                credentialsId,
+                region,
+                resourceId
+            });
+            return;
+        }
 
         const configList = (await listDatabaseInstanceConfigData({
             accountId,
@@ -1317,45 +1338,58 @@ async function getOracleStorageInfoFromOntap(activeNodeInstanceId: string, insta
             'space.performance_tier_footprint',
             'space.capacity_tier_footprint',
             'space.snapshot.used'
-        ];
-        const command = oracleStorageInfoFromOntap({
-            region,
-            apiEndpoint: 'storage/volumes',
-            apiQueryFields: `fields=${fields.join(',')}`,
-            instances: mappedByInstances
+        ].join(',');
+
+        const volumeUuidsByFsxId = new Map<string, string[]>();
+        mappedByInstances.forEach(({ fsxId, volumes }) => {
+            if (!fsxId || volumes.length === 0) {
+                return;
+            }
+            volumeUuidsByFsxId.set(fsxId, uniq([...(volumeUuidsByFsxId.get(fsxId) ?? []), ...volumes]));
         });
 
-        const response = await callSsmExecution({
-            credentialsId,
-            region,
-            commands: [command],
-            ec2InstanceId: activeNodeInstanceId,
-            comment: ssmComment,
-            accountId,
-            cacheData: true,
-            shouldReadFromCloudWatchLogs: true,
-            documentName: SSM_RUN_SHELL_SCRIPT_DOC,
-            documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-        });
-
-        const parsedResponse = sqlResponseParsing(response);
-        if (!parsedResponse || isEmpty(parsedResponse)) {
-            logger.warn(`No storage data found from ONTAP for Oracle instances: with ${credentialsId}, ${region}`);
-            return;
-        }
+        const spaceByVolumeId = new Map<string, OntapVolumeSpaceRecord>();
+        await Promise.all(
+            Array.from(volumeUuidsByFsxId.entries()).map(
+                throat(3, async ([fsxId, volumeUuids]) => {
+                    try {
+                        const base = buildOntapProxyBase(accountId, fsxId, region);
+                        const records = await collectOntapRecordsBatched<OntapVolumeSpaceRecord>(
+                            base,
+                            'api/storage/volumes',
+                            'uuid',
+                            volumeUuids,
+                            { fields }
+                        );
+                        records.forEach(record => {
+                            if (record.uuid) {
+                                spaceByVolumeId.set(record.uuid, record);
+                            }
+                        });
+                    } catch (error) {
+                        logger.error('Failed fetching ONTAP volume space data for FSx', {
+                            accountId,
+                            fsxId,
+                            region,
+                            resourceId,
+                            error
+                        });
+                    }
+                })
+            )
+        );
 
         const instancesResponse: Record<string, ontapStorageSummary> = {};
-        Object.entries(parsedResponse).forEach(([instanceName, value]) => {
-            const instanceData = value as { records?: any[]; error?: unknown };
-            if (instanceData.error || !Array.isArray(instanceData.records) || instanceData.records.length === 0) {
-                logger.warn('Skipping ONTAP storage data for instance due to missing or errored response', {
-                    instanceName,
-                    hasError: Boolean(instanceData.error)
+        mappedByInstances.forEach(({ name: instanceName, volumes }) => {
+            const records = compact(volumes.map(volumeId => spaceByVolumeId.get(volumeId)));
+            if (records.length === 0) {
+                logger.warn('Skipping ONTAP storage data for instance due to missing volume space data', {
+                    instanceName
                 });
                 return;
             }
-            const storageSummary = instanceData.records.reduce((acc, record) => {
-                const space = record?.space;
+            instancesResponse[instanceName] = records.reduce((acc, record) => {
+                const { space } = record;
                 if (!space) {
                     return acc;
                 }
@@ -1368,16 +1402,15 @@ async function getOracleStorageInfoFromOntap(activeNodeInstanceId: string, insta
                     snapshotUsed: (acc.snapshotUsed || 0) + Number(space.snapshot?.used || 0)
                 };
             }, {} as ontapStorageSummary);
-            instancesResponse[instanceName] = storageSummary;
         });
         if (isEmpty(instancesResponse)) {
             logger.warn('All ONTAP storage entries were skipped due to errors');
             return;
         }
-        logger.debug('SSM response for Oracle storage data from ONTAP', { instancesResponse });
+        logger.debug('Computed Oracle storage data from ONTAP', { instancesResponse });
         return instancesResponse;
     } catch (error) {
-        logger.error('Failed executing SSM script to get storage data from ONTAP', { error });
+        logger.error('Failed fetching Oracle storage data from ONTAP', { error });
     }
 }
 

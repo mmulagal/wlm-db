@@ -3,6 +3,7 @@ import type { database_instances as DatabaseInstances, resource as Resource } fr
 import { PlatformDifference, SavingsOpportunity } from '@aws-sdk/client-compute-optimizer';
 import { GetCommandInvocationCommandOutput } from '@aws-sdk/client-ssm';
 import { OracleDeploymentTenacy } from '../operations/workloads/oracle/consts';
+import type { OntapVolumeSpace } from '../lib/ontap/ontap-gateway';
 
 enum DiscoverySource {
     DISCOVER = 'discover',
@@ -730,16 +731,7 @@ type VolumeSpaceRecord = {
             total_percent: number;
         };
     };
-    space: {
-        size: number;
-        used: number;
-        physical_used?: number;
-        performance_tier_footprint?: number;
-        capacity_tier_footprint?: number;
-        snapshot?: {
-            used?: number;
-        };
-    };
+    space: OntapVolumeSpace & { size: number; used: number };
 };
 
 interface OptimizeParams {
