@@ -53,9 +53,12 @@ export const SnapshotPolicyFixModal = memo(
 
         const handleContinue = useCallback(async () => {
             try {
+                const metaData = {
+                    workload: resources[0]?.metadata?.workload
+                } 
                 await fix(
                     resources.map(resource => resource.id),
-                    {}
+                    metaData
                 );
                 onFixSuccess?.();
             } catch {

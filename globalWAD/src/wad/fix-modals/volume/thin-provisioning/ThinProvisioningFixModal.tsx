@@ -34,9 +34,12 @@ export const ThinProvisioningFixModal = memo(
     ({ recommendationName, resources, close, fix, isFixing, onFixSuccess }: VolumeFixModalProps) => {
         const handleContinue = useCallback(async () => {
             try {
+                const metaData = {
+                    workload: resources[0]?.metadata?.workload
+                } 
                 await fix(
                     resources.map(resource => resource.id),
-                    {}
+                    metaData
                 );
                 onFixSuccess?.();
             } catch {

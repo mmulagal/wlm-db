@@ -48,9 +48,12 @@ export const BlockDeviceSpaceManagementFixModal = memo(
             }
 
             try {
+                const metaData = {
+                    workload: resources[0]?.metadata?.workload
+                } 
                 await fix(
                     resources.map(resource => resource.id),
-                    {}
+                    metaData
                 );
                 onFixSuccess?.();
             } catch {
