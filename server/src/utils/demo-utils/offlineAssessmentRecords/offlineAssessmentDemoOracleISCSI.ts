@@ -445,7 +445,12 @@ export const offlineAssessmentDemoOracleISCSI = {
                                 totalObjects: 2
                             }
                         },
-                        'afd-logical-block-size': {},
+                        'afd-logical-block-size': {
+                            assessment: {
+                                result: '1'
+                            },
+                            error: ''
+                        },
                         'asmlib-logical-block-size': {
                             assessment: {
                                 result: 'Y'

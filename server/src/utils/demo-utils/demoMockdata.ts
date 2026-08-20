@@ -6868,15 +6868,17 @@ const ORACLE_STORAGE_ASSESSMENT_DATA = {
             'asm-external-redundancy': {
                 error: '',
                 assessment: {
-                    violations: [
-                        { diskGroupName: 'DATA', currentRedundancy: 'NORMAL', recommendedRedundancy: 'EXTERNAL' },
-                        { diskGroupName: 'FRA', currentRedundancy: 'HIGH', recommendedRedundancy: 'EXTERNAL' }
-                    ],
+                    violations: ['DATA', 'FRA'],
                     result: 'false',
                     totalObjects: 2
                 }
             },
-            'afd-logical-block-size': {},
+            'afd-logical-block-size': {
+                assessment: {
+                    result: '0'
+                },
+                error: ''
+            },
             'asmlib-logical-block-size': {
                 assessment: {
                     result: 'N'

@@ -106,6 +106,7 @@ interface FsxOntapInventory {
 
 interface FsxOntapQuery {
     fileSystemId: string;
+    fsxName?: string;
     region: string;
     volumeUuids: string[];
     volumeNames: string[];
@@ -498,10 +499,11 @@ async function collectOntapAssessmentData(
         return acc;
     }, {});
     const fsxQueries: FsxOntapQuery[] = Object.values(fsxByFileSystem).map(entries => {
-        const { fileSystemId, region } = entries[0];
+        const { fileSystemId, fsxName, region } = entries[0];
         const volumes = entries.flatMap(({ volumes: vs }) => vs);
         return {
             fileSystemId,
+            fsxName,
             region,
             volumeUuids: [...new Set(volumes.map(v => v.volumeUuid).filter(Boolean))],
             volumeNames: [...new Set(volumes.map(v => v.volumeName).filter(Boolean))],
@@ -519,7 +521,7 @@ async function collectOntapAssessmentData(
                           {
                               actionName: 'Databases well-architected analysis for FSx for ONTAP file system',
                               resourceId: query.fileSystemId,
-                              resourceName: query.fileSystemId
+                              resourceName: query.fsxName ?? query.fileSystemId
                           },
                           () => fetchOntapInventory(accountId, query)
                       )

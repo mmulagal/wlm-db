@@ -130,7 +130,7 @@ const asmOSConfig = ORACLE_GOLDEN_CONFIG.filter(
     e =>
         e.type === 'storage' &&
         e.subType === 'configuration' &&
-        !e.applicableTo &&
+        e.applicableTo === 'asm' &&
         e.resourceType !== ASSESSMENT_RESOURCE_TYPE.VOLUME &&
         e.resourceType !== ASSESSMENT_RESOURCE_TYPE.LUN
 );
@@ -326,6 +326,12 @@ function getAsmOSConfigDrift(
                                     violationDetails
                                 )
                             );
+                        } else {
+                            driftData.push({
+                                ...config,
+                                status: AssessmentStatus.NOT_APPLICABLE,
+                                errorMessage: 'AFD logical block size assessment data is unavailable for this instance.'
+                            });
                         }
                         break;
                     }
@@ -362,6 +368,13 @@ function getAsmOSConfigDrift(
                                     violationDetails
                                 )
                             );
+                        } else {
+                            driftData.push({
+                                ...config,
+                                status: AssessmentStatus.NOT_APPLICABLE,
+                                errorMessage:
+                                    'ASMLib logical block size assessment data is unavailable for this instance.'
+                            });
                         }
                         break;
                     }

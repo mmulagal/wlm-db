@@ -2848,7 +2848,12 @@
                         "totalObjects": 2
                     }
                 },
-                "afd-logical-block-size": {},
+                "afd-logical-block-size": {
+                    "assessment": {
+                        "result": "0"
+                    },
+                    "error": ""
+                },
                 "asmlib-logical-block-size": {
                     "assessment": {
                         "result": "Y"

@@ -51,8 +51,8 @@ function calculateLicenseDrift(
             status: matchingLicenseAssessmentStatus,
             recommended: AssessmentStatus.OPTIMIZED,
             sqlServerInstances,
-            totalObjectsAssessed: sqlServerInstances?.length ?? 1,
-            totalObjectsInViolation: isViolation ? sqlServerInstances?.length ?? 0 : 0,
+            totalObjectsAssessed: 1,
+            totalObjectsInViolation: isViolation ? 1 : 0,
             objectsInViolation: isViolation ? sqlServerInstances?.map(i => i.sqlServerInstance ?? '') ?? [] : []
         };
     } catch (error: any) {
