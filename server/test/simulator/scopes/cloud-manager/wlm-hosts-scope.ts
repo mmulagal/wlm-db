@@ -8,8 +8,12 @@ nock(`${WORKLOAD_FACTORY_ENDPOINT}`, {
     .persist(true)
     .post('/wlm-hosts/graphql')
     .reply((_uri, requestBody) => {
-        const { query = '', variables } = requestBody as { query?: string; variables?: { region?: string } };
-        const region = variables?.region ?? '';
+        const { query = '', variables } = requestBody as {
+            query?: string;
+            variables?: { region?: string; scopedWhere?: { field: string; value: string }[] };
+        };
+        const region =
+            variables?.region ?? variables?.scopedWhere?.find(({ field }) => field === 'region')?.value ?? '';
         const data = query.includes('query Ec2DatabaseInstances')
             ? buildEc2DatabaseInstancesForRegion(region)
             : buildEc2StorageGraphDataForRegion(region);

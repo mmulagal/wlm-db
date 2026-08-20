@@ -42,6 +42,11 @@ interface GraphqlFsxVolume {
     workloads?: WorkloadEntry[];
 }
 
+interface GraphqlFsxFileSystem {
+    fileSystemId: string;
+    tags?: { key: string; value: string }[];
+}
+
 interface GraphqlOntapVolume {
     uuid: string;
     workloads?: WorkloadEntry[];
@@ -58,6 +63,7 @@ interface GraphqlOntapLun {
 interface Ec2StorageGraphData {
     relationships?: GraphqlRelationship[];
     ec2Instances?: GraphqlEc2Instance[];
+    fsxFileSystems?: GraphqlFsxFileSystem[];
     fsxVolumes?: GraphqlFsxVolume[];
     ontapVolumes?: GraphqlOntapVolume[];
     ontapLuns?: GraphqlOntapLun[];
@@ -82,6 +88,7 @@ interface FsxVolume {
 interface FsxItem {
     id: string;
     fileSystemId: string;
+    fsxName?: string;
     region: string;
     volumes: FsxVolume[];
 }
@@ -186,7 +193,8 @@ async function withTaggingServiceCache<T>(
     region: string,
     resource: string,
     query: string,
-    cacheParams?: TaggingServiceCacheParams
+    cacheParams?: TaggingServiceCacheParams,
+    queryVariables?: Record<string, unknown>
 ): Promise<T> {
     logger.info('Looking up tagging service cache', { accountId, credentialsId, region, resource, cacheParams });
 
@@ -213,7 +221,7 @@ async function withTaggingServiceCache<T>(
         }
     }
 
-    const response = await callWlmHostsGraphql<T>(accountId, credentialsId, region, query);
+    const response = await callWlmHostsGraphql<T>(accountId, credentialsId, region, query, queryVariables);
 
     if (canUseRedis) {
         try {
@@ -265,7 +273,7 @@ function attachStorage(
     draft.storageWorkloads.push(...workloads);
 }
 
-function toFsxItems(volumes: Map<string, VolumeDraft>): FsxItem[] {
+function toFsxItems(volumes: Map<string, VolumeDraft>, fsxNameById: Map<string, string | undefined>): FsxItem[] {
     const fsxByFileSystem = new Map<string, FsxItem>();
     for (const {
         fsxVolumeId,
@@ -276,7 +284,14 @@ function toFsxItems(volumes: Map<string, VolumeDraft>): FsxItem[] {
         attachedDirectly,
         luns
     } of volumes.values()) {
-        const fsx = fsxByFileSystem.get(fileSystemId) ?? { id: fileSystemId, fileSystemId, region, volumes: [] };
+        const fsxName = fsxNameById.get(fileSystemId);
+        const fsx = fsxByFileSystem.get(fileSystemId) ?? {
+            id: fileSystemId,
+            fileSystemId,
+            ...(fsxName && { fsxName }),
+            region,
+            volumes: []
+        };
         fsxByFileSystem.set(fileSystemId, fsx);
         fsx.volumes.push({
             id: fsxVolumeId,
@@ -312,9 +327,26 @@ async function buildEc2FsxRelationship(
 ): Promise<Ec2FsxRelationship> {
     logger.info('Building EC2-FSx relationship using tagging service apis ', { accountId, region, cacheParams });
 
+    const queryVariables = {
+        accountWhere: [{ field: 'accountId', op: 'EQ', value: accountId }],
+        scopedWhere: [
+            { field: 'accountId', op: 'EQ', value: accountId },
+            { field: 'credential', op: 'EQ', value: credentialsId },
+            { field: 'region', op: 'EQ', value: region }
+        ],
+        workloadWhere: [
+            {
+                field: 'workload',
+                op: 'IN',
+                value: ['Oracle Database', 'Microsoft SQL Server']
+            }
+        ],
+        first: 1000
+    };
     const {
         relationships = [],
         ec2Instances = [],
+        fsxFileSystems = [],
         fsxVolumes = [],
         ontapVolumes = [],
         ontapLuns = []
@@ -324,10 +356,17 @@ async function buildEc2FsxRelationship(
         region,
         'ec2-storage',
         EC2_STORAGE_ORACLE_MSSQL_QUERY,
-        cacheParams
+        cacheParams,
+        queryVariables
     );
 
     const ec2ById = new Map(ec2Instances.map(ec2 => [ec2.instanceId, ec2]));
+    const fsxNameById = new Map(
+        fsxFileSystems.map(({ fileSystemId, tags = [] }) => [
+            fileSystemId,
+            tags.find(({ key }) => key === 'Name')?.value
+        ])
+    );
     const fsxByOntapUuid = new Map(fsxVolumes.map(volume => [volume.ontapUuid, volume]));
     const fsxByFileSystemAndName = new Map(
         fsxVolumes.map(volume => [`${volume.fileSystemId}::${volume.name}`, volume])
@@ -359,7 +398,7 @@ async function buildEc2FsxRelationship(
     for (const [instanceId, { volumes, storageWorkloads }] of draftByEc2) {
         const { region: ec2Region, vpcId, platform, workloads: ec2Workloads } = ec2ById.get(instanceId)!;
         const workloads = dedupeDatabaseWorkloads([...(ec2Workloads ?? []), ...storageWorkloads]);
-        const fsxs = toFsxItems(volumes);
+        const fsxs = toFsxItems(volumes, fsxNameById);
         if (workloads.length > 0 && fsxs.length > 0) {
             ec2s.push({
                 instanceId,

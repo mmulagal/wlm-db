@@ -11,14 +11,29 @@ describe('Tagging service lib', () => {
 
     describe('callWlmHostsGraphql', () => {
         it('Returns the graphql data envelope for the EC2-storage query', async () => {
-            const response = await callWlmHostsGraphql<{ relationships?: unknown[]; ec2Instances?: unknown[] }>(
-                ACCOUNT_ID,
-                credentialsId,
-                region,
-                EC2_STORAGE_ORACLE_MSSQL_QUERY
-            );
+            const response = await callWlmHostsGraphql<{
+                relationships?: unknown[];
+                ec2Instances?: unknown[];
+                fsxFileSystems?: unknown[];
+            }>(ACCOUNT_ID, credentialsId, region, EC2_STORAGE_ORACLE_MSSQL_QUERY, {
+                accountWhere: [{ field: 'accountId', op: 'EQ', value: ACCOUNT_ID }],
+                scopedWhere: [
+                    { field: 'accountId', op: 'EQ', value: ACCOUNT_ID },
+                    { field: 'credential', op: 'EQ', value: credentialsId },
+                    { field: 'region', op: 'EQ', value: region }
+                ],
+                workloadWhere: [
+                    {
+                        field: 'workload',
+                        op: 'IN',
+                        value: ['Oracle Database', 'Microsoft SQL Server']
+                    }
+                ],
+                first: 1000
+            });
             expect(response.relationships).toBeDefined();
             expect(response.ec2Instances).toBeDefined();
+            expect(response.fsxFileSystems).toBeDefined();
         });
 
         it('Returns the graphql data envelope for the EC2 database instances query', async () => {

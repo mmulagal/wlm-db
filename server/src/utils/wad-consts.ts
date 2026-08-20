@@ -42,6 +42,7 @@ interface ParentResourceWithScopeForFix {
 // ─── Scan / fix result records ────────────────────────────────────────────────
 
 interface WadResourceComponent {
+    id?: string;
     parameter: string;
     current: string;
     recommended: string;
@@ -113,8 +114,10 @@ interface WadScanContext {
     credentialsId: string;
     region: string;
     filesystemId: string;
+    fsxName?: string;
     workload: string;
     svmName?: string;
+    ontapUuidToFsxVolumeId?: Map<string, string>;
 }
 
 interface ScanRequestMessage {

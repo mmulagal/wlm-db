@@ -64,6 +64,7 @@ describe('collectOntapAssessmentData', () => {
                     {
                         id: 'fs-1',
                         fileSystemId: 'fs-1',
+                        fsxName: 'SQL storage',
                         region: 'us-east-1',
                         volumes: [
                             {

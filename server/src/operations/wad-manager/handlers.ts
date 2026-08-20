@@ -2,6 +2,7 @@ import throat from 'throat';
 import getLogger from '../../utils/logger';
 import {
     FixRequestMessage,
+    FixResourceResult,
     ScanRequestMessage,
     ScanTrigger,
     TaskStatus,
@@ -25,8 +26,10 @@ import { StorageAssessment as OracleStorageAssessment } from '../continuous-opti
 import { getMssqlStorageResourceScan } from '../continuous-optimization/mssql/assessment-operations';
 import { getOracleStorageResourceScan } from '../continuous-optimization/oracle/assessment-operations';
 import { applyOntapStorageFix } from '../continuous-optimization/ontap-storage-fix-operations';
+import { getFsxVolumeDetails } from '../aws/fsx-operations';
 
 const logger = getLogger();
+const FSX_VOLUME_ID_PREFIX = 'fsvol-';
 
 /**
  * WAD storage note: the downstream `setResult` call is a plain Redis SET EX, so sending two
@@ -61,6 +64,37 @@ function mergeConfigurations(configs: WadConfigurationEntry[]): WadConfiguration
     }
 
     return [...merged.values()].map(({ entry }) => entry);
+}
+
+async function resolveFixResourceIds(
+    accountId: string,
+    credentialsId: string,
+    region: string,
+    fileSystemId: string,
+    resourceIds: string[],
+    isSimulated?: boolean
+) {
+    const fsxVolumeIds = isSimulated ? [] : resourceIds.filter(id => id.startsWith(FSX_VOLUME_ID_PREFIX));
+    const volumes =
+        fsxVolumeIds.length > 0
+            ? await getFsxVolumeDetails(credentialsId, region, fileSystemId, fsxVolumeIds, accountId, {
+                  useCache: false
+              })
+            : [];
+    const ontapUuidByFsxVolumeId = new Map(
+        volumes.flatMap(({ VolumeId, OntapConfiguration: { UUID } = {} }) =>
+            VolumeId && UUID ? [[VolumeId, UUID] as const] : []
+        )
+    );
+
+    const unresolvedResourceIds = fsxVolumeIds.filter(id => !ontapUuidByFsxVolumeId.has(id));
+    const resourceIdByOntapId = new Map(
+        resourceIds
+            .filter(id => !unresolvedResourceIds.includes(id))
+            .map(id => [ontapUuidByFsxVolumeId.get(id) ?? id, id] as const)
+    );
+
+    return { resourceIdByOntapId, unresolvedResourceIds };
 }
 
 type WorkloadScanFn = (
@@ -168,11 +202,19 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                 throat(3, async () => {
                     const relationship = await buildEc2FsxRelationship(accountId, credentialsId, region);
                     const storageAssessments = await collectOntapAssessmentData(accountId, relationship, scanTaskId);
+                    const ontapUuidToFsxVolumeId = new Map(
+                        relationship.ec2s.flatMap(({ fsxs }) =>
+                            fsxs.flatMap(({ volumes }) =>
+                                volumes.map(({ volumeUuid, fsxVolumeId }) => [volumeUuid, fsxVolumeId] as const)
+                            )
+                        )
+                    );
                     const pairConfigs: WadConfigurationEntry[] = [];
 
                     for (const {
                         workloadType,
                         fileSystemId,
+                        fsxName,
                         storageAssessment,
                         headroomData,
                         snapcenterData
@@ -186,7 +228,9 @@ async function handleScanRequest(req: ScanRequestMessage): Promise<void> {
                                     credentialsId,
                                     region,
                                     filesystemId: fileSystemId,
-                                    workload: workloadType
+                                    fsxName,
+                                    workload: workloadType,
+                                    ontapUuidToFsxVolumeId
                                 },
                                 storageAssessment,
                                 headroomData,
@@ -318,18 +362,50 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
     let status = TrackerTaskStatus.SUCCESS;
     let errorMessage = '';
     try {
-        const resourceResults = await applyOntapStorageFix({
+        const credentialsId = parentResource.credentialsIds[0];
+        const { resourceIdByOntapId, unresolvedResourceIds } = await resolveFixResourceIds(
             accountId,
-            credentialsId: parentResource.credentialsIds[0],
-            fsxId: parentResource.id,
-            region: parentResource.region,
-            svmName: (metadata?.svmName as string | undefined) ?? '',
-            configurationId: configurationId.replace(`${WAD_SERVICE_ID}-`, ''),
+            credentialsId,
+            parentResource.region,
+            parentResource.id,
             resourceIds,
-            value: metadata?.value as string | undefined,
-            workload: metadata?.workload as string,
             isSimulated
-        });
+        );
+
+        if (unresolvedResourceIds.length > 0) {
+            logger.error('WAD: skipping fix for FSx volumes without an ONTAP uuid', {
+                taskId,
+                configurationId,
+                unresolvedResourceIds
+            });
+        }
+
+        const ontapResourceResults =
+            resourceIdByOntapId.size > 0
+                ? await applyOntapStorageFix({
+                      accountId,
+                      credentialsId,
+                      fsxId: parentResource.id,
+                      region: parentResource.region,
+                      svmName: (metadata?.svmName as string | undefined) ?? '',
+                      configurationId: configurationId.replace(`${WAD_SERVICE_ID}-`, ''),
+                      resourceIds: [...resourceIdByOntapId.keys()],
+                      value: metadata?.value as string | undefined,
+                      workload: metadata?.workload as string,
+                      isSimulated
+                  })
+                : [];
+        const resourceResults: FixResourceResult[] = [
+            ...ontapResourceResults.map(({ resourceId, ...result }) => ({
+                ...result,
+                resourceId: resourceIdByOntapId.get(resourceId) ?? resourceId
+            })),
+            ...unresolvedResourceIds.map(resourceId => ({
+                resourceId,
+                success: false,
+                failureReason: 'Unable to resolve ONTAP uuid for FSx volume'
+            }))
+        ];
 
         publishFixResult({ ...baseResult, resourceResults, reportedAt: Date.now() });
 

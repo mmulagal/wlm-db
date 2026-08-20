@@ -276,6 +276,7 @@ describe('handlers — tracker wiring', () => {
                     {
                         instanceId: 'i-success',
                         fileSystemId: 'fs-success',
+                        fsxName: 'Successful FSx',
                         workloadType: 'mssql',
                         storageAssessment: {} as never
                     }
@@ -284,6 +285,7 @@ describe('handlers — tracker wiring', () => {
                     {
                         instanceId: 'i-failure',
                         fileSystemId: 'fs-failure',
+                        fsxName: 'Failed FSx',
                         workloadType: 'mssql',
                         storageAssessment: {} as never
                     }
@@ -303,7 +305,7 @@ describe('handlers — tracker wiring', () => {
                             configurationId: 'wlmdb-storage-assessment',
                             parentResource: {
                                 id: 'fs-success',
-                                name: 'fs-success',
+                                name: context.fsxName ?? context.filesystemId,
                                 type: 'fsx',
                                 accountId: context.accountId,
                                 region: context.region,

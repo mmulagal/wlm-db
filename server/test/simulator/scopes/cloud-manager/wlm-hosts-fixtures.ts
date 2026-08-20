@@ -223,7 +223,14 @@ function buildEc2StorageGraphDataForRegion(region: string) {
         storageType: 'ontap_luns'
     }));
 
-    return { relationships, ec2Instances, fsxVolumes, ontapVolumes, ontapLuns };
+    const fsxFileSystems = [
+        {
+            fileSystemId: FILE_SYSTEM_ID,
+            tags: [{ key: 'Name', value: 'WLMDB-Simulator-CostExplorer' }]
+        }
+    ];
+
+    return { relationships, ec2Instances, fsxFileSystems, fsxVolumes, ontapVolumes, ontapLuns };
 }
 
 function buildEc2DatabaseInstancesForRegion(region: string) {

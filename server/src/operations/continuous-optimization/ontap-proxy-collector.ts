@@ -115,6 +115,7 @@ interface FsxOntapQuery {
 interface FsxStorageCollectionResult {
     instanceId: string;
     fileSystemId: string;
+    fsxName?: string;
     workloadType: string;
     storageAssessment: MssqlStorageAssessment | OracleStorageAssessment;
     headroomData?: AggregateHeadroomData;
@@ -529,12 +530,13 @@ async function collectOntapAssessmentData(
     const inventoryByFsx = Object.fromEntries(inventoryList.map(inv => [inv.fileSystemId, inv]));
 
     const results: FsxStorageCollectionResult[] = relationship.ec2s.flatMap(ec2 =>
-        ec2.fsxs.flatMap(({ fileSystemId }) => {
+        ec2.fsxs.flatMap(({ fileSystemId, fsxName }) => {
             const inventory = inventoryByFsx[fileSystemId];
 
             return ec2.workloadTypes.map(workloadType => ({
                 instanceId: ec2.instanceId,
                 fileSystemId,
+                fsxName,
                 workloadType,
                 storageAssessment:
                     workloadType === 'mssql'

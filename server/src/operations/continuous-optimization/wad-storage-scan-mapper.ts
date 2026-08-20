@@ -1,5 +1,5 @@
 import { AssessmentErrorItemType } from '../../routes/types/continuous-optimization.types';
-import { AssessmentStatus } from '../../utils/continous-optimization-consts';
+import { ASSESSMENT_RESOURCE_TYPE, AssessmentStatus } from '../../utils/continous-optimization-consts';
 import {
     DriftAssessmentItem,
     ResourceOptimizationStatus,
@@ -13,13 +13,30 @@ import getLogger from '../../utils/logger';
 
 const logger = getLogger();
 
+const COMPONENT_RESOURCE_TYPES = new Set([
+    ASSESSMENT_RESOURCE_TYPE.VOLUME,
+    ASSESSMENT_RESOURCE_TYPE.LUN,
+    ASSESSMENT_RESOURCE_TYPE.VOLUME_OR_LUN
+]);
+
 function toConfigurationEntry(
     ctx: WadScanContext,
     driftAssessmentItem: DriftAssessmentItem,
     prefixedConfigurationId: string
 ): WadConfigurationEntry {
     const { resourceType, assessmentDetails } = driftAssessmentItem;
-    const { taskId, requestId, accountId, serviceId, filesystemId, credentialsId, region, workload } = ctx;
+    const {
+        taskId,
+        requestId,
+        accountId,
+        serviceId,
+        filesystemId,
+        fsxName,
+        credentialsId,
+        region,
+        workload,
+        ontapUuidToFsxVolumeId
+    } = ctx;
     logger.info('Mapping drift to WAD configuration entry', {
         accountId,
         credentialsId,
@@ -35,21 +52,24 @@ function toConfigurationEntry(
         configurationId: prefixedConfigurationId,
         parentResource: {
             id: filesystemId,
-            name: filesystemId,
+            name: fsxName ?? filesystemId,
             type: WAD_FILESYSTEM_RESOURCE_TYPE,
             accountId,
             region,
             credentialsIds: [credentialsId]
         },
-        resources: (assessmentDetails ?? []).map(
-            ({ id, name, status, svmName, metadata }): WadResourceEntry => ({
+        resources: (assessmentDetails ?? []).map(({ id, name, status, svmName, metadata }): WadResourceEntry => {
+            const components = metadata?.components ?? [];
+            return {
                 resource: {
-                    id,
+                    id: ontapUuidToFsxVolumeId?.get(id) ?? id,
                     type: resourceType ?? '',
                     name,
                     metadata: {
                         workload,
-                        components: metadata?.components ?? [],
+                        components: COMPONENT_RESOURCE_TYPES.has(resourceType ?? '')
+                            ? components.map(component => ({ ...component, id }))
+                            : components,
                         ...(svmName !== undefined && { svmName })
                     }
                 },
@@ -57,8 +77,8 @@ function toConfigurationEntry(
                     status === AssessmentStatus.OPTIMIZED
                         ? ResourceOptimizationStatus.OPTIMIZED
                         : ResourceOptimizationStatus.NOT_OPTIMIZED
-            })
-        )
+            };
+        })
     };
 }
 

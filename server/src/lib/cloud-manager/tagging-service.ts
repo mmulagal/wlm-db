@@ -8,27 +8,17 @@ const logger = getLogger();
 
 const EC2_STORAGE_ORACLE_MSSQL_QUERY = `
 query Ec2StorageOracleMssql(
-  $accountId: JSON!
-  $credential: JSON!
-  $region: JSON!
+  $accountWhere: [FilterClause!]
+  $scopedWhere: [FilterClause!]
+  $workloadWhere: [FilterClause!]
   $first: Int = 1000
 ) {
-  relationships(
-    where: [{ field: "accountId", op: EQ, value: $accountId }]
-    first: $first
-  ) {
+  relationships(where: $accountWhere, first: $first) {
     computeId
     storageId
     storageType
   }
-  ec2Instances(
-    where: [
-      { field: "accountId", op: EQ, value: $accountId }
-      { field: "credential", op: EQ, value: $credential }
-      { field: "region", op: EQ, value: $region }
-    ]
-    first: $first
-  ) {
+  ec2Instances(where: $scopedWhere, first: $first) {
     accountId
     credential
     region
@@ -40,71 +30,36 @@ query Ec2StorageOracleMssql(
     subnetId
     state { name }
     tags { key value }
-    workloads(
-      where: [{ field: "workload", op: IN, value: ["Oracle Database", "Microsoft SQL Server"] }]
-    ) {
-      workload
-      category
-      confidence
-      isPrimary
+    workloads(where: $workloadWhere) {
+      workload category confidence isPrimary
     }
   }
-  fsxVolumes(
-    where: [
-      { field: "accountId", op: EQ, value: $accountId }
-      { field: "credential", op: EQ, value: $credential }
-      { field: "region", op: EQ, value: $region }
-    ]
-    first: $first
-  ) {
-    accountId
-    credential
-    region
-    volumeId
+  fsxFileSystems(where: $scopedWhere, first: $first) {
     fileSystemId
-    ontapUuid
-    name
-    lifecycle
+    tags { key value }
+  }
+  fsxVolumes(where: $scopedWhere, first: $first) {
+    accountId credential region
+    volumeId fileSystemId ontapUuid name lifecycle
     storageVirtualMachineId
     ontapConfiguration { sizeInMegabytes }
-    workloads { workload category confidence isPrimary }
+    workloads(where: $workloadWhere) {
+      workload category confidence isPrimary
+    }
   }
-  ontapVolumes(
-    where: [
-      { field: "accountId", op: EQ, value: $accountId }
-      { field: "credential", op: EQ, value: $credential }
-      { field: "region", op: EQ, value: $region }
-    ]
-    first: $first
-  ) {
-    accountId
-    credential
-    region
-    uuid
-    name
-    fileSystemId
-    svmName
-    state
-    size
-    workloads { workload category confidence isPrimary }
+  ontapVolumes(where: $scopedWhere, first: $first) {
+    accountId credential region
+    uuid name fileSystemId svmName state size
+    workloads(where: $workloadWhere) {
+      workload category confidence isPrimary
+    }
   }
-  ontapLuns(
-    where: [
-      { field: "accountId", op: EQ, value: $accountId }
-      { field: "credential", op: EQ, value: $credential }
-      { field: "region", op: EQ, value: $region }
-    ]
-    first: $first
-  ) {
-    accountId
-    credential
-    region
-    uuid
-    name
-    fileSystemId
-    volumeName
-    osType
-    workloads { workload category confidence isPrimary }
+  ontapLuns(where: $scopedWhere, first: $first) {
+    accountId credential region
+    uuid name fileSystemId volumeName osType
+    workloads(where: $workloadWhere) {
+      workload category confidence isPrimary
+    }
   }
 }
 `.trim();
@@ -177,7 +132,8 @@ async function callWlmHostsGraphql<T>(
     accountId: string,
     credentialsId: string,
     region: string,
-    query: string
+    query: string,
+    variables: Record<string, unknown> = { accountId, credential: credentialsId, region, first: 1000 }
 ): Promise<T> {
     logger.info('Fetching wlm-hosts resources via graphql', { accountId, credentialsId, region });
 
@@ -192,7 +148,7 @@ async function callWlmHostsGraphql<T>(
                 },
                 json: {
                     query,
-                    variables: { accountId, credential: credentialsId, region, first: 1000 }
+                    variables
                 }
             })
             .json<{ data: T; errors?: { message: string }[] }>();
