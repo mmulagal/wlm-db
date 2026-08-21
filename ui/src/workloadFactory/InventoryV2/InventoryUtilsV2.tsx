@@ -321,6 +321,75 @@ export const resolveUnregisteredDatabasesAndPasswordRestriction = ({
     });
 };
 
+const markInstanceRowFsxLinkExists = (instanceRow: any): any => ({
+    ...instanceRow,
+    fsxLinkExists: true,
+    databaseInstanceTopology: instanceRow?.databaseInstanceTopology
+        ? { ...instanceRow.databaseInstanceTopology, fsxLinkExists: true }
+        : instanceRow?.databaseInstanceTopology
+});
+
+/** After FSx link association, flip fsxLinkExists on the matching inventory host/instance rows. */
+export const markInstanceFsxLinkExistsInInventory = (
+    inventoryTableData: Record<string, any> | null | undefined,
+    {
+        resourceId,
+        credId,
+        regionId,
+        instanceId,
+        instanceName
+    }: {
+        resourceId?: string;
+        credId?: string;
+        regionId?: string;
+        instanceId?: string;
+        instanceName?: string;
+    }
+): Record<string, any> | null => {
+    if (!inventoryTableData) {
+        return null;
+    }
+
+    const { host, instance } = resolveInventoryHostAndInstance({
+        inventoryTableData,
+        resourceId,
+        credId,
+        regionId,
+        instanceId,
+        instanceName
+    });
+    if (!host) {
+        return null;
+    }
+
+    const updatedHost = {
+        ...host,
+        hostManageReadiness: host.hostManageReadiness
+            ? { ...host.hostManageReadiness, fsxLinkExists: true }
+            : host.hostManageReadiness,
+        sqlServerInstances: host.sqlServerInstances?.map((instanceRow: any) =>
+            matchesInventoryInstance(instanceRow, instanceId, instanceName)
+                ? markInstanceRowFsxLinkExists(instanceRow)
+                : instanceRow
+        )
+    };
+
+    const hostKey = Object.keys(inventoryTableData).find(key => inventoryTableData[key] === host);
+    if (hostKey) {
+        return { ...inventoryTableData, [hostKey]: updatedHost };
+    }
+
+    if (!instance) {
+        return null;
+    }
+
+    return Object.fromEntries(
+        Object.entries(inventoryTableData).map(([key, hostRow]) =>
+            hostRow === host ? [key, updatedHost] : [key, hostRow]
+        )
+    );
+};
+
 /** Resolve fsxLinkExists for WAD from store payload or inventory instance row. */
 export const resolveInstanceFsxLinkExists = ({
     fsxLinkExistsFromStore,
@@ -5210,11 +5279,17 @@ export const fixIssueDisableMsg = (rowData: any, translation: TFunction) => {
         rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
     ) {
         if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
-            disableMsg = GENERAL.ASSESSMENT_AOAG_DETECTED;
+            disableMsg =
+                rowData?.hostType === DBType.MSSQL
+                    ? translation('databases.register-flow.missing-assessment-data')
+                    : translation('databases.register-flow.missing-assessment-data-oracle');
             return disableMsg;
         }
         if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-            disableMsg = GENERAL.ASSESSMENT_AOAG_UNDETECTED;
+            disableMsg =
+                rowData?.hostType === DBType.MSSQL
+                    ? translation('databases.register-flow.missing-assessment-data')
+                    : translation('databases.register-flow.missing-assessment-data-oracle');
             return disableMsg;
         }
     }
@@ -5222,11 +5297,17 @@ export const fixIssueDisableMsg = (rowData: any, translation: TFunction) => {
         rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
         rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS
     ) {
-        disableMsg = GENERAL.ASSESSMENT_FOR_MANAGE;
+        disableMsg =
+            rowData?.hostType === DBType.MSSQL
+                ? translation('databases.register-flow.missing-assessment-data')
+                : translation('databases.register-flow.missing-assessment-data-oracle');
         return disableMsg;
     }
     if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-        disableMsg = GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
+        disableMsg =
+            rowData?.hostType === DBType.MSSQL
+                ? translation('databases.register-flow.missing-assessment-data')
+                : translation('databases.register-flow.missing-assessment-data-oracle');
         return disableMsg;
     }
 
@@ -5674,10 +5755,14 @@ export const getOptimizationStatusData = (rowData: any, t: any) => {
             rowData.fileSystemType.includes(GENERAL.FSX_FOR_ONTAP)
         ) {
             if (rowData?.statusColText === INVENTORY_STATUS.UNMANAGED) {
-                return GENERAL.ASSESSMENT_AOAG_DETECTED;
+                return rowData?.hostType === DBType.MSSQL
+                    ? t('databases.register-flow.missing-assessment-data')
+                    : t('databases.register-flow.missing-assessment-data-oracle');
             }
             if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                return GENERAL.ASSESSMENT_AOAG_UNDETECTED;
+                return rowData?.hostType === DBType.MSSQL
+                    ? t('databases.register-flow.missing-assessment-data')
+                    : t('databases.register-flow.missing-assessment-data-oracle');
             }
         }
 
@@ -5686,10 +5771,14 @@ export const getOptimizationStatusData = (rowData: any, t: any) => {
                 rowData?.statusColText === INVENTORY_STATUS.UNMANAGED ||
                 rowData?.statusColText === INVENTORY_STATUS.IN_PROGRESS
             ) {
-                return GENERAL.ASSESSMENT_FOR_MANAGE;
+                return rowData?.hostType === DBType.MSSQL
+                    ? t('databases.register-flow.missing-assessment-data')
+                    : t('databases.register-flow.missing-assessment-data-oracle');
             }
             if (rowData?.statusColText === INVENTORY_STATUS.UNDETECTED) {
-                return GENERAL.ASSESSMENT_FOR_UNDETECTED_FSXN;
+                return rowData?.hostType === DBType.MSSQL
+                    ? t('databases.register-flow.missing-assessment-data')
+                    : t('databases.register-flow.missing-assessment-data-oracle');
             }
         }
 

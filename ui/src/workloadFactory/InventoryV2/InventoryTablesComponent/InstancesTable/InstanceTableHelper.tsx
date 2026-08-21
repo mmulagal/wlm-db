@@ -1572,9 +1572,11 @@ const dispatchWadWellArchitectedFromInventoryRow = (
     dispatch(setSelectedWellArchitectTab(wellArchitectedTab));
     dispatch(setLandingFrom(WLF_TABS.INVENTORY));
 
+    const hostname = rowData?.name || rowData?.hostRow?.name || rowData?.hostName;
+
     dispatch(
         setGwPageLoadInstanceData({
-            hostname: rowData?.name || rowData?.hostRow?.name,
+            hostname,
             resourceId,
             instanceId,
             instanceName: rowData?.databaseInstanceName || instanceId,
@@ -1589,7 +1591,7 @@ const dispatchWadWellArchitectedFromInventoryRow = (
     );
 
     dispatch(resetWorkloadFactoryResourceData());
-    dispatch(setSelectedHostname(rowData?.name || rowData?.hostRow?.name));
+    dispatch(setSelectedHostname(hostname));
     dispatch(
         setSelectedResourcePageHostData({
             resourceId,
@@ -1669,9 +1671,10 @@ export const handleOracleWadOptimizeAction = (rowData: any, dispatch: Dispatch) 
     dispatch(setLandingFrom(WLF_TABS.INVENTORY));
 
     // Set page load instance data with isWad: true
+    const hostname = rowData?.name || rowData?.hostRow?.name || rowData?.hostName;
     dispatch(
         setGwPageLoadInstanceData({
-            hostname: rowData?.name || rowData?.hostRow?.name,
+            hostname,
             resourceId: databaseHostId,
             instanceId,
             instanceName: rowData?.databaseInstanceName,
@@ -1685,7 +1688,7 @@ export const handleOracleWadOptimizeAction = (rowData: any, dispatch: Dispatch) 
 
     // For overview and database
     dispatch(resetWorkloadFactoryResourceData());
-    dispatch(setSelectedHostname(rowData?.name || rowData?.hostRow?.name));
+    dispatch(setSelectedHostname(hostname));
     dispatch(
         setSelectedResourcePageHostData({
             resourceId: databaseHostId,
@@ -1713,7 +1716,7 @@ export const handleUnregisteredOracleOptimizeAction = (rowData: any, dispatch: D
     const instanceId = rowData?.databaseInstanceName || rowData?.oracleInstance;
     const credentialId = rowData?.credentialId || hostRow?.credentialId;
     const regionId = rowData?.regionId || hostRow?.regionId;
-    const hostname = rowData?.name || hostRow?.name;
+    const hostname = rowData?.name || hostRow?.name || rowData?.hostName;
 
     dispatch(
         setFSXId({

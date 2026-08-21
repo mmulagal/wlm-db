@@ -1,7 +1,7 @@
 import { DsFlashingDotsLoader, TooltipInfo, DsTypography } from '@netapp/design-system';
 import { ColumnProps } from '@netapp/design-system/dist/components/Table';
 import { TFunction } from 'i18next';
-import { FINDINGS, SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
+import { FINDINGS, INSTANCE_INFORMATION_DETAIL, SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 
 interface OracleColDefsParams {
     loading: boolean;
@@ -35,7 +35,7 @@ export const getOracleColDefs = ({ loading, noOfInstances, styles, t }: OracleCo
         width: 'auto',
         renderCell: (_cellData: any, rowData: any) => (
             <div className={styles.tooltips}>
-                {rowData.details === 'Database edition' && noOfInstances > 1 && (
+                {rowData.detailKey === INSTANCE_INFORMATION_DETAIL.DATABASE_EDITION && noOfInstances > 1 && (
                     <TooltipInfo>{t('databases.explore-savings.oracle-edition-multi-tooltip')}</TooltipInfo>
                 )}
                 <DsTypography variant="Regular_14">{rowData.details}</DsTypography>
@@ -68,7 +68,7 @@ export const getInstanceColDefs = ({
         width: 'auto',
         renderCell: (_cellData: any, rowData: any) => (
             <div className={styles.tooltips}>
-                {rowData.details === 'SQL Edition' && noOfInstances > 1 && (
+                {rowData.detailKey === INSTANCE_INFORMATION_DETAIL.SQL_EDITION && noOfInstances > 1 && (
                     <TooltipInfo>{t('databases.explore-savings.sql-edition-multi-tooltip')}</TooltipInfo>
                 )}
                 <DsTypography variant="Regular_14">{rowData.details}</DsTypography>
@@ -80,57 +80,100 @@ export const getInstanceColDefs = ({
         accessor: 'value',
         id: '2',
         width: 'auto',
-        renderCell: (_cellData: any, rowData: any) =>
-            !loading ? <DsTypography variant="Regular_14">{rowData.value}</DsTypography> : <DsFlashingDotsLoader />
+        renderCell: (_cellData: any, rowData: any) => {
+            if (loading) {
+                return <DsFlashingDotsLoader />;
+            }
+            if (
+                rowData.detailKey === INSTANCE_INFORMATION_DETAIL.SQL_EDITION &&
+                rowData.showSqlLicensePermissionTooltip
+            ) {
+                return (
+                    <div className={styles.tooltips}>
+                        <TooltipInfo>
+                            {t('databases.explore-savings.insufficient-sql-license-permissions-tooltip')}
+                        </TooltipInfo>
+                        <DsTypography variant="Regular_14">{rowData.value}</DsTypography>
+                    </div>
+                );
+            }
+            return <DsTypography variant="Regular_14">{rowData.value}</DsTypography>;
+        }
     },
     {
         Header: t('databases.explore-savings.instance-information-table.headers.findings'),
         accessor: 'findings',
         id: '3',
         width: 'auto',
-        renderCell: (_cellData: any, rowData: any) =>
-            !storageSavingsLoading && !snapshotLoading ? (
+        renderCell: (_cellData: any, rowData: any) => {
+            const isSqlEditionPermissionTooltip =
+                rowData.detailKey === INSTANCE_INFORMATION_DETAIL.SQL_EDITION &&
+                rowData.showSqlLicensePermissionTooltip;
+
+            return !storageSavingsLoading && !snapshotLoading ? (
                 <>
-                    {rowData.details === 'Instance type' && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
-                        <div className={styles.instanceTypeTooltip}>
-                            <TooltipInfo>{t('databases.explore-savings.instance-type-findings-tooltip')}</TooltipInfo>
+                    {rowData.detailKey === INSTANCE_INFORMATION_DETAIL.INSTANCE_TYPE &&
+                        savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_EBS && (
+                            <div className={styles.tooltips}>
+                                <TooltipInfo>
+                                    {t('databases.explore-savings.instance-type-findings-tooltip')}
+                                </TooltipInfo>
+                                {(rowData?.findings === FINDINGS.INSUFFICIENT_DATA ||
+                                    rowData?.findings === FINDINGS.INSUFFICIENT_PERMISSIONS ||
+                                    rowData?.findings === '-') && (
+                                    <DsTypography variant="Regular_14">
+                                        {t('databases.general.not-available')}
+                                    </DsTypography>
+                                )}
+                            </div>
+                        )}
+                    {isSqlEditionPermissionTooltip && (
+                        <div className={styles.tooltips}>
+                            <TooltipInfo>
+                                {t('databases.explore-savings.insufficient-sql-license-permissions-tooltip')}
+                            </TooltipInfo>
+                            <DsTypography variant="Regular_14">{t('databases.general.not-available')}</DsTypography>
                         </div>
                     )}
-                    {rowData?.findings === FINDINGS.NOT_OPTIMIZED && (
+                    {rowData?.findings === FINDINGS.NOT_OPTIMIZED && !isSqlEditionPermissionTooltip && (
                         <div className={styles.tooltips}>
-                            {rowData.details === 'SQL Edition' && (
+                            {rowData.detailKey === INSTANCE_INFORMATION_DETAIL.SQL_EDITION && (
                                 <TooltipInfo>{t('databases.explore-savings.not-optimized-tooltip')}</TooltipInfo>
                             )}
                             <DsTypography variant="Regular_14">
-                                {rowData?.details === 'Instance type'
+                                {rowData?.detailKey === INSTANCE_INFORMATION_DETAIL.INSTANCE_TYPE
                                     ? t('databases.explore-savings.findings-over-provisioned')
                                     : t('databases.general.findings.not_optimized')}
                             </DsTypography>
                         </div>
                     )}
 
-                    {rowData?.findings === FINDINGS.OPTIMIZED && (
+                    {rowData?.findings === FINDINGS.OPTIMIZED && !isSqlEditionPermissionTooltip && (
                         <DsTypography variant="Regular_14">{t('databases.general.findings.optimized')}</DsTypography>
                     )}
 
-                    {rowData?.findings === FINDINGS.UNDER_PROVISIONED && (
+                    {rowData?.findings === FINDINGS.UNDER_PROVISIONED && !isSqlEditionPermissionTooltip && (
                         <DsTypography variant="Regular_14">
                             {t('databases.explore-savings.findings-under-provisioned')}
                         </DsTypography>
                     )}
 
                     {(rowData?.findings === FINDINGS.INSUFFICIENT_DATA ||
-                        rowData?.findings === FINDINGS.INSUFFICIENT_PERMISSIONS) && (
-                        <DsTypography variant="Regular_14">{t('databases.general.not-available')}</DsTypography>
-                    )}
+                        rowData?.findings === FINDINGS.INSUFFICIENT_PERMISSIONS) &&
+                        rowData.detailKey !== INSTANCE_INFORMATION_DETAIL.INSTANCE_TYPE &&
+                        !isSqlEditionPermissionTooltip && (
+                            <DsTypography variant="Regular_14">{t('databases.general.not-available')}</DsTypography>
+                        )}
 
-                    {rowData.details === 'Instance type' && savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && (
-                        <DsTypography variant="Regular_14">-</DsTypography>
-                    )}
+                    {rowData.detailKey === INSTANCE_INFORMATION_DETAIL.INSTANCE_TYPE &&
+                        savingsCalculatorFrom === SAVINGS_CALC_MODE.AUTO_FSXW && (
+                            <DsTypography variant="Regular_14">-</DsTypography>
+                        )}
                 </>
             ) : (
                 <DsFlashingDotsLoader />
-            )
+            );
+        }
     }
 ];
 

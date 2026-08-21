@@ -22,4 +22,8 @@ export interface ExploreSavingsBulkSliceEntities {
     triggerBulkDataFetch?: boolean;
     /** Host keys cleared from partial-data banner after successful banner auth (see exploreSavingsHostKey). */
     partialDataBannerAuthedHostKeys?: string[];
+    /** Host row ids shown in partial-data banner AuthDialog (multi-host). */
+    partialDataBannerAuthHostIds?: string[];
+    /** Subset of partialDataBannerAuthHostIds selected for register-credentials. */
+    partialDataBannerSelectedAuthHostIds?: string[];
 }

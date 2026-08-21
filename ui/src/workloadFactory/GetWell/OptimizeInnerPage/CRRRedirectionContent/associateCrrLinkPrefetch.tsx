@@ -1,5 +1,6 @@
 import { ReactNode, useCallback } from 'react';
 import { BlueXPListeners, postBlueXPMessage } from '@tlveng/wlm-ds';
+import { Button } from '@netapp/design-system';
 import { useDispatch } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,17 +16,38 @@ import {
     useGetFsxDetailsForLinkRedirectMutation,
     useCheckExistingLinkMutation,
     useDeleteExistingLinkMutation,
-    useAssociateSelectedLinkMutation
+    useAssociateSelectedLinkMutation,
+    useTriggerInstanceAssessmentMutation,
+    useTriggerOracleInstanceAssessmentMutation,
+    useTriggerUnregisteredMssqlAssessmentMutation,
+    useTriggerUnregisteredOracleAssessmentMutation,
+    useLazyGetSubTaskListQuery
 } from '../../../../utils/apiService';
 import { addNotification, NOTIFICATION_TYPES } from '../../../../store/notificationSlice';
+import { setInventoryTableData } from '../../../../store/workloadFactory/inventoryV2Slice';
+import { setRefreshOracleWellArchitect } from '../../../../store/workloadFactory/oracleSlice';
+import {
+    setFsxLinkExists,
+    setGwAdhocError,
+    setGwRefreshPage
+} from '../../../../store/workloadFactory/getWellOptimizeSlice';
+import { markInstanceFsxLinkExistsInInventory } from '../../../InventoryV2/InventoryUtilsV2';
+import { resetGwValuesOnRefresh } from '../../GetWellUtils';
+import { handleTriggerAssessment, handleWellArchitectRefresh } from '../../../../utils/resourceUtils';
+import { GENERAL } from '../../../../utils/appConstants';
+import { DBType, FROM_DIALOG } from '../../../../utils/consts';
 import DialogComponent from '../../../../common/Dialog/DialogComponent';
 import CRRDataDiaolgContent from './CRRDataDialogContent';
 import styles from './CRRRedirectionContent.module.scss';
 import store from '../../../../store/store';
-import { FROM_DIALOG } from '../../../../utils/consts';
 
 export type AssociateCrrLinkPrefetchResult = {
-    runAssociateLinkPrefetch: (rowData: any, dialogHeader: ReactNode, isWad?: boolean) => Promise<void>;
+    runAssociateLinkPrefetch: (
+        rowData: any,
+        dialogHeader: ReactNode,
+        isWad?: boolean,
+        triggerAssessmentOnSuccess?: boolean
+    ) => Promise<void>;
 };
 
 /** Pass `setDialog` / `closeDialog` from the parent’s `useDialog()` so the dialog context is not subscribed twice. */
@@ -40,9 +62,97 @@ export function useAssociateCrrLinkPrefetch(
     const [checkExistingLinkApi] = useCheckExistingLinkMutation();
     const [deleteExistingLinkApi] = useDeleteExistingLinkMutation();
     const [associateSelectedLinkApi] = useAssociateSelectedLinkMutation();
+    const [triggerMssqlAssessmentApi] = useTriggerInstanceAssessmentMutation();
+    const [triggerOracleAssessmentApi] = useTriggerOracleInstanceAssessmentMutation();
+    const [triggerUnregisteredMssqlAssessmentApi] = useTriggerUnregisteredMssqlAssessmentMutation();
+    const [triggerUnregisteredOracleAssessmentApi] = useTriggerUnregisteredOracleAssessmentMutation();
+    const [getJobDetailApi] = useLazyGetSubTaskListQuery();
+
+    const runPostLinkAssociateActions = useCallback(() => {
+        const state = store.getState();
+        const {
+            selectedResourceId,
+            selectedDatabaseInstance,
+            selectedDatabaseInstanceName,
+            selectedGwInstanceCredId,
+            selectedGwInstanceRegionId,
+            isUnregistered,
+            configEngineType
+        } = state.getWellOptimize;
+        const { inventoryTableData, registerHostType } = state.inventoryV2;
+        const {
+            selectedResourceId: oracleResourceId,
+            selectedDatabaseInstance: oracleInstanceId,
+            selectedResourceCredId,
+            selectedResourceRegionId
+        } = state.workloadFactoryResource;
+        const { isWorkloadFactory, accountId } = state.auth;
+        const dbType = configEngineType || registerHostType || DBType.MSSQL;
+        const isOracle = dbType === DBType.ORACLE;
+
+        const updatedInventory = markInstanceFsxLinkExistsInInventory(inventoryTableData, {
+            resourceId: selectedResourceId,
+            credId: selectedGwInstanceCredId,
+            regionId: selectedGwInstanceRegionId,
+            instanceId: selectedDatabaseInstance,
+            instanceName: selectedDatabaseInstanceName
+        });
+        if (updatedInventory) {
+            dispatch(setInventoryTableData(updatedInventory));
+        }
+        dispatch(setFsxLinkExists(true));
+
+        const refreshGetWellPage = () => {
+            handleWellArchitectRefresh(
+                dispatch,
+                resetGwValuesOnRefresh,
+                isOracle ? setRefreshOracleWellArchitect : setGwRefreshPage
+            );
+        };
+        const createNotificationMessage = (handleJobMonitoringClick: () => void) => (
+            <div>
+                {t('databases.well-architect.assessment-track-in-progress')}{' '}
+                <Button Component="button" variant="text" onClick={handleJobMonitoringClick}>
+                    {GENERAL.JOB_MONITORING}.
+                </Button>
+            </div>
+        );
+
+        handleTriggerAssessment({
+            setTriggerAssessmentInProgress: () => undefined,
+            triggerAssessmentApi: isOracle ? triggerOracleAssessmentApi : triggerMssqlAssessmentApi,
+            triggerUnregisteredAssessmentApi: isOracle
+                ? triggerUnregisteredOracleAssessmentApi
+                : triggerUnregisteredMssqlAssessmentApi,
+            credentialId: isOracle ? selectedResourceCredId || selectedGwInstanceCredId : selectedGwInstanceCredId,
+            regionId: isOracle ? selectedResourceRegionId || selectedGwInstanceRegionId : selectedGwInstanceRegionId,
+            selectedResourceId: isUnregistered
+                ? selectedResourceId || oracleResourceId
+                : oracleResourceId || selectedResourceId,
+            selectedDatabaseInstance: oracleInstanceId || selectedDatabaseInstance,
+            instanceName: selectedDatabaseInstanceName,
+            accountId,
+            isUnregistered,
+            dispatch,
+            isWorkloadFactory,
+            getJobDetailApi,
+            refreshGetWellPage,
+            setGwAdhocError,
+            t,
+            createNotificationMessage
+        });
+    }, [
+        dispatch,
+        getJobDetailApi,
+        t,
+        triggerMssqlAssessmentApi,
+        triggerOracleAssessmentApi,
+        triggerUnregisteredMssqlAssessmentApi,
+        triggerUnregisteredOracleAssessmentApi
+    ]);
 
     const runAssociateLinkPrefetch = useCallback(
-        async (rowData: any, dialogHeader: ReactNode, isWad: boolean = false) => {
+        async (rowData: any, dialogHeader: ReactNode, isWad: boolean = false, triggerAssessmentOnSuccess = false) => {
             dispatch(setCrrPrefetchLoading(true));
             try {
                 const stateBefore = store.getState();
@@ -133,6 +243,9 @@ export function useAssociateCrrLinkPrefetch(
                                     message: t('databases.inventory.link-associate')
                                 })
                             );
+                            if (triggerAssessmentOnSuccess) {
+                                runPostLinkAssociateActions();
+                            }
                             closeDialog();
                         }
                     }
@@ -223,6 +336,7 @@ export function useAssociateCrrLinkPrefetch(
             dispatch,
             getAssociatedLinksApi,
             getFsxDetailsForLinkRedirectApi,
+            runPostLinkAssociateActions,
             setDialog,
             t
         ]

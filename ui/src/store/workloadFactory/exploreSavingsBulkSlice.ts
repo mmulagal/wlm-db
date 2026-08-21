@@ -13,7 +13,9 @@ const initialHeaderState: ExploreSavingsBulkSliceEntities = {
     rowsRequiringAuthBulk: [],
     bulkAuthStatus: {},
     triggerBulkDataFetch: false,
-    partialDataBannerAuthedHostKeys: []
+    partialDataBannerAuthedHostKeys: [],
+    partialDataBannerAuthHostIds: [],
+    partialDataBannerSelectedAuthHostIds: []
 };
 
 const exploreSavingsBulkSlice = createSlice({
@@ -73,6 +75,16 @@ const exploreSavingsBulkSlice = createSlice({
         },
         resetPartialDataBannerAuthedHostKeys: state => {
             state.partialDataBannerAuthedHostKeys = [];
+        },
+        setPartialDataBannerAuthHostIds: (state, action: PayloadAction<string[]>) => {
+            state.partialDataBannerAuthHostIds = action.payload;
+        },
+        setPartialDataBannerSelectedAuthHostIds: (state, action: PayloadAction<string[]>) => {
+            state.partialDataBannerSelectedAuthHostIds = action.payload;
+        },
+        resetPartialDataBannerAuthHostSelection: state => {
+            state.partialDataBannerAuthHostIds = [];
+            state.partialDataBannerSelectedAuthHostIds = [];
         }
     }
 });
@@ -92,7 +104,10 @@ export const {
     resetBulkAuthCredentialsAndStatus,
     setTriggerBulkDataFetch,
     addPartialDataBannerAuthedHostKeys,
-    resetPartialDataBannerAuthedHostKeys
+    resetPartialDataBannerAuthedHostKeys,
+    setPartialDataBannerAuthHostIds,
+    setPartialDataBannerSelectedAuthHostIds,
+    resetPartialDataBannerAuthHostSelection
 } = exploreSavingsBulkSlice.actions;
 
 export default exploreSavingsBulkSlice;

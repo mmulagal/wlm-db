@@ -198,12 +198,13 @@ const OracleWellArchitectDashboard = () => {
                         cardData={config}
                         showDismissedConfigurations={showDismissedConfigurations}
                         setShowDismissedConfigurations={setShowDismissedConfigurations}
+                        showMissingLinkBanner={showMissingLinkBanner}
                         driftAssessmentData={driftAssessmentData}
                     />
                     <DsAccordion
                         id={accordionId}
                         variant="Default"
-                        isDisabled={loading || showDismissedConfigurations}
+                        isDisabled={loading || showDismissedConfigurations || showMissingLinkBanner}
                         isExpanded={isAccordionExpanded(accordionId, optimizePrintState)}
                         onClick={() => toggleAccordion(accordionId)}
                         title={
@@ -224,21 +225,27 @@ const OracleWellArchitectDashboard = () => {
                                 {/* DsAccordion blocks header-action clicks from reaching the header, so toggle here */}
                                 <div
                                     className={`${styles.viewRecommendation} ${
-                                        loading || showDismissedConfigurations ? styles.viewRecommendationDisabled : ''
+                                        loading || showDismissedConfigurations || showMissingLinkBanner
+                                            ? styles.viewRecommendationDisabled
+                                            : ''
                                     }`}
                                     onClick={() => {
-                                        if (!loading && !showDismissedConfigurations) {
+                                        if (!loading && !showDismissedConfigurations && !showMissingLinkBanner) {
                                             toggleAccordion(accordionId);
                                         }
                                     }}
                                 >
                                     <div className={isDarkTheme && !loading ? styles['dark-theme-light'] : ''}>
-                                        {loading || showDismissedConfigurations ? <LightDisabled /> : <Light />}
+                                        {loading || showDismissedConfigurations || showMissingLinkBanner ? (
+                                            <LightDisabled />
+                                        ) : (
+                                            <Light />
+                                        )}
                                     </div>
                                     <div
                                         style={{
                                             color:
-                                                loading || showDismissedConfigurations
+                                                loading || showDismissedConfigurations || showMissingLinkBanner
                                                     ? 'var(--text-disabled)'
                                                     : 'var(--text-button-primary)'
                                         }}
@@ -255,6 +262,7 @@ const OracleWellArchitectDashboard = () => {
         },
         [
             showDismissedConfigurations,
+            showMissingLinkBanner,
             driftAssessmentData,
             loading,
             optimizePrintState,

@@ -97,7 +97,12 @@ const DialogComponent = ({
     const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
     const { username: scUsername, password: scPassword } = useAppSelector(state => state.snapCenter.credentials);
     const { authVerification } = useAppSelector(state => state.snapCenter);
-    const { bulkAuthCredentials, rowsRequiringAuthBulk } = useAppSelector(state => state.exploreSavingsBulk);
+    const {
+        bulkAuthCredentials,
+        rowsRequiringAuthBulk,
+        partialDataBannerAuthHostIds,
+        partialDataBannerSelectedAuthHostIds
+    } = useAppSelector(state => state.exploreSavingsBulk);
 
     // Track if this is a bulk explore savings case
     const isBulkExploreSavings = useRef(false);
@@ -124,6 +129,12 @@ const DialogComponent = ({
         }
 
         isBulkExploreSavings.current = false;
+        if (
+            (partialDataBannerAuthHostIds?.length ?? 0) > 1 &&
+            (partialDataBannerSelectedAuthHostIds?.length ?? 0) === 0
+        ) {
+            return true;
+        }
         if (isGovAccount) {
             return !isValidSsmArn(exploreSavingsSsmArn);
         }

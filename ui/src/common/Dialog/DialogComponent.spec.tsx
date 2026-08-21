@@ -86,7 +86,9 @@ let mockState = {
     exploreSavingsBulk: {
         bulkAuthCredentials: {},
         rowsRequiringAuthBulk: [],
-        selectedRowsForExploreSavingsEBSBulk: []
+        selectedRowsForExploreSavingsEBSBulk: [],
+        partialDataBannerAuthHostIds: [],
+        partialDataBannerSelectedAuthHostIds: []
     }
 };
 
@@ -375,6 +377,24 @@ describe('DialogComponent', () => {
         );
         const btn = container.querySelector('button');
         expect(btn?.disabled).toBe(false);
+    });
+
+    it('should disable primary button for EXPLORE_SAVINGS when no partial-data hosts are selected', () => {
+        mockState.exploreSavings.serverDetails = { userName: 'user', password: 'pass' };
+        mockState.exploreSavingsBulk.partialDataBannerAuthHostIds = ['host-1', 'host-2'];
+        mockState.exploreSavingsBulk.partialDataBannerSelectedAuthHostIds = [];
+        const { container } = render(
+            <DialogComponent
+                header="Header"
+                content="Content"
+                primaryButton="Explore"
+                dialogFrom={FROM_DIALOG_VALUES.EXPLORE_SAVINGS}
+                callback={vi.fn()}
+                closeCallback={vi.fn()}
+            />
+        );
+        const btn = container.querySelector('button');
+        expect(btn?.disabled).toBe(true);
     });
 
     // ---- disabledCheck: EXPLORE_SAVINGS bulk ----

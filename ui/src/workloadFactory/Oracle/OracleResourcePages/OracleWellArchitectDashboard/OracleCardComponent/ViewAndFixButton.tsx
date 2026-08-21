@@ -39,10 +39,17 @@ interface ViewAndFixButtonProps {
     loading?: boolean;
     callOptimizeApi?: (type: string) => void;
     isWad?: boolean;
+    showMissingLinkBanner?: boolean;
 }
 
 // For oracle assessment and optimization
-const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }: ViewAndFixButtonProps) => {
+const ViewAndFixButton = ({
+    cardData,
+    loading,
+    callOptimizeApi,
+    isWad = false,
+    showMissingLinkBanner = false
+}: ViewAndFixButtonProps) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
     const { setDialog, closeDialog } = useDialog();
@@ -89,6 +96,13 @@ const ViewAndFixButton = ({ cardData, loading, callOptimizeApi, isWad = false }:
 
     const viewButtonDisable = () => {
         const type = configId;
+
+        if (showMissingLinkBanner) {
+            return {
+                isDisable: true,
+                reason: t('databases.wad.registered-missing-fs-link-disabled-message')
+            };
+        }
 
         // Check if card is in ACTIVATING state - disable button if true
         if (cardData?.dismissedObj?.configState === CONFIG_STATES.ACTIVATING) {

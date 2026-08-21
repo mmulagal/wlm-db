@@ -6,9 +6,11 @@ import { configureStore, createSlice } from '@reduxjs/toolkit';
 import InstanceInformation from './InstanceInformation';
 
 const mockHasExploreSavingsAoagDeployment = vi.fn().mockReturnValue(false);
+const mockHasInsufficientSqlLicensePermissions = vi.fn().mockReturnValue(false);
 
 vi.mock('../../ExploreSavingsUtils', () => ({
-    hasExploreSavingsAoagDeployment: (...args: any[]) => mockHasExploreSavingsAoagDeployment(...args)
+    hasExploreSavingsAoagDeployment: (...args: any[]) => mockHasExploreSavingsAoagDeployment(...args),
+    hasInsufficientSqlLicensePermissions: (...args: any[]) => mockHasInsufficientSqlLicensePermissions(...args)
 }));
 
 vi.mock('react-i18next', () => ({

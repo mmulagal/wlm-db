@@ -335,6 +335,8 @@
             "view-prerequisites-list": "View prerequisites list",
             "setup-details": "Setup details",
             "missing-prerequisite": "Missing prerequisite",
+            "missing-assessment-data": "Well-architected analysis is not available for selected instances.",
+            "missing-assessment-data-oracle": "Well-architected analysis is not available for selected databases.",
             "detect-instance-table-col": {
                 "database-name": "Database name",
                 "instance-name": "Instance name",
@@ -2176,6 +2178,7 @@
             "type": "Type",
             "sql-edition-multi-tooltip": "The value is determined by the highest SQL Server edition found in all SQL Server instances on the host.",
             "instance-type-findings-tooltip": "Displays findings (over-provisioned, under-provisioned, or optimized) based on analysis of Amazon CloudWatch metrics (CPU, bandwidth, network, and more) of the current instance and on the current memory of the instance. No finding appears when Workload Factory has insufficient permissions or unavailable metrics.",
+            "insufficient-sql-license-permissions-tooltip": "We don't have sufficient permissions to get these details.",
             "not-optimized-tooltip": "With FSx for ONTAP, you can change your SQL license from Enterprise to Standard because replication and other Enterprise features aren't in use.",
             "findings-over-provisioned": "Over-provisioned",
             "findings-under-provisioned": "Under-provisioned",

@@ -5,6 +5,9 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import AuthDialog from './AuthDialog';
 import { AUTHENTICATION_TYPE } from '../../../../utils/consts';
+import exploreSavingsBulkSlice, {
+    setPartialDataBannerSelectedAuthHostIds
+} from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
 
 // Mock react-i18next – `tFn` can be overridden per-test
 let tFn: (key: string) => string | null = (key: string) => key;
@@ -28,9 +31,6 @@ vi.mock('./AuthDialog.module.scss', () => ({
 // Mock SVG
 vi.mock('../../../../assets/ic_copy.svg', () => ({
     ReactComponent: (props: any) => <svg data-testid="copy-icon" {...props} />
-}));
-vi.mock('../../../../assets/ic_bullet.svg', () => ({
-    ReactComponent: (props: any) => <svg data-testid="bullet-icon" {...props} />
 }));
 
 // Mock CopyToClipboard component
@@ -94,6 +94,19 @@ vi.mock('@tlveng/wlm-ds', () => ({
         <span data-variant={variant} className={className} {...rest}>
             {children}
         </span>
+    ),
+    DsCheckbox: ({ id, title, isSelected, onSelect, isDisabled, className }: any) => (
+        <label className={className}>
+            <input
+                type="checkbox"
+                data-testid={`host-checkbox-${id}`}
+                checked={isSelected}
+                onClick={onSelect}
+                disabled={isDisabled}
+                readOnly
+            />
+            {title}
+        </label>
     )
 }));
 
@@ -103,18 +116,27 @@ const createMockStore = (
     selectedAuthenticationType: string | null | undefined = AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
     userName = '',
     password = '',
-    actionsDisabled = false
-) =>
-    configureStore({
+    actionsDisabled = false,
+    partialDataBannerSelectedAuthHostIds: string[] = []
+) => {
+    const store = configureStore({
         reducer: {
             exploreSavings: () => ({
                 selectedAuthenticationType,
                 serverDetails: { userName, password }
             }),
             dialogComponent: () => ({ actionsDisabled }),
-            auth: () => ({ isGovAccount: false })
+            auth: () => ({ isGovAccount: false }),
+            exploreSavingsBulk: exploreSavingsBulkSlice.reducer
         }
     });
+
+    if (partialDataBannerSelectedAuthHostIds.length > 0) {
+        store.dispatch(setPartialDataBannerSelectedAuthHostIds(partialDataBannerSelectedAuthHostIds));
+    }
+
+    return store;
+};
 
 const renderComponent = (
     databaseHostName = 'test-db-host',
@@ -122,14 +144,22 @@ const renderComponent = (
     userName = '',
     password = '',
     actionsDisabled = false,
-    isOracle = false
+    isOracle = false,
+    authHostRows?: any[],
+    partialDataBannerSelectedAuthHostIds: string[] = authHostRows?.map(row => row.id) ?? []
 ) => {
-    const store = createMockStore(selectedAuthenticationType, userName, password, actionsDisabled);
+    const store = createMockStore(
+        selectedAuthenticationType,
+        userName,
+        password,
+        actionsDisabled,
+        partialDataBannerSelectedAuthHostIds
+    );
     return {
         store,
         ...render(
             <Provider store={store}>
-                <AuthDialog databaseHostName={databaseHostName} isOracle={isOracle} />
+                <AuthDialog databaseHostName={databaseHostName} isOracle={isOracle} authHostRows={authHostRows} />
             </Provider>
         )
     };
@@ -565,6 +595,56 @@ describe('AuthDialog', () => {
             expect(screen.queryByText('databases.explore-savings.select-auth-mode')).toBeNull();
             expect(screen.queryByTestId('select-sql-authentication')).toBeNull();
             expect(screen.queryByTestId('accordion-controller')).toBeNull();
+        });
+    });
+
+    describe('Multi-host auth selection', () => {
+        const authHostRows = [
+            { id: 'host-1', name: 'es-ebs-no-auth-sql' },
+            { id: 'host-2', name: 'es-ebs-missing-permission-sql' },
+            { id: 'host-3', name: 'es-ebs-not-registered-sql' }
+        ];
+
+        it('should render checkboxes for multiple auth hosts', () => {
+            renderComponent(
+                '3 hosts',
+                AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
+                '',
+                '',
+                false,
+                false,
+                authHostRows
+            );
+            expect(screen.getByTestId('host-checkbox-host-1')).toBeTruthy();
+            expect(screen.getByTestId('host-checkbox-host-2')).toBeTruthy();
+            expect(screen.getByTestId('host-checkbox-host-3')).toBeTruthy();
+            expect(screen.getByText('es-ebs-no-auth-sql')).toBeTruthy();
+        });
+
+        it('should not render host list for a single auth host', () => {
+            renderComponent('single-host', AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION, '', '', false, false, [
+                authHostRows[0]
+            ]);
+            expect(screen.queryByTestId('host-checkbox-host-1')).toBeNull();
+        });
+
+        it('should toggle host selection via checkbox', () => {
+            const { store } = renderComponent(
+                '3 hosts',
+                AUTHENTICATION_TYPE.SQL_SERVER_AUTHENTICATION,
+                '',
+                '',
+                false,
+                false,
+                authHostRows
+            );
+
+            fireEvent.click(screen.getByTestId('host-checkbox-host-2'));
+
+            expect(store.getState().exploreSavingsBulk.partialDataBannerSelectedAuthHostIds).toEqual([
+                'host-1',
+                'host-3'
+            ]);
         });
     });
 

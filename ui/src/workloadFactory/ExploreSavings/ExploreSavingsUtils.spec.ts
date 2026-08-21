@@ -24,6 +24,7 @@ import {
     generateLabel2ForInstanceType,
     handleAuthenticate,
     isMissingSqlPermissions,
+    hasInsufficientSqlLicensePermissions,
     shouldAuthDialogOpen,
     shouldAuthDialogOpenBulk,
     isFsxOntapExploreSavingsMode,
@@ -261,6 +262,9 @@ vi.mock('../../store/workloadFactory/exploreSavingsBulkSlice', () => ({
     addPartialDataBannerAuthedHostKeys: vi.fn((val: any) => ({
         type: 'addPartialDataBannerAuthedHostKeys',
         payload: val
+    })),
+    resetPartialDataBannerAuthHostSelection: vi.fn(() => ({
+        type: 'resetPartialDataBannerAuthHostSelection'
     }))
 }));
 
@@ -4114,6 +4118,63 @@ describe('ExploreSavingsUtils', () => {
                 }
             ];
             expect(isMissingSqlPermissions(instances)).toBe(false);
+        });
+    });
+
+    // =========================================================================
+    // hasInsufficientSqlLicensePermissions
+    // =========================================================================
+    describe('hasInsufficientSqlLicensePermissions', () => {
+        it('returns false when SQL edition display data exists', () => {
+            const host = makeRowData({
+                hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true },
+                sqlServerInstances: [{ databaseServer: { serverEdition: 'Standard Edition (64-bit)' } }]
+            });
+            expect(hasInsufficientSqlLicensePermissions(host)).toBe(false);
+        });
+
+        it('returns true when edition is missing and SQL permissions are incomplete', () => {
+            const host = makeRowData({
+                hostManageReadiness: { extensiveRunPermission: true, canReadAWSSSMDocuments: true },
+                sqlServerInstances: [
+                    {
+                        manageReadiness: {
+                            assessment: { missingSqlPermissions: ['VIEW SERVER STATE'] }
+                        }
+                    }
+                ]
+            });
+            expect(hasInsufficientSqlLicensePermissions(host)).toBe(true);
+        });
+
+        it('returns true when edition is missing and only partial explore-savings permission exists', () => {
+            const host = makeRowData({
+                hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true },
+                sqlServerInstances: [{}]
+            });
+            expect(hasInsufficientSqlLicensePermissions(host)).toBe(true);
+        });
+
+        it('returns false when edition exists via sqlServerEdition field', () => {
+            const host = makeRowData({
+                hostManageReadiness: { extensiveRunPermission: false, canReadAWSSSMDocuments: true },
+                sqlServerInstances: [{ sqlServerEdition: 'Standard Edition (64-bit)' }]
+            });
+            expect(hasInsufficientSqlLicensePermissions(host)).toBe(false);
+        });
+
+        it('returns false when edition is missing but full extensive permission and no missing SQL permissions', () => {
+            const host = makeRowData({
+                hostManageReadiness: { extensiveRunPermission: true, canReadAWSSSMDocuments: true },
+                sqlServerInstances: [
+                    {
+                        manageReadiness: {
+                            assessment: { missingSqlPermissions: [] }
+                        }
+                    }
+                ]
+            });
+            expect(hasInsufficientSqlLicensePermissions(host)).toBe(false);
         });
     });
 

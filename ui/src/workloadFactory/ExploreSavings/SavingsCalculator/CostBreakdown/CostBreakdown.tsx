@@ -92,6 +92,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
     // eslint-disable-next-line react/no-unstable-nested-components, no-unused-vars
     const ComparisonTableLayout = ({ data, calculatedResponse: _calcResp, existingType }: any) => {
         const checkForComputeTooltip = data.isTooltip && data.type === 'Compute';
+        const checkForPermissionTooltip = data.isPermissionTooltip;
         return (
             <div
                 className={
@@ -114,7 +115,7 @@ const CostBreakdown = ({ disableState = false }: CB) => {
                         >
                             {data?.isTooltip ? (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    {(checkForTooltip || checkForComputeTooltip) && (
+                                    {(checkForTooltip || checkForComputeTooltip || checkForPermissionTooltip) && (
                                         <TooltipInfo>{data?.isTooltip}</TooltipInfo>
                                     )}
                                     <div>{data?.type}</div>

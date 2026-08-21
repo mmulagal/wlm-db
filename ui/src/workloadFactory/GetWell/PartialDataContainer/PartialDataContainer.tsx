@@ -42,7 +42,7 @@ const PartialDataContainer = ({ variant = 'default', resourceType = 'instance' }
             />
         );
 
-        runAssociateLinkPrefetch({ volumeName: '', volumeId: '' }, associateLinkHeader, false);
+        runAssociateLinkPrefetch({ volumeName: '', volumeId: '' }, associateLinkHeader, false, true);
     };
 
     const handleLearnMoreLinks = () => {

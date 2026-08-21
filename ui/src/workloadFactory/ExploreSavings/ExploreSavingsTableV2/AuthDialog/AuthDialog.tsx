@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { DsRadioButton, DsTextField, DsTypography } from '@tlveng/wlm-ds';
+import { DsCheckbox, DsRadioButton, DsTextField, DsTypography } from '@tlveng/wlm-ds';
 import { useDispatch } from 'react-redux';
 import { ChangeEvent, useEffect, useState } from 'react';
 import { Popover } from '@netapp/design-system';
@@ -14,20 +14,20 @@ import {
 } from '../../../../common/AccordionCard/AccordionCard';
 import CopyToClipboardCommon from '../../../../common/CopyToClipboard/copyToClipboard';
 import { ReactComponent as CopyIcon } from '../../../../assets/ic_copy.svg';
-import { ReactComponent as Bullet } from '../../../../assets/ic_bullet.svg';
 import {
     resetServerDetailsCredentials,
     setCredentials,
     setSelectedAuthenticationType
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
+import { setPartialDataBannerSelectedAuthHostIds } from '../../../../store/workloadFactory/exploreSavingsBulkSlice';
 
 interface AuthDialogProps {
     databaseHostName: string;
-    databaseHostNames?: string[];
+    authHostRows?: any[];
     isOracle?: boolean;
 }
 
-const AuthDialog = ({ databaseHostName, databaseHostNames, isOracle = false }: AuthDialogProps) => {
+const AuthDialog = ({ databaseHostName, authHostRows, isOracle = false }: AuthDialogProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
     const [userNameTouched, setUserNameTouched] = useState(false);
@@ -39,7 +39,15 @@ const AuthDialog = ({ databaseHostName, databaseHostNames, isOracle = false }: A
         serverDetails: { userName, password, ssmParameterArn }
     } = useAppSelector(state => state.exploreSavings);
     const { actionsDisabled } = useAppSelector(state => state.dialogComponent);
+    const { partialDataBannerSelectedAuthHostIds = [] } = useAppSelector(state => state.exploreSavingsBulk);
     const isGovAccount = useAppSelector(state => state.auth.isGovAccount);
+
+    const toggleHostSelection = (hostId: string) => {
+        const nextSelected = partialDataBannerSelectedAuthHostIds.includes(hostId)
+            ? partialDataBannerSelectedAuthHostIds.filter(id => id !== hostId)
+            : [...partialDataBannerSelectedAuthHostIds, hostId];
+        dispatch(setPartialDataBannerSelectedAuthHostIds(nextSelected));
+    };
 
     useEffect(() => {
         if (!isOracle && !selectedAuthenticationType) {
@@ -141,13 +149,18 @@ const AuthDialog = ({ databaseHostName, databaseHostNames, isOracle = false }: A
             <DsTypography variant="Regular_14">
                 {t('databases.explore-savings.auth-heading')} <span className={styles.dbName}>{databaseHostName}</span>
             </DsTypography>
-            {databaseHostNames && databaseHostNames.length > 0 && (
+            {authHostRows && authHostRows.length > 1 && (
                 <div className={styles.hostNameList}>
-                    {databaseHostNames.map(hostName => (
-                        <div key={hostName} className={styles.hostNameItem}>
-                            <Bullet />
-                            <DsTypography variant="Regular_14">{hostName}</DsTypography>
-                        </div>
+                    {authHostRows.map(row => (
+                        <DsCheckbox
+                            key={row.id}
+                            id={row.id}
+                            title={row.name}
+                            isSelected={partialDataBannerSelectedAuthHostIds.includes(row.id)}
+                            onSelect={() => toggleHostSelection(row.id)}
+                            isDisabled={actionsDisabled}
+                            className={styles.hostNameItem}
+                        />
                     ))}
                 </div>
             )}

@@ -77,6 +77,7 @@ const StorageCardComponent = ({
     type,
     showDismissedConfigurations,
     setShowDismissedConfigurations,
+    showMissingLinkBanner = false,
     engineType = DBType.MSSQL
 }: any) => {
     const dispatch = useDispatch();
@@ -106,6 +107,10 @@ const StorageCardComponent = ({
 
     // Function to determine if dismissed style should be applied
     const shouldApplyDismissedStyle = () => {
+        if (showMissingLinkBanner) {
+            return true;
+        }
+
         // Not applicable configs should have disabled/dismissed style
         // If the configuration data is not available, show the disabled/dismissed style
         if (
@@ -152,16 +157,20 @@ const StorageCardComponent = ({
     const [disableText, setDisableText] = useState(false);
 
     useEffect(() => {
-        if (!loading && !isAssessmentAvailable) {
+        if (showMissingLinkBanner || (!loading && !isAssessmentAvailable)) {
             setDisableText(true);
         } else {
             setDisableText(false);
         }
-    }, [isAssessmentAvailable, loading]);
+    }, [isAssessmentAvailable, loading, showMissingLinkBanner]);
 
     const { setDialog, closeDialog } = useDialog();
 
     const disableOptimizeButton = useMemo(() => {
+        if (showMissingLinkBanner) {
+            return true;
+        }
+
         const statusValue = cardData?.block_two?.value;
 
         // Disable optimize button for 'not-applicable' status
@@ -198,9 +207,13 @@ const StorageCardComponent = ({
             );
         }
         return statusValue !== GETWELL_STATUS.NOT_OPTIMIZED;
-    }, [cardData]);
+    }, [cardData, showMissingLinkBanner]);
 
     const disableOptimizeButtonTooltip = useMemo(() => {
+        if (showMissingLinkBanner) {
+            return t('databases.wad.registered-missing-fs-link-disabled-message');
+        }
+
         if (
             cardData?.id === ASSESSMENT_CONFIG_IDS.FILE_SYSTEM_HEADROOM &&
             cardData?.block_two?.value === GETWELL_STATUS.NOT_OPTIMIZED &&
@@ -210,7 +223,7 @@ const StorageCardComponent = ({
             return GENERAL.NOT_OPTIMIZED_SHARED_DRIVES;
         }
         return '';
-    }, [cardData]);
+    }, [cardData, showMissingLinkBanner, t]);
 
     const setImage = (value: string) => {
         if (value === GETWELL_STATUS.OPTIMIZED) {
@@ -1049,6 +1062,10 @@ const StorageCardComponent = ({
     };
 
     const dismissDisableButton = () => {
+        if (showMissingLinkBanner) {
+            return true;
+        }
+
         if (
             cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
             cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||

@@ -41,7 +41,10 @@ import {
     setSelectedRowsForExploreSavingsOracleOnPremBulk,
     setSelectedRowsForExploreSavingsOracleEbsBulk,
     resetBulkAuthCredentialsAndStatus,
-    resetRowsRequiringAuthBulk
+    resetRowsRequiringAuthBulk,
+    resetPartialDataBannerAuthHostSelection,
+    setPartialDataBannerAuthHostIds,
+    setPartialDataBannerSelectedAuthHostIds
 } from '../../../store/workloadFactory/exploreSavingsBulkSlice';
 import store from '../../../store/store';
 import { useGetSendEmailMutation, useRegisterResourceCredentialsBulkMutation } from '../../../utils/apiService';
@@ -407,6 +410,14 @@ const SavingsCalculator = ({ statusCheck }: any) => {
         // Partial-data banner uses single-cred AuthDialog; clear bulk state so DialogComponent enables Authenticate.
         dispatch(resetRowsRequiringAuthBulk());
 
+        const hostIds = rowsToAuth.map((row: any) => row.id).filter(Boolean);
+        if (hostIds.length > 1) {
+            dispatch(setPartialDataBannerAuthHostIds(hostIds));
+            dispatch(setPartialDataBannerSelectedAuthHostIds(hostIds));
+        } else {
+            dispatch(resetPartialDataBannerAuthHostSelection());
+        }
+
         const hostNames = rowsToAuth.map((row: any) => row?.name).filter(Boolean);
         const databaseHostName = hostNames.length === 1 ? hostNames[0] : `${hostNames.length} hosts`;
 
@@ -416,7 +427,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                 content={
                     <AuthDialog
                         databaseHostName={databaseHostName}
-                        databaseHostNames={hostNames.length > 1 ? hostNames : undefined}
+                        authHostRows={rowsToAuth.length > 1 ? rowsToAuth : undefined}
                         isOracle={isOracleEbs}
                     />
                 }
@@ -426,12 +437,19 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                     dispatch(resetDialogComponent());
                     dispatch(resetServerDetailsCredentials());
                     dispatch(resetBulkAuthCredentialsAndStatus());
+                    dispatch(resetPartialDataBannerAuthHostSelection());
                     closeDialog();
                 }}
                 dialogFrom={FROM_DIALOG.EXPLORE_SAVINGS}
                 callback={() => {
+                    const { partialDataBannerSelectedAuthHostIds = [] } = store.getState().exploreSavingsBulk;
+                    const selectedRowsToAuth =
+                        rowsToAuth.length > 1
+                            ? rowsToAuth.filter((row: any) => partialDataBannerSelectedAuthHostIds.includes(row.id))
+                            : rowsToAuth;
+
                     handleAuthenticate(
-                        rowsToAuth[0],
+                        selectedRowsToAuth[0] ?? rowsToAuth[0],
                         dispatch,
                         selectedExploreSavingsFileSystemType,
                         isWorkloadFactory,
@@ -443,7 +461,7 @@ const SavingsCalculator = ({ statusCheck }: any) => {
                         {
                             isOracle: isOracleEbs,
                             fromPartialDataBanner: true,
-                            rowsToAuthenticate: rowsToAuth
+                            rowsToAuthenticate: selectedRowsToAuth
                         }
                     );
                 }}

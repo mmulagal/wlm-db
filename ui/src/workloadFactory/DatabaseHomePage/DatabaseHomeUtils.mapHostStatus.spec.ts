@@ -70,6 +70,7 @@ describe('mapHostStatusToAssessmentData unregistered cred mismatch', () => {
 
         expect(result[0].statusColText).toBe(INVENTORY_STATUS.UNMANAGED);
         expect(result[0].ec2InstanceId).toBe(ec2Id);
+        expect(result[0].hostName).toBe('adwlmcom');
         expect(result[0].loadingStatus).toBe(false);
     });
 });

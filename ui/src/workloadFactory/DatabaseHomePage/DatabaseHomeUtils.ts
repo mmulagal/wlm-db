@@ -1487,17 +1487,25 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, orac
                 score = `${optBreakDown?.total?.percent || '0'}%`;
                 const optimized = optBreakDown?.total?.optimized || 0;
                 if (score !== '100%') {
+                    const inventoryRow = resolveInventoryRowForAssessmentInstance(
+                        databaseHost,
+                        instance,
+                        inventoryTableData
+                    );
                     const perTableData: any = {
                         id: id++,
-                        hostName: databaseHost?.databaseHostName,
+                        hostName: inventoryRow?.hostName || databaseHost?.databaseHostName,
                         score,
                         optimized,
                         databaseInstanceName: instance?.databaseInstanceName,
+                        serverInstanceName: instance?.databaseInstanceName,
                         databaseHostId: databaseHost?.databaseHostId,
                         instanceId: instance?.databaseInstanceId,
                         credentialId: databaseHost?.credentialId,
                         regionId: databaseHost?.regionId,
-                        type: DBType.MSSQL
+                        type: DBType.MSSQL,
+                        isUnregistered: !!databaseHost?.isUnregistered,
+                        ec2InstanceId: inventoryRow?.ec2InstanceId || databaseHost?.vmInstanceId
                     };
                     tableData.push(perTableData);
                 }
@@ -1532,17 +1540,25 @@ export const getAssessmentHostListGroupedByCategory = (assessmentData: any, orac
                 score = `${optBreakDown?.total?.percent || '0'}%`;
                 const optimized = optBreakDown?.total?.optimized || 0;
                 if (score !== '100%') {
+                    const inventoryRow = resolveInventoryRowForAssessmentInstance(
+                        databaseHost,
+                        instance,
+                        inventoryTableData
+                    );
                     const perTableData: any = {
                         id: id++,
-                        hostName: databaseHost?.databaseHostName,
+                        hostName: inventoryRow?.hostName || databaseHost?.databaseHostName,
                         score,
                         optimized,
                         databaseInstanceName: instance?.databaseInstanceName,
+                        serverInstanceName: instance?.databaseInstanceName,
                         databaseHostId: databaseHost?.databaseHostId,
                         instanceId: instance?.databaseInstanceId,
                         credentialId: databaseHost?.credentialId,
                         regionId: databaseHost?.regionId,
-                        type: DBType.ORACLE
+                        type: DBType.ORACLE,
+                        isUnregistered: !!databaseHost?.isUnregistered,
+                        ec2InstanceId: inventoryRow?.ec2InstanceId || databaseHost?.vmInstanceId
                     };
                     tableData.push(perTableData);
                 }
@@ -1602,6 +1618,7 @@ export const disableOfflineRows = (data: any) =>
 export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any, isLoading: boolean) => {
     const result = assessmentData.map((instanceData: any) => {
         const updatedAssessmentData = { ...instanceData };
+        const instanceName = instanceData.serverInstanceName || instanceData.databaseInstanceName;
         let host =
             hostData?.[uniqueHostRow(instanceData.databaseHostId, instanceData?.credentialId, instanceData.regionId)];
         if (!host && instanceData?.ec2InstanceId) {
@@ -1615,7 +1632,7 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
         const instance = host?.sqlServerInstances?.find(
             (inst: any) =>
                 inst.databaseInstanceId === instanceData.instanceId ||
-                inst.databaseInstanceName?.toLowerCase() === instanceData.serverInstanceName?.toLowerCase()
+                inst.databaseInstanceName?.toLowerCase() === instanceName?.toLowerCase()
         );
 
         if (!host || !instance) {
@@ -1629,7 +1646,7 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
                 },
                 {
                     databaseInstanceId: instanceData.instanceId,
-                    databaseInstanceName: instanceData.serverInstanceName
+                    databaseInstanceName: instanceName
                 },
                 hostData
             );
@@ -1646,6 +1663,9 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
                     !!instanceData?.isUnregistered;
                 updatedAssessmentData.statusColText = inventoryRow.statusColText;
                 updatedAssessmentData.resourceId = inventoryRow.resourceId;
+                if (!updatedAssessmentData.hostName) {
+                    updatedAssessmentData.hostName = inventoryRow.hostName;
+                }
                 updatedAssessmentData.loadingStatus = false;
                 return updatedAssessmentData;
             }
@@ -1663,6 +1683,9 @@ export const mapHostStatusToAssessmentData = (hostData: any, assessmentData: any
             updatedAssessmentData.isUnregistered ?? instance?.isUnregistered ?? !!instanceData?.isUnregistered;
         updatedAssessmentData.statusColText = instance?.statusColText;
         updatedAssessmentData.resourceId = instance?.resourceId;
+        if (!updatedAssessmentData.hostName) {
+            updatedAssessmentData.hostName = host?.name;
+        }
         updatedAssessmentData.loadingStatus = false;
         return updatedAssessmentData;
     });

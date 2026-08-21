@@ -226,6 +226,9 @@ const getWellOptimizeSlice = createSlice({
             state.hostManageReadiness = action.payload.hostManageReadiness;
             state.fsxLinkExists = action.payload.fsxLinkExists;
         },
+        setFsxLinkExists: (state, action: PayloadAction<boolean | undefined>) => {
+            state.fsxLinkExists = action.payload;
+        },
         setLandingFromInnerPage: (state, action: PayloadAction<any>) => {
             state.landingFromInnerPage = action.payload;
         },
@@ -287,6 +290,7 @@ export const {
     setSelectedGwInstanceCredId,
     setSelectedGwInstanceRegionId,
     setGwPageLoadInstanceData,
+    setFsxLinkExists,
     setLandingFromInnerPage,
     setGwSelectedRowFsxId,
     setIsInnerPageOptimize,

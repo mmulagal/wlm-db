@@ -4,13 +4,13 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './InstanceInformation.module.scss';
 import { useAppDispatch, useAppSelector } from '../../../../store/storeHooks';
-import { FINDINGS, SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
+import { FINDINGS, INSTANCE_INFORMATION_DETAIL, SAVINGS_CALC_MODE, WLF_TABS } from '../../../../utils/consts';
 import {
     setOnPremStorageAndComputeInfo,
     setOracleLicenseCostUpdating
 } from '../../../../store/workloadFactory/exploreSavingsSlice';
 import { useSearchDebounce } from '../../../../common/hooks/useSearchDebounce';
-import { hasExploreSavingsAoagDeployment } from '../../ExploreSavingsUtils';
+import { hasExploreSavingsAoagDeployment, hasInsufficientSqlLicensePermissions } from '../../ExploreSavingsUtils';
 import { getOracleColDefs, getInstanceColDefs, getInstanceClassName } from './InstanceInformationUtils';
 
 const InstanceInformation = ({ host }: { host?: any }) => {
@@ -164,6 +164,9 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             const findingsDbModel = hasExploreSavingsAoagDeployment(currentHost)
                 ? FINDINGS.NOT_OPTIMIZED
                 : FINDINGS.OPTIMIZED;
+            const showSqlLicensePermissionTooltip =
+                hasInsufficientSqlLicensePermissions(currentHost) ||
+                findingsLicenseData === FINDINGS.INSUFFICIENT_PERMISSIONS;
 
             setNoOfInstances(
                 isOracleEbs ? currentHost?.databaseInstanceDetails?.length || 0 : currentHost?.totalInstance || 0
@@ -212,18 +215,21 @@ const InstanceInformation = ({ host }: { host?: any }) => {
 
                 const data: any = [
                     {
+                        detailKey: INSTANCE_INFORMATION_DETAIL.INSTANCE_TYPE,
                         details: t('databases.explore-savings.instance-information-table.details.instance-type'),
                         value: instanceTypeValue,
                         id: '1',
                         findings: findingsComputeData
                     },
                     {
+                        detailKey: INSTANCE_INFORMATION_DETAIL.DATABASE_EDITION,
                         details: t('databases.explore-savings.instance-information-table.details.database-edition'),
                         value: oracleEdition,
                         id: '2',
                         findings: findingsLicenseData
                     },
                     {
+                        detailKey: INSTANCE_INFORMATION_DETAIL.DEPLOYMENT_MODEL,
                         details: t('databases.explore-savings.instance-information-table.details.deployment-model'),
                         value: currentHost?.serverInstallationMode || t('databases.general.not-available'),
                         id: '3',
@@ -242,6 +248,7 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                 });
                 const data: any = [
                     {
+                        detailKey: INSTANCE_INFORMATION_DETAIL.INSTANCE_TYPE,
                         details: t('databases.explore-savings.instance-information-table.details.instance-type'),
                         value:
                             instanceTypelist?.length > 0
@@ -251,13 +258,16 @@ const InstanceInformation = ({ host }: { host?: any }) => {
                         findings: isArrayMode ? findingsComputeData : ''
                     },
                     {
+                        detailKey: INSTANCE_INFORMATION_DETAIL.SQL_EDITION,
                         details: t('databases.explore-savings.instance-information-table.details.sql-edition'),
                         value:
                             serverEdition?.length > 0 ? serverEdition.join(', ') : t('databases.general.not-available'),
                         id: '2',
-                        findings: findingsLicenseData
+                        findings: findingsLicenseData,
+                        showSqlLicensePermissionTooltip
                     },
                     {
+                        detailKey: INSTANCE_INFORMATION_DETAIL.DEPLOYMENT_MODEL,
                         details: t('databases.explore-savings.instance-information-table.details.deployment-model'),
                         value: currentHost?.serverAllInstallationMode
                             ? currentHost?.serverAllInstallationMode.join(', ')
@@ -297,6 +307,9 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             )
                 ? FINDINGS.NOT_OPTIMIZED
                 : FINDINGS.OPTIMIZED;
+            const showSqlLicensePermissionTooltip =
+                hasInsufficientSqlLicensePermissions(currentHost) ||
+                findingsLicenseData === FINDINGS.INSUFFICIENT_PERMISSIONS;
 
             setNoOfInstances(currentHost?.totalInstance || 0);
 
@@ -308,12 +321,15 @@ const InstanceInformation = ({ host }: { host?: any }) => {
             });
             const data: any = [
                 {
+                    detailKey: INSTANCE_INFORMATION_DETAIL.SQL_EDITION,
                     details: t('databases.explore-savings.instance-information-table.details.sql-edition'),
                     value: serverEdition?.length > 0 ? serverEdition.join(', ') : t('databases.general.not-available'),
                     id: '2',
-                    findings: findingsLicenseData
+                    findings: findingsLicenseData,
+                    showSqlLicensePermissionTooltip
                 },
                 {
+                    detailKey: INSTANCE_INFORMATION_DETAIL.DEPLOYMENT_MODEL,
                     details: t('databases.explore-savings.instance-information-table.details.deployment-model'),
                     value: currentHost?.deploymentModel || t('databases.general.not-available'),
                     id: '3',
@@ -349,12 +365,14 @@ const InstanceInformation = ({ host }: { host?: any }) => {
 
             const data: any = [
                 {
+                    detailKey: INSTANCE_INFORMATION_DETAIL.DATABASE_EDITION,
                     details: t('databases.explore-savings.instance-information-table.details.database-edition'),
                     value: currentHost?.oracleEdition || t('databases.general.not-available'),
                     id: '1',
                     findings: findingsLicenseData
                 },
                 {
+                    detailKey: INSTANCE_INFORMATION_DETAIL.DEPLOYMENT_MODEL,
                     details: t('databases.explore-savings.instance-information-table.details.deployment-model'),
                     value: currentHost?.deploymentModel || t('databases.general.not-available'),
                     id: '2',

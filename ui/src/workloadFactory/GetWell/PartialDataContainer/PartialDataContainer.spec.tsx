@@ -114,7 +114,8 @@ describe('PartialDataContainer', () => {
         expect(runAssociateLinkPrefetch).toHaveBeenCalledWith(
             { volumeName: '', volumeId: '' },
             expect.anything(),
-            false
+            false,
+            true
         );
     });
 

@@ -1177,15 +1177,10 @@ export const GENERAL = {
     HEADROOM_OVER_PROVISIONED_ERROR: 'Over provisioned headroom can not be optimized',
     NOT_OPTIMIZED_SHARED_DRIVES:
         'Drive size optimization isn’t possible because data is on the same shared drive. You’ll need to change the storage layout before resizing the drive.',
-    ASSESSMENT_FOR_MANAGE: 'Well-architected analysis is only supported for registered instances.',
     FSXN_OPTIMIZE_SUPPORTED:
         'Well-architected analysis is only available for Microsoft SQL Server instances with FSx for ONTAP file system storage.',
-    ASSESSMENT_FOR_UNDETECTED_FSXN: 'Well-architected is only supported for registered instances.',
     ASSESSMENT_STORAGE_TYPE_UNKNOWN:
         'Well-architected analysis is only supported for authenticated and registered FSx for ONTAP instances.',
-    ASSESSMENT_AOAG_DETECTED: 'Well-architected analysis is only supported for registered instances.',
-    ASSESSMENT_AOAG_UNDETECTED:
-        'Well-architected analysis is only supported for authenticated and registered instances.',
     INVENTORY_LOADING_DISABLED: 'Inventory data loading',
     VIRTUAL_MOUNT_POINT_INFO_TOOLTIP:
         'Creates a partition access path folder containing the new database files in the selected drive. Use this option when you run out of drive letters or to consolidate files under existing drives with segregation at storage.',

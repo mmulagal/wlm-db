@@ -96,6 +96,7 @@ const OracleCardComponent = ({
     cardData,
     showDismissedConfigurations,
     setShowDismissedConfigurations,
+    showMissingLinkBanner = false,
     isAllSubConfigActivating
 }: any) => {
     const { t } = useTranslation();
@@ -131,15 +132,19 @@ const OracleCardComponent = ({
     const [disableText, setDisableText] = useState(false);
 
     useEffect(() => {
-        if (!loading && !isAssessmentAvailable) {
+        if (showMissingLinkBanner || (!loading && !isAssessmentAvailable)) {
             setDisableText(true);
         } else {
             setDisableText(false);
         }
-    }, [isAssessmentAvailable, loading]);
+    }, [isAssessmentAvailable, loading, showMissingLinkBanner]);
 
     // Function to determine if dismissed style should be applied
     const shouldApplyDismissedStyle = () => {
+        if (showMissingLinkBanner) {
+            return true;
+        }
+
         // Not applicable configs should have disabled/dismissed style
         // If the configuration data is not available, show the disabled/dismissed style
         if (
@@ -242,6 +247,10 @@ const OracleCardComponent = ({
     };
 
     const dismissDisableButton = () => {
+        if (showMissingLinkBanner) {
+            return true;
+        }
+
         if (
             cardData?.dismissedObj?.configState === CONFIG_STATES.DISMISSED ||
             cardData?.dismissedObj?.configState === CONFIG_STATES.POSTPONED ||
@@ -397,6 +406,7 @@ const OracleCardComponent = ({
                                 loading={loading ?? undefined}
                                 callOptimizeApi={callOracleOptimizeApi}
                                 isWad={isWad}
+                                showMissingLinkBanner={showMissingLinkBanner}
                             />
                         </div>
                     ))}

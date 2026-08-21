@@ -923,6 +923,14 @@ export const FINDINGS = {
     ANALYZING: 'ANALYZING'
 };
 
+/** Stable row keys for instance-information table logic (labels come from i18n). */
+export const INSTANCE_INFORMATION_DETAIL = {
+    INSTANCE_TYPE: 'instance-type',
+    SQL_EDITION: 'sql-edition',
+    DEPLOYMENT_MODEL: 'deployment-model',
+    DATABASE_EDITION: 'database-edition'
+} as const;
+
 export const TCO_MANUAL_DEPLOYMENT_TYPE = {
     SINGLE: 'Single availability zone',
     MULTI: 'Multi availability zone'

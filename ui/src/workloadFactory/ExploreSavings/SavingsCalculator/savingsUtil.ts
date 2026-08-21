@@ -38,7 +38,11 @@ import {
     setViewCalculationsApiResponse,
     setViewCalculationsResponse
 } from '../../../store/workloadFactory/exploreSavingsSlice';
-import { formatStorageSavingsRecommendedData, formatViewCalcData } from '../ExploreSavingsUtils';
+import {
+    formatStorageSavingsRecommendedData,
+    formatViewCalcData,
+    hasInsufficientSqlLicensePermissions
+} from '../ExploreSavingsUtils';
 import { StorageSavingsInterface, ViewCalculationsInterface } from '../../../utils/types/exploreSavingsType';
 
 export const getOracleLicenseCostValue = () => {
@@ -86,6 +90,9 @@ export const comparisonData = (calculatedResponse: any) => {
         ? false
         : checkIfByolFieldRequired(selectedHostDetails, false, savingsCalculatorFrom);
 
+    const insufficientSqlLicensePermissions = !isOracle && hasInsufficientSqlLicensePermissions(selectedHostDetails);
+    const permissionTooltip = i18next.t('databases.explore-savings.insufficient-sql-license-permissions-tooltip');
+
     const licenseLabel = isOracle ? 'Oracle License' : 'SQL license';
     const licenseTooltip = isOracle
         ? ''
@@ -132,7 +139,8 @@ export const comparisonData = (calculatedResponse: any) => {
         },
         {
             type: licenseLabel,
-            isTooltip: licenseTooltip,
+            isTooltip: insufficientSqlLicensePermissions ? permissionTooltip : licenseTooltip,
+            isPermissionTooltip: insufficientSqlLicensePermissions,
             fsx: isOracle
                 ? oracleLicenseCost
                 : formatCost(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice),
@@ -160,7 +168,9 @@ export const comparisonData = (calculatedResponse: any) => {
 
 export const comparisonDataFsxw = (calculatedResponse: any) => {
     const state = store.getState();
-    const { recommendedTargetInstance } = state.exploreSavings;
+    const { recommendedTargetInstance, selectedHostDetails } = state.exploreSavings;
+    const insufficientSqlLicensePermissions = hasInsufficientSqlLicensePermissions(selectedHostDetails);
+    const permissionTooltip = i18next.t('databases.explore-savings.insufficient-sql-license-permissions-tooltip');
     return [
         {
             type: 'Capacity',
@@ -218,8 +228,10 @@ export const comparisonDataFsxw = (calculatedResponse: any) => {
         },
         {
             type: 'SQL license',
-            isTooltip:
-                'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on FSx for Windows are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
+            isTooltip: insufficientSqlLicensePermissions
+                ? permissionTooltip
+                : 'SQL license costs for SQL on FSx for ONTAP are based on the Standard SQL license while SQL license costs for SQL on FSx for Windows are based on the Enterprise license. According to our findings, the SQL license cost is optimal when using FSx for ONTAP.',
+            isPermissionTooltip: insufficientSqlLicensePermissions,
             fsx: calculatedResponse?.recommendedInstance?.licenseMonthlyPrice
                 ? `$${formatFractionalNumberForCost(calculatedResponse?.recommendedInstance?.licenseMonthlyPrice, 2)}`
                 : '$0',

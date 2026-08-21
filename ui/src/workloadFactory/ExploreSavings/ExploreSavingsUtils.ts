@@ -56,6 +56,7 @@ import { addNotification, NOTIFICATION_TYPES } from '../../store/notificationSli
 import {
     addPartialDataBannerAuthedHostKeys,
     resetBulkAuthCredentialsAndStatus,
+    resetPartialDataBannerAuthHostSelection,
     resetRowsRequiringAuthBulk,
     setBulkAuthStatus,
     setRowsRequiringAuthBulk,
@@ -2155,6 +2156,7 @@ const closePartialDataBannerAuthDialog = (dispatch: Dispatch, closeDialogCallbac
     dispatch(resetDialogComponent());
     dispatch(resetServerDetailsCredentials());
     dispatch(resetBulkAuthCredentialsAndStatus());
+    dispatch(resetPartialDataBannerAuthHostSelection());
     closeDialogCallback();
 };
 
@@ -2735,6 +2737,27 @@ export const isMissingSqlPermissions = (sqlServerInstances: any) =>
             return REQUIRED_SQL_PERMISSIONS.some(perm => missing.includes(perm));
         });
     });
+
+const hasSqlEditionDisplayData = (host: any): boolean =>
+    host?.sqlServerInstances?.some(
+        (instance: any) =>
+            instance?.databaseServer?.serverEdition ||
+            instance?.serverEdition ||
+            instance?.sqlEdition ||
+            instance?.sqlServerEdition
+    );
+
+/** SQL license/edition is unavailable in TCO when edition data is missing and permissions are partial or incomplete. */
+export const hasInsufficientSqlLicensePermissions = (host: any): boolean => {
+    if (!host || hasSqlEditionDisplayData(host)) {
+        return false;
+    }
+    return (
+        isMissingSqlPermissions(host?.sqlServerInstances) ||
+        (canEnableExploreSavingsWithoutRegistration(host?.hostManageReadiness) &&
+            host?.hostManageReadiness?.extensiveRunPermission !== true)
+    );
+};
 
 export const shouldAuthDialogOpen = (rowData: any) => {
     if (!rowData?.isDetected) {
