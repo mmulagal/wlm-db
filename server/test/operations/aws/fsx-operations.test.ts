@@ -27,6 +27,7 @@ import {
     isInstanceAppConsistentBackupEnabled,
     resolveOntapVolumeMappings,
     updateVolumeMappings,
+    aggregateProtectionAcrossDataVolumes,
     fetchOntapVolumeSnapshotDetails
 } from '../../../src/operations/aws/fsx-operations';
 import { DEFAULT_AWS_CREDENTIALS_ID, INVENTORY_AWS_VPC_ID, ACCOUNT_ID, CREDENTIALS_ID } from '../../utils/consts';
@@ -127,7 +128,7 @@ describe('Testcases for Amazon FSx resources operations', () => {
             fsxResponse.volumeMap.volumeDBMap,
             `i-${faker.string.fromCharacters('abcdef0123456789', 17)}`
         );
-        expect(response?.volumeDBMapWithBackupFlag.master).toEqual(true);
+        expect(response?.volumeDBMapWithBackupFlag?.master).toEqual(true);
     });
 
     it('Get Ontap volume snapshots count', async () => {
@@ -138,7 +139,42 @@ describe('Testcases for Amazon FSx resources operations', () => {
             fsxResponse.volumeMap.volumeRecords,
             fsxResponse.volumeMap.volumeDBMap
         );
-        expect(response.master).toBeTruthy();
+        expect(response?.master).toBeTruthy();
+    });
+
+    it('requires snapshots on every data volume and ignores a log-only volume', async () => {
+        const response = await getOntapVolumesSnapshotCount(
+            DEFAULT_AWS_CREDENTIALS_ID,
+            DEFAULT_AWS_REGION,
+            FSX_FILESYSTEM_ID,
+            [
+                { name: 'data-protected', uuid: 'data-protected', snapshot_count: 1 },
+                { name: 'data-unprotected', uuid: 'data-unprotected', snapshot_count: 0 },
+                { name: 'log-unprotected', uuid: 'log-unprotected', snapshot_count: 0 }
+            ],
+            [
+                {
+                    databaseName: 'multifile',
+                    ontapVolumeuuid: 'data-protected',
+                    dataLunUuids: ['data-lun-1'],
+                    logLunUuids: []
+                },
+                {
+                    databaseName: 'multifile',
+                    ontapVolumeuuid: 'data-unprotected',
+                    dataLunUuids: ['data-lun-2'],
+                    logLunUuids: []
+                },
+                {
+                    databaseName: 'multifile',
+                    ontapVolumeuuid: 'log-unprotected',
+                    dataLunUuids: [],
+                    logLunUuids: ['log-lun']
+                }
+            ]
+        );
+
+        expect(response).toEqual({ multifile: false });
     });
 
     it('Get Ontap mapped volumes', async () => {
@@ -214,6 +250,35 @@ describe('Testcases for Amazon FSx resources operations', () => {
     });
 
     describe('updateVolumeMappings', () => {
+        it('should retain MDF and NDF data files on different ONTAP volumes', () => {
+            const result = updateVolumeMappings(
+                [
+                    { DatabaseName: 'apr1', VolumeName: 'data1', VolumeId: 'E:\\', FileType: 0, MountPoint: 'E:\\' },
+                    { DatabaseName: 'apr1', VolumeName: 'data2', VolumeId: 'F:\\', FileType: 0, MountPoint: 'F:\\' }
+                ],
+                {
+                    'E:\\': { uuid: 'vol-uuid-mdf', name: 'data1' },
+                    'F:\\': { uuid: 'vol-uuid-ndf', name: 'data2' }
+                },
+                { 'E:\\': 'lun-uuid-mdf', 'F:\\': 'lun-uuid-ndf' }
+            );
+
+            expect(result).toEqual([
+                {
+                    databaseName: 'apr1',
+                    ontapVolumeuuid: 'vol-uuid-mdf',
+                    dataLunUuids: ['lun-uuid-mdf'],
+                    logLunUuids: []
+                },
+                {
+                    databaseName: 'apr1',
+                    ontapVolumeuuid: 'vol-uuid-ndf',
+                    dataLunUuids: ['lun-uuid-ndf'],
+                    logLunUuids: []
+                }
+            ]);
+        });
+
         it('should group multi-file/multi-database rows, bucket LUN uuids by FileType, and dedupe repeated LUNs', () => {
             const databaseVolumeMap = [
                 { DatabaseName: 'apr1', VolumeName: 'sqldata', VolumeId: 'E:\\', FileType: 0, MountPoint: 'E:\\' },
@@ -276,6 +341,43 @@ describe('Testcases for Amazon FSx resources operations', () => {
             const result = updateVolumeMappings(databaseVolumeMap, {}, { 'E:\\': 'lun-uuid-data' });
 
             expect(result).toEqual([]);
+        });
+    });
+
+    describe('aggregateProtectionAcrossDataVolumes', () => {
+        it('ANDs data volumes, ignores log-only rows, and supports legacy rows', () => {
+            const entries = [
+                {
+                    databaseName: 'multifile',
+                    ontapVolumeuuid: 'data-1',
+                    dataLunUuids: ['data-lun-1'],
+                    logLunUuids: []
+                },
+                {
+                    databaseName: 'multifile',
+                    ontapVolumeuuid: 'data-2',
+                    dataLunUuids: ['data-lun-2'],
+                    logLunUuids: []
+                },
+                {
+                    databaseName: 'multifile',
+                    ontapVolumeuuid: 'log',
+                    dataLunUuids: [],
+                    logLunUuids: ['log-lun']
+                },
+                { databaseName: 'legacy', ontapVolumeuuid: 'legacy-data' }
+            ];
+
+            expect(
+                aggregateProtectionAcrossDataVolumes(entries, volume =>
+                    ['data-1', 'log', 'legacy-data'].includes(volume.ontapVolumeuuid)
+                )
+            ).toEqual({ multifile: false, legacy: true });
+            expect(
+                aggregateProtectionAcrossDataVolumes(entries, volume =>
+                    ['data-1', 'data-2', 'legacy-data'].includes(volume.ontapVolumeuuid)
+                )
+            ).toEqual({ multifile: true, legacy: true });
         });
     });
 

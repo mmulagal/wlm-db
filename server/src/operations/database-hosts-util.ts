@@ -54,6 +54,11 @@ interface BackupType {
     [key: string]: boolean;
 }
 
+interface AwsBackupType {
+    volumeDBMapWithBackupFlag?: Record<string, boolean>;
+    volumeUuidsInBackups: boolean;
+}
+
 interface DatabaseDetails {
     databaseId: number;
     databaseName: string;
@@ -411,5 +416,6 @@ export {
     EstimationFSxType,
     EstimationEbsType,
     BackupType,
+    AwsBackupType,
     DatabaseDetails
 };

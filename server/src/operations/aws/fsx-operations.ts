@@ -102,6 +102,25 @@ interface ResolveOntapVolumeMappingsResult {
     volumeDBMap: VolumeDBMapEntry[];
 }
 
+type DataVolumeProtectionEntry = Pick<VolumeDBMapEntry, 'databaseName' | 'dataLunUuids' | 'logLunUuids'>;
+
+function aggregateProtectionAcrossDataVolumes<T extends DataVolumeProtectionEntry>(
+    volumeDBMap: T[] | undefined,
+    isVolumeProtected: (volume: T) => boolean
+): Record<string, boolean> {
+    return (volumeDBMap ?? []).reduce<Record<string, boolean>>((protectionByDatabase, volume) => {
+        const hasDataLuns = Boolean(volume.dataLunUuids?.length);
+        const hasLogLuns = Boolean(volume.logLunUuids?.length);
+        if (!hasDataLuns && hasLogLuns) {
+            return protectionByDatabase;
+        }
+
+        const isProtected = isVolumeProtected(volume);
+        protectionByDatabase[volume.databaseName] = (protectionByDatabase[volume.databaseName] ?? true) && isProtected;
+        return protectionByDatabase;
+    }, {});
+}
+
 async function getFSXDetails(credentialsId: string, region: string, fileSystems: FileSystem[]) {
     const allFileSystems: FSxFileSystemType[] = [];
     const fileSystemChunks = divideArrayIntoChunks(fileSystems, 20);
@@ -433,7 +452,7 @@ async function isFsxnAwsBackupEnabled(
                 volumeUuids,
                 accountId
             );
-            let volumeDBMapWithBackupFlag;
+            let volumeDBMapWithBackupFlag: Record<string, boolean> | undefined;
             const backups: Backup[] = [];
             if (!isEmpty(volumeIds)) {
                 const volumeChunks = divideArrayIntoChunks(volumeIds, 20);
@@ -479,13 +498,10 @@ async function isFsxnAwsBackupEnabled(
                 });
 
                 if (volumeDBMap) {
-                    // This function maps the volumes in the volumeDBMap to their backup status,
-                    // indicating whether they have backups or not. {master: true, model: true, msdb: true};
-                    volumeDBMapWithBackupFlag = volumeDBMap?.reduce((acc: any, volume: any) => {
-                        const fsxbackup = volumeUuidsInBackups.includes(volume.ontapVolumeuuid);
-                        acc[volume.databaseName] = fsxbackup;
-                        return acc;
-                    }, {});
+                    volumeDBMapWithBackupFlag = aggregateProtectionAcrossDataVolumes(
+                        volumeDBMap,
+                        (volume: VolumeDBMapEntry) => volumeUuidsInBackups.includes(volume.ontapVolumeuuid)
+                    );
                 }
 
                 logger.debug('fsx backups here', backups, uuidVolumeIdMap, volumeDBMapWithBackupFlag);
@@ -543,23 +559,9 @@ async function getOntapVolumesSnapshotCount(
                 return map;
             }, {});
 
-            const volumeDBMapWithProtectionFlag = volumeDBMap?.reduce(
-                (
-                    acc: any,
-                    volumeDetail: {
-                        ontapVolumeuuid: string;
-                        localSnapshotsProtected: boolean;
-                        databaseName: string;
-                    }
-                ) => {
-                    if (volumesMap[volumeDetail.ontapVolumeuuid] > 0) {
-                        acc[volumeDetail.databaseName] = true;
-                    } else {
-                        acc[volumeDetail.databaseName] = false;
-                    }
-                    return acc;
-                },
-                {}
+            const volumeDBMapWithProtectionFlag = aggregateProtectionAcrossDataVolumes(
+                volumeDBMap,
+                (volumeDetail: VolumeDBMapEntry) => volumesMap[volumeDetail.ontapVolumeuuid] > 0
             );
 
             return volumeDBMapWithProtectionFlag;
@@ -1339,7 +1341,7 @@ async function isInstanceAppConsistentBackupEnabled(
     region: string,
     fsxId: string,
     volumesToCheck: string[],
-    volumeDBMap: Array<{ ontapVolumeuuid: string; databaseName: string }>,
+    volumeDBMap: VolumeDBMapEntry[],
     accountId?: string
 ) {
     logger.info(
@@ -1369,13 +1371,10 @@ async function isInstanceAppConsistentBackupEnabled(
                 `Error fetching snapshot copy details for volumes: ${volumesToCheck}. Errors: ${JSON.stringify(errors)}`
             );
         }
-        const appConsistentBackupMap: Record<string, boolean> = {};
-
-        for (const db of volumeDBMap) {
-            const { databaseName, ontapVolumeuuid } = db;
+        const appConsistentBackupMap = aggregateProtectionAcrossDataVolumes(volumeDBMap, ({ ontapVolumeuuid }) => {
             const { comment = '' } = response?.[ontapVolumeuuid] ?? {};
-            appConsistentBackupMap[databaseName] = IS_DEMO_FLOW || comment === SNAPCENTER_BACKUP_SNAPSHOT_COMMENT;
-        }
+            return IS_DEMO_FLOW || comment === SNAPCENTER_BACKUP_SNAPSHOT_COMMENT;
+        });
 
         return appConsistentBackupMap;
     } catch (error) {
@@ -1515,6 +1514,7 @@ export {
     getMZFsxnNodePreference,
     resolveOntapVolumeMappings,
     updateVolumeMappings,
+    aggregateProtectionAcrossDataVolumes,
     fetchOntapVolumeSnapshotDetails,
     DEFAULT_LATEST_SNAPSHOT_FIELDS,
     type VolumeSnapshotDetails

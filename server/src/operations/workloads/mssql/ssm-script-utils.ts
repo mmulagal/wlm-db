@@ -1319,7 +1319,7 @@ SELECT DISTINCT
 SELECT DISTINCT vs.logical_volume_name as volumename FROM sys.master_files AS mf
                         CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.[file_id]) AS vs
                         WHERE vs.volume_mount_point ${SQL_CASE_INSENSITIVE} != 'C:\\'
-                        AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 1, 3)) ${SQL_CASE_INSENSITIVE} = 'MDF'
+                        AND mf.type = 0
                         AND REVERSE(SUBSTRING(REVERSE(mf.physical_name), 5, 6)) ${SQL_CASE_INSENSITIVE} != 'TEMPDB'
                         FOR JSON PATH
 "@

@@ -71,7 +71,8 @@ import {
     getCostAllocationTagFsxResource,
     isFsxwAwsBackupEnabled,
     getMappedOntapVolumes,
-    isInstanceAppConsistentBackupEnabled
+    isInstanceAppConsistentBackupEnabled,
+    aggregateProtectionAcrossDataVolumes
 } from './aws/fsx-operations';
 import {
     DatabaseInstance,
@@ -116,6 +117,7 @@ import { trendGraphCreateScriptForOracle } from './workloads/oracle/oracle-ssm-s
 import { getPaginatedDatabaseInstances, getResources, populateDbInstances } from './database/database-operations';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from './workloads/pgsql/const';
 import {
+    AwsBackupType,
     BackupType,
     checkAllTrue,
     checkKey,
@@ -1217,7 +1219,11 @@ async function getDatabasesV2(
     }
 }
 
-function fetchCrrBackupDetails(instanceDetails: DatabaseInstance[], volumeRecords: VolumeRecord[], volumeDBMap: any) {
+function fetchCrrBackupDetails(
+    instanceDetails: DatabaseInstance[],
+    volumeRecords: VolumeRecord[],
+    volumeDBMap: VolumeDBMapEntry[]
+) {
     logger.info('Fetching CRR backup details', {
         instanceNames: instanceDetails.map(instance => instance?.database_instance_name),
         volumeRecordsLength: volumeRecords?.length
@@ -1227,15 +1233,17 @@ function fetchCrrBackupDetails(instanceDetails: DatabaseInstance[], volumeRecord
         return [];
     }
     const [{ crrConfigData: { crrDetails } = {} }] = instanceDetails;
-    const crrMapping = Object.entries(volumeDBMap).map(([, dbMap]: [string, any]) => {
-        const { databaseName, ontapVolumeuuid: volumeUuid } = dbMap;
+    const crrMapping = volumeDBMap.map(dbMap => {
+        const { databaseName, ontapVolumeuuid: volumeUuid, dataLunUuids, logLunUuids } = dbMap;
         const { name: volumeNameFromVolumeRecords } = volumeRecords.find(vr => vr.uuid === volumeUuid) || {};
         const crrDetail = Array.isArray(crrDetails)
             ? crrDetails.find(({ volumeName }: { volumeName: string }) => volumeName === volumeNameFromVolumeRecords)
             : undefined;
         return {
             databaseName,
-            isCRREnabled: crrDetail ? crrDetail.isCRREnabled : null
+            isCRREnabled: crrDetail ? crrDetail.isCRREnabled : null,
+            dataLunUuids,
+            logLunUuids
         };
     });
 
@@ -1339,7 +1347,7 @@ async function getProtectionDetails(
     isSqlAuthEnabled = false,
     preFetchedInstanceVolumeMapping?: Record<string, MappedOnTapVolumeResponse>
 ): Promise<{
-    awsBackup: Record<string, BackupType>;
+    awsBackup: Record<string, AwsBackupType>;
     ontapBackup: Record<string, BackupType>;
     crrBackup: Record<string, BackupType>;
     isAppConsistentBackupEnabled: Record<string, BackupType>;
@@ -1381,7 +1389,7 @@ async function getProtectionDetails(
         ])
     );
 
-    const awsBackup: Record<string, BackupType> = {};
+    const awsBackup: Record<string, AwsBackupType> = {};
     const ontapBackup: Record<string, BackupType> = {};
     const crrBackup: Record<string, BackupType> = {};
     const isAppConsistentBackupEnabled: Record<string, BackupType> = {};
@@ -1425,12 +1433,9 @@ async function getProtectionDetails(
                 volumeUuidsInBackups: Boolean(awsBackupInstance?.volumeUuidsInBackups)
             };
             ontapBackup[instanceName] = ontapBackupInstance || {};
-            crrBackup[instanceName] = crrBackupInstance.reduce(
-                (acc: BackupType, item: { databaseName: string; isCRREnabled: boolean | null }) => {
-                    acc[item.databaseName] = item.isCRREnabled === null ? false : item.isCRREnabled;
-                    return acc;
-                },
-                {}
+            crrBackup[instanceName] = aggregateProtectionAcrossDataVolumes(
+                crrBackupInstance,
+                item => item.isCRREnabled === true
             );
             isAppConsistentBackupEnabled[instanceName] = { ...databaseAppConsistentBackupMap };
         })
