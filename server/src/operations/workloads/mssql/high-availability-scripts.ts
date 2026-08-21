@@ -38,19 +38,23 @@ $quorumResourceName = [string]$quorumInfo.QuorumResource
 $quorumType = $quorumInfo.QuorumType
 $windowsClusterName = (Get-Cluster -ErrorAction SilentlyContinue).Name
 
-# Get all cluster resources of type 'Physical Disk'
-$physicalDisks = Get-ClusterResource | Where-Object { $_.ResourceType -eq "Physical Disk" }
-
-# Check if the quorum resource matches any physical disk resource
-$quorumResource = $physicalDisks | Where-Object { $_.Name -eq $quorumResourceName }
+$quorumResource = Get-ClusterResource |
+    Where-Object { $_.Name -eq $quorumResourceName }
+$isPhysicalDisk = $quorumResource.ResourceType -eq "Physical Disk"
+$isFileShareWitness = $quorumResource.ResourceType -eq "File Share Witness"
+$isMajority = $quorumType -eq "Majority"
+$isPhysicalDiskAndMajority = $isPhysicalDisk -and $isMajority
+$isSupportedWitnessAndMajority = ($isPhysicalDisk -or $isFileShareWitness) -and $isMajority
 
 # Prepare result object
 $result = [PSCustomObject]@{
                 QuorumResourceName = $quorumResourceName
                 QuorumType = $quorumType
-                IsPhysicalDisk = !!$quorumResource
-                IsMajority = $quorumType -eq "Majority"
-                IsPhysicalDiskAndMajority = !!$quorumResource -and ($quorumType -eq "Majority")
+                IsPhysicalDisk = $isPhysicalDisk
+                IsFileShareWitness = $isFileShareWitness
+                IsMajority = $isMajority
+                IsPhysicalDiskAndMajority = $isPhysicalDiskAndMajority
+                IsSupportedWitnessAndMajority = $isSupportedWitnessAndMajority
                 WindowsClusterName = $windowsClusterName
 }
 $result | ConvertTo-Json -Compress

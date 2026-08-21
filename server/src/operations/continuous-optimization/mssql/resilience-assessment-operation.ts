@@ -1174,16 +1174,26 @@ async function initiateHostLevelHighAvailabilityAssessment(
                 error: 'Unable to parse quorum data from ssm response'
             };
         } else {
+            const {
+                IsSupportedWitnessAndMajority: isSupportedWitnessAndMajorityRaw,
+                IsPhysicalDiskAndMajority: isPhysicalDiskAndMajority,
+                IsMajority: isMajority,
+                QuorumType: quorumType,
+                IsPhysicalDisk: isPhysicalDisk,
+                IsFileShareWitness: isFileShareWitness,
+                QuorumResourceName: quorumResourceName
+            } = parsedQuorumData;
+            const isSupportedWitnessAndMajority = isSupportedWitnessAndMajorityRaw ?? isPhysicalDiskAndMajority;
             clusterQuorumResult = {
-                status: parsedQuorumData.IsPhysicalDiskAndMajority
-                    ? AssessmentStatus.OPTIMIZED
-                    : AssessmentStatus.NOT_OPTIMIZED,
+                status: isSupportedWitnessAndMajority ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
                 details: {
-                    isMajority: parsedQuorumData.IsMajority,
-                    quorumType: parsedQuorumData.QuorumType,
-                    isPhysicalDisk: parsedQuorumData.IsPhysicalDisk,
-                    quorumResourceName: parsedQuorumData.QuorumResourceName,
-                    isPhysicalDiskAndMajority: parsedQuorumData.IsPhysicalDiskAndMajority
+                    isMajority,
+                    quorumType,
+                    isPhysicalDisk,
+                    isFileShareWitness,
+                    quorumResourceName,
+                    isPhysicalDiskAndMajority,
+                    isSupportedWitnessAndMajority
                 }
             };
         }
@@ -1468,7 +1478,7 @@ async function getHighAvailabilityDriftData(
                           clusterQuorum.status !== AssessmentStatus.OPTIMIZED
                               ? [
                                     {
-                                        objectName: 'isPhysicalDiskAndMajority',
+                                        objectName: 'isSupportedWitnessAndMajority',
                                         value: 'false',
                                         objectType: 'configuration',
                                         recommended: 'true'

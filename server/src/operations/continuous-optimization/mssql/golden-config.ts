@@ -587,7 +587,7 @@ const MSSQL_GOLDEN_CONFIG: GoldenConfigEntry[] = [
         categories: [AwsWellArchitecturedPillars.RELIABILITY],
         resourceType: ASSESSMENT_RESOURCE_TYPE.WINDOWS_CLUSTER,
         recommendation:
-            'The quorum configuration should be tailored to a 2-node Windows Failover Cluster, using Node and Disk Majority with a Disk Witness to ensure high availability.',
+            'Configure the 2-node Windows Failover Cluster with a majority quorum using either a Disk Witness or a File Share Witness.',
         recommended: '',
         configLevel: 'host'
     },

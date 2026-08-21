@@ -142,8 +142,10 @@ interface HighAvailabilityClusterQuorumDetails {
     isMajority: boolean;
     quorumType: number;
     isPhysicalDisk: boolean;
+    isFileShareWitness?: boolean;
     quorumResourceName: string;
     isPhysicalDiskAndMajority: boolean;
+    isSupportedWitnessAndMajority?: boolean;
 }
 
 interface HighAvailabilityIgroupDetails {

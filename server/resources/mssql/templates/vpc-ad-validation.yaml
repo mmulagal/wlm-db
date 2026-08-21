@@ -204,7 +204,7 @@ Resources:
         Condition: ADCheckEnabled
         Properties:
             Handle: !Ref ValidationNode1WaitHandler
-            Timeout: '2700'
+            Timeout: '3600'
             Count: 1
     ValidationNode1:
         Type: AWS::EC2::Instance
@@ -212,7 +212,7 @@ Resources:
         CreationPolicy:
             ResourceSignal:
                 Count: '1'
-                Timeout: PT45M
+                Timeout: PT60M
         Metadata:
             AWS::CloudFormation::Init:
                 configSets:
@@ -564,7 +564,7 @@ Resources:
         Condition: ADCheckNotEnabled
         Properties:
             Handle: !Ref ValidationNode2WaitHandler
-            Timeout: '900'
+            Timeout: '1800'
             Count: 1
     ValidationNode2:
         Type: AWS::EC2::Instance
@@ -572,7 +572,7 @@ Resources:
         CreationPolicy:
             ResourceSignal:
                 Count: '1'
-                Timeout: PT15M
+                Timeout: PT30M
         Metadata:
             AWS::CloudFormation::Init:
                 configSets:

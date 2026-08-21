@@ -1690,23 +1690,24 @@ const hostLevelHighAvailabilityAssessmentTemplate = `
             $quorumResourceName = [string]$quorumInfo.QuorumResource
             $quorumType = $quorumInfo.QuorumType
 
-            # Get all cluster resources of type 'Physical Disk'
-            $physicalDisks = Get-ClusterResource | Where-Object { $_.ResourceType -eq "Physical Disk" }
-
-            # Check if the quorum resource matches any physical disk resource
-            $quorumResource = $physicalDisks | Where-Object { $_.Name -eq $quorumResourceName }
-
-            # IsPhysicalDiskAndMajority means NodeAndDiskMajority (recommended for 2-node FCI)
-            $isPhysicalDiskAndMajority = (!!$quorumResource) -and ($quorumType -eq "Majority")
+            $quorumResource = Get-ClusterResource |
+                Where-Object { $_.Name -eq $quorumResourceName }
+            $isPhysicalDisk = $quorumResource.ResourceType -eq "Physical Disk"
+            $isFileShareWitness = $quorumResource.ResourceType -eq "File Share Witness"
+            $isMajority = $quorumType -eq "Majority"
+            $isPhysicalDiskAndMajority = $isPhysicalDisk -and $isMajority
+            $isSupportedWitnessAndMajority = ($isPhysicalDisk -or $isFileShareWitness) -and $isMajority
 
             $FinalResponse['rawdata']['hostLevelDetails']['highAvailability']['clusterQuorum'] = @{
-                status = if ($isPhysicalDiskAndMajority) { 'optimized' } else { 'not-optimized' }
+                status = if ($isSupportedWitnessAndMajority) { 'optimized' } else { 'not-optimized' }
                 details = @{
                     quorumResourceName = $quorumResourceName
                     quorumType = $quorumType
-                    isPhysicalDisk = !!$quorumResource
-                    isMajority = $quorumType -eq "Majority"
+                    isPhysicalDisk = $isPhysicalDisk
+                    isFileShareWitness = $isFileShareWitness
+                    isMajority = $isMajority
                     isPhysicalDiskAndMajority = $isPhysicalDiskAndMajority
+                    isSupportedWitnessAndMajority = $isSupportedWitnessAndMajority
                 }
             }
         } catch {

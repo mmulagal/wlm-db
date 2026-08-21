@@ -394,9 +394,28 @@ describe('ssm-doc-storage-assessment', () => {
             expect(finding.totalObjectsInViolation).toBe(0);
         });
 
-        it('should mark as not optimized when weight is not 1 or resource type is not Physical Disk', () => {
-            const [finding] = calculateRegistryClusterQuorumDrift(
+        it('should mark as optimized when resource type is File Share Witness regardless of weight', () => {
+            const findings = [
                 { weight: '0', resourceType: 'File Share Witness' },
+                { weight: '1', resourceType: 'File Share Witness' },
+                { resourceType: 'File Share Witness' }
+            ].map(
+                quorum =>
+                    calculateRegistryClusterQuorumDrift(quorum, TEST_STOPPED_EC2_INSTANCE_ID)[0] as {
+                        status?: string;
+                        totalObjectsInViolation?: number;
+                    }
+            );
+
+            findings.forEach(finding => {
+                expect(finding.status).toBe(AssessmentStatus.OPTIMIZED);
+                expect(finding.totalObjectsInViolation).toBe(0);
+            });
+        });
+
+        it('should mark as not optimized when resource type is not a supported witness', () => {
+            const [finding] = calculateRegistryClusterQuorumDrift(
+                { weight: '1', resourceType: 'Cloud Witness' },
                 TEST_STOPPED_EC2_INSTANCE_ID
             ) as any[];
 

@@ -35,7 +35,9 @@ const SQL_INSTANCE_NAMES_PATH = 'HKLM:\\SOFTWARE\\Microsoft\\Microsoft SQL Serve
 const MPIO_PARAMETERS_PATH = 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\mpio\\Parameters';
 const DISK_TIMEOUT_PATH = 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Disk';
 const CLUSTER_QUORUM_REGISTRY_PATH = 'HKLM:\\Cluster\\Quorum';
-const CLUSTER_QUORUM_RECOMMENDED_TYPE = 'Physical Disk';
+const CLUSTER_QUORUM_PHYSICAL_DISK_TYPE = 'Physical Disk';
+const CLUSTER_QUORUM_FILE_SHARE_WITNESS_TYPE = 'File Share Witness';
+const CLUSTER_QUORUM_RECOMMENDED_TYPES = [CLUSTER_QUORUM_PHYSICAL_DISK_TYPE, CLUSTER_QUORUM_FILE_SHARE_WITNESS_TYPE];
 const DRIVE_LETTER_PATTERN = /^[A-Za-z]:/;
 const SYSTEM_DATABASE_FILE_PATTERN = /^(master|mastlog|model|tempdb|templog|msdb)/i;
 const clusterResourceRegistryPath = (resourceId: string): string => `HKLM:\\Cluster\\Resources\\${resourceId}`;
@@ -604,14 +606,19 @@ function calculateRegistryClusterQuorumDrift(
         return [{ ...goldenData, errorMessage: quorum?.error ?? NO_CLUSTER_QUORUM_DATA_ERROR }];
     }
 
-    if (!quorum.weight || !quorum.resourceType) {
+    if (!quorum.resourceType) {
         return [{ ...goldenData, errorMessage: INCOMPLETE_CLUSTER_QUORUM_DATA_ERROR }];
     }
 
+    const isFileShareWitness = quorum.resourceType === CLUSTER_QUORUM_FILE_SHARE_WITNESS_TYPE;
+    if (!isFileShareWitness && !quorum.weight) {
+        return [{ ...goldenData, errorMessage: INCOMPLETE_CLUSTER_QUORUM_DATA_ERROR }];
+    }
+
+    const isPhysicalDiskMajority =
+        quorum.resourceType === CLUSTER_QUORUM_PHYSICAL_DISK_TYPE && Number(quorum.weight) === 1;
     const status =
-        Number(quorum.weight) === 1 && quorum.resourceType === CLUSTER_QUORUM_RECOMMENDED_TYPE
-            ? AssessmentStatus.OPTIMIZED
-            : AssessmentStatus.NOT_OPTIMIZED;
+        isFileShareWitness || isPhysicalDiskMajority ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED;
     const isViolation = status === AssessmentStatus.NOT_OPTIMIZED;
 
     return [
@@ -635,7 +642,7 @@ function calculateRegistryClusterQuorumDrift(
                           objectName: 'resourceType',
                           value: quorum.resourceType ?? 'Unknown',
                           objectType: ASSESSMENT_RESOURCE_TYPE.WINDOWS_CLUSTER,
-                          recommended: CLUSTER_QUORUM_RECOMMENDED_TYPE
+                          recommended: CLUSTER_QUORUM_RECOMMENDED_TYPES.join(' or ')
                       }
                   ]
                 : undefined
