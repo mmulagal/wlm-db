@@ -585,8 +585,13 @@
             "status": "not-optimized",
             "recommended": "",
             "subType": "configuration",
-            "resourceType": "EC2 Instance",
-            "objectsInViolation": ["i-5520fe41798c75632"],
+            "resourceType": "NFS Mount",
+            "objectsInViolation": [
+                "/oracledata2:/mnt/oradata",
+                "/oracledata2:/mnt/oradata_secondary",
+                "/oraclearch2:/mnt/oraarch",
+                "/oracleredo2:/mnt/oraredoctl"
+            ],
             "violationDetails": [
                 {
                     "objectName": "/oracledata2:/mnt/oradata",
@@ -613,8 +618,8 @@
                     "recommended": "rw=true, bg=true, hard=true, proto=tcp, rsize=262144, wsize=262144, nointr=true, timeo=600, vers=4.2"
                 }
             ],
-            "totalObjectsAssessed": 1,
-            "totalObjectsInViolation": 1,
+            "totalObjectsAssessed": 4,
+            "totalObjectsInViolation": 4,
             "focusWidgetName": "Operating system"
         },
         {
@@ -627,8 +632,8 @@
             "status": "not-optimized",
             "recommended": "",
             "subType": "configuration",
-            "resourceType": "EC2 Instance",
-            "objectsInViolation": ["i-5520fe41798c75632"],
+            "resourceType": "NFS Mount",
+            "objectsInViolation": ["198.19.255.89:/orahome"],
             "violationDetails": [
                 {
                     "objectName": "198.19.255.89:/orahome",
@@ -675,8 +680,10 @@
             "status": "not-optimized",
             "recommended": "",
             "subType": "configuration",
-            "resourceType": "EC2 Instance",
-            "objectsInViolation": ["i-5520fe41798c75632"],
+            "resourceType": "NFS Mount",
+            "objectsInViolation": [
+                "/oracledata2:/mnt/oradata, /oracledata2:/mnt/oradata_secondary, /oraclearch2:/mnt/oraarch, /oracleredo2:/mnt/oraredoctl"
+            ],
             "violationDetails": [
                 {
                     "objectName": "/oracledata2:/mnt/oradata",
@@ -703,8 +710,8 @@
                     "recommended": "Remove noac option and ensure caching options are not set to 0"
                 }
             ],
-            "totalObjectsAssessed": 1,
-            "totalObjectsInViolation": 1,
+            "totalObjectsAssessed": 4,
+            "totalObjectsInViolation": 4,
             "focusWidgetName": "Operating system"
         },
         {
@@ -1543,25 +1550,115 @@
         {
             "id": "multipath-configuration",
             "name": "Multipath configuration",
-            "type": "compute",
-            "severity": "warning",
-            "recommendation": "Workload Factory recommends configuring multipath.conf with the recommended settings for Oracle database hosts using NetApp storage to ensure optimal I/O performance and reliability.",
-            "categories": ["Performance efficiency", "Reliability"],
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP block devices, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.",
+            "categories": ["Reliability", "Operational excellence"],
             "status": "not-optimized",
-            "recommended": "Optimized",
-            "subType": "configuration",
-            "resourceType": "EC2 Instance",
-            "objectsInViolation": ["i-5520fe41798c75632"],
-            "violationDetails": [
-                {
-                    "objectName": "path_selector",
-                    "value": "round-robin 0",
-                    "objectType": "multipath configuration",
-                    "recommended": "service-time 0"
-                }
-            ],
+            "recommended": "",
+            "objectsInViolation": ["i-0f637156f1dcbd1be"],
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "violationDetails": [
+                {
+                    "objectName": "find_multipaths",
+                    "value": "not found",
+                    "objectType": "default configuration",
+                    "recommended": "find_multipaths yes or on"
+                },
+                {
+                    "objectName": "polling_interval",
+                    "value": "not found",
+                    "objectType": "default configuration",
+                    "recommended": "polling_interval 5"
+                },
+                {
+                    "objectName": "path_grouping_policy",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "path_grouping_policy group_by_prio"
+                },
+                {
+                    "objectName": "path_selector",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "path_selector service-time 0"
+                },
+                {
+                    "objectName": "prio",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "prio ontap"
+                },
+                {
+                    "objectName": "hardware_handler",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "hardware_handler 0"
+                },
+                {
+                    "objectName": "failback",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "failback immediate"
+                },
+                {
+                    "objectName": "rr_weight",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "rr_weight uniform"
+                },
+                {
+                    "objectName": "no_path_retry",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "no_path_retry queue"
+                },
+                {
+                    "objectName": "fast_io_fail_tmo",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "fast_io_fail_tmo 5"
+                },
+                {
+                    "objectName": "dev_loss_tmo",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "dev_loss_tmo infinity"
+                },
+                {
+                    "objectName": "detect_prio",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "detect_prio yes"
+                },
+                {
+                    "objectName": "flush_on_last_del",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "flush_on_last_del yes or always"
+                },
+                {
+                    "objectName": "retain_attached_hw_handler",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "retain_attached_hw_handler yes"
+                },
+                {
+                    "objectName": "path_checker",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "path_checker tur"
+                },
+                {
+                    "objectName": "max_sectors_kb",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "max_sectors_kb 4096"
+                }
+            ],
             "focusWidgetName": "Operating system"
         },
         {

@@ -21,7 +21,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "SSD storage tier",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -252,7 +252,7 @@
                 },
                 {
                     "key": "sizePercentToDataDrive",
-                    "label": "Log drive size percentage",
+                    "label": "Current value",
                     "accessor": "sizePercentToDataDrive"
                 },
                 {
@@ -367,7 +367,7 @@
                 },
                 {
                     "key": "sizePercentToDataDrive",
-                    "label": "TempDB drive size percentage",
+                    "label": "Current value",
                     "accessor": "sizePercentToDataDrive"
                 },
                 {
@@ -725,7 +725,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Autosize-mode",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -786,18 +786,18 @@
                 },
                 {
                     "key": "current",
-                    "label": "Current",
+                    "label": "Current value",
                     "accessor": "current"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "LUNs/volume",
+            "resourceTypeLabel": "Block device",
             "hasSubConfigs": true,
-            "tableTitle": "Impacted LUNs/volumes"
+            "tableTitle": "Impacted block devices"
         },
         "dialogContent": {
             "sections": [
@@ -854,7 +854,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Snapshot copy reserve",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -1097,12 +1097,12 @@
                 },
                 {
                     "key": "current",
-                    "label": "Current",
+                    "label": "Current value",
                     "accessor": "current"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 }
             ],
@@ -1152,12 +1152,12 @@
                 },
                 {
                     "key": "current",
-                    "label": "Current",
+                    "label": "Current value",
                     "accessor": "current"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 }
             ],
@@ -1206,7 +1206,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Snapshot status",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -1272,19 +1272,19 @@
             "tagSection": "256px"
         },
         "cardMetadata": {
-            "impactedLabel": "Impacted LUNs",
+            "impactedLabel": "Impacted block devices",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "LUN name",
+                    "label": "Block device path",
                     "accessor": "objectName"
                 },
                 {
                     "key": "value",
-                    "label": "OS type",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -1293,7 +1293,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "LUN"
+            "resourceTypeLabel": "Block device"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1353,7 +1353,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Policy",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -1400,15 +1400,16 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted storage multipaths",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Multipath configuration",
-                    "accessor": "objectName"
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "value",
@@ -1421,7 +1422,8 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Storage multipath"
+            "resourceTypeLabel": "Host",
+            "combineRows": true
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1455,32 +1457,15 @@
         "viewLink": true
     },
     "mpio-enabled": {
-        "hasInnerPage": true,
+        "hasInnerPage": false,
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted storage multipaths",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
-            "columns": [
-                {
-                    "key": "objectName",
-                    "label": "Multipath configuration",
-                    "accessor": "objectName"
-                },
-                {
-                    "key": "value",
-                    "label": "Current value",
-                    "accessor": "value"
-                },
-                {
-                    "key": "recommended",
-                    "label": "Recommended value",
-                    "accessor": "recommended"
-                }
-            ],
-            "resourceTypeLabel": "Storage multipath"
+            "resourceTypeLabel": "Host"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1518,10 +1503,11 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted storage multipaths",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "tableTitle": "Impacted configuration",
             "columns": [
                 {
                     "key": "objectName",
@@ -1539,7 +1525,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Storage multipath"
+            "resourceTypeLabel": "Host"
         },
         "optimizeApi": {
             "mutation": "optimizeOperatingSystemForBulk",
@@ -1586,7 +1572,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "NTFS allocation unit size",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -1638,6 +1624,13 @@
         "hasInnerPage": false,
         "viewOnly": false,
         "fixSupported": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted hosts",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "resourceTypeLabel": "Host"
+        },
         "optimizeApi": {
             "mutation": "optimizeComputeConfigForBulk",
             "payloadScope": "bulk",
@@ -1668,8 +1661,11 @@
         "viewOnly": true,
         "fixSupported": false,
         "cardMetadata": {
-            "impactedLabel": "Impacted missing patches",
+            "impactedLabel": "Missing patches",
             "countSource": "impactedCount"
+        },
+        "columns": {
+            "resourceTypeLabel": "Host"
         },
         "dialogContent": {
             "sections": [
@@ -1863,7 +1859,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "MTU size",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -1914,6 +1910,9 @@
         "viewOnly": true,
         "fixSupported": false,
         "optimizeNotAvailable": true,
+        "columns": {
+            "resourceTypeLabel": "Host"
+        },
         "applicationPriority": 1,
         "viewLink": false
     },
@@ -1922,7 +1921,7 @@
         "viewOnly": true,
         "fixSupported": false,
         "cardMetadata": {
-            "impactedLabel": "Impacted missing patches",
+            "impactedLabel": "Missing patches",
             "countSource": "impactedCount"
         },
         "dialogContent": {
@@ -2168,7 +2167,7 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted clusters",
+            "impactedLabel": "Impacted SQL instances",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
@@ -2195,7 +2194,7 @@
                     "accessor": "configName"
                 }
             ],
-            "resourceTypeLabel": "Cluster"
+            "resourceTypeLabel": "SQL instance"
         },
         "optimizeApi": {
             "mutation": "optimizeHAMssql",
@@ -2291,7 +2290,7 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted heartbeat settings",
+            "impactedLabel": "Impacted SQL instances",
             "countSource": "totalObjectsInViolation"
         },
         "optimizeApi": {
@@ -2351,16 +2350,16 @@
                 },
                 {
                     "key": "current",
-                    "label": "Current heartbeat setting",
+                    "label": "Current value",
                     "accessor": "current"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended heartbeat setting",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "heartbeat setting",
+            "resourceTypeLabel": "SQL instance",
             "combineRows": true
         },
         "resiliencyPriority": 9,
@@ -2371,7 +2370,7 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted LUNs",
+            "impactedLabel": "Impacted block devices",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
@@ -2385,7 +2384,7 @@
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "LUN name",
+                    "label": "Block device path",
                     "accessor": "objectName"
                 },
                 {
@@ -2399,7 +2398,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "LUN"
+            "resourceTypeLabel": "Block device"
         },
         "optimizeApi": {
             "mutation": "optimizeHAMssql",
@@ -2439,14 +2438,14 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted EC2 instances",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Node name",
+                    "label": "Host name",
                     "accessor": "objectName"
                 },
                 {
@@ -2460,7 +2459,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "EC2 instance"
+            "resourceTypeLabel": "Host"
         },
         "optimizeApi": {
             "mutation": "optimizeHAMssql",

@@ -46,7 +46,7 @@ import {
 import { handleOptimizeStorageJob } from '../../../GetWell/GetWellUtils';
 import { isExcludedFromOptimizationCountForCard } from '../../../WellArchitectedTab/assessmentFormatUtils';
 import { createFailedOptimizationMessage, fixingProcessNotification } from './OracleCardComponent/OracleCardComponent';
-import { getOptimizeApiConfig, sortConfigsByPriority } from '../../../../utils/configRegistry';
+import { getOptimizeApiConfig, sortConfigsByPriority, getColumnConfig } from '../../../../utils/configRegistry';
 
 // Factory function for creating base block structure
 // Helper functions for card formatting
@@ -215,7 +215,7 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
             // Update blockSixValue to show total patch count, not EC2 instance count
             const totalPatches = criticalViolations + securityViolations + otherViolations;
             blockSixValue = String(totalPatches);
-            blockSixCount = { totalObjectsInViolation: totalPatches };
+            // Don't set blockSixCount for patch configs to avoid "Impacted" prefix (matches MSSQL behavior)
         }
     } else if (
         isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH) &&
@@ -227,7 +227,7 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
 
         // Update blockSixValue to show total patch count
         blockSixValue = String(assessment.missingPatchesCount);
-        blockSixCount = { totalObjectsInViolation: assessment.missingPatchesCount };
+        // Don't set blockSixCount for patch configs to avoid "Impacted" prefix (matches MSSQL behavior)
     }
 
     // Get correct block_six.type label based on config
@@ -241,7 +241,9 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
     } else if (isConfigIdMatch(configId, ASSESSMENT_CONFIG_IDS.SWAP_SPACE)) {
         blockSixType = BLOCK_SIX_LABELS.SWAP_SPACE;
     } else if (assessment.resourceType) {
-        blockSixType = `${assessment.resourceType}s`;
+        const columnConfig = getColumnConfig(configId, DBType.ORACLE);
+        const resourceLabel = columnConfig?.resourceTypeLabel || assessment.resourceType;
+        blockSixType = `${resourceLabel}s`;
     } else {
         blockSixType = displayName;
     }
@@ -270,7 +272,10 @@ const formatOracleFlatAssessmentToCard = (assessment: any, optimizingData: Recor
         },
         block_five: {
             type: 'Resource type',
-            value: assessment.resourceType || ''
+            value: (() => {
+                const columnConfig = getColumnConfig(configId, DBType.ORACLE);
+                return columnConfig?.resourceTypeLabel || assessment.resourceType || '';
+            })()
         },
         block_six: {
             type: blockSixType,

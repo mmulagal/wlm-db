@@ -553,7 +553,7 @@
             "status": "not-optimized",
             "recommended": "windows_2008",
             "recommendation": "ONTAP LUN os type value shall match the operating system partionioning scheme to achieve I/O alignment. Incorrect configuration may result in suboptimal performance",
-            "resourceType": "Lun",
+            "resourceType": "Block device",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 3,
             "objectsInViolation": [
@@ -565,17 +565,17 @@
                 {
                     "objectName": "/vol/wlmdb_sqldata_1728552629461/sqldata",
                     "value": "windows",
-                    "objectType": "Lun"
+                    "objectType": "Block device"
                 },
                 {
                     "objectName": "/vol/wlmdb_sqltemp_1728552629461/tempdb",
                     "value": "windows",
-                    "objectType": "Lun"
+                    "objectType": "Block device"
                 },
                 {
                     "objectName": "/vol/wlmdb_sqldata_1728574994/sqldata",
                     "value": "windows",
-                    "objectType": "Lun"
+                    "objectType": "Block device"
                 }
             ],
             "categories": ["Performance efficiency"],
@@ -1089,8 +1089,8 @@
             "recommended": "optimized",
             "recommendation": "To enhance network performance and system efficiency for your SQL Server EC2 instance, we recommend optimizing your Receive Side Scaling (RSS) configuration. Proper RSS settings distribute network processing across multiple processors, reducing latency and improving application responsiveness. Adhering to best practices ensures efficient handling of network traffic, leading to better stability and reliability.",
             "resourceType": "Network Adapter",
-            "totalObjectsAssessed": 0,
-            "totalObjectsInViolation": 0,
+            "totalObjectsAssessed": 2,
+            "totalObjectsInViolation": 2,
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "rss-config",
@@ -1166,19 +1166,113 @@
             "type": "compute"
         },
         {
-            "name": "License",
-            "status": "not-optimized",
-            "severity": "warning",
-            "recommended": "optimized",
-            "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
-            "resourceType": "EC2 instance",
-            "totalObjectsAssessed": 0,
-            "totalObjectsInViolation": 0,
-            "objectsInViolation": [],
-            "violationDetails": [],
             "id": "sql-license",
+            "name": "License",
+            "type": "application",
+            "severity": "warning",
+            "recommendation": "The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized.",
             "categories": ["Cost optimization"],
-            "type": "application"
+            "status": "not-optimized",
+            "recommended": "optimized",
+            "objectsInViolation": [
+                "PROD-MarketingCampaigns",
+                "PROD-SupplierManagement",
+                "PROD-ProductCatalog",
+                "MSSQLSERVER",
+                "PreProd-BusinessIntelligence",
+                "Prod-HelpDesk",
+                "Dev-VendorManagement",
+                "UAT-QualityControl",
+                "DEV-SalesAnalytics"
+            ],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "sqlServerInstances": [
+                {
+                    "sqlServerInstance": "PROD-MarketingCampaigns",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4080.1",
+                    "sqlServerProductYear": 2022,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQL-Managed-Host-Prod"
+                },
+                {
+                    "sqlServerInstance": "PROD-SupplierManagement",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4080.1",
+                    "sqlServerProductYear": 2022,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQL-Managed-Host-Prod"
+                },
+                {
+                    "sqlServerInstance": "PROD-ProductCatalog",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4080.1",
+                    "sqlServerProductYear": 2022,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQL-Managed-Host-Prod"
+                },
+                {
+                    "sqlServerInstance": "MSSQLSERVER",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4080.1",
+                    "sqlServerProductYear": 2022,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQLServer-QA-02"
+                },
+                {
+                    "sqlServerInstance": "PreProd-BusinessIntelligence",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4080.1",
+                    "sqlServerProductYear": 2022,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQLServer-PreProd-02"
+                },
+                {
+                    "sqlServerInstance": "Prod-HelpDesk",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4080.1",
+                    "sqlServerProductYear": 2022,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQLServer-Prod-02"
+                },
+                {
+                    "sqlServerInstance": "Dev-VendorManagement",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4080.1",
+                    "sqlServerProductYear": 2022,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQLServer-Dev-02"
+                },
+                {
+                    "sqlServerInstance": "UAT-QualityControl",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4080.1",
+                    "sqlServerProductYear": 2022,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQLServer-UAT-02"
+                },
+                {
+                    "sqlServerInstance": "DEV-SalesAnalytics",
+                    "sqlServerState": "Running",
+                    "sqlServerVersion": "16.0.4080.1",
+                    "sqlServerProductYear": 2022,
+                    "sqlServerEdition": "Standard Edition (64-bit)",
+                    "sqlServerEngineEdition": 2,
+                    "sqlServerName": "SQL-Managed-Host-DEV"
+                }
+            ],
+            "subType": "application",
+            "resourceType": "EC2 instance",
+            "focusWidgetName": "License"
         },
         {
             "id": "mssql-patch",
@@ -1390,13 +1484,13 @@
             "severity": "critical",
             "recommended": "",
             "recommendation": "All shared disks (iSCSI LUNs) must be accessible by both nodes in the FCI deployment model to allow failover.",
-            "resourceType": "Lun",
+            "resourceType": "Block device",
             "totalObjectsAssessed": 2,
             "totalObjectsInViolation": 1,
             "objectsInViolation": ["/vol/wlmdb_sqltemp_1753061371059/tempdb"],
             "violationDetails": [
                 {
-                    "objectType": "LUN",
+                    "objectType": "Block device",
                     "objectName": "lun-quorum",
                     "value": "Not accessible",
                     "recommended": "Accessible"

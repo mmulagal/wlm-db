@@ -559,30 +559,6 @@
                         "totalObjectsInViolation": 0
                     },
                     {
-                        "id": "selinux",
-                        "name": "Selinux",
-                        "type": "storage",
-                        "severity": "warning",
-                        "recommendation": "Workload Factory recommends disabling SELinux on Oracle database hosts by setting SELINUX=disabled in the system configuration. Disabling SELinux can help avoid compatibility issues and administrative overhead associated with managing SELinux policies for Oracle workloads. After this change, SELinux will no longer enforce access controls, so ensure that your environment is otherwise secured.",
-                        "categories": ["Security", "Operational excellence"],
-                        "status": "optimized",
-                        "recommended": "disabled",
-                        "subType": "configuration",
-                        "focusWidgetName": "Selinux",
-                        "objectsInViolation": ["i-08b88d1026a035b68"],
-                        "violationDetails": [
-                            {
-                                "objectName": "i-08b88d1026a035b68",
-                                "value": "enforcing",
-                                "objectType": "EC2 instance",
-                                "recommended": "disabled",
-                                "dataCategory": ""
-                            }
-                        ],
-                        "totalObjectsAssessed": 1,
-                        "totalObjectsInViolation": 0
-                    },
-                    {
                         "id": "iscsi-replacement-timeout",
                         "name": "Iscsi Replacement Timeout",
                         "type": "storage",
@@ -651,28 +627,117 @@
                     },
                     {
                         "id": "multipath-configuration",
-                        "name": "Multipath Configuration",
+                        "name": "Multipath configuration",
                         "type": "storage",
-                        "severity": "warning",
-                        "recommendation": "Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.",
-                        "categories": ["Performance efficiency"],
-                        "status": "optimized",
-                        "recommended": "disabled",
+                        "severity": "critical",
+                        "recommendation": "Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP block devices, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.",
+                        "categories": ["Reliability", "Operational excellence"],
+                        "status": "not-optimized",
+                        "recommended": "",
+                        "objectsInViolation": ["i-0f637156f1dcbd1be"],
+                        "totalObjectsAssessed": 1,
+                        "totalObjectsInViolation": 1,
                         "subType": "configuration",
                         "resourceType": "EC2 Instance",
-                        "focusWidgetName": "Multipath Configuration",
-                        "objectsInViolation": ["i-08b88d1026a035b68"],
                         "violationDetails": [
                             {
-                                "objectName": "i-08b88d1026a035b68",
-                                "value": "120",
-                                "objectType": "EC2 instance",
-                                "recommended": "disabled",
-                                "dataCategory": ""
+                                "objectName": "find_multipaths",
+                                "value": "not found",
+                                "objectType": "default configuration",
+                                "recommended": "find_multipaths yes or on"
+                            },
+                            {
+                                "objectName": "polling_interval",
+                                "value": "not found",
+                                "objectType": "default configuration",
+                                "recommended": "polling_interval 5"
+                            },
+                            {
+                                "objectName": "path_grouping_policy",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "path_grouping_policy group_by_prio"
+                            },
+                            {
+                                "objectName": "path_selector",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "path_selector service-time 0"
+                            },
+                            {
+                                "objectName": "prio",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "prio ontap"
+                            },
+                            {
+                                "objectName": "hardware_handler",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "hardware_handler 0"
+                            },
+                            {
+                                "objectName": "failback",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "failback immediate"
+                            },
+                            {
+                                "objectName": "rr_weight",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "rr_weight uniform"
+                            },
+                            {
+                                "objectName": "no_path_retry",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "no_path_retry queue"
+                            },
+                            {
+                                "objectName": "fast_io_fail_tmo",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "fast_io_fail_tmo 5"
+                            },
+                            {
+                                "objectName": "dev_loss_tmo",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "dev_loss_tmo infinity"
+                            },
+                            {
+                                "objectName": "detect_prio",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "detect_prio yes"
+                            },
+                            {
+                                "objectName": "flush_on_last_del",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "flush_on_last_del yes or always"
+                            },
+                            {
+                                "objectName": "retain_attached_hw_handler",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "retain_attached_hw_handler yes"
+                            },
+                            {
+                                "objectName": "path_checker",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "path_checker tur"
+                            },
+                            {
+                                "objectName": "max_sectors_kb",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "max_sectors_kb 4096"
                             }
                         ],
-                        "totalObjectsAssessed": 1,
-                        "totalObjectsInViolation": 0
+                        "focusWidgetName": "Operating system"
                     },
                     {
                         "id": "kernel-parameters",
@@ -709,7 +774,7 @@
                         "status": "optimized",
                         "recommended": "",
                         "subType": "configuration",
-                        "resourceType": "EC2 Instance",
+                        "resourceType": "NFS Mount",
                         "focusWidgetName": "Nfs Mount Options Databasefiles",
                         "objectsInViolation": ["i-031858c121f213fb7"],
                         "violationDetails": [
@@ -734,7 +799,7 @@
                         "status": "optimized",
                         "recommended": "",
                         "subType": "configuration",
-                        "resourceType": "EC2 Instance",
+                        "resourceType": "NFS Mount",
                         "focusWidgetName": "Nfs Mount Options Adrhome",
                         "objectsInViolation": ["i-08b88d1026a035b68"],
                         "violationDetails": [],
@@ -751,7 +816,7 @@
                         "status": "optimized",
                         "recommended": "",
                         "subType": "configuration",
-                        "resourceType": "EC2 Instance",
+                        "resourceType": "NFS Mount",
                         "focusWidgetName": "Nfs Caching Options",
                         "objectsInViolation": ["i-08b88d1026a035b68"],
                         "violationDetails": [],
@@ -1217,6 +1282,32 @@
                         "current": "15%",
                         "missingPermissions": [],
                         "recommendedSizeInGib": 350
+                    },
+                    {
+                        "id": "oracle-security-patch",
+                        "name": "Oracle critical security patch",
+                        "type": "application",
+                        "severity": "critical",
+                        "recommendation": "Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.",
+                        "categories": ["Security", "Reliability"],
+                        "status": "not-optimized",
+                        "recommended": "optimized",
+                        "missingPatchesCount": 4,
+                        "subType": "application",
+                        "resourceType": "Database",
+                        "objectsInViolation": ["oracle-dev"],
+                        "violationDetails": [
+                            {
+                                "objectName": "oracle-dev",
+                                "value": "Missing 4 critical patches",
+                                "objectType": "Database",
+                                "recommended": "Latest patches applied",
+                                "dataCategory": ""
+                            }
+                        ],
+                        "totalObjectsAssessed": 1,
+                        "totalObjectsInViolation": 1,
+                        "focusWidgetName": "Oracle security patch"
                     },
                     {
                         "id": "clone-management",
@@ -1983,30 +2074,6 @@
                         "totalObjectsInViolation": 0
                     },
                     {
-                        "id": "selinux",
-                        "name": "Selinux",
-                        "type": "storage",
-                        "severity": "warning",
-                        "recommendation": "Workload Factory recommends disabling SELinux on Oracle database hosts by setting SELINUX=disabled in the system configuration. Disabling SELinux can help avoid compatibility issues and administrative overhead associated with managing SELinux policies for Oracle workloads. After this change, SELinux will no longer enforce access controls, so ensure that your environment is otherwise secured.",
-                        "categories": ["Security", "Operational excellence"],
-                        "status": "optimized",
-                        "recommended": "disabled",
-                        "subType": "configuration",
-                        "focusWidgetName": "Selinux",
-                        "objectsInViolation": ["i-08b88d1026a035b68"],
-                        "violationDetails": [
-                            {
-                                "objectName": "i-08b88d1026a035b68",
-                                "value": "enforcing",
-                                "objectType": "EC2 instance",
-                                "recommended": "disabled",
-                                "dataCategory": ""
-                            }
-                        ],
-                        "totalObjectsAssessed": 1,
-                        "totalObjectsInViolation": 0
-                    },
-                    {
                         "id": "iscsi-replacement-timeout",
                         "name": "Iscsi Replacement Timeout",
                         "type": "storage",
@@ -2075,28 +2142,117 @@
                     },
                     {
                         "id": "multipath-configuration",
-                        "name": "Multipath Configuration",
+                        "name": "Multipath configuration",
                         "type": "storage",
-                        "severity": "warning",
-                        "recommendation": "Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.",
-                        "categories": ["Performance efficiency"],
-                        "status": "optimized",
-                        "recommended": "disabled",
+                        "severity": "critical",
+                        "recommendation": "Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP block devices, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.",
+                        "categories": ["Reliability", "Operational excellence"],
+                        "status": "not-optimized",
+                        "recommended": "",
+                        "objectsInViolation": ["i-0f637156f1dcbd1be"],
+                        "totalObjectsAssessed": 1,
+                        "totalObjectsInViolation": 1,
                         "subType": "configuration",
                         "resourceType": "EC2 Instance",
-                        "focusWidgetName": "Multipath Configuration",
-                        "objectsInViolation": ["i-08b88d1026a035b68"],
                         "violationDetails": [
                             {
-                                "objectName": "i-08b88d1026a035b68",
-                                "value": "120",
-                                "objectType": "EC2 instance",
-                                "recommended": "disabled",
-                                "dataCategory": ""
+                                "objectName": "find_multipaths",
+                                "value": "not found",
+                                "objectType": "default configuration",
+                                "recommended": "find_multipaths yes or on"
+                            },
+                            {
+                                "objectName": "polling_interval",
+                                "value": "not found",
+                                "objectType": "default configuration",
+                                "recommended": "polling_interval 5"
+                            },
+                            {
+                                "objectName": "path_grouping_policy",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "path_grouping_policy group_by_prio"
+                            },
+                            {
+                                "objectName": "path_selector",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "path_selector service-time 0"
+                            },
+                            {
+                                "objectName": "prio",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "prio ontap"
+                            },
+                            {
+                                "objectName": "hardware_handler",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "hardware_handler 0"
+                            },
+                            {
+                                "objectName": "failback",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "failback immediate"
+                            },
+                            {
+                                "objectName": "rr_weight",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "rr_weight uniform"
+                            },
+                            {
+                                "objectName": "no_path_retry",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "no_path_retry queue"
+                            },
+                            {
+                                "objectName": "fast_io_fail_tmo",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "fast_io_fail_tmo 5"
+                            },
+                            {
+                                "objectName": "dev_loss_tmo",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "dev_loss_tmo infinity"
+                            },
+                            {
+                                "objectName": "detect_prio",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "detect_prio yes"
+                            },
+                            {
+                                "objectName": "flush_on_last_del",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "flush_on_last_del yes or always"
+                            },
+                            {
+                                "objectName": "retain_attached_hw_handler",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "retain_attached_hw_handler yes"
+                            },
+                            {
+                                "objectName": "path_checker",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "path_checker tur"
+                            },
+                            {
+                                "objectName": "max_sectors_kb",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "max_sectors_kb 4096"
                             }
                         ],
-                        "totalObjectsAssessed": 1,
-                        "totalObjectsInViolation": 0
+                        "focusWidgetName": "Operating system"
                     },
                     {
                         "id": "kernel-parameters",
@@ -2133,7 +2289,7 @@
                         "status": "optimized",
                         "recommended": "",
                         "subType": "configuration",
-                        "resourceType": "EC2 Instance",
+                        "resourceType": "NFS Mount",
                         "focusWidgetName": "Nfs Mount Options Databasefiles",
                         "objectsInViolation": ["i-031858c121f213fb7"],
                         "violationDetails": [
@@ -2158,7 +2314,7 @@
                         "status": "optimized",
                         "recommended": "",
                         "subType": "configuration",
-                        "resourceType": "EC2 Instance",
+                        "resourceType": "NFS Mount",
                         "focusWidgetName": "Nfs Mount Options Adrhome",
                         "objectsInViolation": ["i-08b88d1026a035b68"],
                         "violationDetails": [],
@@ -2175,7 +2331,7 @@
                         "status": "optimized",
                         "recommended": "",
                         "subType": "configuration",
-                        "resourceType": "EC2 Instance",
+                        "resourceType": "NFS Mount",
                         "focusWidgetName": "Nfs Caching Options",
                         "objectsInViolation": ["i-08b88d1026a035b68"],
                         "violationDetails": [],
@@ -2641,6 +2797,32 @@
                         "current": "15%",
                         "missingPermissions": [],
                         "recommendedSizeInGib": 350
+                    },
+                    {
+                        "id": "oracle-security-patch",
+                        "name": "Oracle critical security patch",
+                        "type": "application",
+                        "severity": "critical",
+                        "recommendation": "Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.",
+                        "categories": ["Security", "Reliability"],
+                        "status": "not-optimized",
+                        "recommended": "optimized",
+                        "missingPatchesCount": 4,
+                        "subType": "application",
+                        "resourceType": "Database",
+                        "objectsInViolation": ["oracle-dev"],
+                        "violationDetails": [
+                            {
+                                "objectName": "oracle-dev",
+                                "value": "Missing 4 critical patches",
+                                "objectType": "Database",
+                                "recommended": "Latest patches applied",
+                                "dataCategory": ""
+                            }
+                        ],
+                        "totalObjectsAssessed": 1,
+                        "totalObjectsInViolation": 1,
+                        "focusWidgetName": "Oracle security patch"
                     },
                     {
                         "id": "clone-management",
@@ -3324,30 +3506,6 @@
                         "totalObjectsInViolation": 0
                     },
                     {
-                        "id": "selinux",
-                        "name": "Selinux",
-                        "type": "storage",
-                        "severity": "warning",
-                        "recommendation": "Workload Factory recommends disabling SELinux on Oracle database hosts by setting SELINUX=disabled in the system configuration. Disabling SELinux can help avoid compatibility issues and administrative overhead associated with managing SELinux policies for Oracle workloads. After this change, SELinux will no longer enforce access controls, so ensure that your environment is otherwise secured.",
-                        "categories": ["Security", "Operational excellence"],
-                        "status": "optimized",
-                        "recommended": "disabled",
-                        "subType": "configuration",
-                        "focusWidgetName": "Selinux",
-                        "objectsInViolation": ["i-08b88d1026a035b68"],
-                        "violationDetails": [
-                            {
-                                "objectName": "i-08b88d1026a035b68",
-                                "value": "enforcing",
-                                "objectType": "EC2 instance",
-                                "recommended": "disabled",
-                                "dataCategory": ""
-                            }
-                        ],
-                        "totalObjectsAssessed": 1,
-                        "totalObjectsInViolation": 0
-                    },
-                    {
                         "id": "iscsi-replacement-timeout",
                         "name": "Iscsi Replacement Timeout",
                         "type": "storage",
@@ -3416,28 +3574,117 @@
                     },
                     {
                         "id": "multipath-configuration",
-                        "name": "Multipath Configuration",
+                        "name": "Multipath configuration",
                         "type": "storage",
-                        "severity": "warning",
-                        "recommendation": "Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.",
-                        "categories": ["Performance efficiency"],
-                        "status": "optimized",
-                        "recommended": "disabled",
+                        "severity": "critical",
+                        "recommendation": "Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP block devices, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.",
+                        "categories": ["Reliability", "Operational excellence"],
+                        "status": "not-optimized",
+                        "recommended": "",
+                        "objectsInViolation": ["i-0f637156f1dcbd1be"],
+                        "totalObjectsAssessed": 1,
+                        "totalObjectsInViolation": 1,
                         "subType": "configuration",
                         "resourceType": "EC2 Instance",
-                        "focusWidgetName": "Multipath Configuration",
-                        "objectsInViolation": ["i-08b88d1026a035b68"],
                         "violationDetails": [
                             {
-                                "objectName": "i-08b88d1026a035b68",
-                                "value": "120",
-                                "objectType": "EC2 instance",
-                                "recommended": "disabled",
-                                "dataCategory": ""
+                                "objectName": "find_multipaths",
+                                "value": "not found",
+                                "objectType": "default configuration",
+                                "recommended": "find_multipaths yes or on"
+                            },
+                            {
+                                "objectName": "polling_interval",
+                                "value": "not found",
+                                "objectType": "default configuration",
+                                "recommended": "polling_interval 5"
+                            },
+                            {
+                                "objectName": "path_grouping_policy",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "path_grouping_policy group_by_prio"
+                            },
+                            {
+                                "objectName": "path_selector",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "path_selector service-time 0"
+                            },
+                            {
+                                "objectName": "prio",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "prio ontap"
+                            },
+                            {
+                                "objectName": "hardware_handler",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "hardware_handler 0"
+                            },
+                            {
+                                "objectName": "failback",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "failback immediate"
+                            },
+                            {
+                                "objectName": "rr_weight",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "rr_weight uniform"
+                            },
+                            {
+                                "objectName": "no_path_retry",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "no_path_retry queue"
+                            },
+                            {
+                                "objectName": "fast_io_fail_tmo",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "fast_io_fail_tmo 5"
+                            },
+                            {
+                                "objectName": "dev_loss_tmo",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "dev_loss_tmo infinity"
+                            },
+                            {
+                                "objectName": "detect_prio",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "detect_prio yes"
+                            },
+                            {
+                                "objectName": "flush_on_last_del",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "flush_on_last_del yes or always"
+                            },
+                            {
+                                "objectName": "retain_attached_hw_handler",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "retain_attached_hw_handler yes"
+                            },
+                            {
+                                "objectName": "path_checker",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "path_checker tur"
+                            },
+                            {
+                                "objectName": "max_sectors_kb",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "max_sectors_kb 4096"
                             }
                         ],
-                        "totalObjectsAssessed": 1,
-                        "totalObjectsInViolation": 0
+                        "focusWidgetName": "Operating system"
                     },
                     {
                         "id": "kernel-parameters",
@@ -3474,7 +3721,7 @@
                         "status": "optimized",
                         "recommended": "",
                         "subType": "configuration",
-                        "resourceType": "EC2 Instance",
+                        "resourceType": "NFS Mount",
                         "focusWidgetName": "Nfs Mount Options Databasefiles",
                         "objectsInViolation": ["i-031858c121f213fb7"],
                         "violationDetails": [
@@ -3499,7 +3746,7 @@
                         "status": "optimized",
                         "recommended": "",
                         "subType": "configuration",
-                        "resourceType": "EC2 Instance",
+                        "resourceType": "NFS Mount",
                         "focusWidgetName": "Nfs Mount Options Adrhome",
                         "objectsInViolation": ["i-08b88d1026a035b68"],
                         "violationDetails": [],
@@ -3516,7 +3763,7 @@
                         "status": "optimized",
                         "recommended": "",
                         "subType": "configuration",
-                        "resourceType": "EC2 Instance",
+                        "resourceType": "NFS Mount",
                         "focusWidgetName": "Nfs Caching Options",
                         "objectsInViolation": ["i-08b88d1026a035b68"],
                         "violationDetails": [],
@@ -3982,6 +4229,32 @@
                         "current": "15%",
                         "missingPermissions": [],
                         "recommendedSizeInGib": 350
+                    },
+                    {
+                        "id": "oracle-security-patch",
+                        "name": "Oracle critical security patch",
+                        "type": "application",
+                        "severity": "critical",
+                        "recommendation": "Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.",
+                        "categories": ["Security", "Reliability"],
+                        "status": "not-optimized",
+                        "recommended": "optimized",
+                        "missingPatchesCount": 4,
+                        "subType": "application",
+                        "resourceType": "Database",
+                        "objectsInViolation": ["oracle-dev"],
+                        "violationDetails": [
+                            {
+                                "objectName": "oracle-dev",
+                                "value": "Missing 4 critical patches",
+                                "objectType": "Database",
+                                "recommended": "Latest patches applied",
+                                "dataCategory": ""
+                            }
+                        ],
+                        "totalObjectsAssessed": 1,
+                        "totalObjectsInViolation": 1,
+                        "focusWidgetName": "Oracle security patch"
                     },
                     {
                         "id": "clone-management",
@@ -4667,30 +4940,6 @@
                         "totalObjectsInViolation": 0
                     },
                     {
-                        "id": "selinux",
-                        "name": "Selinux",
-                        "type": "storage",
-                        "severity": "warning",
-                        "recommendation": "Workload Factory recommends disabling SELinux on Oracle database hosts by setting SELINUX=disabled in the system configuration. Disabling SELinux can help avoid compatibility issues and administrative overhead associated with managing SELinux policies for Oracle workloads. After this change, SELinux will no longer enforce access controls, so ensure that your environment is otherwise secured.",
-                        "categories": ["Security", "Operational excellence"],
-                        "status": "optimized",
-                        "recommended": "disabled",
-                        "subType": "configuration",
-                        "focusWidgetName": "Selinux",
-                        "objectsInViolation": ["i-08b88d1026a035b68"],
-                        "violationDetails": [
-                            {
-                                "objectName": "i-08b88d1026a035b68",
-                                "value": "enforcing",
-                                "objectType": "EC2 instance",
-                                "recommended": "disabled",
-                                "dataCategory": ""
-                            }
-                        ],
-                        "totalObjectsAssessed": 1,
-                        "totalObjectsInViolation": 0
-                    },
-                    {
                         "id": "iscsi-replacement-timeout",
                         "name": "Iscsi Replacement Timeout",
                         "type": "storage",
@@ -4759,28 +5008,117 @@
                     },
                     {
                         "id": "multipath-configuration",
-                        "name": "Multipath Configuration",
+                        "name": "Multipath configuration",
                         "type": "storage",
-                        "severity": "warning",
-                        "recommendation": "Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.",
-                        "categories": ["Performance efficiency"],
-                        "status": "optimized",
-                        "recommended": "disabled",
+                        "severity": "critical",
+                        "recommendation": "Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP block devices, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.",
+                        "categories": ["Reliability", "Operational excellence"],
+                        "status": "not-optimized",
+                        "recommended": "",
+                        "objectsInViolation": ["i-0f637156f1dcbd1be"],
+                        "totalObjectsAssessed": 1,
+                        "totalObjectsInViolation": 1,
                         "subType": "configuration",
                         "resourceType": "EC2 Instance",
-                        "focusWidgetName": "Multipath Configuration",
-                        "objectsInViolation": ["i-08b88d1026a035b68"],
                         "violationDetails": [
                             {
-                                "objectName": "i-08b88d1026a035b68",
-                                "value": "120",
-                                "objectType": "EC2 instance",
-                                "recommended": "disabled",
-                                "dataCategory": ""
+                                "objectName": "find_multipaths",
+                                "value": "not found",
+                                "objectType": "default configuration",
+                                "recommended": "find_multipaths yes or on"
+                            },
+                            {
+                                "objectName": "polling_interval",
+                                "value": "not found",
+                                "objectType": "default configuration",
+                                "recommended": "polling_interval 5"
+                            },
+                            {
+                                "objectName": "path_grouping_policy",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "path_grouping_policy group_by_prio"
+                            },
+                            {
+                                "objectName": "path_selector",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "path_selector service-time 0"
+                            },
+                            {
+                                "objectName": "prio",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "prio ontap"
+                            },
+                            {
+                                "objectName": "hardware_handler",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "hardware_handler 0"
+                            },
+                            {
+                                "objectName": "failback",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "failback immediate"
+                            },
+                            {
+                                "objectName": "rr_weight",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "rr_weight uniform"
+                            },
+                            {
+                                "objectName": "no_path_retry",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "no_path_retry queue"
+                            },
+                            {
+                                "objectName": "fast_io_fail_tmo",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "fast_io_fail_tmo 5"
+                            },
+                            {
+                                "objectName": "dev_loss_tmo",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "dev_loss_tmo infinity"
+                            },
+                            {
+                                "objectName": "detect_prio",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "detect_prio yes"
+                            },
+                            {
+                                "objectName": "flush_on_last_del",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "flush_on_last_del yes or always"
+                            },
+                            {
+                                "objectName": "retain_attached_hw_handler",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "retain_attached_hw_handler yes"
+                            },
+                            {
+                                "objectName": "path_checker",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "path_checker tur"
+                            },
+                            {
+                                "objectName": "max_sectors_kb",
+                                "value": "not found",
+                                "objectType": "netapp device configuration",
+                                "recommended": "max_sectors_kb 4096"
                             }
                         ],
-                        "totalObjectsAssessed": 1,
-                        "totalObjectsInViolation": 0
+                        "focusWidgetName": "Operating system"
                     },
                     {
                         "id": "kernel-parameters",
@@ -4817,9 +5155,9 @@
                         "status": "optimized",
                         "recommended": "",
                         "subType": "configuration",
-                        "resourceType": "EC2 Instance",
+                        "resourceType": "NFS Mount",
                         "focusWidgetName": "Nfs Mount Options Databasefiles",
-                        "objectsInViolation": ["i-031858c121f213fb7"],
+                        "objectsInViolation": ["/data_171025073459:/mnt/oradata"],
                         "violationDetails": [
                             {
                                 "objectName": "/data_171025073459:/mnt/oradata",
@@ -4842,7 +5180,7 @@
                         "status": "optimized",
                         "recommended": "",
                         "subType": "configuration",
-                        "resourceType": "EC2 Instance",
+                        "resourceType": "NFS Mount",
                         "focusWidgetName": "Nfs Mount Options Adrhome",
                         "objectsInViolation": ["i-08b88d1026a035b68"],
                         "violationDetails": [],
@@ -4859,7 +5197,7 @@
                         "status": "optimized",
                         "recommended": "",
                         "subType": "configuration",
-                        "resourceType": "EC2 Instance",
+                        "resourceType": "NFS Mount",
                         "focusWidgetName": "Nfs Caching Options",
                         "objectsInViolation": ["i-08b88d1026a035b68"],
                         "violationDetails": [],
@@ -5325,6 +5663,32 @@
                         "current": "15%",
                         "missingPermissions": [],
                         "recommendedSizeInGib": 350
+                    },
+                    {
+                        "id": "oracle-security-patch",
+                        "name": "Oracle critical security patch",
+                        "type": "application",
+                        "severity": "critical",
+                        "recommendation": "Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.",
+                        "categories": ["Security", "Reliability"],
+                        "status": "not-optimized",
+                        "recommended": "optimized",
+                        "missingPatchesCount": 4,
+                        "subType": "application",
+                        "resourceType": "Database",
+                        "objectsInViolation": ["oracle-dev"],
+                        "violationDetails": [
+                            {
+                                "objectName": "oracle-dev",
+                                "value": "Missing 4 critical patches",
+                                "objectType": "Database",
+                                "recommended": "Latest patches applied",
+                                "dataCategory": ""
+                            }
+                        ],
+                        "totalObjectsAssessed": 1,
+                        "totalObjectsInViolation": 1,
+                        "focusWidgetName": "Oracle security patch"
                     },
                     {
                         "id": "clone-management",

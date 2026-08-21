@@ -27,7 +27,14 @@ import { ReactComponent as Download } from '../../assets/download.svg';
 import { ReactComponent as Close } from '../../assets/ic_close_blue.svg';
 import { ReactComponent as Activating } from '../../assets/action-required.svg';
 
-import { CONFIG_STATES, DBType, WELL_ARCHITECTED_CATEGORY_ORDER } from '../../utils/consts';
+import {
+    CONFIG_STATES,
+    DBType,
+    WELL_ARCHITECTED_CATEGORY_ORDER,
+    WIZARD_TYPE,
+    PATCH_SCAN_FIELD,
+    ASSESSMENT_CONFIG_IDS
+} from '../../utils/consts';
 import Tag from '../../common/Tag/Tag';
 import RecommendationText from './RecommendationText/RecommendationText';
 import {
@@ -56,7 +63,8 @@ import LearnHowDialog from '../ExploreSavings/SavingsCalculator/SavingsSelection
 import {
     useLazyGetSubTaskListQuery,
     useTriggerInstanceAssessmentMutation,
-    useTriggerUnregisteredMssqlAssessmentMutation
+    useTriggerUnregisteredMssqlAssessmentMutation,
+    getWellApi
 } from '../../utils/apiService';
 import AssessmentContainer from '../../common/AssessmentContainer/AssessmentContainer';
 import PartialDataContainer from './PartialDataContainer/PartialDataContainer';
@@ -76,7 +84,7 @@ import {
     calculatePostponeInfo,
     checkAllConfigurationsDismissed
 } from './GetWellHelper';
-import generateReport from '../../utils/generateWellArchitectedExcel';
+import generateReport, { enrichAssessmentDataWithPatches } from '../../utils/generateWellArchitectedExcel';
 
 const GetWell = () => {
     const { t } = useTranslation();
@@ -218,7 +226,24 @@ const GetWell = () => {
 
     const printDocument = async () => {
         try {
-            await generateReport(JSON.stringify(driftAssessmentData), DBType.MSSQL, cardData?.isWad || false);
+            const patchConfigs = [
+                { id: ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH, field: PATCH_SCAN_FIELD.HOST_OS_PATCH },
+                { id: ASSESSMENT_CONFIG_IDS.MICROSOFT_SQL_SERVER_PATCH, field: PATCH_SCAN_FIELD.MSSQL_PATCH }
+            ];
+
+            const enrichedData = await enrichAssessmentDataWithPatches(
+                driftAssessmentData,
+                patchConfigs,
+                WIZARD_TYPE.MSSQL,
+                selectedGwInstanceCredId,
+                selectedGwInstanceRegionId,
+                selectedResourceId,
+                selectedDatabaseInstance,
+                dispatch,
+                getWellApi
+            );
+
+            await generateReport(JSON.stringify(enrichedData), DBType.MSSQL, cardData?.isWad || false);
             dispatch(
                 addNotification({
                     notificationType: NOTIFICATION_TYPES.SUCCESS,

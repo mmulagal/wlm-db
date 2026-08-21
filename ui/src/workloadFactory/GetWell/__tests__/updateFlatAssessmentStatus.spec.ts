@@ -74,7 +74,8 @@ vi.mock('../../Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWel
 }));
 
 vi.mock('../../../utils/configRegistry', () => ({
-    sortConfigsByPriority: vi.fn()
+    sortConfigsByPriority: vi.fn(),
+    getColumnConfig: vi.fn(() => undefined)
 }));
 
 vi.mock('../../../utils/utilityFunctions', () => ({

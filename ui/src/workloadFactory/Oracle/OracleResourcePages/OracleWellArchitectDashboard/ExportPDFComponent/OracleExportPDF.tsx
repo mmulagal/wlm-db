@@ -5,9 +5,9 @@ import { ReactComponent as Download } from '../../../../../assets/download.svg';
 import styles from './OracleExportPDF.module.scss';
 import { NOTIFICATION_TYPES, addNotification } from '../../../../../store/notificationSlice';
 import { GENERAL } from '../../../../../utils/appConstants';
-import { DBType } from '../../../../../utils/consts';
-import generateReport from '../../../../../utils/generateWellArchitectedExcel';
-import { generateDate } from '../../../../GetWell/GetWellUtils';
+import { DBType, WIZARD_TYPE, PATCH_SCAN_FIELD, ASSESSMENT_CONFIG_IDS } from '../../../../../utils/consts';
+import generateReport, { enrichAssessmentDataWithPatches } from '../../../../../utils/generateWellArchitectedExcel';
+import { getWellApi } from '../../../../../utils/apiService';
 import { useAppSelector } from '../../../../../store/storeHooks';
 
 interface OracleExportPDFProps {
@@ -25,13 +25,40 @@ const OracleExportPDF = ({
 }: OracleExportPDFProps) => {
     const dispatch = useDispatch();
     const { t } = useTranslation();
-    const { driftAssessmentData } = useAppSelector(state => state.getWellOptimize);
+    const {
+        driftAssessmentData,
+        selectedGwInstanceCredId,
+        selectedGwInstanceRegionId,
+        selectedResourceId,
+        selectedDatabaseInstance
+    } = useAppSelector(state => state.getWellOptimize);
+
     const printDocument = async () => {
         setOptimizePrintState(true);
         setTimeout(async () => {
             try {
+                const patchConfigs = [
+                    { id: ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH, field: PATCH_SCAN_FIELD.HOST_OS_PATCH },
+                    {
+                        id: ASSESSMENT_CONFIG_IDS.ORACLE_SECURITY_PATCH,
+                        field: PATCH_SCAN_FIELD.ORACLE_SECURITY_PATCH
+                    }
+                ];
+
+                const enrichedData = await enrichAssessmentDataWithPatches(
+                    driftAssessmentData,
+                    patchConfigs,
+                    WIZARD_TYPE.ORACLE,
+                    selectedGwInstanceCredId,
+                    selectedGwInstanceRegionId,
+                    selectedResourceId,
+                    selectedDatabaseInstance,
+                    dispatch,
+                    getWellApi
+                );
+
                 await generateReport(
-                    JSON.stringify(driftAssessmentData),
+                    JSON.stringify(enrichedData),
                     DBType.ORACLE,
                     (driftAssessmentData as any)?.isWad || false
                 );

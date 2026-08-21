@@ -1203,7 +1203,9 @@
                 "sql-instance-name-clone": "SQL instance name",
                 "sql-host-name-clone": "SQL host name",
                 "impacted-ec2-instances": "Impacted EC2 instances",
-                "impacted-resources": "Impacted resources"
+                "impacted-resources": "Impacted resources",
+                "impacted-nfs-mounts": "Impacted NFS mounts",
+                "impacted-configurations": "Impacted configurations"
             },
             "unavailable": "Unavailable",
             "application-oracle-server": "Application (Oracle Server)",

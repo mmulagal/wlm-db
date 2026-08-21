@@ -165,6 +165,10 @@ const DynamicOptimizeInnerPage = () => {
     // Check if optimizeApi exists (not the fixSupported flag which is for dashboard bulk)
     const canOptimize = useMemo(() => {
         if (!configId) return false;
+        // Bulk-only configs need checkboxes even if fix is not fully supported
+        const isBulkOnlyDnfs =
+            configId === ASSESSMENT_CONFIG_IDS.DNFS_CONFIGURATION_FILE && engineType === DBType.ORACLE;
+        if (isBulkOnlyDnfs) return true;
         return !!getOptimizeApiConfig(configId, engineType);
     }, [configId, engineType]);
 

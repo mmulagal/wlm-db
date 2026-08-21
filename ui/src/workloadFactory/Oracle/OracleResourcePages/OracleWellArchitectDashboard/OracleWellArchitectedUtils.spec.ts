@@ -67,7 +67,8 @@ vi.mock('../../../../utils/recommendations', () => ({
 const mockGetOptimizeApiConfig: Mock = vi.fn();
 vi.mock('../../../../utils/configRegistry', () => ({
     getOptimizeApiConfig: (...args: any[]) => (mockGetOptimizeApiConfig as any)(...args),
-    sortConfigsByPriority: vi.fn()
+    sortConfigsByPriority: vi.fn(),
+    getColumnConfig: vi.fn(() => undefined)
 }));
 
 // ─── Resource utils — match actual groupByType signature ──────────────────────

@@ -419,7 +419,39 @@ const createDashboardTableConfigOverrides = (
             configItem: item
         }),
         customColumns: [createDefaultImpactedColumn(ASSESSMENT_CONFIG_IDS.CLONE_MANAGEMENT, engineType)]
-    }
+    },
+    ...Object.fromEntries(
+        [ASSESSMENT_CONFIG_IDS.DNFS_CONFIGURATION_FILE, ASSESSMENT_CONFIG_IDS.DNFS_NO_SHARED_CACHE].map(configId => [
+            configId,
+            {
+                customColumns: [
+                    createCountWithViewColumn(
+                        'databases.well-architect.dashboard-table-headers.impacted-nfs-mounts',
+                        configId,
+                        engineType,
+                        undefined,
+                        true
+                    )
+                ]
+            }
+        ])
+    ),
+    ...Object.fromEntries(
+        [ASSESSMENT_CONFIG_IDS.MULTIPATH_CONFIGURATION, ASSESSMENT_CONFIG_IDS.MULTIPATH_IO_TIMEOUT].map(configId => [
+            configId,
+            {
+                customColumns: [
+                    createCountWithViewColumn(
+                        'databases.well-architect.dashboard-table-headers.impacted-configurations',
+                        configId,
+                        engineType,
+                        undefined,
+                        true
+                    )
+                ]
+            }
+        ])
+    )
 });
 
 export const resolveDashboardTableConfig = (configType: string, engineType: string) => {

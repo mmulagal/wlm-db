@@ -11,10 +11,17 @@ import {
     getOracleCardsData,
     formatOracleOptimizationBreakDown
 } from '../workloadFactory/Oracle/OracleResourcePages/OracleWellArchitectDashboard/OracleWellArchitectedUtils';
-import { buildSubConfigValues, getColumnConfig, getDialogContentConfig, type DialogSectionDef } from './configRegistry';
+import {
+    buildSubConfigValues,
+    getCardMetadata,
+    getColumnConfig,
+    getDialogContentConfig,
+    pluralizeResourceType,
+    type DialogSectionDef
+} from './configRegistry';
 import { getRecommendation } from './recommendations';
 import { ASSESSMENT_CONFIG_IDS, ASSESSMENT_CONFIG_NAMES, DBType } from './consts';
-import type { FlatAssessmentItem, FlatAssessmentResponse } from './types/getWellTypes';
+import type { AssessmentMetadata, FlatAssessmentItem, FlatAssessmentResponse } from './types/getWellTypes';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -38,6 +45,7 @@ interface WorkbookInput {
     displayToInternal: Map<string, string>;
     assessmentsById: Map<string, FlatAssessmentItem>;
     orderedIds: string[];
+    metadata: AssessmentMetadata;
 }
 
 interface TableConfig<T = Record<string, string>> {
@@ -78,7 +86,8 @@ const IMPACTED_TABLE_TITLE_MARKERS = [
     'SQL Instances License details',
     'Recommended Adapter Settings',
     'RSS Adapters',
-    'Sub-configuration settings'
+    'Sub-configuration settings',
+    'Missing Patches'
 ];
 
 // ---------------------------------------------------------------------------
@@ -112,6 +121,66 @@ const createCellStyle = (fill?: string, font?: any, alignment?: Partial<ExcelJS.
         }
     })
 });
+
+// ---------------------------------------------------------------------------
+// Assessment Data Enrichment
+// ---------------------------------------------------------------------------
+
+/**
+ * Enriches assessment data with patch information for report generation
+ * @param driftAssessmentData - The original assessment data to enrich
+ * @param patchConfigs - Array of patch configurations with id and field mappings
+ * @param dbType - Database type (WIZARD_TYPE.MSSQL or WIZARD_TYPE.ORACLE)
+ * @param selectedGwInstanceCredId - Credential ID
+ * @param selectedGwInstanceRegionId - Region ID
+ * @param selectedResourceId - Resource ID
+ * @param selectedDatabaseInstance - Database instance ID
+ * @param dispatch - Redux dispatch function
+ * @param getWellApiInstance - API service instance
+ * @returns Promise resolving to enriched assessment data
+ */
+export const enrichAssessmentDataWithPatches = async (
+    driftAssessmentData: any,
+    patchConfigs: Array<{ id: string; field: string }>,
+    dbType: string,
+    selectedGwInstanceCredId: string | undefined,
+    selectedGwInstanceRegionId: string | undefined,
+    selectedResourceId: string | undefined,
+    selectedDatabaseInstance: string | undefined,
+    dispatch: any,
+    getWellApiInstance: any
+): Promise<any> => {
+    const enrichedData = JSON.parse(JSON.stringify(driftAssessmentData));
+    if (!selectedGwInstanceCredId || !selectedGwInstanceRegionId || !selectedResourceId || !selectedDatabaseInstance) {
+        return enrichedData;
+    }
+    await Promise.all(
+        patchConfigs.map(async ({ id, field }) => {
+            const assessment = enrichedData?.assessments?.find((a: any) => a.id === id);
+            if (!assessment || assessment.status === 'optimized' || assessment.status === 'n/a') return;
+            try {
+                const result = await dispatch(
+                    getWellApiInstance.endpoints.getMissingPatchAssessmentData.initiate({
+                        dbType,
+                        credentialId: selectedGwInstanceCredId,
+                        regionId: selectedGwInstanceRegionId,
+                        databaseHostId: selectedResourceId,
+                        instanceId: selectedDatabaseInstance,
+                        field
+                    })
+                ).unwrap();
+                if (result) {
+                    assessment.ec2InstancesToPatch =
+                        result.ec2InstancesToPatch || result.missingPatchesInEc2Instances || [];
+                    assessment.missingPatchesInEc2Instances = assessment.ec2InstancesToPatch;
+                }
+            } catch (error) {
+                // Silent fail for individual patches
+            }
+        })
+    );
+    return enrichedData;
+};
 
 function applyCellStyle(cell: ExcelJS.Cell, style: ReturnType<typeof createCellStyle>): void {
     const targetCell = cell;
@@ -653,6 +722,25 @@ function addImpactedResourcesHeader(details: DetailSheetRow[], columnKeys: strin
     details.push(headerRow);
 }
 
+function resolveImpactedTableTitle(
+    configId: string,
+    databaseType: string,
+    itemCount?: number,
+    fallback = 'Impacted resources'
+): string {
+    const columnConfig = getColumnConfig(configId, databaseType);
+    if (columnConfig?.tableTitle) return columnConfig.tableTitle;
+
+    if (columnConfig?.resourceTypeLabel && typeof itemCount === 'number') {
+        if (itemCount === 1) return `Impacted ${columnConfig.resourceTypeLabel}`;
+        return pluralizeResourceType(columnConfig.resourceTypeLabel);
+    }
+
+    const cardMetadata = getCardMetadata(configId, databaseType);
+    if (cardMetadata?.impactedLabel) return cardMetadata.impactedLabel;
+    return fallback;
+}
+
 interface SizingDriveRow {
     logAccessPath?: string;
     tempdbAccessPath?: string;
@@ -661,33 +749,98 @@ interface SizingDriveRow {
     sizePercentToDataDrive?: number;
 }
 
+interface PlacementViolationDetail {
+    value?: string;
+    additionalInfo?: {
+        driveLetter?: string;
+        lunPath?: string;
+    };
+}
+
+/**
+ * Builds nested/expandable rows for MSSQL database file placement configs.
+ * Used for: data-files-location, log-files-location, tempdb-files-location
+ * Groups multiple drives/LUNs per database into parent-child row structure.
+ */
+function buildNestedPlacementRows(
+    assessment: FlatAssessmentItem,
+    configId: string,
+    databaseType: string,
+    columnConfig: NonNullable<ReturnType<typeof getColumnConfig>>,
+    rows: DetailSheetRow[]
+): DetailSheetRow[] {
+    const columns = columnConfig.columns || [];
+    const columnLabels = columns.map(col => col.label);
+
+    // Maps accessor name → value; any unrecognised or missing accessor defaults to ''
+    const buildRow = (values: Partial<Record<string, string>>): DetailSheetRow =>
+        Object.fromEntries(columns.map(col => [col.label, (col.accessor ? values[col.accessor] : undefined) ?? '']));
+
+    const grouped = new Map<string, { drives: string[]; lunPaths: string[] }>();
+    (assessment.violationDetails as PlacementViolationDetail[]).forEach(detail => {
+        const databaseName = String(detail?.value ?? '');
+        const entry = grouped.get(databaseName) ?? { drives: [], lunPaths: [] };
+        grouped.set(databaseName, entry);
+        if (detail.additionalInfo?.driveLetter) entry.drives.push(detail.additionalInfo.driveLetter);
+        if (detail.additionalInfo?.lunPath) entry.lunPaths.push(detail.additionalInfo.lunPath);
+    });
+
+    addImpactedResourcesHeader(rows, columnLabels, resolveImpactedTableTitle(configId, databaseType, grouped.size));
+    rows.push(Object.fromEntries(columnLabels.map(label => [label, label])));
+
+    grouped.forEach(({ drives, lunPaths }, databaseName) => {
+        rows.push(
+            buildRow({
+                databaseName,
+                current: String(assessment.current || ''),
+                recommended: String(assessment.recommended || ''),
+                driveDisplay:
+                    drives.length > 1 ? `${drives.length} ${t('databases.well-architect.drives')}` : drives[0] ?? '',
+                lunPathDisplay:
+                    lunPaths.length > 1
+                        ? `${lunPaths.length} ${t('databases.well-architect.lun-paths')}`
+                        : lunPaths[0] ?? ''
+            })
+        );
+
+        if (drives.length > 1) {
+            drives.forEach((drive, index) => {
+                rows.push(buildRow({ driveDisplay: drive, lunPathDisplay: lunPaths[index] || '' }));
+            });
+        }
+    });
+
+    return rows;
+}
+
 /** Log drive size and TempDB drive size expose drive rows under sizingViolations, not violationDetails. */
 function buildSizingViolationsDriveTable(
     sizingViolations: NonNullable<FlatAssessmentItem['sizingViolations']>,
-    configId: string
+    databaseType: string,
+    configId: string,
+    recommended?: string
 ): DetailSheetRow[] {
-    const drivePathKey: 'logAccessPath' | 'tempdbAccessPath' =
-        configId === ASSESSMENT_CONFIG_IDS.LOG_DRIVE_SIZE ? 'logAccessPath' : 'tempdbAccessPath';
-    const percentColumnLabel =
-        configId === ASSESSMENT_CONFIG_IDS.LOG_DRIVE_SIZE
-            ? t('databases.well-architect.log-drive-size-percentage')
-            : t('databases.well-architect.tempdb-drive-size-percentage');
-    const columns = [
-        t('databases.well-architect.drive-name'),
-        t('databases.well-architect.lun-path'),
-        t('databases.well-architect.databases'),
-        t('databases.well-architect.status'),
-        percentColumnLabel
-    ];
+    const columnConfig = getColumnConfig(configId, DBType.MSSQL);
+    const columns = columnConfig?.columns || [];
+    const columnLabels = columns.map(col => col.label);
+    const recommendedValue = recommended || '';
 
     const mapDrives = (drives: SizingDriveRow[] | undefined, statusLabel: string): DetailSheetRow[] =>
-        (drives || []).map(drive => ({
-            [columns[0]]: drive[drivePathKey] || '',
-            [columns[1]]: drive.lunPath || '',
-            [columns[2]]: (drive.databases || []).join(', '),
-            [columns[3]]: statusLabel,
-            [columns[4]]: drive.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : ''
-        }));
+        (drives || []).map(drive => {
+            const row: DetailSheetRow = {};
+            columns.forEach(col => {
+                if (col.accessor === 'logAccessPath') row[col.label] = drive.logAccessPath || '';
+                else if (col.accessor === 'tempdbAccessPath') row[col.label] = drive.tempdbAccessPath || '';
+                else if (col.accessor === 'sizePercentToDataDrive') {
+                    row[col.label] = drive.sizePercentToDataDrive != null ? `${drive.sizePercentToDataDrive}%` : '';
+                } else if (col.accessor === 'recommended') row[col.label] = recommendedValue;
+                else if (col.accessor === 'lunPath') row[col.label] = drive.lunPath || '';
+                else if (col.accessor === 'databases') row[col.label] = (drive.databases || []).join(', ');
+                else if (col.accessor === 'status') row[col.label] = statusLabel;
+                else row[col.label] = '';
+            });
+            return row;
+        });
 
     const dataRows: DetailSheetRow[] = [
         ...mapDrives(
@@ -706,15 +859,20 @@ function buildSizingViolationsDriveTable(
 
     if (!dataRows.length) return [];
 
-    const tableTitle = getColumnConfig(configId)?.tableTitle || 'Impacted drives';
+    const tableTitle = resolveImpactedTableTitle(configId, databaseType, dataRows.length, 'Impacted drives');
     const rows: DetailSheetRow[] = [];
-    addImpactedResourcesHeader(rows, columns, tableTitle);
-    rows.push(Object.fromEntries(columns.map(label => [label, label])));
+    addImpactedResourcesHeader(rows, columnLabels, tableTitle);
+    rows.push(Object.fromEntries(columnLabels.map(label => [label, label])));
     rows.push(...dataRows);
     return rows;
 }
 
-function buildTableB(assessment: FlatAssessmentItem, configId: string, databaseType: string): DetailSheetRow[] {
+function buildTableB(
+    assessment: FlatAssessmentItem,
+    configId: string,
+    databaseType: string,
+    metadata?: AssessmentMetadata
+): DetailSheetRow[] {
     const columnConfig = getColumnConfig(configId, databaseType);
     const hasSubConfigs = columnConfig?.hasSubConfigs || Boolean(assessment.configDetails?.length);
     const configDetails = assessment.configDetails || [];
@@ -723,22 +881,87 @@ function buildTableB(assessment: FlatAssessmentItem, configId: string, databaseT
 
     const rows: DetailSheetRow[] = [];
 
-    if (hasSubConfigs && assessment.violationDetails?.length) {
+    if (columnConfig?.combineRows && assessment.violationDetails?.length) {
+        const columns = columnConfig.columns || [];
+        const columnLabels = columns.map(col => col.label);
+        const current = assessment.violationDetails
+            .map((detail: { objectName?: string; value?: string }) => `${detail.objectName}=${detail.value ?? ''}`)
+            .join(', ');
+        const recommended = assessment.violationDetails
+            .map(
+                (detail: { objectName?: string; recommended?: string }) =>
+                    // Fall back to the top-level recommended value (e.g. mpio-iscsi-count) when a
+                    // row doesn't have its own per-row recommended value
+                    `${detail.objectName}=${detail.recommended ?? assessment.recommended ?? ''}`
+            )
+            .join(', ');
+        const combinedRow: DetailSheetRow = {};
+
+        addImpactedResourcesHeader(
+            rows,
+            columnLabels,
+            resolveImpactedTableTitle(configId, databaseType, assessment.violationDetails.length)
+        );
+        rows.push(Object.fromEntries(columnLabels.map(label => [label, label])));
+        columns.forEach(col => {
+            if (col.accessor === 'databaseHostName') combinedRow[col.label] = metadata?.databaseHostName || '';
+            else if (col.accessor === 'current' || col.accessor === 'value') combinedRow[col.label] = current;
+            else if (col.accessor === 'recommended') combinedRow[col.label] = recommended;
+            else combinedRow[col.label] = '';
+        });
+        rows.push(combinedRow);
+        return rows;
+    }
+
+    if (columnConfig?.useNestedExpandable && assessment.violationDetails?.length) {
+        return buildNestedPlacementRows(assessment, configId, databaseType, columnConfig, rows);
+    }
+
+    // Handle configs with columns defined (sub-configs + configs like ntfs-allocation-unit-size)
+    if ((hasSubConfigs || columnConfig?.columns) && assessment.violationDetails?.length) {
         const columns = columnConfig?.columns || [
             { key: 'objectName', label: 'Object name' },
             { key: 'current', label: 'Current' },
             { key: 'recommended', label: 'Recommended' }
         ];
         const columnLabels = columns.map(col => col.label);
-        addImpactedResourcesHeader(rows, columnLabels, columnConfig?.tableTitle || 'Impacted resources');
+        addImpactedResourcesHeader(
+            rows,
+            columnLabels,
+            resolveImpactedTableTitle(configId, databaseType, assessment.violationDetails.length)
+        );
         rows.push(Object.fromEntries(columnLabels.map(label => [label, label])));
-        assessment.violationDetails.forEach((violation: any) => {
-            const { current, recommended } = buildSubConfigValues(violation, configDetails);
+        const useObjectsInViolationForName = columnConfig?.objectNameSource === 'objectsInViolation';
+        const objectsInViolation: string[] = useObjectsInViolationForName
+            ? (assessment.objectsInViolation || []).map(item => (typeof item === 'string' ? item : ''))
+            : [];
+
+        assessment.violationDetails.forEach((violation: any, index: number) => {
+            // buildSubConfigValues only for actual sub-configs; otherwise use direct field mapping
+            const { current, recommended } = hasSubConfigs
+                ? buildSubConfigValues(violation, configDetails)
+                : {
+                      current: violation.current ?? assessment.current ?? violation.value ?? '',
+                      recommended: violation.recommended ?? assessment.recommended ?? ''
+                  };
+            // cluster-quorum: cluster name from objectsInViolation, violation.objectName stored as configName
+            const resolvedObjectName = useObjectsInViolationForName
+                ? objectsInViolation[index] || ''
+                : violation.objectName || '';
+            const resolvedConfigName = useObjectsInViolationForName ? violation.objectName || '' : '';
             const dataRow: DetailSheetRow = {};
             columns.forEach(col => {
-                if (col.accessor === 'current') dataRow[col.label] = current;
-                else if (col.accessor === 'recommended') dataRow[col.label] = recommended;
-                else if (col.key === 'objectName') dataRow[col.label] = violation.objectName || '';
+                if (col.accessor === 'current') dataRow[col.label] = current || '';
+                else if (col.accessor === 'recommended') dataRow[col.label] = recommended || '';
+                else if (col.accessor === 'value') dataRow[col.label] = violation.value || '';
+                else if (col.accessor === 'configName') dataRow[col.label] = resolvedConfigName;
+                else if (col.accessor === 'databaseName')
+                    dataRow[col.label] = violation.databaseName || violation.value || '';
+                else if (col.accessor === 'driveDisplay') {
+                    dataRow[col.label] = violation.driveDisplay || violation.additionalInfo?.driveLetter || '';
+                } else if (col.accessor === 'lunPathDisplay') {
+                    dataRow[col.label] = violation.lunPathDisplay || violation.additionalInfo?.lunPath || '';
+                } else if (col.key === 'objectName') dataRow[col.label] = resolvedObjectName;
                 else if (col.key === 'objectType') dataRow[col.label] = violation.objectType || '';
                 else if (col.key === 'dataCategory') dataRow[col.label] = violation.dataCategory || '';
                 else dataRow[col.label] = violation[col.key] ?? violation.value ?? '';
@@ -754,8 +977,16 @@ function buildTableB(assessment: FlatAssessmentItem, configId: string, databaseT
         const hasRecommended = firstViolation.recommended !== undefined;
 
         if (configId === 'mtu-alignment' || hasRecommended) {
-            addImpactedResourcesHeader(rows, ['Object name', 'Current', 'Recommended']);
-            rows.push({ 'Object name': 'Object name', Current: 'Current', Recommended: 'Recommended' });
+            addImpactedResourcesHeader(
+                rows,
+                ['Object name', 'Current', 'Recommended'],
+                resolveImpactedTableTitle(configId, databaseType, assessment.violationDetails.length)
+            );
+            rows.push({
+                'Object name': 'Object name',
+                Current: 'Current',
+                Recommended: 'Recommended'
+            });
             assessment.violationDetails.forEach((violation: any) => {
                 rows.push({
                     'Object name': violation.objectName || '',
@@ -767,7 +998,11 @@ function buildTableB(assessment: FlatAssessmentItem, configId: string, databaseT
         }
 
         if (hasValueColumn) {
-            addImpactedResourcesHeader(rows, ['Object name', 'Current value']);
+            addImpactedResourcesHeader(
+                rows,
+                ['Object name', 'Current value'],
+                resolveImpactedTableTitle(configId, databaseType, assessment.violationDetails.length)
+            );
             rows.push({ 'Object name': 'Object name', 'Current value': 'Current value' });
             assessment.violationDetails.forEach((violation: any) => {
                 rows.push({ 'Object name': violation.objectName || '', 'Current value': violation.value || '' });
@@ -775,7 +1010,11 @@ function buildTableB(assessment: FlatAssessmentItem, configId: string, databaseT
             return rows;
         }
 
-        addImpactedResourcesHeader(rows, ['Object name']);
+        addImpactedResourcesHeader(
+            rows,
+            ['Object name'],
+            resolveImpactedTableTitle(configId, databaseType, assessment.violationDetails.length)
+        );
         rows.push({ 'Object name': 'Object name' });
         assessment.violationDetails.forEach((violation: any) => {
             rows.push({ 'Object name': violation.objectName || violation.value || '' });
@@ -787,7 +1026,12 @@ function buildTableB(assessment: FlatAssessmentItem, configId: string, databaseT
         (configId === ASSESSMENT_CONFIG_IDS.LOG_DRIVE_SIZE || configId === ASSESSMENT_CONFIG_IDS.TEMPDB_DRIVE_SIZE) &&
         assessment.sizingViolations
     ) {
-        const sizingRows = buildSizingViolationsDriveTable(assessment.sizingViolations, configId);
+        const sizingRows = buildSizingViolationsDriveTable(
+            assessment.sizingViolations,
+            databaseType,
+            configId,
+            assessment.recommended ? String(assessment.recommended) : ''
+        );
         if (sizingRows.length) return sizingRows;
     }
 
@@ -821,6 +1065,36 @@ function buildTableB(assessment: FlatAssessmentItem, configId: string, databaseT
     }
 
     if (assessment.objectsInViolation?.length && !assessment.violationDetails?.length) {
+        if (columnConfig?.columns?.length) {
+            const { columns } = columnConfig;
+            const columnLabels = columns.map(col => col.label);
+            addImpactedResourcesHeader(
+                rows,
+                columnLabels,
+                resolveImpactedTableTitle(configId, databaseType, assessment.objectsInViolation.length)
+            );
+            rows.push(Object.fromEntries(columnLabels.map(label => [label, label])));
+            assessment.objectsInViolation.forEach(item => {
+                const resolvedObjectName =
+                    typeof item === 'string'
+                        ? item
+                        : item?.objectName || item?.databaseName || item?.ontapVolumeName || '';
+                const dataRow: DetailSheetRow = {};
+                columns.forEach(col => {
+                    if (col.accessor === 'objectName') dataRow[col.label] = resolvedObjectName;
+                    else if (col.accessor === 'value') dataRow[col.label] = assessment.current?.toString() || '';
+                    else if (col.accessor === 'current') dataRow[col.label] = assessment.current?.toString() || '';
+                    else if (col.accessor === 'recommended')
+                        dataRow[col.label] = assessment.recommended?.toString() || '';
+                    else if (col.accessor === 'databaseHostName') dataRow[col.label] = metadata?.databaseHostName || '';
+                    else if (col.accessor === 'databaseName') dataRow[col.label] = resolvedObjectName;
+                    else dataRow[col.label] = '';
+                });
+                rows.push(dataRow);
+            });
+            return rows;
+        }
+
         if (configId === 'compute-rightsizing') {
             rows.push({}, {});
             rows.push({ 'Violation Type': 'Objects in Violation' });
@@ -831,7 +1105,11 @@ function buildTableB(assessment: FlatAssessmentItem, configId: string, databaseT
                 rows.push({ 'Violation Type': value });
             });
         } else {
-            addImpactedResourcesHeader(rows, ['Object name']);
+            addImpactedResourcesHeader(
+                rows,
+                ['Object name'],
+                resolveImpactedTableTitle(configId, databaseType, assessment.objectsInViolation.length)
+            );
             rows.push({ 'Object name': 'Object name' });
             assessment.objectsInViolation.forEach(item => {
                 const value =
@@ -840,6 +1118,73 @@ function buildTableB(assessment: FlatAssessmentItem, configId: string, databaseT
             });
         }
     }
+
+    return rows;
+}
+
+function buildPatchTable(assessment: FlatAssessmentItem, configId: string, databaseType: string): DetailSheetRow[] {
+    const rows: DetailSheetRow[] = [];
+    const dialogConfig = getDialogContentConfig(configId, databaseType);
+
+    if (!dialogConfig?.features?.showPatchTable) return rows;
+
+    const patchColumns = dialogConfig.features.patchColumns || [];
+    if (!patchColumns.length) return rows;
+
+    // Get patch data from assessment
+    const assessmentData = assessment as any;
+    const instances = assessmentData.missingPatchesInEc2Instances || assessmentData.ec2InstancesToPatch;
+
+    if (!instances || !Array.isArray(instances)) return rows;
+
+    // Collect all patches from all instances
+    const allPatches: any[] = [];
+
+    instances.forEach((instance: any) => {
+        const missingPatchDetails = instance?.missingPatchDetails || [];
+
+        if (Array.isArray(missingPatchDetails)) {
+            // For Oracle OS patch (host-os-patch on Oracle), map fields
+            if (configId === ASSESSMENT_CONFIG_IDS.OPERATING_SYSTEM_PATCH && databaseType === DBType.ORACLE) {
+                missingPatchDetails.forEach((patch: any) => {
+                    allPatches.push({
+                        ...patch,
+                        component: patch.classification || patch.component,
+                        packageName: patch.title || patch.packageName,
+                        updateType: patch.state || patch.updateType
+                    });
+                });
+            } else {
+                // For MSSQL patch, MSSQL host OS patch, and Oracle security patch - use fields as-is
+                allPatches.push(...missingPatchDetails);
+            }
+        }
+    });
+
+    if (!allPatches.length) return rows;
+
+    // Create table with patch details
+    const columnLabels = patchColumns.map(col => translateSectionField(col.header));
+    const tableTitle = 'Missing Patches';
+
+    rows.push({}, {});
+    const headerRow: DetailSheetRow = {};
+    columnLabels.forEach((label, index) => {
+        headerRow[label] = index === 0 ? tableTitle : '';
+    });
+    rows.push(headerRow);
+    rows.push(Object.fromEntries(columnLabels.map(label => [label, label])));
+
+    // Add patch data rows
+    allPatches.forEach(patch => {
+        const dataRow: DetailSheetRow = {};
+        patchColumns.forEach((col, index) => {
+            const label = columnLabels[index];
+            const value = patch[col.accessor];
+            dataRow[label] = value !== undefined && value !== null ? String(value) : '';
+        });
+        rows.push(dataRow);
+    });
 
     return rows;
 }
@@ -967,18 +1312,27 @@ function buildDetailSheetRows(
     assessment: FlatAssessmentItem,
     configId: string,
     databaseType: string,
-    isWad: boolean
+    isWad: boolean,
+    metadata?: AssessmentMetadata
 ): DetailSheetRow[] {
     const details: DetailSheetRow[] = [buildSummaryBlock(assessment, configId, databaseType, isWad)];
     const tableA = buildTableA(assessment.configDetails);
     if (tableA.length) details.push(...tableA);
     if (assessment.status === 'optimized' || assessment.status === 'n/a') return details;
+
+    // Try to add patch table first (for patch configurations)
+    const patchRows = buildPatchTable(assessment, configId, databaseType);
+    if (patchRows.length) {
+        details.push(...patchRows);
+        return details;
+    }
+
     const specialRows = buildSpecialConfigTables(assessment);
     if (specialRows.length) {
         details.push(...specialRows);
         return details;
     }
-    details.push(...buildTableB(assessment, configId, databaseType));
+    details.push(...buildTableB(assessment, configId, databaseType, metadata));
     return details;
 }
 
@@ -1023,7 +1377,8 @@ function buildWorkbookInput(data: FlatAssessmentResponse, databaseType: string):
             Severity: assessment.severity
                 ? assessment.severity.charAt(0).toUpperCase() + assessment.severity.slice(1)
                 : 'Unknown',
-            'Resource type': assessment.resourceType || 'Resource',
+            'Resource type':
+                getColumnConfig(configId, databaseType)?.resourceTypeLabel || assessment.resourceType || 'Resource',
             'Impacted resources (X out of Y)': formatImpactedResourcesDisplay(assessment)
         });
     });
@@ -1065,7 +1420,8 @@ function buildWorkbookInput(data: FlatAssessmentResponse, databaseType: string):
         configurationStatus,
         displayToInternal,
         assessmentsById,
-        orderedIds
+        orderedIds,
+        metadata: data.metadata
     };
 }
 
@@ -1363,7 +1719,7 @@ async function generateProperXlsxWorkbook(
         if (!configId) return;
         const assessment = workbookInput.assessmentsById.get(configId);
         if (!assessment) return;
-        const configDetails = buildDetailSheetRows(assessment, configId, databaseType, isWad);
+        const configDetails = buildDetailSheetRows(assessment, configId, databaseType, isWad, workbookInput.metadata);
         if (!configDetails.length) return;
 
         const configSheet = workbook.addWorksheet(getSheetName(displayName));

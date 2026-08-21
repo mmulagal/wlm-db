@@ -72,12 +72,12 @@ describe('getColumnConfig', () => {
         expect(config?.columns[0]?.label).toBe('Host name');
     });
 
-    // ── combineRows (no injectMetadataFields) ─────────────────────────────────
+    // ── combineRows + injectMetadataFields ──────────────────────────────────────
 
     it('returns combineRows: true for tcp-advanced-options (Oracle)', () => {
         const config = getColumnConfig('tcp-advanced-options', DBType.ORACLE);
         expect(config?.combineRows).toBe(true);
-        expect(config?.injectMetadataFields).toBeFalsy();
+        expect(config?.injectMetadataFields).toBeTruthy();
     });
 
     // ── fallback (no dbType) ──────────────────────────────────────────────────

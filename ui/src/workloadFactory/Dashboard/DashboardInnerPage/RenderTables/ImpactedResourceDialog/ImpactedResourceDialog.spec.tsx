@@ -303,8 +303,8 @@ describe('ImpactedResourceDialog', () => {
         };
         render(<ImpactedResourceDialog data={data as any} />);
         expect(screen.getByText('Volume name')).toBeTruthy();
-        expect(screen.getByText('Current')).toBeTruthy();
-        expect(screen.getByText('Recommended')).toBeTruthy();
+        expect(screen.getByText('Current value')).toBeTruthy();
+        expect(screen.getByText('Recommended value')).toBeTruthy();
         expect(screen.getByText('vol1')).toBeTruthy();
         expect(screen.getByText('deduplication=none, compaction=enabled')).toBeTruthy();
         expect(screen.getByText('deduplication=enabled, compaction=enabled')).toBeTruthy();
@@ -528,8 +528,8 @@ describe('ImpactedResourceDialog', () => {
             };
             render(<ImpactedResourceDialog data={data as any} />);
             expect(screen.getByText('Host name')).toBeTruthy();
-            expect(screen.getByText('Current heartbeat setting')).toBeTruthy();
-            expect(screen.getByText('Recommended heartbeat setting')).toBeTruthy();
+            expect(screen.getByText('Current value')).toBeTruthy();
+            expect(screen.getByText('Recommended value')).toBeTruthy();
             // Combined rows: name=value pairs
             expect(screen.getByText('CrossSubnetDelay=500, CrossSubnetThreshold=5')).toBeTruthy();
             expect(screen.getByText('CrossSubnetDelay=2000, CrossSubnetThreshold=20')).toBeTruthy();
@@ -640,19 +640,17 @@ describe('ImpactedResourceDialog', () => {
 
     // === MULTIPATH I/O SESSIONS (MSSQL) ===
     describe('MULTIPATH_IO_SESSIONS MSSQL', () => {
-        it('renders multipath configuration, current value and top-level recommended', () => {
+        it('renders host name, current value and recommended columns with combineRows', () => {
             const data = {
                 configurationName: 'mpio-iscsi-count',
-                recommended: '5',
-                violationDetails: [{ objectName: 'sessions', value: '2' }]
+                violationDetails: [{ objectName: 'sessions', value: '2', recommended: '5' }]
             };
             render(<ImpactedResourceDialog data={data as any} />);
-            expect(screen.getByText('Multipath configuration')).toBeTruthy();
+            expect(screen.getByText('Host name')).toBeTruthy();
             expect(screen.getByText('Current value')).toBeTruthy();
             expect(screen.getByText('Recommended value')).toBeTruthy();
-            expect(screen.getByText('sessions')).toBeTruthy();
-            expect(screen.getByText('2')).toBeTruthy();
-            expect(screen.getByText('5')).toBeTruthy();
+            expect(screen.getByText('sessions=2')).toBeTruthy();
+            expect(screen.getByText('sessions=5')).toBeTruthy();
         });
 
         it('renders unavailable placeholder row when violationDetails is empty', () => {
@@ -662,7 +660,7 @@ describe('ImpactedResourceDialog', () => {
                 violationDetails: []
             };
             render(<ImpactedResourceDialog data={data as any} />);
-            expect(screen.getByText('Multipath configuration')).toBeTruthy();
+            expect(screen.getByText('Host name')).toBeTruthy();
             expect(screen.getAllByText('databases.general.unavailable').length).toBeGreaterThan(0);
         });
     });
@@ -775,14 +773,33 @@ describe('ImpactedResourceDialog', () => {
 
         // --- SWAP SPACE ---
         describe('swap-space', () => {
-            it('renders ec2-instance, current and recommended from violationDetails', () => {
+            afterEach(() => {
+                engineTypeMock.driftAssessmentData = null;
+                engineTypeMock.selectedHostname = '';
+            });
+
+            it('renders Host name / Current value / Recommended value columns from violationDetails', () => {
+                const data = {
+                    configurationName: 'swap-space',
+                    violationDetails: [{ objectName: 'i-0abc123', value: '2 GB', recommended: '8 GB' }],
+                    hostName: 'oracle-host.example.com'
+                };
+                render(<ImpactedResourceDialog data={data as any} />);
+                expect(screen.getByText('Host name')).toBeTruthy();
+                expect(screen.getByText('Current value')).toBeTruthy();
+                expect(screen.getByText('Recommended value')).toBeTruthy();
+                expect(screen.getByText('oracle-host.example.com')).toBeTruthy();
+                expect(screen.getByText('2 GB')).toBeTruthy();
+                expect(screen.getByText('8 GB')).toBeTruthy();
+            });
+
+            it('shows unavailable when no hostname source is available (violationDetails path)', () => {
                 const data = {
                     configurationName: 'swap-space',
                     violationDetails: [{ objectName: 'i-0abc123', value: '2 GB', recommended: '8 GB' }]
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('EC2 instance')).toBeTruthy();
-                expect(screen.getByText('i-0abc123')).toBeTruthy();
+                expect(screen.getAllByText('databases.general.unavailable').length).toBeGreaterThan(0);
                 expect(screen.getByText('2 GB')).toBeTruthy();
                 expect(screen.getByText('8 GB')).toBeTruthy();
             });
@@ -790,7 +807,7 @@ describe('ImpactedResourceDialog', () => {
             it('renders placeholder row when violationDetails and objectsInViolation are both empty', () => {
                 const data = { configurationName: 'swap-space', violationDetails: [], objectsInViolation: [] };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('EC2 instance')).toBeTruthy();
+                expect(screen.getByText('Host name')).toBeTruthy();
                 expect(screen.getAllByText('databases.general.unavailable').length).toBeGreaterThan(0);
             });
         });
@@ -803,9 +820,9 @@ describe('ImpactedResourceDialog', () => {
                     violationDetails: [{ objectName: 'AFD_disk1', value: '512', recommended: '4096' }]
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('AFD_disk1')).toBeTruthy();
-                expect(screen.getByText('512')).toBeTruthy();
-                expect(screen.getByText('4096')).toBeTruthy();
+                // combineRows: true — violationDetails collapsed into name=value pairs
+                expect(screen.getByText('AFD_disk1=512')).toBeTruthy();
+                expect(screen.getByText('AFD_disk1=4096')).toBeTruthy();
             });
         });
 
@@ -817,9 +834,9 @@ describe('ImpactedResourceDialog', () => {
                     violationDetails: [{ objectName: 'ORCL_ASM1', value: '512', recommended: '4096' }]
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('ORCL_ASM1')).toBeTruthy();
-                expect(screen.getByText('512')).toBeTruthy();
-                expect(screen.getByText('4096')).toBeTruthy();
+                // combineRows: true — violationDetails collapsed into name=value pairs
+                expect(screen.getByText('ORCL_ASM1=512')).toBeTruthy();
+                expect(screen.getByText('ORCL_ASM1=4096')).toBeTruthy();
             });
         });
 
@@ -828,6 +845,8 @@ describe('ImpactedResourceDialog', () => {
             it('renders EC2 instance, current value and recommended value from violationDetails', () => {
                 const data = {
                     configurationName: 'dnfs-consistent-ip-resolution',
+                    // hostName maps to metadata.databaseHostName (injectMetadataFields: true, accessor: databaseHostName)
+                    hostName: 'i-0dnfs01',
                     violationDetails: [{ objectName: 'i-0dnfs01', value: 'disabled', recommended: 'enabled' }]
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
@@ -845,9 +864,9 @@ describe('ImpactedResourceDialog', () => {
                     violationDetails: [{ objectName: '/oradata', value: 'relatime', recommended: 'noatime' }]
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('/oradata')).toBeTruthy();
-                expect(screen.getByText('relatime')).toBeTruthy();
-                expect(screen.getByText('noatime')).toBeTruthy();
+                // combineRows: true — violationDetails collapsed into name=value pairs
+                expect(screen.getByText('/oradata=relatime')).toBeTruthy();
+                expect(screen.getByText('/oradata=noatime')).toBeTruthy();
             });
         });
 
@@ -919,10 +938,11 @@ describe('ImpactedResourceDialog', () => {
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
                 expect(screen.getByText('Host name')).toBeTruthy();
-                expect(screen.getByText('Current iSCSI replacement timeout')).toBeTruthy();
+                expect(screen.getByText('Current value')).toBeTruthy();
                 expect(screen.getByText('oracle-host-01')).toBeTruthy();
-                expect(screen.getByText('120')).toBeTruthy();
-                expect(screen.getByText('5')).toBeTruthy();
+                // combineRows: true — violationDetails collapsed into name=value pairs
+                expect(screen.getByText('replacement_timeout=120')).toBeTruthy();
+                expect(screen.getByText('replacement_timeout=5')).toBeTruthy();
             });
 
             it('shows hostname from data.hostName when metadata is absent', () => {
@@ -971,9 +991,9 @@ describe('ImpactedResourceDialog', () => {
                     ]
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('path_grouping_policy')).toBeTruthy();
-                expect(screen.getByText('multibus')).toBeTruthy();
-                expect(screen.getByText('group_by_prio')).toBeTruthy();
+                // combineRows: true — violationDetails collapsed into name=value pairs
+                expect(screen.getByText('path_grouping_policy=multibus')).toBeTruthy();
+                expect(screen.getByText('path_grouping_policy=group_by_prio')).toBeTruthy();
             });
         });
 
@@ -994,8 +1014,9 @@ describe('ImpactedResourceDialog', () => {
                 expect(screen.getByText('Host name')).toBeTruthy();
                 expect(screen.getByText('Current value')).toBeTruthy();
                 expect(screen.getByText('oracle-host-02')).toBeTruthy();
-                expect(screen.getByText('yes')).toBeTruthy();
-                expect(screen.getByText('no')).toBeTruthy();
+                // combineRows: true — violationDetails collapsed into name=value pairs
+                expect(screen.getByText('use_friendly_names=yes')).toBeTruthy();
+                expect(screen.getByText('use_friendly_names=no')).toBeTruthy();
             });
 
             it('shows hostname from data.hostName when metadata is absent', () => {
@@ -1017,9 +1038,9 @@ describe('ImpactedResourceDialog', () => {
                     violationDetails: [{ objectName: 'nr_requests', value: '64', recommended: '256' }]
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('nr_requests')).toBeTruthy();
-                expect(screen.getByText('64')).toBeTruthy();
-                expect(screen.getByText('256')).toBeTruthy();
+                // combineRows: true — violationDetails collapsed into name=value pairs
+                expect(screen.getByText('nr_requests=64')).toBeTruthy();
+                expect(screen.getByText('nr_requests=256')).toBeTruthy();
             });
         });
 
@@ -1064,8 +1085,8 @@ describe('ImpactedResourceDialog', () => {
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
                 expect(screen.getByText('NFS mount')).toBeTruthy();
-                expect(screen.getByText('Status')).toBeTruthy();
-                expect(screen.getByText('Recommended dNFS configuration')).toBeTruthy();
+                expect(screen.getByText('Current value')).toBeTruthy();
+                expect(screen.getByText('Recommended value')).toBeTruthy();
                 expect(screen.getByText('/nfs/mount1')).toBeTruthy();
                 expect(screen.getByText('disabled')).toBeTruthy();
                 expect(screen.getByText('enabled')).toBeTruthy();
@@ -1092,8 +1113,8 @@ describe('ImpactedResourceDialog', () => {
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
                 expect(screen.getByText('NFS mount')).toBeTruthy();
-                expect(screen.getByText('Current mount options')).toBeTruthy();
-                expect(screen.getByText('Recommended mount options')).toBeTruthy();
+                expect(screen.getByText('Current value')).toBeTruthy();
+                expect(screen.getByText('Recommended value')).toBeTruthy();
                 expect(screen.getByText('/nfs/mount3')).toBeTruthy();
             });
         });
@@ -1107,8 +1128,8 @@ describe('ImpactedResourceDialog', () => {
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
                 expect(screen.getByText('NFS mount')).toBeTruthy();
-                expect(screen.getByText('Current mount options')).toBeTruthy();
-                expect(screen.getByText('Recommended mount options')).toBeTruthy();
+                expect(screen.getByText('Current value')).toBeTruthy();
+                expect(screen.getByText('Recommended value')).toBeTruthy();
                 expect(screen.getByText('/u01/oradata')).toBeTruthy();
                 expect(screen.getByText('rw')).toBeTruthy();
                 expect(screen.getByText('rw,noatime')).toBeTruthy();
@@ -1215,7 +1236,7 @@ describe('ImpactedResourceDialog', () => {
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
                 expect(screen.getByText('Volume name')).toBeTruthy();
-                expect(screen.getByText('Snapshot status')).toBeTruthy();
+                expect(screen.getByText('Current value')).toBeTruthy();
                 expect(screen.getByText('Recommended value')).toBeTruthy();
                 expect(screen.getByText('vol-snap')).toBeTruthy();
                 expect(screen.getByText('not-configured')).toBeTruthy();
@@ -1260,9 +1281,11 @@ describe('ImpactedResourceDialog', () => {
 
         // --- TCP ADVANCED OPTIONS ---
         describe('tcp-advanced-options', () => {
-            it('renders 3 columns (EC2 instance, Current value, Recommended value) with violationDetails', () => {
+            it('renders 3 columns (Host name, Current value, Recommended value) with violationDetails', () => {
                 const data = {
                     configurationName: 'tcp-advanced-options',
+                    // hostName maps to metadata.databaseHostName (injectMetadataFields: true, accessor: databaseHostName)
+                    hostName: 'i-0abc123',
                     objectsInViolation: ['i-0abc123'],
                     violationDetails: [
                         { objectName: 'net.ipv4.tcp_timestamps', value: '0', recommended: '1' },
@@ -1271,7 +1294,7 @@ describe('ImpactedResourceDialog', () => {
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
                 // Headers come from registry labels (English), not i18n keys
-                expect(screen.getByText('EC2 instance')).toBeTruthy();
+                expect(screen.getByText('Host name')).toBeTruthy();
                 expect(screen.getByText('Current value')).toBeTruthy();
                 expect(screen.getByText('Recommended value')).toBeTruthy();
                 expect(screen.getByText('i-0abc123')).toBeTruthy();
@@ -1282,14 +1305,15 @@ describe('ImpactedResourceDialog', () => {
             it('renders 3 columns with fallback when only objectsInViolation is provided', () => {
                 const data = {
                     configurationName: 'tcp-advanced-options',
-                    objectsInViolation: ['i-0abc123', 'i-0def456']
+                    // hostName maps to metadata.databaseHostName (injectMetadataFields: true, accessor: databaseHostName)
+                    hostName: 'i-0abc123',
+                    objectsInViolation: ['i-0abc123']
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('EC2 instance')).toBeTruthy();
+                expect(screen.getByText('Host name')).toBeTruthy();
                 expect(screen.getByText('Current value')).toBeTruthy();
                 expect(screen.getByText('Recommended value')).toBeTruthy();
                 expect(screen.getByText('i-0abc123')).toBeTruthy();
-                expect(screen.getByText('i-0def456')).toBeTruthy();
             });
 
             it('renders placeholder row when objectsInViolation is empty', () => {
@@ -1298,7 +1322,7 @@ describe('ImpactedResourceDialog', () => {
                     objectsInViolation: []
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('EC2 instance')).toBeTruthy();
+                expect(screen.getByText('Host name')).toBeTruthy();
                 expect(screen.getByText('Current value')).toBeTruthy();
                 expect(screen.getByText('Recommended value')).toBeTruthy();
                 expect(screen.getAllByText('databases.general.unavailable').length).toBeGreaterThan(0);
@@ -1307,7 +1331,12 @@ describe('ImpactedResourceDialog', () => {
 
         // --- SWAP SPACE objectsInViolation fallback ---
         describe('swap-space objectsInViolation fallback', () => {
-            it('renders from objectsInViolation with top-level current and recommended when violationDetails is empty', () => {
+            afterEach(() => {
+                engineTypeMock.driftAssessmentData = null;
+                engineTypeMock.selectedHostname = '';
+            });
+
+            it('renders top-level current and recommended when violationDetails is empty (no objectName column)', () => {
                 const data = {
                     configurationName: 'swap-space',
                     violationDetails: [],
@@ -1316,10 +1345,24 @@ describe('ImpactedResourceDialog', () => {
                     recommended: '8 GB'
                 };
                 render(<ImpactedResourceDialog data={data as any} />);
-                expect(screen.getByText('EC2 instance')).toBeTruthy();
-                expect(screen.getByText('i-0ec2inst')).toBeTruthy();
+                expect(screen.getByText('Host name')).toBeTruthy();
                 expect(screen.getByText('1 GB')).toBeTruthy();
                 expect(screen.getByText('8 GB')).toBeTruthy();
+            });
+
+            it('injects hostname from driftAssessmentData.metadata into the objectsInViolation fallback row', () => {
+                engineTypeMock.driftAssessmentData = {
+                    metadata: { databaseHostName: 'host-from-metadata.example.com' }
+                };
+                const data = {
+                    configurationName: 'swap-space',
+                    violationDetails: [],
+                    objectsInViolation: ['i-0ec2inst'],
+                    current: '1 GB',
+                    recommended: '8 GB'
+                };
+                render(<ImpactedResourceDialog data={data as any} />);
+                expect(screen.getByText('host-from-metadata.example.com')).toBeTruthy();
             });
         });
     });

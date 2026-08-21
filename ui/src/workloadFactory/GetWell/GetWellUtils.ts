@@ -82,7 +82,7 @@ import {
     formatNumberWithCustomComma,
     getCurrentDateTime
 } from '../../utils/utilityFunctions';
-import { sortConfigsByPriority } from '../../utils/configRegistry';
+import { sortConfigsByPriority, getColumnConfig } from '../../utils/configRegistry';
 
 /**
  * Checks if the deployment type is AOAG.
@@ -2517,7 +2517,9 @@ export const formatFlatAssessments = (
         } else if (isConfigIdMatch(configKey, ASSESSMENT_CONFIG_IDS.SWAP_SPACE)) {
             blockSixType = BLOCK_SIX_LABELS.SWAP_SPACE;
         } else if (assessment.resourceType) {
-            blockSixType = `${assessment.resourceType}s`;
+            const columnConfig = getColumnConfig(configKey, DBType.MSSQL);
+            const resourceLabel = columnConfig?.resourceTypeLabel || assessment.resourceType;
+            blockSixType = `${resourceLabel}s`;
         } else {
             blockSixType = BLOCK_SIX_LABELS.IMPACTED_RESOURCES;
         }
@@ -2546,7 +2548,10 @@ export const formatFlatAssessments = (
             },
             block_five: {
                 type: 'Resource type',
-                value: assessment.resourceType || ''
+                value: (() => {
+                    const columnConfig = getColumnConfig(configKey, DBType.MSSQL);
+                    return columnConfig?.resourceTypeLabel || assessment.resourceType || '';
+                })()
             },
             block_six: {
                 type: blockSixType,
@@ -2660,7 +2665,12 @@ export const formatFlatAssessments = (
                     },
                     block_five: {
                         type: 'Resource type',
-                        value: dismissedConfig.subType || dismissedConfig.type || ''
+                        value: (() => {
+                            const columnConfig = getColumnConfig(configId, DBType.MSSQL);
+                            return (
+                                columnConfig?.resourceTypeLabel || dismissedConfig.subType || dismissedConfig.type || ''
+                            );
+                        })()
                     },
                     block_six: {
                         type: BLOCK_SIX_LABELS.IMPACTED_RESOURCES,

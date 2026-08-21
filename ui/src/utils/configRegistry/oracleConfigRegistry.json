@@ -153,15 +153,16 @@
         "viewOnly": true,
         "fixSupported": false,
         "cardMetadata": {
-            "impactedLabel": "Impacted EC2 instances",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
-                    "key": "objectName",
-                    "label": "EC2 instance",
-                    "accessor": "objectName"
+                    "key": "hostName",
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "value",
@@ -174,7 +175,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "EC2 instance"
+            "resourceTypeLabel": "Host"
         },
         "dialogContent": {
             "sections": [
@@ -642,12 +643,12 @@
                 },
                 {
                     "key": "value",
-                    "label": "Number of LUNs",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 },
                 {
@@ -707,12 +708,12 @@
                 },
                 {
                     "key": "value",
-                    "label": "Number of LUNs",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 },
                 {
@@ -772,12 +773,12 @@
                 },
                 {
                     "key": "value",
-                    "label": "Number of LUNs",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 },
                 {
@@ -837,12 +838,12 @@
                 },
                 {
                     "key": "value",
-                    "label": "Number of LUNs",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 },
                 {
@@ -954,7 +955,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Autosize",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -1010,7 +1011,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Autosize-mode",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -1057,6 +1058,9 @@
         "viewOnly": false,
         "fixSupported": true,
         "linkedConfigGroup": "ontap",
+        "cardMetadata": {
+            "impactedLabel": "Impacted block devices"
+        },
         "optimizeApi": {
             "mutation": "optimizeOracleStorageConfig",
             "payloadScope": "credential-scoped",
@@ -1072,16 +1076,16 @@
                 },
                 {
                     "key": "current",
-                    "label": "Current",
+                    "label": "Current value",
                     "accessor": "current"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "LUNs/volumes",
+            "resourceTypeLabel": "Block device",
             "hasSubConfigs": true
         },
         "dialogContent": {
@@ -1126,7 +1130,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Snapshot copy reserve",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -1182,7 +1186,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Snapshot autodelete",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -1400,12 +1404,12 @@
                 },
                 {
                     "key": "current",
-                    "label": "Current",
+                    "label": "Current value",
                     "accessor": "current"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 }
             ],
@@ -1458,12 +1462,12 @@
                 },
                 {
                     "key": "current",
-                    "label": "Current",
+                    "label": "Current value",
                     "accessor": "current"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 }
             ],
@@ -1514,7 +1518,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Snapshot status",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -1558,15 +1562,16 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted objects",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
-                    "key": "objectName",
-                    "label": "EC2 instance",
-                    "accessor": "objectName"
+                    "key": "hostName",
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "current",
@@ -1579,7 +1584,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "object",
+            "resourceTypeLabel": "Host",
             "combineRows": true
         },
         "optimizeApi": {
@@ -1639,12 +1644,12 @@
                 },
                 {
                     "key": "value",
-                    "label": "Current mount options",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended mount options",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 }
             ],
@@ -1735,12 +1740,37 @@
         "viewLink": true
     },
     "nfsv4-domain-name": {
-        "hasInnerPage": false,
+        "hasInnerPage": true,
         "viewOnly": true,
         "fixSupported": false,
-        "optimizeNotAvailable": true,
+        "cardMetadata": {
+            "impactedLabel": "Impacted hosts",
+            "countSource": "totalObjectsInViolation"
+        },
+        "columns": {
+            "injectMetadataFields": true,
+            "columns": [
+                {
+                    "key": "objectName",
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
+                },
+                {
+                    "key": "value",
+                    "label": "Current value",
+                    "accessor": "value"
+                },
+                {
+                    "key": "recommended",
+                    "label": "Recommended value",
+                    "accessor": "recommended"
+                }
+            ],
+            "resourceTypeLabel": "Host",
+            "combineRows": true
+        },
         "storagePriority": 35,
-        "viewLink": false
+        "viewLink": true
     },
     "nfs-caching-options": {
         "hasInnerPage": true,
@@ -1834,6 +1864,9 @@
         "hasInnerPage": false,
         "viewOnly": true,
         "fixSupported": false,
+        "columns": {
+            "resourceTypeLabel": "Host"
+        },
         "dialogContent": {
             "sections": [
                 {
@@ -1862,17 +1895,18 @@
     },
     "dnfs-configuration-file": {
         "hasInnerPage": true,
-        "viewOnly": true,
+        "viewOnly": false,
         "fixSupported": false,
         "cardHeights": {
             "recommendationSection": "180px",
             "tagSection": "276px"
         },
         "cardMetadata": {
-            "impactedLabel": "Impacted EC2 instances",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "tableTitle": "Impacted NFS mounts",
             "columns": [
                 {
                     "key": "objectName",
@@ -1881,16 +1915,16 @@
                 },
                 {
                     "key": "value",
-                    "label": "Status",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended dNFS configuration",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "EC2 instance"
+            "resourceTypeLabel": "Host"
         },
         "dialogContent": {
             "sections": [
@@ -1921,19 +1955,20 @@
         "viewOnly": true,
         "fixSupported": false,
         "cardMetadata": {
-            "impactedLabel": "Impacted EC2 instances",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "EC2 instance",
-                    "accessor": "objectName"
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "value",
-                    "label": "Svm dns name",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -1942,7 +1977,7 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "EC2 instance"
+            "resourceTypeLabel": "Host"
         },
         "dialogContent": {
             "sections": [
@@ -1969,10 +2004,11 @@
             "tagSection": "276px"
         },
         "cardMetadata": {
-            "impactedLabel": "Impacted EC2 instances",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "tableTitle": "Impacted NFS mounts",
             "columns": [
                 {
                     "key": "objectName",
@@ -1981,16 +2017,16 @@
                 },
                 {
                     "key": "value",
-                    "label": "Current mount options",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended mount options",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "EC2 instance"
+            "resourceTypeLabel": "Host"
         },
         "dialogContent": {
             "sections": [
@@ -2027,6 +2063,10 @@
             "recommendationSection": "160px",
             "tagSection": "256px"
         },
+        "cardMetadata": {
+            "impactedLabel": "Impacted volumes",
+            "countSource": "totalObjectsInViolation"
+        },
         "columns": {
             "columns": [
                 {
@@ -2036,7 +2076,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "NFS rootonly",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -2097,7 +2137,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Export policy",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -2243,8 +2283,11 @@
         "viewOnly": true,
         "fixSupported": false,
         "cardMetadata": {
-            "impactedLabel": "Impacted missing patches",
+            "impactedLabel": "Missing patches",
             "countSource": "impactedCount"
+        },
+        "columns": {
+            "resourceTypeLabel": "Host"
         },
         "dialogContent": {
             "sections": [
@@ -2336,15 +2379,16 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted EC2 instances",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Parameter name",
-                    "accessor": "objectName"
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "value",
@@ -2357,7 +2401,8 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "EC2 instance"
+            "resourceTypeLabel": "Host",
+            "combineRows": true
         },
         "optimizeApi": {
             "mutation": "optimizeOracleOperatingSystem",
@@ -2396,15 +2441,16 @@
         "viewOnly": true,
         "fixSupported": false,
         "cardMetadata": {
-            "impactedLabel": "Impacted configurations",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Configuration name",
-                    "accessor": "objectName"
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "value",
@@ -2417,7 +2463,8 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Configuration"
+            "resourceTypeLabel": "Host",
+            "combineRows": true
         },
         "dialogContent": {
             "sections": [
@@ -2449,15 +2496,16 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted parameters",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
-                    "key": "objectName",
-                    "label": "Parameter name",
-                    "accessor": "objectName"
+                    "key": "hostName",
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "value",
@@ -2470,7 +2518,8 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "EC2 instance"
+            "resourceTypeLabel": "Host",
+            "combineRows": true
         },
         "optimizeApi": {
             "mutation": "optimizeOracleOperatingSystem",
@@ -2519,6 +2568,9 @@
         "hasInnerPage": false,
         "viewOnly": false,
         "fixSupported": true,
+        "columns": {
+            "resourceTypeLabel": "Host"
+        },
         "cardHeights": {
             "recommendationSection": "170px",
             "tagSection": "266px"
@@ -2564,11 +2616,12 @@
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
-                    "key": "objectName",
-                    "label": "EC2 instance",
-                    "accessor": "objectName"
+                    "key": "hostName",
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "current",
@@ -2624,6 +2677,9 @@
         "hasInnerPage": false,
         "viewOnly": true,
         "fixSupported": false,
+        "columns": {
+            "resourceTypeLabel": "Host"
+        },
         "cardHeights": {
             "recommendationSection": "190px",
             "tagSection": "286px"
@@ -2667,28 +2723,30 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted configurations",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
-                    "key": "objectName",
-                    "label": "Target portal address",
-                    "accessor": "objectName"
+                    "key": "hostName",
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "value",
-                    "label": "Current sessions",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended sessions",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Session Configuration"
+            "resourceTypeLabel": "Host",
+            "combineRows": true
         },
         "cardHeights": {
             "recommendationSection": "170px",
@@ -2731,7 +2789,7 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted configurations",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
@@ -2744,7 +2802,7 @@
                 },
                 {
                     "key": "value",
-                    "label": "Current iSCSI replacement timeout",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
@@ -2753,7 +2811,8 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Configuration"
+            "resourceTypeLabel": "Host",
+            "combineRows": true
         },
         "cardHeights": {
             "recommendationSection": "170px",
@@ -2796,15 +2855,17 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted configurations",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "tableTitle": "Impacted configuration",
+            "injectMetadataFields": true,
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Configuration name",
-                    "accessor": "objectName"
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "value",
@@ -2817,7 +2878,8 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Configuration"
+            "resourceTypeLabel": "Host",
+            "combineRows": true
         },
         "cardHeights": {
             "recommendationSection": "200px",
@@ -2879,7 +2941,7 @@
         "viewOnly": false,
         "fixSupported": true,
         "cardMetadata": {
-            "impactedLabel": "Impacted configurations",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
@@ -2901,7 +2963,8 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "Configuration"
+            "resourceTypeLabel": "Host",
+            "combineRows": true
         },
         "cardHeights": {
             "recommendationSection": "170px",
@@ -2944,7 +3007,7 @@
         "viewOnly": true,
         "fixSupported": false,
         "cardMetadata": {
-            "impactedLabel": "Impacted missing patches",
+            "impactedLabel": "Missing patches",
             "countSource": "impactedCount"
         },
         "dialogContent": {
@@ -3017,6 +3080,9 @@
         "hasInnerPage": false,
         "viewOnly": true,
         "fixSupported": false,
+        "columns": {
+            "resourceTypeLabel": "Host"
+        },
         "dialogContent": {
             "sections": [
                 {
@@ -3065,17 +3131,16 @@
                 },
                 {
                     "key": "value",
-                    "label": "Current redundancy",
+                    "label": "Current value",
                     "accessor": "value"
                 },
                 {
                     "key": "recommended",
-                    "label": "Recommended",
+                    "label": "Recommended value",
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "ASM disk groups",
-            "tableTitle": "ASM disk groups"
+            "resourceTypeLabel": "ASM disk group"
         },
         "dialogContent": {
             "sections": [
@@ -3112,15 +3177,16 @@
         "viewOnly": true,
         "fixSupported": false,
         "cardMetadata": {
-            "impactedLabel": "Impacted AFD configurations",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Configuration",
-                    "accessor": "objectName"
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "value",
@@ -3133,7 +3199,8 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "AFD configuration"
+            "resourceTypeLabel": "Host",
+            "combineRows": true
         },
         "dialogContent": {
             "sections": [
@@ -3168,15 +3235,16 @@
         "viewOnly": true,
         "fixSupported": false,
         "cardMetadata": {
-            "impactedLabel": "Impacted ASMLib configurations",
+            "impactedLabel": "Impacted hosts",
             "countSource": "totalObjectsInViolation"
         },
         "columns": {
+            "injectMetadataFields": true,
             "columns": [
                 {
                     "key": "objectName",
-                    "label": "Configuration name",
-                    "accessor": "objectName"
+                    "label": "Host name",
+                    "accessor": "databaseHostName"
                 },
                 {
                     "key": "value",
@@ -3189,7 +3257,8 @@
                     "accessor": "recommended"
                 }
             ],
-            "resourceTypeLabel": "ASMLib configuration"
+            "resourceTypeLabel": "Host",
+            "combineRows": true
         },
         "dialogContent": {
             "sections": [

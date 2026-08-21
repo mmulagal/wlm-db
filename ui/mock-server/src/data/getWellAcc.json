@@ -1550,33 +1550,99 @@
                                 "name": "License",
                                 "type": "application",
                                 "severity": "warning",
-                                "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
+                                "recommendation": "The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized.",
                                 "categories": ["Cost optimization"],
                                 "status": "optimized",
                                 "recommended": "optimized",
-                                "subType": "application",
-                                "resourceType": "EC2 instance",
-                                "focusWidgetName": "License",
+                                "objectsInViolation": [],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 0,
                                 "sqlServerInstances": [
+                                    {
+                                        "sqlServerInstance": "PROD-MarketingCampaigns",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-SupplierManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-ProductCatalog",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
                                     {
                                         "sqlServerInstance": "MSSQLSERVER",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
-                                        "sqlServerName": "SQLServer-Prod-02"
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-QA-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PreProd-BusinessIntelligence",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-PreProd-02"
                                     },
                                     {
                                         "sqlServerInstance": "Prod-HelpDesk",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
                                         "sqlServerName": "SQLServer-Prod-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "Dev-VendorManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-Dev-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "UAT-QualityControl",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-UAT-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "DEV-SalesAnalytics",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-DEV"
                                     }
-                                ]
+                                ],
+                                "subType": "application",
+                                "resourceType": "EC2 instance",
+                                "focusWidgetName": "License"
                             },
                             {
                                 "id": "host-os-patch",
@@ -1930,12 +1996,12 @@
                                 "status": "not-optimized",
                                 "recommended": "",
                                 "subType": "highAvailability",
-                                "resourceType": "Lun",
+                                "resourceType": "Block device",
                                 "focusWidgetName": "Microsoft SQL Server High Availability",
                                 "objectsInViolation": ["/vol/wlmdb_sqltemp_1753061371059/tempdb"],
                                 "violationDetails": [
                                     {
-                                        "objectType": "LUN",
+                                        "objectType": "Block device",
                                         "objectName": "lun-quorum",
                                         "value": "Not accessible",
                                         "recommended": "Accessible"
@@ -2188,33 +2254,109 @@
                                 "name": "License",
                                 "type": "application",
                                 "severity": "warning",
-                                "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
+                                "recommendation": "The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized.",
                                 "categories": ["Cost optimization"],
                                 "status": "not-optimized",
                                 "recommended": "optimized",
-                                "subType": "application",
-                                "resourceType": "EC2 instance",
-                                "focusWidgetName": "License",
+                                "objectsInViolation": [
+                                    "PROD-MarketingCampaigns",
+                                    "PROD-SupplierManagement",
+                                    "PROD-ProductCatalog",
+                                    "MSSQLSERVER",
+                                    "PreProd-BusinessIntelligence",
+                                    "Prod-HelpDesk",
+                                    "Dev-VendorManagement",
+                                    "UAT-QualityControl",
+                                    "DEV-SalesAnalytics"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
                                 "sqlServerInstances": [
                                     {
-                                        "sqlServerInstance": "MSSQLSERVER2",
+                                        "sqlServerInstance": "PROD-MarketingCampaigns",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
-                                        "sqlServerName": "SQLServer-Prod-02"
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-SupplierManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-ProductCatalog",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "MSSQLSERVER",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-QA-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PreProd-BusinessIntelligence",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-PreProd-02"
                                     },
                                     {
                                         "sqlServerInstance": "Prod-HelpDesk",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
                                         "sqlServerName": "SQLServer-Prod-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "Dev-VendorManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-Dev-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "UAT-QualityControl",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-UAT-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "DEV-SalesAnalytics",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-DEV"
                                     }
-                                ]
+                                ],
+                                "subType": "application",
+                                "resourceType": "EC2 instance",
+                                "focusWidgetName": "License"
                             },
                             {
                                 "id": "host-os-patch",
@@ -2568,12 +2710,12 @@
                                 "status": "not-optimized",
                                 "recommended": "",
                                 "subType": "highAvailability",
-                                "resourceType": "Lun",
+                                "resourceType": "Block device",
                                 "focusWidgetName": "Microsoft SQL Server High Availability",
                                 "objectsInViolation": ["/vol/wlmdb_sqltemp_1753061371059/tempdb"],
                                 "violationDetails": [
                                     {
-                                        "objectType": "LUN",
+                                        "objectType": "Block device",
                                         "objectName": "lun-quorum",
                                         "value": "Not accessible",
                                         "recommended": "Accessible"
@@ -4116,33 +4258,109 @@
                                 "name": "License",
                                 "type": "application",
                                 "severity": "warning",
-                                "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
+                                "recommendation": "The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized.",
                                 "categories": ["Cost optimization"],
                                 "status": "not-optimized",
                                 "recommended": "optimized",
-                                "subType": "application",
-                                "resourceType": "EC2 instance",
-                                "focusWidgetName": "License",
+                                "objectsInViolation": [
+                                    "PROD-MarketingCampaigns",
+                                    "PROD-SupplierManagement",
+                                    "PROD-ProductCatalog",
+                                    "MSSQLSERVER",
+                                    "PreProd-BusinessIntelligence",
+                                    "Prod-HelpDesk",
+                                    "Dev-VendorManagement",
+                                    "UAT-QualityControl",
+                                    "DEV-SalesAnalytics"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
                                 "sqlServerInstances": [
                                     {
-                                        "sqlServerInstance": "MSSQLSERVER3",
+                                        "sqlServerInstance": "PROD-MarketingCampaigns",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
-                                        "sqlServerName": "SQLServer-Prod-02"
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-SupplierManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-ProductCatalog",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "MSSQLSERVER",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-QA-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PreProd-BusinessIntelligence",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-PreProd-02"
                                     },
                                     {
                                         "sqlServerInstance": "Prod-HelpDesk",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
                                         "sqlServerName": "SQLServer-Prod-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "Dev-VendorManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-Dev-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "UAT-QualityControl",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-UAT-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "DEV-SalesAnalytics",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-DEV"
                                     }
-                                ]
+                                ],
+                                "subType": "application",
+                                "resourceType": "EC2 instance",
+                                "focusWidgetName": "License"
                             },
                             {
                                 "id": "host-os-patch",
@@ -4496,12 +4714,12 @@
                                 "status": "not-optimized",
                                 "recommended": "",
                                 "subType": "highAvailability",
-                                "resourceType": "Lun",
+                                "resourceType": "Block device",
                                 "focusWidgetName": "Microsoft SQL Server High Availability",
                                 "objectsInViolation": ["/vol/wlmdb_sqltemp_1753061371059/tempdb"],
                                 "violationDetails": [
                                     {
-                                        "objectType": "LUN",
+                                        "objectType": "Block device",
                                         "objectName": "lun-quorum",
                                         "value": "Not accessible",
                                         "recommended": "Accessible"
@@ -6055,33 +6273,109 @@
                                 "name": "License",
                                 "type": "application",
                                 "severity": "warning",
-                                "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
+                                "recommendation": "The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized.",
                                 "categories": ["Cost optimization"],
                                 "status": "not-optimized",
                                 "recommended": "optimized",
-                                "subType": "application",
-                                "resourceType": "EC2 instance",
-                                "focusWidgetName": "License",
+                                "objectsInViolation": [
+                                    "PROD-MarketingCampaigns",
+                                    "PROD-SupplierManagement",
+                                    "PROD-ProductCatalog",
+                                    "MSSQLSERVER",
+                                    "PreProd-BusinessIntelligence",
+                                    "Prod-HelpDesk",
+                                    "Dev-VendorManagement",
+                                    "UAT-QualityControl",
+                                    "DEV-SalesAnalytics"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
                                 "sqlServerInstances": [
+                                    {
+                                        "sqlServerInstance": "PROD-MarketingCampaigns",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-SupplierManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-ProductCatalog",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
                                     {
                                         "sqlServerInstance": "MSSQLSERVER",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
-                                        "sqlServerName": "SQLServer-Prod-02"
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-QA-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PreProd-BusinessIntelligence",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-PreProd-02"
                                     },
                                     {
                                         "sqlServerInstance": "Prod-HelpDesk",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
                                         "sqlServerName": "SQLServer-Prod-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "Dev-VendorManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-Dev-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "UAT-QualityControl",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-UAT-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "DEV-SalesAnalytics",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-DEV"
                                     }
-                                ]
+                                ],
+                                "subType": "application",
+                                "resourceType": "EC2 instance",
+                                "focusWidgetName": "License"
                             },
                             {
                                 "id": "host-os-patch",
@@ -6435,12 +6729,12 @@
                                 "status": "not-optimized",
                                 "recommended": "",
                                 "subType": "highAvailability",
-                                "resourceType": "Lun",
+                                "resourceType": "Block device",
                                 "focusWidgetName": "Microsoft SQL Server High Availability",
                                 "objectsInViolation": ["/vol/wlmdb_sqltemp_1753061371059/tempdb"],
                                 "violationDetails": [
                                     {
-                                        "objectType": "LUN",
+                                        "objectType": "Block device",
                                         "objectName": "lun-quorum",
                                         "value": "Not accessible",
                                         "recommended": "Accessible"
@@ -7983,33 +8277,109 @@
                                 "name": "License",
                                 "type": "application",
                                 "severity": "warning",
-                                "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
+                                "recommendation": "The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized.",
                                 "categories": ["Cost optimization"],
                                 "status": "not-optimized",
                                 "recommended": "optimized",
-                                "subType": "application",
-                                "resourceType": "EC2 instance",
-                                "focusWidgetName": "License",
+                                "objectsInViolation": [
+                                    "PROD-MarketingCampaigns",
+                                    "PROD-SupplierManagement",
+                                    "PROD-ProductCatalog",
+                                    "MSSQLSERVER",
+                                    "PreProd-BusinessIntelligence",
+                                    "Prod-HelpDesk",
+                                    "Dev-VendorManagement",
+                                    "UAT-QualityControl",
+                                    "DEV-SalesAnalytics"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
                                 "sqlServerInstances": [
                                     {
-                                        "sqlServerInstance": "MSSQLSERVER2",
+                                        "sqlServerInstance": "PROD-MarketingCampaigns",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
-                                        "sqlServerName": "SQLServer-Prod-02"
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-SupplierManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-ProductCatalog",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "MSSQLSERVER",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-QA-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PreProd-BusinessIntelligence",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-PreProd-02"
                                     },
                                     {
                                         "sqlServerInstance": "Prod-HelpDesk",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
                                         "sqlServerName": "SQLServer-Prod-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "Dev-VendorManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-Dev-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "UAT-QualityControl",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-UAT-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "DEV-SalesAnalytics",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-DEV"
                                     }
-                                ]
+                                ],
+                                "subType": "application",
+                                "resourceType": "EC2 instance",
+                                "focusWidgetName": "License"
                             },
                             {
                                 "id": "host-os-patch",
@@ -8363,12 +8733,12 @@
                                 "status": "not-optimized",
                                 "recommended": "",
                                 "subType": "highAvailability",
-                                "resourceType": "Lun",
+                                "resourceType": "Block device",
                                 "focusWidgetName": "Microsoft SQL Server High Availability",
                                 "objectsInViolation": ["/vol/wlmdb_sqltemp_1753061371059/tempdb"],
                                 "violationDetails": [
                                     {
-                                        "objectType": "LUN",
+                                        "objectType": "Block device",
                                         "objectName": "lun-quorum",
                                         "value": "Not accessible",
                                         "recommended": "Accessible"
@@ -9911,33 +10281,109 @@
                                 "name": "License",
                                 "type": "application",
                                 "severity": "warning",
-                                "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
+                                "recommendation": "The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized.",
                                 "categories": ["Cost optimization"],
                                 "status": "not-optimized",
                                 "recommended": "optimized",
-                                "subType": "application",
-                                "resourceType": "EC2 instance",
-                                "focusWidgetName": "License",
+                                "objectsInViolation": [
+                                    "PROD-MarketingCampaigns",
+                                    "PROD-SupplierManagement",
+                                    "PROD-ProductCatalog",
+                                    "MSSQLSERVER",
+                                    "PreProd-BusinessIntelligence",
+                                    "Prod-HelpDesk",
+                                    "Dev-VendorManagement",
+                                    "UAT-QualityControl",
+                                    "DEV-SalesAnalytics"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
                                 "sqlServerInstances": [
                                     {
-                                        "sqlServerInstance": "MSSQLSERVER3",
+                                        "sqlServerInstance": "PROD-MarketingCampaigns",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
-                                        "sqlServerName": "SQLServer-Prod-02"
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-SupplierManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-ProductCatalog",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "MSSQLSERVER",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-QA-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PreProd-BusinessIntelligence",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-PreProd-02"
                                     },
                                     {
                                         "sqlServerInstance": "Prod-HelpDesk",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
                                         "sqlServerName": "SQLServer-Prod-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "Dev-VendorManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-Dev-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "UAT-QualityControl",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-UAT-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "DEV-SalesAnalytics",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-DEV"
                                     }
-                                ]
+                                ],
+                                "subType": "application",
+                                "resourceType": "EC2 instance",
+                                "focusWidgetName": "License"
                             },
                             {
                                 "id": "host-os-patch",
@@ -11675,33 +12121,109 @@
                                 "name": "License",
                                 "type": "application",
                                 "severity": "warning",
-                                "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
+                                "recommendation": "The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized.",
                                 "categories": ["Cost optimization"],
                                 "status": "not-optimized",
                                 "recommended": "optimized",
-                                "subType": "application",
-                                "resourceType": "EC2 instance",
-                                "focusWidgetName": "License",
+                                "objectsInViolation": [
+                                    "PROD-MarketingCampaigns",
+                                    "PROD-SupplierManagement",
+                                    "PROD-ProductCatalog",
+                                    "MSSQLSERVER",
+                                    "PreProd-BusinessIntelligence",
+                                    "Prod-HelpDesk",
+                                    "Dev-VendorManagement",
+                                    "UAT-QualityControl",
+                                    "DEV-SalesAnalytics"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
                                 "sqlServerInstances": [
+                                    {
+                                        "sqlServerInstance": "PROD-MarketingCampaigns",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-SupplierManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-ProductCatalog",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
                                     {
                                         "sqlServerInstance": "MSSQLSERVER",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
-                                        "sqlServerName": "SQLServer-Prod-02"
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-QA-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PreProd-BusinessIntelligence",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-PreProd-02"
                                     },
                                     {
                                         "sqlServerInstance": "Prod-HelpDesk",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
                                         "sqlServerName": "SQLServer-Prod-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "Dev-VendorManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-Dev-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "UAT-QualityControl",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-UAT-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "DEV-SalesAnalytics",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-DEV"
                                     }
-                                ]
+                                ],
+                                "subType": "application",
+                                "resourceType": "EC2 instance",
+                                "focusWidgetName": "License"
                             },
                             {
                                 "id": "host-os-patch",
@@ -13633,33 +14155,109 @@
                                 "name": "License",
                                 "type": "application",
                                 "severity": "warning",
-                                "recommendation": "When the license for your commercial software database meets your performance requirements, the license is considered optimized",
+                                "recommendation": "The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized.",
                                 "categories": ["Cost optimization"],
                                 "status": "not-optimized",
                                 "recommended": "optimized",
-                                "subType": "application",
-                                "resourceType": "EC2 instance",
-                                "focusWidgetName": "License",
+                                "objectsInViolation": [
+                                    "PROD-MarketingCampaigns",
+                                    "PROD-SupplierManagement",
+                                    "PROD-ProductCatalog",
+                                    "MSSQLSERVER",
+                                    "PreProd-BusinessIntelligence",
+                                    "Prod-HelpDesk",
+                                    "Dev-VendorManagement",
+                                    "UAT-QualityControl",
+                                    "DEV-SalesAnalytics"
+                                ],
+                                "totalObjectsAssessed": 1,
+                                "totalObjectsInViolation": 1,
                                 "sqlServerInstances": [
                                     {
-                                        "sqlServerInstance": "MSSQLSERVER2",
+                                        "sqlServerInstance": "PROD-MarketingCampaigns",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
-                                        "sqlServerName": "SQLServer-Prod-02"
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-SupplierManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PROD-ProductCatalog",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-Prod"
+                                    },
+                                    {
+                                        "sqlServerInstance": "MSSQLSERVER",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-QA-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "PreProd-BusinessIntelligence",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-PreProd-02"
                                     },
                                     {
                                         "sqlServerInstance": "Prod-HelpDesk",
                                         "sqlServerState": "Running",
                                         "sqlServerVersion": "16.0.4080.1",
-                                        "sqlServerProductYear": 2019,
-                                        "sqlServerEdition": "Enterprise Edition (64-bit)",
-                                        "sqlServerEngineEdition": 3,
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
                                         "sqlServerName": "SQLServer-Prod-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "Dev-VendorManagement",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-Dev-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "UAT-QualityControl",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQLServer-UAT-02"
+                                    },
+                                    {
+                                        "sqlServerInstance": "DEV-SalesAnalytics",
+                                        "sqlServerState": "Running",
+                                        "sqlServerVersion": "16.0.4080.1",
+                                        "sqlServerProductYear": 2022,
+                                        "sqlServerEdition": "Standard Edition (64-bit)",
+                                        "sqlServerEngineEdition": 2,
+                                        "sqlServerName": "SQL-Managed-Host-DEV"
                                     }
-                                ]
+                                ],
+                                "subType": "application",
+                                "resourceType": "EC2 instance",
+                                "focusWidgetName": "License"
                             },
                             {
                                 "id": "host-os-patch",

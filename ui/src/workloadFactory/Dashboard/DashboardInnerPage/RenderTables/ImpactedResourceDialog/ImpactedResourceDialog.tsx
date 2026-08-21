@@ -334,7 +334,11 @@ const mapMtuInterfacesToTable = (
     t: (key: string) => string
 ): ImpactedResourcesResult => {
     const interfaces = data.ec2InterfacesToFix || [];
-    const columns = [t('databases.well-architect.network-interface-name'), 'MTU', 'Recommended value'];
+    const columns = [
+        t('databases.well-architect.network-interface-name'),
+        t('databases.well-architect.current-value'),
+        t('databases.well-architect.recommended-value')
+    ];
     if (interfaces.length > 0) {
         const rows = interfaces.map(item => [
             item?.name || na,
@@ -546,6 +550,11 @@ const mapGenericConfigFromRegistry = (
                 if (accessor === 'recommended') {
                     return data?.recommended != null ? String(data.recommended) : na;
                 }
+                // Metadata accessor (e.g. databaseHostName injected via injectMetadataFields)
+                if (accessor in metadataFields) {
+                    const metaValue = metadataFields[accessor as keyof AssessmentMetadata];
+                    return metaValue != null && metaValue !== '' ? String(metaValue) : na;
+                }
                 return na;
             })
         );
@@ -574,7 +583,7 @@ const getMssqlImpactedResources = (
             return mssqlSizingViolationsToDriveTable(
                 sizing,
                 'logAccessPath',
-                'databases.well-architect.log-drive-size-percentage',
+                'databases.well-architect.current-value',
                 data?.recommended,
                 na,
                 t
@@ -584,7 +593,7 @@ const getMssqlImpactedResources = (
             return mssqlSizingViolationsToDriveTable(
                 sizing,
                 'tempdbAccessPath',
-                'databases.well-architect.tempdb-drive-size-percentage',
+                'databases.well-architect.current-value',
                 data?.recommended,
                 na,
                 t

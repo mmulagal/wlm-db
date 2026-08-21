@@ -1155,6 +1155,83 @@
             "current": "Large databases sharing data LUN or volume"
         },
         {
+            "id": "compute-rightsizing",
+            "name": "Compute rightsizing",
+            "type": "compute",
+            "severity": "warning",
+            "recommendation": "To ensure optimal performance and cost efficiency for your SQL Server EC2 instance, right-size your EC2 instance to match the workload requirements of your SQL Server database.",
+            "categories": ["Cost optimization", "Performance efficiency"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "compute",
+            "resourceType": "EC2 instance"
+        },
+        {
+            "id": "host-os-patch",
+            "name": "Operating system patch",
+            "type": "compute",
+            "severity": "critical",
+            "recommendation": "Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.",
+            "categories": ["Security", "Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "compute",
+            "resourceType": "EC2 instance"
+        },
+        {
+            "id": "mtu-alignment",
+            "name": "MTU alignment",
+            "type": "compute",
+            "severity": "critical",
+            "recommendation": "Workload Factory recommends aligning EC2 instance Maximum Transmission Unit (MTU) settings with your \nFSx for ONTAP file system to prevent network fragmentation and optimize SQL Server performance. \nFixing MTU misalignment ensures consistent MTU configuration across all nodes and network paths.",
+            "categories": ["Performance efficiency", "Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "compute",
+            "resourceType": "Network Interface"
+        },
+        {
+            "id": "sql-license",
+            "name": "License",
+            "type": "application",
+            "severity": "warning",
+            "recommendation": "The SQL Server license assessment is at the host level. If any instance running on the host is not using the Enterprise license features, the license is considered not optimized.",
+            "categories": ["Cost optimization"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "application",
+            "resourceType": "EC2 instance"
+        },
+        {
+            "id": "mssql-patch",
+            "name": "Microsoft SQL server patch",
+            "type": "application",
+            "severity": "critical",
+            "recommendation": "Critical (criticalPatchesCount) and important (importantPatchesCount) patches are missing. We recommend applying the latest patches to ensure your MSSQL instance is secure and up-to-date.",
+            "categories": ["Security", "Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "application",
+            "resourceType": "SQL instance"
+        },
+        {
+            "id": "crr",
+            "name": "Cross-region replication (CRR)",
+            "type": "resiliency",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability.",
+            "categories": ["Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "resiliency",
+            "resourceType": "Volume"
+        },
+        {
+            "id": "backup-configuration",
+            "name": "Backup configuration",
+            "type": "resiliency",
+            "severity": "warning",
+            "recommendation": "Enable FSx Backup or AWS Backup for SQL Server volumes to support data retention and compliance. \nIf using both, consider removing redundant backups manually.",
+            "categories": ["Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "resiliency",
+            "resourceType": "Volume"
+        },
+        {
             "name": "Network adapter settings",
             "status": "optimized",
             "severity": "warning",
@@ -1189,48 +1266,26 @@
             "current": "4"
         },
         {
-            "name": "Shared storage",
-            "status": "not-optimized",
-            "severity": "critical",
-            "recommended": "",
-            "recommendation": "All shared disks (iSCSI LUNs) must be accessible by both nodes in the FCI deployment model to allow failover.",
-            "resourceType": "Lun",
-            "totalObjectsAssessed": 2,
-            "totalObjectsInViolation": 1,
-            "objectsInViolation": ["/vol/wlmdb_sqltemp_1753061371059/tempdb"],
-            "violationDetails": [
-                {
-                    "objectType": "LUN",
-                    "objectName": "lun-quorum",
-                    "value": "Not accessible",
-                    "recommended": "Accessible"
-                }
-            ],
             "id": "shared-storage",
+            "name": "Shared storage",
+            "type": "resiliency",
+            "severity": "critical",
+            "recommendation": "All shared disks (iSCSI block devices) must be accessible by both nodes in the FCI deployment model to allow failover.",
             "categories": ["Reliability"],
-            "type": "resiliency"
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "highAvailability",
+            "resourceType": "Block device"
         },
         {
-            "name": "Drive Letter",
-            "status": "not-optimized",
-            "severity": "critical",
-            "recommended": "Validate availability of same drive letters on standby node",
-            "recommendation": "Validate availability of the same drive letters on the secondary node.",
-            "resourceType": "Drive",
-            "totalObjectsAssessed": 1,
-            "totalObjectsInViolation": 1,
-            "objectsInViolation": ["S:"],
-            "violationDetails": [
-                {
-                    "objectType": "Drive",
-                    "objectName": "E:",
-                    "value": "Missing from zxc node",
-                    "recommended": "Present"
-                }
-            ],
             "id": "drive-letter",
+            "name": "Drive letter",
+            "type": "resiliency",
+            "severity": "critical",
+            "recommendation": "Validate availability of the same drive letters on the secondary node.",
             "categories": ["Reliability"],
-            "type": "resiliency"
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "highAvailability",
+            "resourceType": "Drive"
         },
         {
             "name": "Cluster Quorum",
@@ -1279,19 +1334,15 @@
             "type": "resiliency"
         },
         {
-            "name": "Sql Server Service",
-            "status": "optimized",
-            "severity": "critical",
-            "recommended": "",
-            "recommendation": "SQL Server services must be set to start automatically and run on the primary node and stop on the secondary node.",
-            "resourceType": "EC2 instance",
-            "totalObjectsAssessed": 2,
-            "totalObjectsInViolation": 0,
-            "objectsInViolation": [],
-            "violationDetails": [],
             "id": "sql-server-service",
+            "name": "SQL server service",
+            "type": "resiliency",
+            "severity": "critical",
+            "recommendation": "SQL Server service must be configured for automatic failover and startup.",
             "categories": ["Reliability"],
-            "type": "resiliency"
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "highAvailability",
+            "resourceType": "EC2 instance"
         },
         {
             "name": "Clone cleanup",
@@ -1437,37 +1488,9 @@
             "severity": "warning",
             "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
             "categories": ["Reliability"],
-            "status": "not-optimized",
-            "recommended": "optimized",
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
             "subType": "protection",
-            "resourceType": "Volume",
-            "objectsInViolation": [
-                {
-                    "ontapVolumeName": "wlmdb_sqllog_1731987160",
-                    "ontapVolumeUuid": "f3c8df60-a626-11ef-8dba-75539f3dc73f2"
-                },
-                {
-                    "ontapVolumeName": "wlmdb_sqllog_1731988070",
-                    "ontapVolumeUuid": "1c3c25e9-a629-11ef-8dba-75539f3dc73f1"
-                }
-            ],
-            "violationDetails": [
-                {
-                    "objectName": "wlmdb_sqllog_1731987160",
-                    "value": "SnapCenter protection not configured",
-                    "objectType": "Volume",
-                    "recommended": "SnapCenter protection enabled"
-                },
-                {
-                    "objectName": "wlmdb_sqllog_1731988070",
-                    "value": "SnapCenter protection not configured",
-                    "objectType": "Volume",
-                    "recommended": "SnapCenter protection enabled"
-                }
-            ],
-            "totalObjectsAssessed": 2,
-            "totalObjectsInViolation": 2,
-            "focusWidgetName": "Application-consistent snapshots"
+            "resourceType": "Volume"
         }
     ],
     "dismissedConfigurations": []

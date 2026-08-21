@@ -86,9 +86,10 @@ const DynamicInnerTable = ({
 
     // Bulk-only configs: rows are pre-selected, checkboxes locked, and fixed via bulk action only (no per-row Fix button)
     const isBulkOnlyConfig =
-        (configId === ASSESSMENT_CONFIG_IDS.MULTIPATH_IO_SESSIONS ||
-            configId === ASSESSMENT_CONFIG_IDS.MULTIPATH_CONFIGURATION) &&
-        engineType === DBType.ORACLE;
+        (configId === ASSESSMENT_CONFIG_IDS.MULTIPATH_IO_SESSIONS && engineType === DBType.ORACLE) ||
+        (configId === ASSESSMENT_CONFIG_IDS.MULTIPATH_CONFIGURATION && engineType === DBType.ORACLE) ||
+        (configId === ASSESSMENT_CONFIG_IDS.DNFS_CONFIGURATION_FILE && engineType === DBType.ORACLE) ||
+        (configId === ASSESSMENT_CONFIG_IDS.MPIO_ISCSI_COUNT && engineType === DBType.MSSQL);
 
     const patchField = useMemo(() => {
         if (!configEntry?.dialogContent?.features?.showPatchTable) return '';
@@ -174,7 +175,8 @@ const DynamicInnerTable = ({
         const addRowMeta = (row: any) => {
             const baseProps = { ...row, id: String(id++), cellProps: getWadCellProps(isWad, t) };
 
-            // For Oracle multipath-io-sessions / multipath-configuration: disable checkboxes so they remain checked and cannot be deselected
+            // Bulk-only configs (e.g. Oracle multipath-io-sessions/multipath-configuration, MSSQL mpio-iscsi-count):
+            // disable checkboxes so they remain checked and cannot be deselected
             if (isBulkOnlyConfig) {
                 baseProps.cellProps = {
                     ...baseProps.cellProps,
@@ -244,7 +246,9 @@ const DynamicInnerTable = ({
             const objectName = typeof firstViolation === 'string' ? firstViolation : '';
             const current = data.violationDetails.map((r: any) => `${r.objectName}=${r.value ?? ''}`).join(', ');
             const recommended = data.violationDetails
-                .map((r: any) => `${r.objectName}=${r.recommended ?? ''}`)
+                // Fall back to the top-level recommended value (e.g. mpio-iscsi-count) when a
+                // row doesn't have its own per-row recommended value
+                .map((r: any) => `${r.objectName}=${r.recommended ?? data.recommended ?? ''}`)
                 .join(', ');
             const combineMetadataFields = columnConfig?.injectMetadataFields
                 ? (driftAssessmentData as any)?.metadata ?? {}
@@ -662,9 +666,16 @@ const DynamicInnerTable = ({
     const createSingularImpactedLabel = (resourceType: string): string =>
         `Impacted ${normalizeResourceTypeCasing(resourceType.charAt(0).toLowerCase() + resourceType.slice(1))}`;
 
-    const singularTitle = tableTitle.startsWith('Impacted ')
-        ? createSingularImpactedLabel(resourceTypeLabel)
-        : resourceTypeLabel;
+    const customTableTitle = columnConfig?.tableTitle;
+    let singularTitle: string;
+    if (tableTitle.startsWith('Impacted ')) {
+        singularTitle =
+            customTableTitle && !customTableTitle.trimEnd().endsWith('s')
+                ? customTableTitle
+                : createSingularImpactedLabel(resourceTypeLabel);
+    } else {
+        singularTitle = resourceTypeLabel;
+    }
 
     const tableComponentProps = getTableLazyLoadingComponentProps(t('databases.general.loading'));
 

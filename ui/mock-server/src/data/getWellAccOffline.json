@@ -974,13 +974,13 @@
                         "severity": "critical",
                         "recommended": "",
                         "recommendation": "All shared disks (iSCSI LUNs) must be accessible by both nodes in the FCI deployment model to allow failover.",
-                        "resourceType": "Lun",
+                        "resourceType": "Block device",
                         "totalObjectsAssessed": 2,
                         "totalObjectsInViolation": 1,
                         "objectsInViolation": ["/vol/wlmdb_sqltemp_1753061371059/tempdb"],
                         "violationDetails": [
                             {
-                                "objectType": "LUN",
+                                "objectType": "Block device",
                                 "objectName": "lun-quorum",
                                 "value": "Not accessible",
                                 "recommended": "Accessible"
@@ -5211,9 +5211,7 @@
                         "categories": ["Performance efficiency"],
                         "status": "over-provisioned",
                         "recommended": "35%",
-                        "objectsInViolation": [
-                            "fs-07a22f282fd4f5a20"
-                        ],
+                        "objectsInViolation": ["fs-07a22f282fd4f5a20"],
                         "subType": "sizing",
                         "resourceType": "File system (FSx for ONTAP)",
                         "focusWidgetName": "File system headroom",

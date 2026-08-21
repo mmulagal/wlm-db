@@ -19,11 +19,7 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "thin-provision",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -36,11 +32,7 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 3,
-            "objectsInViolation": [
-                "oracleredo2",
-                "oraclearch2",
-                "oracledata2"
-            ],
+            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -65,11 +57,7 @@
                 }
             ],
             "id": "autosize",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -82,11 +70,7 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 3,
-            "objectsInViolation": [
-                "oracleredo2",
-                "oraclearch2",
-                "oracledata2"
-            ],
+            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -111,11 +95,7 @@
                 }
             ],
             "id": "autosize-mode",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -125,20 +105,12 @@
             "type": "storage",
             "severity": "critical",
             "recommendation": "Workload Factory recommends configuring block device space settings for LUNs used by Oracle database instances to prevent write failures and improve space efficiency on FSx for ONTAP. This configuration applies the recommended combination of settings for thin-provisioned volumes:\n- Space reservation: enabled - reserves enough space in the volume so writes to the LUN do not fail.\n- Space allocation: enabled - allows FSx for ONTAP to notify the EC2 host when a volume is full and supports automatic space reclamation when the database deletes data.\n- Fractional reserve: disabled - avoids unnecessary overwrite reservation, optimizing space utilization and cost effectiveness for thin provisioning.\nTogether, these settings help ensure predictable database behavior while minimizing wasted capacity.",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "status": "not-optimized",
             "recommended": "",
             "subType": "configuration",
             "resourceType": "Volume/Lun",
-            "objectsInViolation": [
-                "oracleredo2",
-                "oraclearch2",
-                "oracledata2"
-            ],
+            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -204,11 +176,7 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 3,
-            "objectsInViolation": [
-                "oracleredo2",
-                "oraclearch2",
-                "oracledata2"
-            ],
+            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -233,11 +201,7 @@
                 }
             ],
             "id": "snapshot-policy",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -250,11 +214,7 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 3,
-            "objectsInViolation": [
-                "oracleredo2",
-                "oraclearch2",
-                "oracledata2"
-            ],
+            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -279,11 +239,7 @@
                 }
             ],
             "id": "snapshot-copy-reserve",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -296,11 +252,7 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 3,
             "totalObjectsInViolation": 3,
-            "objectsInViolation": [
-                "oracleredo2",
-                "oraclearch2",
-                "oracledata2"
-            ],
+            "objectsInViolation": ["oracleredo2", "oraclearch2", "oracledata2"],
             "violationDetails": [
                 {
                     "objectName": "oracleredo2",
@@ -325,11 +277,7 @@
                 }
             ],
             "id": "snapshot-autodelete",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -345,11 +293,7 @@
             "objectsInViolation": [],
             "violationDetails": [],
             "id": "space-mgmt-try-first",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage",
             "focusWidgetName": "ONTAP"
         },
@@ -359,18 +303,12 @@
             "type": "storage",
             "severity": "critical",
             "recommendation": "Workload Factory recommends enabling tiering for some Oracle database volumes on Amazon FSx for NetApp ONTAP where appropriate, to move cold data to lower-cost capacity storage and reduce overall storage costs, while keeping active database data on high-performance SSDs to preserve critical performance. Recommended policies are based on the data type in each volume, with tiering disabled (none) for data files and redo logs, and auto for archive logs. For archive/FRA volumes, it is also recommended to set an appropriate cooling period before data is tiered—typically 2 days for compressed backups and 14 days for uncompressed backups—to balance cost efficiency and performance.",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "status": "not-optimized",
             "recommended": "",
             "subType": "configuration",
             "resourceType": "Volume",
-            "objectsInViolation": [
-                "oracledata2"
-            ],
+            "objectsInViolation": ["oracledata2"],
             "violationDetails": [
                 {
                     "objectName": "oracledata2",
@@ -420,9 +358,7 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 4,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "data_dnfs3"
-            ],
+            "objectsInViolation": ["data_dnfs3"],
             "violationDetails": [
                 {
                     "objectName": "data_dnfs3",
@@ -438,11 +374,7 @@
                 }
             ],
             "id": "storage-efficiencies",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage",
             "focusWidgetName": "ONTAP",
             "configDetails": [
@@ -480,62 +412,540 @@
             ]
         },
         {
-            "name": "Nfs Rootonly",
-            "status": "not-optimized",
-            "severity": "critical",
-            "recommended": "",
-            "recommendation": "Workload Factory recommends disabling the nfs-rootonly parameter for dNFS. ONTAP's nfs-rootonly setting restricts NFS connections to privileged ports (<1024). Since dNFS processes in NFSv4+ do not run as root and use higher ports, disabling this parameter allows necessary connections.",
-            "resourceType": "Volume",
-            "totalObjectsAssessed": 4,
-            "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "oracledata2"
-            ],
-            "violationDetails": [
-                {
-                    "objectName": "oracledata2",
-                    "value": "enabled",
-                    "objectType": "Volume",
-                    "recommended": "disabled"
-                }
-            ],
-            "id": "nfs-rootonly",
-            "categories": [
-                "Reliability",
-                "Performance efficiency"
-            ],
+            "id": "nfs-mount-options-databasefiles",
+            "name": "NFS mount options - database files",
             "type": "storage",
-            "focusWidgetName": "ONTAP"
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends using optimized NFS mount options for database files: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144,nointr. This configuration is designed to improve database performance and resilience, particularly in high-throughput environments.",
+            "categories": ["Reliability", "Operational excellence", "Performance efficiency"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "NFS Mount"
         },
         {
-            "name": "Export Policy",
-            "status": "not-optimized",
+            "id": "nfs-mount-options-adrhome",
+            "name": "NFS mount options - ADR home",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends using optimized NFS mount options for ADR home: rw,bg,hard,[vers=3,vers=4.1],proto=tcp,timeo=600,rsize=262144,wsize=262144 ",
+            "categories": ["Reliability", "Performance efficiency", "Operational excellence"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "NFS Mount"
+        },
+        {
+            "id": "nfsv4-domain-name",
+            "name": "NFSv4 domain name",
+            "type": "storage",
             "severity": "critical",
-            "recommended": "",
-            "recommendation": "Workload Factory recommends ensuring that If Oracle binaries are located on an NFS share, the export policy includes superuser and setuid permissions.Superuser (root) access allows NFS clients to map as root, needed for binary execution.",
-            "resourceType": "Volume",
-            "totalObjectsAssessed": 4,
+            "recommendation": "Workload Factory recommends matching NFSv4 domain names between the host (/etc/idmapd.conf or hostname -d) and NFS server (v4-id-domain in ONTAP).",
+            "categories": ["Reliability", "Security"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance"
+        },
+        {
+            "id": "nfs-caching-options",
+            "name": "NFS caching options",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends avoiding the use of the following mount options in standalone deployments to prevent disabling cache: \"cio\", \"actimeo=0\", \"noac\", and \"forcedirectio\".",
+            "categories": ["Reliability", "Performance efficiency"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "NFS Mount"
+        },
+        {
+            "id": "dnfs-enabled",
+            "name": "dNFS enabled",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Workload Factory recommends enabling Direct NFS (dNFS) for your Oracle environment. Enabling dNFS can improve database performance and simplify NFS storage management by allowing Oracle to manage NFS I/O directly.",
+            "categories": ["Performance efficiency", "Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance"
+        },
+        {
+            "id": "dnfs-consistent-ip-resolution",
+            "name": "dNFS consistent IP resolution",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Workload Factory recommends avoiding the use of Direct NFS (dNFS) with any type of round-robin name resolution, including DNS, DDNS, NIS, or any other method. This includes the DNS load balancing feature available in ONTAP. Ensuring consistent IP address resolution is crucial for maintaining database stability and preventing potential crashes or data corruption.",
+            "categories": ["Performance efficiency", "Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance"
+        },
+        {
+            "id": "dnfs-configuration-file",
+            "name": "dNFS configuration file",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Workload Factory recommends verifying and optimizing the oranfstab file content to ensure proper Direct NFS (dNFS) usage. The oranfstab file is essential for configuring advanced dNFS features such as multipathing and specific NFS options. Proper configuration ensures efficient data access and management.",
+            "categories": ["Performance efficiency", "Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance"
+        },
+        {
+            "id": "dnfs-no-shared-cache",
+            "name": "dNFS no shared cache",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Workload Factory recommends configuring the nosharecache mount option for environments where Direct NFS (dNFS) is enabled, and a source volume is mounted more than once on a single server with nested NFS mounts. This configuration prevents cache sharing between mounts, ensuring data consistency and optimal performance.",
+            "categories": ["Performance efficiency", "Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance"
+        },
+        {
+            "id": "nfs-rootonly",
+            "name": "NFS rootonly",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Workload Factory recommends disabling the nfs-rootonly parameter for dNFS. ONTAPs nfs-rootonly setting restricts NFS connections to privileged ports (<1024). Since dNFS processes in NFSv4+ do not run as root and use higher ports, disabling this parameter allows necessary connections.",
+            "categories": ["Performance efficiency", "Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "Volume"
+        },
+        {
+            "id": "export-policy",
+            "name": "Binaries export policy",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Workload Factory recommends ensuring that if Oracle binaries are located on an NFS share, the export policy includes superuser and setuid permissions.Superuser (root) access allows NFS clients to map as root, needed for binary execution.",
+            "categories": ["Security", "Reliability", "Operational excellence"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "Volume"
+        },
+        {
+            "id": "mpio-enabled",
+            "name": "Multipath I/O status",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "To ensure optimal uptime and data access consistency for MSSQL databases on EC2 with underlying block devices provisioned in FSx for ONTAP, it is recommended to enable and configure Multipath I/O (MPIO). MPIO provides multiple paths to FSx for ONTAP, enhancing both resiliency and performance. This best practice protects against potential data loss or downtime by maintaining data access even if a component fails.",
+            "categories": ["Performance efficiency", "Reliability"],
+            "status": "not-optimized",
+            "recommended": "true",
+            "objectsInViolation": ["mpio-enabled"],
+            "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "oracledata2"
-            ],
+            "subType": "configuration",
+            "resourceType": "Storage multipath",
             "violationDetails": [
                 {
-                    "objectName": "oracleredo2",
-                    "value": "adaptive",
-                    "objectType": "Volume",
-                    "recommended": "none",
-                    "dataCategory": "log-files"
+                    "objectName": "mpio-enabled",
+                    "value": "Disabled",
+                    "objectType": "configuration",
+                    "recommended": "Enabled"
                 }
             ],
-            "id": "export-policy",
-            "categories": [
-                "Reliability",
-                "Performance efficiency",
-                "Operational excellence"
-            ],
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "host-utilities",
+            "name": "Host utilities",
             "type": "storage",
-            "focusWidgetName": "ONTAP"
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends installing host utilities for block device and multipath management on systems hosting Oracle databases. These utilities ensure optimal compatibility, performance, and reliability when connecting to enterprise storage systems. Proper installation of host utilities helps streamline storage operations and supports best practices for Oracle deployments.",
+            "categories": ["Reliability", "Operational excellence"],
+            "status": "not-optimized",
+            "recommended": "installed",
+            "objectsInViolation": ["demo-oracle-prod-iscsi-001"],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "violationDetails": [
+                {
+                    "objectName": "sanlun",
+                    "value": "not installed",
+                    "objectType": "package",
+                    "recommended": "sanlun is installed"
+                }
+            ],
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "multipath-io-sessions",
+            "name": "Multipath I/O sessions",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends configuring host with four iSCSI sessions to each FSx ONTAP iSCSI endpoint in order to fully leverage multipath I/O",
+            "categories": ["Reliability", "Performance efficiency"],
+            "status": "not-optimized",
+            "recommended": "4",
+            "objectsInViolation": ["demo-oracle-prod-iscsi-001"],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "violationDetails": [
+                {
+                    "objectName": "10.0.0.100",
+                    "value": "1",
+                    "objectType": "iscsi target",
+                    "recommended": "4"
+                },
+                {
+                    "objectName": "10.0.0.101",
+                    "value": "0",
+                    "objectType": "iscsi target",
+                    "recommended": "4"
+                }
+            ],
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "iscsi-replacement-timeout",
+            "name": "iSCSI replacement timeout",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Workload Factory recommends setting node.session.timeo.replacement_timeout = 5 in /etc/iscsi/iscsid.conf for Oracle database hosts using multipath I/O. This adjustment reduces the time required to detect and recover from iSCSI path failures, ensuring that database operations remain highly available and responsive. After applying this change and restarting the iSCSI service, the host will be able to fail over to alternate paths within 5 seconds of a path failure, minimizing the risk of application downtime.",
+            "categories": ["Reliability", "Performance efficiency"],
+            "status": "not-optimized",
+            "recommended": "5",
+            "objectsInViolation": ["demo-oracle-prod-iscsi-001"],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "violationDetails": [
+                {
+                    "objectName": "iscsi-replacement-timeout",
+                    "value": "120",
+                    "objectType": "configuration",
+                    "recommended": "5"
+                }
+            ],
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "multipath-friendly-names",
+            "name": "Multipath friendly names",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends enabling Multipath Friendly Names in the multipath configuration for Oracle database hosts. This setting simplifies device identification by assigning human-readable names to multipath devices, making storage management and troubleshooting more efficient and reducing the risk of configuration errors.",
+            "categories": ["Operational excellence"],
+            "status": "not-optimized",
+            "recommended": "enabled",
+            "objectsInViolation": ["demo-oracle-prod-iscsi-001"],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "violationDetails": [
+                {
+                    "objectName": "user_friendly_names",
+                    "value": "no",
+                    "objectType": "netapp device configuration",
+                    "recommended": "user_friendly_names \"yes\" for netapp device section"
+                }
+            ],
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "multipath-configuration",
+            "name": "Multipath configuration",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Workload Factory strongly recommends that the multipath configuration file (/etc/multipath.conf) be properly configured with NetApp recommended settings for ONTAP block devices, as this is critical for reliable path management, optimal performance, and compatibility with ONTAP storage systems. In addition, installing the Device Mapper Multipath package on all database hosts that connect to ONTAP storage via iSCSI enables multipath I/O, providing redundancy, failover, and resilient storage connectivity for Oracle databases. This combined approach ensures robust and dependable integration with ONTAP storage.",
+            "categories": ["Reliability", "Operational excellence"],
+            "status": "not-optimized",
+            "recommended": "",
+            "objectsInViolation": ["i-0f637156f1dcbd1be"],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "violationDetails": [
+                {
+                    "objectName": "find_multipaths",
+                    "value": "not found",
+                    "objectType": "default configuration",
+                    "recommended": "find_multipaths yes or on"
+                },
+                {
+                    "objectName": "polling_interval",
+                    "value": "not found",
+                    "objectType": "default configuration",
+                    "recommended": "polling_interval 5"
+                },
+                {
+                    "objectName": "path_grouping_policy",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "path_grouping_policy group_by_prio"
+                },
+                {
+                    "objectName": "path_selector",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "path_selector service-time 0"
+                },
+                {
+                    "objectName": "prio",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "prio ontap"
+                },
+                {
+                    "objectName": "hardware_handler",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "hardware_handler 0"
+                },
+                {
+                    "objectName": "failback",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "failback immediate"
+                },
+                {
+                    "objectName": "rr_weight",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "rr_weight uniform"
+                },
+                {
+                    "objectName": "no_path_retry",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "no_path_retry queue"
+                },
+                {
+                    "objectName": "fast_io_fail_tmo",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "fast_io_fail_tmo 5"
+                },
+                {
+                    "objectName": "dev_loss_tmo",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "dev_loss_tmo infinity"
+                },
+                {
+                    "objectName": "detect_prio",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "detect_prio yes"
+                },
+                {
+                    "objectName": "flush_on_last_del",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "flush_on_last_del yes or always"
+                },
+                {
+                    "objectName": "retain_attached_hw_handler",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "retain_attached_hw_handler yes"
+                },
+                {
+                    "objectName": "path_checker",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "path_checker tur"
+                },
+                {
+                    "objectName": "max_sectors_kb",
+                    "value": "not found",
+                    "objectType": "netapp device configuration",
+                    "recommended": "max_sectors_kb 4096"
+                }
+            ],
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "asm-setup",
+            "name": "ASM setup",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends using Oracle Automatic Storage Management (ASM) for iSCSI-based storage, such as FSx for NetApp ONTAP, to optimize performance, simplify storage management, and enhance scalability for Oracle Database deployments.",
+            "categories": ["Reliability", "Performance efficiency"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance"
+        },
+        {
+            "id": "asm-external-redundancy",
+            "name": "ASM external redundancy",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends configuring Oracle ASM disk groups with External Redundancy for FSxN iSCSI block devices to leverage FSxN’s built-in high availability, optimize storage efficiency, and reduce costs by avoiding Oracle-level data mirroring.",
+            "categories": ["Cost efficiency", "Performance efficiency"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "ASM Disk Group"
+        },
+        {
+            "id": "afd-logical-block-size",
+            "name": "AFD logical block size",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Workload Factory recommends configuring the Oracle ASM Filter Driver (AFD) to use the logical block size of the underlying FSx for NetApp ONTAP. This ensures that AFD aligns I/O operations with the storage’s block size, optimizing performance by minimizing latency and reducing unnecessary I/O overhead.",
+            "categories": ["Reliability", "Performance efficiency"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance"
+        },
+        {
+            "id": "asmlib-logical-block-size",
+            "name": "ASMLIB logical block size",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Workload Factory recommends configuring Oracle ASMLib to use the logical block size of the underlying FSx for NetApp ONTAP, by setting the appropriate option in the ASMLib configuration file. This ensures that ASMLib aligns I/O operations with the storage’s block size, optimizing performance by minimizing latency and reducing unnecessary I/O overhead.",
+            "categories": ["Reliability", "Performance efficiency"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance"
+        },
+        {
+            "id": "kernel-parameters",
+            "name": "TCP slot table",
+            "type": "storage",
+            "severity": "critical",
+            "recommendation": "Workload Factory recommends configuring the kernel parameters for the TCP slot table to 128, optimized specifically for Oracle workloads.",
+            "categories": ["Reliability", "Performance efficiency"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance"
+        },
+        {
+            "id": "host-os-patch",
+            "name": "Operating system patch",
+            "type": "compute",
+            "severity": "critical",
+            "recommendation": "Critical security patches are missing. We recommend applying the latest patches to ensure your database infrastructure is secure and up-to-date.",
+            "categories": ["Security", "Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "compute",
+            "resourceType": "EC2 instance"
+        },
+        {
+            "id": "transparent-hugepages",
+            "name": "Transparent hugepages",
+            "type": "compute",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends disabling Transparent HugePages (THP) on database hosts running Oracle databases. \nDisabling THP is an Oracle best practice to prevent potential performance issues and ensure optimal database stability.",
+            "categories": ["Performance efficiency"],
+            "status": "optimized",
+            "recommended": "disabled",
+            "objectsInViolation": [],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 0,
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "violationDetails": [],
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "filesystems-io-options",
+            "name": "Filesystems I/O options",
+            "type": "compute",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends setting filesystemio_options = setall for optimal I/O performance. \nAdjust SGA size if needed when moving away from buffered I/O.",
+            "categories": ["Performance efficiency"],
+            "status": "not-optimized",
+            "recommended": "setall",
+            "objectsInViolation": ["demo-oracle-prod-iscsi-001"],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 1,
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "violationDetails": [
+                {
+                    "objectName": "filesystemio_options",
+                    "value": "none",
+                    "objectType": "oracle parameter",
+                    "recommended": "SETALL"
+                }
+            ],
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "multiblock-readcount",
+            "name": "Multiblock read count",
+            "type": "compute",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends removing db_file_multiblock_read_count from init.ora to prevent performance issues and allow Oracle to manage this setting automatically.",
+            "categories": ["Performance efficiency"],
+            "errorMessage": "SPFile path found but file does not exist: +DATADG/ORCL/PARAMETERFILE/spfile.269.1227496693",
+            "subType": "configuration",
+            "resourceType": "EC2 Instance"
+        },
+        {
+            "id": "tcp-advanced-options",
+            "name": "TCP advanced options",
+            "type": "compute",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends enabling TCP features such as TCP window scaling",
+            "categories": ["Reliability", "Performance efficiency"],
+            "status": "optimized",
+            "recommended": "enabled",
+            "objectsInViolation": [],
+            "totalObjectsAssessed": 1,
+            "totalObjectsInViolation": 0,
+            "subType": "configuration",
+            "resourceType": "EC2 Instance",
+            "violationDetails": [],
+            "focusWidgetName": "Operating system"
+        },
+        {
+            "id": "oracle-security-patch",
+            "name": "Oracle critical patch updates",
+            "type": "application",
+            "severity": "critical",
+            "recommendation": "Oracle Critical Patch Updates (CPUs) include security fixes for supported self-managed Oracle databases. Installing the latest patch helps protect your database from vulnerabilities and improves system reliability.",
+            "categories": ["Security", "Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "application",
+            "resourceType": "Database"
+        },
+        {
+            "id": "crr",
+            "name": "Cross-region replication (CRR)",
+            "type": "resiliency",
+            "severity": "warning",
+            "recommendation": "Workload Factory recommends enabling Cross-Region Replication (CRR) for your FSx for ONTAP filesystems serving Oracle. CRR ensures that your data is replicated to another AWS region, providing enhanced data durability and availability. It is recommended to configure CRR for disaster recovery and compliance requirements. Replicating redo logs (when applicable) can also assist with recovery to a specific point in time.",
+            "categories": ["Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "resiliency",
+            "resourceType": "Volume"
+        },
+        {
+            "id": "backup-configuration",
+            "name": "Backup configuration",
+            "type": "resiliency",
+            "severity": "warning",
+            "recommendation": "Backup Configuration recommendation: Enable FSx Backup or AWS Backup for Oracle database volumes to support data retention and compliance. If using both, consider removing redundant backups manually.",
+            "categories": ["Reliability"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "resiliency",
+            "resourceType": "Volume"
+        },
+        {
+            "id": "clone-management",
+            "name": "Clone cleanup",
+            "type": "cloning",
+            "severity": "warning",
+            "recommendation": "Old clones can incur significant costs. Consider deleting these clones to optimize your storage expenses.",
+            "categories": ["Cost efficiency"],
+            "status": "optimized",
+            "recommended": "optimized",
+            "objectsInViolation": [],
+            "totalObjectsAssessed": 0,
+            "totalObjectsInViolation": 0,
+            "subType": "cloning",
+            "resourceType": "Database",
+            "cloneDetails": [],
+            "oldCloneDetails": [],
+            "cloneDriftMessage": "0 out of 0 clones are old and divergent"
         },
         {
             "name": "Swap Space",
@@ -546,14 +956,10 @@
             "resourceType": "EC2 instance",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "i-08b88d1026a035b68"
-            ],
+            "objectsInViolation": ["i-08b88d1026a035b68"],
             "violationDetails": [],
             "id": "swap-space",
-            "categories": [
-                "Performance efficiency"
-            ],
+            "categories": ["Performance efficiency"],
             "type": "storage",
             "current": "8 GB"
         },
@@ -566,14 +972,10 @@
             "resourceType": "File system (FSx for ONTAP)",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "fs-0d5efc3057c4f12cb"
-            ],
+            "objectsInViolation": ["fs-0d5efc3057c4f12cb"],
             "violationDetails": [],
             "id": "headroom",
-            "categories": [
-                "Performance efficiency"
-            ],
+            "categories": ["Performance efficiency"],
             "type": "storage",
             "current": "15%",
             "missingPermissions": []
@@ -587,9 +989,7 @@
             "resourceType": "Disk Group",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "DATADG"
-            ],
+            "objectsInViolation": ["DATADG"],
             "violationDetails": [
                 {
                     "objectName": "DATADG",
@@ -600,10 +1000,7 @@
                 }
             ],
             "id": "data-dg-lun-layout",
-            "categories": [
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Operational excellence", "Performance efficiency"],
             "type": "storage"
         },
         {
@@ -615,9 +1012,7 @@
             "resourceType": "Disk Group",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "DATARG"
-            ],
+            "objectsInViolation": ["DATARG"],
             "violationDetails": [
                 {
                     "objectName": "DATARG",
@@ -628,10 +1023,7 @@
                 }
             ],
             "id": "redolog-dg-lun-layout",
-            "categories": [
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Operational excellence", "Performance efficiency"],
             "type": "storage"
         },
         {
@@ -643,9 +1035,7 @@
             "resourceType": "Disk Group",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "DATARG"
-            ],
+            "objectsInViolation": ["DATARG"],
             "violationDetails": [
                 {
                     "objectName": "DATARG",
@@ -656,39 +1046,19 @@
                 }
             ],
             "id": "fra-dg-lun-layout",
-            "categories": [
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Operational excellence", "Performance efficiency"],
             "type": "storage"
         },
         {
-            "name": "Archivelog Dg Lun Layout",
-            "status": "not-optimized",
-            "severity": "warning",
-            "recommended": "associated-lun-count",
-            "recommendation": "Multiple LUNs laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that ASM Disk Group for archive logs will consist of at least 2-8 LUNs.",
-            "resourceType": "Disk Group",
-            "totalObjectsAssessed": 1,
-            "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "DATARG"
-            ],
-            "violationDetails": [
-                {
-                    "objectName": "DATARG",
-                    "value": "1",
-                    "objectType": "Disk Group",
-                    "recommended": "2",
-                    "dataCategory": "Archive log"
-                }
-            ],
             "id": "archivelog-dg-lun-layout",
-            "categories": [
-                "Operational excellence",
-                "Performance efficiency"
-            ],
-            "type": "storage"
+            "name": "ASM archive log disk group LUNs",
+            "type": "storage",
+            "severity": "warning",
+            "recommendation": "Multiple block devices laid out within an Amazon FSx ONTAP volume provides better performance. It is recommended that  ASM Disk Group for archive logs will consist of at least 2-8 block devices.",
+            "categories": ["Operational excellence", "Performance efficiency"],
+            "errorMessage": "The one-time assessment provides only well-architected status and recommendations. Register databases to unlock more features.",
+            "subType": "layout",
+            "resourceType": "Disk Group"
         },
         {
             "name": "Archive Placement",
@@ -699,16 +1069,10 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "pdb21cnas1"
-            ],
+            "objectsInViolation": ["pdb21cnas1"],
             "violationDetails": [],
             "id": "archive-placement",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage"
         },
         {
@@ -720,16 +1084,10 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "pdb21cnas1"
-            ],
+            "objectsInViolation": ["pdb21cnas1"],
             "violationDetails": [],
             "id": "datafiles-placement",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage"
         },
         {
@@ -741,16 +1099,10 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "pdb21cnas1"
-            ],
+            "objectsInViolation": ["pdb21cnas1"],
             "violationDetails": [],
             "id": "controlfiles-placement",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage"
         },
         {
@@ -762,16 +1114,10 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "pdb21cnas1"
-            ],
+            "objectsInViolation": ["pdb21cnas1"],
             "violationDetails": [],
             "id": "redologs-placement",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage"
         },
         {
@@ -783,16 +1129,10 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "pdb21cnas1"
-            ],
+            "objectsInViolation": ["pdb21cnas1"],
             "violationDetails": [],
             "id": "templogs-placement",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage"
         },
         {
@@ -804,16 +1144,10 @@
             "resourceType": "Volume",
             "totalObjectsAssessed": 1,
             "totalObjectsInViolation": 1,
-            "objectsInViolation": [
-                "pdb21cnas1"
-            ],
+            "objectsInViolation": ["pdb21cnas1"],
             "violationDetails": [],
             "id": "oracle-binary-placement",
-            "categories": [
-                "Cost optimization",
-                "Operational excellence",
-                "Performance efficiency"
-            ],
+            "categories": ["Cost optimization", "Operational excellence", "Performance efficiency"],
             "type": "storage"
         },
         {
@@ -822,9 +1156,7 @@
             "type": "resiliency",
             "severity": "warning",
             "recommendation": "Use application-consistent snapshots with NetApp SnapCenter to take accurate, reliable snapshots of your volume data at a specific moment in time. This keeps your apps running smoothly and your data safe. SnapCenter makes backups easier and helps you restore data quickly and correctly, reducing downtime and protecting your most important workloads.",
-            "categories": [
-                "Reliability"
-            ],
+            "categories": ["Reliability"],
             "status": "not-optimized",
             "recommended": "optimized",
             "subType": "protection",
