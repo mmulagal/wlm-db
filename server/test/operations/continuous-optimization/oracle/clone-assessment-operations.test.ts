@@ -1,8 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import { AssessmentStatus } from '../../../../src/utils/continous-optimization-consts';
 import { CloneAssessment } from '../../../../src/utils/common-types';
-import { calculateOracleCloneDrift } from '../../../../src/operations/continuous-optimization/oracle/clone-assessment-operations';
+import {
+    calculateOracleCloneDrift,
+    fetchOracleFlexCloneVolumes
+} from '../../../../src/operations/continuous-optimization/oracle/clone-assessment-operations';
+import {
+    registerProxyGetResponse,
+    resetProxyOverrides
+} from '../../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
+
+function ontapPage<T>(records: T[]) {
+    return { records, num_records: records.length };
+}
 
 const ACCOUNT_ID = 'test-account-id';
 const CREDENTIALS_ID = 'test-credentials-id';
@@ -266,5 +277,51 @@ describe('calculateOracleCloneDrift', () => {
         const oldDetails = drift.oldCloneDetails as Record<string, unknown>[];
         expect(oldDetails).toHaveLength(1);
         expect(oldDetails[0].cloneAge).toBe(100);
+    });
+});
+
+describe('fetchOracleFlexCloneVolumes', () => {
+    beforeEach(() => {
+        resetProxyOverrides();
+    });
+
+    it('fetches FlexClone volumes for the FSx filesystem via the proxy-forwarder', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes',
+            body: ontapPage([
+                {
+                    uuid: 'clone-uuid-1',
+                    name: 'clone_vol_1',
+                    create_time: '2025-01-01T00:00:00+00:00',
+                    clone: { is_flexclone: true, parent_volume: { name: 'data_vol' } },
+                    space: { physical_used: 1024 }
+                }
+            ])
+        });
+
+        const records = await fetchOracleFlexCloneVolumes('acct-1', 'fs-1', 'us-east-1');
+
+        expect(records).toEqual([
+            {
+                uuid: 'clone-uuid-1',
+                name: 'clone_vol_1',
+                create_time: '2025-01-01T00:00:00+00:00',
+                clone: { is_flexclone: true, parent_volume: { name: 'data_vol' } },
+                space: { physical_used: 1024 }
+            }
+        ]);
+    });
+
+    it('returns an empty array when no FlexClone volumes exist', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes',
+            body: ontapPage([])
+        });
+
+        const records = await fetchOracleFlexCloneVolumes('acct-1', 'fs-1', 'us-east-1');
+
+        expect(records).toEqual([]);
     });
 });

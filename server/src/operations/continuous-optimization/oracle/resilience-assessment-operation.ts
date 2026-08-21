@@ -15,12 +15,150 @@ import { getFsxnVolIdsFromOntapVolIds } from '../../aws/fsx-operations';
 import { resolveCrossRegionPeerIds, updateCrrDetailsWithCrossRegionStatus } from '../crr-assessment-utils';
 import { callSsmExecution } from '../../aws/ssm-operations';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
-import { ORACLE_CRR_ASSESSMENT_SCRIPT } from './ssm-scripts/resiliency-assessment-scripts';
+import { ORACLE_CRR_ASSESSMENT_SCRIPT, type DirectOntapCrrData } from './ssm-scripts/resiliency-assessment-scripts';
 import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
+import {
+    collectAllOntapRecords,
+    collectOntapRecordsBatched,
+    buildOntapProxyBase
+} from '../../../lib/ontap/ontap-gateway';
 import ORACLE_GOLDEN_CONFIG from './golden-config';
 import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 
 const logger = getLogger();
+
+const CLUSTER_PEER_FIELDS = 'name,status.state,remote.ip_addresses';
+const SVM_PEER_FIELDS = 'name,state,applications,peer.cluster.name,peer.svm.uuid,peer.svm.name,svm.name,svm.uuid';
+const SNAPMIRROR_RELATIONSHIP_FIELDS =
+    'policy.name,policy.type,state,source.path,source.svm.name,source.svm.uuid,destination.path,destination.svm.name,destination.svm.uuid';
+
+interface OntapClusterPeerRecord {
+    name?: string;
+    status?: { state?: string };
+}
+
+interface OntapSvmPeerRecord {
+    name?: string;
+    state?: string;
+    applications?: string[];
+    peer?: { cluster?: { name?: string }; svm?: { uuid?: string; name?: string } };
+    svm?: { name?: string; uuid?: string };
+}
+
+interface OntapSnapmirrorRelationshipRecord {
+    policy?: { name?: string; type?: string };
+    state?: string;
+    source?: { path?: string; svm?: { name?: string; uuid?: string } };
+    destination?: { path?: string; svm?: { name?: string; uuid?: string } };
+}
+
+function toClusterPeerRow(peer: OntapClusterPeerRecord) {
+    return { peerClusterName: peer.name, availability: peer.status?.state };
+}
+
+function toSvmPeerRow(peer: OntapSvmPeerRecord) {
+    return {
+        name: peer.name,
+        state: peer.state,
+        applications: peer.applications,
+        peerClusterName: peer.peer?.cluster?.name,
+        peerSvmUuid: peer.peer?.svm?.uuid,
+        peerSvmName: peer.peer?.svm?.name,
+        svmname: peer.svm?.name,
+        svmuuid: peer.svm?.uuid
+    };
+}
+
+function toSnapmirrorRelationshipRow(relationship: OntapSnapmirrorRelationshipRecord) {
+    return {
+        policyName: relationship.policy?.name,
+        policyType: relationship.policy?.type,
+        state: relationship.state,
+        sourceVserverName: relationship.source?.svm?.name,
+        sourceVserverUuid: relationship.source?.svm?.uuid,
+        sourcePath: relationship.source?.path,
+        destinationVserverName: relationship.destination?.svm?.name,
+        destinationVserverUuid: relationship.destination?.svm?.uuid,
+        destinationPath: relationship.destination?.path
+    };
+}
+
+async function fetchDirectOntapCrrData(
+    accountId: string,
+    instanceRecord: WorkloadInstance
+): Promise<DirectOntapCrrData> {
+    const base = buildOntapProxyBase(accountId, instanceRecord.fsxFileSystem, instanceRecord.region);
+    const svmNames = [
+        ...new Set(
+            (Array.isArray(instanceRecord.svmOntapName)
+                ? instanceRecord.svmOntapName
+                : [instanceRecord.svmOntapName]
+            ).filter((name): name is string => !!name)
+        )
+    ];
+
+    logger.info('Fetching direct ONTAP CRR assessment data via proxy-forwarder', {
+        accountId,
+        targetId: base.targetId,
+        svmNames
+    });
+
+    const [clusterPeersRes, svmPeersRes, snapmirrorRes] = await Promise.allSettled([
+        collectAllOntapRecords<OntapClusterPeerRecord>(base, 'api/cluster/peers', { fields: CLUSTER_PEER_FIELDS }),
+        isEmpty(svmNames)
+            ? Promise.reject(new Error('Unable to fetch ONTAP svm peers as the mapped SVM name is missing.'))
+            : collectOntapRecordsBatched<OntapSvmPeerRecord>(base, 'api/svm/peers', 'svm.name', svmNames, {
+                  fields: SVM_PEER_FIELDS
+              }),
+        isEmpty(svmNames)
+            ? Promise.reject(
+                  new Error('Unable to fetch ONTAP snapmirror relationships as the mapped SVM name is missing.')
+              )
+            : collectOntapRecordsBatched<OntapSnapmirrorRelationshipRecord>(
+                  base,
+                  'api/snapmirror/relationships',
+                  'source.svm.name',
+                  svmNames,
+                  { list_destinations_only: true, fields: SNAPMIRROR_RELATIONSHIP_FIELDS }
+              )
+    ]);
+
+    let clusterPeerDetails: ReturnType<typeof toClusterPeerRow>[] = [];
+    if (clusterPeersRes.status === 'fulfilled') {
+        clusterPeerDetails = clusterPeersRes.value.map(toClusterPeerRow);
+    } else {
+        logger.warn('Failed to fetch ONTAP cluster peers for CRR assessment', {
+            targetId: base.targetId,
+            err: clusterPeersRes.reason
+        });
+    }
+
+    let vserverPeerDetails: ReturnType<typeof toSvmPeerRow>[] = [];
+    if (svmPeersRes.status === 'fulfilled') {
+        vserverPeerDetails = svmPeersRes.value.map(toSvmPeerRow);
+    } else {
+        logger.warn('Failed to fetch ONTAP svm peers for CRR assessment', {
+            targetId: base.targetId,
+            err: svmPeersRes.reason
+        });
+    }
+
+    let snapMirrorDestinationDetails: ReturnType<typeof toSnapmirrorRelationshipRow>[] = [];
+    if (snapmirrorRes.status === 'fulfilled') {
+        snapMirrorDestinationDetails = snapmirrorRes.value.map(toSnapmirrorRelationshipRow);
+    } else {
+        logger.warn('Failed to fetch ONTAP snapmirror relationships for CRR assessment', {
+            targetId: base.targetId,
+            err: snapmirrorRes.reason
+        });
+    }
+
+    return {
+        clusterPeerDetailsJson: JSON.stringify(clusterPeerDetails),
+        vserverPeerDetailsJson: JSON.stringify(vserverPeerDetails),
+        snapMirrorDestinationDetailsJson: JSON.stringify(snapMirrorDestinationDetails)
+    };
+}
 
 async function initiateCrossRegionResiliencyAssessment(
     accountId: string,
@@ -60,7 +198,8 @@ async function initiateCrossRegionResiliencyAssessment(
             throw createError(HttpErrorCodes.INTERNAL_SERVER_ERROR, errorMessageText);
         }
 
-        const command = [ORACLE_CRR_ASSESSMENT_SCRIPT(instanceRecord)];
+        const ontapCrrData = await fetchDirectOntapCrrData(accountId, instanceRecord);
+        const command = [ORACLE_CRR_ASSESSMENT_SCRIPT(instanceRecord, ontapCrrData)];
         const ssmComment = 'Get Cross Region Replication Assessment for Oracle';
 
         const response = await callSsmExecution({
@@ -222,4 +361,4 @@ function getCrrDriftData(
     }
 }
 
-export { initiateCrossRegionResiliencyAssessment, getCrrDriftData };
+export { initiateCrossRegionResiliencyAssessment, getCrrDriftData, fetchDirectOntapCrrData };

@@ -53,6 +53,11 @@ import {
 import { OS_ASSESSMENT } from './ssm-scripts/os-iscsi-assessment-scripts';
 import { NFS_OS_ASSESSMENT } from './ssm-scripts/os-nfs-assessment-scripts';
 import { ORACLE_STORAGE_SIZING_ASSESSMENT, VOLUME_LUN_CONFIGURATION } from './ssm-scripts/storage-assessment-scripts';
+import {
+    fetchDirectOntapAssessmentData,
+    resolveBinaryVolumesNfsInfo,
+    RawBinaryVolumeRecord
+} from './storage-ontap-merge';
 import { getHeadroomDrift } from '../headroom-assessment';
 import {
     buildBlockDeviceSpaceManagementEntry,
@@ -2683,10 +2688,12 @@ async function initiateStorageAssessmentCollection(
                   )
                 : NFS_OS_ASSESSMENT(activeNodeInstanceid, databaseInstanceName);
 
+        const ontapAssessmentData = await fetchDirectOntapAssessmentData(accountId, instanceRecord);
+
         const combinedResponse = await callSsmExecution({
             credentialsId,
             region,
-            commands: [VOLUME_LUN_CONFIGURATION(instanceRecord), ORACLE_STORAGE_SIZING_ASSESSMENT],
+            commands: [VOLUME_LUN_CONFIGURATION(instanceRecord, ontapAssessmentData), ORACLE_STORAGE_SIZING_ASSESSMENT],
             ec2InstanceId: activeNodeInstanceid,
             comment: 'Get Storage Configuration Assessment for Oracle instance',
             accountId,
@@ -2696,6 +2703,17 @@ async function initiateStorageAssessmentCollection(
             documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
         });
         const [storageAssessment, storageSizingAssessment] = parseMultipleCommandResponse(combinedResponse);
+
+        // The binary volumes discovered above only carry a raw host-side volume name for NFS mounts;
+        // resolve their ONTAP identity (uuid/svm/export-policy) server-side now that it's known.
+        const rawBinaryVolumes = (storageAssessment.binaryVolumes?.data ?? []) as RawBinaryVolumeRecord[];
+        if (rawBinaryVolumes.length > 0) {
+            storageAssessment.binaryVolumes.data = await resolveBinaryVolumesNfsInfo(
+                accountId,
+                instanceRecord,
+                rawBinaryVolumes
+            );
+        }
 
         const osAssessmentResponse = await callSsmExecution({
             credentialsId,

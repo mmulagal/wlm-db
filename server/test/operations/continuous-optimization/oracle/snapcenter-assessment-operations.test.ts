@@ -1,10 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { AssessmentStatus } from '../../../../src/utils/continous-optimization-consts';
 import {
     calculateSnapCenterDrift,
+    fetchSnapCenterVolumeOntapData,
     SnapcenterAssessmentData
 } from '../../../../src/operations/continuous-optimization/oracle/snapcenter-assessment-operations';
 import { AssessmentItemType } from '../../../../src/routes/types/continuous-optimization.types';
+import {
+    registerProxyGetResponse,
+    resetProxyOverrides
+} from '../../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
+
+function ontapPage<T>(records: T[]) {
+    return { records, num_records: records.length };
+}
 
 const BASE_ASSESSMENT_DATA: SnapcenterAssessmentData = {
     isDataguardPrimary: false,
@@ -197,5 +206,60 @@ describe('calculateSnapCenterDrift', () => {
         expect(drift.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
         expect(drift.totalObjectsAssessed).toBe(0);
         expect(drift.totalObjectsInViolation).toBe(0);
+    });
+});
+
+describe('fetchSnapCenterVolumeOntapData (Oracle)', () => {
+    beforeEach(() => {
+        resetProxyOverrides();
+    });
+
+    it('merges SVM identity and SnapCenter snapshot presence per volume', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-1',
+            body: { svm: { uuid: 'svm-uuid-1', name: 'svm-a' } }
+        });
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-1/snapshots',
+            body: ontapPage([{ comment: 'creator=snapcenter' }])
+        });
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-2',
+            body: { svm: { uuid: 'svm-uuid-1', name: 'svm-a' } }
+        });
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-2/snapshots',
+            body: ontapPage([])
+        });
+
+        const result = await fetchSnapCenterVolumeOntapData('acct-1', 'fs-1', 'us-east-1', [
+            'vol-uuid-1',
+            'vol-uuid-2'
+        ]);
+
+        expect(result.response).toEqual({
+            'vol-uuid-1': { svmId: 'svm-uuid-1', svmName: 'svm-a', hasSnapcenterSnapshot: true },
+            'vol-uuid-2': { svmId: 'svm-uuid-1', svmName: 'svm-a', hasSnapcenterSnapshot: false }
+        });
+        expect(result.errors).toEqual({});
+    });
+
+    it('records a per-volume error without failing the others', async () => {
+        // The 'error-target' fsxId makes the scope's fallback reply with a 500 for every path.
+        const result = await fetchSnapCenterVolumeOntapData('acct-1', 'error-target', 'us-east-1', ['vol-uuid-1']);
+
+        expect(result.response).toEqual({});
+        expect(result.errors['vol-uuid-1']).toBeDefined();
+    });
+
+    it('returns an empty result without calling the proxy when there are no volume UUIDs', async () => {
+        const result = await fetchSnapCenterVolumeOntapData('acct-1', 'fs-1', 'us-east-1', []);
+
+        expect(result.response).toEqual({});
+        expect(result.errors).toEqual({});
     });
 });

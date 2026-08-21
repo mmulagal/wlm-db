@@ -14,14 +14,27 @@ import { CLONE_AGE, GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/cons
 import { AssessmentCategoriesOracle, AssessmentStatus } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
-import { callSsmExecution } from '../../aws/ssm-operations';
 import { calculateDaysSince } from '../../../utils/utils';
-import { SSM_RUN_SHELL_SCRIPT_DOC, SSM_RUN_SHELL_SCRIPT_DOC_VERSION } from '../../workloads/oracle/consts';
 import ORACLE_GOLDEN_CONFIG from './golden-config';
 import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
-import { buildFlexCloneQueryScript } from './ssm-scripts/clone-assessment-scripts';
+import { collectAllOntapRecords, buildOntapProxyBase } from '../../../lib/ontap/ontap-gateway';
 
 const logger = getLogger();
+
+const FLEXCLONE_VOLUMES_FIELDS =
+    'clone.parent_volume.name,clone.is_flexclone,create_time,name,uuid,svm.name,svm.uuid,space.size,space.used,space.physical_used';
+
+async function fetchOracleFlexCloneVolumes(
+    accountId: string,
+    fsxFileSystem: string,
+    region: string
+): Promise<VolumeRecord[]> {
+    const base = buildOntapProxyBase(accountId, fsxFileSystem, region);
+    return collectAllOntapRecords<VolumeRecord>(base, 'api/storage/volumes', {
+        'clone.is_flexclone': true,
+        fields: FLEXCLONE_VOLUMES_FIELDS
+    });
+}
 
 /**
  * Queries ONTAP for FlexClone volumes, correlates with Oracle mapped volumes,
@@ -39,7 +52,6 @@ async function runOracleCloneAssessment(
         name: databaseInstanceName,
         resourceName,
         fsxFileSystem,
-        activeNodeInstanceid,
         mappedVolumeNames = [],
         svmOntapName
     } = instanceRecord;
@@ -67,44 +79,7 @@ async function runOracleCloneAssessment(
         return;
     }
 
-    const script = buildFlexCloneQueryScript(fsxFileSystem, region, svmName);
-    const ssmResponse = await callSsmExecution({
-        credentialsId,
-        region,
-        commands: [script],
-        ec2InstanceId: activeNodeInstanceid,
-        comment: 'Get FlexClone volumes for Oracle clone assessment',
-        accountId,
-        shouldReadFromCloudWatchLogs: true,
-        documentName: SSM_RUN_SHELL_SCRIPT_DOC,
-        documentVersion: SSM_RUN_SHELL_SCRIPT_DOC_VERSION
-    });
-
-    let parsed;
-    try {
-        parsed = typeof ssmResponse === 'string' ? JSON.parse(ssmResponse) : ssmResponse;
-    } catch (error) {
-        const parseErrorMessage = 'Failed to parse FlexClone SSM response';
-        logger.error(parseErrorMessage, {
-            accountId,
-            databaseHostId,
-            databaseInstanceId,
-            error
-        });
-        throw new Error(parseErrorMessage);
-    }
-
-    if (parsed?.error) {
-        const ssmErrorMessage = `SSM returned error response for FlexClone query: ${parsed.error}`;
-        logger.error(ssmErrorMessage, {
-            accountId,
-            databaseHostId,
-            databaseInstanceId
-        });
-        throw new Error(ssmErrorMessage);
-    }
-
-    const flexCloneRecords: VolumeRecord[] = parsed?.records || [];
+    const flexCloneRecords = await fetchOracleFlexCloneVolumes(accountId, fsxFileSystem, region);
 
     if (isEmpty(flexCloneRecords)) {
         return {
@@ -300,4 +275,4 @@ function calculateOracleCloneDrift(
     }
 }
 
-export { initiateOracleCloneAssessmentCollection, calculateOracleCloneDrift };
+export { initiateOracleCloneAssessmentCollection, calculateOracleCloneDrift, fetchOracleFlexCloneVolumes };

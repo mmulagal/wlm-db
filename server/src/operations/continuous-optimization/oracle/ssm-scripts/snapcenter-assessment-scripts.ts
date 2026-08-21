@@ -3,8 +3,6 @@ import {
     checkCommandStatus,
     logFileCheck,
     pythonScriptInit,
-    getFsxCredentials,
-    ontapRestApiScript,
     getOracleHomePath,
     parseSpfileProperties
 } from '../../../workloads/oracle/oracle-ssm-script-utils';
@@ -12,6 +10,17 @@ import { LINUX_LOG_DIRECTORY } from '../consts';
 
 const SNAPCENTER_LOG_FILE = `${LINUX_LOG_DIRECTORY}/snapcenter-assessment.log`;
 const SNAPCENTER_LOG_FILE_NAME = 'snapcenter-assessment.log';
+
+interface SnapCenterVolumeOntapInfo {
+    svmId: string;
+    svmName: string;
+    hasSnapcenterSnapshot: boolean;
+}
+
+interface SnapCenterOntapData {
+    response: Record<string, SnapCenterVolumeOntapInfo>;
+    errors: Record<string, string>;
+}
 
 /**
  * Shared Python core for the SnapCenter assessment. Defines `collect_snapcenter_assessment`
@@ -132,34 +141,37 @@ def collect_snapcenter_assessment(ontap_get, oracle_sid, volume_uuids, volume_na
 `;
 
 const snapcenterPythonTemplate = (
-    fsxId: string,
-    region: string,
     instanceName: string,
     volumeNames: string[],
     volumeUuids: string[],
-    volumeLogKeys: string[]
+    volumeLogKeys: string[],
+    snapCenterOntapData: SnapCenterOntapData
 ) => `
-${getFsxCredentials}
-${ontapRestApiScript}
-
-filesystemid = '${fsxId}'
-region = '${region}'
 instance_name = '${instanceName}'
 volume_names = json.loads('${JSON.stringify(volumeNames)}')
 volume_uuids = json.loads('${JSON.stringify(volumeUuids)}')
 volume_log_keys = json.loads('${JSON.stringify(volumeLogKeys)}')
+snap_center_ontap_data = json.loads('${JSON.stringify(snapCenterOntapData.response)}')
 
 log("Starting SnapCenter snapshot assessment")
-log("FSx ID: {}, Region: {}, Instance: {}".format(filesystemid, region, instance_name))
+log("Instance: {}".format(instance_name))
 log("Volume names: {}, Volume UUIDs: {}".format(volume_names, volume_uuids))
 log("Volume log keys: {}".format(volume_log_keys))
 
-# Adapter: ontapRestApiRequest returns (data, error); collect_snapcenter_assessment expects raise-on-error.
 def _ontap_get(endpoint):
-    data, err = ontapRestApiRequest(filesystemid, region, 'GET', endpoint)
-    if err:
-        raise Exception(err)
-    return data
+    if endpoint.startswith("storage/volumes?uuid="):
+        records = [
+            {"uuid": vol_uuid, "svm": {"uuid": info.get("svmId", ""), "name": info.get("svmName", "")}}
+            for vol_uuid, info in snap_center_ontap_data.items()
+        ]
+        return {"records": records, "num_records": len(records)}
+    snapshot_endpoint_match = re.match(r"^storage/volumes/([^/]+)/snapshots", endpoint)
+    if snapshot_endpoint_match:
+        has_snapshot = snap_center_ontap_data.get(snapshot_endpoint_match.group(1), {}).get(
+            "hasSnapcenterSnapshot", False
+        )
+        return {"num_records": 1 if has_snapshot else 0}
+    raise Exception("Unexpected ONTAP endpoint requested by SnapCenter assessment: {}".format(endpoint))
 
 def _log_warn(msg):
     log("Warning: " + msg)
@@ -222,8 +234,7 @@ if [ "$is_dataguard_primary" == "true" ]; then
 fi
 `;
 
-const SNAPCENTER_ASSESSMENT_SCRIPT = (instanceRecord: WorkloadInstance) => {
-    const fsxId = instanceRecord.fsxFileSystem.split(',')[0];
+const SNAPCENTER_ASSESSMENT_SCRIPT = (instanceRecord: WorkloadInstance, snapCenterOntapData: SnapCenterOntapData) => {
     const volumeNames = instanceRecord.mappedVolumeNames || [];
     const volumeUuids = instanceRecord.mappedVolumesUuids || [];
     const volumeLogKeys =
@@ -244,14 +255,7 @@ ${checkCommandStatus}
 ${dataguardPrimaryCheck(instanceRecord.name)}
 
 scResult=$(${pythonScriptInit(
-        snapcenterPythonTemplate(
-            fsxId,
-            instanceRecord.region,
-            instanceRecord.name,
-            volumeNames,
-            volumeUuids,
-            volumeLogKeys
-        ),
+        snapcenterPythonTemplate(instanceRecord.name, volumeNames, volumeUuids, volumeLogKeys, snapCenterOntapData),
         SNAPCENTER_LOG_FILE_NAME
     )})
 
@@ -302,3 +306,4 @@ def collect_snapcenter_assessment_wad(ontap_config, oracle_sid, is_dataguard_pri
 `;
 
 export { SNAPCENTER_ASSESSMENT_SCRIPT, snapcenterAssessmentWadFunction };
+export type { SnapCenterOntapData, SnapCenterVolumeOntapInfo };

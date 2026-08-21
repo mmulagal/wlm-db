@@ -1,6 +1,9 @@
 import { WorkloadInstance, CrrAssessment, AWSBackupAssessment } from '../../../../src/utils/common-types';
 import { ORACLE_CRR_ASSESSMENT_SCRIPT } from '../../../../src/operations/continuous-optimization/oracle/ssm-scripts/resiliency-assessment-scripts';
-import { getCrrDriftData } from '../../../../src/operations/continuous-optimization/oracle/resilience-assessment-operation';
+import {
+    getCrrDriftData,
+    fetchDirectOntapCrrData
+} from '../../../../src/operations/continuous-optimization/oracle/resilience-assessment-operation';
 import { getOracleAwsBackupDriftData } from '../../../../src/operations/continuous-optimization/oracle/resilience-awsBackup-assessment-operations';
 import { OracleGenericParameterDriftResponseType } from '../../../../src/routes/types/oracle-continuous-optimization.types';
 import {
@@ -13,6 +16,14 @@ import {
     AssessmentErrorItemType,
     AssessmentItemType
 } from '../../../../src/routes/types/continuous-optimization.types';
+import {
+    registerProxyGetResponse,
+    resetProxyOverrides
+} from '../../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
+
+function ontapPage<T>(records: T[]) {
+    return { records, num_records: records.length };
+}
 
 const BASE_INSTANCE_RECORD: WorkloadInstance = {
     id: 'oracle-instance-1',
@@ -30,15 +41,21 @@ const BASE_INSTANCE_RECORD: WorkloadInstance = {
     redoVolumeNames: ['redo_vol']
 };
 
+const EMPTY_ONTAP_CRR_DATA = {
+    clusterPeerDetailsJson: '[]',
+    vserverPeerDetailsJson: '[]',
+    snapMirrorDestinationDetailsJson: '[]'
+};
+
 describe('ORACLE_CRR_ASSESSMENT_SCRIPT', () => {
     it('should generate a bash script with correct shebang and pipefail', () => {
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD, EMPTY_ONTAP_CRR_DATA);
         expect(script).toContain('#!/bin/bash');
         expect(script).toContain('set -euo pipefail');
     });
 
     it('should save original stdout before redirecting to log file', () => {
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD, EMPTY_ONTAP_CRR_DATA);
         const fd3SaveIndex = script.indexOf('exec 3>&1');
         const execRedirectIndex = script.indexOf('exec >>');
         expect(fd3SaveIndex).toBeGreaterThan(-1);
@@ -46,34 +63,42 @@ describe('ORACLE_CRR_ASSESSMENT_SCRIPT', () => {
     });
 
     it('should output final result to original stdout via fd 3', () => {
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD, EMPTY_ONTAP_CRR_DATA);
         expect(script).toContain('echo "$crrResults" >&3');
     });
 
     it('should use SVM names instead of UUIDs', () => {
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD, EMPTY_ONTAP_CRR_DATA);
         expect(script).toContain('"svm_oracle_prod"');
         expect(script).toContain('svm_names');
         expect(script).not.toContain('mappedSvmUuids');
     });
 
-    it('should use svm.name in ONTAP API queries', () => {
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
-        expect(script).toContain('svm/peers?svm.name={svm_name}');
-        expect(script).toContain('source.svm.name={svm_name}');
-        expect(script).not.toContain('svm.uuid={svm_uuid}');
-        expect(script).not.toContain('source.svm.uuid={svm_uuid}');
+    it('should inject pre-fetched ONTAP cluster/svm-peer/snapmirror JSON instead of calling ONTAP directly', () => {
+        const ontapCrrData = {
+            clusterPeerDetailsJson: JSON.stringify([{ peerClusterName: 'remote-cluster', availability: 'available' }]),
+            vserverPeerDetailsJson: JSON.stringify([{ svmname: 'svm_oracle_prod', state: 'peered' }]),
+            snapMirrorDestinationDetailsJson: JSON.stringify([{ sourcePath: 'svm_oracle_prod:data_vol' }])
+        };
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD, ontapCrrData);
+        expect(script).toContain(`cluster_peers_records = json.loads('${ontapCrrData.clusterPeerDetailsJson}')`);
+        expect(script).toContain(`vserver_peers_records = json.loads('${ontapCrrData.vserverPeerDetailsJson}')`);
+        expect(script).toContain(
+            `snapmirror_dests_records = json.loads('${ontapCrrData.snapMirrorDestinationDetailsJson}')`
+        );
     });
 
-    it('should use shared Python helpers (getFsxCredentials + ontapRestApiRequest)', () => {
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
-        expect(script).toContain('def getFsxCredentials(fileSystemId)');
-        expect(script).toContain('def ontapRestApiRequest(fileSystemId, region, method, url');
-        expect(script).toContain('PYTHON');
+    it('should not make any ONTAP REST calls or use FSx credentials from the script', () => {
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD, EMPTY_ONTAP_CRR_DATA);
+        expect(script).not.toContain('ontapRestApiRequest');
+        expect(script).not.toContain('def getFsxCredentials');
+        expect(script).not.toContain('cluster/peers?fields=');
+        expect(script).not.toContain('svm/peers?svm.name=');
+        expect(script).not.toContain('snapmirror/relationships/?list_destinations_only=true');
     });
 
     it('should exclude redo volumes from mapped volume names', () => {
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD, EMPTY_ONTAP_CRR_DATA);
         expect(script).toContain('"data_vol"');
         expect(script).toContain('"log_vol"');
         expect(script).not.toContain('"redo_vol"');
@@ -84,7 +109,7 @@ describe('ORACLE_CRR_ASSESSMENT_SCRIPT', () => {
             ...BASE_INSTANCE_RECORD,
             redoVolumeNames: undefined
         };
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(instanceWithoutRedo);
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(instanceWithoutRedo, EMPTY_ONTAP_CRR_DATA);
         expect(script).toContain('"data_vol"');
         expect(script).toContain('"log_vol"');
         expect(script).toContain('"redo_vol"');
@@ -97,21 +122,11 @@ describe('ORACLE_CRR_ASSESSMENT_SCRIPT', () => {
             mappedVolumesUuids: ['uuid-data', 'uuid-log', 'uuid-redo', 'uuid-shared-redo-ctrl'],
             redoVolumeNames: ['redo_vol']
         };
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(instanceWithSharedRedoCtrl);
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(instanceWithSharedRedoCtrl, EMPTY_ONTAP_CRR_DATA);
         expect(script).toContain('"data_vol"');
         expect(script).toContain('"log_vol"');
         expect(script).toContain('"shared_redo_ctrl_vol"');
         expect(script).not.toContain('"redo_vol"');
-    });
-
-    it('should use first FSx ID when comma-separated', () => {
-        const instanceWithMultipleFsx: WorkloadInstance = {
-            ...BASE_INSTANCE_RECORD,
-            fsxFileSystem: 'fs-first,fs-second'
-        };
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(instanceWithMultipleFsx);
-        expect(script).toContain('fs-first');
-        expect(script).not.toContain('fs-second');
     });
 
     it('should handle single SVM name (not array)', () => {
@@ -119,30 +134,122 @@ describe('ORACLE_CRR_ASSESSMENT_SCRIPT', () => {
             ...BASE_INSTANCE_RECORD,
             svmOntapName: 'single_svm'
         };
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(instanceSingleSvm);
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(instanceSingleSvm, EMPTY_ONTAP_CRR_DATA);
         expect(script).toContain('"single_svm"');
     });
 
-    it('should include cluster peers, vserver peers, and snapmirror API calls', () => {
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
-        expect(script).toContain('cluster/peers?fields=name,status.state,remote.ip_addresses');
-        expect(script).toContain('svm/peers?svm.name=');
-        expect(script).toContain('snapmirror/relationships/?list_destinations_only=true');
-    });
-
     it('should match peer info from SnapMirror destination SVM, not all peers', () => {
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD, EMPTY_ONTAP_CRR_DATA);
         // prettier-ignore
-        expect(script).toContain('dest_svm = dest.get(\'destination\', {}).get(\'svm\', {}).get(\'name\', \'\')');
+        expect(script).toContain('dest_svm = dest.get(\'destinationVserverName\', \'\')');
         // prettier-ignore
         expect(script).toContain('if dest_svm in mapping[\'peerSvmNames\']');
     });
 
     it('should not contain inline ontap_request bash function or manual credential parsing', () => {
-        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD);
+        const script = ORACLE_CRR_ASSESSMENT_SCRIPT(BASE_INSTANCE_RECORD, EMPTY_ONTAP_CRR_DATA);
         expect(script).not.toContain('ontap_request ()');
         expect(script).not.toContain('fsxusername=$(echo');
         expect(script).not.toContain('fsxpassword=$(echo');
+    });
+});
+
+describe('fetchDirectOntapCrrData', () => {
+    beforeEach(() => {
+        resetProxyOverrides();
+    });
+
+    it('fetches cluster peers, svm peers and snapmirror relationships and shapes them for the SSM script', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-0abc123def456',
+            ontapPath: 'api/cluster/peers',
+            body: ontapPage([{ name: 'FsxIdfs-remote1', status: { state: 'available' } }])
+        });
+        registerProxyGetResponse({
+            targetId: 'fs-0abc123def456',
+            ontapPath: 'api/svm/peers',
+            body: ontapPage([
+                {
+                    name: 'peer-relationship-1',
+                    state: 'peered',
+                    applications: ['snapmirror'],
+                    peer: { cluster: { name: 'FsxIdfs-remote1' }, svm: { uuid: 'peer-svm-uuid', name: 'peer-svm' } },
+                    svm: { name: 'svm_oracle_prod', uuid: 'svm-uuid-1' }
+                }
+            ])
+        });
+        registerProxyGetResponse({
+            targetId: 'fs-0abc123def456',
+            ontapPath: 'api/snapmirror/relationships',
+            body: ontapPage([
+                {
+                    policy: { name: 'MirrorAllSnapshots', type: 'async_mirror' },
+                    state: 'snapmirrored',
+                    source: { path: 'svm_oracle_prod:data_vol', svm: { name: 'svm_oracle_prod', uuid: 'svm-uuid-1' } },
+                    destination: { path: 'peer-svm:data_vol_dest', svm: { name: 'peer-svm', uuid: 'peer-svm-uuid' } }
+                }
+            ])
+        });
+
+        const result = await fetchDirectOntapCrrData('acct-1', BASE_INSTANCE_RECORD);
+
+        expect(JSON.parse(result.clusterPeerDetailsJson)).toEqual([
+            { peerClusterName: 'FsxIdfs-remote1', availability: 'available' }
+        ]);
+        expect(JSON.parse(result.vserverPeerDetailsJson)).toEqual([
+            {
+                name: 'peer-relationship-1',
+                state: 'peered',
+                applications: ['snapmirror'],
+                peerClusterName: 'FsxIdfs-remote1',
+                peerSvmUuid: 'peer-svm-uuid',
+                peerSvmName: 'peer-svm',
+                svmname: 'svm_oracle_prod',
+                svmuuid: 'svm-uuid-1'
+            }
+        ]);
+        expect(JSON.parse(result.snapMirrorDestinationDetailsJson)).toEqual([
+            {
+                policyName: 'MirrorAllSnapshots',
+                policyType: 'async_mirror',
+                state: 'snapmirrored',
+                sourceVserverName: 'svm_oracle_prod',
+                sourceVserverUuid: 'svm-uuid-1',
+                sourcePath: 'svm_oracle_prod:data_vol',
+                destinationVserverName: 'peer-svm',
+                destinationVserverUuid: 'peer-svm-uuid',
+                destinationPath: 'peer-svm:data_vol_dest'
+            }
+        ]);
+    });
+
+    it('skips svm peers and snapmirror relationships without failing cluster peers when the mapped SVM name is missing', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-0abc123def456',
+            ontapPath: 'api/cluster/peers',
+            body: ontapPage([{ name: 'FsxIdfs-remote1', status: { state: 'available' } }])
+        });
+
+        const result = await fetchDirectOntapCrrData('acct-1', { ...BASE_INSTANCE_RECORD, svmOntapName: undefined });
+
+        expect(JSON.parse(result.clusterPeerDetailsJson)).toHaveLength(1);
+        expect(result.vserverPeerDetailsJson).toBe('[]');
+        expect(result.snapMirrorDestinationDetailsJson).toBe('[]');
+    });
+
+    it('batches svm peer/snapmirror lookups across multiple mapped SVM names', async () => {
+        registerProxyGetResponse({
+            targetId: 'fs-0abc123def456',
+            ontapPath: 'api/svm/peers',
+            body: ontapPage([{ name: 'peer-1', state: 'peered', svm: { name: 'svm_oracle_prod', uuid: 'svm-uuid-1' } }])
+        });
+
+        const result = await fetchDirectOntapCrrData('acct-1', {
+            ...BASE_INSTANCE_RECORD,
+            svmOntapName: ['svm_oracle_prod', 'svm_oracle_standby']
+        });
+
+        expect(JSON.parse(result.vserverPeerDetailsJson)).toHaveLength(1);
     });
 });
 
