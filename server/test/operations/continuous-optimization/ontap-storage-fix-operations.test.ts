@@ -7,6 +7,7 @@ import { RESOURCESTYPE } from '../../../src/utils/consts';
 import * as utilsLib from '../../../src/utils/utils';
 import {
     getCapturedProxyGetUris,
+    getCapturedProxyPatchBodies,
     getCapturedProxyPatchUris,
     registerProxyGetResponse,
     registerProxyPatchResponse,
@@ -69,7 +70,8 @@ describe('applyOntapStorageFix', () => {
             svmName: 'svm1',
             configurationId: OptimizeStorageConfigs.THIN_PROVISIONING,
             resourceIds: [volumeUuid],
-            resourceType: RESOURCESTYPE.MSSQL
+            resourceType: RESOURCESTYPE.MSSQL,
+            useRest: true
         });
 
         expect(results).toEqual([{ resourceId: volumeUuid, success: true }]);
@@ -127,7 +129,8 @@ describe('applyOntapStorageFix', () => {
                 svmName: 'svm1',
                 configurationId: OptimizeStorageConfigs.FRACTIONAL_RESERVE,
                 resourceIds: [volumeUuid],
-                resourceType: RESOURCESTYPE.MSSQL
+                resourceType: RESOURCESTYPE.MSSQL,
+                useRest: true
             });
 
             expect(results).toEqual([{ resourceId: volumeUuid, success: true }]);
@@ -135,6 +138,78 @@ describe('applyOntapStorageFix', () => {
             expect(patchUri).toBeDefined();
             const decodedPatchUri = decodeURIComponent(patchUri as string);
             expect(decodedPatchUri).toContain(`uuid=${volumeUuid}`);
+        });
+    });
+
+    describe('snapshot policy and tiering fixes', () => {
+        const REST_PATH = 'api/storage/volumes';
+        const CLI_PATH = 'api/private/cli/volume';
+
+        it.each([
+            {
+                configurationId: OptimizeStorageConfigs.SNAPSHOT_POLICY,
+                value: undefined,
+                expectedBody: { snapshot_policy: { name: 'none' } }
+            },
+            {
+                configurationId: OptimizeStorageConfigs.TIERING_POLICY,
+                value: 'snapshot-only',
+                expectedBody: { tiering: { policy: 'snapshot_only' } }
+            },
+            {
+                configurationId: OptimizeStorageConfigs.TIERING_MINIMUM_COOLING_DAYS,
+                value: '7',
+                expectedBody: { tiering: { policy: 'auto', min_cooling_days: 7 } }
+            }
+        ])('should PATCH $configurationId by uuid via REST when useRest is set', async testCase => {
+            const { configurationId, value, expectedBody } = testCase;
+            const volumeUuid = 'mssql-vol-uuid';
+
+            mockManagementEndpoint();
+            registerProxyPatchResponse({ targetId: FIRST_FSX_ID, ontapPath: REST_PATH, body: { num_records: 1 } });
+
+            const results = await applyOntapStorageFix({
+                accountId: ACCOUNT_ID,
+                credentialsId: CREDENTIALS_ID,
+                fsxId: FIRST_FSX_ID,
+                region: DEFAULT_AWS_REGION,
+                svmName: 'svm1',
+                configurationId,
+                resourceIds: [volumeUuid],
+                value,
+                useRest: true
+            });
+
+            expect(results).toEqual([{ resourceId: volumeUuid, success: true }]);
+            const patchUri = getCapturedProxyPatchUris().find(uri => uri.includes(REST_PATH));
+            expect(patchUri).toBeDefined();
+            expect(decodeURIComponent(patchUri as string)).toContain(`uuid=${volumeUuid}`);
+            expect(getCapturedProxyPatchBodies()).toContainEqual(expectedBody);
+        });
+
+        it('should keep the private-CLI volume-name path when useRest is not set', async () => {
+            const volumeName = 'oracle_tiering_vol';
+
+            mockManagementEndpoint();
+            registerProxyPatchResponse({ targetId: FIRST_FSX_ID, ontapPath: CLI_PATH, body: { num_records: 1 } });
+
+            const results = await applyOntapStorageFix({
+                accountId: ACCOUNT_ID,
+                credentialsId: CREDENTIALS_ID,
+                fsxId: FIRST_FSX_ID,
+                region: DEFAULT_AWS_REGION,
+                svmName: 'svm1',
+                configurationId: OptimizeStorageConfigs.TIERING_POLICY,
+                resourceIds: [volumeName],
+                value: 'none',
+                resourceType: RESOURCESTYPE.ORACLE
+            });
+
+            expect(results).toEqual([{ resourceId: volumeName, success: true }]);
+            const patchUri = getCapturedProxyPatchUris().find(uri => uri.includes(CLI_PATH));
+            expect(patchUri).toBeDefined();
+            expect(decodeURIComponent(patchUri as string)).toContain(`volume=${volumeName}`);
+            expect(getCapturedProxyPatchUris().some(uri => uri.includes(REST_PATH))).toBe(false);
         });
     });
 

@@ -1,5 +1,4 @@
 import createError from 'http-errors';
-import { flatten, map } from 'lodash-es';
 import throat from 'throat';
 import {
     buildOntapProxyBase,
@@ -31,18 +30,16 @@ const CONFIG_KEY_BY_ID: Record<string, string> = Object.fromEntries(
     Object.entries(OptimizeStorageConfigs).map(([key, value]) => [value, key])
 );
 
-const REST_FIX_CONFIG_KEYS = new Set([
+const REST_FIX_VOLUME_UUID_CONFIG_KEYS = new Set([
     'THIN_PROVISIONING',
     'FRACTIONAL_RESERVE',
-    'SPACE_RESERVATION',
-    'SPACE_ALLOCATION'
+    'SNAPSHOT_POLICY',
+    'TIERING_MINIMUM_COOLING_DAYS',
+    'TIERING_POLICY',
+    'COMPRESSION'
 ]);
 
-// Oracle's per-volume `objectsToOptimize` are ONTAP volume *names* (see Oracle assessment code),
-// while THIN_PROVISIONING/FRACTIONAL_RESERVE's REST variant filters `api/storage/volumes` by
-// `uuid` (see buildOntapFixSearchParams). Keep Oracle on the name-based private-CLI path for these
-// two configs instead of silently matching zero records; MSSQL supplies UUIDs and keeps using REST.
-const REST_FIX_ORACLE_UNSUPPORTED_CONFIG_KEYS = new Set(['THIN_PROVISIONING', 'FRACTIONAL_RESERVE']);
+const REST_FIX_CONFIG_KEYS = new Set([...REST_FIX_VOLUME_UUID_CONFIG_KEYS, 'SPACE_RESERVATION', 'SPACE_ALLOCATION']);
 
 const EFFICIENCY_RETRY_CONFIG_KEYS = new Set(['COMPRESSION', 'DEDUPLICATION', 'COMPACTION']);
 const DEPRIORITIZED_EFFICIENCY_CODE = '6881332';
@@ -55,7 +52,16 @@ function isDeprioritizedEfficiencyError(err: unknown): boolean {
 
 const PENDING_EFFICIENCY_OPERATION_SIGNATURE = 'operation is currently pending';
 const PENDING_OPERATION_MAX_ATTEMPTS = 3;
-const PENDING_OPERATION_RETRY_INTERVAL_MS = 10_000; // matches ONTAP_JOB_POLL_DEFAULT_INTERVAL_MS's cadence in ontap-gateway.ts
+const PENDING_OPERATION_RETRY_INTERVAL_MS = 10_000;
+
+const ORACLE_COMBINED_FIX_VALUES: Record<string, string> = {
+    [OptimizeStorageConfigs.COMPRESSION]: 'none',
+    [OptimizeStorageConfigs.DEDUPLICATION]: 'none',
+    [OptimizeStorageConfigs.COMPACTION]: 'none',
+    [OptimizeStorageConfigs.TIERING_POLICY]: 'none'
+};
+
+// matches ONTAP_JOB_POLL_DEFAULT_INTERVAL_MS's cadence in ontap-gateway.ts
 
 /**
  * Retries `sendPatch` a bounded number of times when ONTAP reports the target volume has a
@@ -104,6 +110,7 @@ interface OntapStorageFixParams {
     resourceType?: RESOURCESTYPE;
     workload?: string;
     isSimulated?: boolean;
+    useRest?: boolean;
 }
 
 function populateFixResultMetadata(
@@ -146,7 +153,7 @@ function buildOntapFixSearchParams(
     usesRestFix: boolean
 ): Record<string, string | number | boolean> {
     if (usesRestFix) {
-        if (['THIN_PROVISIONING', 'FRACTIONAL_RESERVE'].includes(configKey)) {
+        if (REST_FIX_VOLUME_UUID_CONFIG_KEYS.has(configKey)) {
             return { uuid: resourceIds.join('|') };
         }
         return { name: resourceIds.join('|') };
@@ -161,7 +168,24 @@ function buildOntapFixSearchParams(
         return { vserver: svmName };
     }
     const queryParamKey = QUERY_PARAMS[type as keyof typeof QUERY_PARAMS] ?? type;
-    return { vserver: svmName, [queryParamKey]: resourceIds.join(',') };
+    return { vserver: svmName, [queryParamKey]: resourceIds.join('|') };
+}
+
+function resolveCombinedFixValue(
+    configurationId: string,
+    childConfigurationId: string,
+    workload: string | undefined,
+    fallbackValue: string
+): string | undefined {
+    if (workload === 'oracle') {
+        return ORACLE_COMBINED_FIX_VALUES[childConfigurationId];
+    }
+    if (workload === 'mssql') {
+        const { components = [] } = MSSQL_GOLDEN_CONFIG.find(({ id }) => id === configurationId) ?? {};
+        const { value } = components.find(({ name, parameter }) => (name ?? parameter) === childConfigurationId) ?? {};
+        return value === undefined ? fallbackValue : String(value);
+    }
+    return fallbackValue;
 }
 
 async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<FixResourceResult[]> {
@@ -174,9 +198,9 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<FixR
         configurationId,
         resourceIds,
         value = '',
-        resourceType = RESOURCESTYPE.MSSQL,
         workload,
-        isSimulated
+        isSimulated,
+        useRest = false
     } = params;
     const normalizedFsxId = fsxId.split(',')[0].trim();
 
@@ -191,28 +215,32 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<FixR
 
     if (isSimulated) {
         return populateFixResultMetadata(
-            map(resourceIds, id => ({ resourceId: id, success: true })),
+            resourceIds.map(id => ({ resourceId: id, success: true })),
             configurationId,
             workload as string
         );
     }
 
-    const configs = isCombinedOptimizeConfig(configurationId)
-        ? COMBINED_OPTIMIZE_DESCRIPTORS[configurationId].components
-              .map(({ configKey, source }) => ({
+    const configs = (
+        isCombinedOptimizeConfig(configurationId)
+            ? COMBINED_OPTIMIZE_DESCRIPTORS[configurationId].components.map(({ configKey, source }) => ({
                   configurationId: configKey,
-                  resourceIds: resourceIds.filter(id => LUN_PATH_PATTERN.test(id) === (source === LUN))
+                  resourceIds: resourceIds.filter(id => LUN_PATH_PATTERN.test(id) === (source === LUN)),
+                  value: resolveCombinedFixValue(configurationId, configKey, workload, value)
               }))
-              .filter(({ resourceIds: ids }) => ids.length > 0)
-        : [{ configurationId, resourceIds }];
+            : [{ configurationId, resourceIds, value }]
+    ).filter(({ resourceIds: ids }) => ids.length > 0);
+    // Cooling days and tiering policy PATCH the same ONTAP field, so keep the sibling's policy.
+    const { value: tieringPolicyValue } =
+        configs.find(({ configurationId: cfgId }) => cfgId === OptimizeStorageConfigs.TIERING_POLICY) ?? {};
 
     const results = await Promise.all(
         configs.map(
-            throat(3, async ({ configurationId: cfgId, resourceIds: ids }) => {
+            throat(3, async ({ configurationId: cfgId, resourceIds: ids, value: configValue }) => {
                 const configKey = CONFIG_KEY_BY_ID[cfgId];
                 if (!configKey) {
                     logger.warn('Unsupported configurationId', { cfgId });
-                    return map(ids, id => ({
+                    return ids.map(id => ({
                         resourceId: id,
                         success: false,
                         failureReason: `Unsupported configurationId: ${cfgId}`
@@ -221,15 +249,20 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<FixR
 
                 let compliantResults: FixResourceResult[] = [];
                 let targetIds = ids;
-                if (EFFICIENCY_RETRY_CONFIG_KEYS.has(configKey) && value === 'none' && ids.length > 0) {
+                if (EFFICIENCY_RETRY_CONFIG_KEYS.has(configKey) && configValue === 'none' && ids.length > 0) {
                     const efficiencyBase = buildOntapProxyBase(accountId, normalizedFsxId, region);
+                    const filterQuery: Record<string, string> = useRest
+                        ? { uuid: ids.join('|'), fields: 'efficiency' }
+                        : { svm: svmName, name: ids.join('|'), fields: 'efficiency' };
                     const volumes = await collectAllOntapRecords<OntapVolumeRecord>(
                         efficiencyBase,
                         'api/storage/volumes',
-                        { svm: svmName, name: ids.join('|'), fields: 'efficiency' }
+                        filterQuery
                     );
                     const alreadyDisabled = new Set(
-                        volumes.filter(volume => volume.efficiency?.state === 'disabled').map(volume => volume.name)
+                        volumes
+                            .filter(volume => volume.efficiency?.state === 'disabled')
+                            .map(volume => (useRest ? volume.uuid : volume.name))
                     );
                     compliantResults = ids
                         .filter(id => alreadyDisabled.has(id))
@@ -246,22 +279,30 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<FixR
                     }
                 }
 
-                const usesRestFix =
-                    REST_FIX_CONFIG_KEYS.has(configKey) &&
-                    !(resourceType === RESOURCESTYPE.ORACLE && REST_FIX_ORACLE_UNSUPPORTED_CONFIG_KEYS.has(configKey));
-                const apiKey = usesRestFix ? `${configKey}_REST` : configKey;
+                const usesRestFix = useRest && REST_FIX_CONFIG_KEYS.has(configKey);
+                const apiKey =
+                    usesRestFix && !['COMPRESSION', 'DEDUPLICATION', 'COMPACTION'].includes(configKey)
+                        ? `${configKey}_REST`
+                        : configKey;
                 const apiFn = OptimizeStorageApiData[apiKey as keyof typeof OptimizeStorageApiData];
                 const { api, body, type } =
                     configKey === 'TIERING_MINIMUM_COOLING_DAYS'
                         ? (apiFn as (typeof OptimizeStorageApiData)['TIERING_MINIMUM_COOLING_DAYS'])(
-                              value || undefined,
-                              'auto'
+                              configValue || undefined,
+                              tieringPolicyValue ?? 'auto'
                           )
                         : configKey === 'TIERING_POLICY'
-                        ? (apiFn as (typeof OptimizeStorageApiData)['TIERING_POLICY'])(value || undefined, null)
-                        : apiFn(value || undefined);
+                        ? (apiFn as (typeof OptimizeStorageApiData)['TIERING_POLICY'])(configValue || undefined, null)
+                        : apiFn(configValue || undefined);
                 const path = `api${api}`;
-                const query = buildOntapFixSearchParams(type, svmName, targetIds, configKey, value, usesRestFix);
+                const query = buildOntapFixSearchParams(
+                    type,
+                    svmName,
+                    targetIds,
+                    configKey,
+                    configValue ?? '',
+                    usesRestFix
+                );
 
                 const sendPatch = () =>
                     retryOnPendingOperation(() =>
@@ -279,7 +320,7 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<FixR
 
                 try {
                     await sendPatch();
-                    return [...compliantResults, ...map(targetIds, id => ({ resourceId: id, success: true }))];
+                    return [...compliantResults, ...targetIds.map(id => ({ resourceId: id, success: true }))];
                 } catch (err) {
                     if (EFFICIENCY_RETRY_CONFIG_KEYS.has(configKey) && isDeprioritizedEfficiencyError(err)) {
                         logger.info('Detected deprioritized-volume efficiency error; attempting recovery', {
@@ -319,7 +360,7 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<FixR
                                 await sendPatch();
                                 return [
                                     ...compliantResults,
-                                    ...map(targetIds, id => ({ resourceId: id, success: true }))
+                                    ...targetIds.map(id => ({ resourceId: id, success: true }))
                                 ];
                             } catch (retryErr) {
                                 const failureReason = retryErr instanceof Error ? retryErr.message : String(retryErr);
@@ -332,7 +373,7 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<FixR
                                 });
                                 return [
                                     ...compliantResults,
-                                    ...map(targetIds, id => ({ resourceId: id, success: false, failureReason }))
+                                    ...targetIds.map(id => ({ resourceId: id, success: false, failureReason }))
                                 ];
                             }
                         }
@@ -349,14 +390,14 @@ async function applyOntapStorageFix(params: OntapStorageFixParams): Promise<FixR
                     });
                     return [
                         ...compliantResults,
-                        ...map(targetIds, id => ({ resourceId: id, success: false, failureReason }))
+                        ...targetIds.map(id => ({ resourceId: id, success: false, failureReason }))
                     ];
                 }
             })
         )
     );
 
-    return populateFixResultMetadata(flatten(results), configurationId, workload as string);
+    return populateFixResultMetadata(results.flat(), configurationId, workload as string);
 }
 
 export { applyOntapStorageFix };

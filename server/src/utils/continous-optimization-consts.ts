@@ -278,6 +278,11 @@ const OptimizeStorageApiData = {
         body: { snapshot_policy: 'none' },
         type: VOLUME
     }),
+    SNAPSHOT_POLICY_REST: () => ({
+        api: '/storage/volumes',
+        body: { snapshot_policy: { name: 'none' } },
+        type: VOLUME
+    }),
     SNAPSHOT_COPY_RESERVE: () => ({
         api: '/private/cli/volume',
         body: { 'percent-snapshot-space': '0' },
@@ -293,11 +298,31 @@ const OptimizeStorageApiData = {
         body: { 'tiering-policy': tieringPolicy || 'snapshot-only', 'tiering-minimum-cooling-days': value || '7' },
         type: VOLUME
     }),
+    TIERING_MINIMUM_COOLING_DAYS_REST: (value?: string, tieringPolicy?: string) => ({
+        api: '/storage/volumes',
+        body: {
+            tiering: {
+                policy: (tieringPolicy || 'snapshot_only').replaceAll('-', '_'),
+                min_cooling_days: Number(value) || 7
+            }
+        },
+        type: VOLUME
+    }),
     TIERING_POLICY: (value?: string, tieringMinCoolingDays?: string | null) => ({
         api: '/private/cli/volume',
         body: {
             'tiering-policy': value || 'snapshot-only',
             ...(tieringMinCoolingDays !== null && { 'tiering-minimum-cooling-days': tieringMinCoolingDays || '7' })
+        },
+        type: VOLUME
+    }),
+    TIERING_POLICY_REST: (value?: string, tieringMinCoolingDays?: string | null) => ({
+        api: '/storage/volumes',
+        body: {
+            tiering: {
+                policy: (value || 'snapshot_only').replaceAll('-', '_'),
+                ...(tieringMinCoolingDays !== null && { min_cooling_days: Number(tieringMinCoolingDays) || 7 })
+            }
         },
         type: VOLUME
     }),

@@ -44,26 +44,45 @@ const FSX_VOLUME_ID_PREFIX = 'fsvol-';
 function mergeConfigurations(configs: WadConfigurationEntry[]): WadConfigurationEntry[] {
     const merged = new Map<string, { entry: WadConfigurationEntry; resourceKeys: Set<string> }>();
 
-    for (const entry of configs) {
-        const entryKey = `${entry.parentResource.accountId}:${entry.parentResource.credentialsIds.join(',')}:${
-            entry.parentResource.region
-        }:${entry.parentResource.id}:${entry.configurationId}`;
+    for (const { parentResource, configurationId, resources } of configs) {
+        const { accountId, credentialsIds, region, id } = parentResource;
+        const entryKey = `${accountId}:${credentialsIds.join(',')}:${region}:${id}:${configurationId}`;
+        const group = merged.get(entryKey) ?? {
+            entry: { parentResource, configurationId, resources: [] },
+            resourceKeys: new Set<string>()
+        };
+        merged.set(entryKey, group);
 
-        if (!merged.has(entryKey)) {
-            merged.set(entryKey, { entry: { ...entry, resources: [] }, resourceKeys: new Set() });
-        }
-        const { entry: mergedEntry, resourceKeys } = merged.get(entryKey)!;
-
-        for (const resourceEntry of entry.resources) {
-            const resourceKey = `${resourceEntry.resource.metadata?.workload ?? ''}:${resourceEntry.resource.id}`;
-            if (!resourceKeys.has(resourceKey)) {
-                resourceKeys.add(resourceKey);
-                mergedEntry.resources.push(resourceEntry);
+        for (const resourceEntry of resources) {
+            const {
+                resource: { id: resourceId, metadata }
+            } = resourceEntry;
+            const resourceKey = `${metadata?.workload ?? ''}:${resourceId}`;
+            if (!group.resourceKeys.has(resourceKey)) {
+                group.resourceKeys.add(resourceKey);
+                group.entry.resources.push(resourceEntry);
             }
         }
     }
 
-    return [...merged.values()].map(({ entry }) => entry);
+    return [...merged.values()].map(({ entry }) => {
+        const { configurationId, resources } = entry;
+        if (configurationId !== `${WAD_SERVICE_ID}-headroom`) {
+            return entry;
+        }
+        const mssqlIds = new Set(
+            resources.flatMap(({ resource: { id: resourceId, metadata } }) =>
+                metadata?.workload === 'mssql' ? [resourceId] : []
+            )
+        );
+        return {
+            ...entry,
+            resources: resources.filter(
+                ({ resource: { id: resourceId, metadata } }) =>
+                    metadata?.workload !== 'oracle' || !mssqlIds.has(resourceId)
+            )
+        };
+    });
 }
 
 async function resolveFixResourceIds(
@@ -392,7 +411,8 @@ async function handleFixRequest(req: FixRequestMessage): Promise<void> {
                       resourceIds: [...resourceIdByOntapId.keys()],
                       value: metadata?.value as string | undefined,
                       workload: metadata?.workload as string,
-                      isSimulated
+                      isSimulated,
+                      useRest: true
                   })
                 : [];
         const resourceResults: FixResourceResult[] = [
