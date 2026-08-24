@@ -162,6 +162,18 @@ function computeHeadroomData(aggregates: OntapAggregateRecord[]) {
     };
 }
 
+async function collectOntapHeadroomData(
+    accountId: string,
+    fileSystemId: string,
+    region: string
+): Promise<AggregateHeadroomData | undefined> {
+    const base = buildOntapProxyBase(accountId, fileSystemId, region);
+    const aggregates = await collectAllOntapRecords<OntapAggregateRecord>(base, 'api/storage/aggregates', {
+        fields: AGGREGATE_FIELDS
+    });
+    return computeHeadroomData(aggregates);
+}
+
 function buildWadSnapcenterData(
     ec2: Ec2WithStorage,
     fileSystemId: string,
@@ -233,7 +245,7 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
 
     const base = buildOntapProxyBase(accountId, fileSystemId, region);
 
-    const [volumesRes, lunsRes, privateCliRes, footprintRes, aggregatesRes, snapshotsRes] = await Promise.allSettled([
+    const [volumesRes, lunsRes, privateCliRes, footprintRes, headroomRes, snapshotsRes] = await Promise.allSettled([
         volumeUuids.length === 0
             ? Promise.resolve<OntapVolumeRecord[]>([])
             : collectOntapRecordsBatched<OntapVolumeRecord>(base, 'api/storage/volumes', 'uuid', volumeUuids, {
@@ -264,7 +276,7 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
                   volumeNames,
                   { fields: FOOTPRINT_FIELDS }
               ),
-        collectAllOntapRecords<OntapAggregateRecord>(base, 'api/storage/aggregates', { fields: AGGREGATE_FIELDS }),
+        collectOntapHeadroomData(accountId, fileSystemId, region),
         collectVolumeSnapshots(base, volumeUuids)
     ]);
 
@@ -280,7 +292,14 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
         'volume footprint',
         fileSystemId
     );
-    const { data: aggregates, error: aggregatesError } = unwrapOntapSettled(aggregatesRes, 'aggregates', fileSystemId);
+    let headroomData: AggregateHeadroomData | undefined;
+    let aggregatesError: string | undefined;
+    if (headroomRes.status === 'fulfilled') {
+        headroomData = headroomRes.value;
+    } else {
+        aggregatesError = headroomRes.reason instanceof Error ? headroomRes.reason.message : String(headroomRes.reason);
+        logger.warn('Failed to fetch ONTAP aggregates', { fileSystemId, err: headroomRes.reason });
+    }
     const { data: snapcenterProtectedVolumeUuids, error: snapshotsError } = unwrapOntapSettled(
         snapshotsRes,
         'SnapCenter snapshots',
@@ -288,7 +307,7 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
     );
 
     if (!aggregatesError) {
-        logger.debug('FSx: fetched aggregates', { fileSystemId, aggregateCount: aggregates.length });
+        logger.debug('FSx: fetched aggregates', { fileSystemId, aggregateCount: headroomData?.aggregateCount ?? 0 });
     }
 
     return {
@@ -303,7 +322,7 @@ async function fetchOntapInventory(accountId: string, query: FsxOntapQuery): Pro
             footprint.map(f => [f.volume, f.volume_blocks_footprint_bin0_percent])
         ),
         snapcenterProtectedVolumeUuids: new Set(snapcenterProtectedVolumeUuids),
-        headroomData: computeHeadroomData(aggregates),
+        headroomData,
         errors: {
             volumes: volumesError,
             luns: lunsError,
@@ -555,4 +574,10 @@ async function collectOntapAssessmentData(
     return results;
 }
 
-export { collectOntapAssessmentData, AggregateHeadroomData, FsxStorageCollectionResult, WadSnapcenterData };
+export {
+    collectOntapAssessmentData,
+    collectOntapHeadroomData,
+    AggregateHeadroomData,
+    FsxStorageCollectionResult,
+    WadSnapcenterData
+};
