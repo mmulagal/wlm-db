@@ -29,7 +29,7 @@ import { INSTANCE_GUID, SERVER_DETAILS, ENTERPRISE_CHECK_QUERY } from '../../../
 /**
  * Version of the offline assessment script.
  */
-const OFFLINE_ASSESSMENT_SCRIPT_VERSION = '1.2.0';
+const OFFLINE_ASSESSMENT_SCRIPT_VERSION = '1.3.0';
 
 const MSSQL_ONE_TIME_WAD = `
 #=====================================================================================
@@ -56,11 +56,12 @@ const MSSQL_ONE_TIME_WAD = `
     The assessment results are saved to a JSON file. By default, files are saved
     in the current working directory. You can specify a custom output path using
     the -OutputPath parameter.
-.PARAMETER StorageManagementAddress
-    The storage system identifier that uniquely identifies the Amazon FSx for NetApp
-    ONTAP file system to be assessed. This parameter is required and must be provided
-    in one of three formats:
-    
+.PARAMETER StorageManagementAddresses
+    One or more storage system identifiers for the Amazon FSx for NetApp ONTAP file
+    systems to be assessed. When a SQL Server instance has volumes spread across more
+    than one FSx file system, provide all addresses as a comma-separated list.
+    This parameter is required and each value must be in one of three formats:
+
     Option 1 - FSx Management FQDN (Fully Qualified Domain Name):
     - Format: Valid domain name (e.g., management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com)
     - Example: management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com
@@ -76,7 +77,7 @@ const MSSQL_ONE_TIME_WAD = `
       and that network connectivity is available on the management network
     - When a management FQDN is provided, the script will use it directly to connect
       to the FSx ONTAP storage system
-    
+
     Option 2 - FSx Management IP Address:
     - Format: Valid IPv4 address (e.g., 10.0.1.100)
     - Example: 192.168.1.50
@@ -92,7 +93,7 @@ const MSSQL_ONE_TIME_WAD = `
       and that network connectivity is available on the management network
     - When a management IP is provided, the script will use it directly to connect
       to the FSx ONTAP storage system
-    
+
     Option 3 - FSx File System ID:
     - Format: fs-xxxxxxxxxxxxxxxxx (where x is alphanumeric)
     - Example: fs-0123456789abcdef0
@@ -103,12 +104,12 @@ const MSSQL_ONE_TIME_WAD = `
       management endpoint using the format: management.<fsx-id>.fsx.<region>.amazonaws.com
     - If the management domain cannot be resolved, the script will fall back to
       retrieving the management IP address from AWS FSx API
-    
+
     The script automatically detects which format you've provided by checking if
     the value matches a valid domain name pattern (FQDN), matches an IPv4 address pattern
-    (management IP), or starts with "fs-" (FSx ID). The StorageManagementAddress
-    is used to authenticate and connect to the FSx ONTAP storage system to retrieve volume
-    details, LUN information, storage configuration, and aggregate capacity data during the assessment.
+    (management IP), or starts with "fs-" (FSx ID). Credentials are resolved
+    independently for each address from AWS Secrets Manager, Windows Credential Manager,
+    or an interactive prompt.
     
 .PARAMETER SqlInstanceName
     The name of the SQL Server instance to assess. This parameter is required and
@@ -149,34 +150,54 @@ const MSSQL_ONE_TIME_WAD = `
     (e.g., permission denied), files will be created in the current working
     directory instead.
 .EXAMPLE
-    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com -SqlInstanceName MSSQLSERVER
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com -SqlInstanceName MSSQLSERVER
     Runs assessment using ONTAP management FQDN for the default SQL instance.
 .EXAMPLE
-    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress 10.0.1.100 -SqlInstanceName SQLInstance1
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses 10.0.1.100 -SqlInstanceName SQLInstance1
     Runs assessment using ONTAP management IP for a named SQL instance.
 .EXAMPLE
-    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER
     Runs assessment using FSx for ONTAP file system ID for the default SQL instance.
 .EXAMPLE
-    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER -OutputPath "C:\\AssessmentResults"
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER -OutputPath "C:\\AssessmentResults"
     Runs assessment and saves JSON files to the specified output directory.
+.EXAMPLE
+    .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses "fs-0123456789abcdef0,fs-0fedcba9876543210" -SqlInstanceName MSSQLSERVER
+    Runs assessment for a SQL instance whose volumes span two FSx file systems.
+    Credentials are resolved separately for each file system address.
 .NOTES
     Version: ${OFFLINE_ASSESSMENT_SCRIPT_VERSION}
     Requires: PowerShell 5.1 or later, SQL Server sqlcmd utility
 #>
 
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$StorageManagementAddress,
+    [Parameter(Mandatory = $false)]
+    [string]$StorageManagementAddresses,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $false)]
     [string]$SqlInstanceName,
 
     [Parameter(Mandatory = $false)]
     [string]$OutputPath = $null
 )
 
-$StorageManagementAddress = $StorageManagementAddress.Trim()
+if ([string]::IsNullOrWhiteSpace($StorageManagementAddresses)) {
+    $StorageManagementAddresses = Read-Host -Prompt "StorageManagementAddresses (Enter comma-separated values for multiple filesystems)"
+}
+if ([string]::IsNullOrWhiteSpace($SqlInstanceName)) {
+    $SqlInstanceName = Read-Host -Prompt "SqlInstanceName"
+}
+
+# Parse comma-separated addresses; preserve backward compat via $StorageManagementAddress = primary
+$AddressList = @(($StorageManagementAddresses -split ',') |
+    ForEach-Object { $_.Trim() } |
+    Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+    Select-Object -Unique)
+if ($AddressList.Count -eq 0) {
+    throw "No valid StorageManagementAddresses provided. Please supply at least one FSx ID, management IP, or management FQDN."
+}
+$StorageManagementAddress = $AddressList[0]  # primary; used for metadata backward compat
+
 $SqlInstanceName = $SqlInstanceName.Trim()
 if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
     $OutputPath = $OutputPath.Trim()
@@ -185,8 +206,7 @@ if (-not [string]::IsNullOrWhiteSpace($OutputPath)) {
 # Script Version
 $ScriptVersion = "${OFFLINE_ASSESSMENT_SCRIPT_VERSION}"
 
-# Determine if StorageManagementAddress is an FSx ID, Management IP, or FQDN
-# FSx IDs start with "fs-" followed by alphanumeric characters
+# Parse primary address type for backward-compat globals (FSx ID / IP / FQDN)
 $FSxID = $null
 $ManagementIP = $null
 $ManagementFQDN = $null
@@ -237,9 +257,9 @@ if ($StorageManagementAddress -match '^fs-[a-zA-Z0-9]+$') {
             $ManagementFQDN = $StorageManagementAddress
             Write-Log "StorageManagementAddress detected as Management FQDN: $ManagementFQDN"
         } else {
-            $errorMessage = "Invalid StorageManagementAddress format: '$StorageManagementAddress'. StorageManagementAddress must be either a valid FQDN (Fully Qualified Domain Name), a valid IPv4 Management IP address, or an FSx ID (format: fs-xxxxxxxxxxxxxxxxx)."
+            $errorMessage = "Invalid StorageManagementAddresses entry: '$StorageManagementAddress'. Each address must be a valid FQDN, a valid IPv4 management IP, or an FSx ID (format: fs-xxxxxxxxxxxxxxxxx)."
             Write-Log -Level "ERROR" -Message $errorMessage
-            Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress <FQDN, ManagementIP, or FSxID> -SqlInstanceName <InstanceName>"
+            Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses <FQDN, ManagementIP, or FSxID[,...]> -SqlInstanceName <InstanceName>"
             throw $errorMessage
         }
     }
@@ -248,7 +268,7 @@ if ($StorageManagementAddress -match '^fs-[a-zA-Z0-9]+$') {
 # Validate SqlInstanceName parameter
 if ([string]::IsNullOrWhiteSpace($SqlInstanceName)) {
     Write-Log -Level "ERROR" -Message "No SQL Server instance name provided. Please specify an instance name using the -SqlInstanceName parameter."
-    Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress <FQDN, ManagementIP, or FSxID> -SqlInstanceName <InstanceName>"
+    Write-Log -Level "ERROR" -Message "Usage: .\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses <FQDN, ManagementIP, or FSxID[,...]> -SqlInstanceName <InstanceName>"
     throw "No SQL Server instance name provided. Please specify an instance name using the -SqlInstanceName parameter."
 }
 
@@ -364,14 +384,19 @@ Function Get-CredentialInteractive {
         [Parameter(Mandatory = $false)]
         [string]$UsernamePrompt = "Enter username",
         [Parameter(Mandatory = $false)]
-        [bool]$AllowEmptyUsername = $false
+        [bool]$AllowEmptyUsername = $false,
+        [Parameter(Mandatory = $false)]
+        [string]$CredentialTarget = $null
     )
     
     Write-Log "Prompting user for $CredentialType credentials..."
     
     $promptText = $UsernamePrompt
+    if (-not [string]::IsNullOrEmpty($CredentialTarget)) {
+        $promptText = "$promptText for '$CredentialTarget'"
+    }
     if (-not [string]::IsNullOrEmpty($DefaultUsername)) {
-        $promptText = "$UsernamePrompt (default: $DefaultUsername)"
+        $promptText = "$promptText (default: $DefaultUsername)"
     }
     
     $username = Read-Host -Prompt $promptText
@@ -384,7 +409,11 @@ Function Get-CredentialInteractive {
         }
     }
     
-    $password = Read-Host -Prompt "Enter $CredentialType password for user '$username'" -AsSecureString
+    $passwordPrompt = "Enter $CredentialType password for user '$username'"
+    if (-not [string]::IsNullOrEmpty($CredentialTarget)) {
+        $passwordPrompt = "$passwordPrompt on '$CredentialTarget'"
+    }
+    $password = Read-Host -Prompt $passwordPrompt -AsSecureString
     $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password)
     $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
     [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
@@ -633,7 +662,7 @@ Function Get-OntapCredentials {
     }
     
     Write-Log -Level "DEBUG" -Message "Falling back to interactive credential prompt for ONTAP"
-    $credentials = Get-CredentialInteractive -CredentialType "ONTAP" -DefaultUsername "fsxadmin" -UsernamePrompt "Enter ONTAP admin username" -AllowEmptyUsername $false
+    $credentials = Get-CredentialInteractive -CredentialType "ONTAP" -DefaultUsername "fsxadmin" -UsernamePrompt "Enter ONTAP admin username" -AllowEmptyUsername $false -CredentialTarget $StorageManagementAddress
     return $credentials
 }
 
@@ -867,74 +896,141 @@ try {
     Write-Log -Level "WARNING" -Message "Could not enumerate SQL Server instances: $($_.Exception.Message)"
 }
 
-Write-Log "Resolving ONTAP storage credentials..."
-$ontapCreds = Get-OntapCredentials -StorageManagementAddress $StorageManagementAddress -Region $vmRegion
+# ── Connect-OntapFilesystem ──────────────────────────────────────────────────
+# Resolves credentials and management endpoint for one storage address,
+# connects to ONTAP, resolves the FSx ID from the cluster name, and returns
+# the context needed to call Invoke-ONTAPRequest for that filesystem.
+Function Connect-OntapFilesystem {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Address,
+        [Parameter(Mandatory = $false)]
+        [string]$Region = $null
+    )
 
-if (-not $ontapCreds) {
-    $errorMessage = "Failed to obtain ONTAP storage credentials. The script attempted to retrieve credentials from AWS Secrets Manager, Windows Credential Manager, and interactive prompts. Please ensure credentials are available in one of these sources or provide them when prompted."
-    Write-Log -Level "ERROR" -Message $errorMessage
-    throw $errorMessage
-}
+    Write-Log "Connecting to FSx ONTAP at: $Address"
 
-$OntapUsername = $ontapCreds.Username
-$OntapPassword = $ontapCreds.Password
-Write-Log "ONTAP credentials obtained from: $($ontapCreds.Source)"
+    # Detect address type
+    $localFSxID = $null
+    $localIP    = $null
+    $localFQDN  = $null
 
-# Determine ONTAP management endpoint
-$OntapHostName = $null
-$OntapIPUsed = $false
-
-if (-not [string]::IsNullOrEmpty($ManagementIP)) {
-    $OntapHostName = $ManagementIP
-    $OntapIPUsed = $true
-    Write-Log "Using provided management IP: $OntapHostName"
-} elseif (-not [string]::IsNullOrEmpty($ManagementFQDN)) {
-    $OntapHostName = $ManagementFQDN
-    Write-Log "Using provided management FQDN: $OntapHostName"
-} elseif (-not [string]::IsNullOrEmpty($FSxID)) {
-    if ([string]::IsNullOrEmpty($vmRegion)) {
-        throw "AWS region is required when using FSx ID. Could not retrieve region from EC2 instance metadata. Either run on an EC2 instance or provide the Management IP instead of FSx ID."
-    }
-    $OntapHostName = "management.$FSxID.fsx.$vmRegion.amazonaws.com"
-    Write-Log -Level "DEBUG" -Message "Constructed FSx management domain: $OntapHostName"
-    try {
-        $OntapHTTP_Request = [System.Net.WebRequest]::Create("https://$OntapHostName")
-        $OntapHTTP_Response = $OntapHTTP_Request.GetResponse()
-        $OntapHTTP_Response.Close()
-        Write-Log "Using FSx management domain: $OntapHostName"
-        Write-Log -Level "DEBUG" -Message "FSx management domain connectivity test successful"
-    } catch {
-        Write-Log -Level "DEBUG" -Message "FSx management domain connectivity test failed: $($_.Exception.Message)"
-        if ($_.Exception.Message -like "*remote server returned an error*") {
-            Write-Log "ONTAP management endpoint validated"
-            Write-Log -Level "DEBUG" -Message "Remote server error indicates endpoint is reachable (expected for HTTPS without valid cert)"
+    if ($Address -match '^fs-[a-zA-Z0-9]+$') {
+        $localFSxID = $Address
+    } else {
+        $ip = $null
+        if ([System.Net.IPAddress]::TryParse($Address, [ref]$ip) -and
+            $ip.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork) {
+            $localIP = $Address
+        } elseif ($Address -match '^[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?(\\.[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?)+$') {
+            $localFQDN = $Address
         } else {
-            Write-Log "FSx management domain not resolved. Switching to management IP."
-            Write-Log -Level "DEBUG" -Message "Calling Get-FSXFileSystem to retrieve management IP for FSxID: $FSxID"
-            $FileSystemDetails = Get-FSXFileSystem -FileSystemId $FSxID
-            $OntapHostName = $FileSystemDetails.ontapconfiguration.Endpoints.Management.IpAddresses
-            Write-Log -Level "DEBUG" -Message "Retrieved management IP addresses: $($OntapHostName | ConvertTo-Json)"
-            if ($OntapHostName -is [array]) {
-                $OntapHostName = $OntapHostName[0]
-                Write-Log -Level "DEBUG" -Message "Multiple IPs found, using first: $OntapHostName"
-            }
-            $OntapIPUsed = $true
-            Write-Log -Level "DEBUG" -Message "Switched to management IP: $OntapHostName"
+            throw "Invalid StorageManagementAddresses entry: '$Address'. Each address must be a valid FQDN, a valid IPv4 management IP, or an FSx ID (format: fs-xxxxxxxxxxxxxxxxx)."
         }
     }
+
+    # Resolve credentials for this address
+    $creds = Get-OntapCredentials -StorageManagementAddress $Address -Region $Region
+    if (-not $creds) {
+        throw "Failed to obtain ONTAP credentials for '$Address'. Ensure credentials are available in AWS Secrets Manager, Windows Credential Manager, or provide them interactively."
+    }
+    Write-Log "ONTAP credentials for '$Address' obtained from: $($creds.Source)"
+
+    # Resolve management hostname
+    $hostName = $null
+    if (-not [string]::IsNullOrEmpty($localIP)) {
+        $hostName = $localIP
+    } elseif (-not [string]::IsNullOrEmpty($localFQDN)) {
+        $hostName = $localFQDN
+    } elseif (-not [string]::IsNullOrEmpty($localFSxID)) {
+        if ([string]::IsNullOrEmpty($Region)) {
+            throw "AWS region is required when using FSx ID '$localFSxID'. Run on an EC2 instance or provide the management IP instead."
+        }
+        $hostName = "management.$localFSxID.fsx.$Region.amazonaws.com"
+        try {
+            $req = [System.Net.WebRequest]::Create("https://$hostName")
+            $req.GetResponse().Close()
+        } catch {
+            if ($_.Exception.Message -notlike "*remote server returned an error*") {
+                Write-Log "FSx management domain '$hostName' not resolved. Switching to management IP."
+                $details = Get-FSXFileSystem -FileSystemId $localFSxID
+                $hostName = $details.ontapconfiguration.Endpoints.Management.IpAddresses
+                if ($hostName -is [array]) { $hostName = $hostName[0] }
+            }
+        }
+    }
+
+    if ([string]::IsNullOrEmpty($hostName)) {
+        throw "Could not determine ONTAP management endpoint for '$Address'."
+    }
+
+    $credBase64 = [System.Convert]::ToBase64String(
+        [System.Text.Encoding]::ASCII.GetBytes($creds.Username + ':' + $creds.Password))
+
+    # Resolve FSx ID from cluster name (FsxId<hex> -> fs-<hex>)
+    $resolvedFSxID = $localFSxID
+    try {
+        $clusterReq = @{
+            ApiEndPoint            = "/cluster"
+            ApiQueryFields         = "fields=name"
+            FSxCredentialsInBase64 = $credBase64
+            FSxHostName            = $hostName
+        }
+        $clusterResp = Invoke-ONTAPRequest @clusterReq
+        if ($clusterResp -and $clusterResp.name -match '^FsxId([a-fA-F0-9]+)$') {
+            $resolvedFSxID = "fs-" + $Matches[1]
+            Write-Log "Resolved FSx ID for '$Address': $resolvedFSxID"
+        }
+    } catch {
+        # Windows PowerShell 5.1 has no null-conditional operator, so guard explicitly
+        $statusCode = if ($_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { $null }
+        if ($statusCode -eq 401) {
+            throw "Authentication failed (401) connecting to '$Address'. Verify your ONTAP credentials."
+        }
+        Write-Log -Level "WARNING" -Message "Could not resolve FSx ID for '$Address': $($_.Exception.Message)"
+    }
+
+    return @{
+        Address                = $Address
+        FSxID                  = $resolvedFSxID
+        FSxHostName            = $hostName
+        FSxCredentialsInBase64 = $credBase64
+        CredentialSource       = $creds.Source
+    }
 }
 
-if ([string]::IsNullOrEmpty($OntapHostName)) {
-    $errorMessage = "Could not determine ONTAP management endpoint from StorageManagementAddress: '$StorageManagementAddress'. Please verify that the StorageManagementAddress is either a valid FQDN (Fully Qualified Domain Name), a valid IPv4 management IP address, or a valid FSx ID (format: fs-xxxxxxxxxxxxxxxxx)."
-    Write-Log -Level "ERROR" -Message $errorMessage
-    throw $errorMessage
-}
-
-$OntapCredentialsInBase64 = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($OntapUsername + ':' + $OntapPassword))
-
-$FSxCredentialsInBase64 = $OntapCredentialsInBase64
-$FSxHostName = $OntapHostName
+# Invoke-ONTAPRequest has to exist before the loop below runs, because Connect-OntapFilesystem
+# calls it to resolve each FSx ID. Its certificate prologue reads $FSxRegion.
 $FSxRegion = $vmRegion
+${invokeOntapRequestTemplate}
+
+# ── Connect to all requested FSx filesystems ─────────────────────────────────
+Write-Log "Resolving ONTAP connections for $($AddressList.Count) address(es)..."
+$visitedFileSystems     = @{}
+$script:FilesystemContexts = @()
+foreach ($addr in $AddressList) {
+    $ctx   = Connect-OntapFilesystem -Address $addr -Region $vmRegion
+    $fsKey = if ($ctx.FSxID) { $ctx.FSxID } else { $addr }
+    if ($visitedFileSystems.ContainsKey($fsKey)) {
+        Write-Log "Skipping duplicate filesystem '$fsKey' from address '$addr'"
+    } else {
+        $visitedFileSystems[$fsKey] = @{
+            FSxCredentialsInBase64 = $ctx.FSxCredentialsInBase64
+            FSxHostName            = $ctx.FSxHostName
+        }
+        $script:FilesystemContexts += $ctx
+    }
+}
+
+# Primary filesystem — sets backward-compat globals used by templates / headroom / MTU
+$primaryCtx              = $script:FilesystemContexts[0]
+$FSxID                   = $primaryCtx.FSxID
+$OntapHostName           = $primaryCtx.FSxHostName
+$OntapCredentialsInBase64 = $primaryCtx.FSxCredentialsInBase64
+$FSxCredentialsInBase64  = $OntapCredentialsInBase64
+$FSxHostName             = $OntapHostName
+$FSxRegion               = $vmRegion
+Write-Log "Primary FSx: $FSxID ($OntapHostName)"
 
 $FinalResponse = @{}
 $FinalResponse['metadata'] = @{
@@ -947,9 +1043,10 @@ $FinalResponse['metadata'] = @{
     virtualNetworkName = $virtualNetworkName
     region = $vmRegion
     storageEndpoint = $StorageManagementAddress
+    storageEndpoints = @($script:FilesystemContexts | ForEach-Object { if ($_.FSxID) { $_.FSxID } else { $_.Address } })
     fsxId = $FSxID
     ontapHostName = $OntapHostName
-    credentialSource = $ontapCreds.Source
+    credentialSource = $primaryCtx.CredentialSource
     hostname = $env:COMPUTERNAME
     numberOfDatabaseInstances = $numberOfDatabaseInstances
     assessmentTimestamp = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
@@ -963,44 +1060,9 @@ $FinalResponse['rawdata'] = @{
     instanceLevelDetails = @{}
 }
     
-${invokeOntapRequestTemplate}
-
-# ========================================
-# Validate and resolve FSx ID from Management IP via ONTAP /api/cluster
-# ========================================
-try {
-    $clusterResponse = Invoke-ONTAPRequest -ApiEndpoint "/cluster" -ApiQueryFields "fields=name"
-    if ($clusterResponse -and $clusterResponse.name) {
-        $clusterName = $clusterResponse.name
-        Write-Log "ONTAP cluster name: $clusterName"
-        # Cluster name format: FsxId0d5efc3057c4f12cb -> fs-0d5efc3057c4f12cb
-        if ($clusterName -match '^FsxId([a-fA-F0-9]+)$') {
-            $FSxID = "fs-" + $Matches[1]
-            Write-Log "Resolved FSx file system ID from cluster name: $FSxID"
-            $FinalResponse['metadata']['fsxId'] = $FSxID
-        } else {
-            Write-Log -Level "WARNING" -Message "Cluster name '$clusterName' does not match expected FsxId format"
-        }
-    } else {
-        Write-Log -Level "WARNING" -Message "Could not retrieve cluster name from ONTAP API"
-    }
-} catch {
-    $errorDetails = $_.Exception.Message
-    if ($_.Exception.Response) {
-        $statusCode = $_.Exception.Response.StatusCode.value__
-        if ($statusCode -eq 401) {
-            $errorDetails = "Failed to resolve FSx ID: Authentication failed (401 Unauthorized). Invalid ONTAP credentials. Please verify your ONTAP credentials are correct."
-        } elseif ($statusCode -eq 404) {
-            $errorDetails = "Failed to resolve FSx ID: Endpoint not found (404). The ONTAP management endpoint may be incorrect. Please verify the Management IP address: $ManagementIP"
-        } elseif ($statusCode -ge 500) {
-            $errorDetails = "Failed to resolve FSx ID: ONTAP server error ($statusCode). The storage system may be unavailable. Please verify the ONTAP storage system is operational."
-        } else {
-            $errorDetails = "Failed to resolve FSx ID: ONTAP API request failed with status code $statusCode. Error: $($_.Exception.Message)"
-        }
-    } 
-    Write-Log -Level "ERROR" -Message $errorDetails
-    throw $errorDetails
-}
+# FSx IDs were resolved inside Connect-OntapFilesystem for each address.
+# Update metadata with the primary FSx ID (already set via $FSxID above).
+$FinalResponse['metadata']['fsxId'] = $FSxID
 
 $outputFileName = "MSSQL_Assessment_v1_$($extractedInstanceName)_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
 
@@ -1024,6 +1086,7 @@ try {
     $svmOntapUuid = ''
     $instanceLevelFsxnIds = @{}
     $includeLogVolumes = $true
+    # $visitedFileSystems is already populated above from Connect-OntapFilesystem calls
 
     $sqlInstances = @($SqlInstanceName) | ForEach-Object {
         $serverInstanceName = $_
@@ -1052,7 +1115,6 @@ try {
         }
     }
 
-    $visitedFileSystems = @{}
     $instanceRespones = @{}
 
     $sqlInstances | ForEach-Object {
@@ -1370,19 +1432,52 @@ ${SERVER_DETAILS}
             $VolumeLunMapping = $LunResult.VolumeLunMapping
             Write-Log -Level "DEBUG" -Message "LUN resolution result: Found $($VolumeNames.Count) volume names, $($VolumeLunMapping.Count) volume-LUN mappings"
 
-            if (!($VolumeNames.count -gt 0)) {
+            $VolumeNameMapping = @{}
+            $ProcessedRecords = @{ records = @() }
+            if ($VolumeNames.count -gt 0) {
+                $VolumeResult = Get-VolumeIdFromName $VolumeNames $VolumeLunMapping $visitedFileSystems $instanceLevelFsxnId $serverInstanceName
+                $VolumeNameMapping = $VolumeResult.volumeNameMapping
+                $ProcessedRecords = Process-Records $VolumeResult.Response
+                Write-Log -Level "DEBUG" -Message "Volume details retrieved: $($VolumeResult.Response.Count) volumes, $($VolumeNameMapping.Count) name mappings"
+                Write-Log -Level "DEBUG" -Message "Processed records: $($ProcessedRecords.records.Count) volume records processed"
+            }
+
+            # Primary lookup can return no names when every LUN lives on another connected
+            # filesystem. Merge remaining filesystems before failing the instance.
+            foreach ($fsCtx in $script:FilesystemContexts) {
+                $secondaryFsxnId = if ($fsCtx.FSxID) { $fsCtx.FSxID } else { $fsCtx.Address }
+                if ($secondaryFsxnId -eq $instanceLevelFsxnId) { continue }
+
+                try {
+                    $secondaryLunResult = Get-LunFromSerialNumber $SerialNumbers $Result.VolumeSerialMapping $visitedFileSystems $secondaryFsxnId
+                    if (-not ($secondaryLunResult.LunNames.Count -gt 0)) { continue }
+
+                    $secondaryVolumeResult = Get-VolumeIdFromName $secondaryLunResult.LunNames $secondaryLunResult.VolumeLunMapping $visitedFileSystems $secondaryFsxnId $serverInstanceName
+                    $LunResult.LunDetails += $secondaryLunResult.LunDetails
+
+                    $knownVolumeUuids = @($ProcessedRecords.records | ForEach-Object { $_.uuid })
+                    foreach ($secondaryRecord in (Process-Records $secondaryVolumeResult.Response).records) {
+                        if ($knownVolumeUuids -notcontains $secondaryRecord.uuid) {
+                            $ProcessedRecords.records += $secondaryRecord
+                        }
+                    }
+
+                    foreach ($secondaryVolumeId in $secondaryVolumeResult.volumeNameMapping.Keys) {
+                        if (-not $VolumeNameMapping.ContainsKey($secondaryVolumeId)) {
+                            $VolumeNameMapping[$secondaryVolumeId] = $secondaryVolumeResult.volumeNameMapping[$secondaryVolumeId]
+                        }
+                    }
+                    Write-Log -Level "DEBUG" -Message "Merged filesystem '$secondaryFsxnId': $($secondaryLunResult.LunDetails.Count) LUNs, $($secondaryVolumeResult.volumeNameMapping.Count) name mappings"
+                } catch {
+                    Write-Log -Level "WARNING" -Message "Could not resolve volumes on filesystem '$secondaryFsxnId' for instance '$serverInstanceName': $($_.Exception.Message)"
+                }
+            }
+
+            if (-not ($VolumeNameMapping.Count -gt 0)) {
                 $errorMessage = "Failed to retrieve ONTAP LUN volume names associated with the Windows volumes for SQL Server instance '$serverInstanceName'. This may indicate that the volumes are not properly mapped to ONTAP LUNs, or there was an error communicating with the ONTAP storage system. Please verify the storage configuration and ONTAP connectivity."
                 Write-Log -Level "ERROR" -Message $errorMessage
                 throw $errorMessage
             }
-
-            $VolumeResult = Get-VolumeIdFromName $VolumeNames $VolumeLunMapping $visitedFileSystems $instanceLevelFsxnId $serverInstanceName
-            $Volumes = $VolumeResult.Response
-            $VolumeNameMapping = $VolumeResult.volumeNameMapping
-            Write-Log -Level "DEBUG" -Message "Volume details retrieved: $($Volumes.Count) volumes, $($VolumeNameMapping.Count) name mappings"
-
-            $ProcessedRecords = Process-Records $Volumes
-            Write-Log -Level "DEBUG" -Message "Processed records: $($ProcessedRecords.records.Count) volume records processed"
             
             Function Update-VolumeMappings {
                 param(
@@ -1436,42 +1531,119 @@ ${SERVER_DETAILS}
 
             # ========================================
             # PART 2: Storage Configuration Assessment
+            # OS / layout / maxDop / HA: instance-level, collected once against primary FS.
+            # Volume + LUN: per-FSx-filesystem (re-derived per FS so only that FS's volumes appear).
+            # Snapshot policy: written once after all per-FS volumes are accumulated.
             # ========================================
-            Write-Log "Getting storage configuration assessment for instance: $serverInstanceName"
+            Write-Log "Getting storage configuration assessment for instance: $serverInstanceName ($($script:FilesystemContexts.Count) filesystem(s))"
 
-            $DriftAssessmentData = @{}
-            $DriftAssessmentData['errors'] = @{}
-            $DriftAssessmentData['filesystemId'] = $FSxID
-
-            $MappedVolumeUuids = @()
-            $MappedVolumeNames = @()
-            $MappedLunNames = @()
-
-            foreach ($vol in $ProcessedRecords.records) {
-                if ($vol.uuid) { $MappedVolumeUuids += $vol.uuid }
-                if ($vol.name) { $MappedVolumeNames += $vol.name }
-            }
-            foreach ($lun in $LunResult.LunDetails) {
-                if ($lun.name) { $MappedLunNames += $lun.name }
-            }
-
-            ${volumeDetailsAssessmentTemplate}
-
-            ${lunDetailsAssessmentTemplate}
+            # Run instance-level templates once using the primary $instanceLevelFsxnId
+            $DriftAssessmentData = @{ errors = @{} }
 
             ${osConfigAssessmentTemplate}
+            $SharedOsData = $DriftAssessmentData['os']
 
             ${storageLayoutAssessmentTemplate}
+            $SharedLayoutData = $DriftAssessmentData['layout']
+            # The layout template also emits instance-level sizing (data-log/tempdb drive details) and
+            # errors on this pre-loop hashtable; both are carried onto the primary assessment below.
+            $SharedSizingData = $DriftAssessmentData['sizing']
+            $SharedErrorData = $DriftAssessmentData['errors']
 
             ${maxDopAssessmentTemplate}
+            $SharedMaxDopData = $DriftAssessmentData['maxDop']
 
             ${highAvailabilityAssessmentTemplate}
+            $SharedHaData = $DriftAssessmentData['highAvailability']
 
+            # Clone reads $ProcessedRecords (primary FS) and writes directly to $FinalResponse
             ${cloneAssessmentTemplate}
 
+            # Per-filesystem volume/LUN assessment
+            # For each FS: re-run LUN serial-number → volume-name resolution so $MappedVolumeUuids
+            # contains only that FS's volumes (different FSes have different ONTAP volume UUIDs).
+            $AssessmentsArray = @()
+            foreach ($fsCtx in $script:FilesystemContexts) {
+                $instanceLevelFsxnId = if ($fsCtx.FSxID) { $fsCtx.FSxID } else { $fsCtx.Address }
+                Write-Log "Collecting volume/LUN assessment for filesystem: $instanceLevelFsxnId"
+
+                $MappedVolumeUuids = @()
+                $MappedVolumeNames = @()
+                $MappedLunNames    = @()
+
+                $perFsLunResult = Get-LunFromSerialNumber $SerialNumbers $Result.VolumeSerialMapping $visitedFileSystems $instanceLevelFsxnId
+                if ($perFsLunResult.LunNames.Count -gt 0) {
+                    $perFsVolumeResult   = Get-VolumeIdFromName $perFsLunResult.LunNames $perFsLunResult.VolumeLunMapping $visitedFileSystems $instanceLevelFsxnId $serverInstanceName
+                    $perFsProcessed      = Process-Records $perFsVolumeResult.Response
+                    foreach ($vol in $perFsProcessed.records) {
+                        if ($vol.uuid) { $MappedVolumeUuids += $vol.uuid }
+                        if ($vol.name) { $MappedVolumeNames += $vol.name }
+                    }
+                    foreach ($lun in $perFsLunResult.LunDetails) {
+                        if ($lun.name) { $MappedLunNames += $lun.name }
+                    }
+                } else {
+                    Write-Log -Level "WARNING" -Message "No volumes found on filesystem '$instanceLevelFsxnId' for instance '$serverInstanceName' — skipping volume/LUN assessment for this FS"
+                }
+
+                # Skip filesystems with no matching volumes/LUNs to avoid emitting empty per-FS assessment objects.
+                # (calculateStorageDrift tolerates missing arrays; empty assessments primarily add noise/duplicates.)
+                if ($MappedVolumeUuids.Count -gt 0 -or $MappedLunNames.Count -gt 0) {
+                    $DriftAssessmentData = @{
+                        errors      = @{}
+                        filesystemId = $instanceLevelFsxnId
+                        os           = $SharedOsData
+                        layout       = $SharedLayoutData
+                    }
+
+                    ${volumeDetailsAssessmentTemplate}
+                    ${lunDetailsAssessmentTemplate}
+
+                    $AssessmentsArray += $DriftAssessmentData
+                }
+            }
+
+            # Instance-level os/layout/sizing still need a carrier when no filesystem mapped any volumes.
+            if ($AssessmentsArray.Count -eq 0) {
+                $AssessmentsArray += @{
+                    errors       = @{}
+                    filesystemId = if ($FSxID) { $FSxID } else { $StorageManagementAddress }
+                    os           = $SharedOsData
+                    layout       = $SharedLayoutData
+                    volumes      = @()
+                    luns         = @()
+                }
+            }
+
+            # Apply instance-level fields onto the primary (first) assessment so the backend can read them
+            if ($AssessmentsArray.Count -gt 0) {
+                if ($SharedMaxDopData) { $AssessmentsArray[0]['maxDop']           = $SharedMaxDopData }
+                if ($SharedHaData)     { $AssessmentsArray[0]['highAvailability'] = $SharedHaData     }
+                if ($SharedSizingData) {
+                    if (-not $AssessmentsArray[0]['sizing']) { $AssessmentsArray[0]['sizing'] = @{} }
+                    foreach ($sizingKey in $SharedSizingData.Keys) {
+                        $AssessmentsArray[0]['sizing'][$sizingKey] = $SharedSizingData[$sizingKey]
+                    }
+                }
+                if ($SharedErrorData) {
+                    foreach ($errorKey in $SharedErrorData.Keys) {
+                        if (-not $AssessmentsArray[0]['errors'].ContainsKey($errorKey)) {
+                            $AssessmentsArray[0]['errors'][$errorKey] = $SharedErrorData[$errorKey]
+                        }
+                    }
+                }
+            }
+
+            # Snapshot policy: accumulate volumes from all per-FS assessments, write once to $FinalResponse
+            $DriftAssessmentData = @{ errors = @{}; volumes = @() }
+            foreach ($perFsAssessment in $AssessmentsArray) {
+                if ($perFsAssessment['volumes']) { $DriftAssessmentData['volumes'] += $perFsAssessment['volumes'] }
+            }
             ${snapshotPolicyAssessmentTemplate}
 
-            $FinalResponse['rawdata']['instanceLevelDetails'][$extractedInstanceName]['assessment'] = $DriftAssessmentData
+            # Store per-FS array; keep first entry as 'assessment' for backward compat with older upload paths
+            $FinalResponse['rawdata']['instanceLevelDetails'][$extractedInstanceName]['assessments'] = $AssessmentsArray
+            $FinalResponse['rawdata']['instanceLevelDetails'][$extractedInstanceName]['assessment']  = $AssessmentsArray[0]
 
         } catch {
             $errorMessage = "Error processing instance '$serverInstanceName': $($_.Exception.Message)"
@@ -1525,37 +1697,51 @@ ${SERVER_DETAILS}
 
     # ========================================
     # PART 4: Headroom Assessment (FSx Storage Capacity)
-    # Collects aggregate storage data from ONTAP for headroom calculation
+    # Aggregated across all connected filesystems
     # ========================================
     try {
-        Write-Log "Collecting ONTAP storage headroom data..."
-        
-        $aggregateResponse = Invoke-ONTAPRequest -ApiEndpoint "/storage/aggregates" -ApiQueryFields "fields=space.block_storage.size,space.block_storage.used,space.block_storage.available"
-        
-        if ($aggregateResponse -and $aggregateResponse.records) {
-            $totalSize = 0
-            $totalUsed = 0
-            $totalAvailable = 0
-            
-            foreach ($aggregate in $aggregateResponse.records) {
-                $totalSize += $aggregate.space.block_storage.size
-                $totalUsed += $aggregate.space.block_storage.used
-                $totalAvailable += $aggregate.space.block_storage.available
+        Write-Log "Collecting ONTAP storage headroom data across $($script:FilesystemContexts.Count) filesystem(s)..."
+
+        $totalSize      = 0
+        $totalUsed      = 0
+        $totalAvailable = 0
+        $totalAggCount  = 0
+
+        foreach ($fsCtx in $script:FilesystemContexts) {
+            try {
+                $aggParams = @{
+                    ApiEndPoint            = "/storage/aggregates"
+                    ApiQueryFields         = "fields=space.block_storage.size,space.block_storage.used,space.block_storage.available"
+                    FSxCredentialsInBase64 = $fsCtx.FSxCredentialsInBase64
+                    FSxHostName            = $fsCtx.FSxHostName
+                }
+                $aggregateResponse = Invoke-ONTAPRequest @aggParams
+                if ($aggregateResponse -and $aggregateResponse.records) {
+                    foreach ($aggregate in $aggregateResponse.records) {
+                        $totalSize      += $aggregate.space.block_storage.size
+                        $totalUsed      += $aggregate.space.block_storage.used
+                        $totalAvailable += $aggregate.space.block_storage.available
+                    }
+                    $totalAggCount += $aggregateResponse.records.Count
+                }
+            } catch {
+                Write-Log -Level "WARNING" -Message "Failed to get headroom from '$($fsCtx.Address)': $($_.Exception.Message)"
             }
-            
+        }
+
+        if ($totalAggCount -gt 0) {
             $headroomPercent = if ($totalSize -gt 0) { [Math]::Ceiling((($totalSize - $totalUsed) / $totalSize) * 100) } else { 0 }
-            
+
             $FinalResponse['rawdata']['hostLevelDetails']['headroom'] = @{
                 ssdStorageCapacityInBytes = $totalSize
-                storageUsedInBytes = $totalUsed
-                storageAvailableInBytes = $totalAvailable
-                headroomPercent = $headroomPercent
-                aggregateCount = $aggregateResponse.records.Count
+                storageUsedInBytes        = $totalUsed
+                storageAvailableInBytes   = $totalAvailable
+                headroomPercent           = $headroomPercent
+                aggregateCount            = $totalAggCount
             }
-            
-            Write-Log "Headroom data collected: $headroomPercent% available"
+            Write-Log "Headroom data collected: $headroomPercent% available (across $totalAggCount aggregate(s))"
         } else {
-            Write-Log -Level "WARNING" -Message "No aggregate data returned from ONTAP"
+            Write-Log -Level "WARNING" -Message "No aggregate data returned from any ONTAP filesystem"
             $FinalResponse['rawdata']['hostLevelDetails']['headroom'] = @{}
         }
     } catch {
@@ -1604,16 +1790,29 @@ ${SERVER_DETAILS}
 
         $fsxMtuInterfaces = @()
         $fsxMtuError = $null
-        try {
-            $fsxPortResponse = Invoke-ONTAPRequest -ApiEndpoint "/network/ethernet/ports" -ApiQueryFields "fields=name,mtu"
-            foreach ($port in $fsxPortResponse.records) {
-                if ($port.name -and $port.mtu) {
-                    $fsxMtuInterfaces += @{ Name = $port.name; MTU = $port.mtu }
+        # Keep every filesystem's ports. Names like e0e are reused across FSxN systems, and
+        # calculateMTUAlignmentDrift uses Math.min over this list.
+        foreach ($fsCtx in $script:FilesystemContexts) {
+            try {
+                $portParams = @{
+                    ApiEndPoint            = "/network/ethernet/ports"
+                    ApiQueryFields         = "fields=name,mtu"
+                    FSxCredentialsInBase64 = $fsCtx.FSxCredentialsInBase64
+                    FSxHostName            = $fsCtx.FSxHostName
                 }
+                $fsxPortResponse = Invoke-ONTAPRequest @portParams
+                foreach ($port in $fsxPortResponse.records) {
+                    if ($port.name -and $port.mtu) {
+                        $fsxMtuInterfaces += @{ Name = $port.name; MTU = $port.mtu }
+                    }
+                }
+            } catch {
+                $fsxMtuError = $_.Exception.Message
+                Write-Log -Level "WARNING" -Message "Failed to retrieve FSx port MTU data from '$($fsCtx.Address)': $fsxMtuError"
             }
-        } catch {
-            $fsxMtuError = $_.Exception.Message
-            Write-Log -Level "WARNING" -Message "Failed to retrieve FSx port MTU data: $fsxMtuError"
+        }
+        if ($fsxMtuInterfaces.Count -gt 0) {
+            $fsxMtuError = $null
         }
 
         $FinalResponse['rawdata']['hostLevelDetails']['mtuAlignment'] = @{

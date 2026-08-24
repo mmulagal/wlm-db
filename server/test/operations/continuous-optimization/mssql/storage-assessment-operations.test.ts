@@ -178,6 +178,21 @@ describe('calculateStorageDrift data-log-drive-details sizing', () => {
     });
 });
 
+describe('calculateStorageDrift missing volumes and luns', () => {
+    it('should not throw when volumes and luns are omitted from the assessment payload', async () => {
+        const drift = await runStorageDrift({
+            filesystemId: 'fs-1',
+            os: {},
+            layout: {},
+            sizing: {},
+            errors: {}
+        } as unknown as StorageAssessment);
+
+        expect(Array.isArray(drift)).toBe(true);
+        expect(drift.length).toBeGreaterThan(0);
+    });
+});
+
 describe('calculateStorageDrift combined entries', () => {
     it('should report tiering-tco-optimization OPTIMIZED when every volume passes both sub-parameters', async () => {
         const drift = await runStorageDrift(

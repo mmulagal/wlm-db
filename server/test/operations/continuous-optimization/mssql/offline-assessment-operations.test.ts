@@ -582,6 +582,60 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(ids).not.toContain('compression');
         });
 
+        it('should not fail file-upload WAD when one filesystem assessment has no volumes or luns', async () => {
+            const resourceId = 'fetch-test-empty-fs-assessment';
+            const instanceId = 'empty-fs-instance';
+            await bulkUpsertOfflineAssessments([
+                {
+                    accountId: ACCOUNT_ID,
+                    resourceId,
+                    databaseInstanceId: instanceId,
+                    databaseType: DATABASE_TYPE.mssql,
+                    rawdata: {
+                        instanceLevelAssessment: {
+                            filesystemId: 'fs-empty',
+                            os: {},
+                            layout: {},
+                            sizing: {}
+                        },
+                        instanceLevelAssessments: [
+                            {
+                                filesystemId: 'fs-empty',
+                                os: {},
+                                layout: {},
+                                sizing: {}
+                            },
+                            {
+                                filesystemId: 'fs-with-volumes',
+                                volumes: [{ name: 'data_vol', uuid: 'uuid-1', autosize: 'off' }],
+                                luns: [],
+                                os: {},
+                                layout: {},
+                                sizing: {}
+                            }
+                        ],
+                        rssConfig: {},
+                        hostLevelHighAvailability: {}
+                    },
+                    metadata: {
+                        hostname: 'empty-fs-host',
+                        storageEndpoint: 'fs-with-volumes',
+                        assessmentTimestamp: new Date().toISOString(),
+                        deploymentType: 'Standalone',
+                        databaseInstanceName: 'MSSQLSERVER'
+                    }
+                }
+            ]);
+
+            const result = await fetchMssqlOfflineAssessment(ACCOUNT_ID, resourceId, instanceId);
+            const autosizeFinding = result.assessments.find(a => a.id === 'autosize') as
+                | { errorMessage?: string; objectsInViolation?: string[] }
+                | undefined;
+            expect(autosizeFinding).toBeDefined();
+            expect(autosizeFinding?.errorMessage).toBeUndefined();
+            expect(autosizeFinding?.objectsInViolation).toContain('data_vol');
+        });
+
         it('should return an empty result for non-existent assessment', async () => {
             const result = await fetchMssqlOfflineAssessment(
                 ACCOUNT_ID,
@@ -1279,6 +1333,80 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(autosizeFinding.errorMessage).toBeUndefined();
             expect(autosizeFinding.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(autosizeFinding.objectsInViolation).toContain('data_vol');
+        });
+
+        it('should ignore file-upload WAD layout and sizing payloads on the unregistered path', async () => {
+            // Unregistered collection uses registry layout + filtered volume/LUN drift. A WAD-shaped
+            // ontap payload (separate-drive layout, data-log/tempdb sizing) must not change those findings.
+            const isolationResourceId = 'awsdoc-fetch-resource-wad-isolation';
+            await bulkUpsertOfflineAssessments([
+                {
+                    accountId: ACCOUNT_ID,
+                    resourceId: isolationResourceId,
+                    databaseInstanceId: AWSDOC_INSTANCE_NAME,
+                    databaseType: DATABASE_TYPE.mssql,
+                    rawdata: {
+                        layoutAssessment: sampleRegistryAssessment,
+                        mpioAssessment: sampleRegistryAssessment.mpio,
+                        ontapStorageAssessments: [
+                            {
+                                filesystemId: 'fs-awsdoc-1',
+                                volumes: [{ name: 'data_vol', uuid: 'uuid-1', autosize: 'off' }],
+                                luns: [],
+                                os: {},
+                                layout: {
+                                    'default-data-files-location': 'separate-drive',
+                                    'default-log-files-location': 'separate-drive',
+                                    'tempdb-files-location': 'separate-drive'
+                                },
+                                sizing: {
+                                    'data-log-drive-details': [
+                                        {
+                                            databaseName: 'Biotic',
+                                            dataDriveLetter: 'D:',
+                                            dataDriveTotalSizeMB: 100000,
+                                            logDriveLetter: 'E:',
+                                            logDriveTotalSizeMB: 42000,
+                                            ontapVolumeName: 'stdlog',
+                                            logAccessPath: 'E:\\'
+                                        }
+                                    ],
+                                    'data-tempdb-drive-details': [
+                                        {
+                                            tempdbDriveLetter: 'T:',
+                                            tempdbDriveTotalSizeMB: 10000,
+                                            dataDriveTotalSizeMB: 100000
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    metadata: {
+                        source: 'unregistered',
+                        databaseInstanceName: AWSDOC_INSTANCE_NAME,
+                        ec2InstanceId: isolationResourceId,
+                        assessmentTimestamp: new Date().toISOString()
+                    }
+                }
+            ]);
+
+            const result = await fetchMssqlUnregisteredInstanceAssessment(
+                ACCOUNT_ID,
+                isolationResourceId,
+                AWSDOC_INSTANCE_NAME
+            );
+
+            const dataLayoutFindings = result.assessments.filter(a => a.id === 'data-files-location');
+            expect(dataLayoutFindings).toHaveLength(1);
+            expect((dataLayoutFindings[0] as { errorMessage?: string }).errorMessage).toBeUndefined();
+            expect((dataLayoutFindings[0] as { status?: string }).status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+
+            ['log-drive-size', 'tempdb-drive-size'].forEach(id => {
+                const finding = result.assessments.find(a => a.id === id) as { errorMessage?: string } | undefined;
+                expect(finding).toBeDefined();
+                expect(finding?.errorMessage).toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
+            });
         });
 
         it('should return an empty result when no record exists', async () => {

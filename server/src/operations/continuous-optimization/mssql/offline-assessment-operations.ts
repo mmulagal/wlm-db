@@ -183,6 +183,8 @@ interface OfflineAssessmentInstanceDetails {
     instanceDetails: MSSQLDatabaseInstanceData;
     mappedVolumes?: MSSQLOfflineMappedVolumes;
     assessment?: Record<string, unknown>;
+    /** Multi-filesystem variant (script v1.3+): one entry per FSx filesystem */
+    assessments?: Record<string, unknown>[];
     clone?: CloneAssessment;
     snapshotPolicy?: MSSQLOfflineSnapshotPolicy;
 }
@@ -200,6 +202,8 @@ interface OfflineAssessmentInputRawData {
  */
 interface MSSQLOfflineAssessmentRawData {
     instanceLevelAssessment?: MSSQLInstanceLevelAssessment;
+    /** Multi-filesystem variant: one entry per FSx filesystem (script v1.3+) */
+    instanceLevelAssessments?: MSSQLInstanceLevelAssessment[];
     rssConfig?: ResourceAssessmentData;
     headroom?: OneTimeWADHeadroomData;
     hostLevelHighAvailability?: OfflineAssessmentHostLevelHA;
@@ -267,6 +271,8 @@ interface MSSQLOfflineAssessmentMetadataType {
     databaseType?: string;
     hostname: string;
     storageEndpoint: string;
+    /** All addresses provided (script v1.3+) */
+    storageEndpoints?: string[];
     fsxId?: string;
     numberOfDatabaseInstances?: number;
     assessmentTimestamp: string;
@@ -312,6 +318,7 @@ async function processOfflineAssessmentUpload(
         ec2InstanceId,
         hostname,
         storageEndpoint,
+        storageEndpoints,
         fsxId,
         numberOfDatabaseInstances,
         assessmentTimestamp,
@@ -335,7 +342,8 @@ async function processOfflineAssessmentUpload(
             Object.entries(instanceLevelDetails || {})
                 .filter(([, data]) => data.instanceDetails?.databaseInstanceId)
                 .map(async ([instanceName, instanceData]) => {
-                    const { instanceDetails, mappedVolumes, assessment, clone, snapshotPolicy } = instanceData;
+                    const { instanceDetails, mappedVolumes, assessment, assessments, clone, snapshotPolicy } =
+                        instanceData;
                     const {
                         databaseInstanceId,
                         windowsClusterNodes,
@@ -387,6 +395,8 @@ async function processOfflineAssessmentUpload(
                         databaseType: DATABASE_TYPE.mssql,
                         rawdata: {
                             instanceLevelAssessment: assessment || {},
+                            // Multi-FS: stored when the script emits the assessments[] array (v1.3+)
+                            ...(assessments && assessments.length > 0 && { instanceLevelAssessments: assessments }),
                             rssConfig: rssConfig || {},
                             headroom: headroom || {},
                             hostLevelHighAvailability: hostLevelHighAvailability || {},
@@ -402,6 +412,7 @@ async function processOfflineAssessmentUpload(
                             databaseInstanceName: instanceName,
                             hostname,
                             storageEndpoint,
+                            ...(storageEndpoints && storageEndpoints.length > 0 && { storageEndpoints }),
                             fsxId,
                             numberOfDatabaseInstances,
                             assessmentTimestamp,
@@ -628,8 +639,21 @@ async function fetchMssqlOfflineAssessment(
         windowsClusterName,
         fciName
     } = metadata;
-    const { instanceLevelAssessment, rssConfig, headroom, hostLevelHighAvailability, mtuAlignment, clone } = rawdata;
-    const { maxDop, highAvailability } = (instanceLevelAssessment as MSSQLInstanceLevelAssessment) || {};
+    const {
+        instanceLevelAssessment,
+        instanceLevelAssessments,
+        rssConfig,
+        headroom,
+        hostLevelHighAvailability,
+        mtuAlignment,
+        clone
+    } = rawdata;
+    // For HA / maxDop we prefer the first entry of the array (instance-level data);
+    // fall back to the single-assessment shape for backward compat.
+    const primaryAssessment =
+        (instanceLevelAssessments?.[0] as MSSQLInstanceLevelAssessment | undefined) ??
+        (instanceLevelAssessment as MSSQLInstanceLevelAssessment | undefined);
+    const { maxDop, highAvailability } = primaryAssessment || {};
 
     let maxDopData: MaxDOPAssesment | undefined;
     if (maxDop) {
@@ -663,7 +687,17 @@ async function fetchMssqlOfflineAssessment(
     } as ResourceAssessmentData;
 
     const [storageWithEndpoint, haResult] = await Promise.all([
-        !isEmpty(instanceLevelAssessment)
+        // Multi-FS path: merge volume/LUN drift from each filesystem, then apply OS checks from primary
+        instanceLevelAssessments && instanceLevelAssessments.length > 0
+            ? calculateMultiFilesystemStorageDrift(
+                  accountId,
+                  resourceId,
+                  databaseInstanceId,
+                  instanceLevelAssessments as unknown as StorageAssessment[],
+                  primaryAssessment,
+                  ec2InstanceId ?? ''
+              )
+            : !isEmpty(instanceLevelAssessment)
             ? calculateStorageDrift(
                   accountId,
                   '',
@@ -967,8 +1001,11 @@ async function computeVolumeLunDrift(
     databaseInstanceId: string,
     ontapStorageAssessments: StorageAssessment[]
 ): Promise<(AssessmentItemType | AssessmentErrorItemType)[]> {
+    const assessableFilesystems = ontapStorageAssessments.filter(
+        storageAssessment => (storageAssessment.volumes?.length ?? 0) > 0 || (storageAssessment.luns?.length ?? 0) > 0
+    );
     const perFilesystemDrift = await Promise.all(
-        ontapStorageAssessments.map(storageAssessment =>
+        assessableFilesystems.map(storageAssessment =>
             calculateStorageDrift(
                 accountId,
                 credentialsId,
@@ -982,6 +1019,42 @@ async function computeVolumeLunDrift(
         )
     );
     return filterToVolumeLunDriftItems(mergeStorageDriftItemsById(perFilesystemDrift), VOLUME_LUN_DRIFT_IDS);
+}
+
+async function calculateMultiFilesystemStorageDrift(
+    accountId: string,
+    resourceId: string,
+    databaseInstanceId: string,
+    storageAssessments: StorageAssessment[],
+    primaryAssessment: MSSQLInstanceLevelAssessment | undefined,
+    ec2InstanceId: string
+): Promise<(AssessmentItemType | AssessmentErrorItemType)[]> {
+    const volumeLunItems = await computeVolumeLunDrift(
+        accountId,
+        '',
+        '',
+        resourceId,
+        databaseInstanceId,
+        storageAssessments
+    );
+    if (isEmpty(primaryAssessment)) {
+        return volumeLunItems;
+    }
+
+    const allPrimaryItems = await calculateStorageDrift(
+        accountId,
+        '',
+        '',
+        resourceId,
+        databaseInstanceId,
+        primaryAssessment as unknown as StorageAssessment,
+        undefined,
+        false,
+        ec2InstanceId
+    );
+    const volumeLunIds = new Set(volumeLunItems.map(item => (item as AssessmentItemType).id));
+    const nonVolumeLunItems = allPrimaryItems.filter(item => !volumeLunIds.has((item as AssessmentItemType).id));
+    return [...nonVolumeLunItems, ...volumeLunItems];
 }
 
 function failSubJobOnCollectionError(
@@ -1427,15 +1500,18 @@ function accumulateLunEntries(
 }
 
 function mapOfflineAssessmentRecord(record: OfflineAssessmentDBSchema) {
-    const { instanceLevelAssessment = {} } = (record.rawdata as MSSQLOfflineAssessmentRawData) || {};
+    const { instanceLevelAssessment = {}, instanceLevelAssessments } =
+        (record.rawdata as MSSQLOfflineAssessmentRawData) || {};
     const { databaseInstanceName, fsxId, storageEndpoint, deploymentType, baseDeploymentType, agName, hostname } =
         (record.metadata as unknown as MSSQLOfflineAssessmentMetadataType) || {};
 
-    const fileSystemId =
-        (instanceLevelAssessment as MSSQLInstanceLevelAssessment).filesystemId || fsxId || storageEndpoint;
-    const { data = [], log = [] } = ((instanceLevelAssessment as MSSQLInstanceLevelAssessment).layout?.[
-        'user-database-layout'
-    ] ?? {}) as UserDatabaseLayout;
+    const primaryAssessmentForMap =
+        (instanceLevelAssessments?.[0] as MSSQLInstanceLevelAssessment | undefined) ??
+        (instanceLevelAssessment as MSSQLInstanceLevelAssessment);
+
+    const fileSystemId = primaryAssessmentForMap.filesystemId || fsxId || storageEndpoint;
+    const { data = [], log = [] } = (primaryAssessmentForMap.layout?.['user-database-layout'] ??
+        {}) as UserDatabaseLayout;
 
     const dbMap = new Map<string, DbMapEntry>();
     accumulateLunEntries(dbMap, data, 'dataLuns');

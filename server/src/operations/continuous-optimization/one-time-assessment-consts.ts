@@ -46,7 +46,7 @@ This PowerShell script performs a comprehensive assessment of your SQL Server en
 
 ### Example 1: Using Management FQDN (Default Instance)
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com -SqlInstanceName MSSQLSERVER
+.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses management.fs-0123456789abcdef0.fsx.us-east-1.amazonaws.com -SqlInstanceName MSSQLSERVER
 \`\`\`
 
 This example:
@@ -56,7 +56,7 @@ This example:
 
 ### Example 2: Using Management IP Address (Named Instance)
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress 10.0.1.100 -SqlInstanceName SQLInstance1
+.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses 10.0.1.100 -SqlInstanceName SQLInstance1
 \`\`\`
 
 This example:
@@ -66,7 +66,7 @@ This example:
 
 ### Example 3: Using FSx File System ID (Default Instance)
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER
+.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER
 \`\`\`
 
 This example:
@@ -76,7 +76,7 @@ This example:
 
 ### Example 4: Custom Output Directory
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER -OutputPath "C:\\AssessmentResults"
+.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses fs-0123456789abcdef0 -SqlInstanceName MSSQLSERVER -OutputPath "C:\\AssessmentResults"
 \`\`\`
 
 This example:
@@ -86,13 +86,22 @@ This example:
 
 ### Example 5: Named Instance with Custom Path
 \`\`\`powershell
-.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddress 192.168.1.50 -SqlInstanceName PROD -OutputPath "D:\\Reports\\SQLAssessment"
+.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses 192.168.1.50 -SqlInstanceName PROD -OutputPath "D:\\Reports\\SQLAssessment"
 \`\`\`
+
+### Example 6: Multiple FSx File Systems
+\`\`\`powershell
+.\\NetApp_WF_MSSQL_Assessment_v${OFFLINE_ASSESSMENT_SCRIPT_VERSION}.ps1 -StorageManagementAddresses "fs-0123456789abcdef0,fs-0fedcba9876543210" -SqlInstanceName MSSQLSERVER
+\`\`\`
+
+This example:
+- Assesses a SQL Server instance whose volumes span two FSx file systems
+- Credentials are resolved separately for each address
 
 ## Parameters
 
-### -StorageManagementAddress (Required)
-The storage system identifier. Can be provided in one of three formats:
+### -StorageManagementAddresses (Required)
+One or more storage system identifiers, comma-separated when the instance uses more than one FSx file system. Each value can be provided in one of three formats:
 
 **Option 1: FSx Management FQDN (Fully Qualified Domain Name)**
 - Format: Valid domain name
@@ -151,7 +160,7 @@ Allows the script to automatically retrieve SQL Server and ONTAP credentials fro
 
 **Secret Naming Convention:**
 - SQL Server credentials: \`<Hostname>/<InstanceName>\`
-- ONTAP credentials: Use the StorageManagementAddress (FQDN, Management IP, or FSx ID) as the secret name
+- ONTAP credentials: Use each StorageManagementAddresses entry (FQDN, Management IP, or FSx ID) as the secret name
 
 ### EC2 Metadata Access (Recommended)
 Allows the script to automatically detect EC2 instance metadata:
@@ -210,7 +219,7 @@ The script attempts to retrieve credentials in the following order:
 - Verify SQL Server authentication mode allows your connection type
 
 **Issue: Cannot connect to ONTAP storage**
-- Verify the StorageManagementAddress is correct (FQDN, Management IP, or FSx ID)
+- Verify each StorageManagementAddresses value is correct (FQDN, Management IP, or FSx ID)
 - Check network connectivity to the management endpoint
 - If using FQDN, verify DNS resolution is working (try \`nslookup <fqdn>\`)
 - Ensure ONTAP credentials are correct

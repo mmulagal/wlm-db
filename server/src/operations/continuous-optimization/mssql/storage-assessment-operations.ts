@@ -652,8 +652,17 @@ async function calculateStorageDrift(
 
     const driftAssessmentData: (WadManagerMssqlAssessmentItemType | AssessmentErrorItemType)[] = [];
 
-    const { volumes, luns, os, layout, sizing, filesystemId, errors } =
-        storageAssessmentData as unknown as StorageAssessment;
+    const {
+        volumes: volumeRecords,
+        luns: lunRecords,
+        os,
+        layout,
+        sizing,
+        filesystemId,
+        errors
+    } = storageAssessmentData as unknown as StorageAssessment;
+    const volumes = volumeRecords ?? [];
+    const luns = lunRecords ?? [];
 
     if (errors && errors.volumes) {
         volumeConfigData.forEach(config => {

@@ -957,7 +957,7 @@ ORDER BY
         if ($netappDataDrives -notcontains $defaultDataDriveDetails.dataDriveLetter) {
             $driveDetailsErrors["instanceDataDrivesError"] = "Data drive is not a NetApp drive."
         } else {
-            if (($defaultDataDriveDetails.dataDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails)) {
+            if (($defaultDataDriveDetails.dataDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails.dataDriveLetter)) {
                 $defaultDataDrive = 'separate-drive'
             }
         }
@@ -975,7 +975,7 @@ ORDER BY
         if ($netappDataDrives -notcontains $defaultTempDBDriveDetails.tempdbDriveLetter) {
             $driveDetailsErrors["instanceTempDBDriveError"] = "TempDB drive is not a NetApp drive."
         } else {
-            if (($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails.dataDriveLetter) -and ($defaultTempDBDriveDetails -notcontains $defaultLogDriveDetails.logDriveLetter)) {
+            if (($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultDataDriveDetails.dataDriveLetter) -and ($defaultTempDBDriveDetails.tempdbDriveLetter -notcontains $defaultLogDriveDetails.logDriveLetter)) {
                 $tempdbDrive = 'separate-drive'
             }
         }
