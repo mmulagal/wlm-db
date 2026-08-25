@@ -112,8 +112,9 @@ interface UnOptimizedDiskGroups {
 }
 
 interface ScopedOntapStorageResult<T> {
-    ontapStorageAssessments: T[];
+    ontapStorageAssessments?: T[];
     headroomData?: OneTimeWADHeadroomData;
+    error?: string;
 }
 
 function getMatchingAssessmentStatus(finding: string) {
@@ -499,6 +500,13 @@ async function collectScopedOntapAssessment(
     const relationship = await buildEc2FsxRelationship(accountId, credentialsId, region);
     const scopedEc2s = relationship.ec2s.filter(ec2 => ec2.instanceId === ec2InstanceId);
     if (scopedEc2s.length === 0) {
+        logger.warn('No tagged ONTAP volume relationship found for scoped assessment', {
+            accountId,
+            credentialsId,
+            region,
+            ec2InstanceId,
+            workloadType
+        });
         throw new Error(`No ONTAP volumes found for this instance. ${FSX_LINK_INACTIVE_HINT}`);
     }
 
@@ -534,7 +542,7 @@ async function runScopedOntapSubAssessment<T>(
     jobId: string,
     workloadType: DATABASE_TYPE,
     workloadLabel: string
-): Promise<ScopedOntapStorageResult<T> | undefined> {
+): Promise<ScopedOntapStorageResult<T>> {
     const sqlServerDeploymentType = workloadType === DATABASE_TYPE.oracle ? RESOURCESTYPE.ORACLE : RESOURCESTYPE.MSSQL;
     const { id: subJobId } = await registerJob(accountId, credentialsId, region, {
         name: 'ONTAP volume/LUN storage assessment',
@@ -566,9 +574,26 @@ async function runScopedOntapSubAssessment<T>(
         if (ontapStorageAssessments.length === 0) {
             status = JOBSTATUS.FAILED;
             errorMessage = `No ONTAP volumes found for this instance: no ${workloadLabel} workload tag detected`;
-            return undefined;
+            logger.warn('No tagged ONTAP volumes found for unregistered instance', {
+                accountId,
+                credentialsId,
+                region,
+                ec2InstanceId,
+                instanceName,
+                workloadType,
+                errorMessage
+            });
+            return { error: errorMessage };
         }
 
+        logger.info('Collected scoped ONTAP assessment for unregistered instance', {
+            accountId,
+            region,
+            ec2InstanceId,
+            instanceName,
+            workloadType,
+            filesystemCount: ontapStorageAssessments.length
+        });
         return { ontapStorageAssessments, headroomData: results[0]?.headroomData };
     } catch (error) {
         status = JOBSTATUS.FAILED;
@@ -577,7 +602,7 @@ async function runScopedOntapSubAssessment<T>(
             `Failed to collect ONTAP storage assessment for unregistered ${workloadLabel} instance; continuing with other findings`,
             { accountId, credentialsId, region, ec2InstanceId, error: errorMessage }
         );
-        return undefined;
+        return { error: errorMessage };
     } finally {
         await updateJobDetails(accountId, subJobId, {
             status,

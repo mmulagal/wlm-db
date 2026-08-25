@@ -28,7 +28,8 @@ const AGGREGATE_FIELDS = 'space.block_storage.size,space.block_storage.used,spac
 const VOLUME_FIELDS =
     'name,uuid,svm,nas.path,autosize,space.fractional_reserve,space.snapshot.reserve_percent,' +
     'space.snapshot.autodelete.enabled,space.snapshot.autodelete.delete_order,snapshot_policy,' +
-    'tiering,guarantee,efficiency';
+    'tiering,guarantee,efficiency,clone.is_flexclone,clone.parent_volume.name,create_time,' +
+    'space.size,space.used,space.physical_used';
 
 const LUN_FIELDS = 'name,uuid,os_type,space.guarantee.requested,space.scsi_thin_provisioning_support_enabled';
 
@@ -220,10 +221,12 @@ async function collectVolumeSnapshots(base: ProxyOperationBaseOpts, volumeUuids:
     const settled = await Promise.allSettled(
         volumeUuids.map(
             throat(3, uuid =>
-                collectAllOntapRecords<OntapSnapshotRecord>(base, `api/storage/volumes/${uuid}/snapshots`, {
-                    comment: 'creator=snapcenter',
-                    max_records: 1
-                }).then(records => ({ uuid, hasSnapshots: records.length > 0 }))
+                collectAllOntapRecords<OntapSnapshotRecord>(
+                    base,
+                    `api/storage/volumes/${uuid}/snapshots`,
+                    { comment: 'creator=snapcenter', max_records: 1, fields: 'comment' },
+                    1
+                ).then(records => ({ uuid, hasSnapshots: records.length > 0 }))
             )
         )
     );
@@ -346,11 +349,34 @@ function toMssqlStorageAssessment(
     const volumes = Object.values(inventory.volumesByUuid)
         .filter(({ uuid }) => volumeUuids.has(uuid))
         .map(
-            ({ name, uuid, autosize, guarantee, space, snapshot_policy: snapshotPolicy, tiering, svm, efficiency }) => {
+            ({
+                name,
+                uuid,
+                create_time: createTime,
+                clone,
+                autosize,
+                guarantee,
+                space,
+                snapshot_policy: snapshotPolicy,
+                tiering,
+                svm,
+                efficiency
+            }) => {
                 const autosizeMode = autosize?.mode;
                 return {
                     name,
                     uuid,
+                    ...(createTime && { create_time: createTime }),
+                    ...(clone && { clone }),
+                    ...(space?.size !== undefined || space?.used !== undefined || space?.physical_used !== undefined
+                        ? {
+                              space: {
+                                  size: space.size,
+                                  used: space.used,
+                                  physical_used: space.physical_used
+                              }
+                          }
+                        : {}),
                     svmName: svm?.name,
                     svmUuid: svm?.uuid,
                     'thin-provision': guarantee?.honored,

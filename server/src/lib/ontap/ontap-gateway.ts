@@ -82,10 +82,18 @@ interface ProxyCollectionEnvelope<T> {
 interface OntapVolumeRecord {
     name: string;
     uuid: string;
+    create_time?: string;
+    clone?: {
+        is_flexclone?: boolean;
+        parent_volume?: { name?: string };
+    };
     svm?: { name?: string; uuid?: string };
     nas?: { path?: string };
     autosize?: { mode?: string };
     space?: {
+        size?: number;
+        used?: number;
+        physical_used?: number;
         fractional_reserve?: number;
         snapshot?: {
             reserve_percent?: number;

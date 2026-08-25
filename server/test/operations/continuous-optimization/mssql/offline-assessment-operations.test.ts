@@ -682,18 +682,6 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(mpioEnabledFinding.status).toBe(AssessmentStatus.OPTIMIZED);
         });
 
-        it('should accept optional credentialsId and region parameters', async () => {
-            const result = await fetchMssqlOfflineAssessment(
-                ACCOUNT_ID,
-                'fetch-test-resource',
-                'fetch-test-instance',
-                'cred-123',
-                'us-east-1'
-            );
-
-            expect(result).toBeDefined();
-        });
-
         it('should include headroom assessment with UNDER_PROVISIONED status when headroom < MIN_OPTIMIZED_HEADROOM_PERCENTAGE', async () => {
             const result = await fetchMssqlOfflineAssessment(
                 ACCOUNT_ID,
@@ -924,12 +912,6 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(result.count).toBe(0);
         });
 
-        it('should accept optional credentialsId and region parameters', async () => {
-            const result = await fetchMssqlOfflineAssessmentPerAccount(ACCOUNT_ID, 50, 'cred-123', 'us-east-1');
-
-            expect(result).toBeDefined();
-        });
-
         it('should include both pre-existing rows with no metadata.source and unregistered rows', async () => {
             const legacyResourceId = 'list-test-legacy-no-source';
             const awsDocResourceId = 'list-test-aws-doc-included';
@@ -1081,33 +1063,20 @@ describe('MSSQL Offline Assessment Operations', () => {
         });
 
         describe('single-instance mode (resourceId + databaseInstanceId provided)', () => {
-            it('should return databases with correct structure', async () => {
+            it('should return categorized databases, storage details, and instance metadata', async () => {
                 const items = await listMssqlOfflineAssessmentDatabases(ACCOUNT_ID, DB_RESOURCE_ID, DB_INSTANCE_ID);
 
                 expect(items).toBeDefined();
                 expect(items.databases).toBeDefined();
                 expect(items.databases.length).toBeGreaterThan(0);
-            });
-
-            it('should correctly categorise user vs system databases', async () => {
-                const items = await listMssqlOfflineAssessmentDatabases(ACCOUNT_ID, DB_RESOURCE_ID, DB_INSTANCE_ID);
-
                 expect(items.databases.find(db => db.name === 'AdventureWorks')?.type).toBe(MSSQL_DATABASE_TYPES.USER);
                 expect(items.databases.find(db => db.name === 'master')?.type).toBe(MSSQL_DATABASE_TYPES.SYSTEM);
-            });
-
-            it('should accumulate size and LUN entries across data and log volumes', async () => {
-                const items = await listMssqlOfflineAssessmentDatabases(ACCOUNT_ID, DB_RESOURCE_ID, DB_INSTANCE_ID);
 
                 const adventureWorks = items.databases.find(db => db.name === 'AdventureWorks');
                 expect(adventureWorks?.size).toBe((512 + 64) * 1024 * 1024);
                 expect(adventureWorks?.luns.dataFiles[0].name).toBe('/vol/data_lun');
                 expect(adventureWorks?.luns.dataFiles[0].driveLetter).toBe('E');
                 expect(adventureWorks?.luns.logFiles[0].name).toBe('/vol/log_lun');
-            });
-
-            it('should include instance metadata', async () => {
-                const items = await listMssqlOfflineAssessmentDatabases(ACCOUNT_ID, DB_RESOURCE_ID, DB_INSTANCE_ID);
 
                 expect(items.databaseInstanceName).toBe('MSSQLSERVER');
                 expect(items.fileSystemId).toBe('fs-databases-test');
@@ -1117,17 +1086,12 @@ describe('MSSQL Offline Assessment Operations', () => {
         });
 
         describe('account-level mode (no resourceId / databaseInstanceId)', () => {
-            it('should return databases for all assessments in the account', async () => {
+            it('should return identified database arrays for all assessments in the account', async () => {
                 const result = await listMssqlOfflineAssessmentDatabasesPerAccount(ACCOUNT_ID);
 
                 expect(Array.isArray(result.items)).toBe(true);
                 expect(result.count).toBe(result.items.length);
                 expect(result.count).toBeGreaterThan(0);
-            });
-
-            it('should include resourceId and databaseInstanceId on every item', async () => {
-                const result = await listMssqlOfflineAssessmentDatabasesPerAccount(ACCOUNT_ID);
-
                 for (const item of result.items) {
                     expect(item.resourceId).toBeDefined();
                     expect(item.databaseInstanceId).toBeDefined();
@@ -1137,12 +1101,6 @@ describe('MSSQL Offline Assessment Operations', () => {
                     i => i.resourceId === ACCT_DB_RESOURCE_1 && i.databaseInstanceId === ACCT_DB_INSTANCE_1
                 );
                 expect(item1).toBeDefined();
-            });
-
-            it('should include databases array on each item', async () => {
-                const result = await listMssqlOfflineAssessmentDatabasesPerAccount(ACCOUNT_ID);
-
-                const item1 = result.items.find(i => i.resourceId === ACCT_DB_RESOURCE_1);
                 expect(Array.isArray(item1?.databases)).toBe(true);
                 expect(item1?.databases.find(db => db.name === 'SalesDB')).toBeDefined();
             });
@@ -1153,13 +1111,6 @@ describe('MSSQL Offline Assessment Operations', () => {
                 expect(result.items).toEqual([]);
                 expect(result.count).toBe(0);
                 expect(result.nextToken).toBeUndefined();
-            });
-
-            it('should respect pageSize and set nextToken when more records remain', async () => {
-                const result = await listMssqlOfflineAssessmentDatabasesPerAccount(ACCOUNT_ID, { pageSize: 1 });
-
-                expect(result.items.length).toBeLessThanOrEqual(1);
-                expect(result.nextToken).toBeDefined();
             });
 
             it('should paginate correctly using nextToken', async () => {
@@ -1174,15 +1125,6 @@ describe('MSSQL Offline Assessment Operations', () => {
 
                 expect(secondPage.items).toHaveLength(1);
                 expect(secondPage.items[0].resourceId).not.toBe(firstPage.items[0].resourceId);
-            });
-
-            it('should accept optional credentialsId and region parameters', async () => {
-                const result = await listMssqlOfflineAssessmentDatabasesPerAccount(ACCOUNT_ID, {
-                    credentialsId: 'cred-123',
-                    region: 'us-east-1'
-                });
-
-                expect(Array.isArray(result.items)).toBe(true);
             });
 
             it('should exclude unregistered rows but keep pre-existing rows with no metadata.source', async () => {
@@ -1243,7 +1185,7 @@ describe('MSSQL Offline Assessment Operations', () => {
             ]);
         });
 
-        it('should compute registry-based layout findings from rawdata.layoutAssessment', async () => {
+        it('should compute registry findings and mark uncollected categories as not applicable', async () => {
             const result = await fetchMssqlUnregisteredInstanceAssessment(
                 ACCOUNT_ID,
                 RESOURCE_ID,
@@ -1255,26 +1197,14 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(dataLayout.errorMessage).toBeUndefined();
             // Shared drive letter between defaultData/defaultLog in the fixture is a violation
             expect(dataLayout.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
-        });
-
-        it('should mark categories other than storage layout and MPIO as not applicable', async () => {
-            const result = await fetchMssqlUnregisteredInstanceAssessment(
-                ACCOUNT_ID,
-                RESOURCE_ID,
-                AWSDOC_INSTANCE_NAME
-            );
 
             const thinProvisionFinding = result.assessments.find(a => a.id === 'thin-provision') as any;
             expect(thinProvisionFinding).toBeDefined();
             expect(thinProvisionFinding.errorMessage).toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
-        });
 
-        it('should compute MPIO findings from rawdata.mpioAssessment', async () => {
-            const result = await fetchMssqlUnregisteredInstanceAssessment(
-                ACCOUNT_ID,
-                RESOURCE_ID,
-                AWSDOC_INSTANCE_NAME
-            );
+            const hostOsPatchFinding = result.assessments.find(a => a.id === 'host-os-patch') as any;
+            expect(hostOsPatchFinding).toBeDefined();
+            expect(hostOsPatchFinding.errorMessage).toBe(ONE_TIME_WAD_NOT_APPLICABLE_MESSAGE);
 
             const mpioEnabledFinding = result.assessments.find(a => a.id === 'mpio-enabled') as any;
             expect(mpioEnabledFinding).toBeDefined();
@@ -1289,50 +1219,103 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(mpioTimeoutFinding.current).toBe('60');
         });
 
-        it('should compute real volume/LUN drift when rawdata.ontapStorageAssessments is present', async () => {
-            const ontapResourceId = 'awsdoc-fetch-resource-with-ontap';
+        it('should compute backup, clone, and compute findings from unregistered rawdata', async () => {
+            const resourceId = 'awsdoc-fetch-resource-new-assessments';
             await bulkUpsertOfflineAssessments([
                 {
                     accountId: ACCOUNT_ID,
-                    resourceId: ontapResourceId,
+                    resourceId,
                     databaseInstanceId: AWSDOC_INSTANCE_NAME,
                     databaseType: DATABASE_TYPE.mssql,
                     rawdata: {
-                        layoutAssessment: sampleRegistryAssessment,
-                        mpioAssessment: sampleRegistryAssessment.mpio,
-                        ontapStorageAssessments: [
-                            {
-                                filesystemId: 'fs-awsdoc-1',
-                                volumes: [{ name: 'data_vol', uuid: 'uuid-1', autosize: 'off' }],
-                                luns: [],
-                                os: {},
-                                layout: {},
-                                sizing: {}
-                            }
-                        ]
+                        awsBackupAssessment: {
+                            fileSystemId: 'fs-1,fs-2',
+                            isAWSBackupEnabled: true,
+                            volumeBackupDetails: [
+                                { uuid: 'vol-1', name: 'data-1', isAWSBackupEnabled: true },
+                                { uuid: 'vol-2', name: 'data-2', isAWSBackupEnabled: true }
+                            ]
+                        },
+                        cloneAssessment: {
+                            status: AssessmentStatus.NOT_OPTIMIZED,
+                            cloneDetails: [
+                                {
+                                    databaseHostName: resourceId,
+                                    databaseHostId: resourceId,
+                                    databaseInstanceName: AWSDOC_INSTANCE_NAME,
+                                    cloneDatabaseName: 'old-clone',
+                                    cloneAge: 100,
+                                    clonedBy: 'other'
+                                }
+                            ]
+                        },
+                        computeAssessment: {
+                            currentInstanceType: 'm5.2xlarge',
+                            finding: 'Optimized',
+                            findingReasonCodes: [],
+                            recommendationOptions: []
+                        }
                     },
                     metadata: {
                         source: 'unregistered',
                         databaseInstanceName: AWSDOC_INSTANCE_NAME,
-                        ec2InstanceId: ontapResourceId,
+                        ec2InstanceId: resourceId,
                         assessmentTimestamp: new Date().toISOString()
                     }
                 }
             ]);
 
-            const result = await fetchMssqlUnregisteredInstanceAssessment(
-                ACCOUNT_ID,
-                ontapResourceId,
-                AWSDOC_INSTANCE_NAME
-            );
+            const result = await fetchMssqlUnregisteredInstanceAssessment(ACCOUNT_ID, resourceId, AWSDOC_INSTANCE_NAME);
 
-            const autosizeFinding = result.assessments.find(a => a.id === 'autosize') as any;
-            expect(autosizeFinding).toBeDefined();
-            // Real (non-fallback) drift for a VOLUME_LUN_DRIFT_IDS entry, computed from the volume
-            // fixture's 'autosize: off' vs the golden-config's recommended 'on'.
-            expect(autosizeFinding.errorMessage).toBeUndefined();
-            expect(autosizeFinding.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
-            expect(autosizeFinding.objectsInViolation).toContain('data_vol');
+            expect(result.assessments.find(a => a.id === 'backup-configuration')).toEqual(
+                expect.objectContaining({ status: AssessmentStatus.OPTIMIZED, totalObjectsAssessed: 2 })
+            );
+            expect(result.assessments.find(a => a.id === 'clone-management')).toEqual(
+                expect.objectContaining({
+                    status: AssessmentStatus.NOT_OPTIMIZED,
+                    objectsInViolation: ['old-clone']
+                })
+            );
+            expect(result.assessments.find(a => a.id === 'compute-rightsizing')).toEqual(
+                expect.objectContaining({ status: AssessmentStatus.OPTIMIZED })
+            );
+        });
+
+        it('should surface category collection errors instead of not-applicable findings', async () => {
+            const resourceId = 'awsdoc-fetch-resource-assessment-errors';
+            await bulkUpsertOfflineAssessments([
+                {
+                    accountId: ACCOUNT_ID,
+                    resourceId,
+                    databaseInstanceId: AWSDOC_INSTANCE_NAME,
+                    databaseType: DATABASE_TYPE.mssql,
+                    rawdata: {
+                        errors: {
+                            awsBackup: 'backup collection failed',
+                            clone: 'clone collection failed',
+                            compute: 'compute collection failed'
+                        }
+                    },
+                    metadata: {
+                        source: 'unregistered',
+                        databaseInstanceName: AWSDOC_INSTANCE_NAME,
+                        ec2InstanceId: resourceId,
+                        assessmentTimestamp: new Date().toISOString()
+                    }
+                }
+            ]);
+
+            const result = await fetchMssqlUnregisteredInstanceAssessment(ACCOUNT_ID, resourceId, AWSDOC_INSTANCE_NAME);
+
+            expect((result.assessments.find(a => a.id === 'backup-configuration') as any)?.errorMessage).toBe(
+                'backup collection failed'
+            );
+            expect((result.assessments.find(a => a.id === 'clone-management') as any)?.errorMessage).toBe(
+                'clone collection failed'
+            );
+            expect((result.assessments.find(a => a.id === 'compute-rightsizing') as any)?.errorMessage).toBe(
+                'compute collection failed'
+            );
         });
 
         it('should ignore file-upload WAD layout and sizing payloads on the unregistered path', async () => {
@@ -1438,36 +1421,6 @@ describe('MSSQL Offline Assessment Operations', () => {
             });
         });
 
-        it('should include HA ids when layoutAssessment.deploymentType is FCI', async () => {
-            const fciResourceId = 'awsdoc-fetch-resource-fci';
-            await bulkUpsertOfflineAssessments([
-                {
-                    accountId: ACCOUNT_ID,
-                    resourceId: fciResourceId,
-                    databaseInstanceId: AWSDOC_INSTANCE_NAME,
-                    databaseType: DATABASE_TYPE.mssql,
-                    rawdata: {
-                        layoutAssessment: { ...sampleRegistryAssessment, deploymentType: 'FCI' },
-                        mpioAssessment: sampleRegistryAssessment.mpio
-                    },
-                    metadata: {
-                        source: 'unregistered',
-                        databaseInstanceName: AWSDOC_INSTANCE_NAME,
-                        ec2InstanceId: fciResourceId,
-                        assessmentTimestamp: new Date().toISOString()
-                    }
-                }
-            ]);
-
-            const result = await fetchMssqlUnregisteredInstanceAssessment(
-                ACCOUNT_ID,
-                fciResourceId,
-                AWSDOC_INSTANCE_NAME
-            );
-
-            expect(result.assessments.some(a => a.id === 'cluster-quorum')).toBe(true);
-        });
-
         it('should compute a cluster-quorum finding from rawdata.quorumAssessment on FCI instances', async () => {
             const fciQuorumResourceId = 'awsdoc-fetch-resource-fci-quorum';
             await bulkUpsertOfflineAssessments([
@@ -1502,7 +1455,7 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(clusterQuorumFinding.status).toBe(AssessmentStatus.OPTIMIZED);
         });
 
-        it('should compute real space-mgmt-try-first and performance-tier drift, and headroom drift, from ontapStorageAssessments/headroomData', async () => {
+        it('should compute volume, performance-tier, and headroom drift from collected ONTAP data', async () => {
             const sizingResourceId = 'awsdoc-fetch-resource-with-sizing';
             await bulkUpsertOfflineAssessments([
                 {
@@ -1526,7 +1479,7 @@ describe('MSSQL Offline Assessment Operations', () => {
                                     {
                                         name: 'violating_vol',
                                         uuid: 'uuid-violating',
-                                        autosize: 'on',
+                                        autosize: 'off',
                                         'space-mgmt-try-first': 'snap_delete'
                                     }
                                 ],
@@ -1568,6 +1521,11 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(spaceMgmtFinding.errorMessage).toBeUndefined();
             expect(spaceMgmtFinding.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
             expect(spaceMgmtFinding.objectsInViolation).toContain('violating_vol');
+
+            const autosizeFinding = result.assessments.find(a => a.id === 'autosize') as any;
+            expect(autosizeFinding.errorMessage).toBeUndefined();
+            expect(autosizeFinding.status).toBe(AssessmentStatus.NOT_OPTIMIZED);
+            expect(autosizeFinding.objectsInViolation).toContain('violating_vol');
 
             const performanceTierFinding = result.assessments.find(a => a.id === 'performance-tier') as any;
             expect(performanceTierFinding).toBeDefined();
@@ -1634,8 +1592,11 @@ describe('MSSQL Offline Assessment Operations', () => {
             expect(job?.status).toBe('WARNING');
 
             const subJobs = await prisma.client.job.findMany({ where: { parent_job_id: jobId } });
-            expect(subJobs).toHaveLength(3);
+            expect(subJobs).toHaveLength(6);
             expect(subJobs.map(subJob => subJob.name).sort()).toEqual([
+                'Backup configuration assessment',
+                'Clone management assessment',
+                'Compute rightsizing assessment',
                 'ONTAP volume/LUN storage assessment',
                 'Registry MPIO assessment',
                 'Registry storage layout assessment'
@@ -1649,9 +1610,18 @@ describe('MSSQL Offline Assessment Operations', () => {
                 .forEach(subJob => {
                     expect(subJob.description).not.toContain('Review detailed findings and recommendations in.;');
                 });
-            expect(
-                subJobs.filter(subJob => subJob.name !== ontapSubJob?.name).every(s => s.status === 'COMPLETED')
-            ).toBe(true);
+            expect(subJobs.find(subJob => subJob.name === 'Backup configuration assessment')?.status).toBe('FAILED');
+            expect(subJobs.find(subJob => subJob.name === 'Clone management assessment')?.status).toBe('FAILED');
+            expect(subJobs.find(subJob => subJob.name === 'Backup configuration assessment')?.error).toBe(
+                ontapSubJob?.error
+            );
+            expect(subJobs.find(subJob => subJob.name === 'Clone management assessment')?.error).toBe(
+                ontapSubJob?.error
+            );
+            expect(subJobs.find(subJob => subJob.name === 'Registry MPIO assessment')?.status).toBe('COMPLETED');
+            expect(subJobs.find(subJob => subJob.name === 'Registry storage layout assessment')?.status).toBe(
+                'COMPLETED'
+            );
         }, 15000);
 
         it('should persist mpio/ontap findings and mark the main job WARNING when the layout subjob fails', async () => {
@@ -1677,7 +1647,7 @@ describe('MSSQL Offline Assessment Operations', () => {
             // because failingEc2InstanceId has no EC2-FSx relationship configured in the simulator
             // (no data collected). Only the MPIO subjob succeeds.
             const subJobs = await prisma.client.job.findMany({ where: { parent_job_id: jobId } });
-            expect(subJobs).toHaveLength(3);
+            expect(subJobs).toHaveLength(6);
             const layoutSubJob = subJobs.find(subJob => subJob.name === 'Registry storage layout assessment');
             const ontapSubJob = subJobs.find(subJob => subJob.name === 'ONTAP volume/LUN storage assessment');
             const mpioSubJob = subJobs.find(subJob => subJob.name === 'Registry MPIO assessment');

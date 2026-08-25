@@ -5,6 +5,7 @@ import { Ec2FsxRelationship } from '../../../src/operations/cloud-manager/taggin
 import { StorageAssessment as OracleStorageAssessment } from '../../../src/operations/continuous-optimization/oracle/common-types';
 import { StorageAssessment as MssqlStorageAssessment } from '../../../src/utils/common-types';
 import {
+    getCapturedProxyGetUris,
     registerProxyGetResponse,
     resetProxyOverrides
 } from '../../simulator/scopes/cloud-manager/proxy-forwarder-scope';
@@ -22,7 +23,7 @@ beforeEach(() => {
 });
 
 describe('collectOntapAssessmentData', () => {
-    it('builds an MSSQL storage assessment from ONTAP volume and LUN records', async () => {
+    it('should build an MSSQL storage assessment and cap the snapshot existence lookup', async () => {
         registerProxyGetResponse({
             targetId: 'fs-1',
             ontapPath: 'api/storage/volumes',
@@ -30,10 +31,15 @@ describe('collectOntapAssessmentData', () => {
                 {
                     name: 'sqldata',
                     uuid: 'vol-uuid-1',
+                    create_time: '2026-01-01T00:00:00Z',
+                    clone: { is_flexclone: true, parent_volume: { name: 'source-volume' } },
                     svm: { name: 'svm1', uuid: 'svm-uuid-1' },
                     autosize: { mode: 'grow' },
                     guarantee: { honored: true, type: 'volume' },
                     space: {
+                        size: 300,
+                        used: 200,
+                        physical_used: 100,
                         fractional_reserve: 0,
                         snapshot: { reserve_percent: 5, autodelete: { enabled: true, delete_order: 'oldest_first' } }
                     },
@@ -53,6 +59,15 @@ describe('collectOntapAssessmentData', () => {
                     space: { guarantee: { requested: false }, scsi_thin_provisioning_support_enabled: true }
                 }
             ])
+        });
+        registerProxyGetResponse({
+            targetId: 'fs-1',
+            ontapPath: 'api/storage/volumes/vol-uuid-1/snapshots',
+            body: {
+                records: [{ comment: 'creator=snapcenter' }],
+                num_records: 1,
+                _links: { next: { href: '/api/storage/volumes/vol-uuid-1/snapshots?start.uuid=next-page' } }
+            }
         });
 
         const relationship = buildRelationship([
@@ -94,6 +109,9 @@ describe('collectOntapAssessmentData', () => {
             {
                 name: 'sqldata',
                 uuid: 'vol-uuid-1',
+                create_time: '2026-01-01T00:00:00Z',
+                clone: { is_flexclone: true, parent_volume: { name: 'source-volume' } },
+                space: { size: 300, used: 200, physical_used: 100 },
                 svmName: 'svm1',
                 svmUuid: 'svm-uuid-1',
                 'thin-provision': true,
@@ -119,9 +137,10 @@ describe('collectOntapAssessmentData', () => {
         expect(assessment.errors.volumes).toBe('');
         expect(assessment.errors.luns).toBe('');
         expect(assessment.errors.layout).toBe('Not collected via proxy forwarder');
+        expect(getCapturedProxyGetUris().filter(uri => uri.includes('/snapshots'))).toHaveLength(1);
     });
 
-    it('builds an Oracle storage assessment, including space-mgmt-try-first from the private CLI lookup', async () => {
+    it('should build an Oracle storage assessment, including space-mgmt-try-first from the private CLI lookup', async () => {
         registerProxyGetResponse({
             targetId: 'fs-2',
             ontapPath: 'api/storage/volumes',
@@ -194,7 +213,7 @@ describe('collectOntapAssessmentData', () => {
         expect(assessment.luns?.data).toEqual([]);
     });
 
-    it('scopes volumes/LUNs per EC2 when multiple EC2s share the same FSx file system', async () => {
+    it('should scope volumes/LUNs per EC2 when multiple EC2s share the same FSx file system', async () => {
         registerProxyGetResponse({
             targetId: 'fs-shared',
             ontapPath: 'api/storage/volumes',
@@ -251,7 +270,7 @@ describe('collectOntapAssessmentData', () => {
         expect(volumeNames(resultB.storageAssessment as MssqlStorageAssessment)).toEqual(['vol-b']);
     });
 
-    it('produces one result per workload type when an EC2 runs multiple database workloads', async () => {
+    it('should produce one result per workload type when an EC2 runs multiple database workloads', async () => {
         registerProxyGetResponse({
             targetId: 'fs-multi',
             ontapPath: 'api/storage/volumes',
@@ -288,7 +307,7 @@ describe('collectOntapAssessmentData', () => {
         expect(results.map(r => r.workloadType).sort()).toEqual(['mssql', 'oracle']);
     });
 
-    it('records a fetch error without failing the whole collection when volumes fail to load', async () => {
+    it('should record a fetch error without failing the whole collection when volumes fail to load', async () => {
         registerProxyGetResponse({
             targetId: 'fs-err',
             ontapPath: 'api/storage/volumes',

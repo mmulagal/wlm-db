@@ -155,11 +155,11 @@ describe('isCombinedViolationDetail', () => {
 // enrichWithGoldenConfig
 // ---------------------------------------------------------------------------
 describe('enrichWithGoldenConfig', () => {
-    it('returns empty array for empty input', () => {
+    it('should return empty array for empty input', () => {
         expect(enrichWithGoldenConfig([], DatabaseTypes.MS_SQL_SERVER)).toEqual([]);
     });
 
-    it('enriches entries with golden-config static fields', () => {
+    it('should enrich entries with golden-config static fields, preserving start and end times', () => {
         const entries: DismissConfig[] = [
             { id: 'thin-provision', configState: 'DISMISSED', startTime: 1000 },
             { id: 'maxdop', configState: 'POSTPONED', startTime: 2000, endTime: 3000 }
@@ -173,6 +173,7 @@ describe('enrichWithGoldenConfig', () => {
         expect(thinProvision).toBeDefined();
         expect(thinProvision?.configurationName).toBe('thin-provision');
         expect(thinProvision?.configState).toBe('DISMISSED');
+        expect(thinProvision?.startTime).toBe(1000);
         expect(thinProvision?.name).toBeTruthy();
         expect(thinProvision?.type).toBe('storage');
         expect(thinProvision?.severity).toBeTruthy();
@@ -183,7 +184,7 @@ describe('enrichWithGoldenConfig', () => {
         expect(maxdop?.endTime).toBe(3000);
     });
 
-    it('works for Oracle ids', () => {
+    it('should work for Oracle ids', () => {
         const entries: DismissConfig[] = [
             { id: 'archive-placement', configState: 'DISMISSED', startTime: 1000 },
             { id: 'crr', configState: 'POSTPONED', startTime: 2000 }
@@ -196,15 +197,6 @@ describe('enrichWithGoldenConfig', () => {
         expect(result[0].type).toBe('storage');
         expect(result[1].id).toBe('crr');
         expect(result[1].type).toBe('resiliency');
-    });
-
-    it('preserves startTime and endTime from input', () => {
-        const entries: DismissConfig[] = [{ id: 'crr', configState: 'POSTPONED', startTime: 100, endTime: 200 }];
-
-        const result = enrichWithGoldenConfig(entries, DatabaseTypes.MS_SQL_SERVER);
-
-        expect(result[0].startTime).toBe(100);
-        expect(result[0].endTime).toBe(200);
     });
 });
 
@@ -224,7 +216,7 @@ describe('collectScopedOntapAssessment', () => {
         resetProxyOverrides();
     });
 
-    it('scopes to the requested EC2 instance, filters by workload type, and throws with no relationship', async () => {
+    it('should scope to the requested EC2 instance, filter by workload type, and throw with no relationship', async () => {
         registerProxyGetResponse({
             targetId: 'fs-scoped',
             ontapPath: 'api/storage/volumes',

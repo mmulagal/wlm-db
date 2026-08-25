@@ -11,24 +11,30 @@ import {
     OfflineAssessmentRecord
 } from '../../../lib/database/offline-assessment';
 import {
-    runLayoutAssessment,
-    getMultipathConfig,
     calculateRegistryStorageLayoutDrift,
     calculateRegistryMpioDrift,
-    getClusterQuorumConfig,
     calculateRegistryClusterQuorumDrift,
     SqlInstanceAssessment,
     MultipathConfig,
     ClusterQuorumConfig
 } from './ssm-doc-storage-assessment';
-import { isFleetManagerCollectionFailure } from '../../aws/ssm-fleet-manager-operations';
+import {
+    runLayoutSubAssessment,
+    runMpioSubAssessment,
+    runClusterQuorumSubAssessment,
+    runAwsBackupSubAssessment,
+    runCloneSubAssessment,
+    runComputeSubAssessment
+} from './unregistered-sub-assessments';
 import { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
 import { calculateStorageDrift } from './storage-assessment-operations';
 import { calculateRssConfigDrift } from './rssConfig-assessment-operations';
 import { calculateMaxDOPDrift } from './maxdop-assessment-operations';
 import { calculateMTUAlignmentDrift } from './mtu-assessment-operations';
-import calculateOneTimeWADCloneDrift from '../clone-assessment-utils';
+import { calculateOneTimeWADCloneDrift } from '../clone-assessment-utils';
 import { getHighAvailabilityDriftData } from './resilience-assessment-operation';
+import { getAwsBackupDriftData } from '../resilience-awsBackup-operations';
+import { calculateComputeDrift } from '../compute-assessment-operations';
 import {
     generateSqlResourceId,
     calculateRecommendedMaxDOP,
@@ -56,6 +62,8 @@ import {
     RssConfigAssesment,
     DatabaseInstance,
     CloneAssessment,
+    ComputeAssessment,
+    AWSBackupAssessment,
     VolumeRecord,
     VolumeDBMapEntry,
     LunRecord,
@@ -250,6 +258,14 @@ interface MssqlUnregisteredAssessmentRawData extends Partial<ScopedOntapStorageR
     layoutAssessment?: Omit<SqlInstanceAssessment, 'mpio'>;
     mpioAssessment?: MultipathConfig;
     quorumAssessment?: ClusterQuorumConfig;
+    awsBackupAssessment?: AWSBackupAssessment;
+    cloneAssessment?: CloneAssessment;
+    computeAssessment?: ComputeAssessment;
+    errors?: {
+        awsBackup?: string;
+        clone?: string;
+        compute?: string;
+    };
 }
 
 /**
@@ -874,8 +890,17 @@ async function fetchMssqlUnregisteredInstanceAssessment(
         return { assessments: [], dismissedConfigurations: [], metadata: {} };
     }
 
-    const { layoutAssessment, mpioAssessment, quorumAssessment, ontapStorageAssessments, headroomData } =
-        (record.rawdata as MssqlUnregisteredAssessmentRawData) || {};
+    const {
+        layoutAssessment,
+        mpioAssessment,
+        quorumAssessment,
+        ontapStorageAssessments,
+        headroomData,
+        awsBackupAssessment,
+        cloneAssessment,
+        computeAssessment,
+        errors: collectionErrors
+    } = (record.rawdata as MssqlUnregisteredAssessmentRawData) || {};
     const { databaseInstanceName, ec2InstanceId, assessmentTimestamp } =
         (record.metadata as unknown as MssqlUnregisteredAssessmentMetadata) || {};
 
@@ -930,6 +955,56 @@ async function fetchMssqlUnregisteredInstanceAssessment(
         if (headroomItem) {
             assessments.push(headroomItem);
         }
+    }
+
+    const backupGoldenConfig = MSSQL_GOLDEN_CONFIG.find(e => e.id === 'backup-configuration');
+    if (awsBackupAssessment && backupGoldenConfig) {
+        assessments.push(
+            getAwsBackupDriftData(
+                accountId,
+                effectiveCredentialsId ?? '',
+                effectiveRegion ?? '',
+                resourceId,
+                databaseInstanceId,
+                awsBackupAssessment,
+                backupGoldenConfig
+            )
+        );
+    } else if (collectionErrors?.awsBackup && backupGoldenConfig) {
+        assessments.push({ ...backupGoldenConfig, errorMessage: collectionErrors.awsBackup });
+    }
+
+    if (cloneAssessment) {
+        assessments.push(
+            calculateOneTimeWADCloneDrift(
+                accountId,
+                resourceId,
+                databaseInstanceId,
+                cloneAssessment,
+                DATABASE_TYPE.mssql
+            )
+        );
+    } else if (collectionErrors?.clone) {
+        const cloneGoldenConfig = MSSQL_GOLDEN_CONFIG.find(e => e.id === 'clone-management');
+        if (cloneGoldenConfig) {
+            assessments.push({ ...cloneGoldenConfig, errorMessage: collectionErrors.clone });
+        }
+    }
+
+    if (computeAssessment || collectionErrors?.compute) {
+        assessments.push(
+            calculateComputeDrift(
+                accountId,
+                effectiveCredentialsId ?? '',
+                effectiveRegion ?? '',
+                resourceId,
+                databaseInstanceId,
+                {
+                    ...(computeAssessment && { compute: computeAssessment }),
+                    ...(collectionErrors?.compute && { errors: { compute: collectionErrors.compute } })
+                } as ResourceAssessmentData
+            )
+        );
     }
 
     // Fail closed to Standalone when the deployment type couldn't be determined (registry layout
@@ -1056,159 +1131,6 @@ async function calculateMultiFilesystemStorageDrift(
     const nonVolumeLunItems = allPrimaryItems.filter(item => !volumeLunIds.has((item as AssessmentItemType).id));
     return [...nonVolumeLunItems, ...volumeLunItems];
 }
-
-function failSubJobOnCollectionError(
-    result: { error?: string },
-    jobState: { status: JOBSTATUS; errorMessage?: string }
-): boolean {
-    if (result.error && isFleetManagerCollectionFailure(result.error)) {
-        jobState.status = JOBSTATUS.FAILED;
-        jobState.errorMessage = result.error;
-        return true;
-    }
-    return false;
-}
-
-async function runLayoutSubAssessment(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    ec2InstanceId: string,
-    instanceName: string,
-    jobId: string
-): Promise<Omit<SqlInstanceAssessment, 'mpio'> | undefined> {
-    const { id: subJobId } = await registerJob(accountId, credentialsId, region, {
-        name: 'Registry storage layout assessment',
-        description: `Registry-based storage layout assessment for ${ec2InstanceId}/${instanceName}`,
-        resourceName: `${ec2InstanceId}/${instanceName}`,
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
-    let status: JOBSTATUS = JOBSTATUS.COMPLETED;
-    let errorMessage: string | undefined;
-    try {
-        return await runLayoutAssessment(credentialsId, region, ec2InstanceId, instanceName, accountId);
-    } catch (error) {
-        status = JOBSTATUS.FAILED;
-        errorMessage = error instanceof Error ? error.message : 'Registry layout assessment failed';
-        logger.error('Failed to run registry-based storage layout assessment for unregistered MSSQL instance', {
-            accountId,
-            credentialsId,
-            region,
-            ec2InstanceId,
-            instanceName,
-            error
-        });
-        return undefined;
-    } finally {
-        await updateJobDetails(accountId, subJobId, {
-            status,
-            endTime: Date.now(),
-            ...(errorMessage && { error: errorMessage })
-        });
-    }
-}
-
-async function runMpioSubAssessment(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    ec2InstanceId: string,
-    instanceName: string,
-    jobId: string
-): Promise<MultipathConfig | undefined> {
-    const { id: subJobId } = await registerJob(accountId, credentialsId, region, {
-        name: 'Registry MPIO assessment',
-        description: `Registry-based MPIO assessment for ${ec2InstanceId}/${instanceName}`,
-        resourceName: `${ec2InstanceId}/${instanceName}`,
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
-    let status: JOBSTATUS = JOBSTATUS.COMPLETED;
-    let errorMessage: string | undefined;
-    try {
-        const result = await getMultipathConfig(credentialsId, region, ec2InstanceId, accountId);
-        const jobState = { status, errorMessage };
-        if (failSubJobOnCollectionError(result, jobState)) {
-            status = jobState.status;
-            errorMessage = jobState.errorMessage;
-            return undefined;
-        }
-        return result;
-    } catch (error) {
-        status = JOBSTATUS.FAILED;
-        errorMessage = error instanceof Error ? error.message : 'Registry MPIO assessment failed';
-        logger.error('Failed to run registry-based MPIO assessment for unregistered MSSQL instance', {
-            accountId,
-            credentialsId,
-            region,
-            ec2InstanceId,
-            instanceName,
-            error
-        });
-        return undefined;
-    } finally {
-        await updateJobDetails(accountId, subJobId, {
-            status,
-            endTime: Date.now(),
-            ...(errorMessage && { error: errorMessage })
-        });
-    }
-}
-
-async function runClusterQuorumSubAssessment(
-    accountId: string,
-    credentialsId: string,
-    region: string,
-    ec2InstanceId: string,
-    instanceName: string,
-    jobId: string
-): Promise<ClusterQuorumConfig | undefined> {
-    const { id: subJobId } = await registerJob(accountId, credentialsId, region, {
-        name: 'Registry cluster quorum assessment',
-        description: `Registry-based cluster quorum assessment for ${ec2InstanceId}/${instanceName}`,
-        resourceName: `${ec2InstanceId}/${instanceName}`,
-        startTime: Date.now(),
-        status: JOBSTATUS.IN_PROGRESS,
-        type: JOBTYPE.ASSESSMENT,
-        parentJobId: jobId
-    });
-    let status: JOBSTATUS = JOBSTATUS.COMPLETED;
-    let errorMessage: string | undefined;
-    try {
-        const result = await getClusterQuorumConfig(credentialsId, region, ec2InstanceId, accountId);
-        const jobState = { status, errorMessage };
-        if (failSubJobOnCollectionError(result, jobState)) {
-            status = jobState.status;
-            errorMessage = jobState.errorMessage;
-            return undefined;
-        }
-        return result;
-    } catch (error) {
-        status = JOBSTATUS.FAILED;
-        errorMessage = error instanceof Error ? error.message : 'Registry cluster quorum assessment failed';
-        logger.error('Failed to run registry-based cluster quorum assessment for unregistered MSSQL instance', {
-            accountId,
-            credentialsId,
-            region,
-            ec2InstanceId,
-            instanceName,
-            error
-        });
-        return undefined;
-    } finally {
-        await updateJobDetails(accountId, subJobId, {
-            status,
-            endTime: Date.now(),
-            ...(errorMessage && { error: errorMessage })
-        });
-    }
-}
-
 async function processMssqlUnregisteredAssessment(
     accountId: string,
     credentialsId: string,
@@ -1221,7 +1143,7 @@ async function processMssqlUnregisteredAssessment(
     try {
         const resourceId = ec2InstanceId;
 
-        const [layoutAssessment, mpioAssessment, ontapStorageResult] = await Promise.all([
+        const [layoutAssessment, mpioAssessment, ontapStorageResult, computeResult] = await Promise.all([
             runLayoutSubAssessment(accountId, credentialsId, region, ec2InstanceId, instanceName, jobId),
             runMpioSubAssessment(accountId, credentialsId, region, ec2InstanceId, instanceName, jobId),
             runScopedOntapSubAssessment<StorageAssessment>(
@@ -1233,9 +1155,32 @@ async function processMssqlUnregisteredAssessment(
                 jobId,
                 DATABASE_TYPE.mssql,
                 'MSSQL'
+            ),
+            runComputeSubAssessment(accountId, credentialsId, region, ec2InstanceId, instanceName, jobId)
+        ]);
+        const { ontapStorageAssessments, headroomData, error: ontapCollectionError } = ontapStorageResult;
+        const [awsBackupResult, cloneResult] = await Promise.all([
+            runAwsBackupSubAssessment(
+                accountId,
+                credentialsId,
+                region,
+                ec2InstanceId,
+                instanceName,
+                jobId,
+                ontapStorageAssessments,
+                ontapCollectionError
+            ),
+            runCloneSubAssessment(
+                accountId,
+                credentialsId,
+                region,
+                ec2InstanceId,
+                instanceName,
+                jobId,
+                ontapStorageAssessments,
+                ontapCollectionError
             )
         ]);
-        const { ontapStorageAssessments, headroomData } = ontapStorageResult ?? {};
         const quorumAssessment =
             layoutAssessment?.deploymentType === 'FCI'
                 ? await runClusterQuorumSubAssessment(
@@ -1248,13 +1193,45 @@ async function processMssqlUnregisteredAssessment(
                   )
                 : undefined;
 
-        if (layoutAssessment || mpioAssessment || (ontapStorageAssessments && ontapStorageAssessments.length > 0)) {
+        const collectionErrors = {
+            ...(awsBackupResult.error && { awsBackup: awsBackupResult.error }),
+            ...(cloneResult.error && { clone: cloneResult.error }),
+            ...(computeResult.error && { compute: computeResult.error })
+        };
+        logger.info('Collected MSSQL unregistered-instance sub-assessments', {
+            accountId,
+            jobId,
+            ec2InstanceId,
+            instanceName,
+            hasLayout: Boolean(layoutAssessment),
+            hasMpio: Boolean(mpioAssessment),
+            hasQuorum: Boolean(quorumAssessment),
+            ontapFilesystemCount: ontapStorageAssessments?.length ?? 0,
+            ontapCollectionError,
+            hasAwsBackup: Boolean(awsBackupResult.data),
+            hasClone: Boolean(cloneResult.data),
+            hasCompute: Boolean(computeResult.data),
+            collectionErrors
+        });
+        if (
+            layoutAssessment ||
+            mpioAssessment ||
+            (ontapStorageAssessments && ontapStorageAssessments.length > 0) ||
+            awsBackupResult.data ||
+            cloneResult.data ||
+            computeResult.data ||
+            Object.keys(collectionErrors).length > 0
+        ) {
             const rawdata: MssqlUnregisteredAssessmentRawData = {
                 ...(layoutAssessment && { layoutAssessment }),
                 ...(mpioAssessment && { mpioAssessment }),
                 ...(quorumAssessment && { quorumAssessment }),
                 ...(ontapStorageAssessments ? { ontapStorageAssessments } : {}),
-                ...(headroomData && { headroomData })
+                ...(headroomData && { headroomData }),
+                ...(awsBackupResult.data && { awsBackupAssessment: awsBackupResult.data }),
+                ...(cloneResult.data && { cloneAssessment: cloneResult.data }),
+                ...(computeResult.data && { computeAssessment: computeResult.data }),
+                ...(Object.keys(collectionErrors).length > 0 && { errors: collectionErrors })
             };
             const metadata: MssqlUnregisteredAssessmentMetadata = {
                 source: OFFLINE_ASSESSMENT_SOURCE.UNREGISTERED,
@@ -1287,8 +1264,15 @@ async function processMssqlUnregisteredAssessment(
             ]);
         } else {
             unexpectedError =
-                'No assessable data collected: registry layout, MPIO, and ONTAP volume/LUN assessments ' +
+                'No assessable data collected: registry layout, MPIO, ONTAP volume/LUN, backup, clone, and compute assessments ' +
                 'all returned no data for this instance';
+            logger.warn('No assessable data collected for MSSQL unregistered-instance assessment', {
+                accountId,
+                jobId,
+                ec2InstanceId,
+                instanceName,
+                ontapCollectionError
+            });
         }
     } catch (error: unknown) {
         unexpectedError = error instanceof Error ? error.message : 'Assessment failed';

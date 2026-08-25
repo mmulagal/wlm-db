@@ -422,6 +422,12 @@ async function buildEc2FsxRelationship(
     logger.info('Built EC2-FSx relationship using tagging service apis ', {
         accountId,
         region,
+        relationshipCount: relationships.length,
+        ec2InstanceCount: ec2Instances.length,
+        fsxFileSystemCount: fsxFileSystems.length,
+        fsxVolumeCount: fsxVolumes.length,
+        ontapVolumeCount: ontapVolumes.length,
+        ontapLunCount: ontapLuns.length,
         ec2Count: ec2s.length,
         ec2Ids: ec2s.map(({ instanceId }) => instanceId)
     });

@@ -1,15 +1,81 @@
 import { isEmpty } from 'lodash-es';
 import { DATABASE_TYPE } from '@prisma/client';
 
-import { CloneAssessment, CloneDetail } from '../../utils/common-types';
+import { CloneAssessment, CloneDetail, ClonedVolumeDetail, VolumeRecord } from '../../utils/common-types';
 import { CLONE_AGE, GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../utils/consts';
 import { AssessmentCategories, AssessmentStatus } from '../../utils/continous-optimization-consts';
 import getLogger from '../../utils/logger';
+import { calculateDaysSince } from '../../utils/utils';
 import type { AssessmentItemType, AssessmentErrorItemType } from '../../routes/types/continuous-optimization.types';
 import { MSSQL_GOLDEN_CONFIG } from './mssql/golden-config';
 import ORACLE_GOLDEN_CONFIG from './oracle/golden-config';
 
 const logger = getLogger();
+
+interface CloneAssessmentContext {
+    databaseHostName: string;
+    databaseHostId: string;
+    databaseInstanceName: string;
+}
+
+function buildCloneAssessmentFromOntapVolumes(
+    volumeRecords: VolumeRecord[],
+    context: CloneAssessmentContext,
+    parentVolumeNames?: string[]
+): CloneAssessment {
+    const parentVolumeSet = parentVolumeNames ? new Set(parentVolumeNames) : undefined;
+    const relevantClones = volumeRecords.filter(
+        record =>
+            record.clone?.is_flexclone === true &&
+            (!parentVolumeSet || parentVolumeSet.has(record.clone.parent_volume?.name ?? ''))
+    );
+
+    const cloneDetails: CloneDetail[] = relevantClones.map(record => {
+        const {
+            uuid: cloneVolumeUuid,
+            create_time: cloneVolumeCreateTime,
+            name: cloneVolumeName,
+            clone: { parent_volume: { name: parentVolumeName = '' } = {} } = {},
+            space
+        } = record;
+        const cloneAge = cloneVolumeCreateTime ? calculateDaysSince(cloneVolumeCreateTime) : 0;
+        const clonedVolumeInfo: ClonedVolumeDetail = {
+            sourceVolumeName: parentVolumeName,
+            cloneVolumeName,
+            cloneVolumeUuid,
+            cloneVolumeCreateTime,
+            cloneDatabaseName: cloneVolumeName
+        };
+
+        return {
+            ...context,
+            cloneDatabaseName: cloneVolumeName,
+            clonedBy: 'other',
+            cloneAge,
+            cloneSize: space?.physical_used ?? space?.used ?? 0,
+            clonedVolumeDetails: [clonedVolumeInfo]
+        };
+    });
+    const oldCloneDetails = cloneDetails.filter(({ cloneAge }) => cloneAge !== undefined && cloneAge > CLONE_AGE);
+    const oldCloneDatabaseNames = oldCloneDetails.flatMap(({ cloneDatabaseName }) =>
+        cloneDatabaseName ? [cloneDatabaseName] : []
+    );
+
+    logger.info('Built clone assessment from ONTAP volumes', {
+        ...context,
+        volumeRecordCount: volumeRecords.length,
+        cloneCount: cloneDetails.length,
+        oldCloneCount: oldCloneDetails.length
+    });
+
+    return {
+        cloneDetails,
+        status: oldCloneDetails.length === 0 ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
+        oldClones: oldCloneDetails.length,
+        oldCloneDetails,
+        oldCloneDatabaseNames
+    };
+}
 
 function calculateOneTimeWADCloneDrift(
     accountId: string,
@@ -76,4 +142,4 @@ function calculateOneTimeWADCloneDrift(
     }
 }
 
-export default calculateOneTimeWADCloneDrift;
+export { calculateOneTimeWADCloneDrift, buildCloneAssessmentFromOntapVolumes };

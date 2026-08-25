@@ -3,6 +3,7 @@ import { isEmpty } from 'lodash-es';
 import { getAllWfCredentials, getWfCredentialDetails, wfCredentials } from '../../lib/cloud-manager/credentials';
 import { CredentialsResponseType } from '../../routes/types/credentials.types';
 import getLogger from '../../utils/logger';
+import { derivePropertiesFromARN } from '../../utils/utils';
 
 const logger = getLogger();
 
@@ -83,4 +84,14 @@ async function getCredentialsDetails(credentialsId: string, accountId?: string) 
         throw createError(400, errMsg);
     }
 }
-export { getCredentials, getRoleDetails, getCredentialsDetails };
+
+async function resolveAwsAccountIdFromCredentials(
+    credentialsId: string,
+    accountId?: string
+): Promise<string | undefined> {
+    const { metadata: { arn } = {} } = await getCredentialsDetails(credentialsId, accountId);
+    const { awsAccountId } = derivePropertiesFromARN(arn ?? '') ?? {};
+    return awsAccountId;
+}
+
+export { getCredentials, getRoleDetails, getCredentialsDetails, resolveAwsAccountIdFromCredentials };

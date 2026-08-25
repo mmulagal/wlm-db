@@ -206,4 +206,4 @@ async function managedHostsComputeAssessment(
     return { computeAssessment, errorMessage };
 }
 
-export { calculateComputeDrift, managedHostsComputeAssessment };
+export { runComputeAssessment, calculateComputeDrift, managedHostsComputeAssessment };

@@ -41,7 +41,7 @@ import {
     lunConfigData,
     blockDeviceConfig
 } from './storage-assessment-operations';
-import calculateOneTimeWADCloneDrift from '../clone-assessment-utils';
+import { calculateOneTimeWADCloneDrift } from '../clone-assessment-utils';
 import { calculateComputeHostOsDrift } from './compute-assessment-operations';
 import { calculateSnapCenterDrift, SnapcenterAssessmentData } from './snapcenter-assessment-operations';
 import { getOntapVolumeIdsByFileType, ORACLE_V1_MAP_CONFIG } from './assessment-operations';

@@ -56,7 +56,8 @@ async function fetchSnapCenterVolumeOntapData(
                         collectAllOntapRecords<Record<string, unknown>>(
                             base,
                             `api/storage/volumes/${volumeUuid}/snapshots`,
-                            SNAPCENTER_SNAPSHOT_QUERY
+                            SNAPCENTER_SNAPSHOT_QUERY,
+                            1
                         )
                     ]);
                     const [svmRecord] = svmRecords;

@@ -13,9 +13,9 @@ import {
     getEffectiveRecommendationPreferences,
     putRecommendationPreferences
 } from '../../lib/aws/compute-optimizer';
-import { derivePropertiesFromARN, getEc2Arn } from '../../utils/utils';
+import { getEc2Arn } from '../../utils/utils';
 import getLogger from '../../utils/logger';
-import { getCredentialsDetails } from '../cloud-manager/credentials-operations';
+import { resolveAwsAccountIdFromCredentials } from '../cloud-manager/credentials-operations';
 import {
     getInstanceTypesFromInstanceRequirements,
     getInstanceTypesFromInstanceRequirementsForManagedInstances,
@@ -452,9 +452,7 @@ async function getInstanceRecommendationsForProfile(
         deploymentType
     });
 
-    const { metadata: { arn } = {} } = await getCredentialsDetails(credentialsId, accountId);
-
-    const { awsAccountId } = derivePropertiesFromARN(arn!) || {};
+    const awsAccountId = await resolveAwsAccountIdFromCredentials(credentialsId, accountId);
     if (awsAccountId) {
         const resourceArn = getEc2Arn(awsAccountId, region, instanceId);
         const instanceIds = nodeInstances.map(({ ec2InstanceId }) => ec2InstanceId);

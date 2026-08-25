@@ -24,6 +24,26 @@ interface AwsBackupAssessmentResult {
     volumeBackupDetails: { name: string; uuid: string; isAWSBackupEnabled: boolean }[];
 }
 
+function mergeAwsBackupAssessments(assessments: AWSBackupAssessment[]): AWSBackupAssessment {
+    const errorMessage = assessments
+        .map(assessment => assessment.errorMessage)
+        .filter(Boolean)
+        .join('; ');
+    const merged: AWSBackupAssessment = {
+        fileSystemId: assessments.map(({ fileSystemId }) => fileSystemId).join(','),
+        isAWSBackupEnabled: assessments.length > 0 && !errorMessage && assessments.every(a => a.isAWSBackupEnabled),
+        ...(errorMessage && { errorMessage }),
+        volumeBackupDetails: assessments.flatMap(({ volumeBackupDetails }) => volumeBackupDetails)
+    };
+    logger.info('Merged AWS backup assessments', {
+        filesystemCount: assessments.length,
+        volumeCount: merged.volumeBackupDetails?.length ?? 0,
+        isAWSBackupEnabled: merged.isAWSBackupEnabled,
+        hasError: Boolean(errorMessage)
+    });
+    return merged;
+}
+
 async function assessAwsBackupForVolumes(
     credentialsId: string,
     region: string,
@@ -250,4 +270,4 @@ function getAwsBackupDriftData(
     };
 }
 
-export { assessAwsBackupForVolumes, initiateAwsBackupAssessment, getAwsBackupDriftData };
+export { assessAwsBackupForVolumes, mergeAwsBackupAssessments, initiateAwsBackupAssessment, getAwsBackupDriftData };

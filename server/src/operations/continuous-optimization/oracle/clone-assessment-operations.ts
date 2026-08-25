@@ -3,20 +3,14 @@ import { isEmpty } from 'lodash-es';
 import { JOBSTATUS, JOBTYPE } from '@prisma/client';
 
 import getLogger from '../../../utils/logger';
-import {
-    CloneAssessment,
-    CloneDetail,
-    ClonedVolumeDetail,
-    VolumeRecord,
-    WorkloadInstance
-} from '../../../utils/common-types';
-import { CLONE_AGE, GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
+import { CloneAssessment, VolumeRecord, WorkloadInstance } from '../../../utils/common-types';
+import { GENERIC_ASSESSMENT_ERROR_MESSAGE } from '../../../utils/consts';
 import { AssessmentCategoriesOracle, AssessmentStatus } from '../../../utils/continous-optimization-consts';
 import { registerJob, updateJobDetails } from '../../database/job-operations';
 import { createDatabaseInstanceConfigData } from '../../../lib/database/database-instance-config';
-import { calculateDaysSince } from '../../../utils/utils';
 import ORACLE_GOLDEN_CONFIG from './golden-config';
 import type { AssessmentItemType, AssessmentErrorItemType } from '../../../routes/types/continuous-optimization.types';
+import { buildCloneAssessmentFromOntapVolumes } from '../clone-assessment-utils';
 import { collectAllOntapRecords, buildOntapProxyBase } from '../../../lib/ontap/ontap-gateway';
 
 const logger = getLogger();
@@ -82,76 +76,11 @@ async function runOracleCloneAssessment(
 
     const flexCloneRecords = await fetchOracleFlexCloneVolumes(accountId, credentialsId, fsxFileSystem, region);
 
-    if (isEmpty(flexCloneRecords)) {
-        return {
-            cloneDetails: [],
-            status: AssessmentStatus.OPTIMIZED,
-            oldClones: 0,
-            oldCloneDetails: [],
-            oldCloneDatabaseNames: []
-        } as CloneAssessment;
-    }
-
-    const mappedVolumeSet = new Set(mappedVolumeNames);
-    const relevantClones = flexCloneRecords.filter(
-        (record: VolumeRecord) =>
-            record.clone?.is_flexclone && mappedVolumeSet.has(record.clone?.parent_volume?.name || '')
+    return buildCloneAssessmentFromOntapVolumes(
+        flexCloneRecords,
+        { databaseHostName: resourceName, databaseHostId, databaseInstanceName },
+        mappedVolumeNames
     );
-
-    const cloneDetails: CloneDetail[] = [];
-    const oldCloneDetails: CloneDetail[] = [];
-    const oldCloneDatabaseNames: string[] = [];
-    let oldClones = 0;
-
-    relevantClones.forEach((record: VolumeRecord) => {
-        const {
-            uuid: cloneVolumeUuid,
-            create_time: cloneVolumeCreateTime,
-            name: cloneVolumeName,
-            clone: { parent_volume: { name: parentVolumeName = '' } = {} } = {},
-            space
-        } = record;
-
-        const cloneAge = cloneVolumeCreateTime ? calculateDaysSince(cloneVolumeCreateTime) : 0;
-        const cloneSize = space?.physical_used ?? space?.used ?? 0;
-
-        const clonedVolumeInfo: ClonedVolumeDetail = {
-            sourceVolumeName: parentVolumeName,
-            cloneVolumeName,
-            cloneVolumeUuid,
-            cloneVolumeCreateTime,
-            cloneDatabaseName: cloneVolumeName
-        };
-
-        const cloneDetail: CloneDetail = {
-            cloneDatabaseName: cloneVolumeName,
-            databaseHostName: resourceName,
-            databaseHostId,
-            databaseInstanceName,
-            clonedBy: 'other',
-            cloneAge,
-            cloneSize,
-            clonedVolumeDetails: [clonedVolumeInfo]
-        };
-
-        cloneDetails.push(cloneDetail);
-
-        if (cloneAge > CLONE_AGE) {
-            oldClones += 1;
-            oldCloneDetails.push(cloneDetail);
-            oldCloneDatabaseNames.push(cloneVolumeName);
-        }
-    });
-
-    const isOptimized = oldClones === 0;
-
-    return {
-        cloneDetails,
-        status: isOptimized ? AssessmentStatus.OPTIMIZED : AssessmentStatus.NOT_OPTIMIZED,
-        oldClones,
-        oldCloneDetails,
-        oldCloneDatabaseNames
-    } as CloneAssessment;
 }
 
 async function initiateOracleCloneAssessmentCollection(
